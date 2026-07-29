@@ -28,7 +28,10 @@ Concretely, in order:
    `docs/concepts/` is the first artifact class the framework actually enforces rather than describes —
    see `docs/adr/0005-okf-derived-concept-model.md`.
 2. **A specialized agent that produces it.** One role, minimum tools, output validated at the boundary
-   before anything consumes it.
+   before anything consumes it. Decide its tree before writing it: a component installed downstream
+   goes under `src/claude/agents/`, one that only serves this repository under `.claude/agents/`
+   (ADR-0006). This is the first component that has to answer that question, and answering it is what
+   makes the boundary real rather than declared.
 3. **An orchestrator that consumes it** and chooses a transition from the artifact's closed `state`
    field — a lookup, not an interpretation.
 4. **One appended event** recording what happened, and **one projection** deriving current state by
@@ -37,7 +40,7 @@ Concretely, in order:
    delegating.
 6. **`make validate`, `make test`** over the above, and a fixture in `fixtures/` shaped like a real
    downstream case.
-7. **The generator and `make dist`**, once there is enough source to assemble.
+7. **The generator and `make dist`**, once `src/claude/` holds enough to assemble.
 
 ## Which rule activates when
 
@@ -49,11 +52,12 @@ at a specific point:
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, concepts only |
 | `make test` in `/siegard-verify` step 1 | a framework test suite exists | pending |
+| `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | pending |
 | "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | pending |
 | "no source-only paths in the distribution" | `dist/` is generator-produced | pending |
 | every capability needs a fixture (`CLAUDE.md` scope) | `fixtures/` holds its first case | pending |
 | migration tests (`rules/compatibility.md`) | a second contract version exists | pending |
-| ADR-0001, ADR-0002, ADR-0003 | their **Validation required** sections are satisfied | pending |
+| ADR-0001, ADR-0002, ADR-0003, ADR-0006 | their **Validation required** sections are satisfied | pending |
 
 `make validate` is active but narrow: it validates the concept bundle and nothing else. Do not read a
 green `make validate` as coverage of a change that did not touch `docs/concepts/`.
@@ -86,7 +90,8 @@ depend on cooperation.
 
 ## Not yet in place
 
-- No `specs/`, `templates/`, `tests/`, or `fixtures/`.
+- No `specs/`, `src/claude/`, `templates/`, `tests/`, or `fixtures/`.
 - `schemas/` and `scripts/` hold only the concept contract and its validator.
 - No framework test suite, so `make test` fails by design rather than passing vacuously.
-- No generator, therefore no authoritative `dist/`.
+- No generator, therefore no authoritative `dist/`. No distributable component has been authored
+  either, so `src/claude/` has nothing to hold yet and the generator has no input to read.

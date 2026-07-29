@@ -22,6 +22,7 @@ One concept per file. The filename is the concept `id` without its `concept.` pr
 | [distribution](distribution.md) | The assembled release artifact under `dist/.claude/`. |
 | [event log](event-log.md) | The append-only record of workflow facts. |
 | [fixture](fixture.md) | A downstream-shaped case exercising a framework capability. |
+| [framework source](framework-source.md) | The tree under `src/claude/` holding the components Siegard ships. |
 | [projection](projection.md) | Current state derived by replaying the event log. |
 | [provenance](provenance.md) | The recorded origin of a material decision. |
 | [specialized agent](specialized-agent.md) | An agent with one declared role and minimum tools. |

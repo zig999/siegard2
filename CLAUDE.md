@@ -33,10 +33,17 @@ convenience, are recorded in `docs/adr/0004-ai-first-artifact-contracts.md`.
 | `templates/` | artifact generators that conform to schemas | implementation |
 | `tests/` | contract, transition, validation, and packaging tests | implementation |
 | `fixtures/` | downstream-shaped cases that exercise capabilities | evidence |
-| `.claude/` | commands, agents, skills, hooks, rules | framework source |
+| `src/claude/` | the Claude Code components the framework ships | framework source |
 | `dist/.claude/` | assembled distribution | generated, never hand-edited |
+| `.claude/` | rules and skills that govern work in this repository | development environment, never shipped |
 | `docs/concepts/` | framework vocabulary, one concept per file | vocabulary authority |
 | `docs/` | bootstrap plan, guides | explanatory |
+
+`.claude/` and `src/claude/` are different trees and never mirror each other. `.claude/` configures the
+agent that develops Siegard; `src/claude/` holds what Siegard ships. A component that would be
+installed into a target repository belongs in `src/claude/` from the moment it is first authored, and
+stays inert here until the generator, a fixture, or a test exercises it — never the ambient session.
+`docs/adr/0006-separate-development-environment-from-framework-source.md` records the boundary.
 
 Most of these paths do not exist yet. Each one is a commitment: create it when the first artifact
 needs it, and do not invent a different location.

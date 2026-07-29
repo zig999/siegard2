@@ -21,6 +21,9 @@ Assemble the distribution under `dist/.claude/` from framework source using a ge
 release artifact, not a source tree: reproducible from committed source, never hand-edited, and free of
 source-only paths and environment-specific values.
 
+Where that framework source lives is decided by ADR-0006, not here. This ADR governs only how the
+distribution is produced from it.
+
 ## Consequences
 
 - A clean boundary between what the framework develops with and what it ships.

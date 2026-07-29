@@ -13,8 +13,8 @@ produces a named gap — it never produces a silent pass.
 | Area touched | Command |
 |---|---|
 | `schemas/`, `specs/` | `make validate` |
-| any framework source | `make test` |
-| distribution inputs (`.claude/`, `templates/`, `scripts/`) | `make dist` then `make validate` |
+| any source or component in this repository | `make test` |
+| distribution inputs (`src/claude/`, `templates/`, `scripts/`) | `make dist` then `make validate` |
 | broad or uncertain scope | `make check` |
 
 **If the command does not exist**, stop treating this as a passing step. Record it verbatim as:
@@ -44,8 +44,8 @@ The change is complete only when these agree. Name any that do not:
 ## 4. Inspect the diff
 
 - unrelated changes: revert them into their own change;
-- source-only paths (`specs/`, `tests/`, `fixtures/`, `docs/`) appearing under `dist/`: fix the
-  generator;
+- source-only paths appearing under `dist/`: fix the generator. The exclusion list is in
+  `.claude/rules/distribution.md`, which is its single authority;
 - secrets, credentials, or environment-specific values anywhere in the distribution: remove them.
 
 ## 5. Report

@@ -14,8 +14,8 @@ sources:
 
 # distribution
 
-The assembled release artifact under `dist/.claude/`, produced from framework source by a generator and
-copied into target repositories.
+The assembled release artifact under `dist/.claude/`, produced from [framework source](framework-source.md)
+by a generator and copied into target repositories.
 
 Generated output, never a source tree, and never hand-edited. Reproducible: the same committed source
 must produce the same distribution.

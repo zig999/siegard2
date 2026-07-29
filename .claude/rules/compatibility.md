@@ -2,6 +2,7 @@
 paths:
   - "specs/**"
   - "schemas/**"
+  - "src/claude/**"
   - "dist/**"
 ---
 

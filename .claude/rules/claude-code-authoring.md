@@ -1,5 +1,6 @@
 ---
 paths:
+  - "src/claude/**"
   - ".claude/**"
   - "CLAUDE.md"
 ---
@@ -28,6 +29,12 @@ Two consequences to design around:
 - `CLAUDE.md` and rules are context, not enforcement. The agent may not follow them. A guarantee that
   must hold regardless of model judgment belongs in a `PreToolUse` hook or a script.
 - A skill loads only when invoked or matched. Do not put a rule that must always hold into a skill.
+
+The table's paths are the paths of an *installed* component. For a component authored under
+`src/claude/`, it describes where that component lands in a target repository, not its path here:
+`src/claude/rules/foo.md` loads nothing in this repository, and a hook under `src/claude/` fires
+downstream and never in this session. Exercise a shippable component through the generator, a fixture,
+or a test — never by observing this session's behavior.
 
 Keep `CLAUDE.md` under 200 lines; longer files reduce adherence. When it grows, move a path-scoped
 invariant to `.claude/rules/` and a procedure to a skill. Do not use `@path` imports to shrink it —
