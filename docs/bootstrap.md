@@ -23,8 +23,10 @@ command  →  orchestrator  →  specialized agent  →  validated artifact  →
 
 Concretely, in order:
 
-1. **A validated artifact and its schema.** One inter-agent artifact with a versioned schema in
-   `schemas/` and a boundary validator in `scripts/`. Smallest piece that produces evidence.
+1. ~~**A validated artifact and its schema.**~~ **Done.** `schemas/concept.v1.json` with the boundary
+   validator `scripts/validate_concepts.py`, wired to `make validate`. The concept bundle in
+   `docs/concepts/` is the first artifact class the framework actually enforces rather than describes —
+   see `docs/adr/0005-okf-derived-concept-model.md`.
 2. **A specialized agent that produces it.** One role, minimum tools, output validated at the boundary
    before anything consumes it.
 3. **An orchestrator that consumes it** and chooses a transition from the artifact's closed `state`
@@ -39,17 +41,22 @@ Concretely, in order:
 
 ## Which rule activates when
 
-Several rules in this repository currently describe components that do not exist. Each becomes
-enforceable at a specific point:
+Several rules in this repository still describe components that do not exist. Each becomes enforceable
+at a specific point:
 
-| Rule | Activates when |
-|---|---|
-| `make validate` / `make test` in `/siegard-verify` step 1 | a `Makefile` with those targets exists |
-| "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist |
-| "no source-only paths in the distribution" | `dist/` is generator-produced |
-| every capability needs a fixture (`CLAUDE.md` scope) | `fixtures/` holds its first case |
-| migration tests (`rules/compatibility.md`) | a second contract version exists |
-| ADR-0001, ADR-0002, ADR-0003 | their **Validation required** sections are satisfied |
+| Rule | Activates when | State |
+|---|---|---|
+| concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
+| `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, concepts only |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | pending |
+| "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | pending |
+| "no source-only paths in the distribution" | `dist/` is generator-produced | pending |
+| every capability needs a fixture (`CLAUDE.md` scope) | `fixtures/` holds its first case | pending |
+| migration tests (`rules/compatibility.md`) | a second contract version exists | pending |
+| ADR-0001, ADR-0002, ADR-0003 | their **Validation required** sections are satisfied | pending |
+
+`make validate` is active but narrow: it validates the concept bundle and nothing else. Do not read a
+green `make validate` as coverage of a change that did not touch `docs/concepts/`.
 
 Until a row's condition holds, the rule is a commitment, not a check. Report it as not run rather than
 as satisfied.
@@ -79,5 +86,7 @@ depend on cooperation.
 
 ## Not yet in place
 
-- No `Makefile`, `specs/`, `schemas/`, `scripts/`, `templates/`, `tests/`, or `fixtures/`.
+- No `specs/`, `templates/`, `tests/`, or `fixtures/`.
+- `schemas/` and `scripts/` hold only the concept contract and its validator.
+- No framework test suite, so `make test` fails by design rather than passing vacuously.
 - No generator, therefore no authoritative `dist/`.

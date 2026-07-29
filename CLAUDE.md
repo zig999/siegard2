@@ -35,7 +35,8 @@ convenience, are recorded in `docs/adr/0004-ai-first-artifact-contracts.md`.
 | `fixtures/` | downstream-shaped cases that exercise capabilities | evidence |
 | `.claude/` | commands, agents, skills, hooks, rules | framework source |
 | `dist/.claude/` | assembled distribution | generated, never hand-edited |
-| `docs/` | glossary, bootstrap plan, guides | explanatory |
+| `docs/concepts/` | framework vocabulary, one concept per file | vocabulary authority |
+| `docs/` | bootstrap plan, guides | explanatory |
 
 Most of these paths do not exist yet. Each one is a commitment: create it when the first artifact
 needs it, and do not invent a different location.
@@ -83,8 +84,8 @@ Prompts may instruct an agent how to apply a rule, but must not become the sole 
 that can live in a specification, schema, or deterministic validator.
 
 Reuse an existing concept when its semantics remain valid, and use one name for it across specs,
-schemas, code, and tests. `docs/glossary.md` is the authority for framework vocabulary; add a term
-there before using it normatively.
+schemas, code, and tests. `docs/concepts/` is the authority for framework vocabulary; add a concept
+file there before using a term normatively.
 
 ## Determinism and state
 

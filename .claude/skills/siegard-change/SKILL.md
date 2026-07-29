@@ -27,9 +27,12 @@ Answer these against the **Scope** section of `CLAUDE.md`, which is the authorit
 
 ## 3. Name it once
 
-Use one name for the concept across specs, schemas, code, tests, and docs. Add the term to
-`docs/glossary.md` before using it normatively. A term used in a rule but absent from the glossary is
-an interpretation waiting to drift.
+Use one name for the concept across specs, schemas, code, tests, and docs. Add a concept file to
+`docs/concepts/` before using a term normatively, then run `make validate`. A term used in a rule but
+absent from the bundle is an interpretation waiting to drift.
+
+The frontmatter contract is `schemas/concept.v1.json`; `docs/concepts/index.md` lists the bundle and
+must gain a row for the new concept.
 
 ## 4. Update everything derived
 
