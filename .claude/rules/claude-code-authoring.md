@@ -46,10 +46,12 @@ The split across commands, orchestrators, specialized agents, skills, hooks, and
 `docs/adr/0003-orchestrator-agent-separation.md`. That ADR is `proposed`, so read it as context, not as
 authority — see `docs/adr/README.md`.
 
-These two hold regardless of how that taxonomy settles:
+These hold regardless of how that taxonomy settles:
 
-- Grant every agent and hook the minimum tools and permissions it needs.
 - Implement durable orchestration and state logic in tested scripts, not in prompt prose.
+- State each component's tool and permission grant in the component itself. The rule is
+  `docs/concepts/least-privilege.md`, stated operatively in `CLAUDE.md` under **Security**; this line
+  only says where the grant is written.
 
 ## Relying on harness behavior
 

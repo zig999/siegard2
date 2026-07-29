@@ -50,8 +50,11 @@ at a specific point:
 | Rule | Activates when | State |
 |---|---|---|
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
-| `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, concepts only |
+| ADR frontmatter contract (`schemas/adr.v1.json`), including supersession | the validator runs in `make validate` | **active** |
+| `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, concepts and ADRs only |
 | `make test` in `/siegard-verify` step 1 | a framework test suite exists | pending |
+| `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
+| security invariants (`CLAUDE.md`, ADR-0007) | stated; enforcement waits for the first hook | **partly active** |
 | `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | pending |
 | "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | pending |
 | "no source-only paths in the distribution" | `dist/` is generator-produced | pending |
@@ -59,8 +62,9 @@ at a specific point:
 | migration tests (`rules/compatibility.md`) | a second contract version exists | pending |
 | ADR-0001, ADR-0002, ADR-0003, ADR-0006 | their **Validation required** sections are satisfied | pending |
 
-`make validate` is active but narrow: it validates the concept bundle and nothing else. Do not read a
-green `make validate` as coverage of a change that did not touch `docs/concepts/`.
+`make validate` is active but narrow: it validates the concept bundle and ADR frontmatter, and nothing
+else. Do not read a green `make validate` as coverage of a change that did not touch `docs/concepts/` or
+`docs/adr/`.
 
 Until a row's condition holds, the rule is a commitment, not a check. Report it as not run rather than
 as satisfied.
@@ -85,13 +89,18 @@ depend on cooperation.
 ## In place
 
 - **Version control.** Git, on `main`, with `origin` at `git@github.com:zig999/siegard2.git`.
-  Traceability, reproducible generation from committed source, and migration history all presuppose
-  it. Nothing has been pushed yet.
+  Traceability, reproducible generation from committed source, and migration history all presuppose it.
+- **Two enforced artifact contracts.** `schemas/concept.v1.json` and `schemas/adr.v1.json`, each with a
+  boundary validator in `scripts/`, both wired to `make validate`. These are the only rules in this
+  repository that are checked rather than trusted.
 
 ## Not yet in place
 
 - No `specs/`, `src/claude/`, `templates/`, `tests/`, or `fixtures/`.
-- `schemas/` and `scripts/` hold only the concept contract and its validator.
-- No framework test suite, so `make test` fails by design rather than passing vacuously.
+- `schemas/` and `scripts/` hold only the concept and ADR contracts and their validators.
+- No framework test suite, so `make test` fails by design rather than passing vacuously. The two
+  validators are therefore untested code enforcing tested contracts.
+- No `.claude/rules/security.md`. ADR-0007 states the security invariants and defers sanitization, path,
+  subprocess, and network detail until the first hook or script needs it.
 - No generator, therefore no authoritative `dist/`. No distributable component has been authored
   either, so `src/claude/` has nothing to hold yet and the generator has no input to read.

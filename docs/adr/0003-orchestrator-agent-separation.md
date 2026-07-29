@@ -1,7 +1,8 @@
 ---
-id: 0003
+id: "0003"
 title: Separate orchestration from specialized agent work
 status: proposed
+contract_version: adr/1
 ---
 
 # Separate orchestration from specialized agent work

@@ -6,7 +6,7 @@ description: A case in fixtures/ shaped like a real downstream need, used to exe
 status: accepted
 contract_version: concept/1
 tags: [scope, evidence, testing]
-generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
+generated: { by: claude-opus-5, at: 2026-07-29T19:49:09Z }
 ---
 
 # fixture
@@ -14,6 +14,11 @@ generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 A case in `fixtures/` shaped like a real downstream application need, used to exercise a framework
 [capability](capability.md).
 
-Fixtures are how downstream reality enters this repository without downstream features entering it.
-The scope fence in `CLAUDE.md` excludes business application work; the fixture is the one channel it
-leaves open, and it is the only feedback loop that tells the framework which abstractions are real.
+Fixtures are how downstream reality enters this repository without downstream features entering it. The
+scope fence in `CLAUDE.md` excludes business application work; the fixture is the one channel through
+which such work enters, as evidence rather than as a feature.
+
+A fixture is not the only evidence that an abstraction is real. An installation or upgrade incident, an
+incompatibility with a supported Claude Code version, an eval result, a controlled dogfooding run, and a
+failure observed in a consuming repository are all legitimate, and none of them passes through a
+fixture. What no channel admits is a consuming repository's business rules.

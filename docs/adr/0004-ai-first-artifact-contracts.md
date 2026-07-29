@@ -1,7 +1,8 @@
 ---
-id: 0004
+id: "0004"
 title: Make inter-agent artifacts machine-consumable, and rank decision criteria accordingly
 status: accepted
+contract_version: adr/1
 ---
 
 # Make inter-agent artifacts machine-consumable, and rank decision criteria accordingly

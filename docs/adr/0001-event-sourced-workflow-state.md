@@ -1,7 +1,8 @@
 ---
-id: 0001
+id: "0001"
 title: Derive workflow state from an append-only event log
 status: proposed
+contract_version: adr/1
 ---
 
 # Derive workflow state from an append-only event log

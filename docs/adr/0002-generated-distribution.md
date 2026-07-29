@@ -1,7 +1,8 @@
 ---
-id: 0002
+id: "0002"
 title: Ship the framework as a generated distribution under dist/.claude/
 status: proposed
+contract_version: adr/1
 ---
 
 # Ship the framework as a generated distribution under `dist/.claude/`

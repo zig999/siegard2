@@ -12,10 +12,12 @@ produces a named gap — it never produces a silent pass.
 
 | Area touched | Command |
 |---|---|
-| `schemas/`, `specs/` | `make validate` |
+| `schemas/`, `specs/`, `docs/adr/`, `docs/concepts/` | `make validate` |
 | any source or component in this repository | `make test` |
-| distribution inputs (`src/claude/`, `templates/`, `scripts/`) | `make dist` then `make validate` |
+| distribution inputs (`src/claude/`, `templates/`, `scripts/`) | `make dist`, then `make dist-check` |
 | broad or uncertain scope | `make check` |
+
+`make dist` regenerates; `make dist-check` verifies. Never report the first as if it were the second.
 
 **If the command does not exist**, stop treating this as a passing step. Record it verbatim as:
 

@@ -1,7 +1,8 @@
 ---
-id: 0006
+id: "0006"
 title: Separate the development environment from distributable framework source
 status: proposed
+contract_version: adr/1
 ---
 
 # Separate the development environment from distributable framework source

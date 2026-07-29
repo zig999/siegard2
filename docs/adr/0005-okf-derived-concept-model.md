@@ -1,7 +1,8 @@
 ---
-id: 0005
+id: "0005"
 title: Base the knowledge layer on OKF concepts, as a constrained superset
 status: accepted
+contract_version: adr/1
 ---
 
 # Base the knowledge layer on OKF concepts, as a constrained superset
