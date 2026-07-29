@@ -5,12 +5,8 @@ This script is a boundary validator: it holds no rules of its own. Every frontma
 constraint lives in the schema file, which is the single authority. The checks
 implemented here are the ones a per-file JSON Schema cannot express — cross-file id
 uniqueness, id/filename agreement, supersession targets that must exist, and the
-sections docs/adr/README.md requires for a given status.
-
-The frontmatter plumbing duplicates scripts/validate_concepts.py rather than sharing a
-module. Two artifact classes is not enough to justify the abstraction, and there is no
-test suite yet to catch a regression in the extraction; CLAUDE.md forbids generalizing
-before a current requirement needs it. Extract when a third class arrives.
+sections docs/adr/README.md requires for a given status. Frontmatter parsing is shared
+via scripts/frontmatter_lib.py.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
@@ -26,7 +22,8 @@ import re
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+
 SCHEMA_PATH = REPO_ROOT / "schemas" / "adr.v1.json"
 RESERVED = {"README.md"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -46,30 +43,6 @@ try:
     from jsonschema import Draft202012Validator
 except ImportError:
     sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
-
-
-def display(path: Path) -> str:
-    """Repo-relative path when the file lives in the repo, absolute otherwise."""
-    try:
-        return str(path.relative_to(REPO_ROOT))
-    except ValueError:
-        return str(path)
-
-
-def split_frontmatter(text: str) -> tuple[dict, str]:
-    """Return (frontmatter mapping, body), or raise ValueError."""
-    if not text.startswith("---\n"):
-        raise ValueError("file does not begin with a '---' frontmatter fence")
-    end = text.find("\n---\n", 3)
-    if end == -1:
-        raise ValueError("frontmatter fence is never closed")
-    data = yaml.safe_load(text[4 : end + 1])
-    if not isinstance(data, dict):
-        raise ValueError(f"frontmatter is {type(data).__name__}, expected a mapping")
-    body = text[end + 5 :]
-    if not body.strip():
-        raise ValueError("ADR has frontmatter but no body")
-    return data, body
 
 
 def unquoted_id_hint(data: dict, stem_id: str) -> str | None:

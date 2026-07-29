@@ -15,6 +15,7 @@ validate:
 	@fail=0; \
 	python3 scripts/validate_concepts.py || fail=1; \
 	python3 scripts/validate_adrs.py || fail=1; \
+	python3 scripts/validate_components.py || fail=1; \
 	exit $$fail
 
 test:

@@ -42,7 +42,7 @@ imports load eagerly and change nothing.
 
 ## Component responsibilities
 
-The split across commands, orchestrators, specialized agents, skills, hooks, and scripts is defined in
+The split across orchestrators, specialized agents, skills, hooks, and scripts is defined in
 `docs/adr/0003-orchestrator-agent-separation.md`. That ADR is `proposed`, so read it as context, not as
 authority — see `docs/adr/README.md`.
 

@@ -10,12 +10,12 @@ paths:
 
 ## A change is breaking when it
 
-- removes or renames a public artifact (command, agent, skill, hook, schema, template);
+- removes or renames a public artifact (skill, agent, hook, schema, template);
 - alters a schema so that previously valid instances become invalid, or previously invalid instances
   become valid;
 - changes workflow semantics, including transition guards and terminal states;
 - invalidates persisted events or the projections derived from them;
-- changes the observable contract of an installed command.
+- changes the observable contract of an installed user-invocable skill.
 
 This list is the test. If a change matches any entry, it is breaking regardless of how small the
 diff looks.

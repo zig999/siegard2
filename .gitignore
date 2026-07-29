@@ -4,3 +4,6 @@
 # Per-maintainer instructions, never shared (see .claude/rules/claude-code-authoring.md)
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Python bytecode from running the validators
+__pycache__/

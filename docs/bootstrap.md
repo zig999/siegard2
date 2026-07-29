@@ -36,8 +36,9 @@ Concretely, in order:
    field — a lookup, not an interpretation.
 4. **One appended event** recording what happened, and **one projection** deriving current state by
    replaying events.
-5. **A command** that starts and resumes the workflow, doing nothing but validating input and
-   delegating.
+5. **A user-invocable skill** that starts and resumes the workflow, doing nothing but validating
+   input and delegating. Claude Code merged custom commands into skills, so this entry point is a
+   skill with `disable-model-invocation` set — see ADR-0009.
 6. **`make validate`, `make test`** over the above, and a fixture in `fixtures/` shaped like a real
    downstream case.
 7. **The generator and `make dist`**, once `src/claude/` holds enough to assemble.
@@ -51,6 +52,7 @@ at a specific point:
 |---|---|---|
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
 | ADR frontmatter contract (`schemas/adr.v1.json`), including supersession | the validator runs in `make validate` | **active** |
+| component contracts (`schemas/skill.v1.json`, `schemas/agent.v1.json`) | wired into `make validate`; exercised when the first component lands under `src/claude/` | **active**, nothing to check yet |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, concepts and ADRs only |
 | `make test` in `/siegard-verify` step 1 | a framework test suite exists | pending |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
@@ -90,16 +92,20 @@ depend on cooperation.
 
 - **Version control.** Git, on `main`, with `origin` at `git@github.com:zig999/siegard2.git`.
   Traceability, reproducible generation from committed source, and migration history all presuppose it.
-- **Two enforced artifact contracts.** `schemas/concept.v1.json` and `schemas/adr.v1.json`, each with a
-  boundary validator in `scripts/`, both wired to `make validate`. These are the only rules in this
-  repository that are checked rather than trusted.
+- **Four enforced artifact contracts.** Concepts (`schemas/concept.v1.json`), ADRs
+  (`schemas/adr.v1.json`), and distributable components (`schemas/skill.v1.json`,
+  `schemas/agent.v1.json`), each with a boundary validator in `scripts/`, all wired to
+  `make validate`. These are the only rules in this repository that are checked rather than trusted.
+  The component contracts were authored before the first component, deliberately, so it is born
+  against them (ADR-0009); their validator reports the empty tree until then.
 
 ## Not yet in place
 
 - No `specs/`, `src/claude/`, `templates/`, `tests/`, or `fixtures/`.
-- `schemas/` and `scripts/` hold only the concept and ADR contracts and their validators.
-- No framework test suite, so `make test` fails by design rather than passing vacuously. The two
-  validators are therefore untested code enforcing tested contracts.
+- `schemas/` and `scripts/` hold only the four artifact contracts, their validators, and the shared
+  frontmatter plumbing (`scripts/frontmatter_lib.py`).
+- No framework test suite, so `make test` fails by design rather than passing vacuously. The three
+  validators and their shared plumbing are therefore untested code enforcing tested contracts.
 - No `.claude/rules/security.md`. ADR-0007 states the security invariants and defers sanitization, path,
   subprocess, and network detail until the first hook or script needs it.
 - No generator, therefore no authoritative `dist/`. No distributable component has been authored

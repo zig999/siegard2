@@ -26,5 +26,6 @@ One concept per file. The filename is the concept `id` without its `concept.` pr
 | [least privilege](least-privilege.md) | Only the tools and permissions a component's contract names. |
 | [projection](projection.md) | Current state derived by replaying the event log. |
 | [provenance](provenance.md) | The recorded origin of a material decision. |
+| [skill](skill.md) | A distributable procedure or knowledge unit, invocable as `/name`. |
 | [specialized agent](specialized-agent.md) | An agent with one declared role and minimum tools. |
 | [transition guard](transition-guard.md) | The condition that must hold for a workflow to change state. |
