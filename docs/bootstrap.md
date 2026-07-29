@@ -71,10 +71,13 @@ exists:
 Treat these as the point where governance becomes real. Until then, the rules in this repository
 depend on cooperation.
 
+## In place
+
+- **Version control.** Git, on `main`, with `origin` at `git@github.com:zig999/siegard2.git`.
+  Traceability, reproducible generation from committed source, and migration history all presuppose
+  it. Nothing has been pushed yet.
+
 ## Not yet in place
 
-- **No version control.** The repository is not a git repository. Traceability, reproducible
-  generation from committed source, and migration history all presuppose one. This blocks more of the
-  framework's guarantees than any missing script.
 - No `Makefile`, `specs/`, `schemas/`, `scripts/`, `templates/`, `tests/`, or `fixtures/`.
 - No generator, therefore no authoritative `dist/`.
