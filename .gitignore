@@ -1,0 +1,6 @@
+# Windows/WSL download metadata
+*:Zone.Identifier
+
+# Per-maintainer instructions, never shared (see .claude/rules/claude-code-authoring.md)
+CLAUDE.local.md
+.claude/settings.local.json
