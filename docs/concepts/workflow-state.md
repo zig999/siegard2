@@ -12,6 +12,8 @@ sources:
     title: Siegard Code repository instructions
   - resource: specs/0001-knowledge-object-driven-development.md
     title: Drive every change through knowledge objects, with determinism at the boundaries
+  - resource: docs/adr/0010-projection-names-the-graph-derived-artifact.md
+    title: The term projection names the graph-derived artifact, and derived workflow state is renamed
 ---
 
 # workflow state

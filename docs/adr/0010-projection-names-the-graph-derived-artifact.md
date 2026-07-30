@@ -1,7 +1,7 @@
 ---
 id: "0010"
 title: The term projection names the graph-derived artifact, and derived workflow state is renamed
-status: proposed
+status: accepted
 contract_version: adr/2
 ---
 
@@ -78,13 +78,33 @@ What would falsify this decision: an event-sourced design whose component contra
 the word `projection` for derived state without becoming unreadable to their implementers. If that happens,
 revisit rather than paper over it — the third option becomes cheaper once the second referent has a mechanism.
 
-## Validation required before acceptance
+## What satisfied acceptance
 
-1. A maintainer changes this status. The decision itself was authorized on 2026-07-30, and this ADR records
-   what it cost; the status act remains a maintainer's, per `docs/adr/README.md`.
-2. `docs/concepts/workflow-state.md` exists with a row in `docs/concepts/index.md`, and `make validate`
-   passes over the bundle.
-3. No reference to the retired meaning remains: every file that used `projection` for derived workflow state
-   names `workflow state` instead, and every file that uses it for the graph-derived artifact is unchanged.
-4. `make test` passes, showing that `tests/test_projections.py` and the fixture headers were not disturbed by
-   the rename.
+All four conditions this record stated are met, and a maintainer accepted it on 2026-07-30:
+
+1. `docs/concepts/projection.md` carries the graph meaning with `specs/0003-knowledge-ontology-and-notation.md`
+   in its `sources`, and `docs/concepts/workflow-state.md` carries the retired definition with a row in
+   `docs/concepts/index.md`. `make validate` passes over 45 concepts.
+2. Every artifact that used the term for derived workflow state names `workflow state` instead:
+   `docs/concepts/transition-guard.md`, `.claude/rules/compatibility.md`, three places in `docs/bootstrap.md`,
+   and the Definitions table of `specs/0001-knowledge-object-driven-development.md`, which had listed a term
+   its body never used.
+3. Every artifact that uses the term for the graph-derived artifact is unchanged: R47, R49, R50 and R51,
+   `scripts/project_knowledge.py`, `tests/test_projections.py`, `schemas/knowledge-graph.v1.json`, the three
+   generated files under `fixtures/knowledge-two-context/knowledge/`, and the enforcement row at
+   `docs/bootstrap.md` line 99.
+4. `make test` passes 87 tests, which is what shows the rename did not disturb the side that has executing
+   code — the asymmetry this decision rests on.
+
+Acceptance changes one thing beyond this record's own status. `docs/concepts/workflow-state.md` was created
+carrying `accepted`, on the reasoning that a rename preserves the status of the definition it moves rather
+than promoting it. That reasoning is no longer what holds the status up: an accepted ADR now uses the term
+normatively, which is the condition `docs/adr/README.md` states for a concept to be `accepted`. The tier is
+derivable from a binding citation instead of from an agent's judgment about a rename.
+
+What remains unclosed is the failure mode rather than this instance of it. Nothing mechanically detects one
+term carrying two referents: `scripts/validate_specs.py` checks that a concept link resolves, and
+`scripts/validate_concepts.py` checks id uniqueness and id/filename agreement. Neither compares meanings. A
+weaker guard would have caught this case — requiring a specification that links a concept to appear in that
+concept's `sources`, which `docs/concepts/projection.md` did not satisfy before this change. It catches
+provenance mismatch, not semantic divergence, and it is not built.
