@@ -32,3 +32,6 @@ a locked entry is a finding.
 
 A target-path collision is reported as a defect rather than resolved by a policy. Two objects competing for
 one path is a modelling error or an agent error, and a rule that silently picked a winner would hide both.
+
+Its [persistence](artifact-persistence.md) is `run-scoped`. A plan is a function of the scope, the pack
+declaration, and the manifest, so keeping one would store what those three already determine.

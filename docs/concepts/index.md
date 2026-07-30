@@ -20,7 +20,7 @@ tiers on purpose, and `docs/adr/README.md` states when a concept crosses between
 specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
 [accepted](accepted.md).
 
-As of 2026-07-30 the split is 30 `accepted` and 14 `proposed`. Every remaining `proposed` entry is
+As of 2026-07-30 the split is 30 `accepted` and 15 `proposed`. Every remaining `proposed` entry is
 vocabulary for `specs/0001-knowledge-object-driven-development.md` or
 `specs/0004-generation-and-reproducibility.md`, neither of which is accepted, so promoting one would bind a
 definition to a mechanism that does not exist. The tier is derivable rather than declared: read which
@@ -31,6 +31,7 @@ artifacts cite a concept, and read their status.
 | [accepted](accepted.md) | The status of a specification or ADR whose decision binds. |
 | [amendment](amendment.md) | A recorded revision of part of an accepted decision, leaving the rest in force. |
 | [artifact class](artifact-class.md) | What a produced artifact is, named independently of how any technology expresses it. |
+| [artifact persistence](artifact-persistence.md) | Whether an artifact is committed, recomputed from committed inputs, or discarded with its run. |
 | [assertion](assertion.md) | A mechanical check that rejects an implementation violating one knowledge object. |
 | [boundary](boundary.md) | The knowledge object type holding a scope — a bounded context or an aggregate — with derived membership. |
 | [capability](capability.md) | A reusable framework behavior with a testable contract. |

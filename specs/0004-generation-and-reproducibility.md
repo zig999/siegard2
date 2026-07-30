@@ -10,7 +10,7 @@ contract_version: spec/1
 ## Scope
 
 This specification fixes how software is produced from the knowledge a repository Siegard governs holds, and
-what "the same knowledge produces the same system" guarantees. It decides five things:
+what "the same knowledge produces the same system" guarantees. It decides six things:
 
 1. the calibrated promise — which artifacts carry byte identity, which carry behavioural conformance, and
    what a reproducibility claim must name;
@@ -21,7 +21,9 @@ what "the same knowledge produces the same system" guarantees. It decides five t
    [scope](../docs/concepts/generation-scope.md), the [plan](../docs/concepts/generation-plan.md), and the
    [manifest](../docs/concepts/generation-manifest.md) — and why none of them is an authored rule language;
 4. [generative completeness](../docs/concepts/generative-completeness.md) as a blocking validation;
-5. how produced and hand-authored source bind back to the knowledge that justifies them.
+5. how produced and hand-authored source bind back to the knowledge that justifies them;
+6. the [persistence](../docs/concepts/artifact-persistence.md) of every artifact it names — which are
+   committed, which are recomputed, and what a claim must record for the ones that are not kept.
 
 It **derives from `specs/0002-knowledge-economy-principles.md`**, which decides what knowledge is worth
 holding, and from **`specs/0003-knowledge-ontology-and-notation.md`**, which decides how it is represented.
@@ -227,6 +229,56 @@ Moving a produced file is an explicit recorded unlock, never a consequence of an
 a later run. Without that rule a relocation appears in a diff as a deletion and an addition, indistinguishable
 from a change in knowledge.
 
+## Artifact persistence
+
+Which of the three derived artifacts is kept was left open by an earlier draft of this specification, and
+leaving it open makes two conforming implementations disagree about whether a manifest survives a run. R31
+requires the manifest to be read on every later run, which implies persistence without stating it, and nothing
+was said about the scope or the plan at all.
+
+Persistence, normativity, and derivation are three axes, not one. This section fixes the first. The second is
+already fixed where it needs to be — R33 states that the manifest decides nothing, and
+`specs/0003-knowledge-ontology-and-notation.md` R51 states that a projection is never normative. The third is
+fixed per artifact by R23 and R30.
+
+A two-value split into permanent knowledge and disposable execution output was considered and rejected. It
+collapses the three axes, and produced source — every artifact class this specification names — has no slot in
+it. This repository already holds artifacts that are derived and committed at once: `dist/.claude/` is
+assembled from `src/claude/` and compared against the committed tree by `make dist-check`, and
+`knowledge/index.md` and `knowledge/graph.json` are generated. Derived has never implied disposable.
+
+**The rule that assigns the value**, rather than a table asserting one per artifact:
+
+> An artifact's persistence follows from whether its body is recomputable from committed inputs with no model
+> involved, and from whether anything outside the run pins its identity.
+
+| Value | Recomputable from committed inputs, without a model | Identity pinned outside the run | What it means |
+|---|---|---|---|
+| `run-scoped` | yes | no | exists for the duration of one run; never committed |
+| `claim-recorded` | yes | yes | not committed; the claim records its declared inputs and the content hash of its frozen body, and the body recomputes |
+| `committed` | no | yes | records a decision no committed input determines; kept in version control |
+
+The rule is what makes the assignment derivable instead of asserted, and it is why the manifest and the plan
+land on opposite sides despite both being derived.
+
+| Artifact | Persistence | Why the rule yields this |
+|---|---|---|
+| generation scope | `claim-recorded` | Expansion is deterministic under R19, so the members recompute from the declared roots and the knowledge base version, both of which R4 already pins. Recording the frozen content hash makes R20's invalidation mechanically checkable rather than only stated. |
+| generation plan | `run-scoped` | R23 derives it, R28 makes it byte-identical for identical inputs, and R26 makes it producible without writing a file. No model participates, and nothing outside the run reads it. |
+| generation manifest | `committed` | It records placement, which `specs/0002-knowledge-economy-principles.md` R4 excludes from the knowledge base and which a specialized agent decides. No committed input determines it. R4 names it as a pinned identity, R31 reads it on every later run, R32 requires a recorded unlock to move a file, R35 needs a locked entry to attribute a difference, and R42 and R44 answer reverse impact from it. |
+| produced source | `committed` | Verification compares against the committed tree, and judged-track content is model-authored, so it is not recomputable byte-for-byte. |
+| target pack declaration | `committed` | Authored, versioned, and distributed under `src/claude/` per R13. |
+
+Discarding the manifest was the one reclassification this section exists to refuse. Placement has exactly
+three possible sources: the knowledge base, which `specs/0002` R4 forbids; a persisted manifest; or the agent,
+on every run, which cannot be relied on to decide identically twice. Closing the first two leaves only the
+third, and byte identity is then unobtainable.
+
+The persistence of the artifacts `specs/0001-knowledge-object-driven-development.md` names — change request,
+impact analysis, context package, specification delta, validation evidence — is not decided here. That
+specification defers their contracts, and deciding the persistence of evidence before the evidence contract
+exists is the guess that reads like a requirement both specifications warn against.
+
 ## Verification
 
 A produced file is never hand-edited, for the reason `.claude/rules/distribution.md` gives about a generated
@@ -297,6 +349,7 @@ Terms used normatively below.
 | Term | Concept |
 |---|---|
 | artifact class | [artifact-class](../docs/concepts/artifact-class.md) |
+| artifact persistence | [artifact-persistence](../docs/concepts/artifact-persistence.md) |
 | target pack | [target-pack](../docs/concepts/target-pack.md) |
 | generation track | [generation-track](../docs/concepts/generation-track.md) |
 | generation scope | [generation-scope](../docs/concepts/generation-scope.md) |
@@ -434,6 +487,23 @@ Terms used normatively below.
 - **R44** — Reverse impact MUST be answered from the derived indexes and version-control history. A
   hand-maintained mapping from knowledge to code MUST NOT exist.
 
+### Artifact persistence
+
+- **R45** — Every artifact this specification names MUST declare exactly one persistence value from the closed
+  set `committed | claim-recorded | run-scoped`.
+- **R46** — A persistence value MUST follow from the rule under **Artifact persistence**: an artifact whose
+  body is not recomputable from committed inputs without a model MUST be `committed`. A declaration that
+  contradicts the rule MUST be rejected rather than repaired.
+- **R47** — The assignment under **Artifact persistence** is normative for the artifacts it names.
+- **R48** — For a `claim-recorded` artifact, the reproducibility claim of R4 MUST record the artifact's
+  declared inputs and the content hash of its frozen body, and the body MUST be recomputable from committed
+  inputs with no model involved.
+- **R49** — A `run-scoped` artifact MUST NOT be committed, and its absence MUST NOT be reported as a finding
+  by the verification of R34 and R35.
+- **R50** — The generation manifest MUST be `committed`. A design in which placement is decided on any run
+  after the first MUST be rejected: `specs/0002-knowledge-economy-principles.md` R4 excludes placement from
+  the knowledge base, and R31 has nothing to read without a committed manifest.
+
 ## What this specification does not decide
 
 Deferred, because a contract written ahead of the code that needs it is a guess that reads like a
@@ -475,8 +545,22 @@ This specification presupposes components that do not exist. It binds nothing un
 8. a fixture under `fixtures/` holds a two-context bundle with a scope that deliberately excludes one context,
    because a scope including everything never tests scoping;
 9. the deterministic share of R6 is measured on that fixture and recorded, because the number is the evidence
-   for the premise and an unmeasured premise is an assumption.
+   for the premise and an unmeasured premise is an assumption;
+10. a test freezes a generation scope, discards the artifact, recomputes it from the recorded roots and the
+    knowledge base version, and asserts the content hash matches the recorded one (R48). This is what makes
+    `claim-recorded` a mechanism rather than a label, and it is what turns R20 into a check;
+11. a test asserts that no plan file survives a generation run, and that verification does not report its
+    absence as a finding (R49);
+12. a test asserts that a persistence declaration contradicting the rule of R46 is rejected rather than
+    repaired;
+13. the fixture of condition 8 carries all three persistence values, so the assignment of R47 is exercised
+    rather than asserted.
+
+Condition 5 already carries R50: a second run that reuses the locked path is the same evidence that the
+manifest survived the first. Nothing further is asked of it here.
 
 If the fixture shows that an artifact class no pack produces survives in R8, or that the deterministic share
 is small enough to make the generative claim scaffolding, reduce the vocabulary or the claim before accepting
-this specification rather than after.
+this specification rather than after. The same applies to the persistence vocabulary: if no artifact needs
+`claim-recorded` — if the scope turns out to be either committed outright or purely run-scoped — reduce R45 to
+two values before accepting rather than after.

@@ -34,3 +34,7 @@ replaces the element-granularity software graph an earlier design proposed, at a
 with no synchronization to maintain.
 
 A manifest records and never decides. Nothing reads it for a rule.
+
+Its [persistence](artifact-persistence.md) is `committed`, and that is not a storage preference. Placement is
+the one thing no committed input determines, so a manifest regenerated per run would leave an agent deciding
+it again on every run — which is the failure the lock exists to prevent.

@@ -30,4 +30,10 @@ generation that degrades quietly produces less software than was asked for with 
 
 Freezing is what makes the scope an identity rather than a query. After a scope is frozen, a change to any
 member invalidates it instead of quietly altering what gets compiled.
+
+Its [persistence](artifact-persistence.md) is `claim-recorded`: the body is not committed, and the claim
+records the declared roots and the frozen content hash instead. Expansion is deterministic, so the members
+recompute — and comparing a recomputed hash against the recorded one is what turns invalidation from a
+statement into a check.
+
 `specs/0004-generation-and-reproducibility.md` holds the requirements.
