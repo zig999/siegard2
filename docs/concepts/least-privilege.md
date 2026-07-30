@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [security, contract]
 generated: { by: claude-opus-5, at: 2026-07-29T19:49:09Z }
 sources:
-  - resource: docs/adr/0007-least-privilege-and-untrusted-input.md
-    title: Treat every input as untrusted and grant least privilege by default
+  - resource: CLAUDE.md
+    title: Siegard Code repository instructions
 ---
 
 # least privilege

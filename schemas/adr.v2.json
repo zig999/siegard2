@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/adr.v2.json",
+  "title": "Siegard ADR frontmatter",
+  "description": "Frontmatter contract for an architecture decision record in docs/adr/. The prose format is documented in docs/adr/README.md; this file is the authority for the frontmatter. Supersession and amendment are structured here so a validator can decide them rather than a reader inferring them from prose. Version 2 adds `amends`, for an ADR that reverses part of another while leaving the rest in force; no ADR currently declares it. Adding that field to schemas/adr.v1.json in place would have made previously invalid instances valid, which .claude/rules/compatibility.md defines as a breaking change, so v1 is kept readable and every ADR was migrated in the same change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "status", "contract_version"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}$",
+      "description": "Four-digit sequential id, never reused, matching the filename prefix. Must be a quoted string: YAML reads an unquoted 0010 as octal 8 and an unquoted 0008 as a string, so the unquoted form is neither safe nor type-stable."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The decision stated as an outcome."
+    },
+    "status": {
+      "enum": ["proposed", "accepted", "superseded"],
+      "description": "Lifecycle vocabulary defined in docs/adr/README.md and shared with schemas/spec.v1.json and schemas/concept.v1.json. Only a maintainer, or a deterministic approval mechanism this repository defines, may change this value away from proposed."
+    },
+    "contract_version": {
+      "const": "adr/2",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape. An ADR still declaring adr/1 is validated against schemas/adr.v1.json, so it is detectably outdated rather than silently non-conforming."
+    },
+    "superseded_by": {
+      "type": "string",
+      "pattern": "^[0-9]{4}$",
+      "description": "Id of the ADR that replaced this one. Required when status is superseded, and forbidden otherwise: a supersession relation that points nowhere, or points from a live decision, is a defect rather than history."
+    },
+    "amends": {
+      "type": "string",
+      "pattern": "^[0-9]{4}$",
+      "description": "Id of an ADR whose decision this one revises in part, leaving the rest of that decision in force. Distinct from superseded_by, which retires a decision whole. The amendment binds only while this ADR is accepted; on a proposed ADR it records intent. scripts/validate_adrs.py additionally requires the amended ADR's body to cite the amending id, because frontmatter a reader does not see cannot warn them that the decision they are reading has moved."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
+      "then": { "required": ["superseded_by"] }
+    }
+  ],
+  "dependentSchemas": {
+    "superseded_by": {
+      "description": "Stating a replacement is what makes a decision superseded. Expressed as a dependency rather than as a negated allOf branch so the failure names the offending field instead of dumping the document.",
+      "required": ["status"],
+      "properties": { "status": { "const": "superseded" } }
+    }
+  }
+}

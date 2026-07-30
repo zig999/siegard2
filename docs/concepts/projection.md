@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [determinism, state]
 generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 sources:
-  - resource: docs/adr/0001-event-sourced-workflow-state.md
-    title: Derive workflow state from an append-only event log
+  - resource: CLAUDE.md
+    title: Siegard Code repository instructions
 ---
 
 # projection

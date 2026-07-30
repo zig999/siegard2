@@ -8,8 +8,10 @@ contract_version: concept/1
 tags: [packaging, generated]
 generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 sources:
-  - resource: docs/adr/0002-generated-distribution.md
-    title: Ship the framework as a generated distribution
+  - resource: .claude/rules/distribution.md
+    title: Generated distribution
+  - resource: CLAUDE.md
+    title: Siegard Code repository instructions
 ---
 
 # distribution

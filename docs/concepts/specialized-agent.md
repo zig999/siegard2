@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [orchestration, agents]
 generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 sources:
-  - resource: docs/adr/0003-orchestrator-agent-separation.md
-    title: Separate orchestration from specialized agent work
+  - resource: CLAUDE.md
+    title: Siegard Code repository instructions
 ---
 
 # specialized agent
@@ -19,5 +19,6 @@ An agent with one declared role and the minimum tools that role requires.
 Used for context separation, tool restriction, or work that genuinely requires model judgment. Work
 that can be decided mechanically belongs in a hook or a script instead.
 
-The component taxonomy this term belongs to is recorded in ADR-0003, which is `proposed` — see
-[accepted](accepted.md).
+The component classes this term belongs to are not yet fixed. `CLAUDE.md` under **Authority placement**
+requires one authoritative definition per concept, which constrains how the classes may divide work
+without settling what they are; `docs/bootstrap.md` names the stage that decides it.

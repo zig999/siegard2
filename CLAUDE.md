@@ -4,6 +4,26 @@ Siegard Code builds the Claude Code framework that other repositories install. I
 versioned distribution of Claude Code components assembled under `dist/.claude/`. This repository
 does not build a business application.
 
+## Golden rule: this file
+
+**`CLAUDE.md` is the maintainer's file. Only the maintainer changes it.**
+
+An agent proposes; it never applies. Write the exact text, say where it goes and what it displaces, and
+stop there. Authorization is per change and stated in the session: it covers the edit that was described,
+never a standing license, and approval of one edit does not carry to the next. A rule an agent installs
+here is a rule that governs the agent by its own hand.
+
+Proposals are wanted, not merely tolerated. A rule this file should carry and does not is a gap worth
+naming — as a proposal.
+
+This binds this file only. Specifications, ADRs, schemas, concepts, `.claude/rules/`, skills, and code
+remain ordinary work under the procedures below, subject to the status restrictions in
+**Normative sources**.
+
+Claude Code loads this file as context, not as configuration, so this rule holds by cooperation until a
+`PreToolUse` hook rejects the write. The gap is named in `docs/bootstrap.md` rather than hidden — which
+is the same standard this repository applies to every other unenforced rule.
+
 ## Language
 
 Write every artifact in this repository in English (en-US): source, generated distribution, specs,
@@ -12,15 +32,22 @@ any language; committed content may not.
 
 ## Decision order
 
-When valid options remain, prefer, in order:
+Two tiers. A valid option must preserve, in order:
 
 1. correctness and safety;
-2. explicit, testable contracts;
-3. deterministic control flow and validation;
+2. explicit, testable contracts and stated compatibility guarantees;
+3. deterministic control flow, validation, and state;
 4. traceability and reproducibility.
 
-A later criterion never overrides an earlier one. Criteria deliberately excluded, including human
-convenience, are recorded in `docs/adr/0004-ai-first-artifact-contracts.md`.
+Among options that satisfy all four, prefer, in order: the smallest sufficient design; lower runtime and
+context cost; easier testing, recovery, and maintenance.
+
+A later criterion never overrides an earlier one, and no tier-two criterion settles a question tier one
+has already settled or licenses giving up a constraint. Recoverability and diagnosability are criterion
+1, not tier two. Human convenience is excluded from both tiers:
+`docs/adr/0004-ai-first-artifact-contracts.md` records that exclusion, and
+`docs/adr/0008-cost-tiebreakers-below-the-constraint-order.md` records the second tier and amends
+ADR-0004 to admit it.
 
 ## Repository layout
 
@@ -38,6 +65,7 @@ convenience, are recorded in `docs/adr/0004-ai-first-artifact-contracts.md`.
 | `.claude/` | rules and skills that govern work in this repository | development environment, never shipped |
 | `docs/concepts/` | framework vocabulary, one concept per file | vocabulary authority |
 | `docs/` | bootstrap plan, guides | explanatory |
+| `reference/` | prior-art and design input this framework derives from | never normative |
 
 `.claude/` and `src/claude/` are different trees and never mirror each other. `.claude/` configures the
 agent that develops Siegard; `src/claude/` holds what Siegard ships. A component that would be
@@ -50,9 +78,10 @@ needs it, and do not invent a different location.
 
 ## Commands
 
-`make validate` (schemas and contracts), `make test` (framework tests), `make dist` (regenerate
-`dist/.claude/` from framework source), `make dist-check` (regenerate into a temporary tree and compare
-it against the committed distribution), `make check` (validate, test, dist-check).
+`make validate` (schemas and contracts), `make test` (framework tests), `make knowledge` (regenerate the
+derived trees of every knowledge fixture), `make dist` (regenerate `dist/.claude/` from framework
+source), `make dist-check` (regenerate into a temporary tree and compare it against the committed
+distribution), `make check` (validate, test, dist-check).
 
 `make check` never mutates the repository. Regeneration is `make dist`; verification is `make dist-check`.
 A check that repairs what it was meant to detect reports success on a defect.
@@ -143,7 +172,8 @@ and why the sanitization and subprocess details wait for the first hook.
 
 Work here must improve the framework itself. Out of scope: features for a specific business
 application, customer business rules, architecture chosen for one downstream system, support for other
-agent harnesses, and application code presented as framework functionality.
+agent harnesses, and application code presented as framework functionality. A target pack is not
+that architecture — `.claude/rules/claude-code-authoring.md` defines the distinction and its limits.
 
 Every framework capability must be exercised by at least one fixture in `fixtures/` shaped like a real
 downstream case. The fixture is the only channel through which downstream application work enters this

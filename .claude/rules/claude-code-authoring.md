@@ -42,9 +42,9 @@ imports load eagerly and change nothing.
 
 ## Component responsibilities
 
-The split across orchestrators, specialized agents, skills, hooks, and scripts is defined in
-`docs/adr/0003-orchestrator-agent-separation.md`. That ADR is `proposed`, so read it as context, not as
-authority — see `docs/adr/README.md`.
+How work divides across orchestrators, specialized agents, skills, hooks, and scripts is not yet fixed.
+`docs/bootstrap.md` names the stage that decides it, and the loading table above is what constrains the
+answer in the meantime.
 
 These hold regardless of how that taxonomy settles:
 
@@ -52,6 +52,22 @@ These hold regardless of how that taxonomy settles:
 - State each component's tool and permission grant in the component itself. The rule is
   `docs/concepts/least-privilege.md`, stated operatively in `CLAUDE.md` under **Security**; this line
   only says where the grant is written.
+
+## Target packs
+
+A target pack is the unit that carries one technology stack: a specialized agent and the templates it
+expands. A pack is framework work, and it is not the "architecture chosen for one downstream system" that
+`CLAUDE.md` **Scope** excludes — a pack serves any repository on its stack rather than one system.
+
+Three limits keep that distinction real:
+
+- a pack is admitted only when a fixture exercises it, which is `CLAUDE.md` **Scope** applied rather than
+  relaxed;
+- what a pack may declare, and what it must leave to its agent's own knowledge of the stack, is fixed by
+  `specs/0004-generation-and-reproducibility.md` once that specification is accepted. Do not restate those
+  rules here, and do not give a pack a rule file of its own;
+- a pack carries no business rule and no customer-specific architecture. Those stay out of scope inside a
+  pack exactly as they are everywhere else.
 
 ## Relying on harness behavior
 

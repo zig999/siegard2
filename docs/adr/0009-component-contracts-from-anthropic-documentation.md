@@ -2,7 +2,7 @@
 id: "0009"
 title: Derive component contracts from Anthropic's documented constraints
 status: proposed
-contract_version: adr/1
+contract_version: adr/2
 ---
 
 # Derive component contracts from Anthropic's documented constraints
@@ -100,8 +100,8 @@ them into `.claude/rules/claude-code-authoring.md` when the first components exe
 - The contracts encode a snapshot. The retrieval date is recorded so staleness is a checkable
   fact rather than a suspicion; nothing yet forces re-verification, and that gap stays open until
   a mechanism needs it.
-- ADR-0003's component taxonomy names "commands" as a class. That ADR is `proposed` and binds
-  nothing; when it is revisited for acceptance, its taxonomy must reflect the merge recorded here.
+- Any later decision about component classes must reflect the commands-into-skills merge recorded
+  here, rather than reintroducing a command class the harness no longer has.
 - Two enforcement gaps are deliberate: the validator checks structure, not that a component works
   (fixtures and evals own that), and nothing verifies `src/claude/` against the live documentation
   continuously (re-verification happens at contract bumps).
