@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: Rank cost and maintainability as tiebreakers below the constraint order
-status: proposed
+status: accepted
 contract_version: adr/2
 amends: "0004"
 ---
@@ -75,15 +75,22 @@ found.
 - Cost: the ADR vocabulary carries an amendment relation that exists for this one case. A reader must now
   follow `amends` to know whether the record in front of them still says what it appears to say.
 
-## Validation required before acceptance
+## What satisfied acceptance
 
-The three conditions this ADR set are met, and the fourth is a maintainer's alone:
+A maintainer accepted this ADR on 2026-07-30. All three conditions it set were met first:
 
-1. **met** — a maintainer resolved the conflict with ADR-0004 by the amendment route;
-2. **met** — `CLAUDE.md` **Decision order** carries the two-group form, so it no longer states the
-   four-criterion version this ADR revises;
-3. **met** — the relation is in frontmatter as `amends: "0004"`, not only in prose, so `make validate`
-   decides it rather than a reader inferring it;
-4. **open** — the status change itself. This ADR binds nothing while `proposed`, and the amendment binds
-   only while it is `accepted`, so `CLAUDE.md` currently carries the amended rule on its own authority
-   while this record explains it as context. Only a maintainer closes that gap.
+1. a maintainer resolved the conflict with ADR-0004 by the amendment route rather than by supersession;
+2. `CLAUDE.md` **Decision order** carries the two-group form, so it no longer states the four-criterion
+   version this ADR revises;
+3. the relation is in frontmatter as `amends: "0004"`, not only in prose, so `make validate` decides it
+   rather than a reader inferring it — and ADR-0004 cites the amending id at the point of the change,
+   which the validator also checks.
+
+Acceptance changes one thing beyond this record's own status: the amendment now **binds**. ADR-0004 stays
+`accepted` for its artifact-contract decision, and the sentence of its Consequences that dropped
+maintainability and context cost is reversed in force rather than merely annotated. `CLAUDE.md` **Decision
+order** was already carrying the amended rule; it now carries it with a binding record behind it instead of
+on its own authority.
+
+This ADR is also the first to exercise `amends` at all. The relation existed in `schemas/adr.v2.json` and in
+the validator and had never been used, so acceptance is what turns a validatable field into a checked one.

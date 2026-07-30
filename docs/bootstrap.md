@@ -212,14 +212,14 @@ depend on cooperation.
 
 - No `templates/`. `tests/` and `fixtures/` now exist, but only for the knowledge layer: no fixture
   exercises the workflow of spec 0001, the generation pipeline of spec 0004, or the distribution.
-- `specs/0002` is `accepted`; `0001`, `0003`, and `0004` are `proposed`, so normative source 1 is
-  occupied and still binds almost nothing. Spec 0003's validation items 2 through 6 are now
-  discharged, and the four contradictions building the evidence exposed have been repaired in the
-  specification itself: the edge vocabulary of R17 gained the two references R29 and R11 already
-  required to resolve, R9 stopped requiring an identity of a value object, R10 stopped naming a
-  boundary no object could be, and R52's three idle edges were removed or reclassified. See
-  `fixtures/knowledge-two-context/README.md` for the evidence and for the six findings that remain
-  open. Item 1, a maintainer's acceptance, is the only condition left.
+- `specs/0002` and `specs/0003` are `accepted`; `0001` and `0004` are `proposed`. Normative source 1 now
+  binds for the knowledge layer and binds nothing for the workflow or the generation pipeline.
+  Spec 0003 was accepted on 2026-07-30 after every condition it set was met by a component that
+  exercises it — see `fixtures/knowledge-two-context/README.md` for the evidence, and that
+  specification's **What satisfied acceptance** for the six defects building the evidence exposed and
+  repaired before acceptance rather than after. Four findings remain open there; none is a
+  contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
+  that invalidates a conforming knowledge object is a breaking change rather than a revision.
 - `make test` runs 59 tests, all over the knowledge layer. The validators for specifications, ADRs,
   concepts, and components remain untested code enforcing tested contracts; only
   `validate_knowledge.py`, `knowledge_graph_lib.py`, `project_knowledge.py`, and

@@ -454,8 +454,9 @@ requirement:
 
 This specification presupposes components that do not exist. It binds nothing until:
 
-1. a maintainer accepts this specification, and accepts spec 0003, from which it derives. Spec 0002 is
-   accepted, and the `CLAUDE.md` **Scope** question R12 through R18 rested on is settled;
+1. a maintainer accepts this specification. Both specifications it derives from are already accepted —
+   spec 0002, and spec 0003 on 2026-07-30 — and the `CLAUDE.md` **Scope** question R12 through R18 rested
+   on is settled, so this specification's own acceptance is the whole of what this condition still asks;
 2. one target pack exists under `src/claude/` with a declaration conforming to a schema, and a test proves
    rejection of a declaration naming a class outside the vocabulary (R8) and of a declaration carrying a
    naming convention (R14);

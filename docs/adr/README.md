@@ -53,11 +53,11 @@ Two rules make an amendment honest rather than hidden:
   rejects an amendment that is recorded only in frontmatter — a reader arrives at the decision, not at
   its metadata, and a reversed statement they cannot see is worse than no record at all.
 
-`docs/concepts/amendment.md` defines the term. One ADR declares `amends`: ADR-0008 amends ADR-0004, which
-reverses one sentence of ADR-0004's Consequences and leaves the rest of that decision in force. ADR-0004
+`docs/concepts/amendment.md` defines the term. One ADR declares `amends`: ADR-0008 amends ADR-0004,
+reversing one sentence of ADR-0004's Consequences and leaving the rest of that decision in force. ADR-0004
 stays `accepted` and cites the amending id at the point of the change, which is what `make validate`
-checks. ADR-0008 is `proposed`, so the amendment records intent and does not yet bind — `CLAUDE.md` carries
-the amended rule on its own authority in the meantime.
+checks. Both are `accepted` as of 2026-07-30, so the amendment binds rather than recording intent — which
+is what makes this the first exercised use of the relation.
 
 ## What belongs in an ADR, and what does not
 

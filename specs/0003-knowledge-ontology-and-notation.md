@@ -1,7 +1,7 @@
 ---
 id: "0003"
 title: Represent domain knowledge as a typed ontology in an AI-first notation
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -773,9 +773,10 @@ requirement:
 - how a governed repository installs `knowledge/`, and how the distribution carries the schema and the
   validator.
 
-## Validation required before acceptance
+## What satisfied acceptance
 
-This specification presupposes components that do not exist. It binds nothing until:
+A maintainer accepted this specification on 2026-07-30. Every condition it set is met, and each was met by
+a component that exercises it rather than by a reading that it still seemed correct:
 
 1. a maintainer accepts it, and accepts spec 0002, from which it derives;
 2. `schemas/knowledge-object.v1.json` exists with a boundary validator wired to `make validate`, and tests
@@ -794,15 +795,31 @@ This specification presupposes components that do not exist. It binds nothing un
 6. the utilization measurement of R52 runs against that fixture and is recorded, because a threshold nobody
    measures removes nothing.
 
-If the fixture shows that a type in R5 holds no object, or that an edge in R17 is never traversed, remove it
-before accepting this specification rather than after.
+The evidence for items 2 through 6 is `fixtures/knowledge-two-context/`, with 27 knowledge objects and one
+ADR across two bounded contexts, 87 tests, and the recorded R52 measurement. Every check in
+`scripts/validate_knowledge.py` was confirmed to have a covering test by disabling each in turn and
+observing the suite fail, so the suite is known to have teeth rather than assumed to.
 
-That instruction has fired once and been acted on. The first measurement over
-`fixtures/knowledge-two-context/` found every node type populated and three edges no resolution read.
-`references` and `supersedes` were removed, `superseded_by` was moved out of the edge table as the field R40
-requires and expansion must not follow, and `attributes[].of` and `rejections[].error` were added because R29
-and R11 already required both to resolve. Building the fixture also forced R9 to stop requiring an identity
-of a value object, R10 to stop naming a boundary no object could be, and R28 to bind `list` as well as `ref`
-— the fixture demonstrated the identical cross-aggregate reference being rejected as a `ref` and accepted as
-a `list`. The record of what building the evidence found is `fixtures/knowledge-two-context/README.md`, and
-items 2 through 6 above are discharged there. Item 1 remains.
+This specification carried one instruction addressed to this moment: if the fixture shows that a type in R5
+holds no object, or that an edge in R17 is never traversed, remove it before accepting rather than after.
+**It fired, and it was acted on before acceptance rather than after.** Building the evidence exposed six
+defects that reading the prose had not:
+
+- the first measurement found every node type populated and three edges no resolution read. `references` and
+  `supersedes` were removed; `superseded_by` moved out of the edge table as the field R40 requires and
+  expansion must not follow;
+- `attributes[].of` and `rejections[].error` were added, because R29 and R11 already required both to resolve
+  and nothing resolves without an edge — the vocabulary R17 called closed was incomplete;
+- R9 stopped requiring an identity of a value object, which is defined by holding none;
+- R10 stopped naming a boundary no object could be, which had left one `ddd` value of `rule` unusable;
+- R28 was extended to bind `list` as well as `ref`, after the fixture demonstrated the identical
+  cross-aggregate reference being rejected in one field and accepted in the other;
+- the edge table's cardinality column was split into `Out` and `In` in one parseable notation, because it had
+  answered three questions in one cell and was therefore the one part of the table nothing verified.
+
+What acceptance does **not** claim is stated rather than glossed. Four findings remain open, recorded in
+`fixtures/knowledge-two-context/README.md`: none is a contradiction, three are limits of what a mechanism can
+decide — two clauses of R46, the pronoun list of R45, and the residuals of the edge-table comparison — and
+one is a redundant forward-cardinality check kept deliberately. From here, `.claude/rules/compatibility.md`
+governs every change to this specification, and a repair that invalidates a conforming knowledge object is a
+breaking change rather than a revision.
