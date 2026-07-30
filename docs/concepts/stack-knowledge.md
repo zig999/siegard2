@@ -3,7 +3,7 @@ id: concept.stack-knowledge
 type: term
 title: stack knowledge
 description: A fact whose change changes every system built on the same technology, and which the knowledge base therefore never holds.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }

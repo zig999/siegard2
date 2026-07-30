@@ -3,7 +3,7 @@ id: concept.knowledge-object
 type: term
 title: knowledge object
 description: One durable concept of a governed repository's knowledge, stated independently of the code that implements it.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

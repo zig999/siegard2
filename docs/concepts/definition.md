@@ -3,7 +3,7 @@ id: concept.definition
 type: term
 title: definition
 description: The knowledge object type that says what a domain concept is and which attributes it holds.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, ddd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

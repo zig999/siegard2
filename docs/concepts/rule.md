@@ -3,7 +3,7 @@ id: concept.rule
 type: term
 title: rule
 description: The knowledge object type that states one falsifiable condition, and the only type an assertion can bind to.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, ddd, validation]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

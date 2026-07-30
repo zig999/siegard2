@@ -3,7 +3,7 @@ id: concept.assertion
 type: term
 title: assertion
 description: A mechanical check that rejects an implementation violating one specific knowledge object.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [kodd, determinism, validation]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

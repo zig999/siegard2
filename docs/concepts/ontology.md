@@ -3,7 +3,7 @@ id: concept.ontology
 type: term
 title: ontology
 description: The schema level of the knowledge model — which node types and edges exist, with what cardinality and meaning.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

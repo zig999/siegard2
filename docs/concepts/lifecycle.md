@@ -3,7 +3,7 @@ id: concept.lifecycle
 type: term
 title: lifecycle
 description: The knowledge object type holding a definition's legal states and the total transition table between them.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, ddd, determinism]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

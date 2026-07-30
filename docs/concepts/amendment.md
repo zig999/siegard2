@@ -3,7 +3,7 @@ id: concept.amendment
 type: term
 title: amendment
 description: A recorded revision of part of an accepted decision, leaving the rest of that decision in force.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [governance, normative-source]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

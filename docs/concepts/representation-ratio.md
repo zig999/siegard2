@@ -3,7 +3,7 @@ id: concept.representation-ratio
 type: term
 title: representation ratio
 description: Permanent knowledge volume measured against the source volume it produces, instrumented so representation cost stays visible.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, observability]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }

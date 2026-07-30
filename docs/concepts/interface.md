@@ -3,7 +3,7 @@ id: concept.interface
 type: term
 title: interface
 description: The knowledge object type describing what a bounded context exposes to, or consumes from, another.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, ddd, compatibility]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

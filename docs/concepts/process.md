@@ -3,7 +3,7 @@ id: concept.process
 type: term
 title: process
 description: The knowledge object type holding an ordered sequence of steps that reference other knowledge objects by id.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, ddd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

@@ -3,7 +3,7 @@ id: concept.knowledge-base
 type: term
 title: knowledge base
 description: The authored set of knowledge objects a governed repository holds, distinct from the graph materialized from it.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }

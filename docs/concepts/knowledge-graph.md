@@ -3,7 +3,7 @@ id: concept.knowledge-graph
 type: term
 title: knowledge graph
 description: The graph of knowledge objects and their explicit relationships, derived from artifact frontmatter rather than maintained by hand.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, determinism]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

@@ -3,7 +3,7 @@ id: concept.domain-knowledge
 type: term
 title: domain knowledge
 description: A fact whose change changes this system, and the only kind of fact the knowledge base holds.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }

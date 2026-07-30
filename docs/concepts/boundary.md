@@ -3,7 +3,7 @@ id: concept.boundary
 type: term
 title: boundary
 description: The knowledge object type holding a scope — a bounded context or an aggregate — whose membership is derived rather than listed.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [knowledge, kodd, ddd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }

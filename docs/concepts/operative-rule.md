@@ -3,7 +3,7 @@ id: concept.operative-rule
 type: term
 title: operative rule
 description: The imperative form of a rule, held by exactly one artifact and separate from the record of why it was decided.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [governance, normative-source]
 generated: { by: claude-opus-5, at: 2026-07-30T11:18:24Z }

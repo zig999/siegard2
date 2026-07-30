@@ -14,10 +14,17 @@ This bundle is a Siegard concept bundle and a valid OKF v0.2 bundle. The frontma
 
 One concept per file. The filename is the concept `id` without its `concept.` prefix.
 
-Each concept's `status` lives in its own frontmatter and is not repeated here. The bundle currently mixes
-`accepted` entries with `proposed` ones introduced alongside
-`specs/0001-knowledge-object-driven-development.md`; a `proposed` concept names a term without binding
-its definition — see [accepted](accepted.md).
+Each concept's `status` lives in its own frontmatter and is not repeated here. The bundle mixes the two
+tiers on purpose, and `docs/adr/README.md` states when a concept crosses between them: a concept becomes
+`accepted` when an artifact that binds uses the term normatively, and one cited only by a `proposed`
+specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
+[accepted](accepted.md).
+
+As of 2026-07-30 the split is 29 `accepted` and 14 `proposed`. Every remaining `proposed` entry is
+vocabulary for `specs/0001-knowledge-object-driven-development.md` or
+`specs/0004-generation-and-reproducibility.md`, neither of which is accepted, so promoting one would bind a
+definition to a mechanism that does not exist. The tier is derivable rather than declared: read which
+artifacts cite a concept, and read their status.
 
 | Concept | Summary |
 |---|---|

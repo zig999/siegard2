@@ -24,6 +24,15 @@ decision. Record what satisfied it, then change the status in the same change.
 
 Do not accept an ADR because it still seems correct. Accept it because something exercised it.
 
+A concept carries no validation section, so the same standard reaches it through its use: a concept becomes
+`accepted` when an artifact that binds uses the term normatively — an accepted specification, an accepted
+ADR, `CLAUDE.md`, or a rule file. A concept cited only by a `proposed` specification stays `proposed`.
+Promoting one would give a definition binding force for a mechanism that does not exist, which is the same
+manufactured authority the paragraph above exists to prevent.
+
+The bundle therefore carries two tiers on purpose, and a concept's tier is derivable rather than declared:
+read which artifacts cite it, and read their status.
+
 ## Who may change a status
 
 Whether the validation section is satisfied is a judgment about evidence, not a mechanical check, so an
