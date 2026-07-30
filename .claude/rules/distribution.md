@@ -17,7 +17,8 @@ a source tree.
 - Keep the output reproducible: the same committed source must produce the same distribution.
 - Exclude source-only paths from the output — `specs/`, `tests/`, `fixtures/`, `docs/`, `.claude/`, and
   any other development-only configuration. `.claude/` is this repository's development environment and
-  never ships; `CLAUDE.md` under **Repository layout** is the authority for the boundary.
+  never ships. `CLAUDE.md` under **Repository layout** holds the path table; **The two trees** in
+  `.claude/rules/claude-code-authoring.md` is the authority for the boundary itself.
 - Never place secrets, credentials, tokens, or environment-specific values in the distribution.
 - Reject hidden defaults: if an installed component behaves differently when a setting is absent,
   state that default in the component itself, not only in the generator.

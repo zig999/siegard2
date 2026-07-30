@@ -67,12 +67,8 @@ ADR-0004 to admit it.
 | `docs/` | bootstrap plan, guides | explanatory |
 | `reference/` | prior-art and design input this framework derives from | never normative |
 
-`.claude/` and `src/claude/` are different trees and never mirror each other. `.claude/` configures the
-agent that develops Siegard; `src/claude/` holds what Siegard ships. A component that would be
-installed into a target repository belongs in `src/claude/` from the moment it is first authored, and
-stays inert here until the generator, a fixture, or a test exercises it — never the ambient session.
-`docs/concepts/framework-source.md` defines the tree that ships, and `docs/bootstrap.md` open question 4
-holds the gate that would prove the two trees stay separate in practice.
+`.claude/` and `src/claude/` are different trees and never mirror each other; the boundary and what it
+costs are in `.claude/rules/claude-code-authoring.md`, which loads on both.
 
 Most of these paths do not exist yet. Each one is a commitment: create it when the first artifact
 needs it, and do not invent a different location.

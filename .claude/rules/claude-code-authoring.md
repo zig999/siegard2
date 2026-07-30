@@ -40,6 +40,22 @@ Keep `CLAUDE.md` under 200 lines; longer files reduce adherence. When it grows, 
 invariant to `.claude/rules/` and a procedure to a skill. Do not use `@path` imports to shrink it —
 imports load eagerly and change nothing.
 
+## The two trees
+
+`.claude/` and `src/claude/` are different trees and never mirror each other. `.claude/` configures the
+agent that develops Siegard; `src/claude/` holds what Siegard ships. `CLAUDE.md` **Repository layout**
+carries the table; this file carries the boundary, because the boundary matters exactly when someone is
+reading or writing a file in one of the two trees.
+
+A component that would be installed into a target repository belongs in `src/claude/` from the moment it
+is first authored, and stays inert here until the generator, a fixture, or a test exercises it — never the
+ambient session. That is the same rule the paragraph under **Where instruction content belongs** applies to
+a component's loading semantics, stated once for the tree as a whole.
+
+`docs/concepts/framework-source.md` defines the tree that ships. `docs/bootstrap.md` open question 4 holds
+the gate that would prove the two trees stay separate in practice, and until that gate is met the
+separation is a commitment rather than a checked property.
+
 ## Component responsibilities
 
 How work divides across orchestrators, specialized agents, skills, hooks, and scripts is not yet fixed.

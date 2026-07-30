@@ -156,7 +156,8 @@ different case from removing a record that only duplicated a rule.
    path end to end. If a class turns out to be ceremony for the workflows the framework actually runs,
    drop it rather than populate it.
 4. **That the source and development trees stay separate in practice.** The boundary is stated in
-   `CLAUDE.md` **Repository layout** and the first distributable component now sits under `src/claude/`.
+   **The two trees** in `.claude/rules/claude-code-authoring.md`, which loads whenever either tree is
+   read, and the first distributable component now sits under `src/claude/`.
    Gate: the generator reads `src/claude/` as its component input; a test asserts that no path under
    `.claude/` reaches the distribution; a fixture installs the generated distribution and exercises the
    component as a downstream-shaped case.
