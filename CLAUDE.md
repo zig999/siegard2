@@ -71,7 +71,8 @@ ADR-0004 to admit it.
 agent that develops Siegard; `src/claude/` holds what Siegard ships. A component that would be
 installed into a target repository belongs in `src/claude/` from the moment it is first authored, and
 stays inert here until the generator, a fixture, or a test exercises it — never the ambient session.
-`docs/adr/0006-separate-development-environment-from-framework-source.md` records the boundary.
+`docs/concepts/framework-source.md` defines the tree that ships, and `docs/bootstrap.md` open question 4
+holds the gate that would prove the two trees stay separate in practice.
 
 Most of these paths do not exist yet. Each one is a commitment: create it when the first artifact
 needs it, and do not invent a different location.
@@ -165,8 +166,8 @@ the first component, not from the first security review.
 - Enforce a security-critical guarantee in a hook or a script. Model judgment is not an enforcement
   mechanism.
 
-`docs/adr/0007-least-privilege-and-untrusted-input.md` records the decision, what it leaves undecided,
-and why the sanitization and subprocess details wait for the first hook.
+The sanitization, path, subprocess, and network detail waits for the first hook or script that needs it.
+`docs/bootstrap.md` open question 5 holds the gate, and names this as stated-but-unenforced until then.
 
 ## Scope
 

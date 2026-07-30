@@ -88,7 +88,7 @@ at a specific point:
 |---|---|---|
 | specification contract (`schemas/spec.v1.json`), frontmatter and body structure | the validator runs in `make validate` | **active**, exercised by every specification in `specs/` |
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
-| ADR frontmatter contract (`schemas/adr.v2.json`), including supersession and amendment | the validator runs in `make validate` | **active** |
+| ADR frontmatter contract (`schemas/adr.v2.json`), including supersession and amendment | the validator runs in `make validate` | **active**; `amends` exercised for the first time by ADR-0008 over ADR-0004 |
 | non-restatement: an ADR's `## Decision` cites an operative rule instead of repeating it (`docs/adr/README.md`) | the check runs in `make validate` | **active**, six ADRs de-duplicated to satisfy it |
 | migration test for a contract bump (`.claude/rules/compatibility.md`) | a test suite exists | **owed**: `adr/1` → `adr/2` happened without one |
 | component contracts (`schemas/skill.v1.json`, `schemas/agent.v1.json`) | the validator runs in `make validate` | **active**, exercised by `concept-author` |
@@ -124,8 +124,14 @@ Each question below carries the gate that would settle it. Until a gate is met, 
 candidate, not a decision — do not build on it as if it were fixed, and do not record it as one.
 
 These gates were the acceptance conditions of ADRs that recorded candidate designs for components that
-do not exist. The ADRs were removed once their operative rules were held by `CLAUDE.md` alone; the gates
-outlived them, because a gate is a test and a candidate design is not.
+do not exist. Five such ADRs were removed once their operative rules were held by `CLAUDE.md` alone; the
+gates outlived them, because a gate is a test and a candidate design is not.
+
+Two were restored rather than removed, on 2026-07-30. ADR-0004 and ADR-0008 carry the reasoning behind the
+**Decision order** — why human convenience is excluded from the ranking, and why a second tier of
+tiebreakers beneath the constraints does not weaken them. `docs/adr/README.md` states that an ADR's
+rationale "has no other home", so removing those two destroyed content nothing replaced, which is a
+different case from removing a record that only duplicated a rule.
 
 1. **Which persistence model records workflow state.** `CLAUDE.md` **Determinism and state** requires it
    persisted outside the conversation and transitions reconstructible from records alone. The leading
