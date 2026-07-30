@@ -20,7 +20,7 @@ tiers on purpose, and `docs/adr/README.md` states when a concept crosses between
 specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
 [accepted](accepted.md).
 
-As of 2026-07-30 the split is 29 `accepted` and 14 `proposed`. Every remaining `proposed` entry is
+As of 2026-07-30 the split is 30 `accepted` and 14 `proposed`. Every remaining `proposed` entry is
 vocabulary for `specs/0001-knowledge-object-driven-development.md` or
 `specs/0004-generation-and-reproducibility.md`, neither of which is accepted, so promoting one would bind a
 definition to a mechanism that does not exist. The tier is derivable rather than declared: read which
@@ -60,7 +60,7 @@ artifacts cite a concept, and read their status.
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
-| [projection](projection.md) | Current state derived by replaying the event log. |
+| [projection](projection.md) | A human-readable artifact generated from the knowledge graph, normative nowhere. |
 | [provenance](provenance.md) | The recorded origin of a material decision. |
 | [representation ratio](representation-ratio.md) | Permanent knowledge volume measured against the source volume it produces. |
 | [rule](rule.md) | The knowledge object type stating one falsifiable condition; the only type an assertion binds to. |
@@ -71,3 +71,4 @@ artifacts cite a concept, and read their status.
 | [stack knowledge](stack-knowledge.md) | A fact whose change changes every system on the same technology, never held by the knowledge base. |
 | [target pack](target-pack.md) | The distributable unit carrying one technology stack: a specialized agent and its templates. |
 | [transition guard](transition-guard.md) | The condition that must hold for a workflow to change state. |
+| [workflow state](workflow-state.md) | Current state of a workflow, derived from the record of what happened. |

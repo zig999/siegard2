@@ -18,7 +18,7 @@ requirements. Build the thin path, then promote the rules it actually needed.
 One workflow, as small as it can be while still crossing every boundary the framework claims:
 
 ```
-command  →  orchestrator  →  specialized agent  →  validated artifact  →  event  →  projection
+command  →  orchestrator  →  specialized agent  →  validated artifact  →  event  →  workflow state
 ```
 
 Concretely, in order:
@@ -40,8 +40,8 @@ Concretely, in order:
    shell — the boundary validator is the consumer's check, not the producer's self-report.
 3. **An orchestrator that consumes it** and chooses a transition from the artifact's closed `state`
    field — a lookup, not an interpretation.
-4. **One appended event** recording what happened, and **one projection** deriving current state by
-   replaying events.
+4. **One appended event** recording what happened, and **one derivation of workflow state** reading those
+   events back.
 5. **A user-invocable skill** that starts and resumes the workflow, doing nothing but validating
    input and delegating. Claude Code merged custom commands into skills, so this entry point is a
    skill with `disable-model-invocation` set — see ADR-0009.
@@ -136,10 +136,10 @@ different case from removing a record that only duplicated a rule.
 1. **Which persistence model records workflow state.** `CLAUDE.md` **Determinism and state** requires it
    persisted outside the conversation and transitions reconstructible from records alone. The leading
    candidate is an append-only event log with state derived by replay. Gate: one event schema in
-   `schemas/` carrying `contract_version`; one projection with a test asserting replay is deterministic;
-   one transition guard with a test for both outcomes; a fixture exercising the loop end to end. If a
-   mutable record turns out to be sufficient for the workflows the framework actually runs, take it —
-   the event model costs a migration burden on every schema change, and nothing has yet earned it.
+   `schemas/` carrying `contract_version`; one workflow-state derivation with a test asserting replay is
+   deterministic; one transition guard with a test for both outcomes; a fixture exercising the loop end to
+   end. If a mutable record turns out to be sufficient for the workflows the framework actually runs, take
+   it — the event model costs a migration burden on every schema change, and nothing has yet earned it.
 2. **How the distribution is produced.** That `dist/.claude/` is generated, reproducible, and never
    hand-edited is settled by `CLAUDE.md` **Repository layout** and `.claude/rules/distribution.md`. What
    is open is the generator. Gate: a generator in `scripts/` that `make dist` runs; running it twice from

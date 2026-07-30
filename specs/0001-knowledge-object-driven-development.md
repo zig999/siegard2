@@ -68,7 +68,7 @@ Terms used normatively below. Each is defined once, in the concept bundle.
 | escalation | [escalation](../docs/concepts/escalation.md) |
 | fail-soft | [fail-soft](../docs/concepts/fail-soft.md) |
 | transition guard | [transition-guard](../docs/concepts/transition-guard.md) |
-| projection | [projection](../docs/concepts/projection.md) |
+| workflow state | [workflow-state](../docs/concepts/workflow-state.md) |
 | provenance | [provenance](../docs/concepts/provenance.md) |
 | accepted | [accepted](../docs/concepts/accepted.md) |
 | specification | [specification](../docs/concepts/specification.md) |
