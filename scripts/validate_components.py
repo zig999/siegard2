@@ -37,6 +37,7 @@ import sys
 from pathlib import Path
 
 from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from cli import cannot_run
 
 SKILL_SCHEMA_PATH = REPO_ROOT / "schemas" / "skill.v1.json"
 AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.v1.json"
@@ -58,17 +59,17 @@ COMMANDS_MERGED = (
 try:
     import yaml
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 
 def load_validator(schema_path: Path) -> Draft202012Validator:
     if not schema_path.is_file():
-        sys.exit(f"cannot run: schema {schema_path} does not exist")
+        cannot_run(f"cannot run: schema {schema_path} does not exist")
     return Draft202012Validator(json.loads(schema_path.read_text()))
 
 

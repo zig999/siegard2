@@ -51,6 +51,8 @@ import re
 import sys
 from pathlib import Path
 
+from cli import cannot_run
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from migrate_contracts import MIGRATIONS  # noqa: E402  (path set immediately above)
 
@@ -255,9 +257,9 @@ def check(update: bool) -> tuple[int, list[str]]:
 def main() -> int:
     args = sys.argv[1:]
     if args not in ([], ["--update"]):
-        sys.exit(f"cannot run: unexpected arguments {args}; usage: check_contract_versions.py [--update]")
+        cannot_run(f"cannot run: unexpected arguments {args}; usage: check_contract_versions.py [--update]")
     if not SCHEMA_DIR.is_dir():
-        sys.exit(f"cannot run: {SCHEMA_DIR} does not exist")
+        cannot_run(f"cannot run: {SCHEMA_DIR} does not exist")
 
     update = args == ["--update"]
     count, problems = check(update)

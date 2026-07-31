@@ -30,17 +30,18 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from cli import cannot_run
 from frontmatter_lib import REPO_ROOT, display
 
 try:
     import yaml  # noqa: F401
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator  # noqa: F401
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 from knowledge_graph_lib import EDGE_KINDS, KO_SCHEMA_PATH, Graph, load  # noqa: E402
 
@@ -200,12 +201,12 @@ def main() -> int:
     check = "--check" in sys.argv
     roots = [Path(a) for a in sys.argv[1:] if a != "--check"] or discover()
     if not roots:
-        sys.exit("cannot run: no knowledge base given and no fixtures/*/knowledge tree exists")
+        cannot_run("cannot run: no knowledge base given and no fixtures/*/knowledge tree exists")
 
     problems: list[str] = []
     for root in roots:
         if not root.is_dir():
-            sys.exit(f"cannot run: knowledge root {root} does not exist")
+            cannot_run(f"cannot run: knowledge root {root} does not exist")
         _code, found = run(root, check)
         problems.extend(found)
         print(f"ontology measured for {display(root)}")

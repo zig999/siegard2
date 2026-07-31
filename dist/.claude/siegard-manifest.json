@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:96ccaeb6effd57793f19274973491670d560bcef002a908abeb9e4d974421826",
+  "source_revision": "sha256:f9ba5fde64b1554e89aa4e5ce15b9bb041ba5f97c5b2526e7af6379bf510ee40",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -14,14 +14,24 @@
       "digest": "sha256:6c006c0de475f0c969a835c5a5da4f9cb7b4662947cad58eb5237d6e8b6c8122"
     },
     {
+      "path": "agents/impact-analyst.md",
+      "source": "src/claude/agents/impact-analyst.md",
+      "digest": "sha256:32df824f9aa53ef1e826c5183f0146cb0de3d84c373f6892962aed326ac93d75"
+    },
+    {
+      "path": "bin/cli.py",
+      "source": "scripts/cli.py",
+      "digest": "sha256:7739ad70d0d7338e011327056e0594a1d3b695058d86a00cf63541b180fb61c1"
+    },
+    {
       "path": "bin/orchestrate.py",
       "source": "scripts/orchestrate.py",
-      "digest": "sha256:01362cd2ced69d059eb1bea8ca06c3839eecbc30afc85a33b67443e912a5e67d"
+      "digest": "sha256:de5085f81cd0c25e528c713dfe0a771da844129c5d35a62c65916e1a96a4ef0f"
     },
     {
       "path": "bin/replay_workflow.py",
       "source": "scripts/replay_workflow.py",
-      "digest": "sha256:da0cb0c623dea141eba0c492b4ea756de1c1800fff3c1e7537f27ac791bbcf86"
+      "digest": "sha256:8ae5cfacae1648b46082dea1cc023dee9d87581ffadcc839dfadffe1a1f86104"
     },
     {
       "path": "bin/workflow_lib.py",
@@ -66,7 +76,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:188e90aa13ef42a10e1639fa9ad4b51d87fa097387ae30bdf8d30d40a652803d"
+      "digest": "sha256:9860e72f73b7b59eaae93f8a693e46b12d801b4e4cdbff6769d96af2628c17b4"
     },
     {
       "path": "skills/knowledge-change/SKILL.md",
@@ -106,6 +116,12 @@
   ],
   "capabilities": [
     {
+      "name": "cli",
+      "class": "script",
+      "status": "active",
+      "path": "bin/cli.py"
+    },
+    {
       "name": "orchestrate",
       "class": "script",
       "status": "active",
@@ -134,6 +150,12 @@
       "class": "specialized-agent",
       "status": "active",
       "path": "agents/concept-author.md"
+    },
+    {
+      "name": "impact-analyst",
+      "class": "specialized-agent",
+      "status": "active",
+      "path": "agents/impact-analyst.md"
     }
   ],
   "overrides": []

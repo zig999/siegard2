@@ -1,0 +1,14 @@
+{
+  "contract_version": "workflow-event/1",
+  "event_id": "ev_0000000000b5",
+  "workflow_id": "wf_cancelled-order-not-billable",
+  "seq": 5,
+  "occurred_at": "2026-07-31T09:20:00Z",
+  "producer": "knowledge-change",
+  "phase": "implementation",
+  "outcome": "updated",
+  "subject": {
+    "contract_version": "knowledge-object/1",
+    "path": "knowledge/rule/sales/cancelled-order-not-billable.md"
+  }
+}

@@ -37,6 +37,7 @@ import tempfile
 from pathlib import Path
 
 from orchestrate import consume_result
+from cli import cannot_run
 from workflow_lib import REPO_ROOT, append, derive, read_log
 
 LOG_NAME = "event-log.jsonl"
@@ -119,10 +120,15 @@ def main() -> int:
     check = "--check" in sys.argv[1:]
     root = Path(args[0]) if args else REPO_ROOT / "fixtures"
 
+    if not root.is_dir():
+        cannot_run(f"cannot run: fixture root {root} does not exist")
+
     fixtures = find_fixtures(root)
     if not fixtures:
-        print(f"workflow fixtures checked: 0 — no inputs/run.json under {root}")
-        return 0
+        # A green run that replayed nothing is worse than a named gap — the Makefile states
+        # that rule for its own targets, and this is the script it most easily hides behind:
+        # `make validate` would report success over a fixtures/ tree somebody renamed.
+        cannot_run(f"cannot run: no inputs/run.json under {root}, so nothing was replayed")
 
     problems: list[str] = []
     for fixture in fixtures:

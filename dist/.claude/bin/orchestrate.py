@@ -38,11 +38,12 @@ import sys
 from pathlib import Path
 
 from workflow_lib import SCHEMA_DIR, append, derive, read_log
+from cli import cannot_run
 
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 # Which phase a producer's result drives, and how its closed `state` maps to an event
 # outcome. A contract absent from this table is refused rather than guessed: an orchestrator

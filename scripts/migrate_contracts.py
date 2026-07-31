@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import sys
 from typing import Callable
+from cli import cannot_run
 
 
 class MigrationError(Exception):
@@ -83,7 +84,7 @@ def migrate(doc: dict, source: str, target: str) -> dict:
 
 def main() -> int:
     if len(sys.argv) != 4:
-        sys.exit(
+        cannot_run(
             "cannot run: usage: migrate_contracts.py <contract-from> <contract-to> <file.json|->"
         )
     source, target, path = sys.argv[1:]
@@ -91,7 +92,7 @@ def main() -> int:
         text = sys.stdin.read() if path == "-" else open(path).read()
         doc = json.loads(text)
     except (OSError, json.JSONDecodeError) as exc:
-        sys.exit(f"cannot run: {exc}")
+        cannot_run(f"cannot run: {exc}")
 
     try:
         print(json.dumps(migrate(doc, source, target), indent=2))

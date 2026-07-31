@@ -39,11 +39,14 @@ Exit:   0 assembled, 1 refused to assemble, 2 cannot run
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import shutil
 import sys
 from pathlib import Path
+
+from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_ROOT = REPO_ROOT / "src" / "claude"
@@ -90,6 +93,7 @@ SHIPPED_EXECUTABLES = {
     "orchestrate.py": "the transition lookup the knowledge-change skill invokes",
     "replay_workflow.py": "state reconstruction from the event log",
     "workflow_lib.py": "imported by both; ships beside them so the import resolves",
+    "cli.py": "the exit-code convention orchestrate.py imports; a shipped import must ship",
 }
 
 # Which capability class each source subtree carries, per specs/0006 R1.
@@ -136,6 +140,39 @@ def exercised_names() -> set[str]:
                 except json.JSONDecodeError:
                     continue
     return names
+
+
+def assert_imports_ship() -> None:
+    """A shipped script may only import modules that ship beside it.
+
+    Found the hard way: `orchestrate.py` gained `from cli import cannot_run`, and nothing
+    noticed that `cli.py` was not in `SHIPPED_EXECUTABLES`. The distribution still built, still
+    verified, and would have failed on the consumer's first invocation with an ImportError —
+    the worst place to discover it, because `specs/0008` R9 exists so a shipped executable
+    "exits with a named error" rather than breaking in a way nobody can read.
+
+    Only modules that live in `scripts/` are checked. A standard-library or third-party import
+    is R9's other half, which each script declares in its own docstring.
+    """
+    available = {p.stem for p in SCRIPT_ROOT.glob("*.py")}
+    shipped = {Path(name).stem for name in SHIPPED_EXECUTABLES}
+    for name in sorted(SHIPPED_EXECUTABLES):
+        source = SCRIPT_ROOT / name
+        if not source.is_file():
+            continue
+        for node in ast.walk(ast.parse(source.read_text())):
+            if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                imported = node.module.split(".")[0]
+            elif isinstance(node, ast.Import):
+                imported = node.names[0].name.split(".")[0]
+            else:
+                continue
+            if imported in available and imported not in shipped:
+                raise Refused(
+                    f"{name} imports {imported}, which scripts/ holds and SHIPPED_EXECUTABLES "
+                    f"does not — the shipped copy would fail with an ImportError on the "
+                    f"consumer's first invocation"
+                )
 
 
 def assert_total(actual: set[str], classified: set[str], tree: str, constant: str) -> None:
@@ -228,6 +265,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         schemas.append({"contract_version": f"{stem}/{version}", "path": f"schemas/{name}"})
 
     # Executables. Their own directory is the import root, which is why workflow_lib.py is here.
+    assert_imports_ship()
     for name in sorted(SHIPPED_EXECUTABLES):
         source = SCRIPT_ROOT / name
         if not source.is_file():
@@ -297,7 +335,7 @@ def build(target: Path) -> tuple[list[dict], list[str]]:
 def main() -> int:
     args = sys.argv[1:]
     if args and (len(args) != 2 or args[0] != "--into"):
-        sys.exit("cannot run: usage: generate_dist.py [--into DIR]")
+        cannot_run("cannot run: usage: generate_dist.py [--into DIR]")
     target = Path(args[1]) if args else DEFAULT_TARGET
 
     try:

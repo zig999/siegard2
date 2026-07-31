@@ -36,6 +36,7 @@ import re
 import sys
 import tempfile
 from pathlib import Path
+from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
@@ -60,7 +61,7 @@ HOST_PATH = re.compile(r"(?:^|[\s\"'=(])(/home/[a-z0-9._-]+|/Users/[a-z0-9._-]+)
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 
 def digest(data: bytes) -> str:

@@ -31,15 +31,17 @@ from pathlib import Path
 
 from frontmatter_lib import REPO_ROOT, display
 
+from cli import cannot_run
+
 try:
     import yaml  # noqa: F401
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 from knowledge_graph_lib import (  # noqa: E402
     EDGE_KINDS,
@@ -248,15 +250,15 @@ def main() -> int:
     check = "--check" in sys.argv
     roots = [Path(a) for a in sys.argv[1:] if a != "--check"] or discover()
     if not roots:
-        sys.exit("cannot run: no knowledge base given and no fixtures/*/knowledge tree exists")
+        cannot_run("cannot run: no knowledge base given and no fixtures/*/knowledge tree exists")
     if not GRAPH_SCHEMA_PATH.is_file():
-        sys.exit(f"cannot run: schema {GRAPH_SCHEMA_PATH} does not exist")
+        cannot_run(f"cannot run: schema {GRAPH_SCHEMA_PATH} does not exist")
 
     status = 0
     problems: list[str] = []
     for root in roots:
         if not root.is_dir():
-            sys.exit(f"cannot run: knowledge root {root} does not exist")
+            cannot_run(f"cannot run: knowledge root {root} does not exist")
         code, differences = run(root, check)
         status |= code
         problems.extend(differences)

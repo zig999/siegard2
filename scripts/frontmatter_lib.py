@@ -15,12 +15,14 @@ import datetime as dt
 import sys
 from pathlib import Path
 
+from cli import cannot_run
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 try:
     import yaml
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 
 def normalize(value):

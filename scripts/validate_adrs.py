@@ -31,6 +31,7 @@ import sys
 from pathlib import Path
 
 from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from cli import cannot_run
 
 SCHEMA_BY_VERSION = {
     "adr/1": REPO_ROOT / "schemas" / "adr.v1.json",
@@ -59,12 +60,12 @@ PATH_TOKEN = re.compile(r"[\w./-]+\.(?:md|json|py)\b|\b[a-z_]+/(?:\*\*|[\w*/-]+)
 try:
     import yaml
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 
 def unquoted_id_hint(data: dict, stem_id: str) -> str | None:
@@ -124,7 +125,7 @@ def operative_lines() -> list[tuple[str, str]]:
     """
     claude_md = REPO_ROOT / "CLAUDE.md"
     if not claude_md.is_file():
-        sys.exit(
+        cannot_run(
             f"cannot run: {display(claude_md)} does not exist, so the non-restatement "
             f"check would pass vacuously"
         )
@@ -185,10 +186,10 @@ def restatements(
 def main() -> int:
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "docs" / "adr"
     if not root.is_dir():
-        sys.exit(f"cannot run: ADR root {root} does not exist")
+        cannot_run(f"cannot run: ADR root {root} does not exist")
     for version, path in SCHEMA_BY_VERSION.items():
         if not path.is_file():
-            sys.exit(f"cannot run: schema {path} for contract {version} does not exist")
+            cannot_run(f"cannot run: schema {path} for contract {version} does not exist")
 
     validators = {
         version: Draft202012Validator(json.loads(path.read_text()))
@@ -197,7 +198,7 @@ def main() -> int:
 
     adrs = sorted(p for p in root.glob("*.md") if p.name not in RESERVED)
     if not adrs:
-        sys.exit(f"cannot run: no ADR files found under {root}")
+        cannot_run(f"cannot run: no ADR files found under {root}")
 
     operative = operative_lines()
 

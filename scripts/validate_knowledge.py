@@ -50,15 +50,17 @@ from pathlib import Path
 
 from frontmatter_lib import REPO_ROOT, display
 
+from cli import cannot_run
+
 try:
     import yaml  # noqa: F401  (imported for the named-error path below)
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator  # noqa: F401
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 from knowledge_graph_lib import (  # noqa: E402  (after the dependency guards)
     ACYCLIC_KINDS,
@@ -586,17 +588,17 @@ def discover() -> list[Path]:
 
 def main() -> int:
     if not KO_SCHEMA_PATH.is_file():
-        sys.exit(f"cannot run: schema {KO_SCHEMA_PATH} does not exist")
+        cannot_run(f"cannot run: schema {KO_SCHEMA_PATH} does not exist")
 
     roots = [Path(a) for a in sys.argv[1:]] or discover()
     if not roots:
-        sys.exit(
+        cannot_run(
             "cannot run: no knowledge base given and no fixtures/*/knowledge tree exists. "
             "A validator that passes over nothing reports a guarantee it never checked"
         )
     for root in roots:
         if not root.is_dir():
-            sys.exit(f"cannot run: knowledge root {root} does not exist")
+            cannot_run(f"cannot run: knowledge root {root} does not exist")
 
     total = 0
     failures: list[str] = []

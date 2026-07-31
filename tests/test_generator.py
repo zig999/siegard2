@@ -20,6 +20,7 @@ import json
 import shutil
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 import generate_dist
@@ -340,3 +341,39 @@ class ShippedExecutables(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ShippedImports(unittest.TestCase):
+    """A shipped script may only import modules that ship beside it.
+
+    This check exists because the suite caught its absence: `orchestrate.py` gained
+    `from cli import cannot_run` while `cli.py` was not shipped. The distribution built,
+    verified, and would have failed on the consumer's first invocation.
+    """
+
+    def test_the_current_selection_is_closed_under_import(self) -> None:
+        generate_dist.assert_imports_ship()  # raises Refused if it is not
+
+    def test_dropping_a_shipped_import_is_refused(self) -> None:
+        without_cli = {
+            k: v for k, v in generate_dist.SHIPPED_EXECUTABLES.items() if k != "cli.py"
+        }
+        with unittest.mock.patch.object(generate_dist, "SHIPPED_EXECUTABLES", without_cli):
+            with self.assertRaises(generate_dist.Refused) as caught:
+                generate_dist.assert_imports_ship()
+        self.assertIn("ImportError", str(caught.exception))
+
+    def test_every_shipped_script_imports_cleanly_from_the_distribution(self) -> None:
+        """The end the check protects: the shipped copy actually loads."""
+        import subprocess
+        import sys
+
+        for name in generate_dist.SHIPPED_EXECUTABLES:
+            module = Path(name).stem
+            result = subprocess.run(
+                [sys.executable, "-B", "-c",
+                 f"import sys; sys.path.insert(0, sys.argv[1]); import {module}",
+                 str(COMMITTED / "bin")],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(0, result.returncode, f"{name}: {result.stderr}")

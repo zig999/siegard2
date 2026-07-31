@@ -1,0 +1,10 @@
+{
+  "contract_version": "workflow-event/1",
+  "event_id": "ev_0000000000b4",
+  "workflow_id": "wf_cancelled-order-not-billable",
+  "seq": 4,
+  "occurred_at": "2026-07-31T09:09:00Z",
+  "producer": "knowledge-change",
+  "phase": "specification-delta",
+  "outcome": "recorded"
+}

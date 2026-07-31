@@ -49,6 +49,7 @@ import sys
 from pathlib import Path
 
 from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from cli import cannot_run
 
 SCHEMA_PATH = REPO_ROOT / "schemas" / "spec.v1.json"
 RESERVED = {"README.md"}
@@ -80,12 +81,12 @@ MET_MARKER = "**Met**"
 try:
     import yaml
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 
 def unquoted_id_hint(data: dict, stem_id: str) -> str | None:
@@ -339,15 +340,15 @@ def check_acceptance_order(
 def main() -> int:
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "specs"
     if not root.is_dir():
-        sys.exit(f"cannot run: specification root {root} does not exist")
+        cannot_run(f"cannot run: specification root {root} does not exist")
     if not SCHEMA_PATH.is_file():
-        sys.exit(f"cannot run: schema {SCHEMA_PATH} does not exist")
+        cannot_run(f"cannot run: schema {SCHEMA_PATH} does not exist")
 
     validator = Draft202012Validator(json.loads(SCHEMA_PATH.read_text()))
 
     specs = sorted(p for p in root.glob("*.md") if p.name not in RESERVED)
     if not specs:
-        sys.exit(f"cannot run: no specification files found under {root}")
+        cannot_run(f"cannot run: no specification files found under {root}")
 
     failures: list[str] = []
     seen_ids: dict[str, str] = {}

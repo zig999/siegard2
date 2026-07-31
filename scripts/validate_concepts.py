@@ -22,6 +22,7 @@ import sys
 from pathlib import Path, PurePosixPath
 
 from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from cli import cannot_run
 
 SCHEMA_PATH = REPO_ROOT / "schemas" / "concept.v1.json"
 RESERVED = {"index.md", "log.md"}
@@ -30,12 +31,12 @@ URI_SCHEME = re.compile(r"^[a-z][a-z0-9+.\-]*://")
 try:
     import yaml
 except ImportError:
-    sys.exit("cannot run: PyYAML is not installed (pip install pyyaml)")
+    cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
     from jsonschema import Draft202012Validator
 except ImportError:
-    sys.exit("cannot run: jsonschema is not installed (pip install jsonschema)")
+    cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
 
 def check_sources(data: dict) -> list[str]:
@@ -120,13 +121,13 @@ def validate(bundle: Path) -> list[str]:
 def main() -> int:
     bundle = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "docs" / "concepts"
     if not bundle.is_dir():
-        sys.exit(f"cannot run: bundle root {bundle} does not exist")
+        cannot_run(f"cannot run: bundle root {bundle} does not exist")
     if not SCHEMA_PATH.is_file():
-        sys.exit(f"cannot run: schema {SCHEMA_PATH} does not exist")
+        cannot_run(f"cannot run: schema {SCHEMA_PATH} does not exist")
 
     concepts = concept_files(bundle)
     if not concepts:
-        sys.exit(f"cannot run: no concept files found under {bundle}")
+        cannot_run(f"cannot run: no concept files found under {bundle}")
 
     failures = validate(bundle)
 

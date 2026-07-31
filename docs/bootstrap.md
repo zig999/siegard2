@@ -173,7 +173,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 296 tests: 98 over the knowledge layer, 59 over the workflow loop, 39 over the generator and the distribution, 35 over the specification set, 33 over contract versioning and migration, 32 over the three validators that had none |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 335 tests over eight areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **partly active** |
 | `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | **active**; the generator reads that tree and nothing else, and a test asserts no path under `.claude/` reaches the distribution |
@@ -410,12 +410,24 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 257 tests: 98 over the knowledge layer, 59 over the workflow loop, 35 over the
-  specification set, 33 over contract versioning and migration, and 32 over the three validators that
-  previously had none. The figure read 193 until 2026-07-31, when counting the suites module by module
-  found the specification set was 35 rather than 36. A count nothing derives drifts, which is the argument
-  for the check `scripts/check_contract_versions.py` now applies to schemas rather than an argument for a
-  more careful reader.
+- `make test` runs 335 tests across eight areas: the knowledge layer, the workflow loop, the
+  specification set, contract versioning and migration, the three validators that had none, the
+  generator and the distribution, installation and upgrade, and the CLI exit-code convention.
+  Two figures in this file drifted before anything derived them — a test count that read 193 against
+  an actual 192, and a specification-set count of 36 against 35 — so the number above is stated once
+  and `make test` is the authority.
+
+  `validate_specs.py` is covered for its concept links and its acceptance order and not for the rest of
+  what it does, so a green `make test` is still not evidence that its frontmatter, section, or
+  requirement-numbering checks work. It is the one validator left in that state. Covered in full:
+  `validate_knowledge.py`, `knowledge_graph_lib.py`, `project_knowledge.py`, `measure_ontology.py`,
+  `workflow_lib.py`, `orchestrate.py`, `check_contract_versions.py`, `migrate_contracts.py`,
+  `generate_dist.py`, `verify_dist.py`, `install_dist.py`, and `cli.py`. `replay_workflow.py` is
+  exercised by `make validate` rather than by a test of its own.
+
+  One cost worth stating rather than absorbing: `validate_adrs.py` compares every `## Decision` line
+  against 215 operative statements, so a full run costs about five seconds. `tests/test_validators.py`
+  mutates a single-ADR subset for that reason and runs the whole tree once.
 
   `validate_adrs.py`, `validate_concepts.py`, and `validate_components.py` were untested code enforcing
   tested contracts until `tests/test_validators.py`, which covers each one in both directions through its
@@ -432,12 +444,17 @@ depend on cooperation.
   seventeen seconds rather than a minute.
 - No `.claude/rules/security.md`. `CLAUDE.md` **Security** states the invariants; sanitization, path,
   subprocess, and network detail wait until the first hook or script needs them — see open question 5.
-- **No installation, therefore no loaded component.** The generator exists and `dist/.claude/` is
-  committed and verified, so open question 2 is closed and its half of open question 4 with it. What is
-  still open is the other half, and it is now the single largest gap: `concept-author` and the
-  `knowledge-change` skill are *assembled* rather than *inert*, which is a smaller claim than it sounds.
-  Nothing has installed the plugin into a repository and watched Claude Code resolve either of them. That
-  is ADR-0009 condition 2 and the remainder of open question 4.
+- **No loaded component.** The generator exists, `dist/.claude/` is committed and verified, and
+  `scripts/install_dist.py` places it into a repository, refuses to install over an existing tree,
+  detects a file the consumer changed and stops rather than overwriting it, and reports a project agent
+  that shadows a shipped one. Those are `specs/0008` R16, R17, and R21, each covered in both directions
+  by `tests/test_install.py`.
+
+  What none of that reaches is the harness. No Claude Code session has resolved
+  `/siegard:knowledge-change` or delegated to `concept-author` or `impact-analyst`. Installing a tree and
+  having the harness load a capability from it are different facts, and only the second closes ADR-0009
+  condition 2 and the remainder of open question 4. Both are still open, and this is now the largest gap
+  in the framework: every component below it is assembled, installable, and unobserved.
 
   One thing did stop being a claim. `dist/.claude/bin/orchestrate.py` runs from the plugin root against a
   real event log and derives the recorded state, and `workflow_lib.py` resolves its schemas from
