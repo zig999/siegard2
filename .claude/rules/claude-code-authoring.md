@@ -81,8 +81,8 @@ Three limits keep that distinction real:
 - a pack is admitted only when a fixture exercises it, which is `CLAUDE.md` **Scope** applied rather than
   relaxed;
 - what a pack may declare, and what it must leave to its agents' own knowledge of the stack, is fixed by
-  `specs/0004-generation-and-reproducibility.md` once that specification is accepted. Do not restate those
-  rules here, and do not give a pack a rule file of its own;
+  `specs/0004-generation-and-reproducibility.md`, accepted on 2026-07-31. Do not restate those rules here,
+  and do not give a pack a rule file of its own;
 - a pack carries no business rule and no customer-specific architecture. Those stay out of scope inside a
   pack exactly as they are everywhere else.
 

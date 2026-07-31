@@ -3,7 +3,7 @@ id: concept.distribution-manifest
 type: term
 title: distribution manifest
 description: The record of what an installation carries, held beside the plugin manifest the harness reads.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [framework, distribution]
 generated: { by: claude-opus-5, at: 2026-07-31T01:49:02Z }

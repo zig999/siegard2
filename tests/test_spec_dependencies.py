@@ -8,6 +8,13 @@ authored field that could disagree with the text.
 Both outcomes are covered for the reason tests/support.py states about the knowledge
 fixture: a rejection test alone cannot tell a working check from one that rejects
 everything, so the committed set is asserted clean beside every rejection.
+
+The "clean" half is asserted over the committed set and the "rejected" half over
+synthetic input, deliberately. How many edges the committed set holds is a function of
+which documents are proposed at the time — every specification was accepted on
+2026-07-31, which took the count to zero — so a test demanding the live corpus produce
+an edge would fail on a change that is not a defect. The derivation itself is proven
+instead, on input this file controls.
 """
 
 from __future__ import annotations
@@ -55,15 +62,6 @@ class TheCommittedSetIsClean(unittest.TestCase):
     def test_the_acceptance_order_holds(self):
         prerequisites = {sid: acceptance_prerequisites(body) for sid, (_, _, body) in self.specs.items()}
         self.assertEqual(check_acceptance_order(prerequisites, self.statuses, self.paths), [])
-
-    def test_the_edges_are_actually_found(self):
-        """A green order check over an empty graph would prove nothing."""
-        edges = {
-            sid: acceptance_prerequisites(body)
-            for sid, (_, _, body) in self.specs.items()
-            if acceptance_prerequisites(body)
-        }
-        self.assertTrue(edges, "no acceptance prerequisite was derived from any specification")
 
 
 class ReferencesAreResolved(unittest.TestCase):

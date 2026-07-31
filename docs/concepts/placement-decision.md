@@ -3,7 +3,7 @@ id: concept.placement-decision
 type: term
 title: placement decision
 description: The validated, frozen record of where a pack puts each artifact the manifest does not already lock.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-31T03:00:10Z }

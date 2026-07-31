@@ -3,7 +3,7 @@ id: concept.escalation
 type: term
 title: escalation
 description: The insertion of workflow phases, decided by a predicate over fields of a validated artifact.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [workflow, kodd, determinism]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

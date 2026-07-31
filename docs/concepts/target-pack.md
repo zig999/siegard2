@@ -3,7 +3,7 @@ id: concept.target-pack
 type: term
 title: target pack
 description: The distributable unit carrying one technology stack — the specialized agents and templates that produce the classes it declares.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, distribution, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
@@ -43,5 +43,6 @@ abstraction absent an accepted requirement for one.
 
 That a pack is framework work rather than the "architecture chosen for one downstream system" that
 `CLAUDE.md` **Scope** excludes is settled; `.claude/rules/claude-code-authoring.md` **Target packs** holds
-the distinction and the fixture gate. What a pack contains is still a proposal, because
-`specs/0004-generation-and-reproducibility.md` is not yet accepted.
+the distinction and the fixture gate. What a pack contains binds as of 2026-07-31, when
+`specs/0004-generation-and-reproducibility.md` was accepted — on a maintainer's decision rather than on the
+fixture evidence that specification had asked for, which it records itself.

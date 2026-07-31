@@ -3,7 +3,7 @@ id: concept.context-package
 type: term
 title: context package
 description: The manifest of identifiers and hashes naming exactly the knowledge one run of context resolution puts in scope.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [kodd, determinism, context]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

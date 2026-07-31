@@ -3,7 +3,7 @@ id: concept.fail-soft
 type: term
 title: fail-soft
 description: Context resolution degrades instead of blocking, and acceptance is evaluated independently of the context that was read.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [kodd, determinism, validation]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

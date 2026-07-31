@@ -14,31 +14,27 @@ This bundle is a Siegard concept bundle and a valid OKF v0.2 bundle. The frontma
 
 One concept per file. The filename is the concept `id` without its `concept.` prefix.
 
-Each concept's `status` lives in its own frontmatter and is not repeated here. The bundle mixes the two
-tiers on purpose, and `docs/adr/README.md` states when a concept crosses between them: a concept becomes
-`accepted` when an artifact that binds uses the term normatively, and one cited only by a `proposed`
-specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
-[accepted](accepted.md).
+Each concept's `status` lives in its own frontmatter and is not repeated here. `docs/adr/README.md` states
+when a concept crosses between the tiers: a concept becomes `accepted` when an artifact that binds uses the
+term normatively, and one cited only by a `proposed` specification stays `proposed`. A `proposed` concept
+names a term without binding its definition — see [accepted](accepted.md). The rule still governs a concept
+added from here on, even though nothing in the bundle currently sits on the lower tier.
 
-As of 2026-07-31 the split is 30 `accepted` and 19 `proposed`. The tier is derivable rather than declared:
-read which artifacts cite a concept, and read their status.
+As of 2026-07-31 every entry is `accepted`. The bundle was promoted in one maintainer decision, together
+with every specification and ADR that was still `proposed`, so the tier no longer distinguishes anything
+here.
 
-`specs/0001-knowledge-object-driven-development.md` was accepted on 2026-07-31, which makes seven
-`proposed` entries eligible for promotion — [change request](change-request.md),
-[impact analysis](impact-analysis.md), [context package](context-package.md),
-[specification delta](specification-delta.md), [escalation](escalation.md), [fail-soft](fail-soft.md), and
-[orchestrator](orchestrator.md). Each is now used normatively by an artifact that binds, which is the
-condition `docs/adr/README.md` states for the crossing.
+What that decision changed, and what it did not, is worth being exact about. The condition
+`docs/adr/README.md` states for the crossing — a term used normatively by an artifact that binds — was
+already satisfied for the entries citing `specs/0001-knowledge-object-driven-development.md`, and the
+promotion recorded a fact for those. It was not satisfied for the vocabulary of
+`specs/0004-generation-and-reproducibility.md` and the framework specifications: those documents were
+accepted on the same authority and on the same day, with their own validation conditions open, so a
+definition here binds a mechanism that in several cases does not exist yet. Each of those specifications
+records that in its **What satisfied acceptance** section, and this bundle does not restate it per concept.
 
-None has been promoted. A status change is a maintainer's decision under `CLAUDE.md` **Normative sources**,
-and the acceptance that made them eligible authorized the specifications rather than the bundle. Two also
-need a judgment that eligibility alone does not settle: [escalation](escalation.md) is defined by a
-requirement that moved to `specs/0014`, which is `proposed`, so the accepted specification uses the term
-while the mechanism sits in one that binds nothing; and whether `orchestrator` names a component class at
-all is still open — see `docs/bootstrap.md` open question 3.
-
-The remaining `proposed` entries are vocabulary for `specs/0004-generation-and-reproducibility.md`, which is
-not accepted, so promoting one would bind a definition to a mechanism that does not exist.
+The consequence is the same one they carry: `.claude/rules/compatibility.md` now governs a change to any
+definition here, and the first component built against one is the thing most likely to demand a change.
 
 | Concept | Summary |
 |---|---|

@@ -272,8 +272,10 @@ orchestrator reads prose, which is stage 2's abandonment criterion not having fi
 
 **Conditions 3, 4, and 5 — an escalation predicate, the validation closure, the acceptance gate's mode
 reporting.** Not met, and not waived. The requirements they covered — R9, R17, R18, R19, R20 — moved to
-`specs/0014-acceptance-closure-and-escalation.md`, which is `proposed` and carries those three conditions
-verbatim. They span stages 3 through 5, so meeting them here would have meant asserting them.
+`specs/0014-acceptance-closure-and-escalation.md`, which was `proposed` at the time and carries those three
+conditions verbatim. They span stages 3 through 5, so meeting them here would have meant asserting them.
+That document was itself accepted on 2026-07-31 with the three still open, so the requirements bind today
+on a maintainer's authority rather than on the evidence this move was made to wait for.
 
 **What the path did *not* narrow.** This specification instructed that a phase in R2 shown to be ceremony
 should be removed before acceptance. None was: all seven ran, and the two a knowledge-only change might

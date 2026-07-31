@@ -3,7 +3,7 @@ id: concept.artifact-class
 type: term
 title: artifact class
 description: What a produced artifact is, named independently of how any technology expresses it.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }

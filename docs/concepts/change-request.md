@@ -3,7 +3,7 @@ id: concept.change-request
 type: term
 title: change request
 description: The recorded request that originates every change to a repository Siegard governs.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [workflow, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

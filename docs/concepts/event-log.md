@@ -21,6 +21,6 @@ It is the sole durable source for workflow history. Conversation history and aut
 are context, both can be truncated or rewritten, and neither is normative.
 
 `CLAUDE.md` under **Determinism and state** requires workflow state to be persisted outside the
-conversation; an append-only log is one way to satisfy that, and it is not yet decided. The term is
-defined here because rules reference it; the architecture it implies binds nothing yet — see
-`docs/bootstrap.md` for the stage that will settle it.
+conversation, and the append-only log is how this framework satisfies it:
+`docs/adr/0011-append-only-workflow-events-derived-by-replay.md` was accepted on 2026-07-31, so the
+architecture the term implies binds rather than describing a candidate.

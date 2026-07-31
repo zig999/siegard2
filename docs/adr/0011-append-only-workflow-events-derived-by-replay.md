@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Record workflow history as an append-only event log, and replay it for state
-status: proposed
+status: accepted
 contract_version: adr/2
 ---
 
@@ -60,7 +60,8 @@ artifact R4 requires and R4 already fixes its content.
 ## Consequences
 
 - Open question 1's gate is met, and `docs/bootstrap.md` records that. A met gate is evidence, not
-  authority: this ADR stays `proposed` until a maintainer accepts it.
+  authority, so this ADR stayed `proposed` until a maintainer accepted it on 2026-07-31 — which makes it
+  the one record in this repository promoted on evidence that was already in place rather than ahead of it.
 - The migration burden the open question warned about is now real and unpaid. `workflow-event/1` has one
   version and one producer of logs, so `.claude/rules/compatibility.md` has not yet been exercised on
   persisted state — the first bump to `workflow-event/2` must carry a migration for logs already
@@ -77,7 +78,22 @@ artifact R4 requires and R4 already fixes its content.
   that the orchestrator's logic is a tested script, which is a narrower claim; open question 3 keeps the
   rest.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. A second workflow fixture whose path differs from the first — a `none` verdict, or a workflow that
    exhausts its attempt limit — replays and is checked, showing the table generalizes beyond one

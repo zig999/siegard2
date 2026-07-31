@@ -1,7 +1,7 @@
 ---
 id: "0005"
 title: Let Claude Code execute, and let the framework provide capabilities and contracts
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -68,9 +68,11 @@ This specification uses these terms as the concept bundle defines them:
 [least privilege](../docs/concepts/least-privilege.md),
 [target pack](../docs/concepts/target-pack.md).
 
-Two terms this specification uses that the bundle does not yet hold, because their definitions belong to
-the specifications that decide them: *capability class* (`specs/0006`) and *capability declaration*
-(`specs/0007`). Until those exist, this document uses them descriptively and binds nothing about them.
+Two terms this specification uses that the bundle does not hold, because their definitions belong to the
+specifications that decide them: *capability class* (`specs/0006`) and *capability declaration*
+(`specs/0007`). Both were accepted on 2026-07-31, so this document's R9 through R13 now bind against
+something specified rather than against a description — which is condition 4 below, and the one this
+document's acceptance actually met.
 
 ## The division of responsibility
 
@@ -152,7 +154,22 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
 - **R19** — No component of this framework may weaken a guarantee in the repository that installs it: it
   requests no permission its declaration does not name, and it disables no check that repository runs.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. A generator produces the distribution from `src/claude/`, a fixture installs it, and Claude Code
    loads the installed components. R9 is unproven until something is reached through the distribution
@@ -163,7 +180,8 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
    thin path exercised one agent and one entry point, which is not yet a selection.
 3. A hook enforces one guarantee under test, with both outcomes covered, showing R5 holds for something
    other than a script the developer chose to run — `docs/bootstrap.md` open question 5.
-4. `specs/0006` and `specs/0007` exist, so that *capability class* and *capability declaration* are
-   defined rather than used descriptively, and R9 through R13 bind something specified.
+4. ~~`specs/0006` and `specs/0007` exist~~ **Met** on 2026-07-31: both were written and accepted, so
+   *capability class* and *capability declaration* are defined rather than used descriptively, and R9
+   through R13 bind something specified.
 5. One capability is retired or superseded through the lifecycle `specs/0013` defines, showing R10's
    contract-only dependency survives a change in what it depends on.

@@ -3,7 +3,7 @@ id: concept.generation-scope
 type: term
 title: generation scope
 description: The closed, frozen set of knowledge objects one generation compiles, and part of what a reproducibility claim names.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }

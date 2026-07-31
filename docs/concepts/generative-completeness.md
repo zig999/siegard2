@@ -3,7 +3,7 @@ id: concept.generative-completeness
 type: term
 title: generative completeness
 description: Whether a generation scope holds every domain fact production needs, evaluated as a blocking validation.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, validation, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }

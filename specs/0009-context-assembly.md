@@ -1,7 +1,7 @@
 ---
 id: "0009"
 title: Fix the context package as a contract, and measure whether resolution earns its place
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -184,7 +184,22 @@ still appear to differ, which is the rule this document's **Decided elsewhere** 
   limit recomputes to a different set the moment the traversal reorders. Under this requirement the failure
   becomes visible as a version mismatch instead of a hash that silently stops matching.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. A bundle large enough for selection to matter exists as a fixture, and resolution runs against it.
    Every requirement here is unexercised today, and R11 in particular cannot be satisfied by argument —

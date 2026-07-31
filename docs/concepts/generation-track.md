@@ -3,7 +3,7 @@ id: concept.generation-track
 type: term
 title: generation track
 description: Whether an artifact class is produced by template expansion or by agent judgment, and therefore what guarantee it carries.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }

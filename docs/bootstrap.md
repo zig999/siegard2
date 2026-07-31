@@ -9,10 +9,17 @@ lands.
 `CLAUDE.md` forbids speculative generalization: introduce an abstraction only when a current
 requirement needs it and its reusable contract can be tested. That rule applies to the framework's own
 architecture, which is why the event model, the generated distribution, and the orchestrator/agent
-split are recorded as `proposed` ADRs rather than asserted as invariants.
+split were held as `proposed` records rather than asserted as invariants.
 
 Rules distilled from working code are testable. Rules written ahead of it are guesses that read like
 requirements. Build the thin path, then promote the rules it actually needed.
+
+On 2026-07-31 a maintainer promoted every remaining `proposed` artifact — eleven specifications, three
+ADRs, nineteen concepts — in one decision, ahead of the sequence below. This file's job does not change
+because of that. A status says which text is authoritative; it does not say which mechanism exists, and
+almost none of the mechanisms below do. What the promotion did change is the cost of correcting a design
+that turns out to be wrong: `.claude/rules/compatibility.md` now governs each of those documents, so the
+correction is a breaking change with a migration path and a migration test.
 
 ## The thin end-to-end path
 
@@ -141,9 +148,11 @@ as satisfied.
 
 ## Open architectural questions
 
-`CLAUDE.md` states what must hold; it does not choose these designs, and neither does anything else yet.
-Each question below carries the gate that would settle it. Until a gate is met, the design named is a
-candidate, not a decision — do not build on it as if it were fixed, and do not record it as one.
+`CLAUDE.md` states what must hold; it does not choose these designs. Each question below carries the gate
+that would settle it, and a gate is met by a mechanism under test, never by a status change: the promotion
+of 2026-07-31 closed question 1, whose gate was already met, and left the rest exactly where they were.
+Until a gate is met, do not treat the design named as demonstrated, whatever the status of the document
+that describes it.
 
 These gates were the acceptance conditions of ADRs that recorded candidate designs for components that
 do not exist. Five such ADRs were removed once their operative rules were held by `CLAUDE.md` alone; the
@@ -163,11 +172,11 @@ different case from removing a record that only duplicated a rule.
    end. If a mutable record turns out to be sufficient for the workflows the framework actually runs, take
    it — the event model costs a migration burden on every schema change, and nothing has yet earned it.
 
-   **Every gate condition is now met** — `schemas/workflow-event.v1.json`, `scripts/workflow_lib.py`,
-   `tests/test_workflow_events.py`, `fixtures/knowledge-change-loop/`. What is not done is recording the
-   decision: a met gate is evidence that the candidate works, not authority that it is chosen, and an
-   agent does not promote its own design. The decision belongs in an ADR a maintainer accepts. Until
-   then, treat the append-only model as the candidate that has passed its test, not as settled.
+   **Settled.** Every gate condition was met — `schemas/workflow-event.v1.json`,
+   `scripts/workflow_lib.py`, `tests/test_workflow_events.py`, `fixtures/knowledge-change-loop/` — and
+   `docs/adr/0011-append-only-workflow-events-derived-by-replay.md` was accepted on 2026-07-31, which
+   records the decision the evidence had been waiting for. This is the one question whose gate was met
+   before its record was accepted rather than after.
 2. **How the distribution is produced.** That `dist/.claude/` is generated, reproducible, and never
    hand-edited is settled by `CLAUDE.md` **Repository layout** and `.claude/rules/distribution.md`. Its
    *shape* is settled too, as of 2026-07-31: a plugin root, per ADR-0012 and `specs/0008`, so the generator
@@ -228,7 +237,7 @@ forecloses nothing.
 | command system | ADR-0009: there is no command class | nothing — the class does not exist |
 | worker model | `docs/concepts/specialized-agent.md` | open question 3's gate |
 | hook system | `CLAUDE.md` **Security** | open question 5's gate — the first hook under test |
-| template system | `specs/0004` (`proposed`); `docs/concepts/generation-track.md` | stage 4, and 0004's acceptance |
+| template system | `specs/0011`, `specs/0004`; `docs/concepts/generation-track.md` | stage 4 — 0004's acceptance is no longer the blocker |
 | target pack model | `.claude/rules/claude-code-authoring.md` **Target packs**; `specs/0004` | a pack with a fixture, after 0004 is accepted |
 | framework lifecycle | `.claude/rules/compatibility.md` | the migration test that rule is already owed |
 
@@ -324,9 +333,12 @@ depend on cooperation.
 - No `templates/`. No fixture exercises the generation pipeline of spec 0004 or the distribution. The
   workflow of spec 0001 now has one, `fixtures/knowledge-change-loop/`, which exercises its control flow
   but produces no code and no context package.
-- `specs/0001`, `0002`, and `0003` are `accepted`; `0004` and `0014` are `proposed`. Normative source 1
-  binds for the knowledge layer and for the workflow, and binds nothing for the generation pipeline, the
-  acceptance closure, or escalation.
+- Every specification, ADR, and concept is `accepted` as of 2026-07-31, so normative source 1 now binds for
+  the generation pipeline, the acceptance closure, escalation, and the whole framework family as well as
+  for the knowledge layer and the workflow. Most of that binds on a maintainer's decision rather than on
+  evidence: the open questions below and the acceptance conditions inside each promoted document are the
+  measure of what is still unbuilt, and they did not close when the statuses changed. Read a `status:
+  accepted` here as "this is the design of record", not as "this was demonstrated".
   Spec 0003 was accepted on 2026-07-30 after every condition it set was met by a component that
   exercises it — see `fixtures/knowledge-two-context/README.md` for the evidence, and that
   specification's **What satisfied acceptance** for the six defects building the evidence exposed and

@@ -1,7 +1,7 @@
 ---
 id: "0006"
 title: Close the set of capability classes, and give each one thing it owns
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -149,7 +149,22 @@ document growing a class for it.
   capability under `specs/0008` R12, which is what makes the `deprecated` state of R14 observable from an
   installation rather than only from a release.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. At least one capability exists in each of at least four classes, each with a fixture. Today two
    classes are occupied, so R1's closed set is a commitment rather than a demonstrated division of work —

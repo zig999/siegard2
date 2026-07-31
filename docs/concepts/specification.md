@@ -3,7 +3,7 @@ id: concept.specification
 type: term
 title: specification
 description: A normative document in specs/, the highest precedence source for this repository.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [governance, normative-source]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

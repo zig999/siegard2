@@ -3,7 +3,7 @@ id: concept.orchestrator
 type: term
 title: orchestrator
 description: The component that chooses a workflow transition by lookup on a validated artifact's closed field, and records what happened.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [determinism, workflow]
 generated: { by: claude-opus-5, at: 2026-07-31T00:35:31Z }

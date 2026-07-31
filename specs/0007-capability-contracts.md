@@ -1,7 +1,7 @@
 ---
 id: "0007"
 title: Make a capability describe itself well enough to be chosen without being read
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -161,10 +161,26 @@ This specification uses these terms as the concept bundle defines them:
   value presented as a calibrated one is a false report, and it is the route by which a value chosen once
   to get a first run moving becomes a framework default nobody decided to ship.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. Capabilities in at least three classes carry a full declaration, and a validator in `scripts/` rejects
-   an incomplete one. Today no declaration format is enforced anywhere, so R1 binds nothing.
+   an incomplete one. No declaration format is enforced anywhere today, so R1 binds without anything
+   checking it — which is the gap this condition exists to close, not a reason to soften R1.
 2. A consumer — a script, or a model given only the declarations — selects correctly between two
    capabilities whose objectives are close, on the strength of R4 alone. If it cannot, R4 is
    underspecified and the repair belongs here rather than in the capabilities.

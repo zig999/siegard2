@@ -3,7 +3,7 @@ id: concept.generation-manifest
 type: term
 title: generation manifest
 description: The lock that records where each produced artifact went, so a later run reuses the placement instead of deciding it again.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, determinism, traceability, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }

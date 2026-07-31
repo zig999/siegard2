@@ -1,7 +1,7 @@
 ---
 id: "0012"
 title: Admit one stack at a time, and let a pack assume its technology instead of abstracting over it
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -147,7 +147,22 @@ This specification uses these terms as the concept bundle defines them:
   to be violated when a pack is extracted from a working system, because everything in that system looks
   like a convention until a second repository disagrees.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. One pack exists and a fixture exercises it end to end, producing at least one artifact on each
    [generation track](../docs/concepts/generation-track.md). Every requirement here is unexercised.
@@ -160,5 +175,6 @@ This specification uses these terms as the concept bundle defines them:
    stack, with every fact the second repository disagrees with recorded. A pack that cannot survive that is
    the downstream architecture `CLAUDE.md` **Scope** excludes, wearing a pack's name.
 4. A pack swap is performed under R11, showing what regeneration recovers and what it does not.
-5. `specs/0004` is accepted. It is the authority for what a pack declares, and until it binds this document
-   specifies a unit around a declaration whose content is still a proposal.
+5. ~~`specs/0004` is accepted.~~ **Met** on 2026-07-31. It is the authority for what a pack declares, so
+   this document no longer specifies a unit around a declaration that binds nothing — with the same
+   qualification the preamble above records about how that acceptance was reached.

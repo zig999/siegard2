@@ -3,7 +3,7 @@ id: concept.specification-delta
 type: term
 title: specification delta
 description: The temporary artifact describing one requested change by reference to permanent knowledge.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [workflow, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }

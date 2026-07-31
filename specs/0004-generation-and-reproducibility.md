@@ -1,7 +1,7 @@
 ---
 id: "0004"
 title: Produce the system from knowledge, and lock what reproduces it
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -643,13 +643,29 @@ requirement:
 - how a governed repository installs the generation artifacts, and how the distribution carries the pack;
 - which pack the framework ships first, and whether it ships any — each is demand-pulled by a fixture.
 
-## Validation required before acceptance
+## What satisfied acceptance
 
-This specification presupposes components that do not exist. It binds nothing until:
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
 
-1. a maintainer accepts this specification. Both specifications it derives from are already accepted —
-   spec 0002, and spec 0003 on 2026-07-30 — and the `CLAUDE.md` **Scope** question R12 through R18 rested
-   on is settled, so this specification's own acceptance is the whole of what this condition still asks;
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
+
+This specification presupposes components that do not exist. Condition 1 is met; the rest are not, and
+each remains the evidence this document owes:
+
+1. ~~a maintainer accepts this specification.~~ **Met** on 2026-07-31. Both specifications it derives from
+   were already accepted — spec 0002, and spec 0003 on 2026-07-30 — and the `CLAUDE.md` **Scope** question
+   R12 through R18 rested on was settled;
 2. one target pack exists under `src/claude/` with a declaration conforming to a schema, and a test proves
    rejection of a declaration naming a class outside the vocabulary (R8) and of a declaration carrying a
    naming convention (R14);

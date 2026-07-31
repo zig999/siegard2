@@ -3,7 +3,7 @@ id: concept.artifact-persistence
 type: term
 title: artifact persistence
 description: Whether an artifact is kept in version control, recomputed from committed inputs, or discarded with the run that made it.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T23:18:39Z }

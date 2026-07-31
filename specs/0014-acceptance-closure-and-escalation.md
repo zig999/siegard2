@@ -1,7 +1,7 @@
 ---
 id: "0014"
 title: Decide acceptance from the observed diff, and escalate only on a validated field
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -36,7 +36,9 @@ acceptance gate reporting each knowledge object's mode.
 
 Rather than accept a specification whose validation had not happened, the requirements those three
 conditions covered were moved here and the conditions moved with them. `specs/0001` now binds only what
-was exercised; this document holds what was not, and binds nothing until the conditions below are met.
+was exercised; this document holds what was not. It was accepted on 2026-07-31 with those conditions still
+open — see **What satisfied acceptance** — so the requirements moved here now bind on a maintainer's
+authority rather than on the evidence they were moved out to wait for.
 
 The requirement numbers in `specs/0001` were retained as forwarding entries rather than renumbered.
 `scripts/validate_specs.py` requires requirement ids to be sequential from R1 and records the reason:
@@ -97,7 +99,22 @@ This specification uses these terms as the concept bundle defines them:
   on independent review. A report that presents review as a guarantee is a false report. Formerly
   `specs/0001` R20.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 These are the three conditions `specs/0001` set and did not meet, carried here with the requirements they
 cover:

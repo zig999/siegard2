@@ -3,7 +3,7 @@ id: concept.generation-plan
 type: term
 title: generation plan
 description: The derived, inspectable list of what one generation will produce, validated before any file is written.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }

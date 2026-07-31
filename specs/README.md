@@ -29,19 +29,23 @@ public artifact is breaking under `.claude/rules/compatibility.md`.
 | [0001](0001-knowledge-object-driven-development.md) | Knowledge-object-driven development | **`accepted`** | the workflow's phases and transitions, context resolution, what acceptance requires of a decision and its evidence, the maturity ladder |
 | [0002](0002-knowledge-economy-principles.md) | Knowledge economy principles | **`accepted`** | what may be recorded as permanent knowledge, and the boundary between domain and stack fact |
 | [0003](0003-knowledge-ontology-and-notation.md) | Knowledge ontology and notation | **`accepted`** | the node types, edges, notation, and attribute type system |
-| [0004](0004-generation-and-reproducibility.md) | Generation and reproducibility | `proposed` | the calibrated reproducibility promise, artifact classes, generation tracks, the derived artifacts |
-| [0014](0014-acceptance-closure-and-escalation.md) | Acceptance closure and escalation | `proposed` | how the acceptance closure is computed, what the gate reports, how escalation is decided |
+| [0004](0004-generation-and-reproducibility.md) | Generation and reproducibility | **`accepted`** | the calibrated reproducibility promise, artifact classes, generation tracks, the derived artifacts |
+| [0014](0014-acceptance-closure-and-escalation.md) | Acceptance closure and escalation | **`accepted`** | how the acceptance closure is computed, what the gate reports, how escalation is decided |
 
 ## The framework
 
-Every entry is `proposed` until the evidence its own **Validation required before acceptance** section
-names exists. Writing them is ordinary work and binds nothing; accepting one is a maintainer's decision.
+Every entry was written as `proposed`, to be accepted when the evidence its own validation section named
+existed. All nine were accepted on 2026-07-31 by maintainer decision instead, with that evidence still
+outstanding. Each records the fact and the outstanding conditions in its **What satisfied acceptance**
+section, and each is now governed by `.claude/rules/compatibility.md`, so a change to a requirement is a
+breaking change rather than a revision.
 
 **No framework specification is accepted before the method specification it depends on.** Every one of the
 nine rests on `specs/0001` or `specs/0004`; accepting a framework document while its foundation binds
-nothing would give it an authority its own basis does not have. `specs/0001` was accepted on 2026-07-31, so
-the rule now bites only where `specs/0004` is the foundation — which is `0011`, `0012`, and every document
-that inherits an artifact class or a generation track from it.
+nothing would give it an authority its own basis does not have. The rule held through the promotion of
+2026-07-31: `specs/0001` was already accepted, and `specs/0004` was accepted in the same decision, so no
+framework document ended up resting on a foundation that binds nothing. What the rule does not reach is the
+question that decision left open — whether either foundation had earned its own acceptance.
 
 That rule is checked rather than trusted, as of 2026-07-31. `scripts/validate_specs.py` derives the
 prerequisite graph from the acceptance conditions each document already writes — no frontmatter field was
@@ -80,3 +84,8 @@ The family is not written all at once, and not in id order. `docs/bootstrap.md` 
 the gate that settles each open question; a specification here is written when the evidence its
 acceptance requires is within reach, so that it records a design rather than guesses one. The agenda that
 maps each document to its gate is in that file under **The framework-architecture agenda**.
+
+Acceptance running ahead of that sequence, as it did on 2026-07-31, does not close the gates. Each remains
+open, listed in every promoted document's **What satisfied acceptance** section, and the sequence is still
+what has to be built. What changed is the cost of being wrong: a design these documents got wrong now costs
+a migration to correct rather than an edit.

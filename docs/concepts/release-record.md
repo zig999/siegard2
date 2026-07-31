@@ -3,7 +3,7 @@ id: concept.release-record
 type: term
 title: release record
 description: What changed between one framework version and the last, read to decide whether to upgrade.
-status: proposed
+status: accepted
 contract_version: concept/1
 tags: [framework, lifecycle]
 generated: { by: claude-opus-5, at: 2026-07-31T01:49:02Z }

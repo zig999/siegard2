@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Hold a template to byte identity, and give it no way to reach outside its inputs
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -139,7 +139,22 @@ This specification uses these terms as the concept bundle defines them:
 - **R18** — A template does not decide whether its output is committed, recomputed, or discarded. That is the
   artifact class's persistence, fixed by `specs/0004`.
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. One template exists, produces one artifact class, and a fixture expands it. Every requirement here is
    unexercised — `docs/bootstrap.md` stage 4.
@@ -150,7 +165,9 @@ This specification uses these terms as the concept bundle defines them:
    case that produces a spurious diff and is invisible in a fixture with one element.
 4. R10 is tested in the failing direction: expansion over knowledge missing a required fact reports the gap
    rather than emitting a default.
-5. `specs/0004` is accepted. It is the authority for artifact classes, tracks, and persistence, and this
-   document is a specialization of decisions that currently bind nothing.
+5. ~~`specs/0004` is accepted.~~ **Met** on 2026-07-31. It is the authority for artifact classes, tracks,
+   and persistence, so this document is now a specialization of decisions that bind — though of decisions
+   accepted on the same maintainer's authority rather than on evidence, which is what the preamble above
+   records.
 6. One artifact class is moved from the deterministic track to the judged track, or the reverse, on the
    evidence of R2 — showing the track is a measured property rather than a label assigned once.
