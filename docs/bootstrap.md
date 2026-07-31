@@ -224,7 +224,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 505 tests over fourteen areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 524 tests over fifteen areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
 | hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
@@ -232,6 +232,9 @@ at a specific point:
 | "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | **active**; a hand edit fails `make dist-check` on the recorded digest and again on the comparison. Not yet *enforced* — that is the hook of open question 5 |
 | "no source-only paths in the distribution" | `dist/` is generator-produced | **active**, with the rejection direction covered: a planted file under `specs/` in the output is reported |
 | `templates/` holds artifact generators that conform to schemas (`CLAUDE.md` layout) | a scaffold exists and `scripts/scaffold.py` validates its output | **active**; eleven scaffolds, each expanded and validated against its real contract, and each refusing to fill in a value nobody supplied |
+| capability status derived from checkable facts (`specs/0006` R17) | `check_capabilities.py` runs in `make validate` | **active**; the manifest's statuses are compared against what the generator's own selection derives, and a hand-edited one is reported |
+| no uncalibrated threshold ships (`specs/0007` R19, R20) | `check_capabilities.py` runs in `make validate` | **active**; every exemption cites the requirement that calibrated it, and a bare number in a shipped file fails the build |
+| framework lifecycle: upgrade detects divergence and stops (`specs/0008` R17) | `install_dist.py` and the `upgrade` skill | **active**, with three outcomes recorded in `fixtures/upgrade-run/` and reproduced by test |
 | every capability needs a fixture (`CLAUDE.md` scope) | `fixtures/` holds its first case | **active** for the knowledge layer; pending for every other capability |
 | migration tests (`rules/compatibility.md`) | a second contract version exists | pending |
 
@@ -373,7 +376,7 @@ forecloses nothing.
 | hook system | `CLAUDE.md` **Security** | open question 5's gate — the first hook under test |
 | template system | `fixtures/pack-typescript/templates/expand.py` | **active**: ten templates, each held to byte identity, to reading only its inputs, and to naming a missing domain fact rather than defaulting one |
 | target pack model | `fixtures/pack-typescript/` | **exercised as a fixture**: twelve classes, ten templates, two agents, byte identity tested on every template. Not admitted under `specs/0012` R13, which wants a pack shown to serve *any* repository on its stack, and blocked from `src/claude/` by D4 |
-| framework lifecycle | `.claude/rules/compatibility.md` | the migration test that rule is already owed |
+| framework lifecycle | `.claude/rules/compatibility.md`, `scripts/migrate_contracts.py`, the `upgrade` skill | **settled for the version half**: the migration test is paid and upgrade detects divergence. Deprecation and retirement are stated and unexercised — no capability has completed `specs/0006` R14's full cycle |
 
 The framework specifications this agenda eventually produces belong in `specs/` at `0005` and above.
 Splitting `specs/` into subdirectories was considered and rejected: 33 concept `sources` resolve to those
@@ -479,10 +482,10 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 505 tests across fourteen areas: the knowledge layer, the workflow loop, the
+- `make test` runs 524 tests across fifteen areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
-  eleven scaffolds in `templates/`, the first shipped hook, context resolution, the generation pipeline, the first target pack, and one generation run end to end.
+  eleven scaffolds in `templates/`, the first shipped hook, context resolution, the generation pipeline, the first target pack, one generation run end to end, and the capability lifecycle.
   Two figures in this file drifted before anything derived them — a test count that read 193 against
   an actual 192, and a specification-set count of 36 against 35 — so the number above is stated once
   and `make test` is the authority.

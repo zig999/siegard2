@@ -24,8 +24,14 @@ validate:
 	python3 scripts/project_knowledge.py --check || fail=1; \
 	python3 scripts/measure_ontology.py --check || fail=1; \
 	python3 scripts/replay_workflow.py --check || fail=1; \
+	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
 
+# `check_capabilities.py` runs last in the chain because it reads the committed
+# distribution: specs/0006 R17 derives each capability's status from whether the
+# distribution installs it and whether a fixture exercises it, and both facts are
+# only available once `make dist` has produced a manifest to compare against.
+#
 # `check_contract_versions.py` sits with the schema tier because it validates the contracts
 # every validator below it loads. Its polarity is inverted relative to the derived-tree
 # checks: it verifies by default and rewrites only under `--update`, which is deliberately

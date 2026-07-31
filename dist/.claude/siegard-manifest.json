@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:abfd2d9fc1c9f33312bfccba31a7c2d7742ff8aca6d6db4fbd7df4f52b7fabfb",
+  "source_revision": "sha256:0db2bd1f3bb093607071120df7da593c638fea92a4ca53123e0986b5f1035027",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -151,7 +151,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:3839f6c0abc518a8839ed5aca858882a47c4019f757f62049b6657a7781914de"
+      "digest": "sha256:e97510a91d91b1fd4afdca10831b2dec8808a323bb4cefb909c89115b4dc04ba"
     },
     {
       "path": "skills/generate/SKILL.md",
@@ -162,6 +162,11 @@
       "path": "skills/knowledge-change/SKILL.md",
       "source": "src/claude/skills/knowledge-change/SKILL.md",
       "digest": "sha256:ec0f04d4fbc330410b2063185535985980529e353a263d16859c79f6bc46738e"
+    },
+    {
+      "path": "skills/upgrade/SKILL.md",
+      "source": "src/claude/skills/upgrade/SKILL.md",
+      "digest": "sha256:9e51627bed8224a242ab17dc7115f066a00aa22336c1d0384da054d586b6b709"
     }
   ],
   "schemas": [
@@ -278,6 +283,12 @@
       "class": "skill",
       "status": "active",
       "path": "skills/knowledge-change/SKILL.md"
+    },
+    {
+      "name": "upgrade",
+      "class": "skill",
+      "status": "active",
+      "path": "skills/upgrade/SKILL.md"
     },
     {
       "name": "concept-author",
