@@ -93,10 +93,21 @@ class Layout(Built):
         for directory in {p.parent for p in self.root.rglob("*") if p.is_file()}:
             self.assertTrue(any(directory.iterdir()))
 
-    def test_directories_with_no_occupant_are_absent(self) -> None:
-        """hooks/ and templates/ have no occupant yet, so R7 keeps them out entirely."""
-        for name in ("hooks", "templates"):
+    def test_a_directory_in_the_closed_set_with_no_occupant_is_absent(self) -> None:
+        """specs/0008 R7, derived rather than listed.
+
+        This named `hooks` and `templates` until a hook shipped. The property is that every
+        directory the closed set allows is either populated or absent — never present and empty —
+        so occupying one should not mean editing this.
+        """
+        occupied = {p.split("/")[0] for p in self.files if "/" in p}
+        for name in sorted(verify_dist.ALLOWED_ROOT - occupied):
             self.assertFalse((self.root / name).exists(), f"{name}/ shipped with nothing in it")
+
+    def test_at_least_one_allowed_directory_is_still_unoccupied(self) -> None:
+        """Otherwise the assertion above would pass by having nothing to check."""
+        occupied = {p.split("/")[0] for p in self.files if "/" in p}
+        self.assertTrue(verify_dist.ALLOWED_ROOT - occupied)
 
     def test_no_rules_and_no_packs(self) -> None:
         """specs/0008 R10 and R23."""

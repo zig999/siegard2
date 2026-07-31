@@ -342,3 +342,58 @@ class Components(TreeCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Hooks(TreeCase):
+    """The hook class, whose contract is its declaration rather than frontmatter."""
+
+    source = REPO_ROOT / "src" / "claude"
+
+    def test_the_real_tree_is_clean(self) -> None:
+        code, output = run(validate_components, self.root)
+        self.assertEqual(0, code, output)
+        self.assertIn("1 hook(s)", output)
+
+    def test_a_declared_hook_with_no_script_is_reported(self) -> None:
+        (self.root / "hooks" / "reject-derived-write.py").unlink()
+        code, output = run(validate_components, self.root)
+        self.assertEqual(1, code, output)
+        self.assertNames(output, "reject-derived-write.py", "does not hold")
+
+    def test_an_undeclared_script_is_reported(self) -> None:
+        (self.root / "hooks" / "stowaway.py").write_text("#!/usr/bin/env python3\n")
+        code, output = run(validate_components, self.root)
+        self.assertEqual(1, code, output)
+        self.assertNames(output, "stowaway.py", "never be loaded")
+
+    def test_a_missing_declaration_is_reported(self) -> None:
+        (self.root / "hooks" / "hooks.declaration.json").unlink()
+        code, output = run(validate_components, self.root)
+        self.assertEqual(1, code, output)
+        self.assertNames(output, "hooks.declaration.json")
+
+    def test_a_default_timeout_is_refused(self) -> None:
+        """specs/0010 R11: 600 is the default the requirement exists to displace."""
+        self.rewrite("hooks/hooks.declaration.json", '"timeout": 10', '"timeout": 600')
+        code, output = run(validate_components, self.root)
+        self.assertEqual(1, code, output)
+        self.assertNames(output, "timeout")
+
+    def test_an_event_that_cannot_block_is_refused(self) -> None:
+        """specs/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
+        self.rewrite("hooks/hooks.declaration.json", '"PreToolUse"', '"PostToolUse"')
+        code, output = run(validate_components, self.root)
+        self.assertEqual(1, code, output)
+        self.assertNames(output, "event")
+
+    def test_a_hook_with_no_stated_guarantee_is_refused(self) -> None:
+        """specs/0010 R10 and specs/0006 R7: one hook, one named guarantee."""
+        import json as _json
+
+        path = self.root / "hooks" / "hooks.declaration.json"
+        data = _json.loads(path.read_text())
+        del data["hooks"][0]["guarantee"]
+        path.write_text(_json.dumps(data, indent=2) + "\n")
+        code, output = run(validate_components, self.root)
+        self.assertEqual(1, code, output)
+        self.assertNames(output, "guarantee")

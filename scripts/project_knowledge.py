@@ -32,6 +32,7 @@ from pathlib import Path
 from frontmatter_lib import REPO_ROOT, display
 
 from cli import cannot_run
+from derived_artifacts import DERIVED_NAMES
 
 try:
     import yaml  # noqa: F401
@@ -208,15 +209,27 @@ def _mermaid_id(node_id: str) -> str:
 
 
 def outputs(graph: Graph) -> dict[str, str]:
-    """Every derived file, keyed by name relative to the knowledge root."""
+    """Every derived file, keyed by name relative to the knowledge root.
+
+    The names are asserted against `derived_artifacts.DERIVED_NAMES`, which is the one place they
+    live. `src/claude/hooks/reject-derived-write.py` refuses writes to that set, and a second copy
+    of the list would drift in the worst direction: a hook protecting a file this no longer
+    produces, and not protecting one it does.
+    """
     materialized = materialize(graph)
     Draft202012Validator(json.loads(GRAPH_SCHEMA_PATH.read_text())).validate(materialized)
-    return {
+    produced = {
         "graph.json": json.dumps(materialized, indent=2, sort_keys=False, ensure_ascii=False) + "\n",
         "index.md": render_index(graph, materialized),
         "glossary.md": render_glossary(graph, materialized),
         "context-map.md": render_context_map(graph, materialized),
     }
+    if set(produced) != DERIVED_NAMES:
+        raise AssertionError(
+            f"the projections written here are {sorted(produced)} and derived_artifacts declares "
+            f"{sorted(DERIVED_NAMES)}; the hook and the materializer must agree"
+        )
+    return produced
 
 
 def run(root: Path, check: bool) -> tuple[int, list[str]]:

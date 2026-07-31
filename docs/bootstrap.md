@@ -173,9 +173,10 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 348 tests over nine areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 386 tests over ten areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
-| security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **partly active** |
+| security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
+| hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
 | `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | **active**; the generator reads that tree and nothing else, and a test asserts no path under `.claude/` reaches the distribution |
 | "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | **active**; a hand edit fails `make dist-check` on the recorded digest and again on the comparison. Not yet *enforced* — that is the hook of open question 5 |
 | "no source-only paths in the distribution" | `dist/` is generator-produced | **active**, with the rejection direction covered: a planted file under `specs/` in the output is reported |
@@ -278,6 +279,22 @@ different case from removing a record that only duplicated a rule.
    bind now. What is missing is enforcement. Gate: the first hook or script exercising "validate before
    acting" and "reject rather than repair" under test — which is also what turns the deferred
    `.claude/rules/security.md` from a plan into a rule distilled from working code.
+
+   **Met, for one guarantee.** `src/claude/hooks/reject-derived-write.py` refuses a write to a knowledge
+   projection: it validates before acting, rejects without repairing, fails closed on unparseable input
+   and on a path that will not resolve inside the tree it governs, and decides on a closed set with no
+   model in the loop. Thirty cases cover it in both directions, including that a denial exits 2 rather
+   than 1 — `specs/0010` R2 makes any other non-zero code non-blocking, so a hook that signalled failure
+   by exiting 1 would permit exactly what it was written to prevent.
+
+   Two things the work added that the gate did not name. The hook's declaration is authored data with a
+   contract — `schemas/hook.v1.json`, checked by `validate_components.py` — rather than a registry inside
+   the generator, because a rule only a script can see is the thing this repository is built against. And
+   `scripts/derived_artifacts.py` holds the derived set once: the materializer asserts its own output
+   equals it, so the hook cannot end up protecting a file nothing produces while missing one it does.
+
+   What is still missing is the rule file. `.claude/rules/security.md` waits for a second and third hook
+   to distil from, and one hook is a case rather than a pattern.
 
 ## The framework-architecture agenda
 
@@ -411,10 +428,10 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 348 tests across nine areas: the knowledge layer, the workflow loop, the
+- `make test` runs 386 tests across ten areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
-  eleven scaffolds in `templates/`.
+  eleven scaffolds in `templates/`, and the first shipped hook.
   Two figures in this file drifted before anything derived them — a test count that read 193 against
   an actual 192, and a specification-set count of 36 against 35 — so the number above is stated once
   and `make test` is the authority.

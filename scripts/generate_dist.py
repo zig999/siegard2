@@ -84,6 +84,7 @@ SHIPPED_SCHEMAS = {
     "skill.v1.json": None,  # a governed repository does not author framework components
     "agent.v1.json": None,  # same
     "plugin.v1.json": None,  # same; the harness reads plugin.json, the consumer does not validate it
+    "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json
 }
 
 # Scripts that ship as executables. specs/0008 R9 gives them `bin/`. workflow_lib.py is a
@@ -95,10 +96,27 @@ SHIPPED_EXECUTABLES = {
     "replay_workflow.py": "state reconstruction from the event log",
     "workflow_lib.py": "imported by both; ships beside them so the import resolves",
     "cli.py": "the exit-code convention orchestrate.py imports; a shipped import must ship",
+    "derived_artifacts.py": "the closed derived set the reject-derived-write hook imports",
 }
 
 # Which capability class each source subtree carries, per specs/0006 R1.
 CLASS_BY_TREE = {"skills": "skill", "agents": "specialized-agent"}
+
+HOOK_DECLARATION = "hooks.declaration.json"
+
+
+def hook_declaration() -> list[dict]:
+    """The authored hook declarations, or an empty list when no hook ships.
+
+    Read rather than hardcoded: `specs/0010` R10 and R11 require a hook to state its event,
+    matcher, guarantee, and timeout, and a registry living inside this script would be a rule only
+    a script could see. `schemas/hook.v1.json` is its contract and `validate_components.py` checks
+    it, so the generator consumes something already validated.
+    """
+    path = SOURCE_ROOT / "hooks" / HOOK_DECLARATION
+    if not path.is_file():
+        return []
+    return json.loads(path.read_text())["hooks"]
 
 
 class Refused(Exception):
@@ -265,6 +283,20 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         version = name.split(".v")[1].split(".json")[0]
         schemas.append({"contract_version": f"{stem}/{version}", "path": f"schemas/{name}"})
 
+    # Hooks. specs/0008 R3 puts them in force while the plugin is enabled, which is what makes a
+    # session-wide guarantee installable at all.
+    hooks_root = SOURCE_ROOT / "hooks"
+    if hooks_root.is_dir():
+        declared = {entry["file"] for entry in hook_declaration()}
+        present = {p.name for p in hooks_root.iterdir() if p.is_file() and p.name != HOOK_DECLARATION}
+        assert_total(present, declared, "src/claude/hooks/", HOOK_DECLARATION)
+        for name in sorted(declared):
+            add(f"hooks/{name}", hooks_root / name)
+            capabilities.append(
+                {"name": Path(name).stem, "class": "hook", "status": "active",
+                 "path": f"hooks/{name}"}
+            )
+
     # Executables. Their own directory is the import root, which is why workflow_lib.py is here.
     assert_imports_ship()
     for name in sorted(SHIPPED_EXECUTABLES):
@@ -280,13 +312,66 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     return files, capabilities, skipped
 
 
+def hooks_document() -> str | None:
+    """`hooks/hooks.json`, or None when nothing ships a hook.
+
+    Computed rather than authored: `specs/0010` R10 requires each hook to state its event, its
+    matcher, and its guarantee, and R11 requires it to state its own timeout. Those facts live in
+    `SHIPPED_HOOKS` beside the decision to ship, so a hook cannot be installed with a matcher
+    nobody wrote down. `${CLAUDE_PLUGIN_ROOT}` is what makes the command path resolve wherever the
+    consumer installed the plugin — ADR-0012 cites the documentation that establishes it.
+    """
+    declared = hook_declaration()
+    if not declared:
+        return None
+    events = sorted({entry["event"] for entry in declared})
+    return json.dumps(
+        {
+            "hooks": {
+                event: [
+                    {
+                        "matcher": entry["matcher"],
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "${CLAUDE_PLUGIN_ROOT}/hooks/" + entry["file"],
+                                "timeout": entry["timeout"],
+                            }
+                        ],
+                    }
+                    for entry in sorted(declared, key=lambda e: e["file"])
+                    if entry["event"] == event
+                ]
+                for event in events
+            }
+        },
+        indent=2,
+    ) + "\n"
+
+
 def build(target: Path) -> tuple[list[dict], list[str]]:
-    """Write the planned distribution into `target`, replacing whatever was there."""
+    """Write the planned distribution into `target`, replacing whatever was there.
+
+    Two files have no source of their own and are recorded against the generator: `hooks/hooks.json`
+    and the manifest. Everything else is copied byte for byte from framework source.
+    """
     files, capabilities, skipped = plan()
+
+    computed: dict[str, str] = {}
+    hooks_json = hooks_document() if any(e["path"].startswith("hooks/") for e in files) else None
+    if hooks_json is not None:
+        computed["hooks/hooks.json"] = hooks_json
+        files.append(
+            {
+                "path": "hooks/hooks.json",
+                "source": "scripts/generate_dist.py",
+                "digest": digest(hooks_json.encode("utf-8")),
+            }
+        )
 
     source_digest = digest(
         json.dumps(
-            [[entry["source"], entry["digest"]] for entry in sorted(files, key=lambda e: e["path"])],
+            [[e["source"], e["digest"]] for e in sorted(files, key=lambda e: e["path"])],
             separators=(",", ":"),
         ).encode("utf-8")
     )
@@ -298,28 +383,29 @@ def build(target: Path) -> tuple[list[dict], list[str]]:
         "installed": sorted(files, key=lambda e: e["path"]),
         "schemas": sorted(
             (
-                {"contract_version": s["contract_version"], "path": s["path"]}
-                for s in (
-                    {
-                        "contract_version": f"{n.partition('.v')[0]}/{n.split('.v')[1].split('.json')[0]}",
-                        "path": f"schemas/{n}",
-                    }
-                    for n, reason in SHIPPED_SCHEMAS.items()
-                    if reason
-                )
+                {
+                    "contract_version": f"{n.partition('.v')[0]}/{n.split('.v')[1].split('.json')[0]}",
+                    "path": f"schemas/{n}",
+                }
+                for n, reason in SHIPPED_SCHEMAS.items()
+                if reason
             ),
             key=lambda s: s["path"],
         ),
         "capabilities": sorted(capabilities, key=lambda c: (c["class"], c["name"])),
         "overrides": [],
     }
+
+    # The manifest records itself, so its digest is taken over the body without the self-entry and
+    # the body is then rendered again with it. Any other order would need the digest of a document
+    # that contains its own digest.
     body = json.dumps(manifest, indent=2) + "\n"
-    manifest_entry = {
-        "path": MANIFEST_NAME,
-        "source": "scripts/generate_dist.py",
-        "digest": digest(body.encode("utf-8")),
-    }
-    manifest["installed"] = sorted(manifest["installed"] + [manifest_entry], key=lambda e: e["path"])
+    manifest["installed"] = sorted(
+        manifest["installed"]
+        + [{"path": MANIFEST_NAME, "source": "scripts/generate_dist.py",
+            "digest": digest(body.encode("utf-8"))}],
+        key=lambda e: e["path"],
+    )
     body = json.dumps(manifest, indent=2) + "\n"
 
     if target.exists():
@@ -327,7 +413,10 @@ def build(target: Path) -> tuple[list[dict], list[str]]:
     for entry in files:
         destination = target / entry["path"]
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes((REPO_ROOT / entry["source"]).read_bytes())
+        if entry["path"] in computed:
+            destination.write_text(computed[entry["path"]])
+        else:
+            destination.write_bytes((REPO_ROOT / entry["source"]).read_bytes())
     (target / MANIFEST_NAME).write_text(body)
 
     return manifest["installed"], skipped

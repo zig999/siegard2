@@ -46,6 +46,9 @@ AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.v1.json"
 # the rationale is recorded in docs/adr/0009-component-contracts-from-anthropic-documentation.md.
 MAX_SKILL_BODY_LINES = 500
 
+HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.v1.json"
+HOOK_DECLARATION = "hooks.declaration.json"
+
 PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.v1.json"
 PLUGIN_DIR = ".claude-plugin"
 PLUGIN_MANIFEST = "plugin.json"
@@ -171,6 +174,55 @@ def check_agents(root: Path, failures: list[str]) -> int:
     return checked
 
 
+def check_hooks(root: Path, failures: list[str]) -> int:
+    """Validate the hook declaration, and hold it to the files beside it.
+
+    A hook is a script rather than a frontmatter artifact, so what a per-file schema can check is
+    its declaration: `specs/0010` R10 requires a hook to state its event, its matcher, and its
+    guarantee, and R11 its own timeout. `schemas/hook.v1.json` is that contract.
+
+    The cross-file half is the correspondence. A declared hook with no script would install a
+    `hooks.json` pointing at nothing, and a script nobody declared would sit in `src/claude/hooks/`
+    looking installed while the harness never loads it — the silent failure `specs/0008` R8 names
+    for a different directory and which applies here for the same reason.
+    """
+    declaration = root / HOOK_DECLARATION
+    if not declaration.is_file():
+        failures.append(
+            f"{display(root)}: hooks/ holds no {HOOK_DECLARATION}, so nothing states what these "
+            f"scripts bind (specs/0010 R10)"
+        )
+        return 0
+
+    try:
+        data = json.loads(declaration.read_text())
+    except json.JSONDecodeError as exc:
+        failures.append(f"{display(declaration)}: not valid JSON: {exc}")
+        return 0
+
+    validator = load_validator(HOOK_SCHEMA_PATH)
+    errors = sorted(validator.iter_errors(data), key=lambda e: list(e.path))
+    for err in errors:
+        where = ".".join(str(p) for p in err.path) or "(root)"
+        failures.append(f"{display(declaration)}: {where}: {err.message}")
+    if errors:
+        return 0
+
+    declared = {entry["file"] for entry in data["hooks"]}
+    present = {p.name for p in root.iterdir() if p.is_file() and p.name != HOOK_DECLARATION}
+    for name in sorted(declared - present):
+        failures.append(
+            f"{display(declaration)}: declares {name}, which hooks/ does not hold — the "
+            f"installation would point at a script that is not there"
+        )
+    for name in sorted(present - declared):
+        failures.append(
+            f"{display(root / name)}: no entry in {HOOK_DECLARATION} declares it, so it would "
+            f"never be loaded (specs/0010 R10)"
+        )
+    return len(declared & present)
+
+
 def check_plugin_manifest(entry: Path, failures: list[str]) -> int:
     """Validate `.claude-plugin/plugin.json`, and refuse anything else in that directory.
 
@@ -213,13 +265,15 @@ def main() -> int:
         return 0
 
     failures: list[str] = []
-    skills = agents = manifests = 0
+    skills = agents = hooks = manifests = 0
 
     for entry in sorted(root.iterdir()):
         if entry.name == "skills" and entry.is_dir():
             skills = check_skills(entry, failures)
         elif entry.name == "agents" and entry.is_dir():
             agents = check_agents(entry, failures)
+        elif entry.name == "hooks" and entry.is_dir():
+            hooks = check_hooks(entry, failures)
         elif entry.name == PLUGIN_DIR and entry.is_dir():
             manifests = check_plugin_manifest(entry, failures)
         elif entry.name == "commands":
@@ -231,10 +285,11 @@ def main() -> int:
             )
 
     print(
-        f"components checked: {skills + agents} ({skills} skill(s), {agents} agent(s)), "
+        f"components checked: {skills + agents + hooks} ({skills} skill(s), {agents} agent(s), "
+        f"{hooks} hook(s)), "
         f"plugin manifests: {manifests}  "
         f"schemas: {display(SKILL_SCHEMA_PATH)}, {display(AGENT_SCHEMA_PATH)}, "
-        f"{display(PLUGIN_SCHEMA_PATH)}"
+        f"{display(PLUGIN_SCHEMA_PATH)}, {display(HOOK_SCHEMA_PATH)}"
     )
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")

@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:7b60ad358c14ab9a02040f444addc77c1cf253842aeac7711eb7d0a278c343d0",
+  "source_revision": "sha256:85cce498f73a652bda9a1f6009468159c5d0960dc78262e88665f79e8f9d1017",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -29,6 +29,11 @@
       "digest": "sha256:7739ad70d0d7338e011327056e0594a1d3b695058d86a00cf63541b180fb61c1"
     },
     {
+      "path": "bin/derived_artifacts.py",
+      "source": "scripts/derived_artifacts.py",
+      "digest": "sha256:154911d6d99e1b0187eae1ff6bcc8ef90e5ca5dfb223f38aa978e87f997a0fdf"
+    },
+    {
       "path": "bin/orchestrate.py",
       "source": "scripts/orchestrate.py",
       "digest": "sha256:f30634882c0d6cad1b3f2a06871557d66492a204e13405b41a7404454daed449"
@@ -42,6 +47,16 @@
       "path": "bin/workflow_lib.py",
       "source": "scripts/workflow_lib.py",
       "digest": "sha256:4f380318d5be2722017eea2169885554f339889af747aaca498f5f0938a55d3a"
+    },
+    {
+      "path": "hooks/hooks.json",
+      "source": "scripts/generate_dist.py",
+      "digest": "sha256:012bd25136c194d56a939e18ad12d5b1e4f713573ed77e7cb69d51bd81552728"
+    },
+    {
+      "path": "hooks/reject-derived-write.py",
+      "source": "src/claude/hooks/reject-derived-write.py",
+      "digest": "sha256:3c7a6c8ea83cae0b08a886f4ba1a618bd6dbfb7f914677e2e73bb0d91d77be3f"
     },
     {
       "path": "schemas/concept-authoring-result.v1.json",
@@ -86,7 +101,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:255624bfead8608a6b88a40551c2923dee4ff849b20a1daecf6680fe7409cda7"
+      "digest": "sha256:5c767779c9c7b7e92cebe9471142d2b3a3fb6e5e41748ca5c3e104bddac91b8a"
     },
     {
       "path": "skills/knowledge-change/SKILL.md",
@@ -130,10 +145,22 @@
   ],
   "capabilities": [
     {
+      "name": "reject-derived-write",
+      "class": "hook",
+      "status": "active",
+      "path": "hooks/reject-derived-write.py"
+    },
+    {
       "name": "cli",
       "class": "script",
       "status": "active",
       "path": "bin/cli.py"
+    },
+    {
+      "name": "derived-artifacts",
+      "class": "script",
+      "status": "active",
+      "path": "bin/derived_artifacts.py"
     },
     {
       "name": "orchestrate",
