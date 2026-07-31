@@ -105,9 +105,11 @@ This specification uses these terms as the concept bundle defines them:
 
 ### Version and compatibility
 
-- **R8** — A pack carries its own version, independent of the framework's, and declares the
+- **R8** — A pack is its own plugin, carrying its own version in its own plugin manifest, and declares the
   [contract versions](../docs/concepts/contract-version.md) it was built against. A consumer can therefore
-  tell whether an installed pack and an installed framework are compatible without running them.
+  tell whether an installed pack and an installed framework are compatible without running them, and adding
+  a stack requires no framework release — see `specs/0008` R23 and
+  `docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md`.
 - **R9** — A framework contract change that invalidates a conforming pack is a breaking change, and the pack
   is versioned rather than silently expected to keep working.
 - **R10** — A pack that no longer declares itself against any supported framework contract version is

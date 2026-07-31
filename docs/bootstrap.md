@@ -168,8 +168,9 @@ different case from removing a record that only duplicated a rule.
    agent does not promote its own design. The decision belongs in an ADR a maintainer accepts. Until
    then, treat the append-only model as the candidate that has passed its test, not as settled.
 2. **How the distribution is produced.** That `dist/.claude/` is generated, reproducible, and never
-   hand-edited is settled by `CLAUDE.md` **Repository layout** and `.claude/rules/distribution.md`. What
-   is open is the generator. Gate: a generator in `scripts/` that `make dist` runs; running it twice from
+   hand-edited is settled by `CLAUDE.md` **Repository layout** and `.claude/rules/distribution.md`. Its
+   *shape* is settled too, as of 2026-07-31: a plugin root, per ADR-0012 and `specs/0008`, so the generator
+   has a target rather than a blank page. What is open is the generator itself. Gate: a generator in `scripts/` that `make dist` runs; running it twice from
    the same source produces identical output; a test asserting no source-only path (`specs/`, `tests/`,
    `fixtures/`, `docs/`, `.claude/`) reaches the output; a test asserting no secret or
    environment-specific value does. Until then, do not create `dist/` by hand to make a rule look
@@ -249,6 +250,17 @@ Four vocabulary decisions from the same proposal, recorded so the terms do not r
 **Discovery** is the act that produces a [change request](concepts/change-request.md), upstream of the
 seven phases in `specs/0001`. It is not an eighth phase and it changes nothing in that specification.
 
+Three of the agenda's topics were settled on 2026-07-31 by reading the harness documentation rather than by
+reasoning, and `docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md` records the decision. The
+framework is distributed as a plugin, which supplies what the first draft of `specs/0008` had invented: a
+`hooks/hooks.json` that is in force while the plugin is enabled, so enabling the framework installs its own
+enforcement; a `bin/` directory that puts executables on the Bash tool's `PATH`, so shipped scripts have a
+documented home; and automatic namespacing of skills as `/<plugin>:<skill>`, which removed a reserved-prefix
+requirement rather than satisfying it. A target pack is its own plugin. Two findings that had been recorded
+as open — that Siegard could not install its own hooks, and that a rename of `concept-author` and
+`knowledge-change` was owed — were closed by the evidence, the second by the work turning out to be
+unnecessary.
+
 ## Enforcement is not in this file, or in CLAUDE.md
 
 Claude Code treats `CLAUDE.md` and `.claude/rules/` as context, not as enforced configuration. The
@@ -265,6 +277,11 @@ exists:
 - a `PreToolUse` hook rejecting any write to `CLAUDE.md`, which the **Golden rule** in that file states
   and cannot itself enforce. It is the sharpest case in this list: the rule restricting the agent lives
   in the file the agent would have to edit to remove it.
+
+Each of these is a session-wide guarantee, which is what decides how it ships: not in a component's
+frontmatter, where `specs/0010` R18 would scope it to that component's lifetime, but in the distribution's
+`hooks/hooks.json`, in force while the plugin is enabled. ADR-0012 records why that route exists and the
+documentation that establishes it.
 
 Treat these as the point where governance becomes real. Until then, the rules in this repository
 depend on cooperation.

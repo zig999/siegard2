@@ -143,8 +143,10 @@ would produce a hook that shrugs, which is not a hook.
   at the hook. A validator in the consuming path holds when hooks are disabled; the hook makes the failure
   early and cheap rather than late and expensive.
 - **R18** — A hook shipped inside a skill's or an agent's frontmatter is scoped to that component's
-  lifetime and enforces nothing outside it. A guarantee that must hold for the whole session is not
-  installed that way.
+  lifetime and enforces nothing outside it. A guarantee that must hold for the whole session ships in the
+  distribution's `hooks/hooks.json`, which is in force while the plugin is enabled — `specs/0008` R3 and
+  `docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md`. Every hook `docs/bootstrap.md` names
+  as a candidate is session-wide, so that is the form they take.
 
 ## Validation required before acceptance
 

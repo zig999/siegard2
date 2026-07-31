@@ -46,7 +46,7 @@ nothing would give it an authority its own basis does not have.
 | [0005](0005-runtime-architecture.md) | Runtime architecture | who executes, what the framework provides, what it may never control, where determinism lives | `CLAUDE.md` **Scope** and **Determinism and state**; `.claude/rules/claude-code-authoring.md` |
 | 0006 | Capability model | which capability classes exist, what each owns, how one is admitted and retired | `docs/concepts/capability.md`; ADR-0009's component classes |
 | 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `.claude/rules/contracts.md`; `schemas/skill.v1.json`, `schemas/agent.v1.json` |
-| 0008 | Distribution layout | that the distribution is a function of source, the closed directory set, the manifest, install and upgrade, namespacing | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` |
+| 0008 | Distribution layout | that the distribution is a plugin, a function of source; the closed directory set; the two records; install, upgrade, and shadowing | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` |
 | 0009 | Context assembly | the context package contract — its manifest form, budget, and stop criteria | `specs/0001` R11–R15, which already fix that resolution never blocks and never invents |
 | 0010 | Hook system | which lifecycle events the framework binds, and the contract a hook honors | `CLAUDE.md` **Security**; the harness hook documentation |
 | 0011 | Template system | what a template is, its schema binding, placeholders, and extension points | `specs/0004`'s generation tracks and artifact classes |

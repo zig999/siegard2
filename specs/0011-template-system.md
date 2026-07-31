@@ -116,16 +116,17 @@ This specification uses these terms as the concept bundle defines them:
 - **R13** — A template holds no domain knowledge and no business rule. Every domain fact in the output comes
   from a knowledge object, so that changing a fact means changing knowledge rather than editing a template.
 - **R14** — A template carries nothing specific to a single downstream repository — no service name, no
-  environment, no path a particular system chose. A template serves every repository on its stack.
+  environment, no path a particular system chose — which is `specs/0005` R13 applied to the artifact where
+  hard-coding one is easiest. A template serves every repository on its stack.
 
 ### Ownership, override, and versioning
 
 - **R15** — A template is owned by exactly one target pack, or by the framework where its artifact class is
   independent of technology. Two packs do not share a template; a shared expansion is either framework-owned
   or duplicated deliberately.
-- **R16** — A consumer does not edit a shipped template in place. An override is a declared replacement the
-  installation records, so that a later upgrade can tell a customization from a divergence and stop rather
-  than overwrite.
+- **R16** — A consumer does not edit a shipped template in place. An override is a declared replacement
+  recorded in the [distribution manifest](../docs/concepts/distribution-manifest.md) under `specs/0008` R12,
+  so that a later upgrade can tell a customization from a divergence and stop rather than overwrite.
 - **R17** — A template's contract version changes whenever its output changes for the same input. That is a
   change every consumer can observe in a diff, so it is a version bump under
   `.claude/rules/compatibility.md` rather than a revision.

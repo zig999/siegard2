@@ -72,8 +72,11 @@ This specification uses these terms as the concept bundle defines them:
 
 ### What a version covers
 
-- **R1** — The framework carries one version covering the distribution as a whole. It is what a consumer
-  states when reporting a problem and what an upgrade moves between.
+- **R1** — The framework carries one version, declared in its plugin manifest, covering everything the
+  framework distribution ships. It is what a consumer states when reporting a problem and what an upgrade
+  moves between. A [target pack](../docs/concepts/target-pack.md) is outside it: a pack is its own plugin
+  with its own version, per `specs/0008` R23 and `specs/0012` R8, so framework and pack compose as a matrix
+  rather than as one number.
 - **R2** — A contract version is independent of the framework version and finer-grained. A consumer selects
   behavior on the contract version of the artifact in front of it, never on the framework version, because
   one release may ship several contracts at different versions.
@@ -82,8 +85,9 @@ This specification uses these terms as the concept bundle defines them:
 
 ### What a release records
 
-- **R4** — A release records every contract version it ships, every contract version it dropped, and every
-  capability whose status changed. A consumer reads that record rather than diffing two distributions.
+- **R4** — A release carries a [release record](../docs/concepts/release-record.md) naming every contract
+  version it ships, every contract version it dropped, and every capability whose status changed. A consumer
+  reads that record rather than diffing two distributions.
 - **R5** — A release that breaks compatibility says so in the release record, names what breaks, and points
   to the migration. An undocumented break is a defect; this requirement is what makes the documented one
   legible without reading the specifications.
@@ -97,8 +101,10 @@ This specification uses these terms as the concept bundle defines them:
   a removal wearing a softer name.
 - **R8** — A deprecation names the replacement, or states plainly that none exists. "Deprecated" without
   either is an instruction to stop with no direction to go.
-- **R9** — Deprecation is readable from an installation, not only from release notes. A consumer inspecting
-  what is installed can tell that a capability is going away.
+- **R9** — Deprecation is readable from an installation, not only from a release record. The
+  [distribution manifest](../docs/concepts/distribution-manifest.md) carries each capability's lifecycle
+  status under `specs/0008` R12, so a consumer inspecting what is installed can tell that a capability is
+  going away.
 
 ### Migration
 

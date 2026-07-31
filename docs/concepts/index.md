@@ -20,7 +20,7 @@ tiers on purpose, and `docs/adr/README.md` states when a concept crosses between
 specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
 [accepted](accepted.md).
 
-As of 2026-07-31 the split is 30 `accepted` and 16 `proposed`. The tier is derivable rather than declared:
+As of 2026-07-31 the split is 30 `accepted` and 18 `proposed`. The tier is derivable rather than declared:
 read which artifacts cite a concept, and read their status.
 
 `specs/0001-knowledge-object-driven-development.md` was accepted on 2026-07-31, which makes seven
@@ -54,6 +54,7 @@ not accepted, so promoting one would bind a definition to a mechanism that does 
 | [contract version](contract-version.md) | The identifier a consumer reads to decide whether it can process an artifact. |
 | [definition](definition.md) | The knowledge object type saying what a domain concept is and which attributes it holds. |
 | [distribution](distribution.md) | The assembled release artifact under `dist/.claude/`. |
+| [distribution manifest](distribution-manifest.md) | The record of what an installation carries, beside the plugin manifest the harness reads. |
 | [domain knowledge](domain-knowledge.md) | A fact whose change changes this system, and the only kind the knowledge base holds. |
 | [escalation](escalation.md) | The insertion of workflow phases, decided by a predicate over a validated artifact. |
 | [event log](event-log.md) | The append-only record of workflow facts. |
@@ -78,6 +79,7 @@ not accepted, so promoting one would bind a definition to a mechanism that does 
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
 | [projection](projection.md) | A human-readable artifact generated from the knowledge graph, normative nowhere. |
 | [provenance](provenance.md) | The recorded origin of a material decision. |
+| [release record](release-record.md) | What changed between one framework version and the last. |
 | [representation ratio](representation-ratio.md) | Permanent knowledge volume measured against the source volume it produces. |
 | [rule](rule.md) | The knowledge object type stating one falsifiable condition; the only type an assertion binds to. |
 | [skill](skill.md) | A distributable procedure or knowledge unit, invocable as `/name`. |

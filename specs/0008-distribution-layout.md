@@ -1,6 +1,6 @@
 ---
 id: "0008"
-title: Assemble the distribution as a function of source, and install it without squatting
+title: Ship the framework as a plugin, so enabling it installs the enforcement
 status: proposed
 contract_version: spec/1
 ---
@@ -10,52 +10,63 @@ contract_version: spec/1
 ## Scope
 
 This specification fixes what the [distribution](../docs/concepts/distribution.md) contains and how it
-reaches a repository Siegard governs. It decides five things:
+reaches a repository Siegard governs. It decides six things:
 
-1. that the distribution is a function of [framework source](../docs/concepts/framework-source.md), and
-   what that makes checkable;
-2. the closed set of directories, and what each one holds;
-3. the manifest — what an installed distribution records about itself;
-4. installation and upgrade, including what happens to a file the consumer changed;
-5. namespacing, so that installing into a repository the framework does not control collides with
-   nothing already there.
+1. that the distribution is a Claude Code plugin, and what the harness therefore provides;
+2. that its content is a function of [framework source](../docs/concepts/framework-source.md);
+3. the closed set of directories — those the harness recognizes, and those that are Siegard's own;
+4. the two records an installation carries, and which fields each owns;
+5. installation and upgrade, including what happens to a file the consumer changed;
+6. namespacing and shadowing, and why no component carries a reserved prefix.
 
 It decides nothing about which capability classes exist, which is `specs/0006`, and nothing about the
-generator's implementation. It fixes the generator's *output contract*, which is a different thing: the
-generator is free in how it assembles, and bound in what it may produce.
+generator's implementation. It fixes the generator's *output contract*: the generator is free in how it
+assembles and bound in what it may produce.
 
 It governs the framework Siegard ships. It does not govern this repository's own development process,
 which `CLAUDE.md` defines.
 
 ### Provenance
 
-No generator exists. This document is therefore the one place in the framework family most at risk of
-specifying something no code has met, and it is deliberately narrow for that reason: it fixes the output
-contract and the failure modes that are already known, and leaves assembly unspecified.
+No generator exists, so nothing here has been exercised. What has changed since the first draft of this
+document is that its central assumption was wrong, and the documentation said so.
 
-Two of those failure modes are documented rather than speculative. ADR-0009 records that two agents with
-the same name load by filesystem read order with no documented precedence — which is what makes R11 below
-a correctness requirement rather than a courtesy. And `.claude/rules/distribution.md` records that a
-distribution built by hand to make a rule appear satisfied is the thing this repository must not do,
-which is why `docs/bootstrap.md` open question 2 gates the generator on reproducibility rather than on
-existence.
+That draft described a tree copied into the consumer's `.claude/`, with a reserved name prefix on every
+component. Two reviews found it failing on its own terms: it could not install its own hooks, because every
+hook `docs/bootstrap.md` names is a session-wide guarantee and this document forbade rewriting a
+`settings.json` it does not own; and its `scripts/` directory was an invented convention. The plugin form
+resolves both, and removes the prefix requirement rather than satisfying it.
+`docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md` records the decision and its sourcing.
+
+### Sources
+
+Normative for every harness behavior relied on here, retrieved 2026-07-31, with the full citation in
+ADR-0012:
+
+- https://code.claude.com/docs/en/plugins — the plugin root, the recognized directories, the manifest and
+  its `name` as skill namespace, `version` and the commit-SHA fallback, hooks in `hooks/hooks.json`,
+  executables in `bin/`, the restriction of plugin `settings.json` to two keys, and that a project or user
+  agent definition overrides a same-named plugin agent while a skill does not;
+- https://code.claude.com/docs/en/hooks — `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_DATA}`.
+
+A behavior absent from those pages on that date is not relied on, and R10 below is what that rule produced.
 
 ### Decided elsewhere, deliberately not restated here
 
 `.claude/rules/distribution.md` is the single authority for four rules this document depends on and does
-not repeat: that a generated file is not hand-edited, that source-only paths are excluded and which
-those are, that no secret or environment-specific value appears, and that a component with a behavioral
-default states that default in itself. `CLAUDE.md` **Repository layout** holds the path table, and
-**The two trees** in `.claude/rules/claude-code-authoring.md` holds the boundary between the tree that
-ships and the tree that does not.
-
-Where this specification and that rule file appear to overlap, the rule file wins and this document is
-the defect.
+not repeat: that a generated file is not hand-edited, that source-only paths are excluded and which those
+are, that no secret or environment-specific value appears, and that a component with a behavioral default
+states that default in itself. `CLAUDE.md` **Repository layout** holds the path table, and **The two trees**
+in `.claude/rules/claude-code-authoring.md` holds the boundary between the tree that ships and the tree that
+does not. Where this specification and that rule file appear to overlap, the rule file wins and this
+document is the defect.
 
 ## Definitions
 
 This specification uses these terms as the concept bundle defines them:
 [distribution](../docs/concepts/distribution.md),
+[distribution manifest](../docs/concepts/distribution-manifest.md),
+[generation manifest](../docs/concepts/generation-manifest.md),
 [framework source](../docs/concepts/framework-source.md),
 [capability](../docs/concepts/capability.md),
 [skill](../docs/concepts/skill.md),
@@ -63,102 +74,138 @@ This specification uses these terms as the concept bundle defines them:
 [target pack](../docs/concepts/target-pack.md),
 [contract version](../docs/concepts/contract-version.md),
 [provenance](../docs/concepts/provenance.md),
-[least privilege](../docs/concepts/least-privilege.md).
+[least privilege](../docs/concepts/least-privilege.md),
+[lifecycle](../docs/concepts/lifecycle.md).
 
 ## The tree
 
 ```
-dist/.claude/
-  agents/      one specialized agent per file, nesting permitted
-  skills/      one directory per skill, holding SKILL.md
-  hooks/       hook programs, and the settings fragment that binds them to events
-  rules/       path-scoped invariants that load in the governed repository
-  templates/   expansion sources, grouped by the artifact class each produces
-  packs/       one directory per target pack
-  schemas/     the artifact contracts a governed repository validates against
-  scripts/     the deterministic logic hooks and skills invoke
-  siegard.json the manifest
+dist/.claude/                      the plugin root
+  .claude-plugin/
+    plugin.json                    read by the harness: name, description, version
+  skills/<name>/SKILL.md           invoked as /<plugin>:<name>
+  agents/*.md                      one specialized agent per file, nesting permitted
+  hooks/hooks.json                 in force while the plugin is enabled
+  bin/                             executables, on the Bash tool's PATH while enabled
+  schemas/                         Siegard's own; the harness does not read these
+  templates/                       Siegard's own
+  siegard-manifest.json            Siegard's own record of what was installed
 ```
 
-One directory per capability class of `specs/0006`, plus `schemas/` for the contracts and `rules/` for
-invariants that are neither. Nothing else is installed.
+Two groups, and the difference matters. `skills/`, `agents/`, `hooks/`, and `bin/` are recognized by the
+harness and are how a capability reaches a consumer. `schemas/`, `templates/`, and `siegard-manifest.json`
+are Siegard's, resolved through `${CLAUDE_PLUGIN_ROOT}`, and depend on no harness support at all.
+
+`packs/` is absent. A [target pack](../docs/concepts/target-pack.md) is its own plugin — see R23.
 
 ## Requirements
 
+### The distribution is a plugin
+
+- **R1** — The distribution is a plugin root: a directory holding `.claude-plugin/plugin.json`. Enabling the
+  plugin installs every capability it carries, and no file the consumer maintains is rewritten to achieve
+  it.
+- **R2** — `plugin.json` sets `version` explicitly. A plugin without one falls back to its commit SHA, which
+  makes every commit a release and takes the framework's version out of the framework's hands.
+- **R3** — Hooks ship in `hooks/hooks.json` and are in force while the plugin is enabled. This is what makes
+  a session-wide guarantee installable, and it is the reason this document specifies a plugin rather than an
+  overlay.
+
 ### The distribution is a function
 
-- **R1** — The distribution is determined by the framework source and the generator version. Running the
+- **R4** — The distribution is determined by the framework source and the generator version. Running the
   generator twice over the same committed source produces byte-identical output, and a difference is a
   defect in the generator rather than an acceptable variation.
-- **R2** — Every installed file originates in framework source or is computed by the generator from it.
-  No file is introduced that has no source, and no file survives in the output whose source was removed.
-- **R3** — Verification of the distribution is separate from producing it. The command that checks
-  regenerates into a temporary location and compares; it never writes into the distribution it is
-  checking, because a check that repairs what it was meant to detect reports success on a defect.
+- **R5** — Every installed file originates in framework source or is computed by the generator from it. No
+  file is introduced that has no source, and no file survives whose source was removed.
+- **R6** — Verification is separate from production. The command that checks regenerates into a temporary
+  location and compares; it never writes into the distribution it is checking, because a check that repairs
+  what it was meant to detect reports success on a defect.
 
 ### The tree
 
-- **R4** — The directory set above is closed. A component that fits none of these directories is not
-  installed until this specification names a home for it, and a directory with nothing in it is omitted
-  rather than shipped empty.
-- **R5** — A directory holds one class of thing. `scripts/` holds no component definition, `agents/`
-  holds no template, and `schemas/` holds no instance of the artifacts it constrains.
-- **R6** — A shipped script declares the runtime dependencies it requires and exits with a named error
-  when one is absent. A script that degrades silently in a repository whose environment differs is worse
-  than one that refuses to run.
+- **R7** — The directory set above is closed. A component that fits none of these is not shipped until this
+  specification names a home for it, and a directory with nothing in it is omitted rather than shipped
+  empty.
+- **R8** — Only `plugin.json` goes inside `.claude-plugin/`. Every other directory sits at the plugin root;
+  a component placed inside `.claude-plugin/` is not loaded.
+- **R9** — A shipped executable lives in `bin/`, declares the runtime dependencies it requires, and exits
+  with a named error when one is absent. A script that degrades silently in a repository whose environment
+  differs is worse than one that refuses to run.
+- **R10** — The framework ships no rule file it depends on. `rules/` is not a recognized plugin directory,
+  so whether a shipped path-scoped invariant loads at all is unverified. An invariant that must hold is a
+  hook; an invariant that may be advisory is carried by the component it governs.
 
-### The manifest
+### The two records
 
-- **R7** — The distribution carries a manifest recording: the framework version, the source revision it
-  was built from, the generator version, every installed path, and the
-  [contract version](../docs/concepts/contract-version.md) of every schema it ships.
-- **R8** — A consumer can determine which framework version is installed by reading the manifest alone,
-  without inspecting component contents or inferring from what happens to be present.
-- **R9** — The manifest is the [provenance](../docs/concepts/provenance.md) record for an upgrade: a
-  later run compares against it to decide what changed, so an upgrade is a diff against a recorded state
-  rather than an overwrite of an unknown one.
+- **R11** — An installation carries exactly two records, and each owns distinct fields. `plugin.json` is the
+  harness's: identity, description, version. The
+  [distribution manifest](../docs/concepts/distribution-manifest.md) is Siegard's, and nothing in it
+  duplicates the other.
+- **R12** — The distribution manifest records the source revision it was built from, the generator version,
+  every installed path, the [contract version](../docs/concepts/contract-version.md) of every schema
+  shipped, each capability's [lifecycle](../docs/concepts/lifecycle.md) status, and every declared override.
+- **R13** — A consumer reads the installed framework version from `plugin.json` and everything else from the
+  distribution manifest, without inspecting component contents or inferring from what happens to be
+  present.
+- **R14** — The distribution manifest is the [provenance](../docs/concepts/provenance.md) record for an
+  upgrade: a later run compares against it to decide what changed, so an upgrade is a diff against a
+  recorded state rather than an overwrite of an unknown one.
+- **R15** — Where a produced artifact's placement must be recorded, that is the
+  [generation manifest](../docs/concepts/generation-manifest.md)'s field and not this one. The two records
+  answer different questions — what is installed here, and where did a generation put things — and neither
+  is called "the manifest" without its qualifier.
 
 ### Installation and upgrade
 
-- **R10** — Installation is idempotent. Installing the same version twice leaves the repository in the
-  same state as installing it once, and produces no duplicate component under a different name.
-- **R11** — An upgrade does not silently overwrite an installed file that diverges from what the manifest
-  records. It detects the divergence, names the file, and stops. A consumer's local change is either
-  theirs to keep or theirs to discard; it is never the framework's to erase without saying so.
-- **R12** — Retiring a capability removes its files and its manifest entries together. A path left behind
-  after retirement is an orphan that a later reader will mistake for an installed capability.
-- **R13** — Installation adds no permission and disables no check in the receiving repository. A
-  component's grant is stated in the component, and the installation of the framework is not the moment
-  a grant widens.
+- **R16** — Enabling the plugin is idempotent. Enabling the same version twice leaves the repository in the
+  same state as enabling it once, and produces no duplicate component under a different name.
+- **R17** — An upgrade does not silently overwrite an installed file that diverges from what the
+  distribution manifest records. It detects the divergence, names the file, and stops. A consumer's local
+  change is either theirs to keep or theirs to discard; it is never the framework's to erase without saying
+  so.
+- **R18** — Retiring a capability removes its files and its manifest entries together. A path left behind
+  after retirement is an orphan a later reader will mistake for an installed capability.
+- **R19** — Installation adds no permission and disables no check in the receiving repository. A plugin's
+  `settings.json` supports only `agent` and `subagentStatusLine`, and the framework sets neither: activating
+  an agent as the main thread would replace how the consumer's Claude Code behaves by default.
 
-### Namespacing
+### Namespacing and shadowing
 
-- **R14** — Every installed component's name carries the framework's reserved prefix. Two agents with the
-  same name load by filesystem read order with no documented precedence, so a generic name in a
-  repository the framework does not control is a correctness hazard and not a matter of taste.
-- **R15** — The framework claims no path outside its own directories in the receiving repository, and
-  writes no file that a repository's own tooling owns.
-- **R16** — Where the framework must contribute to a shared configuration file, it contributes a fragment
-  the consumer adopts rather than rewriting a file the consumer maintains. Two documented mechanisms carry
-  a hook without editing `settings.json`: a skill or subagent may declare hooks in its own frontmatter,
-  and a plugin bundles `hooks/hooks.json` and is enabled as a unit
-  (https://code.claude.com/docs/en/hooks, retrieved 2026-07-31). The first is scoped to that component's
-  lifetime by `specs/0010` R18, so a session-wide guarantee is carried by the plugin form or installed by
-  the consumer deliberately — never by the framework editing a file it does not own.
+- **R20** — A skill carries no reserved prefix. The plugin's `name` is the namespace and the harness applies
+  it, so a prefix would be both redundant and visible in every invocation.
+- **R21** — A consumer's own agent definition overrides a same-named plugin agent. The framework detects and
+  reports that shadowing rather than trying to prevent it by choosing an unlikely name: the precedence
+  resolves in the consumer's favour, which is correct, and the exposure is a capability silently lost rather
+  than a load order nobody can predict. A name chosen to be improbable is a convention hoped to work; a
+  check is a check.
+- **R22** — The framework claims no path outside its own plugin root, and writes no file that a repository's
+  own tooling owns.
+
+### Packs
+
+- **R23** — A [target pack](../docs/concepts/target-pack.md) is a separate plugin with its own version, and
+  the framework distribution contains no pack. `specs/0004` R17 states the framework ships no default pack,
+  so a `packs/` directory inside this distribution would be one the framework's own rules guarantee is
+  always empty.
 
 ## Validation required before acceptance
 
-1. A generator exists, `make dist` runs it, and running it twice from the same source produces identical
-   output. R1 through R3 are unenforced until then — `docs/bootstrap.md` open question 2.
+1. A generator exists, `make dist` runs it, running it twice from the same source produces identical output,
+   and `claude plugin validate` passes on the result. R4 through R6 are unenforced until then —
+   `docs/bootstrap.md` open question 2.
 2. A test asserts that no source-only path and no secret reaches the output, per the exclusion list in
    `.claude/rules/distribution.md`.
-3. A fixture installs the generated distribution into a downstream-shaped repository, Claude Code loads
-   the installed components, and the loop of `docs/bootstrap.md` stage 2 runs against them. This is what
-   turns R10 through R13 from description into behavior, and it is also ADR-0009 condition 2.
-4. A second fixture upgrades an installed distribution over a locally modified file and is shown to stop
-   rather than overwrite, covering R11 in the direction that matters.
-5. R14 is applied to the components that already exist. `concept-author` and `knowledge-change` carry
-   unprefixed names today, so either they are renamed before anything consumes them or this requirement
-   is wrong and must be replaced by a namespacing mechanism that does not depend on names.
-6. The manifest has a versioned schema in `schemas/`, since a consumer branches on it — which
-   `.claude/rules/contracts.md` already requires of an artifact carrying persisted state.
+3. A fixture loads the generated plugin with `--plugin-dir`, Claude Code loads its components, and the loop
+   of `docs/bootstrap.md` stage 2 runs against them. This is ADR-0009 condition 2, and it is what turns R1
+   through R3 and R16 through R19 from description into behavior.
+4. One hook ships in `hooks/hooks.json` and is shown to fire and to deny in the loaded fixture. R3 is the
+   central claim of this document's design, and it is documented rather than demonstrated until then.
+5. A second fixture upgrades an installed distribution over a locally modified file and is shown to stop
+   rather than overwrite, covering R17 in the direction that matters.
+6. The shadowing check of R21 exists: a fixture installs the plugin into a repository holding an agent of
+   the same name and the framework reports it.
+7. The distribution manifest has a versioned schema in `schemas/`, since a consumer branches on it — which
+   `.claude/rules/contracts.md` already requires of an artifact carrying persisted state. It arrives with
+   the generator that first produces one.
+8. A target pack ships as a second plugin and installs and versions independently, exercising R23.

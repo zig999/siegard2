@@ -77,16 +77,20 @@ This specification uses these terms as the concept bundle defines them:
 | template | expanding into one artifact class | a script or an agent that owns the expansion |
 | target pack | one technology stack: its agent and its templates | selected per repository, not per request |
 
-A [projection](../docs/concepts/projection.md), a schema, and a knowledge object are **artifacts**, not
-capability classes. They are what capabilities consume and produce.
+The set covers what **executes or is delegated to**. A [projection](../docs/concepts/projection.md), a
+schema, a rule file, and a knowledge object are **artifacts**: they are what capabilities consume and
+produce, they are shipped where a consumer needs them, and none of them is a capability class. A shipped
+artifact therefore needs no entry here, which is what lets `specs/0008` install `schemas/` without this
+document growing a class for it.
 
 ## Requirements
 
 ### The set of classes
 
-- **R1** — The classes above are the closed set. A component that fits none of them is not shipped until
-  a class for it exists, and adding a class requires its own contract, at least one capability occupying
-  it, and a fixture exercising that capability.
+- **R1** — The classes above are the closed set of things that execute or are delegated to. A *component*
+  that fits none of them is not shipped until a class for it exists, and adding a class requires its own
+  contract, at least one capability occupying it, and a fixture exercising that capability. A shipped
+  *artifact* is not a component and needs no class.
 - **R2** — A class with no capability in it is removed rather than kept open. An empty class invites a
   component to be shaped to fit the framework instead of the work.
 - **R3** — One class owns each decision. Where two classes could each hold a rule, the rule goes to the
@@ -102,15 +106,19 @@ capability classes. They are what capabilities consume and produce.
   its own output — a guarantee a producer self-reports is not a guarantee.
 - **R6** — An agent's tool grant is the minimum its role requires, stated in the agent itself. An agent
   that only reads and writes files does not receive a shell.
-- **R7** — A hook enforces one guarantee, decides it deterministically, and rejects rather than repairs.
-  A hook that needs to interpret prose is not an enforcement mechanism.
+- **R7** — A hook holds exactly one guarantee, so that a denial names a single condition and a hook can be
+  retired without taking another guarantee with it. That a guarantee is enforced by a hook rather than by
+  model judgment, and that a hook rejects rather than repairs, are `CLAUDE.md` **Security**'s and are cited
+  here rather than restated. `specs/0010` fixes how a hook honors them.
 - **R8** — A script holds durable control flow, state derivation, and validation. This is where an
   [orchestrator](../docs/concepts/orchestrator.md)'s logic lives; it is never prompt text.
 - **R9** — A template expands into exactly one [artifact class](../docs/concepts/artifact-class.md) and
   names the schema its output must satisfy. A template that can produce two unrelated artifact classes is
-  two templates.
-- **R10** — A target pack carries one technology stack and nothing about a single downstream system. It
-  holds an agent and templates; it holds no business rule, and no architecture chosen for one repository.
+  two templates. A template belongs to a [target pack](../docs/concepts/target-pack.md), or to the framework
+  where its artifact class is independent of technology — `specs/0011` R15 owns that division.
+- **R10** — A target pack carries one technology stack, holding one specialized agent and the templates it
+  expands. It carries no business rule and nothing specific to a single downstream repository, which is
+  `specs/0005` R13 applied rather than restated here.
 
 ### Admission
 
@@ -133,7 +141,10 @@ capability classes. They are what capabilities consume and produce.
 - **R16** — Retiring a capability that another consumed requires the migration
   `.claude/rules/compatibility.md` demands, and a test that fails against the old behavior.
 - **R17** — A capability's status is derived from checkable facts — whether the distribution installs it,
-  whether a fixture exercises it — and not from a label maintained by hand.
+  whether a fixture exercises it — and not from a label maintained by hand. The
+  [distribution manifest](../docs/concepts/distribution-manifest.md) carries the status of each installed
+  capability under `specs/0008` R12, which is what makes the `deprecated` state of R14 observable from an
+  installation rather than only from a release.
 
 ## Validation required before acceptance
 
