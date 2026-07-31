@@ -22,6 +22,7 @@ validate:
 	python3 scripts/validate_knowledge.py || fail=1; \
 	python3 scripts/project_knowledge.py --check || fail=1; \
 	python3 scripts/measure_ontology.py --check || fail=1; \
+	python3 scripts/replay_workflow.py --check || fail=1; \
 	exit $$fail
 
 # The knowledge validator is wired above, as specs/0003 R37 requires. Both derived
@@ -32,6 +33,12 @@ validate:
 # Nothing in `validate` gates on a figure. `measure_ontology.py --check` verifies
 # that the recorded R52 measurement matches the fixture, not that any value in it
 # clears a threshold: spec 0002 R8 and spec 0001 R25 both forbid the latter.
+#
+# `replay_workflow.py --check` replays every workflow fixture through the real guard
+# and compares the result against the committed log and derived state. It is verified
+# and not regenerated here for the same reason as the two trees above. Regeneration is
+# `python3 scripts/replay_workflow.py`, which has no target: CLAUDE.md **Commands**
+# fixes the canonical entry points, and only the maintainer changes that file.
 knowledge:
 	python3 scripts/project_knowledge.py
 	python3 scripts/measure_ontology.py

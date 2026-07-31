@@ -20,11 +20,16 @@ tiers on purpose, and `docs/adr/README.md` states when a concept crosses between
 specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
 [accepted](accepted.md).
 
-As of 2026-07-30 the split is 30 `accepted` and 15 `proposed`. Every remaining `proposed` entry is
+As of 2026-07-31 the split is 30 `accepted` and 16 `proposed`. Every remaining `proposed` entry is
 vocabulary for `specs/0001-knowledge-object-driven-development.md` or
 `specs/0004-generation-and-reproducibility.md`, neither of which is accepted, so promoting one would bind a
 definition to a mechanism that does not exist. The tier is derivable rather than declared: read which
 artifacts cite a concept, and read their status.
+
+[orchestrator](orchestrator.md) is the first entry where that reasoning has started to come apart: its
+mechanism now exists and is tested, while the specification that uses the term normatively is still
+`proposed`. It stays `proposed` because the concept follows its source, and because whether an
+orchestrator is a component class at all is still open — see `docs/bootstrap.md` open question 3.
 
 | Concept | Summary |
 |---|---|
@@ -59,6 +64,7 @@ artifacts cite a concept, and read their status.
 | [least privilege](least-privilege.md) | Only the tools and permissions a component's contract names. |
 | [lifecycle](lifecycle.md) | The knowledge object type holding a definition's legal states and its total transition table. |
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
+| [orchestrator](orchestrator.md) | The component that chooses a transition by lookup on a validated artifact's closed field. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
 | [projection](projection.md) | A human-readable artifact generated from the knowledge graph, normative nowhere. |

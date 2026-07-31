@@ -1,0 +1,10 @@
+{
+  "contract_version": "workflow-event/1",
+  "event_id": "ev_0000000000a3",
+  "workflow_id": "wf_dunning-term",
+  "seq": 3,
+  "occurred_at": "2026-07-30T12:10:00Z",
+  "producer": "knowledge-change",
+  "phase": "context-resolution",
+  "outcome": "resolved"
+}

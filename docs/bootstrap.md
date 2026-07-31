@@ -1,7 +1,8 @@
 # Bootstrap plan
 
-This repository currently contains governance and no implementation. This file records what to build
-first and which rules start binding as each piece lands.
+This repository holds governance, the knowledge layer, and the thin workflow path. It holds no generator
+and no distribution. This file records what to build next and which rules start binding as each piece
+lands.
 
 ## Why sequencing matters here
 
@@ -38,15 +39,21 @@ Concretely, in order:
    Authored is not done: the agent is inert here by that same rule, so "output validated at the boundary"
    is only proven when steps 3–6 run it against a fixture. Its tool grant deliberately excludes the
    shell — the boundary validator is the consumer's check, not the producer's self-report.
-3. **An orchestrator that consumes it** and chooses a transition from the artifact's closed `state`
-   field — a lookup, not an interpretation.
-4. **One appended event** recording what happened, and **one derivation of workflow state** reading those
-   events back.
-5. **A user-invocable skill** that starts and resumes the workflow, doing nothing but validating
-   input and delegating. Claude Code merged custom commands into skills, so this entry point is a
-   skill with `disable-model-invocation` set — see ADR-0009.
-6. **`make validate`, `make test`** over the above, and a fixture in `fixtures/` shaped like a real
-   downstream case.
+3. ~~**An orchestrator that consumes it**~~ **Done.** `scripts/orchestrate.py` chooses its transition
+   from a closed field — `state` on one contract, `verdict` on the other — of an artifact that passed
+   its schema at the boundary. The mapping is `CONSUMED`, a dict; adding a producer is adding a row.
+   Nothing in it reads prose, which is stage 2's abandonment criterion not having fired.
+4. ~~**One appended event** and **one derivation of workflow state**~~ **Done.**
+   `schemas/workflow-event.v1.json` and `scripts/workflow_lib.py`: an append-only log, state replayed
+   from it by `derive()`, and `guard()` holding the transition table. Ordering is `seq`, so replay
+   depends on neither a clock nor file order.
+5. ~~**A user-invocable skill**~~ **Authored.** `src/claude/skills/knowledge-change/SKILL.md`, with
+   `disable-model-invocation` set per ADR-0009. Authored is not done, by the same rule that applied to
+   `concept-author`: it is inert here, and only the generator with an installed fixture exercises it.
+6. ~~**`make validate`, `make test`** over the above, and a fixture~~ **Done.**
+   `fixtures/knowledge-change-loop/` runs all seven phases of R2 with one validation failure and one
+   recovery; `scripts/replay_workflow.py --check` is wired into `make validate`, and
+   `tests/test_workflow_events.py` covers each guard condition in both directions.
 7. **The generator and `make dist`**, once `src/claude/` holds enough to assemble.
 
 ## Sequencing
@@ -65,6 +72,15 @@ Five stages. Each one names what it would falsify, because a stage that cannot f
    Abandonment criterion: if the orchestrator needs to interpret prose to choose a transition, the
    artifact design is wrong — fix the schemas, not the prompt. This stage carries the risk of the whole
    plan.
+
+   **Done except the generator.** The loop runs, and the abandonment criterion did not fire: the
+   orchestrator reads a closed field and there is no branch in it that inspects prose. Two corrections
+   the work forced on this stage's own description, both recorded rather than quietly absorbed. The five
+   phase names above are shorthand for R2's seven, not a shorter path — R2 states escalation inserts
+   phases and never removes one, so context resolution is recorded as *degenerate* rather than skipped,
+   and "knowledge authoring" is the implementation phase. And the minimal generator is not done, so
+   ADR-0009 condition 2 remains open: nothing has yet installed a component and watched Claude Code load
+   it.
 3. **Graph and context resolution.** Only once the bundle is large enough for selection to matter, with
    the reproducibility test and the instrumentation — selection recall, tokens per change — that decides
    whether resolution pays for itself. Falsifies the determinism claim, which becomes a test rather than
@@ -92,14 +108,17 @@ at a specific point:
 | non-restatement: an ADR's `## Decision` cites an operative rule instead of repeating it (`docs/adr/README.md`) | the check runs in `make validate` | **active**, six ADRs de-duplicated to satisfy it |
 | migration test for a contract bump (`.claude/rules/compatibility.md`) | a test suite exists | **owed**: `adr/1` → `adr/2` happened without one |
 | component contracts (`schemas/skill.v1.json`, `schemas/agent.v1.json`) | the validator runs in `make validate` | **active**, exercised by `concept-author` |
-| result contract (`schemas/concept-authoring-result.v1.json`) validated at the boundary | the thin-path orchestrator or a test consumes the agent's result | pending |
+| result contract (`schemas/concept-authoring-result.v1.json`) validated at the boundary | the thin-path orchestrator or a test consumes the agent's result | **active**: `scripts/orchestrate.py` validates it before consumption, and rejection is tested |
+| workflow event contract (`schemas/workflow-event.v1.json`), its conditionals, and the transition guard | `scripts/workflow_lib.py` runs under test | **active**, every guard condition covered in both directions |
+| impact analysis contract (`schemas/impact-analysis.v1.json`), R4's closed verdict | the orchestrator consumes it | **active**, exercised by `fixtures/knowledge-change-loop/` |
+| a workflow fixture's log and derived state are replayed and never hand-edited | `replay_workflow.py --check` runs in `make validate` | **active** |
 | knowledge-object contract (`schemas/knowledge-object.v1.json`), per-type conditionals and the attribute type system | the validator runs in `make validate` (spec 0003 R37) | **active**, exercised by `fixtures/knowledge-two-context/` |
 | materialized graph contract (`schemas/knowledge-graph.v1.json`) | the materializer emits `graph.json` | **active** |
 | the checks spec 0003 defers to a script — R11, R15, R18, R20, R22, R28, R29, R38, R43–R48 | `scripts/validate_knowledge.py` runs in `make validate` | **active**, both outcomes tested per check |
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 59 tests over the knowledge layer |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 157 tests: 98 over the knowledge layer, 59 over the workflow loop |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **partly active** |
 | `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | pending |
@@ -140,6 +159,12 @@ different case from removing a record that only duplicated a rule.
    deterministic; one transition guard with a test for both outcomes; a fixture exercising the loop end to
    end. If a mutable record turns out to be sufficient for the workflows the framework actually runs, take
    it — the event model costs a migration burden on every schema change, and nothing has yet earned it.
+
+   **Every gate condition is now met** — `schemas/workflow-event.v1.json`, `scripts/workflow_lib.py`,
+   `tests/test_workflow_events.py`, `fixtures/knowledge-change-loop/`. What is not done is recording the
+   decision: a met gate is evidence that the candidate works, not authority that it is chosen, and an
+   agent does not promote its own design. The decision belongs in an ADR a maintainer accepts. Until
+   then, treat the append-only model as the candidate that has passed its test, not as settled.
 2. **How the distribution is produced.** That `dist/.claude/` is generated, reproducible, and never
    hand-edited is settled by `CLAUDE.md` **Repository layout** and `.claude/rules/distribution.md`. What
    is open is the generator. Gate: a generator in `scripts/` that `make dist` runs; running it twice from
@@ -155,6 +180,15 @@ different case from removing a record that only duplicated a rule.
    specialized agent's tool grant demonstrably the minimum its role requires; a fixture exercising the
    path end to end. If a class turns out to be ceremony for the workflows the framework actually runs,
    drop it rather than populate it.
+
+   **Partly met.** The entry point and the orchestrator exist, and the orchestrator's transition is a
+   lookup on a closed field with no prose read — that condition is met and tested. Two are not: the
+   specialized agent never ran, because it is inert here until the generator installs it, so its result
+   was consumed as a recorded artifact rather than produced; and "completing a workflow together" is
+   therefore unproven. One thing the work did settle by demonstration: the orchestrator is a script, not
+   a prompt and not an agent. Whether `orchestrator` names a component class the framework *ships* is
+   still open — see `docs/concepts/orchestrator.md`, which records the term and leaves the class
+   question here.
 4. **That the source and development trees stay separate in practice.** The boundary is stated in
    **The two trees** in `.claude/rules/claude-code-authoring.md`, which loads whenever either tree is
    read, and the first distributable component now sits under `src/claude/`.
@@ -165,6 +199,53 @@ different case from removing a record that only duplicated a rule.
    bind now. What is missing is enforcement. Gate: the first hook or script exercising "validate before
    acting" and "reject rather than repair" under test — which is also what turns the deferred
    `.claude/rules/security.md` from a plan into a rule distilled from working code.
+
+## The framework-architecture agenda
+
+A proposal on 2026-07-30 asked for eleven specifications describing the Siegard product: runtime
+architecture, a capability model and its contracts, the distribution layout, context assembly, a command
+system, a worker model, a hook system, a template system, target packs, and the framework lifecycle. The
+gap it names is real. `specs/` fixes the method a governed repository follows; nothing fixes the product
+that implements it, and the four specifications there do not claim to.
+
+It is recorded as an agenda rather than written as eleven specifications, for the reason this file already
+gives: a contract for a component that does not exist is a guess that reads like a requirement. Three of
+the eleven would answer an open question above by assertion instead of meeting its gate, and
+`docs/concepts/capability.md` already settles what an unexercised capability is — an intention. An agenda
+that names, per topic, who holds the authority now and which gate would move it costs one section and
+forecloses nothing.
+
+| Topic | Who holds the authority today | What would settle it |
+|---|---|---|
+| runtime architecture | `CLAUDE.md` **Scope**; `.claude/rules/claude-code-authoring.md` | stage 2, once the thin path has run |
+| capability model, capability contracts | `docs/concepts/capability.md`; `schemas/skill.v1.json`, `schemas/agent.v1.json` | open question 3's gate |
+| distribution layout | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` | open question 2's gate — a generator |
+| context assembly | `specs/0001` **Context resolution**; `docs/concepts/context-package.md` | stage 3, with the selection instrumentation |
+| command system | ADR-0009: there is no command class | nothing — the class does not exist |
+| worker model | `docs/concepts/specialized-agent.md` | open question 3's gate |
+| hook system | `CLAUDE.md` **Security** | open question 5's gate — the first hook under test |
+| template system | `specs/0004` (`proposed`); `docs/concepts/generation-track.md` | stage 4, and 0004's acceptance |
+| target pack model | `.claude/rules/claude-code-authoring.md` **Target packs**; `specs/0004` | a pack with a fixture, after 0004 is accepted |
+| framework lifecycle | `.claude/rules/compatibility.md` | the migration test that rule is already owed |
+
+The framework specifications this agenda eventually produces belong in `specs/` at `0005` and above.
+Splitting `specs/` into subdirectories was considered and rejected: 33 concept `sources` resolve to those
+paths under a constraint ADR-0010 made enforced, and renaming a public artifact is breaking under
+`.claude/rules/compatibility.md`. An id range separates the two families at no cost.
+
+Four vocabulary decisions from the same proposal, recorded so the terms do not re-enter:
+
+- a unit of work with one role is a **specialized agent**. `worker` is v0.1 vocabulary surviving only in
+  `reference/`, which is normative nowhere;
+- a user-invocable procedure is a **skill**. ADR-0009 records that there is no command class, and
+  `scripts/validate_components.py` already rejects `src/claude/commands/` by name;
+- a **projection**, a schema, and a template are artifact classes, not kinds of capability. ADR-0010
+  exists because `projection` named two referents once already;
+- the tier that holds `specs/` is a **normative source**, named in `CLAUDE.md`. `foundations` is not a
+  second name for it.
+
+**Discovery** is the act that produces a [change request](concepts/change-request.md), upstream of the
+seven phases in `specs/0001`. It is not an eighth phase and it changes nothing in that specification.
 
 ## Enforcement is not in this file, or in CLAUDE.md
 
@@ -190,12 +271,13 @@ depend on cooperation.
 
 - **Version control.** Git, on `main`, with `origin` at `git@github.com:zig999/siegard2.git`.
   Traceability, reproducible generation from committed source, and migration history all presuppose it.
-- **Five enforced artifact contracts.** Specifications (`schemas/spec.v1.json`), concepts
-  (`schemas/concept.v1.json`), ADRs (`schemas/adr.v2.json`, with `adr.v1.json` kept readable), and
-  distributable components
-  (`schemas/skill.v1.json`, `schemas/agent.v1.json`), each with a boundary validator in `scripts/`, all
-  wired to `make validate`. These are the only rules in this repository that are checked rather than
-  trusted. The component contracts were authored before the first component, deliberately, so it was born
+- **Eight enforced artifact contracts.** Specifications (`schemas/spec.v1.json`), concepts
+  (`schemas/concept.v1.json`), ADRs (`schemas/adr.v2.json`, with `adr.v1.json` kept readable),
+  distributable components (`schemas/skill.v1.json`, `schemas/agent.v1.json`), knowledge objects
+  (`schemas/knowledge-object.v1.json`), and the two the workflow loop added — workflow events
+  (`schemas/workflow-event.v1.json`) and impact analysis (`schemas/impact-analysis.v1.json`) — each with
+  a boundary validator in `scripts/`, all wired to `make validate`. These are the only rules in this
+  repository that are checked rather than trusted. The component contracts were authored before the first component, deliberately, so it was born
   against them (ADR-0009); the specification contract was authored in the same change as the first
   specification, for the same reason.
 - **A design authority.** `specs/0001-knowledge-object-driven-development.md`, `proposed`, is the first
@@ -207,11 +289,20 @@ depend on cooperation.
   contract in `schemas/concept-authoring-result.v1.json`. It is a component under `src/claude/` that
   nothing under `.claude/` duplicates, and it exercises the component contract for the first time. The
   rest of open question 4 above — generator input, exclusion test, fixture — remains open.
+- **The thin path, less the generator.** `scripts/orchestrate.py`, `scripts/workflow_lib.py`, and
+  `scripts/replay_workflow.py`, over `schemas/workflow-event.v1.json` and
+  `schemas/impact-analysis.v1.json`, with `src/claude/skills/knowledge-change/SKILL.md` as the entry
+  point and `fixtures/knowledge-change-loop/` as the case. It runs all seven phases of spec 0001 R2,
+  including a validation failure and a recovery under a stated attempt limit, and it is the change that
+  turned the boundary check on `concept-authoring-result/1` from a declared gap into a tested one. What
+  it does not prove is in that fixture's **What it is not evidence for**, and the shortfall is the same
+  one everywhere: no component has been installed and loaded, because there is no generator.
 
 ## Not yet in place
 
-- No `templates/`. `tests/` and `fixtures/` now exist, but only for the knowledge layer: no fixture
-  exercises the workflow of spec 0001, the generation pipeline of spec 0004, or the distribution.
+- No `templates/`. No fixture exercises the generation pipeline of spec 0004 or the distribution. The
+  workflow of spec 0001 now has one, `fixtures/knowledge-change-loop/`, which exercises its control flow
+  but produces no code and no context package.
 - `specs/0002` and `specs/0003` are `accepted`; `0001` and `0004` are `proposed`. Normative source 1 now
   binds for the knowledge layer and binds nothing for the workflow or the generation pipeline.
   Spec 0003 was accepted on 2026-07-30 after every condition it set was met by a component that
@@ -220,12 +311,19 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 59 tests, all over the knowledge layer. The validators for specifications, ADRs,
-  concepts, and components remain untested code enforcing tested contracts; only
-  `validate_knowledge.py`, `knowledge_graph_lib.py`, `project_knowledge.py`, and
-  `measure_ontology.py` are covered. Do not read a green `make test` as coverage of the other four.
+- `make test` runs 157 tests: 98 over the knowledge layer, 59 over the workflow loop. The validators for
+  specifications, ADRs, concepts, and components remain untested code enforcing tested contracts; only
+  `validate_knowledge.py`, `knowledge_graph_lib.py`, `project_knowledge.py`, `measure_ontology.py`,
+  `workflow_lib.py`, and `orchestrate.py` are covered. Do not read a green `make test` as coverage of
+  the other four. `replay_workflow.py` is exercised by `make validate` rather than by a test of its own.
 - No `.claude/rules/security.md`. `CLAUDE.md` **Security** states the invariants; sanitization, path,
   subprocess, and network detail wait until the first hook or script needs them — see open question 5.
-- No generator, therefore no authoritative `dist/`. `src/claude/` now holds the generator's first
-  input, and until steps 3–6 exist, `concept-author` is authored-but-unexercised: no orchestrator
-  consumes its result, no test validates the result contract at the boundary, and no fixture runs it.
+- No generator, therefore no authoritative `dist/`. This is now the single largest gap: steps 3–6 exist,
+  so `concept-author`'s result contract is validated at a boundary by an orchestrator and exercised by a
+  fixture — but the agent itself, and the `knowledge-change` skill written to drive it, are still inert.
+  Nothing has installed either into a repository and watched Claude Code load it. That is ADR-0009
+  condition 2, open question 2, and the remainder of open question 4, all waiting on the same artifact.
+- No contract for a context package or a specification delta. Spec 0001 R11 requires the first and R16
+  constrains the second; the workflow loop records both phases without producing either artifact, because
+  nothing consumes them to choose a transition yet. Spec 0001 states each artifact's schema arrives with
+  the phase that produces it, so these arrive with stage 3 and stage 4.
