@@ -59,6 +59,15 @@ CONSUMED: dict[str, dict] = {
         # concept-authoring result drives the implementation phase of specs/0001 R2.
         "outcomes": {"authored": "authored", "updated": "updated", "blocked": "blocked"},
     },
+    "knowledge-authoring-result/1": {
+        "phase": "implementation",
+        "field": "state",
+        "producer": "knowledge-author",
+        # The domain-layer counterpart of the row above. Same phase and same three outcomes,
+        # because a knowledge object and a concept are both what a knowledge-only change
+        # produces; a separate contract because the two vocabularies never overlap.
+        "outcomes": {"authored": "authored", "updated": "updated", "blocked": "blocked"},
+    },
     "impact-analysis/1": {
         "phase": "impact-analysis",
         "field": "verdict",

@@ -482,9 +482,22 @@ class Fixture(unittest.TestCase):
         accepted = [e for e in self.events if e["phase"] == "acceptance"][0]
         self.assertTrue(accepted["decided_by"], "specs/0001 R21 requires a deciding authority")
 
-    def test_both_producer_contracts_are_consumed_at_the_boundary(self) -> None:
-        consumed = {e["subject"]["contract_version"] for e in self.events if "subject" in e}
-        self.assertEqual(consumed, set(CONSUMED))
+    def test_every_consumable_contract_is_exercised_by_some_fixture(self) -> None:
+        """Derived rather than counted: a new row in CONSUMED needs a fixture, not an edit here.
+
+        This assertion read `== set(CONSUMED)` over one fixture until `knowledge-authoring-result/1`
+        arrived. That was correct when one fixture consumed everything and became wrong the moment a
+        second one carried part of the load — the property worth holding is that no consumable
+        contract goes unexercised, across the whole fixture set.
+        """
+        exercised: set[str] = set()
+        for log in sorted((REPO_ROOT / "fixtures").glob("*/event-log.jsonl")):
+            for line in log.read_text().splitlines():
+                if line.strip():
+                    event = json.loads(line)
+                    if "subject" in event:
+                        exercised.add(event["subject"]["contract_version"])
+        self.assertEqual(set(CONSUMED), exercised)
 
     def test_every_recorded_event_still_passes_its_contract(self) -> None:
         for entry in self.events:

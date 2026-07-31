@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:f9ba5fde64b1554e89aa4e5ce15b9bb041ba5f97c5b2526e7af6379bf510ee40",
+  "source_revision": "sha256:7b60ad358c14ab9a02040f444addc77c1cf253842aeac7711eb7d0a278c343d0",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -19,6 +19,11 @@
       "digest": "sha256:32df824f9aa53ef1e826c5183f0146cb0de3d84c373f6892962aed326ac93d75"
     },
     {
+      "path": "agents/knowledge-author.md",
+      "source": "src/claude/agents/knowledge-author.md",
+      "digest": "sha256:3bb0db38510c6517c4f0e3ab4071d6eb96010794b4a3b15ba5577fc17f4745dc"
+    },
+    {
       "path": "bin/cli.py",
       "source": "scripts/cli.py",
       "digest": "sha256:7739ad70d0d7338e011327056e0594a1d3b695058d86a00cf63541b180fb61c1"
@@ -26,7 +31,7 @@
     {
       "path": "bin/orchestrate.py",
       "source": "scripts/orchestrate.py",
-      "digest": "sha256:de5085f81cd0c25e528c713dfe0a771da844129c5d35a62c65916e1a96a4ef0f"
+      "digest": "sha256:f30634882c0d6cad1b3f2a06871557d66492a204e13405b41a7404454daed449"
     },
     {
       "path": "bin/replay_workflow.py",
@@ -59,6 +64,11 @@
       "digest": "sha256:1c34a0476f92b990086d335f72bd7a354db052547428cd1a557e539ab1d6bac6"
     },
     {
+      "path": "schemas/knowledge-authoring-result.v1.json",
+      "source": "schemas/knowledge-authoring-result.v1.json",
+      "digest": "sha256:43bba1b00573cf6272d08deaa58fcfc1d6645d585620d1e0fd4fb4ae81aabc55"
+    },
+    {
       "path": "schemas/knowledge-graph.v1.json",
       "source": "schemas/knowledge-graph.v1.json",
       "digest": "sha256:2dd9284b01c023aeb5898c9ccf4d051eacaf5a3edc9668fe5867579de175eaa4"
@@ -76,7 +86,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:9860e72f73b7b59eaae93f8a693e46b12d801b4e4cdbff6769d96af2628c17b4"
+      "digest": "sha256:255624bfead8608a6b88a40551c2923dee4ff849b20a1daecf6680fe7409cda7"
     },
     {
       "path": "skills/knowledge-change/SKILL.md",
@@ -100,6 +110,10 @@
     {
       "contract_version": "impact-analysis/1",
       "path": "schemas/impact-analysis.v1.json"
+    },
+    {
+      "contract_version": "knowledge-authoring-result/1",
+      "path": "schemas/knowledge-authoring-result.v1.json"
     },
     {
       "contract_version": "knowledge-graph/1",
@@ -156,6 +170,12 @@
       "class": "specialized-agent",
       "status": "active",
       "path": "agents/impact-analyst.md"
+    },
+    {
+      "name": "knowledge-author",
+      "class": "specialized-agent",
+      "status": "active",
+      "path": "agents/knowledge-author.md"
     }
   ],
   "overrides": []

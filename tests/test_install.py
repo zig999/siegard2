@@ -231,10 +231,21 @@ class ShippedAgents(unittest.TestCase):
             c["name"]: c for c in self.manifest["capabilities"] if c["class"] == "specialized-agent"
         }
 
-    def test_both_agents_ship(self) -> None:
-        self.assertEqual({"concept-author", "impact-analyst"}, set(self.agents))
+    def test_every_authored_agent_ships(self) -> None:
+        """Derived rather than listed: authoring an agent with a fixture should not edit a test.
 
-    def test_neither_agent_has_a_shell(self) -> None:
+        This read `== {"concept-author", "impact-analyst"}` until `knowledge-author` arrived. The
+        property worth holding is that the distribution carries every agent a fixture exercises,
+        not that it carries a particular two.
+        """
+        authored = {p.stem for p in (REPO_ROOT / "src" / "claude" / "agents").glob("*.md")}
+        self.assertEqual(authored, set(self.agents))
+
+    def test_more_than_one_agent_ships(self) -> None:
+        """A derived assertion over an empty set would pass; this is what keeps it honest."""
+        self.assertGreaterEqual(len(self.agents), 2)
+
+    def test_no_agent_has_a_shell(self) -> None:
         """specs/0006 R6, and the reason: a guarantee a producer self-reports is not one."""
         for name in self.agents:
             body = (DIST / "agents" / f"{name}.md").read_text()

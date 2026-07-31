@@ -72,6 +72,7 @@ SHIPPED_SCHEMAS = {
     "workflow-event.v1.json": "the governed repository's event log; workflow_lib.py validates against it",
     "impact-analysis.v1.json": "consumed at the boundary by orchestrate.py",
     "concept-authoring-result.v1.json": "consumed at the boundary by orchestrate.py",
+    "knowledge-authoring-result.v1.json": "consumed at the boundary by orchestrate.py",
     "knowledge-object.v1.json": "the governed repository's knowledge base",
     "knowledge-graph.v1.json": "the materialized graph derived from that base",
     "concept.v1.json": "the bundle concept-author writes into",
