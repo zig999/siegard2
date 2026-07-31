@@ -1,0 +1,20 @@
+{
+  "contract_version": "pack-declaration/1",
+  "pack": "typescript-node",
+  "version": "0.1.0",
+  "framework_contracts": ["pack-declaration/1", "generation-plan/1", "generation-scope/1", "knowledge-object/1"],
+  "produces": [
+    { "class": "type",             "track": "deterministic", "from": ["definition"] },
+    { "class": "dto",              "track": "deterministic", "from": ["definition"] },
+    { "class": "enum",             "track": "deterministic", "from": ["lifecycle"] },
+    { "class": "state-machine",    "track": "deterministic", "from": ["lifecycle"] },
+    { "class": "persistence-schema","track": "deterministic","from": ["definition"] },
+    { "class": "migration",        "track": "deterministic", "from": ["definition"] },
+    { "class": "event-schema",     "track": "deterministic", "from": ["interface"] },
+    { "class": "api-description",  "track": "deterministic", "from": ["interface"] },
+    { "class": "conformance-test", "track": "deterministic", "from": ["rule", "lifecycle"] },
+    { "class": "documentation",    "track": "deterministic", "from": ["boundary"] },
+    { "class": "validator",        "track": "judged",        "from": ["rule"] },
+    { "class": "orchestration",    "track": "judged",        "from": ["process"] }
+  ]
+}
