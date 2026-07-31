@@ -224,7 +224,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 532 tests over fifteen areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 540 tests over fifteen areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
 | hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
@@ -378,7 +378,7 @@ forecloses nothing.
 | hook system | `CLAUDE.md` **Security** | open question 5's gate — the first hook under test |
 | template system | `fixtures/pack-typescript/templates/expand.py` | **active**: ten templates, each held to byte identity, to reading only its inputs, and to naming a missing domain fact rather than defaulting one |
 | target pack model | `fixtures/pack-typescript/` | **exercised as a fixture**: twelve classes, ten templates, two agents, byte identity tested on every template. Not admitted under `specs/0012` R13, which wants a pack shown to serve *any* repository on its stack, and blocked from `src/claude/` by D4 |
-| framework lifecycle | `.claude/rules/compatibility.md`, `scripts/migrate_contracts.py`, the `upgrade` skill | **settled for the version half**: the migration test is paid and upgrade detects divergence. Deprecation and retirement are stated and unexercised — no capability has completed `specs/0006` R14's full cycle |
+| framework lifecycle | `.claude/rules/compatibility.md`, `migrate_contracts.py`, `check_capabilities.py`, the `upgrade` skill | **active as a mechanism**: the migration test is paid, upgrade detects divergence, and `fixtures/lifecycle-retirement/` holds the full `active → deprecated → retired` sequence with a migration test that fails against the old behavior. No *real* capability has needed to go, and retiring one to demonstrate retirement would manufacture the evidence |
 
 The framework specifications this agenda eventually produces belong in `specs/` at `0005` and above.
 Splitting `specs/` into subdirectories was considered and rejected: 33 concept `sources` resolve to those
@@ -484,7 +484,7 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 532 tests across fifteen areas: the knowledge layer, the workflow loop, the
+- `make test` runs 540 tests across fifteen areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
   eleven scaffolds in `templates/`, the first shipped hook, context resolution, the generation pipeline, the first target pack, one generation run end to end, and the capability lifecycle.

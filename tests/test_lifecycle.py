@@ -197,3 +197,85 @@ class RecordedUpgradeOutcomes(unittest.TestCase):
         """A case in the fixture with nothing reproducing it is a claim, not evidence."""
         covered = {"same-version", "local-divergence", "shadowed-agent"}
         self.assertEqual(covered, {case["name"] for case in self.recipe["cases"]})
+
+
+class Retirement(unittest.TestCase):
+    """`specs/0006` R14 through R16, over `fixtures/lifecycle-retirement/`.
+
+    A fixture rather than a real retirement. Nothing in the framework has needed to go yet, and
+    retiring something to demonstrate retirement would manufacture the evidence rather than
+    produce it. What the fixture makes real is the mechanism: the sequence is checked, the
+    migration exists as a function, and the test below fails against the old behavior — which is
+    the clause R16 states and which no amount of recorded history would satisfy on its own.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.record = json.loads(
+            (REPO_ROOT / "fixtures" / "lifecycle-retirement" / "releases.json").read_text()
+        )
+
+    def test_the_recorded_sequence_holds(self) -> None:
+        self.assertEqual([], cc.check_release_sequence(self.record["releases"]))
+
+    def test_it_passes_through_deprecated(self) -> None:
+        """R15: removing an installed capability without that step is a silent breaking change."""
+        self.assertEqual(
+            ["active", "deprecated", "retired"],
+            [release["status"] for release in self.record["releases"]],
+        )
+
+    def test_skipping_deprecated_is_reported(self) -> None:
+        problems = cc.check_release_sequence(
+            [{"version": "0.1.0", "status": "active"},
+             {"version": "0.2.0", "status": "retired", "migration": "x"}]
+        )
+        self.assertTrue(any("R15" in p for p in problems), problems)
+
+    def test_a_deprecation_naming_no_replacement_is_reported(self) -> None:
+        problems = cc.check_release_sequence([{"version": "0.2.0", "status": "deprecated"}])
+        self.assertTrue(any("replacement" in p for p in problems), problems)
+
+    def test_a_retirement_with_no_migration_is_reported(self) -> None:
+        problems = cc.check_release_sequence(
+            [{"version": "0.2.0", "status": "deprecated", "replacement": "report"},
+             {"version": "0.3.0", "status": "retired", "replacement": "report"}]
+        )
+        self.assertTrue(any("R16" in p for p in problems), problems)
+
+    def test_the_lifecycle_does_not_run_backwards(self) -> None:
+        problems = cc.check_release_sequence(
+            [{"version": "0.2.0", "status": "deprecated", "replacement": "report"},
+             {"version": "0.3.0", "status": "active"}]
+        )
+        self.assertTrue(any("backwards" in p for p in problems), problems)
+
+    def test_the_migration_fails_against_the_old_behavior(self) -> None:
+        """R16's own clause, and the reason this is a test rather than a recorded claim.
+
+        The retired capability answered with a bare string; its replacement answers with the
+        structured result the rest of the framework consumes. A migration that returned its input
+        unchanged would pass a test asserting only that the new shape works — so the assertion
+        that matters is that the *old* behavior no longer satisfies the new consumer.
+        """
+
+        def old_behavior(request: str) -> str:
+            return f"report for {request}"
+
+        def migrate(legacy: str) -> dict:
+            return {"contract_version": "report/1", "summary": legacy}
+
+        def new_consumer(result) -> str:
+            if not isinstance(result, dict) or result.get("contract_version") != "report/1":
+                raise TypeError("report/1 expected")
+            return result["summary"]
+
+        legacy = old_behavior("invoices")
+        with self.assertRaises(TypeError):
+            new_consumer(legacy)
+        self.assertEqual(legacy, new_consumer(migrate(legacy)))
+
+    def test_the_record_names_the_test_that_backs_it(self) -> None:
+        """A recorded migration with no test behind it is the debt this repository already paid once."""
+        self.assertIn("Retirement::test_the_migration_fails_against_the_old_behavior",
+                      self.record["migration_test"])

@@ -140,3 +140,51 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# --- lifecycle across releases -----------------------------------------------------------
+
+
+LIFECYCLE_ORDER = {"proposed": 0, "active": 1, "deprecated": 2, "retired": 3}
+
+
+def check_release_sequence(releases: list[dict]) -> list[str]:
+    """Every reason a capability's observed history violates specs/0006 R14 through R16.
+
+    R15's clause is the one that needs a mechanism: a capability moves to `deprecated` before
+    `retired`, and removing an installed one without that step is "a breaking change made
+    silently". Silent is the operative word — nothing observes it unless something compares two
+    releases, which is what this does.
+    """
+    problems: list[str] = []
+    previous: dict | None = None
+    for release in releases:
+        status = release["status"]
+        if status not in LIFECYCLE_ORDER:
+            problems.append(f"{release['version']}: status {status!r} is outside specs/0006 R14")
+            continue
+        if previous is not None:
+            before, after = LIFECYCLE_ORDER[previous["status"]], LIFECYCLE_ORDER[status]
+            if after < before:
+                problems.append(
+                    f"{release['version']}: moves from {previous['status']!r} back to {status!r}; "
+                    f"the lifecycle of specs/0006 R14 does not run backwards"
+                )
+            if previous["status"] == "active" and status == "retired":
+                problems.append(
+                    f"{release['version']}: retires a capability that was active in "
+                    f"{previous['version']} without passing through 'deprecated' — specs/0006 R15 "
+                    f"calls that a breaking change made silently"
+                )
+        if status == "deprecated" and not release.get("replacement"):
+            problems.append(
+                f"{release['version']}: deprecated without naming a replacement or stating plainly "
+                f"that none exists (specs/0006 R15)"
+            )
+        if status == "retired" and not release.get("migration"):
+            problems.append(
+                f"{release['version']}: retired with no migration recorded — specs/0006 R16 requires "
+                f"the migration .claude/rules/compatibility.md demands"
+            )
+        previous = release
+    return problems
