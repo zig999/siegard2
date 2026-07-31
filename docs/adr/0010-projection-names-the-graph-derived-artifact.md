@@ -103,8 +103,21 @@ normatively, which is the condition `docs/adr/README.md` states for a concept to
 derivable from a binding citation instead of from an agent's judgment about a rename.
 
 What remains unclosed is the failure mode rather than this instance of it. Nothing mechanically detects one
-term carrying two referents: `scripts/validate_specs.py` checks that a concept link resolves, and
-`scripts/validate_concepts.py` checks id uniqueness and id/filename agreement. Neither compares meanings. A
-weaker guard would have caught this case — requiring a specification that links a concept to appear in that
-concept's `sources`, which `docs/concepts/projection.md` did not satisfy before this change. It catches
-provenance mismatch, not semantic divergence, and it is not built.
+term carrying two referents, because no check compares meanings.
+
+One guard against the mechanism that produced it is now built. `scripts/validate_concepts.py` rejects a
+`sources` entry that resolves to no file, which is the constraint `schemas/concept.v1.json` already stated and
+nothing enforced. It is the check this history asked for: the first version of `docs/concepts/projection.md`
+was sourced from `docs/adr/0001-event-sourced-workflow-state.md`, and when that ADR was deleted the dangling
+reference was replaced with `CLAUDE.md` rather than reported. That silent replacement is the moment the
+definition lost its anchor. `tests/test_concept_sources.py` covers both outcomes, including the exact
+deleted path.
+
+A second guard was considered and rejected on measurement: requiring a specification that links a concept to
+appear in that concept's `sources`. It would have fired on this case, and it fires on 38 links in the current
+tree, because `sources` is declared as the material a concept derives from rather than the artifacts that cite
+it. Making one field carry both relations is the defect this record exists to resolve, one level up. A
+citation index is a separate field and a separate decision.
+
+What neither guard reaches: a source that resolves says nothing about whether the definition still matches
+what that source decided. The bound is stated rather than closed.

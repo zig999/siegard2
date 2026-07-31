@@ -87,7 +87,7 @@ at a specific point:
 | Rule | Activates when | State |
 |---|---|---|
 | specification contract (`schemas/spec.v1.json`), frontmatter and body structure | the validator runs in `make validate` | **active**, exercised by every specification in `specs/` |
-| concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
+| concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active**; the `sources` path constraint became enforced with ADR-0010, which records the deleted-source failure that demanded it |
 | ADR frontmatter contract (`schemas/adr.v2.json`), including supersession and amendment | the validator runs in `make validate` | **active**; `amends` exercised for the first time by ADR-0008 over ADR-0004 |
 | non-restatement: an ADR's `## Decision` cites an operative rule instead of repeating it (`docs/adr/README.md`) | the check runs in `make validate` | **active**, six ADRs de-duplicated to satisfy it |
 | migration test for a contract bump (`.claude/rules/compatibility.md`) | a test suite exists | **owed**: `adr/1` → `adr/2` happened without one |
