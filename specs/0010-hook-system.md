@@ -96,9 +96,12 @@ would produce a hook that shrugs, which is not a hook.
 - **R3** — A hook fails closed. Where it cannot reach a decision — malformed input, an unreadable file,
   an unexpected tool payload, an internal error — it catches the condition and exits 2 with the reason on
   stderr. It never exits 0 on an unhandled error, because an uncaught failure reads as permission.
-- **R4** — A hook does not rewrite what it inspects. `PreToolUse` offers `updatedInput`, and Siegard
-  hooks do not use it: an action the framework considers wrong is denied with a reason, and the caller
-  fixes it. Silent correction hides the defect and makes the corrected input unattributable.
+- **R4** — The `updatedInput` field of a `PreToolUse` response is not used. That a hook rejects rather
+  than repairs is `CLAUDE.md` **Security**'s rule, cited under **Decided elsewhere** and not restated
+  here; what this requirement adds is the single harness affordance that would let a Siegard hook break
+  it, which neither `CLAUDE.md` nor `specs/0006` R7 could have named. An action the framework considers
+  wrong is denied with a reason, and the caller fixes it: silent correction hides the defect and makes the
+  corrected input unattributable.
 - **R5** — A hook never returns an allow decision for an action the receiving repository's own rules would
   prompt for or deny. A shipped hook may narrow what is permitted; it may never widen it.
 

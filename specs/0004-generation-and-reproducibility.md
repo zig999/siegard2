@@ -19,7 +19,9 @@ what "the same knowledge produces the same system" guarantees. It decides six th
    [track](../docs/concepts/generation-track.md);
 3. the three derived artifacts between knowledge and source — the
    [scope](../docs/concepts/generation-scope.md), the [plan](../docs/concepts/generation-plan.md), and the
-   [manifest](../docs/concepts/generation-manifest.md) — and why none of them is an authored rule language;
+   [manifest](../docs/concepts/generation-manifest.md) — why none of them is an authored rule language, and
+   the one judged input they need: the [placement decision](../docs/concepts/placement-decision.md) that
+   supplies a target path the manifest does not yet hold;
 4. [generative completeness](../docs/concepts/generative-completeness.md) as a blocking validation;
 5. how produced and hand-authored source bind back to the knowledge that justifies them;
 6. the [persistence](../docs/concepts/artifact-persistence.md) of every artifact it names — which are
@@ -68,16 +70,16 @@ Two copies of a rule diverge. Where this specification needs one of the above, i
 calibration would repeat the defect spec 0001 exists to correct: a determinism guarantee resting on steps no
 mechanism decides.
 
-Reproducibility comes from **locking**, not from authoring. A specialized agent decides where a produced
-artifact goes, because placement is stack knowledge that spec 0002 R4 keeps out of the knowledge base — and
-an agent is a model, which cannot be relied on to decide identically twice. The manifest records the decision
+Reproducibility comes from **locking**, not from authoring. The pack decides where a produced artifact goes,
+because placement is stack knowledge that spec 0002 R4 keeps out of the knowledge base — and where a model
+makes that decision it cannot be relied on to decide identically twice. The manifest records the decision
 once, and every later run obeys the record. The pattern is a dependency lockfile's.
 
 | | first generation of an artifact | regeneration under lock |
 |---|---|---|
-| Target path | the agent decides; the manifest records | read from the manifest; not decided again |
+| Target path | the placement decision of R52 supplies it; the manifest records it | read from the manifest; not decided again |
 | Content, `deterministic` class | template expansion over structured knowledge | **byte-identical** |
-| Content, `judged` class | the agent authors it | verified against the generated conformance suite |
+| Content, `judged` class | the class's agent authors it | verified against the generated conformance suite |
 | What a diff means | a new entry is expected to vary | any variation in a locked entry is a finding |
 
 Three consequences are stated rather than left implicit.
@@ -124,14 +126,14 @@ never how a technology expresses it:
 pack: kotlin-spring
 version: 1.4.0
 produces:
-  - { class: type,               track: deterministic }
-  - { class: persistence-schema, track: deterministic }
-  - { class: migration,          track: deterministic }
-  - { class: enum,               track: deterministic }
-  - { class: state-machine,      track: deterministic }
-  - { class: conformance-test,   track: deterministic }
-  - { class: validator,          track: judged }
-  - { class: orchestration,      track: judged }
+  - { class: type,               track: deterministic, from: [definition] }
+  - { class: persistence-schema, track: deterministic, from: [definition] }
+  - { class: migration,          track: deterministic, from: [definition] }
+  - { class: enum,               track: deterministic, from: [definition] }
+  - { class: state-machine,      track: deterministic, from: [lifecycle] }
+  - { class: conformance-test,   track: deterministic, from: [rule, lifecycle] }
+  - { class: validator,          track: judged,        from: [rule] }
+  - { class: orchestration,      track: judged,        from: [process] }
 ```
 
 Eight lines of declaration in place of an authored ruleset. What the declaration buys, and what could not be
@@ -139,8 +141,22 @@ read off an agent's prompt: a class outside the vocabulary is rejected, the trac
 before anything runs, and a node type yielding nothing under the active pack is **reported** rather than
 silently uncovered.
 
-What is deliberately absent: naming conventions, directory layout, path derivation, expansion order, and the
-mapping from a reference to a storage representation. Each is stack knowledge, each already lives in the
+**`from` is the third column, and an earlier draft omitted it.** That draft declared only the class and the
+track, and R14 said the declaration holds nothing else, while `specs/0012` R6 assigned the node-type-to-class
+mapping to the pack and `specs/0012` R7 left it in the agent's own competence. R23 then derived the plan from
+the scope, this declaration, and the manifest, with no model in the loop — so nothing in the plan's declared
+inputs could answer *which artifacts a knowledge object demands*. The plan was model-free and incomplete at
+the same time. R11 was already unsatisfiable for the same reason: a node type yielding no class cannot be
+reported by anything that cannot enumerate what each type yields.
+
+`from` is the smallest input that closes it. It is not what R14's exclusion protects — a mapping from a node
+type to an artifact class names no directory, no filename, and no storage representation, and `specs/0012`
+R6 already put it in the pack rather than in the framework. R10 still holds unchanged: *this specification*
+fixes no mapping, because the mapping presumes a technology and the pack is where a technology may be
+presumed.
+
+What remains deliberately absent: naming conventions, directory layout, path derivation, expansion order, and
+the mapping from a reference to a storage representation. Each is stack knowledge, each already lives in the
 agent, and each would be maintenance cost with no differentiating content — the economy spec 0002 protects.
 
 Two classes were considered and cut. `module-layout` is precisely the stack knowledge spec 0002 R4 excludes,
@@ -148,10 +164,23 @@ and `client-stub` added nothing `api-description` does not already carry.
 
 ## The target pack
 
-A target pack is one specialized agent and the templates it expands, distributed together under
-`src/claude/`. The agent conforms to `schemas/agent.v1.json` and enumerates its tool grant, per ADR-0009 and
-[least privilege](../docs/concepts/least-privilege.md). The entry point that runs generation is a
-[skill](../docs/concepts/skill.md), because ADR-0009 records that there is no command class.
+A target pack is the specialized agents and templates that produce the classes it declares, distributed
+together under `src/claude/`. Each agent conforms to `schemas/agent.v1.json` and enumerates its tool grant,
+per ADR-0009 and [least privilege](../docs/concepts/least-privilege.md). The entry point that runs
+generation is a [skill](../docs/concepts/skill.md), because ADR-0009 records that there is no command class.
+
+**Composition follows the declaration, and an earlier draft of this section did not.** It said a pack is
+*one* specialized agent and the templates it expands, which cannot be reconciled with `specs/0006` R5 — a
+specialized agent produces exactly one artifact class — for any pack declaring two judged classes. The
+example declaration below declares two, `validator` and `orchestration`, so the contradiction was not
+hypothetical: this document's own example could not be built by a conforming pack. The composition rule is
+therefore derived from the declaration rather than fixed at one agent, and R51 makes the correspondence
+exact.
+
+The alternative repair was to keep one agent and forbid a pack from declaring more than one judged class.
+It is recorded here as considered and rejected: it forces one stack to be served by several packs, which
+R12's single active pack then makes unreachable, and it buys nothing the producer-cardinality check does
+not already give.
 
 Exactly one pack is active in a governed repository. One pack is what lets a template assume its technology
 instead of abstracting over it, which is where the deterministic track gets its width, and it is consistent
@@ -172,7 +201,10 @@ knowledge graph ─┐
 roots ───────────┘   (closed, frozen)   │
                                         ├──→ generation plan ──→ execution ──→ source
 target pack declaration ────────────────┤   (derived, validated)              + manifest
-manifest (the lock) ────────────────────┘
+manifest (the lock) ────────────────────┤
+placement decision ─────────────────────┘
+(judged, validated, frozen —
+ new target paths only)
 ```
 
 ### The scope — derived, frozen, fail-closed
@@ -197,15 +229,49 @@ matters most:
 Conflating the two would carry fail-soft into generation, and a generation that degrades quietly produces
 less software than was asked for with no signal.
 
+### The placement decision — where judgment becomes a lock
+
+Placement is stack knowledge and an agent decides it, which is the concession **The calibrated promise**
+already records. What that section left implicit is *when* the decision enters, and the omission made the
+plan impossible to derive for a first generation. The plan must know a new entry's target path — R25
+detects collisions before any write, and a collision between two new entries is the case worth catching —
+while R23 admits no model into the derivation. A path the manifest does not yet hold has only one source,
+and that source is a model.
+
+The [placement decision](../docs/concepts/placement-decision.md) is that source, made explicit and made an
+input. For the entries the manifest does not lock, the pack proposes a target path per entry; the proposal
+is validated against the pack's declaration, the closed class vocabulary, path safety, and the repository
+boundary; and the validated result is **frozen** before the plan is derived. From there the derivation is
+the model-free function R23 describes, over four inputs rather than three.
+
+*Which* producer inside the pack proposes a path is left open, and the reason is worth being explicit
+about. A judged class has an agent that can decide one. A deterministic class has a template, and a
+template cannot judge — but `specs/0011` R12 already puts naming and layout inside the template, so a pack
+may well derive a deterministic class's path rather than propose it, which would give that class byte
+identity from the first run instead of the second. Both designs satisfy every requirement here, they differ
+in what the first run promises, and choosing between them without a pack to try them on is the guess this
+specification's **What this specification does not decide** exists to refuse.
+
+The gain is that the one judged step in an otherwise deterministic pipeline is a named, validated,
+inspectable artifact instead of an unstated assumption. What it does not buy is byte identity for a first
+run: two first generations over the same knowledge may place the same artifact differently, and that is the
+same trade the calibrated promise already made. Identity begins at the second run, where R31 reads the path
+back rather than asking again.
+
+An authored placement ruleset shipped by the pack was considered and rejected. It would produce byte
+identity from the first run, and it is precisely the rule language **The calibrated promise** removed: a
+placement grammar is paid on every change to the stack, a lock is paid once, and R14 excludes path
+derivation from the declaration for that reason.
+
 ### The plan — derived, inspectable before any write
 
-The plan is a consequence, not a design. It is derived from the scope, the pack's declaration, and the
-manifest, and it exists for four reasons: audit, validation before execution, incremental execution, and
-reproducibility.
+The plan is a consequence, not a design. It is derived from the scope, the pack's declaration, the manifest,
+and the frozen placement decision, and it exists for four reasons: audit, validation before execution,
+incremental execution, and reproducibility.
 
-Each entry names the knowledge object, the artifact class, the track, and whether the entry is **locked** — a
-path already in the manifest — or **new**. That flag is what lets a diff distinguish expected variation from a
-finding.
+Each entry names the knowledge object, the artifact class, the track, the target path, and whether the entry
+is **locked** — a path already in the manifest — or **new**, in which case the path came from the frozen
+placement decision. That flag is what lets a diff distinguish expected variation from a finding.
 
 The plan is validated **before any file is written**: every reference resolves, every class is in the
 vocabulary and in the pack's declaration, no two entries claim one target path, and every locked path still
@@ -216,8 +282,10 @@ A target-path collision is a **defect to report**, not a conflict to resolve by 
 for one path is a modelling error or an agent error, and a policy that silently picked a winner would hide
 both.
 
-Because no model participates in producing the plan, plan determinism is testable on its own — cheaper and
-sharper than diffing produced source, and independent of whether any template is correct.
+Because no model participates in the derivation itself, plan determinism is testable on its own — cheaper
+and sharper than diffing produced source, and independent of whether any template is correct. The judgment
+the placement decision carries is upstream of the derivation and frozen before it runs, so it is one of the
+four inputs held fixed by the test rather than a source of variation inside it.
 
 ### The manifest — the lock
 
@@ -268,6 +336,19 @@ land on opposite sides despite both being derived.
 | generation manifest | `committed` | It records placement, which `specs/0002-knowledge-economy-principles.md` R4 excludes from the knowledge base and which a specialized agent decides. No committed input determines it. R4 names it as a pinned identity, R31 reads it on every later run, R32 requires a recorded unlock to move a file, R35 needs a locked entry to attribute a difference, and R42 and R44 answer reverse impact from it. |
 | produced source | `committed` | Verification compares against the committed tree, and judged-track content is model-authored, so it is not recomputable byte-for-byte. |
 | target pack declaration | `committed` | Authored, versioned, and distributed under `src/claude/` per R13. |
+| placement decision | `run-scoped` | The one entry the rule does not yield on its own — see below. A model produces it, so the rule reads `committed`; the manifest is what actually keeps the decision, and committing both would create the second authority for placement that R50 exists to prevent. |
+
+**The placement decision is the rule's one refinement, and it is narrow on purpose.** Its body is
+model-produced, so the rule as stated lands it on `committed`. Committing it would put the same fact in two
+places: R30 already requires the manifest to record the target path of every produced artifact, and R31
+makes the manifest the thing every later run reads. Two records of one decision drift, and the drift would
+be between a lock and a proposal — the worst pair to have disagree.
+
+What licenses the exception is that the run *transcribes* the decision into a committed artifact before it
+ends. R53 states the conditions, and they are the ones that make the transcription trustworthy rather than
+convenient: the committed artifact is named, the transcription happens in the same run, and a run that fails
+before writing locks nothing. Without the last condition the manifest could hold a path for a file that was
+never produced, which R25's "every locked path still exists" would then reject on the next run.
 
 Discarding the manifest was the one reclassification this section exists to refuse. Placement has exactly
 three possible sources: the knowledge base, which `specs/0002` R4 forbids; a persisted manifest; or the agent,
@@ -277,7 +358,10 @@ third, and byte identity is then unobtainable.
 The persistence of the artifacts `specs/0001-knowledge-object-driven-development.md` names — change request,
 impact analysis, context package, specification delta, validation evidence — is not decided here. That
 specification defers their contracts, and deciding the persistence of evidence before the evidence contract
-exists is the guess that reads like a requirement both specifications warn against.
+exists is the guess that reads like a requirement both specifications warn against. The deferral ends per
+artifact, as each contract arrives: `specs/0009-context-assembly.md` R13 assigns the context package
+`claim-recorded` by applying the rule above, now that R1 there fixes the package's contract. The rule is
+this section's; the assignment is that document's.
 
 ## Verification
 
@@ -339,7 +423,8 @@ Declared absence, not oversight. A request to record one of these is a request t
 | Naming conventions, directory layout, project structure | Stack knowledge, excluded by spec 0002 R4 |
 | Idiomatic decisions of a language or framework | Stack knowledge |
 | How a reference becomes a column or a foreign key | Stack knowledge; the domain fact is `binding`, per spec 0003 |
-| Where produced source lives in the tree | The agent decides once; the manifest locks it |
+| Where produced source lives in the tree | The pack decides once, through the placement decision of R52; the manifest locks it |
+| Which producer inside a pack proposes a new path, and whether a deterministic class derives its own | Both designs satisfy R52; they differ in what a first run promises, and no pack exists to choose on |
 | Deployment topology, infrastructure | ADR for the decision, the pack for what is produced |
 
 ## Definitions
@@ -355,6 +440,7 @@ Terms used normatively below.
 | generation scope | [generation-scope](../docs/concepts/generation-scope.md) |
 | generation plan | [generation-plan](../docs/concepts/generation-plan.md) |
 | generation manifest | [generation-manifest](../docs/concepts/generation-manifest.md) |
+| placement decision | [placement-decision](../docs/concepts/placement-decision.md) |
 | generative completeness | [generative-completeness](../docs/concepts/generative-completeness.md) |
 | knowledge base | [knowledge-base](../docs/concepts/knowledge-base.md) |
 | knowledge graph | [knowledge-graph](../docs/concepts/knowledge-graph.md) |
@@ -410,11 +496,14 @@ Terms used normatively below.
 ### The target pack
 
 - **R12** — Exactly one target pack is active in a governed repository.
-- **R13** — A target pack comprises one specialized agent and the templates it expands, distributed together
-  under `src/claude/`. The agent MUST conform to `schemas/agent.v1.json` and MUST enumerate its tool grant.
+- **R13** — A target pack comprises the specialized agents and templates that produce the classes it
+  declares, distributed together under `src/claude/`. Every agent MUST conform to `schemas/agent.v1.json`
+  and MUST enumerate its tool grant. R51 fixes the correspondence between the declaration and the producers,
+  and a pack MUST NOT carry a producer for a class it does not declare. Whether a pack additionally carries
+  an agent that only decides placement is not fixed here — see **Deliberately not specified**.
 - **R14** — A pack MUST declare only its identity, its version, and the classes it produces with the track of
-  each. It MUST NOT declare a naming convention, a directory layout, path derivation, expansion order, or the
-  mapping from a reference to a storage representation.
+  each and the node types each is yielded by. It MUST NOT declare a naming convention, a directory layout,
+  path derivation, expansion order, or the mapping from a reference to a storage representation.
 - **R15** — A stack fact a template expands MUST live in the pack, and MUST NOT be required of the knowledge
   base, per spec 0002 R4.
 - **R16** — A component other than a target pack MUST NOT depend on a specific pack.
@@ -434,17 +523,22 @@ Terms used normatively below.
 
 ### The generation plan
 
-- **R23** — The plan MUST be derived from the scope, the pack's declaration, and the manifest. It MUST NOT be
-  authored, and it MUST NOT hold a rule.
-- **R24** — Each plan entry MUST name the knowledge object, the artifact class, the track, and whether the
-  entry is locked or new.
+- **R23** — The plan MUST be derived from the scope, the pack's declaration, the manifest, and the frozen
+  placement decision of R52. It MUST NOT be authored, it MUST NOT hold a rule, and no model MUST participate
+  in the derivation itself.
+- **R24** — Each plan entry MUST name the knowledge object, the artifact class, the track, the target path,
+  and whether the entry is locked or new. A locked entry takes its path from the manifest and a new entry
+  takes it from the frozen placement decision; a plan entry with no target path cannot be validated under
+  R25.
 - **R25** — The plan MUST be validated before any file is written: every reference resolves, every class is in
   the vocabulary and in the pack's declaration, no two entries claim one target path, and every locked path
   still exists. A plan that fails validation is rejected, never repaired.
 - **R26** — A plan MUST be producible and inspectable without writing any file.
 - **R27** — A target-path collision MUST be reported as a defect. A policy that resolves a collision silently
   MUST NOT exist.
-- **R28** — An identical scope, pack declaration, and manifest MUST yield a byte-identical plan.
+- **R28** — An identical scope, pack declaration, manifest, and frozen placement decision MUST yield a
+  byte-identical plan. Holding the placement decision fixed is what makes this testable for a first
+  generation; it is not a claim that two first generations choose the same paths, which R52 denies.
 - **R29** — Determinism MUST be tested at the plan as well as at the output. A test covering only produced
   source cannot distinguish a nondeterministic plan from a nondeterministic template.
 
@@ -492,8 +586,9 @@ Terms used normatively below.
 - **R45** — Every artifact this specification names MUST declare exactly one persistence value from the closed
   set `committed | claim-recorded | run-scoped`.
 - **R46** — A persistence value MUST follow from the rule under **Artifact persistence**: an artifact whose
-  body is not recomputable from committed inputs without a model MUST be `committed`. A declaration that
-  contradicts the rule MUST be rejected rather than repaired.
+  body is not recomputable from committed inputs without a model MUST be `committed`, unless R53's
+  transcription conditions hold for it. A declaration that contradicts the rule, and does not meet those
+  conditions, MUST be rejected rather than repaired.
 - **R47** — The assignment under **Artifact persistence** is normative for the artifacts it names.
 - **R48** — For a `claim-recorded` artifact, the reproducibility claim of R4 MUST record the artifact's
   declared inputs and the content hash of its frozen body, and the body MUST be recomputable from committed
@@ -504,13 +599,41 @@ Terms used normatively below.
   after the first MUST be rejected: `specs/0002-knowledge-economy-principles.md` R4 excludes placement from
   the knowledge base, and R31 has nothing to read without a committed manifest.
 
+### Producer cardinality, and the first placement
+
+These three arrived after R1 through R50, and they are numbered here rather than inserted beside the
+requirements they qualify, so that an existing citation still resolves to the statement it named.
+
+- **R51** — Every artifact class a pack declares MUST have exactly one producer within that pack: a template
+  for a class on the `deterministic` track, a specialized agent for a class on the `judged` track. A
+  declared class with no producer MUST be rejected, and two producers for one class MUST be rejected. This
+  is `specs/0006` R5 made checkable at the pack rather than restated: an agent produces exactly one artifact
+  class, so a pack declaring two judged classes carries two agents.
+- **R52** — For each plan entry the manifest does not lock, the target path MUST come from a placement
+  decision that the pack produced, that was validated before use, and that was frozen before plan
+  derivation began. Validation MUST reject a path outside the governed repository, a path that is not a
+  legal path for the repository, an entry naming a class the pack does not declare, and two entries naming
+  one path. A placement decision that fails validation MUST be rejected, never repaired, and no plan MUST be
+  derived from it. This specification claims no byte identity for a placement decision: a model produces it,
+  and R5's distinction between a first generation and a regeneration under lock is what a report carries
+  instead.
+- **R53** — A placement decision is `run-scoped`. It is the one artifact this specification exempts from
+  R46's rule that a model-produced body is `committed`, and the exemption holds only while all four
+  conditions hold: the run transcribes the decision into the manifest under R30; the manifest is named as
+  the committed authority for the same fact; the transcription happens in the run that produced the
+  decision; and a run that ends without producing an artifact locks no path for it. A design meeting fewer
+  than all four MUST NOT claim this exemption.
+
 ## What this specification does not decide
 
 Deferred, because a contract written ahead of the code that needs it is a guess that reads like a
 requirement:
 
-- the schemas of the scope, the plan, the manifest, and the pack declaration, each arriving with the first
-  pack that produces one;
+- the schemas of the scope, the plan, the manifest, the pack declaration, and the placement decision, each
+  arriving with the first pack that produces one. R52 fixes what the placement decision is for and what its
+  validation must reject; the contract it is validated against is deferred here for the reason this list
+  gives, and `.claude/rules/contracts.md` already decides that it needs a versioned schema when it arrives,
+  because it is an artifact a later derivation consumes;
 - the declaration syntax hand-authored source uses in R42, and its language coverage;
 - how a `rule.expression` is evaluated. Spec 0003 defers the grammar; this specification defers the evaluator
   and requires only that a rule without an expression carry `examples`;
@@ -554,7 +677,17 @@ This specification presupposes components that do not exist. It binds nothing un
 12. a test asserts that a persistence declaration contradicting the rule of R46 is rejected rather than
     repaired;
 13. the fixture of condition 8 carries all three persistence values, so the assignment of R47 is exercised
-    rather than asserted.
+    rather than asserted;
+14. the pack of condition 2 declares two judged classes, and a test proves a pack carrying one agent for
+    both is rejected (R51), together with a declaration naming a class no producer covers. One judged class
+    never tests the cardinality rule, which is the defect that survived this document's first draft;
+15. the pack's declaration is shown to answer R11: a node type in the scope that the declaration's `from`
+    entries do not cover is reported rather than passing silently;
+16. a first generation produces a placement decision that is validated, frozen, and shown to be the only
+    judged input to the plan (R52), and a test proves a placement decision naming a path outside the
+    governed repository is rejected rather than repaired. A second test asserts that a run failing before
+    execution locks no path, which is R53's fourth condition and the one that keeps R25's "every locked path
+    still exists" satisfiable.
 
 Condition 5 already carries R50: a second run that reuses the locked path is the same evidence that the
 manifest survived the first. Nothing further is asked of it here.

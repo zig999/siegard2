@@ -20,7 +20,7 @@ tiers on purpose, and `docs/adr/README.md` states when a concept crosses between
 specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
 [accepted](accepted.md).
 
-As of 2026-07-31 the split is 30 `accepted` and 18 `proposed`. The tier is derivable rather than declared:
+As of 2026-07-31 the split is 30 `accepted` and 19 `proposed`. The tier is derivable rather than declared:
 read which artifacts cite a concept, and read their status.
 
 `specs/0001-knowledge-object-driven-development.md` was accepted on 2026-07-31, which makes seven
@@ -50,7 +50,7 @@ not accepted, so promoting one would bind a definition to a mechanism that does 
 | [boundary](boundary.md) | The knowledge object type holding a scope — a bounded context or an aggregate — with derived membership. |
 | [capability](capability.md) | A reusable framework behavior with a testable contract. |
 | [change request](change-request.md) | The recorded request that originates every change to a governed repository. |
-| [context package](context-package.md) | The manifest naming exactly the knowledge one implementation task may read. |
+| [context package](context-package.md) | The manifest naming exactly the knowledge one run of context resolution puts in scope. |
 | [contract version](contract-version.md) | The identifier a consumer reads to decide whether it can process an artifact. |
 | [definition](definition.md) | The knowledge object type saying what a domain concept is and which attributes it holds. |
 | [distribution](distribution.md) | The assembled release artifact under `dist/.claude/`. |
@@ -76,6 +76,7 @@ not accepted, so promoting one would bind a definition to a mechanism that does 
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
 | [orchestrator](orchestrator.md) | The component that chooses a transition by lookup on a validated artifact's closed field. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
+| [placement decision](placement-decision.md) | The validated, frozen record of where a pack puts each artifact the manifest does not lock. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
 | [projection](projection.md) | A human-readable artifact generated from the knowledge graph, normative nowhere. |
 | [provenance](provenance.md) | The recorded origin of a material decision. |
@@ -87,6 +88,6 @@ not accepted, so promoting one would bind a definition to a mechanism that does 
 | [specification](specification.md) | A normative document in `specs/`, the highest precedence source in this repository. |
 | [specification delta](specification-delta.md) | The temporary artifact describing one requested change by reference. |
 | [stack knowledge](stack-knowledge.md) | A fact whose change changes every system on the same technology, never held by the knowledge base. |
-| [target pack](target-pack.md) | The distributable unit carrying one technology stack: a specialized agent and its templates. |
+| [target pack](target-pack.md) | The distributable unit carrying one technology stack: the agents and templates producing the classes it declares. |
 | [transition guard](transition-guard.md) | The condition that must hold for a workflow to change state. |
 | [workflow state](workflow-state.md) | Current state of a workflow, derived from the record of what happened. |

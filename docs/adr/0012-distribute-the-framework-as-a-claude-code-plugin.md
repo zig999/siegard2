@@ -78,8 +78,11 @@ Normative for every harness behavior above, retrieved 2026-07-31:
   placeholders exported to a hook's environment.
 
 A behavior not present on those pages at that date is not relied on. `specs/0013` R13 and R14 govern
-re-verification, and the two retrieval dates now in the framework — ADR-0009 at 2026-07-29 and these at
-2026-07-31 — are the divergence R14 exists to reconcile.
+re-verification. The two retrieval dates now in the framework — ADR-0009 at 2026-07-29 and these at
+2026-07-31 — cover disjoint page sets: ADR-0009 cites skills, sub-agents, and best practices, and nothing
+above re-cites any of them. R14 is therefore satisfied rather than breached, since no page is cited at two
+dates, and what remains open is R13's obligation to re-verify each page at the next version bump of the
+contract carrying it.
 
 ## Consequences
 

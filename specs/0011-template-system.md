@@ -45,8 +45,8 @@ lesson written down before a template can repeat it.
 - what byte identity means as a promise, and which artifacts carry it rather than behavioural conformance
   — `specs/0004`, which is also the authority for
   [artifact persistence](../docs/concepts/artifact-persistence.md);
-- that the mapping from a node type to the classes it yields belongs to a pack rather than to the framework
-  — [artifact class](../docs/concepts/artifact-class.md);
+- that the mapping from a node type to the classes it yields belongs to a pack rather than to the framework,
+  and is declared by it — [artifact class](../docs/concepts/artifact-class.md), `specs/0004` R14;
 - that a template expands into exactly one artifact class and names its output's schema — `specs/0006` R9;
 - what a capability declares about itself — `specs/0007`.
 
@@ -70,13 +70,16 @@ This specification uses these terms as the concept bundle defines them:
 
 ### What a template is
 
-- **R1** — A template expands structured knowledge into exactly one artifact class, with no model in the
-  loop. Where a model participates in producing the artifact, the artifact is on the judged track and a
-  [specialized agent](../docs/concepts/specialized-agent.md) produces it — not a template with a model
-  attached.
-- **R2** — Identical inputs produce byte-identical output. A template that cannot hold this is not a
-  template, and the correct response is to move its artifact class to the judged track rather than to
-  weaken the promise.
+- **R1** — A template is the mechanism of the deterministic
+  [generation track](../docs/concepts/generation-track.md), expanding structured knowledge into exactly one
+  artifact class. What that track promises — no model in the loop, and identical input yielding
+  byte-identical output — is defined by that concept and by `specs/0004`, listed above as inherited, and is
+  not restated here. This requirement binds the definition to an artifact; R2 states what follows from it.
+- **R2** — A template that cannot hold byte identity is not a weaker template. Its artifact class moves to
+  the judged track and a [specialized agent](../docs/concepts/specialized-agent.md) produces it instead.
+  This is the consequence the inherited definition does not carry, and it is this document's own
+  contribution: the guarantee is never relaxed to keep the mechanism, because a promise that bends once
+  bends per exception until nothing tests it.
 - **R3** — A template's output is validated against the schema the template names, before it is written. An
   artifact that fails is rejected, and nothing downstream consumes it.
 
@@ -129,7 +132,10 @@ This specification uses these terms as the concept bundle defines them:
   so that a later upgrade can tell a customization from a divergence and stop rather than overwrite.
 - **R17** — A template's contract version changes whenever its output changes for the same input. That is a
   change every consumer can observe in a diff, so it is a version bump under
-  `.claude/rules/compatibility.md` rather than a revision.
+  `.claude/rules/compatibility.md` rather than a revision. The bump rate for a template is therefore high —
+  reformatting whitespace in produced output is a bump — and that is the price of R2 rather than a defect in
+  this rule. A maintainer who finds the rate intolerable has found an argument about which artifact classes
+  belong on the deterministic track at all, not a licence to skip the bump quietly.
 - **R18** — A template does not decide whether its output is committed, recomputed, or discarded. That is the
   artifact class's persistence, fixed by `specs/0004`.
 

@@ -20,13 +20,17 @@ the [artifact class](artifact-class.md), the target path, a content hash, and th
 
 The manifest does two jobs, and the first is the one that carries the reproducibility claim.
 
-**It locks placement.** Where a produced artifact goes is [stack knowledge](stack-knowledge.md), so a
-specialized agent decides it — and an agent is a model, which cannot be relied on to decide identically
-twice. Recording the decision once and reading it thereafter makes regeneration reproducible even though
-the first placement was judgment. The pattern is a dependency lockfile's: resolve once, then obey the record.
+**It locks placement.** Where a produced artifact goes is [stack knowledge](stack-knowledge.md), so the
+pack decides it — and where a model makes that call it cannot be relied on to decide identically twice.
+Recording the decision once and reading it thereafter makes regeneration reproducible even though the first
+placement was judgment. The pattern is a dependency lockfile's: resolve once, then obey the record.
 
-Moving a produced file is therefore an explicit recorded unlock, never a consequence of an agent choosing
-differently later. Without that rule a relocation appears in a diff as a deletion and an addition,
+The manifest is also where the [placement decision](placement-decision.md) of a first generation lands. That
+transcription is what lets the decision itself stay `run-scoped`: if both were kept, placement would have
+two records that can disagree, and one of them would be a proposal wearing a lock's authority.
+
+Moving a produced file is therefore an explicit recorded unlock, never a consequence of a later run choosing
+differently. Without that rule a relocation appears in a diff as a deletion and an addition,
 indistinguishable from a change in knowledge.
 
 **It records execution**, which is what makes reverse impact a query and regenerate-and-diff decidable. It
@@ -36,5 +40,5 @@ with no synchronization to maintain.
 A manifest records and never decides. Nothing reads it for a rule.
 
 Its [persistence](artifact-persistence.md) is `committed`, and that is not a storage preference. Placement is
-the one thing no committed input determines, so a manifest regenerated per run would leave an agent deciding
-it again on every run — which is the failure the lock exists to prevent.
+the one thing no committed input determines, so a manifest regenerated per run would leave the decision to
+be made again on every run — which is the failure the lock exists to prevent.

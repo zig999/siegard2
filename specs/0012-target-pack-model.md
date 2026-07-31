@@ -20,8 +20,8 @@ decides five things:
 
 It does not decide what a pack *declares*. `specs/0004` is the authority for that, and
 [target pack](../docs/concepts/target-pack.md) already records the shape: identity, version, and the
-artifact classes it produces with the track of each, and nothing else. This document decides the unit
-around that declaration.
+artifact classes it produces with the track of each and the node types each is yielded by, and nothing
+else. This document decides the unit around that declaration.
 
 It governs the framework Siegard ships. It does not govern this repository's own development process,
 which `CLAUDE.md` defines.
@@ -45,13 +45,15 @@ citation.
 - that a pack is framework work rather than the architecture of one downstream system, and that a pack is
   admitted only when a fixture exercises it — `.claude/rules/claude-code-authoring.md` **Target packs**,
   which is the authority for both;
-- that a pack carries one stack, holds an agent and templates, and carries no business rule — `specs/0006`
-  R10;
+- that a pack carries one stack, holds one producer per declared artifact class, and carries no business
+  rule — `specs/0006` R10;
 - the closed vocabulary of [artifact classes](../docs/concepts/artifact-class.md) and the
   [track](../docs/concepts/generation-track.md) each is produced on — `specs/0004`;
 - every constraint on the templates a pack owns — `specs/0011`;
-- that a pack's agent has one role, produces one artifact class, and receives the minimum tool grant its
-  role requires — `specs/0006` R5 and R6;
+- that each of a pack's agents has one role, produces one artifact class, and receives the minimum tool
+  grant its role requires — `specs/0006` R5 and R6;
+- that a target path the manifest does not lock comes from a validated, frozen
+  [placement decision](../docs/concepts/placement-decision.md) — `specs/0004` R52;
 - breaking change and migration rules — `.claude/rules/compatibility.md`.
 
 ## Definitions
@@ -63,6 +65,7 @@ This specification uses these terms as the concept bundle defines them:
 [artifact class](../docs/concepts/artifact-class.md),
 [generation track](../docs/concepts/generation-track.md),
 [generation manifest](../docs/concepts/generation-manifest.md),
+[placement decision](../docs/concepts/placement-decision.md),
 [specialized agent](../docs/concepts/specialized-agent.md),
 [knowledge object](../docs/concepts/knowledge-object.md),
 [capability](../docs/concepts/capability.md),
@@ -87,8 +90,8 @@ This specification uses these terms as the concept bundle defines them:
 
 ### Composition
 
-- **R4** — A pack ships nothing beyond the one [specialized agent](../docs/concepts/specialized-agent.md) and
-  the templates it expands that `specs/0004` composes it from: no
+- **R4** — A pack ships nothing beyond the [specialized agents](../docs/concepts/specialized-agent.md) and
+  templates that `specs/0004` R13 and R51 compose it from — one producer per declared artifact class: no
   [knowledge object](../docs/concepts/knowledge-object.md), no schema, and no hook. The schema a template's
   output is validated against belongs to the artifact class and is framework-owned, so a pack that shipped one
   would be extending a vocabulary R6 reserves to the framework. Enforcement stays framework-owned for the same
@@ -96,12 +99,20 @@ This specification uses these terms as the concept bundle defines them:
   denies.
 - **R5** — A pack holds stack knowledge only. Naming, layout, layering, idiom, and how a construct becomes a
   storage representation are its business, and none of them appears in an authored knowledge artifact.
-- **R6** — A pack maps node types to the artifact classes they yield. It does not extend the artifact class
-  vocabulary, which is framework-owned: a class a pack needs and the framework does not hold is a request to
-  change `specs/0004`.
-- **R7** — A pack declares nothing its own agent already knows. Path derivation, expansion order, and naming
-  rules are the agent's competence, and declaring them re-authors stack knowledge the framework deliberately
-  does not hold.
+- **R6** — A pack maps node types to the artifact classes they yield, and **declares** the mapping, per
+  `specs/0004` R14. Owning the fact and declaring it are separate questions, and an earlier draft of this
+  requirement answered only the first: the mapping sat in the pack while nothing model-free could read it,
+  which left `specs/0004` R23's plan derivation with no way to know what a knowledge object demands. A pack
+  does not extend the artifact class vocabulary, which is framework-owned: a class a pack needs and the
+  framework does not hold is a request to change `specs/0004`.
+- **R7** — A pack declares nothing its own agent already knows **and nothing model-free needs to read**. Path
+  derivation, expansion order, and naming rules meet both conditions — they are the agent's competence, and
+  the only thing that consumes them is the agent itself — so declaring them re-authors stack knowledge the
+  framework deliberately does not hold. The node-type mapping of R6 fails the second condition, which is why
+  it is declared and these are not. A target path is the case that looks like an exception and is not: it is
+  read by the plan, but through the frozen
+  [placement decision](../docs/concepts/placement-decision.md) of `specs/0004` R52 rather than through a
+  declared derivation rule.
 
 ### Version and compatibility
 
@@ -122,9 +133,11 @@ This specification uses these terms as the concept bundle defines them:
   a configuration adjustment.
 - **R12** — Retiring a pack removes its agents and templates together with its manifest entries, and names
   the replacement or states that none exists.
-- **R13** — A pack is admitted with a fixture and retired with one. The fixture that admitted it is what
-  demonstrates the pack serves any repository on its stack rather than the one repository it was extracted
-  from.
+- **R13** — A pack is admitted with a fixture, which is what demonstrates the pack serves any repository on
+  its stack rather than the one repository it was extracted from. Retirement is not the mirror of that and
+  does not get a second fixture invented for symmetry: what retiring a pack owes is the migration and the
+  test that fails against the old behavior, which `specs/0006` R16 already requires of any capability
+  another consumed.
 
 ### Isolation
 

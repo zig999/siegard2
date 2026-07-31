@@ -26,11 +26,15 @@ which `CLAUDE.md` defines.
 
 ### Provenance
 
-This specification derives from the SIGARD v0.1 draft in `reference/`, which it replaces as the design
-authority and which carries no normative weight at any precedence level, whatever its own text says
-about its status. Three defects in that draft forced the rewrite rather than an edit: a determinism
-claim whose decisive steps were natural language, a knowledge-contract check with no definable
-mechanism, and a phase order stated in two incompatible ways, one of which contradicted itself.
+This specification derives from the SIGARD v0.1 draft, which it replaces as the design authority and
+which carried no normative weight at any precedence level, whatever its own text said about its status.
+Three defects in that draft forced the rewrite rather than an edit: a determinism claim whose decisive
+steps were natural language, a knowledge-contract check with no definable mechanism, and a phase order
+stated in two incompatible ways, one of which contradicted itself.
+
+The draft is no longer in this repository. It was carried in `reference/` until that directory was
+removed, and it is recoverable from git history through commit `8744312`, the last commit that contains
+it. This paragraph is the anchor for the phrase "the v0.1 draft" wherever this repository still uses it.
 
 ### Decided elsewhere, deliberately not restated here
 

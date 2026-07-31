@@ -111,7 +111,11 @@ This specification uses these terms as the concept bundle defines them:
   tell what it depends on without executing it.
 - **R9** — A capability that needs knowledge in scope declares what it needs, in terms of the ontology
   rather than of file paths. What is actually in scope for one run is a
-  [context package](../docs/concepts/context-package.md), which `specs/0009` fixes.
+  [context package](../docs/concepts/context-package.md), which `specs/0009` fixes. This requirement's
+  *value* is contingent on that document's R11: if measurement shows resolution does not select better
+  than including the whole bundle, the declaration still holds — a capability still states what it needs —
+  but it stops narrowing anything, and this requirement is then a description rather than a constraint.
+  It is stated here so the contingency is recorded on both sides rather than discovered later.
 
 ### The determinism split
 
@@ -146,7 +150,16 @@ This specification uses these terms as the concept bundle defines them:
 - **R19** — A declaration does not encode a numeric threshold that has not been calibrated from executed
   runs and recorded with the evidence that calibrated it. This is `specs/0001` R10 applied to a
   capability's own configuration, and it covers a retry count, a budget, and an
-  [escalation](../docs/concepts/escalation.md) trigger alike.
+  [escalation](../docs/concepts/escalation.md) trigger alike. What it reaches is a value the framework
+  *ships*: a value the caller supplies per run is not a framework threshold, and requiring evidence for it
+  would leave a fresh installation unable to run anything at all, since no executed run exists to calibrate
+  from before the first one. The two mechanisms this framework already uses are that distinction applied —
+  the attempt limit of `specs/0001` R7 is a property of a workflow's opening event, and the budget of
+  `specs/0009` R7 is stated by the caller — and neither is a default this framework asserts.
+- **R20** — A report naming a numeric value states which of the two it is: supplied by the caller for this
+  run, or shipped by the framework and calibrated, with the evidence that calibrated it. A caller-supplied
+  value presented as a calibrated one is a false report, and it is the route by which a value chosen once
+  to get a first run moving becomes a framework default nobody decided to ship.
 
 ## Validation required before acceptance
 
@@ -163,3 +176,7 @@ This specification uses these terms as the concept bundle defines them:
    whichever is chosen is enforced by one validator rather than two.
 5. R19 is exercised: one threshold is either calibrated and recorded with its evidence, or removed from a
    declaration that asserted it.
+6. R20 is exercised in the direction that catches something: a report over a run whose attempt limit came
+   from the caller names it as caller-supplied, and a test asserts that the same value cannot be reported as
+   calibrated. `fixtures/knowledge-change-loop/` already runs under a caller-supplied attempt limit, so the
+   case exists and only the reporting does not.

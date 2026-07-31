@@ -39,7 +39,17 @@ names exists. Writing them is ordinary work and binds nothing; accepting one is 
 
 **No framework specification is accepted before the method specification it depends on.** Every one of the
 nine rests on `specs/0001` or `specs/0004`; accepting a framework document while its foundation binds
-nothing would give it an authority its own basis does not have.
+nothing would give it an authority its own basis does not have. `specs/0001` was accepted on 2026-07-31, so
+the rule now bites only where `specs/0004` is the foundation — which is `0011`, `0012`, and every document
+that inherits an artifact class or a generation track from it.
+
+That rule is checked rather than trusted, as of 2026-07-31. `scripts/validate_specs.py` derives the
+prerequisite graph from the acceptance conditions each document already writes — no frontmatter field was
+added, because a declared dependency and a stated one would be two authorities for the same relation — and
+it reports an unresolved reference, a prerequisite marked met while its target is not accepted, an accepted
+document still carrying an unmet prerequisite, and a cycle. What it cannot see is stated in that script's
+docstring: an accepted document replaces its acceptance section with what satisfied it, so the check works
+on the proposed side and on the moment of promotion, not retrospectively.
 
 | Id | Title | Decides | Inherits, and must not restate |
 |---|---|---|---|
@@ -48,9 +58,9 @@ nothing would give it an authority its own basis does not have.
 | 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `.claude/rules/contracts.md`; `schemas/skill.v1.json`, `schemas/agent.v1.json` |
 | 0008 | Distribution layout | that the distribution is a plugin, a function of source; the closed directory set; the two records; install, upgrade, and shadowing | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` |
 | 0009 | Context assembly | the context package contract — its manifest form, budget, and stop criteria | `specs/0001` R11–R15, which already fix that resolution never blocks and never invents |
-| 0010 | Hook system | which lifecycle events the framework binds, and the contract a hook honors | `CLAUDE.md` **Security**; the harness hook documentation |
-| 0011 | Template system | what a template is, its schema binding, placeholders, and extension points | `specs/0004`'s generation tracks and artifact classes |
-| 0012 | Target pack model | how a technology stack enters the framework, and what a pack may declare | `specs/0004`; `.claude/rules/claude-code-authoring.md` **Target packs** |
+| 0010 | Hook system | the constraints a hook honors: handler type, exit-code discipline, failing closed, and what a hook cannot guarantee | `CLAUDE.md` **Security**; the harness hook documentation |
+| 0011 | Template system | what a template is, what it may read, how it refers to knowledge, and ownership, override, and versioning | `specs/0004`'s generation tracks and artifact classes |
+| 0012 | Target pack model | how a technology stack enters the framework as a unit: one active pack, its composition, its own version, and its retirement | `specs/0004`; `.claude/rules/claude-code-authoring.md` **Target packs** |
 | 0013 | Framework lifecycle | versioning, deprecation, and the migration a consumer is owed | `.claude/rules/compatibility.md` |
 
 Three documents the original plan proposed are deliberately absent:
@@ -58,7 +68,8 @@ Three documents the original plan proposed are deliberately absent:
 - **a command system.** ADR-0009 records that custom commands were merged into skills; a user-invocable
   procedure is a skill, and `scripts/validate_components.py` rejects `src/claude/commands/` by name.
 - **a worker model.** A unit of work with one role is a [specialized agent](../docs/concepts/specialized-agent.md).
-  `worker` survives only in `reference/`, which is normative nowhere.
+  `worker` is vocabulary from the v0.1 draft, which was normative nowhere and this repository no longer
+  carries.
 - **a projection or schema capability.** A [projection](../docs/concepts/projection.md) is an artifact
   generated from the knowledge graph, and a schema is an artifact contract. ADR-0010 exists because
   `projection` once named two different things.

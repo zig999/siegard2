@@ -37,8 +37,8 @@ gate for each, and this document's acceptance conditions keep it from binding be
 Two classes the original framework plan proposed are not here. **Command** is absent because ADR-0009
 records that custom commands were merged into skills; the invocation `/name` survives, the class does
 not, and `scripts/validate_components.py` rejects `src/claude/commands/` by name. **Worker** is absent
-because a unit of work with one role is a specialized agent; `worker` is vocabulary from the v0.1 draft
-in `reference/`, which is normative nowhere.
+because a unit of work with one role is a specialized agent; `worker` is vocabulary from the v0.1 draft,
+which was normative nowhere and is no longer in this repository.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -75,7 +75,7 @@ This specification uses these terms as the concept bundle defines them:
 | hook | enforcing one guarantee at a lifecycle event | the harness, unconditionally at that event |
 | script | durable control flow, state derivation, and validation | a skill, a hook, or a maintainer |
 | template | expanding into one artifact class | a script or an agent that owns the expansion |
-| target pack | one technology stack: its agent and its templates | selected per repository, not per request |
+| target pack | one technology stack: its agents and its templates | selected per repository, not per request |
 
 The set covers what **executes or is delegated to**. A [projection](../docs/concepts/projection.md), a
 schema, a rule file, and a knowledge object are **artifacts**: they are what capabilities consume and
@@ -116,9 +116,12 @@ document growing a class for it.
   names the schema its output must satisfy. A template that can produce two unrelated artifact classes is
   two templates. A template belongs to a [target pack](../docs/concepts/target-pack.md), or to the framework
   where its artifact class is independent of technology — `specs/0011` R15 owns that division.
-- **R10** — A target pack carries one technology stack, holding one specialized agent and the templates it
-  expands. It carries no business rule and nothing specific to a single downstream repository, which is
-  `specs/0005` R13 applied rather than restated here.
+- **R10** — A target pack carries one technology stack, holding one producer for each artifact class it
+  declares: a template for a class on the deterministic track, a specialized agent for a class on the judged
+  track. `specs/0004` R13 and R51 own that correspondence and this requirement does not restate it; what
+  matters here is that R5 above is what forces it, since an agent producing exactly one artifact class
+  cannot cover a pack that declares two judged ones. A pack carries no business rule and nothing specific to
+  a single downstream repository, which is `specs/0005` R13 applied rather than restated here.
 
 ### Admission
 

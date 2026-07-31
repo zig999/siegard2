@@ -35,8 +35,11 @@ never deprecated anything, and never migrated a consumer.
 It is nevertheless the document with the most evidence behind a single requirement. R13 and R14 below exist
 because two gaps were recorded rather than theorized. ADR-0009 states plainly that its contracts encode a
 snapshot of external documentation, that the retrieval date is recorded so staleness is checkable, and that
-"nothing yet forces re-verification". `specs/0010` then added a second retrieval date for an overlapping
-documentation set, with no mechanism reconciling the two. R13 closes that.
+"nothing yet forces re-verification". `specs/0010` then added a second retrieval date — for a different set
+of pages on an overlapping *subject*, which is not the same thing and is worth saying precisely: no page in
+the framework is cited at two dates. R13 closes the gap ADR-0009 named. R14 closes the one the second date
+makes visible without yet committing, which is that nothing would notice if the same page were cited twice
+at different dates.
 
 R11 has similar grounding of the negative kind: `docs/bootstrap.md` records that the `adr/1` to `adr/2`
 contract bump happened *without* a migration test, and lists that debt as owed. ADR-0011 records the same
@@ -146,10 +149,22 @@ This specification uses these terms as the concept bundle defines them:
 3. The two debts named in **Provenance** are settled or explicitly written off: the missing `adr/1` to
    `adr/2` migration test recorded in `docs/bootstrap.md`, and the `workflow-event/1` exposure recorded in
    ADR-0011.
-4. R13 and R14 are applied to the retrieval dates that already diverge — ADR-0009 at 2026-07-29 and
-   `specs/0010` at 2026-07-31 — either by re-verifying both against one date or by recording why they differ.
-5. One capability completes deprecation and removal under R7 through R9, with the deprecation readable from
+4. A deterministic check in `scripts/` reports any documentation page cited at two different retrieval
+   dates, which is R14 made mechanical rather than read. The two dates in the framework today are not that
+   case, and the distinction is worth recording because an earlier draft of this condition treated them as
+   one: ADR-0009 cites the skills, sub-agents, and best-practices pages at 2026-07-29, while ADR-0012,
+   `specs/0008`, and `specs/0010` cite the plugins and hooks pages at 2026-07-31. Two dates over two
+   disjoint page sets is what R13 produces by design; two dates over *one* page is the contradiction R14
+   forbids, and nothing checks for it yet.
+5. The [release record](../docs/concepts/release-record.md) of R4 has a versioned schema in `schemas/`. A
+   consumer parses it to decide whether to upgrade, which `.claude/rules/contracts.md` places in the row
+   requiring one. It arrives with the first release that produces one, on the same rule `specs/0008`
+   condition 7 applies to the distribution manifest.
+6. R6 has a mechanism. The framework has never been tested against a pinned harness version and nothing
+   pins one, so until a fixture runs against a recorded version and the release reads that record, R6
+   states a practice rather than requiring one.
+7. One capability completes deprecation and removal under R7 through R9, with the deprecation readable from
    an installation rather than only from a release note.
-6. A consumer upgrade is performed across a breaking change, end to end, in a fixture: install the old
+8. A consumer upgrade is performed across a breaking change, end to end, in a fixture: install the old
    version, generate, upgrade, migrate, and regenerate. Until that exists, this document describes a
    lifecycle no artifact has lived through.

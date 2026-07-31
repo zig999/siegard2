@@ -34,11 +34,11 @@ validated artifact, an orchestrator choosing a transition by lookup, an append-o
 derived by replay. Where this specification states something the thin path did not exercise, it says so
 in **Validation required before acceptance** rather than presenting it as settled.
 
-The SIGARD v0.1 draft under `reference/` proposed a different architecture, in which the framework owned
-a planner, a context resolver, and a pool of workers that consumed an execution plan. That model is not
-adopted. It puts the framework in control of the workflow, which R2 below forbids, and it duplicates
-scheduling that the harness already performs. `reference/` is non-normative input at every precedence
-level.
+The SIGARD v0.1 draft proposed a different architecture, in which the framework owned a planner, a
+context resolver, and a pool of workers that consumed an execution plan. That model is not adopted. It
+puts the framework in control of the workflow, which R2 below forbids, and it duplicates scheduling that
+the harness already performs. The draft was non-normative input at every precedence level, and it is no
+longer in this repository — `specs/0001` **Provenance** records where it went.
 
 ### Decided elsewhere, deliberately not restated here
 

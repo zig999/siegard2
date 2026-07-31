@@ -18,9 +18,14 @@ What a produced artifact *is* — a type, a persistence schema, a migration, a v
 named independently of how any technology expresses it.
 
 The vocabulary is closed and belongs to the framework, while the mapping from a node type to the classes it
-yields belongs to a [target pack](target-pack.md). That division exists because the mapping presumes a
-technology and the vocabulary does not: "a definition yields a migration" is only true where a database
-exists, and [stack knowledge](stack-knowledge.md) has no place in a framework-owned enum.
+yields belongs to a [target pack](target-pack.md), which declares it. That division exists because the
+mapping presumes a technology and the vocabulary does not: "a definition yields a migration" is only true
+where a database exists, and [stack knowledge](stack-knowledge.md) has no place in a framework-owned enum.
+
+The mapping is declared rather than left to the pack's agent because two model-free things need to read it:
+the [generation plan](generation-plan.md), which cannot work out what a knowledge object demands without it,
+and the report that a node type yields nothing under the active pack. Owning a fact and declaring it are
+different questions, and the pack answers both here.
 
 An artifact class carries one thing a pack could not be trusted to supply informally: its
 [generation track](generation-track.md). Whether a class is produced by expansion or by judgment decides

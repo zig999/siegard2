@@ -105,6 +105,7 @@ at a specific point:
 | Rule | Activates when | State |
 |---|---|---|
 | specification contract (`schemas/spec.v1.json`), frontmatter and body structure | the validator runs in `make validate` | **active**, exercised by every specification in `specs/` |
+| acceptance order: no specification accepted before the one it depends on (`specs/README.md`) | the derived prerequisite check runs in `make validate` | **active**; edges derived from acceptance conditions, three prerequisites found today, both outcomes tested |
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active**; the `sources` path constraint became enforced with ADR-0010, which records the deleted-source failure that demanded it |
 | ADR frontmatter contract (`schemas/adr.v2.json`), including supersession and amendment | the validator runs in `make validate` | **active**; `amends` exercised for the first time by ADR-0008 over ADR-0004 |
 | non-restatement: an ADR's `## Decision` cites an operative rule instead of repeating it (`docs/adr/README.md`) | the check runs in `make validate` | **active**, six ADRs de-duplicated to satisfy it |
@@ -120,7 +121,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 157 tests: 98 over the knowledge layer, 59 over the workflow loop |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 193 tests: 98 over the knowledge layer, 59 over the workflow loop, 36 over the specification set |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **partly active** |
 | `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | pending |
@@ -238,8 +239,8 @@ paths under a constraint ADR-0010 made enforced, and renaming a public artifact 
 
 Four vocabulary decisions from the same proposal, recorded so the terms do not re-enter:
 
-- a unit of work with one role is a **specialized agent**. `worker` is v0.1 vocabulary surviving only in
-  `reference/`, which is normative nowhere;
+- a unit of work with one role is a **specialized agent**. `worker` is v0.1 vocabulary, which was
+  normative nowhere and this repository no longer carries;
 - a user-invocable procedure is a **skill**. ADR-0009 records that there is no command class, and
   `scripts/validate_components.py` already rejects `src/claude/commands/` by name;
 - a **projection**, a schema, and a template are artifact classes, not kinds of capability. ADR-0010
@@ -299,11 +300,12 @@ depend on cooperation.
   repository that are checked rather than trusted. The component contracts were authored before the first component, deliberately, so it was born
   against them (ADR-0009); the specification contract was authored in the same change as the first
   specification, for the same reason.
-- **A design authority.** `specs/0001-knowledge-object-driven-development.md`, `proposed`, is the first
-  occupant of normative source 1. It fixes the workflow, the escalation predicates, the calibrated
+- **A design authority.** `specs/0001-knowledge-object-driven-development.md`, `accepted` on 2026-07-31, is
+  the first occupant of normative source 1. It fixes the workflow, the escalation predicates, the calibrated
   fail-soft claim, and the maturity ladder that decides when a knowledge object gains mechanical force.
-  Its **Provenance** section records what the SIGARD v0.1 draft under `reference/` contributed and what
-  forced a rewrite; that draft is non-normative input at every precedence level.
+  Its **Provenance** section records what the SIGARD v0.1 draft contributed, what forced a rewrite, and
+  where the draft went once `reference/` was removed; it was non-normative input at every precedence
+  level.
 - **The first distributable component.** `src/claude/agents/concept-author.md`, with its result
   contract in `schemas/concept-authoring-result.v1.json`. It is a component under `src/claude/` that
   nothing under `.claude/` duplicates, and it exercises the component contract for the first time. The
@@ -331,11 +333,14 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 157 tests: 98 over the knowledge layer, 59 over the workflow loop. The validators for
-  specifications, ADRs, concepts, and components remain untested code enforcing tested contracts; only
+- `make test` runs 193 tests: 98 over the knowledge layer, 59 over the workflow loop, and 36 over the
+  specification set — its concept links and its acceptance order. The validators for ADRs, concepts, and
+  components remain untested code enforcing tested contracts; `validate_specs.py` is now covered for those
+  two checks and not for the rest of what it does, so a green `make test` is not evidence that its
+  frontmatter, section, or requirement-numbering checks work. Covered in full:
   `validate_knowledge.py`, `knowledge_graph_lib.py`, `project_knowledge.py`, `measure_ontology.py`,
-  `workflow_lib.py`, and `orchestrate.py` are covered. Do not read a green `make test` as coverage of
-  the other four. `replay_workflow.py` is exercised by `make validate` rather than by a test of its own.
+  `workflow_lib.py`, and `orchestrate.py`. `replay_workflow.py` is exercised by `make validate` rather than
+  by a test of its own.
 - No `.claude/rules/security.md`. `CLAUDE.md` **Security** states the invariants; sanitization, path,
   subprocess, and network detail wait until the first hook or script needs them — see open question 5.
 - No generator, therefore no authoritative `dist/`. This is now the single largest gap: steps 3–6 exist,

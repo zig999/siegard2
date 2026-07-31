@@ -152,9 +152,12 @@ are Siegard's, resolved through `${CLAUDE_PLUGIN_ROOT}`, and depend on no harnes
   upgrade: a later run compares against it to decide what changed, so an upgrade is a diff against a
   recorded state rather than an overwrite of an unknown one.
 - **R15** — Where a produced artifact's placement must be recorded, that is the
-  [generation manifest](../docs/concepts/generation-manifest.md)'s field and not this one. The two records
-  answer different questions — what is installed here, and where did a generation put things — and neither
-  is called "the manifest" without its qualifier.
+  [generation manifest](../docs/concepts/generation-manifest.md)'s field and not this one. The distribution
+  manifest and the generation manifest answer different questions — what is installed here, and where did a
+  generation put things — and neither is called "the manifest" without its qualifier where both could be
+  meant. (The pair R11 closes is a different pair: `plugin.json` and the distribution manifest are the two
+  records an *installation* carries, while a generation manifest belongs to a governed repository and is
+  never installed.)
 
 ### Installation and upgrade
 

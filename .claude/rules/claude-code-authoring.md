@@ -71,15 +71,16 @@ These hold regardless of how that taxonomy settles:
 
 ## Target packs
 
-A target pack is the unit that carries one technology stack: a specialized agent and the templates it
-expands. A pack is framework work, and it is not the "architecture chosen for one downstream system" that
-`CLAUDE.md` **Scope** excludes — a pack serves any repository on its stack rather than one system.
+A target pack is the unit that carries one technology stack: the specialized agents and templates that
+produce the artifact classes it declares. A pack is framework work, and it is not the "architecture chosen
+for one downstream system" that `CLAUDE.md` **Scope** excludes — a pack serves any repository on its stack
+rather than one system.
 
 Three limits keep that distinction real:
 
 - a pack is admitted only when a fixture exercises it, which is `CLAUDE.md` **Scope** applied rather than
   relaxed;
-- what a pack may declare, and what it must leave to its agent's own knowledge of the stack, is fixed by
+- what a pack may declare, and what it must leave to its agents' own knowledge of the stack, is fixed by
   `specs/0004-generation-and-reproducibility.md` once that specification is accepted. Do not restate those
   rules here, and do not give a pack a rule file of its own;
 - a pack carries no business rule and no customer-specific architecture. Those stay out of scope inside a
