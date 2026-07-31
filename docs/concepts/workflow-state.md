@@ -27,7 +27,7 @@ records that produced it, it is not derived state — it is a second source of t
 `CLAUDE.md` under **Determinism and state** requires workflow state to be persisted outside the
 conversation, and [event log](event-log.md) holds why conversation history is not that record. Which
 persistence model records it is not decided, so the derivation above names the candidate rather than a
-settled mechanism — see `docs/bootstrap.md`.
+settled mechanism.
 
 `projection` names the graph-derived artifact and not this one.
 `docs/adr/0010-projection-names-the-graph-derived-artifact.md` records why the two are kept apart.

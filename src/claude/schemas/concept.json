@@ -2,10 +2,18 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/concept.json",
   "title": "Siegard concept frontmatter",
-  "description": "Frontmatter contract for a concept file in a Siegard concept bundle. Derived from Google's Open Knowledge Format v0.2: OKF field names and semantics are preserved where they coincide, and Siegard adds required fields OKF leaves optional. See docs/adr/0005-okf-derived-concept-model.md, including the one documented divergence on `status`.",
+  "description": "Frontmatter contract for a concept file in a Siegard concept bundle. Derived from Google's Open Knowledge Format v0.2: OKF field names and semantics are preserved where they coincide, and Siegard adds required fields OKF leaves optional. See the OKF-derived concept decision, including the one documented divergence on `status`.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["id", "type", "title", "description", "status", "contract_version", "generated"],
+  "required": [
+    "id",
+    "type",
+    "title",
+    "description",
+    "status",
+    "contract_version",
+    "generated"
+  ],
   "properties": {
     "id": {
       "type": "string",
@@ -13,18 +21,28 @@
       "description": "Stable identifier. Siegard addition: OKF has no identifier field."
     },
     "type": {
-      "enum": ["term"],
+      "enum": [
+        "term"
+      ],
       "description": "OKF field. OKF leaves type values unregistered; Siegard closes the vocabulary so a consumer branches on a known value. Extend this enum only when a second type actually exists."
     },
-    "title": { "type": "string", "minLength": 1, "description": "OKF field. Display name." },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "OKF field. Display name."
+    },
     "description": {
       "type": "string",
       "minLength": 1,
       "description": "OKF field. Single-sentence summary."
     },
     "status": {
-      "enum": ["proposed", "accepted", "superseded"],
-      "description": "Siegard lifecycle vocabulary, shared with docs/adr/README.md. DIVERGES from OKF, which defines draft|stable|deprecated on this field. Documented in ADR-0005."
+      "enum": [
+        "proposed",
+        "accepted",
+        "superseded"
+      ],
+      "description": "Siegard lifecycle vocabulary, shared with the decision-record format. DIVERGES from OKF, which defines draft|stable|deprecated on this field. Documented in ADR-0005."
     },
     "contract_version": {
       "const": "concept/1",
@@ -33,10 +51,17 @@
     "generated": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["by", "at"],
+      "required": [
+        "by",
+        "at"
+      ],
       "description": "OKF trust field. Siegard requires it; OKF leaves it optional.",
       "properties": {
-        "by": { "type": "string", "minLength": 1, "description": "Actor that produced this content." },
+        "by": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Actor that produced this content."
+        },
         "at": {
           "type": "string",
           "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
@@ -50,10 +75,19 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["by", "at"],
+        "required": [
+          "by",
+          "at"
+        ],
         "properties": {
-          "by": { "type": "string", "minLength": 1 },
-          "at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" }
+          "by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+          }
         }
       }
     },
@@ -63,12 +97,23 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["resource"],
+        "required": [
+          "resource"
+        ],
         "properties": {
-          "resource": { "type": "string", "minLength": 1 },
-          "id": { "type": "string" },
-          "title": { "type": "string" },
-          "author": { "type": "string" }
+          "resource": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          }
         }
       }
     },
@@ -79,7 +124,10 @@
     "tags": {
       "type": "array",
       "description": "OKF field. Cross-cutting categorization.",
-      "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      }
     },
     "stale_after": {
       "type": "string",

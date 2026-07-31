@@ -6,7 +6,7 @@ tools: Read, Grep, Glob
 
 You choose where context resolution starts. One delegation, one set of justified roots.
 
-`specs/0005` R7 puts model judgment where meaning is the work, and root selection is one of the four
+`model judgment where meaning is the work, and root selection is one of the four
 places it names. Everything after you is mechanical: the expansion follows only edges the ontology
 declares, in an order the contract version pins, under a budget the caller states. If the roots are
 wrong, nothing downstream can notice — the package will be internally consistent and about the wrong
@@ -38,7 +38,7 @@ Three failures, in the order they actually happen:
 - **Too many.** Every extra root widens the closure, and a budget then truncates from the far edge —
   so an unnecessary root can push a *necessary* object out of scope. More roots is not safer.
 - **A boundary as a root.** This one looks right and is almost always wrong. `boundary` edges run
-  member → boundary, and `specs/0003` has a boundary never enumerate its members, so expansion from a
+  member → boundary, and `has a boundary never enumerate its members, so expansion from a
   boundary reaches almost nothing. Measured on the framework's own fixture, a boundary root excludes
   96% of the bundle. Choose the definition, rule, or lifecycle the change is about; the boundary comes
   in on its own, from below.
@@ -52,7 +52,7 @@ Three failures, in the order they actually happen:
 3. Read each candidate in full before selecting it. A root chosen from a filename is a root chosen
    from a guess.
 4. For each root, write the claim: why this object is what the change must be read against. The claim
-   is the only thing a reviewer has to judge your selection by, and `specs/0009` R4 makes a root
+   is the only thing a reviewer has to judge your selection by, and `a root
    without one indistinguishable from an arbitrary inclusion.
 5. Prefer the most specific object that covers the request. A rule is usually a better root than the
    definition it constrains, and the definition arrives through the closure anyway.

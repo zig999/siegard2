@@ -2,51 +2,88 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/pack-declaration.json",
   "title": "Target pack declaration",
-  "description": "What a target pack declares, and the whole of it. specs/0004 R14 fixes the fields: identity, version, and the classes it produces with the track of each and the node types each is yielded by — and nothing else. What is deliberately absent is naming conventions, directory layout, path derivation, expansion order, and how a reference becomes a storage representation: each is stack knowledge that already lives in the pack's own agent, and declaring it would be maintenance cost with no differentiating content. specs/0012 R7 states the test — a pack declares nothing its own agent already knows AND nothing model-free needs to read. The `from` column fails the second half of that test, which is why it is here: specs/0004 R23 derives the plan with no model in the loop, so nothing else could answer which artifacts a knowledge object demands.",
+  "description": "What a target pack declares, and the whole of it. the fields: identity, version, and the classes it produces with the track of each and the node types each is yielded by — and nothing else. What is deliberately absent is naming conventions, directory layout, path derivation, expansion order, and how a reference becomes a storage representation: each is stack knowledge that already lives in the pack's own agent, and declaring it would be maintenance cost with no differentiating content. the test — a pack declares nothing its own agent already knows AND nothing model-free needs to read. The `from` column fails the second half of that test, which is why it is here: the plan with no model in the loop, so nothing else could answer which artifacts a knowledge object demands.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "pack", "version", "produces"],
+  "required": [
+    "contract_version",
+    "pack",
+    "version",
+    "produces"
+  ],
   "properties": {
-    "contract_version": { "const": "pack-declaration/1" },
+    "contract_version": {
+      "const": "pack-declaration/1"
+    },
     "pack": {
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "The pack's identity. specs/0012 R1 records the active pack in the governed repository's own configuration, so this is the name that configuration names."
+      "description": "The pack's identity. the active pack in the governed repository's own configuration, so this is the name that configuration names."
     },
     "version": {
       "type": "string",
       "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$",
-      "description": "specs/0004 R30 records it in the generation manifest, so reproducing a generation names the pack version that produced it."
+      "description": "it in the generation manifest, so reproducing a generation names the pack version that produced it."
     },
     "framework_contracts": {
       "type": "array",
-      "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*/\\d+$" },
-      "description": "specs/0012 R8: the contract versions this pack was built against, so a consumer can tell whether an installed pack and an installed framework are compatible without running them. R10 refuses a pack declaring itself against no supported version at installation rather than letting it fail during generation."
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*/\\d+$"
+      },
+      "description": "the contract versions this pack was built against, so a consumer can tell whether an installed pack and an installed framework are compatible without running them. R10 refuses a pack declaring itself against no supported version at installation rather than letting it fail during generation."
     },
     "produces": {
       "type": "array",
       "minItems": 1,
-      "description": "One entry per artifact class the pack produces. specs/0004 R51 requires exactly one producer per declared class — a template on the deterministic track, a specialized agent on the judged one — so a declared class with no producer and two producers for one class are both rejected.",
+      "description": "One entry per artifact class the pack produces. What is required: exactly one producer per declared class — a template on the deterministic track, a specialized agent on the judged one — so a declared class with no producer and two producers for one class are both rejected.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["class", "track", "from"],
+        "required": [
+          "class",
+          "track",
+          "from"
+        ],
         "properties": {
           "class": {
-            "enum": ["type", "dto", "persistence-schema", "migration", "enum", "state-machine",
-                     "validator", "conformance-test", "event-schema", "api-description",
-                     "orchestration", "documentation"],
-            "description": "specs/0004 R8 closes this vocabulary and it is framework-owned. A class a pack needs and the framework does not hold is a request to change that specification, not something a pack may add."
+            "enum": [
+              "type",
+              "dto",
+              "persistence-schema",
+              "migration",
+              "enum",
+              "state-machine",
+              "validator",
+              "conformance-test",
+              "event-schema",
+              "api-description",
+              "orchestration",
+              "documentation"
+            ],
+            "description": "this vocabulary and it is framework-owned. A class a pack needs and the framework does not hold is a request to change that specification, not something a pack may add."
           },
           "track": {
-            "enum": ["deterministic", "judged"],
-            "description": "specs/0004 R1. R2 makes the deterministic track byte-identical for identical input with no model invoked; R3 verifies the judged track against a conformance suite generated from the knowledge base. specs/0011 R2 forbids relaxing the first to keep a mechanism — a template that cannot hold byte identity moves its class here instead."
+            "enum": [
+              "deterministic",
+              "judged"
+            ],
+            "description": ". R2 makes the deterministic track byte-identical for identical input with no model invoked; R3 verifies the judged track against a conformance suite generated from the knowledge base. relaxing the first to keep a mechanism — a template that cannot hold byte identity moves its class here instead."
           },
           "from": {
             "type": "array",
             "minItems": 1,
-            "items": { "enum": ["definition", "rule", "lifecycle", "interface", "boundary", "process"] },
-            "description": "Which node types yield this class. specs/0004 R11 reports a node type yielding nothing under the active pack, which is unsatisfiable unless something can enumerate what each type yields."
+            "items": {
+              "enum": [
+                "definition",
+                "rule",
+                "lifecycle",
+                "interface",
+                "boundary",
+                "process"
+              ]
+            },
+            "description": "Which node types yield this class. a node type yielding nothing under the active pack, which is unsatisfiable unless something can enumerate what each type yields."
           }
         }
       }

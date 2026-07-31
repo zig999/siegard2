@@ -2,18 +2,31 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/generation-manifest.json",
   "title": "Generation manifest",
-  "description": "What a generation produced, and the lock on where it goes. specs/0004 R30 records the knowledge object, the artifact class, the target path, a content hash, and the pack version for each produced artifact. R31 reads the path on every later run and never decides it again. R32 makes moving a produced file an explicit recorded unlock — without it a relocation appears in a diff as a deletion and an addition, indistinguishable from a change in knowledge. R33 is the constraint that keeps it honest: the manifest records execution and decides nothing. R50 makes it committed, and rejects any design where placement is decided after the first run — specs/0002 R4 excludes placement from the knowledge base and R31 has nothing to read without it. specs/0008 R15 keeps it distinct from the distribution manifest: what is installed here and where a generation put things are different questions.",
+  "description": "What a generation produced, and the lock on where it goes. the knowledge object, the artifact class, the target path, a content hash, and the pack version for each produced artifact. R31 reads the path on every later run and never decides it again. R32 makes moving a produced file an explicit recorded unlock — without it a relocation appears in a diff as a deletion and an addition, indistinguishable from a change in knowledge. R33 is the constraint that keeps it honest: the manifest records execution and decides nothing. R50 makes it committed, and rejects any design where placement is decided after the first run — placement from the knowledge base and R31 has nothing to read without it. it distinct from the distribution manifest: what is installed here and where a generation put things are different questions.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "pack", "pack_version", "artifacts"],
+  "required": [
+    "contract_version",
+    "pack",
+    "pack_version",
+    "artifacts"
+  ],
   "properties": {
-    "contract_version": { "const": "generation-manifest/1" },
-    "pack": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
-    "pack_version": { "type": "string", "minLength": 1 },
+    "contract_version": {
+      "const": "generation-manifest/1"
+    },
+    "pack": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "pack_version": {
+      "type": "string",
+      "minLength": 1
+    },
     "framework_version": {
       "type": "string",
       "minLength": 1,
-      "description": "specs/0004 R4 names four pinned identities a reproducibility claim must carry; this is where the manifest records the framework it was produced under."
+      "description": "four pinned identities a reproducibility claim must carry; this is where the manifest records the framework it was produced under."
     },
     "artifacts": {
       "type": "array",
@@ -21,16 +34,43 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["ko", "class", "path", "content_hash", "pack_version"],
+        "required": [
+          "ko",
+          "class",
+          "path",
+          "content_hash",
+          "pack_version"
+        ],
         "properties": {
-          "ko": { "type": "string", "minLength": 1 },
-          "class": {
-            "enum": ["type", "dto", "persistence-schema", "migration", "enum", "state-machine",
-                     "validator", "conformance-test", "event-schema", "api-description",
-                     "orchestration", "documentation"]
+          "ko": {
+            "type": "string",
+            "minLength": 1
           },
-          "path": { "type": "string", "minLength": 1, "pattern": "^[^/][^\\\\]*$" },
-          "content_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "class": {
+            "enum": [
+              "type",
+              "dto",
+              "persistence-schema",
+              "migration",
+              "enum",
+              "state-machine",
+              "validator",
+              "conformance-test",
+              "event-schema",
+              "api-description",
+              "orchestration",
+              "documentation"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^/][^\\\\]*$"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
           "pack_version": {
             "type": "string",
             "minLength": 1,
@@ -39,7 +79,7 @@
           "unlocked_from": {
             "type": "string",
             "minLength": 1,
-            "description": "specs/0004 R32: the path this artifact was moved from, recorded so a relocation is an explicit unlock rather than a deletion and an addition in a diff."
+            "description": "the path this artifact was moved from, recorded so a relocation is an explicit unlock rather than a deletion and an addition in a diff."
           }
         }
       }

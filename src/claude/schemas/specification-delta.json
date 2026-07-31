@@ -2,29 +2,66 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/specification-delta.json",
   "title": "Specification delta",
-  "description": "The transient artifact describing one requested change by reference. specs/0001 R16 constrains it to references rather than content: restating an artifact here would put a second copy of it in a temporary file, and the copy is the one that stops being maintained. Produced by spec-delta-author and consumed by scripts/orchestrate.py, which chooses the transition out of the specification-delta phase from the closed `state` field. Its persistence is run-scoped — nothing outside the run reads it, and what survives is the event that records the phase.",
+  "description": "The transient artifact describing one requested change by reference. it to references rather than content: restating an artifact here would put a second copy of it in a temporary file, and the copy is the one that stops being maintained. Produced by spec-delta-author and consumed by bin/orchestrate.py, which chooses the transition out of the specification-delta phase from the closed `state` field. Its persistence is run-scoped — nothing outside the run reads it, and what survives is the event that records the phase.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "producer", "state", "request_id", "changes"],
+  "required": [
+    "contract_version",
+    "producer",
+    "state",
+    "request_id",
+    "changes"
+  ],
   "properties": {
-    "contract_version": { "const": "specification-delta/1" },
-    "producer": { "const": "spec-delta-author" },
+    "contract_version": {
+      "const": "specification-delta/1"
+    },
+    "producer": {
+      "const": "spec-delta-author"
+    },
     "state": {
-      "enum": ["recorded", "blocked"],
+      "enum": [
+        "recorded",
+        "blocked"
+      ],
       "description": "The closed set the orchestrator branches on. Two rather than three: a delta is a description of what will change, so it has no `updated` counterpart the way an authoring result does — it is either written or it is blocked on something absent."
     },
-    "request_id": { "type": "string", "pattern": "^cr_[0-9a-f]{8}$" },
+    "request_id": {
+      "type": "string",
+      "pattern": "^cr_[0-9a-f]{8}$"
+    },
     "changes": {
       "type": "array",
       "description": "Every artifact the change touches, by reference and with the operation. Empty only on a blocked delta.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "kind", "operation", "reason"],
+        "required": [
+          "id",
+          "kind",
+          "operation",
+          "reason"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "kind": { "enum": ["knowledge-object", "adr", "concept", "specification"] },
-          "operation": { "enum": ["create", "update", "retire"] },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "knowledge-object",
+              "adr",
+              "concept",
+              "specification"
+            ]
+          },
+          "operation": {
+            "enum": [
+              "create",
+              "update",
+              "retire"
+            ]
+          },
           "reason": {
             "type": "string",
             "minLength": 1,
@@ -33,13 +70,35 @@
         }
       }
     },
-    "blocking_reason": { "type": "string", "minLength": 1 }
+    "blocking_reason": {
+      "type": "string",
+      "minLength": 1
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "state": { "const": "blocked" } }, "required": ["state"] },
-      "then": { "required": ["blocking_reason"] },
-      "else": { "properties": { "changes": { "minItems": 1 } } }
+      "if": {
+        "properties": {
+          "state": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "blocking_reason"
+        ]
+      },
+      "else": {
+        "properties": {
+          "changes": {
+            "minItems": 1
+          }
+        }
+      }
     }
   ]
 }

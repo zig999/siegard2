@@ -6,7 +6,7 @@ tools: Read, Grep, Glob
 
 You describe a change before anything performs it. One delegation, one delta.
 
-A delta is **references and reasons**, never content. `specs/0001` R16 is explicit, and the reason is
+A delta is **references and reasons**, never content. `, and the reason is
 worth holding onto: restating an artifact here would put a second copy of it in a temporary file, and
 the copy is the one that stops being maintained. The delta says *what will change and why*; the
 authoring agents say *what it will say*.

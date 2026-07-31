@@ -6,27 +6,27 @@ that contract's boundary check stopped being a declared gap. It does three thing
 deliberately nothing else:
 
 1. validates a producer's result against the contract the artifact itself declares, at the
-   boundary, before anything reads it (.claude/rules/contracts.md, specs/0001 R6);
+   boundary, before anything reads it (.claude/rules/contracts.md, );
 2. reads the transition from CONSUMED — a table keyed by contract version and the closed
    `state` field. It never reads prose, and there is no branch here that inspects the
-   artifact's narrative content (specs/0001 R5);
+   artifact's narrative content;
 3. appends one event and reports the state derived from the log.
 
 It holds no orchestration prose and no model judgment. That is the point:
 .claude/rules/claude-code-authoring.md requires durable orchestration and state logic in
-tested scripts, and docs/bootstrap.md stage 2 sets the abandonment criterion — if this had
+tested scripts, and the orchestrator sets the abandonment criterion — if this had
 to interpret prose to choose a transition, the artifact design would be wrong.
 
-Acceptance is not available here. specs/0001 R21 forbids a workflow accepting its own
+Acceptance is not available here. a workflow accepting its own
 output, so an acceptance event carries `decided_by` and arrives through `record` from a
 maintainer's decision, never from this script's own reasoning.
 
-Declared dependencies: jsonschema, via scripts/workflow_lib.py.
+Declared dependencies: jsonschema, via bin/workflow_lib.py.
 
 Usage:
   orchestrate.py consume --log P --workflow ID --result P --event-id ID --at TS
-  orchestrate.py record  --log P --event P
-  orchestrate.py state   --log P --workflow ID
+  orchestrate.py record --log P --event P
+  orchestrate.py state --log P --workflow ID
 Exit: 0 appended or reported, 1 rejected at the boundary or by the guard, 2 cannot run
 """
 
@@ -56,7 +56,7 @@ CONSUMED: dict[str, dict] = {
         "field": "state",
         "producer": "concept-author",
         # In a knowledge-only change the authored knowledge *is* the implementation, so a
-        # concept-authoring result drives the implementation phase of specs/0001 R2.
+        # concept-authoring result drives the implementation phase.
         "outcomes": {"authored": "authored", "updated": "updated", "blocked": "blocked"},
     },
     "knowledge-authoring-result/1": {
@@ -72,7 +72,7 @@ CONSUMED: dict[str, dict] = {
         "phase": "specification-delta",
         "field": "state",
         "producer": "spec-delta-author",
-        # specs/0001 R16's artifact. Two outcomes rather than three: a delta describes a change
+        # the artifact. Two outcomes rather than three: a delta describes a change
         # rather than performing one, so it has no `updated` counterpart — it is written, or it
         # is blocked on something absent.
         "outcomes": {"recorded": "recorded", "blocked": "blocked"},
@@ -80,7 +80,7 @@ CONSUMED: dict[str, dict] = {
     "impact-analysis/1": {
         "phase": "impact-analysis",
         "field": "verdict",
-        # No `producer` key: specs/0001 R4 requires the artifact, not a particular producer
+        # No `producer` key: What is required: the artifact, not a particular producer
         # of it, so this contract is not owned by one named agent the way the other is.
         "outcomes": {"none": "none", "update": "update", "create": "create"},
     },
@@ -132,7 +132,7 @@ def validate_at_boundary(path: Path) -> dict:
         lines = []
         for err in errors:
             where = ".".join(str(p) for p in err.path) or "(root)"
-            lines.append(f"  {where}: {err.message}")
+            lines.append(f" {where}: {err.message}")
         raise ValueError(
             f"{path}: fails contract {declared} at the boundary — rejected, not repaired:\n"
             + "\n".join(lines)
@@ -212,7 +212,7 @@ def record(args: argparse.Namespace) -> int:
     """Append a caller-authored event: a phase with no agent producer, or a decision.
 
     The guard applies identically. This is how a maintainer's acceptance enters the log
-    (specs/0001 R21) and how the phases that no agent yet produces are recorded.
+ and how the phases that no agent yet produces are recorded.
     """
     event = json.loads(Path(args.event).read_text())
     state = append(Path(args.log), event)

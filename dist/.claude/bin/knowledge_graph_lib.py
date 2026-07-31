@@ -1,4 +1,4 @@
-"""Materialize a knowledge base into the graph specs/0003 defines, and check it.
+"""Materialize a knowledge base into the graph , and check it.
 
 The materializer and the checks live together because every check the specification
 defers to a script needs the same resolved graph: totality (R11), cross-context
@@ -16,8 +16,8 @@ enforce cardinality, and R19 requires expansion to follow only traversed edges, 
 table arrives here as data. `schemas/knowledge-graph.json` holds the edge *names* it
 emits; this module holds the cardinality and traversal policy the names carry.
 
-Consumers: scripts/validate_knowledge.py (validation), scripts/project_knowledge.py
-(projections and graph.json), scripts/measure_ontology.py (the R52 measurement).
+Consumers: bin/validate_knowledge.py (validation), bin/project_knowledge.py
+(projections and graph.json), the measure ontology tool (the R52 measurement).
 """
 
 from __future__ import annotations
@@ -31,12 +31,12 @@ from frontmatter_lib import PLUGIN_ROOT, display, split_frontmatter
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - frontmatter_lib already exits on this
+except ImportError: # pragma: no cover - frontmatter_lib already exits on this
     raise
 
 try:
     from jsonschema import Draft202012Validator
-except ImportError:  # pragma: no cover - callers exit with a named error
+except ImportError: # pragma: no cover - callers exit with a named error
     raise
 
 KO_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "knowledge-object.json"
@@ -95,7 +95,7 @@ NUMERIC = re.compile(r"^[0-9]+$")
 
 @dataclass(frozen=True)
 class EdgeKind:
-    """One row of the edge table of specs/0003.
+    """One row of the edge table.
 
     `minimum` and `maximum` bound how many edges of this kind one origin declares;
     `inverse_maximum` bounds how many arrive at one target, which is how R20's "at most
@@ -104,14 +104,14 @@ class EdgeKind:
     """
 
     name: str
-    origin_types: tuple[str, ...]  # empty means any knowledge object
-    target_types: tuple[str, ...]  # empty means any node
+    origin_types: tuple[str, ...] # empty means any knowledge object
+    target_types: tuple[str, ...] # empty means any node
     minimum: int
     maximum: int | None
     inverse_maximum: int | None
     traversed: bool
     depth: int | None
-    crosses_context: bool = False  # exempt from R15
+    crosses_context: bool = False # exempt from R15
 
 
 EDGE_KINDS: dict[str, EdgeKind] = {
@@ -174,7 +174,7 @@ ACYCLIC_KINDS = ("boundary", "depends_on", "steps[].ko")
 @dataclass
 class Node:
     id: str
-    kind: str  # a knowledge-object type, or "adr"
+    kind: str # a knowledge-object type, or "adr"
     path: Path
     data: dict
     body: str = ""
@@ -189,7 +189,7 @@ class Edge:
     source: str
     target: str
     kind: str
-    locator: str  # where in the source frontmatter this edge was declared
+    locator: str # where in the source frontmatter this edge was declared
 
 
 @dataclass
@@ -294,7 +294,7 @@ def _load_adr(graph: Graph, path: Path, validator: Draft202012Validator) -> None
     """An ADR is a permanent graph node and never a knowledge object (R7).
 
     Validated against schemas/knowledge-decision.json, which spec 0003 names as its contract. The
-    similarity check in scripts/validate_adrs.py is not applied: it compares an ADR
+    similarity check in the validate adrs tool is not applied: it compares an ADR
     against this repository's own CLAUDE.md, which says nothing about a governed one.
     """
     try:
@@ -361,7 +361,7 @@ def _materialize_edges(graph: Graph) -> None:
         if not node.is_ko:
             continue
         data = node.data
-        add = lambda kind, target, locator: graph.edges.append(  # noqa: E731
+        add = lambda kind, target, locator: graph.edges.append( # noqa: E731
             Edge(source=node.id, target=target, kind=kind, locator=locator)
         )
         if "boundary" in data:

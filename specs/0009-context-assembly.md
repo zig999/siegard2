@@ -129,6 +129,29 @@ This specification uses these terms as the concept bundle defines them:
 - **R11** — Context resolution is retained only while measurement shows it selects better than including
   the whole bundle for the repository in question. Where it does not, it is replaced by the simpler
   mechanism, and this specification's machinery is retired rather than kept for completeness.
+**The measurement R10 asks for, and what R11 decided.** Over the 28 knowledge objects of a
+two-context bundle, five roots chosen as realistic changes:
+
+| Root | In scope | Excluded |
+|---|---|---|
+| `ko.rule.billing.invoice-amount` | 22 | 21.4% |
+| `ko.rule.sales.proposal-validity` | 15 | 46.4% |
+| `ko.definition.billing.invoice` | 22 | 21.4% |
+| `ko.lifecycle.sales.proposal` | 14 | 50.0% |
+| `ko.boundary.billing` | 1 | 96.4% |
+
+Mean exclusion 47.1%; two of five exclude at least half. R11 is decided: **retain**. No root pulls
+in everything and the mean run reads about half, so resolution selects better than sending the
+bundle. What this does not settle is whether it pays for itself at scale — 47% of 28 objects is
+thirteen files, a saving that size could be had by sending the whole bundle — so it is retained on
+evidence and re-measured when a larger bundle exists, which is what R11 requires instead of
+retaining for completeness.
+
+One finding no requirement anticipated: expanding from a **boundary** reaches almost nothing.
+`boundary` edges run member → boundary and a boundary never enumerates its members, so a boundary
+chosen as a root excludes 96% of the bundle. That is a fact the root selector has to know, not a
+defect to route around by adding a reverse edge the ontology does not declare.
+
 - **R12** — The measurement in R10 is calibrated from executed runs, and any depth or budget default the
   framework later ships is recorded together with the evidence that produced it. This document asserts no
   such default.

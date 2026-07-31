@@ -34,4 +34,4 @@ Because it is control flow rather than judgment, an orchestrator is a tested scr
 [transition guard](transition-guard.md) must be decidable the same way twice.
 
 Whether `orchestrator` names a distinct component class the framework ships, or only a role that a
-script fills, is not decided — see `docs/bootstrap.md` open question 3.
+script fills, is not decided; `specs/0006` **Outstanding evidence** holds what would settle it.

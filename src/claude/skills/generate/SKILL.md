@@ -4,7 +4,7 @@ description: Produces source from the knowledge base through the active target p
 disable-model-invocation: true
 ---
 
-You run generation. `specs/0004` R18 makes this the entry point, and everything it drives is
+You run generation. `this the entry point, and everything it drives is
 mechanical except one step.
 
 Two rules govern everything below, and neither is yours to relax:
@@ -24,7 +24,7 @@ Collect these before running anything. A missing input is a stop, not a default:
    Installation decides this path; a component that guessed it would fail silently in a repository
    laid out differently.
 2. **the knowledge root**, and the contract governing it.
-3. **the active pack** and its declaration. `specs/0004` R17: the framework ships no default pack, and
+3. **the active pack** and its declaration. `the framework ships no default pack, and
    a missing or ambiguous one blocks generation with a report naming what is missing. A pack inferred
    at run time is a hidden default and is rejected.
 4. **the roots** the scope expands from, and the change request they answer.
@@ -36,7 +36,7 @@ Collect these before running anything. A missing input is a stop, not a default:
 ## The order, and why it cannot be rearranged
 
 ```
-scope  →  demand  →  placement  →  freeze  →  plan  →  validate  →  write  →  manifest
+scope → demand → placement → freeze → plan → validate → write → manifest
 ```
 
 1. **Resolve the scope.** It fails closed: a member that cannot be resolved blocks the run. This is

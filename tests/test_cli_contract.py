@@ -6,7 +6,7 @@ checked is wrong". The documented distinction did not exist anywhere.
 
 `make validate` never noticed, because it treats any non-zero as a failure. That is the argument
 for fixing it rather than deleting it from the docstrings: this repository does not keep a stated
-contract that nothing honours, and `docs/bootstrap.md` says so in the general form — until a
+contract that nothing honours — until a
 condition holds, report a rule as not run rather than as satisfied.
 
 The last test is the one that keeps this from rotting: it reads every script's own docstring and

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Replay a workflow fixture's declared steps, and write or check what they produce.
 
-A workflow fixture is any directory under fixtures/ holding inputs/run.json. Replaying it
+A workflow fixture is any directory under the named root holding inputs/run.json. Replaying it
 drives the real orchestrator over the real guard: every event is validated against
 workflow-event/1 and accepted by the transition guard, or the replay fails. So a fixture
 that replays is evidence that its recorded history is a legal one, not merely well-formed
@@ -23,10 +23,10 @@ There is no Makefile target for regeneration. CLAUDE.md **Commands** fixes the c
 entry points and only the maintainer changes that file, so `--check` is wired into
 `make validate` and regeneration is this script run directly.
 
-Declared dependencies: jsonschema, via scripts/workflow_lib.py.
+Declared dependencies: jsonschema, via bin/workflow_lib.py.
 
-Usage:  scripts/replay_workflow.py [fixtures_root] [--check]
-Exit:   0 written, or check passed; 1 check failed or a replay was rejected; 2 cannot run
+Usage: bin/replay_workflow.py [fixtures_root] [--check]
+Exit: 0 written, or check passed; 1 check failed or a replay was rejected; 2 cannot run
 """
 
 from __future__ import annotations
@@ -106,11 +106,11 @@ def process(fixture: Path, check: bool, problems: list[str]) -> None:
     for path, produced in ((log_path, produced_log), (state_path, produced_state)):
         name = path.name
         if not path.is_file():
-            problems.append(f"{fixture.name}/{name} does not exist; run scripts/replay_workflow.py")
+            problems.append(f"{fixture.name}/{name} does not exist; run bin/replay_workflow.py")
         elif path.read_text() != produced:
             problems.append(
                 f"{fixture.name}/{name} does not match a fresh replay — it was hand-edited, or the "
-                f"inputs changed without regenerating; run scripts/replay_workflow.py"
+                f"inputs changed without regenerating; run bin/replay_workflow.py"
             )
     print(f"{fixture.name}: checked {LOG_NAME}, {STATE_NAME} against a fresh replay")
 
@@ -129,7 +129,7 @@ def main() -> int:
     if not fixtures:
         # A green run that replayed nothing is worse than a named gap — the Makefile states
         # that rule for its own targets, and this is the script it most easily hides behind:
-        # `make validate` would report success over a fixtures/ tree somebody renamed.
+        # a verification run would report success over a tree somebody renamed.
         cannot_run(f"cannot run: no inputs/run.json under {root}, so nothing was replayed")
 
     problems: list[str] = []
@@ -139,11 +139,11 @@ def main() -> int:
         except (ValueError, KeyError, FileNotFoundError) as exc:
             problems.append(f"{fixture.name}: {exc}")
 
-    print(f"workflow fixtures: {len(fixtures)}  contract: schemas/workflow-event.json")
+    print(f"workflow fixtures: {len(fixtures)} contract: schemas/workflow-event.json")
     if problems:
         print(f"FAILED: {len(problems)} problem(s)\n")
         for problem in problems:
-            print(f"  {problem}")
+            print(f" {problem}")
         return 1
     print("all workflow fixtures replay to their recorded log and state")
     return 0

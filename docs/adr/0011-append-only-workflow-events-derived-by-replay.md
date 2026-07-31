@@ -9,7 +9,7 @@ contract_version: adr/1
 
 ## Context
 
-`docs/bootstrap.md` open question 1 asked which persistence model records workflow state, and named
+An open question asked which persistence model records workflow state, and named
 an append-only log with state derived by replay as the leading candidate rather than the answer. It
 attached a gate — an event schema carrying `contract_version`, a derivation with a determinism test, a
 transition guard tested in both directions, and a fixture running the loop end to end — and warned that
@@ -59,7 +59,7 @@ artifact R4 requires and R4 already fixes its content.
 
 ## Consequences
 
-- Open question 1's gate is met, and `docs/bootstrap.md` records that. A met gate is evidence, not
+- That gate is met, and this records that. A met gate is evidence, not
   authority, so this ADR stayed `proposed` until a maintainer accepted it on 2026-07-31 — which makes it
   the one record in this repository promoted on evidence that was already in place rather than ahead of it.
 - The migration burden the open question warned about is now real and unpaid. `workflow-event/1` has one

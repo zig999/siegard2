@@ -9,7 +9,7 @@ are the fixed half. They fall into two groups on purpose:
   *consistently* wrong — it produces the same defect twice and reports agreement — so the
   invariants are computed from the tree and never from the plan.
 
-`docs/bootstrap.md` open question 2 named four conditions: a generator `make dist` runs, two runs
+Four conditions were named for the generator: a generator `make dist` runs, two runs
 producing identical output, a test that no source-only path reaches the output, and a test that no
 secret or environment-specific value does. Each has a case here.
 """

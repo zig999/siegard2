@@ -8,7 +8,7 @@ recomputes to a different set the moment the traversal reorders.
 The measurement class is the one that could end this machinery. `specs/0009` R11 retains
 resolution only while it selects better than including the whole bundle, and R10 asks for the
 record rather than the figure — so these assert that the record exists and that the numbers in
-`docs/bootstrap.md` are the ones the code actually produces.
+the specifications record are the ones the code actually produces.
 """
 
 from __future__ import annotations
@@ -225,7 +225,7 @@ class EarnsItsPlace(unittest.TestCase):
 
     def test_the_recorded_measurement_matches_what_the_code_produces(self) -> None:
         """A figure in prose that nothing derives is the drift this repository has already had twice."""
-        recorded = (REPO_ROOT / "docs" / "bootstrap.md").read_text()
+        recorded = (REPO_ROOT / "specs" / "0009-context-assembly.md").read_text()
         self.assertIn(f"{self.total} knowledge objects", recorded)
 
     def test_expanding_from_a_boundary_reaches_almost_nothing(self) -> None:

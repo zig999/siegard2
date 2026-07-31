@@ -1,25 +1,25 @@
 """Append-only workflow events, the state derived from them, and the guards between.
 
 This module is the append-only persistence candidate under test for open question 1 in
-docs/bootstrap.md. It holds three things and no rules of its own beyond them:
+the build plan. It holds three things and no rules of its own beyond them:
 
 - TRANSITIONS, the lookup table that makes a transition a table read rather than an
-  interpretation of prose (specs/0001 R5). Its phase vocabulary is R2's default path,
+  interpretation of prose. Its phase vocabulary is R2's default path,
   complete: R2 permits escalation to insert phases and forbids removing one.
 - derive(), which reads a log back into workflow state. State is never stored; it is
   replayed, so it cannot drift from the record that produced it
-  (docs/concepts/workflow-state.md).
+  (the workflow state definition).
 - guard(), which decides whether one candidate event may be appended. Every condition is
   decidable from the log and the candidate alone — no clock, no filesystem, no judgment
-  (docs/concepts/transition-guard.md).
+  (the transition guard definition).
 
 Ordering comes from `seq`, never from file order or from `occurred_at`: a clock can repeat
-or move backwards, and replay has to be deterministic (specs/0001 R8). Callers supply
+or move backwards, and replay has to be deterministic. Callers supply
 `event_id` and `occurred_at` for the same reason concept-author refuses to invent its own
 timestamp — a framework that minted them would make a replay irreproducible.
 
 Rejection is total: guard() returns reasons and append() refuses. Nothing here repairs a
-malformed event (specs/0001 R6).
+malformed event.
 
 Declared dependencies: jsonschema. Required; this module raises a named error rather than
 degrading silently if it is missing.
@@ -36,10 +36,10 @@ EVENT_SCHEMA_PATH = SCHEMA_DIR / "workflow-event.json"
 
 try:
     from jsonschema import Draft202012Validator
-except ImportError as exc:  # pragma: no cover - environment failure, not logic
+except ImportError as exc: # pragma: no cover - environment failure, not logic
     raise ImportError("cannot run: jsonschema is not installed (pip install jsonschema)") from exc
 
-# The phase a workflow opens in. specs/0001 R1: no phase runs without a change request.
+# The phase a workflow opens in. no phase runs without a change request.
 OPENING_PHASE = "change-request"
 
 # Terminal statuses. A workflow reaching one accepts no further event.
@@ -56,7 +56,7 @@ TRANSITIONS: dict[tuple[str, str], str] = {
     ("change-request", "recorded"): "impact-analysis",
     # R3: impact analysis runs for every request, including a `none` verdict. A `none`
     # verdict has no knowledge to author, so the path runs to acceptance, which still
-    # evaluates closure over the observed diff (specs/0014 R2, R3).
+    # evaluates closure over the observed diff.
     ("impact-analysis", "none"): "acceptance",
     ("impact-analysis", "update"): "context-resolution",
     ("impact-analysis", "create"): "context-resolution",
@@ -172,7 +172,7 @@ def guard(state: dict, event: dict) -> list[str]:
 
     An empty list is the only permission. Each condition below is decidable from the
     derived state and the candidate event, which is what makes it a guard rather than a
-    suggestion (docs/concepts/transition-guard.md).
+    suggestion (the transition guard definition).
     """
     reasons = []
     phase, outcome = event.get("phase"), event.get("outcome")
@@ -212,7 +212,7 @@ def guard(state: dict, event: dict) -> list[str]:
             reasons.append(
                 f"attempt {state['attempts']} of {limit} has been used, so a return to "
                 f"implementation is not available; the legal outcome is 'exhausted' "
-                f"(specs/0001 R7 makes exhaustion terminal and never an acceptance)"
+                f"(exhaustion terminal and never an acceptance)"
             )
     if phase == "validation" and outcome == "exhausted" and limit is not None:
         if state["attempts"] < limit:
@@ -237,12 +237,12 @@ def append(path: Path, event: dict, events: list[dict] | None = None) -> dict:
     """Validate an event at the boundary, guard it, then append it. Never repair it.
 
     Returns the state derived after the append. Raises ValueError naming every reason when
-    the event fails its contract or its guard — specs/0001 R6: rejected, never repaired.
+    the event fails its contract or its guard: rejected, never repaired.
     """
     problems = schema_problems(event)
     if problems:
         raise ValueError(
-            "event fails contract workflow-event/1:\n" + "\n".join(f"  {p}" for p in problems)
+            "event fails contract workflow-event/1:\n" + "\n".join(f" {p}" for p in problems)
         )
     if events is None:
         events = read_log(path)
@@ -250,7 +250,7 @@ def append(path: Path, event: dict, events: list[dict] | None = None) -> dict:
     reasons = guard(state, event)
     if reasons:
         raise ValueError(
-            "event rejected by the transition guard:\n" + "\n".join(f"  {r}" for r in reasons)
+            "event rejected by the transition guard:\n" + "\n".join(f" {r}" for r in reasons)
         )
     if any(e.get("event_id") == event["event_id"] for e in events):
         raise ValueError(f"event_id {event['event_id']} already exists in {path}")

@@ -1,7 +1,7 @@
 """Shared frontmatter plumbing for Siegard boundary validators.
 
 Extracted when the third artifact class (Claude Code components) arrived, exactly as
-scripts/validate_adrs.py recorded it would be. This module holds no rules: schemas hold
+the validate adrs tool recorded it would be. This module holds no rules: schemas hold
 the constraints, each validator holds its own cross-file checks, and this module only
 parses and formats.
 

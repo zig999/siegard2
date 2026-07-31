@@ -2,44 +2,65 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/artifact-class.json",
   "title": "Artifact class output contracts",
-  "description": "What a produced artifact of each class must satisfy, framework-owned. specs/0012 R4: the schema a template's output is validated against belongs to the artifact class and is framework-owned — a pack shipping one would be extending a vocabulary R6 reserves to the framework. specs/0004 R8 closes the vocabulary here. ONE file rather than twelve: the vocabulary is one closed set, every class shares the same three obligations, and twelve near-identical documents would be the ceremony this repository refuses — CLAUDE.md's decision order prefers the smallest sufficient design among options that satisfy the constraints. What a JSON Schema can hold about produced source is not its syntax, which is the stack's business and the pack's: it is the obligations that hold whatever the technology. Each class states the source node types it may come from, whether its output must name the knowledge object it came from, and the markers its output must carry.",
+  "description": "What a produced artifact of each class must satisfy, framework-owned. the schema a template's output is validated against belongs to the artifact class and is framework-owned — a pack shipping one would be extending a vocabulary R6 reserves to the framework. the vocabulary here. ONE file rather than twelve: the vocabulary is one closed set, every class shares the same three obligations, and twelve near-identical documents would be the ceremony this repository refuses — CLAUDE.md's decision order prefers the smallest sufficient design among options that satisfy the constraints. What a JSON Schema can hold about produced source is not its syntax, which is the stack's business and the pack's: it is the obligations that hold whatever the technology. Each class states the source node types it may come from, whether its output must name the knowledge object it came from, and the markers its output must carry.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "classes"],
+  "required": [
+    "contract_version",
+    "classes"
+  ],
   "$comment": "The instance is schemas/artifact-classes.json. additionalProperties is false there too, so a note has to live here rather than in the data.",
   "properties": {
-    "contract_version": { "const": "artifact-class/1" },
+    "contract_version": {
+      "const": "artifact-class/1"
+    },
     "classes": {
       "type": "object",
       "additionalProperties": false,
       "minProperties": 12,
       "maxProperties": 12,
-      "description": "Exactly the twelve of specs/0004 R8. Bounded so adding one here without changing that specification fails, which is what makes the vocabulary closed rather than merely described as closed.",
+      "description": "Exactly the twelve. Bounded so adding one here without changing that specification fails, which is what makes the vocabulary closed rather than merely described as closed.",
       "patternProperties": {
         "^(type|dto|persistence-schema|migration|enum|state-machine|validator|conformance-test|event-schema|api-description|orchestration|documentation)$": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["what", "from", "declares_source"],
+          "required": [
+            "what",
+            "from",
+            "declares_source"
+          ],
           "properties": {
             "what": {
               "type": "string",
               "minLength": 1,
-              "description": "What the artifact is, named independently of how any technology expresses it — the wording specs/0004 R8's table uses."
+              "description": "What the artifact is, named independently of how any technology expresses it — the wording the table uses."
             },
             "from": {
               "type": "array",
               "minItems": 1,
-              "items": { "enum": ["definition", "rule", "lifecycle", "interface", "boundary", "process"] },
-              "description": "The node types this class may be produced from. A pack's `from` column must be a subset: specs/0004 R10 leaves the mapping to the pack because it presumes a technology, and this bounds which mappings are coherent at all."
+              "items": {
+                "enum": [
+                  "definition",
+                  "rule",
+                  "lifecycle",
+                  "interface",
+                  "boundary",
+                  "process"
+                ]
+              },
+              "description": "The node types this class may be produced from. A pack's `from` column must be a subset: the mapping to the pack because it presumes a technology, and this bounds which mappings are coherent at all."
             },
             "declares_source": {
               "type": "boolean",
-              "description": "Whether produced output must name the knowledge object it came from. True for every class: specs/0004 R42 binds produced source to knowledge through the manifest, and an artifact that did not name its source would make a diff unreadable without one. Recorded per class rather than assumed so a future class can differ and say so."
+              "description": "Whether produced output must name the knowledge object it came from. True for every class: produced source to knowledge through the manifest, and an artifact that did not name its source would make a diff unreadable without one. Recorded per class rather than assumed so a future class can differ and say so."
             },
             "requires_markers": {
               "type": "array",
-              "items": { "type": "string", "minLength": 1 },
-              "description": "Substrings the output must carry beyond its source identifier. `conformance-test` carries the declaration specs/0004 R36 requires; the rest carry none, and an empty list says that rather than leaving it unstated."
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Substrings the output must carry beyond its source identifier. `conformance-test` carries the declaration requires; the rest carry none, and an empty list says that rather than leaving it unstated."
             }
           }
         }

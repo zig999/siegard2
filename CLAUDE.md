@@ -48,22 +48,29 @@ leaving a contract implicit is the worse form.
 | Path | Contains | Role | Reaches the consumer |
 |---|---|---|---|
 | `specs/` | what the distributed framework must do | authority for the product's behavior | no |
-| `docs/concepts/` | framework vocabulary, one concept per file | authority for terms | contract only |
-| `schemas/` | machine-readable artifact contracts | authority for structure | some — `generate_dist.py` decides |
-| `scripts/` | validation, transformation, packaging, state derivation | implementation | some — `SHIPPED_EXECUTABLES` decides |
-| `templates/` | artifact scaffolds that conform to schemas | implementation | some — the product scaffolds do |
+| `docs/concepts/` | framework vocabulary, one concept per file | authority for terms | no |
+| `docs/adr/` | decisions this repository took, and what each cost | rationale, never a rule | no |
+| `schemas/` | contracts over this repository's own artifacts | authority for structure | no |
+| `scripts/` | the generator: assembly, verification, and this repository's checks | implementation | no |
+| `templates/` | scaffolds for artifacts only this repository authors | implementation | no |
 | `tests/` | contract, transition, validation, and packaging tests | implementation | no |
 | `fixtures/` | downstream-shaped cases that exercise capabilities | evidence | no |
 | `src/claude/` | the Claude Code components the generator ships | framework source | yes, in full |
 | `dist/.claude/` | the assembled distribution | generated, never hand-edited | it **is** the product |
 | `.claude/` | rules and skills that govern work in this repository | development environment | no |
-| `docs/` | guides and explanation | explanatory | no |
 | `reference/` | prior-art and design input this framework derives from | never authoritative | no |
 
-The last column is the load-bearing one. `.claude/` and `src/claude/` never mirror each other: `.claude/`
-configures the agent that develops the generator, `src/claude/` holds what the generator ships. A
-specification states what the *distributed* framework must do, so it may not derive authority from
-`.claude/` or `docs/adr/` — neither reaches the consumer who has to satisfy it.
+The last column is the load-bearing one, and `src/claude/` is the only `yes`: assembly copies that tree,
+so a file ships because of where it sits. The two exceptions are computed rather than copied —
+`hooks/hooks.json` from the authored declaration, and `siegard-manifest.json`, which records the assembly
+and so cannot precede it. Nothing else reaches a consumer, and a component under `src/claude/` cites no
+path outside it: `specs/`, `scripts/`, and the rest are absent from an installation, so a citation to one
+is a dangling pointer in the consumer's hands.
+
+`.claude/` and `src/claude/` never mirror each other: `.claude/` configures the agent that develops the
+generator, `src/claude/` holds what the generator ships. A specification states what the *distributed*
+framework must do, so it may not derive authority from `.claude/` or `docs/adr/` — neither reaches the
+consumer who has to satisfy it.
 
 ## Where authority lives
 

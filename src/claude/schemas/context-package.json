@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/context-package.json",
   "title": "Context package",
-  "description": "The artifact that names exactly the knowledge one run of context resolution puts in scope. specs/0009 R1 requires the versioned schema; R2 makes the package the boundary of what may be read while it is in scope, so a consumer that needs something absent reports a gap rather than reading around it. R6 binds one package to one run — a validation failure sends the workflow back to implementation and the failed object enters the *next* resolution as a mandatory root, so a package carried across that boundary would state a scope the later attempt was never granted. specs/0009 R13 makes its persistence claim-recorded: the body recomputes from the recorded roots, the graph, the budget, and the expansion contract version, and the identity is pinned from outside the run.",
+  "description": "The artifact that names exactly the knowledge one run of context resolution puts in scope. What is required: the versioned schema; R2 makes the package the boundary of what may be read while it is in scope, so a consumer that needs something absent reports a gap rather than reading around it. R6 binds one package to one run — a validation failure sends the workflow back to implementation and the failed object enters the *next* resolution as a mandatory root, so a package carried across that boundary would state a scope the later attempt was never granted. its persistence claim-recorded: the body recomputes from the recorded roots, the graph, the budget, and the expansion contract version, and the identity is pinned from outside the run.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,26 +24,29 @@
     "package_id": {
       "type": "string",
       "pattern": "^cp_[0-9a-f]{8}$",
-      "description": "specs/0009 R5: the resolution run this package was assembled for, identified so provenance runs from a decision back to the scope that informed it."
+      "description": "the resolution run this package was assembled for, identified so provenance runs from a decision back to the scope that informed it."
     },
     "request_id": {
       "type": "string",
       "pattern": "^cr_[0-9a-f]{8}$",
-      "description": "specs/0009 R5: the change request. specs/0001 R1 means no phase runs without one, so a package naming none is not traceable to a reason for existing."
+      "description": "the change request. no phase runs without one, so a package naming none is not traceable to a reason for existing."
     },
     "expansion_contract_version": {
       "type": "string",
       "pattern": "^context-expansion/\\d+$",
-      "description": "specs/0009 R17: expansion order is fixed by the contract version the package records, and a change to the order that changes which objects a package holds is a contract version change. Held apart from `contract_version` above, which versions the document: the order can move while the document shape does not, and a reader that could not tell them apart would have to guess which changed."
+      "description": "expansion order is fixed by the contract version the package records, and a change to the order that changes which objects a package holds is a contract version change. Held apart from `contract_version` above, which versions the document: the order can move while the document shape does not, and a reader that could not tell them apart would have to guess which changed."
     },
     "roots": {
       "type": "array",
       "minItems": 1,
-      "description": "specs/0009 R4: each root carries the claim that justified selecting it. Root selection is where model judgment enters resolution (specs/0005 R7), so the claim is the only thing a review has to read.",
+      "description": "each root carries the claim that justified selecting it. Root selection is where model judgment enters resolution, so the claim is the only thing a review has to read.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "claim"],
+        "required": [
+          "id",
+          "claim"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -60,13 +63,20 @@
     },
     "entries": {
       "type": "array",
-      "description": "specs/0009 R3: every object in scope, with the content hash of what was read. The hash lets a later reader establish which version a decision was made against without storing a second copy of it. Roots appear here too — a root is in scope, and a consumer checking whether it may read something should not have to consult two lists.",
+      "description": "every object in scope, with the content hash of what was read. The hash lets a later reader establish which version a decision was made against without storing a second copy of it. Roots appear here too — a root is in scope, and a consumer checking whether it may read something should not have to consult two lists.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "content_hash", "depth"],
+        "required": [
+          "id",
+          "content_hash",
+          "depth"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
           "content_hash": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
@@ -88,15 +98,28 @@
     "budget": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["unit", "limit", "consumed"],
-      "description": "specs/0009 R7: the budget is stated by the caller, in a unit the package records, and the package records what was consumed against it. A framework-chosen budget would be a threshold asserted without evidence, which specs/0001 R10 forbids.",
+      "required": [
+        "unit",
+        "limit",
+        "consumed"
+      ],
+      "description": "the budget is stated by the caller, in a unit the package records, and the package records what was consumed against it. A framework-chosen budget would be a threshold asserted without evidence, which.",
       "properties": {
         "unit": {
-          "enum": ["objects", "bytes"],
+          "enum": [
+            "objects",
+            "bytes"
+          ],
           "description": "What the limit counts. Closed so a consumer branches on a known value; `tokens` is deliberately absent until a tokenizer ships, because a unit nothing can measure is a unit nobody can honour."
         },
-        "limit": { "type": "integer", "minimum": 1 },
-        "consumed": { "type": "integer", "minimum": 0 },
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "consumed": {
+          "type": "integer",
+          "minimum": 0
+        },
         "depth_limit": {
           "type": "integer",
           "minimum": 1,
@@ -105,16 +128,25 @@
       }
     },
     "stop_reason": {
-      "enum": ["closure_complete", "budget_exhausted", "depth_limit", "unresolved_relationship"],
-      "description": "specs/0009 R8: expansion stops for exactly one recorded reason, from this closed set, never inferred by a reader from what is present. One traversal can meet several conditions and stops on one; everything else it met is in `degradations`."
+      "enum": [
+        "closure_complete",
+        "budget_exhausted",
+        "depth_limit",
+        "unresolved_relationship"
+      ],
+      "description": "expansion stops for exactly one recorded reason, from this closed set, never inferred by a reader from what is present. One traversal can meet several conditions and stops on one; everything else it met is in `degradations`."
     },
     "degradations": {
       "type": "array",
-      "description": "specs/0009 R15: recorded separately from the single stop reason, because a run that meets several conditions has several to report and one field cannot hold them. Losing all but the first is what makes the acceptance gate of specs/0001 R14 report less than what happened. R14 carries a degradation forward with the package, so a consumer reading a degraded package is told it is degraded.",
+      "description": "recorded separately from the single stop reason, because a run that meets several conditions has several to report and one field cannot hold them. Losing all but the first is what makes the acceptance gate report less than what happened. R14 carries a degradation forward with the package, so a consumer reading a degraded package is told it is degraded.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["code", "subject", "evidence"],
+        "required": [
+          "code",
+          "subject",
+          "evidence"
+        ],
         "properties": {
           "code": {
             "enum": [
@@ -125,7 +157,7 @@
               "budget_exhausted",
               "depth_limit"
             ],
-            "description": "specs/0009 R15's closed set. R16 fixes the correspondence with R8: the first four are the degradations specs/0001 R13 names and the last two are the truncations, `closure_complete` is the one stop reason that is never a degradation, and `unresolved_root`, `cycle`, and `contradictory_knowledge` are never stop reasons because R13 requires resolution to continue past each of them."
+            "description": "the closed set. R16 fixes the correspondence with R8: the first four are the degradations and the last two are the truncations, `closure_complete` is the one stop reason that is never a degradation, and `unresolved_root`, `cycle`, and `contradictory_knowledge` are never stop reasons because R13 requires resolution to continue past each of them."
           },
           "subject": {
             "type": "string",
@@ -144,13 +176,23 @@
   "allOf": [
     {
       "if": {
-        "properties": { "stop_reason": { "const": "closure_complete" } },
-        "required": ["stop_reason"]
+        "properties": {
+          "stop_reason": {
+            "const": "closure_complete"
+          }
+        },
+        "required": [
+          "stop_reason"
+        ]
       },
       "else": {
-        "properties": { "degradations": { "minItems": 1 } }
+        "properties": {
+          "degradations": {
+            "minItems": 1
+          }
+        }
       },
-      "description": "specs/0009 R16: where the stop reason is not `closure_complete`, the degradation list holds a matching entry. A truncated package reporting no degradation would say the closure was cut short and that nothing was lost."
+      "description": "where the stop reason is not `closure_complete`, the degradation list holds a matching entry. A truncated package reporting no degradation would say the closure was cut short and that nothing was lost."
     }
   ]
 }

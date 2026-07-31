@@ -32,7 +32,7 @@ placement** corrects the concept rather than the specification.
 
 Mechanism: `scripts/project_knowledge.py`, `tests/test_projections.py`, three generated files under
 `fixtures/knowledge-two-context/knowledge/`, and a check inside `make validate` all depend on the graph
-meaning. The persistence model the other meaning describes is open question 1 in `docs/bootstrap.md`, and
+meaning. The persistence model the other meaning describes is settled elsewhere.md`, and
 `docs/concepts/event-log.md` states that the append-only log is one candidate rather than a decision.
 Renaming the enforced side to accommodate the unimplemented one would have inverted which artifact carried
 risk.
@@ -54,7 +54,7 @@ Three options were on the table.
 
 The one taken assigns `projection` to the graph meaning and renames the other. Its cost is five edits on the
 unenforced side: `docs/concepts/transition-guard.md`, `.claude/rules/compatibility.md`, and three places in
-`docs/bootstrap.md`. It leaves R50, R51, `scripts/project_knowledge.py`, `tests/test_projections.py`, and the
+It leaves R50, R51, `scripts/project_knowledge.py`, `tests/test_projections.py`, and the
 generated fixture headers untouched.
 
 The second would have kept `projection` for derived workflow state and renamed the three generated artifacts

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Install and upgrade the Siegard distribution in a repository it governs.
 
-specs/0008 states three behaviours nothing implemented. R16: enabling the same version twice
+three behaviours nothing implemented. R16: enabling the same version twice
 leaves the repository in the same state as enabling it once. R17: an upgrade does not silently
 overwrite an installed file that diverges from what the distribution manifest records — it
 detects the divergence, names the file, and stops. R21: a consumer's own agent definition
@@ -9,7 +9,7 @@ overrides a same-named plugin agent, and the framework reports that shadowing ra
 trying to prevent it by choosing an unlikely name.
 
 **Where a plugin lives is the harness's business, not this script's.** The target is an explicit
-argument. specs/0008 R22 states the framework claims no path outside its own plugin root, and a
+argument. the framework claims no path outside its own plugin root, and a
 script that guessed an installation convention would be claiming one — so it refuses a target it
 was not given and writes nothing outside it.
 
@@ -26,7 +26,7 @@ Declared dependencies: none beyond the standard library.
 Usage:
   install_dist.py install --source DIST --target DIR [--project DIR]
   install_dist.py upgrade --source DIST --target DIR [--project DIR]
-  install_dist.py status  --target DIR [--project DIR]
+  install_dist.py status --target DIR [--project DIR]
 Exit: 0 done, 1 refused (divergence, or an installation that is not one), 2 cannot run
 """
 
@@ -49,7 +49,7 @@ def digest(data: bytes) -> str:
 
 
 # Bytecode the interpreter writes beside a shipped executable. Not installed, has no source, and
-# present in any installation whose scripts have run once — see scripts/verify_dist.py.
+# present in any installation whose scripts have run once — see the verify dist tool.
 RUNTIME_ARTIFACTS = ("__pycache__",)
 
 
@@ -96,7 +96,7 @@ def divergences(target: Path) -> list[str]:
 def shadowed(source: Path, project: Path) -> list[str]:
     """Plugin agents a project-level definition of the same name would override.
 
-    specs/0008 R21: the precedence resolves in the consumer's favour, which is correct, and the
+    the precedence resolves in the consumer's favour, which is correct, and the
     exposure is a capability silently lost. ADR-0012 records the choice to report it rather than
     pick an improbable name — a name chosen to be unlikely is a convention hoped to work.
     """
@@ -132,7 +132,7 @@ def write(source: Path, target: Path) -> int:
 def report(notes: list[str], heading: str) -> None:
     print(f"{heading}: {len(notes)}")
     for note in notes:
-        print(f"  {note}")
+        print(f" {note}")
 
 
 def main() -> int:
@@ -161,13 +161,13 @@ def main() -> int:
             print(
                 f"refused: {args.target} is not empty. Installing over an existing tree would "
                 f"discard whatever is there; use `upgrade`, which detects a consumer's changes "
-                f"and stops (specs/0008 R17).",
+                f"and stops.",
                 file=sys.stderr,
             )
             return 1
         count = write(args.source, args.target)
         version = json.loads((args.target / ".claude-plugin" / "plugin.json").read_text())["version"]
-        print(f"installed {count} file(s) into {args.target}  version: {version}")
+        print(f"installed {count} file(s) into {args.target} version: {version}")
         if args.project:
             report(shadowed(args.target, args.project), "shadowed agents")
         return 0
@@ -184,13 +184,13 @@ def main() -> int:
     changed = divergences(args.target)
     if changed:
         print(
-            f"refused: {len(changed)} installed file(s) changed since installation. specs/0008 "
+            f"refused: {len(changed)} installed file(s) changed since installation. "
             f"R17: a consumer's local change is theirs to keep or theirs to discard, never the "
             f"framework's to erase without saying so.",
             file=sys.stderr,
         )
         for note in changed:
-            print(f"  {note}", file=sys.stderr)
+            print(f" {note}", file=sys.stderr)
         return 1
 
     before = read_manifest(args.target)["source_revision"]
@@ -202,7 +202,7 @@ def main() -> int:
         return 0
 
     count = write(args.source, args.target)
-    print(f"upgraded {count} file(s) in {args.target}\n  from {before}\n  to   {after}")
+    print(f"upgraded {count} file(s) in {args.target}\n from {before}\n to {after}")
     if args.project:
         report(shadowed(args.target, args.project), "shadowed agents")
     return 0

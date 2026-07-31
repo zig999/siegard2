@@ -1,6 +1,6 @@
 """Both directions for the three validators that enforced tested contracts untested.
 
-`docs/bootstrap.md` named the gap plainly: "The validators for ADRs, concepts, and components
+The gap was named plainly: "The validators for ADRs, concepts, and components
 remain untested code enforcing tested contracts." A schema being covered says nothing about the
 script that loads it — the cross-file checks, the ones a JSON Schema cannot express, are exactly
 the part with no coverage, and they are the part with logic in it.

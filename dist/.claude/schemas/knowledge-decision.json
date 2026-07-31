@@ -2,10 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/knowledge-decision.json",
   "title": "Siegard knowledge decision",
-  "description": "Frontmatter contract for a `decision` node in a consumer repository's knowledge tree, per specs/0003. This is product surface: it ships, and the records it governs are the consumer's own business decisions — why a domain choice was made and what it rejected. It is deliberately NOT schemas/adr.json, which governs this repository's own architecture decisions under docs/adr/, is owned by the generator's maintainer, and never reaches a consumer.",
+  "description": "Frontmatter contract for a `decision` node in a consumer repository's knowledge tree. This is product surface: it ships, and the records it governs are the consumer's own business decisions — why a domain choice was made and what it rejected. It governs the consumer's own records and nothing the framework's authors decide about the framework.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "title", "status", "contract_version"],
+  "required": [
+    "id",
+    "title",
+    "status",
+    "contract_version"
+  ],
   "properties": {
     "id": {
       "type": "string",
@@ -18,7 +23,11 @@
       "description": "The decision stated as an outcome."
     },
     "status": {
-      "enum": ["proposed", "accepted", "superseded"],
+      "enum": [
+        "proposed",
+        "accepted",
+        "superseded"
+      ],
       "description": "Whether this decision binds in the consumer's domain. The consumer owns the transition; nothing in the framework decides it."
     },
     "contract_version": {

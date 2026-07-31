@@ -2,10 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/workflow-event.json",
   "title": "Workflow event",
-  "description": "One entry in the append-only event log that records what happened in a workflow phase. The named producer is whatever appended the entry — an orchestrator, a script, or a skill acting on a maintainer's decision; the named consumer is the workflow-state derivation in scripts/workflow_lib.py, which replays a log to derive state. Each entry states a fact, never the state that resulted: docs/concepts/event-log.md holds that distinction, and docs/concepts/workflow-state.md holds why state is derived rather than stored. This artifact is persisted state and carries control flow, so .claude/rules/contracts.md requires this versioned schema and boundary validation before consumption. The phase vocabulary is specs/0001 R2's default path, unabridged: R2 states escalation inserts phases and never removes one, so a workflow that has nothing to resolve records a degenerate context-resolution event rather than skipping the phase. Which persistence model records workflow state is still open (docs/bootstrap.md open question 1); this contract is the append-only candidate under test, not a settled decision.",
+  "description": "One entry in the append-only event log that records what happened in a workflow phase. The named producer is whatever appended the entry — an orchestrator, a script, or a skill acting on a maintainer's decision; the named consumer is the workflow-state derivation in bin/workflow_lib.py, which replays a log to derive state. Each entry states a fact, never the state that resulted: the event log definition holds that distinction, and the workflow state definition holds why state is derived rather than stored. This artifact is persisted state and carries control flow, so.claude/rules/contracts.md requires this versioned schema and boundary validation before consumption. The phase vocabulary is the default path, unabridged: R2 states escalation inserts phases and never removes one, so a workflow that has nothing to resolve records a degenerate context-resolution event rather than skipping the phase. Which persistence model records workflow state is still open the orchestrator; this contract is the append-only candidate under test, not a settled decision.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "event_id", "workflow_id", "seq", "occurred_at", "producer", "phase", "outcome"],
+  "required": [
+    "contract_version",
+    "event_id",
+    "workflow_id",
+    "seq",
+    "occurred_at",
+    "producer",
+    "phase",
+    "outcome"
+  ],
   "properties": {
     "contract_version": {
       "const": "workflow-event/1",
@@ -14,7 +23,7 @@
     "event_id": {
       "type": "string",
       "pattern": "^ev_[0-9a-f]{12}$",
-      "description": "Stable identifier for this entry, required by .claude/rules/contracts.md for traceability. The caller supplies it: a framework that minted ids from a clock or a random source would make replay irreproducible, which is the same reason concept-author refuses to invent its own timestamp."
+      "description": "Stable identifier for this entry, required by.claude/rules/contracts.md for traceability. The caller supplies it: a framework that minted ids from a clock or a random source would make replay irreproducible, which is the same reason concept-author refuses to invent its own timestamp."
     },
     "workflow_id": {
       "type": "string",
@@ -24,7 +33,7 @@
     "seq": {
       "type": "integer",
       "minimum": 1,
-      "description": "Position of this entry within its workflow, starting at 1 and increasing by exactly 1. Ordering comes from this field and never from occurred_at or from file order: two entries can share a timestamp, and a clock can move backwards, but replay must be deterministic (specs/0001 R8)."
+      "description": "Position of this entry within its workflow, starting at 1 and increasing by exactly 1. Ordering comes from this field and never from occurred_at or from file order: two entries can share a timestamp, and a clock can move backwards, but replay must be deterministic."
     },
     "occurred_at": {
       "type": "string",
@@ -34,7 +43,7 @@
     "producer": {
       "type": "string",
       "minLength": 1,
-      "description": "What appended this entry: an orchestrator, a script, or a skill acting on a decision. The named producer .claude/rules/contracts.md requires, so a recorded fact can be traced to what asserted it."
+      "description": "What appended this entry: an orchestrator, a script, or a skill acting on a decision. The named producer.claude/rules/contracts.md requires, so a recorded fact can be traced to what asserted it."
     },
     "phase": {
       "enum": [
@@ -46,7 +55,7 @@
         "validation",
         "acceptance"
       ],
-      "description": "The phase this entry reports, from the closed default path fixed by specs/0001 R2, in that order. The list is complete rather than reduced: R2 permits escalation to insert phases and forbids removing one, so a knowledge-only change records every phase, with context-resolution degenerate where the impact set already is the context."
+      "description": "The phase this entry reports, from the closed default path, in that order. The list is complete rather than reduced: R2 permits escalation to insert phases and forbids removing one, so a knowledge-only change records every phase, with context-resolution degenerate where the impact set already is the context."
     },
     "outcome": {
       "enum": [
@@ -64,13 +73,16 @@
         "accepted",
         "blocked"
       ],
-      "description": "What happened, as a closed field. This is what makes a transition a lookup rather than an interpretation (specs/0001 R5): the derivation pairs phase with outcome and reads the next phase from a table. Values are grouped by the phase that can emit them, which the transition table — not this enum — enforces: recorded (change-request, specification-delta), none/update/create (impact-analysis verdicts, specs/0001 R4), resolved/degraded (context-resolution), authored/updated (implementation), passed/failed/exhausted (validation), accepted (acceptance), blocked (any phase)."
+      "description": "What happened, as a closed field. This is what makes a transition a lookup rather than an interpretation: the derivation pairs phase with outcome and reads the next phase from a table. Values are grouped by the phase that can emit them, which the transition table — not this enum — enforces: recorded (change-request, specification-delta), none/update/create (impact-analysis verdicts, ), resolved/degraded (context-resolution), authored/updated (implementation), passed/failed/exhausted (validation), accepted (acceptance), blocked (any phase)."
     },
     "subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "contract_version"],
-      "description": "The validated artifact whose closed field produced this outcome. specs/0001 R5 requires a transition to be chosen by lookup on an artifact that passed its contract at the boundary, so an event asserting such an outcome must name the artifact and the contract it passed.",
+      "required": [
+        "path",
+        "contract_version"
+      ],
+      "description": "The validated artifact whose closed field produced this outcome. What is required: a transition to be chosen by lookup on an artifact that passed its contract at the boundary, so an event asserting such an outcome must name the artifact and the contract it passed.",
       "properties": {
         "path": {
           "type": "string",
@@ -87,11 +99,14 @@
     "evidence": {
       "type": "array",
       "minItems": 1,
-      "description": "What ran, its result, and the inputs needed to reproduce it, required of every validation event by specs/0001 R22. An acceptance resting on a validation with no evidence is a defect, not a fast path.",
+      "description": "What ran, its result, and the inputs needed to reproduce it, required of every validation event. An acceptance resting on a validation with no evidence is a defect, not a fast path.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["check", "result"],
+        "required": [
+          "check",
+          "result"
+        ],
         "properties": {
           "check": {
             "type": "string",
@@ -99,7 +114,10 @@
             "description": "What ran, named so it can be run again — a command, a validator, or a named review."
           },
           "result": {
-            "enum": ["pass", "fail"],
+            "enum": [
+              "pass",
+              "fail"
+            ],
             "description": "The outcome of this one check, closed so the event's own outcome can be cross-checked against it rather than trusted."
           },
           "detail": {
@@ -113,17 +131,17 @@
     "degradation": {
       "type": "string",
       "minLength": 1,
-      "description": "What context resolution could not satisfy: a root it could not locate, a cycle, contradictory knowledge, or an exhausted budget. specs/0001 R13 requires resolution to record the degradation and continue rather than block, and R14 makes the record an input to acceptance."
+      "description": "What context resolution could not satisfy: a root it could not locate, a cycle, contradictory knowledge, or an exhausted budget. What is required: resolution to record the degradation and continue rather than block, and R14 makes the record an input to acceptance."
     },
     "decided_by": {
       "type": "string",
       "minLength": 1,
-      "description": "The maintainer or the named deterministic approval mechanism that decided acceptance. specs/0001 R21 requires one and forbids a workflow accepting its own output, so this field cannot be synthesized by the orchestrator that ran the workflow."
+      "description": "The maintainer or the named deterministic approval mechanism that decided acceptance. What is required: one and forbids a workflow accepting its own output, so this field cannot be synthesized by the orchestrator that ran the workflow."
     },
     "attempt_limit": {
       "type": "integer",
       "minimum": 1,
-      "description": "How many implementation attempts this workflow permits, stated when the workflow opens because specs/0001 R7 requires the limit to be stated. The caller states it rather than the framework defaulting it: R10 forbids inventing a calibrated threshold, and a framework-wide default asserted here would be exactly that. The guard reads this value from the opening event, so a workflow's limit is fixed by its own record."
+      "description": "How many implementation attempts this workflow permits, stated when the workflow opens because What is required: the limit to be stated. The caller states it rather than the framework defaulting it: R10 forbids inventing a calibrated threshold, and a framework-wide default asserted here would be exactly that. The guard reads this value from the opening event, so a workflow's limit is fixed by its own record."
     },
     "blocking_reason": {
       "type": "string",
@@ -133,65 +151,164 @@
   },
   "allOf": [
     {
-      "if": { "properties": { "outcome": { "const": "blocked" } }, "required": ["outcome"] },
-      "then": { "required": ["blocking_reason"] }
-    },
-    {
       "if": {
-        "properties": { "outcome": { "enum": ["none", "update", "create", "authored", "updated"] } },
-        "required": ["outcome"]
+        "properties": {
+          "outcome": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
       },
       "then": {
-        "required": ["subject"],
-        "description": "An outcome read from an artifact's closed field must name that artifact (specs/0001 R5). Without it the record asserts a verdict with nothing behind it."
+        "required": [
+          "blocking_reason"
+        ]
       }
     },
     {
       "if": {
-        "properties": { "phase": { "const": "validation" }, "outcome": { "enum": ["passed", "failed"] } },
-        "required": ["phase", "outcome"]
+        "properties": {
+          "outcome": {
+            "enum": [
+              "none",
+              "update",
+              "create",
+              "authored",
+              "updated"
+            ]
+          }
+        },
+        "required": [
+          "outcome"
+        ]
       },
       "then": {
-        "required": ["evidence"],
-        "description": "specs/0001 R22. An exhausted attempt limit is exempt: it reports a control-flow fact about prior attempts, not a check that ran."
+        "required": [
+          "subject"
+        ],
+        "description": "An outcome read from an artifact's closed field must name that artifact. Without it the record asserts a verdict with nothing behind it."
       }
     },
     {
       "if": {
-        "properties": { "phase": { "const": "context-resolution" }, "outcome": { "const": "degraded" } },
-        "required": ["phase", "outcome"]
+        "properties": {
+          "phase": {
+            "const": "validation"
+          },
+          "outcome": {
+            "enum": [
+              "passed",
+              "failed"
+            ]
+          }
+        },
+        "required": [
+          "phase",
+          "outcome"
+        ]
       },
-      "then": { "required": ["degradation"] }
+      "then": {
+        "required": [
+          "evidence"
+        ],
+        "description": ". An exhausted attempt limit is exempt: it reports a control-flow fact about prior attempts, not a check that ran."
+      }
     },
     {
       "if": {
-        "properties": { "phase": { "const": "acceptance" }, "outcome": { "const": "accepted" } },
-        "required": ["phase", "outcome"]
+        "properties": {
+          "phase": {
+            "const": "context-resolution"
+          },
+          "outcome": {
+            "const": "degraded"
+          }
+        },
+        "required": [
+          "phase",
+          "outcome"
+        ]
       },
-      "then": { "required": ["decided_by"] }
+      "then": {
+        "required": [
+          "degradation"
+        ]
+      }
     },
     {
-      "if": { "properties": { "seq": { "const": 1 } }, "required": ["seq"] },
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "acceptance"
+          },
+          "outcome": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "phase",
+          "outcome"
+        ]
+      },
       "then": {
-        "required": ["attempt_limit"],
+        "required": [
+          "decided_by"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "seq": {
+            "const": 1
+          }
+        },
+        "required": [
+          "seq"
+        ]
+      },
+      "then": {
+        "required": [
+          "attempt_limit"
+        ],
         "description": "The opening entry states the limit, so R7's 'stated attempt limit' is a property of the record rather than of the code that read it."
       }
     }
   ],
   "dependentSchemas": {
     "decided_by": {
-      "properties": { "phase": { "const": "acceptance" } },
-      "required": ["phase"],
+      "properties": {
+        "phase": {
+          "const": "acceptance"
+        }
+      },
+      "required": [
+        "phase"
+      ],
       "description": "A deciding authority recorded on any phase but acceptance is a contradiction; expressed as a dependency so the failure names the offending field."
     },
     "degradation": {
-      "properties": { "phase": { "const": "context-resolution" } },
-      "required": ["phase"],
-      "description": "Only context resolution degrades under specs/0001 R13."
+      "properties": {
+        "phase": {
+          "const": "context-resolution"
+        }
+      },
+      "required": [
+        "phase"
+      ],
+      "description": "Only context resolution degrades."
     },
     "blocking_reason": {
-      "properties": { "outcome": { "const": "blocked" } },
-      "required": ["outcome"],
+      "properties": {
+        "outcome": {
+          "const": "blocked"
+        }
+      },
+      "required": [
+        "outcome"
+      ],
       "description": "A blocking reason on an outcome that produced something is a contradiction."
     }
   }

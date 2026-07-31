@@ -5,7 +5,7 @@ lifecycle can reference it. One change request runs the full default path of
 `specs/0001-knowledge-object-driven-development.md`, fails validation once, recovers, and reaches a
 maintainer's acceptance.
 
-This is the fixture for `docs/bootstrap.md` stage 2 — the first workflow loop, over knowledge only.
+This is the fixture for the first workflow loop, over knowledge only.
 It exercises the orchestrator, the event log, the workflow-state derivation, and the transition guard
 as one path rather than four units.
 
@@ -46,7 +46,7 @@ seq  phase                 outcome     how it was recorded
 ## What it is evidence for
 
 - **All seven phases run.** `specs/0001` R2 fixes the default path and states escalation inserts
-  phases and never removes one. `docs/bootstrap.md` stage 2 names this loop in five words —
+  phases and never removes one. This loop is five phases —
   `request → impact analysis → knowledge authoring → validation → acceptance` — and that is shorthand
   for the same seven, not a shorter path. Here context resolution is *degenerate*, not skipped: in a
   bundle this small the impact set already is the context, so the phase resolves trivially and records
@@ -77,7 +77,7 @@ Named rather than left to be assumed:
 - **The agent never ran.** `concept-author` is inert in this repository. The two results here are
   recorded artifacts, so what is proven is that a conforming result drives the loop and a malformed
   one is rejected — not that the agent produces a conforming result. That needs the generator and an
-  installed component, which is `docs/bootstrap.md` open question 2 and ADR-0009 condition 2.
+  installed component, which is ADR-0009 condition 2.
 - **The skill never ran either.** `src/claude/skills/knowledge-change/SKILL.md` is the entry point
   this path is designed for, and it is inert here for the same reason.
 - **No context package exists.** Context resolution records that it resolved; it produces no artifact,

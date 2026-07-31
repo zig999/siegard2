@@ -159,3 +159,11 @@ removing one because the document binds would turn an open debt into a silent on
    stack, with every fact the second repository disagrees with recorded. A pack that cannot survive that is
    the downstream architecture `specs/0005` R13 excludes, wearing a pack's name.
 4. A pack swap is performed under R11, showing what regeneration recovers and what it does not.
+5. Where a pack's source lives is settled. `specs/0004` R13 states a pack is distributed together
+   under `src/claude/`; `specs/0008` R23 states a pack is a separate plugin and that the framework
+   distribution contains no pack, and its directory listing has no `packs/`. A pack under
+   `src/claude/` would be emitted into the framework distribution, which R23 forbids; a pack
+   anywhere else contradicts R13. Both are accepted at equal precedence with no supersession, so
+   this is recorded and left for a maintainer rather than resolved by whichever document a script
+   reads first. Nothing reaches a real pack before the generation pipeline needs one, so the
+   decision is owed then. A fixture pack has a home already and does not depend on it.

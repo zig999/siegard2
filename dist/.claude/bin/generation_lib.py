@@ -1,6 +1,6 @@
 """Scope resolution, placement validation, plan derivation, and plan validation.
 
-The four steps `specs/0004` puts between a knowledge base and a written file, in one module
+The four steps `between a knowledge base and a written file, in one module
 because each consumes the previous one's output and splitting them would multiply the
 serialization without separating anything.
 
@@ -14,7 +14,7 @@ input.
 for that reason. A member that cannot be resolved blocks generation here, where the same
 condition in `resolve_context.py` records a degradation and continues.
 
-Declared dependencies: PyYAML and jsonschema, via scripts/knowledge_graph_lib.py.
+Declared dependencies: PyYAML and jsonschema, via bin/knowledge_graph_lib.py.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from knowledge_graph_lib import EDGE_KINDS, Graph
 
 
 class Blocked(Exception):
-    """Generation cannot proceed. Never a degradation: specs/0004 R21 fails closed."""
+    """Generation cannot proceed. Never a degradation: fails closed."""
 
 
 def _digest(text: str) -> str:
@@ -53,8 +53,9 @@ def resolve_scope(graph: Graph, scope_id: str, request_id: str, roots: list[str]
     if missing:
         raise Blocked(
             f"scope roots {', '.join(sorted(missing))} resolve to no knowledge object. "
-            f"specs/0004 R21 blocks generation rather than degrading: the fail-soft behaviour of "
-            f"specs/0001 R13 must not be applied to a generation scope"
+            f"An unresolvable root blocks generation rather than degrading: a scope fails "
+            f"closed, and the fail-soft behaviour of context resolution must not be applied "
+            f"to one"
         )
 
     members: list[dict] = []
@@ -82,7 +83,7 @@ def resolve_scope(graph: Graph, scope_id: str, request_id: str, roots: list[str]
             if target not in graph.nodes:
                 raise Blocked(
                     f"{node_id} declares a {kind} edge to {target}, which the graph does not hold. "
-                    f"specs/0004 R21: a member that cannot be resolved blocks generation"
+                    f"a member that cannot be resolved blocks generation"
                 )
             if target not in seen:
                 frontier.append(target)

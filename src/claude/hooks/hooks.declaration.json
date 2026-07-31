@@ -6,7 +6,7 @@
       "event": "PreToolUse",
       "matcher": "Write|Edit|MultiEdit|NotebookEdit",
       "timeout": 10,
-      "guarantee": "a knowledge projection is derived and never hand-edited (specs/0003 R42, R51)"
+      "guarantee": "a knowledge projection is derived and never hand-edited"
     }
   ]
 }

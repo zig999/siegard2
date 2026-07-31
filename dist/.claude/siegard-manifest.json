@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:f7151c1c0bf531441fd7395186cdbc2ba4acccdf7221664028399f39a4923faf",
+  "source_revision": "sha256:00e0b13665c59836b6d07d451405c1077737839da01b5bbda1ffcdae80648e01",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -16,22 +16,22 @@
     {
       "path": "agents/impact-analyst.md",
       "source": "src/claude/agents/impact-analyst.md",
-      "digest": "sha256:8f5112e25b87364172fc1da1e534203720b0baaaebe2f3d8934fe5a0975cd5cb"
+      "digest": "sha256:f6e3901e70171c7417a4164840eb4ee3ae16ee452101d10b00f450589de3b2df"
     },
     {
       "path": "agents/knowledge-author.md",
       "source": "src/claude/agents/knowledge-author.md",
-      "digest": "sha256:763dee2466a3192829f5b6035be08c0db0e8d99bc40b23b606ff29820a93ba49"
+      "digest": "sha256:cb639db09546d953933a9956e46b0449bd8db46f5e4b8a25ab9f501e763aa1ce"
     },
     {
       "path": "agents/root-selector.md",
       "source": "src/claude/agents/root-selector.md",
-      "digest": "sha256:2cc632059381425be6ac5446cc0323826a22d0c7eb42ded2e84f9a7daa1f4039"
+      "digest": "sha256:8fa80fab0b49ca1b42596f0aad3d0e98d3ab064edebee333d8eed9b9c370b1a2"
     },
     {
       "path": "agents/spec-delta-author.md",
       "source": "src/claude/agents/spec-delta-author.md",
-      "digest": "sha256:98c2653ab23563e1ed249c346e9a9cc8be9d7c30e5feb75609838737c4c19282"
+      "digest": "sha256:f76e9eab74b88c8b98aa1ad40ffe8eb05cb7f311c369d08c560feaf2cf3050dd"
     },
     {
       "path": "bin/cli.py",
@@ -41,77 +41,77 @@
     {
       "path": "bin/derived_artifacts.py",
       "source": "src/claude/bin/derived_artifacts.py",
-      "digest": "sha256:154911d6d99e1b0187eae1ff6bcc8ef90e5ca5dfb223f38aa978e87f997a0fdf"
+      "digest": "sha256:62be50049868bfa74034d746606914a745b11a0e30d8211cdbd416a201c67067"
     },
     {
       "path": "bin/frontmatter_lib.py",
       "source": "src/claude/bin/frontmatter_lib.py",
-      "digest": "sha256:6f8d7674495335101e6c9046227290c7494f33538690440bbc349d268d3047bd"
+      "digest": "sha256:ea5c712ea30d00e7796c404432edf8755313b6d5e242d31ab428489a7d71e4a8"
     },
     {
       "path": "bin/generate_code.py",
       "source": "src/claude/bin/generate_code.py",
-      "digest": "sha256:c4fc1ac61a9fdc54839e96af284233ac64f92d6931c2b2c08e14486f4bcd205b"
+      "digest": "sha256:b743f4e4baed6e67e799cd744e584f5a7b2c20d60fa1ad0247faad8f278fd7df"
     },
     {
       "path": "bin/generation_lib.py",
       "source": "src/claude/bin/generation_lib.py",
-      "digest": "sha256:ad8ec8073d7fd2366a2b2180a78f24c3c310b7d325d85140e6e80bfef21bd785"
+      "digest": "sha256:0febb881b2764ce3cc2e701dcc7cc69bb9fa9d1d62cb18aa709890cfdefdaa29"
     },
     {
       "path": "bin/install_dist.py",
       "source": "src/claude/bin/install_dist.py",
-      "digest": "sha256:82562999cefcbb0ace7c6aebd1cd630451d9f3a3382f1edd0cb23de04efafdbc"
+      "digest": "sha256:c1a7a2bafc315ee84a8c83abc6520a197a05cfb7a9dca039a8584e7c9eeb02bb"
     },
     {
       "path": "bin/knowledge_graph_lib.py",
       "source": "src/claude/bin/knowledge_graph_lib.py",
-      "digest": "sha256:451dc436f2430cb7a7241ce40095e183ae679dfaced8d224e63c1b79084a1ca6"
+      "digest": "sha256:924951bb70d60461d62bb2904980c377c327cf1e737c93fc652a1cedfc15c4f5"
     },
     {
       "path": "bin/orchestrate.py",
       "source": "src/claude/bin/orchestrate.py",
-      "digest": "sha256:98c78b045be5a0e8a4d06926de061b618ceef2413c86ef5a2eeb455464815d9d"
+      "digest": "sha256:ef6ef8df5dd68a1ed142302fdae8086976af6315a5fee2c79c4b8cce4b1f23a2"
     },
     {
       "path": "bin/project_knowledge.py",
       "source": "src/claude/bin/project_knowledge.py",
-      "digest": "sha256:a32eb8d7c7defa74dec995842fc6652e347bb360c6857ac184ffab252df781d7"
+      "digest": "sha256:45f893e1d05ab7546e7b8b179425c4d204caf94968458c4e072ac8e6917e43a1"
     },
     {
       "path": "bin/replay_workflow.py",
       "source": "src/claude/bin/replay_workflow.py",
-      "digest": "sha256:4df6b144fa0cebcde40562541c6f5c3ab96673a04991a6cade3a3ab55a3863f5"
+      "digest": "sha256:7ab81ebf5e1de3acf05546119099b5f52c7d466a20f1796d7c38f43b879e1c75"
     },
     {
       "path": "bin/resolve_context.py",
       "source": "src/claude/bin/resolve_context.py",
-      "digest": "sha256:a3a3150b0a45d4d731bf45a7671a8acb7c882a7581a13f958469c11720b3624f"
+      "digest": "sha256:779d1ca2b1a2d6028caabdb5940c8ba1a021ba1ec7a94d54fe93398e50fe9011"
     },
     {
       "path": "bin/validate_artifacts.py",
       "source": "src/claude/bin/validate_artifacts.py",
-      "digest": "sha256:e4ec615e2fe3f2c37b0bfcb645f4b67fc0235cfc66ea610e467178188c956ca3"
+      "digest": "sha256:9d3365ec0d1779dce7fce36393c3a8ab7e2991757e3dde219ed2fa88e8fbe6c4"
     },
     {
       "path": "bin/validate_concepts.py",
       "source": "src/claude/bin/validate_concepts.py",
-      "digest": "sha256:e146471f50aae94a0d3ccf61253ee304c4c2e270a93fbfb69fbe3ab2629b1d62"
+      "digest": "sha256:a778daa67ec4e8470c8d8c1fd4cc8803eb4402a517fc03b98f3bf328cfa2d1da"
     },
     {
       "path": "bin/validate_knowledge.py",
       "source": "src/claude/bin/validate_knowledge.py",
-      "digest": "sha256:904a9d23bc3d2ef41a4586162a994a8a17167829165614a8a95817a8e04bec61"
+      "digest": "sha256:14122485d853f27524713ffcf6d822e2ab793d0aab03471689e6fc20b3b63563"
     },
     {
       "path": "bin/verify_judged.py",
       "source": "src/claude/bin/verify_judged.py",
-      "digest": "sha256:a279a24df42ddc999eee3b13c7fc5cc1afc941208fb9bd1570c596c4096e46b4"
+      "digest": "sha256:597dc2de3de675450922a6dd4b54bfd229eb069b301b8eded56c02d65f9107c2"
     },
     {
       "path": "bin/workflow_lib.py",
       "source": "src/claude/bin/workflow_lib.py",
-      "digest": "sha256:aa755f6bbc87f05eb4e118ac18c0fc4d55af27c53b83a9f9088ecca11ced4875"
+      "digest": "sha256:4546e71a7a1c40f3fe1dd17e61f2e65d3c9b138398a08cce67c58ff5dce66c2c"
     },
     {
       "path": "hooks/hooks.json",
@@ -121,12 +121,12 @@
     {
       "path": "hooks/reject-derived-write.py",
       "source": "src/claude/hooks/reject-derived-write.py",
-      "digest": "sha256:3c7a6c8ea83cae0b08a886f4ba1a618bd6dbfb7f914677e2e73bb0d91d77be3f"
+      "digest": "sha256:90b08607ed5825d0a25635e0eb5ddf5971d4d88b5e350257cf63f77f3956a79f"
     },
     {
       "path": "schemas/artifact-class.json",
       "source": "src/claude/schemas/artifact-class.json",
-      "digest": "sha256:345b9a76aba146fea099f63224ffb5c27571b0da49d7c510796faf96e529e30f"
+      "digest": "sha256:4e99632167c85bb07b27a58d653d49efc198f60fd5567da4de5713cbc3add9ae"
     },
     {
       "path": "schemas/artifact-classes.json",
@@ -136,97 +136,97 @@
     {
       "path": "schemas/concept-authoring-result.json",
       "source": "src/claude/schemas/concept-authoring-result.json",
-      "digest": "sha256:782bb8061e01088a7acc6eeea563fc843748d6557fe8b02d5582043eb92f87a4"
+      "digest": "sha256:00c4ee883c8c613d6d2f1d400401d7fecf9c8e6864c7e60adf8a0b02f37c7282"
     },
     {
       "path": "schemas/concept.json",
       "source": "src/claude/schemas/concept.json",
-      "digest": "sha256:b14891def04a795d98d9ceb562bb0d21df665e9e5a76ff56acc436f4dfc6c354"
+      "digest": "sha256:0677a5f8979bbb3512a7d413614b7abdabaab9608b415bc297204a306a8efce2"
     },
     {
       "path": "schemas/context-package.json",
       "source": "src/claude/schemas/context-package.json",
-      "digest": "sha256:8f8d34b8a0116ade1b280c603f4aff4995b1cccc2b6cafa5cc9df12aaed94b82"
+      "digest": "sha256:305f6870eb0f16d817638d299babf607092520d11baeaa4b3cc8f52a9bcee5ec"
     },
     {
       "path": "schemas/distribution-manifest.json",
       "source": "src/claude/schemas/distribution-manifest.json",
-      "digest": "sha256:f1a3e2f60e441fd108a229fb55cdfdd4379f9a99009092f5e478796560a1398e"
+      "digest": "sha256:bf01fb169dc2e57df4503649792639caa487ad80eec4c694f0550722651b8505"
     },
     {
       "path": "schemas/generation-manifest.json",
       "source": "src/claude/schemas/generation-manifest.json",
-      "digest": "sha256:829a1a294c559e14f05ed592d05ef62408c378d6b1406078a585d88ae7c7d9de"
+      "digest": "sha256:a50363a74413635b671530fe5e97c4ce467e2be9c220358a63569ad82b4ea052"
     },
     {
       "path": "schemas/generation-plan.json",
       "source": "src/claude/schemas/generation-plan.json",
-      "digest": "sha256:ff7530330de7ef502d3be2b66b7ef428c3ca1923faecdc9acf6befd31920e650"
+      "digest": "sha256:d19f7e1252b668dba3c96e28b8470103a8b1e8d383c9fc1e47c2cf1ef1c5cd36"
     },
     {
       "path": "schemas/generation-scope.json",
       "source": "src/claude/schemas/generation-scope.json",
-      "digest": "sha256:96d60dd5ead10643f8a45a870e8c5703f6200ed957612f156a7c143e2639c898"
+      "digest": "sha256:1bc73661c48fa0f0216a2c735a3795057e0cc45297017a3bbc931f882d6b9f34"
     },
     {
       "path": "schemas/impact-analysis.json",
       "source": "src/claude/schemas/impact-analysis.json",
-      "digest": "sha256:1df10be358114f3396151c0babebd3442decad2dae127fafaed63ff8822fc579"
+      "digest": "sha256:ba8dec732007524aa51f9f5c38bc85f4df702029c49599ebaafc07870590e888"
     },
     {
       "path": "schemas/knowledge-authoring-result.json",
       "source": "src/claude/schemas/knowledge-authoring-result.json",
-      "digest": "sha256:6506746e978ba2706024f9018fdb689cc5dca6ebab78683576ac370ff0ef99da"
+      "digest": "sha256:48b84248ac6a695e4853f93abaac866ea5f93293d7927ed78fd255d77a43b3b0"
     },
     {
       "path": "schemas/knowledge-decision.json",
       "source": "src/claude/schemas/knowledge-decision.json",
-      "digest": "sha256:646a1d77daaa5a1008288a092d08d00ee29ed13cff2c1e364668aba02a742cf1"
+      "digest": "sha256:d251b13acabf40117330598d7aedb290c35cc65a9e2ad39397a6d821faf69c92"
     },
     {
       "path": "schemas/knowledge-graph.json",
       "source": "src/claude/schemas/knowledge-graph.json",
-      "digest": "sha256:1fcd9941f737b252d54e427cfad97350b3af5d08028f365601aa65eb57be84e8"
+      "digest": "sha256:3424016e7ab95126d37cbb57442b5886f9f98b10df137ac34fa1a81260ed0c83"
     },
     {
       "path": "schemas/knowledge-object.json",
       "source": "src/claude/schemas/knowledge-object.json",
-      "digest": "sha256:c33d38e4f1d17c4b82832c95c623e790829ff54fcd8aab6e4aa8ca9b9f51ba2e"
+      "digest": "sha256:9c6bf28c2e51917071356cc5d42591770040b835a70993667234128e5a4323ec"
     },
     {
       "path": "schemas/pack-declaration.json",
       "source": "src/claude/schemas/pack-declaration.json",
-      "digest": "sha256:0010868c9200374f10c0213bc7f34e01a0fd50ccf6bc5f9e0b7d814ef7bf6ed0"
+      "digest": "sha256:b5797b80d7df44f15ac45aee4b3feca86a3f51792020a12254471f0e5e049e0d"
     },
     {
       "path": "schemas/placement-decision.json",
       "source": "src/claude/schemas/placement-decision.json",
-      "digest": "sha256:ca4f2243caacd9f4591ef584c39f0c3d264855617a6b0f1f04132a307d9de1c0"
+      "digest": "sha256:7eff3c9746ec37de23fce81dbc65be25d56bb481973bf3080eb779210b0fbdde"
     },
     {
       "path": "schemas/specification-delta.json",
       "source": "src/claude/schemas/specification-delta.json",
-      "digest": "sha256:e9db76b5d3998700298dee9ddc570961e1ac056ef4d94551d1ea5555388d7e31"
+      "digest": "sha256:500d4ae4810cc2b4c6d4684252fcbc9988f678ed97d4533b12222fe49e46d628"
     },
     {
       "path": "schemas/validation-evidence.json",
       "source": "src/claude/schemas/validation-evidence.json",
-      "digest": "sha256:3ffd528a318552f7642c6efb679cc448ea92c246e505202eb3f9153626a5265a"
+      "digest": "sha256:cb2b4eb44517744f918892913c774a99f2a39aee03e6ad9f4074bf9bbaf7719d"
     },
     {
       "path": "schemas/workflow-event.json",
       "source": "src/claude/schemas/workflow-event.json",
-      "digest": "sha256:57a7b0c76e9859ba5a67c742dc13aa41db0b537a6ce77bd1fc084ec192df2ed8"
+      "digest": "sha256:015bdc4634e468534a444988b58d1998e85a2534f180a4805a0db2dee0a32814"
     },
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:1db3e51f2d8938b73139ce1825b7d15e7390c339a9c3fffda909de5af8556be7"
+      "digest": "sha256:86b9123684cd7562fd7368a8b99674de2126750ae40b1c9f9edf581a295c3074"
     },
     {
       "path": "skills/generate/SKILL.md",
       "source": "src/claude/skills/generate/SKILL.md",
-      "digest": "sha256:3e1046cfe4a00193323ce0a36418cd9a0a9c29725198d060905e3410a7585d64"
+      "digest": "sha256:199ca1b07745129b88b29eb7e6d0a67ea476505d30224cd2d9210bfba6e6e92f"
     },
     {
       "path": "skills/knowledge-change/SKILL.md",
@@ -236,7 +236,7 @@
     {
       "path": "skills/upgrade/SKILL.md",
       "source": "src/claude/skills/upgrade/SKILL.md",
-      "digest": "sha256:9e51627bed8224a242ab17dc7115f066a00aa22336c1d0384da054d586b6b709"
+      "digest": "sha256:9cd73cb9ff8d76ce6e4c928750128ac2c6b28843a0845edbad40596257a2040d"
     },
     {
       "path": "templates/concept.md",
@@ -276,7 +276,7 @@
     {
       "path": "templates/knowledge-object-rule.md",
       "source": "src/claude/templates/knowledge-object-rule.md",
-      "digest": "sha256:ebf2c55386c0cde7470947e661db989feff0041d992637bc2e75dcacdc79127b"
+      "digest": "sha256:2e4d9cae4187e81d15bd80eec976937370063d35c49ae072b926cb60e274877d"
     },
     {
       "path": "templates/pack-declaration.md",

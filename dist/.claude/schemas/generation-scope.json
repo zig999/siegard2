@@ -2,18 +2,36 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/generation-scope.json",
   "title": "Generation scope",
-  "description": "The closed, frozen set of knowledge objects one generation runs over. specs/0004 R19 derives it by expansion from declared roots over the edges specs/0003 marks traversed, and freezes it. R20 makes a change to any member invalidate the scope rather than alter it. R21 makes resolution fail closed — a member that cannot be resolved blocks generation, and the fail-soft behaviour of specs/0001 R13 must not be applied here. R22 keeps it a separate artifact from the context package for exactly that reason: their failure semantics are opposite, and one artifact serving both would have to pick one. Its persistence is claim-recorded: expansion is deterministic, so the members recompute from the roots and the knowledge base version, and the frozen content hash is what makes R20's invalidation mechanically checkable rather than only stated.",
+  "description": "The closed, frozen set of knowledge objects one generation runs over. it by expansion from declared roots over the edges traversed, and freezes it. R20 makes a change to any member invalidate the scope rather than alter it. R21 makes resolution fail closed — a member that cannot be resolved blocks generation, and the fail-soft behaviour must not be applied here. R22 keeps it a separate artifact from the context package for exactly that reason: their failure semantics are opposite, and one artifact serving both would have to pick one. Its persistence is claim-recorded: expansion is deterministic, so the members recompute from the roots and the knowledge base version, and the frozen content hash is what makes R20's invalidation mechanically checkable rather than only stated.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "scope_id", "request_id", "roots", "members", "frozen_digest"],
+  "required": [
+    "contract_version",
+    "scope_id",
+    "request_id",
+    "roots",
+    "members",
+    "frozen_digest"
+  ],
   "properties": {
-    "contract_version": { "const": "generation-scope/1" },
-    "scope_id": { "type": "string", "pattern": "^gs_[0-9a-f]{8}$" },
-    "request_id": { "type": "string", "pattern": "^cr_[0-9a-f]{8}$" },
+    "contract_version": {
+      "const": "generation-scope/1"
+    },
+    "scope_id": {
+      "type": "string",
+      "pattern": "^gs_[0-9a-f]{8}$"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^cr_[0-9a-f]{8}$"
+    },
     "roots": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "The declared roots expansion started from. A scope with no root has nothing to generate."
     },
     "members": {
@@ -23,18 +41,37 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "type", "content_hash"],
+        "required": [
+          "id",
+          "type",
+          "content_hash"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "type": { "enum": ["definition", "rule", "lifecycle", "interface", "boundary", "process"] },
-          "content_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "enum": [
+              "definition",
+              "rule",
+              "lifecycle",
+              "interface",
+              "boundary",
+              "process"
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
         }
       }
     },
     "frozen_digest": {
       "type": "string",
       "pattern": "^sha256:[0-9a-f]{64}$",
-      "description": "Over the member ids and their hashes. specs/0004 R20: a scope whose members changed is invalid, and comparing one digest is how that is detected without re-reading every file."
+      "description": "Over the member ids and their hashes. a scope whose members changed is invalid, and comparing one digest is how that is detected without re-reading every file."
     }
   }
 }

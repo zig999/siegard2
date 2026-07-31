@@ -269,7 +269,7 @@ def main() -> int:
     if not root.is_dir():
         print(
             f"components checked: 0 — {display(root)} does not exist yet; the contract "
-            f"precedes the first component (docs/bootstrap.md)"
+            f"precedes the first component (the build plan)"
         )
         return 0
 

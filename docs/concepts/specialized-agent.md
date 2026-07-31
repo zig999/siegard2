@@ -21,4 +21,4 @@ that can be decided mechanically belongs in a hook or a script instead.
 
 The component classes this term belongs to are not yet fixed. `CLAUDE.md` under **Authority placement**
 requires one authoritative definition per concept, which constrains how the classes may divide work
-without settling what they are; `docs/bootstrap.md` names the stage that decides it.
+without settling what they are, and nothing has decided it yet.

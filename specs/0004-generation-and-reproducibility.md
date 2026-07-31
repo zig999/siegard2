@@ -623,6 +623,14 @@ requirements they qualify, so that an existing citation still resolves to the st
   decision; and a run that ends without producing an artifact locks no path for it. A design meeting fewer
   than all four MUST NOT claim this exemption.
 
+**The measurement R6 asks for: 59 of 61 plan entries — 96.7% — are on the deterministic track.**
+R6 requires the promise reduced to what the mechanism delivers where that share does not cover the
+structural code. It does here: types, DTOs, persistence schemas, migrations, enums, state machines,
+event schemas, API descriptions, conformance tests, and documentation are all deterministic. The two
+judged entries are `validator`, from a rule's expression, and `orchestration`, from a process. The
+promise stands as written, on one pack and one knowledge base, and is owed a re-measurement against
+a base whose rules outnumber its definitions.
+
 ## What this specification does not decide
 
 Deferred, because a contract written ahead of the code that needs it is a guess that reads like a

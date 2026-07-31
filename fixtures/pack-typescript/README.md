@@ -5,7 +5,7 @@ deterministic track with a template each, two on the judged track with an agent 
 
 ## Where it lives, and why not `src/claude/`
 
-`docs/bootstrap.md` **D4** records an unresolved conflict between `specs/0004` R13, which puts a
+`specs/0012` **Outstanding evidence** item 5 records an unresolved conflict between `specs/0004` R13, which puts a
 pack's agents and templates under `src/claude/`, and `specs/0008` R23, which keeps every pack out of
 the framework distribution. Both are accepted at equal precedence with no supersession, so the
 **Conflict protocol** applies and a maintainer decides.

@@ -87,7 +87,7 @@ deep; degrees of freedom matched to task fragility; consistent terminology; no t
 content; evaluations before extensive documentation.
 
 These are context, deliberately not encoded anywhere normative yet: rules distilled from working
-components are testable, rules written ahead of them are guesses (`docs/bootstrap.md`). Promote
+components are testable, rules written ahead of them are guesses (the build plan). Promote
 them into `.claude/rules/claude-code-authoring.md` when the first components exercise them.
 
 ## Consequences

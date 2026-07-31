@@ -5,13 +5,13 @@ This script is a boundary validator: it holds no rules of its own. Every constra
 lives in the schema file, which is the single authority. The checks implemented here
 are the ones a JSON Schema cannot express — cross-file uniqueness, reserved filenames,
 id/filename agreement, and whether a declared source still exists. Frontmatter parsing
-is shared via scripts/frontmatter_lib.py.
+is shared via bin/frontmatter_lib.py.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
 
-Usage:  scripts/validate_concepts.py [bundle_root]   (default: docs/concepts)
-Exit:   0 all concepts valid, 1 validation failures, 2 cannot run
+Usage: bin/validate_concepts.py <bundle_root>
+Exit: 0 all concepts valid, 1 validation failures, 2 cannot run
 """
 
 from __future__ import annotations
@@ -46,8 +46,8 @@ def check_sources(data: dict) -> list[str]:
     reach the filesystem, so this is the half a JSON Schema cannot hold.
 
     What it catches is provenance rot: a concept outliving the artifact that minted it.
-    docs/adr/0010-projection-names-the-graph-derived-artifact.md records the instance that
-    demanded the check. docs/concepts/projection.md was sourced from an ADR that was later
+    the decision that `projection` names the graph-derived artifact records the instance that
+    demanded the check. the projection definition was sourced from an ADR that was later
     deleted, the dangling reference was replaced rather than reported, and the definition
     then drifted from what cited it while every file still validated on its own.
 
@@ -133,11 +133,11 @@ def main() -> int:
 
     failures = validate(bundle)
 
-    print(f"concepts checked: {len(concepts)}  schema: {display(SCHEMA_PATH)}")
+    print(f"concepts checked: {len(concepts)} schema: {display(SCHEMA_PATH)}")
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")
         for f in failures:
-            print(f"  {f}")
+            print(f" {f}")
         return 1
     print("all concepts valid")
     return 0

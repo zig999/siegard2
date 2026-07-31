@@ -120,10 +120,17 @@ class Scope(Fixture):
         self.assertNotIn("adr", types)
 
     def test_an_unresolvable_root_blocks_rather_than_degrades(self) -> None:
-        """specs/0004 R21: fail-soft must not be applied to a generation scope."""
+        """A generation scope fails closed; fail-soft belongs to context resolution.
+
+        Asserted on what the message says rather than on a requirement id. A shipped component
+        cites no requirement, because the specification it would cite is the generator's and
+        never reaches the repository the message is read in.
+        """
         with self.assertRaises(gl.Blocked) as caught:
             gl.resolve_scope(self.graph, "gs_1a2b3c4d", "cr_2b4f6a80", ["ko.rule.sales.absent"])
-        self.assertIn("R21", str(caught.exception))
+        message = str(caught.exception)
+        self.assertIn("resolve to no knowledge object", message)
+        self.assertIn("blocks generation", message)
 
     def test_an_unresolvable_member_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as holder:

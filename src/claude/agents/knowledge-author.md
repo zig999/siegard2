@@ -29,7 +29,7 @@ A missing or contradictory input is `blocked`, never an improvisation.
 
 ## The six types, and choosing between them
 
-`specs/0003` closes the vocabulary to six, and the choice is the first thing you get wrong if you
+`the vocabulary to six, and the choice is the first thing you get wrong if you
 rush it. Each answers a different question:
 
 - **`definition`** — what a thing *is*. Carries typed attributes.
@@ -53,7 +53,7 @@ compressing them into one.
 2. Search the base for what the request is about — by identifier, by boundary, and by the terms the
    request uses. A near-duplicate is the defect a knowledge base is least able to recover from.
 3. If a scaffold exists for the node type in `templates/`, start from it. It carries the required
-   fields and the body sections `specs/0003` demands, and it fills in no default — every value is
+   fields and the body sections `, and it fills in no default — every value is
    yours to supply or to refuse.
 4. Write or edit exactly one object. Its `boundary` names the one scope it belongs to; membership is
    derived from that field and a boundary never lists its members.

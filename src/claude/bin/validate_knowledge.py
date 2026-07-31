@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
-"""Validate a governed repository's knowledge base against specs/0003.
+"""Validate a governed repository's knowledge base against .
 
 This script is a boundary validator. Every frontmatter constraint lives in
 schemas/knowledge-object.json, which R30 makes the single authority for the attribute
-type system; materialization lives in scripts/knowledge_graph_lib.py. What lives here is
+type system; materialization lives in bin/knowledge_graph_lib.py. What lives here is
 the set of checks the specification defers to a script, each decided against the
 materialized graph rather than against one file:
 
-  R11  lifecycle totality, with both shorthands expanded before the product is checked,
+  R11 lifecycle totality, with both shorthands expanded before the product is checked,
        plus reachability from `initial` and an outgoing transition for every non-terminal
-  R15  a reference crossing a bounded context targets an `interface`
-  R18  edge cardinality, in both directions where the table declares an inverse
-  R20  at most one lifecycle names one definition as `subject`
-  R21  exactly one boundary per object, derived from the member's own field
-  R22  an edge naming an id the graph does not hold, together with orphans and cycles
-  R27  a lifecycle-bound enum resolves to a lifecycle
-  R28  a `ref` crossing an aggregate declares `binding: by-identity`
-  R29  a `ref` or `list` target the graph does not hold
-  R38  id and path compute each other, with no lookup
-  R39  no id segment is a sequential number
-  R43  exactly the two body sections the type names, in order, none empty
-  R44  one sentence per line
-  R45  one RFC 2119 keyword and no pronoun in a normative statement
-  R48  a body length ceiling, read from the knowledge base rather than invented here
-  R35  a synonym is declared in `aliases` and appears in no body
+  R15 a reference crossing a bounded context targets an `interface`
+  R18 edge cardinality, in both directions where the table declares an inverse
+  R20 at most one lifecycle names one definition as `subject`
+  R21 exactly one boundary per object, derived from the member's own field
+  R22 an edge naming an id the graph does not hold, together with orphans and cycles
+  R27 a lifecycle-bound enum resolves to a lifecycle
+  R28 a `ref` crossing an aggregate declares `binding: by-identity`
+  R29 a `ref` or `list` target the graph does not hold
+  R38 id and path compute each other, with no lookup
+  R39 no id segment is a sequential number
+  R43 exactly the two body sections the type names, in order, none empty
+  R44 one sentence per line
+  R45 one RFC 2119 keyword and no pronoun in a normative statement
+  R48 a body length ceiling, read from the knowledge base rather than invented here
+  R35 a synonym is declared in `aliases` and appears in no body
 
 Every problem is reported and none is repaired: R22 says so for the materializer, and
 CLAUDE.md says a check that repairs what it detects reports success on a defect. This
@@ -37,9 +37,9 @@ judgments about meaning, and CLAUDE.md keeps model judgment out of enforcement.
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
 
-Usage:  scripts/validate_knowledge.py [knowledge_root ...]
-        with no argument, every fixtures/*/knowledge tree is validated
-Exit:   0 every knowledge base valid, 1 validation failures, 2 cannot run
+Usage: bin/validate_knowledge.py [knowledge_root ...]
+        with no argument, every the named root tree is validated
+Exit: 0 every knowledge base valid, 1 validation failures, 2 cannot run
 """
 
 from __future__ import annotations
@@ -53,16 +53,16 @@ from frontmatter_lib import PLUGIN_ROOT, display
 from cli import cannot_run
 
 try:
-    import yaml  # noqa: F401  (imported for the named-error path below)
+    import yaml # noqa: F401 (imported for the named-error path below)
 except ImportError:
     cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
-    from jsonschema import Draft202012Validator  # noqa: F401
+    from jsonschema import Draft202012Validator # noqa: F401
 except ImportError:
     cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
-from knowledge_graph_lib import (  # noqa: E402  (after the dependency guards)
+from knowledge_graph_lib import ( # noqa: E402 (after the dependency guards)
     ACYCLIC_KINDS,
     EDGE_KINDS,
     KO_SCHEMA_PATH,
@@ -610,11 +610,11 @@ def main() -> int:
         print(f"knowledge base {display(root)}: {objects} file(s), {len(problems)} problem(s)")
         failures.extend(problems)
 
-    print(f"knowledge files checked: {total}  schema: {display(KO_SCHEMA_PATH)}")
+    print(f"knowledge files checked: {total} schema: {display(KO_SCHEMA_PATH)}")
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")
         for problem in failures:
-            print(f"  {problem}")
+            print(f" {problem}")
         return 1
     print("all knowledge bases valid")
     return 0

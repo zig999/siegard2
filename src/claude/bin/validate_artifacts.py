@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Hold every pack and every produced artifact to the framework-owned class contract.
 
-`specs/0012` R4 keeps the schema a template's output validates against in the framework, because
-a pack shipping one would extend a vocabulary R6 reserves. `specs/0004` R8 closes the vocabulary.
+`the schema a template's output validates against in the framework, because
+a pack shipping one would extend a vocabulary R6 reserves. `the vocabulary.
 `schemas/artifact-classes.json` is the instance and this is what enforces it.
 
 Three checks, and each is a rule that existed only as prose.
@@ -11,18 +11,18 @@ Three checks, and each is a rule that existed only as prose.
 same twelve. Four contracts spell that list out, and a fifth would have drifted from them eventually
 — comparing them here is cheaper than noticing later.
 
-**A pack's `from` column must be coherent.** `specs/0004` R10 leaves the node-type mapping to the
+**A pack's `from` column must be coherent.** `the node-type mapping to the
 pack because it presumes a technology, but a pack claiming to produce a `state-machine` from a
 `definition` is not presuming a technology, it is contradicting what the class is.
 
-**Produced output names its source.** `specs/0004` R42 binds produced source to knowledge through
+**Produced output names its source.** `produced source to knowledge through
 the manifest, and an artifact that did not name the object it came from would make a diff
 unreadable without one. `conformance-test` additionally carries the declaration R36 requires.
 
 Declared dependencies: jsonschema.
 
-Usage:  scripts/validate_artifacts.py
-Exit:   0 valid, 1 problems, 2 cannot run
+Usage: bin/validate_artifacts.py
+Exit: 0 valid, 1 problems, 2 cannot run
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ def check_vocabulary(classes: set[str]) -> list[str]:
         if declared != classes:
             problems.append(
                 f"schemas/{name}: names {sorted(declared ^ classes)} differently from "
-                f"schemas/artifact-classes.json — specs/0004 R8 closes the vocabulary once"
+                f"schemas/artifact-classes.json — the vocabulary once"
             )
     return problems
 
@@ -103,13 +103,13 @@ def check_produced(contract: dict, root: Path) -> list[str]:
             if spec["declares_source"] and artifact["ko"] not in body:
                 problems.append(
                     f"{artifact['path']}: does not name {artifact['ko']}, the knowledge object it "
-                    f"was produced from — specs/0004 R42 binds produced source through the manifest"
+                    f"was produced from — produced source through the manifest"
                 )
             for marker in spec.get("requires_markers", []):
                 if marker not in body:
                     problems.append(
                         f"{artifact['path']}: a {artifact['class']} must carry {marker!r} "
-                        f"(specs/0004 R36)"
+                        f""
                     )
     return problems
 
@@ -117,9 +117,9 @@ def check_produced(contract: dict, root: Path) -> list[str]:
 def main() -> int:
     """Hold every declared pack and produced artifact to the class contract.
 
-    The search root is named, never defaulted: this script shipped with the generator's
-    own `fixtures/` as its fallback, a path absent from an installation, so the default
-    searched nothing and the run reported success over an empty set.
+    The search root is named, never defaulted. A default would resolve to a path that may
+    not exist in the repository this runs against, and searching nothing while reporting
+    success is worse than refusing to start.
     """
     if len(sys.argv) < 2:
         cannot_run("cannot run: name the root holding packs and generation runs; there is no default")
@@ -139,11 +139,11 @@ def main() -> int:
         classes = set(contract["classes"])
         problems = check_vocabulary(classes) + check_packs(contract, root) + check_produced(contract, root)
 
-    print(f"artifact classes checked: {len(contract['classes'])}  contract: schemas/{CONTRACT.name}")
+    print(f"artifact classes checked: {len(contract['classes'])} contract: schemas/{CONTRACT.name}")
     if problems:
         print(f"FAILED: {len(problems)} problem(s)\n")
         for problem in problems:
-            print(f"  {problem}")
+            print(f" {problem}")
         return 1
     print("every pack and every produced artifact conforms to its class contract")
     return 0

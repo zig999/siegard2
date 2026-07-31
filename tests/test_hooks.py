@@ -1,6 +1,6 @@
 """The first shipped hook, in both directions and on every way it can fail.
 
-`docs/bootstrap.md` open question 5 asked for "the first hook or script exercising 'validate
+The hook gate asked for "the first hook or script exercising 'validate
 before acting' and 'reject rather than repair' under test". `specs/0006` condition 3 asked for a
 hook enforcing a guarantee with both outcomes covered.
 

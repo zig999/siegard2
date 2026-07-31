@@ -158,7 +158,9 @@ class BlockedRuns(GenerationCase):
             target = Path(holder) / "out"
             with self.assertRaises(gl.Blocked) as caught:
                 gc.produce(self.recipe, target, repo_root=mirror)
-            self.assertIn("R25", str(caught.exception))
+            message = str(caught.exception)
+            self.assertIn("the plan does not validate", message)
+            self.assertIn("rather than repairing it", message)
             self.assertFalse(target.exists(), "a blocked plan wrote files")
 
 
@@ -173,7 +175,7 @@ class Measurement(GenerationCase):
     def test_the_recorded_share_matches_what_the_code_produces(self) -> None:
         """A figure in prose that nothing derives is the drift this repository has had twice."""
         deterministic, total = gc.deterministic_share(self.manifest, self.plan)
-        recorded = (REPO_ROOT / "docs" / "bootstrap.md").read_text()
+        recorded = (REPO_ROOT / "specs" / "0004-generation-and-reproducibility.md").read_text()
         self.assertIn(f"{deterministic} of {total}", recorded)
 
     def test_every_produced_artifact_is_locked_on_the_next_run(self) -> None:

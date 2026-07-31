@@ -13,7 +13,7 @@ contract_version: adr/1
 repository's `.claude/`, with a reserved name prefix on every component to avoid collisions. Two reviews
 found that design failing on its own terms:
 
-- **It could not install its own enforcement.** Every hook `docs/bootstrap.md` names as a candidate —
+- **It could not install its own enforcement.** Every hook named as a candidate —
   rejecting a write under `dist/`, rejecting an artifact that fails its schema, rejecting a schema change
   with no contract bump, rejecting a write to `CLAUDE.md` — is a session-wide guarantee. `specs/0010` R18
   scopes a hook declared in component frontmatter to that component's lifetime, and `specs/0008` R16
@@ -114,7 +114,7 @@ What this document states and nothing has yet exercised. A condition kept here i
 removing one because the document binds would turn an open debt into a silent one.
 
 1. A generator produces a plugin directory, `claude plugin validate` passes on it, and `--plugin-dir`
-   loads it in a fixture. This is ADR-0009 condition 2 and `docs/bootstrap.md` open question 2, and it is
+   loads it in a fixture. This is ADR-0009 condition 2 and the build plan open question 2, and it is
    what turns every claim above from documentation into behavior.
 2. One hook ships in `hooks/hooks.json`, is shown to fire in the loaded fixture, and is shown to deny in
    both directions. Until then the central argument for this decision — that the plugin form installs

@@ -1,7 +1,7 @@
 """The first target pack: ten templates, two agents, and the constraints `specs/0011` fixes.
 
 A pack is admitted with a fixture (`specs/0012` R13), and this is that fixture. It lives under
-`fixtures/` rather than `src/claude/` because `docs/bootstrap.md` D4 records an unresolved conflict
+`fixtures/` rather than `src/claude/` because `specs/0012` **Outstanding evidence** item 5 records an unresolved conflict
 between `specs/0004` R13 and `specs/0008` R23 about where a *production* pack's source belongs. A
 fixture pack is not distributed at all, so it does not turn on that decision.
 
