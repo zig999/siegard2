@@ -1,0 +1,140 @@
+{
+  "contract_version": "distribution-manifest/1",
+  "source_revision": "sha256:96ccaeb6effd57793f19274973491670d560bcef002a908abeb9e4d974421826",
+  "generator_version": "1.0.0",
+  "installed": [
+    {
+      "path": ".claude-plugin/plugin.json",
+      "source": "src/claude/.claude-plugin/plugin.json",
+      "digest": "sha256:90bfe5332f8deae56cd38e20542ae9c63fc9f8611b86c3625cb235731eb0e79c"
+    },
+    {
+      "path": "agents/concept-author.md",
+      "source": "src/claude/agents/concept-author.md",
+      "digest": "sha256:6c006c0de475f0c969a835c5a5da4f9cb7b4662947cad58eb5237d6e8b6c8122"
+    },
+    {
+      "path": "bin/orchestrate.py",
+      "source": "scripts/orchestrate.py",
+      "digest": "sha256:01362cd2ced69d059eb1bea8ca06c3839eecbc30afc85a33b67443e912a5e67d"
+    },
+    {
+      "path": "bin/replay_workflow.py",
+      "source": "scripts/replay_workflow.py",
+      "digest": "sha256:da0cb0c623dea141eba0c492b4ea756de1c1800fff3c1e7537f27ac791bbcf86"
+    },
+    {
+      "path": "bin/workflow_lib.py",
+      "source": "scripts/workflow_lib.py",
+      "digest": "sha256:4f380318d5be2722017eea2169885554f339889af747aaca498f5f0938a55d3a"
+    },
+    {
+      "path": "schemas/concept-authoring-result.v1.json",
+      "source": "schemas/concept-authoring-result.v1.json",
+      "digest": "sha256:5c5c68972a95eaa47e26b0c3b036fb8202fa6111bff5378cb2a054742720684d"
+    },
+    {
+      "path": "schemas/concept.v1.json",
+      "source": "schemas/concept.v1.json",
+      "digest": "sha256:d46fca4b6a438d1958626d92440500672c11936efa9668156b892eb444ba6f84"
+    },
+    {
+      "path": "schemas/distribution-manifest.v1.json",
+      "source": "schemas/distribution-manifest.v1.json",
+      "digest": "sha256:c8f0ec64c71e4eb4b752df77f0ac43c72edecad0a19ef2b167cbcb1d859e3856"
+    },
+    {
+      "path": "schemas/impact-analysis.v1.json",
+      "source": "schemas/impact-analysis.v1.json",
+      "digest": "sha256:1c34a0476f92b990086d335f72bd7a354db052547428cd1a557e539ab1d6bac6"
+    },
+    {
+      "path": "schemas/knowledge-graph.v1.json",
+      "source": "schemas/knowledge-graph.v1.json",
+      "digest": "sha256:2dd9284b01c023aeb5898c9ccf4d051eacaf5a3edc9668fe5867579de175eaa4"
+    },
+    {
+      "path": "schemas/knowledge-object.v1.json",
+      "source": "schemas/knowledge-object.v1.json",
+      "digest": "sha256:b04bac42957ea9d42f11ee2ee3061db4425d06d63d24802856e624bbe3dc715d"
+    },
+    {
+      "path": "schemas/workflow-event.v1.json",
+      "source": "schemas/workflow-event.v1.json",
+      "digest": "sha256:846e3ec6b5f717a8adb94e937d3463ae0e93661a74be3e0fcbbd213bfff503a9"
+    },
+    {
+      "path": "siegard-manifest.json",
+      "source": "scripts/generate_dist.py",
+      "digest": "sha256:188e90aa13ef42a10e1639fa9ad4b51d87fa097387ae30bdf8d30d40a652803d"
+    },
+    {
+      "path": "skills/knowledge-change/SKILL.md",
+      "source": "src/claude/skills/knowledge-change/SKILL.md",
+      "digest": "sha256:ec0f04d4fbc330410b2063185535985980529e353a263d16859c79f6bc46738e"
+    }
+  ],
+  "schemas": [
+    {
+      "contract_version": "concept-authoring-result/1",
+      "path": "schemas/concept-authoring-result.v1.json"
+    },
+    {
+      "contract_version": "concept/1",
+      "path": "schemas/concept.v1.json"
+    },
+    {
+      "contract_version": "distribution-manifest/1",
+      "path": "schemas/distribution-manifest.v1.json"
+    },
+    {
+      "contract_version": "impact-analysis/1",
+      "path": "schemas/impact-analysis.v1.json"
+    },
+    {
+      "contract_version": "knowledge-graph/1",
+      "path": "schemas/knowledge-graph.v1.json"
+    },
+    {
+      "contract_version": "knowledge-object/1",
+      "path": "schemas/knowledge-object.v1.json"
+    },
+    {
+      "contract_version": "workflow-event/1",
+      "path": "schemas/workflow-event.v1.json"
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "orchestrate",
+      "class": "script",
+      "status": "active",
+      "path": "bin/orchestrate.py"
+    },
+    {
+      "name": "replay-workflow",
+      "class": "script",
+      "status": "active",
+      "path": "bin/replay_workflow.py"
+    },
+    {
+      "name": "workflow-lib",
+      "class": "script",
+      "status": "active",
+      "path": "bin/workflow_lib.py"
+    },
+    {
+      "name": "knowledge-change",
+      "class": "skill",
+      "status": "active",
+      "path": "skills/knowledge-change/SKILL.md"
+    },
+    {
+      "name": "concept-author",
+      "class": "specialized-agent",
+      "status": "active",
+      "path": "agents/concept-author.md"
+    }
+  ],
+  "overrides": []
+}

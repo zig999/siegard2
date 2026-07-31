@@ -45,6 +45,10 @@ AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.v1.json"
 # the rationale is recorded in docs/adr/0009-component-contracts-from-anthropic-documentation.md.
 MAX_SKILL_BODY_LINES = 500
 
+PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.v1.json"
+PLUGIN_DIR = ".claude-plugin"
+PLUGIN_MANIFEST = "plugin.json"
+
 COMMANDS_MERGED = (
     "custom commands were merged into skills "
     "(https://code.claude.com/docs/en/skills, retrieved 2026-07-29) — "
@@ -166,6 +170,38 @@ def check_agents(root: Path, failures: list[str]) -> int:
     return checked
 
 
+def check_plugin_manifest(entry: Path, failures: list[str]) -> int:
+    """Validate `.claude-plugin/plugin.json`, and refuse anything else in that directory.
+
+    The manifest is not a component and has no frontmatter, so it is checked here rather than
+    beside skills and agents. `specs/0008` R8 states that only `plugin.json` goes inside
+    `.claude-plugin/`, and that a component placed there is not loaded at all — a failure that
+    is silent at run time, which is why it is loud here.
+    """
+    manifest = entry / PLUGIN_MANIFEST
+    for stray in sorted(entry.iterdir()):
+        if stray.name != PLUGIN_MANIFEST:
+            failures.append(
+                f"{display(stray)}: only {PLUGIN_MANIFEST} goes inside {PLUGIN_DIR}/ — anything "
+                f"else placed there is not loaded (specs/0008 R8)"
+            )
+    if not manifest.is_file():
+        failures.append(f"{display(entry)}: {PLUGIN_MANIFEST} is missing — a plugin root requires it")
+        return 0
+
+    try:
+        data = json.loads(manifest.read_text())
+    except json.JSONDecodeError as exc:
+        failures.append(f"{display(manifest)}: not valid JSON: {exc}")
+        return 0
+
+    validator = load_validator(PLUGIN_SCHEMA_PATH)
+    for err in sorted(validator.iter_errors(data), key=lambda e: list(e.path)):
+        where = ".".join(str(p) for p in err.path) or "(root)"
+        failures.append(f"{display(manifest)}: {where}: {err.message}")
+    return 1
+
+
 def main() -> int:
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "src" / "claude"
     if not root.is_dir():
@@ -176,13 +212,15 @@ def main() -> int:
         return 0
 
     failures: list[str] = []
-    skills = agents = 0
+    skills = agents = manifests = 0
 
     for entry in sorted(root.iterdir()):
         if entry.name == "skills" and entry.is_dir():
             skills = check_skills(entry, failures)
         elif entry.name == "agents" and entry.is_dir():
             agents = check_agents(entry, failures)
+        elif entry.name == PLUGIN_DIR and entry.is_dir():
+            manifests = check_plugin_manifest(entry, failures)
         elif entry.name == "commands":
             failures.append(f"{display(entry)}: {COMMANDS_MERGED}")
         else:
@@ -192,8 +230,10 @@ def main() -> int:
             )
 
     print(
-        f"components checked: {skills + agents} ({skills} skill(s), {agents} agent(s))  "
-        f"schemas: {display(SKILL_SCHEMA_PATH)}, {display(AGENT_SCHEMA_PATH)}"
+        f"components checked: {skills + agents} ({skills} skill(s), {agents} agent(s)), "
+        f"plugin manifests: {manifests}  "
+        f"schemas: {display(SKILL_SCHEMA_PATH)}, {display(AGENT_SCHEMA_PATH)}, "
+        f"{display(PLUGIN_SCHEMA_PATH)}"
     )
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")

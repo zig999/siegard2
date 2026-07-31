@@ -21,6 +21,10 @@
       "schema": "concept.v1.json",
       "constraint_digest": "sha256:a65a2f60850b400598e723c9f6b4e49da468c68ac8684efbd44f9a4eda495514"
     },
+    "distribution-manifest/1": {
+      "schema": "distribution-manifest.v1.json",
+      "constraint_digest": "sha256:bc87c97c564f4a5af3305835525b39404080510d363c4351a00e01f01f294109"
+    },
     "impact-analysis/1": {
       "schema": "impact-analysis.v1.json",
       "constraint_digest": "sha256:d2a371c8a167f212314ab74fcb80f89e6af5781b4e13929c4083a0af7431c5e4"
@@ -32,6 +36,10 @@
     "knowledge-object/1": {
       "schema": "knowledge-object.v1.json",
       "constraint_digest": "sha256:6d4523381bbd0d545df018ae5a789e6db2f9f8c2dc70e00fbce02f72dfa18628"
+    },
+    "plugin/1": {
+      "schema": "plugin.v1.json",
+      "constraint_digest": "sha256:0324abe009ca521aeee0b612bb3c83cc8c0a7df711c33ea61e114647ba2a1ba5"
     },
     "skill/1": {
       "schema": "skill.v1.json",

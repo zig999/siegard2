@@ -53,12 +53,16 @@ knowledge:
 test:
 	python3 -m unittest discover -s tests -t .
 
+# `dist` regenerates dist/.claude/ from src/claude/, schemas/, and the executables
+# scripts/generate_dist.py selects. `dist-check` regenerates into a temporary tree and
+# compares, and additionally holds the committed tree to the invariants specs/0008 states
+# about the output itself. Both layers matter: a comparison alone cannot catch a generator
+# that is consistently wrong, because it would produce the same defect twice and report
+# agreement.
 dist:
-	@echo "dist: no generator exists yet — see docs/bootstrap.md, open question 2" >&2
-	@exit 1
+	python3 scripts/generate_dist.py
 
 dist-check:
-	@echo "dist-check: no generator exists yet, so there is no committed distribution to compare against — see docs/bootstrap.md, open question 2" >&2
-	@exit 1
+	python3 scripts/verify_dist.py
 
 check: validate test dist-check

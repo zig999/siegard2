@@ -23,13 +23,13 @@ The stripping is structural rather than textual: inside `properties`, `$defs`, a
 siblings, a key is a *name*, so a property legitimately called `description` — the concept
 contract has one — is preserved while the annotation of the same spelling is dropped.
 
-Two schemas carry no `contract_version` property, and the exemption is verified rather than
-trusted. A Claude Code component's frontmatter vocabulary belongs to the harness: both
-contracts set `additionalProperties: false` because Claude Code silently ignores an unknown
-field, so a Siegard-added version field could not be carried without making every conforming
-component invalid. This script asserts that each exempt schema really does forbid additional
-properties, so the stated reason has to hold for the exemption to apply. Any *other* schema
-missing the field fails.
+Three schemas carry no `contract_version` property, and the exemption is verified rather than
+trusted. The harness owns those vocabularies: a Claude Code component's frontmatter and the
+plugin manifest. Each contract sets `additionalProperties: false` because Claude Code silently
+ignores an unknown field, so a Siegard-added version field could not be carried without making
+every conforming component invalid. This script asserts that each exempt schema really does
+forbid additional properties, so the stated reason has to hold for the exemption to apply. Any
+*other* schema missing the field fails.
 
 Regeneration is `--update`, which is never wired into `make validate`: a check that repairs
 what it was meant to detect reports success on a defect. The polarity is inverted relative to
@@ -73,7 +73,7 @@ NAME_MAPS = frozenset({"properties", "patternProperties", "$defs", "definitions"
 # Contracts whose artifact cannot carry a `contract_version` field, with the condition that
 # has to hold for the exemption to be real. Claude Code owns component frontmatter and ignores
 # unknown fields silently, so both contracts close the object; see ADR-0009.
-HARNESS_OWNED = frozenset({"skill", "agent"})
+HARNESS_OWNED = frozenset({"skill", "agent", "plugin"})
 
 
 def strip_annotations(node):

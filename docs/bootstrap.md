@@ -1,8 +1,8 @@
 # Bootstrap plan
 
-This repository holds governance, the knowledge layer, and the thin workflow path. It holds no generator
-and no distribution. This file records what to build next and which rules start binding as each piece
-lands.
+This repository holds governance, the knowledge layer, the thin workflow path, and — since 2026-07-31 —
+a generator and a committed distribution. This file records what to build next and which rules start
+binding as each piece lands.
 
 ## Why sequencing matters here
 
@@ -61,7 +61,11 @@ Concretely, in order:
    `fixtures/knowledge-change-loop/` runs all seven phases of R2 with one validation failure and one
    recovery; `scripts/replay_workflow.py --check` is wired into `make validate`, and
    `tests/test_workflow_events.py` covers each guard condition in both directions.
-7. **The generator and `make dist`**, once `src/claude/` holds enough to assemble.
+7. ~~**The generator and `make dist`**~~ **Done.** `scripts/generate_dist.py` assembles
+   `dist/.claude/` as a plugin root, and `scripts/verify_dist.py` regenerates into a temporary tree
+   and compares. `make check` therefore runs end to end for the first time. What this does *not*
+   settle is step 2 and step 5: a generated component is still not a loaded one, and nothing has
+   watched Claude Code resolve either of them. That is the next step rather than this one.
 
 ## Construction decisions
 
@@ -169,12 +173,12 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 257 tests: 98 over the knowledge layer, 59 over the workflow loop, 35 over the specification set, 33 over contract versioning and migration, 32 over the three validators that had none |
-| `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 296 tests: 98 over the knowledge layer, 59 over the workflow loop, 39 over the generator and the distribution, 35 over the specification set, 33 over contract versioning and migration, 32 over the three validators that had none |
+| `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **partly active** |
-| `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | pending |
-| "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | pending |
-| "no source-only paths in the distribution" | `dist/` is generator-produced | pending |
+| `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | **active**; the generator reads that tree and nothing else, and a test asserts no path under `.claude/` reaches the distribution |
+| "do not hand-edit generated artifacts" (`rules/distribution.md`) | a generator and `make dist` exist | **active**; a hand edit fails `make dist-check` on the recorded digest and again on the comparison. Not yet *enforced* — that is the hook of open question 5 |
+| "no source-only paths in the distribution" | `dist/` is generator-produced | **active**, with the rejection direction covered: a planted file under `specs/` in the output is reported |
 | every capability needs a fixture (`CLAUDE.md` scope) | `fixtures/` holds its first case | **active** for the knowledge layer; pending for every other capability |
 | migration tests (`rules/compatibility.md`) | a second contract version exists | pending |
 
@@ -221,11 +225,31 @@ different case from removing a record that only duplicated a rule.
 2. **How the distribution is produced.** That `dist/.claude/` is generated, reproducible, and never
    hand-edited is settled by `CLAUDE.md` **Repository layout** and `.claude/rules/distribution.md`. Its
    *shape* is settled too, as of 2026-07-31: a plugin root, per ADR-0012 and `specs/0008`, so the generator
-   has a target rather than a blank page. What is open is the generator itself. Gate: a generator in `scripts/` that `make dist` runs; running it twice from
+   has a target rather than a blank page. Gate: a generator in `scripts/` that `make dist` runs; running it twice from
    the same source produces identical output; a test asserting no source-only path (`specs/`, `tests/`,
    `fixtures/`, `docs/`, `.claude/`) reaches the output; a test asserting no secret or
-   environment-specific value does. Until then, do not create `dist/` by hand to make a rule look
-   satisfied.
+   environment-specific value does.
+
+   **Settled.** Every condition is met by `scripts/generate_dist.py`, `scripts/verify_dist.py`, and
+   `tests/test_generator.py`, and `dist/.claude/` is committed and verified by `make dist-check`.
+
+   Four things the work decided that the gate did not ask for, recorded because each was a choice and
+   not a discovery. `source_revision` is a content digest over the framework source rather than a commit
+   SHA: a SHA would make the committed distribution unverifiable, since generating at commit N-1 records
+   N-1 and committing the result produces N. The manifest carries no timestamp, because a minted value
+   would differ between two runs over identical source and R4 calls that a defect — `specs/0008` R12 does
+   not ask for one. Which schemas ship is an explicit classification asserted total against `schemas/`, so
+   a new contract forces a decision instead of inheriting one. And `__pycache__` is excluded from
+   verification: a consumer who runs a shipped executable once will have it, and reporting it as an
+   unmanaged file would make every upgrade check fail after first use.
+
+   One correction to the gate's own framing. An earlier reading of R6 took "verification is separate from
+   production" to mean the verifier may not use the generator. R6 says the opposite — it "regenerates into
+   a temporary location and compares" — and what it forbids is writing into the distribution being
+   checked. `verify_dist.py` does both: it regenerates and compares, *and* it holds the committed tree to
+   the invariants `specs/0008` states about the output. The second layer is the one that survives a
+   generator which is consistently wrong, because a comparison alone would produce the same defect twice
+   and report agreement.
 3. **Which component classes exist and what each owns.** `CLAUDE.md` **Authority placement** requires one
    authoritative definition per concept, which constrains any division of work without choosing one.
    There is no command class — ADR-0009 records the commands-into-skills merge. Gate: one entry point,
@@ -408,11 +432,19 @@ depend on cooperation.
   seventeen seconds rather than a minute.
 - No `.claude/rules/security.md`. `CLAUDE.md` **Security** states the invariants; sanitization, path,
   subprocess, and network detail wait until the first hook or script needs them — see open question 5.
-- No generator, therefore no authoritative `dist/`. This is now the single largest gap: steps 3–6 exist,
-  so `concept-author`'s result contract is validated at a boundary by an orchestrator and exercised by a
-  fixture — but the agent itself, and the `knowledge-change` skill written to drive it, are still inert.
-  Nothing has installed either into a repository and watched Claude Code load it. That is ADR-0009
-  condition 2, open question 2, and the remainder of open question 4, all waiting on the same artifact.
+- **No installation, therefore no loaded component.** The generator exists and `dist/.claude/` is
+  committed and verified, so open question 2 is closed and its half of open question 4 with it. What is
+  still open is the other half, and it is now the single largest gap: `concept-author` and the
+  `knowledge-change` skill are *assembled* rather than *inert*, which is a smaller claim than it sounds.
+  Nothing has installed the plugin into a repository and watched Claude Code resolve either of them. That
+  is ADR-0009 condition 2 and the remainder of open question 4.
+
+  One thing did stop being a claim. `dist/.claude/bin/orchestrate.py` runs from the plugin root against a
+  real event log and derives the recorded state, and `workflow_lib.py` resolves its schemas from
+  `dist/.claude/schemas/` rather than from this repository — `bin/` sits beside `schemas/` at the plugin
+  root exactly as `scripts/` sits beside `schemas/` here. A shipped executable therefore works outside
+  `scripts/`, which is the first thing in this repository to do so. A shipped *component* still has not
+  been loaded by the harness, and the two are not the same evidence.
 - No contract for a context package or a specification delta. Spec 0001 R11 requires the first and R16
   constrains the second; the workflow loop records both phases without producing either artifact, because
   nothing consumes them to choose a transition yet. Spec 0001 states each artifact's schema arrives with
