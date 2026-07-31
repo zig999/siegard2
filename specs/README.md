@@ -6,38 +6,47 @@ one carries no normative weight.
 
 Two families sit here, at the same precedence level and in one flat directory.
 
-**The method** — what a repository Siegard governs does. Ids `0001`–`0004`.
+**The method** — what a repository Siegard governs does.
 
-**The framework** — what the Siegard product is, and how it is built. Ids `0005` and above. These
-specify the software that implements the method. They do not amend the method, and where one needs a
-method decision changed, that change belongs in the method specification rather than here.
+**The framework** — what the Siegard product is, and how it is built. These specify the software that
+implements the method. They do not amend the method, and where one needs a method decision changed, that
+change belongs in the method specification rather than here.
+
+Ids are allocated sequentially across both families, and the tables below are the authority for which
+family a document belongs to. An earlier version of this file claimed the id range separated the two at no
+cost; `0014` falsified that within a day of the framework family being written, by being a method
+specification numbered after them. A number records when a document was written, not what it governs.
 
 The directory is flat on purpose. Splitting it into `foundations/` and `framework/` was considered and
 rejected: 33 concept `sources` resolve to these paths under a constraint ADR-0010 made enforced,
 `scripts/validate_specs.py` globs `specs/*.md` and would silently ignore a subdirectory, and renaming a
-public artifact is breaking under `.claude/rules/compatibility.md`. An id range separates the families at
-no cost.
+public artifact is breaking under `.claude/rules/compatibility.md`.
 
 ## The method
 
 | Id | Title | Status | Decides |
 |---|---|---|---|
-| [0001](0001-knowledge-object-driven-development.md) | Knowledge-object-driven development | `proposed` | the workflow every change request follows, escalation, fail-soft, acceptance, the maturity ladder |
+| [0001](0001-knowledge-object-driven-development.md) | Knowledge-object-driven development | **`accepted`** | the workflow's phases and transitions, context resolution, what acceptance requires of a decision and its evidence, the maturity ladder |
 | [0002](0002-knowledge-economy-principles.md) | Knowledge economy principles | **`accepted`** | what may be recorded as permanent knowledge, and the boundary between domain and stack fact |
 | [0003](0003-knowledge-ontology-and-notation.md) | Knowledge ontology and notation | **`accepted`** | the node types, edges, notation, and attribute type system |
 | [0004](0004-generation-and-reproducibility.md) | Generation and reproducibility | `proposed` | the calibrated reproducibility promise, artifact classes, generation tracks, the derived artifacts |
+| [0014](0014-acceptance-closure-and-escalation.md) | Acceptance closure and escalation | `proposed` | how the acceptance closure is computed, what the gate reports, how escalation is decided |
 
 ## The framework
 
 Every entry is `proposed` until the evidence its own **Validation required before acceptance** section
 names exists. Writing them is ordinary work and binds nothing; accepting one is a maintainer's decision.
 
+**No framework specification is accepted before the method specification it depends on.** Every one of the
+nine rests on `specs/0001` or `specs/0004`; accepting a framework document while its foundation binds
+nothing would give it an authority its own basis does not have.
+
 | Id | Title | Decides | Inherits, and must not restate |
 |---|---|---|---|
 | [0005](0005-runtime-architecture.md) | Runtime architecture | who executes, what the framework provides, what it may never control, where determinism lives | `CLAUDE.md` **Scope** and **Determinism and state**; `.claude/rules/claude-code-authoring.md` |
 | 0006 | Capability model | which capability classes exist, what each owns, how one is admitted and retired | `docs/concepts/capability.md`; ADR-0009's component classes |
 | 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `.claude/rules/contracts.md`; `schemas/skill.v1.json`, `schemas/agent.v1.json` |
-| 0008 | Distribution layout | what `dist/.claude/` contains, the rule per directory, and what may never appear | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` |
+| 0008 | Distribution layout | that the distribution is a function of source, the closed directory set, the manifest, install and upgrade, namespacing | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` |
 | 0009 | Context assembly | the context package contract — its manifest form, budget, and stop criteria | `specs/0001` R11–R15, which already fix that resolution never blocks and never invents |
 | 0010 | Hook system | which lifecycle events the framework binds, and the contract a hook honors | `CLAUDE.md` **Security**; the harness hook documentation |
 | 0011 | Template system | what a template is, its schema binding, placeholders, and extension points | `specs/0004`'s generation tracks and artifact classes |

@@ -62,8 +62,10 @@ Five stages. Each one names what it would falsify, because a stage that cannot f
 
 1. **A design authority, no framework code.** Spec 0001, the retirement of the v0.1 draft, the concepts
    the spec uses normatively, and the specification contract that makes any of it checkable. Falsifies
-   nothing by itself — it is the baseline against which the later stages become falsifiable. **Done**,
-   pending one maintainer decision: the status of spec 0001.
+   nothing by itself — it is the baseline against which the later stages become falsifiable. **Done.**
+   Spec 0001 was accepted on 2026-07-31 on the evidence of stage 2, with the requirements its three unmet
+   conditions covered moved to `specs/0014-acceptance-closure-and-escalation.md` rather than accepted
+   unexercised. Normative source 1 now binds for the workflow as well as the knowledge layer.
 2. **The first workflow loop, over knowledge only.** `request → impact analysis → knowledge authoring →
    validation → acceptance`, with no generated code and no context resolution: in a five-object bundle
    the impact set *is* the context. This is steps 3–6 above, plus the minimal generator, because a
@@ -303,8 +305,9 @@ depend on cooperation.
 - No `templates/`. No fixture exercises the generation pipeline of spec 0004 or the distribution. The
   workflow of spec 0001 now has one, `fixtures/knowledge-change-loop/`, which exercises its control flow
   but produces no code and no context package.
-- `specs/0002` and `specs/0003` are `accepted`; `0001` and `0004` are `proposed`. Normative source 1 now
-  binds for the knowledge layer and binds nothing for the workflow or the generation pipeline.
+- `specs/0001`, `0002`, and `0003` are `accepted`; `0004` and `0014` are `proposed`. Normative source 1
+  binds for the knowledge layer and for the workflow, and binds nothing for the generation pipeline, the
+  acceptance closure, or escalation.
   Spec 0003 was accepted on 2026-07-30 after every condition it set was met by a component that
   exercises it — see `fixtures/knowledge-two-context/README.md` for the evidence, and that
   specification's **What satisfied acceptance** for the six defects building the evidence exposed and

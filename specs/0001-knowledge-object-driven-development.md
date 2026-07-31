@@ -1,7 +1,7 @@
 ---
 id: "0001"
 title: Drive every change through knowledge objects, with determinism at the boundaries
-status: proposed
+status: accepted
 contract_version: spec/1
 ---
 
@@ -10,10 +10,16 @@ contract_version: spec/1
 ## Scope
 
 This specification defines the workflow every [change request](../docs/concepts/change-request.md)
-follows in a repository Siegard governs, from the request to acceptance. It fixes what the framework
-makes deterministic, what it leaves to model judgment, how a workflow escalates, how acceptance is
-evaluated, and how a [knowledge object](../docs/concepts/knowledge-object.md) gains mechanical force
-over an implementation.
+follows in a repository Siegard governs, from the request to acceptance. It fixes the phases and their
+order, what the framework makes deterministic, what it leaves to model judgment, what context resolution
+guarantees, what acceptance requires of a decision and of its evidence, and how a
+[knowledge object](../docs/concepts/knowledge-object.md) gains mechanical force over an implementation.
+
+Two things it no longer decides. How the acceptance closure is computed and what the acceptance gate
+reports, and how escalation is decided, moved to
+`specs/0014-acceptance-closure-and-escalation.md` when this specification was accepted — see
+**What satisfied acceptance**. R9 and R17 through R20 remain as forwarding entries rather than being
+renumbered, because renumbering would redirect an existing citation to a different statement.
 
 It governs the framework Siegard ships. It does not govern this repository's own development process,
 which `CLAUDE.md` defines.
@@ -175,11 +181,12 @@ that outcome visible over time instead of surprising at the end.
 
 ### Escalation
 
-- **R9** — Escalation is decided by predicates over fields of validated artifacts. No predicate reads
-  prose, and no agent decides whether to escalate.
+- **R9** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R1 when this specification was
+  accepted, because no escalation predicate existed to satisfy the condition that covered it. The number is
+  retained rather than reused so that a citation of R9 still resolves to the statement it named.
 - **R10** — A numeric threshold in an escalation predicate is calibrated from executed workflows and
   recorded together with the evidence that calibrated it. A threshold asserted without that evidence is
-  not a valid instantiation of R9.
+  not a valid escalation predicate.
 
 ### Context resolution
 
@@ -201,17 +208,14 @@ that outcome visible over time instead of surprising at the end.
 
 ### Acceptance
 
-- **R17** — The set of checks that decides acceptance is computed from the impact artifact, the
-  knowledge graph, and the actual diff. It is never computed from the context package the implementer
-  consumed.
-- **R18** — The validation closure covers every knowledge object the diff touches, whether or not the
-  impact artifact named it. Declared impact and observed diff are unioned, so independence does not
-  leak when an implementation touches a path outside its plan.
-- **R19** — The acceptance gate reports, for each impacted knowledge object, the mode that decided it:
-  `mechanical` where an assertion exists, `review` where none does. Every gap is named.
-- **R20** — Fail-soft guarantees independence of evaluation, not correctness of implementation. Where no
-  assertion covers an impacted knowledge object, acceptance rests on independent review. A report that
-  presents review as a guarantee is a false report.
+- **R17** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R2. The number is retained rather
+  than reused so that a citation of R17 still resolves to the statement it named.
+- **R18** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R3, with R17 above: the two are one
+  closure and neither is testable without the other.
+- **R19** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R4, because no acceptance gate exists
+  to report a mode.
+- **R20** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R5, with R19 above: what the gate may
+  not present as a guarantee is meaningless where no gate reports anything.
 - **R21** — Acceptance requires a maintainer's decision, or a deterministic approval mechanism the
   governed repository defines. No workflow accepts its own output.
 - **R22** — Validation produces evidence that records what ran, its result, and the inputs needed to
@@ -245,20 +249,43 @@ like a requirement:
 - the layout a governed repository uses for these artifacts, and how the distribution installs it;
 - knowledge derived from code as a capability: R26 constrains it, and nothing here requires it to exist.
 
-## Validation required before acceptance
+## What satisfied acceptance
 
-This specification presupposes components that do not exist. It binds nothing until:
+Accepted 2026-07-31, on the evidence of `fixtures/knowledge-change-loop/` and the thin path of
+`docs/bootstrap.md` stage 2. Two of the five conditions this specification set were met; the requirements
+the other three covered were moved out rather than accepted unexercised.
 
-1. a maintainer accepts it;
-2. the knowledge-only path — change request, impact analysis, knowledge authoring, validation,
-   acceptance — runs end to end in a fixture under `fixtures/`, with each transition chosen by lookup
-   on a validated artifact (R5);
-3. one escalation predicate is decided by a script or hook against a validated artifact, with a test
-   covering both outcomes (R9);
-4. a test shows the validation closure exceeding the context closure for a change where the two differ,
-   which is what makes R17 and R18 falsifiable rather than aspirational;
-5. the acceptance gate reports the mode of each impacted knowledge object, and a test asserts that a
-   knowledge object with no assertion is reported as `review` rather than as passing (R19, R20).
+**Condition 1 — a maintainer accepts it.** Given.
 
-If building the knowledge-only path shows that a phase in R2 is ceremony for the workflows the
-framework actually runs, narrow the path before accepting this specification.
+**Condition 2 — the knowledge-only path runs end to end in a fixture, with each transition chosen by
+lookup on a validated artifact (R5).** Met. `fixtures/knowledge-change-loop/` runs one change request
+through all seven phases of R2, including a validation failure and a recovery under the attempt limit R7
+requires be stated. Every transition is a lookup in the table held by `scripts/workflow_lib.py` on the
+closed `outcome` field of an event that passed `workflow-event/1`; three of the nine came from
+`scripts/orchestrate.py consume`, which reads a closed field — `verdict` on `impact-analysis/1`, `state`
+on `concept-authoring-result/1` — from an artifact validated at the boundary first. No branch in the
+orchestrator reads prose, which is stage 2's abandonment criterion not having fired.
+
+**Conditions 3, 4, and 5 — an escalation predicate, the validation closure, the acceptance gate's mode
+reporting.** Not met, and not waived. The requirements they covered — R9, R17, R18, R19, R20 — moved to
+`specs/0014-acceptance-closure-and-escalation.md`, which is `proposed` and carries those three conditions
+verbatim. They span stages 3 through 5, so meeting them here would have meant asserting them.
+
+**What the path did *not* narrow.** This specification instructed that a phase in R2 shown to be ceremony
+should be removed before acceptance. None was: all seven ran, and the two a knowledge-only change might
+have been expected to skip did not disappear. Context resolution ran *degenerate* — in a bundle this small
+the impact set already is the context, so the phase resolves trivially and records that it did — and the
+implementation phase is where knowledge authoring happens, because in a knowledge-only change the authored
+knowledge is what the change produces. R2's "escalation inserts phases; it never removes one" survived its
+first test.
+
+**What R10 was doing while unexercised by any condition.** It was already binding in practice. The attempt
+limit of R7 is a property of each workflow's opening event rather than a framework default precisely
+because R10 forbids asserting a calibrated threshold ahead of executed workflows —
+`docs/adr/0011-append-only-workflow-events-derived-by-replay.md` records that reasoning. R10 stayed here
+for that reason, and its closing clause was repointed from R9 to the predicate it describes.
+
+**What acceptance now costs.** `.claude/rules/compatibility.md` governs `specs/**`, so from here a change
+to a transition guard, a terminal state, or the workflow's semantics is a breaking change with a migration
+path and a migration test rather than a revision. `docs/bootstrap.md` records the migration debt this
+repository already owes on `workflow-event/1`, and that debt is now under this rule.

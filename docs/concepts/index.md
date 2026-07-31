@@ -20,16 +20,25 @@ tiers on purpose, and `docs/adr/README.md` states when a concept crosses between
 specification stays `proposed`. A `proposed` concept names a term without binding its definition — see
 [accepted](accepted.md).
 
-As of 2026-07-31 the split is 30 `accepted` and 16 `proposed`. Every remaining `proposed` entry is
-vocabulary for `specs/0001-knowledge-object-driven-development.md` or
-`specs/0004-generation-and-reproducibility.md`, neither of which is accepted, so promoting one would bind a
-definition to a mechanism that does not exist. The tier is derivable rather than declared: read which
-artifacts cite a concept, and read their status.
+As of 2026-07-31 the split is 30 `accepted` and 16 `proposed`. The tier is derivable rather than declared:
+read which artifacts cite a concept, and read their status.
 
-[orchestrator](orchestrator.md) is the first entry where that reasoning has started to come apart: its
-mechanism now exists and is tested, while the specification that uses the term normatively is still
-`proposed`. It stays `proposed` because the concept follows its source, and because whether an
-orchestrator is a component class at all is still open — see `docs/bootstrap.md` open question 3.
+`specs/0001-knowledge-object-driven-development.md` was accepted on 2026-07-31, which makes seven
+`proposed` entries eligible for promotion — [change request](change-request.md),
+[impact analysis](impact-analysis.md), [context package](context-package.md),
+[specification delta](specification-delta.md), [escalation](escalation.md), [fail-soft](fail-soft.md), and
+[orchestrator](orchestrator.md). Each is now used normatively by an artifact that binds, which is the
+condition `docs/adr/README.md` states for the crossing.
+
+None has been promoted. A status change is a maintainer's decision under `CLAUDE.md` **Normative sources**,
+and the acceptance that made them eligible authorized the specifications rather than the bundle. Two also
+need a judgment that eligibility alone does not settle: [escalation](escalation.md) is defined by a
+requirement that moved to `specs/0014`, which is `proposed`, so the accepted specification uses the term
+while the mechanism sits in one that binds nothing; and whether `orchestrator` names a component class at
+all is still open — see `docs/bootstrap.md` open question 3.
+
+The remaining `proposed` entries are vocabulary for `specs/0004-generation-and-reproducibility.md`, which is
+not accepted, so promoting one would bind a definition to a mechanism that does not exist.
 
 | Concept | Summary |
 |---|---|

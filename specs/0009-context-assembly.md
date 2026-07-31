@@ -137,5 +137,5 @@ This specification uses these terms as the concept bundle defines them:
    detected. Without it, R2 is a convention rather than a boundary.
 5. The stop reasons of R8 are each produced by a fixture at least once, including the unresolvable case,
    so the closed set is shown to be complete rather than assumed.
-6. `specs/0001` is accepted. Until then this document's foundation — R11 through R15 there — binds
-   nothing, and a contract built on it inherits that status.
+6. ~~`specs/0001` is accepted.~~ **Met** on 2026-07-31. This document's foundation — R11 through R15 there —
+   now binds, so what remains unmet above is this document's own evidence rather than its basis.

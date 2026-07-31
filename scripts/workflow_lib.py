@@ -56,7 +56,7 @@ TRANSITIONS: dict[tuple[str, str], str] = {
     ("change-request", "recorded"): "impact-analysis",
     # R3: impact analysis runs for every request, including a `none` verdict. A `none`
     # verdict has no knowledge to author, so the path runs to acceptance, which still
-    # evaluates closure over the observed diff (R17, R18).
+    # evaluates closure over the observed diff (specs/0014 R2, R3).
     ("impact-analysis", "none"): "acceptance",
     ("impact-analysis", "update"): "context-resolution",
     ("impact-analysis", "create"): "context-resolution",
