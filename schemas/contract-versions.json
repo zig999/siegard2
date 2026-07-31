@@ -3,11 +3,7 @@
   "contracts": {
     "adr/1": {
       "schema": "adr.v1.json",
-      "constraint_digest": "sha256:09ce76c4b6527973e0a01c1556affcc5be44be48feffd5baf0f9c718004604ef"
-    },
-    "adr/2": {
-      "schema": "adr.v2.json",
-      "constraint_digest": "sha256:6c8af0adfad06c5b751feb1bb44ca908e82f9a9eefa94fae1ad1b019c2e8aab8"
+      "constraint_digest": "sha256:925b59d935c94420d523a10ce8e87421bbccc0a83e392f13c258ad42ae52e32e"
     },
     "agent/1": {
       "schema": "agent.v1.json",
@@ -23,7 +19,7 @@
     },
     "concept/1": {
       "schema": "concept.v1.json",
-      "constraint_digest": "sha256:a65a2f60850b400598e723c9f6b4e49da468c68ac8684efbd44f9a4eda495514"
+      "constraint_digest": "sha256:12a0eaed5a25a3fc4264c4712e0807e6842d53d62b117ebefb2140c6c331a54a"
     },
     "context-package/1": {
       "schema": "context-package.v1.json",
@@ -57,6 +53,10 @@
       "schema": "knowledge-authoring-result.v1.json",
       "constraint_digest": "sha256:69bf72be9dcbee4f3615e5df77127f3eb145856b690b0393f8fefbfc8e4029d8"
     },
+    "knowledge-decision/1": {
+      "schema": "knowledge-decision.v1.json",
+      "constraint_digest": "sha256:d183715b3132167facd6aa00722b844a208315605be60b5d89063cadaafd481a"
+    },
     "knowledge-graph/1": {
       "schema": "knowledge-graph.v1.json",
       "constraint_digest": "sha256:8e2670c7e92b0b53164a66fcc50db320b59f4a90690726cfe87d06d7480cc684"
@@ -83,7 +83,7 @@
     },
     "spec/1": {
       "schema": "spec.v1.json",
-      "constraint_digest": "sha256:c6d5ca641736746da432f509b1311900bf10b4606c425ecf2a4ecf715d06bb53"
+      "constraint_digest": "sha256:ca8550904c512de7f76b22c03b48f9572698473920f4b939b377eaae41fc0a06"
     },
     "specification-delta/1": {
       "schema": "specification-delta.v1.json",

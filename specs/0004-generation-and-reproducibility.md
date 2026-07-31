@@ -41,7 +41,7 @@ It governs the framework Siegard ships. It does not govern this repository's own
 
 Whether a target pack is framework work at all rested on `CLAUDE.md` **Scope**, which excludes "architecture
 chosen for one downstream system" and did not say whether a technology pack is that. A maintainer settled it
-on 2026-07-30: a target pack is not that architecture, and `.claude/rules/claude-code-authoring.md`
+on 2026-07-30: a target pack is not that architecture, and `specs/0005` R4
 **Target packs** holds the distinction and the fixture gate that keeps it honest.
 
 R12 through R18 therefore rest on an accepted rule rather than on a presumption. What remains open is not the
@@ -57,10 +57,10 @@ premise but the evidence: no pack exists, so nothing has exercised any of them.
 | The workflow every change request follows | spec 0001 |
 | That context resolution degrades rather than blocks | spec 0001 R13–R15, [fail-soft](../docs/concepts/fail-soft.md) |
 | The maturity ladder, and what an assertion binds | spec 0001 R23–R26 |
-| Which component classes exist; that there is no command class | ADR-0009 |
+| Which component classes exist; that there is no command class | `specs/0006` |
 | The frontmatter contract of a distributable agent or skill | `schemas/agent.v1.json`, `schemas/skill.v1.json` |
-| That a generated tree is never hand-edited, and that hidden defaults are rejected | `.claude/rules/distribution.md` |
-| What makes a change breaking | `.claude/rules/compatibility.md` |
+| That a generated tree is never hand-edited, and that hidden defaults are rejected | R7 below; `specs/0005` R16b |
+| What makes a change breaking | `specs/0013` R3a |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
 
@@ -184,11 +184,11 @@ not already give.
 
 Exactly one pack is active in a governed repository. One pack is what lets a template assume its technology
 instead of abstracting over it, which is where the deterministic track gets its width, and it is consistent
-with `.claude/rules/claude-code-authoring.md` forbidding a vendor-neutral abstraction absent an accepted
+with `specs/0005` R4 forbidding a vendor-neutral abstraction absent an accepted
 requirement.
 
 The framework ships no default pack. A missing or ambiguous pack blocks generation and is reported, because
-`.claude/rules/distribution.md` rejects a hidden default and a pack inferred at run time is the largest
+`specs/0005` R16b rejects a hidden default and a pack inferred at run time is the largest
 hidden default available.
 
 ## The generation model
@@ -365,7 +365,7 @@ this section's; the assignment is that document's.
 
 ## Verification
 
-A produced file is never hand-edited, for the reason `.claude/rules/distribution.md` gives about a generated
+A produced file is never hand-edited, for the reason R7 gives about a generated
 tree. Where produced code must be extended, the plan declares an extension point and the extension is a
 separate hand-authored file the produced code calls. Mixed files defeat regenerate-and-diff, which is the only
 mechanism that makes the promise checkable.
@@ -486,8 +486,8 @@ Terms used normatively below.
 
 - **R8** — The artifact class vocabulary is closed, per the table under **Artifact classes and what a pack
   declares**. A class outside it MUST be rejected.
-- **R9** — A new artifact class is admitted only when a target pack needs it and a fixture exercises it,
-  recorded with the case that demanded it.
+- **R9** — A new artifact class is admitted when a target pack needs it, recorded with the case that
+  demanded it. A fixture exercising the class is recommended evidence, not a condition of admission.
 - **R10** — Each target pack MUST declare which classes it produces and the track of each. This specification
   fixes no mapping from node type to class, because such a mapping presumes a technology.
 - **R11** — A node type yielding no class under the active pack MUST be reported. Silence about a type that
@@ -509,7 +509,9 @@ Terms used normatively below.
 - **R16** — A component other than a target pack MUST NOT depend on a specific pack.
 - **R17** — The framework ships no default pack. A missing or ambiguous pack MUST block generation with a
   report naming what is missing, and a pack inferred at run time MUST be rejected as a hidden default.
-- **R18** — The entry point that runs generation is a skill, per ADR-0009.
+- **R18** — The entry point that runs generation is a [skill](../docs/concepts/skill.md). `specs/0006`
+  fixes the capability classes and holds that there is no command class;
+  `docs/adr/0009-component-contracts-from-anthropic-documentation.md` records why.
 
 ### The generation scope
 
@@ -632,7 +634,7 @@ requirement:
 - the schemas of the scope, the plan, the manifest, the pack declaration, and the placement decision, each
   arriving with the first pack that produces one. R52 fixes what the placement decision is for and what its
   validation must reject; the contract it is validated against is deferred here for the reason this list
-  gives, and `.claude/rules/contracts.md` already decides that it needs a versioned schema when it arrives,
+  gives, and `specs/0005` R16a already decides that it needs a versioned schema when it arrives,
   because it is an artifact a later derivation consumes;
 - the declaration syntax hand-authored source uses in R42, and its language coverage;
 - how a `rule.expression` is evaluated. Spec 0003 defers the grammar; this specification defers the evaluator

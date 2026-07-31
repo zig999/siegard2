@@ -157,8 +157,6 @@ class Concepts(TreeCase):
 
 
 ADR_UNDER_TEST = "0010-projection-names-the-graph-derived-artifact.md"
-ADR_AMENDER = "0008-cost-tiebreakers-below-the-constraint-order.md"
-ADR_AMENDED = "0004-ai-first-artifact-contracts.md"
 
 
 class AdrsFullTree(unittest.TestCase):
@@ -204,22 +202,12 @@ class Adrs(TreeCase):
     def test_an_unknown_contract_version_is_reported(self) -> None:
         self.rewrite(
             ADR_UNDER_TEST,
-            "contract_version: adr/2",
+            "contract_version: adr/1",
             "contract_version: adr/7",
         )
         code, output = run(validate_adrs, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "0010-", "names no contract")
-
-    def test_a_dangling_supersession_is_reported(self) -> None:
-        self.rewrite(
-            ADR_UNDER_TEST,
-            "status: accepted",
-            "status: superseded\nsuperseded_by: \"0404\"",
-        )
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0010-", "names no ADR")
 
     def test_a_duplicate_id_is_reported(self) -> None:
         source = next(self.root.glob("0010-*.md"))
@@ -247,29 +235,6 @@ class Adrs(TreeCase):
         code, output = run(validate_adrs, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "0010-")
-
-
-class AdrAmendments(TreeCase):
-    """The amendment relation needs both ends present, so it gets its own pair."""
-
-    source = REPO_ROOT / "docs" / "adr"
-    subset = (ADR_AMENDER, ADR_AMENDED)
-
-    def test_the_pair_is_clean_before_any_mutation(self) -> None:
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(0, code, output)
-
-    def test_an_amendment_naming_itself_is_reported(self) -> None:
-        self.rewrite(ADR_AMENDER, 'amends: "0004"', 'amends: "0008"')
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0008-", "names itself")
-
-    def test_an_amendment_naming_no_adr_is_reported(self) -> None:
-        self.rewrite(ADR_AMENDER, 'amends: "0004"', 'amends: "0404"')
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0008-", "names no ADR")
 
 
 class Components(TreeCase):

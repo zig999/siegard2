@@ -52,6 +52,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_ROOT = REPO_ROOT / "src" / "claude"
 SCHEMA_ROOT = REPO_ROOT / "schemas"
 SCRIPT_ROOT = REPO_ROOT / "scripts"
+TEMPLATE_ROOT = REPO_ROOT / "templates"
 FIXTURE_ROOT = REPO_ROOT / "fixtures"
 DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
 
@@ -92,14 +93,37 @@ SHIPPED_SCHEMAS = {
     "distribution-manifest.v1.json": "so a consumer can validate the manifest it is told to read",
     # Not shipped, and why.
     "spec.v1.json": None,  # governs specs/ in this repository; a governed repository writes none
-    "adr.v1.json": None,  # same, and kept readable only for fixtures/migration-adr-v1-v2/
-    "adr.v2.json": None,  # same
+    "adr.v1.json": None,  # same: the only ADR contract, and it governs this repository alone
     "skill.v1.json": None,  # a governed repository does not author framework components
     "agent.v1.json": None,  # same
     "plugin.v1.json": None,  # same; the harness reads plugin.json, the consumer does not validate it
     "artifact-class.v1.json": "the class contract a governed repository validates produced artifacts against",
     "artifact-classes.json": "its instance: the closed vocabulary of specs/0004 R8, framework-owned per specs/0012 R4",
-    "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json  # governs the source-only declaration; the consumer reads hooks/hooks.json
+    "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json
+    "knowledge-decision.v1.json": "the contract for a `decision` node in the consumer's knowledge tree",
+}
+
+# Every scaffold in templates/, and whether a consumer authors the artifact it skeletons. The two
+# audiences were mixed in one flat directory until 2026-07-31 and neither shipped. A scaffold ships
+# exactly when the contract it names ships, so this classification cannot drift from SHIPPED_SCHEMAS
+# without one of the two totality assertions catching it.
+SHIPPED_SCAFFOLDS = {
+    "concept.md": "the consumer's own bundle; concept/1 ships and concept-author writes into it",
+    "knowledge-object-definition.md": "the consumer authors knowledge objects; knowledge-object/1 ships",
+    "knowledge-object-rule.md": "same",
+    "knowledge-object-lifecycle.md": "same",
+    "knowledge-object-interface.md": "same",
+    "knowledge-object-boundary.md": "same",
+    "knowledge-object-process.md": "same",
+    "knowledge-decision.md": "the consumer's own decision records; knowledge-decision/1 ships",
+    "pack-declaration.md": "a consumer authoring a target pack declares it against pack-declaration/1",
+    "specification-delta.md": "produced during the consumer's workflow; specification-delta/1 ships",
+    "validation-evidence.md": "recorded by the consumer's layered validation; validation-evidence/1 ships",
+    # Not shipped, and why: each skeletons an artifact only this repository authors.
+    "specification.md": None,  # specs/ is the generator's; spec.v1.json does not ship
+    "adr.md": None,  # docs/adr/ is the generator's governance; adr.v1.json does not ship
+    "skill.md": None,  # a governed repository does not author framework components
+    "agent.md": None,  # same
 }
 
 # Scripts that ship as executables. specs/0008 R9 gives them `bin/`. workflow_lib.py is a
@@ -112,6 +136,20 @@ SHIPPED_EXECUTABLES = {
     "workflow_lib.py": "imported by both; ships beside them so the import resolves",
     "cli.py": "the exit-code convention orchestrate.py imports; a shipped import must ship",
     "derived_artifacts.py": "the closed derived set the reject-derived-write hook imports",
+    # A schema that ships needs a validator that ships, and a shipped skill or agent needs its
+    # machinery. Until 2026-07-31 the distribution carried contracts and prompts with neither, so
+    # a consumer could author a knowledge object and had nothing to check it with.
+    "frontmatter_lib.py": "import closure: every knowledge script below parses frontmatter through it",
+    "knowledge_graph_lib.py": "materializes knowledge-graph/1; imported by everything that reads the tree",
+    "validate_knowledge.py": "the boundary validator for knowledge-object/1, which ships",
+    "project_knowledge.py": "derives the projections the reject-derived-write hook protects",
+    "resolve_context.py": "produces context-package/1 for the root-selector agent, both of which ship",
+    "validate_concepts.py": "the boundary validator for concept/1, which ships with the concept-author agent",
+    "validate_artifacts.py": "holds a produced artifact to artifact-class/1 and artifacts-classes, both shipped",
+    "verify_judged.py": "checks the judged track against validation-evidence/1, which ships",
+    "generation_lib.py": "the plan derivation the generate skill drives",
+    "generate_code.py": "the generation pipeline the generate skill invokes",
+    "install_dist.py": "the installer and divergence check the upgrade skill invokes",
 }
 
 # Which capability class each source subtree carries, per specs/0006 R1.
@@ -323,6 +361,15 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
                 {"name": Path(name).stem, "class": "hook", "status": "active",
                  "path": f"hooks/{name}"}
             )
+
+    # Scaffolds. specs/0008 names `templates/` in the closed set as "Siegard's own", and until
+    # 2026-07-31 nothing populated it: a consumer authoring a knowledge object got the contract and
+    # no skeleton to start from. A scaffold ships when the contract it names ships, which is the
+    # same test SHIPPED_SCHEMAS applies one level up.
+    present = {p.name for p in TEMPLATE_ROOT.glob("*.md")}
+    assert_total(present, set(SHIPPED_SCAFFOLDS), "templates/", "SHIPPED_SCAFFOLDS")
+    for name in sorted(n for n, reason in SHIPPED_SCAFFOLDS.items() if reason):
+        add(f"templates/{name}", TEMPLATE_ROOT / name)
 
     # Executables. Their own directory is the import root, which is why workflow_lib.py is here.
     assert_imports_ship()

@@ -2,7 +2,7 @@
 id: "0012"
 title: Distribute the framework as a Claude Code plugin, and let the harness namespace it
 status: accepted
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # Distribute the framework as a Claude Code plugin

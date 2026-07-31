@@ -2,7 +2,7 @@
 id: "0005"
 title: Base the knowledge layer on OKF concepts, as a constrained superset
 status: accepted
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # Base the knowledge layer on OKF concepts, as a constrained superset
@@ -86,5 +86,6 @@ ever needed — `proposed` → `draft`, `accepted` → `stable`, `superseded` �
 
 This decision presupposes no unbuilt component, and it is exercised
 in the same change that records it: ten concepts converted, a schema enforcing them, and a validator
-proven to reject a bad `type`, a missing `generated`, a wrong `contract_version`, a `superseded` concept
-without `superseded_by`, a duplicate `id`, and a filename that disagrees with its `id`.
+proven to reject a bad `type`, a missing `generated`, a wrong `contract_version`, a duplicate `id`, and a
+filename that disagrees with its `id`. A `superseded` concept naming no replacement was rejected too, until
+`superseded_by` was removed from the contract on 2026-07-31.

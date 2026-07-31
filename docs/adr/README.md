@@ -11,62 +11,31 @@ Every ADR carries `status` in its frontmatter. The value determines whether the 
 |---|---|---|
 | `proposed` | The decision is recorded and argued, but nothing has exercised it | None. Binds nothing. Cite it as context, never as authority. |
 | `accepted` | The decision binds; dependent artifacts must conform | Full, at precedence level 2 |
-| `superseded` | Replaced by a later ADR, named in `superseded_by` | None. Kept for history and migration. |
+| `superseded` | Replaced by a later ADR, which this one names in its prose | None. Kept for history and migration. |
 
 A `proposed` ADR is not a weaker rule — it is not a rule. This distinction is what keeps design work
 from silently becoming an invariant.
 
-## Moving from proposed to accepted
+## Changing a status
 
-A `proposed` ADR becomes `accepted` when its **Validation required before acceptance** section is
-satisfied: the components it presupposes exist, and at least one fixture or test exercises the
-decision. Record what satisfied it, then change the status in the same change.
+No artifact needs approval to take effect — `CLAUDE.md` **Golden rule** states that, and it covers every
+artifact class carrying `status`, concepts included. An ADR in `docs/adr/` is followed; a concept in
+`docs/concepts/` is respected. Neither waits behind a gate.
 
-Do not accept an ADR because it still seems correct. Accept it because something exercised it.
+`proposed` remains available for a decision an author wants recorded and argued while explicitly not yet
+in force, and it carries the **Validation required before acceptance** section stating what would put it
+there. Use it when that distinction is real. Do not use it as a holding pen: an ADR written to be followed
+is written `accepted`.
 
-A concept carries no validation section, so the same standard reaches it through its use: a concept becomes
-`accepted` when an artifact that binds uses the term normatively — an accepted specification, an accepted
-ADR, `CLAUDE.md`, or a rule file. A concept cited only by a `proposed` specification stays `proposed`.
-Promoting one would give a definition binding force for a mechanism that does not exist, which is the same
-manufactured authority the paragraph above exists to prevent.
+## Revising and retiring a decision
 
-The bundle therefore carries two tiers on purpose, and a concept's tier is derivable rather than declared:
-read which artifacts cite it, and read their status.
+Neither relation is structured. `superseded_by` and `amends` were removed on 2026-07-31 by maintainer
+decision, as ceremony this repository does not need for a set this size.
 
-## Who may change a status
-
-Whether the validation section is satisfied is a judgment about evidence, not a mechanical check, so an
-agent does not decide it. An agent creates and revises `proposed` ADRs as ordinary work, and may state
-that the conditions now appear satisfied. Only a maintainer, or a deterministic approval mechanism this
-repository defines, changes a status to `accepted` or `superseded`.
-
-This file states what must be true before a status changes; `CLAUDE.md` states who may apply it. The
-restriction covers every artifact class carrying `status`, including `docs/concepts/`.
-
-## Amendment
-
-An ADR may revise *part* of another ADR's decision while leaving the rest in force. That relation is
-`amends: "<id>"` in the amending ADR's frontmatter, and it is not a status: the amended ADR stays
-`accepted`, because most of what it decided still binds.
-
-| Relation | The amended or replaced ADR | Use when |
-|---|---|---|
-| `amends` | stays `accepted`, keeps its other decisions | one statement is reversed or narrowed and the rest stands |
-| `superseded_by` | becomes `superseded` and binds nothing | the decision is retired whole |
-
-Two rules make an amendment honest rather than hidden:
-
-- an amendment binds only while the amending ADR is `accepted`, so creating one is ordinary work and
-  putting it into force is a maintainer's decision, exactly as for any status change;
-- the amended ADR must cite the amending id in its body, at the point of the change. `make validate`
-  rejects an amendment that is recorded only in frontmatter — a reader arrives at the decision, not at
-  its metadata, and a reversed statement they cannot see is worse than no record at all.
-
-`docs/concepts/amendment.md` defines the term. One ADR declares `amends`: ADR-0008 amends ADR-0004,
-reversing one sentence of ADR-0004's Consequences and leaving the rest of that decision in force. ADR-0004
-stays `accepted` and cites the amending id at the point of the change, which is what `make validate`
-checks. Both are `accepted` as of 2026-07-30, so the amendment binds rather than recording intent — which
-is what makes this the first exercised use of the relation.
+An ADR that revises part of another states so in its own prose and cites the id it revises; the revised
+ADR stays `accepted`, because most of what it decided still binds. An ADR retired whole takes
+`status: superseded` and names its replacement in prose. No validator resolves either target, so a
+citation that goes nowhere is now a reading error rather than a build failure.
 
 ## What belongs in an ADR, and what does not
 
@@ -89,20 +58,18 @@ similarity is textual, so a paraphrase passes. It bounds the failure rather than
 
 ## Format
 
-The frontmatter contract is `schemas/adr.v2.json`, enforced by `make validate`. Each ADR is validated
-against the contract it declares, so `schemas/adr.v1.json` remains readable and an ADR still declaring
-`adr/1` fails on that contract's terms rather than being misread — the mechanism
-`.claude/rules/compatibility.md` requires. Quote the id: YAML reads an unquoted `0010` as octal 8, and an
-unquoted `0008` as a string, so the unquoted form is neither safe nor type-stable.
+The frontmatter contract is `schemas/adr.v1.json`, enforced by `make validate`. It is the only ADR
+contract: a maintainer decided on 2026-07-31 that this repository does not manage ADR versions, so a
+change to that schema is made in place and recorded rather than carried as a second version. Quote the
+id: YAML reads an unquoted `0010` as octal 8, and an unquoted `0008` as a string, so the unquoted form is
+neither safe nor type-stable.
 
 ```markdown
 ---
 id: "0001"
 title: <decision, stated as an outcome>
 status: proposed | accepted | superseded
-contract_version: adr/2
-superseded_by: "<id>"   # only when superseded, and never otherwise
-amends: "<id>"          # only when revising part of another ADR, which stays accepted
+contract_version: adr/1
 ---
 
 # <title>

@@ -177,7 +177,7 @@ still appear to differ, which is the rule this document's **Decided elsewhere** 
 
 - **R17** — Expansion order is fixed by the [contract version](../docs/concepts/contract-version.md) the
   package records, and a change to the order that changes which knowledge objects a package holds is a
-  contract version change under `.claude/rules/compatibility.md`. This document still specifies no order,
+  contract version change under `specs/0013` R3a. This document still specifies no order,
   which the **Scope** above leaves free deliberately; what it forbids is an order free to differ between two
   runs of one contract version. Without this, R13's `claim-recorded` is a label: `specs/0004` R48 requires a
   discarded body to recompute to the recorded content hash, and a package truncated by a budget or a depth

@@ -14,5 +14,6 @@ generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 A reusable framework behavior with a testable contract, installed into a target repository through the
 [distribution](distribution.md).
 
-A capability requires at least one [fixture](fixture.md) that exercises it. A behavior with no fixture
-is not yet a capability — it is an intention.
+A capability does not require a [fixture](fixture.md). A fixture is the recommended evidence where the
+behavior's failure mode is not evident from its contract, and one is created only with maintainer
+authorization.

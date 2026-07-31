@@ -35,16 +35,15 @@ and a set of inheritances it does not restate.
 The one thing it adds that nothing else holds is the consequence of the single-pack rule. That a pack may
 *assume* its technology rather than abstract over it is what makes a template concrete enough to promise
 byte identity, and it is the reason the framework can refuse the vendor-neutral indirection that
-`.claude/rules/claude-code-authoring.md` forbids. Stating that consequence is the work here; the rest is
+`specs/0005` R4 forbids. Stating that consequence is the work here; the rest is
 citation.
 
 ### Decided elsewhere, deliberately not restated here
 
 - what a pack declares, and what it must leave to its agent's own knowledge of the stack — `specs/0004`,
   with the shape recorded in [target pack](../docs/concepts/target-pack.md);
-- that a pack is framework work rather than the architecture of one downstream system, and that a pack is
-  admitted only when a fixture exercises it — `.claude/rules/claude-code-authoring.md` **Target packs**,
-  which is the authority for both;
+- that a pack is framework work rather than the architecture of one downstream system — `specs/0005` R13;
+  and that a fixture is optional evidence rather than a condition of admission — `specs/0005` R12;
 - that a pack carries one stack, holds one producer per declared artifact class, and carries no business
   rule — `specs/0006` R10;
 - the closed vocabulary of [artifact classes](../docs/concepts/artifact-class.md) and the
@@ -54,7 +53,7 @@ citation.
   grant its role requires — `specs/0006` R5 and R6;
 - that a target path the manifest does not lock comes from a validated, frozen
   [placement decision](../docs/concepts/placement-decision.md) — `specs/0004` R52;
-- breaking change and migration rules — `.claude/rules/compatibility.md`.
+- breaking change and migration rules — `specs/0013` R3a and R10–R12.
 
 ## Definitions
 

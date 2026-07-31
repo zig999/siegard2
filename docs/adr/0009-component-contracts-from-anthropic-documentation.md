@@ -2,7 +2,7 @@
 id: "0009"
 title: Derive component contracts from Anthropic's documented constraints
 status: accepted
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # Derive component contracts from Anthropic's documented constraints

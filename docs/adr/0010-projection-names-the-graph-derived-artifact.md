@@ -2,7 +2,7 @@
 id: "0010"
 title: The term projection names the graph-derived artifact, and derived workflow state is renamed
 status: accepted
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # The term projection names the graph-derived artifact, and derived workflow state is renamed

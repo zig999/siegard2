@@ -47,9 +47,9 @@ longer in this repository — `specs/0001` **Provenance** records where it went.
   **Determinism and state**;
 - the security invariants binding every shipped component — `CLAUDE.md` **Security**, and
   [least privilege](../docs/concepts/least-privilege.md);
-- where instruction content belongs, given the harness's loading semantics —
-  `.claude/rules/claude-code-authoring.md`;
-- what an artifact passed between components must carry — `.claude/rules/contracts.md`;
+- where instruction content belongs, given the harness's loading semantics — `specs/0006`, which fixes
+  the capability classes, and `specs/0010` for a hook;
+- what an artifact passed between components must carry — R16a below;
 - the workflow phases themselves, and the transition rules over them — `specs/0001`.
 
 ## Definitions
@@ -128,8 +128,9 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
   dependency in their declarations.
 - **R11** — A capability states its own tool and permission grant. The absence of a statement is not a
   grant.
-- **R12** — A capability is admitted only when a [fixture](../docs/concepts/fixture.md) exercises it as a
-  downstream-shaped case. A declared behavior with no fixture is an intention, not a capability.
+- **R12** — A capability is not blocked for want of a [fixture](../docs/concepts/fixture.md). A fixture is
+  the recommended evidence where a capability's failure mode is not evident from its contract; it is
+  proposed rather than assumed, and created only with maintainer authorization.
 - **R13** — A capability carries no business rule of any single downstream system, and no architecture
   chosen for one. A [target pack](../docs/concepts/target-pack.md) carries a technology stack, which is
   a different thing: it serves any repository on that stack.
@@ -142,6 +143,16 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
   it, so a later reader can reproduce the decision without the session that made it.
 - **R16** — An artifact that fails its contract at a boundary is rejected. Nothing repairs it in place,
   and nothing consumes it while the failure stands.
+- **R16a** — An artifact passed between capabilities names its producer and its consumer, its valid
+  states and failure outcomes, a stable identifier, and the evidence behind a material decision, and it
+  is validated at the boundary before consumption. Where it carries control flow, a transition guard, or
+  persisted state, or where a consumer parses it to reach a decision, it MUST have a versioned schema in
+  the framework's contract set. Where it only explains something to a reader, prose is the correct form
+  and a schema is ceremony.
+- **R16b** — A default that changes behavior is stated in the component that applies it, never only in
+  whatever reads it. A value a component supplies silently when a field is absent is a hidden default and
+  MUST be rejected: a reader of the artifact cannot see it, and two components reading the same artifact
+  would each be free to invent a different one.
 
 ### Limits
 

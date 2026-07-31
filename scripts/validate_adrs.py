@@ -4,16 +4,17 @@
 This script is a boundary validator: it holds no rules of its own. Every frontmatter
 constraint lives in the schema file, which is the single authority. The checks
 implemented here are the ones a per-file JSON Schema cannot express — cross-file id
-uniqueness, id/filename agreement, supersession and amendment targets that must exist,
-the citation an amendment owes its reader, the sections docs/adr/README.md requires for
-a given status, and the non-restatement rule that same file states: a Decision section
-cites an operative rule, it does not reproduce one. Frontmatter parsing is shared via
+uniqueness, id/filename agreement, the sections docs/adr/README.md requires for a given
+status, and the non-restatement rule that same file states: a Decision section cites an
+operative rule, it does not reproduce one. Frontmatter parsing is shared via
 scripts/frontmatter_lib.py.
 
-Two contract versions are readable. `.claude/rules/compatibility.md` requires a consumer
-to select behavior on `contract_version` rather than infer it from shape, so each ADR is
-validated against the contract it declares. An ADR still declaring `adr/1` therefore
-fails on that contract's terms — detectably outdated rather than quietly non-conforming.
+Supersession and amendment relations were removed on 2026-07-31 by maintainer decision:
+a retired or revised decision says so in prose, and no validator resolves the target.
+
+One contract version exists. A maintainer decided on 2026-07-31 that this repository does
+not manage ADR versions, so `adr/1` is the only readable contract and an ADR declaring
+anything else is rejected by name rather than migrated.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
@@ -35,7 +36,6 @@ from cli import cannot_run
 
 SCHEMA_BY_VERSION = {
     "adr/1": REPO_ROOT / "schemas" / "adr.v1.json",
-    "adr/2": REPO_ROOT / "schemas" / "adr.v2.json",
 }
 RESERVED = {"README.md"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -205,10 +205,6 @@ def main() -> int:
     failures: list[str] = []
     seen_ids: dict[str, str] = {}
     versions: dict[str, int] = {}
-    statuses: dict[str, str] = {}  # id -> status
-    bodies: dict[str, str] = {}  # id -> body
-    supersessions: list[tuple[str, str]] = []  # (referrer path, target id)
-    amendments: list[tuple[str, str, str]] = []  # (referrer path, amender id, target id)
 
     for path in adrs:
         rel = display(path)
@@ -255,8 +251,6 @@ def main() -> int:
             failures.append(f"{rel}: id '{aid}' already used by {seen_ids[aid]}")
         else:
             seen_ids[aid] = rel
-            statuses[aid] = data["status"]
-            bodies[aid] = body
 
         if stem_id != aid:
             failures.append(f"{rel}: filename must start with '{aid}-' to match id '{aid}'")
@@ -279,36 +273,6 @@ def main() -> int:
                 f"blockquote if the repetition is deliberate\n"
                 f"      ADR:  {line[:84]}\n"
                 f"      rule: {rule[:84]}"
-            )
-
-        if "superseded_by" in data:
-            supersessions.append((rel, data["superseded_by"]))
-        if "amends" in data:
-            amendments.append((rel, aid, data["amends"]))
-
-    for rel, target in supersessions:
-        if target not in seen_ids:
-            failures.append(f"{rel}: superseded_by '{target}' names no ADR in {display(root)}")
-
-    # An amendment revises part of a live decision. Each condition below marks a
-    # relation that would leave a reader with the wrong decision in hand.
-    for rel, amender, target in amendments:
-        if target == amender:
-            failures.append(f"{rel}: amends '{target}' names itself")
-            continue
-        if target not in seen_ids:
-            failures.append(f"{rel}: amends '{target}' names no ADR in {display(root)}")
-            continue
-        if statuses[target] == "superseded":
-            failures.append(
-                f"{rel}: amends '{target}', which is superseded — amend the ADR that "
-                f"replaced it, or supersede it in turn"
-            )
-        citation = f"ADR-{amender}"
-        if citation not in bodies[target]:
-            failures.append(
-                f"{seen_ids[target]}: is amended by {citation} and never cites it — a "
-                f"reader of this decision cannot see the frontmatter that moved it"
             )
 
     schemas = ", ".join(display(SCHEMA_BY_VERSION[v]) for v in sorted(SCHEMA_BY_VERSION))

@@ -2,7 +2,7 @@
 id: "0001"
 title: Fix the proposal validity window at thirty days
 status: proposed
-contract_version: adr/2
+contract_version: knowledge-decision/1
 ---
 
 # Fix the proposal validity window at thirty days

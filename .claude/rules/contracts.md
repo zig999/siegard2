@@ -34,81 +34,23 @@ something, do not schematize it — a schema around prose adds ceremony and no g
 Prefer structured data for control flow. Use prose for explanation and for content that cannot be
 represented meaningfully as a contract.
 
-## Conforming example
+## What a conforming contract looks like
 
-A reviewer agent returns a verdict that an orchestrator uses to choose the next transition. Because
-the verdict drives control flow, it needs a schema.
+A reviewer agent returns a verdict an orchestrator uses to choose the next transition. Because the
+verdict drives control flow, it needs a schema — and each element earns its place:
 
-`schemas/review-verdict.v1.json`:
+| Element | What it buys |
+|---|---|
+| `contract_version: { "const": "review-verdict/1" }` | the consumer rejects an artifact it was not built to read |
+| `verdict_id`, `subject_id` | traceability from a recorded event back to this artifact |
+| `producer` | the named producer the rules above require |
+| `state: { "enum": [...] }` | the orchestrator's transition is a lookup, not an interpretation |
+| `blocking_reason`, required by `if`/`then` when `state` is `blocked` | the failure outcome carries its reason mechanically |
+| `evidence: { "minItems": 1 }` | a material decision cannot be recorded without support |
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://siegard.dev/schemas/review-verdict.v1.json",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["contract_version", "verdict_id", "subject_id", "producer", "state", "evidence"],
-  "properties": {
-    "contract_version": { "const": "review-verdict/1" },
-    "verdict_id": { "type": "string", "pattern": "^rv_[0-9a-z]{8}$" },
-    "subject_id": { "type": "string", "description": "id of the artifact under review" },
-    "producer": { "type": "string", "description": "agent name that produced this verdict" },
-    "state": { "enum": ["accepted", "rejected", "blocked"] },
-    "blocking_reason": {
-      "type": "string",
-      "description": "required when state is blocked; names the missing input"
-    },
-    "evidence": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["path", "claim"],
-        "properties": {
-          "path": { "type": "string" },
-          "line": { "type": "integer", "minimum": 1 },
-          "claim": { "type": "string" }
-        }
-      }
-    }
-  },
-  "allOf": [
-    {
-      "if": { "properties": { "state": { "const": "blocked" } }, "required": ["state"] },
-      "then": { "required": ["blocking_reason"] }
-    }
-  ]
-}
-```
+Plus `additionalProperties: false`, so a field the producer invented is rejected rather than ignored.
+`schemas/impact-analysis.v1.json` and `schemas/workflow-event.v1.json` are worked examples in this
+repository; read one before writing a new contract.
 
-A conforming instance:
-
-```json
-{
-  "contract_version": "review-verdict/1",
-  "verdict_id": "rv_7f3a91c0",
-  "subject_id": "spec_workflow_events_v2",
-  "producer": "spec-reviewer",
-  "state": "rejected",
-  "evidence": [
-    {
-      "path": "specs/workflow-events.md",
-      "line": 42,
-      "claim": "transition guard is stated in prose only and has no testable predicate"
-    }
-  ]
-}
-```
-
-What makes it conforming, and what each element buys:
-
-- `contract_version` — the consumer can reject an artifact it was not built to read;
-- `verdict_id`, `subject_id` — traceability from a recorded event back to this artifact;
-- `producer` — the named producer the rules above require;
-- `state` as a closed enum — the orchestrator's transition is a lookup, not an interpretation;
-- conditional `blocking_reason` — the failure outcome carries the reason mechanically;
-- `evidence` with `minItems: 1` — a material decision cannot be recorded without support.
-
-A prose review summary may accompany this artifact for a human reader. It is not the contract, and no
-control flow may depend on it.
+A prose summary may accompany such an artifact for a human reader. It is not the contract, and no control
+flow may depend on it.

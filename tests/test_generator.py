@@ -104,10 +104,18 @@ class Layout(Built):
         for name in sorted(verify_dist.ALLOWED_ROOT - occupied):
             self.assertFalse((self.root / name).exists(), f"{name}/ shipped with nothing in it")
 
-    def test_at_least_one_allowed_directory_is_still_unoccupied(self) -> None:
-        """Otherwise the assertion above would pass by having nothing to check."""
+    def test_the_closed_set_is_fully_occupied(self) -> None:
+        """Every directory specs/0008 R7 allows now ships with something in it.
+
+        This inverts what stood here. The old assertion required at least one allowed directory to
+        be unoccupied, so that the emptiness check above had something to check; `templates/` was
+        the last one empty, and populating it on 2026-07-31 made that guard fail. It failed
+        correctly: the distribution now fills its whole declared layout, and the emptiness check
+        is vacuous *because there is nothing left to omit*. Stating that here keeps the vacuity
+        recorded rather than silent — if a future R7 adds a directory, this fails until it ships.
+        """
         occupied = {p.split("/")[0] for p in self.files if "/" in p}
-        self.assertTrue(verify_dist.ALLOWED_ROOT - occupied)
+        self.assertEqual(set(), verify_dist.ALLOWED_ROOT - occupied)
 
     def test_no_rules_and_no_packs(self) -> None:
         """specs/0008 R10 and R23."""
@@ -168,7 +176,7 @@ class ShippedSelection(unittest.TestCase):
 
     def test_internal_schemas_do_not_ship(self) -> None:
         """A governed repository writes no specification, ADR, or framework component."""
-        for name in ("spec.v1.json", "adr.v1.json", "adr.v2.json", "skill.v1.json", "agent.v1.json"):
+        for name in ("spec.v1.json", "adr.v1.json", "skill.v1.json", "agent.v1.json"):
             self.assertIsNone(generate_dist.SHIPPED_SCHEMAS[name], name)
 
     def test_an_unclassified_schema_is_refused(self) -> None:

@@ -2,7 +2,7 @@
 id: "0004"
 title: Make inter-agent artifacts machine-consumable, and rank decision criteria accordingly
 status: accepted
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # Make inter-agent artifacts machine-consumable, and rank decision criteria accordingly
@@ -28,9 +28,9 @@ example of each. This ADR deliberately does not reproduce that content — two c
 and the rule is the copy that loads while someone is authoring an artifact.
 
 `CLAUDE.md` **Decision order** governs how competing designs are ranked. This ADR fixed its original
-four-criterion form. **ADR-0008 amends that form**, admitting a second tier of tiebreakers beneath the
-constraints, and `CLAUDE.md` carries the amended version rather than the one this ADR first recorded. The
-amendment reverses one sentence of **Consequences** below, which is the sentence that dropped
+four-criterion form. **ADR-0008 revises that form**, admitting a second tier of tiebreakers beneath the
+constraints, and `CLAUDE.md` carries the revised version rather than the one this ADR first recorded. That
+revision reverses one sentence of **Consequences** below, which is the sentence that dropped
 maintainability and context cost; every other decision here stands.
 
 What this record holds that has no other home is why human convenience was excluded from the ranking at

@@ -20,7 +20,7 @@ decides four things:
 4. what a declaration may not contain.
 
 It decides nothing about which classes exist, which is `specs/0006`; nothing about the contract of an
-*artifact* passed between capabilities, which `.claude/rules/contracts.md` already holds; and nothing
+*artifact* passed between capabilities, which `specs/0005` R16a already holds; and nothing
 about where a declaration file lives, which is `specs/0008`.
 
 The purpose is narrow and worth stating plainly: `specs/0005` R3 puts selection in Claude Code's hands.
@@ -46,11 +46,12 @@ this document turns into a requirement.
 ### Decided elsewhere, deliberately not restated here
 
 - what an artifact passed between capabilities must carry, and which criticality demands a versioned
-  schema — `.claude/rules/contracts.md`;
+  schema — `specs/0005` R16a;
 - that a component states its own tool and permission grant — `CLAUDE.md` **Security**;
 - the harness's own frontmatter requirements — `schemas/skill.v1.json`, `schemas/agent.v1.json`;
-- how a description should be written to be matched well — `.claude/rules/claude-code-authoring.md` and
-  the practices ADR-0009 records but does not yet bind.
+- how a description should be written to be matched well — `specs/0006` and
+  the practices `docs/adr/0009-component-contracts-from-anthropic-documentation.md` records but does
+  not yet bind.
 
 ## Definitions
 

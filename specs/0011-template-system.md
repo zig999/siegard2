@@ -132,7 +132,7 @@ This specification uses these terms as the concept bundle defines them:
   so that a later upgrade can tell a customization from a divergence and stop rather than overwrite.
 - **R17** — A template's contract version changes whenever its output changes for the same input. That is a
   change every consumer can observe in a diff, so it is a version bump under
-  `.claude/rules/compatibility.md` rather than a revision. The bump rate for a template is therefore high —
+  `specs/0013` R3a rather than a revision. The bump rate for a template is therefore high —
   reformatting whitespace in produced output is a bump — and that is the price of R2 rather than a defect in
   this rule. A maintainer who finds the rate intolerable has found an argument about which artifact classes
   belong on the deterministic track at all, not a licence to skip the bump quietly.

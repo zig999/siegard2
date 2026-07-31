@@ -20,9 +20,10 @@ five things:
 5. the framework's relationship to the harness it targets, including when an externally sourced constraint
    is re-verified.
 
-It does not define what makes a change breaking, or what a breaking change requires. That is
-`.claude/rules/compatibility.md`, which is the single authority and is cited rather than repeated. This
-document decides the *release mechanics* around that rule.
+R3a defines what makes a change breaking and what a breaking change requires; the rest of this document
+decides the release mechanics around it. That test lived in `.claude/rules/compatibility.md` until
+2026-07-31, where a consumer bound by it could not read it — that file still governs a change to this
+repository's own artifacts, which is a separate question from what the product promises.
 
 It governs the framework Siegard ships. It does not govern this repository's own development process, which
 `CLAUDE.md` defines.
@@ -49,9 +50,9 @@ is the strongest available argument for stating it.
 ### Decided elsewhere, deliberately not restated here
 
 - what makes a change breaking, what a breaking change requires, how a contract is versioned, and when
-  compatibility should *not* be preserved — `.claude/rules/compatibility.md`, the authority for all four;
-- the status vocabulary of a specification or an ADR, who may change a status, and how an
-  [amendment](../docs/concepts/amendment.md) differs from a supersession — `docs/adr/README.md`;
+  compatibility should *not* be preserved — R3a and R10 through R12 below;
+- the status vocabulary of this repository's own specifications and decision records —
+  `docs/adr/README.md`, which governs the generator rather than the product;
 - the lifecycle of one [capability](../docs/concepts/capability.md) — `specs/0006` R14 through R17;
 - what an installation and an upgrade do, and the distribution manifest that records them — `specs/0008`;
 - how a [target pack](../docs/concepts/target-pack.md)'s version relates to the framework's — `specs/0012`
@@ -64,7 +65,6 @@ This specification uses these terms as the concept bundle defines them:
 [distribution](../docs/concepts/distribution.md),
 [capability](../docs/concepts/capability.md),
 [target pack](../docs/concepts/target-pack.md),
-[amendment](../docs/concepts/amendment.md),
 [accepted](../docs/concepts/accepted.md),
 [specification](../docs/concepts/specification.md),
 [provenance](../docs/concepts/provenance.md),
@@ -85,6 +85,17 @@ This specification uses these terms as the concept bundle defines them:
   one release may ship several contracts at different versions.
 - **R3** — A framework version is never reused, and a released version is never rewritten. A defect in a
   release is corrected by a further release.
+- **R3a** — A change to the framework is **breaking** when it removes or renames a contract, a shipped
+  component, or a scaffold; alters a schema so that instances previously valid become invalid or
+  instances previously invalid become valid; changes workflow semantics, including a transition guard or
+  a terminal state; invalidates a persisted artifact or the state derived from it; or changes the
+  observable contract of an installed user-invocable capability. This list is the test, and a change
+  matching any entry is breaking regardless of how small its diff is. A breaking change states the break
+  in this specification family, defines the migration R10 through R12 require, versions the affected
+  contract rather than mutating it in place, and updates the release record R4 and R5 require.
+  Compatibility that would retain incorrect or unsafe behavior is not preserved: it is broken, and the
+  exception is recorded with its migration. An undocumented break is a defect; a documented one is a
+  decision.
 
 ### What a release records
 
@@ -118,6 +129,16 @@ This specification uses these terms as the concept bundle defines them:
 - **R12** — A migration does not run implicitly during an upgrade. It is invoked deliberately, reports what
   it changed, and is idempotent, so that running it twice is safe and running it once is a decision the
   consumer made.
+
+**Recorded exception, 2026-07-31.** `superseded_by` and `amends` were removed from `schemas/adr.v1.json`,
+`schemas/adr.v2.json`, `schemas/spec.v1.json`, and `schemas/concept.v1.json` **in place**, without the new
+version file R11 and R3a would otherwise require. R3a admits a documented break, and this is the document. It rests on three facts: the change only relaxes, so no
+document valid before is invalid after; no artifact in this repository declared either field except ADR-0008,
+changed in the same commit; and of the four contracts only `concept/1` ships, where `additionalProperties: true`
+leaves a downstream document still carrying `superseded_by` valid and merely unconstrained. What it costs: a
+consumer pinned to `concept/1` now sees a contract that accepts a `superseded` concept naming no replacement,
+under a version number that did not move. `schemas/contract-versions.json` was re-locked with `--update`, so
+the digest records the constraints that now hold rather than the ones that did.
 
 ### The harness
 
@@ -172,7 +193,7 @@ available and was not taken here.
    disjoint page sets is what R13 produces by design; two dates over *one* page is the contradiction R14
    forbids, and nothing checks for it yet.
 5. The [release record](../docs/concepts/release-record.md) of R4 has a versioned schema in `schemas/`. A
-   consumer parses it to decide whether to upgrade, which `.claude/rules/contracts.md` places in the row
+   consumer parses it to decide whether to upgrade, which `specs/0005` R16a places in the row
    requiring one. It arrives with the first release that produces one, on the same rule `specs/0008`
    condition 7 applies to the distribution manifest.
 6. R6 has a mechanism. The framework has never been tested against a pinned harness version and nothing

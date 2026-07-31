@@ -52,7 +52,7 @@ PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 # body sections, and one skeleton for six types would be a skeleton for none of them.
 SCHEMA_BY_KIND = {
     "specification": "spec.v1.json",
-    "adr": "adr.v2.json",
+    "adr": "adr.v1.json",
     "concept": "concept.v1.json",
     "knowledge-object-definition": "knowledge-object.v1.json",
     "knowledge-object-rule": "knowledge-object.v1.json",
@@ -60,6 +60,7 @@ SCHEMA_BY_KIND = {
     "knowledge-object-interface": "knowledge-object.v1.json",
     "knowledge-object-boundary": "knowledge-object.v1.json",
     "knowledge-object-process": "knowledge-object.v1.json",
+    "knowledge-decision": "knowledge-decision.v1.json",
     "skill": "skill.v1.json",
     "agent": "agent.v1.json",
     "pack-declaration": "pack-declaration.v1.json",

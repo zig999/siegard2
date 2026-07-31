@@ -27,7 +27,7 @@ machine consumption, which is why it may repeat what the graph states and why no
 home of that statement.
 
 The set is closed. `specs/0003-knowledge-ontology-and-notation.md` R50 limits it to the bundle `index.md`, a
-glossary, and a context map, and a fourth requires a [fixture](fixture.md) that demands it. R51 holds both
+glossary, and a context map, and a fourth requires a recorded case that demands it. R51 holds both
 properties above.
 
 Derived workflow state is not a projection in this repository's vocabulary; it is

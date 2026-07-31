@@ -180,6 +180,6 @@ available and was not taken here.
    validator rejects the artifact. Without this, R16's honesty is a disclaimer rather than a design.
 5. The four candidates named in `docs/bootstrap.md` are each either implemented or dropped with a reason,
    so this document is grounded in hooks that exist rather than in hooks that were imagined.
-6. `.claude/rules/security.md` is written from what the first hook actually needed — sanitization, path,
+6. The security detail the first hook actually needed is recorded — sanitization, path,
    subprocess, and network detail — which is what open question 5 says turns a plan into a rule distilled
    from working code.

@@ -1,19 +1,17 @@
 """Contract versioning and migration, over `.claude/rules/compatibility.md`.
 
 That rule states four things a breaking change owes and, until this suite, held none of them
-to a mechanism. `adr/1` → `adr/2` shipped with no migration path and no migration test;
-`docs/bootstrap.md` recorded the debt, and a recorded debt is not a check.
+to a mechanism.
 
-Two halves, and the second is what makes the first worth anything:
+No contract in this repository carries a second version: the one that did — `adr/1` →
+`adr/2` — was collapsed on 2026-07-31 when a maintainer decided ADR versions are not managed
+here, and its fixture went with it. What remains under test is the machinery that will meet
+the first real bump: the refusals a migration owes, and the coverage check that fails a bump
+registering no path. `specs/0013` R11 asks for a migration tested against the old behavior;
+with no migration in the registry, R11 is unexercised rather than satisfied, and that is
+stated here rather than implied by a green suite.
 
-- the migration exists and works — `fixtures/migration-adr-v1-v2/before.md` crosses from
-  `adr/1` to `adr/2` and validates on the other side;
-- the migration was **needed** — the same document is rejected by `adr/2` before it crosses.
-  Without that assertion a migration that returned its input unchanged would pass, and the
-  rule's requirement of a test "that fails against the old behavior" would be satisfied by
-  a test that cannot fail.
-
-The contract-version checks in the second class are the same argument applied to the schemas
+The contract-version checks are the same argument applied to the schemas
 themselves: a constraint change with no version bump must be detected, and an edit to a
 description must not be, because the rule calls one breaking and not the other.
 """
@@ -27,58 +25,17 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import yaml
 from jsonschema import Draft202012Validator
 
 import check_contract_versions as cv
-from frontmatter_lib import split_frontmatter
 from migrate_contracts import MIGRATIONS, MigrationError, migrate
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = REPO_ROOT / "schemas"
-FIXTURE = REPO_ROOT / "fixtures" / "migration-adr-v1-v2" / "before.md"
 
 
 def validator(name: str) -> Draft202012Validator:
     return Draft202012Validator(json.loads((SCHEMAS / name).read_text()))
-
-
-class AdrMigration(unittest.TestCase):
-    """The `adr/1` → `adr/2` path, and the break that made it owed."""
-
-    def setUp(self) -> None:
-        self.doc, _body = split_frontmatter(FIXTURE.read_text())
-
-    def test_the_fixture_is_a_real_v1_document(self) -> None:
-        """Positive control: without this, a rejection test proves only that junk is rejected."""
-        self.assertEqual([], list(validator("adr.v1.json").iter_errors(self.doc)))
-
-    def test_v2_rejects_the_unmigrated_document(self) -> None:
-        """The break is real: 'previously valid instances become invalid' (compatibility.md)."""
-        errors = list(validator("adr.v2.json").iter_errors(self.doc))
-        self.assertTrue(
-            any("contract_version" in list(e.path) for e in errors),
-            f"adr/2 was expected to reject an adr/1 document on contract_version; got {errors}",
-        )
-
-    def test_migration_produces_a_valid_v2_document(self) -> None:
-        migrated = migrate(self.doc, "adr/1", "adr/2")
-        self.assertEqual([], list(validator("adr.v2.json").iter_errors(migrated)))
-
-    def test_migration_does_not_mutate_its_input(self) -> None:
-        """A migration that edited in place would corrupt the caller's copy of the old version."""
-        before = json.dumps(self.doc, sort_keys=True)
-        migrate(self.doc, "adr/1", "adr/2")
-        self.assertEqual(before, json.dumps(self.doc, sort_keys=True))
-
-    def test_migration_preserves_every_other_field(self) -> None:
-        migrated = migrate(self.doc, "adr/1", "adr/2")
-        for field in ("id", "title", "status"):
-            self.assertEqual(self.doc[field], migrated[field])
-
-    def test_amends_is_optional_so_nothing_must_be_invented(self) -> None:
-        """`amends` is what v2 added; a migration that supplied one would author a fact."""
-        self.assertNotIn("amends", migrate(self.doc, "adr/1", "adr/2"))
 
 
 class MigrationRefusals(unittest.TestCase):
@@ -124,9 +81,15 @@ class MigrationCoverage(unittest.TestCase):
         found = {"widget/1": {"file": "widget.v1.json", "schema": {}, "name": "widget"}}
         self.assertEqual([], cv.check_migration_coverage(found))
 
-    def test_the_registry_is_not_empty(self) -> None:
-        """A coverage check over an empty registry would pass by having nothing to cover."""
-        self.assertIn(("adr/1", "adr/2"), MIGRATIONS)
+    def test_the_registry_is_empty_and_that_is_recorded(self) -> None:
+        """No contract carries a second version, so coverage passes by having nothing to cover.
+
+        This is the assertion that keeps a green suite from reading as migration coverage.
+        When the first real bump lands, this test fails and is replaced by the pair the old
+        `adr/1` -> `adr/2` fixture used to hold: the document crosses, and it was rejected
+        before it crossed.
+        """
+        self.assertEqual({}, MIGRATIONS)
 
 
 class ConstraintDigest(unittest.TestCase):
@@ -275,17 +238,6 @@ class LockIntegrity(unittest.TestCase):
         _count, problems = cv.check(update=False)
         self.assertEqual([], problems)
 
-
-class FixtureIsNotAnAdr(unittest.TestCase):
-    """The migration fixture must never be mistaken for a decision this repository made."""
-
-    def test_it_lives_outside_the_adr_directory(self) -> None:
-        self.assertFalse((REPO_ROOT / "docs" / "adr" / "9001-a-decision.md").exists())
-
-    def test_its_id_is_outside_the_allocated_range(self) -> None:
-        data = yaml.safe_load(FIXTURE.read_text().split("---")[1])
-        allocated = {p.name[:4] for p in (REPO_ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md")}
-        self.assertNotIn(data["id"], allocated)
 
 
 if __name__ == "__main__":

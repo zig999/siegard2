@@ -26,11 +26,6 @@
       "enum": ["proposed", "accepted", "superseded"],
       "description": "Siegard lifecycle vocabulary, shared with docs/adr/README.md. DIVERGES from OKF, which defines draft|stable|deprecated on this field. Documented in ADR-0005."
     },
-    "superseded_by": {
-      "type": "string",
-      "pattern": "^concept\\.[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "Required when status is superseded."
-    },
     "contract_version": {
       "const": "concept/1",
       "description": "Siegard addition. A consumer rejects an artifact it was not built to read rather than inferring version from shape."
@@ -91,11 +86,5 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
       "description": "OKF lifecycle field. Date after which content should be re-verified."
     }
-  },
-  "allOf": [
-    {
-      "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
-      "then": { "required": ["superseded_by"] }
-    }
-  ]
+  }
 }

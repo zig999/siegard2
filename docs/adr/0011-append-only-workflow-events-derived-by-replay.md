@@ -2,7 +2,7 @@
 id: "0011"
 title: Record workflow history as an append-only event log, and replay it for state
 status: accepted
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # Record workflow history as an append-only event log, and replay it for state

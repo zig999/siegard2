@@ -4,9 +4,9 @@
 This script is a boundary validator: it holds no rules of its own. Every frontmatter
 constraint lives in the schema file, which is the single authority. The checks
 implemented here are the ones a per-file JSON Schema cannot express — cross-file id
-uniqueness, id/filename agreement, supersession targets that must exist, the sections a
-specification requires for a given status, requirement ids that must be citable,
-concept links that must resolve, and the acceptance order the set declares about itself.
+uniqueness, id/filename agreement, the sections a specification requires for a given
+status, requirement ids that must be citable, concept links that must resolve, and the
+acceptance order the set declares about itself.
 Frontmatter parsing is shared via scripts/frontmatter_lib.py.
 
 Three checks exist because a specification carries obligations an ADR does not:
@@ -352,7 +352,6 @@ def main() -> int:
 
     failures: list[str] = []
     seen_ids: dict[str, str] = {}
-    supersessions: list[tuple[str, str]] = []  # (referrer path, target id)
     # Collected across the loop because a cross-file check cannot run until every file
     # has been read: a reference is only unresolved once the whole set is known.
     bodies: dict[str, str] = {}
@@ -417,15 +416,6 @@ def main() -> int:
         filenames[sid] = path.name
         statuses[sid] = data["status"]
         prerequisites[sid] = acceptance_prerequisites(body)
-
-        if "superseded_by" in data:
-            supersessions.append((rel, data["superseded_by"]))
-
-    for rel, target in supersessions:
-        if target not in seen_ids:
-            failures.append(
-                f"{rel}: superseded_by '{target}' names no specification in {display(root)}"
-            )
 
     # Cross-file, so they run once the whole set is known rather than per file.
     for sid, body in sorted(bodies.items()):

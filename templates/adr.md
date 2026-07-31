@@ -2,7 +2,7 @@
 id: "{{id}}"
 title: {{title}}
 status: proposed
-contract_version: adr/2
+contract_version: adr/1
 ---
 
 # {{title}}

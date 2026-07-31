@@ -42,16 +42,16 @@ It governs the framework Siegard ships. It does not govern this repository's own
 | The workflow every change request follows, and its transient artifacts | spec 0001 |
 | The maturity ladder, and what an assertion binds | spec 0001 R23–R26 |
 | How software is produced from this representation | `specs/0004` |
-| The OKF-derived frontmatter precedent and its one divergence | ADR-0005 |
-| When an artifact requires a versioned schema | `.claude/rules/contracts.md` |
-| What makes a change breaking, and how a version is bumped | `.claude/rules/compatibility.md` |
-| That a derived tree is never hand-edited, and that hidden defaults are rejected | `.claude/rules/distribution.md` |
+| The OKF-derived frontmatter precedent and its one divergence | R-block **Notation** below; `docs/adr/0005-okf-derived-concept-model.md` records why |
+| When an artifact requires a versioned schema | `specs/0005` R16a |
+| What makes a change breaking, and how a version is bumped | `specs/0013` R3a, R10–R12 |
+| That a hidden default is rejected | `specs/0005` R16b |
 
 ### One deliberate naming decision
 
 The node type describing what a bounded context exposes is named
 [interface](../docs/concepts/interface.md), not "contract". This repository already uses *contract* for an
-agreement between framework components — `contract_version`, `.claude/rules/contracts.md`, the component
+agreement between framework components — `contract_version`, `specs/0005` R16a, the component
 contracts of ADR-0009. Using the same word for a domain-level interface would put one name on two things,
 which `CLAUDE.md` **Authority placement** forbids.
 
@@ -126,7 +126,7 @@ Six node types. Five are knowledge objects; the sixth is not.
 | [interface](../docs/concepts/interface.md) | What does this context expose or consume? | `version`, `schema`, `ownership` | a break requires a version bump and a migration |
 | [boundary](../docs/concepts/boundary.md) | What is the scope, and who owns it? | `subdomain_type` | every object belongs to exactly one; crossing requires an interface |
 | [process](../docs/concepts/process.md) | In which order, and with what outcome? | `steps[]` | every referenced id exists; no step content restated |
-| ADR | Why was this decided, and what was rejected? | per `schemas/adr.v2.json` | non-restatement of an operative rule |
+| ADR | Why was this decided, and what was rejected? | per `schemas/knowledge-decision.v1.json` | non-restatement of an operative rule |
 
 Each type passes the differentiation test of spec 0002 R3: two systems built on one technology differ in
 their definitions, rules, lifecycles, interfaces, boundaries, and processes, and in nothing else this
@@ -259,7 +259,7 @@ defaults:
 ```
 
 An override is a fact about that attribute; a repetition is noise. The default lives in the knowledge base
-rather than in whatever reads it, because `.claude/rules/distribution.md` rejects a hidden default and a
+rather than in whatever reads it, because `specs/0005` R16b rejects a hidden default and a
 value supplied downstream is exactly that.
 
 `knowledge/system.md` holds one further declaration for the same reason: the body length ceiling R48
@@ -649,7 +649,7 @@ Terms used normatively below.
   outgoing transition. A trigger list and the reserved name `terminal` are shorthands a validator expands
   before checking the product.
 - **R12** — An `interface` MUST declare `version`, `schema`, and `ownership` ∈ `published | consumed`. A
-  `consumed` interface is exempt from the version-bump discipline of `.claude/rules/compatibility.md`, which
+  `consumed` interface is exempt from the version-bump discipline of `specs/0013` R3a, which
   governs what this repository breaks.
 - **R13** — A `boundary` with `ddd: bounded-context` MUST declare `subdomain_type`.
 - **R14** — A `process` MUST declare `steps` as an ordered list naming knowledge-object ids, and MUST NOT
@@ -685,7 +685,7 @@ Terms used normatively below.
 - **R25** — Every attribute MUST declare the parameters its primitive requires and does not inherit.
 - **R26** — A parameter repeated across attributes MUST be declared once as a system default and overridden
   only where an attribute differs. A default MUST live in the knowledge base and MUST NOT be supplied by
-  whatever reads it, which `.claude/rules/distribution.md` rejects as a hidden default.
+  whatever reads it, which `specs/0005` R16b rejects as a hidden default.
 - **R27** — An attribute holding lifecycle state MUST declare `enum` with `lifecycle` naming a `lifecycle`
   id, and MUST NOT repeat the state names.
 - **R28** — A `ref` or a `list` MUST declare `binding`, and one whose target lies in another aggregate MUST
@@ -739,7 +739,7 @@ Terms used normatively below.
   single-responsibility violation under R8 rather than as a formatting warning. The ceiling MUST be declared
   by the knowledge base as `limits.body_lines` in `knowledge/system.md`, and a validator MUST NOT supply a
   default for it: a ceiling supplied by whatever reads the knowledge base is the hidden default
-  `.claude/rules/distribution.md` rejects. Where the field is absent, the validator MUST report R48 as
+  `specs/0005` R16b rejects. Where the field is absent, the validator MUST report R48 as
   unenforceable rather than assume a value. The *value* remains deferred to R52's measurement; its home does
   not.
 - **R49** — Where machine consumption and human readability conflict, machine consumption MUST win, and the
@@ -747,8 +747,8 @@ Terms used normatively below.
 
 ### Projections and ontology governance
 
-- **R50** — Projections are limited to `index.md`, a glossary, and a context map. A fourth requires a fixture
-  that demands it.
+- **R50** — Projections are limited to `index.md`, a glossary, and a context map. A fourth requires a
+  recorded case that demands it.
 - **R51** — A projection MUST be reproducible from the graph and MUST NOT be a normative source.
 - **R52** — Type utilization and edge traversal utility MUST be measured. A type holding under 5% of nodes
   with no check branching on it, or an edge no resolution reads, MUST be removed rather than retained for
@@ -767,7 +767,7 @@ requirement:
   which R52's measurement should calibrate rather than assert. Where the ceiling lives is decided: a
   maintainer settled `limits.body_lines` in `knowledge/system.md` on 2026-07-30, after building the fixture
   showed that the alternative — a validator holding the number — is the hidden default
-  `.claude/rules/distribution.md` rejects;
+  `specs/0005` R16b rejects;
 - the schema of `knowledge/system.md`, beyond the three defaults R26 requires it to hold and the
   `limits.body_lines` ceiling R48 requires;
 - how a governed repository installs `knowledge/`, and how the distribution carries the schema and the

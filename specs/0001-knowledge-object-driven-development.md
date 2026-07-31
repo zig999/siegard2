@@ -41,11 +41,11 @@ it. This paragraph is the anchor for the phrase "the v0.1 draft" wherever this r
 | Question | Authority |
 |---|---|
 | Which persistence model records workflow state | undecided; `CLAUDE.md` **Determinism and state** bounds it |
-| How the distribution is produced and what it excludes | `.claude/rules/distribution.md`, `CLAUDE.md` **Repository layout** |
-| Which component classes exist and what each owns | ADR-0009 for the contracts; the taxonomy is undecided |
-| When an artifact requires a versioned schema | `.claude/rules/contracts.md` |
+| How the distribution is produced and what it excludes | `specs/0008` R4–R6, R5a–R5c |
+| Which component classes exist and what each owns | `specs/0006` |
+| When an artifact requires a versioned schema | `specs/0005` R16a |
 | Security posture, privilege, and untrusted input | `CLAUDE.md` **Security** |
-| The status vocabulary and who may change a status | `docs/adr/README.md` |
+| The status of a knowledge artifact, and who moves it | the governed repository's own decision |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
 

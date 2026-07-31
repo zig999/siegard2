@@ -42,7 +42,6 @@ definition here, and the first component built against one is the thing most lik
 | Concept | Summary |
 |---|---|
 | [accepted](accepted.md) | The status of a specification or ADR whose decision binds. |
-| [amendment](amendment.md) | A recorded revision of part of an accepted decision, leaving the rest in force. |
 | [artifact class](artifact-class.md) | What a produced artifact is, named independently of how any technology expresses it. |
 | [artifact persistence](artifact-persistence.md) | Whether an artifact is committed, recomputed from committed inputs, or discarded with its run. |
 | [assertion](assertion.md) | A mechanical check that rejects an implementation violating one knowledge object. |

@@ -3,8 +3,10 @@
 
 `.claude/rules/compatibility.md` requires a breaking change to "define the supported
 migration path" and to "add a compatibility or migration test that fails against the old
-behavior". Both were prose until this module: `adr/1` → `adr/2` shipped with neither, and
-`docs/bootstrap.md` recorded the debt rather than hiding it.
+behavior". The registry is empty: no contract in this repository carries a second version, and the
+one that did — `adr/1` → `adr/2` — was collapsed on 2026-07-31 when a maintainer decided
+ADR versions are not managed here. The machinery stays because the first real bump needs
+it, and because check_contract_versions.py fails a bump that registers no path.
 
 A migration here is a function, not a description, for the reason this repository applies
 everywhere else: a path that is only written down is a path nobody has run. Registering one
@@ -35,27 +37,9 @@ class MigrationError(Exception):
     """A migration was asked for something it cannot do."""
 
 
-def _adr_1_to_2(doc: dict) -> dict:
-    """Carry an ADR from `adr/1` to `adr/2`.
-
-    What broke: `adr.v2.json` pins `contract_version` to the const `adr/2` and, like v1,
-    sets `additionalProperties: false`. Every document valid under v1 therefore becomes
-    invalid under v2 on that field alone — "previously valid instances become invalid" is
-    the first entry in the rule's own list of what makes a change breaking.
-
-    What v2 added is `amends`, and it is optional, so nothing has to be supplied for a v1
-    document to satisfy v2. The migration is exactly the version field. That the whole of a
-    breaking change can be one line is the argument for testing it rather than trusting it:
-    the size of the diff is not the test, the rule's list is.
-    """
-    return {**doc, "contract_version": "adr/2"}
-
-
 # Keyed by (from, to). A key here is the claim that a document can cross that boundary; the
 # coverage check in check_contract_versions.py fails when a boundary exists and a key does not.
-MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
-    ("adr/1", "adr/2"): _adr_1_to_2,
-}
+MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {}
 
 
 def migrate(doc: dict, source: str, target: str) -> dict:

@@ -57,15 +57,15 @@ on the proposed side and on the moment of promotion, not retrospectively.
 
 | Id | Title | Decides | Inherits, and must not restate |
 |---|---|---|---|
-| [0005](0005-runtime-architecture.md) | Runtime architecture | who executes, what the framework provides, what it may never control, where determinism lives | `CLAUDE.md` **Scope** and **Determinism and state**; `.claude/rules/claude-code-authoring.md` |
+| [0005](0005-runtime-architecture.md) | Runtime architecture | who executes, what the framework provides, what it may never control, where determinism lives | `CLAUDE.md` **Scope** and **Determinism and state** |
 | 0006 | Capability model | which capability classes exist, what each owns, how one is admitted and retired | `docs/concepts/capability.md`; ADR-0009's component classes |
-| 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `.claude/rules/contracts.md`; `schemas/skill.v1.json`, `schemas/agent.v1.json` |
-| 0008 | Distribution layout | that the distribution is a plugin, a function of source; the closed directory set; the two records; install, upgrade, and shadowing | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` |
+| 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `specs/0005` R16a; `schemas/skill.v1.json`, `schemas/agent.v1.json` |
+| 0008 | Distribution layout | that the distribution is a plugin, a function of source; the closed directory set; the two records; install, upgrade, and shadowing | `CLAUDE.md` **Repository layout** |
 | 0009 | Context assembly | the context package contract — its manifest form, budget, and stop criteria | `specs/0001` R11–R15, which already fix that resolution never blocks and never invents |
 | 0010 | Hook system | the constraints a hook honors: handler type, exit-code discipline, failing closed, and what a hook cannot guarantee | `CLAUDE.md` **Security**; the harness hook documentation |
 | 0011 | Template system | what a template is, what it may read, how it refers to knowledge, and ownership, override, and versioning | `specs/0004`'s generation tracks and artifact classes |
-| 0012 | Target pack model | how a technology stack enters the framework as a unit: one active pack, its composition, its own version, and its retirement | `specs/0004`; `.claude/rules/claude-code-authoring.md` **Target packs** |
-| 0013 | Framework lifecycle | versioning, deprecation, and the migration a consumer is owed | `.claude/rules/compatibility.md` |
+| 0012 | Target pack model | how a technology stack enters the framework as a unit: one active pack, its composition, its own version, and its retirement | `specs/0004`; `specs/0005` R12 and R13 |
+| 0013 | Framework lifecycle | versioning, what makes a change breaking, deprecation, and the migration a consumer is owed | — |
 
 Three documents the original plan proposed are deliberately absent:
 

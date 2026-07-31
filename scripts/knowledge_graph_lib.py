@@ -40,7 +40,7 @@ except ImportError:  # pragma: no cover - callers exit with a named error
     raise
 
 KO_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-object.v1.json"
-ADR_SCHEMA_PATH = REPO_ROOT / "schemas" / "adr.v2.json"
+ADR_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-decision.v1.json"
 GRAPH_CONTRACT = "knowledge-graph/1"
 
 # Files inside a knowledge tree that are not knowledge objects. `system.md` is authored;
@@ -293,7 +293,7 @@ def _load_system(graph: Graph) -> None:
 def _load_adr(graph: Graph, path: Path, validator: Draft202012Validator) -> None:
     """An ADR is a permanent graph node and never a knowledge object (R7).
 
-    Validated against schemas/adr.v2.json, which spec 0003 names as its contract. The
+    Validated against schemas/knowledge-decision.v1.json, which spec 0003 names as its contract. The
     similarity check in scripts/validate_adrs.py is not applied: it compares an ADR
     against this repository's own CLAUDE.md, which says nothing about a governed one.
     """

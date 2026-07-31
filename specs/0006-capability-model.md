@@ -45,10 +45,9 @@ which was normative nowhere and is no longer in this repository.
 - what a capability is, in one sentence — [capability](../docs/concepts/capability.md);
 - that a component states its own tool and permission grant — `CLAUDE.md` **Security**;
 - where instruction content belongs, given the harness's loading semantics —
-  `.claude/rules/claude-code-authoring.md`, which also fixes what a target pack may declare;
-- the frontmatter a skill and an agent must carry — `schemas/skill.v1.json`, `schemas/agent.v1.json`,
-  and ADR-0009 for why each constraint is there;
-- breaking change and migration rules — `.claude/rules/compatibility.md`.
+  `specs/0012`, which fixes the target pack as a unit, and `specs/0004`, which fixes what one declares;
+- the frontmatter a skill and an agent must carry — `schemas/skill.v1.json`, `schemas/agent.v1.json`;
+- breaking change and migration rules — `specs/0013` R3a and R10–R12.
 
 ## Definitions
 
@@ -142,7 +141,7 @@ document growing a class for it.
   replacement or states plainly that none exists. Removing an installed capability without that step is a
   breaking change made silently.
 - **R16** — Retiring a capability that another consumed requires the migration
-  `.claude/rules/compatibility.md` demands, and a test that fails against the old behavior.
+  `specs/0013` R3a demands, and a test that fails against the old behavior.
 - **R17** — A capability's status is derived from checkable facts — whether the distribution installs it,
   whether a fixture exercises it — and not from a label maintained by hand. The
   [distribution manifest](../docs/concepts/distribution-manifest.md) carries the status of each installed

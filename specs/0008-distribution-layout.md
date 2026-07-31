@@ -53,13 +53,12 @@ A behavior absent from those pages on that date is not relied on, and R10 below 
 
 ### Decided elsewhere, deliberately not restated here
 
-`.claude/rules/distribution.md` is the single authority for four rules this document depends on and does
-not repeat: that a generated file is not hand-edited, that source-only paths are excluded and which those
-are, that no secret or environment-specific value appears, and that a component with a behavioral default
-states that default in itself. `CLAUDE.md` **Repository layout** holds the path table, and **The two trees**
-in `.claude/rules/claude-code-authoring.md` holds the boundary between the tree that ships and the tree that
-does not. Where this specification and that rule file appear to overlap, the rule file wins and this
-document is the defect.
+Four rules this document depends on now live in it, as R5a through R5c and `specs/0005` R16b. They were
+delegated to `.claude/rules/distribution.md` until 2026-07-31, which put the authority for what the
+*distribution* contains in a file the distribution never carries — a consumer bound by those rules could
+not read them. That file still governs `dist/` as a tree inside this repository, which is a separate
+question from what the product guarantees, and where the two appear to overlap this document decides the
+product and that file decides the repository.
 
 ## Definitions
 
@@ -118,6 +117,15 @@ are Siegard's, resolved through `${CLAUDE_PLUGIN_ROOT}`, and depend on no harnes
   defect in the generator rather than an acceptable variation.
 - **R5** — Every installed file originates in framework source or is computed by the generator from it. No
   file is introduced that has no source, and no file survives whose source was removed.
+- **R5a** — An installed file is never hand-edited. It is produced by the generator and replaced by the
+  generator; a change to it is made at its source and regenerated, and an edit in place is drift the next
+  verification MUST report rather than absorb.
+- **R5b** — The distribution carries only what a consumer needs to run the framework. A path that exists
+  to develop the framework — its specifications, tests, fixtures, explanatory documentation, and the
+  development environment that governs its own repository — MUST NOT reach the output. A consumer who
+  receives one cannot tell a rule they must satisfy from a rule that governed the people who built it.
+- **R5c** — No secret, credential, token, or environment-specific value appears anywhere in the
+  distribution. An absolute path true only on the machine that built it is such a value.
 - **R6** — Verification is separate from production. The command that checks regenerates into a temporary
   location and compares; it never writes into the distribution it is checking, because a check that repairs
   what it was meant to detect reports success on a defect.
@@ -212,8 +220,7 @@ available and was not taken here.
 1. A generator exists, `make dist` runs it, running it twice from the same source produces identical output,
    and `claude plugin validate` passes on the result. R4 through R6 are unenforced until then —
    `docs/bootstrap.md` open question 2.
-2. A test asserts that no source-only path and no secret reaches the output, per the exclusion list in
-   `.claude/rules/distribution.md`.
+2. A test asserts that no source-only path and no secret reaches the output, per R5b and R5c.
 3. A fixture loads the generated plugin with `--plugin-dir`, Claude Code loads its components, and the loop
    of `docs/bootstrap.md` stage 2 runs against them. This is ADR-0009 condition 2, and it is what turns R1
    through R3 and R16 through R19 from description into behavior.
@@ -224,6 +231,6 @@ available and was not taken here.
 6. The shadowing check of R21 exists: a fixture installs the plugin into a repository holding an agent of
    the same name and the framework reports it.
 7. The distribution manifest has a versioned schema in `schemas/`, since a consumer branches on it — which
-   `.claude/rules/contracts.md` already requires of an artifact carrying persisted state. It arrives with
+   `specs/0005` R16a already requires of an artifact carrying persisted state. It arrives with
    the generator that first produces one.
 8. A target pack ships as a second plugin and installs and versions independently, exercising R23.

@@ -23,8 +23,8 @@ a source tree.
 - Reject hidden defaults: if an installed component behaves differently when a setting is absent,
   state that default in the component itself, not only in the generator.
 
-## Before the generator exists
+## The generator
 
-No generator exists yet. Until one does, `dist/` is not authoritative and must not be treated as
-release output. Do not create `dist/` by copying files by hand to make a rule appear satisfied —
-build the generator, or record in `docs/bootstrap.md` that this step is still open.
+`scripts/generate_dist.py` produces `dist/.claude/`, `make dist` runs it, and `make dist-check` verifies
+the committed tree against a fresh run. `dist/` is therefore authoritative and is release output. Change
+the source or the generator and regenerate; a file placed there by hand is drift `verify_dist.py` reports.

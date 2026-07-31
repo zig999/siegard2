@@ -24,6 +24,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import generate_dist
 import scaffold
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -188,6 +189,13 @@ CASES: dict[str, dict[str, str]] = {
         "outcome": "a settled invoice or a cancelled order",
         **STAMP,
     },
+    "knowledge-decision": {
+        "id": "0099",
+        "title": "Settle one domain question, and say what it cost",
+        "context": "A consumer's decision record needs a worked example to be testable.",
+        "decision": "Ship this skeleton and require it to be filled in.",
+        "consequences": "An unfilled decision is visibly unfilled rather than plausibly complete.",
+    },
 }
 
 
@@ -204,9 +212,19 @@ class Coverage(unittest.TestCase):
     def test_every_kind_has_a_case(self) -> None:
         self.assertEqual(set(scaffold.SCHEMA_BY_KIND), set(CASES))
 
-    def test_the_fourteen_scaffolds_are_all_here(self) -> None:
-        """One per artifact this repository authors and whose contract exists."""
-        self.assertEqual(14, len(scaffold.SCHEMA_BY_KIND))
+    def test_every_scaffold_is_classified_for_shipping(self) -> None:
+        """A scaffold is authored for this repository or for a consumer, and never for neither.
+
+        This replaces a bare count. `templates/` served two audiences out of one flat directory
+        and shipped nothing until 2026-07-31; the count could not tell the two apart, so it went
+        stale the moment one was added. `generate_dist.SHIPPED_SCAFFOLDS` is the classification,
+        asserted total against the directory by the generator itself — this pins that the test
+        suite and the generator read the same set.
+        """
+        self.assertEqual(
+            {f"{kind}.md" for kind in scaffold.SCHEMA_BY_KIND},
+            set(generate_dist.SHIPPED_SCAFFOLDS),
+        )
 
     def test_every_json_kind_expands_to_valid_json(self) -> None:
         for kind in sorted(scaffold.JSON_KINDS):

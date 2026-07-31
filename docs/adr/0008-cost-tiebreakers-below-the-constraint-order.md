@@ -2,8 +2,7 @@
 id: "0008"
 title: Rank cost and maintainability as tiebreakers below the constraint order
 status: accepted
-contract_version: adr/2
-amends: "0004"
+contract_version: adr/1
 ---
 
 # Rank cost and maintainability as tiebreakers below the constraint order
@@ -53,10 +52,9 @@ This reverses one sentence of an accepted ADR. Superseding ADR-0004 wholesale wo
 would have dragged an unrelated and working decision — the criticality-tiered schema requirement —
 through a restatement.
 
-Three routes were open. A maintainer took the first: amend rather than supersede, leaving ADR-0004
-accepted for its artifact-contract decision. The consequences of that choice are now in place —
-`schemas/adr.v2.json` carries the `amends` field, `docs/adr/README.md` defines the relation and requires
-the amended record to cite the amending one in its body, and ADR-0004 does.
+Three routes were open. A maintainer took the first: revise rather than supersede, leaving ADR-0004
+accepted for its artifact-contract decision. That revision is recorded in prose on both sides — this
+record names what it reverses, and ADR-0004 cites this id at the point of the change.
 
 The two rejected routes are recorded because a reader should see what the choice cost. Superseding
 ADR-0004 would have duplicated the contract tiers into a new record. Rejecting this ADR would have
@@ -72,8 +70,8 @@ found.
 - Cost: the second tier is a tiebreaker, not a test. Two readers can disagree about which design is
   smallest without either violating a constraint, and the tier does not make that choice mechanical.
   It bounds the argument rather than settling it.
-- Cost: the ADR vocabulary carries an amendment relation that exists for this one case. A reader must now
-  follow `amends` to know whether the record in front of them still says what it appears to say.
+- Cost: a reader of ADR-0004 must follow its prose citation of this record to know that one sentence of
+  what they are reading has been reversed. Nothing validates that citation, so it can rot unnoticed.
 
 ## What satisfied acceptance
 
@@ -82,9 +80,10 @@ A maintainer accepted this ADR on 2026-07-30. All three conditions it set were m
 1. a maintainer resolved the conflict with ADR-0004 by the amendment route rather than by supersession;
 2. `CLAUDE.md` **Decision order** carries the two-group form, so it no longer states the four-criterion
    version this ADR revises;
-3. the relation is in frontmatter as `amends: "0004"`, not only in prose, so `make validate` decides it
+3. the relation was in frontmatter as `amends: "0004"`, not only in prose, so `make validate` decided it
    rather than a reader inferring it — and ADR-0004 cites the amending id at the point of the change,
-   which the validator also checks.
+   which the validator also checked. That field was removed on 2026-07-31; the prose citation on both
+   sides is what remains, and nothing checks it.
 
 Acceptance changes one thing beyond this record's own status: the amendment now **binds**. ADR-0004 stays
 `accepted` for its artifact-contract decision, and the sentence of its Consequences that dropped
@@ -92,5 +91,6 @@ maintainability and context cost is reversed in force rather than merely annotat
 order** was already carrying the amended rule; it now carries it with a binding record behind it instead of
 on its own authority.
 
-This ADR is also the first to exercise `amends` at all. The relation existed in `schemas/adr.v2.json` and in
-the validator and had never been used, so acceptance is what turns a validatable field into a checked one.
+This ADR was also the only one ever to declare `amends`. The relation was removed on 2026-07-31 as
+ceremony carried for a single case — which is the cost this record's own Consequences section had
+already named.
