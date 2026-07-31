@@ -24,11 +24,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import generate_dist
 import scaffold
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TEMPLATES = REPO_ROOT / "templates"
+TEMPLATES_SHIPPED = REPO_ROOT / "src" / "claude" / "templates"
+TEMPLATES_GENERATOR = REPO_ROOT / "templates"
 
 STAMP = {"generated_by": "claude-opus-5", "generated_at": "2026-07-31T10:00:00Z"}
 
@@ -206,25 +206,25 @@ class Coverage(unittest.TestCase):
 
     def test_every_template_has_a_kind(self) -> None:
         """A template nothing maps to a schema would produce an unvalidated artifact."""
-        present = {p.stem for p in TEMPLATES.glob("*.md")}
+        present = {p.stem for p in list(TEMPLATES_SHIPPED.glob("*.md")) + list(TEMPLATES_GENERATOR.glob("*.md"))}
         self.assertEqual(present, set(scaffold.SCHEMA_BY_KIND))
 
     def test_every_kind_has_a_case(self) -> None:
         self.assertEqual(set(scaffold.SCHEMA_BY_KIND), set(CASES))
 
-    def test_every_scaffold_is_classified_for_shipping(self) -> None:
-        """A scaffold is authored for this repository or for a consumer, and never for neither.
+    def test_every_scaffold_sits_in_the_tree_its_audience_reads(self) -> None:
+        """A scaffold ships exactly when the artifact it skeletons is a consumer's to author.
 
-        This replaces a bare count. `templates/` served two audiences out of one flat directory
-        and shipped nothing until 2026-07-31; the count could not tell the two apart, so it went
-        stale the moment one was added. `generate_dist.SHIPPED_SCAFFOLDS` is the classification,
-        asserted total against the directory by the generator itself — this pins that the test
-        suite and the generator read the same set.
+        This is the third form of the same check. It was a count of fourteen, which could not
+        tell the two audiences apart; then a classification table in the generator, which was a
+        second place for a fact the filesystem already held. The location is now the whole of
+        the decision, so what is left to assert is that the two directories partition the kinds
+        `scaffold.py` knows — a scaffold in neither tree, or in both, is the defect.
         """
-        self.assertEqual(
-            {f"{kind}.md" for kind in scaffold.SCHEMA_BY_KIND},
-            set(generate_dist.SHIPPED_SCAFFOLDS),
-        )
+        shipped = {p.stem for p in TEMPLATES_SHIPPED.glob("*.md")}
+        generator = {p.stem for p in TEMPLATES_GENERATOR.glob("*.md")}
+        self.assertEqual(set(), shipped & generator, "a scaffold sits in both trees")
+        self.assertEqual(set(scaffold.SCHEMA_BY_KIND), shipped | generator)
 
     def test_every_json_kind_expands_to_valid_json(self) -> None:
         for kind in sorted(scaffold.JSON_KINDS):

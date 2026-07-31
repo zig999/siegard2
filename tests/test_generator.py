@@ -24,6 +24,15 @@ import unittest.mock
 from pathlib import Path
 
 import generate_dist
+
+from . import (
+    GENERATOR_SCHEMAS,
+    GENERATOR_SCRIPTS,
+    GENERATOR_TEMPLATES,
+    SHIPPED_BIN,
+    SHIPPED_SCHEMAS,
+    SHIPPED_TEMPLATES,
+)
 import verify_dist
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -161,33 +170,36 @@ class Provenance(Built):
 
 
 class ShippedSelection(unittest.TestCase):
-    def test_every_schema_is_classified(self) -> None:
-        """A schema the constant does not name would ship or not by whichever branch ran."""
-        present = {
-            p.name
-            for p in (REPO_ROOT / "schemas").glob("*.json")
-            if p.name != "contract-versions.json"
-        }
-        self.assertEqual(present, set(generate_dist.SHIPPED_SCHEMAS))
+    """What ships is decided by location, and these are the properties that makes true.
 
-    def test_every_shipped_executable_exists(self) -> None:
-        for name in generate_dist.SHIPPED_EXECUTABLES:
-            self.assertTrue((REPO_ROOT / "scripts" / name).is_file(), name)
+    The trees do not overlap, and the generator's own artifacts stay out of the one that
+    ships. Classifying a mixed tree file by file would assert the same thing against a table
+    instead, which is a second place for a fact the filesystem already holds.
+    """
 
-    def test_internal_schemas_do_not_ship(self) -> None:
+    def test_the_two_trees_are_disjoint(self) -> None:
+        for tree, shipped, generator in (
+            ("schemas", SHIPPED_SCHEMAS, GENERATOR_SCHEMAS),
+            ("templates", SHIPPED_TEMPLATES, GENERATOR_TEMPLATES),
+            ("scripts", SHIPPED_BIN, GENERATOR_SCRIPTS),
+        ):
+            with self.subTest(tree=tree):
+                a = {p.name for p in shipped.iterdir() if p.is_file()}
+                b = {p.name for p in generator.iterdir() if p.is_file()}
+                self.assertEqual(set(), a & b, f"{tree}: a file sits in both trees")
+
+    def test_the_generators_own_contracts_stay_out_of_the_shipped_tree(self) -> None:
         """A governed repository writes no specification, ADR, or framework component."""
-        for name in ("spec.v1.json", "adr.v1.json", "skill.v1.json", "agent.v1.json"):
-            self.assertIsNone(generate_dist.SHIPPED_SCHEMAS[name], name)
+        for name in ("spec.json", "adr.json", "skill.json", "agent.json"):
+            with self.subTest(schema=name):
+                self.assertFalse((SHIPPED_SCHEMAS / name).exists(), name)
+                self.assertTrue((GENERATOR_SCHEMAS / name).is_file(), name)
 
-    def test_an_unclassified_schema_is_refused(self) -> None:
-        with self.assertRaises(generate_dist.Refused) as caught:
-            generate_dist.assert_total({"new.v1.json"}, set(), "schemas/", "SHIPPED_SCHEMAS")
-        self.assertIn("does not classify", str(caught.exception))
-
-    def test_a_classified_but_absent_schema_is_refused(self) -> None:
-        with self.assertRaises(generate_dist.Refused) as caught:
-            generate_dist.assert_total(set(), {"gone.v1.json"}, "schemas/", "SHIPPED_SCHEMAS")
-        self.assertIn("no longer holds", str(caught.exception))
+    def test_every_shipped_schema_reaches_the_distribution(self) -> None:
+        """Location is the decision, so the source tree and the output must agree exactly."""
+        files, _capabilities, _skipped = generate_dist.plan()
+        installed = {p["path"] for p in files if p["path"].startswith("schemas/")}
+        self.assertEqual({f"schemas/{p.name}" for p in SHIPPED_SCHEMAS.glob("*.json")}, installed)
 
 
 class CapabilityStatus(Built):
@@ -200,31 +212,26 @@ class CapabilityStatus(Built):
         for capability in self.manifest["capabilities"]:
             self.assertIn(capability["path"], self.files, capability["name"])
 
-    def test_an_unexercised_component_is_skipped_and_reported(self) -> None:
-        """specs/0006 R11, and no silent cap: what is dropped is named."""
+    def test_a_component_with_no_fixture_still_ships(self) -> None:
+        """specs/0006 R11: a fixture is evidence, never a gate.
+
+        Gating on a fixture would let an optional support tool decide what a consumer receives:
+        authoring a component and forgetting a fixture would produce a distribution missing it,
+        reported as a skip nobody watches for.
+        """
         stray = REPO_ROOT / "src" / "claude" / "agents" / "no-fixture-names-this.md"
         stray.write_text(
             "---\nname: no-fixture-names-this\n"
-            "description: Present only so a test can assert the generator refuses to ship it.\n"
+            "description: Present only so a test can assert the generator ships it regardless.\n"
             "tools: Read\n---\n\nBody.\n"
         )
-        try:
-            with tempfile.TemporaryDirectory() as holder:
-                root = Path(holder) / "dist"
-                _installed, skipped = generate_dist.build(root)
-                files = verify_dist.tree(root)
-        finally:
-            stray.unlink()
-        self.assertNotIn("agents/no-fixture-names-this.md", files)
-        self.assertTrue(
-            any("no-fixture-names-this" in note for note in skipped),
-            f"the skip was not reported; got {skipped}",
-        )
-
-    def test_exercised_names_reads_data_and_not_prose(self) -> None:
-        names = generate_dist.exercised_names()
-        self.assertIn("knowledge-change", names)
-        self.assertIn("concept-author", names)
+        self.addCleanup(stray.unlink)
+        with tempfile.TemporaryDirectory() as holder:
+            root = Path(holder) / "dist"
+            _installed, skipped = generate_dist.build(root)
+            files = verify_dist.tree(root)
+        self.assertIn("agents/no-fixture-names-this.md", files)
+        self.assertEqual([], skipped)
 
 
 class Invariants(Built):
@@ -373,13 +380,19 @@ class ShippedImports(unittest.TestCase):
     def test_the_current_selection_is_closed_under_import(self) -> None:
         generate_dist.assert_imports_ship()  # raises Refused if it is not
 
-    def test_dropping_a_shipped_import_is_refused(self) -> None:
-        without_cli = {
-            k: v for k, v in generate_dist.SHIPPED_EXECUTABLES.items() if k != "cli.py"
-        }
-        with unittest.mock.patch.object(generate_dist, "SHIPPED_EXECUTABLES", without_cli):
-            with self.assertRaises(generate_dist.Refused) as caught:
-                generate_dist.assert_imports_ship()
+    def test_importing_the_generators_own_module_is_refused(self) -> None:
+        """The direction is the check: the generator may import the shipped tree, not back.
+
+        Simulated by adding a module to the generator-only set rather than by writing a file
+        into `src/claude/bin/`, so the assertion runs against the real tree and leaves it
+        exactly as it found it.
+        """
+        target = SHIPPED_BIN / "orchestrate.py"
+        original = target.read_text()
+        target.write_text("import verify_dist\n" + original)
+        self.addCleanup(target.write_text, original)
+        with self.assertRaises(generate_dist.Refused) as caught:
+            generate_dist.assert_imports_ship()
         self.assertIn("ImportError", str(caught.exception))
 
     def test_every_shipped_script_imports_cleanly_from_the_distribution(self) -> None:
@@ -387,8 +400,8 @@ class ShippedImports(unittest.TestCase):
         import subprocess
         import sys
 
-        for name in generate_dist.SHIPPED_EXECUTABLES:
-            module = Path(name).stem
+        for source in sorted(SHIPPED_BIN.glob("*.py")):
+            name, module = source.name, source.stem
             result = subprocess.run(
                 [sys.executable, "-B", "-c",
                  f"import sys; sys.path.insert(0, sys.argv[1]); import {module}",

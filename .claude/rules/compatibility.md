@@ -30,8 +30,8 @@ diff looks.
 
 ## Versioning contracts
 
-Increment the version in the contract's own identifier and filename (`review-verdict.v1.json` →
-`review-verdict.v2.json`) and keep the prior version readable for as long as persisted artifacts
+Increment the version in the contract's own identifier and filename (`review-verdict.json` →
+`review-verdict.json`) and keep the prior version readable for as long as persisted artifacts
 reference it. A consumer selects behavior on `contract_version`; it must not infer version from
 shape.
 

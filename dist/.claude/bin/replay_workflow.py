@@ -118,7 +118,9 @@ def process(fixture: Path, check: bool, problems: list[str]) -> None:
 def main() -> int:
     args = [a for a in sys.argv[1:] if a != "--check"]
     check = "--check" in sys.argv[1:]
-    root = Path(args[0]) if args else REPO_ROOT / "fixtures"
+    if not args:
+        cannot_run("cannot run: name the root holding the workflow runs; there is no default")
+    root = Path(args[0])
 
     if not root.is_dir():
         cannot_run(f"cannot run: fixture root {root} does not exist")
@@ -137,7 +139,7 @@ def main() -> int:
         except (ValueError, KeyError, FileNotFoundError) as exc:
             problems.append(f"{fixture.name}: {exc}")
 
-    print(f"workflow fixtures: {len(fixtures)}  contract: schemas/workflow-event.v1.json")
+    print(f"workflow fixtures: {len(fixtures)}  contract: schemas/workflow-event.json")
     if problems:
         print(f"FAILED: {len(problems)} problem(s)\n")
         for problem in problems:

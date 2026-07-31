@@ -41,8 +41,6 @@ Exactly one pack is active in a governed repository. One pack is what lets a tem
 instead of abstracting over it, and `.claude/rules/claude-code-authoring.md` forbids a vendor-neutral
 abstraction absent an accepted requirement for one.
 
-That a pack is framework work rather than the "architecture chosen for one downstream system" that
-`CLAUDE.md` **Scope** excludes is settled; `.claude/rules/claude-code-authoring.md` **Target packs** holds
-the distinction and the fixture gate. What a pack contains binds as of 2026-07-31, when
-`specs/0004-generation-and-reproducibility.md` was accepted — on a maintainer's decision rather than on the
-fixture evidence that specification had asked for, which it records itself.
+That a pack is framework work rather than the architecture of one downstream system is settled by
+`specs/0005` R13. What a pack contains is fixed by
+`specs/0004-generation-and-reproducibility.md`, which records the evidence it still owes.

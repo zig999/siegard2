@@ -13,18 +13,16 @@ This specification fixes what the [distribution](../docs/concepts/distribution.m
 reaches a repository Siegard governs. It decides six things:
 
 1. that the distribution is a Claude Code plugin, and what the harness therefore provides;
-2. that its content is a function of [framework source](../docs/concepts/framework-source.md);
+2. what a consumer can check about the installation they hold, and what its manifest accounts for;
 3. the closed set of directories — those the harness recognizes, and those that are Siegard's own;
 4. the two records an installation carries, and which fields each owns;
 5. installation and upgrade, including what happens to a file the consumer changed;
 6. namespacing and shadowing, and why no component carries a reserved prefix.
 
-It decides nothing about which capability classes exist, which is `specs/0006`, and nothing about the
-generator's implementation. It fixes the generator's *output contract*: the generator is free in how it
-assembles and bound in what it may produce.
+It decides nothing about which capability classes exist, which is `specs/0006`, and nothing about how a
+distribution is assembled or verified. This document binds the result, not the build: it states what must
+be true of a distribution in a consumer's hands, and says nothing about who produced it or how.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
@@ -33,15 +31,14 @@ document is that its central assumption was wrong, and the documentation said so
 
 That draft described a tree copied into the consumer's `.claude/`, with a reserved name prefix on every
 component. Two reviews found it failing on its own terms: it could not install its own hooks, because every
-hook `docs/bootstrap.md` names is a session-wide guarantee and this document forbade rewriting a
+hook named below is a session-wide guarantee and this document forbade rewriting a
 `settings.json` it does not own; and its `scripts/` directory was an invented convention. The plugin form
 resolves both, and removes the prefix requirement rather than satisfying it.
-`docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md` records the decision and its sourcing.
 
 ### Sources
 
 Normative for every harness behavior relied on here, retrieved 2026-07-31, with the full citation in
-ADR-0012:
+the plugin documentation:
 
 - https://code.claude.com/docs/en/plugins — the plugin root, the recognized directories, the manifest and
   its `name` as skill namespace, `version` and the commit-SHA fallback, hooks in `hooks/hooks.json`,
@@ -53,12 +50,11 @@ A behavior absent from those pages on that date is not relied on, and R10 below 
 
 ### Decided elsewhere, deliberately not restated here
 
-Four rules this document depends on now live in it, as R5a through R5c and `specs/0005` R16b. They were
-delegated to `.claude/rules/distribution.md` until 2026-07-31, which put the authority for what the
-*distribution* contains in a file the distribution never carries — a consumer bound by those rules could
-not read them. That file still governs `dist/` as a tree inside this repository, which is a separate
-question from what the product guarantees, and where the two appear to overlap this document decides the
-product and that file decides the repository.
+How a distribution is assembled and verified — regenerating for byte identity, comparing into a
+temporary tree, never hand-editing the output, which paths a build excludes — is not stated here, because
+none of it is something a consumer satisfies or observes. A build obligation is answerable to whoever
+runs the build, and naming that party would put this document in the business of describing a producer
+rather than a product.
 
 ## Definitions
 
@@ -110,25 +106,25 @@ are Siegard's, resolved through `${CLAUDE_PLUGIN_ROOT}`, and depend on no harnes
   a session-wide guarantee installable, and it is the reason this document specifies a plugin rather than an
   overlay.
 
-### The distribution is a function
+### What the distribution is, as a consumer can check it
 
-- **R4** — The distribution is determined by the framework source and the generator version. Running the
-  generator twice over the same committed source produces byte-identical output, and a difference is a
-  defect in the generator rather than an acceptable variation.
-- **R5** — Every installed file originates in framework source or is computed by the generator from it. No
-  file is introduced that has no source, and no file survives whose source was removed.
-- **R5a** — An installed file is never hand-edited. It is produced by the generator and replaced by the
-  generator; a change to it is made at its source and regenerated, and an edit in place is drift the next
-  verification MUST report rather than absorb.
+These are properties of the artifact in a consumer's hands, verifiable from the installation itself,
+with no access to whatever produced it.
+
+- **R4** — Every installed file is accounted for by the [distribution manifest](../docs/concepts/distribution-manifest.md):
+  it names the framework source the file came from and a digest of what was installed. A consumer can
+  therefore tell what they hold apart from what they were meant to hold, without the framework's source.
+- **R5** — No installed file lacks a source, and none survives whose source was removed. An installation
+  is exactly what its framework version defines and carries no residue of an earlier one.
 - **R5b** — The distribution carries only what a consumer needs to run the framework. A path that exists
   to develop the framework — its specifications, tests, fixtures, explanatory documentation, and the
-  development environment that governs its own repository — MUST NOT reach the output. A consumer who
-  receives one cannot tell a rule they must satisfy from a rule that governed the people who built it.
+  development environment that governs its own repository — is absent. A consumer who received one could
+  not tell a rule they must satisfy from a rule that governed the people who built it.
 - **R5c** — No secret, credential, token, or environment-specific value appears anywhere in the
   distribution. An absolute path true only on the machine that built it is such a value.
-- **R6** — Verification is separate from production. The command that checks regenerates into a temporary
-  location and compares; it never writes into the distribution it is checking, because a check that repairs
-  what it was meant to detect reports success on a defect.
+- **R6** — An installation is reproducible from the framework version alone: two consumers on the same
+  version hold byte-identical trees. This is what makes R4's digest comparable across installations
+  rather than local to one.
 
 ### The tree
 
@@ -200,29 +196,17 @@ are Siegard's, resolved through `${CLAUDE_PLUGIN_ROOT}`, and depend on no harnes
   so a `packs/` directory inside this distribution would be one the framework's own rules guarantee is
   always empty.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. A generator exists, `make dist` runs it, running it twice from the same source produces identical output,
    and `claude plugin validate` passes on the result. R4 through R6 are unenforced until then —
-   `docs/bootstrap.md` open question 2.
-2. A test asserts that no source-only path and no secret reaches the output, per R5b and R5c.
+   the gate below.
+2. A test asserts that no development-only path and no secret reaches the output, per R5b and R5c.
 3. A fixture loads the generated plugin with `--plugin-dir`, Claude Code loads its components, and the loop
-   of `docs/bootstrap.md` stage 2 runs against them. This is ADR-0009 condition 2, and it is what turns R1
+   of the first end-to-end run runs against them. This is what turns R1
    through R3 and R16 through R19 from description into behavior.
 4. One hook ships in `hooks/hooks.json` and is shown to fire and to deny in the loaded fixture. R3 is the
    central claim of this document's design, and it is documented rather than demonstrated until then.

@@ -11,7 +11,7 @@
     {
       "check": "scripts/validate_concepts.py knowledge/concepts",
       "result": "pass",
-      "detail": "concepts checked: 12  schema: schemas/concept.v1.json — all concepts valid"
+      "detail": "concepts checked: 12  schema: schemas/concept.json — all concepts valid"
     },
     {
       "check": "grep -c 'dunning' knowledge/concepts/index.md",

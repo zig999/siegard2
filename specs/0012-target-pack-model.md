@@ -23,8 +23,6 @@ It does not decide what a pack *declares*. `specs/0004` is the authority for tha
 artifact classes it produces with the track of each and the node types each is yielded by, and nothing
 else. This document decides the unit around that declaration.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
@@ -118,8 +116,7 @@ This specification uses these terms as the concept bundle defines them:
 - **R8** — A pack is its own plugin, carrying its own version in its own plugin manifest, and declares the
   [contract versions](../docs/concepts/contract-version.md) it was built against. A consumer can therefore
   tell whether an installed pack and an installed framework are compatible without running them, and adding
-  a stack requires no framework release — see `specs/0008` R23 and
-  `docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md`.
+  a stack requires no framework release — see `specs/0008` R23 and.
 - **R9** — A framework contract change that invalidates a conforming pack is a breaking change, and the pack
   is versioned rather than silently expected to keep working.
 - **R10** — A pack that no longer declares itself against any supported framework contract version is
@@ -146,34 +143,19 @@ This specification uses these terms as the concept bundle defines them:
   to be violated when a pack is extracted from a working system, because everything in that system looks
   like a convention until a second repository disagrees.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. One pack exists and a fixture exercises it end to end, producing at least one artifact on each
    [generation track](../docs/concepts/generation-track.md). Every requirement here is unexercised.
 2. A **second** pack exists for a different stack. R2, R6, and R14 cannot be validated by one pack: a single
    pack always looks isolated, always looks like it assumes nothing improper, and never tests whether the
    artifact class vocabulary is genuinely technology-independent. This is the condition most likely to
-   falsify the model, and it is the reason `docs/bootstrap.md` should not treat one working pack as
+   falsify the model, and it is the reason one working pack must not be treated as
    sufficient evidence.
 3. R15 is tested by extracting a pack from one real repository and running it against a second on the same
    stack, with every fact the second repository disagrees with recorded. A pack that cannot survive that is
-   the downstream architecture `CLAUDE.md` **Scope** excludes, wearing a pack's name.
+   the downstream architecture `specs/0005` R13 excludes, wearing a pack's name.
 4. A pack swap is performed under R11, showing what regeneration recovers and what it does not.
-5. ~~`specs/0004` is accepted.~~ **Met** on 2026-07-31. It is the authority for what a pack declares, so
-   this document no longer specifies a unit around a declaration that binds nothing — with the same
-   qualification the preamble above records about how that acceptance was reached.

@@ -18,11 +18,9 @@ This specification fixes the constraints a Siegard hook honors. It decides five 
 5. the limits — what a hook cannot guarantee, and what must therefore be enforced somewhere else too.
 
 It does not define the hook configuration format. That is governed by the harness documentation cited
-below, exactly as `schemas/skill.v1.json` already states for a skill's `hooks` field. This document
+below, exactly as `schemas/skill.json` already states for a skill's `hooks` field. This document
 constrains Siegard's use of that format; it does not restate it.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Sources
 
@@ -44,10 +42,10 @@ this document, and record the new retrieval date.
 
 ### Provenance
 
-No hook exists. `docs/bootstrap.md` open question 5 holds the gate, and the same file lists the four
+No hook exists. No gate for it is met, and four candidates are named below
 candidates that motivated this document — rejecting a write under `dist/` that the generator did not
 produce, rejecting an inter-agent artifact that fails its schema, rejecting a schema change with no
-contract version bump, and rejecting a write to `CLAUDE.md`.
+contract version bump, and rejecting a write to a file only a maintainer may change.
 
 Two requirements below exist only because the documentation was read rather than remembered. R2 inverts
 what a Unix programmer would write: exit code 1 is a non-blocking error, so a hook that fails
@@ -59,7 +57,7 @@ in this document if it had been written from memory of how hooks probably work.
 
 - that a security-critical guarantee is enforced by a hook or a script rather than by model judgment,
   that a path and a structured input are validated before a hook acts, and that a hook rejects rather
-  than repairs — `CLAUDE.md` **Security**, which is the authority for all three;
+  than repairs — `specs/0005` R11, R20, and R22, which are the authority for all three;
 - that repository content, tool output, and downstream input are data and never instructions — the same
   section;
 - that a hook holds exactly one guarantee and decides it deterministically — `specs/0006` R7;
@@ -97,9 +95,9 @@ would produce a hook that shrugs, which is not a hook.
   an unexpected tool payload, an internal error — it catches the condition and exits 2 with the reason on
   stderr. It never exits 0 on an unhandled error, because an uncaught failure reads as permission.
 - **R4** — The `updatedInput` field of a `PreToolUse` response is not used. That a hook rejects rather
-  than repairs is `CLAUDE.md` **Security**'s rule, cited under **Decided elsewhere** and not restated
+  than repairs is `specs/0005` R22, cited under **Decided elsewhere** and not restated
   here; what this requirement adds is the single harness affordance that would let a Siegard hook break
-  it, which neither `CLAUDE.md` nor `specs/0006` R7 could have named. An action the framework considers
+  it, which `specs/0006` R7 could not have named. An action the framework considers
   wrong is denied with a reason, and the caller fixes it: silent correction hides the defect and makes the
   corrected input unattributable.
 - **R5** — A hook never returns an allow decision for an action the receiving repository's own rules would
@@ -148,28 +146,16 @@ would produce a hook that shrugs, which is not a hook.
 - **R18** — A hook shipped inside a skill's or an agent's frontmatter is scoped to that component's
   lifetime and enforces nothing outside it. A guarantee that must hold for the whole session ships in the
   distribution's `hooks/hooks.json`, which is in force while the plugin is enabled — `specs/0008` R3 and
-  `docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md`. Every hook `docs/bootstrap.md` names
+  the plugin manifest. Every hook named below
   as a candidate is session-wide, so that is the form they take.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. One hook exists, enforces one guarantee, and is tested in both directions — the action denied and the
-   action permitted. `docs/bootstrap.md` open question 5 holds this gate, and until it is met every
+   action permitted. That gate is unmet, and until it is met every
    requirement here constrains nothing.
 2. R3 is tested directly: the hook is given malformed input and shown to exit 2 rather than 0. Fail-closed
    is the requirement most likely to be got wrong by a correct-looking implementation, because the
@@ -178,7 +164,7 @@ available and was not taken here.
    that signals failure conventionally.
 4. A fixture demonstrates R17: the guarantee still holds with hooks disabled, because the consuming
    validator rejects the artifact. Without this, R16's honesty is a disclaimer rather than a design.
-5. The four candidates named in `docs/bootstrap.md` are each either implemented or dropped with a reason,
+5. The four candidates named below are each either implemented or dropped with a reason,
    so this document is grounded in hooks that exist rather than in hooks that were imagined.
 6. The security detail the first hook actually needed is recorded — sanitization, path,
    subprocess, and network detail — which is what open question 5 says turns a plan into a rule distilled

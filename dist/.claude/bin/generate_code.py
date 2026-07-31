@@ -45,7 +45,12 @@ from cli import cannot_run
 from generation_lib import Blocked, content_hash, derive_plan, resolve_scope, validate_plan
 from knowledge_graph_lib import load
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# Two roots, and conflating them is what shipped a script looking for a consumer's pack
+# inside the framework's own installed files. PLUGIN_ROOT is where this code ships and is
+# where the framework's own facts are; INVOCATION_ROOT is the repository being generated
+# into, which is the directory the command runs from.
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+INVOCATION_ROOT = Path.cwd()
 
 # specs/0004 R7: a produced file is not hand-edited, and extension happens through an extension
 # point the plan declares, in a separate hand-authored file. This is the suffix that names one.
@@ -72,7 +77,7 @@ def prepare(run: dict, repo_root: Path | None = None) -> tuple[dict, dict, dict,
     `repo_root` is an argument rather than a module constant so a caller can resolve a run
     against a copy of the tree. A test that had to patch the constant would be testing the patch.
     """
-    repo_root = repo_root or REPO_ROOT
+    repo_root = repo_root or INVOCATION_ROOT
     pack_root = repo_root / run["pack_root"]
     declaration = json.loads((pack_root / "pack-declaration.json").read_text())
     graph = load(repo_root / run["knowledge_root"])
@@ -83,7 +88,7 @@ def prepare(run: dict, repo_root: Path | None = None) -> tuple[dict, dict, dict,
 
 def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dict, list[str], list[str]]:
     """Write the plan's deterministic entries into `target`. Returns manifest, gaps, skipped."""
-    repo_root = repo_root or REPO_ROOT
+    repo_root = repo_root or INVOCATION_ROOT
     pack_root = repo_root / run["pack_root"]
     templates = load_templates(pack_root)
     declaration, graph, scope, placement = prepare(run, repo_root)
@@ -150,7 +155,7 @@ def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dic
         "pack": declaration["pack"],
         "pack_version": declaration["version"],
         "framework_version": json.loads(
-            (REPO_ROOT / "src" / "claude" / ".claude-plugin" / "plugin.json").read_text()
+            (PLUGIN_ROOT / ".claude-plugin" / "plugin.json").read_text()
         )["version"],
         "artifacts": sorted(artifacts, key=lambda a: (a["ko"], a["class"])),
     }
@@ -249,9 +254,9 @@ def main() -> int:
 
     try:
         if args.action == "run":
-            target = args.into or (REPO_ROOT / run["output_root"])
+            target = args.into or (INVOCATION_ROOT / run["output_root"])
             manifest, gaps, skipped = produce(run, target)
-            (REPO_ROOT / run["manifest"]).write_text(json.dumps(manifest, indent=2) + "\n")
+            (INVOCATION_ROOT / run["manifest"]).write_text(json.dumps(manifest, indent=2) + "\n")
             print(f"produced {len(manifest['artifacts'])} artifact(s) into {target}")
             for note in skipped:
                 print(f"  not produced here: {note}")
@@ -259,15 +264,15 @@ def main() -> int:
                 print(f"  generative gap: {gap}", file=sys.stderr)
             return 1 if gaps else 0
 
-        manifest = json.loads((REPO_ROOT / run["manifest"]).read_text())
+        manifest = json.loads((INVOCATION_ROOT / run["manifest"]).read_text())
         if args.action == "index":
-            print(json.dumps(binding_indexes(manifest, REPO_ROOT / run["output_root"]), indent=2))
+            print(json.dumps(binding_indexes(manifest, INVOCATION_ROOT / run["output_root"]), indent=2))
             return 0
 
         with tempfile.TemporaryDirectory() as holder:
             fresh = Path(holder) / "out"
             produce(run, fresh)
-            problems = findings(REPO_ROOT / run["output_root"], fresh, manifest)
+            problems = findings(INVOCATION_ROOT / run["output_root"], fresh, manifest)
         print(f"verified {len(manifest['artifacts'])} artifact(s), regenerate-and-diff")
         if problems:
             print(f"FAILED: {len(problems)} finding(s)\n")

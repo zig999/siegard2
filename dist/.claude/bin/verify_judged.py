@@ -26,7 +26,11 @@ from pathlib import Path
 from cli import cannot_run
 from knowledge_graph_lib import load
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# A run file names its paths relative to the repository that owns the run, which is the
+# directory the command is invoked from. It is not the plugin root: this script ships, so
+# resolving against its own tree would look for a consumer's knowledge base inside the
+# framework's installed files.
+INVOCATION_ROOT = Path.cwd()
 
 
 def cases(node: dict) -> list[tuple[dict, str]]:
@@ -53,7 +57,7 @@ def load_artifact(path: Path):
 
 
 def verify(run: dict) -> tuple[list[str], int]:
-    graph = load(REPO_ROOT / run["knowledge_root"])
+    graph = load(INVOCATION_ROOT / run["knowledge_root"])
     problems: list[str] = []
     checked = 0
 
@@ -69,7 +73,7 @@ def verify(run: dict) -> tuple[list[str], int]:
                 f"artifact has no covering suite — specs/0004 R3 makes that unaccepted output"
             )
             continue
-        artifact = load_artifact(REPO_ROOT / entry["artifact"])
+        artifact = load_artifact(INVOCATION_ROOT / entry["artifact"])
         for given, expected in suite:
             checked += 1
             actual = artifact.check(given)

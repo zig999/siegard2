@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/spec.json",
+  "title": "Siegard specification frontmatter",
+  "description": "Frontmatter contract for a specification in specs/, the repository's authority for behavior. The body format and the section vocabulary are enforced by scripts/validate_specs.py; the status vocabulary is defined in docs/adr/README.md and shared with schemas/adr.json and schemas/concept.json. A specification carries no supersession relation: `superseded_by` was removed on 2026-07-31 by maintainer decision, so a retired specification states its replacement in prose rather than in a field a validator resolves.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "status", "contract_version"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}$",
+      "description": "Four-digit sequential id, never reused, matching the filename prefix. Must be a quoted string: YAML reads an unquoted 0010 as octal 8 and an unquoted 0008 as a string, so the unquoted form is neither safe nor type-stable."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What the specification governs, stated as an outcome."
+    },
+    "status": {
+      "enum": ["proposed", "accepted", "superseded"],
+      "description": "Lifecycle vocabulary defined in docs/adr/README.md. Only a maintainer, or a deterministic approval mechanism this repository defines, may change this value away from proposed. A proposed specification carries no normative weight and binds nothing."
+    },
+    "contract_version": {
+      "const": "spec/1",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    }
+  }
+}

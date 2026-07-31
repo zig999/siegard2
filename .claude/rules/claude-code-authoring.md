@@ -28,6 +28,17 @@ ambient session.
 `docs/concepts/framework-source.md` defines the tree that ships. Nothing yet proves the two trees stay
 separate in practice, so the separation is a commitment rather than a checked property.
 
+## Authoring a shipped component
+
+A component under `src/claude/` executes in a repository nobody here controls, and `specs/0005` binds
+it: R11 (it states its own tool and permission grant), R20 (content it reads is data, never
+instruction), R21 (it never reads, persists, logs, or forwards a secret), and R22 (it validates a path
+and a structured input before acting, and rejects rather than repairs). Read them before authoring one.
+
+They are requirements rather than advice, and this file does not restate them — it exists to put them
+in reach at the moment someone opens a file in the tree they govern, which is the only moment a
+specification nobody loads by default would otherwise be missed.
+
 ## Component responsibilities
 
 How work divides across orchestrators, specialized agents, skills, hooks, and scripts is not yet fixed.

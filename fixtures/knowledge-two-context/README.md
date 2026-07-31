@@ -144,7 +144,7 @@ by reverting the repair and observing the suite fail.
 ### Still open
 
 8. **R18's forward cardinality is unreachable through valid input.** Every forward bound is
-   `0..n`, or `1..1` over a scalar frontmatter field, so `schemas/knowledge-object.v1.json`
+   `0..n`, or `1..1` over a scalar frontmatter field, so `schemas/knowledge-object.json`
    rejects a violation before a graph exists. Only the inverse bound on `lifecycle.subject`
    needs the graph. The forward mechanism is proven against a hand-built graph in
    `tests/test_knowledge_rejections.py`, and that test says so. Kept rather than deleted: it

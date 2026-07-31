@@ -2,100 +2,100 @@
   "$comment": "Constraint digest per contract version, written by scripts/check_contract_versions.py --update. A digest covers the assertion vocabulary only: annotation keywords are stripped, so clarifying a description is not a version bump and changing what a schema accepts is. Regenerating this file to silence a mismatch discards the only record that a contract moved.",
   "contracts": {
     "adr/1": {
-      "schema": "adr.v1.json",
-      "constraint_digest": "sha256:925b59d935c94420d523a10ce8e87421bbccc0a83e392f13c258ad42ae52e32e"
+      "schema": "adr.json",
+      "constraint_digest": "sha256:0d305c78dee9cf81e8ef1123d8eaa17edfc443e88e34349d19342dcb36031963"
     },
-    "agent/1": {
-      "schema": "agent.v1.json",
-      "constraint_digest": "sha256:2764414c5851b79eab258afbe71bc1ccdcb4e23cdd1e0aeb9f72334896ebf252"
+    "agent": {
+      "schema": "agent.json",
+      "constraint_digest": "sha256:9ee684c7fe4565569ba62922a4fbdeddcb59615e576daa3beda73b0477f7ff83"
     },
     "artifact-class/1": {
-      "schema": "artifact-class.v1.json",
-      "constraint_digest": "sha256:e388b8559071f085c342f16dc6cc6fd1cb9dab85a1dd65600ef3ef86927d0fd3"
+      "schema": "artifact-class.json",
+      "constraint_digest": "sha256:72bb1c40800d7fd2e17182d51ec3ba27f0f465070880711e2843adfab4130603"
     },
     "concept-authoring-result/1": {
-      "schema": "concept-authoring-result.v1.json",
-      "constraint_digest": "sha256:2ea8d966552f63c87d2cc76befd92b5acd5cd69ecd3ae76fcaf6deb474c21cf0"
+      "schema": "concept-authoring-result.json",
+      "constraint_digest": "sha256:b2696304532298979d66006ec9f9d28e19c7c3cbc628eab2fe7fcfac9f58acfc"
     },
     "concept/1": {
-      "schema": "concept.v1.json",
-      "constraint_digest": "sha256:12a0eaed5a25a3fc4264c4712e0807e6842d53d62b117ebefb2140c6c331a54a"
+      "schema": "concept.json",
+      "constraint_digest": "sha256:063c21561833ba95a79b98152c7a527e1f08d14e21fc3d2c3826fba4baef9462"
     },
     "context-package/1": {
-      "schema": "context-package.v1.json",
-      "constraint_digest": "sha256:454b846c424d77b1134f2771c5ad481d6ad7f6de09f3dafa5c049f5a3853b7d6"
+      "schema": "context-package.json",
+      "constraint_digest": "sha256:462413a5dea7d865c528fd75d3b80f9dd3febcdbf3253e8aa9ad6013e015ad87"
     },
     "distribution-manifest/1": {
-      "schema": "distribution-manifest.v1.json",
-      "constraint_digest": "sha256:bc87c97c564f4a5af3305835525b39404080510d363c4351a00e01f01f294109"
+      "schema": "distribution-manifest.json",
+      "constraint_digest": "sha256:0d1e14a567e12159d0d2547cbe014310e39096f08a30a97a6d1fefee5d435110"
     },
     "generation-manifest/1": {
-      "schema": "generation-manifest.v1.json",
-      "constraint_digest": "sha256:2a53d070c947a86e5063228bc0ff37441d53dde37d0976cba7122a09fcfec782"
+      "schema": "generation-manifest.json",
+      "constraint_digest": "sha256:98cca8d41f1247d9fbe2b8b7dcc530b34020f53b0e95cf1e524419613a721016"
     },
     "generation-plan/1": {
-      "schema": "generation-plan.v1.json",
-      "constraint_digest": "sha256:8c41ceb345a8b15c10956692b6ffc34b6097a2e77514a52ce6926d64f2bd0ef9"
+      "schema": "generation-plan.json",
+      "constraint_digest": "sha256:bf4d96ff921a648dcc8404d166af11a8c90e75aad6206503a201bcf7169db57b"
     },
     "generation-scope/1": {
-      "schema": "generation-scope.v1.json",
-      "constraint_digest": "sha256:61953471aa0775403dd9e64af729fca71abf943543129574dfd262826a471361"
+      "schema": "generation-scope.json",
+      "constraint_digest": "sha256:d4adf545ea3623f7c86a23c0d83d6f97964199f3ded39c3e8eed8038736e8e09"
     },
     "hook/1": {
-      "schema": "hook.v1.json",
-      "constraint_digest": "sha256:73627fd421ef00150ce17b57888b939f66c2d106caabc896ff2b7b34b133291c"
+      "schema": "hook.json",
+      "constraint_digest": "sha256:7ccbc9a97c9baf349db0c24601af7dd3e88422efa2f7992bcd396996ed91fbbc"
     },
     "impact-analysis/1": {
-      "schema": "impact-analysis.v1.json",
-      "constraint_digest": "sha256:d2a371c8a167f212314ab74fcb80f89e6af5781b4e13929c4083a0af7431c5e4"
+      "schema": "impact-analysis.json",
+      "constraint_digest": "sha256:900537a6ace874ec70b38b055c30b775746eb094a2b2883411c58f8e89de1069"
     },
     "knowledge-authoring-result/1": {
-      "schema": "knowledge-authoring-result.v1.json",
-      "constraint_digest": "sha256:69bf72be9dcbee4f3615e5df77127f3eb145856b690b0393f8fefbfc8e4029d8"
+      "schema": "knowledge-authoring-result.json",
+      "constraint_digest": "sha256:5699b718cbddf7c4c2b9c92406508917b73be7ee4ba9c24f30fcc5aaaad17c5b"
     },
     "knowledge-decision/1": {
-      "schema": "knowledge-decision.v1.json",
-      "constraint_digest": "sha256:d183715b3132167facd6aa00722b844a208315605be60b5d89063cadaafd481a"
+      "schema": "knowledge-decision.json",
+      "constraint_digest": "sha256:a99341ba1236208c18c5aea5c57f25b42f8ba9f348be0f3bc8ff561ddc4b0671"
     },
     "knowledge-graph/1": {
-      "schema": "knowledge-graph.v1.json",
-      "constraint_digest": "sha256:8e2670c7e92b0b53164a66fcc50db320b59f4a90690726cfe87d06d7480cc684"
+      "schema": "knowledge-graph.json",
+      "constraint_digest": "sha256:0ca389e1375d75eacd76ecb9bf94c2852d8f77ee1cf179fa8a70ec2e52bc6958"
     },
     "knowledge-object/1": {
-      "schema": "knowledge-object.v1.json",
-      "constraint_digest": "sha256:6d4523381bbd0d545df018ae5a789e6db2f9f8c2dc70e00fbce02f72dfa18628"
+      "schema": "knowledge-object.json",
+      "constraint_digest": "sha256:e357e60e0580b4a5ef2647d3cc969b56de0e5ecd617aa8f954ccc171a0676703"
     },
     "pack-declaration/1": {
-      "schema": "pack-declaration.v1.json",
-      "constraint_digest": "sha256:3e37865778951d0a7bc9bc2029921ddc29aff714aaa35741cf8bec2c6a28eaa1"
+      "schema": "pack-declaration.json",
+      "constraint_digest": "sha256:d53e9ca8f7a6ad374da518e4d734c364044ebd14a2f03f58e88db66c17730264"
     },
     "placement-decision/1": {
-      "schema": "placement-decision.v1.json",
-      "constraint_digest": "sha256:25bc5a671e7b9bec3aa6da2e8ca547274b6d166daf3d9455cbe422879f62fd40"
+      "schema": "placement-decision.json",
+      "constraint_digest": "sha256:89ba6b50c148a809ccb160ad93f472321cf32daa97458f5b42070b22acfcf9e0"
     },
-    "plugin/1": {
-      "schema": "plugin.v1.json",
-      "constraint_digest": "sha256:0324abe009ca521aeee0b612bb3c83cc8c0a7df711c33ea61e114647ba2a1ba5"
+    "plugin": {
+      "schema": "plugin.json",
+      "constraint_digest": "sha256:98d979c34d1cf3d5b3ebea2a68d62db1b28c2714278529334a8b503ecf0c8a0d"
     },
-    "skill/1": {
-      "schema": "skill.v1.json",
-      "constraint_digest": "sha256:aaaaf5e5baa6b8fb295177e00b1f007fc0464fb758944687dd510ab114a3ed91"
+    "skill": {
+      "schema": "skill.json",
+      "constraint_digest": "sha256:41d20d3fc7230c6cd6b274f033fa61de10bef82a981a56246e0428cd3a3f8a03"
     },
     "spec/1": {
-      "schema": "spec.v1.json",
-      "constraint_digest": "sha256:ca8550904c512de7f76b22c03b48f9572698473920f4b939b377eaae41fc0a06"
+      "schema": "spec.json",
+      "constraint_digest": "sha256:b8ed5c3dcd26fb6309bdff75f1ac73b1cb1c75b66682b54888093f3870224c67"
     },
     "specification-delta/1": {
-      "schema": "specification-delta.v1.json",
-      "constraint_digest": "sha256:6da3feea9a0a64bbf7e164c1a08e8c23a4e235e91765fe5aca28ff543d1c1365"
+      "schema": "specification-delta.json",
+      "constraint_digest": "sha256:3598019392d13ffdec7a33fa62da2b75890e399954424dfe7f9391e79cddd220"
     },
     "validation-evidence/1": {
-      "schema": "validation-evidence.v1.json",
-      "constraint_digest": "sha256:9bd4db1e7714746c21ad09fc938d61783ba8955dcef0195272bcec85110172ab"
+      "schema": "validation-evidence.json",
+      "constraint_digest": "sha256:e80c568cb32269f15242a4bf549e9658c64cb3317dde52e5b5b3aa85ab957f24"
     },
     "workflow-event/1": {
-      "schema": "workflow-event.v1.json",
-      "constraint_digest": "sha256:decf0097f4e702240a8312b54bbfd67cf64f8f8802ee9d49b3ceef4e45749756"
+      "schema": "workflow-event.json",
+      "constraint_digest": "sha256:ea7dfa0afe0df6883daa9a659a1fdd95533031e9fc4ba8c8139383afa6397ba0"
     }
   }
 }

@@ -43,7 +43,7 @@ class Produced(GenerationCase):
     def test_the_manifest_conforms(self) -> None:
         from jsonschema import Draft202012Validator
 
-        schema = json.loads((REPO_ROOT / "schemas" / "generation-manifest.v1.json").read_text())
+        schema = json.loads((REPO_ROOT / "src" / "claude" / "schemas" / "generation-manifest.json").read_text())
         self.assertEqual([], list(Draft202012Validator(schema).iter_errors(self.manifest)))
 
     def test_every_recorded_artifact_exists_with_its_recorded_hash(self) -> None:

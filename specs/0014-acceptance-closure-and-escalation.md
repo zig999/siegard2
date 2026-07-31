@@ -10,7 +10,7 @@ contract_version: spec/1
 ## Scope
 
 This specification holds the five requirements moved out of
-`specs/0001-knowledge-object-driven-development.md` when that specification was accepted on 2026-07-31.
+`specs/0001-knowledge-object-driven-development.md`, which was accepted without the evidence they name.
 It decides three things:
 
 1. how the set of checks that decides acceptance is computed, and why it is not computed from what the
@@ -23,12 +23,10 @@ It decides nothing about the workflow's phases, its transitions, its persisted s
 acceptance requires a maintainer's decision. Those stayed in `specs/0001`, which is accepted and remains
 the authority for all of them.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process, which
-`CLAUDE.md` defines.
 
 ### Why these requirements are here
 
-`specs/0001` set five acceptance conditions. The thin path of `docs/bootstrap.md` stage 2 met two: a
+`specs/0001` set five acceptance conditions. The first end-to-end run met two: a
 maintainer's acceptance, and the knowledge-only path running end to end in a fixture with every transition
 chosen by lookup on a validated artifact. Three were not met — an escalation predicate decided by a script
 with both outcomes tested, a test showing the validation closure exceeding the context closure, and an
@@ -36,7 +34,7 @@ acceptance gate reporting each knowledge object's mode.
 
 Rather than accept a specification whose validation had not happened, the requirements those three
 conditions covered were moved here and the conditions moved with them. `specs/0001` now binds only what
-was exercised; this document holds what was not. It was accepted on 2026-07-31 with those conditions still
+was exercised; this document holds what was not. It is accepted with those conditions still
 open — see **What satisfied acceptance** — so the requirements moved here now bind on a maintainer's
 authority rather than on the evidence they were moved out to wait for.
 
@@ -99,28 +97,16 @@ This specification uses these terms as the concept bundle defines them:
   on independent review. A report that presents review as a guarantee is a false report. Formerly
   `specs/0001` R20.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 These are the three conditions `specs/0001` set and did not meet, carried here with the requirements they
 cover:
 
 1. one escalation predicate is decided by a script or hook against a validated artifact, with a test
-   covering both outcomes (R1). `docs/bootstrap.md` stage 5 holds this, because `specs/0001` R10 forbids
+   covering both outcomes (R1). Nothing holds this yet, because `specs/0001` R10 forbids
    inventing a threshold before executed workflows exist to calibrate it;
 2. a test shows the validation closure exceeding the context closure for a change where the two differ,
    which is what makes R2 and R3 falsifiable rather than aspirational. This needs context resolution, which

@@ -67,11 +67,11 @@ class Composition(Pack):
     def test_the_declaration_conforms(self) -> None:
         from jsonschema import Draft202012Validator
 
-        schema = json.loads((REPO_ROOT / "schemas" / "pack-declaration.v1.json").read_text())
+        schema = json.loads((REPO_ROOT / "src" / "claude" / "schemas" / "pack-declaration.json").read_text())
         self.assertEqual([], list(Draft202012Validator(schema).iter_errors(self.declaration)))
 
     def test_it_declares_the_whole_closed_vocabulary(self) -> None:
-        schema = json.loads((REPO_ROOT / "schemas" / "pack-declaration.v1.json").read_text())
+        schema = json.loads((REPO_ROOT / "src" / "claude" / "schemas" / "pack-declaration.json").read_text())
         vocabulary = set(schema["properties"]["produces"]["items"]["properties"]["class"]["enum"])
         self.assertEqual(vocabulary, {entry["class"] for entry in self.declaration["produces"]})
 
@@ -220,7 +220,7 @@ class MissingFacts(Pack):
 
     def test_the_primitive_vocabulary_is_total(self) -> None:
         """A type the knowledge base can hold and this pack cannot express fails at expansion."""
-        schema = json.loads((REPO_ROOT / "schemas" / "knowledge-object.v1.json").read_text())
+        schema = json.loads((REPO_ROOT / "src" / "claude" / "schemas" / "knowledge-object.json").read_text())
         declared = set(schema["$defs"]["attribute"]["properties"]["type"]["enum"])
         self.assertEqual(declared, set(expand.PRIMITIVE))
         self.assertEqual(declared, set(expand.SQL))

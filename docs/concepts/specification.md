@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [governance, normative-source]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }
 sources:
-  - resource: schemas/spec.v1.json
+  - resource: schemas/spec.json
     title: Siegard specification frontmatter
   - resource: docs/adr/README.md
     title: Architecture decision records
@@ -21,7 +21,7 @@ specification is precedence level 1 in `CLAUDE.md`: it outranks an ADR, a schema
 implementation, and a conflict is resolved by correcting the lower source.
 
 A specification states requirements that can be cited individually and violated observably. Its
-frontmatter contract is `schemas/spec.v1.json`; `scripts/validate_specs.py` enforces both the
+frontmatter contract is `schemas/spec.json`; `scripts/validate_specs.py` enforces both the
 frontmatter and the body's structure, including that requirement identifiers are unique and sequential
 so a test, an impact artifact, or an acceptance report can cite one and mean one statement.
 

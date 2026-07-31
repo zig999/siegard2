@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The thin-path orchestrator: validate an agent's result, then look up the transition.
 
-This is the consumer that schemas/concept-authoring-result.v1.json names, and the reason
+This is the consumer that schemas/concept-authoring-result.json names, and the reason
 that contract's boundary check stopped being a declared gap. It does three things and
 deliberately nothing else:
 
@@ -90,7 +90,8 @@ CONSUMED: dict[str, dict] = {
 def schema_for(contract_version: str) -> Path:
     """Path of the contract a declared version names, by rule rather than by registry.
 
-    `concept-authoring-result/1` -> schemas/concept-authoring-result.v1.json. Deriving the
+    `concept-authoring-result/1` -> schemas/concept-authoring-result.json. One contract has one
+    file, so the version selects nothing in the path and everything in the validation. Deriving the
     path means a new contract needs no mapping to keep in step; a registry would be a second
     place for the same fact to live.
     """
@@ -99,7 +100,7 @@ def schema_for(contract_version: str) -> Path:
     name, version = contract_version.split("/")
     if not name or not version.isdigit():
         raise ValueError(f"contract_version '{contract_version}' is not '<name>/<version>'")
-    return SCHEMA_DIR / f"{name}.v{version}.json"
+    return SCHEMA_DIR / f"{name}.json"
 
 
 def validate_at_boundary(path: Path) -> dict:

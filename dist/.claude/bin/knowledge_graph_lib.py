@@ -5,7 +5,7 @@ defers to a script needs the same resolved graph: totality (R11), cross-context
 targeting (R15), edge cardinality (R18), one lifecycle per subject (R20), unresolved
 targets (R22, R29). Building that graph twice would be two answers to one question.
 
-This module holds no frontmatter constraint. Those live in schemas/knowledge-object.v1.json,
+This module holds no frontmatter constraint. Those live in schemas/knowledge-object.json,
 which R30 makes the single authority for the attribute type system. What lives here is
 what a per-file schema cannot see: the filesystem, other files, and the closure of edges.
 
@@ -13,7 +13,7 @@ The one fact this module copies from the specification is the edge table under *
 ontology: edges, cardinality, and traversal** — origin, target, cardinality, and whether
 expansion traverses each edge. Prose is not machine-readable, R18 requires a validator to
 enforce cardinality, and R19 requires expansion to follow only traversed edges, so the
-table arrives here as data. `schemas/knowledge-graph.v1.json` holds the edge *names* it
+table arrives here as data. `schemas/knowledge-graph.json` holds the edge *names* it
 emits; this module holds the cardinality and traversal policy the names carry.
 
 Consumers: scripts/validate_knowledge.py (validation), scripts/project_knowledge.py
@@ -27,7 +27,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from frontmatter_lib import PLUGIN_ROOT, display, split_frontmatter
 
 try:
     import yaml
@@ -39,8 +39,8 @@ try:
 except ImportError:  # pragma: no cover - callers exit with a named error
     raise
 
-KO_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-object.v1.json"
-ADR_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-decision.v1.json"
+KO_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "knowledge-object.json"
+ADR_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "knowledge-decision.json"
 GRAPH_CONTRACT = "knowledge-graph/1"
 
 # Files inside a knowledge tree that are not knowledge objects. `system.md` is authored;
@@ -293,7 +293,7 @@ def _load_system(graph: Graph) -> None:
 def _load_adr(graph: Graph, path: Path, validator: Draft202012Validator) -> None:
     """An ADR is a permanent graph node and never a knowledge object (R7).
 
-    Validated against schemas/knowledge-decision.v1.json, which spec 0003 names as its contract. The
+    Validated against schemas/knowledge-decision.json, which spec 0003 names as its contract. The
     similarity check in scripts/validate_adrs.py is not applied: it compares an ADR
     against this repository's own CLAUDE.md, which says nothing about a governed one.
     """

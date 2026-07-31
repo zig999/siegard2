@@ -26,7 +26,7 @@ from knowledge_graph_lib import load
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = REPO_ROOT / "fixtures" / "knowledge-two-context" / "knowledge"
-SCHEMA = REPO_ROOT / "schemas" / "context-package.v1.json"
+SCHEMA = REPO_ROOT / "src" / "claude" / "schemas" / "context-package.json"
 
 RULE = "ko.rule.sales.proposal-validity"
 CLAIM = "the change alters when a proposal may still be accepted"

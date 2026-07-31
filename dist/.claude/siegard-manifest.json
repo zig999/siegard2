@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:100117fc46a45ec8ec5825e049049e060cacd9262f86f4eb3b207e3839c8848d",
+  "source_revision": "sha256:f7151c1c0bf531441fd7395186cdbc2ba4acccdf7221664028399f39a4923faf",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -16,12 +16,12 @@
     {
       "path": "agents/impact-analyst.md",
       "source": "src/claude/agents/impact-analyst.md",
-      "digest": "sha256:32df824f9aa53ef1e826c5183f0146cb0de3d84c373f6892962aed326ac93d75"
+      "digest": "sha256:8f5112e25b87364172fc1da1e534203720b0baaaebe2f3d8934fe5a0975cd5cb"
     },
     {
       "path": "agents/knowledge-author.md",
       "source": "src/claude/agents/knowledge-author.md",
-      "digest": "sha256:3bb0db38510c6517c4f0e3ab4071d6eb96010794b4a3b15ba5577fc17f4745dc"
+      "digest": "sha256:763dee2466a3192829f5b6035be08c0db0e8d99bc40b23b606ff29820a93ba49"
     },
     {
       "path": "agents/root-selector.md",
@@ -31,87 +31,87 @@
     {
       "path": "agents/spec-delta-author.md",
       "source": "src/claude/agents/spec-delta-author.md",
-      "digest": "sha256:552efc1ec8b191628d8396b23a458d49468bbf2e9866877dd472bd1f7f179554"
+      "digest": "sha256:98c2653ab23563e1ed249c346e9a9cc8be9d7c30e5feb75609838737c4c19282"
     },
     {
       "path": "bin/cli.py",
-      "source": "scripts/cli.py",
+      "source": "src/claude/bin/cli.py",
       "digest": "sha256:7739ad70d0d7338e011327056e0594a1d3b695058d86a00cf63541b180fb61c1"
     },
     {
       "path": "bin/derived_artifacts.py",
-      "source": "scripts/derived_artifacts.py",
+      "source": "src/claude/bin/derived_artifacts.py",
       "digest": "sha256:154911d6d99e1b0187eae1ff6bcc8ef90e5ca5dfb223f38aa978e87f997a0fdf"
     },
     {
       "path": "bin/frontmatter_lib.py",
-      "source": "scripts/frontmatter_lib.py",
-      "digest": "sha256:e440aee69513dc4e1c44b15d01dfcd7c2ac821ce874a05e2d12460321fd402fb"
+      "source": "src/claude/bin/frontmatter_lib.py",
+      "digest": "sha256:6f8d7674495335101e6c9046227290c7494f33538690440bbc349d268d3047bd"
     },
     {
       "path": "bin/generate_code.py",
-      "source": "scripts/generate_code.py",
-      "digest": "sha256:9843978c9e4822530cc644dfdec6af4a1217133e48ac9fc76941a4aa6ed04429"
+      "source": "src/claude/bin/generate_code.py",
+      "digest": "sha256:c4fc1ac61a9fdc54839e96af284233ac64f92d6931c2b2c08e14486f4bcd205b"
     },
     {
       "path": "bin/generation_lib.py",
-      "source": "scripts/generation_lib.py",
+      "source": "src/claude/bin/generation_lib.py",
       "digest": "sha256:ad8ec8073d7fd2366a2b2180a78f24c3c310b7d325d85140e6e80bfef21bd785"
     },
     {
       "path": "bin/install_dist.py",
-      "source": "scripts/install_dist.py",
+      "source": "src/claude/bin/install_dist.py",
       "digest": "sha256:82562999cefcbb0ace7c6aebd1cd630451d9f3a3382f1edd0cb23de04efafdbc"
     },
     {
       "path": "bin/knowledge_graph_lib.py",
-      "source": "scripts/knowledge_graph_lib.py",
-      "digest": "sha256:bbba92cb6beec8e238bddbc925bd4e210a263237c3a0c3e5882654c644c626ac"
+      "source": "src/claude/bin/knowledge_graph_lib.py",
+      "digest": "sha256:451dc436f2430cb7a7241ce40095e183ae679dfaced8d224e63c1b79084a1ca6"
     },
     {
       "path": "bin/orchestrate.py",
-      "source": "scripts/orchestrate.py",
-      "digest": "sha256:887916fdd5c58c3bd77748df74aa8d17f10b52be8d81565342e121841fea1f24"
+      "source": "src/claude/bin/orchestrate.py",
+      "digest": "sha256:98c78b045be5a0e8a4d06926de061b618ceef2413c86ef5a2eeb455464815d9d"
     },
     {
       "path": "bin/project_knowledge.py",
-      "source": "scripts/project_knowledge.py",
-      "digest": "sha256:1d7a97ffa47db1f09ef38dce3a5c2e946b3ce706c99426001768c5bb1270b611"
+      "source": "src/claude/bin/project_knowledge.py",
+      "digest": "sha256:a32eb8d7c7defa74dec995842fc6652e347bb360c6857ac184ffab252df781d7"
     },
     {
       "path": "bin/replay_workflow.py",
-      "source": "scripts/replay_workflow.py",
-      "digest": "sha256:8ae5cfacae1648b46082dea1cc023dee9d87581ffadcc839dfadffe1a1f86104"
+      "source": "src/claude/bin/replay_workflow.py",
+      "digest": "sha256:4df6b144fa0cebcde40562541c6f5c3ab96673a04991a6cade3a3ab55a3863f5"
     },
     {
       "path": "bin/resolve_context.py",
-      "source": "scripts/resolve_context.py",
+      "source": "src/claude/bin/resolve_context.py",
       "digest": "sha256:a3a3150b0a45d4d731bf45a7671a8acb7c882a7581a13f958469c11720b3624f"
     },
     {
       "path": "bin/validate_artifacts.py",
-      "source": "scripts/validate_artifacts.py",
-      "digest": "sha256:cbf41d53817c9f1d1719135f816593891512fcc64883920d578b02ac9ce8c7af"
+      "source": "src/claude/bin/validate_artifacts.py",
+      "digest": "sha256:e4ec615e2fe3f2c37b0bfcb645f4b67fc0235cfc66ea610e467178188c956ca3"
     },
     {
       "path": "bin/validate_concepts.py",
-      "source": "scripts/validate_concepts.py",
-      "digest": "sha256:37c28106158d3214b124bf7e40f10d83a89f5ea50562e59ee3724db67ef33d7e"
+      "source": "src/claude/bin/validate_concepts.py",
+      "digest": "sha256:e146471f50aae94a0d3ccf61253ee304c4c2e270a93fbfb69fbe3ab2629b1d62"
     },
     {
       "path": "bin/validate_knowledge.py",
-      "source": "scripts/validate_knowledge.py",
-      "digest": "sha256:fc6213ef1fd267563f8285b6c701bdcbab0852aa67aa1dc7c0fddfef5c2acb5d"
+      "source": "src/claude/bin/validate_knowledge.py",
+      "digest": "sha256:904a9d23bc3d2ef41a4586162a994a8a17167829165614a8a95817a8e04bec61"
     },
     {
       "path": "bin/verify_judged.py",
-      "source": "scripts/verify_judged.py",
-      "digest": "sha256:ff5ed6e17cf466f26c82f9285fe5e06383eae7045f2670474d3a5b19028cbcc1"
+      "source": "src/claude/bin/verify_judged.py",
+      "digest": "sha256:a279a24df42ddc999eee3b13c7fc5cc1afc941208fb9bd1570c596c4096e46b4"
     },
     {
       "path": "bin/workflow_lib.py",
-      "source": "scripts/workflow_lib.py",
-      "digest": "sha256:4f380318d5be2722017eea2169885554f339889af747aaca498f5f0938a55d3a"
+      "source": "src/claude/bin/workflow_lib.py",
+      "digest": "sha256:aa755f6bbc87f05eb4e118ac18c0fc4d55af27c53b83a9f9088ecca11ced4875"
     },
     {
       "path": "hooks/hooks.json",
@@ -124,104 +124,104 @@
       "digest": "sha256:3c7a6c8ea83cae0b08a886f4ba1a618bd6dbfb7f914677e2e73bb0d91d77be3f"
     },
     {
-      "path": "schemas/artifact-class.v1.json",
-      "source": "schemas/artifact-class.v1.json",
-      "digest": "sha256:33137008477fe4f7a3398a744bc597c1dd78d240aeb0d2315f42023ab1701630"
+      "path": "schemas/artifact-class.json",
+      "source": "src/claude/schemas/artifact-class.json",
+      "digest": "sha256:345b9a76aba146fea099f63224ffb5c27571b0da49d7c510796faf96e529e30f"
     },
     {
       "path": "schemas/artifact-classes.json",
-      "source": "schemas/artifact-classes.json",
+      "source": "src/claude/schemas/artifact-classes.json",
       "digest": "sha256:9396ba3e2f2ad6ea47a6bebf03639429d636bbc5b349aff9f4285fc1cfd2d53d"
     },
     {
-      "path": "schemas/concept-authoring-result.v1.json",
-      "source": "schemas/concept-authoring-result.v1.json",
-      "digest": "sha256:5c5c68972a95eaa47e26b0c3b036fb8202fa6111bff5378cb2a054742720684d"
+      "path": "schemas/concept-authoring-result.json",
+      "source": "src/claude/schemas/concept-authoring-result.json",
+      "digest": "sha256:782bb8061e01088a7acc6eeea563fc843748d6557fe8b02d5582043eb92f87a4"
     },
     {
-      "path": "schemas/concept.v1.json",
-      "source": "schemas/concept.v1.json",
-      "digest": "sha256:01e9c576366dc3e4fb349d42cd51ad22d89a777e88d58d06a052854e5e136390"
+      "path": "schemas/concept.json",
+      "source": "src/claude/schemas/concept.json",
+      "digest": "sha256:b14891def04a795d98d9ceb562bb0d21df665e9e5a76ff56acc436f4dfc6c354"
     },
     {
-      "path": "schemas/context-package.v1.json",
-      "source": "schemas/context-package.v1.json",
-      "digest": "sha256:c2b189b5ea54c82c90d3e0f0fac07e9de0ae280198a6cb64a6ac6ade7162b4e9"
+      "path": "schemas/context-package.json",
+      "source": "src/claude/schemas/context-package.json",
+      "digest": "sha256:8f8d34b8a0116ade1b280c603f4aff4995b1cccc2b6cafa5cc9df12aaed94b82"
     },
     {
-      "path": "schemas/distribution-manifest.v1.json",
-      "source": "schemas/distribution-manifest.v1.json",
-      "digest": "sha256:c8f0ec64c71e4eb4b752df77f0ac43c72edecad0a19ef2b167cbcb1d859e3856"
+      "path": "schemas/distribution-manifest.json",
+      "source": "src/claude/schemas/distribution-manifest.json",
+      "digest": "sha256:f1a3e2f60e441fd108a229fb55cdfdd4379f9a99009092f5e478796560a1398e"
     },
     {
-      "path": "schemas/generation-manifest.v1.json",
-      "source": "schemas/generation-manifest.v1.json",
-      "digest": "sha256:235e983889a552b6b4f238e56cce1c68ce52fe896a6abce3bcd09f4b687cd9db"
+      "path": "schemas/generation-manifest.json",
+      "source": "src/claude/schemas/generation-manifest.json",
+      "digest": "sha256:829a1a294c559e14f05ed592d05ef62408c378d6b1406078a585d88ae7c7d9de"
     },
     {
-      "path": "schemas/generation-plan.v1.json",
-      "source": "schemas/generation-plan.v1.json",
-      "digest": "sha256:5d753a6dd1e73d31927026a26b36b124f33e7dbccdea53733dd6bf1c0b38deb0"
+      "path": "schemas/generation-plan.json",
+      "source": "src/claude/schemas/generation-plan.json",
+      "digest": "sha256:ff7530330de7ef502d3be2b66b7ef428c3ca1923faecdc9acf6befd31920e650"
     },
     {
-      "path": "schemas/generation-scope.v1.json",
-      "source": "schemas/generation-scope.v1.json",
-      "digest": "sha256:76fa3afd76ef269eaa39d9763f455c9b5e516b83ed191bb2202f2ad97af65f47"
+      "path": "schemas/generation-scope.json",
+      "source": "src/claude/schemas/generation-scope.json",
+      "digest": "sha256:96d60dd5ead10643f8a45a870e8c5703f6200ed957612f156a7c143e2639c898"
     },
     {
-      "path": "schemas/impact-analysis.v1.json",
-      "source": "schemas/impact-analysis.v1.json",
-      "digest": "sha256:1c34a0476f92b990086d335f72bd7a354db052547428cd1a557e539ab1d6bac6"
+      "path": "schemas/impact-analysis.json",
+      "source": "src/claude/schemas/impact-analysis.json",
+      "digest": "sha256:1df10be358114f3396151c0babebd3442decad2dae127fafaed63ff8822fc579"
     },
     {
-      "path": "schemas/knowledge-authoring-result.v1.json",
-      "source": "schemas/knowledge-authoring-result.v1.json",
-      "digest": "sha256:43bba1b00573cf6272d08deaa58fcfc1d6645d585620d1e0fd4fb4ae81aabc55"
+      "path": "schemas/knowledge-authoring-result.json",
+      "source": "src/claude/schemas/knowledge-authoring-result.json",
+      "digest": "sha256:6506746e978ba2706024f9018fdb689cc5dca6ebab78683576ac370ff0ef99da"
     },
     {
-      "path": "schemas/knowledge-decision.v1.json",
-      "source": "schemas/knowledge-decision.v1.json",
-      "digest": "sha256:448a93c4806e3616309b329092ef71d1c775c6ed36b5672fa3a9b198da2e39e1"
+      "path": "schemas/knowledge-decision.json",
+      "source": "src/claude/schemas/knowledge-decision.json",
+      "digest": "sha256:646a1d77daaa5a1008288a092d08d00ee29ed13cff2c1e364668aba02a742cf1"
     },
     {
-      "path": "schemas/knowledge-graph.v1.json",
-      "source": "schemas/knowledge-graph.v1.json",
-      "digest": "sha256:2dd9284b01c023aeb5898c9ccf4d051eacaf5a3edc9668fe5867579de175eaa4"
+      "path": "schemas/knowledge-graph.json",
+      "source": "src/claude/schemas/knowledge-graph.json",
+      "digest": "sha256:1fcd9941f737b252d54e427cfad97350b3af5d08028f365601aa65eb57be84e8"
     },
     {
-      "path": "schemas/knowledge-object.v1.json",
-      "source": "schemas/knowledge-object.v1.json",
-      "digest": "sha256:b04bac42957ea9d42f11ee2ee3061db4425d06d63d24802856e624bbe3dc715d"
+      "path": "schemas/knowledge-object.json",
+      "source": "src/claude/schemas/knowledge-object.json",
+      "digest": "sha256:c33d38e4f1d17c4b82832c95c623e790829ff54fcd8aab6e4aa8ca9b9f51ba2e"
     },
     {
-      "path": "schemas/pack-declaration.v1.json",
-      "source": "schemas/pack-declaration.v1.json",
-      "digest": "sha256:7f62f836e6159160f4bd93da222a096b6aa35a1c1096e71ff6ca2579d4aa4e9f"
+      "path": "schemas/pack-declaration.json",
+      "source": "src/claude/schemas/pack-declaration.json",
+      "digest": "sha256:0010868c9200374f10c0213bc7f34e01a0fd50ccf6bc5f9e0b7d814ef7bf6ed0"
     },
     {
-      "path": "schemas/placement-decision.v1.json",
-      "source": "schemas/placement-decision.v1.json",
-      "digest": "sha256:b57b865f964a9a9ca12820fcaa14348230daad878a9cff7f89e9f29ace472e39"
+      "path": "schemas/placement-decision.json",
+      "source": "src/claude/schemas/placement-decision.json",
+      "digest": "sha256:ca4f2243caacd9f4591ef584c39f0c3d264855617a6b0f1f04132a307d9de1c0"
     },
     {
-      "path": "schemas/specification-delta.v1.json",
-      "source": "schemas/specification-delta.v1.json",
-      "digest": "sha256:e8eb2ca5899dabab56dc1c8a6869a72388c760795f9e04cd2949807a9db583db"
+      "path": "schemas/specification-delta.json",
+      "source": "src/claude/schemas/specification-delta.json",
+      "digest": "sha256:e9db76b5d3998700298dee9ddc570961e1ac056ef4d94551d1ea5555388d7e31"
     },
     {
-      "path": "schemas/validation-evidence.v1.json",
-      "source": "schemas/validation-evidence.v1.json",
-      "digest": "sha256:21db23605bcfd0bfa597268e70830ca09827046b56269342d1950b9ea3ab85e9"
+      "path": "schemas/validation-evidence.json",
+      "source": "src/claude/schemas/validation-evidence.json",
+      "digest": "sha256:3ffd528a318552f7642c6efb679cc448ea92c246e505202eb3f9153626a5265a"
     },
     {
-      "path": "schemas/workflow-event.v1.json",
-      "source": "schemas/workflow-event.v1.json",
-      "digest": "sha256:846e3ec6b5f717a8adb94e937d3463ae0e93661a74be3e0fcbbd213bfff503a9"
+      "path": "schemas/workflow-event.json",
+      "source": "src/claude/schemas/workflow-event.json",
+      "digest": "sha256:57a7b0c76e9859ba5a67c742dc13aa41db0b537a6ce77bd1fc084ec192df2ed8"
     },
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:68a1c762f735553f374703b59527c6fad086b945c989fceb03a06d3b4ed4afda"
+      "digest": "sha256:1db3e51f2d8938b73139ce1825b7d15e7390c339a9c3fffda909de5af8556be7"
     },
     {
       "path": "skills/generate/SKILL.md",
@@ -240,64 +240,64 @@
     },
     {
       "path": "templates/concept.md",
-      "source": "templates/concept.md",
+      "source": "src/claude/templates/concept.md",
       "digest": "sha256:28f909c28f115c7e63743c4ce5f599ee5af43853165360a79801383fb613af80"
     },
     {
       "path": "templates/knowledge-decision.md",
-      "source": "templates/knowledge-decision.md",
+      "source": "src/claude/templates/knowledge-decision.md",
       "digest": "sha256:5e4f691281097d2949ac67bca7802bab98fd2bcddc5b54244eeaba38e8572a44"
     },
     {
       "path": "templates/knowledge-object-boundary.md",
-      "source": "templates/knowledge-object-boundary.md",
+      "source": "src/claude/templates/knowledge-object-boundary.md",
       "digest": "sha256:52fce4a8e3fff39261f3b8c00199f45f5166e5c5b56376a5dc01f789206266f5"
     },
     {
       "path": "templates/knowledge-object-definition.md",
-      "source": "templates/knowledge-object-definition.md",
+      "source": "src/claude/templates/knowledge-object-definition.md",
       "digest": "sha256:8a468f9126c8d09c3ac717e8d12b65be69889db920d5f2dc58d8e5286fe76fe9"
     },
     {
       "path": "templates/knowledge-object-interface.md",
-      "source": "templates/knowledge-object-interface.md",
+      "source": "src/claude/templates/knowledge-object-interface.md",
       "digest": "sha256:0136826281d3d1e884a36e48a8d85fc708b1bb771102869536d62e95428952da"
     },
     {
       "path": "templates/knowledge-object-lifecycle.md",
-      "source": "templates/knowledge-object-lifecycle.md",
+      "source": "src/claude/templates/knowledge-object-lifecycle.md",
       "digest": "sha256:9cca1d645f8722d2c126b1f00f07a0597c69d1982f55cd7436020c23b4fe1a70"
     },
     {
       "path": "templates/knowledge-object-process.md",
-      "source": "templates/knowledge-object-process.md",
+      "source": "src/claude/templates/knowledge-object-process.md",
       "digest": "sha256:1ba9f7ca804399f1dcfd9aa93ef08350d691ca14566ef9f6f132aa1e4b5edd4f"
     },
     {
       "path": "templates/knowledge-object-rule.md",
-      "source": "templates/knowledge-object-rule.md",
+      "source": "src/claude/templates/knowledge-object-rule.md",
       "digest": "sha256:ebf2c55386c0cde7470947e661db989feff0041d992637bc2e75dcacdc79127b"
     },
     {
       "path": "templates/pack-declaration.md",
-      "source": "templates/pack-declaration.md",
+      "source": "src/claude/templates/pack-declaration.md",
       "digest": "sha256:ecae922b5600d890e0eabd6906cf68483d6aac96f6818b525436190c6de7865f"
     },
     {
       "path": "templates/specification-delta.md",
-      "source": "templates/specification-delta.md",
+      "source": "src/claude/templates/specification-delta.md",
       "digest": "sha256:7d5de5600bfc21762346326a458a053744530e07e8356a8ae9a5452a0154459e"
     },
     {
       "path": "templates/validation-evidence.md",
-      "source": "templates/validation-evidence.md",
+      "source": "src/claude/templates/validation-evidence.md",
       "digest": "sha256:35840737426b76bd82dc330f370fb07173839acb320bfcef3e1ba53059a287de"
     }
   ],
   "schemas": [
     {
       "contract_version": "artifact-class/1",
-      "path": "schemas/artifact-class.v1.json"
+      "path": "schemas/artifact-class.json"
     },
     {
       "contract_version": "artifact-class/1",
@@ -305,71 +305,71 @@
     },
     {
       "contract_version": "concept-authoring-result/1",
-      "path": "schemas/concept-authoring-result.v1.json"
+      "path": "schemas/concept-authoring-result.json"
     },
     {
       "contract_version": "concept/1",
-      "path": "schemas/concept.v1.json"
+      "path": "schemas/concept.json"
     },
     {
       "contract_version": "context-package/1",
-      "path": "schemas/context-package.v1.json"
+      "path": "schemas/context-package.json"
     },
     {
       "contract_version": "distribution-manifest/1",
-      "path": "schemas/distribution-manifest.v1.json"
+      "path": "schemas/distribution-manifest.json"
     },
     {
       "contract_version": "generation-manifest/1",
-      "path": "schemas/generation-manifest.v1.json"
+      "path": "schemas/generation-manifest.json"
     },
     {
       "contract_version": "generation-plan/1",
-      "path": "schemas/generation-plan.v1.json"
+      "path": "schemas/generation-plan.json"
     },
     {
       "contract_version": "generation-scope/1",
-      "path": "schemas/generation-scope.v1.json"
+      "path": "schemas/generation-scope.json"
     },
     {
       "contract_version": "impact-analysis/1",
-      "path": "schemas/impact-analysis.v1.json"
+      "path": "schemas/impact-analysis.json"
     },
     {
       "contract_version": "knowledge-authoring-result/1",
-      "path": "schemas/knowledge-authoring-result.v1.json"
+      "path": "schemas/knowledge-authoring-result.json"
     },
     {
       "contract_version": "knowledge-decision/1",
-      "path": "schemas/knowledge-decision.v1.json"
+      "path": "schemas/knowledge-decision.json"
     },
     {
       "contract_version": "knowledge-graph/1",
-      "path": "schemas/knowledge-graph.v1.json"
+      "path": "schemas/knowledge-graph.json"
     },
     {
       "contract_version": "knowledge-object/1",
-      "path": "schemas/knowledge-object.v1.json"
+      "path": "schemas/knowledge-object.json"
     },
     {
       "contract_version": "pack-declaration/1",
-      "path": "schemas/pack-declaration.v1.json"
+      "path": "schemas/pack-declaration.json"
     },
     {
       "contract_version": "placement-decision/1",
-      "path": "schemas/placement-decision.v1.json"
+      "path": "schemas/placement-decision.json"
     },
     {
       "contract_version": "specification-delta/1",
-      "path": "schemas/specification-delta.v1.json"
+      "path": "schemas/specification-delta.json"
     },
     {
       "contract_version": "validation-evidence/1",
-      "path": "schemas/validation-evidence.v1.json"
+      "path": "schemas/validation-evidence.json"
     },
     {
       "contract_version": "workflow-event/1",
-      "path": "schemas/workflow-event.v1.json"
+      "path": "schemas/workflow-event.json"
     }
   ],
   "capabilities": [

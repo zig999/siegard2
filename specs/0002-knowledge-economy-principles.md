@@ -19,9 +19,6 @@ or how software is produced from them. Those are separate specifications that ci
 dependency is declared in their **Scope** sections rather than asserted here, because three specifications
 sit at one precedence level and none outranks another.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines, and it does not govern the concept bundle in `docs/concepts/`, which
-`docs/adr/0005-okf-derived-concept-model.md` governs.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -29,9 +26,7 @@ which `CLAUDE.md` defines, and it does not govern the concept bundle in `docs/co
 |---|---|
 | The workflow every change request follows | spec 0001 |
 | Why coverage figures are observability rather than gates | spec 0001 R25 |
-| The constraint order, and the exclusion of human convenience | `CLAUDE.md` **Decision order** |
-| That one concept has one authoritative definition | `CLAUDE.md` **Authority placement** |
-| That an abstraction requires a current requirement and a testable contract | `CLAUDE.md` **Scope** |
+| That an abstraction requires a current requirement and a testable contract | `specs/0005` R4 |
 | Where stack knowledge lives, once the knowledge base has excluded it | undecided; `specs/0004` proposes an answer |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
@@ -141,20 +136,3 @@ Terms used normatively below.
   and each is falsifiable against these tests rather than derived from them mechanically;
 - whether an element that fails R2 is removed immediately or on the next change that touches it.
 
-## What satisfied acceptance
-
-This specification presupposed no unbuilt component, and both conditions it stated are met:
-
-1. a maintainer accepted it on 2026-07-30;
-2. the four concepts it uses normatively and introduced with it — knowledge base, domain knowledge, stack
-   knowledge, representation ratio — are present in `docs/concepts/` with rows in the bundle index, and
-   `make validate` passes over the bundle.
-
-What exercised it before acceptance was the reduction R2 and R3 forced on the draft this specification was
-separated from: an authored generation ruleset removed in favour of a specialized agent's own knowledge of
-its technology, and three attribute parameters replaced by system-level defaults. A principle that changed
-nothing would not have been worth accepting.
-
-R7 is the one requirement here that no evidence yet satisfies: no system has been generated, so no ratio
-exists. Acceptance therefore carries a live obligation to instrument, and the absence of a measurement MUST
-be reported as absence rather than as a healthy ratio.

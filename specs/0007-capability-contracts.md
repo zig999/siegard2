@@ -27,19 +27,17 @@ The purpose is narrow and worth stating plainly: `specs/0005` R3 puts selection 
 A model can only select well from what it can read cheaply. A declaration is that readable surface, and
 its quality is the difference between a framework that offers capabilities and one that hides them.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
-Two frontmatter contracts already exist and are enforced: `schemas/skill.v1.json` and
-`schemas/agent.v1.json`, derived in ADR-0009 from Anthropic's documented constraints. They answer a
+Two frontmatter contracts already exist and are enforced: `schemas/skill.json` and
+`schemas/agent.json`, derived from Anthropic's documented constraints. They answer a
 different question from this document. They fix what the *harness* must find in a component in order to
 load it. A declaration fixes what a *consumer* must find in order to choose it. The two overlap in two
 fields — a name and a description — and this specification does not duplicate the rest of either.
 
 The one worked example is `src/claude/agents/concept-author.md` with
-`schemas/concept-authoring-result.v1.json`: an agent that states its required inputs, its procedure, its
+`schemas/concept-authoring-result.json`: an agent that states its required inputs, its procedure, its
 result contract, and what its tool grant deliberately excludes. What that agent does in prose is what
 this document turns into a requirement.
 
@@ -47,11 +45,10 @@ this document turns into a requirement.
 
 - what an artifact passed between capabilities must carry, and which criticality demands a versioned
   schema — `specs/0005` R16a;
-- that a component states its own tool and permission grant — `CLAUDE.md` **Security**;
-- the harness's own frontmatter requirements — `schemas/skill.v1.json`, `schemas/agent.v1.json`;
+- that a component states its own tool and permission grant — `specs/0005` R11;
+- the harness's own frontmatter requirements — `schemas/skill.json`, `schemas/agent.json`;
 - how a description should be written to be matched well — `specs/0006` and
-  the practices `docs/adr/0009-component-contracts-from-anthropic-documentation.md` records but does
-  not yet bind.
+  the practices Anthropic documents but does not bind.
 
 ## Definitions
 
@@ -162,22 +159,10 @@ This specification uses these terms as the concept bundle defines them:
   value presented as a calibrated one is a false report, and it is the route by which a value chosen once
   to get a first run moving becomes a framework default nobody decided to ship.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. Capabilities in at least three classes carry a full declaration, and a validator in `scripts/` rejects
    an incomplete one. No declaration format is enforced anywhere today, so R1 binds without anything
@@ -188,7 +173,7 @@ available and was not taken here.
 3. One capability's declaration is shown to be wrong by a fixture: a property declared deterministic that
    a prompt actually decided, or a grant wider than its steps. R10 and R14 are only real once something
    has caught a violation.
-4. The overlap with `schemas/skill.v1.json` and `schemas/agent.v1.json` is resolved in one direction —
+4. The overlap with `schemas/skill.json` and `schemas/agent.json` is resolved in one direction —
    either a declaration extends those contracts or it is a separate artifact that references them — and
    whichever is chosen is enforced by one validator rather than two.
 5. R19 is exercised: one threshold is either calibrated and recorded with its evidence, or removed from a

@@ -17,7 +17,7 @@ implementation to work around a specification is a defect, not a change.
 ## 2. Name it once
 
 One name for the concept across specs, schemas, code, tests, and docs. A term used normatively needs a
-file in `docs/concepts/` and a row in `docs/concepts/index.md`; the contract is `schemas/concept.v1.json`.
+file in `docs/concepts/` and a row in `docs/concepts/index.md`; the contract is `schemas/concept.json`.
 
 ## 3. Update everything derived, in the same change
 

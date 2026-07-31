@@ -34,7 +34,7 @@ framework does not control.
 
 ## Decision
 
-Workflow history is a JSONL log of entries conforming to `schemas/workflow-event.v1.json`, and state is
+Workflow history is a JSONL log of entries conforming to `schemas/workflow-event.json`, and state is
 computed from it by `derive()` in `scripts/workflow_lib.py`. Nothing stores state.
 
 Four specifics this contract fixes, each because the alternative failed a test rather than because it
@@ -54,7 +54,7 @@ reads better:
   requires the limit stated; a framework-wide default would be the calibrated threshold R10 forbids
   inventing ahead of executed workflows.
 
-`schemas/impact-analysis.v1.json` arrives in the same change, because the loop cannot run without the
+`schemas/impact-analysis.json` arrives in the same change, because the loop cannot run without the
 artifact R4 requires and R4 already fixes its content.
 
 ## Consequences
@@ -78,22 +78,10 @@ artifact R4 requires and R4 already fixes its content.
   that the orchestrator's logic is a tested script, which is a narrower claim; open question 3 keeps the
   rest.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. A second workflow fixture whose path differs from the first — a `none` verdict, or a workflow that
    exhausts its attempt limit — replays and is checked, showing the table generalizes beyond one

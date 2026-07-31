@@ -57,7 +57,7 @@ seq  phase                 outcome     how it was recorded
   other — from an artifact that passed its schema at the boundary. Nothing in the orchestrator reads
   prose, and the fixture would fail if it did: the results carry no prose to read.
 - **The boundary rejects rather than repairs** (R6). This is the fixture that closed the gap
-  `schemas/concept-authoring-result.v1.json` declared in its own description, where the boundary check
+  `schemas/concept-authoring-result.json` declared in its own description, where the boundary check
   was named as arriving with the orchestrator.
 - **A validation failure returns to implementation under a stated limit** (R7). Attempt 1 fails,
   attempt 2 passes, and the limit came from the workflow's own opening event rather than from a

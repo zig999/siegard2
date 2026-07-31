@@ -5,26 +5,42 @@ paths:
   - "scripts/**"
 ---
 
-# Generated distribution
+# Building the distribution
 
-`dist/.claude/` is a release artifact assembled from the framework source in `src/claude/`. It is not
-a source tree.
+`dist/.claude/` is what this repository produces. It is not a source tree, and nothing here is edited
+by hand.
 
-## Rules
+`specs/0008` states what a distribution must be true of — the properties a consumer can check in the
+tree they installed. This file states what *this* repository must do to build one. A consumer never
+satisfies a rule below; the person or agent running `make dist` does.
 
-- Do not hand-edit a file under `dist/` when a generator owns it. Change the source or the generator,
-  then regenerate.
-- Keep the output reproducible: the same committed source must produce the same distribution.
-- Exclude source-only paths from the output — `specs/`, `tests/`, `fixtures/`, `docs/`, `.claude/`, and
-  any other development-only configuration. `.claude/` is this repository's development environment and
-  never ships. `CLAUDE.md` under **Repository layout** holds the path table; **The two trees** in
-  `.claude/rules/claude-code-authoring.md` is the authority for the boundary itself.
-- Never place secrets, credentials, tokens, or environment-specific values in the distribution.
-- Reject hidden defaults: if an installed component behaves differently when a setting is absent,
-  state that default in the component itself, not only in the generator.
+## What ships
 
-## The generator
+Everything under `src/claude/`, and nothing else. A file reaches the consumer because of where it sits,
+not because a table in the generator names it. Adding a schema, scaffold, or executable to that tree
+ships it; adding it anywhere else does not.
 
-`scripts/generate_dist.py` produces `dist/.claude/`, `make dist` runs it, and `make dist-check` verifies
-the committed tree against a fresh run. `dist/` is therefore authoritative and is release output. Change
-the source or the generator and regenerate; a file placed there by hand is drift `verify_dist.py` reports.
+Two files in the output have no counterpart in the source, and both are computed rather than copied:
+`hooks/hooks.json`, derived from the authored `hooks.declaration.json`, and `siegard-manifest.json`,
+which records the assembly and therefore cannot precede it.
+
+## Rules for the build
+
+- Do not hand-edit a file under `dist/`. Change the source or the generator, then regenerate.
+- Keep the output reproducible: the same committed source and generator version must produce a
+  byte-identical tree. A difference between two runs is a defect in the generator, never an acceptable
+  variation.
+- Verify by regenerating into a temporary tree and comparing. Never write into the tree being checked —
+  a check that repairs what it was meant to detect reports success on a defect.
+- Exclude every development-only path: `specs/`, `tests/`, `fixtures/`, `docs/`, `.claude/`, and this
+  repository's own `schemas/`, `scripts/`, and `templates/`. `.claude/` configures the agent that
+  develops the generator and never ships.
+- Never place a secret, credential, token, or environment-specific value in the output. An absolute
+  path true only on the build machine is such a value.
+- Reject a hidden default: if an installed component behaves differently when a setting is absent,
+  state that default in the component itself, not in the generator.
+- A fixture is optional evidence and never a gate. Nothing is withheld from the distribution for want
+  of one — `specs/0006` R11, and `CLAUDE.md` **Scope**.
+
+`make dist` regenerates; `make dist-check` verifies. Reporting the first as if it were the second
+reports success on a defect.

@@ -21,8 +21,6 @@ reports, and how escalation is decided, moved to
 **What satisfied acceptance**. R9 and R17 through R20 remain as forwarding entries rather than being
 renumbered, because renumbering would redirect an existing citation to a different statement.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
@@ -40,11 +38,11 @@ it. This paragraph is the anchor for the phrase "the v0.1 draft" wherever this r
 
 | Question | Authority |
 |---|---|
-| Which persistence model records workflow state | undecided; `CLAUDE.md` **Determinism and state** bounds it |
+| Which persistence model records workflow state | `specs/0005` R14 |
 | How the distribution is produced and what it excludes | `specs/0008` R4–R6, R5a–R5c |
 | Which component classes exist and what each owns | `specs/0006` |
 | When an artifact requires a versioned schema | `specs/0005` R16a |
-| Security posture, privilege, and untrusted input | `CLAUDE.md` **Security** |
+| Security posture, privilege, and untrusted input | `specs/0005` R11 and R20–R22 |
 | The status of a knowledge artifact, and who moves it | the governed repository's own decision |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
@@ -253,45 +251,3 @@ like a requirement:
 - the layout a governed repository uses for these artifacts, and how the distribution installs it;
 - knowledge derived from code as a capability: R26 constrains it, and nothing here requires it to exist.
 
-## What satisfied acceptance
-
-Accepted 2026-07-31, on the evidence of `fixtures/knowledge-change-loop/` and the thin path of
-`docs/bootstrap.md` stage 2. Two of the five conditions this specification set were met; the requirements
-the other three covered were moved out rather than accepted unexercised.
-
-**Condition 1 — a maintainer accepts it.** Given.
-
-**Condition 2 — the knowledge-only path runs end to end in a fixture, with each transition chosen by
-lookup on a validated artifact (R5).** Met. `fixtures/knowledge-change-loop/` runs one change request
-through all seven phases of R2, including a validation failure and a recovery under the attempt limit R7
-requires be stated. Every transition is a lookup in the table held by `scripts/workflow_lib.py` on the
-closed `outcome` field of an event that passed `workflow-event/1`; three of the nine came from
-`scripts/orchestrate.py consume`, which reads a closed field — `verdict` on `impact-analysis/1`, `state`
-on `concept-authoring-result/1` — from an artifact validated at the boundary first. No branch in the
-orchestrator reads prose, which is stage 2's abandonment criterion not having fired.
-
-**Conditions 3, 4, and 5 — an escalation predicate, the validation closure, the acceptance gate's mode
-reporting.** Not met, and not waived. The requirements they covered — R9, R17, R18, R19, R20 — moved to
-`specs/0014-acceptance-closure-and-escalation.md`, which was `proposed` at the time and carries those three
-conditions verbatim. They span stages 3 through 5, so meeting them here would have meant asserting them.
-That document was itself accepted on 2026-07-31 with the three still open, so the requirements bind today
-on a maintainer's authority rather than on the evidence this move was made to wait for.
-
-**What the path did *not* narrow.** This specification instructed that a phase in R2 shown to be ceremony
-should be removed before acceptance. None was: all seven ran, and the two a knowledge-only change might
-have been expected to skip did not disappear. Context resolution ran *degenerate* — in a bundle this small
-the impact set already is the context, so the phase resolves trivially and records that it did — and the
-implementation phase is where knowledge authoring happens, because in a knowledge-only change the authored
-knowledge is what the change produces. R2's "escalation inserts phases; it never removes one" survived its
-first test.
-
-**What R10 was doing while unexercised by any condition.** It was already binding in practice. The attempt
-limit of R7 is a property of each workflow's opening event rather than a framework default precisely
-because R10 forbids asserting a calibrated threshold ahead of executed workflows —
-`docs/adr/0011-append-only-workflow-events-derived-by-replay.md` records that reasoning. R10 stayed here
-for that reason, and its closing clause was repointed from R9 to the predicate it describes.
-
-**What acceptance now costs.** `.claude/rules/compatibility.md` governs `specs/**`, so from here a change
-to a transition guard, a terminal state, or the workflow's semantics is a breaking change with a migration
-path and a migration test rather than a revision. `docs/bootstrap.md` records the migration debt this
-repository already owes on `workflow-event/1`, and that debt is now under this rule.

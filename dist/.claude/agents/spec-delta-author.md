@@ -53,7 +53,7 @@ makes wrong, incomplete, or absent.
 
 ## Result
 
-Return exactly one JSON object conforming to `schemas/specification-delta.v1.json`, and nothing else.
+Return exactly one JSON object conforming to `schemas/specification-delta.json`, and nothing else.
 
 ```json
 {

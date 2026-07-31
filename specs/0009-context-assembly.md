@@ -36,12 +36,10 @@ than leaving to inference: expansion is deterministic, so whatever performs it i
 `specs/0005` R5 and `specs/0006` R8, and root selection is model judgment under `specs/0001` R12. No
 resolver class is needed, and none is proposed here.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
-Nothing here has been exercised. `docs/bootstrap.md` stage 3 is the stage that builds context resolution,
+Nothing here has been exercised. Nothing has yet built context resolution,
 and it has not started; the thin path of stage 2 ran with resolution degenerate, because in a bundle of a
 few objects the impact set already is the context.
 
@@ -124,7 +122,7 @@ This specification uses these terms as the concept bundle defines them:
 
 - **R10** — Every resolution run records the roots it selected and the volume of context the package
   produced, in the unit R7 states. Those records, read against what the change turned out to need, are
-  what make both of `docs/bootstrap.md` stage 3's measurements computable — selection recall and tokens
+  what make both measurements R10 asks for computable — selection recall and tokens
   per change — and R11 is decided on both rather than on volume alone. Recall is computable only after the
   change closes, which is why this requirement asks for the record rather than for the figure. This is
   observability: no gate, threshold, or acceptance criterion is expressed as a recall or coverage figure.
@@ -184,26 +182,14 @@ still appear to differ, which is the rule this document's **Decided elsewhere** 
   limit recomputes to a different set the moment the traversal reorders. Under this requirement the failure
   becomes visible as a version mismatch instead of a hash that silently stops matching.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. A bundle large enough for selection to matter exists as a fixture, and resolution runs against it.
    Every requirement here is unexercised today, and R11 in particular cannot be satisfied by argument —
-   `docs/bootstrap.md` stage 3.
+   the first end-to-end run.
 2. The measurement of R10 is taken and recorded, and the result is acted on: either resolution is retained
    with the evidence that justifies it, or R11 is applied and this specification is narrowed to the
    simpler mechanism. Accepting this document before that measurement would bind machinery the evidence
@@ -223,5 +209,3 @@ available and was not taken here.
    under R8, and a test asserts that a stop reason other than `closure_complete` has a matching degradation
    entry (R16). Each of `specs/0001` R13's four is produced at least once, which is what shows the closed
    set of R15 covers the vocabulary the accepted specification already binds.
-8. ~~`specs/0001` is accepted.~~ **Met** on 2026-07-31. This document's foundation — R11 through R15 there —
-   now binds, so what remains unmet above is this document's own evidence rather than its basis.

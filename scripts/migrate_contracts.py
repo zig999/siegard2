@@ -3,10 +3,9 @@
 
 `.claude/rules/compatibility.md` requires a breaking change to "define the supported
 migration path" and to "add a compatibility or migration test that fails against the old
-behavior". The registry is empty: no contract in this repository carries a second version, and the
-one that did — `adr/1` → `adr/2` — was collapsed on 2026-07-31 when a maintainer decided
-ADR versions are not managed here. The machinery stays because the first real bump needs
-it, and because check_contract_versions.py fails a bump that registers no path.
+behavior". The registry is empty: no contract in this repository carries a second version. The machinery
+stays because the first real bump needs it, and because check_contract_versions.py fails a bump
+that registers no path.
 
 A migration here is a function, not a description, for the reason this repository applies
 everywhere else: a path that is only written down is a path nobody has run. Registering one
@@ -30,6 +29,7 @@ from __future__ import annotations
 import json
 import sys
 from typing import Callable
+import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 

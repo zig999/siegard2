@@ -32,7 +32,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_DIR = REPO_ROOT / "schemas"
-EVENT_SCHEMA_PATH = SCHEMA_DIR / "workflow-event.v1.json"
+EVENT_SCHEMA_PATH = SCHEMA_DIR / "workflow-event.json"
 
 try:
     from jsonschema import Draft202012Validator

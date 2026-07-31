@@ -28,7 +28,7 @@ declared class.
 
 from __future__ import annotations
 
-# The attribute type vocabulary `schemas/knowledge-object.v1.json` closes, mapped to this stack.
+# The attribute type vocabulary `schemas/knowledge-object.json` closes, mapped to this stack.
 # Total over that enum by assertion below: a type the knowledge base can hold and this pack cannot
 # express would fail at expansion, which is the worst place to discover a gap in a pack's coverage.
 #

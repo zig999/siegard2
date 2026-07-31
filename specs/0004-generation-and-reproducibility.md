@@ -34,12 +34,10 @@ Both are cited here rather than repeated.
 It does not restate spec 0001's workflow. Where this specification's validations run inside that workflow,
 it names the requirement of 0001 that governs.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process, which
-`CLAUDE.md` defines.
 
 ### The premise this specification rests on, now settled
 
-Whether a target pack is framework work at all rested on `CLAUDE.md` **Scope**, which excludes "architecture
+Whether a target pack is framework work at all rested on `specs/0005` R13, which excludes "architecture
 chosen for one downstream system" and did not say whether a technology pack is that. A maintainer settled it
 on 2026-07-30: a target pack is not that architecture, and `specs/0005` R4
 **Target packs** holds the distinction and the fixture gate that keeps it honest.
@@ -58,7 +56,7 @@ premise but the evidence: no pack exists, so nothing has exercised any of them.
 | That context resolution degrades rather than blocks | spec 0001 R13–R15, [fail-soft](../docs/concepts/fail-soft.md) |
 | The maturity ladder, and what an assertion binds | spec 0001 R23–R26 |
 | Which component classes exist; that there is no command class | `specs/0006` |
-| The frontmatter contract of a distributable agent or skill | `schemas/agent.v1.json`, `schemas/skill.v1.json` |
+| The frontmatter contract of a distributable agent or skill | `schemas/agent.json`, `schemas/skill.json` |
 | That a generated tree is never hand-edited, and that hidden defaults are rejected | R7 below; `specs/0005` R16b |
 | What makes a change breaking | `specs/0013` R3a |
 
@@ -165,9 +163,9 @@ and `client-stub` added nothing `api-description` does not already carry.
 ## The target pack
 
 A target pack is the specialized agents and templates that produce the classes it declares, distributed
-together under `src/claude/`. Each agent conforms to `schemas/agent.v1.json` and enumerates its tool grant,
-per ADR-0009 and [least privilege](../docs/concepts/least-privilege.md). The entry point that runs
-generation is a [skill](../docs/concepts/skill.md), because ADR-0009 records that there is no command class.
+together under `src/claude/`. Each agent conforms to `schemas/agent.json` and enumerates its tool grant,
+per `specs/0005` R11 and [least privilege](../docs/concepts/least-privilege.md). The entry point that runs
+generation is a [skill](../docs/concepts/skill.md), because there is no command class.
 
 **Composition follows the declaration, and an earlier draft of this section did not.** It said a pack is
 *one* specialized agent and the templates it expands, which cannot be reconciled with `specs/0006` R5 — a
@@ -497,7 +495,7 @@ Terms used normatively below.
 
 - **R12** — Exactly one target pack is active in a governed repository.
 - **R13** — A target pack comprises the specialized agents and templates that produce the classes it
-  declares, distributed together under `src/claude/`. Every agent MUST conform to `schemas/agent.v1.json`
+  declares, distributed together under `src/claude/`. Every agent MUST conform to `schemas/agent.json`
   and MUST enumerate its tool grant. R51 fixes the correspondence between the declaration and the producers,
   and a pack MUST NOT carry a producer for a class it does not declare. Whether a pack additionally carries
   an agent that only decides placement is not fixed here — see **Deliberately not specified**.
@@ -511,7 +509,6 @@ Terms used normatively below.
   report naming what is missing, and a pack inferred at run time MUST be rejected as a hidden default.
 - **R18** — The entry point that runs generation is a [skill](../docs/concepts/skill.md). `specs/0006`
   fixes the capability classes and holds that there is no command class;
-  `docs/adr/0009-component-contracts-from-anthropic-documentation.md` records why.
 
 ### The generation scope
 
@@ -645,29 +642,14 @@ requirement:
 - how a governed repository installs the generation artifacts, and how the distribution carries the pack;
 - which pack the framework ships first, and whether it ships any — each is demand-pulled by a fixture.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 This specification presupposes components that do not exist. Condition 1 is met; the rest are not, and
 each remains the evidence this document owes:
 
-1. ~~a maintainer accepts this specification.~~ **Met** on 2026-07-31. Both specifications it derives from
-   were already accepted — spec 0002, and spec 0003 on 2026-07-30 — and the `CLAUDE.md` **Scope** question
-   R12 through R18 rested on was settled;
 2. one target pack exists under `src/claude/` with a declaration conforming to a schema, and a test proves
    rejection of a declaration naming a class outside the vocabulary (R8) and of a declaration carrying a
    naming convention (R14);

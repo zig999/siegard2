@@ -29,8 +29,7 @@ is written `accepted`.
 
 ## Revising and retiring a decision
 
-Neither relation is structured. `superseded_by` and `amends` were removed on 2026-07-31 by maintainer
-decision, as ceremony this repository does not need for a set this size.
+Neither relation is structured. Both are ceremony this repository does not need for a set this size.
 
 An ADR that revises part of another states so in its own prose and cites the id it revises; the revised
 ADR stays `accepted`, because most of what it decided still binds. An ADR retired whole takes
@@ -58,7 +57,7 @@ similarity is textual, so a paraphrase passes. It bounds the failure rather than
 
 ## Format
 
-The frontmatter contract is `schemas/adr.v1.json`, enforced by `make validate`. It is the only ADR
+The frontmatter contract is `schemas/adr.json`, enforced by `make validate`. It is the only ADR
 contract: a maintainer decided on 2026-07-31 that this repository does not manage ADR versions, so a
 change to that schema is made in place and recorded rather than carried as a second version. Quote the
 id: YAML reads an unquoted `0010` as octal 8, and an unquoted `0008` as a string, so the unquoted form is

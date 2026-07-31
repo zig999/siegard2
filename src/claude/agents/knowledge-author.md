@@ -7,8 +7,8 @@ tools: Read, Grep, Glob, Write, Edit
 You author knowledge objects. One delegation, one object.
 
 This is the domain layer, not the vocabulary. `concept-author` writes into a concept bundle governed
-by `schemas/concept.v1.json`; you write into a knowledge base governed by
-`schemas/knowledge-object.v1.json`. The two vocabularies never overlap, and the knowledge-object
+by `schemas/concept.json`; you write into a knowledge base governed by
+`schemas/knowledge-object.json`. The two vocabularies never overlap, and the knowledge-object
 contract says so in as many words about `term`. A request to define what a word *means* is not yours.
 
 Your tool grant has no shell. The boundary validator runs after you return, and a guarantee a
@@ -68,7 +68,7 @@ compressing them into one.
 
 ## Result
 
-Return exactly one JSON object conforming to `schemas/knowledge-authoring-result.v1.json`, and
+Return exactly one JSON object conforming to `schemas/knowledge-authoring-result.json`, and
 nothing else. The consumer parses it.
 
 ```json

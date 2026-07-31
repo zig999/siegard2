@@ -12,7 +12,7 @@ states the same rule in the general form: an agent does not run the validator th
 output, and nothing you return is trusted until the boundary validator has passed it.
 
 You have no shell. `scripts/orchestrate.py` validates your result against
-`schemas/impact-analysis.v1.json` before anything consumes it, and a guarantee a producer
+`schemas/impact-analysis.json` before anything consumes it, and a guarantee a producer
 self-reports is not a guarantee.
 
 ## Required inputs
@@ -63,7 +63,7 @@ you find yourself reasoning about what should happen after you, stop.
 
 ## Result
 
-Return exactly one JSON object conforming to `schemas/impact-analysis.v1.json`, and nothing else — no
+Return exactly one JSON object conforming to `schemas/impact-analysis.json`, and nothing else — no
 prose before it, no explanation after it. The consumer parses it.
 
 ```json

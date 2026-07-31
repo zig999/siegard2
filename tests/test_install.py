@@ -27,7 +27,7 @@ import install_dist
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DIST = REPO_ROOT / "dist" / ".claude"
-SCRIPT = REPO_ROOT / "scripts" / "install_dist.py"
+SCRIPT = REPO_ROOT / "src" / "claude" / "bin" / "install_dist.py"
 
 
 def run(*args: str) -> subprocess.CompletedProcess:

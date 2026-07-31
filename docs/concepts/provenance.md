@@ -23,4 +23,4 @@ the agent that made it.
 In a concept file, provenance is carried in frontmatter as `generated: { by, at }` for authorship,
 `sources` for the materials the concept derives from, and `verified` for later confirmation events.
 Those three field names come from OKF v0.2, whose provenance model Siegard adopted rather than
-inventing its own — see `schemas/concept.v1.json`.
+inventing its own — see `schemas/concept.json`.

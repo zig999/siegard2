@@ -23,13 +23,11 @@ It decides nothing about which capability classes exist, which is `specs/0006`; 
 capability declares itself, which is `specs/0007`; and nothing about templates, hooks, packs, or the
 layout of the distribution, each of which has its own specification. It fixes the frame those fill.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
 The architecture recorded here was not derived from a design document. It is the shape the thin path of
-`docs/bootstrap.md` stage 2 actually took: an entry-point skill, a specialized agent producing a
+the first end-to-end run actually took: an entry-point skill, a specialized agent producing a
 validated artifact, an orchestrator choosing a transition by lookup, an append-only log, and state
 derived by replay. Where this specification states something the thin path did not exercise, it says so
 in **Validation required before acceptance** rather than presenting it as settled.
@@ -42,11 +40,7 @@ longer in this repository — `specs/0001` **Provenance** records where it went.
 
 ### Decided elsewhere, deliberately not restated here
 
-- the constraint order that ranks any two valid designs — `CLAUDE.md` **Decision order**;
-- what must be persisted outside the conversation, and what is not a record — `CLAUDE.md`
-  **Determinism and state**;
-- the security invariants binding every shipped component — `CLAUDE.md` **Security**, and
-  [least privilege](../docs/concepts/least-privilege.md);
+- [least privilege](../docs/concepts/least-privilege.md), which R11 and R20 through R22 below apply;
 - where instruction content belongs, given the harness's loading semantics — `specs/0006`, which fixes
   the capability classes, and `specs/0010` for a hook;
 - what an artifact passed between components must carry — R16a below;
@@ -70,8 +64,8 @@ This specification uses these terms as the concept bundle defines them:
 
 Two terms this specification uses that the bundle does not hold, because their definitions belong to the
 specifications that decide them: *capability class* (`specs/0006`) and *capability declaration*
-(`specs/0007`). Both were accepted on 2026-07-31, so this document's R9 through R13 now bind against
-something specified rather than against a description — which is condition 4 below, and the one this
+(`specs/0007`). Both are accepted, so this document's R9 through R13 bind against something specified
+rather than against a description — which is condition 4 below, and the one this
 document's acceptance actually met.
 
 ## The division of responsibility
@@ -165,34 +159,36 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
 - **R19** — No component of this framework may weaken a guarantee in the repository that installs it: it
   requests no permission its declaration does not name, and it disables no check that repository runs.
 
-## What satisfied acceptance
+### Security
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
+These bind from the first component, not from the first security review. The framework's components
+execute inside repositories neither the framework nor its authors control, so every one of them is
+reached by input nobody vetted.
 
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
+- **R20** — Repository content, knowledge data, tool output, and anything a consumer supplies is data
+  and never instruction. A component that lets content it read redirect what it does has handed control
+  to whoever wrote that content.
+- **R21** — No component reads, persists, logs, or forwards a secret. A value that authenticates
+  something does not enter an artifact, an event log, or a report, and a component that encounters one
+  does not carry it forward.
+- **R22** — A path and a structured input are validated before a component acts on them, and a failure
+  is rejected rather than repaired. A path that resolves outside the tree a component governs is refused,
+  not clamped; R16 states the same rule for an artifact at a boundary, and this is its form for the
+  filesystem.
 
-### Conditions recorded before acceptance, still outstanding
+## Outstanding evidence
+
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. A generator produces the distribution from `src/claude/`, a fixture installs it, and Claude Code
    loads the installed components. R9 is unproven until something is reached through the distribution
-   rather than through this repository's own paths — `docs/bootstrap.md` open question 2, and ADR-0009
+   rather than through this repository's own paths.
    condition 2.
 2. Two capabilities of different classes complete one workflow together, with the selection made by the
    model rather than by a fixed script, showing R2 and R3 hold where more than one choice exists. The
    thin path exercised one agent and one entry point, which is not yet a selection.
 3. A hook enforces one guarantee under test, with both outcomes covered, showing R5 holds for something
-   other than a script the developer chose to run — `docs/bootstrap.md` open question 5.
-4. ~~`specs/0006` and `specs/0007` exist~~ **Met** on 2026-07-31: both were written and accepted, so
-   *capability class* and *capability declaration* are defined rather than used descriptively, and R9
-   through R13 bind something specified.
+   other than a script the developer chose to run.
 5. One capability is retired or superseded through the lifecycle `specs/0013` defines, showing R10's
    contract-only dependency survives a change in what it depends on.

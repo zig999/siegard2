@@ -27,7 +27,7 @@ from knowledge_graph_lib import load
 REPO_ROOT = Path(__file__).resolve().parent.parent
 KNOWLEDGE = REPO_ROOT / "fixtures" / "knowledge-two-context" / "knowledge"
 PACK = REPO_ROOT / "fixtures" / "pack-minimal"
-SCHEMAS = REPO_ROOT / "schemas"
+SCHEMAS = REPO_ROOT / "src" / "claude" / "schemas"
 ROOT_KO = "ko.rule.sales.proposal-validity"
 
 
@@ -58,11 +58,11 @@ class Fixture(unittest.TestCase):
 class Conformance(Fixture):
     def test_each_artifact_conforms_to_its_contract(self) -> None:
         for name, document in (
-            ("pack-declaration.v1.json", self.declaration),
-            ("generation-scope.v1.json", self.scope),
-            ("placement-decision.v1.json", self.placement),
-            ("generation-plan.v1.json", self.plan),
-            ("generation-manifest.v1.json", self.manifest),
+            ("pack-declaration.json", self.declaration),
+            ("generation-scope.json", self.scope),
+            ("placement-decision.json", self.placement),
+            ("generation-plan.json", self.plan),
+            ("generation-manifest.json", self.manifest),
         ):
             with self.subTest(contract=name):
                 self.assertEqual([], list(validator(name).iter_errors(document)))
@@ -73,15 +73,15 @@ class Conformance(Fixture):
             return set(pointer(load_json(SCHEMAS / name)))
 
         declared = classes(
-            "pack-declaration.v1.json",
+            "pack-declaration.json",
             lambda s: s["properties"]["produces"]["items"]["properties"]["class"]["enum"],
         )
         for name, pointer in (
-            ("placement-decision.v1.json",
+            ("placement-decision.json",
              lambda s: s["properties"]["entries"]["items"]["properties"]["class"]["enum"]),
-            ("generation-plan.v1.json",
+            ("generation-plan.json",
              lambda s: s["properties"]["entries"]["items"]["properties"]["class"]["enum"]),
-            ("generation-manifest.v1.json",
+            ("generation-manifest.json",
              lambda s: s["properties"]["artifacts"]["items"]["properties"]["class"]["enum"]),
         ):
             with self.subTest(contract=name):
@@ -90,14 +90,14 @@ class Conformance(Fixture):
     def test_the_vocabulary_has_twelve_classes(self) -> None:
         self.assertEqual(
             12,
-            len(load_json(SCHEMAS / "pack-declaration.v1.json")
+            len(load_json(SCHEMAS / "pack-declaration.json")
                 ["properties"]["produces"]["items"]["properties"]["class"]["enum"]),
         )
 
     def test_a_traversing_placement_path_is_rejected_by_the_contract(self) -> None:
         document = json.loads(json.dumps(self.placement))
         document["entries"][0]["path"] = "/etc/passwd"
-        self.assertTrue(list(validator("placement-decision.v1.json").iter_errors(document)))
+        self.assertTrue(list(validator("placement-decision.json").iter_errors(document)))
 
 
 class Scope(Fixture):
@@ -270,7 +270,7 @@ class Plan(Fixture):
 
     def test_no_model_is_reachable_from_the_derivation(self) -> None:
         """specs/0004 R23, read off the module rather than asserted in prose."""
-        source = (REPO_ROOT / "scripts" / "generation_lib.py").read_text()
+        source = (REPO_ROOT / "src" / "claude" / "bin" / "generation_lib.py").read_text()
         for forbidden in ("subprocess", "urllib", "socket", "requests", "http"):
             self.assertNotIn(f"import {forbidden}", source)
 

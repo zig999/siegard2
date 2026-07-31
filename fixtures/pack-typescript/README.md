@@ -40,7 +40,7 @@ and the framework generator does not ship it — a test in `tests/test_generator
   attributes, a lifecycle with no transitions, and an interface with no version each fail naming the
   field. A test walks the AST for any two-argument `.get()`, which is what a silent default looks
   like.
-- **The attribute vocabulary is total.** Every type `schemas/knowledge-object.v1.json` admits has a
+- **The attribute vocabulary is total.** Every type `schemas/knowledge-object.json` admits has a
   mapping, asserted against the schema. A type the base can hold and the pack cannot express would
   otherwise fail at expansion, which is the worst place to find a gap in coverage.
 - **No domain knowledge, and no downstream-specific value** (R13, R14). A test extracts the strings

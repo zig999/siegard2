@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a Siegard concept bundle against schemas/concept.v1.json.
+"""Validate a Siegard concept bundle against schemas/concept.json.
 
 This script is a boundary validator: it holds no rules of its own. Every constraint
 lives in the schema file, which is the single authority. The checks implemented here
@@ -21,10 +21,10 @@ import re
 import sys
 from pathlib import Path, PurePosixPath
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from frontmatter_lib import INVOCATION_ROOT, PLUGIN_ROOT, display, split_frontmatter
 from cli import cannot_run
 
-SCHEMA_PATH = REPO_ROOT / "schemas" / "concept.v1.json"
+SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "concept.json"
 RESERVED = {"index.md", "log.md"}
 URI_SCHEME = re.compile(r"^[a-z][a-z0-9+.\-]*://")
 
@@ -66,7 +66,7 @@ def check_sources(data: dict) -> list[str]:
                 f"absolute URI"
             )
             continue
-        if not (REPO_ROOT / resource).is_file():
+        if not (INVOCATION_ROOT / resource).is_file():
             problems.append(
                 f"sources.{index}.resource: '{resource}' resolves to no file — a source that "
                 f"no longer exists is provenance nothing supports"
@@ -119,7 +119,9 @@ def validate(bundle: Path) -> list[str]:
 
 
 def main() -> int:
-    bundle = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "docs" / "concepts"
+    if len(sys.argv) < 2:
+        cannot_run("cannot run: name the concept bundle root; there is no default")
+    bundle = Path(sys.argv[1])
     if not bundle.is_dir():
         cannot_run(f"cannot run: bundle root {bundle} does not exist")
     if not SCHEMA_PATH.is_file():

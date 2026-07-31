@@ -29,6 +29,5 @@ conversation, and [event log](event-log.md) holds why conversation history is no
 persistence model records it is not decided, so the derivation above names the candidate rather than a
 settled mechanism — see `docs/bootstrap.md`.
 
-This concept carried the name `projection` until 2026-07-30, when that term was assigned to the
-graph-derived artifact it also named. `docs/adr/0010-projection-names-the-graph-derived-artifact.md`
-records the decision.
+`projection` names the graph-derived artifact and not this one.
+`docs/adr/0010-projection-names-the-graph-derived-artifact.md` records why the two are kept apart.

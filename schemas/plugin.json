@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/plugin.json",
+  "title": "Claude Code plugin manifest",
+  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. specs/0008 R11 fixes what this record owns and what it does not: identity, description, version, and nothing the distribution manifest already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and specs/0008 relies on no behaviour absent from the documentation on the date above.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "version"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "The plugin identity, and the namespace the harness prepends to every skill it ships: a skill named `knowledge-change` is invoked as `/<name>:knowledge-change`. Kebab-case because it appears verbatim in that invocation. specs/0008 R20 forbids a reserved prefix on a skill for this reason — the namespace is applied here, once."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "What the plugin is, for a consumer deciding whether to enable it. Not a changelog and not a capability list: specs/0008 R12 puts the installed inventory in the distribution manifest, and R11 forbids the two records from duplicating a field."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$",
+      "description": "The framework version, set explicitly. specs/0008 R2: a plugin without one falls back to its commit SHA, which makes every commit a release and takes the framework's version out of the framework's hands. Semantic versioning, because .claude/rules/compatibility.md decides what a breaking change is and a consumer needs the major to mean it."
+    }
+  }
+}

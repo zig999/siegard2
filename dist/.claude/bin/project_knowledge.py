@@ -29,7 +29,7 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display
+from frontmatter_lib import PLUGIN_ROOT, display
 
 from cli import cannot_run
 from derived_artifacts import DERIVED_NAMES
@@ -52,7 +52,7 @@ from knowledge_graph_lib import (  # noqa: E402
     load,
 )
 
-GRAPH_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-graph.v1.json"
+GRAPH_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "knowledge-graph.json"
 
 KO_TYPES = ("boundary", "definition", "rule", "lifecycle", "interface", "process")
 
@@ -255,15 +255,18 @@ def run(root: Path, check: bool) -> tuple[int, list[str]]:
     return (1 if differences else 0), differences
 
 
-def discover() -> list[Path]:
-    return sorted(p for p in (REPO_ROOT / "fixtures").glob("*/knowledge") if p.is_dir())
-
-
 def main() -> int:
+    """Derive or check the projections of every knowledge root named on the command line.
+
+    A root is named, never defaulted. This script shipped with the generator's own
+    layout as its fallback, which resolved to a path that exists only in that
+    repository — in an installation the default found nothing and the run reported
+    success over an empty set.
+    """
     check = "--check" in sys.argv
-    roots = [Path(a) for a in sys.argv[1:] if a != "--check"] or discover()
+    roots = [Path(a) for a in sys.argv[1:] if a != "--check"]
     if not roots:
-        cannot_run("cannot run: no knowledge base given and no fixtures/*/knowledge tree exists")
+        cannot_run("cannot run: name at least one knowledge root; there is no default")
     if not GRAPH_SCHEMA_PATH.is_file():
         cannot_run(f"cannot run: schema {GRAPH_SCHEMA_PATH} does not exist")
 

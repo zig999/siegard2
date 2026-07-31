@@ -18,7 +18,7 @@ sources:
 
 A distributable procedure or knowledge unit shipped from
 [framework source](framework-source.md) as `src/claude/skills/<name>/SKILL.md`, loaded on demand by
-description match or invoked as `/name`. The frontmatter contract is `schemas/skill.v1.json`.
+description match or invoked as `/name`. The frontmatter contract is `schemas/skill.json`.
 
 There is no separate command class: Claude Code merged custom commands into skills, and Siegard
 ships only the skill form. A user-invocable entry point is a skill; whether the model may also

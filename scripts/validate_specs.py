@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the specification set in specs/ against schemas/spec.v1.json.
+"""Validate the specification set in specs/ against schemas/spec.json.
 
 This script is a boundary validator: it holds no rules of its own. Every frontmatter
 constraint lives in the schema file, which is the single authority. The checks
@@ -48,10 +48,11 @@ import re
 import sys
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from generator_lib import REPO_ROOT, display
+from frontmatter_lib import split_frontmatter
 from cli import cannot_run
 
-SCHEMA_PATH = REPO_ROOT / "schemas" / "spec.v1.json"
+SCHEMA_PATH = REPO_ROOT / "schemas" / "spec.json"
 RESERVED = {"README.md"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 

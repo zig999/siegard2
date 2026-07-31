@@ -38,7 +38,7 @@ WORKFLOW = "wf_dunning-term"
 # schema, and this file — and a test that carries its own copy of a rule stops being able to
 # disagree with the schema.
 R2_PHASES = set(
-    json.loads((REPO_ROOT / "schemas" / "workflow-event.v1.json").read_text())["properties"]["phase"][
+    json.loads((REPO_ROOT / "src" / "claude" / "schemas" / "workflow-event.json").read_text())["properties"]["phase"][
         "enum"
     ]
 )
@@ -228,7 +228,7 @@ class SpecificationAgreement(unittest.TestCase):
         match = re.search(r"\*\*R2\*\* — The default path is exactly: (.+?), in that order", spec, re.S)
         self.assertIsNotNone(match, "R2 no longer states the default path in the expected form")
         prose = [part.strip().replace(" ", "-") for part in match.group(1).replace("\n", " ").split(",")]
-        schema = json.loads((REPO_ROOT / "schemas" / "workflow-event.v1.json").read_text())
+        schema = json.loads((REPO_ROOT / "src" / "claude" / "schemas" / "workflow-event.json").read_text())
         self.assertEqual(
             prose,
             schema["properties"]["phase"]["enum"],
@@ -241,7 +241,7 @@ class SpecificationAgreement(unittest.TestCase):
 
 
 class Contract(unittest.TestCase):
-    """The conditionals in schemas/workflow-event.v1.json, in both directions."""
+    """The conditionals in schemas/workflow-event.json, in both directions."""
 
     def test_a_conforming_event_has_no_problems(self) -> None:
         self.assertEqual(schema_problems(opening()), [])

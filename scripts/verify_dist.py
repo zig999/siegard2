@@ -36,12 +36,14 @@ import re
 import sys
 import tempfile
 from pathlib import Path
+
+import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
 MANIFEST_NAME = "siegard-manifest.json"
-MANIFEST_SCHEMA = REPO_ROOT / "schemas" / "distribution-manifest.v1.json"
+MANIFEST_SCHEMA = REPO_ROOT / "src" / "claude" / "schemas" / "distribution-manifest.json"
 
 # specs/0008 R7 closes the directory set; anything else at the plugin root is unshippable.
 ALLOWED_ROOT = {".claude-plugin", "skills", "agents", "hooks", "bin", "schemas", "templates"}

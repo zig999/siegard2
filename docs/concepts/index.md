@@ -9,7 +9,7 @@ concept here before using a term normatively. A term used in a rule but absent f
 interpretation waiting to drift.
 
 This bundle is a Siegard concept bundle and a valid OKF v0.2 bundle. The frontmatter contract is
-`schemas/concept.v1.json`; the decision and its one divergence from OKF are recorded in
+`schemas/concept.json`; the decision and its one divergence from OKF are recorded in
 `docs/adr/0005-okf-derived-concept-model.md`. Validate with `make validate`.
 
 One concept per file. The filename is the concept `id` without its `concept.` prefix.

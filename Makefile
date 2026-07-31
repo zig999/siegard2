@@ -1,4 +1,8 @@
-# Siegard Code — canonical entry points declared in CLAUDE.md.
+# siegard-generator — canonical entry points declared in CLAUDE.md.
+#
+# Every shipped script lives in src/claude/bin/ and takes its root as an argument: it
+# ships, so it cannot default to a path that exists only here. The roots this repository
+# validates are therefore named below rather than baked into the tool.
 #
 # A target that has nothing to check yet must fail loudly rather than succeed
 # vacuously. A green run that validated nothing is worse than a named gap.
@@ -18,14 +22,14 @@ validate:
 	python3 scripts/validate_specs.py || fail=1; \
 	python3 scripts/validate_adrs.py || fail=1; \
 	python3 scripts/check_contract_versions.py || fail=1; \
-	python3 scripts/validate_concepts.py || fail=1; \
+	python3 src/claude/bin/validate_concepts.py docs/concepts || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
-	python3 scripts/validate_artifacts.py || fail=1; \
-	python3 scripts/validate_knowledge.py || fail=1; \
-	python3 scripts/project_knowledge.py --check || fail=1; \
+	python3 src/claude/bin/validate_artifacts.py fixtures || fail=1; \
+	python3 src/claude/bin/validate_knowledge.py fixtures/*/knowledge || fail=1; \
+	python3 src/claude/bin/project_knowledge.py --check fixtures/*/knowledge || fail=1; \
 	python3 scripts/measure_ontology.py --check || fail=1; \
-	python3 scripts/replay_workflow.py --check || fail=1; \
-	python3 scripts/verify_judged.py --run fixtures/generation-run/run.json || fail=1; \
+	python3 src/claude/bin/replay_workflow.py --check fixtures || fail=1; \
+	python3 src/claude/bin/verify_judged.py --run fixtures/generation-run/run.json || fail=1; \
 	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
 
@@ -52,17 +56,17 @@ validate:
 # `replay_workflow.py --check` replays every workflow fixture through the real guard
 # and compares the result against the committed log and derived state. It is verified
 # and not regenerated here for the same reason as the two trees above. Regeneration is
-# `python3 scripts/replay_workflow.py`, which has no target: CLAUDE.md **Commands**
+# `python3 src/claude/bin/replay_workflow.py fixtures`, which has no target: CLAUDE.md **Commands**
 # fixes the canonical entry points, and only the maintainer changes that file.
 knowledge:
-	python3 scripts/project_knowledge.py
+	python3 src/claude/bin/project_knowledge.py fixtures/*/knowledge
 	python3 scripts/measure_ontology.py
 
 test:
 	python3 -m unittest discover -s tests -t .
 
-# `dist` regenerates dist/.claude/ from src/claude/, schemas/, and the executables
-# scripts/generate_dist.py selects. `dist-check` regenerates into a temporary tree and
+# `dist` regenerates dist/.claude/ by copying src/claude/, which holds everything that
+# ships and nothing that does not. `dist-check` regenerates into a temporary tree and
 # compares, and additionally holds the committed tree to the invariants specs/0008 states
 # about the output itself. Both layers matter: a comparison alone cannot catch a generator
 # that is consistently wrong, because it would produce the same defect twice and report

@@ -23,13 +23,11 @@ track each is produced on, which `specs/0004` fixes; nothing about what a
 [target pack](../docs/concepts/target-pack.md) declares, which is `specs/0012`; and nothing about a
 template's syntax, which is implementation.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
-No template exists, and `templates/` is named in `CLAUDE.md` **Repository layout** as a path to create when
-the first artifact needs it. `docs/bootstrap.md` stage 4 is where templates arrive.
+No template exists, and a scaffold directory is a path to create when
+the first artifact needs it. Templates arrive with the first artifact that needs one.
 
 The determinism requirements below are not speculative, though. R4 through R6 are the generalization of a
 defect this framework already hit and fixed once: an early draft of the workflow event contract ordered
@@ -139,25 +137,13 @@ This specification uses these terms as the concept bundle defines them:
 - **R18** — A template does not decide whether its output is committed, recomputed, or discarded. That is the
   artifact class's persistence, fixed by `specs/0004`.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. One template exists, produces one artifact class, and a fixture expands it. Every requirement here is
-   unexercised — `docs/bootstrap.md` stage 4.
+   unexercised.
 2. A test expands the same knowledge twice and asserts byte-identical output, and a second test asserts that
    a template reaching for a clock or an environment variable is detected. R2 without R4 tested is a promise
    with an open door behind it.
@@ -165,9 +151,5 @@ available and was not taken here.
    case that produces a spurious diff and is invisible in a fixture with one element.
 4. R10 is tested in the failing direction: expansion over knowledge missing a required fact reports the gap
    rather than emitting a default.
-5. ~~`specs/0004` is accepted.~~ **Met** on 2026-07-31. It is the authority for artifact classes, tracks,
-   and persistence, so this document is now a specialization of decisions that bind — though of decisions
-   accepted on the same maintainer's authority rather than on evidence, which is what the preamble above
-   records.
 6. One artifact class is moved from the deterministic track to the judged track, or the reverse, on the
    evidence of R2 — showing the track is a measured property rather than a label assigned once.

@@ -21,12 +21,8 @@ five things:
    is re-verified.
 
 R3a defines what makes a change breaking and what a breaking change requires; the rest of this document
-decides the release mechanics around it. That test lived in `.claude/rules/compatibility.md` until
-2026-07-31, where a consumer bound by it could not read it — that file still governs a change to this
-repository's own artifacts, which is a separate question from what the product promises.
+decides the release mechanics around it.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process, which
-`CLAUDE.md` defines.
 
 ### Provenance
 
@@ -34,16 +30,16 @@ This document is the family's last and its subject is the least exercised: the f
 never deprecated anything, and never migrated a consumer.
 
 It is nevertheless the document with the most evidence behind a single requirement. R13 and R14 below exist
-because two gaps were recorded rather than theorized. ADR-0009 states plainly that its contracts encode a
+because two gaps were recorded rather than theorized. The component contracts encode a
 snapshot of external documentation, that the retrieval date is recorded so staleness is checkable, and that
 "nothing yet forces re-verification". `specs/0010` then added a second retrieval date — for a different set
 of pages on an overlapping *subject*, which is not the same thing and is worth saying precisely: no page in
-the framework is cited at two dates. R13 closes the gap ADR-0009 named. R14 closes the one the second date
+the framework is cited at two dates. R13 closes that gap. R14 closes the one the second date
 makes visible without yet committing, which is that nothing would notice if the same page were cited twice
 at different dates.
 
-R11 has similar grounding of the negative kind: `docs/bootstrap.md` records that the `adr/1` to `adr/2`
-contract bump happened *without* a migration test, and lists that debt as owed. ADR-0011 records the same
+R11 has similar grounding of the negative kind: The `adr/1` to `adr/2`
+contract bump happened *without* a migration test. The same
 exposure for `workflow-event/1`. The framework has therefore already twice done the thing R11 forbids, which
 is the strongest available argument for stating it.
 
@@ -51,8 +47,6 @@ is the strongest available argument for stating it.
 
 - what makes a change breaking, what a breaking change requires, how a contract is versioned, and when
   compatibility should *not* be preserved — R3a and R10 through R12 below;
-- the status vocabulary of this repository's own specifications and decision records —
-  `docs/adr/README.md`, which governs the generator rather than the product;
 - the lifecycle of one [capability](../docs/concepts/capability.md) — `specs/0006` R14 through R17;
 - what an installation and an upgrade do, and the distribution manifest that records them — `specs/0008`;
 - how a [target pack](../docs/concepts/target-pack.md)'s version relates to the framework's — `specs/0012`
@@ -130,10 +124,10 @@ This specification uses these terms as the concept bundle defines them:
   it changed, and is idempotent, so that running it twice is safe and running it once is a decision the
   consumer made.
 
-**Recorded exception, 2026-07-31.** `superseded_by` and `amends` were removed from `schemas/adr.v1.json`,
-`schemas/adr.v2.json`, `schemas/spec.v1.json`, and `schemas/concept.v1.json` **in place**, without the new
+**Recorded exception, 2026-07-31.** `superseded_by` and `amends` were removed from `schemas/adr.json`,
+`schemas/adr.json`, `schemas/spec.json`, and `schemas/concept.json` **in place**, without the new
 version file R11 and R3a would otherwise require. R3a admits a documented break, and this is the document. It rests on three facts: the change only relaxes, so no
-document valid before is invalid after; no artifact in this repository declared either field except ADR-0008,
+document valid before is invalid after; no artifact declared either field except one,
 changed in the same commit; and of the four contracts only `concept/1` ships, where `additionalProperties: true`
 leaves a downstream document still carrying `superseded_by` valid and merely unconstrained. What it costs: a
 consumer pinned to `concept/1` now sees a contract that accepts a `superseded` concept naming no replacement,
@@ -160,22 +154,10 @@ the digest records the constraints that now hold rather than the ones that did.
   depending on an implementation detail, an internal path, or an artifact's incidental shape is depending on
   something no version protects.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. One release exists, with the record R4 requires. Nothing here is exercised: the framework has never
    released.
@@ -183,12 +165,12 @@ available and was not taken here.
    under the previous version. R11 is the requirement the framework has already violated twice, so satisfying
    it once is the minimum evidence that the mechanism exists.
 3. The two debts named in **Provenance** are settled or explicitly written off: the missing `adr/1` to
-   `adr/2` migration test recorded in `docs/bootstrap.md`, and the `workflow-event/1` exposure recorded in
-   ADR-0011.
+   `adr/2` migration test recorded elsewhere, and the `workflow-event/1` exposure recorded in
+   the same exposure.
 4. A deterministic check in `scripts/` reports any documentation page cited at two different retrieval
    dates, which is R14 made mechanical rather than read. The two dates in the framework today are not that
    case, and the distinction is worth recording because an earlier draft of this condition treated them as
-   one: ADR-0009 cites the skills, sub-agents, and best-practices pages at 2026-07-29, while ADR-0012,
+   one: the component contracts cite the skills, sub-agents, and best-practices pages at 2026-07-29, while the plugin decision,
    `specs/0008`, and `specs/0010` cite the plugins and hooks pages at 2026-07-31. Two dates over two
    disjoint page sets is what R13 produces by design; two dates over *one* page is the contradiction R14
    forbids, and nothing checks for it yet.

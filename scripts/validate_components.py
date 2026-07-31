@@ -2,7 +2,7 @@
 """Validate distributable Claude Code components under src/claude/.
 
 This script is a boundary validator: it holds no rules of its own. Every frontmatter
-constraint lives in schemas/skill.v1.json and schemas/agent.v1.json, which are the
+constraint lives in schemas/skill.json and schemas/agent.json, which are the
 single authorities and carry their source citations. The checks implemented here are
 the ones a per-file JSON Schema cannot express:
 
@@ -36,20 +36,21 @@ import json
 import sys
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from generator_lib import REPO_ROOT, display
+from frontmatter_lib import split_frontmatter
 from cli import cannot_run
 
-SKILL_SCHEMA_PATH = REPO_ROOT / "schemas" / "skill.v1.json"
-AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.v1.json"
+SKILL_SCHEMA_PATH = REPO_ROOT / "schemas" / "skill.json"
+AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.json"
 
 # Documented guidance ("Keep SKILL.md under 500 lines"), made a hard limit here —
 # the rationale is recorded in docs/adr/0009-component-contracts-from-anthropic-documentation.md.
 MAX_SKILL_BODY_LINES = 500
 
-HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.v1.json"
+HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.json"
 HOOK_DECLARATION = "hooks.declaration.json"
 
-PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.v1.json"
+PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.json"
 PLUGIN_DIR = ".claude-plugin"
 PLUGIN_MANIFEST = "plugin.json"
 
@@ -106,6 +107,14 @@ def schema_errors(validator: Draft202012Validator, data: dict, rel: str, failure
             seen.add(line)
             failures.append(line)
     return bool(errors)
+
+
+# Directories under the framework source that carry payload rather than a Claude Code
+# component. The harness never reads them: specs/0008 calls them "Siegard's own", resolved
+# through ${CLAUDE_PLUGIN_ROOT}. They have contracts of their own — check_contract_versions.py
+# locks the schemas and scaffold.py expands the templates — so a component contract here would
+# be a second authority over a file that already has one.
+PAYLOAD_DIRS = frozenset({"bin", "schemas", "templates"})
 
 
 def check_skills(root: Path, failures: list[str]) -> int:
@@ -179,7 +188,7 @@ def check_hooks(root: Path, failures: list[str]) -> int:
 
     A hook is a script rather than a frontmatter artifact, so what a per-file schema can check is
     its declaration: `specs/0010` R10 requires a hook to state its event, its matcher, and its
-    guarantee, and R11 its own timeout. `schemas/hook.v1.json` is that contract.
+    guarantee, and R11 its own timeout. `schemas/hook.json` is that contract.
 
     The cross-file half is the correspondence. A declared hook with no script would install a
     `hooks.json` pointing at nothing, and a script nobody declared would sit in `src/claude/hooks/`
@@ -278,6 +287,8 @@ def main() -> int:
             manifests = check_plugin_manifest(entry, failures)
         elif entry.name == "commands":
             failures.append(f"{display(entry)}: {COMMANDS_MERGED}")
+        elif entry.name in PAYLOAD_DIRS and entry.is_dir():
+            continue
         else:
             failures.append(
                 f"{display(entry)}: no contract exists for this component class — add the "

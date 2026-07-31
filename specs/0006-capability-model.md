@@ -23,18 +23,16 @@ the distribution puts one, which is `specs/0008`; and nothing about the internal
 packs, each of which has its own specification. `specs/0005` fixes the frame this fills: it is R9 through
 R13 there that this document makes specific.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process,
-which `CLAUDE.md` defines.
 
 ### Provenance
 
 The classes below are the ones the framework has, plus the ones a specification already commits it to.
 Two are exercised today: a [specialized agent](../docs/concepts/specialized-agent.md) and a script. A
 [skill](../docs/concepts/skill.md) is authored but has never been loaded. A hook, a template, and a
-[target pack](../docs/concepts/target-pack.md) exist only as commitments — `docs/bootstrap.md` names the
+[target pack](../docs/concepts/target-pack.md) exist only as commitments — nothing yet exercises the
 gate for each, and this document's acceptance conditions keep it from binding before those are met.
 
-Two classes the original framework plan proposed are not here. **Command** is absent because ADR-0009
+Two classes the original framework plan proposed are not here. **Command** is absent because
 records that custom commands were merged into skills; the invocation `/name` survives, the class does
 not, and `scripts/validate_components.py` rejects `src/claude/commands/` by name. **Worker** is absent
 because a unit of work with one role is a specialized agent; `worker` is vocabulary from the v0.1 draft,
@@ -43,10 +41,10 @@ which was normative nowhere and is no longer in this repository.
 ### Decided elsewhere, deliberately not restated here
 
 - what a capability is, in one sentence — [capability](../docs/concepts/capability.md);
-- that a component states its own tool and permission grant — `CLAUDE.md` **Security**;
+- that a component states its own tool and permission grant — `specs/0005` R11;
 - where instruction content belongs, given the harness's loading semantics —
   `specs/0012`, which fixes the target pack as a unit, and `specs/0004`, which fixes what one declares;
-- the frontmatter a skill and an agent must carry — `schemas/skill.v1.json`, `schemas/agent.v1.json`;
+- the frontmatter a skill and an agent must carry — `schemas/skill.json`, `schemas/agent.json`;
 - breaking change and migration rules — `specs/0013` R3a and R10–R12.
 
 ## Definitions
@@ -88,7 +86,7 @@ document growing a class for it.
 
 - **R1** — The classes above are the closed set of things that execute or are delegated to. A *component*
   that fits none of them is not shipped until a class for it exists, and adding a class requires its own
-  contract, at least one capability occupying it, and a fixture exercising that capability. A shipped
+  contract and at least one capability occupying it. A shipped
   *artifact* is not a component and needs no class.
 - **R2** — A class with no capability in it is removed rather than kept open. An empty class invites a
   component to be shaped to fit the framework instead of the work.
@@ -107,7 +105,7 @@ document growing a class for it.
   that only reads and writes files does not receive a shell.
 - **R7** — A hook holds exactly one guarantee, so that a denial names a single condition and a hook can be
   retired without taking another guarantee with it. That a guarantee is enforced by a hook rather than by
-  model judgment, and that a hook rejects rather than repairs, are `CLAUDE.md` **Security**'s and are cited
+  model judgment, and that a hook rejects rather than repairs, are `specs/0005` R5 and R22 and are cited
   here rather than restated. `specs/0010` fixes how a hook honors them.
 - **R8** — A script holds durable control flow, state derivation, and validation. This is where an
   [orchestrator](../docs/concepts/orchestrator.md)'s logic lives; it is never prompt text.
@@ -124,8 +122,10 @@ document growing a class for it.
 
 ### Admission
 
-- **R11** — A behavior becomes a capability when a fixture exercises it as a downstream-shaped case.
-  Before that it is an intention, and the framework does not ship it.
+- **R11** — A behavior becomes a capability when it has a declared contract and something exercises
+  it — a test, a fixture, an eval, or a run in a consuming repository. A [fixture](../docs/concepts/fixture.md)
+  is one such evidence and never a condition of shipping: nothing is withheld from the distribution for
+  want of one.
 - **R12** — A capability declares a [contract version](../docs/concepts/contract-version.md) for every
   artifact it produces that another capability consumes. A consumer selects behavior on that version and
   never infers it from an artifact's shape.
@@ -135,43 +135,31 @@ document growing a class for it.
 ### Lifecycle
 
 - **R14** — A capability is `proposed`, `active`, `deprecated`, or `retired`. `proposed` ships nothing;
-  `active` is installed and exercised by a fixture; `deprecated` is installed, still working, and
-  documented as going away; `retired` is absent from the distribution.
+  `active` is installed; `deprecated` is installed, still working, and documented as going away;
+  `retired` is absent from the distribution.
 - **R15** — A capability moves to `deprecated` before `retired`, and the deprecation names the
   replacement or states plainly that none exists. Removing an installed capability without that step is a
   breaking change made silently.
 - **R16** — Retiring a capability that another consumed requires the migration
   `specs/0013` R3a demands, and a test that fails against the old behavior.
 - **R17** — A capability's status is derived from checkable facts — whether the distribution installs it,
-  whether a fixture exercises it — and not from a label maintained by hand. The
+  and whether it is documented as going away — and not from a label maintained by hand. The
   [distribution manifest](../docs/concepts/distribution-manifest.md) carries the status of each installed
   capability under `specs/0008` R12, which is what makes the `deprecated` state of R14 observable from an
   installation rather than only from a release.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. At least one capability exists in each of at least four classes, each with a fixture. Today two
    classes are occupied, so R1's closed set is a commitment rather than a demonstrated division of work —
-   `docs/bootstrap.md` open question 3 holds the gate.
+   That gate is unmet.
 2. One class is dropped or one is added on the evidence of R2, showing the set is genuinely revisable
    rather than fixed by this document.
 3. A hook enforces a guarantee under test with both outcomes covered, so R7 constrains something that
-   exists — `docs/bootstrap.md` open question 5.
+   exists.
 4. One capability completes the full lifecycle of R14 through R16, including the migration, so that
    deprecation is a mechanism rather than a described intention.
 5. A deterministic check derives capability status per R17. Until then the statuses in this framework are

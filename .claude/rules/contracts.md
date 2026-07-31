@@ -49,7 +49,7 @@ verdict drives control flow, it needs a schema — and each element earns its pl
 | `evidence: { "minItems": 1 }` | a material decision cannot be recorded without support |
 
 Plus `additionalProperties: false`, so a field the producer invented is rejected rather than ignored.
-`schemas/impact-analysis.v1.json` and `schemas/workflow-event.v1.json` are worked examples in this
+`schemas/impact-analysis.json` and `schemas/workflow-event.json` are worked examples in this
 repository; read one before writing a new contract.
 
 A prose summary may accompany such an artifact for a human reader. It is not the contract, and no control

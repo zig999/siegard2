@@ -2,7 +2,7 @@
 """Validate a governed repository's knowledge base against specs/0003.
 
 This script is a boundary validator. Every frontmatter constraint lives in
-schemas/knowledge-object.v1.json, which R30 makes the single authority for the attribute
+schemas/knowledge-object.json, which R30 makes the single authority for the attribute
 type system; materialization lives in scripts/knowledge_graph_lib.py. What lives here is
 the set of checks the specification defers to a script, each decided against the
 materialized graph rather than against one file:
@@ -48,7 +48,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display
+from frontmatter_lib import PLUGIN_ROOT, display
 
 from cli import cannot_run
 
@@ -582,20 +582,21 @@ def validate(root: Path) -> list[str]:
     return graph.problems
 
 
-def discover() -> list[Path]:
-    return sorted(p for p in (REPO_ROOT / "fixtures").glob("*/knowledge") if p.is_dir())
-
-
 def main() -> int:
+    """Validate every knowledge root named on the command line.
+
+    A root is named, never defaulted. This script shipped with the generator's own
+    layout as its fallback, which resolved to a path that exists only in that
+    repository — in an installation the default found nothing and the run reported
+    success over an empty set.
+    A validator that passes over nothing reports a guarantee it never checked.
+    """
     if not KO_SCHEMA_PATH.is_file():
         cannot_run(f"cannot run: schema {KO_SCHEMA_PATH} does not exist")
 
-    roots = [Path(a) for a in sys.argv[1:]] or discover()
+    roots = [Path(a) for a in sys.argv[1:]]
     if not roots:
-        cannot_run(
-            "cannot run: no knowledge base given and no fixtures/*/knowledge tree exists. "
-            "A validator that passes over nothing reports a guarantee it never checked"
-        )
+        cannot_run("cannot run: name at least one knowledge root; there is no default")
     for root in roots:
         if not root.is_dir():
             cannot_run(f"cannot run: knowledge root {root} does not exist")

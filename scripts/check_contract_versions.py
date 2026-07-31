@@ -4,10 +4,12 @@
 Two checks, and each exists because .claude/rules/compatibility.md states a rule that
 nothing verified.
 
-**Declaration.** A schema file named `<name>.v<N>.json` declares `<name>/<N>` as the const
-of its own `contract_version` property. A consumer selects behaviour on that value and
-"must not infer version from shape"; a filename and a declaration that disagree make the
-two sources of one fact contradict, and the consumer reads the one the author did not mean.
+**Declaration.** A schema file is named `<name>.json` and declares `<name>/<version>` as the
+const of its own `contract_version` property. The filename carries identity and the document
+carries the version: one contract has one file, and which version that file currently is lives
+in the file rather than in its name. A consumer selects behaviour on the declared value and
+"must not infer version from shape", so a document declaring a name its file does not match is
+a contradiction the consumer would resolve the wrong way.
 
 **Integrity.** A schema whose *constraints* changed while its version did not is the
 breaking change that rule names first: "alters a schema so that previously valid instances
@@ -31,6 +33,12 @@ every conforming component invalid. This script asserts that each exempt schema 
 forbid additional properties, so the stated reason has to hold for the exemption to apply. Any
 *other* schema missing the field fails.
 
+**No migration coverage.** One contract has one file, so two versions never sit side by side and
+the trace a bump used to leave — a second version file — no longer exists. The check that required a
+registered migration beside such a pair is gone rather than kept unreachable. `specs/0013` R11 asks
+for a migration tested against the old behavior; nothing here verifies that it exists, and that gap
+is stated rather than covered by a check that cannot fire.
+
 Regeneration is `--update`, which is never wired into `make validate`: a check that repairs
 what it was meant to detect reports success on a defect. The polarity is inverted relative to
 project_knowledge.py and measure_ontology.py, whose bare invocation regenerates and whose
@@ -51,21 +59,33 @@ import re
 import sys
 from pathlib import Path
 
+import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from migrate_contracts import MIGRATIONS  # noqa: E402  (path set immediately above)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# Contracts sit in two trees now: the ones the framework ships, under src/claude/schemas/,
+# and the ones that govern this repository's own artifacts, under schemas/. Both are locked
+# here, because a constraint that moves is a break whichever side it sits on. The lock itself
+# is the generator's bookkeeping and never ships.
+SCHEMA_DIRS = (REPO_ROOT / "src" / "claude" / "schemas", REPO_ROOT / "schemas")
 SCHEMA_DIR = REPO_ROOT / "schemas"
 LOCK_PATH = SCHEMA_DIR / "contract-versions.json"
+
+
+def schema_files():
+    """Every contract file across both trees, deterministically ordered."""
+    return sorted(
+        (p for d in SCHEMA_DIRS if d.is_dir() for p in d.glob("*.json") if p != LOCK_PATH),
+        key=lambda p: p.name,
+    )
 
 # Files in schemas/ that are not contracts. Named rather than pattern-matched: a file that fails
 # the `<name>.vN.json` shape is either an instance like this one or a mistake, and letting the
 # pattern decide would silently forgive the second.
 NOT_A_CONTRACT = frozenset({"contract-versions.json", "artifact-classes.json"})
 
-FILENAME = re.compile(r"^(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.v(?P<version>\d+)\.json$")
+FILENAME = re.compile(r"^(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.json$")
 
 # JSON Schema keywords that annotate rather than assert. Dropping them is what lets a
 # clarified description ship without a version bump.
@@ -110,14 +130,13 @@ def contracts() -> tuple[dict[str, dict], list[str]]:
     """Every schema keyed by `<name>/<version>`, plus the problems found reading them."""
     found: dict[str, dict] = {}
     problems: list[str] = []
-    for path in sorted(SCHEMA_DIR.glob("*.json")):
+    for path in schema_files():
         if path.name in NOT_A_CONTRACT:
             continue
         match = FILENAME.match(path.name)
         if not match:
             problems.append(
-                f"schemas/{path.name}: filename must be '<name>.v<N>.json' so the contract version "
-                f"can be read from it"
+                f"schemas/{path.name}: filename must be '<name>.json', lower-case and hyphenated"
             )
             continue
         try:
@@ -125,8 +144,21 @@ def contracts() -> tuple[dict[str, dict], list[str]]:
         except json.JSONDecodeError as exc:
             problems.append(f"schemas/{path.name}: not valid JSON: {exc}")
             continue
-        name, version = match["name"], match["version"]
-        found[f"{name}/{version}"] = {"file": path.name, "schema": schema, "name": name}
+        name = match["name"]
+        declared = schema.get("properties", {}).get("contract_version")
+        const = declared.get("const") if isinstance(declared, dict) else None
+        if const is None:
+            # A harness-owned contract carries no version field; check_declaration decides
+            # whether the exemption is real, and keys it by name alone.
+            found[name] = {"file": path.name, "schema": schema, "name": name}
+            continue
+        if not isinstance(const, str) or const.count("/") != 1 or const.split("/")[0] != name:
+            problems.append(
+                f"schemas/{path.name}: declares contract_version const {const!r}, which does not "
+                f"name this file — expected '{name}/<version>'"
+            )
+            continue
+        found[const] = {"file": path.name, "schema": schema, "name": name}
     return found, problems
 
 
@@ -149,12 +181,6 @@ def check_declaration(contract: str, entry: dict) -> list[str]:
             ]
         return []
 
-    const = declared.get("const") if isinstance(declared, dict) else None
-    if const != contract:
-        return [
-            f"schemas/{file}: declares contract_version const {const!r}, but its filename says "
-            f"'{contract}'"
-        ]
     if "contract_version" not in (schema.get("required") or []):
         return [
             f"schemas/{file}: declares `contract_version` but does not require it, so an instance "
@@ -163,30 +189,6 @@ def check_declaration(contract: str, entry: dict) -> list[str]:
     return []
 
 
-def check_migration_coverage(found: dict[str, dict]) -> list[str]:
-    """Two adjacent versions of one contract require a registered path between them.
-
-    This is the half of `.claude/rules/compatibility.md` that no mechanism held. That rule
-    requires a breaking change to "define the supported migration path", and `adr/1` → `adr/2`
-    shipped without one — a debt `docs/bootstrap.md` recorded and nothing could detect. A
-    second version file is the observable trace of a bump, so requiring a migration beside it
-    turns the rule into a check instead of an intention.
-    """
-    problems: list[str] = []
-    versions: dict[str, list[int]] = {}
-    for contract in found:
-        name, version = contract.rsplit("/", 1)
-        versions.setdefault(name, []).append(int(version))
-
-    for name, present in sorted(versions.items()):
-        for lower, upper in zip(sorted(present), sorted(present)[1:]):
-            if (f"{name}/{lower}", f"{name}/{upper}") not in MIGRATIONS:
-                problems.append(
-                    f"{name}/{lower} to {name}/{upper}: both versions exist and no migration is "
-                    f"registered in scripts/migrate_contracts.py — .claude/rules/compatibility.md "
-                    f"requires a breaking change to define the supported migration path"
-                )
-    return problems
 
 
 def check(update: bool) -> tuple[int, list[str]]:
@@ -195,7 +197,6 @@ def check(update: bool) -> tuple[int, list[str]]:
     for contract, entry in sorted(found.items()):
         problems.extend(check_declaration(contract, entry))
 
-    problems.extend(check_migration_coverage(found))
 
     digests = {contract: constraint_digest(entry["schema"]) for contract, entry in found.items()}
 

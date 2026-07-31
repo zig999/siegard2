@@ -30,9 +30,6 @@ It decides nothing about how software is produced from this representation — a
 pack, generation scope, plan, manifest, verification, and generative completeness belong to `specs/0004`,
 which cites this one. It does not restate spec 0001's workflow or its transient artifacts.
 
-It governs the framework Siegard ships. It does not govern this repository's own development process, which
-`CLAUDE.md` defines, and it does not govern the concept bundle in `docs/concepts/`, which
-`docs/adr/0005-okf-derived-concept-model.md` governs.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -42,7 +39,7 @@ It governs the framework Siegard ships. It does not govern this repository's own
 | The workflow every change request follows, and its transient artifacts | spec 0001 |
 | The maturity ladder, and what an assertion binds | spec 0001 R23–R26 |
 | How software is produced from this representation | `specs/0004` |
-| The OKF-derived frontmatter precedent and its one divergence | R-block **Notation** below; `docs/adr/0005-okf-derived-concept-model.md` records why |
+| The OKF-derived frontmatter precedent and its one divergence | R-block **Notation** below |
 | When an artifact requires a versioned schema | `specs/0005` R16a |
 | What makes a change breaking, and how a version is bumped | `specs/0013` R3a, R10–R12 |
 | That a hidden default is rejected | `specs/0005` R16b |
@@ -52,8 +49,8 @@ It governs the framework Siegard ships. It does not govern this repository's own
 The node type describing what a bounded context exposes is named
 [interface](../docs/concepts/interface.md), not "contract". This repository already uses *contract* for an
 agreement between framework components — `contract_version`, `specs/0005` R16a, the component
-contracts of ADR-0009. Using the same word for a domain-level interface would put one name on two things,
-which `CLAUDE.md` **Authority placement** forbids.
+contracts of a Claude Code component. Using the same word for a domain-level interface would put one name on two things,
+which would put one name on two things.
 
 ## DDD supplies the vocabulary
 
@@ -126,7 +123,7 @@ Six node types. Five are knowledge objects; the sixth is not.
 | [interface](../docs/concepts/interface.md) | What does this context expose or consume? | `version`, `schema`, `ownership` | a break requires a version bump and a migration |
 | [boundary](../docs/concepts/boundary.md) | What is the scope, and who owns it? | `subdomain_type` | every object belongs to exactly one; crossing requires an interface |
 | [process](../docs/concepts/process.md) | In which order, and with what outcome? | `steps[]` | every referenced id exists; no step content restated |
-| ADR | Why was this decided, and what was rejected? | per `schemas/knowledge-decision.v1.json` | non-restatement of an operative rule |
+| ADR | Why was this decided, and what was rejected? | per `schemas/knowledge-decision.json` | non-restatement of an operative rule |
 
 Each type passes the differentiation test of spec 0002 R3: two systems built on one technology differ in
 their definitions, rules, lifecycles, interfaces, boundaries, and processes, and in nothing else this
@@ -184,7 +181,7 @@ How many targets one attribute or one transition names is a question for the fro
 this table. A `ref` declares exactly one `target`, a `list` exactly one `of`, a lifecycle-bound `enum`
 exactly one `lifecycle`, a transition at most one `guard`, a rejection exactly one `error`, a step exactly
 one `ko`, and a context relationship exactly one `with` — each because the field is a single value that
-`schemas/knowledge-object.v1.json` requires or permits. A definition holding three `ref` attributes declares
+`schemas/knowledge-object.json` requires or permits. A definition holding three `ref` attributes declares
 three `attributes[].target` edges, which is why every such row is `0..n` out.
 
 Every edge in the table is traversed. That is not a coincidence to be admired but the consequence of R52
@@ -286,13 +283,14 @@ Three rules make the type system carry DDD semantics rather than only shapes:
 
 ## Notation
 
-The frontmatter derives from Google's Open Knowledge Format v0.2 under exactly the reasoning ADR-0005
+The frontmatter derives from Google's Open Knowledge Format v0.2, for the reasons this section records
+-0005
 recorded for the concept bundle: OKF's field names and semantics where they coincide, Siegard's stricter
 requirements where OKF is weaker, and one documented divergence on `status`.
 
-This is a **separate contract** from `schemas/concept.v1.json`. A concept file holds this framework's
+This is a **separate contract** from `schemas/concept.json`. A concept file holds this framework's
 vocabulary; a knowledge object holds a governed repository's domain knowledge. The type vocabularies are
-disjoint on purpose — `concept.v1.json` uses `type: term`, and no knowledge-object type is named `term`.
+disjoint on purpose — `concept.json` uses `type: term`, and no knowledge-object type is named `term`.
 
 ### Common frontmatter
 
@@ -348,7 +346,7 @@ context it constrains, or it is stack knowledge that spec 0002 R4 excludes.
 | `generated` | optional | required | provenance is not optional |
 | `out_of_scope` | absent | required, non-empty | absence cannot be inferred; silence reads as permission |
 | `boundary` | absent | required | the partition is what makes scoping cheap |
-| `status` | `draft\|stable\|deprecated` | `proposed\|accepted\|superseded` | **divergence**, identical to ADR-0005, same mapping |
+| `status` | `draft\|stable\|deprecated` | `proposed\|accepted\|superseded` | **divergence**, with the mapping this section records |
 
 ## Folder structure, optimized for id arithmetic
 
@@ -579,7 +577,7 @@ The compensation is projections, not exceptions to a form rule.
 
 Three, generated from the ontology and never authored: the bundle `index.md`, a glossary derived from
 `definition` objects, and a context map derived from `boundary.context_relationships`. A fourth requires a
-[fixture](../docs/concepts/fixture.md) that demands it, per `CLAUDE.md` **Scope**.
+recorded case that demands it.
 
 A [projection](../docs/concepts/projection.md) is reproducible from the graph and is never a normative
 source. A human-readable artifact that becomes authoritative reintroduces the duplication this ontology
@@ -700,15 +698,15 @@ Terms used normatively below.
 - **R31** — Fields shared with OKF v0.2 — `type`, `title`, `description`, `tags`, `sources`, `resource`,
   `generated`, `verified`, `stale_after` — MUST keep OKF's names and semantics.
 - **R32** — `id`, `question`, `contract_version`, `generated`, `out_of_scope`, and `boundary` are required,
-  and `type` is a closed enum, for the reasons ADR-0005 records. `status` uses
-  `proposed | accepted | superseded`, diverging from OKF identically to ADR-0005 and with the same mapping,
+  and `type` is a closed enum, for the reasons this specification records. `status` uses
+  `proposed | accepted | superseded`, diverging from OKF with the same mapping,
   and the divergence MUST be marked in the schema.
 - **R33** — Every fact a machine reads to produce or validate something MUST live in frontmatter. Nothing
   decides anything by parsing body prose.
 - **R34** — Every knowledge object MUST declare `out_of_scope` with at least one entry.
 - **R35** — A synonym MUST be declared in `aliases` and MUST NOT appear in any body.
 - **R36** — A consumer MUST preserve a frontmatter field it does not know.
-- **R37** — The frontmatter contract MUST ship as `schemas/knowledge-object.v1.json` with a boundary
+- **R37** — The frontmatter contract MUST ship as `schemas/knowledge-object.json` with a boundary
   validator in `scripts/`, wired to `make validate`, with per-type required fields expressed conditionally in
   the schema.
 
@@ -773,53 +771,3 @@ requirement:
 - how a governed repository installs `knowledge/`, and how the distribution carries the schema and the
   validator.
 
-## What satisfied acceptance
-
-A maintainer accepted this specification on 2026-07-30. Every condition it set is met, and each was met by
-a component that exercises it rather than by a reading that it still seemed correct:
-
-1. a maintainer accepts it, and accepts spec 0002, from which it derives;
-2. `schemas/knowledge-object.v1.json` exists with a boundary validator wired to `make validate`, and tests
-   prove rejection of: an unknown `type`, a missing `question`, an empty `out_of_scope`, a `rule` with
-   neither `expression` nor `examples`, a `decimal` attribute with no `scale`, a `ref` across an aggregate
-   boundary without `by-identity`, an `enum` repeating lifecycle states, two lifecycles over one subject, a
-   `lifecycle` with one undecided state-trigger pair or one unreachable state, a violated edge cardinality,
-   and an id that disagrees with its path;
-3. the cross-context check in R15, the totality check in R11 including both shorthand expansions, and the
-   cardinality checks in R18 are each decided by a script against a materialized graph, with tests covering
-   both outcomes;
-4. a fixture under `fixtures/` holds a two-context bundle exercising all six node types and every traversed
-   edge;
-5. the glossary and context-map projections are generated from that fixture, and a test asserts regeneration
-   is byte-identical (R51);
-6. the utilization measurement of R52 runs against that fixture and is recorded, because a threshold nobody
-   measures removes nothing.
-
-The evidence for items 2 through 6 is `fixtures/knowledge-two-context/`, with 27 knowledge objects and one
-ADR across two bounded contexts, 87 tests, and the recorded R52 measurement. Every check in
-`scripts/validate_knowledge.py` was confirmed to have a covering test by disabling each in turn and
-observing the suite fail, so the suite is known to have teeth rather than assumed to.
-
-This specification carried one instruction addressed to this moment: if the fixture shows that a type in R5
-holds no object, or that an edge in R17 is never traversed, remove it before accepting rather than after.
-**It fired, and it was acted on before acceptance rather than after.** Building the evidence exposed six
-defects that reading the prose had not:
-
-- the first measurement found every node type populated and three edges no resolution read. `references` and
-  `supersedes` were removed; `superseded_by` moved out of the edge table as the field R40 requires and
-  expansion must not follow;
-- `attributes[].of` and `rejections[].error` were added, because R29 and R11 already required both to resolve
-  and nothing resolves without an edge — the vocabulary R17 called closed was incomplete;
-- R9 stopped requiring an identity of a value object, which is defined by holding none;
-- R10 stopped naming a boundary no object could be, which had left one `ddd` value of `rule` unusable;
-- R28 was extended to bind `list` as well as `ref`, after the fixture demonstrated the identical
-  cross-aggregate reference being rejected in one field and accepted in the other;
-- the edge table's cardinality column was split into `Out` and `In` in one parseable notation, because it had
-  answered three questions in one cell and was therefore the one part of the table nothing verified.
-
-What acceptance does **not** claim is stated rather than glossed. Four findings remain open, recorded in
-`fixtures/knowledge-two-context/README.md`: none is a contradiction, three are limits of what a mechanism can
-decide — two clauses of R46, the pronoun list of R45, and the residuals of the edge-table comparison — and
-one is a redundant forward-cardinality check kept deliberately. From here, `.claude/rules/compatibility.md`
-governs every change to this specification, and a repair that invalidates a conforming knowledge object is a
-breaking change rather than a revision.
