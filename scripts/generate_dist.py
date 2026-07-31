@@ -77,6 +77,13 @@ SHIPPED_SCHEMAS = {
     "knowledge-graph.v1.json": "the materialized graph derived from that base",
     "concept.v1.json": "the bundle concept-author writes into",
     "context-package.v1.json": "the scope a governed repository resolves and its consumers read",
+    "pack-declaration.v1.json": "a governed repository reads its active pack's declaration",
+    "generation-scope.v1.json": "produced and validated during generation in the governed repository",
+    "placement-decision.v1.json": "produced and validated during generation in the governed repository",
+    "generation-plan.v1.json": "produced and validated during generation in the governed repository",
+    "generation-manifest.v1.json": "committed in the governed repository and read on every later run",
+    "specification-delta.v1.json": "consumed at the boundary by orchestrate.py",
+    "validation-evidence.v1.json": "the standalone evidence a layered validation records",
     "distribution-manifest.v1.json": "so a consumer can validate the manifest it is told to read",
     # Not shipped, and why.
     "spec.v1.json": None,  # governs specs/ in this repository; a governed repository writes none
@@ -85,7 +92,7 @@ SHIPPED_SCHEMAS = {
     "skill.v1.json": None,  # a governed repository does not author framework components
     "agent.v1.json": None,  # same
     "plugin.v1.json": None,  # same; the harness reads plugin.json, the consumer does not validate it
-    "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json
+    "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json  # governs the source-only declaration; the consumer reads hooks/hooks.json
 }
 
 # Scripts that ship as executables. specs/0008 R9 gives them `bin/`. workflow_lib.py is a

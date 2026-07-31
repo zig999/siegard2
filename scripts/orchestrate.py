@@ -68,6 +68,15 @@ CONSUMED: dict[str, dict] = {
         # produces; a separate contract because the two vocabularies never overlap.
         "outcomes": {"authored": "authored", "updated": "updated", "blocked": "blocked"},
     },
+    "specification-delta/1": {
+        "phase": "specification-delta",
+        "field": "state",
+        "producer": "spec-delta-author",
+        # specs/0001 R16's artifact. Two outcomes rather than three: a delta describes a change
+        # rather than performing one, so it has no `updated` counterpart — it is written, or it
+        # is blocked on something absent.
+        "outcomes": {"recorded": "recorded", "blocked": "blocked"},
+    },
     "impact-analysis/1": {
         "phase": "impact-analysis",
         "field": "verdict",

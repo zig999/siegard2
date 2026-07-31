@@ -29,6 +29,18 @@
       "schema": "distribution-manifest.v1.json",
       "constraint_digest": "sha256:bc87c97c564f4a5af3305835525b39404080510d363c4351a00e01f01f294109"
     },
+    "generation-manifest/1": {
+      "schema": "generation-manifest.v1.json",
+      "constraint_digest": "sha256:2a53d070c947a86e5063228bc0ff37441d53dde37d0976cba7122a09fcfec782"
+    },
+    "generation-plan/1": {
+      "schema": "generation-plan.v1.json",
+      "constraint_digest": "sha256:8c41ceb345a8b15c10956692b6ffc34b6097a2e77514a52ce6926d64f2bd0ef9"
+    },
+    "generation-scope/1": {
+      "schema": "generation-scope.v1.json",
+      "constraint_digest": "sha256:61953471aa0775403dd9e64af729fca71abf943543129574dfd262826a471361"
+    },
     "hook/1": {
       "schema": "hook.v1.json",
       "constraint_digest": "sha256:73627fd421ef00150ce17b57888b939f66c2d106caabc896ff2b7b34b133291c"
@@ -49,6 +61,14 @@
       "schema": "knowledge-object.v1.json",
       "constraint_digest": "sha256:6d4523381bbd0d545df018ae5a789e6db2f9f8c2dc70e00fbce02f72dfa18628"
     },
+    "pack-declaration/1": {
+      "schema": "pack-declaration.v1.json",
+      "constraint_digest": "sha256:3e37865778951d0a7bc9bc2029921ddc29aff714aaa35741cf8bec2c6a28eaa1"
+    },
+    "placement-decision/1": {
+      "schema": "placement-decision.v1.json",
+      "constraint_digest": "sha256:25bc5a671e7b9bec3aa6da2e8ca547274b6d166daf3d9455cbe422879f62fd40"
+    },
     "plugin/1": {
       "schema": "plugin.v1.json",
       "constraint_digest": "sha256:0324abe009ca521aeee0b612bb3c83cc8c0a7df711c33ea61e114647ba2a1ba5"
@@ -60,6 +80,14 @@
     "spec/1": {
       "schema": "spec.v1.json",
       "constraint_digest": "sha256:c6d5ca641736746da432f509b1311900bf10b4606c425ecf2a4ecf715d06bb53"
+    },
+    "specification-delta/1": {
+      "schema": "specification-delta.v1.json",
+      "constraint_digest": "sha256:6da3feea9a0a64bbf7e164c1a08e8c23a4e235e91765fe5aca28ff543d1c1365"
+    },
+    "validation-evidence/1": {
+      "schema": "validation-evidence.v1.json",
+      "constraint_digest": "sha256:9bd4db1e7714746c21ad09fc938d61783ba8955dcef0195272bcec85110172ab"
     },
     "workflow-event/1": {
       "schema": "workflow-event.v1.json",

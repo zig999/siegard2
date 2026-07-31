@@ -205,7 +205,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 417 tests over eleven areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 457 tests over twelve areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
 | hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
@@ -352,7 +352,7 @@ forecloses nothing.
 | command system | ADR-0009: there is no command class | nothing — the class does not exist |
 | worker model | `docs/concepts/specialized-agent.md` | open question 3's gate |
 | hook system | `CLAUDE.md` **Security** | open question 5's gate — the first hook under test |
-| template system | `specs/0011`, `specs/0004`; `docs/concepts/generation-track.md` | stage 4 — 0004's acceptance is no longer the blocker |
+| template system | `specs/0011`, `specs/0004`; `docs/concepts/generation-track.md` | a pack with a producer. The pipeline the templates would feed is built and tested against `fixtures/pack-minimal/`; what is missing is a template |
 | target pack model | `.claude/rules/claude-code-authoring.md` **Target packs**; `specs/0004` | a pack with a fixture, after 0004 is accepted |
 | framework lifecycle | `.claude/rules/compatibility.md` | the migration test that rule is already owed |
 
@@ -460,10 +460,10 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 417 tests across eleven areas: the knowledge layer, the workflow loop, the
+- `make test` runs 457 tests across twelve areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
-  eleven scaffolds in `templates/`, the first shipped hook, and context resolution.
+  eleven scaffolds in `templates/`, the first shipped hook, context resolution, and the generation pipeline.
   Two figures in this file drifted before anything derived them — a test count that read 193 against
   an actual 192, and a specification-set count of 36 against 35 — so the number above is stated once
   and `make test` is the authority.

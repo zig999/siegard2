@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:f90a22f475c2f871cb4d72c0b6431484317a8c35cf47bd6657160690924be040",
+  "source_revision": "sha256:abfd2d9fc1c9f33312bfccba31a7c2d7742ff8aca6d6db4fbd7df4f52b7fabfb",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -29,6 +29,11 @@
       "digest": "sha256:2cc632059381425be6ac5446cc0323826a22d0c7eb42ded2e84f9a7daa1f4039"
     },
     {
+      "path": "agents/spec-delta-author.md",
+      "source": "src/claude/agents/spec-delta-author.md",
+      "digest": "sha256:552efc1ec8b191628d8396b23a458d49468bbf2e9866877dd472bd1f7f179554"
+    },
+    {
       "path": "bin/cli.py",
       "source": "scripts/cli.py",
       "digest": "sha256:7739ad70d0d7338e011327056e0594a1d3b695058d86a00cf63541b180fb61c1"
@@ -41,7 +46,7 @@
     {
       "path": "bin/orchestrate.py",
       "source": "scripts/orchestrate.py",
-      "digest": "sha256:f30634882c0d6cad1b3f2a06871557d66492a204e13405b41a7404454daed449"
+      "digest": "sha256:887916fdd5c58c3bd77748df74aa8d17f10b52be8d81565342e121841fea1f24"
     },
     {
       "path": "bin/replay_workflow.py",
@@ -84,6 +89,21 @@
       "digest": "sha256:c8f0ec64c71e4eb4b752df77f0ac43c72edecad0a19ef2b167cbcb1d859e3856"
     },
     {
+      "path": "schemas/generation-manifest.v1.json",
+      "source": "schemas/generation-manifest.v1.json",
+      "digest": "sha256:235e983889a552b6b4f238e56cce1c68ce52fe896a6abce3bcd09f4b687cd9db"
+    },
+    {
+      "path": "schemas/generation-plan.v1.json",
+      "source": "schemas/generation-plan.v1.json",
+      "digest": "sha256:5d753a6dd1e73d31927026a26b36b124f33e7dbccdea53733dd6bf1c0b38deb0"
+    },
+    {
+      "path": "schemas/generation-scope.v1.json",
+      "source": "schemas/generation-scope.v1.json",
+      "digest": "sha256:76fa3afd76ef269eaa39d9763f455c9b5e516b83ed191bb2202f2ad97af65f47"
+    },
+    {
       "path": "schemas/impact-analysis.v1.json",
       "source": "schemas/impact-analysis.v1.json",
       "digest": "sha256:1c34a0476f92b990086d335f72bd7a354db052547428cd1a557e539ab1d6bac6"
@@ -104,6 +124,26 @@
       "digest": "sha256:b04bac42957ea9d42f11ee2ee3061db4425d06d63d24802856e624bbe3dc715d"
     },
     {
+      "path": "schemas/pack-declaration.v1.json",
+      "source": "schemas/pack-declaration.v1.json",
+      "digest": "sha256:7f62f836e6159160f4bd93da222a096b6aa35a1c1096e71ff6ca2579d4aa4e9f"
+    },
+    {
+      "path": "schemas/placement-decision.v1.json",
+      "source": "schemas/placement-decision.v1.json",
+      "digest": "sha256:b57b865f964a9a9ca12820fcaa14348230daad878a9cff7f89e9f29ace472e39"
+    },
+    {
+      "path": "schemas/specification-delta.v1.json",
+      "source": "schemas/specification-delta.v1.json",
+      "digest": "sha256:e8eb2ca5899dabab56dc1c8a6869a72388c760795f9e04cd2949807a9db583db"
+    },
+    {
+      "path": "schemas/validation-evidence.v1.json",
+      "source": "schemas/validation-evidence.v1.json",
+      "digest": "sha256:21db23605bcfd0bfa597268e70830ca09827046b56269342d1950b9ea3ab85e9"
+    },
+    {
       "path": "schemas/workflow-event.v1.json",
       "source": "schemas/workflow-event.v1.json",
       "digest": "sha256:846e3ec6b5f717a8adb94e937d3463ae0e93661a74be3e0fcbbd213bfff503a9"
@@ -111,7 +151,12 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:06c05efb95fc53ce27670270417769645aee2a74282d7232eaa5ec595e8b9bb8"
+      "digest": "sha256:3839f6c0abc518a8839ed5aca858882a47c4019f757f62049b6657a7781914de"
+    },
+    {
+      "path": "skills/generate/SKILL.md",
+      "source": "src/claude/skills/generate/SKILL.md",
+      "digest": "sha256:3e1046cfe4a00193323ce0a36418cd9a0a9c29725198d060905e3410a7585d64"
     },
     {
       "path": "skills/knowledge-change/SKILL.md",
@@ -137,6 +182,18 @@
       "path": "schemas/distribution-manifest.v1.json"
     },
     {
+      "contract_version": "generation-manifest/1",
+      "path": "schemas/generation-manifest.v1.json"
+    },
+    {
+      "contract_version": "generation-plan/1",
+      "path": "schemas/generation-plan.v1.json"
+    },
+    {
+      "contract_version": "generation-scope/1",
+      "path": "schemas/generation-scope.v1.json"
+    },
+    {
       "contract_version": "impact-analysis/1",
       "path": "schemas/impact-analysis.v1.json"
     },
@@ -151,6 +208,22 @@
     {
       "contract_version": "knowledge-object/1",
       "path": "schemas/knowledge-object.v1.json"
+    },
+    {
+      "contract_version": "pack-declaration/1",
+      "path": "schemas/pack-declaration.v1.json"
+    },
+    {
+      "contract_version": "placement-decision/1",
+      "path": "schemas/placement-decision.v1.json"
+    },
+    {
+      "contract_version": "specification-delta/1",
+      "path": "schemas/specification-delta.v1.json"
+    },
+    {
+      "contract_version": "validation-evidence/1",
+      "path": "schemas/validation-evidence.v1.json"
     },
     {
       "contract_version": "workflow-event/1",
@@ -195,6 +268,12 @@
       "path": "bin/workflow_lib.py"
     },
     {
+      "name": "generate",
+      "class": "skill",
+      "status": "active",
+      "path": "skills/generate/SKILL.md"
+    },
+    {
       "name": "knowledge-change",
       "class": "skill",
       "status": "active",
@@ -223,6 +302,12 @@
       "class": "specialized-agent",
       "status": "active",
       "path": "agents/root-selector.md"
+    },
+    {
+      "name": "spec-delta-author",
+      "class": "specialized-agent",
+      "status": "active",
+      "path": "agents/spec-delta-author.md"
     }
   ],
   "overrides": []

@@ -17,8 +17,10 @@
       "event": "events/03-context-resolution.json"
     },
     {
-      "kind": "record",
-      "event": "events/04-specification-delta.json"
+      "kind": "consume",
+      "result": "specification-delta.json",
+      "event_id": "ev_0000000000b4",
+      "at": "2026-07-31T09:09:00Z"
     },
     {
       "kind": "consume",
