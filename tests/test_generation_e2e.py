@@ -232,3 +232,63 @@ class BindingIndexes(GenerationCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class JudgedTrack(GenerationCase):
+    """specs/0004 R3 — what replaces byte identity where a model produces the artifact.
+
+    The artifact is *recorded* rather than produced by an agent, exactly as the results in
+    `fixtures/knowledge-change-loop/` are. What that leaves testable is the half R3 specifies: a
+    judged artifact is verified against a conformance suite generated from the knowledge base, and
+    one with no covering suite is not accepted output.
+    """
+
+    def setUp(self) -> None:
+        import verify_judged
+
+        self.verify_judged = verify_judged
+
+    def test_the_recorded_validator_satisfies_its_suite(self) -> None:
+        problems, checked = self.verify_judged.verify(self.recipe)
+        self.assertEqual([], problems)
+        self.assertGreater(checked, 0, "a suite with no cases proves nothing")
+
+    def test_the_suite_comes_from_the_knowledge_object(self) -> None:
+        """specs/0004 R36: generated from rule.examples, never authored beside the validator."""
+        from knowledge_graph_lib import load
+
+        graph = load(REPO_ROOT / self.recipe["knowledge_root"])
+        node = graph.nodes[self.recipe["judged"][0]["ko"]]
+        self.assertEqual(len(node.data["examples"]), len(self.verify_judged.cases(node.data)))
+
+    def test_a_validator_contradicting_the_knowledge_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as holder:
+            wrong = Path(holder) / "wrong.py"
+            wrong.write_text("def check(given):\n    return 'allowed'\n")
+            altered = dict(self.recipe)
+            altered["judged"] = [dict(self.recipe["judged"][0], artifact=str(wrong))]
+            problems, _ = self.verify_judged.verify(altered)
+        self.assertTrue(any("states 'rejected'" in p for p in problems), problems)
+
+    def test_a_judged_artifact_with_no_covering_suite_is_refused(self) -> None:
+        """R3: an artifact with no covering suite is not accepted output."""
+        altered = dict(self.recipe)
+        altered["judged"] = [
+            dict(self.recipe["judged"][0], ko="ko.rule.sales.proposal-validity")
+        ]
+        problems, _ = self.verify_judged.verify(altered)
+        self.assertTrue(any("no covering suite" in p for p in problems), problems)
+
+    def test_a_lifecycle_generates_its_suite_from_totality(self) -> None:
+        """R36's second source: every recorded rejection is a decided fact a validator must hold."""
+        from knowledge_graph_lib import load
+
+        graph = load(REPO_ROOT / self.recipe["knowledge_root"])
+        lifecycle = graph.nodes["ko.lifecycle.billing.invoice"].data
+        suite = self.verify_judged.cases(lifecycle)
+        self.assertTrue(suite)
+        self.assertTrue(all(expected == "rejected" for _given, expected in suite))
+
+    def test_the_recorded_status_of_the_artifact_is_stated(self) -> None:
+        """No agent ran. A fixture that let that be assumed would be the wrong kind of evidence."""
+        self.assertIn("no agent ran", self.recipe["judged"][0]["recorded"])

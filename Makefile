@@ -20,10 +20,12 @@ validate:
 	python3 scripts/check_contract_versions.py || fail=1; \
 	python3 scripts/validate_concepts.py || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
+	python3 scripts/validate_artifacts.py || fail=1; \
 	python3 scripts/validate_knowledge.py || fail=1; \
 	python3 scripts/project_knowledge.py --check || fail=1; \
 	python3 scripts/measure_ontology.py --check || fail=1; \
 	python3 scripts/replay_workflow.py --check || fail=1; \
+	python3 scripts/verify_judged.py --run fixtures/generation-run/run.json || fail=1; \
 	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
 

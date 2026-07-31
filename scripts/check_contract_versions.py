@@ -60,6 +60,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_DIR = REPO_ROOT / "schemas"
 LOCK_PATH = SCHEMA_DIR / "contract-versions.json"
 
+# Files in schemas/ that are not contracts. Named rather than pattern-matched: a file that fails
+# the `<name>.vN.json` shape is either an instance like this one or a mistake, and letting the
+# pattern decide would silently forgive the second.
+NOT_A_CONTRACT = frozenset({"contract-versions.json", "artifact-classes.json"})
+
 FILENAME = re.compile(r"^(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.v(?P<version>\d+)\.json$")
 
 # JSON Schema keywords that annotate rather than assert. Dropping them is what lets a
@@ -106,7 +111,7 @@ def contracts() -> tuple[dict[str, dict], list[str]]:
     found: dict[str, dict] = {}
     problems: list[str] = []
     for path in sorted(SCHEMA_DIR.glob("*.json")):
-        if path.name == LOCK_PATH.name:
+        if path.name in NOT_A_CONTRACT:
             continue
         match = FILENAME.match(path.name)
         if not match:

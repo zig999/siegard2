@@ -18,6 +18,8 @@ part was the scaffold's fault.
 
 from __future__ import annotations
 
+import ast
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -150,6 +152,29 @@ CASES: dict[str, dict[str, str]] = {
         "owns": "the order, its lines, and its lifecycle",
         **STAMP,
     },
+    "pack-declaration": {
+        "pack": "worked-example",
+        "version": "0.1.0",
+        "framework_contract": "generation-plan/1",
+        "artifact_class": "type",
+        "track": "deterministic",
+        "node_type": "definition",
+    },
+    "specification-delta": {
+        "request_id": "cr_7a2e4d10",
+        "artifact_id": "ko.definition.sales.order-line",
+        "artifact_kind": "knowledge-object",
+        "operation": "update",
+        "reason": "the line gains a quantity, which the definition does not currently hold",
+    },
+    "validation-evidence": {
+        "producer": "worked-example",
+        "verdict": "passed",
+        "request_id": "cr_7a2e4d10",
+        "command": "make validate",
+        "result": "pass",
+        "detail": "all knowledge bases valid",
+    },
     "knowledge-object-process": {
         "context": "sales",
         "slug": "order-to-cash",
@@ -179,8 +204,21 @@ class Coverage(unittest.TestCase):
     def test_every_kind_has_a_case(self) -> None:
         self.assertEqual(set(scaffold.SCHEMA_BY_KIND), set(CASES))
 
-    def test_the_eleven_scaffolds_are_all_here(self) -> None:
-        self.assertEqual(11, len(scaffold.SCHEMA_BY_KIND))
+    def test_the_fourteen_scaffolds_are_all_here(self) -> None:
+        """One per artifact this repository authors and whose contract exists."""
+        self.assertEqual(14, len(scaffold.SCHEMA_BY_KIND))
+
+    def test_every_json_kind_expands_to_valid_json(self) -> None:
+        for kind in sorted(scaffold.JSON_KINDS):
+            with self.subTest(kind=kind):
+                text, problems = scaffold.expand(kind, CASES[kind])
+                self.assertEqual([], problems)
+                json.loads(text)
+
+    def test_a_json_kind_carries_no_frontmatter(self) -> None:
+        """The artifact's own form decides how it is parsed; a delta is an object, not a file."""
+        for kind in sorted(scaffold.JSON_KINDS):
+            self.assertFalse(scaffold.template_path(kind).read_text().startswith("---"), kind)
 
 
 class Expansion(unittest.TestCase):

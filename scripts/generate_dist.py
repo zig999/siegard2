@@ -63,6 +63,11 @@ GENERATOR_VERSION = "1.0.0"
 MANIFEST_NAME = "siegard-manifest.json"
 PLUGIN_DIR = ".claude-plugin"
 
+# The lock is this repository's bookkeeping and never ships. The class instance does ship, and is
+# classified below like any other file — it is data rather than a contract, so it is excluded from
+# the contract totality assertion and named here instead.
+NOT_A_SCHEMA = frozenset({"contract-versions.json"})
+
 # Every schema in schemas/, and whether a governed repository needs it. A schema ships when a
 # shipped component or executable validates against it downstream; the rest govern this
 # repository's own artifacts and would be dead weight a consumer could mistake for a contract
@@ -92,6 +97,8 @@ SHIPPED_SCHEMAS = {
     "skill.v1.json": None,  # a governed repository does not author framework components
     "agent.v1.json": None,  # same
     "plugin.v1.json": None,  # same; the harness reads plugin.json, the consumer does not validate it
+    "artifact-class.v1.json": "the class contract a governed repository validates produced artifacts against",
+    "artifact-classes.json": "its instance: the closed vocabulary of specs/0004 R8, framework-owned per specs/0012 R4",
     "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json  # governs the source-only declaration; the consumer reads hooks/hooks.json
 }
 
@@ -125,6 +132,20 @@ def hook_declaration() -> list[dict]:
     if not path.is_file():
         return []
     return json.loads(path.read_text())["hooks"]
+
+
+def contract_of(name: str) -> str:
+    """The contract version a shipped schema file carries.
+
+    From the filename where it has one — `concept.v1.json` is `concept/1` — and from the document
+    otherwise. `artifact-classes.json` is an instance rather than a contract: it declares its own
+    `contract_version` and has no version in its name, and inferring one from the filename would
+    give it a contract nothing else recognises.
+    """
+    if ".v" in name:
+        stem, _, rest = name.partition(".v")
+        return f"{stem}/{rest.split('.json')[0]}"
+    return json.loads((SCHEMA_ROOT / name).read_text())["contract_version"]
 
 
 class Refused(Exception):
@@ -281,15 +302,13 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
             )
 
     # Schemas Siegard resolves through ${CLAUDE_PLUGIN_ROOT}; the harness never reads these.
-    present = {p.name for p in SCHEMA_ROOT.glob("*.json") if p.name != "contract-versions.json"}
+    present = {p.name for p in SCHEMA_ROOT.glob("*.json") if p.name not in NOT_A_SCHEMA}
     assert_total(present, set(SHIPPED_SCHEMAS), "schemas/", "SHIPPED_SCHEMAS")
     schemas: list[dict] = []
     for name in sorted(n for n, reason in SHIPPED_SCHEMAS.items() if reason):
         source = SCHEMA_ROOT / name
         add(f"schemas/{name}", source)
-        stem, _, _ = name.partition(".v")
-        version = name.split(".v")[1].split(".json")[0]
-        schemas.append({"contract_version": f"{stem}/{version}", "path": f"schemas/{name}"})
+        schemas.append({"contract_version": contract_of(name), "path": f"schemas/{name}"})
 
     # Hooks. specs/0008 R3 puts them in force while the plugin is enabled, which is what makes a
     # session-wide guarantee installable at all.
@@ -391,10 +410,7 @@ def build(target: Path) -> tuple[list[dict], list[str]]:
         "installed": sorted(files, key=lambda e: e["path"]),
         "schemas": sorted(
             (
-                {
-                    "contract_version": f"{n.partition('.v')[0]}/{n.split('.v')[1].split('.json')[0]}",
-                    "path": f"schemas/{n}",
-                }
+                {"contract_version": contract_of(n), "path": f"schemas/{n}"}
                 for n, reason in SHIPPED_SCHEMAS.items()
                 if reason
             ),

@@ -62,7 +62,16 @@ SCHEMA_BY_KIND = {
     "knowledge-object-process": "knowledge-object.v1.json",
     "skill": "skill.v1.json",
     "agent": "agent.v1.json",
+    "pack-declaration": "pack-declaration.v1.json",
+    "specification-delta": "specification-delta.v1.json",
+    "validation-evidence": "validation-evidence.v1.json",
 }
+
+# Kinds whose artifact is a JSON document rather than markdown with frontmatter. The distinction
+# is the artifact's own form, not a property of scaffolding: a specification is a file with
+# frontmatter and a specification delta is a JSON object, and validating either against its
+# contract means parsing it the way its consumer will.
+JSON_KINDS = frozenset({"pack-declaration", "specification-delta", "validation-evidence"})
 
 try:
     import yaml
@@ -119,10 +128,16 @@ def conforms(kind: str, text: str) -> list[str]:
     schema_path = SCHEMA_ROOT / SCHEMA_BY_KIND[kind]
     if not schema_path.is_file():
         cannot_run(f"cannot run: schema {schema_path} does not exist")
-    try:
-        data, _body = split_frontmatter(text)
-    except (ValueError, yaml.YAMLError) as exc:
-        return [f"the expanded scaffold is not a valid artifact: {exc}"]
+    if kind in JSON_KINDS:
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            return [f"the expanded scaffold is not valid JSON: {exc}"]
+    else:
+        try:
+            data, _body = split_frontmatter(text)
+        except (ValueError, yaml.YAMLError) as exc:
+            return [f"the expanded scaffold is not a valid artifact: {exc}"]
 
     validator = Draft202012Validator(json.loads(schema_path.read_text()))
     return [

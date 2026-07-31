@@ -13,6 +13,10 @@
       "schema": "agent.v1.json",
       "constraint_digest": "sha256:2764414c5851b79eab258afbe71bc1ccdcb4e23cdd1e0aeb9f72334896ebf252"
     },
+    "artifact-class/1": {
+      "schema": "artifact-class.v1.json",
+      "constraint_digest": "sha256:e388b8559071f085c342f16dc6cc6fd1cb9dab85a1dd65600ef3ef86927d0fd3"
+    },
     "concept-authoring-result/1": {
       "schema": "concept-authoring-result.v1.json",
       "constraint_digest": "sha256:2ea8d966552f63c87d2cc76befd92b5acd5cd69ecd3ae76fcaf6deb474c21cf0"

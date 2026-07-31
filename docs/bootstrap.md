@@ -224,7 +224,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 524 tests over fifteen areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 532 tests over fifteen areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
 | hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
@@ -235,6 +235,8 @@ at a specific point:
 | capability status derived from checkable facts (`specs/0006` R17) | `check_capabilities.py` runs in `make validate` | **active**; the manifest's statuses are compared against what the generator's own selection derives, and a hand-edited one is reported |
 | no uncalibrated threshold ships (`specs/0007` R19, R20) | `check_capabilities.py` runs in `make validate` | **active**; every exemption cites the requirement that calibrated it, and a bare number in a shipped file fails the build |
 | framework lifecycle: upgrade detects divergence and stops (`specs/0008` R17) | `install_dist.py` and the `upgrade` skill | **active**, with three outcomes recorded in `fixtures/upgrade-run/` and reproduced by test |
+| artifact class output contracts, framework-owned (`specs/0012` R4) | `validate_artifacts.py` runs in `make validate` | **active**; the closed vocabulary of `specs/0004` R8 lives in `schemas/artifact-classes.json`, four contracts are compared against it, a pack's `from` column must be a subset, and every produced artifact must name the object it came from |
+| judged track verified against a generated suite (`specs/0004` R3) | `verify_judged.py` runs in `make validate` | **active** for one artifact; the suite comes from `rule.examples` and lifecycle totality (R36), and a validator contradicting the knowledge fails. The artifact is *recorded* — no agent produced it |
 | every capability needs a fixture (`CLAUDE.md` scope) | `fixtures/` holds its first case | **active** for the knowledge layer; pending for every other capability |
 | migration tests (`rules/compatibility.md`) | a second contract version exists | pending |
 
@@ -482,7 +484,7 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 524 tests across fifteen areas: the knowledge layer, the workflow loop, the
+- `make test` runs 532 tests across fifteen areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
   eleven scaffolds in `templates/`, the first shipped hook, context resolution, the generation pipeline, the first target pack, one generation run end to end, and the capability lifecycle.

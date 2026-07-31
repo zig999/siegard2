@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:0db2bd1f3bb093607071120df7da593c638fea92a4ca53123e0986b5f1035027",
+  "source_revision": "sha256:0677b40b37eac422a473eec80357a3087ca6d6a6a2fc358982b46e7ac392c17e",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -67,6 +67,16 @@
       "path": "hooks/reject-derived-write.py",
       "source": "src/claude/hooks/reject-derived-write.py",
       "digest": "sha256:3c7a6c8ea83cae0b08a886f4ba1a618bd6dbfb7f914677e2e73bb0d91d77be3f"
+    },
+    {
+      "path": "schemas/artifact-class.v1.json",
+      "source": "schemas/artifact-class.v1.json",
+      "digest": "sha256:33137008477fe4f7a3398a744bc597c1dd78d240aeb0d2315f42023ab1701630"
+    },
+    {
+      "path": "schemas/artifact-classes.json",
+      "source": "schemas/artifact-classes.json",
+      "digest": "sha256:9396ba3e2f2ad6ea47a6bebf03639429d636bbc5b349aff9f4285fc1cfd2d53d"
     },
     {
       "path": "schemas/concept-authoring-result.v1.json",
@@ -151,7 +161,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:e97510a91d91b1fd4afdca10831b2dec8808a323bb4cefb909c89115b4dc04ba"
+      "digest": "sha256:756a4962035175c3475e2ffb3df398545a469bcbfe3b2fd137eadb7805db8092"
     },
     {
       "path": "skills/generate/SKILL.md",
@@ -170,6 +180,14 @@
     }
   ],
   "schemas": [
+    {
+      "contract_version": "artifact-class/1",
+      "path": "schemas/artifact-class.v1.json"
+    },
+    {
+      "contract_version": "artifact-class/1",
+      "path": "schemas/artifact-classes.json"
+    },
     {
       "contract_version": "concept-authoring-result/1",
       "path": "schemas/concept-authoring-result.v1.json"
