@@ -1,0 +1,49 @@
+{
+  "$comment": "Constraint digest per contract version, written by scripts/check_contract_versions.py --update. A digest covers the assertion vocabulary only: annotation keywords are stripped, so clarifying a description is not a version bump and changing what a schema accepts is. Regenerating this file to silence a mismatch discards the only record that a contract moved.",
+  "contracts": {
+    "adr/1": {
+      "schema": "adr.v1.json",
+      "constraint_digest": "sha256:09ce76c4b6527973e0a01c1556affcc5be44be48feffd5baf0f9c718004604ef"
+    },
+    "adr/2": {
+      "schema": "adr.v2.json",
+      "constraint_digest": "sha256:6c8af0adfad06c5b751feb1bb44ca908e82f9a9eefa94fae1ad1b019c2e8aab8"
+    },
+    "agent/1": {
+      "schema": "agent.v1.json",
+      "constraint_digest": "sha256:2764414c5851b79eab258afbe71bc1ccdcb4e23cdd1e0aeb9f72334896ebf252"
+    },
+    "concept-authoring-result/1": {
+      "schema": "concept-authoring-result.v1.json",
+      "constraint_digest": "sha256:2ea8d966552f63c87d2cc76befd92b5acd5cd69ecd3ae76fcaf6deb474c21cf0"
+    },
+    "concept/1": {
+      "schema": "concept.v1.json",
+      "constraint_digest": "sha256:a65a2f60850b400598e723c9f6b4e49da468c68ac8684efbd44f9a4eda495514"
+    },
+    "impact-analysis/1": {
+      "schema": "impact-analysis.v1.json",
+      "constraint_digest": "sha256:d2a371c8a167f212314ab74fcb80f89e6af5781b4e13929c4083a0af7431c5e4"
+    },
+    "knowledge-graph/1": {
+      "schema": "knowledge-graph.v1.json",
+      "constraint_digest": "sha256:8e2670c7e92b0b53164a66fcc50db320b59f4a90690726cfe87d06d7480cc684"
+    },
+    "knowledge-object/1": {
+      "schema": "knowledge-object.v1.json",
+      "constraint_digest": "sha256:6d4523381bbd0d545df018ae5a789e6db2f9f8c2dc70e00fbce02f72dfa18628"
+    },
+    "skill/1": {
+      "schema": "skill.v1.json",
+      "constraint_digest": "sha256:aaaaf5e5baa6b8fb295177e00b1f007fc0464fb758944687dd510ab114a3ed91"
+    },
+    "spec/1": {
+      "schema": "spec.v1.json",
+      "constraint_digest": "sha256:c6d5ca641736746da432f509b1311900bf10b4606c425ecf2a4ecf715d06bb53"
+    },
+    "workflow-event/1": {
+      "schema": "workflow-event.v1.json",
+      "constraint_digest": "sha256:decf0097f4e702240a8312b54bbfd67cf64f8f8802ee9d49b3ceef4e45749756"
+    }
+  }
+}

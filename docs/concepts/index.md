@@ -17,12 +17,15 @@ One concept per file. The filename is the concept `id` without its `concept.` pr
 Each concept's `status` lives in its own frontmatter and is not repeated here. `docs/adr/README.md` states
 when a concept crosses between the tiers: a concept becomes `accepted` when an artifact that binds uses the
 term normatively, and one cited only by a `proposed` specification stays `proposed`. A `proposed` concept
-names a term without binding its definition — see [accepted](accepted.md). The rule still governs a concept
-added from here on, even though nothing in the bundle currently sits on the lower tier.
+names a term without binding its definition — see [accepted](accepted.md). The rule governs every concept
+added from here on, and [scaffold](scaffold.md) is the first to exercise it.
 
-As of 2026-07-31 every entry is `accepted`. The bundle was promoted in one maintainer decision, together
-with every specification and ADR that was still `proposed`, so the tier no longer distinguishes anything
-here.
+On 2026-07-31 every entry then in the bundle was promoted to `accepted` in one maintainer decision, together
+with every specification and ADR that was still `proposed`. For a short while the tier distinguished nothing
+here. [scaffold](scaffold.md) restored the distinction the same day: it is `proposed`, because the only
+things that use the term are `templates/` and a script, and `CLAUDE.md` **Normative sources** places
+implementation below the tiers that bind. It becomes `accepted` when a specification or a rule file uses it
+normatively — not when the scaffolds it names begin to work.
 
 What that decision changed, and what it did not, is worth being exact about. The condition
 `docs/adr/README.md` states for the crossing — a term used normatively by an artifact that binds — was
@@ -79,6 +82,7 @@ definition here, and the first component built against one is the thing most lik
 | [release record](release-record.md) | What changed between one framework version and the last. |
 | [representation ratio](representation-ratio.md) | Permanent knowledge volume measured against the source volume it produces. |
 | [rule](rule.md) | The knowledge object type stating one falsifiable condition; the only type an assertion binds to. |
+| [scaffold](scaffold.md) | A generator producing a conforming skeleton of an artifact this repository authors; not a template. |
 | [skill](skill.md) | A distributable procedure or knowledge unit, invocable as `/name`. |
 | [specialized agent](specialized-agent.md) | An agent with one declared role and minimum tools. |
 | [specification](specification.md) | A normative document in `specs/`, the highest precedence source in this repository. |

@@ -17,6 +17,7 @@ validate:
 	@fail=0; \
 	python3 scripts/validate_specs.py || fail=1; \
 	python3 scripts/validate_adrs.py || fail=1; \
+	python3 scripts/check_contract_versions.py || fail=1; \
 	python3 scripts/validate_concepts.py || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
 	python3 scripts/validate_knowledge.py || fail=1; \
@@ -25,6 +26,12 @@ validate:
 	python3 scripts/replay_workflow.py --check || fail=1; \
 	exit $$fail
 
+# `check_contract_versions.py` sits with the schema tier because it validates the contracts
+# every validator below it loads. Its polarity is inverted relative to the derived-tree
+# checks: it verifies by default and rewrites only under `--update`, which is deliberately
+# absent from this target. A lock regenerated to silence a mismatch discards the only record
+# that a contract moved.
+#
 # The knowledge validator is wired above, as specs/0003 R37 requires. Both derived
 # trees are verified rather than regenerated here: `--check` compares and mutates
 # nothing, so `validate` stays safe to run on a dirty tree. Regeneration is

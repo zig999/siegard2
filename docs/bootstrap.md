@@ -63,6 +63,46 @@ Concretely, in order:
    `tests/test_workflow_events.py` covers each guard condition in both directions.
 7. **The generator and `make dist`**, once `src/claude/` holds enough to assemble.
 
+## Construction decisions
+
+Four questions the build order raised before any code answered them. Each is recorded here because
+leaving it implicit would let the first component that meets it decide by accident.
+
+**D1 — the plugin root is `dist/.claude/`.** `CLAUDE.md` **Repository layout** and
+`.claude/rules/distribution.md` both name that path, and `specs/0008` **Decided elsewhere** states that
+where that specification and that rule file appear to overlap, the rule file wins. The harness manifest
+therefore lands at `dist/.claude/.claude-plugin/plugin.json`. Decided 2026-07-31; no edit to `CLAUDE.md`
+was needed.
+
+**D2 — two proposed mechanisms were discarded rather than built.** A "bootstrap default" tier for numeric
+limits was proposed, holding a provisional uncalibrated value between a caller-supplied one and a
+calibrated one. It contradicts `specs/0001` R10 and `specs/0007` R19, and R20 names the exact failure it
+would institutionalize: a value chosen once to get a first run moving becoming a framework default nobody
+decided to ship. A five-value artifact lifecycle vocabulary was proposed alongside it; `specs/0004` R45
+fixes a closed set of three, and the **Artifact persistence** section of that document already records why
+collapsing persistence, normativity, and derivation into one axis was rejected. Neither is built, and no
+accepted specification changed to refuse them.
+
+**D3 — `templates/` holds scaffolds, and a template is something else.** `CLAUDE.md` gives `templates/`
+the role "artifact generators that conform to schemas", which is a generator for an artifact *this*
+repository authors. `specs/0011` R1 defines a template as the mechanism of the deterministic generation
+track, producing an artifact class from the closed vocabulary of `specs/0004` R8 — where `specification`
+and `adr` do not appear. Two mechanisms, one word, and
+`docs/adr/0010-projection-names-the-graph-derived-artifact.md` exists because `projection` named two
+referents once already. `docs/concepts/scaffold.md` records the distinction and is `proposed`: only
+`templates/` and a script use the term, and implementation does not promote vocabulary.
+
+**D4 — where a target pack's source lives is unresolved, and is named rather than merged.**
+`specs/0004` R13 states a pack is "distributed together under `src/claude/`". `specs/0008` R23 states a
+pack is a separate plugin and "the framework distribution contains no pack", and that document's directory
+listing says `packs/` is absent. `CLAUDE.md` **Repository layout** defines `src/claude/` as the components
+the framework *ships* and offers no third location. A pack under `src/claude/` here would be emitted into
+the framework distribution, which R23 forbids; a pack anywhere else contradicts R13. Both are accepted, at
+equal precedence, with no supersession between them, so **Conflict protocol** in `CLAUDE.md` applies: this
+is recorded and left for a maintainer rather than resolved by whichever specification a script happened to
+read first. Nothing in the build reaches a real pack before the generation pipeline exists, so the decision
+is owed then and not now. A fixture pack has a home already and does not depend on it.
+
 ## Sequencing
 
 Five stages. Each one names what it would falsify, because a stage that cannot fail teaches nothing.
@@ -116,7 +156,8 @@ at a specific point:
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active**; the `sources` path constraint became enforced with ADR-0010, which records the deleted-source failure that demanded it |
 | ADR frontmatter contract (`schemas/adr.v2.json`), including supersession and amendment | the validator runs in `make validate` | **active**; `amends` exercised for the first time by ADR-0008 over ADR-0004 |
 | non-restatement: an ADR's `## Decision` cites an operative rule instead of repeating it (`docs/adr/README.md`) | the check runs in `make validate` | **active**, six ADRs de-duplicated to satisfy it |
-| migration test for a contract bump (`.claude/rules/compatibility.md`) | a test suite exists | **owed**: `adr/1` → `adr/2` happened without one |
+| migration test for a contract bump (`.claude/rules/compatibility.md`) | a test suite exists | **active**; the `adr/1` → `adr/2` debt was paid by `scripts/migrate_contracts.py` and `fixtures/migration-adr-v1-v2/`, and `check_contract_versions.py` now fails a bump that registers no path |
+| contract integrity: constraints cannot change without a version bump (`.claude/rules/compatibility.md`) | `check_contract_versions.py` runs in `make validate` | **active**; a digest over the assertion vocabulary, so a reworded description is not a bump and a changed constraint is |
 | component contracts (`schemas/skill.v1.json`, `schemas/agent.v1.json`) | the validator runs in `make validate` | **active**, exercised by `concept-author` |
 | result contract (`schemas/concept-authoring-result.v1.json`) validated at the boundary | the thin-path orchestrator or a test consumes the agent's result | **active**: `scripts/orchestrate.py` validates it before consumption, and rejection is tested |
 | workflow event contract (`schemas/workflow-event.v1.json`), its conditionals, and the transition guard | `scripts/workflow_lib.py` runs under test | **active**, every guard condition covered in both directions |
@@ -128,7 +169,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 193 tests: 98 over the knowledge layer, 59 over the workflow loop, 36 over the specification set |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 257 tests: 98 over the knowledge layer, 59 over the workflow loop, 35 over the specification set, 33 over contract versioning and migration, 32 over the three validators that had none |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **partly active** |
 | `src/claude/` holds every shippable component (`CLAUDE.md` layout) | the first distributable component is authored | pending |
@@ -345,14 +386,26 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 193 tests: 98 over the knowledge layer, 59 over the workflow loop, and 36 over the
-  specification set — its concept links and its acceptance order. The validators for ADRs, concepts, and
-  components remain untested code enforcing tested contracts; `validate_specs.py` is now covered for those
-  two checks and not for the rest of what it does, so a green `make test` is not evidence that its
-  frontmatter, section, or requirement-numbering checks work. Covered in full:
+- `make test` runs 257 tests: 98 over the knowledge layer, 59 over the workflow loop, 35 over the
+  specification set, 33 over contract versioning and migration, and 32 over the three validators that
+  previously had none. The figure read 193 until 2026-07-31, when counting the suites module by module
+  found the specification set was 35 rather than 36. A count nothing derives drifts, which is the argument
+  for the check `scripts/check_contract_versions.py` now applies to schemas rather than an argument for a
+  more careful reader.
+
+  `validate_adrs.py`, `validate_concepts.py`, and `validate_components.py` were untested code enforcing
+  tested contracts until `tests/test_validators.py`, which covers each one in both directions through its
+  real entry point. `validate_specs.py` is covered for its concept links and its acceptance order and not
+  for the rest of what it does, so a green `make test` is still not evidence that its frontmatter, section,
+  or requirement-numbering checks work — it is the one validator left in that state. Covered in full:
   `validate_knowledge.py`, `knowledge_graph_lib.py`, `project_knowledge.py`, `measure_ontology.py`,
-  `workflow_lib.py`, and `orchestrate.py`. `replay_workflow.py` is exercised by `make validate` rather than
-  by a test of its own.
+  `workflow_lib.py`, `orchestrate.py`, `check_contract_versions.py`, and `migrate_contracts.py`.
+  `replay_workflow.py` is exercised by `make validate` rather than by a test of its own.
+
+  One cost worth stating rather than absorbing: `validate_adrs.py` compares every `## Decision` line
+  against 215 operative statements, so a full run costs about five seconds. `tests/test_validators.py`
+  mutates a single-ADR subset for that reason and runs the whole tree once, which is why the suite takes
+  seventeen seconds rather than a minute.
 - No `.claude/rules/security.md`. `CLAUDE.md` **Security** states the invariants; sanitization, path,
   subprocess, and network detail wait until the first hook or script needs them — see open question 5.
 - No generator, therefore no authoritative `dist/`. This is now the single largest gap: steps 3–6 exist,
