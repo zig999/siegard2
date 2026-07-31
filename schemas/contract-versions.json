@@ -21,6 +21,10 @@
       "schema": "concept.v1.json",
       "constraint_digest": "sha256:a65a2f60850b400598e723c9f6b4e49da468c68ac8684efbd44f9a4eda495514"
     },
+    "context-package/1": {
+      "schema": "context-package.v1.json",
+      "constraint_digest": "sha256:454b846c424d77b1134f2771c5ad481d6ad7f6de09f3dafa5c049f5a3853b7d6"
+    },
     "distribution-manifest/1": {
       "schema": "distribution-manifest.v1.json",
       "constraint_digest": "sha256:bc87c97c564f4a5af3305835525b39404080510d363c4351a00e01f01f294109"

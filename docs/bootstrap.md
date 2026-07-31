@@ -134,7 +134,39 @@ Five stages. Each one names what it would falsify, because a stage that cannot f
    and "knowledge authoring" is the implementation phase. And the minimal generator is not done, so
    ADR-0009 condition 2 remains open: nothing has yet installed a component and watched Claude Code load
    it.
-3. **Graph and context resolution.** Only once the bundle is large enough for selection to matter, with
+3. **Graph and context resolution.** **Built, measured, and retained — provisionally.**
+   `schemas/context-package.v1.json` and `scripts/resolve_context.py` expand a set of justified roots
+   over the edges the ontology declares, under a caller-stated budget, recording one stop reason and
+   every degradation separately.
+
+   **The measurement `specs/0009` R10 asks for**, over the 28 knowledge objects of
+   `fixtures/knowledge-two-context/`, five roots chosen as realistic changes:
+
+   | Root | In scope | Excluded |
+   |---|---|---|
+   | `ko.rule.billing.invoice-amount` | 22 | 21.4% |
+   | `ko.rule.sales.proposal-validity` | 15 | 46.4% |
+   | `ko.definition.billing.invoice` | 22 | 21.4% |
+   | `ko.lifecycle.sales.proposal` | 14 | 50.0% |
+   | `ko.boundary.billing` | 1 | 96.4% |
+
+   Mean exclusion 47.1%; two of five exclude at least half.
+
+   **R11 is decided: retain.** The condition R11 states is whether resolution "selects better than
+   including the whole bundle for the repository in question", and on this bundle it does — no root
+   pulls in everything, and the mean run reads about half. What the measurement does *not* settle is
+   whether it pays for itself at scale: 47% of 28 objects is thirteen files, and a saving that size
+   could be had by sending the bundle. So this is retained on evidence and re-measured when a larger
+   bundle exists, rather than retained for completeness — which is the outcome R11 forbids.
+
+   One finding the measurement produced that no requirement anticipated. Expanding from a **boundary**
+   reaches almost nothing: `boundary` edges run member → boundary, and `specs/0003` has a boundary never
+   enumerate its members, so a boundary chosen as a root excludes 96% of the bundle. That is a fact the
+   root selector has to know, not a defect to route around by adding a reverse edge the ontology does
+   not declare.
+
+   The original sequencing text for this stage follows, kept because its abandonment criterion is what
+   the measurement above answered. Only once the bundle is large enough for selection to matter, with
    the reproducibility test and the instrumentation — selection recall, tokens per change — that decides
    whether resolution pays for itself. Falsifies the determinism claim, which becomes a test rather than
    an adjective. Abandonment criterion: if recall is indistinguishable from sending the whole bundle,
@@ -173,7 +205,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 386 tests over ten areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 417 tests over eleven areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
 | hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
@@ -316,7 +348,7 @@ forecloses nothing.
 | runtime architecture | `CLAUDE.md` **Scope**; `.claude/rules/claude-code-authoring.md` | stage 2, once the thin path has run |
 | capability model, capability contracts | `docs/concepts/capability.md`; `schemas/skill.v1.json`, `schemas/agent.v1.json` | open question 3's gate |
 | distribution layout | `CLAUDE.md` **Repository layout**; `.claude/rules/distribution.md` | open question 2's gate — a generator |
-| context assembly | `specs/0001` **Context resolution**; `docs/concepts/context-package.md` | stage 3, with the selection instrumentation |
+| context assembly | `schemas/context-package.v1.json` and `scripts/resolve_context.py` | **settled**: built, measured, and retained on the measurement rather than for completeness — see stage 3 |
 | command system | ADR-0009: there is no command class | nothing — the class does not exist |
 | worker model | `docs/concepts/specialized-agent.md` | open question 3's gate |
 | hook system | `CLAUDE.md` **Security** | open question 5's gate — the first hook under test |
@@ -428,10 +460,10 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 386 tests across ten areas: the knowledge layer, the workflow loop, the
+- `make test` runs 417 tests across eleven areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
-  eleven scaffolds in `templates/`, and the first shipped hook.
+  eleven scaffolds in `templates/`, the first shipped hook, and context resolution.
   Two figures in this file drifted before anything derived them — a test count that read 193 against
   an actual 192, and a specification-set count of 36 against 35 — so the number above is stated once
   and `make test` is the authority.

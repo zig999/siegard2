@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/1",
-  "source_revision": "sha256:85cce498f73a652bda9a1f6009468159c5d0960dc78262e88665f79e8f9d1017",
+  "source_revision": "sha256:f90a22f475c2f871cb4d72c0b6431484317a8c35cf47bd6657160690924be040",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -22,6 +22,11 @@
       "path": "agents/knowledge-author.md",
       "source": "src/claude/agents/knowledge-author.md",
       "digest": "sha256:3bb0db38510c6517c4f0e3ab4071d6eb96010794b4a3b15ba5577fc17f4745dc"
+    },
+    {
+      "path": "agents/root-selector.md",
+      "source": "src/claude/agents/root-selector.md",
+      "digest": "sha256:2cc632059381425be6ac5446cc0323826a22d0c7eb42ded2e84f9a7daa1f4039"
     },
     {
       "path": "bin/cli.py",
@@ -69,6 +74,11 @@
       "digest": "sha256:d46fca4b6a438d1958626d92440500672c11936efa9668156b892eb444ba6f84"
     },
     {
+      "path": "schemas/context-package.v1.json",
+      "source": "schemas/context-package.v1.json",
+      "digest": "sha256:c2b189b5ea54c82c90d3e0f0fac07e9de0ae280198a6cb64a6ac6ade7162b4e9"
+    },
+    {
       "path": "schemas/distribution-manifest.v1.json",
       "source": "schemas/distribution-manifest.v1.json",
       "digest": "sha256:c8f0ec64c71e4eb4b752df77f0ac43c72edecad0a19ef2b167cbcb1d859e3856"
@@ -101,7 +111,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:5c767779c9c7b7e92cebe9471142d2b3a3fb6e5e41748ca5c3e104bddac91b8a"
+      "digest": "sha256:06c05efb95fc53ce27670270417769645aee2a74282d7232eaa5ec595e8b9bb8"
     },
     {
       "path": "skills/knowledge-change/SKILL.md",
@@ -117,6 +127,10 @@
     {
       "contract_version": "concept/1",
       "path": "schemas/concept.v1.json"
+    },
+    {
+      "contract_version": "context-package/1",
+      "path": "schemas/context-package.v1.json"
     },
     {
       "contract_version": "distribution-manifest/1",
@@ -203,6 +217,12 @@
       "class": "specialized-agent",
       "status": "active",
       "path": "agents/knowledge-author.md"
+    },
+    {
+      "name": "root-selector",
+      "class": "specialized-agent",
+      "status": "active",
+      "path": "agents/root-selector.md"
     }
   ],
   "overrides": []

@@ -76,6 +76,7 @@ SHIPPED_SCHEMAS = {
     "knowledge-object.v1.json": "the governed repository's knowledge base",
     "knowledge-graph.v1.json": "the materialized graph derived from that base",
     "concept.v1.json": "the bundle concept-author writes into",
+    "context-package.v1.json": "the scope a governed repository resolves and its consumers read",
     "distribution-manifest.v1.json": "so a consumer can validate the manifest it is told to read",
     # Not shipped, and why.
     "spec.v1.json": None,  # governs specs/ in this repository; a governed repository writes none

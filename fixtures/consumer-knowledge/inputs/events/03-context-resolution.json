@@ -4,7 +4,8 @@
   "workflow_id": "wf_cancelled-order-not-billable",
   "seq": 3,
   "occurred_at": "2026-07-31T09:06:00Z",
-  "producer": "knowledge-change",
+  "producer": "root-selector",
   "phase": "context-resolution",
-  "outcome": "resolved"
+  "outcome": "degraded",
+  "degradation": "budget_exhausted on cp_5c7d9e01: expansion stopped at the caller's 12-object budget with 16 of 28 objects unread"
 }

@@ -1,7 +1,12 @@
 {
   "attempt_limit": 3,
   "attempts": 1,
-  "degradations": [],
+  "degradations": [
+    {
+      "detail": "budget_exhausted on cp_5c7d9e01: expansion stopped at the caller's 12-object budget with 16 of 28 objects unread",
+      "seq": 3
+    }
+  ],
   "history": [
     {
       "outcome": "recorded",
@@ -14,7 +19,7 @@
       "seq": 2
     },
     {
-      "outcome": "resolved",
+      "outcome": "degraded",
       "phase": "context-resolution",
       "seq": 3
     },
