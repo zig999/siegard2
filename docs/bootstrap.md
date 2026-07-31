@@ -171,7 +171,26 @@ Five stages. Each one names what it would falsify, because a stage that cannot f
    whether resolution pays for itself. Falsifies the determinism claim, which becomes a test rather than
    an adjective. Abandonment criterion: if recall is indistinguishable from sending the whole bundle,
    simplify to inclusion by tag or domain.
-4. **The code side.** Specification delta, implementation, layered validation and evidence, the
+4. **The code side.** **Built and measured.** `scripts/generate_code.py` executes a validated plan
+   through `fixtures/pack-typescript/`, records a generation manifest, and verifies by
+   regenerate-and-diff into a temporary tree. `fixtures/generation-run/` holds one run: 59 produced
+   artifacts from 61 plan entries over a 21-object scope.
+
+   **The measurement `specs/0004` R6 asks for: 59 of 61 plan entries — 96.7% — are on the
+   deterministic track.** R6 requires the promise reduced to what the mechanism delivers where the
+   share does not cover the structural code. It does here: types, DTOs, persistence schemas,
+   migrations, enums, state machines, event schemas, API descriptions, conformance tests, and
+   documentation are all deterministic. The two judged entries are `validator`, from a rule's
+   expression, and `orchestration`, from a process. The promise stands as written, on this pack and
+   this base, and is owed a re-measurement against a base whose rules outnumber its definitions.
+
+   Two findings the run produced. A placement convention that gave `enum` and `state-machine` from
+   one lifecycle the same path was rejected by R27 before anything was written — the collision check
+   caught a real mistake on its first real use. And once a manifest exists, a collision in the
+   placement decision is unreachable: R31 reads the locked path back and never consults the decision
+   again, so a first generation is the only run where R27 can fire.
+
+   The original sequencing text for this stage follows. Specification delta, implementation, layered validation and evidence, the
    independent validation closure, and the acceptance gate that reports each knowledge object's mode.
    Falsifies fail-soft and the normative inversion in its first concrete case.
 5. **Escalation thresholds, assertion promotion, and knowledge derived from code.** Last, because every
@@ -205,7 +224,7 @@ at a specific point:
 | projections are derived and never hand-edited (R42, R51) | `project_knowledge.py --check` runs in `make validate` | **active** |
 | ontology utilization measured (R52) | `measure_ontology.py --check` runs in `make validate` | **active**, three removal candidates found |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, five artifact classes plus two derived-tree checks |
-| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 484 tests over thirteen areas; `make test` prints the count, which is the only figure here nothing derives |
+| `make test` in `/siegard-verify` step 1 | a framework test suite exists | **active**, 505 tests over fourteen areas; `make test` prints the count, which is the only figure here nothing derives |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | **active**; `verify_dist.py` regenerates into a temporary tree and compares, and separately holds the committed tree to the invariants specs/0008 states about the output |
 | security invariants (`CLAUDE.md` **Security**) | stated; enforcement waits for the first hook | **active for one guarantee**: `reject-derived-write` enforces "a projection is never hand-edited", fails closed, rejects without repairing, and decides without a model. Every other invariant remains stated |
 | hook contract (`schemas/hook.v1.json`), event, matcher, timeout, and guarantee | `validate_components.py` checks the declaration | **active**; a declared hook with no script, a script nobody declared, an inherited timeout, and an event that cannot block are each rejected |
@@ -460,10 +479,10 @@ depend on cooperation.
   repaired before acceptance rather than after. Four findings remain open there; none is a
   contradiction. From here `.claude/rules/compatibility.md` governs changes to spec 0003, so a repair
   that invalidates a conforming knowledge object is a breaking change rather than a revision.
-- `make test` runs 484 tests across thirteen areas: the knowledge layer, the workflow loop, the
+- `make test` runs 505 tests across fourteen areas: the knowledge layer, the workflow loop, the
   specification set, contract versioning and migration, the three validators that had none, the
   generator and the distribution, installation and upgrade, the CLI exit-code convention, and the
-  eleven scaffolds in `templates/`, the first shipped hook, context resolution, the generation pipeline, and the first target pack.
+  eleven scaffolds in `templates/`, the first shipped hook, context resolution, the generation pipeline, the first target pack, and one generation run end to end.
   Two figures in this file drifted before anything derived them — a test count that read 193 against
   an actual 192, and a specification-set count of 36 against 35 — so the number above is stated once
   and `make test` is the authority.

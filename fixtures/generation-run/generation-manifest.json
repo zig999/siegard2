@@ -1,0 +1,421 @@
+{
+  "contract_version": "generation-manifest/1",
+  "pack": "typescript-node",
+  "pack_version": "0.1.0",
+  "framework_version": "0.1.0",
+  "artifacts": [
+    {
+      "ko": "ko.boundary.billing",
+      "class": "documentation",
+      "path": "src/billing/docs/billing.doc.md",
+      "content_hash": "sha256:53c7ab4186d37ff72f9fe1638b49f568b74a7eb8bc42841b18a2145d6944761c",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.boundary.billing.invoice",
+      "class": "documentation",
+      "path": "src/billing/docs/invoice.doc.md",
+      "content_hash": "sha256:eb846cdf266ef8a80afa6c88fb6639b6cb2f26bee090d1c0d6579351d64a7803",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.boundary.sales",
+      "class": "documentation",
+      "path": "src/sales/docs/sales.doc.md",
+      "content_hash": "sha256:851b9a747afd1149ce32380008a783c590c0fe27d5530a317fbb66b6151eb999",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.boundary.sales.customer",
+      "class": "documentation",
+      "path": "src/sales/docs/customer.doc.md",
+      "content_hash": "sha256:f445d08b845853bd06ea7c4205430e1f52e9154271587a12c0b11f14542910eb",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.boundary.sales.proposal",
+      "class": "documentation",
+      "path": "src/sales/docs/proposal.doc.md",
+      "content_hash": "sha256:c30362caa9cb808ed72feef812ea3319e649b3a8566e263af21cd7c7942ad3c2",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice",
+      "class": "dto",
+      "path": "src/billing/dto/invoice.dto.ts",
+      "content_hash": "sha256:58f8e3eccdd2253d20f2ed61689088bf4e4a50121bfe2c2135bb3abe5677df6a",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice",
+      "class": "migration",
+      "path": "src/billing/db/migrations/invoice.up.sql",
+      "content_hash": "sha256:c27f0d3d60486c0d97a0e852116cc9d6b10d8ad8d26200bb8cd0b67d068969de",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice",
+      "class": "persistence-schema",
+      "path": "src/billing/db/invoice.sql",
+      "content_hash": "sha256:37ea222a0a6edb482d82434362e957607679f01da0a1ede8cd19a4f9613992c0",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice",
+      "class": "type",
+      "path": "src/billing/types/invoice.ts",
+      "content_hash": "sha256:24276645de0d2035d449497ad7a3ed42c7d01ee1941e4f3d37d1d3f5e1caefd4",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-already-issued",
+      "class": "dto",
+      "path": "src/billing/dto/invoice-already-issued.dto.ts",
+      "content_hash": "sha256:e74eeebb556c30dcd317694fa9cf0d1ccaf6af954bee3bbaa48b183d4e875832",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-already-issued",
+      "class": "migration",
+      "path": "src/billing/db/migrations/invoice-already-issued.up.sql",
+      "content_hash": "sha256:55eed51f23ab77c7f18c083484a3ec0e5e4c0e6982d023bce7cdbb34c5b234b1",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-already-issued",
+      "class": "persistence-schema",
+      "path": "src/billing/db/invoice-already-issued.sql",
+      "content_hash": "sha256:acf918fb13cbb984f68c7ffdd8814730a770c0958b11c1c187d3c7be0ecd5b46",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-already-issued",
+      "class": "type",
+      "path": "src/billing/types/invoice-already-issued.ts",
+      "content_hash": "sha256:c2f2e99e81e75da3d5b5257c9570d6f56d5796c5d59969d5f0f5fc66631391df",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-not-issued",
+      "class": "dto",
+      "path": "src/billing/dto/invoice-not-issued.dto.ts",
+      "content_hash": "sha256:36ae06d39675db642c9f9e443b98f2ee35b55a2f9f15474e05b20423537d0371",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-not-issued",
+      "class": "migration",
+      "path": "src/billing/db/migrations/invoice-not-issued.up.sql",
+      "content_hash": "sha256:0eae42a87ee59cb743ae38e8d258f269089a845d862c76e55719105ebd9c8913",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-not-issued",
+      "class": "persistence-schema",
+      "path": "src/billing/db/invoice-not-issued.sql",
+      "content_hash": "sha256:79486ed2fa9cf2e816aa54bad04136cecc820f6bb308e01e7f7d0beec0ae0395",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-not-issued",
+      "class": "type",
+      "path": "src/billing/types/invoice-not-issued.ts",
+      "content_hash": "sha256:3160ec3f907c457279440205e49fe5e556acbc5f9a56abd34e10bb9d7ac957dc",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-terminal",
+      "class": "dto",
+      "path": "src/billing/dto/invoice-terminal.dto.ts",
+      "content_hash": "sha256:f56f71ddf4a7ea33c90740908bbacb024274e0e704c6c3d72a6ee5fa5c42369d",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-terminal",
+      "class": "migration",
+      "path": "src/billing/db/migrations/invoice-terminal.up.sql",
+      "content_hash": "sha256:52d9a32d9ff414c72795b901f83d670df1e993dce67a49212b24ab953609fdc5",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-terminal",
+      "class": "persistence-schema",
+      "path": "src/billing/db/invoice-terminal.sql",
+      "content_hash": "sha256:9f0133cf34496bfbdd4afd931282037e505c8ba681a05b2973c0aa4ecbfcc4c3",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.billing.invoice-terminal",
+      "class": "type",
+      "path": "src/billing/types/invoice-terminal.ts",
+      "content_hash": "sha256:b4e6f2c640c40890445b0e46bd3158d03d63546505ed99b70e62db74ac4b6e7f",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.customer",
+      "class": "dto",
+      "path": "src/sales/dto/customer.dto.ts",
+      "content_hash": "sha256:f805ce4af7450b265262bb8028db086b2580cc9275eb0fac95553bf726fed7ae",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.customer",
+      "class": "migration",
+      "path": "src/sales/db/migrations/customer.up.sql",
+      "content_hash": "sha256:32a74da3afccc551db11d2740b1faa8d34cd330280aedc53d3986ca8fb40d95d",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.customer",
+      "class": "persistence-schema",
+      "path": "src/sales/db/customer.sql",
+      "content_hash": "sha256:a40a64405c78baea850533c82e1899e6fc08c8dbe9bcd35b8344cf81503e656c",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.customer",
+      "class": "type",
+      "path": "src/sales/types/customer.ts",
+      "content_hash": "sha256:b5f9285e6f9ffe75c7bb9f94e06e0263003723d02bcb649bfe3aa615d5195d54",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal",
+      "class": "dto",
+      "path": "src/sales/dto/proposal.dto.ts",
+      "content_hash": "sha256:229e9a7264e03efed784ee65d135b5da187f9d844940df08feef36a9de0580c3",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal",
+      "class": "migration",
+      "path": "src/sales/db/migrations/proposal.up.sql",
+      "content_hash": "sha256:942ee80a5f25470dcb9ae7781225ee412f317d1a548d7d90fc5fab7cc5960db4",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal",
+      "class": "persistence-schema",
+      "path": "src/sales/db/proposal.sql",
+      "content_hash": "sha256:1e4f756872ef5eea90a04ef1a0eff98717ec0d96aca718db99705014b131f532",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal",
+      "class": "type",
+      "path": "src/sales/types/proposal.ts",
+      "content_hash": "sha256:17f3f89737b58fd5a34e518e193b1c272de121a739fd4ab0313614f69fee6cf2",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-already-issued",
+      "class": "dto",
+      "path": "src/sales/dto/proposal-already-issued.dto.ts",
+      "content_hash": "sha256:4cafdbdf6918edae12a121ca7c9670a905ff2b2dc38f40c735f16ef0577d893a",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-already-issued",
+      "class": "migration",
+      "path": "src/sales/db/migrations/proposal-already-issued.up.sql",
+      "content_hash": "sha256:5e4dec5851e1835c8c222f9dd15edd7dfc48e45d3fb55c40c565174235f5883a",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-already-issued",
+      "class": "persistence-schema",
+      "path": "src/sales/db/proposal-already-issued.sql",
+      "content_hash": "sha256:305c0f561363ba627929f5b9b55d30c98db340e1253fb0af41eb8f1b0a1f4143",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-already-issued",
+      "class": "type",
+      "path": "src/sales/types/proposal-already-issued.ts",
+      "content_hash": "sha256:b5064daeff056669fbaad456fdadf20df2cee300e6eabff833cd71a9a682471c",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-expired",
+      "class": "dto",
+      "path": "src/sales/dto/proposal-expired.dto.ts",
+      "content_hash": "sha256:438308c2844e4493a3b15b695601bc0777ca2b7286c1e63660ccf3ae3ae1cadf",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-expired",
+      "class": "migration",
+      "path": "src/sales/db/migrations/proposal-expired.up.sql",
+      "content_hash": "sha256:351f843d427581a07aa2a77bea14218529bd7f900cb48d0f75f591dbbf1b6db4",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-expired",
+      "class": "persistence-schema",
+      "path": "src/sales/db/proposal-expired.sql",
+      "content_hash": "sha256:5fbcd3a3f99519c8ec1df9e669258ec414da1d6c78f4b822fbe90223848e7735",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-expired",
+      "class": "type",
+      "path": "src/sales/types/proposal-expired.ts",
+      "content_hash": "sha256:70c0a349c0b40dfb50e964e8d54f709e5729d7af7a139c8f4f53089b704c8890",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-item",
+      "class": "dto",
+      "path": "src/sales/dto/proposal-item.dto.ts",
+      "content_hash": "sha256:2b1a2ef2b0a07d94376d47b6aa0f431e7f7a5bb5db10903bd926fcd11f79d715",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-item",
+      "class": "migration",
+      "path": "src/sales/db/migrations/proposal-item.up.sql",
+      "content_hash": "sha256:d111183fdf5e47fbcae191c09d5d60cdaa98e9011e1c5e0f00c3e6023fabb7f1",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-item",
+      "class": "persistence-schema",
+      "path": "src/sales/db/proposal-item.sql",
+      "content_hash": "sha256:0f12a6fa7d194c7420ae1d9cada61f1a374a5aba0722141fe4518bedd5c34575",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-item",
+      "class": "type",
+      "path": "src/sales/types/proposal-item.ts",
+      "content_hash": "sha256:1a5effb635cdf3340409b40fbb3ef5eb15750d87b0931405251670d41e9aaefd",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-not-issued",
+      "class": "dto",
+      "path": "src/sales/dto/proposal-not-issued.dto.ts",
+      "content_hash": "sha256:64cfa96f92dd6a59632bc7226813a546ea29e1264f92e58bafe60cb03387d432",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-not-issued",
+      "class": "migration",
+      "path": "src/sales/db/migrations/proposal-not-issued.up.sql",
+      "content_hash": "sha256:d97dcf7eb002d0c8720d8ae59d358c68492a3991f91869b8b13028a133281a9f",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-not-issued",
+      "class": "persistence-schema",
+      "path": "src/sales/db/proposal-not-issued.sql",
+      "content_hash": "sha256:8038a44fc781fcbebafe480490af5c6955c74375705a161722b203552a70593c",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-not-issued",
+      "class": "type",
+      "path": "src/sales/types/proposal-not-issued.ts",
+      "content_hash": "sha256:78b0322d10ce330f5360a5dfe80e9d3511299a5a5f8b3cba6d4b2a01f9dc3ae7",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-terminal",
+      "class": "dto",
+      "path": "src/sales/dto/proposal-terminal.dto.ts",
+      "content_hash": "sha256:2ec13b49142e938f7c7c38eb730edf201634f04d6085a9eea57fc898ea5617af",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-terminal",
+      "class": "migration",
+      "path": "src/sales/db/migrations/proposal-terminal.up.sql",
+      "content_hash": "sha256:6c2f508c70031367e80f1fa4bd43d1d925e6d76c7b6829b09c189348030a4333",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-terminal",
+      "class": "persistence-schema",
+      "path": "src/sales/db/proposal-terminal.sql",
+      "content_hash": "sha256:0163291df35edf35454edf8646bb339d5fcc943462edc9b7a70857242fd19e83",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-terminal",
+      "class": "type",
+      "path": "src/sales/types/proposal-terminal.ts",
+      "content_hash": "sha256:2ece2910bc703a379d0bbb1010f52530e87384e08509fce314be680056847ea2",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.interface.sales.contract-signed",
+      "class": "api-description",
+      "path": "src/sales/docs/contract-signed.api.md",
+      "content_hash": "sha256:b294507b8031ddcda91d061ecd799f16ee67088adf682878b88190b5fb368ead",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.interface.sales.contract-signed",
+      "class": "event-schema",
+      "path": "src/sales/events/contract-signed.ts",
+      "content_hash": "sha256:fe74dc4e9f1b769cebbdf4aa33b93b4e41afcdcd90b757cac65d33676698b5d8",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.lifecycle.billing.invoice",
+      "class": "conformance-test",
+      "path": "src/billing/conformance/invoice.test.ts",
+      "content_hash": "sha256:52ae9910250806ddfd74ac122022a9be001687fad2c35bfa0e10431b1ba092aa",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.lifecycle.billing.invoice",
+      "class": "enum",
+      "path": "src/billing/state/invoice.states.ts",
+      "content_hash": "sha256:69b1db3c4ab993393a7965b8440f1d425848a6b9d187184585d11029addff126",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.lifecycle.billing.invoice",
+      "class": "state-machine",
+      "path": "src/billing/state/invoice.machine.ts",
+      "content_hash": "sha256:92ff093d41b3f31a019c2d8da46426ab0d53e5175da843e580d0d56b83b84b16",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.lifecycle.sales.proposal",
+      "class": "conformance-test",
+      "path": "src/sales/conformance/proposal.test.ts",
+      "content_hash": "sha256:aa3875bd6d6378afe2dfc71eb49d38a6502cfd324aa9a87b72e162d019bf22ee",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.lifecycle.sales.proposal",
+      "class": "enum",
+      "path": "src/sales/state/proposal.states.ts",
+      "content_hash": "sha256:52b1e8d79ecb13b7d6acf835f3c74f05ca3dea950188a2e9a753f018d3796e06",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.lifecycle.sales.proposal",
+      "class": "state-machine",
+      "path": "src/sales/state/proposal.machine.ts",
+      "content_hash": "sha256:fc8015794edc365801bb906f35a6a4e57a9e7f21f44f5928808f151fe811ef7b",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.rule.billing.invoice-amount",
+      "class": "conformance-test",
+      "path": "src/billing/conformance/invoice-amount.test.ts",
+      "content_hash": "sha256:2bffce92594a6100beeac312fd892e88017305c53bcc0abe7246437017dd49f0",
+      "pack_version": "0.1.0"
+    },
+    {
+      "ko": "ko.rule.sales.proposal-expiration",
+      "class": "conformance-test",
+      "path": "src/sales/conformance/proposal-expiration.test.ts",
+      "content_hash": "sha256:2421a8f8f0570ce8e91b9c1e1fd3ff758316278ec04b32f322200fde31804ed6",
+      "pack_version": "0.1.0"
+    }
+  ]
+}
