@@ -1,10 +1,11 @@
-"""The validator's edge table must agree with the one specs/0003 declares closed.
+"""The validator's edge table must agree with the one foundation/0003 declares closed.
 
 R17 closes the edge vocabulary "per the table under **The ontology: edges, cardinality, and
 traversal**", R18 requires a validator to enforce cardinality, and R19 requires every edge to
 declare whether expansion traverses it and to what depth. That table is prose, and prose is not
 machine-readable, so `scripts/knowledge_graph_lib.py` carries it as data. Two copies of one fact
-diverge, and `CLAUDE.md` **Authority placement** forbids leaving them to.
+diverge, and `CLAUDE.md` **Where authority lives** requires one authoritative definition per concept,
+in one place.
 
 This module reads the specification's own table and compares every column against the module.
 The specification stays the authority; the module is a checked transcription rather than a
@@ -33,7 +34,7 @@ import unittest
 from knowledge_graph_lib import EDGE_KINDS
 from tests.support import REPO_ROOT
 
-SPEC = REPO_ROOT / "specs" / "0003-knowledge-ontology-and-notation.md"
+SPEC = REPO_ROOT / "foundation" / "0003-knowledge-ontology-and-notation.md"
 HEADER = "| Edge | Origin → target | Out | In | Authored or structural | Traversed | Depth |"
 BACKTICKED = re.compile(r"`([^`]+)`")
 BOUNDS = re.compile(r"^(\d+)\.\.(\d+|n)$")

@@ -1,15 +1,15 @@
 """The first shipped hook, in both directions and on every way it can fail.
 
 The hook gate asked for "the first hook or script exercising 'validate
-before acting' and 'reject rather than repair' under test". `specs/0006` condition 3 asked for a
+before acting' and 'reject rather than repair' under test". `foundation/0006` condition 3 asked for a
 hook enforcing a guarantee with both outcomes covered.
 
-The guarantee is `specs/0003` R42 and R51: a knowledge projection is derived and never
+The guarantee is `foundation/0003` R42 and R51: a knowledge projection is derived and never
 hand-edited. It existed only as `project_knowledge.py --check`, in a Makefile a consumer may
 never run.
 
 `decide()` is pure, so the denial logic is tested without a harness. The process boundary is
-tested separately, because `specs/0010` R2 makes the *exit code* the decision — a hook that
+tested separately, because `foundation/0010` R2 makes the *exit code* the decision — a hook that
 reasoned correctly and exited 1 would permit exactly what it was written to prevent.
 """
 
@@ -109,7 +109,7 @@ class Decision(unittest.TestCase):
                 self.assertEqual(self.hook.DENY, code)
 
     def test_a_non_writing_tool_is_not_this_hook_s_business(self) -> None:
-        """specs/0006 R7: one hook, one guarantee."""
+        """foundation/0006 R7: one hook, one guarantee."""
         code, _ = self.decide(payload(tool="Read"))
         self.assertEqual(self.hook.ALLOW, code)
 
@@ -138,19 +138,19 @@ class Decision(unittest.TestCase):
         self.assertEqual(self.hook.DENY, code)
 
     def test_the_reason_is_a_statement_and_not_an_instruction(self) -> None:
-        """specs/0010 R14: instruction-shaped text is a prompt-injection surface."""
+        """foundation/0010 R14: instruction-shaped text is a prompt-injection surface."""
         _code, reason = self.decide(payload())
         opener = reason.split()[0]
         self.assertNotIn(opener.lower(), {"change", "edit", "run", "do", "use", "regenerate", "please"})
 
     def test_the_reason_names_the_artifact_rather_than_embedding_it(self) -> None:
-        """specs/0010 R13."""
+        """foundation/0010 R13."""
         _code, reason = self.decide(payload())
         self.assertLess(len(reason), self.hook.MAX_REASON)
 
 
 class Process(unittest.TestCase):
-    """The exit code is the decision — specs/0010 R2."""
+    """The exit code is the decision — foundation/0010 R2."""
 
     def setUp(self) -> None:
         holder = tempfile.TemporaryDirectory()
@@ -193,24 +193,24 @@ class Process(unittest.TestCase):
 
 
 class Shipped(unittest.TestCase):
-    """What the distribution carries, against what specs/0010 requires of it."""
+    """What the distribution carries, against what foundation/0010 requires of it."""
 
     def setUp(self) -> None:
         self.document = json.loads(HOOKS_JSON.read_text())
 
     def test_hooks_json_ships(self) -> None:
-        """specs/0008 R3: in force while the plugin is enabled."""
+        """foundation/0008 R3: in force while the plugin is enabled."""
         self.assertTrue(HOOKS_JSON.is_file())
 
     def test_every_handler_is_a_command(self) -> None:
-        """specs/0010 R1: prompt and agent handlers evaluate with a model."""
+        """foundation/0010 R1: prompt and agent handlers evaluate with a model."""
         for entries in self.document["hooks"].values():
             for entry in entries:
                 for handler in entry["hooks"]:
                     self.assertEqual("command", handler["type"])
 
     def test_every_hook_states_its_own_timeout(self) -> None:
-        """specs/0010 R11: the 600-second default is long enough to look like a hung session."""
+        """foundation/0010 R11: the 600-second default is long enough to look like a hung session."""
         for entries in self.document["hooks"].values():
             for entry in entries:
                 for handler in entry["hooks"]:
@@ -218,7 +218,7 @@ class Shipped(unittest.TestCase):
                     self.assertLess(handler["timeout"], 600)
 
     def test_it_binds_an_event_that_can_block(self) -> None:
-        """specs/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
+        """foundation/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
         self.assertEqual(["PreToolUse"], sorted(self.document["hooks"]))
 
     def test_the_command_resolves_through_the_plugin_root(self) -> None:
@@ -237,7 +237,7 @@ class Shipped(unittest.TestCase):
 
 
 class ConsumerKeepsTheGuarantee(unittest.TestCase):
-    """specs/0010 R16 and R17: the hook is a checkpoint, not a proof."""
+    """foundation/0010 R16 and R17: the hook is a checkpoint, not a proof."""
 
     def test_the_check_still_fails_on_a_hand_edited_projection_with_no_hook(self) -> None:
         import shutil

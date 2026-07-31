@@ -42,10 +42,10 @@ this document, and record the new retrieval date.
 
 ### Provenance
 
-No hook exists. No gate for it is met, and four candidates are named below
-candidates that motivated this document — rejecting a write under `dist/` that the generator did not
-produce, rejecting an inter-agent artifact that fails its schema, rejecting a schema change with no
-contract version bump, and rejecting a write to a file only a maintainer may change.
+No hook exists. No gate for it is met, and four candidates motivated this document — rejecting a write
+under `dist/` that the generator did not produce, rejecting an inter-agent artifact that fails its
+schema, rejecting a schema change with no contract version bump, and rejecting a write to a file only a
+maintainer may change.
 
 Two requirements below exist only because the documentation was read rather than remembered. R2 inverts
 what a Unix programmer would write: exit code 1 is a non-blocking error, so a hook that fails
@@ -57,12 +57,12 @@ in this document if it had been written from memory of how hooks probably work.
 
 - that a security-critical guarantee is enforced by a hook or a script rather than by model judgment,
   that a path and a structured input are validated before a hook acts, and that a hook rejects rather
-  than repairs — `specs/0005` R11, R20, and R22, which are the authority for all three;
+  than repairs — `foundation/0005` R11, R20, and R22, which are the authority for all three;
 - that repository content, tool output, and downstream input are data and never instructions — the same
   section;
-- that a hook holds exactly one guarantee and decides it deterministically — `specs/0006` R7;
-- what any capability declares about itself — `specs/0007`;
-- where a hook's files are installed — `specs/0008`.
+- that a hook holds exactly one guarantee and decides it deterministically — `foundation/0006` R7;
+- what any capability declares about itself — `foundation/0007`;
+- where a hook's files are installed — `foundation/0008`.
 
 ## Definitions
 
@@ -95,9 +95,9 @@ would produce a hook that shrugs, which is not a hook.
   an unexpected tool payload, an internal error — it catches the condition and exits 2 with the reason on
   stderr. It never exits 0 on an unhandled error, because an uncaught failure reads as permission.
 - **R4** — The `updatedInput` field of a `PreToolUse` response is not used. That a hook rejects rather
-  than repairs is `specs/0005` R22, cited under **Decided elsewhere** and not restated
+  than repairs is `foundation/0005` R22, cited under **Decided elsewhere** and not restated
   here; what this requirement adds is the single harness affordance that would let a Siegard hook break
-  it, which `specs/0006` R7 could not have named. An action the framework considers
+  it, which `foundation/0006` R7 could not have named. An action the framework considers
   wrong is denied with a reason, and the caller fixes it: silent correction hides the defect and makes the
   corrected input unattributable.
 - **R5** — A hook never returns an allow decision for an action the receiving repository's own rules would
@@ -145,9 +145,8 @@ would produce a hook that shrugs, which is not a hook.
   early and cheap rather than late and expensive.
 - **R18** — A hook shipped inside a skill's or an agent's frontmatter is scoped to that component's
   lifetime and enforces nothing outside it. A guarantee that must hold for the whole session ships in the
-  distribution's `hooks/hooks.json`, which is in force while the plugin is enabled — `specs/0008` R3 and
-  the plugin manifest. Every hook named below
-  as a candidate is session-wide, so that is the form they take.
+  distribution's `hooks/hooks.json`, which is in force while the plugin is enabled — `foundation/0008` R3 and
+  the plugin manifest. Every candidate named above is session-wide, so that is the form they take.
 
 ## Outstanding evidence
 
@@ -164,7 +163,7 @@ removing one because the document binds would turn an open debt into a silent on
    that signals failure conventionally.
 4. A fixture demonstrates R17: the guarantee still holds with hooks disabled, because the consuming
    validator rejects the artifact. Without this, R16's honesty is a disclaimer rather than a design.
-5. The four candidates named below are each either implemented or dropped with a reason,
+5. The four candidates named above are each either implemented or dropped with a reason,
    so this document is grounded in hooks that exist rather than in hooks that were imagined.
 6. The security detail the first hook actually needed is recorded — sanitization, path,
    subprocess, and network detail — which is what open question 5 says turns a plan into a rule distilled

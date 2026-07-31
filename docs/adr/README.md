@@ -1,7 +1,20 @@
 # Architecture decision records
 
-An ADR records a decision that no specification defines. ADRs are normative source 2, below accepted
-specifications and above schemas.
+An ADR records a decision that no specification defines. An accepted ADR binds: a dependent artifact must
+conform to it. `CLAUDE.md` **Where authority lives** carries the order and is the authority for it — a
+specification, then an accepted ADR, then a concept, then a schema, then code and tests, then documentation.
+
+**Settled 2026-07-31, by a maintainer.** This file and `CLAUDE.md` had contradicted each other: this file
+said an accepted ADR binds, while `CLAUDE.md` classified `docs/adr/` as "rationale, never a rule" and left
+an ADR out of the precedence order altogether. The binding reading was adopted and `CLAUDE.md` was changed
+to match, which is why the order above is cited rather than restated here. What survives of the older
+reading is the part that was always right and is now the whole of what **What belongs in an ADR** governs:
+the decision binds, and the operative rule still lives elsewhere.
+
+An earlier version of this paragraph placed an ADR at "normative source 2" on a numbered scale of normative
+sources. No such scale was ever defined in this repository — it was cited by four files and defined by
+none — so it is removed rather than invented, and the order above names its sources instead of numbering
+them.
 
 ## Status vocabulary
 
@@ -10,7 +23,7 @@ Every ADR carries `status` in its frontmatter. The value determines whether the 
 | Status | Meaning | Normative weight |
 |---|---|---|
 | `proposed` | The decision is recorded and argued, but nothing has exercised it | None. Binds nothing. Cite it as context, never as authority. |
-| `accepted` | The decision binds; dependent artifacts must conform | Full, at precedence level 2 |
+| `accepted` | The decision binds; dependent artifacts must conform | Full: a dependent artifact must conform, and the decision outranks a schema |
 | `superseded` | Replaced by a later ADR, which this one names in its prose | None. Kept for history and migration. |
 
 A `proposed` ADR is not a weaker rule — it is not a rule. This distinction is what keeps design work
@@ -18,7 +31,7 @@ from silently becoming an invariant.
 
 ## Changing a status
 
-No artifact needs approval to take effect — `CLAUDE.md` **Golden rule** states that, and it covers every
+No artifact needs approval to take effect — `CLAUDE.md` **Golden rule: this file** states that, and it covers every
 artifact class carrying `status`, concepts included. An ADR in `docs/adr/` is followed; a concept in
 `docs/concepts/` is respected. Neither waits behind a gate.
 

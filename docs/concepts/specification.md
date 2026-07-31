@@ -2,7 +2,7 @@
 id: concept.specification
 type: term
 title: specification
-description: A normative document in specs/, the highest precedence source for this repository.
+description: A normative document in foundation/, the highest precedence source for this repository.
 status: accepted
 contract_version: concept/1
 tags: [governance, normative-source]
@@ -16,9 +16,9 @@ sources:
 
 # specification
 
-A normative document in `specs/`, governing the framework Siegard builds. An [accepted](accepted.md)
-specification is precedence level 1 in `CLAUDE.md`: it outranks an ADR, a schema, a concept, and an
-implementation, and a conflict is resolved by correcting the lower source.
+A normative document in `foundation/`, governing the framework Siegard builds. An [accepted](accepted.md)
+specification is the highest authority `CLAUDE.md` **Where authority lives** names: it outranks an ADR, a
+schema, a concept, and an implementation, and a conflict is resolved by correcting the lower source.
 
 A specification states requirements that can be cited individually and violated observably. Its
 frontmatter contract is `schemas/spec.json`; `scripts/validate_specs.py` enforces both the

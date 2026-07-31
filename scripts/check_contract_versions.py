@@ -35,7 +35,7 @@ forbid additional properties, so the stated reason has to hold for the exemption
 
 **No migration coverage.** One contract has one file, so two versions never sit side by side and
 the trace a bump used to leave — a second version file — no longer exists. The check that required a
-registered migration beside such a pair is gone rather than kept unreachable. `specs/0013` R11 asks
+registered migration beside such a pair is gone rather than kept unreachable. `foundation/0013` R11 asks
 for a migration tested against the old behavior; nothing here verifies that it exists, and that gap
 is stated rather than covered by a check that cannot fire.
 

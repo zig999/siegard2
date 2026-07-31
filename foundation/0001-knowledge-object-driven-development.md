@@ -17,9 +17,9 @@ guarantees, what acceptance requires of a decision and of its evidence, and how 
 
 Two things it no longer decides. How the acceptance closure is computed and what the acceptance gate
 reports, and how escalation is decided, moved to
-`specs/0014-acceptance-closure-and-escalation.md` when this specification was accepted — see
-**What satisfied acceptance**. R9 and R17 through R20 remain as forwarding entries rather than being
-renumbered, because renumbering would redirect an existing citation to a different statement.
+`foundation/0014-acceptance-closure-and-escalation.md` when this specification was accepted. R9 and R17
+through R20 remain as forwarding entries rather than being renumbered, because renumbering would
+redirect an existing citation to a different statement.
 
 
 ### Provenance
@@ -38,11 +38,11 @@ it. This paragraph is the anchor for the phrase "the v0.1 draft" wherever this r
 
 | Question | Authority |
 |---|---|
-| Which persistence model records workflow state | `specs/0005` R14 |
-| How the distribution is produced and what it excludes | `specs/0008` R4–R6, R5a–R5c |
-| Which component classes exist and what each owns | `specs/0006` |
-| When an artifact requires a versioned schema | `specs/0005` R16a |
-| Security posture, privilege, and untrusted input | `specs/0005` R11 and R20–R22 |
+| Which persistence model records workflow state | `foundation/0005` R14 |
+| How the distribution is produced and what it excludes | `foundation/0008` R4–R6, R5a–R5c |
+| Which component classes exist and what each owns | `foundation/0006` |
+| When an artifact requires a versioned schema | `foundation/0005` R16a |
+| Security posture, privilege, and untrusted input | `foundation/0005` R11 and R20–R22 |
 | The status of a knowledge artifact, and who moves it | the governed repository's own decision |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
@@ -183,7 +183,7 @@ that outcome visible over time instead of surprising at the end.
 
 ### Escalation
 
-- **R9** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R1 when this specification was
+- **R9** — Moved to `foundation/0014-acceptance-closure-and-escalation.md` R1 when this specification was
   accepted, because no escalation predicate existed to satisfy the condition that covered it. The number is
   retained rather than reused so that a citation of R9 still resolves to the statement it named.
 - **R10** — A numeric threshold in an escalation predicate is calibrated from executed workflows and
@@ -210,13 +210,13 @@ that outcome visible over time instead of surprising at the end.
 
 ### Acceptance
 
-- **R17** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R2. The number is retained rather
+- **R17** — Moved to `foundation/0014-acceptance-closure-and-escalation.md` R2. The number is retained rather
   than reused so that a citation of R17 still resolves to the statement it named.
-- **R18** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R3, with R17 above: the two are one
+- **R18** — Moved to `foundation/0014-acceptance-closure-and-escalation.md` R3, with R17 above: the two are one
   closure and neither is testable without the other.
-- **R19** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R4, because no acceptance gate exists
+- **R19** — Moved to `foundation/0014-acceptance-closure-and-escalation.md` R4, because no acceptance gate exists
   to report a mode.
-- **R20** — Moved to `specs/0014-acceptance-closure-and-escalation.md` R5, with R19 above: what the gate may
+- **R20** — Moved to `foundation/0014-acceptance-closure-and-escalation.md` R5, with R19 above: what the gate may
   not present as a guarantee is meaningless where no gate reports anything.
 - **R21** — Acceptance requires a maintainer's decision, or a deterministic approval mechanism the
   governed repository defines. No workflow accepts its own output.

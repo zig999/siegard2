@@ -1,6 +1,6 @@
 """Projections are reproducible from the graph, and the committed ones are not stale.
 
-Validation item 5 of specs/0003 requires the glossary and context-map projections to be
+Validation item 5 of foundation/0003 requires the glossary and context-map projections to be
 generated from the fixture, with a test asserting regeneration is byte-identical (R51).
 Byte identity is asserted three ways, because each catches a different failure:
 

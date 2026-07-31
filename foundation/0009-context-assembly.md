@@ -27,13 +27,13 @@ it is a bound on *change* rather than a choice of order: whatever order an imple
 the contract version it declares, because a package that recomputes to a different set after an upgrade
 cannot be the `claim-recorded` artifact R13 says it is.
 
-It decides nothing about the ontology's edges, which `specs/0003` fixes and this document only agrees to
-respect; nothing about the workflow phase that produces the package, which `specs/0001` fixes; and
-nothing about how a capability declares the context it needs, which is `specs/0007` R9.
+It decides nothing about the ontology's edges, which `foundation/0003` fixes and this document only agrees to
+respect; nothing about the workflow phase that produces the package, which `foundation/0001` fixes; and
+nothing about how a capability declares the context it needs, which is `foundation/0007` R9.
 
-It also adds nothing to `specs/0006`'s closed set of capability classes, and it is worth stating rather
+It also adds nothing to `foundation/0006`'s closed set of capability classes, and it is worth stating rather
 than leaving to inference: expansion is deterministic, so whatever performs it is a script under
-`specs/0005` R5 and `specs/0006` R8, and root selection is model judgment under `specs/0001` R12. No
+`foundation/0005` R5 and `foundation/0006` R8, and root selection is model judgment under `foundation/0001` R12. No
 resolver class is needed, and none is proposed here.
 
 
@@ -52,14 +52,14 @@ the abandonment criterion a requirement rather than a note.
 
 ### Decided elsewhere, deliberately not restated here
 
-`specs/0001` R11 through R15 already fix the substance of resolution's behavior: that the package is a
+`foundation/0001` R11 through R15 already fix the substance of resolution's behavior: that the package is a
 manifest of identifiers and hashes rather than copies, that root selection is judgment and expansion is
 deterministic, that resolution never blocks and records degradation instead, that a recorded degradation
 reaches acceptance, and that resolution never invents a knowledge object to fill a gap. This document
-gives those decisions a contract to live in; where the two appear to differ, `specs/0001` is the
+gives those decisions a contract to live in; where the two appear to differ, `foundation/0001` is the
 authority.
 
-`specs/0003` owns the node types and the edges. `specs/0002` owns what may be permanent knowledge at all,
+`foundation/0003` owns the node types and the edges. `foundation/0002` owns what may be permanent knowledge at all,
 and its rule against expressing a gate as a coverage figure is why R10 below exists.
 
 ## Definitions
@@ -99,7 +99,7 @@ This specification uses these terms as the concept bundle defines them:
   bundle already holds; an earlier draft said *task*, which the bundle does not define and which therefore
   bound nothing.
 - **R6** — One package serves one run of context resolution. The phases downstream of that run read it,
-  and the next resolution produces a new package rather than extending this one. `specs/0001` R7 is what
+  and the next resolution produces a new package rather than extending this one. `foundation/0001` R7 is what
   makes this concrete rather than tidy: a validation failure returns the workflow to implementation and
   the failed check's knowledge object enters the *next* resolution as a mandatory root, so a package
   carried across that boundary would state a scope the later attempt was never granted.
@@ -108,14 +108,14 @@ This specification uses these terms as the concept bundle defines them:
 
 - **R7** — The budget is stated by the caller, in a unit the package records, and the package records what
   was consumed against it. A framework-chosen budget would be a threshold asserted without evidence,
-  which `specs/0001` R10 forbids.
+  which `foundation/0001` R10 forbids.
 - **R8** — Expansion stops for exactly one recorded reason, from the closed set: the closure is complete,
   the budget is exhausted, a declared depth limit is reached, or a relationship could not be resolved.
   The reason is recorded in the package, never inferred by a reader from what is present. A stop reason is
   not the record of everything that went wrong during the run, which is R15's separate field: one traversal
   can meet several conditions and stop on one.
 - **R9** — Expansion follows only relationships the [ontology](../docs/concepts/ontology.md) declares. A
-  relationship absent from `specs/0003`'s edge table is not traversed, and a traversal a capability wants
+  relationship absent from `foundation/0003`'s edge table is not traversed, and a traversal a capability wants
   that the ontology does not hold is a request to change the ontology.
 
 ### Whether resolution earns its place
@@ -161,11 +161,11 @@ defect to route around by adding a reverse edge the ontology does not declare.
 - **R13** — A package is never committed. Its
   [artifact persistence](../docs/concepts/artifact-persistence.md) is `claim-recorded`, and that value is
   derived rather than chosen: the body recomputes from the recorded roots, the graph, the budget, and the
-  expansion's contract version with no model in the loop (`specs/0001` R12), and something outside the run
+  expansion's contract version with no model in the loop (`foundation/0001` R12), and something outside the run
   pins its identity, because R3's hashes and R5's identity exist so that a later decision can be traced
-  back to it. Those four are the declared inputs `specs/0004` R48 requires the claim to record. `specs/0004`
+  back to it. Those four are the declared inputs `foundation/0004` R48 requires the claim to record. `foundation/0004`
   defers this artifact's persistence until its contract exists; R1 above is that contract, so this document
-  decides the value under `specs/0004`'s rule rather than asserting one of its own. A stored copy would be
+  decides the value under `foundation/0004`'s rule rather than asserting one of its own. A stored copy would be
   a second authority for knowledge the graph already holds.
 - **R14** — A degradation recorded in the package is carried forward with it. A consumer that reads a
   degraded package is told it is degraded, because [fail-soft](../docs/concepts/fail-soft.md) guarantees
@@ -173,24 +173,24 @@ defect to route around by adding a reverse edge the ontology does not declare.
 
 ### The degradation record
 
-R14 requires a degradation to be carried forward and nothing above says what one is. `specs/0001` R13 names
+R14 requires a degradation to be carried forward and nothing above says what one is. `foundation/0001` R13 names
 four — a root that cannot be located, a cycle that cannot be resolved, contradictory knowledge, an exhausted
 budget — and R8's closed set of stop reasons holds neither the cycle nor the contradiction, while holding a
 depth limit R13 does not name. The two vocabularies were written for different questions and were never
-reconciled; these requirements reconcile them. `specs/0001` is accepted and is the authority where they
+reconciled; these requirements reconcile them. `foundation/0001` is accepted and is the authority where they
 still appear to differ, which is the rule this document's **Decided elsewhere** already states.
 
 - **R15** — The package records a list of degradations separately from the single stop reason of R8. Each
   entry carries a code from the closed set `unresolved_root | unresolved_relationship | cycle |
   contradictory_knowledge | budget_exhausted | depth_limit`, the subject it was observed on, and a
   structured reference to the evidence. A run that meets several conditions records several entries; one
-  field cannot hold them, and losing all but the first is what makes the acceptance gate of `specs/0001`
+  field cannot hold them, and losing all but the first is what makes the acceptance gate of `foundation/0001`
   R14 report less than what happened.
-- **R16** — The first four codes of R15 are the four degradations `specs/0001` R13 names, and the last two
+- **R16** — The first four codes of R15 are the four degradations `foundation/0001` R13 names, and the last two
   are the truncations. `budget_exhausted` and `depth_limit` are degradations for the same reason R13 gives
   for the budget: the closure was cut short and knowledge that belonged in scope is absent. `closure_complete`
   is the one stop reason of R8 that is never a degradation, and `unresolved_root`, `cycle`, and
-  `contradictory_knowledge` are never stop reasons, because `specs/0001` R13 requires resolution to continue
+  `contradictory_knowledge` are never stop reasons, because `foundation/0001` R13 requires resolution to continue
   past each of them. Where the stop reason is not `closure_complete`, the degradation list holds a matching
   entry.
 
@@ -198,9 +198,9 @@ still appear to differ, which is the rule this document's **Decided elsewhere** 
 
 - **R17** — Expansion order is fixed by the [contract version](../docs/concepts/contract-version.md) the
   package records, and a change to the order that changes which knowledge objects a package holds is a
-  contract version change under `specs/0013` R3a. This document still specifies no order,
+  contract version change under `foundation/0013` R3a. This document still specifies no order,
   which the **Scope** above leaves free deliberately; what it forbids is an order free to differ between two
-  runs of one contract version. Without this, R13's `claim-recorded` is a label: `specs/0004` R48 requires a
+  runs of one contract version. Without this, R13's `claim-recorded` is a label: `foundation/0004` R48 requires a
   discarded body to recompute to the recorded content hash, and a package truncated by a budget or a depth
   limit recomputes to a different set the moment the traversal reorders. Under this requirement the failure
   becomes visible as a version mismatch instead of a hash that silently stops matching.
@@ -211,14 +211,13 @@ What this document states and nothing has yet exercised. A condition kept here i
 removing one because the document binds would turn an open debt into a silent one.
 
 1. A bundle large enough for selection to matter exists as a fixture, and resolution runs against it.
-   Every requirement here is unexercised today, and R11 in particular cannot be satisfied by argument —
-   the first end-to-end run.
+   Every requirement here is unexercised today, and R11 in particular cannot be satisfied by argument.
 2. The measurement of R10 is taken and recorded, and the result is acted on: either resolution is retained
    with the evidence that justifies it, or R11 is applied and this specification is narrowed to the
    simpler mechanism. Accepting this document before that measurement would bind machinery the evidence
    might discard.
 3. A test asserts that the same roots, graph, budget, and expansion contract version produce a
-   byte-identical manifest, which is `specs/0001` R12's determinism claim made checkable.
+   byte-identical manifest, which is `foundation/0001` R12's determinism claim made checkable.
 4. A test covers R2's rejection direction: a consumer that reads an artifact the package does not name is
    detected. Without it, R2 is a convention rather than a boundary.
 5. The stop reasons of R8 are each produced by a fixture at least once, including the unresolvable case,
@@ -226,9 +225,9 @@ removing one because the document binds would turn an open debt into a silent on
 6. R13's `claim-recorded` is exercised rather than declared: the schema of R1 carries the persistence
    value, and a test discards a package and rebuilds it from its recorded roots, graph version, budget, and
    expansion contract version. A persistence value nothing recomputes is a label, which is the failure
-   `specs/0004`'s rule was written to prevent. The rebuild is run against a package the budget truncated,
+   `foundation/0004`'s rule was written to prevent. The rebuild is run against a package the budget truncated,
    because a package that reached closure recomputes under any order and therefore tests nothing about R17.
 7. A fixture records more than one degradation in one run under R15 while recording exactly one stop reason
    under R8, and a test asserts that a stop reason other than `closure_complete` has a matching degradation
-   entry (R16). Each of `specs/0001` R13's four is produced at least once, which is what shows the closed
+   entry (R16). Each of `foundation/0001` R13's four is produced at least once, which is what shows the closed
    set of R15 covers the vocabulary the accepted specification already binds.

@@ -11,7 +11,7 @@ contract_version: adr/1
 
 `projection` named two different things at once, and both were `accepted`.
 
-`specs/0003-knowledge-ontology-and-notation.md` R50 and R51 use it for the three artifacts generated from the
+`foundation/0003-knowledge-ontology-and-notation.md` R50 and R51 use it for the three artifacts generated from the
 knowledge graph — the bundle `index.md`, a glossary, and a context map — and require each to be reproducible
 from the graph and normative nowhere. `docs/concepts/projection.md` defined it as current workflow state
 derived by replaying an event log. The two differ in source of record, in subject, and in what
@@ -20,30 +20,30 @@ reproducibility means for each, so this was not one concept described twice.
 The collision has a history worth recording, because it explains how two accepted artifacts disagreed without
 anyone editing either. `docs/adr/0001-event-sourced-workflow-state.md` recorded the event-sourced design and
 was one of the five ADRs removed once their operative rules were held by `CLAUDE.md` alone. The vocabulary it
-introduced stayed in the bundle, re-sourced to `CLAUDE.md`, and `specs/0003` later took the same word for a
+introduced stayed in the bundle, re-sourced to `CLAUDE.md`, and `foundation/0003` later took the same word for a
 different object. A concept outliving the decision that minted it is how a bundle drifts while every
 individual file still validates.
 
 Two asymmetries decided which referent kept the word.
 
-Precedence: `specs/0003` is an accepted specification at normative source 1, and the concept bundle is source
-3. `CLAUDE.md` **Conflict protocol** resolves the highest-level source first, and `CLAUDE.md` **Authority
-placement** corrects the concept rather than the specification.
+Precedence: `foundation/0003` is an accepted specification and the concept bundle is vocabulary. `CLAUDE.md`
+**Where authority lives** orders the two and settles which side gives way — a specification outranks a
+concept, and where a concept names a specification in its `sources`, the concept is what gets corrected.
 
 Mechanism: `scripts/project_knowledge.py`, `tests/test_projections.py`, three generated files under
 `fixtures/knowledge-two-context/knowledge/`, and a check inside `make validate` all depend on the graph
-meaning. The persistence model the other meaning describes is settled elsewhere.md`, and
-`docs/concepts/event-log.md` states that the append-only log is one candidate rather than a decision.
+meaning. `docs/concepts/event-log.md` states that the append-only log is one candidate rather than a
+decision.
 Renaming the enforced side to accommodate the unimplemented one would have inverted which artifact carried
 risk.
 
 ## Decision
 
 `projection` names the graph-derived artifact. `docs/concepts/projection.md` defines it, and
-`specs/0003-knowledge-ontology-and-notation.md` R50 and R51 govern it.
+`foundation/0003-knowledge-ontology-and-notation.md` R50 and R51 govern it.
 
 Derived workflow state is `workflow state`, defined by `docs/concepts/workflow-state.md`. That is the name
-`CLAUDE.md` **Determinism and state** and `specs/0001-knowledge-object-driven-development.md` R8 already use
+`CLAUDE.md` **Determinism and state** and `foundation/0001-knowledge-object-driven-development.md` R8 already use
 for it, so the rename adopts an existing term rather than minting one.
 
 A maintainer chose this on 2026-07-30, among the three options recorded below.
@@ -58,14 +58,14 @@ It leaves R50, R51, `scripts/project_knowledge.py`, `tests/test_projections.py`,
 generated fixture headers untouched.
 
 The second would have kept `projection` for derived workflow state and renamed the three generated artifacts
-in `specs/0003`. It was rejected on both grounds above: it edits an accepted specification at source 1 to
+in `foundation/0003`. It was rejected on both grounds above: it edits an accepted specification at source 1 to
 accommodate a concept at source 3, and it changes the side that has executing code and a check in
 `make validate`.
 
 The third would have generalized `projection` to the property both uses share — derived from a source of
 record, reproducible from it, never a second source of truth — with two named instances beneath it. It was
 rejected because a definition broad enough to cover both stops deciding which artifacts are permitted, which
-is what R50 exists to do, and `specs/0002-knowledge-economy-principles.md` R2 removes an element that
+is what R50 exists to do, and `foundation/0002-knowledge-economy-principles.md` R2 removes an element that
 neither generates nor verifies.
 
 One cost is accepted with open eyes. Event-sourcing literature calls derived state a projection, so if the

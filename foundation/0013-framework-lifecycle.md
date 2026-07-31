@@ -32,7 +32,7 @@ never deprecated anything, and never migrated a consumer.
 It is nevertheless the document with the most evidence behind a single requirement. R13 and R14 below exist
 because two gaps were recorded rather than theorized. The component contracts encode a
 snapshot of external documentation, that the retrieval date is recorded so staleness is checkable, and that
-"nothing yet forces re-verification". `specs/0010` then added a second retrieval date — for a different set
+"nothing yet forces re-verification". `foundation/0010` then added a second retrieval date — for a different set
 of pages on an overlapping *subject*, which is not the same thing and is worth saying precisely: no page in
 the framework is cited at two dates. R13 closes that gap. R14 closes the one the second date
 makes visible without yet committing, which is that nothing would notice if the same page were cited twice
@@ -47,9 +47,9 @@ is the strongest available argument for stating it.
 
 - what makes a change breaking, what a breaking change requires, how a contract is versioned, and when
   compatibility should *not* be preserved — R3a and R10 through R12 below;
-- the lifecycle of one [capability](../docs/concepts/capability.md) — `specs/0006` R14 through R17;
-- what an installation and an upgrade do, and the distribution manifest that records them — `specs/0008`;
-- how a [target pack](../docs/concepts/target-pack.md)'s version relates to the framework's — `specs/0012`
+- the lifecycle of one [capability](../docs/concepts/capability.md) — `foundation/0006` R14 through R17;
+- what an installation and an upgrade do, and the distribution manifest that records them — `foundation/0008`;
+- how a [target pack](../docs/concepts/target-pack.md)'s version relates to the framework's — `foundation/0012`
   R8 through R10.
 
 ## Definitions
@@ -72,7 +72,7 @@ This specification uses these terms as the concept bundle defines them:
 - **R1** — The framework carries one version, declared in its plugin manifest, covering everything the
   framework distribution ships. It is what a consumer states when reporting a problem and what an upgrade
   moves between. A [target pack](../docs/concepts/target-pack.md) is outside it: a pack is its own plugin
-  with its own version, per `specs/0008` R23 and `specs/0012` R8, so framework and pack compose as a matrix
+  with its own version, per `foundation/0008` R23 and `foundation/0012` R8, so framework and pack compose as a matrix
   rather than as one number.
 - **R2** — A contract version is independent of the framework version and finer-grained. A consumer selects
   behavior on the contract version of the artifact in front of it, never on the framework version, because
@@ -111,7 +111,7 @@ This specification uses these terms as the concept bundle defines them:
   either is an instruction to stop with no direction to go.
 - **R9** — Deprecation is readable from an installation, not only from a release record. The
   [distribution manifest](../docs/concepts/distribution-manifest.md) carries each capability's lifecycle
-  status under `specs/0008` R12, so a consumer inspecting what is installed can tell that a capability is
+  status under `foundation/0008` R12, so a consumer inspecting what is installed can tell that a capability is
   going away.
 
 ### Migration
@@ -171,12 +171,12 @@ removing one because the document binds would turn an open debt into a silent on
    dates, which is R14 made mechanical rather than read. The two dates in the framework today are not that
    case, and the distinction is worth recording because an earlier draft of this condition treated them as
    one: the component contracts cite the skills, sub-agents, and best-practices pages at 2026-07-29, while the plugin decision,
-   `specs/0008`, and `specs/0010` cite the plugins and hooks pages at 2026-07-31. Two dates over two
+   `foundation/0008`, and `foundation/0010` cite the plugins and hooks pages at 2026-07-31. Two dates over two
    disjoint page sets is what R13 produces by design; two dates over *one* page is the contradiction R14
    forbids, and nothing checks for it yet.
 5. The [release record](../docs/concepts/release-record.md) of R4 has a versioned schema in `schemas/`. A
-   consumer parses it to decide whether to upgrade, which `specs/0005` R16a places in the row
-   requiring one. It arrives with the first release that produces one, on the same rule `specs/0008`
+   consumer parses it to decide whether to upgrade, which `foundation/0005` R16a places in the row
+   requiring one. It arrives with the first release that produces one, on the same rule `foundation/0008`
    condition 7 applies to the distribution manifest.
 6. R6 has a mechanism. The framework has never been tested against a pinned harness version and nothing
    pins one, so until a fixture runs against a recorded version and the release reads that record, R6

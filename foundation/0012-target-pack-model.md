@@ -18,7 +18,7 @@ decides five things:
 4. what changing or retiring a pack owes the artifacts already generated from it;
 5. isolation — that no pack depends on another, and no pack extends a framework-owned vocabulary.
 
-It does not decide what a pack *declares*. `specs/0004` is the authority for that, and
+It does not decide what a pack *declares*. `foundation/0004` is the authority for that, and
 [target pack](../docs/concepts/target-pack.md) already records the shape: identity, version, and the
 artifact classes it produces with the track of each and the node types each is yielded by, and nothing
 else. This document decides the unit around that declaration.
@@ -33,25 +33,25 @@ and a set of inheritances it does not restate.
 The one thing it adds that nothing else holds is the consequence of the single-pack rule. That a pack may
 *assume* its technology rather than abstract over it is what makes a template concrete enough to promise
 byte identity, and it is the reason the framework can refuse the vendor-neutral indirection that
-`specs/0005` R4 forbids. Stating that consequence is the work here; the rest is
+`foundation/0005` R4 forbids. Stating that consequence is the work here; the rest is
 citation.
 
 ### Decided elsewhere, deliberately not restated here
 
-- what a pack declares, and what it must leave to its agent's own knowledge of the stack — `specs/0004`,
+- what a pack declares, and what it must leave to its agent's own knowledge of the stack — `foundation/0004`,
   with the shape recorded in [target pack](../docs/concepts/target-pack.md);
-- that a pack is framework work rather than the architecture of one downstream system — `specs/0005` R13;
-  and that a fixture is optional evidence rather than a condition of admission — `specs/0005` R12;
+- that a pack is framework work rather than the architecture of one downstream system — `foundation/0005` R13;
+  and that a fixture is optional evidence rather than a condition of admission — `foundation/0005` R12;
 - that a pack carries one stack, holds one producer per declared artifact class, and carries no business
-  rule — `specs/0006` R10;
+  rule — `foundation/0006` R10;
 - the closed vocabulary of [artifact classes](../docs/concepts/artifact-class.md) and the
-  [track](../docs/concepts/generation-track.md) each is produced on — `specs/0004`;
-- every constraint on the templates a pack owns — `specs/0011`;
+  [track](../docs/concepts/generation-track.md) each is produced on — `foundation/0004`;
+- every constraint on the templates a pack owns — `foundation/0011`;
 - that each of a pack's agents has one role, produces one artifact class, and receives the minimum tool
-  grant its role requires — `specs/0006` R5 and R6;
+  grant its role requires — `foundation/0006` R5 and R6;
 - that a target path the manifest does not lock comes from a validated, frozen
-  [placement decision](../docs/concepts/placement-decision.md) — `specs/0004` R52;
-- breaking change and migration rules — `specs/0013` R3a and R10–R12.
+  [placement decision](../docs/concepts/placement-decision.md) — `foundation/0004` R52;
+- breaking change and migration rules — `foundation/0013` R3a and R10–R12.
 
 ## Definitions
 
@@ -76,7 +76,7 @@ This specification uses these terms as the concept bundle defines them:
 
 - **R1** — The active pack is recorded in the governed repository's own configuration, before any generation
   runs, rather than inferred from what happens to be installed. That exactly one pack is active is
-  `specs/0004`'s decision, not this document's; what this requirement adds is that the choice is a written
+  `foundation/0004`'s decision, not this document's; what this requirement adds is that the choice is a written
   fact, because a pack inferred from installation makes the technology of a generated artifact a function of
   resolution order.
 - **R2** — Because one pack is active, a pack assumes its technology. It introduces no abstraction whose
@@ -88,7 +88,7 @@ This specification uses these terms as the concept bundle defines them:
 ### Composition
 
 - **R4** — A pack ships nothing beyond the [specialized agents](../docs/concepts/specialized-agent.md) and
-  templates that `specs/0004` R13 and R51 compose it from — one producer per declared artifact class: no
+  templates that `foundation/0004` R13 and R51 compose it from — one producer per declared artifact class: no
   [knowledge object](../docs/concepts/knowledge-object.md), no schema, and no hook. The schema a template's
   output is validated against belongs to the artifact class and is framework-owned, so a pack that shipped one
   would be extending a vocabulary R6 reserves to the framework. Enforcement stays framework-owned for the same
@@ -97,18 +97,18 @@ This specification uses these terms as the concept bundle defines them:
 - **R5** — A pack holds stack knowledge only. Naming, layout, layering, idiom, and how a construct becomes a
   storage representation are its business, and none of them appears in an authored knowledge artifact.
 - **R6** — A pack maps node types to the artifact classes they yield, and **declares** the mapping, per
-  `specs/0004` R14. Owning the fact and declaring it are separate questions, and an earlier draft of this
+  `foundation/0004` R14. Owning the fact and declaring it are separate questions, and an earlier draft of this
   requirement answered only the first: the mapping sat in the pack while nothing model-free could read it,
-  which left `specs/0004` R23's plan derivation with no way to know what a knowledge object demands. A pack
+  which left `foundation/0004` R23's plan derivation with no way to know what a knowledge object demands. A pack
   does not extend the artifact class vocabulary, which is framework-owned: a class a pack needs and the
-  framework does not hold is a request to change `specs/0004`.
+  framework does not hold is a request to change `foundation/0004`.
 - **R7** — A pack declares nothing its own agent already knows **and nothing model-free needs to read**. Path
   derivation, expansion order, and naming rules meet both conditions — they are the agent's competence, and
   the only thing that consumes them is the agent itself — so declaring them re-authors stack knowledge the
   framework deliberately does not hold. The node-type mapping of R6 fails the second condition, which is why
   it is declared and these are not. A target path is the case that looks like an exception and is not: it is
   read by the plan, but through the frozen
-  [placement decision](../docs/concepts/placement-decision.md) of `specs/0004` R52 rather than through a
+  [placement decision](../docs/concepts/placement-decision.md) of `foundation/0004` R52 rather than through a
   declared derivation rule.
 
 ### Version and compatibility
@@ -116,7 +116,7 @@ This specification uses these terms as the concept bundle defines them:
 - **R8** — A pack is its own plugin, carrying its own version in its own plugin manifest, and declares the
   [contract versions](../docs/concepts/contract-version.md) it was built against. A consumer can therefore
   tell whether an installed pack and an installed framework are compatible without running them, and adding
-  a stack requires no framework release — see `specs/0008` R23 and.
+  a stack requires no framework release — see `foundation/0008` R23 and.
 - **R9** — A framework contract change that invalidates a conforming pack is a breaking change, and the pack
   is versioned rather than silently expected to keep working.
 - **R10** — A pack that no longer declares itself against any supported framework contract version is
@@ -132,7 +132,7 @@ This specification uses these terms as the concept bundle defines them:
 - **R13** — A pack is admitted with a fixture, which is what demonstrates the pack serves any repository on
   its stack rather than the one repository it was extracted from. Retirement is not the mirror of that and
   does not get a second fixture invented for symmetry: what retiring a pack owes is the migration and the
-  test that fails against the old behavior, which `specs/0006` R16 already requires of any capability
+  test that fails against the old behavior, which `foundation/0006` R16 already requires of any capability
   another consumed.
 
 ### Isolation
@@ -157,10 +157,10 @@ removing one because the document binds would turn an open debt into a silent on
    sufficient evidence.
 3. R15 is tested by extracting a pack from one real repository and running it against a second on the same
    stack, with every fact the second repository disagrees with recorded. A pack that cannot survive that is
-   the downstream architecture `specs/0005` R13 excludes, wearing a pack's name.
+   the downstream architecture `foundation/0005` R13 excludes, wearing a pack's name.
 4. A pack swap is performed under R11, showing what regeneration recovers and what it does not.
-5. Where a pack's source lives is settled. `specs/0004` R13 states a pack is distributed together
-   under `src/claude/`; `specs/0008` R23 states a pack is a separate plugin and that the framework
+5. Where a pack's source lives is settled. `foundation/0004` R13 states a pack is distributed together
+   under `src/claude/`; `foundation/0008` R23 states a pack is a separate plugin and that the framework
    distribution contains no pack, and its directory listing has no `packs/`. A pack under
    `src/claude/` would be emitted into the framework distribution, which R23 forbids; a pack
    anywhere else contradicts R13. Both are accepted at equal precedence with no supersession, so

@@ -21,7 +21,7 @@ does not exist is a guess. The thin path of stage 2 is the first thing that made
 answerable with evidence instead of preference.
 
 Two facts from building it bear on the choice. First, the loop needs history, not only current state:
-`specs/0001` R7 returns a failed validation to implementation under a stated attempt limit, so the
+`foundation/0001` R7 returns a failed validation to implementation under a stated attempt limit, so the
 guard has to know how many attempts have already happened. A mutable record holding only the current
 phase cannot answer that without keeping a counter beside it — a second piece of state that can
 disagree with the first. Second, the interesting property turned out to be reproducibility of the
@@ -48,7 +48,7 @@ reads better:
   same allocation of the clock that `src/claude/agents/concept-author.md` already required of its
   caller.
 - **The transition table is data.** `TRANSITIONS` maps a `(phase, outcome)` pair to the next phase or
-  to a terminal status, and `guard()` refuses a pair the table does not hold. `specs/0001` R5 is the
+  to a terminal status, and `guard()` refuses a pair the table does not hold. `foundation/0001` R5 is the
   authority for why the choice is a lookup; the table is where that choice is written down.
 - **The attempt limit is a property of the workflow's own opening entry**, not of the framework. R7
   requires the limit stated; a framework-wide default would be the calibrated threshold R10 forbids

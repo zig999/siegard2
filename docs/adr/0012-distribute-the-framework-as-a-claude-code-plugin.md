@@ -9,14 +9,14 @@ contract_version: adr/1
 
 ## Context
 
-`specs/0008-distribution-layout.md` described the distribution as a tree copied into a consuming
+`foundation/0008-distribution-layout.md` described the distribution as a tree copied into a consuming
 repository's `.claude/`, with a reserved name prefix on every component to avoid collisions. Two reviews
 found that design failing on its own terms:
 
 - **It could not install its own enforcement.** Every hook named as a candidate —
   rejecting a write under `dist/`, rejecting an artifact that fails its schema, rejecting a schema change
-  with no contract bump, rejecting a write to `CLAUDE.md` — is a session-wide guarantee. `specs/0010` R18
-  scopes a hook declared in component frontmatter to that component's lifetime, and `specs/0008` R16
+  with no contract bump, rejecting a write to `CLAUDE.md` — is a session-wide guarantee. `foundation/0010` R18
+  scopes a hook declared in component frontmatter to that component's lifetime, and `foundation/0008` R16
   forbids the framework rewriting a `settings.json` it does not own. So installing Siegard could not
   install the hooks that make Siegard's guarantees hold.
 - **`scripts/` was an invented directory.** The harness has no documented convention for a script
@@ -32,10 +32,10 @@ assumption the specification was built on.
 
 ## Decision
 
-The framework is distributed as a Claude Code plugin. `specs/0008-distribution-layout.md` carries the
+The framework is distributed as a Claude Code plugin. `foundation/0008-distribution-layout.md` carries the
 resulting layout and rules; this record carries why, and the sourcing that decided it.
 
-Four consequences of the plugin form replace things `specs/0008` had invented:
+Four consequences of the plugin form replace things `foundation/0008` had invented:
 
 - **`hooks/hooks.json` at the plugin root** carries hooks in the same format as a settings file's `hooks`
   object, and they take effect while the plugin is enabled. Enabling the plugin installs the enforcement,
@@ -57,7 +57,7 @@ capability silently shadowed rather than a load order nobody can predict. Siegar
 reports shadowing rather than trying to prevent it by naming**: a name chosen to be unlikely is a
 convention hoped to work, and a check is a check. No component is renamed.
 
-A target pack is its own plugin, versioned independently. `specs/0004` R17 already states the framework
+A target pack is its own plugin, versioned independently. `foundation/0004` R17 already states the framework
 ships no default pack, so a `packs/` directory inside the framework distribution would be a directory the
 framework's own rules guarantee is always empty.
 
@@ -77,7 +77,7 @@ Normative for every harness behavior above, retrieved 2026-07-31:
 - https://code.claude.com/docs/en/hooks — `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_DATA}` as path
   placeholders exported to a hook's environment.
 
-A behavior not present on those pages at that date is not relied on. `specs/0013` R13 and R14 govern
+A behavior not present on those pages at that date is not relied on. `foundation/0013` R13 and R14 govern
 re-verification. The two retrieval dates now in the framework — ADR-0009 at 2026-07-29 and these at
 2026-07-31 — cover disjoint page sets: ADR-0009 cites skills, sub-agents, and best practices, and nothing
 above re-cites any of them. R14 is therefore satisfied rather than breached, since no page is cited at two
@@ -86,7 +86,7 @@ contract carrying it.
 
 ## Consequences
 
-- `specs/0008` is rewritten around the plugin root rather than a `.claude/` overlay. The directories it
+- `foundation/0008` is rewritten around the plugin root rather than a `.claude/` overlay. The directories it
   invented (`scripts/`) or misplaced (`packs/`) are corrected, and the reserved-prefix requirement becomes
   a shadowing check.
 - `concept-author` and `knowledge-change` keep their names. The rename that two reviews called cheap-now

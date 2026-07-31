@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd, ddd, determinism]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }
 sources:
-  - resource: specs/0003-knowledge-ontology-and-notation.md
+  - resource: foundation/0003-knowledge-ontology-and-notation.md
     title: Represent domain knowledge as a typed ontology in an AI-first notation
 ---
 
@@ -28,5 +28,5 @@ A lifecycle is the authority for its state set. An attribute holding that state 
 id and does not repeat the values, so the states have one home.
 
 At most one lifecycle describes a given definition. Two would leave no single state set to generate from.
-`specs/0003-knowledge-ontology-and-notation.md` holds the totality, reachability, and cardinality
+`foundation/0003-knowledge-ontology-and-notation.md` holds the totality, reachability, and cardinality
 requirements.

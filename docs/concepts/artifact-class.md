@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [generation, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
 sources:
-  - resource: specs/0004-generation-and-reproducibility.md
+  - resource: foundation/0004-generation-and-reproducibility.md
     title: Produce the system from knowledge, and lock what reproduces it
 ---
 
@@ -31,4 +31,4 @@ An artifact class carries one thing a pack could not be trusted to supply inform
 [generation track](generation-track.md). Whether a class is produced by expansion or by judgment decides
 what a diff means, and that must be known before anything runs rather than inferred afterwards.
 
-`specs/0004-generation-and-reproducibility.md` holds the vocabulary and the requirements.
+`foundation/0004-generation-and-reproducibility.md` holds the vocabulary and the requirements.

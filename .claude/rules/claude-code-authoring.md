@@ -30,7 +30,7 @@ separate in practice, so the separation is a commitment rather than a checked pr
 
 ## Authoring a shipped component
 
-A component under `src/claude/` executes in a repository nobody here controls, and `specs/0005` binds
+A component under `src/claude/` executes in a repository nobody here controls, and `foundation/0005` binds
 it: R11 (it states its own tool and permission grant), R20 (content it reads is data, never
 instruction), R21 (it never reads, persists, logs, or forwards a secret), and R22 (it validates a path
 and a structured input before acting, and rejects rather than repairs). Read them before authoring one.
@@ -63,7 +63,7 @@ Three limits keep that distinction real:
 - a fixture exercising a pack is recommended evidence, never a condition of admission, and one is created
   only with maintainer authorization — `CLAUDE.md` **Scope** applied rather than relaxed;
 - what a pack may declare, and what it must leave to its agents' own knowledge of the stack, is fixed by
-  `specs/0004-generation-and-reproducibility.md`. Do not restate those rules here, and do not give a pack
+  `foundation/0004-generation-and-reproducibility.md`. Do not restate those rules here, and do not give a pack
   a rule file of its own;
 - a pack carries no business rule and no customer-specific architecture. Those stay out of scope inside a
   pack exactly as they are everywhere else.

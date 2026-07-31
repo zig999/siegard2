@@ -5,7 +5,7 @@ to a mechanism.
 
 No contract in this repository carries a second version, so no migration is registered. What
 remains under test is the machinery that will meet the first real bump: the refusals a migration owes, and the coverage check that fails a bump
-registering no path. `specs/0013` R11 asks for a migration tested against the old behavior;
+registering no path. `foundation/0013` R11 asks for a migration tested against the old behavior;
 with no migration in the registry, R11 is unexercised rather than satisfied, and that is
 stated here rather than implied by a green suite.
 

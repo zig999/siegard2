@@ -104,7 +104,7 @@ class Concepts(TreeCase):
         )
 
     def test_a_source_that_resolves_to_no_file_is_reported(self) -> None:
-        self.rewrite("boundary.md", "resource: specs/", "resource: specs/9999-gone-")
+        self.rewrite("boundary.md", "resource: foundation/", "resource: foundation/9999-gone-")
         problems = validate_concepts(self.root)
         self.assertTrue(
             any("resolves to no file" in p for p in problems),
@@ -114,7 +114,7 @@ class Concepts(TreeCase):
     def test_an_absolute_source_path_is_reported(self) -> None:
         self.rewrite(
             "boundary.md",
-            "resource: specs/0003-knowledge-ontology-and-notation.md",
+            "resource: foundation/0003-knowledge-ontology-and-notation.md",
             "resource: /etc/passwd",
         )
         problems = validate_concepts(self.root)
@@ -126,7 +126,7 @@ class Concepts(TreeCase):
     def test_a_traversing_source_path_is_reported(self) -> None:
         self.rewrite(
             "boundary.md",
-            "resource: specs/0003-knowledge-ontology-and-notation.md",
+            "resource: foundation/0003-knowledge-ontology-and-notation.md",
             "resource: ../../etc/passwd",
         )
         problems = validate_concepts(self.root)
@@ -338,21 +338,21 @@ class Hooks(TreeCase):
         self.assertNames(output, "hooks.declaration.json")
 
     def test_a_default_timeout_is_refused(self) -> None:
-        """specs/0010 R11: 600 is the default the requirement exists to displace."""
+        """foundation/0010 R11: 600 is the default the requirement exists to displace."""
         self.rewrite("hooks/hooks.declaration.json", '"timeout": 10', '"timeout": 600')
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "timeout")
 
     def test_an_event_that_cannot_block_is_refused(self) -> None:
-        """specs/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
+        """foundation/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
         self.rewrite("hooks/hooks.declaration.json", '"PreToolUse"', '"PostToolUse"')
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "event")
 
     def test_a_hook_with_no_stated_guarantee_is_refused(self) -> None:
-        """specs/0010 R10 and specs/0006 R7: one hook, one named guarantee."""
+        """foundation/0010 R10 and foundation/0006 R7: one hook, one named guarantee."""
         import json as _json
 
         path = self.root / "hooks" / "hooks.declaration.json"

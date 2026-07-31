@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T23:18:39Z }
 sources:
-  - resource: specs/0004-generation-and-reproducibility.md
+  - resource: foundation/0004-generation-and-reproducibility.md
     title: Produce the system from knowledge, and lock what reproduces it
 ---
 
@@ -27,4 +27,4 @@ Persistence is not normativity and not derivation. A
 [projection](projection.md) is derived and non-normative while still being kept. Collapsing the three axes
 into one is what makes a lock look like a temporary file.
 
-`specs/0004-generation-and-reproducibility.md` holds the rule, the assignment, and the requirements.
+`foundation/0004-generation-and-reproducibility.md` holds the rule, the assignment, and the requirements.

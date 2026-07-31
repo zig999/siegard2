@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd, determinism]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }
 sources:
-  - resource: specs/0001-knowledge-object-driven-development.md
+  - resource: foundation/0001-knowledge-object-driven-development.md
     title: Drive every change through knowledge objects, with determinism at the boundaries
 ---
 

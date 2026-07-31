@@ -2,7 +2,7 @@
 
 A downstream-shaped case: a billing domain needs the term *dunning* defined before its invoice
 lifecycle can reference it. One change request runs the full default path of
-`specs/0001-knowledge-object-driven-development.md`, fails validation once, recovers, and reaches a
+`foundation/0001-knowledge-object-driven-development.md`, fails validation once, recovers, and reaches a
 maintainer's acceptance.
 
 This is the fixture for the first workflow loop, over knowledge only.
@@ -45,7 +45,7 @@ seq  phase                 outcome     how it was recorded
 
 ## What it is evidence for
 
-- **All seven phases run.** `specs/0001` R2 fixes the default path and states escalation inserts
+- **All seven phases run.** `foundation/0001` R2 fixes the default path and states escalation inserts
   phases and never removes one. This loop is five phases —
   `request → impact analysis → knowledge authoring → validation → acceptance` — and that is shorthand
   for the same seven, not a shorter path. Here context resolution is *degenerate*, not skipped: in a
@@ -81,7 +81,7 @@ Named rather than left to be assumed:
 - **The skill never ran either.** `src/claude/skills/knowledge-change/SKILL.md` is the entry point
   this path is designed for, and it is inert here for the same reason.
 - **No context package exists.** Context resolution records that it resolved; it produces no artifact,
-  because `specs/0001` R11's context package has no contract yet and the phase that needs one has not
+  because `foundation/0001` R11's context package has no contract yet and the phase that needs one has not
   arrived. The same holds for the specification delta: nothing consumes it to choose a transition, so
   `.claude/rules/contracts.md` does not yet require a schema for it.
 - **The knowledge bundle is not here.** The paths in `files_changed` and in `implicated` are the shape

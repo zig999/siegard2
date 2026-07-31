@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec.json",
   "title": "Siegard specification frontmatter",
-  "description": "Frontmatter contract for a specification in specs/, the repository's authority for behavior. The body format and the section vocabulary are enforced by scripts/validate_specs.py; the status vocabulary is defined in docs/adr/README.md and shared with schemas/adr.json and schemas/concept.json. A specification carries no supersession relation: `superseded_by` was removed on 2026-07-31 by maintainer decision, so a retired specification states its replacement in prose rather than in a field a validator resolves.",
+  "description": "Frontmatter contract for a specification in foundation/, the repository's authority for behavior. The body format and the section vocabulary are enforced by scripts/validate_specs.py; the status vocabulary is defined in docs/adr/README.md and shared with schemas/adr.json and schemas/concept.json. A specification carries no supersession relation: `superseded_by` was removed on 2026-07-31 by maintainer decision, so a retired specification states its replacement in prose rather than in a field a validator resolves.",
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "title", "status", "contract_version"],

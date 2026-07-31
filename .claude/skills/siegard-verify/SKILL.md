@@ -12,7 +12,7 @@ produces a named gap — it never produces a silent pass.
 
 | Area touched | Command |
 |---|---|
-| `schemas/`, `specs/`, `docs/adr/`, `docs/concepts/` | `make validate` |
+| `schemas/`, `foundation/`, `docs/adr/`, `docs/concepts/` | `make validate` |
 | any source or component in this repository | `make test` |
 | distribution inputs (`src/claude/`, `templates/`, `scripts/`) | `make dist`, then `make dist-check` |
 | broad or uncertain scope | `make check` |

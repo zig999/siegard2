@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assemble the Siegard distribution from framework source.
 
-specs/0008 fixes the output contract and leaves the assembly free. What it fixes: the
+foundation/0008 fixes the output contract and leaves the assembly free. What it fixes: the
 distribution is a plugin root holding `.claude-plugin/plugin.json` (R1); running this twice
 over the same committed source produces byte-identical output (R4); every installed file
 originates in framework source and no file survives whose source was removed (R5); the
@@ -16,7 +16,7 @@ misfiled contract would then govern two audiences at once with nothing to catch 
 
 **Determinism has one requirement and one consequence.** Every iteration is sorted, and the
 manifest carries no timestamp: a value minted at generation time would differ between two runs
-over identical source, which R4 calls a defect rather than an acceptable variation. specs/0008
+over identical source, which R4 calls a defect rather than an acceptable variation. foundation/0008
 R12 lists what the manifest records and a timestamp is not among them.
 
 **`source_revision` is a content digest, not a commit SHA.** A SHA would make the committed
@@ -25,7 +25,7 @@ commit N, and the next `make dist-check` would regenerate, read HEAD as N, and r
 difference nobody introduced. A digest over the framework source inputs identifies the source
 exactly, is stable across commits that do not touch it, and needs no VCS at all.
 
-**Capability status is derived, never labelled.** specs/0006 R17 requires exactly that, and R14
+**Capability status is derived, never labelled.** foundation/0006 R17 requires exactly that, and R14
 states `proposed` ships nothing. What ships is what `src/claude/` holds, so every capability
 assembled here is `active` by derivation. A fixture is evidence and never a gate: gating on one
 lets an optional support tool decide what a consumer receives.
@@ -59,7 +59,7 @@ SCRIPT_ROOT = SOURCE_ROOT / "bin"
 TEMPLATE_ROOT = SOURCE_ROOT / "templates"
 DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
 
-# Bumped whenever this script's output changes for unchanged source. specs/0008 R4 makes the
+# Bumped whenever this script's output changes for unchanged source. foundation/0008 R4 makes the
 # distribution a function of the source *and* the generator, so a consumer that sees a
 # difference can attribute it to one or the other.
 GENERATOR_VERSION = "1.0.0"
@@ -67,7 +67,7 @@ GENERATOR_VERSION = "1.0.0"
 MANIFEST_NAME = "siegard-manifest.json"
 PLUGIN_DIR = ".claude-plugin"
 
-# Which capability class each source subtree carries, per specs/0006 R1.
+# Which capability class each source subtree carries, per foundation/0006 R1.
 CLASS_BY_TREE = {"skills": "skill", "agents": "specialized-agent"}
 
 HOOK_DECLARATION = "hooks.declaration.json"
@@ -76,7 +76,7 @@ HOOK_DECLARATION = "hooks.declaration.json"
 def hook_declaration() -> list[dict]:
     """The authored hook declarations, or an empty list when no hook ships.
 
-    Read rather than hardcoded: `specs/0010` R10 and R11 require a hook to state its event,
+    Read rather than hardcoded: `foundation/0010` R10 and R11 require a hook to state its event,
     matcher, guarantee, and timeout, and a registry living inside this script would be a rule only
     a script could see. `schemas/hook.json` is its contract and `validate_components.py` checks
     it, so the generator consumes something already validated.
@@ -114,7 +114,7 @@ def assert_imports_ship() -> None:
     Found the hard way: `orchestrate.py` gained `from cli import cannot_run`, and nothing
     noticed that `cli.py` did not ship with it. The distribution still built, still
     verified, and would have failed on the consumer's first invocation with an ImportError —
-    the worst place to discover it, because `specs/0008` R9 exists so a shipped executable
+    the worst place to discover it, because `foundation/0008` R9 exists so a shipped executable
     "exits with a named error" rather than breaking in a way nobody can read.
 
     Only a module the generator holds is checked. A standard-library or third-party import is
@@ -152,7 +152,7 @@ def assert_total(actual: set[str], classified: set[str], tree: str, constant: st
     if stale:
         raise Refused(
             f"{constant} classifies {', '.join(stale)}, which {tree} no longer holds — "
-            f"specs/0008 R5: no file survives whose source was removed"
+            f"foundation/0008 R5: no file survives whose source was removed"
         )
 
 
@@ -176,10 +176,10 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         )
         return body
 
-    # The plugin manifest. specs/0008 R1 makes its presence what defines a plugin root.
+    # The plugin manifest. foundation/0008 R1 makes its presence what defines a plugin root.
     manifest_source = SOURCE_ROOT / PLUGIN_DIR / "plugin.json"
     if not manifest_source.is_file():
-        raise Refused(f"{manifest_source} is missing; specs/0008 R1 requires it at the plugin root")
+        raise Refused(f"{manifest_source} is missing; foundation/0008 R1 requires it at the plugin root")
     add(f"{PLUGIN_DIR}/plugin.json", manifest_source)
 
     # Skills: one directory per skill, SKILL.md the entrypoint.
@@ -216,7 +216,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     for source in sorted(SCHEMA_ROOT.glob("*.json")):
         add(f"schemas/{source.name}", source)
 
-    # Hooks. specs/0008 R3 puts them in force while the plugin is enabled, which is what makes a
+    # Hooks. foundation/0008 R3 puts them in force while the plugin is enabled, which is what makes a
     # session-wide guarantee installable at all.
     hooks_root = SOURCE_ROOT / "hooks"
     if hooks_root.is_dir():
@@ -230,7 +230,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
                  "path": f"hooks/{name}"}
             )
 
-    # Scaffolds a consumer expands. specs/0008 names `templates/` in the closed set.
+    # Scaffolds a consumer expands. foundation/0008 names `templates/` in the closed set.
     for source in sorted(TEMPLATE_ROOT.glob("*.md")):
         add(f"templates/{source.name}", source)
 
@@ -249,7 +249,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
 def hooks_document() -> str | None:
     """`hooks/hooks.json`, or None when nothing ships a hook.
 
-    Computed rather than authored: `specs/0010` R10 requires each hook to state its event, its
+    Computed rather than authored: `foundation/0010` R10 requires each hook to state its event, its
     matcher, and its guarantee, and R11 requires it to state its own timeout. Those facts live in
     `SHIPPED_HOOKS` beside the decision to ship, so a hook cannot be installed with a matcher
     nobody wrote down. `${CLAUDE_PLUGIN_ROOT}` is what makes the command path resolve wherever the

@@ -1,4 +1,4 @@
-"""One generation, executed, verified, and measured — the last step of `specs/0004`.
+"""One generation, executed, verified, and measured — the last step of `foundation/0004`.
 
 Fifty-nine artifacts produced from a real knowledge base through a real pack, into
 `fixtures/generation-run/out`. Committed, because R34's verification is a diff against a
@@ -47,7 +47,7 @@ class Produced(GenerationCase):
         self.assertEqual([], list(Draft202012Validator(schema).iter_errors(self.manifest)))
 
     def test_every_recorded_artifact_exists_with_its_recorded_hash(self) -> None:
-        """specs/0004 R30, and the half that makes R35's attribution possible."""
+        """foundation/0004 R30, and the half that makes R35's attribution possible."""
         for artifact in self.manifest["artifacts"]:
             path = self.out / artifact["path"]
             self.assertTrue(path.is_file(), artifact["path"])
@@ -59,7 +59,7 @@ class Produced(GenerationCase):
         self.assertEqual(recorded, on_disk)
 
     def test_every_artifact_traces_to_a_knowledge_object_in_the_scope(self) -> None:
-        """specs/0004 R30: reproducing a generation names what produced each file."""
+        """foundation/0004 R30: reproducing a generation names what produced each file."""
         members = {member["id"] for member in self.scope["members"]}
         for artifact in self.manifest["artifacts"]:
             self.assertIn(artifact["ko"], members)
@@ -69,7 +69,7 @@ class Produced(GenerationCase):
             self.assertEqual(self.declaration["version"], artifact["pack_version"])
 
     def test_the_manifest_names_the_framework_version(self) -> None:
-        """One of the four pinned identities specs/0004 R4 requires of a claim."""
+        """One of the four pinned identities foundation/0004 R4 requires of a claim."""
         installed = json.loads(
             (REPO_ROOT / "src" / "claude" / ".claude-plugin" / "plugin.json").read_text()
         )
@@ -81,7 +81,7 @@ class Produced(GenerationCase):
 
 
 class RegenerateAndDiff(GenerationCase):
-    """specs/0004 R34 and R35."""
+    """foundation/0004 R34 and R35."""
 
     def fresh(self, mutate=None) -> list[str]:
         with tempfile.TemporaryDirectory() as holder:
@@ -165,7 +165,7 @@ class BlockedRuns(GenerationCase):
 
 
 class Measurement(GenerationCase):
-    """specs/0004 R6 — the requirement that can reduce what the framework promises."""
+    """foundation/0004 R6 — the requirement that can reduce what the framework promises."""
 
     def test_the_deterministic_share_is_computable(self) -> None:
         deterministic, total = gc.deterministic_share(self.manifest, self.plan)
@@ -175,7 +175,7 @@ class Measurement(GenerationCase):
     def test_the_recorded_share_matches_what_the_code_produces(self) -> None:
         """A figure in prose that nothing derives is the drift this repository has had twice."""
         deterministic, total = gc.deterministic_share(self.manifest, self.plan)
-        recorded = (REPO_ROOT / "specs" / "0004-generation-and-reproducibility.md").read_text()
+        recorded = (REPO_ROOT / "foundation" / "0004-generation-and-reproducibility.md").read_text()
         self.assertIn(f"{deterministic} of {total}", recorded)
 
     def test_every_produced_artifact_is_locked_on_the_next_run(self) -> None:
@@ -183,7 +183,7 @@ class Measurement(GenerationCase):
 
         The two judged entries stay `new`: nothing produced them, so the manifest holds no path
         for them and there is nothing to lock. A run that ends without producing an artifact
-        locks no path for it — specs/0004 R53's fourth condition, visible here.
+        locks no path for it — foundation/0004 R53's fourth condition, visible here.
         """
         plan, _ = gl.derive_plan(
             self.recipe["plan_id"], self.scope, self.declaration, self.manifest, self.placement
@@ -203,7 +203,7 @@ class Measurement(GenerationCase):
 
 
 class BindingIndexes(GenerationCase):
-    """specs/0004 R42 and R44 — derived, never authored."""
+    """foundation/0004 R42 and R44 — derived, never authored."""
 
     def test_produced_source_binds_through_the_manifest(self) -> None:
         index = gc.binding_indexes(self.manifest, self.out)
@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
 
 class JudgedTrack(GenerationCase):
-    """specs/0004 R3 — what replaces byte identity where a model produces the artifact.
+    """foundation/0004 R3 — what replaces byte identity where a model produces the artifact.
 
     The artifact is *recorded* rather than produced by an agent, exactly as the results in
     `fixtures/knowledge-change-loop/` are. What that leaves testable is the half R3 specifies: a
@@ -256,7 +256,7 @@ class JudgedTrack(GenerationCase):
         self.assertGreater(checked, 0, "a suite with no cases proves nothing")
 
     def test_the_suite_comes_from_the_knowledge_object(self) -> None:
-        """specs/0004 R36: generated from rule.examples, never authored beside the validator."""
+        """foundation/0004 R36: generated from rule.examples, never authored beside the validator."""
         from knowledge_graph_lib import load
 
         graph = load(REPO_ROOT / self.recipe["knowledge_root"])

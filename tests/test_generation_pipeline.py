@@ -1,13 +1,13 @@
 """The four steps between a knowledge base and a written file, and the refusals at each.
 
-`specs/0004` puts a scope, a placement decision, a plan, and a manifest between knowledge and
+`foundation/0004` puts a scope, a placement decision, a plan, and a manifest between knowledge and
 source. The property that makes the whole thing testable is R23: no model participates in
 deriving the plan, so R28's byte identity is checkable on its own — and R29 requires it to be
 checked here rather than only at the output, because a test covering produced source cannot
 distinguish a nondeterministic plan from a nondeterministic template.
 
 Exercised against `fixtures/pack-minimal/`, a pack declaration with no producers behind it. That
-is deliberate: the pipeline is framework-owned and stack-independent (`specs/0012` R4), and
+is deliberate: the pipeline is framework-owned and stack-independent (`foundation/0012` R4), and
 testing it against a real pack would conflate "the pipeline works" with "the pack works".
 """
 
@@ -68,7 +68,7 @@ class Conformance(Fixture):
                 self.assertEqual([], list(validator(name).iter_errors(document)))
 
     def test_the_class_vocabulary_is_the_same_in_every_contract(self) -> None:
-        """specs/0004 R8 closes it once; four contracts naming it must not drift apart."""
+        """foundation/0004 R8 closes it once; four contracts naming it must not drift apart."""
         def classes(name: str, pointer) -> set:
             return set(pointer(load_json(SCHEMAS / name)))
 
@@ -101,7 +101,7 @@ class Conformance(Fixture):
 
 
 class Scope(Fixture):
-    """specs/0004 R19 through R22."""
+    """foundation/0004 R19 through R22."""
 
     def test_it_recomputes_from_its_roots(self) -> None:
         fresh = gl.resolve_scope(
@@ -144,7 +144,7 @@ class Scope(Fixture):
                 gl.resolve_scope(load(copy), "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
 
     def test_a_changed_member_invalidates_the_scope(self) -> None:
-        """specs/0004 R20: a change invalidates rather than alters."""
+        """foundation/0004 R20: a change invalidates rather than alters."""
         self.assertEqual([], gl.scope_is_stale(self.scope, self.graph))
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "knowledge"
@@ -160,7 +160,7 @@ class Scope(Fixture):
 
 
 class Demand(Fixture):
-    """specs/0004 R14's `from` column, which is what makes the plan derivable without a model."""
+    """foundation/0004 R14's `from` column, which is what makes the plan derivable without a model."""
 
     def test_every_demanded_artifact_names_a_declared_class(self) -> None:
         declared = {entry["class"] for entry in self.declaration["produces"]}
@@ -170,7 +170,7 @@ class Demand(Fixture):
             self.assertIn(artifact_class, declared)
 
     def test_a_node_type_yielding_nothing_is_reported(self) -> None:
-        """specs/0004 R11: silence about it reads as coverage that does not exist."""
+        """foundation/0004 R11: silence about it reads as coverage that does not exist."""
         _demanded, uncovered = gl.demand(self.scope, self.declaration)
         self.assertIn("boundary", uncovered)
 
@@ -179,7 +179,7 @@ class Demand(Fixture):
 
 
 class Placement(Fixture):
-    """specs/0004 R52. Rejects, never repairs."""
+    """foundation/0004 R52. Rejects, never repairs."""
 
     def broken(self, mutate) -> list[str]:
         document = json.loads(json.dumps(self.placement))
@@ -215,7 +215,7 @@ class Placement(Fixture):
 
 
 class Plan(Fixture):
-    """specs/0004 R23 through R29."""
+    """foundation/0004 R23 through R29."""
 
     def derive(self, manifest=None, placement=None) -> dict:
         plan, _ = gl.derive_plan(
@@ -228,7 +228,7 @@ class Plan(Fixture):
         self.assertEqual(self.plan, self.derive())
 
     def test_identical_inputs_yield_a_byte_identical_plan(self) -> None:
-        """specs/0004 R28, and R29 requires it tested here rather than only at the output."""
+        """foundation/0004 R28, and R29 requires it tested here rather than only at the output."""
         self.assertEqual(
             json.dumps(self.derive(), indent=2, sort_keys=True),
             json.dumps(self.derive(), indent=2, sort_keys=True),
@@ -238,7 +238,7 @@ class Plan(Fixture):
         self.assertTrue(all(entry["state"] == "new" for entry in self.derive()["entries"]))
 
     def test_a_regeneration_is_entirely_locked(self) -> None:
-        """specs/0004 R31: the path is read on every later run and never decided again."""
+        """foundation/0004 R31: the path is read on every later run and never decided again."""
         second = self.derive(manifest=self.manifest)
         self.assertTrue(all(entry["state"] == "locked" for entry in second["entries"]))
 
@@ -259,7 +259,7 @@ class Plan(Fixture):
         )
 
     def test_a_demanded_artifact_with_no_path_blocks(self) -> None:
-        """specs/0004 R24: an entry with no target path cannot be validated under R25."""
+        """foundation/0004 R24: an entry with no target path cannot be validated under R25."""
         short = json.loads(json.dumps(self.placement))
         short["entries"] = short["entries"][1:]
         with self.assertRaises(gl.Blocked) as caught:
@@ -276,14 +276,14 @@ class Plan(Fixture):
         self.assertEqual({"deterministic", "judged"}, {e["track"] for e in self.plan["entries"]})
 
     def test_no_model_is_reachable_from_the_derivation(self) -> None:
-        """specs/0004 R23, read off the module rather than asserted in prose."""
+        """foundation/0004 R23, read off the module rather than asserted in prose."""
         source = (REPO_ROOT / "src" / "claude" / "bin" / "generation_lib.py").read_text()
         for forbidden in ("subprocess", "urllib", "socket", "requests", "http"):
             self.assertNotIn(f"import {forbidden}", source)
 
 
 class PlanValidation(Fixture):
-    """specs/0004 R25 and R27 — before any file is written."""
+    """foundation/0004 R25 and R27 — before any file is written."""
 
     def test_the_fixture_plan_validates(self) -> None:
         plan = json.loads(json.dumps(self.plan))
@@ -305,7 +305,7 @@ class PlanValidation(Fixture):
         self.assertTrue(any("no longer exists" in p for p in problems), problems)
 
     def test_validation_writes_nothing(self) -> None:
-        """specs/0004 R26: a plan is producible and inspectable without writing any file."""
+        """foundation/0004 R26: a plan is producible and inspectable without writing any file."""
         before = {p for p in REPO_ROOT.rglob("*") if p.is_file() and ".git" not in p.parts}
         gl.derive_plan("gp_4f5a6b7c", self.scope, self.declaration, self.empty_manifest, self.placement)
         gl.validate_plan(self.plan, self.scope, self.declaration, REPO_ROOT)
@@ -352,7 +352,7 @@ class CommittedFixture(unittest.TestCase):
         self.assertEqual(load_json(PACK / "generation-plan.json"), plan)
 
     def test_the_manifest_locks_every_planned_path(self) -> None:
-        """specs/0004 R53: the run transcribes the decision into the manifest before it ends."""
+        """foundation/0004 R53: the run transcribes the decision into the manifest before it ends."""
         plan = load_json(PACK / "generation-plan.json")
         manifest = load_json(PACK / "generation-manifest.json")
         self.assertEqual(
@@ -361,10 +361,10 @@ class CommittedFixture(unittest.TestCase):
         )
 
     def test_the_manifest_names_the_framework_it_was_produced_under(self) -> None:
-        """specs/0004 R4 names four pinned identities a reproducibility claim must carry."""
+        """foundation/0004 R4 names four pinned identities a reproducibility claim must carry."""
         installed = load_json(REPO_ROOT / "src" / "claude" / ".claude-plugin" / "plugin.json")
         self.assertEqual(installed["version"], load_json(PACK / "generation-manifest.json")["framework_version"])
 
     def test_the_run_names_the_skill_that_drives_it(self) -> None:
-        """specs/0004 R18: the entry point that runs generation is a skill."""
+        """foundation/0004 R18: the entry point that runs generation is a skill."""
         self.assertEqual("generate", self.run["producer"])

@@ -10,7 +10,7 @@ paths:
 `dist/.claude/` is what this repository produces. It is not a source tree, and nothing here is edited
 by hand.
 
-`specs/0008` states what a distribution must be true of — the properties a consumer can check in the
+`foundation/0008` states what a distribution must be true of — the properties a consumer can check in the
 tree they installed. This file states what *this* repository must do to build one. A consumer never
 satisfies a rule below; the person or agent running `make dist` does.
 
@@ -32,7 +32,7 @@ which records the assembly and therefore cannot precede it.
   variation.
 - Verify by regenerating into a temporary tree and comparing. Never write into the tree being checked —
   a check that repairs what it was meant to detect reports success on a defect.
-- Exclude every development-only path: `specs/`, `tests/`, `fixtures/`, `docs/`, `.claude/`, and this
+- Exclude every development-only path: `foundation/`, `tests/`, `fixtures/`, `docs/`, `.claude/`, and this
   repository's own `schemas/`, `scripts/`, and `templates/`. `.claude/` configures the agent that
   develops the generator and never ships.
 - Never place a secret, credential, token, or environment-specific value in the output. An absolute
@@ -40,7 +40,7 @@ which records the assembly and therefore cannot precede it.
 - Reject a hidden default: if an installed component behaves differently when a setting is absent,
   state that default in the component itself, not in the generator.
 - A fixture is optional evidence and never a gate. Nothing is withheld from the distribution for want
-  of one — `specs/0006` R11, and `CLAUDE.md` **Scope**.
+  of one — `foundation/0006` R11, and `CLAUDE.md` **Scope**.
 
 `make dist` regenerates; `make dist-check` verifies. Reporting the first as if it were the second
 reports success on a defect.

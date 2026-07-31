@@ -1,4 +1,4 @@
-"""The fixture validates, and exercises what specs/0003 requires a fixture to exercise.
+"""The fixture validates, and exercises what foundation/0003 requires a fixture to exercise.
 
 This module is the positive half of every rejection test elsewhere in the suite. A
 validator proven only to reject cannot be distinguished from one that rejects everything,

@@ -1,6 +1,6 @@
 """The ten deterministic templates of the `typescript-node` pack.
 
-`specs/0011` R1 makes a template the mechanism of the deterministic generation track: it expands
+`foundation/0011` R1 makes a template the mechanism of the deterministic generation track: it expands
 structured knowledge into exactly one artifact class, with no model in the loop, and identical
 input yields byte-identical output. Every constraint that follows from that is visible here, and
 each one is a test in `tests/test_pack_typescript.py`.
@@ -22,7 +22,7 @@ each one is a test in `tests/test_pack_typescript.py`.
 - **R12, R13** — naming, layout, and idiom are here; no domain fact is. Every value in the output
   that says something about the world came from a knowledge object.
 
-`specs/0004` R2 is what the whole module is held to, and R51 pairs each function with exactly one
+`foundation/0004` R2 is what the whole module is held to, and R51 pairs each function with exactly one
 declared class.
 """
 
@@ -34,7 +34,7 @@ from __future__ import annotations
 #
 # `decimal` and `money` become `string` rather than `number`: an IEEE double cannot hold a money
 # amount exactly, and choosing `number` would make the pack silently lossy for the one attribute
-# type a billing domain is most likely to use. That is stack knowledge, which specs/0011 R12 puts
+# type a billing domain is most likely to use. That is stack knowledge, which foundation/0011 R12 puts
 # here — and the reason is recorded because the wrong choice would look tidier.
 PRIMITIVE = {
     "string": "string",
@@ -68,7 +68,7 @@ SQL = {
 
 
 class MissingFact(Exception):
-    """The knowledge does not hold something this template needs — specs/0011 R10."""
+    """The knowledge does not hold something this template needs — foundation/0011 R10."""
 
 
 def _require(node: dict, field: str, artifact_class: str) -> object:
@@ -76,7 +76,7 @@ def _require(node: dict, field: str, artifact_class: str) -> object:
     if value in (None, [], {}):
         raise MissingFact(
             f"{node['id']}: the {artifact_class} template needs `{field}` and "
-            f"the knowledge object does not hold it. specs/0011 R10: no default is substituted for a "
+            f"the knowledge object does not hold it. foundation/0011 R10: no default is substituted for a "
             f"domain fact, because a default invented here is a domain fact authored by the pack"
         )
     return value
@@ -104,7 +104,7 @@ def header(node: dict, pack_version: str) -> str:
     """
     return (
         f"// Generated from {node['id']} by typescript-node {pack_version}.\n"
-        f"// specs/0004 R7: this file is not hand-edited. Change the knowledge object.\n"
+        f"// foundation/0004 R7: this file is not hand-edited. Change the knowledge object.\n"
     )
 
 
@@ -232,7 +232,7 @@ def api_description(node: dict, pack_version: str) -> str:
 
 
 def conformance_test(node: dict, pack_version: str) -> str:
-    """specs/0004 R36: generated from `rule.examples` and from `lifecycle` totality.
+    """foundation/0004 R36: generated from `rule.examples` and from `lifecycle` totality.
 
     R3 makes a judged artifact with no covering suite unaccepted output, so this is what a
     judged `validator` is checked against — which is why it is on the deterministic track even
@@ -272,7 +272,7 @@ def documentation(node: dict, pack_version: str) -> str:
     )
 
 
-# One function per declared deterministic class. specs/0004 R51: exactly one producer per class,
+# One function per declared deterministic class. foundation/0004 R51: exactly one producer per class,
 # and this mapping is what the pack's own test asserts against its declaration.
 TEMPLATES = {
     "type": type_,

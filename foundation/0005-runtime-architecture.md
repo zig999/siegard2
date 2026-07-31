@@ -19,8 +19,8 @@ rather than of the method the product implements, and it decides five things:
    model judgment;
 5. the limits: what this architecture does not promise, and what it forbids building.
 
-It decides nothing about which capability classes exist, which is `specs/0006`; nothing about how a
-capability declares itself, which is `specs/0007`; and nothing about templates, hooks, packs, or the
+It decides nothing about which capability classes exist, which is `foundation/0006`; nothing about how a
+capability declares itself, which is `foundation/0007`; and nothing about templates, hooks, packs, or the
 layout of the distribution, each of which has its own specification. It fixes the frame those fill.
 
 
@@ -30,21 +30,21 @@ The architecture recorded here was not derived from a design document. It is the
 the first end-to-end run actually took: an entry-point skill, a specialized agent producing a
 validated artifact, an orchestrator choosing a transition by lookup, an append-only log, and state
 derived by replay. Where this specification states something the thin path did not exercise, it says so
-in **Validation required before acceptance** rather than presenting it as settled.
+rather than presenting it as settled.
 
 The SIGARD v0.1 draft proposed a different architecture, in which the framework owned a planner, a
 context resolver, and a pool of workers that consumed an execution plan. That model is not adopted. It
 puts the framework in control of the workflow, which R2 below forbids, and it duplicates scheduling that
 the harness already performs. The draft was non-normative input at every precedence level, and it is no
-longer in this repository — `specs/0001` **Provenance** records where it went.
+longer in this repository — `foundation/0001` **Provenance** records where it went.
 
 ### Decided elsewhere, deliberately not restated here
 
 - [least privilege](../docs/concepts/least-privilege.md), which R11 and R20 through R22 below apply;
-- where instruction content belongs, given the harness's loading semantics — `specs/0006`, which fixes
-  the capability classes, and `specs/0010` for a hook;
+- where instruction content belongs, given the harness's loading semantics — `foundation/0006`, which fixes
+  the capability classes, and `foundation/0010` for a hook;
 - what an artifact passed between components must carry — R16a below;
-- the workflow phases themselves, and the transition rules over them — `specs/0001`.
+- the workflow phases themselves, and the transition rules over them — `foundation/0001`.
 
 ## Definitions
 
@@ -63,8 +63,8 @@ This specification uses these terms as the concept bundle defines them:
 [target pack](../docs/concepts/target-pack.md).
 
 Two terms this specification uses that the bundle does not hold, because their definitions belong to the
-specifications that decide them: *capability class* (`specs/0006`) and *capability declaration*
-(`specs/0007`). Both are accepted, so this document's R9 through R13 bind against something specified
+specifications that decide them: *capability class* (`foundation/0006`) and *capability declaration*
+(`foundation/0007`). Both are accepted, so this document's R9 through R13 bind against something specified
 rather than against a description — which is condition 4 below, and the one this
 document's acceptance actually met.
 
@@ -184,11 +184,10 @@ removing one because the document binds would turn an open debt into a silent on
 1. A generator produces the distribution from `src/claude/`, a fixture installs it, and Claude Code
    loads the installed components. R9 is unproven until something is reached through the distribution
    rather than through this repository's own paths.
-   condition 2.
 2. Two capabilities of different classes complete one workflow together, with the selection made by the
    model rather than by a fixed script, showing R2 and R3 hold where more than one choice exists. The
    thin path exercised one agent and one entry point, which is not yet a selection.
 3. A hook enforces one guarantee under test, with both outcomes covered, showing R5 holds for something
    other than a script the developer chose to run.
-5. One capability is retired or superseded through the lifecycle `specs/0013` defines, showing R10's
+5. One capability is retired or superseded through the lifecycle `foundation/0013` defines, showing R10's
    contract-only dependency survives a change in what it depends on.

@@ -2,12 +2,12 @@
 
 `CLAUDE.md` gives `templates/` the role "artifact generators that conform to schemas".
 `docs/concepts/scaffold.md` records what that is and what it is not — a scaffold is not a
-template in the sense of `specs/0011`, which expands domain knowledge into an artifact class
-from the closed vocabulary of `specs/0004` R8 and holds byte identity.
+template in the sense of `foundation/0011`, which expands domain knowledge into an artifact class
+from the closed vocabulary of `foundation/0004` R8 and holds byte identity.
 
 What the two share is enforced here: output validates before it is written, and nothing is
 minted. Every placeholder is required, so a scaffold cannot quietly supply a timestamp, an
-identifier, or a version — the values a caller owns and `specs/0011` R5 forbids a generator
+identifier, or a version — the values a caller owns and `foundation/0011` R5 forbids a generator
 from inventing.
 
 Each kind gets a full expansion with plausible values and an assertion that the result passes
@@ -41,7 +41,7 @@ CASES: dict[str, dict[str, str]] = {
         "short_title": "A worked example",
         "scope": "what a scaffolded specification looks like before anyone has written one",
         "decides": "nothing; it is a skeleton",
-        "decided_elsewhere": "`CLAUDE.md` **Normative sources** fixes precedence and this does not restate it.",
+        "decided_elsewhere": "`CLAUDE.md` **Where authority lives** fixes precedence and this does not restate it.",
         "concept_title": "specification",
         "concept_slug": "specification",
         "requirement_group": "The example",

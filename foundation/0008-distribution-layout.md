@@ -19,7 +19,7 @@ reaches a repository Siegard governs. It decides six things:
 5. installation and upgrade, including what happens to a file the consumer changed;
 6. namespacing and shadowing, and why no component carries a reserved prefix.
 
-It decides nothing about which capability classes exist, which is `specs/0006`, and nothing about how a
+It decides nothing about which capability classes exist, which is `foundation/0006`, and nothing about how a
 distribution is assembled or verified. This document binds the result, not the build: it states what must
 be true of a distribution in a consumer's hands, and says nothing about who produced it or how.
 
@@ -31,7 +31,7 @@ document is that its central assumption was wrong, and the documentation said so
 
 That draft described a tree copied into the consumer's `.claude/`, with a reserved name prefix on every
 component. Two reviews found it failing on its own terms: it could not install its own hooks, because every
-hook named below is a session-wide guarantee and this document forbade rewriting a
+such hook is a session-wide guarantee and this document forbade rewriting a
 `settings.json` it does not own; and its `scripts/` directory was an invented convention. The plugin form
 resolves both, and removes the prefix requirement rather than satisfying it.
 
@@ -192,7 +192,7 @@ with no access to whatever produced it.
 ### Packs
 
 - **R23** — A [target pack](../docs/concepts/target-pack.md) is a separate plugin with its own version, and
-  the framework distribution contains no pack. `specs/0004` R17 states the framework ships no default pack,
+  the framework distribution contains no pack. `foundation/0004` R17 states the framework ships no default pack,
   so a `packs/` directory inside this distribution would be one the framework's own rules guarantee is
   always empty.
 
@@ -202,11 +202,10 @@ What this document states and nothing has yet exercised. A condition kept here i
 removing one because the document binds would turn an open debt into a silent one.
 
 1. A generator exists, `make dist` runs it, running it twice from the same source produces identical output,
-   and `claude plugin validate` passes on the result. R4 through R6 are unenforced until then —
-   the gate below.
+   and `claude plugin validate` passes on the result. R4 through R6 are unenforced until then.
 2. A test asserts that no development-only path and no secret reaches the output, per R5b and R5c.
-3. A fixture loads the generated plugin with `--plugin-dir`, Claude Code loads its components, and the loop
-   of the first end-to-end run runs against them. This is what turns R1
+3. A fixture loads the generated plugin with `--plugin-dir`, Claude Code loads its components, and a
+   knowledge change workflow runs against them. This is what turns R1
    through R3 and R16 through R19 from description into behavior.
 4. One hook ships in `hooks/hooks.json` and is shown to fire and to deny in the loaded fixture. R3 is the
    central claim of this document's design, and it is documented rather than demonstrated until then.
@@ -215,6 +214,6 @@ removing one because the document binds would turn an open debt into a silent on
 6. The shadowing check of R21 exists: a fixture installs the plugin into a repository holding an agent of
    the same name and the framework reports it.
 7. The distribution manifest has a versioned schema in `schemas/`, since a consumer branches on it — which
-   `specs/0005` R16a already requires of an artifact carrying persisted state. It arrives with
+   `foundation/0005` R16a already requires of an artifact carrying persisted state. It arrives with
    the generator that first produces one.
 8. A target pack ships as a second plugin and installs and versions independently, exercising R23.

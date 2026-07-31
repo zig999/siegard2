@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [workflow, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }
 sources:
-  - resource: specs/0001-knowledge-object-driven-development.md
+  - resource: foundation/0001-knowledge-object-driven-development.md
     title: Drive every change through knowledge objects, with determinism at the boundaries
 ---
 
@@ -26,6 +26,6 @@ event in a project's history, while a knowledge object states something that sta
 request is closed.
 
 The workflow it enters, and the phases that follow, are defined in
-`specs/0001-knowledge-object-driven-development.md`, which was accepted on 2026-07-31. This concept is
+`foundation/0001-knowledge-object-driven-development.md`, which was accepted on 2026-07-31. This concept is
 therefore eligible for promotion and has not been promoted: a status change is a maintainer's decision, and
 `index.md` records the eligibility rather than acting on it — see [accepted](accepted.md).

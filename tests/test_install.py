@@ -1,4 +1,4 @@
-"""Installation and upgrade, over the three behaviours `specs/0008` states and nothing held.
+"""Installation and upgrade, over the three behaviours `foundation/0008` states and nothing held.
 
 R16 makes enabling the same version twice leave the repository as one enabling did. R17 forbids
 an upgrade from silently overwriting a file the consumer changed — it detects, names, and stops.
@@ -63,13 +63,13 @@ class Installation(Consumer):
         self.assertEqual(install_dist.tree(DIST), self.snapshot())
 
     def test_it_reports_the_version_it_installed(self) -> None:
-        """specs/0008 R13: a consumer reads the installed version from plugin.json."""
+        """foundation/0008 R13: a consumer reads the installed version from plugin.json."""
         result = self.install()
         version = json.loads((DIST / ".claude-plugin" / "plugin.json").read_text())["version"]
         self.assertIn(version, result.stdout)
 
     def test_nothing_is_written_outside_the_target(self) -> None:
-        """specs/0008 R22: the framework claims no path outside its own plugin root."""
+        """foundation/0008 R22: the framework claims no path outside its own plugin root."""
         self.install()
         outside = {p for p in self.project.rglob("*") if p.is_file()}
         self.assertTrue(all(str(p).startswith(str(self.plugin)) for p in outside))
@@ -94,7 +94,7 @@ class Installation(Consumer):
 
 
 class Idempotence(Consumer):
-    """specs/0008 R16."""
+    """foundation/0008 R16."""
 
     def test_upgrading_to_the_same_version_is_a_no_op(self) -> None:
         self.install()
@@ -113,7 +113,7 @@ class Idempotence(Consumer):
 
 
 class Divergence(Consumer):
-    """specs/0008 R17."""
+    """foundation/0008 R17."""
 
     def diverge(self) -> Path:
         path = self.plugin / "agents" / "concept-author.md"
@@ -186,7 +186,7 @@ class Divergence(Consumer):
 
 
 class Shadowing(Consumer):
-    """specs/0008 R21, and ADR-0012's choice to report rather than rename."""
+    """foundation/0008 R21, and ADR-0012's choice to report rather than rename."""
 
     def add_project_agent(self, name: str) -> None:
         agents = self.project / ".claude" / "agents"
@@ -246,7 +246,7 @@ class ShippedAgents(unittest.TestCase):
         self.assertGreaterEqual(len(self.agents), 2)
 
     def test_no_agent_has_a_shell(self) -> None:
-        """specs/0006 R6, and the reason: a guarantee a producer self-reports is not one."""
+        """foundation/0006 R6, and the reason: a guarantee a producer self-reports is not one."""
         for name in self.agents:
             body = (DIST / "agents" / f"{name}.md").read_text()
             tools = next(l for l in body.splitlines() if l.startswith("tools:"))

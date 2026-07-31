@@ -18,8 +18,8 @@ cost; `0014` falsified that within a day of the framework family being written, 
 specification numbered after them. A number records when a document was written, not what it governs.
 
 The directory is flat on purpose. Splitting it into `foundations/` and `framework/` was considered and
-rejected: 33 concept `sources` resolve to these paths, a validator globbing `specs/*.md` would silently
-ignore a subdirectory, and renaming a public artifact is breaking under `specs/0013` R3a.
+rejected: 33 concept `sources` resolve to these paths, a validator globbing `foundation/*.md` would silently
+ignore a subdirectory, and renaming a public artifact is breaking under `foundation/0013` R3a.
 
 ## The method
 
@@ -35,12 +35,12 @@ ignore a subdirectory, and renaming a public artifact is breaking under `specs/0
 
 A specification binds when its frontmatter says `status: accepted`. Where one was accepted ahead of the
 evidence it asked for, that evidence is listed under its **Outstanding evidence** section and is owed. A
-change to a requirement is a breaking change under `specs/0013` R3a rather than a revision.
+change to a requirement is a breaking change under `foundation/0013` R3a rather than a revision.
 
 **No framework specification is accepted before the method specification it depends on.** Every one of the
-nine rests on `specs/0001` or `specs/0004`; accepting a framework document while its foundation binds
+nine rests on `foundation/0001` or `foundation/0004`; accepting a framework document while its foundation binds
 nothing would give it an authority its own basis does not have. The rule held through the promotion of
-2026-07-31: `specs/0001` was already accepted, and `specs/0004` was accepted in the same decision, so no
+2026-07-31: `foundation/0001` was already accepted, and `foundation/0004` was accepted in the same decision, so no
 framework document ended up resting on a foundation that binds nothing. What the rule does not reach is the
 question that decision left open — whether either foundation had earned its own acceptance.
 
@@ -56,12 +56,12 @@ on the proposed side and on the moment of promotion, not retrospectively.
 |---|---|---|---|
 | [0005](0005-runtime-architecture.md) | Runtime architecture | who executes, what the framework provides, what it may never control, where determinism lives | — |
 | 0006 | Capability model | which capability classes exist, what each owns, how one is admitted and retired | `docs/concepts/capability.md` |
-| 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `specs/0005` R16a; `schemas/skill.json`, `schemas/agent.json` |
+| 0007 | Capability contracts | how a capability declares itself: identifier, inputs, outputs, consumed and produced artifacts, assertions, what is deterministic and what is judgment | `foundation/0005` R16a; `schemas/skill.json`, `schemas/agent.json` |
 | 0008 | Distribution layout | that the distribution is a plugin, a function of source; the closed directory set; the two records; install, upgrade, and shadowing | — |
-| 0009 | Context assembly | the context package contract — its manifest form, budget, and stop criteria | `specs/0001` R11–R15, which already fix that resolution never blocks and never invents |
-| 0010 | Hook system | the constraints a hook honors: handler type, exit-code discipline, failing closed, and what a hook cannot guarantee | `specs/0005` R20–R22; the harness hook documentation |
-| 0011 | Template system | what a template is, what it may read, how it refers to knowledge, and ownership, override, and versioning | `specs/0004`'s generation tracks and artifact classes |
-| 0012 | Target pack model | how a technology stack enters the framework as a unit: one active pack, its composition, its own version, and its retirement | `specs/0004`; `specs/0005` R12 and R13 |
+| 0009 | Context assembly | the context package contract — its manifest form, budget, and stop criteria | `foundation/0001` R11–R15, which already fix that resolution never blocks and never invents |
+| 0010 | Hook system | the constraints a hook honors: handler type, exit-code discipline, failing closed, and what a hook cannot guarantee | `foundation/0005` R20–R22; the harness hook documentation |
+| 0011 | Template system | what a template is, what it may read, how it refers to knowledge, and ownership, override, and versioning | `foundation/0004`'s generation tracks and artifact classes |
+| 0012 | Target pack model | how a technology stack enters the framework as a unit: one active pack, its composition, its own version, and its retirement | `foundation/0004`; `foundation/0005` R12 and R13 |
 | 0013 | Framework lifecycle | versioning, what makes a change breaking, deprecation, and the migration a consumer is owed | — |
 
 Three documents the original plan proposed are deliberately absent:
@@ -79,10 +79,8 @@ Three documents the original plan proposed are deliberately absent:
 
 The family is not written all at once, and not in id order. The producing repository holds the sequence, and
 the gate that settles each open question; a specification here is written when the evidence its
-acceptance requires is within reach, so that it records a design rather than guesses one. The agenda that
-maps each document to its gate is in that file under **The framework-architecture agenda**.
+acceptance requires is within reach, so that it records a design rather than guesses one.
 
 Acceptance running ahead of that sequence, as it did on 2026-07-31, does not close the gates. Each remains
-open, listed in every promoted document's **What satisfied acceptance** section, and the sequence is still
-what has to be built. What changed is the cost of being wrong: a design these documents got wrong now costs
-a migration to correct rather than an edit.
+open, and the sequence is still what has to be built. What changed is the cost of being wrong: a design
+these documents got wrong now costs a migration to correct rather than an edit.

@@ -23,18 +23,18 @@ added from here on, and [scaffold](scaffold.md) is the first to exercise it.
 On 2026-07-31 every entry then in the bundle was promoted to `accepted` in one maintainer decision, together
 with every specification and ADR that was still `proposed`. For a short while the tier distinguished nothing
 here. [scaffold](scaffold.md) restored the distinction the same day: it is `proposed`, because the only
-things that use the term are `templates/` and a script, and `CLAUDE.md` **Normative sources** places
+things that use the term are `templates/` and a script, and `CLAUDE.md` **Where authority lives** places
 implementation below the tiers that bind. It becomes `accepted` when a specification or a rule file uses it
 normatively — not when the scaffolds it names begin to work.
 
 What that decision changed, and what it did not, is worth being exact about. The condition
 `docs/adr/README.md` states for the crossing — a term used normatively by an artifact that binds — was
-already satisfied for the entries citing `specs/0001-knowledge-object-driven-development.md`, and the
+already satisfied for the entries citing `foundation/0001-knowledge-object-driven-development.md`, and the
 promotion recorded a fact for those. It was not satisfied for the vocabulary of
-`specs/0004-generation-and-reproducibility.md` and the framework specifications: those documents were
+`foundation/0004-generation-and-reproducibility.md` and the framework specifications: those documents were
 accepted on the same authority and on the same day, with their own validation conditions open, so a
 definition here binds a mechanism that in several cases does not exist yet. Each of those specifications
-records that in its **What satisfied acceptance** section, and this bundle does not restate it per concept.
+records that, and this bundle does not restate it per concept.
 
 The consequence is the same one they carry: `.claude/rules/compatibility.md` now governs a change to any
 definition here, and the first component built against one is the thing most likely to demand a change.
@@ -84,7 +84,7 @@ definition here, and the first component built against one is the thing most lik
 | [scaffold](scaffold.md) | A generator producing a conforming skeleton of an artifact this repository authors; not a template. |
 | [skill](skill.md) | A distributable procedure or knowledge unit, invocable as `/name`. |
 | [specialized agent](specialized-agent.md) | An agent with one declared role and minimum tools. |
-| [specification](specification.md) | A normative document in `specs/`, the highest precedence source in this repository. |
+| [specification](specification.md) | A normative document in `foundation/`, the highest precedence source in this repository. |
 | [specification delta](specification-delta.md) | The temporary artifact describing one requested change by reference. |
 | [stack knowledge](stack-knowledge.md) | A fact whose change changes every system on the same technology, never held by the knowledge base. |
 | [target pack](target-pack.md) | The distributable unit carrying one technology stack: the agents and templates producing the classes it declares. |

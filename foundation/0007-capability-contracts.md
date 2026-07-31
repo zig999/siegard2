@@ -19,11 +19,11 @@ decides four things:
 3. how the declaration relates to the frontmatter contracts a class already has;
 4. what a declaration may not contain.
 
-It decides nothing about which classes exist, which is `specs/0006`; nothing about the contract of an
-*artifact* passed between capabilities, which `specs/0005` R16a already holds; and nothing
-about where a declaration file lives, which is `specs/0008`.
+It decides nothing about which classes exist, which is `foundation/0006`; nothing about the contract of an
+*artifact* passed between capabilities, which `foundation/0005` R16a already holds; and nothing
+about where a declaration file lives, which is `foundation/0008`.
 
-The purpose is narrow and worth stating plainly: `specs/0005` R3 puts selection in Claude Code's hands.
+The purpose is narrow and worth stating plainly: `foundation/0005` R3 puts selection in Claude Code's hands.
 A model can only select well from what it can read cheaply. A declaration is that readable surface, and
 its quality is the difference between a framework that offers capabilities and one that hides them.
 
@@ -44,10 +44,10 @@ this document turns into a requirement.
 ### Decided elsewhere, deliberately not restated here
 
 - what an artifact passed between capabilities must carry, and which criticality demands a versioned
-  schema — `specs/0005` R16a;
-- that a component states its own tool and permission grant — `specs/0005` R11;
+  schema — `foundation/0005` R16a;
+- that a component states its own tool and permission grant — `foundation/0005` R11;
 - the harness's own frontmatter requirements — `schemas/skill.json`, `schemas/agent.json`;
-- how a description should be written to be matched well — `specs/0006` and
+- how a description should be written to be matched well — `foundation/0006` and
   the practices Anthropic documents but does not bind.
 
 ## Definitions
@@ -109,7 +109,7 @@ This specification uses these terms as the concept bundle defines them:
   tell what it depends on without executing it.
 - **R9** — A capability that needs knowledge in scope declares what it needs, in terms of the ontology
   rather than of file paths. What is actually in scope for one run is a
-  [context package](../docs/concepts/context-package.md), which `specs/0009` fixes. This requirement's
+  [context package](../docs/concepts/context-package.md), which `foundation/0009` fixes. This requirement's
   *value* is contingent on that document's R11: if measurement shows resolution does not select better
   than including the whole bundle, the declaration still holds — a capability still states what it needs —
   but it stops narrowing anything, and this requirement is then a description rather than a constraint.
@@ -146,14 +146,14 @@ This specification uses these terms as the concept bundle defines them:
 - **R18** — A declaration does not carry a business rule of any downstream system, and does not name a
   single repository's paths, services, or conventions.
 - **R19** — A declaration does not encode a numeric threshold that has not been calibrated from executed
-  runs and recorded with the evidence that calibrated it. This is `specs/0001` R10 applied to a
+  runs and recorded with the evidence that calibrated it. This is `foundation/0001` R10 applied to a
   capability's own configuration, and it covers a retry count, a budget, and an
   [escalation](../docs/concepts/escalation.md) trigger alike. What it reaches is a value the framework
   *ships*: a value the caller supplies per run is not a framework threshold, and requiring evidence for it
   would leave a fresh installation unable to run anything at all, since no executed run exists to calibrate
   from before the first one. The two mechanisms this framework already uses are that distinction applied —
-  the attempt limit of `specs/0001` R7 is a property of a workflow's opening event, and the budget of
-  `specs/0009` R7 is stated by the caller — and neither is a default this framework asserts.
+  the attempt limit of `foundation/0001` R7 is a property of a workflow's opening event, and the budget of
+  `foundation/0009` R7 is stated by the caller — and neither is a default this framework asserts.
 - **R20** — A report naming a numeric value states which of the two it is: supplied by the caller for this
   run, or shipped by the framework and calibrated, with the evidence that calibrated it. A caller-supplied
   value presented as a calibrated one is a false report, and it is the route by which a value chosen once

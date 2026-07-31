@@ -1,13 +1,20 @@
 """A shipped component names no path the consumer does not have.
 
 `src/claude/` is copied into the distribution whole, so a citation inside it travels to a
-repository where `scripts/`, `tests/`, `fixtures/`, and `docs/` do not exist. Those are the
-generator's own trees, and a component pointing at one hands its reader a path that resolves
-to nothing — the failure is silent, because prose does not fail like an import does.
+repository where `foundation/`, `scripts/`, `tests/`, `fixtures/`, and `docs/` do not exist. Those
+are the generator's own trees, and a component pointing at one hands its reader a path that
+resolves to nothing — the failure is silent, because prose does not fail like an import does.
 
-The four trees below were clean when this was written and this keeps them clean. `specs/` is
-deliberately absent: a shipped artifact still cites the requirement it implements, and whether
-those citations should survive in a consumer's hands is a decision this suite does not make.
+All five trees below are covered, `foundation/` included. An earlier version of this docstring
+described four and called `foundation/` deliberately absent, on the grounds that a shipped artifact
+still cites the requirement it implements and whether such a citation should survive in a
+consumer's hands was a decision this suite did not make. That decision was made: every such
+citation was removed when the shipped tree was cut loose from the generator's documents, and the
+tuple has covered `foundation/` since. The docstring is what lagged, which is the failure mode a
+comment has and an assertion does not.
+
+This checks citations *inside* shipped files. That no such directory reaches the assembled
+distribution is a separate guarantee, held by `scripts/verify_dist.py`.
 """
 
 from __future__ import annotations
@@ -19,7 +26,7 @@ from pathlib import Path
 from . import SHIPPED_ROOT
 
 # Each is a directory that exists only in the generator's repository.
-GENERATOR_ONLY = ("specs", "scripts", "tests", "fixtures", "docs")
+GENERATOR_ONLY = ("foundation", "scripts", "tests", "fixtures", "docs")
 CITATION = re.compile(rf"\b({'|'.join(GENERATOR_ONLY)})/")
 
 

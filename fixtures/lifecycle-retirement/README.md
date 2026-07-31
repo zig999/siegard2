@@ -1,6 +1,6 @@
 # A capability retired
 
-`specs/0006` R14 fixes the lifecycle vocabulary, R15 forbids skipping `deprecated`, and R16 makes
+`foundation/0006` R14 fixes the lifecycle vocabulary, R15 forbids skipping `deprecated`, and R16 makes
 retiring a consumed capability owe the migration `.claude/rules/compatibility.md` demands and a test
 that fails against the old behavior.
 
@@ -24,7 +24,7 @@ What a fixture can make real is the mechanism, and it does:
 
 - **No capability actually went through this.** The four capability classes the distribution ships
   are all `active`, and `check_capabilities.py` derives that from facts rather than from labels.
-- **No release record exists.** `specs/0013` governs how a consumer learns what changed between two
+- **No release record exists.** `foundation/0013` governs how a consumer learns what changed between two
   versions, and this fixture records three versions of one capability rather than a release.
 - **`docs/` carries no changelog.** `.claude/rules/compatibility.md` requires release documentation
   updated on a breaking change, and that requirement is stated and unmet.

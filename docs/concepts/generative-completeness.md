@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [generation, validation, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
 sources:
-  - resource: specs/0004-generation-and-reproducibility.md
+  - resource: foundation/0004-generation-and-reproducibility.md
     title: Produce the system from knowledge, and lock what reproduces it
 ---
 

@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [framework, distribution]
 generated: { by: claude-opus-5, at: 2026-07-31T01:49:02Z }
 sources:
-  - resource: specs/0008-distribution-layout.md
+  - resource: foundation/0008-distribution-layout.md
     title: Ship the framework as a plugin, so enabling it installs the enforcement
   - resource: docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md
     title: Distribute the framework as a Claude Code plugin, and let the harness namespace it

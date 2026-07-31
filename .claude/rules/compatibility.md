@@ -1,6 +1,6 @@
 ---
 paths:
-  - "specs/**"
+  - "foundation/**"
   - "schemas/**"
   - "src/claude/**"
   - "dist/**"

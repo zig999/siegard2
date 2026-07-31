@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd, ddd, compatibility]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }
 sources:
-  - resource: specs/0003-knowledge-ontology-and-notation.md
+  - resource: foundation/0003-knowledge-ontology-and-notation.md
     title: Represent domain knowledge as a typed ontology in an AI-first notation
 ---
 

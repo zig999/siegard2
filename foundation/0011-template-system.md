@@ -19,8 +19,8 @@ This specification fixes what a template is and what it may do. It decides five 
 5. ownership, override, and versioning.
 
 It decides nothing about the vocabulary of [artifact classes](../docs/concepts/artifact-class.md) or which
-track each is produced on, which `specs/0004` fixes; nothing about what a
-[target pack](../docs/concepts/target-pack.md) declares, which is `specs/0012`; and nothing about a
+track each is produced on, which `foundation/0004` fixes; nothing about what a
+[target pack](../docs/concepts/target-pack.md) declares, which is `foundation/0012`; and nothing about a
 template's syntax, which is implementation.
 
 
@@ -39,14 +39,14 @@ lesson written down before a template can repeat it.
 ### Decided elsewhere, deliberately not restated here
 
 - the closed vocabulary of artifact classes, and the [generation track](../docs/concepts/generation-track.md)
-  each is produced on — `specs/0004`;
+  each is produced on — `foundation/0004`;
 - what byte identity means as a promise, and which artifacts carry it rather than behavioural conformance
-  — `specs/0004`, which is also the authority for
+  — `foundation/0004`, which is also the authority for
   [artifact persistence](../docs/concepts/artifact-persistence.md);
 - that the mapping from a node type to the classes it yields belongs to a pack rather than to the framework,
-  and is declared by it — [artifact class](../docs/concepts/artifact-class.md), `specs/0004` R14;
-- that a template expands into exactly one artifact class and names its output's schema — `specs/0006` R9;
-- what a capability declares about itself — `specs/0007`.
+  and is declared by it — [artifact class](../docs/concepts/artifact-class.md), `foundation/0004` R14;
+- that a template expands into exactly one artifact class and names its output's schema — `foundation/0006` R9;
+- what a capability declares about itself — `foundation/0007`.
 
 ## Definitions
 
@@ -71,7 +71,7 @@ This specification uses these terms as the concept bundle defines them:
 - **R1** — A template is the mechanism of the deterministic
   [generation track](../docs/concepts/generation-track.md), expanding structured knowledge into exactly one
   artifact class. What that track promises — no model in the loop, and identical input yielding
-  byte-identical output — is defined by that concept and by `specs/0004`, listed above as inherited, and is
+  byte-identical output — is defined by that concept and by `foundation/0004`, listed above as inherited, and is
   not restated here. This requirement binds the definition to an artifact; R2 states what follows from it.
 - **R2** — A template that cannot hold byte identity is not a weaker template. Its artifact class moves to
   the judged track and a [specialized agent](../docs/concepts/specialized-agent.md) produces it instead.
@@ -117,7 +117,7 @@ This specification uses these terms as the concept bundle defines them:
 - **R13** — A template holds no domain knowledge and no business rule. Every domain fact in the output comes
   from a knowledge object, so that changing a fact means changing knowledge rather than editing a template.
 - **R14** — A template carries nothing specific to a single downstream repository — no service name, no
-  environment, no path a particular system chose — which is `specs/0005` R13 applied to the artifact where
+  environment, no path a particular system chose — which is `foundation/0005` R13 applied to the artifact where
   hard-coding one is easiest. A template serves every repository on its stack.
 
 ### Ownership, override, and versioning
@@ -126,16 +126,16 @@ This specification uses these terms as the concept bundle defines them:
   independent of technology. Two packs do not share a template; a shared expansion is either framework-owned
   or duplicated deliberately.
 - **R16** — A consumer does not edit a shipped template in place. An override is a declared replacement
-  recorded in the [distribution manifest](../docs/concepts/distribution-manifest.md) under `specs/0008` R12,
+  recorded in the [distribution manifest](../docs/concepts/distribution-manifest.md) under `foundation/0008` R12,
   so that a later upgrade can tell a customization from a divergence and stop rather than overwrite.
 - **R17** — A template's contract version changes whenever its output changes for the same input. That is a
   change every consumer can observe in a diff, so it is a version bump under
-  `specs/0013` R3a rather than a revision. The bump rate for a template is therefore high —
+  `foundation/0013` R3a rather than a revision. The bump rate for a template is therefore high —
   reformatting whitespace in produced output is a bump — and that is the price of R2 rather than a defect in
   this rule. A maintainer who finds the rate intolerable has found an argument about which artifact classes
   belong on the deterministic track at all, not a licence to skip the bump quietly.
 - **R18** — A template does not decide whether its output is committed, recomputed, or discarded. That is the
-  artifact class's persistence, fixed by `specs/0004`.
+  artifact class's persistence, fixed by `foundation/0004`.
 
 ## Outstanding evidence
 

@@ -1,12 +1,12 @@
-"""The first target pack: ten templates, two agents, and the constraints `specs/0011` fixes.
+"""The first target pack: ten templates, two agents, and the constraints `foundation/0011` fixes.
 
-A pack is admitted with a fixture (`specs/0012` R13), and this is that fixture. It lives under
-`fixtures/` rather than `src/claude/` because `specs/0012` **Outstanding evidence** item 5 records an unresolved conflict
-between `specs/0004` R13 and `specs/0008` R23 about where a *production* pack's source belongs. A
+A pack is admitted with a fixture (`foundation/0012` R13), and this is that fixture. It lives under
+`fixtures/` rather than `src/claude/` because `foundation/0012` **Outstanding evidence** item 5 records an unresolved conflict
+between `foundation/0004` R13 and `foundation/0008` R23 about where a *production* pack's source belongs. A
 fixture pack is not distributed at all, so it does not turn on that decision.
 
 The pack declares all twelve classes of the closed vocabulary — ten deterministic, two judged. That
-split is not a convention: `specs/0011` R2 says a template that cannot hold byte identity is not a
+split is not a convention: `foundation/0011` R2 says a template that cannot hold byte identity is not a
 weaker template, its class moves to the judged track and an agent produces it. So the track a class
 sits on is a claim, and the byte-identity tests below are what back it.
 """
@@ -62,7 +62,7 @@ class Pack(unittest.TestCase):
 
 
 class Composition(Pack):
-    """specs/0004 R51 and specs/0006 R5."""
+    """foundation/0004 R51 and foundation/0006 R5."""
 
     def test_the_declaration_conforms(self) -> None:
         from jsonschema import Draft202012Validator
@@ -96,7 +96,7 @@ class Composition(Pack):
             self.assertNotIn("Bash", data["tools"])
 
     def test_the_declaration_states_nothing_R14_excludes(self) -> None:
-        """specs/0004 R14: identity, version, and the classes with track and node types. No more."""
+        """foundation/0004 R14: identity, version, and the classes with track and node types. No more."""
         self.assertEqual(
             {"contract_version", "pack", "version", "framework_contracts", "produces"},
             set(self.declaration),
@@ -106,7 +106,7 @@ class Composition(Pack):
 
 
 class ByteIdentity(Pack):
-    """specs/0004 R2 — and specs/0011 R2, which makes the track a claim this backs."""
+    """foundation/0004 R2 — and foundation/0011 R2, which makes the track a claim this backs."""
 
     def test_every_template_is_byte_identical_across_two_runs(self) -> None:
         for artifact_class, template in sorted(expand.TEMPLATES.items()):
@@ -116,7 +116,7 @@ class ByteIdentity(Pack):
 
     def test_every_template_either_produces_output_or_names_the_gap(self) -> None:
         """Coverage is not assumed. A knowledge object short of what a class needs is a
-        generative gap (specs/0004 R38), and the template naming it is the correct outcome."""
+        generative gap (foundation/0004 R38), and the template naming it is the correct outcome."""
         produced = gaps = 0
         for artifact_class, template in sorted(expand.TEMPLATES.items()):
             for node in self.by_type[SOURCE_TYPE[artifact_class]]:
@@ -133,14 +133,14 @@ class ByteIdentity(Pack):
         """Otherwise the branch above would never run, and R38 would be untested here.
 
         `ko.rule.sales.proposal-validity` carries no `examples`, so no conformance test can be
-        generated from it. specs/0004 R38 blocks the scope rather than inventing one.
+        generated from it. foundation/0004 R38 blocks the scope rather than inventing one.
         """
         gap = next(n for n in self.by_type["rule"] if "examples" not in n)
         with self.assertRaises(expand.MissingFact):
             expand.conformance_test(gap, VERSION)
 
     def test_the_pack_version_is_an_input_and_not_a_lookup(self) -> None:
-        """specs/0011 R5: a value the knowledge does not hold is supplied by the caller."""
+        """foundation/0011 R5: a value the knowledge does not hold is supplied by the caller."""
         node = self.sample("type")
         self.assertNotEqual(expand.type_(node, "0.1.0"), expand.type_(node, "0.2.0"))
 
@@ -151,7 +151,7 @@ class ByteIdentity(Pack):
 
 
 class ReadsOnlyItsInputs(Pack):
-    """specs/0011 R4, read off the module rather than asserted in prose."""
+    """foundation/0011 R4, read off the module rather than asserted in prose."""
 
     def module(self) -> ast.Module:
         return ast.parse((PACK / "templates" / "expand.py").read_text())
@@ -178,7 +178,7 @@ class ReadsOnlyItsInputs(Pack):
 
 
 class MissingFacts(Pack):
-    """specs/0011 R10 and specs/0004 R39 — the direction that proves nothing is invented."""
+    """foundation/0011 R10 and foundation/0004 R39 — the direction that proves nothing is invented."""
 
     def test_a_definition_with_no_attributes_fails_naming_the_field(self) -> None:
         node = dict(self.sample("type"))
@@ -227,7 +227,7 @@ class MissingFacts(Pack):
 
 
 class HoldsNoDomainKnowledge(Pack):
-    """specs/0011 R13 and R14, and specs/0005 R13 applied where hard-coding is easiest."""
+    """foundation/0011 R13 and R14, and foundation/0005 R13 applied where hard-coding is easiest."""
 
     def literals(self) -> list[str]:
         """Every string the module actually evaluates, excluding docstrings.
@@ -258,20 +258,20 @@ class HoldsNoDomainKnowledge(Pack):
             self.assertNotIn(node, joined)
 
     def test_it_names_no_downstream_specific_value(self) -> None:
-        """specs/0011 R14, and specs/0005 R13 applied where hard-coding is easiest."""
+        """foundation/0011 R14, and foundation/0005 R13 applied where hard-coding is easiest."""
         joined = "\n".join(self.literals()).lower()
         for term in ("invoice", "proposal", "customer", "billing", "sales", "order"):
             self.assertNotIn(term, joined)
 
     def test_it_references_knowledge_by_identifier_and_never_by_path(self) -> None:
-        """specs/0011 R8: a path is a fact about how a repository is arranged."""
+        """foundation/0011 R8: a path is a fact about how a repository is arranged."""
         source = (PACK / "templates" / "expand.py").read_text()
         for marker in ("knowledge/", "fixtures/", "src/"):
             self.assertNotIn(marker, source)
 
 
 class ConformanceSuite(Pack):
-    """specs/0004 R36 and R3 — what a judged artifact is checked against."""
+    """foundation/0004 R36 and R3 — what a judged artifact is checked against."""
 
     def test_it_is_generated_from_rule_examples(self) -> None:
         covered = [node for node in self.by_type["rule"] if node.get("examples")]
@@ -288,7 +288,7 @@ class ConformanceSuite(Pack):
                 self.assertIn(rejection["from"], output)
 
     def test_it_declares_the_knowledge_object_it_covers(self) -> None:
-        """specs/0004 R36: a suite must declare the id of the object it covers."""
+        """foundation/0004 R36: a suite must declare the id of the object it covers."""
         covered = [n for n in self.by_type["rule"] if n.get("examples")] + self.by_type["lifecycle"]
         for node in covered:
             self.assertIn(f"// declares: {node['id']}", expand.conformance_test(node, VERSION))

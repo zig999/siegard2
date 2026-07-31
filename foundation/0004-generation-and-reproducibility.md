@@ -27,8 +27,8 @@ what "the same knowledge produces the same system" guarantees. It decides six th
 6. the [persistence](../docs/concepts/artifact-persistence.md) of every artifact it names — which are
    committed, which are recomputed, and what a claim must record for the ones that are not kept.
 
-It **derives from `specs/0002-knowledge-economy-principles.md`**, which decides what knowledge is worth
-holding, and from **`specs/0003-knowledge-ontology-and-notation.md`**, which decides how it is represented.
+It **derives from `foundation/0002-knowledge-economy-principles.md`**, which decides what knowledge is worth
+holding, and from **`foundation/0003-knowledge-ontology-and-notation.md`**, which decides how it is represented.
 Both are cited here rather than repeated.
 
 It does not restate spec 0001's workflow. Where this specification's validations run inside that workflow,
@@ -37,10 +37,9 @@ it names the requirement of 0001 that governs.
 
 ### The premise this specification rests on, now settled
 
-Whether a target pack is framework work at all rested on `specs/0005` R13, which excludes "architecture
+Whether a target pack is framework work at all rested on `foundation/0005` R13, which excludes "architecture
 chosen for one downstream system" and did not say whether a technology pack is that. A maintainer settled it
-on 2026-07-30: a target pack is not that architecture, and `specs/0005` R4
-**Target packs** holds the distinction and the fixture gate that keeps it honest.
+on 2026-07-30: a target pack is not that architecture.
 
 R12 through R18 therefore rest on an accepted rule rather than on a presumption. What remains open is not the
 premise but the evidence: no pack exists, so nothing has exercised any of them.
@@ -55,10 +54,10 @@ premise but the evidence: no pack exists, so nothing has exercised any of them.
 | The workflow every change request follows | spec 0001 |
 | That context resolution degrades rather than blocks | spec 0001 R13–R15, [fail-soft](../docs/concepts/fail-soft.md) |
 | The maturity ladder, and what an assertion binds | spec 0001 R23–R26 |
-| Which component classes exist; that there is no command class | `specs/0006` |
+| Which component classes exist; that there is no command class | `foundation/0006` |
 | The frontmatter contract of a distributable agent or skill | `schemas/agent.json`, `schemas/skill.json` |
-| That a generated tree is never hand-edited, and that hidden defaults are rejected | R7 below; `specs/0005` R16b |
-| What makes a change breaking | `specs/0013` R3a |
+| That a generated tree is never hand-edited, and that hidden defaults are rejected | R7 below; `foundation/0005` R16b |
+| What makes a change breaking | `foundation/0013` R3a |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
 
@@ -140,15 +139,15 @@ before anything runs, and a node type yielding nothing under the active pack is 
 silently uncovered.
 
 **`from` is the third column, and an earlier draft omitted it.** That draft declared only the class and the
-track, and R14 said the declaration holds nothing else, while `specs/0012` R6 assigned the node-type-to-class
-mapping to the pack and `specs/0012` R7 left it in the agent's own competence. R23 then derived the plan from
+track, and R14 said the declaration holds nothing else, while `foundation/0012` R6 assigned the node-type-to-class
+mapping to the pack and `foundation/0012` R7 left it in the agent's own competence. R23 then derived the plan from
 the scope, this declaration, and the manifest, with no model in the loop — so nothing in the plan's declared
 inputs could answer *which artifacts a knowledge object demands*. The plan was model-free and incomplete at
 the same time. R11 was already unsatisfiable for the same reason: a node type yielding no class cannot be
 reported by anything that cannot enumerate what each type yields.
 
 `from` is the smallest input that closes it. It is not what R14's exclusion protects — a mapping from a node
-type to an artifact class names no directory, no filename, and no storage representation, and `specs/0012`
+type to an artifact class names no directory, no filename, and no storage representation, and `foundation/0012`
 R6 already put it in the pack rather than in the framework. R10 still holds unchanged: *this specification*
 fixes no mapping, because the mapping presumes a technology and the pack is where a technology may be
 presumed.
@@ -164,11 +163,11 @@ and `client-stub` added nothing `api-description` does not already carry.
 
 A target pack is the specialized agents and templates that produce the classes it declares, distributed
 together under `src/claude/`. Each agent conforms to `schemas/agent.json` and enumerates its tool grant,
-per `specs/0005` R11 and [least privilege](../docs/concepts/least-privilege.md). The entry point that runs
+per `foundation/0005` R11 and [least privilege](../docs/concepts/least-privilege.md). The entry point that runs
 generation is a [skill](../docs/concepts/skill.md), because there is no command class.
 
 **Composition follows the declaration, and an earlier draft of this section did not.** It said a pack is
-*one* specialized agent and the templates it expands, which cannot be reconciled with `specs/0006` R5 — a
+*one* specialized agent and the templates it expands, which cannot be reconciled with `foundation/0006` R5 — a
 specialized agent produces exactly one artifact class — for any pack declaring two judged classes. The
 example declaration below declares two, `validator` and `orchestration`, so the contradiction was not
 hypothetical: this document's own example could not be built by a conforming pack. The composition rule is
@@ -182,11 +181,11 @@ not already give.
 
 Exactly one pack is active in a governed repository. One pack is what lets a template assume its technology
 instead of abstracting over it, which is where the deterministic track gets its width, and it is consistent
-with `specs/0005` R4 forbidding a vendor-neutral abstraction absent an accepted
+with `foundation/0005` R4 forbidding a vendor-neutral abstraction absent an accepted
 requirement.
 
 The framework ships no default pack. A missing or ambiguous pack blocks generation and is reported, because
-`specs/0005` R16b rejects a hidden default and a pack inferred at run time is the largest
+`foundation/0005` R16b rejects a hidden default and a pack inferred at run time is the largest
 hidden default available.
 
 ## The generation model
@@ -244,7 +243,7 @@ the model-free function R23 describes, over four inputs rather than three.
 
 *Which* producer inside the pack proposes a path is left open, and the reason is worth being explicit
 about. A judged class has an agent that can decide one. A deterministic class has a template, and a
-template cannot judge — but `specs/0011` R12 already puts naming and layout inside the template, so a pack
+template cannot judge — but `foundation/0011` R12 already puts naming and layout inside the template, so a pack
 may well derive a deterministic class's path rather than propose it, which would give that class byte
 identity from the first run instead of the second. Both designs satisfy every requirement here, they differ
 in what the first run promises, and choosing between them without a pack to try them on is the guess this
@@ -304,7 +303,7 @@ was said about the scope or the plan at all.
 
 Persistence, normativity, and derivation are three axes, not one. This section fixes the first. The second is
 already fixed where it needs to be — R33 states that the manifest decides nothing, and
-`specs/0003-knowledge-ontology-and-notation.md` R51 states that a projection is never normative. The third is
+`foundation/0003-knowledge-ontology-and-notation.md` R51 states that a projection is never normative. The third is
 fixed per artifact by R23 and R30.
 
 A two-value split into permanent knowledge and disposable execution output was considered and rejected. It
@@ -331,7 +330,7 @@ land on opposite sides despite both being derived.
 |---|---|---|
 | generation scope | `claim-recorded` | Expansion is deterministic under R19, so the members recompute from the declared roots and the knowledge base version, both of which R4 already pins. Recording the frozen content hash makes R20's invalidation mechanically checkable rather than only stated. |
 | generation plan | `run-scoped` | R23 derives it, R28 makes it byte-identical for identical inputs, and R26 makes it producible without writing a file. No model participates, and nothing outside the run reads it. |
-| generation manifest | `committed` | It records placement, which `specs/0002-knowledge-economy-principles.md` R4 excludes from the knowledge base and which a specialized agent decides. No committed input determines it. R4 names it as a pinned identity, R31 reads it on every later run, R32 requires a recorded unlock to move a file, R35 needs a locked entry to attribute a difference, and R42 and R44 answer reverse impact from it. |
+| generation manifest | `committed` | It records placement, which `foundation/0002-knowledge-economy-principles.md` R4 excludes from the knowledge base and which a specialized agent decides. No committed input determines it. R4 names it as a pinned identity, R31 reads it on every later run, R32 requires a recorded unlock to move a file, R35 needs a locked entry to attribute a difference, and R42 and R44 answer reverse impact from it. |
 | produced source | `committed` | Verification compares against the committed tree, and judged-track content is model-authored, so it is not recomputable byte-for-byte. |
 | target pack declaration | `committed` | Authored, versioned, and distributed under `src/claude/` per R13. |
 | placement decision | `run-scoped` | The one entry the rule does not yield on its own — see below. A model produces it, so the rule reads `committed`; the manifest is what actually keeps the decision, and committing both would create the second authority for placement that R50 exists to prevent. |
@@ -349,15 +348,15 @@ before writing locks nothing. Without the last condition the manifest could hold
 never produced, which R25's "every locked path still exists" would then reject on the next run.
 
 Discarding the manifest was the one reclassification this section exists to refuse. Placement has exactly
-three possible sources: the knowledge base, which `specs/0002` R4 forbids; a persisted manifest; or the agent,
+three possible sources: the knowledge base, which `foundation/0002` R4 forbids; a persisted manifest; or the agent,
 on every run, which cannot be relied on to decide identically twice. Closing the first two leaves only the
 third, and byte identity is then unobtainable.
 
-The persistence of the artifacts `specs/0001-knowledge-object-driven-development.md` names — change request,
+The persistence of the artifacts `foundation/0001-knowledge-object-driven-development.md` names — change request,
 impact analysis, context package, specification delta, validation evidence — is not decided here. That
 specification defers their contracts, and deciding the persistence of evidence before the evidence contract
 exists is the guess that reads like a requirement both specifications warn against. The deferral ends per
-artifact, as each contract arrives: `specs/0009-context-assembly.md` R13 assigns the context package
+artifact, as each contract arrives: `foundation/0009-context-assembly.md` R13 assigns the context package
 `claim-recorded` by applying the rule above, now that R1 there fixes the package's contract. The rule is
 this section's; the assignment is that document's.
 
@@ -507,8 +506,8 @@ Terms used normatively below.
 - **R16** — A component other than a target pack MUST NOT depend on a specific pack.
 - **R17** — The framework ships no default pack. A missing or ambiguous pack MUST block generation with a
   report naming what is missing, and a pack inferred at run time MUST be rejected as a hidden default.
-- **R18** — The entry point that runs generation is a [skill](../docs/concepts/skill.md). `specs/0006`
-  fixes the capability classes and holds that there is no command class;
+- **R18** — The entry point that runs generation is a [skill](../docs/concepts/skill.md). `foundation/0006`
+  fixes the capability classes and holds that there is no command class.
 
 ### The generation scope
 
@@ -595,7 +594,7 @@ Terms used normatively below.
 - **R49** — A `run-scoped` artifact MUST NOT be committed, and its absence MUST NOT be reported as a finding
   by the verification of R34 and R35.
 - **R50** — The generation manifest MUST be `committed`. A design in which placement is decided on any run
-  after the first MUST be rejected: `specs/0002-knowledge-economy-principles.md` R4 excludes placement from
+  after the first MUST be rejected: `foundation/0002-knowledge-economy-principles.md` R4 excludes placement from
   the knowledge base, and R31 has nothing to read without a committed manifest.
 
 ### Producer cardinality, and the first placement
@@ -606,7 +605,7 @@ requirements they qualify, so that an existing citation still resolves to the st
 - **R51** — Every artifact class a pack declares MUST have exactly one producer within that pack: a template
   for a class on the `deterministic` track, a specialized agent for a class on the `judged` track. A
   declared class with no producer MUST be rejected, and two producers for one class MUST be rejected. This
-  is `specs/0006` R5 made checkable at the pack rather than restated: an agent produces exactly one artifact
+  is `foundation/0006` R5 made checkable at the pack rather than restated: an agent produces exactly one artifact
   class, so a pack declaring two judged classes carries two agents.
 - **R52** — For each plan entry the manifest does not lock, the target path MUST come from a placement
   decision that the pack produced, that was validated before use, and that was frozen before plan
@@ -639,7 +638,7 @@ requirement:
 - the schemas of the scope, the plan, the manifest, the pack declaration, and the placement decision, each
   arriving with the first pack that produces one. R52 fixes what the placement decision is for and what its
   validation must reject; the contract it is validated against is deferred here for the reason this list
-  gives, and `specs/0005` R16a already decides that it needs a versioned schema when it arrives,
+  gives, and `foundation/0005` R16a already decides that it needs a versioned schema when it arrives,
   because it is an artifact a later derivation consumes;
 - the declaration syntax hand-authored source uses in R42, and its language coverage;
 - how a `rule.expression` is evaluated. Spec 0003 defers the grammar; this specification defers the evaluator

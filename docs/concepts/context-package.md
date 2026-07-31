@@ -8,9 +8,9 @@ contract_version: concept/1
 tags: [kodd, determinism, context]
 generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }
 sources:
-  - resource: specs/0001-knowledge-object-driven-development.md
+  - resource: foundation/0001-knowledge-object-driven-development.md
     title: Drive every change through knowledge objects, with determinism at the boundaries
-  - resource: specs/0009-context-assembly.md
+  - resource: foundation/0009-context-assembly.md
     title: Fix the context package as a contract, and measure whether resolution earns its place
 ---
 
@@ -35,10 +35,10 @@ names it.
 The degradations are a list, and they are not the stop reason. One traversal can lose a root, meet a cycle,
 and then run out of budget; it stops on one of the three and records all of them, because the gate that
 reads the package is owed what happened rather than what happened last —
-`specs/0009-context-assembly.md` R15 and R16 hold the two vocabularies and how they line up.
+`foundation/0009-context-assembly.md` R15 and R16 hold the two vocabularies and how they line up.
 
 A context package is never committed. Its [artifact persistence](artifact-persistence.md) is
-`claim-recorded` under `specs/0009-context-assembly.md` R13: the roots, the graph, the budget, and the
+`claim-recorded` under `foundation/0009-context-assembly.md` R13: the roots, the graph, the budget, and the
 expansion's [contract version](contract-version.md) reproduce it, so it recomputes, while the hashes and the
 recorded run identity are what a later decision is traced back through. A stored copy would be a second
 authority for knowledge the graph already holds.

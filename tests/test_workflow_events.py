@@ -33,7 +33,7 @@ FIXTURE = REPO_ROOT / "fixtures" / "knowledge-change-loop"
 LOG = FIXTURE / "event-log.jsonl"
 WORKFLOW = "wf_dunning-term"
 
-# The phases specs/0001 R2 fixes, read from the contract that encodes them rather than
+# The phases foundation/0001 R2 fixes, read from the contract that encodes them rather than
 # restated here. Restating would put the same list in a third place — the specification, the
 # schema, and this file — and a test that carries its own copy of a rule stops being able to
 # disagree with the schema.
@@ -82,7 +82,7 @@ class Derivation(unittest.TestCase):
         self.assertEqual(derive(self.events, WORKFLOW), recorded)
 
     def test_file_order_does_not_change_the_result(self) -> None:
-        """Ordering is by seq, so any read order yields the same state (specs/0001 R8)."""
+        """Ordering is by seq, so any read order yields the same state (foundation/0001 R8)."""
         expected = derive(self.events, WORKFLOW)
         shuffled = list(self.events)
         random.Random(20260730).shuffle(shuffled)
@@ -150,7 +150,7 @@ class Guard(unittest.TestCase):
         reasons = guard(state, event(3, "impact-analysis", "create", subject=subject()))
         self.assertTrue(any("terminal status" in r for r in reasons), reasons)
 
-    # --- specs/0001 R7, the attempt limit ------------------------------------------
+    # --- foundation/0001 R7, the attempt limit ------------------------------------------
 
     def reached_validation(self, limit: int, attempts: int) -> list[dict]:
         """A log standing in validation, having used `attempts` implementation attempts."""
@@ -193,10 +193,10 @@ class Guard(unittest.TestCase):
         self.assertEqual(derive(log + [exhausted], WORKFLOW)["status"], "failed")
 
     def test_exhaustion_is_never_an_acceptance(self) -> None:
-        """specs/0001 R7. The terminal status of an exhausted limit is failure."""
+        """foundation/0001 R7. The terminal status of an exhausted limit is failure."""
         self.assertEqual(TRANSITIONS[("validation", "exhausted")], "failed")
 
-    # --- specs/0001 R22, evidence that agrees with the verdict ---------------------
+    # --- foundation/0001 R22, evidence that agrees with the verdict ---------------------
 
     def test_passed_with_a_failing_check_is_rejected(self) -> None:
         log = self.reached_validation(limit=2, attempts=1)
@@ -218,13 +218,13 @@ class Guard(unittest.TestCase):
 class SpecificationAgreement(unittest.TestCase):
     """The schema's phase vocabulary against the specification that fixes it.
 
-    specs/0001 R2 is the authority and the schema is derived from it, so the two can drift.
+    foundation/0001 R2 is the authority and the schema is derived from it, so the two can drift.
     This asserts they have not, the same way tests/test_edge_table_agreement.py holds spec
     0003's edge table against the knowledge contract.
     """
 
     def test_the_phase_enum_is_r2s_default_path_in_order(self) -> None:
-        spec = (REPO_ROOT / "specs" / "0001-knowledge-object-driven-development.md").read_text()
+        spec = (REPO_ROOT / "foundation" / "0001-knowledge-object-driven-development.md").read_text()
         match = re.search(r"\*\*R2\*\* — The default path is exactly: (.+?), in that order", spec, re.S)
         self.assertIsNotNone(match, "R2 no longer states the default path in the expected form")
         prose = [part.strip().replace(" ", "-") for part in match.group(1).replace("\n", " ").split(",")]
@@ -251,7 +251,7 @@ class Contract(unittest.TestCase):
         self.assertTrue(any("attempt_limit" in p for p in schema_problems(bare)), schema_problems(bare))
 
     def test_acceptance_requires_a_deciding_authority(self) -> None:
-        """specs/0001 R21: no workflow accepts its own output."""
+        """foundation/0001 R21: no workflow accepts its own output."""
         without = event(9, "acceptance", "accepted")
         self.assertTrue(any("decided_by" in p for p in schema_problems(without)))
         self.assertEqual(schema_problems(event(9, "acceptance", "accepted", decided_by="maintainer")), [])
@@ -261,7 +261,7 @@ class Contract(unittest.TestCase):
         self.assertTrue(schema_problems(bad))
 
     def test_validation_requires_evidence(self) -> None:
-        """specs/0001 R22."""
+        """foundation/0001 R22."""
         self.assertTrue(any("evidence" in p for p in schema_problems(event(6, "validation", "passed"))))
 
     def test_exhaustion_needs_no_evidence(self) -> None:
@@ -269,7 +269,7 @@ class Contract(unittest.TestCase):
         self.assertEqual(schema_problems(event(6, "validation", "exhausted")), [])
 
     def test_a_verdict_read_from_an_artifact_must_name_it(self) -> None:
-        """specs/0001 R5: the transition is a lookup on a validated artifact's field."""
+        """foundation/0001 R5: the transition is a lookup on a validated artifact's field."""
         self.assertTrue(any("subject" in p for p in schema_problems(event(5, "implementation", "authored"))))
         self.assertEqual(schema_problems(event(5, "implementation", "authored", subject=subject())), [])
 
@@ -281,7 +281,7 @@ class Contract(unittest.TestCase):
         self.assertTrue(schema_problems(bad))
 
     def test_degradation_belongs_only_to_context_resolution(self) -> None:
-        """specs/0001 R13."""
+        """foundation/0001 R13."""
         ok = event(3, "context-resolution", "degraded", degradation="budget exhausted")
         self.assertEqual(schema_problems(ok), [])
         self.assertTrue(schema_problems(event(4, "specification-delta", "recorded", degradation="x")))
@@ -461,7 +461,7 @@ class Fixture(unittest.TestCase):
         self.assertEqual(self.state["status"], "accepted")
 
     def test_every_phase_of_the_default_path_is_recorded(self) -> None:
-        """specs/0001 R2: escalation inserts phases and never removes one."""
+        """foundation/0001 R2: escalation inserts phases and never removes one."""
         self.assertEqual({e["phase"] for e in self.events}, R2_PHASES)
 
     def test_the_recorded_path_follows_the_transition_table(self) -> None:
@@ -480,7 +480,7 @@ class Fixture(unittest.TestCase):
 
     def test_acceptance_names_who_decided_it(self) -> None:
         accepted = [e for e in self.events if e["phase"] == "acceptance"][0]
-        self.assertTrue(accepted["decided_by"], "specs/0001 R21 requires a deciding authority")
+        self.assertTrue(accepted["decided_by"], "foundation/0001 R21 requires a deciding authority")
 
     def test_every_consumable_contract_is_exercised_by_some_fixture(self) -> None:
         """Derived rather than counted: a new row in CONSUMED needs a fixture, not an edit here.

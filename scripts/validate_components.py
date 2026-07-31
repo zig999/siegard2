@@ -110,7 +110,7 @@ def schema_errors(validator: Draft202012Validator, data: dict, rel: str, failure
 
 
 # Directories under the framework source that carry payload rather than a Claude Code
-# component. The harness never reads them: specs/0008 calls them "Siegard's own", resolved
+# component. The harness never reads them: foundation/0008 calls them "Siegard's own", resolved
 # through ${CLAUDE_PLUGIN_ROOT}. They have contracts of their own — check_contract_versions.py
 # locks the schemas and scaffold.py expands the templates — so a component contract here would
 # be a second authority over a file that already has one.
@@ -187,19 +187,19 @@ def check_hooks(root: Path, failures: list[str]) -> int:
     """Validate the hook declaration, and hold it to the files beside it.
 
     A hook is a script rather than a frontmatter artifact, so what a per-file schema can check is
-    its declaration: `specs/0010` R10 requires a hook to state its event, its matcher, and its
+    its declaration: `foundation/0010` R10 requires a hook to state its event, its matcher, and its
     guarantee, and R11 its own timeout. `schemas/hook.json` is that contract.
 
     The cross-file half is the correspondence. A declared hook with no script would install a
     `hooks.json` pointing at nothing, and a script nobody declared would sit in `src/claude/hooks/`
-    looking installed while the harness never loads it — the silent failure `specs/0008` R8 names
+    looking installed while the harness never loads it — the silent failure `foundation/0008` R8 names
     for a different directory and which applies here for the same reason.
     """
     declaration = root / HOOK_DECLARATION
     if not declaration.is_file():
         failures.append(
             f"{display(root)}: hooks/ holds no {HOOK_DECLARATION}, so nothing states what these "
-            f"scripts bind (specs/0010 R10)"
+            f"scripts bind (foundation/0010 R10)"
         )
         return 0
 
@@ -227,7 +227,7 @@ def check_hooks(root: Path, failures: list[str]) -> int:
     for name in sorted(present - declared):
         failures.append(
             f"{display(root / name)}: no entry in {HOOK_DECLARATION} declares it, so it would "
-            f"never be loaded (specs/0010 R10)"
+            f"never be loaded (foundation/0010 R10)"
         )
     return len(declared & present)
 
@@ -236,7 +236,7 @@ def check_plugin_manifest(entry: Path, failures: list[str]) -> int:
     """Validate `.claude-plugin/plugin.json`, and refuse anything else in that directory.
 
     The manifest is not a component and has no frontmatter, so it is checked here rather than
-    beside skills and agents. `specs/0008` R8 states that only `plugin.json` goes inside
+    beside skills and agents. `foundation/0008` R8 states that only `plugin.json` goes inside
     `.claude-plugin/`, and that a component placed there is not loaded at all — a failure that
     is silent at run time, which is why it is loud here.
     """
@@ -245,7 +245,7 @@ def check_plugin_manifest(entry: Path, failures: list[str]) -> int:
         if stray.name != PLUGIN_MANIFEST:
             failures.append(
                 f"{display(stray)}: only {PLUGIN_MANIFEST} goes inside {PLUGIN_DIR}/ — anything "
-                f"else placed there is not loaded (specs/0008 R8)"
+                f"else placed there is not loaded (foundation/0008 R8)"
             )
     if not manifest.is_file():
         failures.append(f"{display(entry)}: {PLUGIN_MANIFEST} is missing — a plugin root requires it")

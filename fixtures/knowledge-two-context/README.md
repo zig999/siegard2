@@ -1,7 +1,7 @@
 # Fixture: a two-context knowledge bundle
 
 What this fixture is for, what it covers, and what it found. It exists to discharge
-validation items 2 through 6 of `specs/0003-knowledge-ontology-and-notation.md`, which that
+validation items 2 through 6 of `foundation/0003-knowledge-ontology-and-notation.md`, which that
 specification requires before a maintainer may accept it.
 
 It is a downstream-shaped case, per `CLAUDE.md` **Scope**: a Sales context that prices and
@@ -30,7 +30,7 @@ so coverage is unaffected.
 
 ## What it covers
 
-| Requirement of specs/0003 | Where the evidence is |
+| Requirement of foundation/0003 | Where the evidence is |
 |---|---|
 | Item 2 — eleven rejections the contract must make | `tests/test_knowledge_rejections.py` |
 | Item 3 — R15, R11 with both shorthands, R18, both outcomes each | `tests/test_knowledge_checks.py` |
@@ -49,12 +49,12 @@ specification.
 
 ## What building it found, and what was repaired
 
-Eleven findings. Each is a statement about `specs/0003`, not about this fixture. Six were
+Eleven findings. Each is a statement about `foundation/0003`, not about this fixture. Six were
 contradictions or gaps and have been repaired in the specification itself; one was a placement
 decision a maintainer has since settled; four remain open. None of the four is a contradiction —
 three are limits of what a mechanism can decide, and one is a redundant check kept deliberately.
 
-### Repaired in specs/0003
+### Repaired in foundation/0003
 
 Findings 1 through 6. Each repair carries tests for both outcomes, and each was mutation-checked
 by reverting the repair and observing the suite fail.

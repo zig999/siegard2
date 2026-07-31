@@ -1,8 +1,8 @@
 """Capability lifecycle and shipped thresholds — the two rules that were maintained by reading.
 
-`specs/0006` R17 requires a capability's status to be derived from checkable facts "and not from a
-label maintained by hand", and `specs/0008` R12 puts that status in the one record a consumer is
-told to trust. `specs/0007` R19 refuses a shipped numeric threshold with no evidence behind it, and
+`foundation/0006` R17 requires a capability's status to be derived from checkable facts "and not from a
+label maintained by hand", and `foundation/0008` R12 puts that status in the one record a consumer is
+told to trust. `foundation/0007` R19 refuses a shipped numeric threshold with no evidence behind it, and
 R20 names the failure it prevents: a value chosen once to get a first run moving becoming a default
 nobody decided to ship.
 
@@ -25,7 +25,7 @@ DIST = REPO_ROOT / "dist" / ".claude"
 
 
 class DerivedStatus(unittest.TestCase):
-    """specs/0006 R17."""
+    """foundation/0006 R17."""
 
     def test_the_installed_statuses_agree_with_what_the_facts_derive(self) -> None:
         self.assertEqual([], cc.check_statuses(DIST))
@@ -71,13 +71,13 @@ class DerivedStatus(unittest.TestCase):
         self.assertTrue(any("retired" in p and "R14" in p for p in problems), problems)
 
     def test_four_capability_classes_are_occupied(self) -> None:
-        """specs/0006 condition 1: at least four classes, each with a fixture."""
+        """foundation/0006 condition 1: at least four classes, each with a fixture."""
         manifest = json.loads((DIST / generate_dist.MANIFEST_NAME).read_text())
         self.assertGreaterEqual(len({c["class"] for c in manifest["capabilities"]}), 4)
 
 
 class Thresholds(unittest.TestCase):
-    """specs/0007 R19 and R20."""
+    """foundation/0007 R19 and R20."""
 
     def test_the_distribution_ships_no_uncalibrated_threshold(self) -> None:
         self.assertEqual([], cc.check_thresholds(DIST))
@@ -104,7 +104,7 @@ class Thresholds(unittest.TestCase):
         for field, reason in cc.CALIBRATED.items():
             self.assertTrue(reason.strip(), field)
             self.assertTrue(
-                "specs/" in reason or "ADR-" in reason,
+                "foundation/" in reason or "ADR-" in reason,
                 f"{field}: {reason!r} cites no requirement",
             )
 
@@ -119,7 +119,7 @@ class UpgradeSkill(unittest.TestCase):
         self.assertTrue((DIST / "skills" / "upgrade" / "SKILL.md").is_file())
 
     def test_it_is_not_model_invocable(self) -> None:
-        """specs/0006 R4: a skill whose effects reach outside the session says so."""
+        """foundation/0006 R4: a skill whose effects reach outside the session says so."""
         from frontmatter_lib import split_frontmatter
 
         data, _ = split_frontmatter((DIST / "skills" / "upgrade" / "SKILL.md").read_text())
@@ -142,7 +142,7 @@ class RecordedUpgradeOutcomes(unittest.TestCase):
 
     The skill drives `scripts/install_dist.py`, so what a fixture can hold is the outcome each
     situation must produce. Recording them as data rather than as prose is also what admits the
-    skill: `specs/0006` R11 makes a fixture the thing that turns an intention into a capability,
+    skill: `foundation/0006` R11 makes a fixture the thing that turns an intention into a capability,
     and R14 keeps an unexercised one out of the distribution entirely.
     """
 
@@ -191,7 +191,7 @@ class RecordedUpgradeOutcomes(unittest.TestCase):
 
     def test_every_recorded_case_cites_a_requirement(self) -> None:
         for case in self.recipe["cases"]:
-            self.assertRegex(case["requirement"], r"^specs/\d{4} R\d+$")
+            self.assertRegex(case["requirement"], r"^foundation/\d{4} R\d+$")
 
     def test_every_recorded_case_has_a_test(self) -> None:
         """A case in the fixture with nothing reproducing it is a claim, not evidence."""
@@ -200,7 +200,7 @@ class RecordedUpgradeOutcomes(unittest.TestCase):
 
 
 class Retirement(unittest.TestCase):
-    """`specs/0006` R14 through R16, over `fixtures/lifecycle-retirement/`.
+    """`foundation/0006` R14 through R16, over `fixtures/lifecycle-retirement/`.
 
     A fixture rather than a real retirement. Nothing in the framework has needed to go yet, and
     retiring something to demonstrate retirement would manufacture the evidence rather than

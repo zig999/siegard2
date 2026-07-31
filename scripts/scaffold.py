@@ -3,8 +3,8 @@
 
 A [scaffold](../docs/concepts/scaffold.md) is a generator for an artifact *this repository
 authors* — a specification, an ADR, a concept, a knowledge object, a component. It is not a
-template in the sense of `specs/0011`: a template expands structured domain knowledge into an
-artifact class from the closed vocabulary of `specs/0004` R8, holds byte identity, and ships
+template in the sense of `foundation/0011`: a template expands structured domain knowledge into an
+artifact class from the closed vocabulary of `foundation/0004` R8, holds byte identity, and ships
 inside a target pack. None of that applies here, and using one word for both is the collision
 `docs/adr/0010-projection-names-the-graph-derived-artifact.md` exists to prevent.
 
@@ -15,7 +15,7 @@ would put the author in the worst position: a file that looks finished and fails
 later, with no indication which part was the scaffold's fault.
 
 **Nothing is minted.** A timestamp, an identifier, and a version come from the caller and are
-never invented — `specs/0011` R5 states it for templates, and a scaffold that invented one would
+never invented — `foundation/0011` R5 states it for templates, and a scaffold that invented one would
 make the artifact irreproducible in the same way. Every placeholder is required for the same
 reason: a default filled in silently is a decision nobody made.
 
@@ -64,7 +64,7 @@ PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 
 # Which contract validates each kind's output. The mapping is explicit rather than derived from
 # the filename: `knowledge-object-rule` and `knowledge-object-definition` are two scaffolds over
-# one contract, because `specs/0003` gives each node type its own required fields and its own
+# one contract, because `foundation/0003` gives each node type its own required fields and its own
 # body sections, and one skeleton for six types would be a skeleton for none of them.
 SCHEMA_BY_KIND = {
     "specification": "spec.json",

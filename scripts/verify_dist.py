@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verify the committed distribution without touching it.
 
-specs/0008 R6: "Verification is separate from production. The command that checks regenerates
+foundation/0008 R6: "Verification is separate from production. The command that checks regenerates
 into a temporary location and compares; it never writes into the distribution it is checking,
 because a check that repairs what it was meant to detect reports success on a defect."
 
@@ -45,11 +45,11 @@ DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
 MANIFEST_NAME = "siegard-manifest.json"
 MANIFEST_SCHEMA = REPO_ROOT / "src" / "claude" / "schemas" / "distribution-manifest.json"
 
-# specs/0008 R7 closes the directory set; anything else at the plugin root is unshippable.
+# foundation/0008 R7 closes the directory set; anything else at the plugin root is unshippable.
 ALLOWED_ROOT = {".claude-plugin", "skills", "agents", "hooks", "bin", "schemas", "templates"}
 
-# .claude/rules/distribution.md names these. `packs/` is specs/0008 R23 and `rules/` is R10.
-FORBIDDEN_PREFIXES = ("specs/", "tests/", "fixtures/", "docs/", ".claude/")
+# .claude/rules/distribution.md names these. `packs/` is foundation/0008 R23 and `rules/` is R10.
+FORBIDDEN_PREFIXES = ("foundation/", "tests/", "fixtures/", "docs/", ".claude/")
 FORBIDDEN_DIRS = {"rules", "packs"}
 
 # A credential-shaped value, and an absolute path that would only be true on the build machine.
@@ -95,23 +95,23 @@ def check_invariants(root: Path, files: dict[str, bytes]) -> list[str]:
             continue
         if entry.name not in ALLOWED_ROOT:
             problems.append(
-                f"{entry.name}: not in the closed directory set of specs/0008 R7 — a component "
+                f"{entry.name}: not in the closed directory set of foundation/0008 R7 — a component "
                 f"fitting none of them is not shipped until that specification names a home"
             )
         if entry.name in FORBIDDEN_DIRS:
             problems.append(
-                f"{entry.name}/: specs/0008 forbids it in the distribution "
+                f"{entry.name}/: foundation/0008 forbids it in the distribution "
                 f"({'R10' if entry.name == 'rules' else 'R23'})"
             )
 
     for path in sorted({Path(p).parent for p in files} - {Path(".")}):
         if not any(p.startswith(f"{path.as_posix()}/") for p in files):
-            problems.append(f"{path}/: empty, and specs/0008 R7 omits an empty directory")
+            problems.append(f"{path}/: empty, and foundation/0008 R7 omits an empty directory")
 
     for path in sorted(files):
         if path.startswith(".claude-plugin/") and path != ".claude-plugin/plugin.json":
             problems.append(
-                f"{path}: only plugin.json goes inside .claude-plugin/ (specs/0008 R8) — a "
+                f"{path}: only plugin.json goes inside .claude-plugin/ (foundation/0008 R8) — a "
                 f"component placed there is not loaded"
             )
         if any(path.startswith(prefix) for prefix in FORBIDDEN_PREFIXES):
@@ -141,7 +141,7 @@ def check_manifest(root: Path, files: dict[str, bytes]) -> list[str]:
     problems: list[str] = []
     manifest_path = root / MANIFEST_NAME
     if not manifest_path.is_file():
-        return [f"{MANIFEST_NAME}: missing — specs/0008 R11 requires it"]
+        return [f"{MANIFEST_NAME}: missing — foundation/0008 R11 requires it"]
 
     try:
         manifest = json.loads(manifest_path.read_text())
@@ -161,7 +161,7 @@ def check_manifest(root: Path, files: dict[str, bytes]) -> list[str]:
             problems.append(f"{path}: recorded in the manifest and absent from the tree")
         elif path not in recorded:
             problems.append(
-                f"{path}: present in the tree and absent from the manifest — specs/0008 R5, no "
+                f"{path}: present in the tree and absent from the manifest — foundation/0008 R5, no "
                 f"file is introduced that has no source"
             )
         elif path != MANIFEST_NAME and recorded[path]["digest"] != digest(files[path]):
@@ -176,7 +176,7 @@ def check_manifest(root: Path, files: dict[str, bytes]) -> list[str]:
         source = REPO_ROOT / entry["source"]
         if not source.is_file():
             problems.append(
-                f"{entry['path']}: its source {entry['source']} no longer exists — specs/0008 R5, "
+                f"{entry['path']}: its source {entry['source']} no longer exists — foundation/0008 R5, "
                 f"no file survives whose source was removed"
             )
 
@@ -193,7 +193,7 @@ def check_manifest(root: Path, files: dict[str, bytes]) -> list[str]:
         if capability["status"] in ("proposed", "retired"):
             problems.append(
                 f"{capability['name']}: status {capability['status']!r} must not appear in an "
-                f"installation — specs/0006 R14, proposed ships nothing and retired is absent"
+                f"installation — foundation/0006 R14, proposed ships nothing and retired is absent"
             )
 
     return problems

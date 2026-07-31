@@ -3,7 +3,7 @@
 Fifty-nine artifacts produced from `fixtures/knowledge-two-context/` through
 `fixtures/pack-typescript/`, with the manifest that records them and the tree they went into.
 
-`out/` is committed because `specs/0004` R34 verifies by regenerating into a temporary tree and
+`out/` is committed because `foundation/0004` R34 verifies by regenerating into a temporary tree and
 diffing against the committed one. There is nothing to diff against otherwise, and R7 makes the
 files there not hand-edited — a `PreToolUse` hook does not yet cover them, so that rule holds by the
 verification catching it rather than by prevention.
@@ -38,10 +38,10 @@ verification catching it rather than by prevention.
   judged artifact verified against a generated conformance suite — is stated and untested. The
   conformance tests for those rules exist in `out/`; the thing they would check does not.
 - **The produced code was never compiled or run.** It is TypeScript and SQL by shape. Nothing here
-  claims it type-checks, and `specs/0004` R3's behavioural conformance is a different claim from the
+  claims it type-checks, and `foundation/0004` R3's behavioural conformance is a different claim from the
   byte identity this fixture holds.
-- **`specs/0004` R7's extension point is unexercised.** The rule is stated in every produced file's
+- **`foundation/0004` R7's extension point is unexercised.** The rule is stated in every produced file's
   header and the binding index reads a `siegard:binds` marker, but no fixture extends a produced
   artifact through a declared extension point.
-- **One knowledge base, one pack.** `specs/0012` R13 wants a pack shown to serve any repository on
+- **One knowledge base, one pack.** `foundation/0012` R13 wants a pack shown to serve any repository on
   its stack, and this shows one.

@@ -15,7 +15,7 @@ element of permanent knowledge, and the boundary between the two kinds of fact a
 
 It decides nothing about *how* knowledge is represented — which node types exist, what notation they use,
 or how software is produced from them. Those are separate specifications that cite this one:
-`specs/0003` for the ontology and the notation, `specs/0004` for generation and reproducibility. The
+`foundation/0003` for the ontology and the notation, `foundation/0004` for generation and reproducibility. The
 dependency is declared in their **Scope** sections rather than asserted here, because three specifications
 sit at one precedence level and none outranks another.
 
@@ -26,8 +26,8 @@ sit at one precedence level and none outranks another.
 |---|---|
 | The workflow every change request follows | spec 0001 |
 | Why coverage figures are observability rather than gates | spec 0001 R25 |
-| That an abstraction requires a current requirement and a testable contract | `specs/0005` R4 |
-| Where stack knowledge lives, once the knowledge base has excluded it | undecided; `specs/0004` proposes an answer |
+| That an abstraction requires a current requirement and a testable contract | `foundation/0005` R4 |
+| Where stack knowledge lives, once the knowledge base has excluded it | undecided; `foundation/0004` proposes an answer |
 
 Two copies of a rule diverge. Where this specification needs one of the above, it cites it.
 
@@ -132,7 +132,7 @@ Terms used normatively below.
   generated systems before a number means anything, and inventing one now would produce the target-chasing
   R8 forbids;
 - where stack knowledge lives once R4 has excluded it from the knowledge base;
-- which node types, notation, or artifacts satisfy R2 and R3 — `specs/0003` and `specs/0004` answer that,
+- which node types, notation, or artifacts satisfy R2 and R3 — `foundation/0003` and `foundation/0004` answer that,
   and each is falsifiable against these tests rather than derived from them mechanically;
 - whether an element that fails R2 is removed immediately or on the next change that touches it.
 

@@ -22,12 +22,12 @@ five things:
    at explicit cost to human reading;
 5. which projections may be generated from the ontology.
 
-It **derives from `specs/0002-knowledge-economy-principles.md`**, which decides what knowledge is worth
+It **derives from `foundation/0002-knowledge-economy-principles.md`**, which decides what knowledge is worth
 holding at all. Every node type, edge, and field below is answerable to the two tests 0002 states, and this
 specification cites them rather than repeating them.
 
 It decides nothing about how software is produced from this representation — artifact classes, the target
-pack, generation scope, plan, manifest, verification, and generative completeness belong to `specs/0004`,
+pack, generation scope, plan, manifest, verification, and generative completeness belong to `foundation/0004`,
 which cites this one. It does not restate spec 0001's workflow or its transient artifacts.
 
 
@@ -38,19 +38,19 @@ which cites this one. It does not restate spec 0001's workflow or its transient 
 | What knowledge is worth holding, and the domain/stack boundary | spec 0002 |
 | The workflow every change request follows, and its transient artifacts | spec 0001 |
 | The maturity ladder, and what an assertion binds | spec 0001 R23–R26 |
-| How software is produced from this representation | `specs/0004` |
+| How software is produced from this representation | `foundation/0004` |
 | The OKF-derived frontmatter precedent and its one divergence | R-block **Notation** below |
-| When an artifact requires a versioned schema | `specs/0005` R16a |
-| What makes a change breaking, and how a version is bumped | `specs/0013` R3a, R10–R12 |
-| That a hidden default is rejected | `specs/0005` R16b |
+| When an artifact requires a versioned schema | `foundation/0005` R16a |
+| What makes a change breaking, and how a version is bumped | `foundation/0013` R3a, R10–R12 |
+| That a hidden default is rejected | `foundation/0005` R16b |
 
 ### One deliberate naming decision
 
 The node type describing what a bounded context exposes is named
 [interface](../docs/concepts/interface.md), not "contract". This repository already uses *contract* for an
-agreement between framework components — `contract_version`, `specs/0005` R16a, the component
-contracts of a Claude Code component. Using the same word for a domain-level interface would put one name on two things,
-which would put one name on two things.
+agreement between framework components — `contract_version`, `foundation/0005` R16a, the component
+contracts of a Claude Code component. Using the same word for a domain-level interface would put one name
+on two things.
 
 ## DDD supplies the vocabulary
 
@@ -197,7 +197,7 @@ nothing resolves without an edge. Their earlier absence made the vocabulary R17 
 specification, which is R52's removal condition met in full. A relationship worth recording is worth
 declaring as one of the edges above.
 
-`implements` is absent: it binds code to knowledge, not knowledge to knowledge, and `specs/0004` owns it.
+`implements` is absent: it binds code to knowledge, not knowledge to knowledge, and `foundation/0004` owns it.
 `extends` is absent: it duplicated `depends_on` in every case examined.
 
 The inverse cardinality on `lifecycle.subject` is a check, not a note: two lifecycles naming one subject is
@@ -256,7 +256,7 @@ defaults:
 ```
 
 An override is a fact about that attribute; a repetition is noise. The default lives in the knowledge base
-rather than in whatever reads it, because `specs/0005` R16b rejects a hidden default and a
+rather than in whatever reads it, because `foundation/0005` R16b rejects a hidden default and a
 value supplied downstream is exactly that.
 
 `knowledge/system.md` holds one further declaration for the same reason: the body length ceiling R48
@@ -283,9 +283,8 @@ Three rules make the type system carry DDD semantics rather than only shapes:
 
 ## Notation
 
-The frontmatter derives from Google's Open Knowledge Format v0.2, for the reasons this section records
--0005
-recorded for the concept bundle: OKF's field names and semantics where they coincide, Siegard's stricter
+The frontmatter derives from Google's Open Knowledge Format v0.2, on the terms already recorded for the
+concept bundle: OKF's field names and semantics where they coincide, Siegard's stricter
 requirements where OKF is weaker, and one documented divergence on `status`.
 
 This is a **separate contract** from `schemas/concept.json`. A concept file holds this framework's
@@ -647,7 +646,7 @@ Terms used normatively below.
   outgoing transition. A trigger list and the reserved name `terminal` are shorthands a validator expands
   before checking the product.
 - **R12** — An `interface` MUST declare `version`, `schema`, and `ownership` ∈ `published | consumed`. A
-  `consumed` interface is exempt from the version-bump discipline of `specs/0013` R3a, which
+  `consumed` interface is exempt from the version-bump discipline of `foundation/0013` R3a, which
   governs what this repository breaks.
 - **R13** — A `boundary` with `ddd: bounded-context` MUST declare `subdomain_type`.
 - **R14** — A `process` MUST declare `steps` as an ordered list naming knowledge-object ids, and MUST NOT
@@ -683,7 +682,7 @@ Terms used normatively below.
 - **R25** — Every attribute MUST declare the parameters its primitive requires and does not inherit.
 - **R26** — A parameter repeated across attributes MUST be declared once as a system default and overridden
   only where an attribute differs. A default MUST live in the knowledge base and MUST NOT be supplied by
-  whatever reads it, which `specs/0005` R16b rejects as a hidden default.
+  whatever reads it, which `foundation/0005` R16b rejects as a hidden default.
 - **R27** — An attribute holding lifecycle state MUST declare `enum` with `lifecycle` naming a `lifecycle`
   id, and MUST NOT repeat the state names.
 - **R28** — A `ref` or a `list` MUST declare `binding`, and one whose target lies in another aggregate MUST
@@ -699,16 +698,15 @@ Terms used normatively below.
   `generated`, `verified`, `stale_after` — MUST keep OKF's names and semantics.
 - **R32** — `id`, `question`, `contract_version`, `generated`, `out_of_scope`, and `boundary` are required,
   and `type` is a closed enum, for the reasons this specification records. `status` uses
-  `proposed | accepted | superseded`, diverging from OKF with the same mapping,
-  and the divergence MUST be marked in the schema.
+  `proposed | accepted | superseded`, diverging from OKF, and the divergence MUST be marked in the schema.
 - **R33** — Every fact a machine reads to produce or validate something MUST live in frontmatter. Nothing
   decides anything by parsing body prose.
 - **R34** — Every knowledge object MUST declare `out_of_scope` with at least one entry.
 - **R35** — A synonym MUST be declared in `aliases` and MUST NOT appear in any body.
 - **R36** — A consumer MUST preserve a frontmatter field it does not know.
-- **R37** — The frontmatter contract MUST ship as `schemas/knowledge-object.json` with a boundary
-  validator in `scripts/`, wired to `make validate`, with per-type required fields expressed conditionally in
-  the schema.
+- **R37** — The frontmatter contract MUST ship as `schemas/knowledge-object.json`, with per-type required
+  fields expressed conditionally in the schema, and the distribution MUST ship a boundary validator that
+  enforces it.
 
 ### Identity and layout
 
@@ -737,7 +735,7 @@ Terms used normatively below.
   single-responsibility violation under R8 rather than as a formatting warning. The ceiling MUST be declared
   by the knowledge base as `limits.body_lines` in `knowledge/system.md`, and a validator MUST NOT supply a
   default for it: a ceiling supplied by whatever reads the knowledge base is the hidden default
-  `specs/0005` R16b rejects. Where the field is absent, the validator MUST report R48 as
+  `foundation/0005` R16b rejects. Where the field is absent, the validator MUST report R48 as
   unenforceable rather than assume a value. The *value* remains deferred to R52's measurement; its home does
   not.
 - **R49** — Where machine consumption and human readability conflict, machine consumption MUST win, and the
@@ -765,7 +763,7 @@ requirement:
   which R52's measurement should calibrate rather than assert. Where the ceiling lives is decided: a
   maintainer settled `limits.body_lines` in `knowledge/system.md` on 2026-07-30, after building the fixture
   showed that the alternative — a validator holding the number — is the hidden default
-  `specs/0005` R16b rejects;
+  `foundation/0005` R16b rejects;
 - the schema of `knowledge/system.md`, beyond the three defaults R26 requires it to hold and the
   `limits.body_lines` ceiling R48 requires;
 - how a governed repository installs `knowledge/`, and how the distribution carries the schema and the
