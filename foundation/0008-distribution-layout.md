@@ -148,7 +148,15 @@ with no access to whatever produced it.
   duplicates the other.
 - **R12** — The distribution manifest records the source revision it was built from, the generator version,
   every installed path, the [contract version](../docs/concepts/contract-version.md) of every schema
-  shipped, each capability's [lifecycle](../docs/concepts/lifecycle.md) status, and every declared override.
+  shipped, each capability's [lifecycle](../docs/concepts/lifecycle.md) status, every declared override, and
+  the declaration of every capability that carries one. That every capability carries one is
+  `foundation/0007` R1 and is checked there; this requirement fixes where a declaration is read from, not
+  how many exist.
+- **R12a** — The declaration a capability carries reaches a consumer through this manifest and through
+  nothing else. `foundation/0007` R23 keeps the authored declaration out of the distribution, so the
+  manifest is the readable surface a declaration exists to provide, and it is derived from the declaration
+  set rather than authored a second time. A manifest entry that disagrees with the declaration it was
+  derived from is a generator defect, not a record a reader should reconcile.
 - **R13** — A consumer reads the installed framework version from `plugin.json` and everything else from the
   distribution manifest, without inspecting component contents or inferring from what happens to be
   present.

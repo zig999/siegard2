@@ -226,3 +226,81 @@ class LockIntegrity(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SupersededContracts(unittest.TestCase):
+    """One file per contract, so the lock is where a bump leaves its trace.
+
+    `.claude/rules/compatibility.md` keeps the current version only in `schemas/`. That removed the
+    trace a second version file used to leave, and these cover what replaced it: a superseded entry
+    naming its successor, and a migration registered for the hop. The coverage check the older
+    convention carried is back, keyed on the record rather than on two files.
+    """
+
+    SUCCESSOR = {"distribution-manifest/2": "digest"}
+
+    def entry(self, **overrides) -> dict:
+        base = {
+            "schema": "distribution-manifest.json",
+            "constraint_digest": "sha256:old",
+            "superseded_by": "distribution-manifest/2",
+        }
+        base.update(overrides)
+        return {"distribution-manifest/1": base}
+
+    def test_a_superseded_contract_with_a_registered_migration_passes(self) -> None:
+        self.assertEqual(
+            [], cv.check_superseded("distribution-manifest/1", self.entry(), self.SUCCESSOR)
+        )
+
+    def test_a_missing_migration_is_reported(self) -> None:
+        """The direction that matters: a bump that left its consumers no way forward."""
+        with mock.patch.object(cv, "registered_migrations", lambda: set()):
+            problems = cv.check_superseded(
+                "distribution-manifest/1", self.entry(), self.SUCCESSOR
+            )
+        self.assertEqual(1, len(problems))
+        self.assertIn("no migration registered", problems[0])
+
+    def test_an_entry_naming_no_successor_is_still_a_removal(self) -> None:
+        locked = self.entry()
+        del locked["distribution-manifest/1"]["superseded_by"]
+        problems = cv.check_superseded("distribution-manifest/1", locked, self.SUCCESSOR)
+        self.assertIn("a removed contract is a breaking change", problems[0])
+
+    def test_a_successor_no_schema_declares_is_reported(self) -> None:
+        problems = cv.check_superseded("distribution-manifest/1", self.entry(), {})
+        self.assertIn("does not exist", problems[0])
+
+    def test_update_carries_a_superseded_entry_forward(self) -> None:
+        previous = self.entry(superseded_by=None)
+        del previous["distribution-manifest/1"]["superseded_by"]
+        carried = cv.carry_superseded(previous, self.SUCCESSOR)
+        self.assertEqual("distribution-manifest/2", carried["distribution-manifest/1"]["superseded_by"])
+        self.assertEqual("sha256:old", carried["distribution-manifest/1"]["constraint_digest"])
+
+    def test_update_drops_an_entry_with_no_successor(self) -> None:
+        """A removal is a break the caller states, not a record --update should preserve."""
+        self.assertEqual({}, cv.carry_superseded(self.entry(), {}))
+
+    def test_the_registered_hop_stamps_the_version_and_changes_nothing_else(self) -> None:
+        before = {
+            "contract_version": "distribution-manifest/1",
+            "capabilities": [{"name": "a", "class": "hook", "status": "active", "path": "hooks/a.py"}],
+        }
+        after = migrate(before, "distribution-manifest/1", "distribution-manifest/2")
+        self.assertEqual("distribution-manifest/2", after["contract_version"])
+        self.assertEqual(before["capabilities"], after["capabilities"])
+        self.assertNotIn("declaration", after["capabilities"][0])
+
+    def test_the_migrated_document_satisfies_the_new_contract(self) -> None:
+        """A path that produces an invalid document is not a path."""
+        schema = json.loads(
+            (REPO_ROOT / "src" / "claude" / "schemas" / "distribution-manifest.json").read_text()
+        )
+        old = json.loads((REPO_ROOT / "dist" / ".claude" / "siegard-manifest.json").read_text())
+        old["contract_version"] = "distribution-manifest/1"
+        for capability in old["capabilities"]:
+            capability.pop("declaration", None)
+        migrated = migrate(old, "distribution-manifest/1", "distribution-manifest/2")
+        self.assertEqual([], list(Draft202012Validator(schema).iter_errors(migrated)))

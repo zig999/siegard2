@@ -76,7 +76,7 @@ This specification uses these terms as the concept bundle defines them:
 | required context | what knowledge it needs in scope to work | every class that reads knowledge |
 | deterministic behavior | what it decides the same way every time | every class |
 | judgment | what it decides by reasoning, and therefore what may vary | every class |
-| assertions | which mechanical checks bind its output | every class that produces a checked artifact |
+| assertions | which assertions bind its output, and where none does | every class that produces a checked artifact |
 | grant | the tools and permissions it uses | every class that executes |
 | failure outcomes | how it reports being unable to proceed | every class |
 
@@ -159,6 +159,27 @@ This specification uses these terms as the concept bundle defines them:
   value presented as a calibrated one is a false report, and it is the route by which a value chosen once
   to get a first run moving becomes a framework default nobody decided to ship.
 
+### Where a declaration lives
+
+- **R21** — A declaration is a separate authored artifact that references the frontmatter contract of its
+  class. It does not extend one. `schemas/skill.json` and `schemas/agent.json` are the harness's contracts
+  and are closed objects, and `docs/adr/0009-component-contracts-from-anthropic-documentation.md` records
+  why that closure carries weight: the harness ignores an unknown frontmatter field silently, so closing
+  the object is what catches a misspelled field the harness would otherwise ship. A declaration field
+  admitted to either contract would relax that closure and reopen the failure mode it was chosen to close.
+  Two of the classes `foundation/0006` R1 holds — a script and a template — carry no frontmatter contract
+  at all, so extending one would leave them nowhere to declare anything.
+- **R22** — A declaration and the component it declares are checked by one validator, which rejects an
+  incomplete declaration under R1 and a disagreement on any field both carry. Two records of one fact is
+  the cost this direction accepts, and a check that compares them is what keeps the cost from becoming
+  drift.
+- **R23** — A declaration is authored under the framework source and is not itself installed, on the
+  precedent `src/claude/hooks/hooks.declaration.json` already sets: the authored declaration stays behind
+  and the generator ships what it computes from it. Installing one per capability would enlarge the closed
+  directory set of `foundation/0008` R7 for an artifact no consumer reads directly. What a consumer reads
+  instead is a catalog derived from the declaration set, and that artifact is `foundation/0008`'s to fix —
+  **Outstanding evidence** below records it as owed rather than assuming it.
+
 ## Outstanding evidence
 
 What this document states and nothing has yet exercised. A condition kept here is a debt;
@@ -173,9 +194,17 @@ removing one because the document binds would turn an open debt into a silent on
 3. One capability's declaration is shown to be wrong by a fixture: a property declared deterministic that
    a prompt actually decided, or a grant wider than its steps. R10 and R14 are only real once something
    has caught a violation.
-4. The overlap with `schemas/skill.json` and `schemas/agent.json` is resolved in one direction —
-   either a declaration extends those contracts or it is a separate artifact that references them — and
-   whichever is chosen is enforced by one validator rather than two.
+4. **Met 2026-07-31.** A maintainer chose the separate-artifact direction and R21 through R23 record it
+   with what decided it: `schemas/skill.json` and `schemas/agent.json` stay closed, which
+   `docs/adr/0009-component-contracts-from-anthropic-documentation.md` requires of them, and two of the
+   six classes have no frontmatter to extend. One validator enforces it —
+   `scripts/validate_components.py` checks the authored set against `capability-declaration/1` and holds
+   each entry to its component's identity and grant, with the rejection covered in both directions. The
+   catalog reaches a consumer through `foundation/0008` R12 and R12a. `docs/adr/0013` records the cost.
+7. Every capability carries a declaration, which R1 requires and condition 1 above owes. One does today,
+   and `scripts/validate_components.py` reports the count against the number of capabilities rather than
+   failing, because a check that failed the build for a debt this document already records would report it
+   twice. R1 binds all of them; nothing yet holds the other eight.
 5. R19 is exercised: one threshold is either calibrated and recorded with its evidence, or removed from a
    declaration that asserted it.
 6. R20 is exercised in the direction that catches something: a report over a run whose attempt limit came

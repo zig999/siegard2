@@ -50,6 +50,18 @@ MAX_SKILL_BODY_LINES = 500
 HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.json"
 HOOK_DECLARATION = "hooks.declaration.json"
 
+DECLARATION_SCHEMA_PATH = REPO_ROOT / "schemas" / "capability-declaration.json"
+CAPABILITY_DECLARATION = "capabilities.declaration.json"
+
+# The frontmatter field each class states its grant in. foundation/0007 R14 holds the grant to what
+# the declared steps require, and foundation/0005 R11 puts the statement in the component; a
+# declaration claiming a grant the component does not is the disagreement R22 exists to catch.
+GRANT_FIELD = {"specialized-agent": "tools", "skill": "allowed-tools"}
+
+# Where a component of each class lives, relative to the framework source root. A declaration whose
+# class does not match the tree its component sits in is two records of one fact disagreeing.
+CLASS_TREE = {"specialized-agent": "agents", "skill": "skills", "hook": "hooks"}
+
 PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.json"
 PLUGIN_DIR = ".claude-plugin"
 PLUGIN_MANIFEST = "plugin.json"
@@ -183,6 +195,96 @@ def check_agents(root: Path, failures: list[str]) -> int:
     return checked
 
 
+def component_frontmatter(root: Path, entry: dict, rel: str, failures: list[str]) -> dict | None:
+    """The frontmatter of the component an entry declares, or None with the reason recorded."""
+    tree = CLASS_TREE.get(entry["class"])
+    if tree is None:
+        # A script, a template, and a target pack have no frontmatter to agree with. The
+        # declaration still validates; there is simply no second record to compare it against.
+        return {}
+    identifier = entry["identifier"]
+    candidates = [root / tree / f"{identifier}.md", root / tree / identifier / "SKILL.md"]
+    for candidate in candidates:
+        if candidate.is_file():
+            parsed = parse(candidate, failures)
+            return None if parsed is None else parsed[0]
+    failures.append(
+        f"{rel}: declares '{identifier}' as a {entry['class']}, and no component answers to it "
+        f"under {tree}/ — a declaration with no component declares nothing"
+    )
+    return None
+
+
+def check_capability_declarations(root: Path, failures: list[str]) -> int:
+    """Validate the authored declaration set, and hold each entry to its component.
+
+    `foundation/0007` R22 requires one validator over the declaration and the component it
+    declares, which is why this lives beside the frontmatter checks rather than in a script of its
+    own. R1 is what it enforces on the declaration; the agreement half is the cost R21's separate
+    artifact accepts, and comparing the two records is what keeps that cost from becoming drift.
+
+    A capability with no entry here is reported as a gap rather than a failure. R1 says a
+    capability whose declaration is absent is not installed, and enforcing that today would reject
+    every component but one — `foundation/0007` **Outstanding evidence** condition 1 is where that
+    debt is recorded, and a check that fails the build for it would be reporting the debt twice.
+    """
+    path = root / CAPABILITY_DECLARATION
+    if not path.is_file():
+        failures.append(
+            f"{display(root)}: holds no {CAPABILITY_DECLARATION}, so no capability declares itself "
+            f"and foundation/0007 R1 is unenforceable"
+        )
+        return 0
+    rel = display(path)
+    try:
+        document = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        failures.append(f"{rel}: not valid JSON: {exc}")
+        return 0
+    if schema_errors(load_validator(DECLARATION_SCHEMA_PATH), document, rel, failures):
+        return 0
+
+    checked = 0
+    declared: set[str] = set()
+    for entry in document["declarations"]:
+        checked += 1
+        identifier = entry["identifier"]
+        if identifier in declared:
+            failures.append(f"{rel}: declares '{identifier}' twice; one capability has one declaration")
+            continue
+        declared.add(identifier)
+        data = component_frontmatter(root, entry, rel, failures)
+        if data is None or not data:
+            continue
+        if data.get("name") != identifier:
+            failures.append(
+                f"{rel}: declares identifier '{identifier}' while its component's frontmatter says "
+                f"name '{data.get('name')}' — two records of one identity must agree"
+            )
+        field = GRANT_FIELD.get(entry["class"])
+        if field is None:
+            continue
+        component_grant = data.get(field)
+        declared_grant = (entry.get("grant") or {}).get("tools")
+        if declared_grant is None:
+            if component_grant:
+                failures.append(
+                    f"{rel}: '{identifier}' declares no grant while its component states "
+                    f"{field}: {component_grant} — the absence of a statement is not a grant"
+                )
+            continue
+        stated = component_grant if isinstance(component_grant, list) else (
+            [item.strip() for item in component_grant.split(",")] if component_grant else []
+        )
+        if sorted(stated) != sorted(declared_grant):
+            failures.append(
+                f"{rel}: '{identifier}' declares grant {sorted(declared_grant)} while its component "
+                f"states {field}: {sorted(stated)} — a grant wider than the steps is a defect even "
+                f"when unused, and a narrower one misdescribes what runs"
+            )
+    return checked
+
+
 def check_hooks(root: Path, failures: list[str]) -> int:
     """Validate the hook declaration, and hold it to the files beside it.
 
@@ -289,11 +391,17 @@ def main() -> int:
             failures.append(f"{display(entry)}: {COMMANDS_MERGED}")
         elif entry.name in PAYLOAD_DIRS and entry.is_dir():
             continue
+        elif entry.name == CAPABILITY_DECLARATION:
+            # Checked once, against the root, after the loop: an entry is held to a component in
+            # another tree, so this cannot run from inside a per-directory branch.
+            continue
         else:
             failures.append(
                 f"{display(entry)}: no contract exists for this component class — add the "
                 f"schema and wire it here before shipping the class (CLAUDE.md, Commands)"
             )
+
+    declarations = check_capability_declarations(root, failures)
 
     print(
         f"components checked: {skills + agents + hooks} ({skills} skill(s), {agents} agent(s), "
@@ -302,6 +410,15 @@ def main() -> int:
         f"schemas: {display(SKILL_SCHEMA_PATH)}, {display(AGENT_SCHEMA_PATH)}, "
         f"{display(PLUGIN_SCHEMA_PATH)}, {display(HOOK_SCHEMA_PATH)}"
     )
+    print(
+        f"capability declarations: {declarations} of {skills + agents + hooks} capabilities  "
+        f"contract: {display(DECLARATION_SCHEMA_PATH)}"
+    )
+    if declarations < skills + agents + hooks:
+        print(
+            f"  gap: {skills + agents + hooks - declarations} capability(ies) carry no declaration. "
+            f"foundation/0007 R1 binds them and nothing checks it — condition 1 there owes the rest."
+        )
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")
         for f in failures:

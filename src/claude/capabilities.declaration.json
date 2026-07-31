@@ -1,0 +1,47 @@
+{
+  "contract_version": "capability-declaration/1",
+  "declarations": [
+    {
+      "identifier": "impact-analyst",
+      "class": "specialized-agent",
+      "objective": "Classify one change request against the knowledge a repository already holds, returning a closed verdict of none, update, or create and naming every implicated knowledge object and ADR. Choose it at the impact-analysis phase, before anything is authored. Not for authoring, not for deciding the next phase, and not for judging whether the change is a good idea.",
+      "inputs": [
+        { "name": "change_request", "artifact": "change-request", "required": true },
+        { "name": "analysis_id", "required": true },
+        { "name": "knowledge_root", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "impact-analysis", "contract": "impact-analysis/1" }
+      ],
+      "consumed_artifacts": [
+        { "artifact": "knowledge-graph", "access": "read" }
+      ],
+      "produced_artifacts": ["impact-analysis"],
+      "required_context": {
+        "node_types": ["boundary", "definition", "rule"],
+        "note": "Classification reads what a change touches, not the whole ontology. A lifecycle, an interface, and a process are reached through the objects above rather than selected directly, so naming all six would narrow nothing."
+      },
+      "deterministic_behavior": [
+        "the result is validated against impact-analysis/1 at the boundary before anything consumes it",
+        "every knowledge-object and ADR identifier the result names is checked to resolve in the graph",
+        "the verdict is one of the closed set none, update, create, and no other value is accepted"
+      ],
+      "judgment": [
+        "which knowledge objects a change request semantically implicates",
+        "whether the implication amounts to none, an update, or a creation"
+      ],
+      "assertions": [
+        { "output": "impact-analysis", "bound": false }
+      ],
+      "grant": {
+        "tools": ["Read", "Grep", "Glob"],
+        "note": "Read-only on purpose. A judgement that could also edit what it judges is not a judgement, and the boundary validator is not this agent's to run."
+      },
+      "failure_outcomes": [
+        { "outcome": "missing_input", "reason": "a required input was not supplied, named in the result rather than substituted" },
+        { "outcome": "unresolved_reference", "reason": "an identifier the analysis would name does not resolve in the graph" },
+        { "outcome": "contradictory_request", "reason": "the change request asks for two things that cannot both hold, named so a caller can decide" }
+      ]
+    }
+  ]
+}

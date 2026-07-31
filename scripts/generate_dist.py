@@ -72,6 +72,11 @@ CLASS_BY_TREE = {"skills": "skill", "agents": "specialized-agent"}
 
 HOOK_DECLARATION = "hooks.declaration.json"
 
+# The authored declaration set. It stays behind for the reason hooks.declaration.json does:
+# foundation/0007 R23 keeps a declaration out of the distribution, and R12a there makes the
+# manifest the surface a consumer reads instead.
+CAPABILITY_DECLARATION = "capabilities.declaration.json"
+
 
 def hook_declaration() -> list[dict]:
     """The authored hook declarations, or an empty list when no hook ships.
@@ -243,7 +248,34 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
              "path": f"bin/{source.name}"}
         )
 
+    attach_declarations(capabilities)
     return files, capabilities, skipped
+
+
+def attach_declarations(capabilities: list[dict]) -> None:
+    """Fold the authored declaration set into the catalog the manifest carries.
+
+    `foundation/0008` R12 puts a declaration in the manifest and R12a makes the manifest the only
+    way one reaches a consumer, because `foundation/0007` R23 keeps the authored file out of the
+    distribution. Derived rather than authored a second time: an entry that disagreed with the
+    declaration it came from would be the generator defect R12a names, so nothing here edits a
+    field the declaration already carries.
+
+    `identifier` and `class` are dropped from what is attached. The manifest entry already holds
+    both, and copying them in would put the same fact twice inside one record.
+    """
+    path = SOURCE_ROOT / CAPABILITY_DECLARATION
+    if not path.is_file():
+        return
+    document = json.loads(path.read_text())
+    by_identifier = {entry["identifier"]: entry for entry in document["declarations"]}
+    for capability in capabilities:
+        entry = by_identifier.get(capability["name"])
+        if entry is None:
+            continue
+        capability["declaration"] = {
+            key: value for key, value in entry.items() if key not in ("identifier", "class")
+        }
 
 
 def hooks_document() -> str | None:
@@ -311,7 +343,7 @@ def build(target: Path) -> tuple[list[dict], list[str]]:
     )
 
     manifest = {
-        "contract_version": "distribution-manifest/1",
+        "contract_version": "distribution-manifest/2",
         "source_revision": source_digest,
         "generator_version": GENERATOR_VERSION,
         "installed": sorted(files, key=lambda e: e["path"]),

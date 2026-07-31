@@ -37,9 +37,29 @@ class MigrationError(Exception):
     """A migration was asked for something it cannot do."""
 
 
+def distribution_manifest_1_to_2(doc: dict) -> dict:
+    """Add nothing, and say why that is the whole migration.
+
+    `distribution-manifest/2` adds one optional field, `capabilities[].declaration`, naming the
+    authored declaration an entry was derived from. A `/1` manifest predates declarations, so no
+    entry has one to name and inventing a file name would assert an artifact that does not exist.
+
+    The migration is therefore a version stamp, and it is registered rather than skipped because
+    the bump is breaking under `.claude/rules/compatibility.md` — a property added to a closed
+    object makes a previously invalid instance valid — and a breaking bump with no registered path
+    is what the coverage check exists to reject. A consumer that reads the stamped document sees a
+    `/2` manifest whose entries carry no declaration, which is exactly what it held before.
+    """
+    migrated = dict(doc)
+    migrated["contract_version"] = "distribution-manifest/2"
+    return migrated
+
+
 # Keyed by (from, to). A key here is the claim that a document can cross that boundary; the
 # coverage check in check_contract_versions.py fails when a boundary exists and a key does not.
-MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {}
+MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
+    ("distribution-manifest/1", "distribution-manifest/2"): distribution_manifest_1_to_2,
+}
 
 
 def migrate(doc: dict, source: str, target: str) -> dict:

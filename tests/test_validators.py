@@ -362,3 +362,86 @@ class Hooks(TreeCase):
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "guarantee")
+
+
+class CapabilityDeclarations(unittest.TestCase):
+    """`foundation/0007` R22: one validator over the declaration and the component it declares.
+
+    R21 makes a declaration a separate artifact, which buys a closed harness contract and costs two
+    records of one fact. These cover the check that keeps the cost from becoming drift, in the
+    direction that matters — each mutation below is a disagreement a reader would not notice.
+    """
+
+    import json as _json
+
+    SOURCE = Path(__file__).resolve().parent.parent / "src" / "claude"
+
+    def tree(self) -> Path:
+        holder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, holder)
+        root = Path(holder) / "claude"
+        shutil.copytree(self.SOURCE, root, ignore=shutil.ignore_patterns("__pycache__"))
+        return root
+
+    def problems(self, mutate=None) -> list[str]:
+        root = self.tree()
+        path = root / validate_components.CAPABILITY_DECLARATION
+        if mutate is not None:
+            document = self._json.loads(path.read_text())
+            mutate(document)
+            path.write_text(self._json.dumps(document))
+        failures: list[str] = []
+        validate_components.check_capability_declarations(root, failures)
+        return failures
+
+    def test_the_authored_set_passes_as_committed(self) -> None:
+        self.assertEqual([], self.problems())
+
+    def test_a_grant_wider_than_the_component_is_reported(self) -> None:
+        """R14: a grant wider than the steps is a defect even when unused."""
+        found = self.problems(lambda d: d["declarations"][0]["grant"]["tools"].append("Bash"))
+        self.assertEqual(1, len(found))
+        self.assertIn("declares grant", found[0])
+
+    def test_a_grant_narrower_than_the_component_is_reported(self) -> None:
+        """The other direction: a declaration that misdescribes what actually runs."""
+        found = self.problems(lambda d: d["declarations"][0]["grant"]["tools"].pop())
+        self.assertIn("declares grant", found[0])
+
+    def test_an_identifier_that_does_not_match_the_component_name_is_reported(self) -> None:
+        """The disagreement has to be injected into the component, not the declaration.
+
+        Pointing the declaration at a different component finds one whose name matches its own
+        filename, so identity still agrees and only the grant diverges. What this covers is the
+        case a rename produces: the component's frontmatter moves and the declaration does not.
+        """
+        root = self.tree()
+        agent = root / "agents" / "impact-analyst.md"
+        agent.write_text(agent.read_text().replace("name: impact-analyst", "name: renamed-analyst", 1))
+        failures: list[str] = []
+        validate_components.check_capability_declarations(root, failures)
+        self.assertTrue(failures)
+        self.assertIn("must agree", failures[0])
+
+    def test_a_declaration_with_no_component_is_reported(self) -> None:
+        found = self.problems(lambda d: d["declarations"][0].update(identifier="not-a-component"))
+        self.assertIn("no component answers to it", found[0])
+
+    def test_an_incomplete_declaration_is_reported(self) -> None:
+        """R1: a declaration that is incomplete is not a declaration."""
+        found = self.problems(lambda d: d["declarations"][0].pop("failure_outcomes"))
+        self.assertTrue(found)
+        self.assertIn("failure_outcomes", found[0])
+
+    def test_a_duplicate_identifier_is_reported(self) -> None:
+        found = self.problems(
+            lambda d: d["declarations"].append(dict(d["declarations"][0]))
+        )
+        self.assertIn("twice", found[0])
+
+    def test_a_missing_set_is_reported(self) -> None:
+        root = self.tree()
+        (root / validate_components.CAPABILITY_DECLARATION).unlink()
+        failures: list[str] = []
+        validate_components.check_capability_declarations(root, failures)
+        self.assertIn("R1 is unenforceable", failures[0])

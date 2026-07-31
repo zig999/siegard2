@@ -1,5 +1,5 @@
 {
-  "$comment": "Constraint digest per contract version, written by scripts/check_contract_versions.py --update. A digest covers the assertion vocabulary only: annotation keywords are stripped, so clarifying a description is not a version bump and changing what a schema accepts is. Regenerating this file to silence a mismatch discards the only record that a contract moved.",
+  "$comment": "Constraint digest per contract version, written by scripts/check_contract_versions.py --update. A digest covers the assertion vocabulary only: annotation keywords are stripped, so clarifying a description is not a version bump and changing what a schema accepts is. Regenerating this file to silence a mismatch discards the only record that a contract moved. An entry carrying superseded_by names the version that replaced it and is kept for as long as a persisted artifact may declare it.",
   "contracts": {
     "adr/1": {
       "schema": "adr.json",
@@ -12,6 +12,10 @@
     "artifact-class/1": {
       "schema": "artifact-class.json",
       "constraint_digest": "sha256:72bb1c40800d7fd2e17182d51ec3ba27f0f465070880711e2843adfab4130603"
+    },
+    "capability-declaration/1": {
+      "schema": "capability-declaration.json",
+      "constraint_digest": "sha256:9566277da869e699e9737a18ae62b3707b772c28d49acc2366d57364f35f87a1"
     },
     "concept-authoring-result/1": {
       "schema": "concept-authoring-result.json",
@@ -27,7 +31,12 @@
     },
     "distribution-manifest/1": {
       "schema": "distribution-manifest.json",
-      "constraint_digest": "sha256:0d1e14a567e12159d0d2547cbe014310e39096f08a30a97a6d1fefee5d435110"
+      "constraint_digest": "sha256:0d1e14a567e12159d0d2547cbe014310e39096f08a30a97a6d1fefee5d435110",
+      "superseded_by": "distribution-manifest/2"
+    },
+    "distribution-manifest/2": {
+      "schema": "distribution-manifest.json",
+      "constraint_digest": "sha256:a0258a13955465ad4dc86dd38f083b01fb4f9456c166f81ac94ea81664951925"
     },
     "generation-manifest/1": {
       "schema": "generation-manifest.json",

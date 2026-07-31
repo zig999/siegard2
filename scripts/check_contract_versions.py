@@ -103,6 +103,79 @@ NAME_MAPS = frozenset({"properties", "patternProperties", "$defs", "definitions"
 HARNESS_OWNED = frozenset({"skill", "agent", "plugin"})
 
 
+def previous_lock() -> dict[str, dict]:
+    """The lock as it stands, or an empty mapping when there is none to carry forward."""
+    if not LOCK_PATH.is_file():
+        return {}
+    try:
+        return json.loads(LOCK_PATH.read_text()).get("contracts", {})
+    except json.JSONDecodeError:
+        # `--update` over an unparseable lock writes a fresh one rather than refusing. The
+        # check path reports the parse error; this path is what repairs it.
+        return {}
+
+
+def carry_superseded(previous: dict[str, dict], digests: dict[str, str]) -> dict[str, dict]:
+    """Entries no schema declares any more, marked with the version that replaced them.
+
+    A contract is superseded rather than deleted when a later version of the same name is
+    present. Where no later version is present the entry is dropped, because a removal is a
+    breaking change the caller has to state rather than a record `--update` should preserve.
+    """
+    carried: dict[str, dict] = {}
+    for contract, entry in previous.items():
+        if contract in digests or "/" not in contract:
+            continue
+        name, version = contract.rsplit("/", 1)
+        successors = sorted(
+            other for other in digests
+            if other.rsplit("/", 1)[0] == name and other != contract
+        )
+        if not successors:
+            continue
+        carried[contract] = {
+            "schema": entry.get("schema", f"{name}.json"),
+            "constraint_digest": entry.get("constraint_digest", ""),
+            "superseded_by": successors[-1],
+        }
+    return carried
+
+
+def registered_migrations() -> set[tuple[str, str]]:
+    """The hops `scripts/migrate_contracts.py` can actually perform."""
+    import migrate_contracts
+
+    return set(migrate_contracts.MIGRATIONS)
+
+
+def check_superseded(contract: str, locked: dict[str, dict], digests: dict[str, str]) -> list[str]:
+    """A locked contract no schema declares is legitimate only as a migrated supersession.
+
+    This is the coverage check the second-version-file convention used to carry. It is keyed on
+    the lock rather than on two files sitting side by side, so it survives one file per contract,
+    and it fires on a missing migration rather than on a missing file.
+    """
+    entry = locked.get(contract, {})
+    successor = entry.get("superseded_by")
+    if not successor:
+        return [
+            f"{contract}: recorded in schemas/{LOCK_PATH.name} but no schema file declares it, and the "
+            f"entry names no superseded_by — a removed contract is a breaking change, not a deletion"
+        ]
+    if successor not in digests:
+        return [
+            f"{contract}: superseded_by names '{successor}', which no schema file declares — the "
+            f"record points at a version that does not exist"
+        ]
+    if (contract, successor) not in registered_migrations():
+        return [
+            f"{contract}: superseded by '{successor}' with no migration registered in "
+            f"scripts/migrate_contracts.py — .claude/rules/compatibility.md requires an executable "
+            f"path, and a bump without one leaves a persisted artifact no way forward"
+        ]
+    return []
+
+
 def strip_annotations(node):
     """Return `node` with annotation keywords removed, respecting name maps."""
     if isinstance(node, list):
@@ -201,6 +274,16 @@ def check(update: bool) -> tuple[int, list[str]]:
     digests = {contract: constraint_digest(entry["schema"]) for contract, entry in found.items()}
 
     if update:
+        # A superseded entry is carried forward rather than recomputed. `.claude/rules/compatibility.md`
+        # keeps one file per contract holding the current version only, so the lock is where a bump
+        # leaves its trace; dropping the entry here would make a superseded contract look deleted,
+        # which is the finding below that a migration is allowed to answer.
+        carried = carry_superseded(previous_lock(), digests)
+        entries = {
+            contract: {"schema": found[contract]["file"], "constraint_digest": digest}
+            for contract, digest in digests.items()
+        }
+        entries.update(carried)
         LOCK_PATH.write_text(
             json.dumps(
                 {
@@ -210,12 +293,10 @@ def check(update: bool) -> tuple[int, list[str]]:
                         "vocabulary only: annotation keywords are stripped, so clarifying a "
                         "description is not a version bump and changing what a schema accepts is. "
                         "Regenerating this file to silence a mismatch discards the only record that "
-                        "a contract moved."
+                        "a contract moved. An entry carrying superseded_by names the version that "
+                        "replaced it and is kept for as long as a persisted artifact may declare it."
                     ),
-                    "contracts": {
-                        contract: {"schema": found[contract]["file"], "constraint_digest": digest}
-                        for contract, digest in sorted(digests.items())
-                    },
+                    "contracts": {c: entries[c] for c in sorted(entries)},
                 },
                 indent=2,
             )
@@ -238,10 +319,7 @@ def check(update: bool) -> tuple[int, list[str]]:
 
     for contract in sorted(set(locked) | set(digests)):
         if contract not in digests:
-            problems.append(
-                f"{contract}: recorded in schemas/{LOCK_PATH.name} but no schema file declares it — "
-                f"a removed contract is a breaking change, not a deletion"
-            )
+            problems.extend(check_superseded(contract, locked, digests))
             continue
         file = found[contract]["file"]
         if contract not in locked:

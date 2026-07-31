@@ -16,7 +16,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "distribution-manifest/1",
+      "const": "distribution-manifest/2",
       "description": "A consumer rejects a manifest it was not built to read rather than inferring version from shape."
     },
     "source_revision": {
@@ -86,7 +86,7 @@
     },
     "capabilities": {
       "type": "array",
-      "description": "each capability's lifecycle status. What is required: status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release — this field is where a consumer observes it.",
+      "description": "each capability's lifecycle status. What is required: status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release \u2014 this field is where a consumer observes it.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -111,7 +111,7 @@
               "template",
               "target-pack"
             ],
-            "description": "this set. A component fitting none of them is not shipped until a class for it exists."
+            "description": "The capability class, from the closed set of six. A component fitting none of them is not shipped until a class for it exists."
           },
           "status": {
             "enum": [
@@ -120,19 +120,32 @@
               "deprecated",
               "retired"
             ],
-            "description": ". `proposed` ships nothing, so it never appears here; `retired` is absent from the distribution, so it never appears here either. The enum is complete rather than reduced because R15 requires the transition through `deprecated` to be expressible."
+            "description": "The capability's lifecycle status. `proposed` ships nothing, so it never appears here; `retired` is absent from the distribution, so it never appears here either. The enum is complete rather than reduced because the transition through `deprecated` must be expressible."
           },
           "path": {
             "type": "string",
             "minLength": 1,
             "description": "Plugin-root-relative path of the component that carries this capability."
+          },
+          "declaration": {
+            "type": "object",
+            "required": [
+              "objective",
+              "inputs",
+              "outputs",
+              "deterministic_behavior",
+              "judgment",
+              "assertions",
+              "failure_outcomes"
+            ],
+            "description": "The declaration this capability carries, derived from the authored set rather than written here. `identifier` and `class` are absent because the entry around it already holds both. This is the only way a declaration reaches a consumer: the authored file is not installed. The parts required here are the ones every capability class must declare; the full contract is `capability-declaration/1` and is enforced where the set is authored, so this checks that a derived entry carries the parts rather than restating a contract that would then have two homes. Absent where the capability carries no declaration yet."
           }
         }
       }
     },
     "overrides": {
       "type": "array",
-      "description": "every declared override. the case this exists for — a consumer replaces a shipped template by declaring it here, so a later upgrade can tell a customization from a divergence and stop rather than overwrite. Empty in a freshly generated distribution: the framework declares none, and only an installation acquires them.",
+      "description": "every declared override. the case this exists for \u2014 a consumer replaces a shipped template by declaring it here, so a later upgrade can tell a customization from a divergence and stop rather than overwrite. Empty in a freshly generated distribution: the framework declares none, and only an installation acquires them.",
       "items": {
         "type": "object",
         "additionalProperties": false,
