@@ -35,6 +35,14 @@ STAMP = {"generated_by": "claude-opus-5", "generated_at": "2026-07-31T10:00:00Z"
 # One plausible value per placeholder, per kind. Deliberately verbose rather than generated:
 # a value that happened to satisfy a pattern by accident would make a green test meaningless.
 CASES: dict[str, dict[str, str]] = {
+    "change-request": {
+        "request_id": "cr_7a2e4d10",
+        "type": "ordinary",
+        "requested_by": "the sales team lead",
+        "requested_at": "2026-08-01T09:00:00Z",
+        "statement": "Sales must issue priced proposals that expire after a bounded period.",
+        "artifact": "intake/sales-request.md",
+    },
     "knowledge-system": {
         "timezone": "America/Sao_Paulo",
         "currency": "BRL",

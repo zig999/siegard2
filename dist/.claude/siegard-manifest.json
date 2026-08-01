@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/2",
-  "source_revision": "sha256:fc0e8027d4806ca241a78b28daa71df24c1bb3393f4ec0ccbc97ad9f69322f87",
+  "source_revision": "sha256:8f3f57a8502c3bda05b8dbb7fa05249f30d72ca9cb6c48a1234cf4e7694c5859",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -11,7 +11,7 @@
     {
       "path": "agents/concept-author.md",
       "source": "src/claude/agents/concept-author.md",
-      "digest": "sha256:81e9fef3d5ac6145af6ccad5cad0df22ac64c94d6c457db3b0bf842bbdcc02cb"
+      "digest": "sha256:eb73976f4e21d094509c3f7934068ac56d374618188faee9e845b4f7c4debe0f"
     },
     {
       "path": "agents/domain-analyst.md",
@@ -26,7 +26,7 @@
     {
       "path": "agents/impact-analyst.md",
       "source": "src/claude/agents/impact-analyst.md",
-      "digest": "sha256:017e8f07467e90d19e2006fadb4df0dc46ac875d78e7e764e5b3f7696088a77a"
+      "digest": "sha256:e9142a1274ce0872ad787f271097f4ffe41ae7078d9bbd83f14f8f83b583770d"
     },
     {
       "path": "agents/knowledge-author.md",
@@ -36,12 +36,12 @@
     {
       "path": "agents/root-selector.md",
       "source": "src/claude/agents/root-selector.md",
-      "digest": "sha256:5afe0cc10fa32121bbaf86853cdf1d89718d153931aba0d0b4b4ec8252a56c78"
+      "digest": "sha256:dc0d14dc5661645b63b27326556efd101ced0b1e5d8e3b0244d14688b4b748b8"
     },
     {
       "path": "agents/spec-delta-author.md",
       "source": "src/claude/agents/spec-delta-author.md",
-      "digest": "sha256:eb253d650c963993c89f6e5cca7e3c221fb3cbbea4f44bea4b69302a9eb8efe4"
+      "digest": "sha256:87e944d0521e8ded4363e3ea9c3b344d983372708540ed0becdfa573d766cb97"
     },
     {
       "path": "bin/cli.py",
@@ -101,7 +101,7 @@
     {
       "path": "bin/validate_knowledge.py",
       "source": "src/claude/bin/validate_knowledge.py",
-      "digest": "sha256:acfff5f08c1034d667d699e8a10561505fbae93299374ff46aaaa56ec2656974"
+      "digest": "sha256:1ad8c6d455f098ac7059fa26627173149e28ebe6c610f61009ed380ad12c9b5f"
     },
     {
       "path": "bin/verify_judged.py",
@@ -226,7 +226,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:4d9962e4c0e215cc42a3794d08639021e38f6c7556f38f3f5590e90187f86bac"
+      "digest": "sha256:e2cf8665611e5295d493b80d4fd21f8a85ddd6f7b518451c05c2bf76a1321dbb"
     },
     {
       "path": "skills/generate/SKILL.md",
@@ -236,7 +236,7 @@
     {
       "path": "skills/ingest-domain/SKILL.md",
       "source": "src/claude/skills/ingest-domain/SKILL.md",
-      "digest": "sha256:1d818d9d58b9b26c93f14d1762e14ed9a9a66a6794c14af23e4662c4f86a5238"
+      "digest": "sha256:6e4abd65c94b582f2611f1ee82818abd44dd369e7e9bed19869fd12175082a5d"
     },
     {
       "path": "skills/model-domain/SKILL.md",
@@ -247,6 +247,11 @@
       "path": "skills/upgrade/SKILL.md",
       "source": "src/claude/skills/upgrade/SKILL.md",
       "digest": "sha256:a55fb0f4573d2413ef298a81e8738013c5b65beae0383344ad3e6fabd8710e7d"
+    },
+    {
+      "path": "templates/change-request.md",
+      "source": "src/claude/templates/change-request.md",
+      "digest": "sha256:a67ca963bc651f7f4d381acef3966286b3c0608a3ae8626154fc008080749d88"
     },
     {
       "path": "templates/concept.md",
@@ -659,17 +664,26 @@
           {
             "artifact": "knowledge-intake-plan",
             "contract": "knowledge-intake-plan/1"
+          },
+          {
+            "artifact": "validation-evidence",
+            "contract": "validation-evidence/1"
           }
         ],
         "consumed_artifacts": [
           {
             "artifact": "knowledge-graph",
             "access": "read"
+          },
+          {
+            "artifact": "knowledge-authoring-result",
+            "access": "read"
           }
         ],
         "produced_artifacts": [
           "knowledge-object",
-          "knowledge-intake-plan"
+          "knowledge-intake-plan",
+          "validation-evidence"
         ],
         "required_context": {
           "node_types": [
@@ -686,10 +700,12 @@
           "the domain model is validated against domain-model/1 before anything is classified, and a model declaring itself blocked ends the run",
           "the classification is validated against knowledge-intake-plan/1 before any object is authored",
           "authoring follows the node-type order strategic before tactical, so an object's boundary and every reference it declares exist before it does",
+          "each authoring result is read at the boundary to tell an authored entry from a blocked one, and a blocked entry is recorded rather than retried",
           "every authored object is born proposed and records the request the model answers",
           "the knowledge validator and the materializer run after authoring, and the derived files are regenerated rather than written",
           "the timestamp and producer identity come from the caller and are never minted",
-          "an entry short of a fact is reported as a gap rather than authored around, and an open question the model refused to decide is carried rather than answered"
+          "an entry short of a fact is reported as a gap rather than authored around, and an open question the model refused to decide is carried rather than answered",
+          "the validators are run and what they reported is recorded as validation evidence \u2014 the checks, their results, and enough to re-run them \u2014 so an ingestion cannot be reported as validated without saying what validated it"
         ],
         "judgment": [
           "how to phrase each authoring delegation",
@@ -719,7 +735,7 @@
           },
           {
             "outcome": "validation_failed",
-            "reason": "the authored base fails the knowledge validator, reported with what failed rather than repaired"
+            "reason": "the authored base fails the knowledge validator; the evidence records every check and its result, and the run reports rather than repairs"
           }
         ]
       }

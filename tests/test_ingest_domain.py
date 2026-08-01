@@ -64,7 +64,23 @@ class Procedure(unittest.TestCase):
         self.assertIn("proposed", self.body)
 
     def test_it_regenerates_projections_rather_than_writing_them(self) -> None:
-        self.assertIn("Never write one by hand", self.body)
+        self.assertIn("Never write one by\nhand", self.body)
+
+    def test_it_reads_the_authoring_result_rather_than_the_filesystem(self) -> None:
+        """A producer's own report is what tells an authored entry from a blocked one."""
+        self.assertIn("knowledge-authoring-result/1", self.body)
+        self.assertIn("you read it rather than the filesystem", self.body)
+
+    def test_it_records_what_validated(self) -> None:
+        """`0001` R22: validation carries evidence, and nothing produced any until this skill did."""
+        self.assertIn("validation-evidence/1", self.body)
+        self.assertIn("reported as validated with nothing saying what", self.body)
+
+    def test_it_names_the_scripts_it_runs(self) -> None:
+        """C04: an installation holds nine executables and nothing else says which is which."""
+        for script in ("bin/validate_knowledge.py", "bin/project_knowledge.py"):
+            with self.subTest(script=script):
+                self.assertIn(script, self.body)
 
     def test_it_reports_the_promotion_handoff(self) -> None:
         """An ingestion reported as finished sends the caller into a block nobody warned about."""
@@ -111,6 +127,17 @@ class Declaration(unittest.TestCase):
             any("strategic before tactical" in b for b in self.entry["deterministic_behavior"]),
             "the order is the guarantee this capability's correctness rests on",
         )
+
+    def test_it_declares_the_authoring_result_it_consumes(self) -> None:
+        """The gap R24 closed on the input side, on the output side: a read that was never declared."""
+        consumed = {c["artifact"] for c in self.entry["consumed_artifacts"]}
+        self.assertIn("knowledge-authoring-result", consumed)
+
+    def test_it_produces_the_validation_evidence_the_method_requires(self) -> None:
+        """`validation-evidence/1` was the one contract with neither a producer nor a consumer."""
+        produced = {o["contract"] for o in self.entry["outputs"]}
+        self.assertIn("validation-evidence/1", produced)
+        self.assertIn("validation-evidence", self.entry["produced_artifacts"])
 
     def test_it_declares_provenance_and_the_proposed_birth(self) -> None:
         behaviour = " ".join(self.entry["deterministic_behavior"])

@@ -26,9 +26,9 @@ Collect these before running anything. A missing input is a stop, not a default:
    the artifacts that request was read from, and both travel into each authored object's provenance — an
    ingestion whose source cannot be named is not one. A model whose `state` is `blocked` ends the run.
 2. **the knowledge root**, and the path of the JSON Schema that governs a knowledge object.
-3. **the framework script root** — the directory holding the knowledge validator and the materializer.
-   Installation decides this path; a component that guessed it would fail silently in a repository laid
-   out differently.
+3. **the framework script root** — the directory holding `bin/validate_knowledge.py` and
+   `bin/project_knowledge.py`. Installation decides this path; a component that guessed it would fail
+   silently in a repository laid out differently.
 4. **the intake id** — `ki_` followed by eight hex digits, for the classification.
 5. **the system defaults**, if the base does not already declare them: the timezone, the currency, and
    the identity strategy every attribute inherits, plus the body-line ceiling. These are domain facts
@@ -92,18 +92,31 @@ nothing is a defect the materializer reports rather than a step you can come bac
 One delegation to `knowledge-author` per object. Give it the classification, the proposed identifier of
 the entry to author, the knowledge root and contract, the material the fact came from, and the instant and
 producer identity. It reads the node type and the subject from the entry — you do not restate them, and
-neither does it decide them. A `blocked` result is a gap, not a retry: record it and move to the next
-entry. Do not restate the request to make the agent accept it.
+neither does it decide them.
+
+Its return is a `knowledge-authoring-result/1`, and you read it rather than the filesystem: its `state`
+tells an authored entry from a blocked one, and a producer's own report of what it wrote is the only
+thing that distinguishes the two without guessing. A `blocked` result is a gap, not a retry — record it
+and move to the next entry. Do not restate the request to make the agent accept it.
 
 ### 5. Validate, then project
 
-Run the knowledge validator over the base. It checks what a per-file schema cannot — that every
+Run `bin/validate_knowledge.py <knowledge root>`. It checks what a per-file schema cannot — that every
 reference resolves, that a lifecycle's transition table is total, that no two lifecycles claim one
 subject, that a cross-context reference targets an interface.
 
-Then regenerate the derived files with the materializer. Never write one by hand: the index, the
-glossary, the context map, and the graph are its output, a hook refuses a write to them, and a
-hand-edited projection is a second authority for what the objects already say.
+Then regenerate the derived files with `bin/project_knowledge.py <knowledge root>`. Never write one by
+hand: the index, the glossary, the context map, and the graph are its output, a hook refuses a write to
+them, and a hand-edited projection is a second authority for what the objects already say. Its
+`--check` mode compares and mutates nothing, which is what a later verification runs.
+
+Both take the knowledge root as an argument and neither defaults to one: they ship, so a path that
+existed only where they were built would be wrong everywhere they run.
+
+**Record what validated.** The run produces a `validation-evidence/1` naming every check that ran, its
+`verdict`, and enough detail to run it again. An ingestion reported as validated with nothing saying what
+validated it is an assertion, and the point of evidence is that a reader can tell a check that passed
+from one that never ran. A failing validator is reported with its evidence and repaired by nobody here.
 
 ## What you never do
 
@@ -121,8 +134,8 @@ hand-edited projection is a second authority for what the objects already say.
 
 Report, in this order: whether the system defaults were already present or expanded; the number of
 constructs classified; the entries authored, by node type; the entries blocked, each with the fact it
-lacked; the constructs recorded as unmapped, each with why; the validator's result; and whether the
-projections regenerated cleanly.
+lacked; the constructs recorded as unmapped, each with why; the `verdict` the validation evidence
+records and where that evidence was written; and whether the projections regenerated cleanly.
 
 Then state what stands between this base and generated source: the objects are `proposed`, and a
 maintainer promotes them. An ingestion reported as finished when nothing has been accepted invites the

@@ -1,6 +1,6 @@
 ---
 name: concept-author
-description: Authors or updates a single concept file in an OKF-derived concept bundle, conforming to the bundle's frontmatter contract, and keeps the bundle index in step. Delegate when a workflow needs a new term defined, an existing concept revised, or an index row repaired. Not for changing the contract itself or renaming concept ids.
+description: Authors or updates a single concept file in an OKF-derived concept bundle, conforming to the bundle's frontmatter contract, and keeps the bundle index in step. Delegate when what must be recorded is the meaning of a term rather than a fact about a domain — a term used normatively and undefined, a definition that has drifted, an index row that disagrees with the file. It needs a bundle and a term, and no prior artifact. Not for recording a domain fact, which is knowledge-author; not for changing the bundle contract; and not for renaming concept ids.
 tools: Read, Grep, Glob, Write, Edit
 ---
 

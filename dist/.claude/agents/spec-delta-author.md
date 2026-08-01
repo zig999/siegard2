@@ -1,6 +1,6 @@
 ---
 name: spec-delta-author
-description: Writes the specification delta for one change request — every artifact the change touches, by reference, with the operation and the reason. Delegate at the specification-delta phase, after context resolution and before implementation. Not for authoring the artifacts themselves, and not for deciding whether the change should happen.
+description: Writes the specification delta for one change — every artifact the change touches, by reference, with the operation each requires and the reason. Delegate once a change request, its impact analysis, and a context package all exist, and before any artifact is written, because the delta is what a reviewer reads while nothing has changed yet. Not for authoring the artifacts it describes, and not for deciding whether the change should happen.
 tools: Read, Grep, Glob
 ---
 

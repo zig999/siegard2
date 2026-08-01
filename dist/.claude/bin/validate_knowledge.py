@@ -44,6 +44,7 @@ Exit: 0 every knowledge base valid, 1 validation failures, 2 cannot run
 
 from __future__ import annotations
 
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -77,6 +78,11 @@ from knowledge_graph_lib import ( # noqa: E402 (after the dependency guards)
     context_of,
     load,
 )
+
+
+# What a scaffold leaves behind when a value is not substituted. The generator's expander refuses one;
+# a consumer's agent has no expander, so the refusal has to happen here instead.
+PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 
 
 # --- resolution, cardinality, and shape of the graph itself -------------------------
@@ -555,7 +561,42 @@ def _holds_word(body: str, word: str) -> bool:
     return word.lower() in {w.lower() for w in WORD.findall(body)}
 
 
+def check_unexpanded_scaffold(graph: Graph) -> None:
+    """No authored object carries a placeholder a scaffold left behind.
+
+    The distribution ships thirteen scaffolds and no expander, and the check does not rest on that. It
+    rests on the fact that no expander could carry this guarantee anywhere. Four paths go around one and
+    none needs bad faith: not running it, running it and editing the output, writing the object by hand,
+    and passing a placeholder as a value — the generator's own expander accepts `title: "{{title}}"`,
+    because it checks that every placeholder received a value and not that the value is one.
+
+    So the guarantee belongs where a producer's work is checked rather than where it is intended: at the
+    boundary, after the agent returns, on the artifact. That is the same reason the boundary validator
+    runs after an authoring agent rather than inside it — a guarantee a producer self-reports is not a
+    guarantee, whatever tools the producer was granted.
+
+    A bare `{{name}}` in frontmatter already fails, but by accident and unhelpfully — YAML reads it as a
+    flow mapping and reports an unhashable key. Quoted, or in the body, it passes everything: `"{{title}}"`
+    is a non-empty string, and no schema can tell it from a title. It then reaches the graph, the
+    projections, and generation, because every one of those reads the same objects.
+    """
+    for node in graph.nodes.values():
+        seen: list[str] = []
+        for number, line in enumerate(node.path.read_text().splitlines(), 1):
+            for name in PLACEHOLDER.findall(line):
+                if name not in seen:
+                    seen.append(name)
+                    graph.report(
+                        node.path,
+                        f"line {number} still holds the scaffold placeholder `{{{{{name}}}}}`. A "
+                        f"scaffold is a skeleton and every value in it is the author's to supply; one "
+                        f"left behind is a decision nobody made, and it is a valid string that no "
+                        f"schema can refuse",
+                    )
+
+
 CHECKS = (
+    check_unexpanded_scaffold,
     check_resolution,
     check_cardinality,
     check_boundary_partition,

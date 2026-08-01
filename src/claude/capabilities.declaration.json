@@ -696,17 +696,26 @@
         {
           "artifact": "knowledge-intake-plan",
           "contract": "knowledge-intake-plan/1"
+        },
+        {
+          "artifact": "validation-evidence",
+          "contract": "validation-evidence/1"
         }
       ],
       "consumed_artifacts": [
         {
           "artifact": "knowledge-graph",
           "access": "read"
+        },
+        {
+          "artifact": "knowledge-authoring-result",
+          "access": "read"
         }
       ],
       "produced_artifacts": [
         "knowledge-object",
-        "knowledge-intake-plan"
+        "knowledge-intake-plan",
+        "validation-evidence"
       ],
       "required_context": {
         "node_types": [
@@ -723,10 +732,12 @@
         "the domain model is validated against domain-model/1 before anything is classified, and a model declaring itself blocked ends the run",
         "the classification is validated against knowledge-intake-plan/1 before any object is authored",
         "authoring follows the node-type order strategic before tactical, so an object's boundary and every reference it declares exist before it does",
+        "each authoring result is read at the boundary to tell an authored entry from a blocked one, and a blocked entry is recorded rather than retried",
         "every authored object is born proposed and records the request the model answers",
         "the knowledge validator and the materializer run after authoring, and the derived files are regenerated rather than written",
         "the timestamp and producer identity come from the caller and are never minted",
-        "an entry short of a fact is reported as a gap rather than authored around, and an open question the model refused to decide is carried rather than answered"
+        "an entry short of a fact is reported as a gap rather than authored around, and an open question the model refused to decide is carried rather than answered",
+        "the validators are run and what they reported is recorded as validation evidence \u2014 the checks, their results, and enough to re-run them \u2014 so an ingestion cannot be reported as validated without saying what validated it"
       ],
       "judgment": [
         "how to phrase each authoring delegation",
@@ -756,7 +767,7 @@
         },
         {
           "outcome": "validation_failed",
-          "reason": "the authored base fails the knowledge validator, reported with what failed rather than repaired"
+          "reason": "the authored base fails the knowledge validator; the evidence records every check and its result, and the run reports rather than repairs"
         }
       ]
     },

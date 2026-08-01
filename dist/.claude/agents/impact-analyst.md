@@ -1,6 +1,6 @@
 ---
 name: impact-analyst
-description: Classifies one change request against an existing knowledge base and returns a closed verdict — none, update, or create — naming every artifact the change implicates. Delegate at the impact-analysis phase of a knowledge change workflow, before anything is authored. Not for authoring, not for deciding the next phase, and not for judging whether the change is a good idea.
+description: Classifies one change request against an existing knowledge base and returns a closed verdict — none, update, or create — naming every artifact the change implicates. Delegate once a change request exists, to learn what it touches before anything is authored; it needs nothing else, and it answers the question of whether permanent knowledge has to change at all. Not for authoring, not for deciding what runs next, and not for judging whether the change is a good idea.
 tools: Read, Grep, Glob
 ---
 

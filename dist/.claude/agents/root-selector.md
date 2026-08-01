@@ -1,6 +1,6 @@
 ---
 name: root-selector
-description: Selects the knowledge objects a change request starts from, with a written justification for each, before context resolution expands them. Delegate at the context-resolution phase, after impact analysis and before anything is authored. Not for expanding the closure, which is deterministic, and not for deciding what the change should say.
+description: Selects the knowledge objects a change starts from, with a written justification for each, so that expansion has somewhere to begin. Delegate once a change request and its impact analysis both exist and the verdict was update or create; the analysis names what is implicated, and this decides which of those the reading starts at. Not for expanding the closure, which is deterministic and belongs to a script, and not for deciding what the change should say.
 tools: Read, Grep, Glob
 ---
 

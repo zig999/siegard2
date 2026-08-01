@@ -1,4 +1,4 @@
-"""C01, C02, C03 — and proof that each one fails.
+"""C01 through C04 — and proof that each one fails.
 
 The committed tree is asserted clean beside every rejection, for the reason `tests/support.py` records
 about the knowledge fixture: a rejection test alone cannot tell a working check from one that rejects
@@ -39,7 +39,8 @@ class Case(unittest.TestCase):
             entry = entries.get(path.stem)
             if entry is not None:
                 cp.check_fields(self.root, entry, path, findings)
-        cp.check_reachability(self.root, findings)
+        cp.check_selectability(self.root, findings)
+        cp.check_named_scripts(self.root, findings)
         return findings
 
     def rules(self) -> set[str]:
@@ -138,38 +139,73 @@ class C02(Case):
 
 
 class C03(Case):
-    """An agent no skill names is unreachable."""
+    """An agent's description states a prerequisite a selector can evaluate.
 
-    def test_an_unrecorded_unreachable_agent_is_caught(self) -> None:
-        """`domain-modeler` is reached by `model-domain`; cut the link and it must be reported."""
-        self.rewrite("skills/model-domain/SKILL.md", "domain-modeler", "the modelling agent")
+    A first form of this rule asked whether any skill named the agent, and that was the wrong criterion
+    in both directions. `foundation/0005` R3 puts selection with the model; every shipped skill declares
+    `disable-model-invocation` because each writes outside the session; so agents are the only layer a
+    selector reaches, and what decides selectability is the description — the declaration does not reach
+    the distribution.
+    """
+
+    CLAUSE = "Delegate when a request describes a problem or a solution and no domain model exists yet."
+
+    def test_a_phase_routed_delegation_is_caught(self) -> None:
+        """The shape four agents carried until the phase order became guidance."""
+        self.rewrite(
+            "agents/domain-modeler.md",
+            self.CLAUSE,
+            "Delegate at the modelling phase of a knowledge change workflow.",
+        )
         findings = self.findings()
         self.assertIn("C03", {f.split(None, 1)[0] for f in findings})
-        self.assertTrue(any("domain-modeler" in f for f in findings))
+        self.assertTrue(any("a moment rather" in f for f in findings))
 
-    def test_a_recorded_debt_passes_and_is_returned_for_printing(self) -> None:
-        """Four agents are unreachable today. A recorded debt is not a pass in silence."""
-        findings: list[str] = []
-        recorded = cp.check_reachability(self.root, findings)
-        self.assertEqual([], findings)
-        self.assertEqual(len(cp.UNREACHABLE), len(recorded))
+    def test_a_workflow_routed_delegation_is_caught(self) -> None:
+        self.rewrite(
+            "agents/domain-modeler.md", self.CLAUSE, "Delegate when a workflow needs a domain modelled."
+        )
+        self.assertIn("C03", self.rules())
 
-    def test_every_recorded_entry_carries_a_reason(self) -> None:
-        for agent, reason in cp.UNREACHABLE.items():
-            with self.subTest(agent=agent):
-                self.assertTrue(reason.strip(), agent)
-                self.assertGreater(len(reason), 40, "a reason short enough to be a label is not one")
+    def test_an_artifact_routed_delegation_passes(self) -> None:
+        """Otherwise the two above could be passing because every clause is rejected."""
+        self.rewrite(
+            "agents/domain-modeler.md",
+            self.CLAUSE,
+            "Delegate once a change request exists and no domain model has been produced for it.",
+        )
+        self.assertNotIn("C03", self.rules())
 
-    def test_no_recorded_entry_is_stale(self) -> None:
-        """An agent that gained a caller must leave the table, or the debt outlives the defect."""
-        skills = list((self.root / "skills").glob("*/SKILL.md"))
-        for agent in cp.UNREACHABLE:
-            with self.subTest(agent=agent):
-                self.assertFalse(
-                    any(agent in s.read_text() for s in skills),
-                    f"{agent} is now invoked by a skill and must leave UNREACHABLE",
-                )
+    def test_a_description_with_no_delegation_clause_is_caught(self) -> None:
+        """A selector told what an agent does and never when to choose it cannot choose it."""
+        self.rewrite("agents/domain-modeler.md", self.CLAUSE, "It is the modelling agent.")
+        self.assertTrue(any("states no `Delegate" in f for f in self.findings()))
 
-    def test_every_recorded_entry_names_an_agent_that_exists(self) -> None:
-        on_disk = {p.stem for p in (self.root / "agents").glob("*.md")}
-        self.assertEqual(set(), set(cp.UNREACHABLE) - on_disk)
+    def test_every_committed_agent_says_when_to_choose_it(self) -> None:
+        self.assertNotIn("C03", self.rules())
+
+
+class C04(Case):
+    """A component that tells its executor to run a shipped script names the script."""
+
+    NAMED = "Run `bin/validate_knowledge.py <knowledge root>`"
+
+    def test_an_unnamed_script_is_caught(self) -> None:
+        """The original defect: `Run the knowledge validator` names no file a consumer can resolve."""
+        self.rewrite("skills/ingest-domain/SKILL.md", self.NAMED, "Run the knowledge validator")
+        findings = self.findings()
+        self.assertIn("C04", {f.split(None, 1)[0] for f in findings})
+        self.assertTrue(any("names no shipped script" in f for f in findings))
+
+    def test_naming_the_script_passes(self) -> None:
+        self.assertNotIn("C04", self.rules())
+
+    def test_a_library_is_exempt_from_needing_a_caller(self) -> None:
+        """A module is imported rather than run; demanding a citation would invite a false one."""
+        self.assertIn("knowledge_graph_lib.py", cp.LIBRARIES)
+        self.assertIn("generation_lib.py", cp.LIBRARIES)
+
+    def test_every_shipped_executable_the_rule_covers_exists(self) -> None:
+        """The exempt set must name real files, or the exemption drifts into covering nothing."""
+        on_disk = {p.name for p in (self.root / "bin").glob("*.py")}
+        self.assertEqual(set(), cp.LIBRARIES - on_disk)

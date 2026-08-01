@@ -23,15 +23,34 @@ Requiring the example and validating it is the same guarantee with none of that 
 field is in a conforming example by construction. Exactly one example, because a second is a second
 shape to imitate.
 
-**C03 — an agent no skill names is unreachable.** Origin: the workflow removal left four agents
-installed, conforming, declared — and invocable by nothing, because a skill is the only class a user
-reaches. `validate_components.py` passed on all four: each was individually valid. Reachability is a
-property of the set, not of a component, so nothing that checks components one at a time can see it.
+**C03 — an agent's description states a prerequisite a selector can evaluate.** A first form of this
+rule asked whether any skill named the agent, and that was the wrong criterion in both directions.
+`foundation/0005` R3 puts selection with Claude Code: an agent is found through its declaration and
+chosen by the model, not by a skill naming it. And every skill this framework ships declares
+`disable-model-invocation`, because each writes outside the session — so skills are the user's doors
+and agents are the only layer a model selects. An agent no skill mentions can be perfectly
+selectable, and one a skill mentions can carry a description nothing can act on.
 
-A recorded debt is not a pass. `UNREACHABLE` carries a reason per agent and this script prints every
-entry on every run, so the debt stays visible rather than becoming silent — the same shape as the
-`CALIBRATED` table in `check_capabilities.py` and as an **Outstanding evidence** section. An agent
-missing from both the skills and the table fails.
+What decides it is the description, which is the whole of what a selector sees: the declaration does
+not reach the distribution. So the rule is what the description routes on. Four agents said
+"delegate at the impact-analysis phase" and its kin — and `foundation/0001` R2 demoted the phase order
+to guidance, so they named a moment the framework no longer has. The three that routed on an artifact
+instead were the three whose contracts had recently changed, which is accident rather than design.
+
+`PHASE_ROUTED` is a regex over the shapes that route on a moment rather than on a prerequisite. An
+agent matching one fails; the repair is to say what must exist before it runs, which is what
+`foundation/0005` R10 makes the only thing that fixes an order.
+
+**C04 — a component that tells its executor to run a shipped script names the script.** Origin:
+`ingest-domain` said "Run the knowledge validator" and "regenerate the derived files with the
+materializer", naming neither file. An installation has eleven executables under `bin/` and nothing
+that says which is which, so the instruction resolves only for a reader who already knows. It is C01
+one level up — a component naming a thing that the consumer cannot resolve — and it was invisible for
+the same reason: the sentence is grammatical and no schema covers prose.
+
+The rule fires on a component that instructs an executor and names no path. It does not require every
+shipped script to have a caller: a library is imported rather than run, and demanding a citation for
+one would push components to cite files they do not invoke.
 
 Declared dependencies: jsonschema — C02 validates a worked example against its contract.
 
@@ -77,27 +96,31 @@ CITED_SCHEMA = re.compile(r"schemas/([a-z0-9-]+)\.json")
 # C01 stops catching anything.
 NOT_A_FIELD = frozenset({"json", "yaml", "md", "true", "false", "null"})
 
-# Agents no skill invokes, with why each is admitted. A reason is required; an agent absent from both
-# the skills and this table is a violation. Every entry is printed on every run.
-UNREACHABLE: dict[str, str] = {
-    "impact-analyst": (
-        "recorded debt, not an entry point. It lost its caller when the workflow machinery was "
-        "removed (docs/adr/0016). Its ordering is derivable from its declaration, so reconnecting it "
-        "means giving it a skill rather than rebuilding anything"
-    ),
-    "root-selector": (
-        "recorded debt, not an entry point. Same origin as impact-analyst; it produces a context "
-        "package that no procedure currently consumes"
-    ),
-    "spec-delta-author": (
-        "recorded debt, not an entry point. Same origin; the delta it produces has no mechanical "
-        "consumer since the orchestrator that read one was removed"
-    ),
-    "concept-author": (
-        "recorded debt, not an entry point. It is the vocabulary layer, and ingest-domain does not "
-        "call it because that procedure authors domain facts. A concept change has no entry point"
-    ),
-}
+# Shapes that route a selector to a moment rather than to a prerequisite. The phase vocabulary was a
+# closed set a persisted event branched on; it is guidance now, and an agent that waits for one waits
+# for something nothing announces.
+PHASE_ROUTED = re.compile(
+    r"\bat the [a-z-]+ phase\b"
+    r"|\bduring the [a-z-]+ phase\b"
+    r"|\bwhen a workflow needs\b"
+    r"|\bat the implementation phase\b",
+    re.IGNORECASE,
+)
+
+# The clause a description uses to tell a selector when to choose the agent.
+DELEGATE = re.compile(r"\bDelegate\b[^.]*\.")
+
+# An instruction to execute something, in the shapes this repository's procedures use.
+RUNS_SOMETHING = re.compile(
+    r"^\s*(?:[-*]|\d+\.)?\s*(?:Then )?(Run|Regenerate|Expand|Validate|Execute) (?:the )?([a-z][^.]*)",
+    re.MULTILINE,
+)
+
+# A shipped executable named by path. `bin/x.py` or a bare `x.py` both resolve for a consumer.
+NAMED_SCRIPT = re.compile(r"`(?:[a-z_/]*/)?([a-z_]+\.py)(?:[^`]*)`")
+
+# Modules a component imports rather than runs. Naming one as a command would be wrong.
+LIBRARIES = frozenset({"cli.py", "frontmatter_lib.py", "generation_lib.py", "knowledge_graph_lib.py"})
 
 
 def load(path: Path) -> dict:
@@ -206,25 +229,55 @@ def check_fields(source: Path, entry: dict, path: Path, findings: list[str]) -> 
             )
 
 
-def check_reachability(source: Path, findings: list[str]) -> list[str]:
-    """C03, over the set. Returns the recorded debts, which the caller prints."""
-    agents = sorted(p.stem for p in (source / "agents").glob("*.md"))
-    skills = list((source / "skills").glob("*/SKILL.md"))
-    invoked = {agent for agent in agents if any(agent in s.read_text() for s in skills)}
+def check_named_scripts(source: Path, findings: list[str]) -> None:
+    """C04, over every component that instructs an executor."""
+    components = sorted((source / "skills").glob("*/SKILL.md")) + sorted(
+        (source / "agents").glob("*.md")
+    )
+    runnable = {
+        p.name for p in (source / "bin").glob("*.py") if p.name not in LIBRARIES
+    }
+    for path in components:
+        rel = path.relative_to(source).as_posix()
+        body = path.read_text()
+        for verb, instruction in RUNS_SOMETHING.findall(body):
+            sentence = f"{verb} {instruction}"
+            if NAMED_SCRIPT.search(sentence):
+                continue
+            findings.append(
+                f"C04 {rel}: {sentence[:70]!r} tells the executor to run something and names no "
+                f"shipped script in the same instruction. An installation holds {len(runnable)} "
+                f"executables and nothing that says which one this is"
+            )
 
-    recorded = []
-    for agent in agents:
-        if agent in invoked:
-            continue
-        if agent in UNREACHABLE:
-            recorded.append(f"{agent}: {UNREACHABLE[agent]}")
-            continue
-        findings.append(
-            f"C03 agents/{agent}.md: no skill names this agent, and a skill is the only class a user "
-            f"invokes. It is installed, declared, and reachable by nothing. Give it an entry point, or "
-            f"record it in UNREACHABLE with the reason it is admitted"
+
+def check_selectability(source: Path, findings: list[str]) -> None:
+    """C03, over each agent's description — the whole of what a selector sees."""
+    for path in sorted((source / "agents").glob("*.md")):
+        rel = path.relative_to(source).as_posix()
+        line = next(
+            (l for l in path.read_text().splitlines() if l.startswith("description: ")), None
         )
-    return recorded
+        if line is None:
+            findings.append(f"C03 {rel}: no description, so nothing can select this agent")
+            continue
+        description = line[len("description: ") :]
+
+        clause = DELEGATE.search(description)
+        if clause is None:
+            findings.append(
+                f"C03 {rel}: the description states no `Delegate ...` clause. A selector is told what "
+                f"this agent does and never when to choose it"
+            )
+            continue
+
+        routed = PHASE_ROUTED.search(clause.group(0))
+        if routed:
+            findings.append(
+                f"C03 {rel}: the delegation clause routes on {routed.group(0)!r} — a moment rather "
+                f"than a prerequisite. The phase order is guidance, so nothing announces that moment "
+                f"to a selector. Say what must exist before this agent runs"
+            )
 
 
 def main() -> int:
@@ -250,19 +303,19 @@ def main() -> int:
         check_fields(source, entry, path, findings)
         checked += 1
 
-    recorded = check_reachability(source, findings)
+    check_selectability(source, findings)
+    check_named_scripts(source, findings)
 
-    print(f"component prose checked: {checked} agent(s)  rules: C01, C02, C03")
-    if recorded:
-        print(f"unreachable, recorded ({len(recorded)}):")
-        for line in recorded:
-            print(f"  {line}")
+    print(f"component prose checked: {checked} agent(s)  rules: C01, C02, C03, C04")
     if findings:
         print(f"FAILED: {len(findings)} violation(s)\n")
         for finding in findings:
             print(f"  {finding}")
         return 1
-    print("every field the prose names exists, every required field is named, every agent is reached")
+    print(
+        "every field the prose names exists, every worked example conforms, every agent says when to "
+        "choose it, and every script a component runs is named"
+    )
     return 0
 
 
