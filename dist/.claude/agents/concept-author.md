@@ -48,4 +48,20 @@ around the block is noise it must ignore.
 - `state`: `authored` (new file) | `updated` (existing file revised) | `blocked` (nothing written)
 - `term`: the term as delegated
 - `concept_id`, `concept_path`, `files_changed`: required unless blocked
+
+```json
+{
+  "contract_version": "concept-authoring-result/1",
+  "producer": "concept-author",
+  "state": "authored",
+  "term": "dunning",
+  "concept_id": "concept.dunning",
+  "concept_path": "concepts/dunning.md",
+  "files_changed": ["concepts/dunning.md", "concepts/index.md"]
+}
+```
+
+A `blocked` result carries `blocking_reason` and writes nothing; any other result carries the three
+fields above. The contract rejects the combinations that contradict each other, and it should: a
+blocking reason on a successful result says two things at once.
 - `blocking_reason`: required when blocked — name the missing input or the conflicting concept

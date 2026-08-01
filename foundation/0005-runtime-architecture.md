@@ -226,6 +226,37 @@ contradicting itself.
   rejected are recorded in
   `docs/adr/0017-order-follows-from-declarations-not-from-a-sequencer.md`.
 
+### Ambiguity has a direction
+
+R24 arrived after R1 through R23 and is numbered here rather than beside R7, so that an existing citation
+still resolves to the statement it named. It states a rule the framework had been applying in four
+components and declaring nowhere.
+
+- **R24** — Where a capability's input admits more than one reading, the resolution is toward the stricter
+  reading, and the direction is stated in the capability rather than left to whoever reads its output. The
+  rule takes one of three forms, and which one applies is decided by what the capability can do rather
+  than by preference:
+
+  1. **Where the ambiguity can be refused, it is refused.** A capability that can return a gap, a blocked
+     outcome, or an open question does that instead of choosing. `foundation/0007` R6 already requires this
+     of a *missing* input; this extends it to an input that is present and reads two ways.
+  2. **Where the capability must resolve it to produce anything, it takes the reading that constrains
+     more, and records the alternative it did not take.** A recorded choice can be overturned by a
+     reviewer and an invisible one cannot, so the alternative is part of the output rather than a
+     courtesy.
+  3. **Where the resolution would decide whether a check runs, it is not an ambiguity.** It is a missing
+     requirement, and the repair belongs in whatever left the input able to read two ways.
+     `foundation/0007` R25 states this for an alternation among declared inputs; the general case is here.
+
+  **The direction is chosen so that being wrong costs work rather than coverage.** A mis-resolution must
+  degrade toward more validation, a narrower claim, or a reported gap — never toward less checking or a
+  wider claim. A capability whose ambiguity default fails the other way has the fail-safe direction
+  inverted, whatever else it gets right.
+
+  This is not a licence to guess where R7 says judgment belongs. R7 puts model judgment where meaning is
+  the work; R24 governs what happens when the meaning genuinely does not resolve, which is the case R7
+  does not reach.
+
 ## Outstanding evidence
 
 What this document states and nothing has yet exercised. A condition kept here is a debt;

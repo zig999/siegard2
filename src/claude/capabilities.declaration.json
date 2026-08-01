@@ -9,7 +9,8 @@
         {
           "name": "change_request",
           "artifact": "change-request",
-          "required": true
+          "required": true,
+          "contract": "change-request/1"
         },
         {
           "name": "analysis_id",
@@ -44,10 +45,12 @@
         "note": "Classification reads what a change touches, not the whole ontology. A lifecycle, an interface, and a process are reached through the objects above rather than selected directly, so naming all six would narrow nothing."
       },
       "deterministic_behavior": [
+        "the change request is validated against change-request/1 at the boundary before it is classified",
         "the result is validated against impact-analysis/2 at the boundary before anything consumes it",
         "every knowledge-object and ADR identifier the result names is checked to resolve in the graph",
         "the verdict is one of the closed set none, update, create, and no other value is accepted",
-        "the state of the base is recorded as empty or populated, and an empty base admits no update verdict"
+        "the state of the base is recorded as empty or populated, and an empty base admits no update verdict",
+        "a request ambiguous between update and create names both the existing artifact and the ambiguity, and the base is recorded as populated whenever anything existed \u2014 the reading that keeps the non-empty implicated rule in force"
       ],
       "judgment": [
         "which knowledge objects a change request semantically implicates",
@@ -89,7 +92,9 @@
       "inputs": [
         {
           "name": "request",
-          "required": true
+          "required": true,
+          "artifact": "change-request",
+          "contract": "change-request/1"
         },
         {
           "name": "model_id",
@@ -114,10 +119,12 @@
         "note": "No node type is in scope. This capability works in DDD's vocabulary and produces a design; the ontology's six types enter one step later, when the model is classified. Naming a node type here would put classification in two capabilities."
       },
       "deterministic_behavior": [
+        "the change request is validated against change-request/1 at the boundary before it is analysed",
         "the result is validated against domain-model/1 at the boundary before anything consumes it",
         "the state is one of the closed set modeled, blocked, and no other value is accepted",
         "every element declares origin as stated or modeled, and an element it decided carries the rationale that decided it",
-        "the model id comes from the caller and is never minted"
+        "the model id comes from the caller and is never minted",
+        "an element whose origin is unclear is recorded as modeled rather than stated, which is the stricter reading: it demands a rationale and invites review, where a wrong `stated` would claim the request said something it did not"
       ],
       "judgment": [
         "the whole of the modelling: subdomain classification, context boundaries, aggregate boundaries, which constructs are entities and which are value objects, and which rules are invariants",
@@ -188,6 +195,10 @@
         {
           "artifact": "knowledge-graph",
           "access": "read"
+        },
+        {
+          "artifact": "knowledge-object",
+          "access": "read"
         }
       ],
       "produced_artifacts": [
@@ -210,7 +221,8 @@
         "the state is one of the closed set classified, blocked, and no other value is accepted",
         "every proposed identifier is computed from the node type and the boundary by the ontology's arithmetic rather than allocated",
         "entries are sorted by proposed identifier, so two classifications of one model compare directly",
-        "the intake id comes from the caller and is never minted"
+        "the intake id comes from the caller and is never minted",
+        "a construct whose node type is genuinely ambiguous is classified as the model supports and the alternative is recorded, never resolved silently"
       ],
       "judgment": [
         "which node type each DDD construct becomes, and the ddd value it carries",
@@ -254,7 +266,8 @@
         {
           "name": "change_request",
           "artifact": "change-request",
-          "required": true
+          "required": true,
+          "contract": "change-request/1"
         },
         {
           "name": "impact_analysis",
@@ -330,6 +343,13 @@
         {
           "name": "change_request",
           "artifact": "change-request",
+          "required": true,
+          "contract": "change-request/1"
+        },
+        {
+          "name": "impact_analysis",
+          "artifact": "impact-analysis",
+          "contract": "impact-analysis/2",
           "required": true
         },
         {
@@ -440,7 +460,8 @@
         "the result is validated against knowledge-authoring-result/1 at the boundary",
         "the object is validated against knowledge-object/1, including the per-type required fields",
         "the node type and the subject are read from the entry the classification names, never decided again",
-        "the timestamp and producer identity come from the caller and are never minted"
+        "the timestamp and producer identity come from the caller and are never minted",
+        "a fact that would need two node types is reported as blocked rather than compressed into one, because refusing is available here and choosing would author a construct nobody described"
       ],
       "judgment": [
         "the wording of the object's own body, and what belongs out of scope",
@@ -573,7 +594,9 @@
       "inputs": [
         {
           "name": "request",
-          "required": true
+          "required": true,
+          "artifact": "change-request",
+          "contract": "change-request/1"
         },
         {
           "name": "model_id",
@@ -702,7 +725,8 @@
         "authoring follows the node-type order strategic before tactical, so an object's boundary and every reference it declares exist before it does",
         "every authored object is born proposed and records the request the model answers",
         "the knowledge validator and the materializer run after authoring, and the derived files are regenerated rather than written",
-        "the timestamp and producer identity come from the caller and are never minted"
+        "the timestamp and producer identity come from the caller and are never minted",
+        "an entry short of a fact is reported as a gap rather than authored around, and an open question the model refused to decide is carried rather than answered"
       ],
       "judgment": [
         "how to phrase each authoring delegation",

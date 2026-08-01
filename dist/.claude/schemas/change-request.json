@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/change-request.json",
+  "title": "Change request",
+  "description": "The recorded request that originates every change to a governed repository. The named producer is whoever asked; the named consumers are every capability that needs to know what was asked and why it is being asked — impact analysis, root selection, the specification delta, and domain modelling all declare it. This contract existed as a deferral for as long as the method did: the specification that requires a change request for every change also defers its schema, and the deferral held until three capabilities declared the artifact without a contract version and so could not satisfy the rule that a prerequisite is declared with one. That is what this closes, and it is the whole of why it exists now rather than earlier. Its body stays prose on purpose. A request explains what someone wants, and where an artifact only explains something to a reader, prose is the correct form and a schema around it is ceremony. What the contract adds is identity, provenance, and the one field a predicate reads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "request_id", "type", "requested_by", "requested_at", "statement", "artifacts"],
+  "properties": {
+    "contract_version": {
+      "const": "change-request/1",
+      "description": "The contract this instance declares. A consumer selects behaviour on this value and never infers a version from shape."
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^cr_[0-9a-f]{8}$",
+      "description": "Stable identifier for this request. Six other contracts already carry a field of exactly this shape referring to it, which is what made the absence of this one visible: the identifier was validated everywhere except where the thing it identifies lives."
+    },
+    "type": {
+      "enum": ["ordinary", "regulatory"],
+      "description": "What kind of change is being asked for. The vocabulary is two values because exactly one predicate reads this field — a regulatory change escalates to the full path with a reinforced acceptance gate — and a third value would be a distinction nothing consumes. It widens when a predicate needs it to, and not before. `ordinary` is not a default the framework supplies: the requester states it, so that `regulatory` is a positive claim somebody made rather than the absence of one."
+    },
+    "requested_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Who asked. Provenance rather than authority: naming the requester does not make the request correct, and no capability reads this field to decide anything. It is here so a recorded decision can be traced to the ask that prompted it."
+    },
+    "requested_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "When it was asked, as a UTC instant the caller supplies. The framework refuses to mint one, for the same reason it refuses elsewhere: an artifact stamped from a clock cannot be reproduced and compared."
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What is being asked, in prose. It states the problem or the outcome wanted, not how to build it — a request that specifies the solution has done the modelling that a later capability is accountable for, and done it where nothing records whether the request stated it or somebody decided it."
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "A constraint the request imposes that is not part of what it asks for — a deadline, a compatibility promise, a system that must keep working. Recorded separately from `statement` because a constraint binds the solution while the statement describes the problem, and a downstream capability treating one as the other either over-constrains the design or ignores a limit somebody stated."
+    },
+    "out_of_scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "What the requester says this request does not cover. Optional here and required of a knowledge object, and the difference is deliberate: a knowledge object's silence would be read as permission by whatever generates from it, while a request's silence is answered by the analysis recording an open question. Where the requester does bound the ask, recording it saves the modelling step from asking."
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Each artifact this request was read from, by path or stable reference. Non-empty: a request nobody can re-read is a request nobody can check an analysis against, and every capability downstream carries this provenance forward into what it produces."
+    }
+  }
+}

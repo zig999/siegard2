@@ -17,6 +17,10 @@
       "schema": "capability-declaration.json",
       "constraint_digest": "sha256:9566277da869e699e9737a18ae62b3707b772c28d49acc2366d57364f35f87a1"
     },
+    "change-request/1": {
+      "schema": "change-request.json",
+      "constraint_digest": "sha256:110ad829770b8941bd69fefe226831f30f19d6ba14a0018d5d84de2eaf14cd4c"
+    },
     "concept-authoring-result/1": {
       "schema": "concept-authoring-result.json",
       "constraint_digest": "sha256:b2696304532298979d66006ec9f9d28e19c7c3cbc628eab2fe7fcfac9f58acfc"

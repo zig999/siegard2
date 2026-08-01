@@ -273,3 +273,63 @@ class DocumentedExample(unittest.TestCase):
             json.loads(self.blocks[0]).get("open_questions"),
             "a model that resolves everything is the failure the agent is warned about",
         )
+
+
+class AmbiguityHasADirection(unittest.TestCase):
+    """The rule `foundation/0005` R24 states, asserted where each capability applies it.
+
+    R24 was written after the framework had been applying it in four components and declaring it nowhere.
+    The risk it closes is a future capability resolving ambiguity permissively because nothing said not to
+    — so what is asserted here is that the direction stays stated, in the prose the producer reads and in
+    the declaration a reader compares capabilities by.
+
+    The fail-safe direction is the half worth protecting: a mis-resolution must cost work, never coverage.
+    `domain-modeler` defaulting to `stated` instead of `modeled` would be the inversion — it would claim
+    the request said something it did not, and drop the rationale a reviewer needs.
+    """
+
+    AGENTS = SHIPPED_ROOT / "agents"
+    DECLARATION = SHIPPED_ROOT / "capabilities.declaration.json"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.declarations = {
+            d["identifier"]: d
+            for d in json.loads(cls.DECLARATION.read_text())["declarations"]
+        }
+
+    def behaviour(self, identifier: str) -> str:
+        return " ".join(self.declarations[identifier]["deterministic_behavior"])
+
+    def test_the_modeller_defaults_to_modeled_not_stated(self) -> None:
+        """Form 2: it must resolve to produce anything, so it takes the reading that demands review."""
+        self.assertIn(
+            "When you are unsure whether something was stated, it was not",
+            (self.AGENTS / "domain-modeler.md").read_text(),
+        )
+        self.assertIn("recorded as modeled rather than stated", self.behaviour("domain-modeler"))
+
+    def test_the_classifier_records_the_alternative(self) -> None:
+        body = (self.AGENTS / "domain-analyst.md").read_text()
+        self.assertIn("genuinely ambiguous", body)
+        self.assertIn("the alternative is recorded, never resolved silently", self.behaviour("domain-analyst"))
+
+    def test_the_author_refuses_rather_than_compressing(self) -> None:
+        """Form 1: refusing is available, so it refuses instead of choosing."""
+        self.assertIn("rather than compressing them into one", (self.AGENTS / "knowledge-author.md").read_text())
+        self.assertIn("blocked rather than compressed", self.behaviour("knowledge-author"))
+
+    def test_the_ingestion_carries_an_open_question_rather_than_answering_it(self) -> None:
+        self.assertIn("carried rather than answered", self.behaviour("ingest-domain"))
+
+    def test_the_impact_analyst_invents_no_field_for_an_ambiguity(self) -> None:
+        """The contract has nowhere to record one, and inventing a field would fail the boundary."""
+        body = (self.AGENTS / "impact-analyst.md").read_text()
+        self.assertIn("rather than inventing a field", body)
+        self.assertNotIn("in `notes`", body)
+
+    def test_the_impact_analysis_contract_has_no_notes_field(self) -> None:
+        """The gap the assertion above exists because of, held so a silent addition is noticed."""
+        schema = json.loads((SHIPPED_SCHEMAS / "impact-analysis.json").read_text())
+        self.assertNotIn("notes", schema["properties"])
+        self.assertFalse(schema["additionalProperties"])

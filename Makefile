@@ -38,6 +38,7 @@ validate:
 	python3 scripts/check_contract_versions.py || fail=1; \
 	python3 src/claude/bin/validate_concepts.py docs/concepts || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
+	python3 scripts/check_component_prose.py || fail=1; \
 	python3 src/claude/bin/validate_artifacts.py fixtures || fail=1; \
 	python3 src/claude/bin/validate_knowledge.py fixtures/*/knowledge || fail=1; \
 	python3 src/claude/bin/project_knowledge.py --check fixtures/*/knowledge || fail=1; \
@@ -46,6 +47,13 @@ validate:
 	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
 
+# `check_component_prose.py` sits beside `validate_components.py` and answers a different question.
+# That script validates each component against its frontmatter contract and holds the declaration to
+# the component; this one holds the component's *prose* to the contracts it declares, and holds the
+# agent set to being reachable. Every finding it reports was found by hand first — a field the prose
+# named and the contract lacked, an agent no skill invoked — and each was invisible to a check that
+# looks at one component at a time against one schema.
+#
 # `check_capabilities.py` runs last in the chain because it reads the committed
 # distribution: foundation/0006 R17 derives each capability's status from whether the
 # distribution installs it and whether a fixture exercises it, and both facts are

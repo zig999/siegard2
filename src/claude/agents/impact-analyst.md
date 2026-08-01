@@ -18,7 +18,9 @@ consumes it, and a guarantee a producer self-reports is not a guarantee.
 
 The delegation message must provide:
 
-1. **the change request** — what is being asked, and its `cr_` identifier;
+1. **the change request**, conforming to `schemas/change-request.json`. It carries the statement, the
+   `type` an escalation predicate reads, any constraint the requester imposed, and the artifacts it was
+   read from;
 2. **the analysis id** — `ia_` followed by eight hex digits. You never mint one: a run whose
    identifiers came from you could not be reproduced and compared;
 3. **the knowledge root** — the directory holding the knowledge base, and the path of the JSON Schema
@@ -70,8 +72,12 @@ happen after you, stop.
    the case that produces a wrong `create`.
 3. Read every candidate you find, in full. A near match decided from a filename is how a duplicate
    knowledge object enters a base.
-4. Classify. Where the request is ambiguous between `update` and `create`, prefer naming both the
-   existing artifact and the ambiguity in `notes` — the maintainer resolves it, not you.
+4. Classify. Where the request is ambiguous between `update` and `create`, name the existing artifact
+   among the implicated either way: a `create` that implicates the objects it connects to carries the same
+   information a reader needs, and the verdict then differs without hiding anything. What you cannot do is
+   record the ambiguity itself — `impact-analysis/2` has no field for it, and the contract is closed. Say
+   nothing rather than inventing a field, and resolve toward the verdict whose implicated set is the
+   larger of the two.
 5. Name every implicated artifact by the identifier it declares, with its kind. Identifiers, never
    content: restating an artifact here would put a second copy of it in a temporary file, and the copy
    is the one that stops being maintained.

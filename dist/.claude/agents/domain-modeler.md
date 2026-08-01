@@ -37,6 +37,21 @@ own output.
 When you are unsure whether something was stated, it was not. `modeled` with a thin rationale is honest;
 `stated` for something you inferred is a false claim about the request.
 
+## Required inputs
+
+The delegation message must provide:
+
+1. **the change request**, conforming to `schemas/change-request.json`. Its `statement` is what you
+   analyse; its `constraints` bind the design without being part of what is asked; its `artifacts` name
+   what it was read from, and travel into the model. Where it declares `out_of_scope`, that is a bound the
+   requester set — record it as excluded rather than re-deciding it;
+2. **the model id** — `dm_` followed by eight hex digits. You never mint one: a model stamped from a clock
+   could not be repeated and compared;
+3. **the material the request references**, where there is any. Absent, the analysis rests on the request
+   alone rather than on material nobody supplied.
+
+A missing input is a stop. Say what is absent and return nothing else.
+
 ## The order, and why each step needs the one before it
 
 Analyse strategic before tactical:

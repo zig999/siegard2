@@ -24,9 +24,9 @@ Two rules govern everything below, and neither is yours to relax:
 
 Collect these before running anything. A missing input is a stop, not a default:
 
-1. **the request** — the description of the problem or the solution, its `cr_` identifier, and every
-   artifact it was read from. All three travel into the model, because a design decision is only reviewable
-   against the request that prompted it.
+1. **the change request**, conforming to `schemas/change-request.json`. Its statement, its constraints,
+   and the artifacts it was read from all travel into the model, because a design decision is only
+   reviewable against the request that prompted it.
 2. **the model id** — `dm_` followed by eight hex digits. You own the identifier; the framework refuses to
    mint one, because a model stamped from a clock could not be repeated and compared.
 3. **the material the request references**, where there is any. Absent, the analysis rests on the request
