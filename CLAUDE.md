@@ -54,7 +54,6 @@ leaving a contract implicit is the worse form.
 | `scripts/` | the generator: assembly, verification, and this repository's checks | implementation | no |
 | `templates/` | scaffolds for artifacts only this repository authors | implementation | no |
 | `tests/` | contract, transition, validation, and packaging tests | implementation | no |
-| `fixtures/` | downstream-shaped cases that exercise capabilities | evidence | no |
 | `src/claude/` | the Claude Code components the generator ships | framework source | yes, in full |
 | `dist/.claude/` | the assembled distribution | generated, never hand-edited | it **is** the product |
 | `.claude/` | rules and skills that govern work in this repository | development environment | no |
@@ -162,26 +161,21 @@ harnesses, and application code presented as framework functionality. A target p
 technology stack and serves any repository on that stack, so a pack is framework work rather than the
 excluded architecture — `foundation/0012` fixes the unit and `foundation/0005` R13 the exclusion.
 
-A fixture in `fixtures/` is the channel through which downstream application work enters this repository,
-and it is optional: no capability is blocked for want of one. A fixture earns its cost where a failure
-mode is not evident from the contract — a multi-step flow, a generator whose output must be read, a case
-that already broke once. Propose one then, name what it would catch, and create it only with maintainer
-authorization. An agent never adds a fixture unbidden.
-
-Evidence that passes through no fixture is equally legitimate: an installation or upgrade incident, a
-Claude Code incompatibility, an eval result, a dogfooding run, a failure seen in a consuming repository.
-None admits that repository's business rules.
+Evidence that an abstraction is real may come from a test, an eval, an installation or upgrade incident,
+a Claude Code incompatibility, a dogfooding run, or a failure seen in a consuming repository. None admits
+that repository's business rules. A fixture is one more such channel and this repository holds none —
+`docs/adr/0019-the-repository-keeps-no-fixtures.md`. Adding one back needs maintainer authorization and a
+named failure mode it would catch; an agent never adds one unbidden.
 
 Do not generalize speculatively. Introduce an abstraction only when a current requirement needs it and
 its reusable contract can be tested. This applies to the framework's own architecture, and to this file.
 
 ## Commands
 
-`make validate` (schemas and contracts), `make test` (framework tests), `make knowledge` (regenerate the
-derived trees of every knowledge fixture), `make dist` (regenerate `dist/.claude/` from framework
-source), `make dist-check` (regenerate into a temporary tree and compare it against the committed
-distribution), `make foundation` (validate `foundation/`; outside `check` by design, so run it when a
-specification changes), `make check` (validate, test, dist-check).
+`make validate` (schemas and contracts), `make test` (framework tests), `make dist` (regenerate
+`dist/.claude/` from framework source), `make dist-check` (regenerate into a temporary tree and compare
+it against the committed distribution), `make foundation` (validate `foundation/`; outside `check` by
+design, so run it when a specification changes), `make check` (validate, test, dist-check).
 
 `make check` never mutates the repository. Regeneration is `make dist`; verification is `make dist-check`.
 A check that repairs what it was meant to detect reports success on a defect.

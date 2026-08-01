@@ -1,11 +1,15 @@
 ---
 id: "0015"
 title: Compile only accepted knowledge, so that promotion is required for something
-status: accepted
+status: superseded
 contract_version: adr/1
 ---
 
 # Compile only accepted knowledge, so that promotion is required for something
+
+**Superseded by `docs/adr/0018-a-knowledge-object-carries-no-status.md`.** The gate below has no scope
+left to guard — the generation path it sat on was removed — and the promotion it made consequential was
+removed with the `status` field itself. Kept for history and for the migration 0018 defines.
 
 ## Context
 

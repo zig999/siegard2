@@ -149,93 +149,19 @@ if __name__ == "__main__":
     unittest.main()
 
 
-class RecordedUpgradeOutcomes(unittest.TestCase):
-    """`fixtures/upgrade-run/`: three outcomes, reproduced rather than remembered.
-
-    The skill drives `scripts/install_dist.py`, so what a fixture can hold is the outcome each
-    situation must produce. Recording them as data rather than as prose is also what admits the
-    skill: `foundation/0006` R11 makes a fixture the thing that turns an intention into a capability,
-    and R14 keeps an unexercised one out of the distribution entirely.
-    """
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.recipe = json.loads((REPO_ROOT / "fixtures" / "upgrade-run" / "run.json").read_text())
-
-    def setUp(self) -> None:
-        import install_dist
-
-        self.install_dist = install_dist
-        holder = tempfile.TemporaryDirectory()
-        self.addCleanup(holder.cleanup)
-        self.project = Path(holder.name) / "consumer"
-        self.plugin = self.project / ".claude" / "plugins" / "siegard"
-        self.project.mkdir(parents=True)
-        self.install_dist.write(DIST, self.plugin)
-
-    def case(self, name: str) -> dict:
-        return next(c for c in self.recipe["cases"] if c["name"] == name)
-
-    def test_same_version_is_a_no_op(self) -> None:
-        case = self.case("same-version")
-        before = self.install_dist.tree(self.plugin)
-        self.assertEqual([], self.install_dist.divergences(self.plugin))
-        self.assertEqual(before, self.install_dist.tree(self.plugin))
-        self.assertEqual("no-op", case["expected_outcome"])
-
-    def test_local_divergence_is_detected_and_named(self) -> None:
-        case = self.case("local-divergence")
-        target = self.plugin / case["diverge"]
-        target.write_text(target.read_text() + "\n<!-- the repository's own note -->\n")
-        found = self.install_dist.divergences(self.plugin)
-        self.assertTrue(any(case["expected_marker"] in note for note in found), found)
-        self.assertTrue(any(case["diverge"] in note for note in found), found)
-
-    def test_a_shadowed_agent_is_reported(self) -> None:
-        case = self.case("shadowed-agent")
-        agents = self.project / ".claude" / "agents"
-        agents.mkdir(parents=True, exist_ok=True)
-        (agents / f"{case['shadow']}.md").write_text(
-            f"---\nname: {case['shadow']}\ndescription: The repository's own.\ntools: Read\n---\n\nLocal.\n"
-        )
-        found = self.install_dist.shadowed(self.plugin, self.project)
-        self.assertTrue(any(case["expected_marker"] in note for note in found), found)
-
-    def test_every_recorded_case_cites_a_requirement(self) -> None:
-        for case in self.recipe["cases"]:
-            self.assertRegex(case["requirement"], r"^foundation/\d{4} R\d+$")
-
-    def test_every_recorded_case_has_a_test(self) -> None:
-        """A case in the fixture with nothing reproducing it is a claim, not evidence."""
-        covered = {"same-version", "local-divergence", "shadowed-agent"}
-        self.assertEqual(covered, {case["name"] for case in self.recipe["cases"]})
-
-
 class Retirement(unittest.TestCase):
-    """`foundation/0006` R14 through R16, over `fixtures/lifecycle-retirement/`.
+    """`foundation/0005` R14 through R16, exercised against constructed sequences.
 
-    A fixture rather than a real retirement. Nothing in the framework has needed to go yet, and
-    retiring something to demonstrate retirement would manufacture the evidence rather than
-    produce it. What the fixture makes real is the mechanism: the sequence is checked, the
-    migration exists as a function, and the test below fails against the old behavior — which is
-    the clause R16 states and which no amount of recorded history would satisfy on its own.
+    Nothing in the framework has needed to be retired yet, and retiring something to demonstrate
+    retirement would manufacture the evidence rather than produce it. What is asserted is the
+    mechanism: an invalid sequence is reported, and the migration below fails against the old
+    behavior — the clause R16 states, which no amount of recorded history would satisfy on its own.
+
+    Three tests here read `fixtures/lifecycle-retirement/releases.json` and went with it when
+    `fixtures/` was removed. Each asserted that a recorded sequence was well-formed, which the
+    constructed cases below already cover from both directions; what the recording added was a
+    claim that some release had happened, and none had.
     """
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.record = json.loads(
-            (REPO_ROOT / "fixtures" / "lifecycle-retirement" / "releases.json").read_text()
-        )
-
-    def test_the_recorded_sequence_holds(self) -> None:
-        self.assertEqual([], cc.check_release_sequence(self.record["releases"]))
-
-    def test_it_passes_through_deprecated(self) -> None:
-        """R15: removing an installed capability without that step is a silent breaking change."""
-        self.assertEqual(
-            ["active", "deprecated", "retired"],
-            [release["status"] for release in self.record["releases"]],
-        )
 
     def test_skipping_deprecated_is_reported(self) -> None:
         problems = cc.check_release_sequence(
@@ -286,8 +212,3 @@ class Retirement(unittest.TestCase):
         with self.assertRaises(TypeError):
             new_consumer(legacy)
         self.assertEqual(legacy, new_consumer(migrate(legacy)))
-
-    def test_the_record_names_the_test_that_backs_it(self) -> None:
-        """A recorded migration with no test behind it is the debt this repository already paid once."""
-        self.assertIn("Retirement::test_the_migration_fails_against_the_old_behavior",
-                      self.record["migration_test"])

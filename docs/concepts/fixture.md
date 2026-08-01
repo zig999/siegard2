@@ -2,7 +2,7 @@
 id: concept.fixture
 type: term
 title: fixture
-description: A case in fixtures/ shaped like a real downstream need, used to exercise a capability.
+description: A downstream-shaped case exercising a framework capability. The term is defined; this repository holds none.
 status: accepted
 contract_version: concept/1
 tags: [scope, evidence, testing]
@@ -11,10 +11,16 @@ generated: { by: claude-opus-5, at: 2026-07-29T19:49:09Z }
 
 # fixture
 
-A case in `fixtures/` shaped like a real downstream application need, used to exercise a framework
+A case shaped like a real downstream application need, used to exercise a framework
 [capability](capability.md).
 
-Fixtures are how downstream reality enters this repository without downstream features entering it. The
+**This repository holds none.** `fixtures/` was removed by a maintainer's decision —
+`docs/adr/0019-the-repository-keeps-no-fixtures.md`. The term stays defined because
+`foundation/0005` R11 uses it normatively, naming a fixture as one of the four things that can
+exercise a capability, and a term a binding requirement uses needs a definition whether or not an
+instance exists.
+
+A fixture is how downstream reality enters this repository without downstream features entering it. The
 scope fence in `CLAUDE.md` excludes business application work; the fixture is the one channel through
 which such work enters, as evidence rather than as a feature.
 

@@ -6,8 +6,7 @@ description: {{description}}
 question: What does the {{title}} boundary hold, and what does it refuse?
 ddd: bounded-context
 subdomain_type: {{subdomain_type}}
-status: proposed
-contract_version: knowledge-object/1
+contract_version: knowledge-object/2
 generated: { by: {{generated_by}}, at: {{generated_at}} }
 out_of_scope:
   - {{out_of_scope}}

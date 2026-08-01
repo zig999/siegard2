@@ -24,11 +24,15 @@ decision — and not because code changed.
 
 ## What it binds
 
-Nothing, by itself. What a knowledge object binds is its level on the maturity ladder in spec 0001:
-`proposed` binds nothing and enters context only; `accepted` enters the [knowledge
-graph](knowledge-graph.md) and selection, and binds review; `accepted` plus an [assertion](assertion.md)
-binds mechanical rejection at validation. The level is derived from the artifact, never declared
-separately.
+Everything the repository states about the fact it answers. A knowledge object carries no status and no
+maturity level: it is in the base, so it is current, it enters the [knowledge
+graph](knowledge-graph.md) and selection, and it binds review. Spec 0001 R11 says so and
+`docs/adr/0018-a-knowledge-object-carries-no-status.md` records why the ladder was removed. A fact that
+is not settled is not an object at a lower tier — it is a gap, reported.
+
+One thing is still layered on top: an [assertion](assertion.md) over an object binds mechanical
+rejection at validation as well as review. That is a property of the assertion existing, derived from
+the artifacts, and never a field on the object.
 
 ## Not a Siegard concept file
 

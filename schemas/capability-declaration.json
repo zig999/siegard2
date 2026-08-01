@@ -68,11 +68,11 @@
         },
         "outputs": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "items": {
             "$ref": "#/$defs/output"
           },
-          "description": "What it returns, and under which contract version (R7)."
+          "description": "What it returns, and under which contract version. Empty where the capability returns nothing another capability consumes: R7 requires a contract version for an output a consumer branches on, and a procedure whose only product is a report for a person has none. Forcing an entry here would put a schema around prose, and a second declared producer behind an artifact one capability authors."
         },
         "consumed_artifacts": {
           "type": "array",

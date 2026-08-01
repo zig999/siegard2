@@ -137,7 +137,7 @@ else — no prose before it, no explanation after it. The consumer parses it.
   "intake_id": "ki_4c1e7a90",
   "producer": "domain-analyst",
   "source": {
-    "description": "The sales domain model dm_4c1e7a90, answering request cr_7a2e4d10",
+    "description": "The sales domain model dm_4c1e7a90, answering request rq_7a2e4d10",
     "artifacts": ["intake/sales-request.md"]
   },
   "state": "classified",

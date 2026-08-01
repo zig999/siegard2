@@ -1,6 +1,6 @@
 ---
 name: ingest-domain
-description: Turns a domain model into a validated knowledge base — classifying every construct, authoring one object per construct in strategic-before-tactical order, then validating and regenerating the derived files. Use once a domain model exists and has been reviewed, including the first time a repository is brought under Siegard. Not for modelling the domain, which is model-domain; not for changing one recorded fact; not for filling a gap the model leaves; and not for generating code.
+description: Turns a domain model into a knowledge base — classifying every construct, then authoring one object per construct in strategic-before-tactical order. Use once a domain model exists and has been reviewed, including the first time a repository is brought under Siegard. Not for modelling the domain, which is model-domain; not for changing one recorded fact; not for filling a gap the model leaves; and not for generating code.
 disable-model-invocation: true
 ---
 
@@ -13,10 +13,11 @@ Two rules govern everything below, and neither is yours to relax:
   framework rather than by whoever knows the domain, and that is the failure this whole path exists to
   prevent. The model's own open questions are the same thing one step earlier — carry them, never answer
   them.
-- **You do not promote.** Every object you author is born `proposed`, recording the material it was read
-  from. Promotion to `accepted` is a maintainer's decision — reading knowledge out of an existing
-  artifact cannot canonize a defect as a rule. Generation compiles accepted knowledge only, so say
-  plainly in your report that promotion is what stands between this base and generated source.
+- **You record no status.** A knowledge object carries no maturity level and no approval state: what
+  you write into the base is current and binds from the moment it exists. What an object does record is
+  the material it was read from, in `sources` — reading knowledge out of an existing artifact can
+  canonize a defect as a rule, and naming the artifact is what lets a reviewer catch that. An entry you
+  are not certain enough to author is a gap you report, never an object written at a lower tier.
 
 ## Required inputs
 
@@ -26,21 +27,18 @@ Collect these before running anything. A missing input is a stop, not a default:
    the artifacts that request was read from, and both travel into each authored object's provenance — an
    ingestion whose source cannot be named is not one. A model whose `state` is `blocked` ends the run.
 2. **the knowledge root**, and the path of the JSON Schema that governs a knowledge object.
-3. **the framework script root** — the directory holding `bin/validate_knowledge.py` and
-   `bin/project_knowledge.py`. Installation decides this path; a component that guessed it would fail
-   silently in a repository laid out differently.
-4. **the intake id** — `ki_` followed by eight hex digits, for the classification.
-5. **the system defaults**, if the base does not already declare them: the timezone, the currency, and
+3. **the intake id** — `ki_` followed by eight hex digits, for the classification.
+4. **the system defaults**, if the base does not already declare them: the timezone, the currency, and
    the identity strategy every attribute inherits, plus the body-line ceiling. These are domain facts
    about this repository and the framework holds none of them.
-6. **the instant and the producer identity** for every object's `generated` field. You own the clock;
+5. **the instant and the producer identity** for every object's `generated` field. You own the clock;
    the framework refuses to, because an object stamped from a clock could not be regenerated and
    compared.
 
 ## The order, and why it cannot be rearranged
 
 ```
-system defaults → classify → boundaries → definitions → rules → lifecycles → interfaces → processes → validate → project
+system defaults → classify → boundaries → definitions → rules → lifecycles → interfaces → processes
 ```
 
 ### 1. The base must be able to hold knowledge
@@ -86,8 +84,8 @@ order:
 The order is not presentation. Every object except a bounded-context boundary declares the one boundary
 it belongs to, so a definition authored before its context has no boundary to name. A rule guards a
 lifecycle transition and a process step names an object, so both need their targets to exist. Authoring
-tactically first produces objects whose references resolve to nothing, and a reference that resolved to
-nothing is a defect the materializer reports rather than a step you can come back to.
+tactically first produces objects whose references resolve to nothing, and nothing in this distribution
+reports such a reference — so the order is the only thing preventing it.
 
 One delegation to `knowledge-author` per object. Give it the classification, the proposed identifier of
 the entry to author, the knowledge root and contract, the material the fact came from, and the instant and
@@ -99,44 +97,41 @@ tells an authored entry from a blocked one, and a producer's own report of what 
 thing that distinguishes the two without guessing. A `blocked` result is a gap, not a retry — record it
 and move to the next entry. Do not restate the request to make the agent accept it.
 
-### 5. Validate, then project
+### 5. Report what was not validated
 
-Run `bin/validate_knowledge.py <knowledge root>`. It checks what a per-file schema cannot — that every
-reference resolves, that a lifecycle's transition table is total, that no two lifecycles claim one
-subject, that a cross-context reference targets an interface.
+A knowledge base needs checks a per-file schema cannot express — that every reference resolves, that a
+lifecycle's transition table is total, that no two lifecycles claim one subject, that a cross-context
+reference targets an interface. **The distribution ships nothing that performs them.** Do not perform
+them yourself: a check a producer runs on its own output is not a check, and one improvised here would
+differ between two runs over the same base.
 
-Then regenerate the derived files with `bin/project_knowledge.py <knowledge root>`. Never write one by
-hand: the index, the glossary, the context map, and the graph are its output, a hook refuses a write to
-them, and a hand-edited projection is a second authority for what the objects already say. Its
-`--check` mode compares and mutates nothing, which is what a later verification runs.
-
-Both take the knowledge root as an argument and neither defaults to one: they ship, so a path that
-existed only where they were built would be wrong everywhere they run.
-
-**Record what validated.** The run produces a `validation-evidence/1` naming every check that ran, its
-`verdict`, and enough detail to run it again. An ingestion reported as validated with nothing saying what
+**Record what did not validate.** The run produces a `validation-evidence/1` naming each check that was
+owed, its `verdict`, and why it did not run. An ingestion reported as validated with nothing saying what
 validated it is an assertion, and the point of evidence is that a reader can tell a check that passed
-from one that never ran. A failing validator is reported with its evidence and repaired by nobody here.
+from one that never ran — which is exactly the distinction this run has to record against itself.
 
 ## What you never do
 
 - Fill a gap, or answer one of the model's open questions. The model said what it said.
 - Re-open a modelling decision. Which constructs are aggregates and which are value objects was settled
   before this procedure, and the model records whether each was stated or decided.
-- Promote an object, or report an ingestion as ready to generate. Only accepted knowledge compiles, and
-  acceptance is not yours.
+- Record a status, a maturity level, or an approval state on an object, or invent a field to carry one.
+  The contract rejects `status` rather than preserving it, so an object that carries one fails at the
+  boundary.
 - Author a construct the ontology's mapping has no home for. It is reported as unmapped, not forced
   into the nearest node type.
-- Hand-edit a projection.
+- Author a derived file. The index, the glossary, the context map, and the graph restate what the
+  objects already say, and a hand-written one is a second authority for the same facts.
 - Generate source. That is a separate entry point over an accepted base.
 
 ## Result
 
 Report, in this order: whether the system defaults were already present or expanded; the number of
 constructs classified; the entries authored, by node type; the entries blocked, each with the fact it
-lacked; the constructs recorded as unmapped, each with why; the `verdict` the validation evidence
-records and where that evidence was written; and whether the projections regenerated cleanly.
+lacked; the constructs recorded as unmapped, each with why; and the `verdict` the validation evidence
+records, with where that evidence was written and which owed checks had nothing to run them.
 
-Then state what stands between this base and generated source: the objects are `proposed`, and a
-maintainer promotes them. An ingestion reported as finished when nothing has been accepted invites the
-caller to run generation and meet a block they were not warned about.
+Every object you authored binds from the moment you wrote it, so what stands between this base and
+anything read from it is the blocked entries and the owed checks nothing ran — say so plainly rather
+than reporting the ingestion as finished. An ingestion reported as finished over entries that blocked
+invites the caller to build on facts the base does not hold.

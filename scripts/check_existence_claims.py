@@ -65,14 +65,11 @@ SUBJECTS: dict[str, dict] = {
         "phrases": ["no generator exists", "no generator has been built"],
         "evidence": nonempty("scripts/generate_dist.py"),
     },
-    "template": {
-        "phrases": ["no template exists", "no template has been written"],
-        "evidence": nonempty("fixtures/pack-*/templates/*.py"),
-    },
-    "pack": {
-        "phrases": ["no pack exists", "no fixture exercises one", "no pack has been built"],
-        "evidence": nonempty("fixtures/pack-*/pack-declaration.json"),
-    },
+    # `template` and `pack` were subjects here until `fixtures/` was removed. Both looked for
+    # their evidence under `fixtures/pack-*/`, so with that tree gone the claims they guarded —
+    # "no template exists", "no pack exists" — are true, and a subject whose evidence path can
+    # never be satisfied is a branch that reports nothing while looking like a check. They return
+    # with the first template or pack that ships from `src/claude/`.
     "context resolution": {
         "phrases": [
             "nothing has yet built context resolution",

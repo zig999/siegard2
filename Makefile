@@ -11,7 +11,7 @@
 # verify: a check that repairs what it was meant to detect reports success on a
 # defect. Verification of the distribution is `dist-check`.
 
-.PHONY: validate foundation knowledge test dist dist-check check
+.PHONY: validate foundation test dist dist-check check
 
 # `foundation/` is the authority this work answers to rather than an artifact the build
 # produces, so it has its own entry point and is deliberately absent from `check` —
@@ -39,11 +39,6 @@ validate:
 	python3 src/claude/bin/validate_concepts.py docs/concepts || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
 	python3 scripts/check_component_prose.py || fail=1; \
-	python3 src/claude/bin/validate_artifacts.py fixtures || fail=1; \
-	python3 src/claude/bin/validate_knowledge.py fixtures/*/knowledge || fail=1; \
-	python3 src/claude/bin/project_knowledge.py --check fixtures/*/knowledge || fail=1; \
-	python3 scripts/measure_ontology.py --check || fail=1; \
-	python3 src/claude/bin/verify_judged.py --run fixtures/generation-run/run.json || fail=1; \
 	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
 
@@ -65,19 +60,14 @@ validate:
 # absent from this target. A lock regenerated to silence a mismatch discards the only record
 # that a contract moved.
 #
-# The knowledge validator is wired above, as foundation/0003 R37 requires. Both derived
-# trees are verified rather than regenerated here: `--check` compares and mutates
-# nothing, so `validate` stays safe to run on a dirty tree. Regeneration is
-# `make knowledge`.
+# **The knowledge validator is not wired here, and foundation/0003 R31 requires one.** It ran over
+# `fixtures/*/knowledge`, and that tree was removed by a maintainer's decision along with the
+# derived-tree checks and the ontology measurement that read it — the `knowledge` target went with
+# them. R31 obliges the *distribution* to ship a boundary validator, which is an obligation on
+# `src/claude/` rather than on this file; what is missing here is a base for it to run against.
+# The gap is named rather than papered over with a target that validates nothing: a green run over
+# an empty glob is worse than an absent one.
 #
-# Nothing in `validate` gates on a figure. `measure_ontology.py --check` verifies
-# that the recorded R52 measurement matches the fixture, not that any value in it
-# clears a threshold: spec 0002 R8 and spec 0001 R25 both forbid the latter.
-#
-knowledge:
-	python3 src/claude/bin/project_knowledge.py fixtures/*/knowledge
-	python3 scripts/measure_ontology.py
-
 test:
 	python3 -m unittest discover -s tests -t .
 

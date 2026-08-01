@@ -60,8 +60,9 @@ rather than one system.
 
 Three limits keep that distinction real:
 
-- a fixture exercising a pack is recommended evidence, never a condition of admission, and one is created
-  only with maintainer authorization — `CLAUDE.md` **Scope** applied rather than relaxed;
+- evidence that a pack works is never a condition of its admission. A fixture was one such evidence and
+  this repository now holds none — `docs/adr/0019-the-repository-keeps-no-fixtures.md` — so what
+  exercises a pack is a test, an eval, or a run in a consuming repository, per `foundation/0005` R11;
 - what a pack may declare, and what it must leave to its agents' own knowledge of the stack, is fixed by
   `foundation/0004-generation-and-reproducibility.md`. Do not restate those rules here, and do not give a pack
   a rule file of its own;

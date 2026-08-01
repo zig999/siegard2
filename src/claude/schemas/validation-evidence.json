@@ -29,7 +29,7 @@
     },
     "request_id": {
       "type": "string",
-      "pattern": "^cr_[0-9a-f]{8}$"
+      "pattern": "^rq_[0-9a-f]{8}$"
     },
     "checks": {
       "type": "array",

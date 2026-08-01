@@ -3,11 +3,17 @@
 
 `.claude/rules/compatibility.md` requires a breaking change to "define the supported
 migration path" and to "add a compatibility or migration test that fails against the old
-behavior". Two contracts carry a second version and each registers its hop here;
+behavior". Every contract carrying a second version registers its hop here;
 check_contract_versions.py fails a bump that registers no path, so the registry cannot fall behind
-the schemas without a check firing. An earlier version of this paragraph said the registry was
-empty and kept saying so after the first entry landed — which is the drift a docstring has and an
-assertion does not.
+the schemas without a check firing. An earlier version of this paragraph counted the contracts and
+kept saying two after the third landed — which is the drift a docstring has and an assertion does
+not, so the count is gone rather than corrected.
+
+Three of the hops govern a contract whose instance is markdown frontmatter rather than a JSON
+document: a knowledge object and a consumer's decision record. The function migrates the parsed
+frontmatter mapping, and the CLI below reads JSON only — a caller migrating a knowledge base parses
+the frontmatter, applies the hop, and writes the file back, because rewriting markdown is a
+formatting decision this script has no basis to make.
 
 A migration here is a function, not a description, for the reason this repository applies
 everywhere else: a path that is only written down is a path nobody has run. Registering one
@@ -81,11 +87,93 @@ def impact_analysis_1_to_2(doc: dict) -> dict:
     return migrated
 
 
+def knowledge_object_1_to_2(doc: dict) -> dict:
+    """Drop `status`, and refuse a document whose status was `superseded`.
+
+    `/2` removes the knowledge lifecycle: `foundation/0003` R26 forbids a status on a knowledge
+    object and the schema rejects the field rather than preserving it, so the migration is a
+    deletion plus the version stamp. `docs/adr/0018-a-knowledge-object-carries-no-status.md`
+    records the decision.
+
+    For `proposed` and `accepted` the deletion loses nothing a reader can act on. Both meant "this
+    is what the base says", differing only in a gate that no longer exists, and `sources` still
+    names the material an object was read from — which is what `proposed` was being read for.
+
+    `superseded` is refused, and that is the whole reason this is a function and not a stamp. A
+    superseded object is a retired revision that R35 no longer retains: stamping it `/2` would
+    readmit it to the base as a current fact, standing beside the object that replaced it and
+    answering the same question differently. Deleting the file instead is a decision about which
+    of two statements the domain holds, so it belongs to whoever owns the base. `superseded_by`
+    names the replacement and travels in the error, because a caller told only that the document
+    was refused would have to reopen the file to find out what replaced it.
+    """
+    status = doc.get("status")
+    if status == "superseded":
+        replacement = doc.get("superseded_by")
+        raise MigrationError(
+            f"{doc.get('id')!r} is superseded"
+            + (f" by {replacement!r}" if replacement else " and names no replacement")
+            + " — knowledge-object/2 retains no retired revision, so this object is deleted from "
+            "the base rather than migrated; version control holds what it said"
+        )
+    migrated = {key: value for key, value in doc.items() if key not in ("status", "superseded_by")}
+    migrated["contract_version"] = "knowledge-object/2"
+    return migrated
+
+
+def knowledge_graph_1_to_2(doc: dict) -> dict:
+    """Drop `status` from every node, and refuse a graph holding a superseded one.
+
+    The graph mirrors the objects it was materialized from, so it moves for the same reason and
+    refuses on the same case: a node the base no longer holds is not a node whose field can be
+    dropped. Refusing here rather than dropping it silently keeps the graph and the base in
+    agreement about what exists — and a graph is derived, so the honest repair is to migrate the
+    objects and materialize again rather than to transform the artifact.
+    """
+    retired = [
+        node.get("id") for node in doc.get("nodes", []) if node.get("status") == "superseded"
+    ]
+    if retired:
+        raise MigrationError(
+            f"graph holds {len(retired)} superseded node(s) — {', '.join(map(str, retired))} — "
+            "which knowledge-object/2 removes from the base; migrate the objects and materialize "
+            "the graph again rather than migrating the derived artifact"
+        )
+    migrated = dict(doc)
+    migrated["contract_version"] = "knowledge-graph/2"
+    migrated["nodes"] = [
+        {key: value for key, value in node.items() if key != "status"}
+        for node in doc.get("nodes", [])
+    ]
+    return migrated
+
+
+def knowledge_decision_1_to_2(doc: dict) -> dict:
+    """Drop `status`, and refuse a decision record that was superseded.
+
+    A consumer's decision record follows the knowledge object it sits beside: `/2` removes the
+    status, and `additionalProperties: false` rejects the field rather than ignoring it. A
+    `superseded` record is refused for the reason a superseded object is — the tree holds the
+    decisions that stand, and which of two records that is belongs to the consumer.
+    """
+    if doc.get("status") == "superseded":
+        raise MigrationError(
+            f"decision {doc.get('id')!r} is superseded — knowledge-decision/2 keeps only the "
+            "records that stand, so this one is deleted from the tree rather than migrated"
+        )
+    migrated = {key: value for key, value in doc.items() if key != "status"}
+    migrated["contract_version"] = "knowledge-decision/2"
+    return migrated
+
+
 # Keyed by (from, to). A key here is the claim that a document can cross that boundary; the
 # coverage check in check_contract_versions.py fails when a boundary exists and a key does not.
 MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
     ("distribution-manifest/1", "distribution-manifest/2"): distribution_manifest_1_to_2,
     ("impact-analysis/1", "impact-analysis/2"): impact_analysis_1_to_2,
+    ("knowledge-object/1", "knowledge-object/2"): knowledge_object_1_to_2,
+    ("knowledge-graph/1", "knowledge-graph/2"): knowledge_graph_1_to_2,
+    ("knowledge-decision/1", "knowledge-decision/2"): knowledge_decision_1_to_2,
 }
 
 

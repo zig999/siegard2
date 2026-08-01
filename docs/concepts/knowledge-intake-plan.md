@@ -47,7 +47,8 @@ mapping names its home.
 
 ## Provenance travels with it
 
-A knowledge object derived from material that already existed is born `proposed` and records the source
-it was read from, and a maintainer promotes it. The intake plan carries that source so the objects
-authored from it can record it — see [provenance](provenance.md). Deriving knowledge from an existing
-artifact cannot canonize a defect as a rule, which is why the promotion is a decision and not a step.
+A knowledge object derived from material that already existed records the source it was read from. The
+intake plan carries that source so the objects authored from it can record it — see
+[provenance](provenance.md). Deriving knowledge from an existing artifact can canonize a defect as a
+rule, and naming the artifact is the only thing that lets a reviewer catch it: the object carries no
+status to say the fact was read rather than stated, so `sources` is where that distinction lives.

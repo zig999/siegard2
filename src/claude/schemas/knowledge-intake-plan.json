@@ -24,7 +24,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["description", "artifacts"],
-      "description": "What material was classified. It travels with the plan because an object derived from material that already existed records the source it was read from, and is born proposed for a maintainer to promote.",
+      "description": "What material was classified. It travels with the plan because an object derived from material that already existed records the source it was read from — the only record of whether a fact was stated by the business or read out of an artifact, now that a knowledge object carries no status to say so.",
       "properties": {
         "description": {
           "type": "string",
@@ -35,7 +35,7 @@
           "type": "array",
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 },
-          "description": "Each artifact the material was read from, by path or by stable reference. Non-empty: a classification whose source cannot be named cannot be promoted, because nothing states what would have to be re-read to check it."
+          "description": "Each artifact the material was read from, by path or by stable reference. Non-empty: a classification whose source cannot be named cannot be reviewed, because nothing states what would have to be re-read to check it."
         }
       }
     },

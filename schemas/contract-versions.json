@@ -69,7 +69,8 @@
     },
     "impact-analysis/2": {
       "schema": "impact-analysis.json",
-      "constraint_digest": "sha256:d6e038c021b6c39644114f89cde22e844ffafe5b58ebd662544f56245af0f0a0"
+      "constraint_digest": "sha256:d6e038c021b6c39644114f89cde22e844ffafe5b58ebd662544f56245af0f0a0",
+      "superseded_by": "impact-analysis/3"
     },
     "knowledge-authoring-result/1": {
       "schema": "knowledge-authoring-result.json",
@@ -77,11 +78,21 @@
     },
     "knowledge-decision/1": {
       "schema": "knowledge-decision.json",
-      "constraint_digest": "sha256:a99341ba1236208c18c5aea5c57f25b42f8ba9f348be0f3bc8ff561ddc4b0671"
+      "constraint_digest": "sha256:a99341ba1236208c18c5aea5c57f25b42f8ba9f348be0f3bc8ff561ddc4b0671",
+      "superseded_by": "knowledge-decision/2"
+    },
+    "knowledge-decision/2": {
+      "schema": "knowledge-decision.json",
+      "constraint_digest": "sha256:838a1c71b5bd631d7dffc98b4ec81d7e241c53055a52627adceadc9df0fc6785"
     },
     "knowledge-graph/1": {
       "schema": "knowledge-graph.json",
-      "constraint_digest": "sha256:0ca389e1375d75eacd76ecb9bf94c2852d8f77ee1cf179fa8a70ec2e52bc6958"
+      "constraint_digest": "sha256:0ca389e1375d75eacd76ecb9bf94c2852d8f77ee1cf179fa8a70ec2e52bc6958",
+      "superseded_by": "knowledge-graph/2"
+    },
+    "knowledge-graph/2": {
+      "schema": "knowledge-graph.json",
+      "constraint_digest": "sha256:863bc1df9d297572fcf47dd126d9ebd0dd0433a1cd6b684ba4e675f4b8e18d23"
     },
     "knowledge-intake-plan/1": {
       "schema": "knowledge-intake-plan.json",
@@ -89,7 +100,12 @@
     },
     "knowledge-object/1": {
       "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:e357e60e0580b4a5ef2647d3cc969b56de0e5ecd617aa8f954ccc171a0676703"
+      "constraint_digest": "sha256:e357e60e0580b4a5ef2647d3cc969b56de0e5ecd617aa8f954ccc171a0676703",
+      "superseded_by": "knowledge-object/2"
+    },
+    "knowledge-object/2": {
+      "schema": "knowledge-object.json",
+      "constraint_digest": "sha256:9a8f1cff9860e06109ce3aa5897b3f0f2860160706f687dfcfeeaf76dfd7036a"
     },
     "pack-declaration/1": {
       "schema": "pack-declaration.json",
@@ -118,6 +134,10 @@
     "validation-evidence/1": {
       "schema": "validation-evidence.json",
       "constraint_digest": "sha256:e80c568cb32269f15242a4bf549e9658c64cb3317dde52e5b5b3aa85ab957f24"
+    },
+    "impact-analysis/3": {
+      "schema": "impact-analysis.json",
+      "constraint_digest": "sha256:f5bb7defad67bf8f30c52833a6eb0c9c5bbaca469e3a034e630c41d0ada1e1ea"
     }
   }
 }

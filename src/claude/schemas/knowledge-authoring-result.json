@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/knowledge-authoring-result.json",
   "title": "Knowledge authoring result",
-  "description": "Result contract for the knowledge-author agent, the named producer. The named consumer is the ingestion procedure, which reads the closed `state` field to tell an authored object from a blocked one and moves to the next entry either way. This artifact carries control flow, so it requires this versioned schema and boundary validation before consumption. It is the knowledge-object counterpart of concept-authoring-result/1 and deliberately not a widening of it: schemas/concept.json and schemas/knowledge-object.json are separate vocabularies that never overlap — the knowledge-object contract says so about `term` in as many words — so one result contract covering both would make `producer` a free string and lose the guarantee that a result claiming another producer is not an instance.",
+  "description": "Result contract for the knowledge-author agent, the named producer. The named consumer is the ingestion procedure, which reads the closed `state` field to tell an authored object from a blocked one and moves to the next entry either way. This artifact carries control flow, so it requires this versioned schema and boundary validation before consumption.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -26,7 +26,7 @@
         "updated",
         "blocked"
       ],
-      "description": "The closed set the consumer branches on: authored = a new knowledge object exists, updated = an existing one was revised, blocked = nothing was written and blocking_reason says why. The same three values as concept-authoring-result/1, because a consumer of either has the same three cases to tell apart."
+      "description": "The closed set the consumer branches on: authored = a new knowledge object exists, updated = an existing one was revised, blocked = nothing was written and blocking_reason says why."
     },
     "request": {
       "type": "string",

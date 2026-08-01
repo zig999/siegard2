@@ -3,15 +3,19 @@
 
 Two rules that were maintained by reading until this script existed.
 
-**`foundation/0006` R17: a capability's status is derived from checkable facts** — whether the
-distribution installs it, whether a fixture exercises it — "and not from a label maintained by
-hand". The distribution manifest carries the status under `foundation/0008` R12, so a hand-written one
-would be a label in the one place a consumer is told to trust. Both facts are computed here from
-the same inputs the generator uses, and disagreeing with the generator is a failure.
+**`foundation/0005` R17: a capability's status is derived from checkable facts** — whether the
+distribution installs it, and whether it is documented as going away — "never from a label
+maintained by hand". The distribution manifest carries the status, so a hand-written one would be a
+label in the one place a consumer is told to trust. Both facts are computed here from the same
+inputs the generator uses, and disagreeing with the generator is a failure.
+
+This docstring claimed a third fact, "whether a fixture exercises it", and the code never read one:
+the status comes from the generator's selection and from nothing else. R11 has always said a
+fixture is "never a condition of shipping", and `fixtures/` no longer exists, so the claim is
+removed rather than corrected into a check nothing would satisfy.
 
 R14 fixes the vocabulary and what each value means for an installation: `proposed` ships nothing,
-`active` is installed and exercised by a fixture, `deprecated` is installed and going away,
-`retired` is absent. R15 requires the move through `deprecated` before `retired`, so a capability
+`active` is installed, `deprecated` is installed and going away, `retired` is absent. R15 requires the move through `deprecated` before `retired`, so a capability
 that vanishes between two versions is a breaking change made silently — which the release record
 in `docs/` would have to catch, and cannot if nothing lists what was installed before.
 
@@ -128,7 +132,7 @@ def main() -> int:
     problems = check_statuses(root) + check_thresholds(root)
     installed = installed_statuses(root)
     print(
-        f"capabilities checked: {len(installed)}  derived from the distribution and the fixtures"
+        f"capabilities checked: {len(installed)}  derived from the distribution"
     )
     if problems:
         print(f"FAILED: {len(problems)} problem(s)\n")

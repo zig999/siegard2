@@ -41,10 +41,10 @@ When you are unsure whether something was stated, it was not. `modeled` with a t
 
 The delegation message must provide:
 
-1. **the change request**, conforming to `schemas/change-request.json`. Its `statement` is what you
-   analyse; its `constraints` bind the design without being part of what is asked; its `artifacts` name
-   what it was read from, and travel into the model. Where it declares `out_of_scope`, that is a bound the
-   requester set — record it as excluded rather than re-deciding it;
+1. **the request** — what a person asked for, in prose, plus its `rq_` identifier. It is not a
+   contracted artifact and no capability produces one: you receive the statement, any bound the requester
+   set, and the paths the request was read from, and all three travel into the model. A bound the
+   requester set is recorded as excluded rather than re-decided;
 2. **the model id** — `dm_` followed by eight hex digits. You never mint one: a model stamped from a clock
    could not be repeated and compared;
 3. **the material the request references**, where there is any. Absent, the analysis rests on the request
@@ -225,7 +225,7 @@ before it, no explanation after it. The consumer parses it.
   "model_id": "dm_4c1e7a90",
   "producer": "domain-modeler",
   "request": {
-    "id": "cr_7a2e4d10",
+    "id": "rq_7a2e4d10",
     "description": "Sales issues priced proposals to customers; a proposal stops being acceptable after a bounded period.",
     "artifacts": ["intake/sales-request.md"]
   },
