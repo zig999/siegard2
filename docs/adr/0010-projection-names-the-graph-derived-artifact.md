@@ -42,7 +42,8 @@ risk.
 `projection` names the graph-derived artifact. `docs/concepts/projection.md` defines it, and
 `foundation/0003-knowledge-ontology-and-notation.md` R50 and R51 govern it.
 
-Derived workflow state is `workflow state`, defined by `docs/concepts/workflow-state.md`. That is the name
+Derived workflow state is `workflow state`, a concept the bundle held when this was decided and has since
+removed along with the machinery that used it. That is the name
 `CLAUDE.md` **Determinism and state** and `foundation/0001-knowledge-object-driven-development.md` R8 already use
 for it, so the rename adopts an existing term rather than minting one.
 
@@ -53,7 +54,7 @@ A maintainer chose this on 2026-07-30, among the three options recorded below.
 Three options were on the table.
 
 The one taken assigns `projection` to the graph meaning and renames the other. Its cost is five edits on the
-unenforced side: `docs/concepts/transition-guard.md`, `.claude/rules/compatibility.md`, and three places in
+unenforced side: the transition-guard concept the bundle then held, `.claude/rules/compatibility.md`, and three places in
 It leaves R50, R51, `scripts/project_knowledge.py`, `tests/test_projections.py`, and the
 generated fixture headers untouched.
 

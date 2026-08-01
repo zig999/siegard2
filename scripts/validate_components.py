@@ -60,7 +60,11 @@ GRANT_FIELD = {"specialized-agent": "tools", "skill": "allowed-tools"}
 
 # Where a component of each class lives, relative to the framework source root. A declaration whose
 # class does not match the tree its component sits in is two records of one fact disagreeing.
-CLASS_TREE = {"specialized-agent": "agents", "skill": "skills", "hook": "hooks"}
+#
+# A hook is absent on purpose: it is a script with no frontmatter, so its second record is
+# `hooks.declaration.json` rather than a header, and `declared_hook` below compares against that.
+# A script and a template are absent because they have no second record at all.
+CLASS_TREE = {"specialized-agent": "agents", "skill": "skills"}
 
 PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.json"
 PLUGIN_DIR = ".claude-plugin"
@@ -195,12 +199,41 @@ def check_agents(root: Path, failures: list[str]) -> int:
     return checked
 
 
+def declared_hook(root: Path, identifier: str, rel: str, failures: list[str]) -> None:
+    """A declared hook must be one the hook declaration actually installs.
+
+    `hooks.declaration.json` is a hook's second record: it names the file, the event, the matcher,
+    and the guarantee. A capability declaration naming a hook that document does not is the same
+    disagreement `component_frontmatter` catches for a class that has frontmatter.
+    """
+    path = root / "hooks" / HOOK_DECLARATION
+    if not path.is_file():
+        failures.append(
+            f"{rel}: declares hook '{identifier}' while hooks/ holds no {HOOK_DECLARATION}"
+        )
+        return
+    try:
+        installed = {Path(e["file"]).stem for e in json.loads(path.read_text())["hooks"]}
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        failures.append(f"{rel}: {HOOK_DECLARATION} cannot be read to check '{identifier}': {exc}")
+        return
+    if identifier not in installed:
+        failures.append(
+            f"{rel}: declares hook '{identifier}', which {HOOK_DECLARATION} does not install "
+            f"(it installs {sorted(installed) or 'nothing'}) — a declared hook nothing installs "
+            f"describes a guarantee that never fires"
+        )
+
+
 def component_frontmatter(root: Path, entry: dict, rel: str, failures: list[str]) -> dict | None:
     """The frontmatter of the component an entry declares, or None with the reason recorded."""
+    if entry["class"] == "hook":
+        declared_hook(root, entry["identifier"], rel, failures)
+        return {}
     tree = CLASS_TREE.get(entry["class"])
     if tree is None:
-        # A script, a template, and a target pack have no frontmatter to agree with. The
-        # declaration still validates; there is simply no second record to compare it against.
+        # A script and a template have no second record to agree with. The declaration still
+        # validates; there is simply nothing to compare it against.
         return {}
     identifier = entry["identifier"]
     candidates = [root / tree / f"{identifier}.md", root / tree / identifier / "SKILL.md"]
@@ -273,9 +306,16 @@ def check_capability_declarations(root: Path, failures: list[str]) -> int:
                     f"{field}: {component_grant} — the absence of a statement is not a grant"
                 )
             continue
-        stated = component_grant if isinstance(component_grant, list) else (
-            [item.strip() for item in component_grant.split(",")] if component_grant else []
-        )
+        if isinstance(component_grant, list):
+            stated = component_grant
+        elif isinstance(component_grant, str):
+            stated = [item.strip() for item in component_grant.split(",") if item.strip()]
+        else:
+            # The frontmatter states its grant as something neither a list nor a string. Its own
+            # schema rejects that, and this check does not duplicate the rejection — it declines to
+            # compare against a value whose shape is already a reported defect, and carries on to
+            # the next entry rather than abandoning the remaining declarations.
+            continue
         if sorted(stated) != sorted(declared_grant):
             failures.append(
                 f"{rel}: '{identifier}' declares grant {sorted(declared_grant)} while its component "

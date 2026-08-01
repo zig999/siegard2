@@ -36,7 +36,7 @@
     "produces": {
       "type": "array",
       "minItems": 1,
-      "description": "One entry per artifact class the pack produces. What is required: exactly one producer per declared class — a template on the deterministic track, a specialized agent on the judged one — so a declared class with no producer and two producers for one class are both rejected.",
+      "description": "One entry per artifact class the pack produces. R51 requires exactly one producer per declared class — a template on the deterministic track, a specialized agent on the judged one — so a declared class with no producer and two producers for one class are both rejected.",
       "items": {
         "type": "object",
         "additionalProperties": false,

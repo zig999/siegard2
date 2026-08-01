@@ -12,7 +12,7 @@
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
       "minLength": 1,
       "maxLength": 64,
-      "description": "The plugin identity, and the namespace the harness prepends to every skill it ships: a skill named `knowledge-change` is invoked as `/<name>:knowledge-change`. Kebab-case because it appears verbatim in that invocation. foundation/0008 R20 forbids a reserved prefix on a skill for this reason — the namespace is applied here, once."
+      "description": "The plugin identity, and the namespace the harness prepends to every skill it ships: a skill named `ingest-domain` is invoked as `/<name>:ingest-domain`. Kebab-case because it appears verbatim in that invocation. foundation/0008 R20 forbids a reserved prefix on a skill for this reason — the namespace is applied here, once."
     },
     "description": {
       "type": "string",

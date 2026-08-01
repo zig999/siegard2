@@ -46,21 +46,30 @@ longer in this repository — `foundation/0001` **Provenance** records where it 
 - what an artifact passed between components must carry — R16a below;
 - the workflow phases themselves, and the transition rules over them — `foundation/0001`.
 
+**The architecture this document recorded was narrowed after the fact.** The orchestrator, the append-only
+log, and the state derived by replay were removed — `docs/adr/0016-remove-the-workflow-machinery.md` — and
+R23 then closed the carve-out that had let R3 admit a component choosing transitions while R2 forbade a
+component choosing order. R6 and R14 are retired by R23 and keep their numbers. The paragraph above
+records what the thin path was, which remains true as history and is no longer a description of the
+framework.
+
 ## Definitions
 
 This specification uses these terms as the concept bundle defines them:
 [capability](../docs/concepts/capability.md),
 [distribution](../docs/concepts/distribution.md),
 [framework source](../docs/concepts/framework-source.md),
-[orchestrator](../docs/concepts/orchestrator.md),
 [skill](../docs/concepts/skill.md),
 [specialized agent](../docs/concepts/specialized-agent.md),
-[transition guard](../docs/concepts/transition-guard.md),
-[workflow state](../docs/concepts/workflow-state.md),
 [event log](../docs/concepts/event-log.md),
 [fixture](../docs/concepts/fixture.md),
 [least privilege](../docs/concepts/least-privilege.md),
 [target pack](../docs/concepts/target-pack.md).
+
+`orchestrator`, `workflow state`, and `transition guard` left this list when R23 retired R6 and R14, and
+the three concepts were then removed from the bundle: no requirement in this framework names any of them,
+and a bundle that kept a dead term to satisfy a historical note would invert which serves which. The words
+still appear above, in the provenance and in a retirement note, as history rather than as vocabulary.
 
 Two terms this specification uses that the bundle does not hold, because their definitions belong to the
 specifications that decide them: *capability class* (`foundation/0006`) and *capability declaration*
@@ -74,10 +83,11 @@ document's acceptance actually met.
 Claude Code                        Siegard
 ─────────────                      ───────
 reads the request                  provides the knowledge, contracts, and capabilities
-plans the work                     validates every artifact at its boundary
-selects capabilities               decides transitions by lookup in a script
-delegates and reasons              records what happened, derives state from the record
-judges meaning                    enforces what must not depend on judgment
+plans the work                     states what each capability requires and produces
+selects capabilities               validates every artifact at its boundary
+sequences the work                 rejects what fails a contract, and repairs nothing
+delegates and reasons              enforces what must not depend on judgment
+judges meaning
 ```
 
 The framework is inert. It starts no process, holds no daemon, and waits for no event. Everything it
@@ -92,21 +102,25 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
 - **R2** — The framework never owns the workflow. No component it ships decides which capability runs
   next, in what order, or at what depth. A capability that sequences other capabilities by its own
   judgment is not a capability of this framework.
-- **R3** — Selection belongs to Claude Code. A capability is found through its declaration and chosen by
-  the model, without an external orchestrator that plans the run. An [orchestrator](../docs/concepts/orchestrator.md)
-  in this framework chooses a *transition* from a validated artifact's closed field; it does not choose
-  *work*.
+- **R3** — Selection and sequence belong to Claude Code. A capability is found through its declaration
+  and chosen by the model, and the order in which capabilities run follows from what each one declares it
+  requires. The framework ships nothing that plans a run. An earlier form of this requirement carved out a
+  component that chose a *transition* rather than *work*; R23 closes the carve-out, because the distinction
+  put this document on both sides of R2.
 - **R4** — The framework targets Claude Code. It introduces no abstraction whose only purpose is to
   support a second agent harness, and no indirection that exists in case one arrives.
 
 ### Where a guarantee lives
 
 - **R5** — A property that must hold regardless of model judgment is enforced by a script or a hook,
-  never by prompt text. Control flow, a [transition guard](../docs/concepts/transition-guard.md), a
-  validation verdict, and a recorded state are in this class.
-- **R6** — A transition is chosen by lookup on a closed field of an artifact that passed its contract.
-  Where a component must read prose to decide what happens next, the defect is in the artifact's
-  contract, and the repair is to that contract rather than to the component that read it.
+  never by prompt text. A validation verdict and a rejection at a boundary are in this class. Control flow
+  is not, and R6 records why an earlier form of this requirement put it here.
+- **R6** — Retired by R23. It required a transition to be chosen by lookup on a closed field of an
+  artifact that passed its contract, which presumed that the framework chooses a transition at all; R23
+  states that it does not. The number is retained rather than reused so that a citation of R6 still
+  resolves to the statement it named. What survives is the rule that motivated it, and it is general
+  rather than about transitions: where a component must read prose to decide anything, the defect is in the
+  artifact's contract, and the repair is to that contract rather than to the component that read it.
 - **R7** — Model judgment is used where meaning is the work: authoring, classification, root selection,
   review. A requirement is never satisfied by asserting that a model will behave correctly.
 - **R8** — Determinism is required of control flow, validation, and recorded state. It is not required of
@@ -118,8 +132,11 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
   is discovered by scanning a path the distribution did not install, and no capability is activated by
   convention alone.
 - **R10** — A capability depends only on another's declared contract, never on its internals or on the
-  order in which it happened to run. Two capabilities that must run in a fixed order state that
-  dependency in their declarations.
+  order in which it happened to run. Two capabilities that must run in a fixed order state that dependency
+  in their declarations, and **that declaration is the only thing in this framework that fixes an order**.
+  An order a capability requires and does not declare does not exist as far as this framework is concerned:
+  nothing else records it, and nothing enforces it. `foundation/0007` fixes what a declaration must carry
+  for an order to be derivable from it without executing anything.
 - **R11** — A capability states its own tool and permission grant. The absence of a statement is not a
   grant.
 - **R12** — A capability is not blocked for want of a [fixture](../docs/concepts/fixture.md). A fixture is
@@ -131,8 +148,11 @@ does happens inside a Claude Code session, or inside a script or hook that sessi
 
 ### State and traceability
 
-- **R14** — Workflow state is derived from a durable record rather than stored beside it. Where both a
-  record and a state exist, the state is computed from the record, so the two cannot disagree.
+- **R14** — Retired by R23. It required workflow state to be derived from a durable record rather than
+  stored beside it, which presumed that the framework holds workflow state; R23 states that it holds none.
+  The number is retained rather than reused. The rule it protected still binds wherever a record and a
+  state do coexist — a state is computed from the record so the two cannot disagree — and R15 below is
+  unaffected.
 - **R15** — A recorded decision names the inputs, the artifact, and the contract version that produced
   it, so a later reader can reproduce the decision without the session that made it.
 - **R16** — An artifact that fails its contract at a boundary is rejected. Nothing repairs it in place,
@@ -176,10 +196,42 @@ reached by input nobody vetted.
   not clamped; R16 states the same rule for an artifact at a boundary, and this is its form for the
   filesystem.
 
+### Sequence is not the framework's
+
+R23 arrived after R1 through R22 and is numbered here rather than beside R2 and R3, so that an existing
+citation still resolves to the statement it named. It is the requirement that makes this document stop
+contradicting itself.
+
+- **R23** — Siegard refuses; it does not sequence. The framework ships no component that decides which
+  capability runs next, none that records where a run stands, and none that resumes one. What it
+  guarantees at a boundary is refusal: an artifact that fails its contract is not consumed, and nothing
+  repairs it. Order is Claude Code's, and it follows from what each capability declares it requires under
+  R10.
+
+  Three guarantees an earlier architecture held are given up here, and each is named because a guarantee
+  lost silently is worse than one withdrawn: a bounded number of attempts whose exhaustion is terminal; the
+  agreement between an outcome and the evidence that outcome carries; and resumption after an
+  interruption. Every one depends on what has already happened rather than on a prerequisite, and a
+  declared dependency cannot express any of them. Where one is needed again it returns as a refusal at a
+  boundary, never as a component that sequences work.
+
+  An earlier form of this requirement counted four, adding the rule that no workflow accepts its own
+  output. That was wrong: the rule is a refusal rather than a sequence, and it still holds — a maintainer
+  promotes, and `foundation/0004` R54 compiles accepted knowledge only.
+
+  What each of the three means for the *method* is not this document's to decide:
+  `foundation/README.md` states that a framework specification does not amend the method, and the earlier
+  form of this requirement did exactly that by declaring two of `foundation/0001`'s requirements given up.
+  That document settles its own — see its **Provenance**. The decision, what it gives up, and what was
+  rejected are recorded in
+  `docs/adr/0017-order-follows-from-declarations-not-from-a-sequencer.md`.
+
 ## Outstanding evidence
 
 What this document states and nothing has yet exercised. A condition kept here is a debt;
-removing one because the document binds would turn an open debt into a silent one.
+removing one because the document binds would turn an open debt into a silent one. A number is never reused: a condition that was met or
+withdrawn leaves its number behind, so a gap in the sequence records that something was settled rather
+than that an item is missing.
 
 1. A generator produces the distribution from `src/claude/`, a fixture installs it, and Claude Code
    loads the installed components. R9 is unproven until something is reached through the distribution

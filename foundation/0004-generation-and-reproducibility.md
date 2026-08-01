@@ -41,8 +41,11 @@ Whether a target pack is framework work at all rested on `foundation/0005` R13, 
 chosen for one downstream system" and did not say whether a technology pack is that. A maintainer settled it
 on 2026-07-30: a target pack is not that architecture.
 
-R12 through R18 therefore rest on an accepted rule rather than on a presumption. What remains open is not the
-premise but the evidence: no pack exists, so nothing has exercised any of them.
+R12 through R18 therefore rest on an accepted rule rather than on a presumption. What remains open is not
+the premise but the evidence, and **Outstanding evidence** states it per requirement rather than as one
+claim about all of them: a pack exists as a fixture and a generation runs through it, while no pack is
+distributed and no second pack exists to test whether the artifact class vocabulary is genuinely
+technology-independent.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -421,7 +424,7 @@ Declared absence, not oversight. A request to record one of these is a request t
 | Idiomatic decisions of a language or framework | Stack knowledge |
 | How a reference becomes a column or a foreign key | Stack knowledge; the domain fact is `binding`, per spec 0003 |
 | Where produced source lives in the tree | The pack decides once, through the placement decision of R52; the manifest locks it |
-| Which producer inside a pack proposes a new path, and whether a deterministic class derives its own | Both designs satisfy R52; they differ in what a first run promises, and no pack exists to choose on |
+| Which producer inside a pack proposes a new path, and whether a deterministic class derives its own | Both designs satisfy R52; they differ in what a first run promises, and no *distributed* pack exists to choose on — a fixture pack settles nothing a framework has to ship |
 | Deployment topology, infrastructure | ADR for the decision, the pack for what is produced |
 
 ## Definitions
@@ -622,6 +625,31 @@ requirements they qualify, so that an existing citation still resolves to the st
   decision; and a run that ends without producing an artifact locks no path for it. A design meeting fewer
   than all four MUST NOT claim this exemption.
 
+### What a scope may compile
+
+R54 arrived after R1 through R53 and is numbered here rather than beside R19, so an existing citation
+still resolves to the statement it named.
+
+- **R54** — A generation scope MUST hold only knowledge objects whose `status` is `accepted`. A member
+  or a declared root at any other status MUST block the scope under R21's fail-closed rule, named, and
+  MUST NOT be silently dropped: a scope that omitted one would compile less than was asked for with no
+  signal. The gate binds knowledge objects only. An ADR is a graph node and never a knowledge object
+  per `foundation/0003-knowledge-ontology-and-notation.md` R7, is no member of a scope, and yields no
+  artifact, so its status MUST NOT block generation.
+
+  This settles a question two accepted specifications left open rather than adding a preference.
+  `foundation/0001-knowledge-object-driven-development.md` R23 places a `proposed` object at level 0,
+  where it binds nothing and "enters context only", and R26 makes a knowledge object derived from
+  existing material born `proposed` and promotable only by a maintainer. This specification said
+  nothing about status, so generation read `proposed` knowledge and the promotion R26 requires was
+  required for nothing. Reading R23's "enters context only" as excluding generation is the reading that
+  constrains more, and `docs/adr/0015-only-accepted-knowledge-compiles.md` records the decision and
+  what it costs.
+
+  The gate belongs to the scope and MUST NOT be applied to context resolution or to validation. R23
+  admits a `proposed` object into context by name, and a validator that refused to validate one could
+  never report what a proposed object must fix before promotion.
+
 **The measurement R6 asks for: 59 of 61 plan entries — 96.7% — are on the deterministic track.**
 R6 requires the promise reduced to what the mechanism delivers where that share does not cover the
 structural code. It does here: types, DTOs, persistence schemas, migrations, enums, state machines,
@@ -652,7 +680,9 @@ requirement:
 ## Outstanding evidence
 
 What this document states and nothing has yet exercised. A condition kept here is a debt;
-removing one because the document binds would turn an open debt into a silent one.
+removing one because the document binds would turn an open debt into a silent one. A number is never reused: a condition that was met or
+withdrawn leaves its number behind, so a gap in the sequence records that something was settled rather
+than that an item is missing.
 
 This specification presupposes components that do not exist. Condition 1 is met; the rest are not, and
 each remains the evidence this document owes:

@@ -22,5 +22,7 @@ Siegard and never ships; `src/claude/` holds what ships and is inert in this rep
 that would be installed into a target repository belongs in framework source from the moment it is
 first authored — a [capability](capability.md) has no other origin.
 
-`src/claude/` holds two components as of 2026-07-31 — the `concept-author` agent and the
-`knowledge-change` skill — and no generator reads them yet, so both are inert here.
+What `src/claude/` holds is not restated here. The count drifted twice — it said two components while
+the tree held more, then kept naming a skill after that skill was removed — and a number maintained by
+reading is the defect this bundle exists to avoid. The distribution manifest records what shipped, and it
+is derived on every assembly.

@@ -28,7 +28,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 KNOWLEDGE = REPO_ROOT / "fixtures" / "knowledge-two-context" / "knowledge"
 PACK = REPO_ROOT / "fixtures" / "pack-minimal"
 SCHEMAS = REPO_ROOT / "src" / "claude" / "schemas"
-ROOT_KO = "ko.rule.sales.proposal-validity"
+# An **accepted** rule. This was `ko.rule.sales.proposal-validity` — a superseded object —
+# which resolved a scope happily because no gate read `status`. Rooting generation on retired
+# knowledge was always wrong; nothing reported it until the scope gate existed to refuse it.
+ROOT_KO = "ko.rule.sales.proposal-expiration"
+# Derived by the ontology's own id arithmetic rather than written out, so a change of root
+# moves the file every mutation test targets with it. Two tests mutated the *previous* root's
+# file and kept passing vacuously once the root moved, which is the drift this closes.
+ROOT_RELATIVE = Path("/".join(ROOT_KO.split(".")[1:3]) + "/" + ROOT_KO.split(".", 3)[3] + ".md")
 
 
 def load_json(path: Path) -> dict:
@@ -100,6 +107,84 @@ class Conformance(Fixture):
         self.assertTrue(list(validator("placement-decision.json").iter_errors(document)))
 
 
+class AcceptedOnly(Fixture):
+    """Only accepted knowledge is compiled — the gate on scope resolution.
+
+    It resolves a conflict between two accepted specifications rather than adding a preference.
+    `foundation/0001` R23 puts a `proposed` object at level 0, where it "binds nothing" and "enters
+    context only", and R26 makes knowledge derived from existing material born `proposed` and
+    promotable only by a maintainer. `foundation/0004` said nothing about status, so generation read
+    `proposed` knowledge and the promotion R26 demands was demanded for nothing.
+
+    The gate is on the scope and deliberately not on the materializer: validation has to keep
+    validating a `proposed` object, and resolution has to keep reading one. What changes is what
+    *compiles*. `foundation/0004` R21 already makes a scope fail closed, so an unaccepted member
+    blocks rather than being skipped — a scope that quietly dropped one would generate less software
+    than was asked for with no signal.
+    """
+
+    def temp_graph(self, mutate) -> object:
+        """A mutated copy whose lifetime is the test's.
+
+        `TemporaryDirectory` as a context manager is wrong here: the graph holds `Path`s into the
+        copy and hashes them lazily, so the directory has to outlive the `with` block. Cleanup is
+        registered against the test instead.
+        """
+        holder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, holder, True)
+        copy = Path(holder) / "knowledge"
+        shutil.copytree(KNOWLEDGE, copy)
+        mutate(copy)
+        return load(copy)
+
+    def demote(self, relative: str):
+        def mutate(copy: Path) -> None:
+            target = copy / relative
+            target.write_text(
+                target.read_text().replace("\nstatus: accepted\n", "\nstatus: proposed\n", 1)
+            )
+        return mutate
+
+    def test_a_proposed_root_blocks(self) -> None:
+        graph = self.temp_graph(self.demote(str(ROOT_RELATIVE)))
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        self.assertIn("not accepted", str(caught.exception))
+
+    def test_a_proposed_member_reached_by_expansion_blocks(self) -> None:
+        """The root is accepted and something the closure reaches is not."""
+        graph = self.temp_graph(self.demote("definition/sales/proposal.md"))
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        message = str(caught.exception)
+        self.assertIn("ko.definition.sales.proposal", message)
+        self.assertIn("would compile it", message)
+
+    def test_a_superseded_root_blocks(self) -> None:
+        """Retired knowledge would generate the system that was replaced."""
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(self.graph, "gs_1a2b3c4d", "cr_2b4f6a80", ["ko.rule.sales.proposal-validity"])
+        self.assertIn("superseded", str(caught.exception))
+
+    def test_the_message_says_what_to_do(self) -> None:
+        """A block that names no remedy leaves the caller re-running it to find one."""
+        graph = self.temp_graph(self.demote("definition/sales/proposal.md"))
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        self.assertIn("Promote it or narrow the scope", str(caught.exception))
+
+    def test_a_proposed_adr_does_not_block(self) -> None:
+        """An ADR is a graph node and never a knowledge object; it is no member and yields nothing."""
+        graph = self.temp_graph(self.demote("decision/0001-proposal-validity-window.md"))
+        scope = gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        self.assertTrue(scope["members"])
+        self.assertNotIn("adr", {m["type"] for m in scope["members"]})
+
+    def test_the_accepted_scope_still_resolves(self) -> None:
+        """The positive case, so the four above are not passing because everything blocks."""
+        self.assertTrue(gl.resolve_scope(self.graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])["members"])
+
+
 class Scope(Fixture):
     """foundation/0004 R19 through R22."""
 
@@ -136,7 +221,7 @@ class Scope(Fixture):
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "knowledge"
             shutil.copytree(KNOWLEDGE, copy)
-            target = copy / "rule" / "sales" / "proposal-validity.md"
+            target = copy / ROOT_RELATIVE
             target.write_text(
                 target.read_text().replace("depends_on: [", "depends_on: [ko.definition.sales.gone, ", 1)
             )
@@ -149,7 +234,7 @@ class Scope(Fixture):
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "knowledge"
             shutil.copytree(KNOWLEDGE, copy)
-            target = copy / "rule" / "sales" / "proposal-validity.md"
+            target = copy / ROOT_RELATIVE
             target.write_text(target.read_text() + "\nAn added line.\n")
             stale = gl.scope_is_stale(self.scope, load(copy))
         self.assertIn(ROOT_KO, stale)

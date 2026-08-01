@@ -14,7 +14,7 @@ attributes:
   - { name: state,     type: enum,     lifecycle: ko.lifecycle.sales.proposal, required: true }
   - { name: customer,  type: ref,      target: ko.definition.sales.customer, binding: by-identity, required: true }
   - { name: items,     type: list,     of: ko.definition.sales.proposal-item, binding: embedded, min_items: 1, required: true }
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

@@ -14,7 +14,7 @@ examples:
   - given: { proposal.issued_at: "2026-07-01T09:00:00Z" }
     when:  { now: "2026-08-05T09:00:00Z", trigger: accept }
     then:  { outcome: rejected, error: ko.definition.sales.proposal-expired }
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

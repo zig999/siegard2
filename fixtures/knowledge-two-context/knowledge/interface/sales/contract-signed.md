@@ -9,7 +9,7 @@ ddd: domain-event
 version: "1.0.0"
 schema: interface/contract-signed.v1.json
 ownership: published
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

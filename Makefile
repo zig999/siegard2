@@ -17,7 +17,10 @@
 # produces, so it has its own entry point and is deliberately absent from `check` —
 # CLAUDE.md **Commands** states both. Run it when a specification changes.
 foundation:
-	python3 scripts/validate_specs.py
+	@fail=0; \
+	python3 scripts/validate_specs.py || fail=1; \
+	python3 scripts/check_existence_claims.py || fail=1; \
+	exit $$fail
 
 # Every validator runs even when an earlier one fails: a report that names one
 # gap and hides the rest is the failure mode this repository is built against.
@@ -39,7 +42,6 @@ validate:
 	python3 src/claude/bin/validate_knowledge.py fixtures/*/knowledge || fail=1; \
 	python3 src/claude/bin/project_knowledge.py --check fixtures/*/knowledge || fail=1; \
 	python3 scripts/measure_ontology.py --check || fail=1; \
-	python3 src/claude/bin/replay_workflow.py --check fixtures || fail=1; \
 	python3 src/claude/bin/verify_judged.py --run fixtures/generation-run/run.json || fail=1; \
 	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
@@ -64,11 +66,6 @@ validate:
 # that the recorded R52 measurement matches the fixture, not that any value in it
 # clears a threshold: spec 0002 R8 and spec 0001 R25 both forbid the latter.
 #
-# `replay_workflow.py --check` replays every workflow fixture through the real guard
-# and compares the result against the committed log and derived state. It is verified
-# and not regenerated here for the same reason as the two trees above. Regeneration is
-# `python3 src/claude/bin/replay_workflow.py fixtures`, which has no target: CLAUDE.md **Commands**
-# fixes the canonical entry points, and only the maintainer changes that file.
 knowledge:
 	python3 src/claude/bin/project_knowledge.py fixtures/*/knowledge
 	python3 scripts/measure_ontology.py

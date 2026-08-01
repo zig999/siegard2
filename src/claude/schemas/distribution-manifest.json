@@ -55,7 +55,7 @@
           "digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
-            "description": "Content hash of the installed file. What is required: an upgrade to detect a file the consumer changed and stop rather than overwrite it; without a recorded digest there is nothing to detect it against."
+            "description": "Content hash of the installed file. R17 requires an upgrade to detect a file the consumer changed and stop rather than overwrite it; without a recorded digest there is nothing to detect it against."
           }
         }
       }
@@ -86,7 +86,7 @@
     },
     "capabilities": {
       "type": "array",
-      "description": "each capability's lifecycle status. What is required: status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release \u2014 this field is where a consumer observes it.",
+      "description": "Each capability's lifecycle status. R17 requires that status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release \u2014 this field is where a consumer observes it.",
       "items": {
         "type": "object",
         "additionalProperties": false,

@@ -17,67 +17,67 @@
     },
     {
       "id": "ko.boundary.sales.proposal",
-      "content_hash": "sha256:d6ea716daa5ced16ea541036837fb0ca012b5c02a0308f0722ee1a866794c76e",
+      "content_hash": "sha256:6fcbb9bc73e4fc19fc58829be304c239ad4faf234ea5a5166fbc9689cba50bcb",
       "depth": 1,
       "via": "boundary"
     },
     {
       "id": "ko.definition.sales.proposal",
-      "content_hash": "sha256:e356fba9941606a81445166ce3fc4f8a609ac08c3e4c14d7412eb0d3c0a349b9",
+      "content_hash": "sha256:aa7a633e4c7a6624d5d68fc0c0910080557e19a08d537bf55d04da165d6d8002",
       "depth": 1,
       "via": "depends_on"
     },
     {
       "id": "adr.0001",
-      "content_hash": "sha256:3ef36845c946e56a04d8f12080e303f8c8437a79eb8f09a8882e6d07c64b3082",
+      "content_hash": "sha256:4508b26be62edbe3acae01a15b8b1d6e5d9d6355d0cfa33cfe66ba5eb86b599d",
       "depth": 1,
       "via": "governed_by"
     },
     {
       "id": "ko.boundary.sales",
-      "content_hash": "sha256:ca5f96b99af1eb95399a3ec953f2e748188e3d47e1efc2573fb1208f3e28d5a3",
+      "content_hash": "sha256:2d33f10c02eea5086e78510a985997e318055d5a5bf2dd7f3754eb82904479a9",
       "depth": 2,
       "via": "boundary"
     },
     {
       "id": "ko.lifecycle.sales.proposal",
-      "content_hash": "sha256:2582137e43ee636e30b48c3e5a9b8bdbbd18d37f11e04147c8d992a5ce96a238",
+      "content_hash": "sha256:4c83d6f167a94c39c2258f905b54d55d0653eb2eec68646091dc39a4cfeb5f8b",
       "depth": 2,
       "via": "attributes[].lifecycle"
     },
     {
       "id": "ko.definition.sales.proposal-item",
-      "content_hash": "sha256:33c9368d8d74dc3ea70777e731f083758431be0c1e52fa70ec193df62b917bbd",
+      "content_hash": "sha256:af7366490959915275c1917c61fab079a290ba73dd3e671d5320c2b8e02f171d",
       "depth": 2,
       "via": "attributes[].of"
     },
     {
       "id": "ko.definition.sales.customer",
-      "content_hash": "sha256:c8830eab7b3c80fa194f71f825d8ee8de31b19fd7346abc2837e65cb577d1d4e",
+      "content_hash": "sha256:87666b2a0dcf45efd65c044b9127505e75d3e78ab2a2b4f5dce0c4387c2141f9",
       "depth": 2,
       "via": "attributes[].target"
     },
     {
       "id": "ko.boundary.billing",
-      "content_hash": "sha256:1aaa2e1dfe25e28ceda236722c2a44d00f102c7f5de8106eff4d3bcf7167bf99",
+      "content_hash": "sha256:14160e84c002bf63165496d0af2ead49266cb85def8404c2c504d97919bf3269",
       "depth": 3,
       "via": "context_relationships[].with"
     },
     {
       "id": "ko.definition.sales.proposal-already-issued",
-      "content_hash": "sha256:1dfed64dae096036455a16ff4215a2dab9f0b5e086fee1ee7664ac7885d60df9",
+      "content_hash": "sha256:3d4a131d2e0a9ec939c485568565b26adf19d728861630f0c1ad4000937977ad",
       "depth": 3,
       "via": "rejections[].error"
     },
     {
       "id": "ko.definition.sales.proposal-not-issued",
-      "content_hash": "sha256:1d6d664249353f920a711d316b4352298ffa3bddd84ebc171388fb4bfe04a7d0",
+      "content_hash": "sha256:c853e8a25b1550a64620e31de41adeeea2d8df59fdd5e0320fa75b622f73d7a7",
       "depth": 3,
       "via": "rejections[].error"
     },
     {
       "id": "ko.definition.sales.proposal-terminal",
-      "content_hash": "sha256:46a6b9ac7c41c281880761f47c67c77b9d2604729a6338e07b78928217bbe760",
+      "content_hash": "sha256:bc356087ee53501f2c1211dedd561e7f8ffb3fc0f945c21de673549eccfb0658",
       "depth": 3,
       "via": "rejections[].error"
     }

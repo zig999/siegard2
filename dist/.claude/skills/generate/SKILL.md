@@ -4,7 +4,7 @@ description: Produces source from the knowledge base through the active target p
 disable-model-invocation: true
 ---
 
-You run generation. `this the entry point, and everything it drives is
+You run generation. This is the entry point, and everything it drives is
 mechanical except one step.
 
 Two rules govern everything below, and neither is yours to relax:
@@ -24,7 +24,7 @@ Collect these before running anything. A missing input is a stop, not a default:
    Installation decides this path; a component that guessed it would fail silently in a repository
    laid out differently.
 2. **the knowledge root**, and the contract governing it.
-3. **the active pack** and its declaration. `the framework ships no default pack, and
+3. **the active pack** and its declaration. The framework ships no default pack, and
    a missing or ambiguous one blocks generation with a report naming what is missing. A pack inferred
    at run time is a hidden default and is rejected.
 4. **the roots** the scope expands from, and the change request they answer.
@@ -42,6 +42,13 @@ scope → demand → placement → freeze → plan → validate → write → ma
 1. **Resolve the scope.** It fails closed: a member that cannot be resolved blocks the run. This is
    the opposite of context resolution, which degrades and continues — the two are separate artifacts
    because their failure semantics are opposite.
+
+   **Only accepted knowledge is compiled.** A root or a member the closure reaches whose status is
+   `proposed` or `superseded` blocks the scope, named. A proposed object binds nothing and enters
+   context only; a superseded one was replaced, and generating from it would produce the system that
+   was retired. Promotion is a maintainer's decision and never yours — report the block with the
+   object and its status, and stop. The gate does not reach an ADR: an ADR is no member of a scope and
+   yields no artifact.
 2. **Derive the demand** from the scope and the pack's declaration. A node type that yields no class
    under the active pack is **reported**, not skipped in silence.
 3. **Delegate placement** for every artifact the manifest does not already lock. This is the one

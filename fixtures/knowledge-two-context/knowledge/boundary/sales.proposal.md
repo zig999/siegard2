@@ -6,7 +6,7 @@ description: The consistency boundary holding a proposal and the items priced in
 question: What is inside the Proposal aggregate?
 boundary: ko.boundary.sales
 ddd: aggregate
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

@@ -26,8 +26,13 @@ be true of a distribution in a consumer's hands, and says nothing about who prod
 
 ### Provenance
 
-No generator exists, so nothing here has been exercised. What has changed since the first draft of this
-document is that its central assumption was wrong, and the documentation said so.
+A generator exists and this document's tree is assembled from framework source, verified by regenerating
+into a temporary tree and comparing. What that leaves unexercised is stated in **Outstanding evidence**
+per requirement rather than as a blanket claim about the whole document, which is the correction an earlier
+version of this paragraph needed: it said no generator existed, and stayed saying it after one was built.
+
+What has changed since the first draft of this document is that its central assumption was wrong, and the
+documentation said so.
 
 That draft described a tree copied into the consumer's `.claude/`, with a reserved name prefix on every
 component. Two reviews found it failing on its own terms: it could not install its own hooks, because every

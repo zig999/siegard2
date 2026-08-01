@@ -61,6 +61,106 @@ class MigrationRefusals(unittest.TestCase):
 
 
 
+class ImpactAnalysisHop(unittest.TestCase):
+    """`impact-analysis/1` to `/2`, and the case the bump exists for.
+
+    `.claude/rules/compatibility.md` requires "a compatibility or migration test that fails against
+    the old behavior". The old behavior is reachable without reading the old file: `/1` had no
+    `base_state` and its `minItems` rule was unconditional, which is exactly what `/2` does when told
+    the base was `populated`. So the break is asserted as one pair — the same document is rejected
+    under `populated` and admitted under `empty` — and the pair is the whole claim.
+
+    An earlier version of this class read the superseded schema out of `git show HEAD:`. That passed
+    only while the change was uncommitted: once `/2` is in HEAD the assertion inverts and the test
+    fails for the opposite reason. A test whose meaning depends on not having committed yet is worse
+    than no test, because it goes green at the moment it stops being true.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.v2 = validator("impact-analysis.json")
+
+    def first_change(self, **over) -> dict:
+        """A `create` over a base that held nothing — what `/1` could not express."""
+        return {
+            "contract_version": "impact-analysis/2",
+            "analysis_id": "ia_3f9c1b02",
+            "request_id": "cr_7a2e4d10",
+            "producer": "impact-analyst",
+            "verdict": "create",
+            "base_state": "empty",
+            "implicated": [],
+            **over,
+        }
+
+    def test_v2_admits_a_create_that_implicates_nothing_over_an_empty_base(self) -> None:
+        self.assertEqual([], list(self.v2.iter_errors(self.first_change())))
+
+    def test_the_same_document_is_rejected_under_the_old_rule(self) -> None:
+        """The break itself: `populated` is `/1`'s unconditional rule, and it still rejects.
+
+        This is the half that fails against the old behavior. Without it, the test above would only
+        show `/2` accepting something, with nothing establishing that anything used to refuse it.
+        """
+        document = self.first_change(base_state="populated")
+        self.assertNotEqual([], list(self.v2.iter_errors(document)))
+
+    def test_an_empty_base_admits_no_update(self) -> None:
+        document = self.first_change(verdict="update")
+        self.assertNotEqual([], list(self.v2.iter_errors(document)))
+
+    def test_base_state_is_required(self) -> None:
+        document = self.first_change()
+        del document["base_state"]
+        self.assertNotEqual([], list(self.v2.iter_errors(document)))
+
+    def test_the_migration_infers_populated_and_stamps_the_version(self) -> None:
+        migrated = migrate(
+            {
+                "contract_version": "impact-analysis/1",
+                "analysis_id": "ia_5c7d9e01",
+                "request_id": "cr_2b4f6a80",
+                "producer": "impact-analyst",
+                "verdict": "update",
+                "implicated": [{"id": "billing.invoice", "kind": "knowledge-object"}],
+            },
+            "impact-analysis/1",
+            "impact-analysis/2",
+        )
+        self.assertEqual("impact-analysis/2", migrated["contract_version"])
+        self.assertEqual("populated", migrated["base_state"])
+        self.assertEqual([], list(self.v2.iter_errors(migrated)))
+
+    def test_the_migration_leaves_the_input_alone(self) -> None:
+        source = {
+            "contract_version": "impact-analysis/1",
+            "analysis_id": "ia_5c7d9e01",
+            "request_id": "cr_2b4f6a80",
+            "producer": "impact-analyst",
+            "verdict": "none",
+            "implicated": [],
+        }
+        migrate(dict(source), "impact-analysis/1", "impact-analysis/2")
+        self.assertEqual("impact-analysis/1", source["contract_version"])
+        self.assertNotIn("base_state", source)
+
+    def test_a_none_verdict_also_infers_populated(self) -> None:
+        """`none` asserts the request is already answered, which nothing empty can assert."""
+        migrated = migrate(
+            {
+                "contract_version": "impact-analysis/1",
+                "analysis_id": "ia_5c7d9e01",
+                "request_id": "cr_2b4f6a80",
+                "producer": "impact-analyst",
+                "verdict": "none",
+                "implicated": [],
+            },
+            "impact-analysis/1",
+            "impact-analysis/2",
+        )
+        self.assertEqual("populated", migrated["base_state"])
+
+
 class ConstraintDigest(unittest.TestCase):
     """What counts as a change, and what does not — the rule's own distinction."""
 

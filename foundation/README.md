@@ -44,13 +44,21 @@ nothing would give it an authority its own basis does not have. The rule held th
 framework document ended up resting on a foundation that binds nothing. What the rule does not reach is the
 question that decision left open — whether either foundation had earned its own acceptance.
 
-That rule is checked rather than trusted, as of 2026-07-31. `scripts/validate_specs.py` derives the
-prerequisite graph from the acceptance conditions each document already writes — no frontmatter field was
+**That rule is checked for a `proposed` document and is unchecked for these fourteen.** The distinction is
+worth stating plainly, because an earlier version of this paragraph said the rule was "checked rather than
+trusted" without it. `scripts/validate_specs.py` derives the prerequisite graph from the acceptance
+conditions a document writes under **Validation required before acceptance** — no frontmatter field was
 added, because a declared dependency and a stated one would be two authorities for the same relation — and
 it reports an unresolved reference, a prerequisite marked met while its target is not accepted, an accepted
-document still carrying an unmet prerequisite, and a cycle. What it cannot see is stated in that script's
-docstring: an accepted document replaces its acceptance section with what satisfied it, so the check works
-on the proposed side and on the moment of promotion, not retrospectively.
+document still carrying an unmet prerequisite, and a cycle. An accepted document replaces that section with
+**Outstanding evidence**, which states what is owed rather than what had to hold first, so the prerequisites
+leave the text on promotion and the graph is empty for a set where every document is accepted. The check is
+live and it currently sees nothing, which is a property of the set rather than a defect in the script.
+
+What *is* checked over these fourteen is narrower and was added because six of them drifted:
+`scripts/check_existence_claims.py` rejects a document claiming a tree is empty while the repository holds
+it. That closes the failure mode where a Provenance paragraph outlives the fact it asserts; it does not
+close the acceptance-order rule, and nothing does retrospectively.
 
 | Id | Title | Decides | Inherits, and must not restate |
 |---|---|---|---|

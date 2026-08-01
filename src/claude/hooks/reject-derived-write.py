@@ -2,15 +2,15 @@
 """Refuse a write to a file the knowledge materializer owns.
 
 One hook, one guarantee, so a denial names a single condition and this can be
-retired without taking another guarantee with it. The guarantee is `a
+retired without taking another guarantee with it. The guarantee is R42 and R51: a
 projection is derived and never hand-edited.
 
 Until now that rule existed only as `project_knowledge.py --check` in a Makefile a consumer may
 never run. Reporting a hand edit afterwards is a different thing from preventing it, and
-`CLAUDE.md` **Security** requires a guarantee that must hold regardless of model judgment to be
+a guarantee that must hold regardless of model judgment is
 enforced by a hook or a script rather than by a prompt.
 
-What `, and where each requirement lands:
+What the hook contract fixes, and where each requirement lands:
 
 - **R1** — a `command` handler. `prompt` and `agent` evaluate with a model, and a guarantee a
   model decides is not enforced.

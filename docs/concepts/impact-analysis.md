@@ -24,7 +24,8 @@ it leaves nothing to decide against; and it is cheap, because it classifies a re
 [knowledge graph](knowledge-graph.md) rather than authoring knowledge.
 
 Its verdict is a closed field, which is what lets an orchestrator choose the next transition by lookup
-rather than by reading prose — see [transition guard](transition-guard.md).
+rather than by reading prose. What reads it is the caller: the framework ships no component that chooses a
+transition, per `foundation/0005` R23.
 
 Impact analysis is also one half of the closure that decides acceptance. The other half is the observed
 diff, and the two are unioned so that independence does not depend on the analysis being complete — see

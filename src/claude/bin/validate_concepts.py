@@ -4,7 +4,8 @@
 This script is a boundary validator: it holds no rules of its own. Every constraint
 lives in the schema file, which is the single authority. The checks implemented here
 are the ones a JSON Schema cannot express — cross-file uniqueness, reserved filenames,
-id/filename agreement, and whether a declared source still exists. Frontmatter parsing
+id/filename agreement, whether a declared source still exists, and whether the bundle's own
+cross-references resolve. Frontmatter parsing
 is shared via bin/frontmatter_lib.py.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
@@ -27,6 +28,7 @@ from cli import cannot_run
 SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "concept.json"
 RESERVED = {"index.md", "log.md"}
 URI_SCHEME = re.compile(r"^[a-z][a-z0-9+.\-]*://")
+MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 try:
     import yaml
@@ -74,6 +76,30 @@ def check_sources(data: dict) -> list[str]:
     return problems
 
 
+def check_links(path: Path, body: str) -> list[str]:
+    """Every link to a sibling concept must resolve.
+
+    A bundle whose own cross-references dangle is the failure this catches, and it went uncaught
+    for as long as the check did not exist: three concepts kept linking to two that had been
+    removed, and every other validator passed. The specification validator has always held
+    specifications to this; the bundle was the asymmetry.
+
+    Only relative links to a sibling `.md` are followed. An absolute URI is out of scope, and a
+    path reaching outside the bundle is a source rather than a cross-reference — `check_sources`
+    owns that.
+    """
+    problems: list[str] = []
+    for label, target in MARKDOWN_LINK.findall(body):
+        href = target.split("#", 1)[0]
+        if not href or URI_SCHEME.match(href) or not href.endswith(".md"):
+            continue
+        if href.startswith("/") or ".." in PurePosixPath(href).parts:
+            continue
+        if not (path.parent / href).is_file():
+            problems.append(f"link '[{label}]({target})' resolves to no file")
+    return problems
+
+
 def concept_files(bundle: Path) -> list[Path]:
     return sorted(p for p in bundle.rglob("*.md") if p.name not in RESERVED)
 
@@ -87,7 +113,7 @@ def validate(bundle: Path) -> list[str]:
     for path in concept_files(bundle):
         rel = display(path)
         try:
-            data, _body = split_frontmatter(path.read_text())
+            data, body = split_frontmatter(path.read_text())
         except ValueError as exc:
             problems.append(f"{rel}: {exc}")
             continue
@@ -114,6 +140,7 @@ def validate(bundle: Path) -> list[str]:
             problems.append(f"{rel}: filename must be '{expected_stem}.md' to match id '{cid}'")
 
         problems.extend(f"{rel}: {problem}" for problem in check_sources(data))
+        problems.extend(f"{rel}: {problem}" for problem in check_links(path, body))
 
     return problems
 

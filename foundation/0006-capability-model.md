@@ -27,10 +27,17 @@ R13 there that this document makes specific.
 ### Provenance
 
 The classes below are the ones the framework has, plus the ones a specification already commits it to.
-Two are exercised today: a [specialized agent](../docs/concepts/specialized-agent.md) and a script. A
-[skill](../docs/concepts/skill.md) is authored but has never been loaded. A hook, a template, and a
-[target pack](../docs/concepts/target-pack.md) exist only as commitments — nothing yet exercises the
-gate for each, and this document's acceptance conditions keep it from binding before those are met.
+How many are occupied is not restated here, and an earlier version of this paragraph is why: it said
+"two", stayed at two while a hook and a skill were built, and a reader trusted it. The count is derived
+on every run — the [distribution manifest](../docs/concepts/distribution-manifest.md) records the class of
+each installed capability under `foundation/0008` R12, which is R17 applied rather than described. Read
+it there.
+
+What the manifest cannot settle is which classes are occupied by a capability as against by an artifact
+that merely resembles one. The template class is the case worth naming: what `src/claude/templates/` holds
+is [scaffolds](../docs/concepts/scaffold.md), which that concept distinguishes from a template, so they
+ship without occupying the class. A real template belongs to a
+[target pack](../docs/concepts/target-pack.md), and no pack is distributed.
 
 Two classes the original framework plan proposed are not here. **Command** is absent because custom
 commands were merged into skills; the invocation `/name` survives, the class does
@@ -53,14 +60,12 @@ This specification uses these terms as the concept bundle defines them:
 [capability](../docs/concepts/capability.md),
 [skill](../docs/concepts/skill.md),
 [specialized agent](../docs/concepts/specialized-agent.md),
-[orchestrator](../docs/concepts/orchestrator.md),
 [target pack](../docs/concepts/target-pack.md),
 [distribution](../docs/concepts/distribution.md),
 [fixture](../docs/concepts/fixture.md),
 [artifact class](../docs/concepts/artifact-class.md),
 [projection](../docs/concepts/projection.md),
 [least privilege](../docs/concepts/least-privilege.md),
-[transition guard](../docs/concepts/transition-guard.md),
 [contract version](../docs/concepts/contract-version.md).
 
 ## The classes
@@ -107,8 +112,12 @@ document growing a class for it.
   retired without taking another guarantee with it. That a guarantee is enforced by a hook rather than by
   model judgment, and that a hook rejects rather than repairs, are `foundation/0005` R5 and R22 and are cited
   here rather than restated. `foundation/0010` fixes how a hook honors them.
-- **R8** — A script holds durable control flow, state derivation, and validation. This is where an
-  [orchestrator](../docs/concepts/orchestrator.md)'s logic lives; it is never prompt text.
+- **R8** — A script holds state derivation and validation, and it is never prompt text.
+
+  An earlier form added *durable control flow* and named a script as where an orchestrator's logic lives.
+  Both are gone: `foundation/0005` R23 states that the framework does not sequence, and R5 there was
+  narrowed to keep control flow out of the class of things a script must decide. A script that sequenced
+  capabilities would be the component R2 of that document forbids, whatever tree it sat in.
 - **R9** — A template expands into exactly one [artifact class](../docs/concepts/artifact-class.md) and
   names the schema its output must satisfy. A template that can produce two unrelated artifact classes is
   two templates. A template belongs to a [target pack](../docs/concepts/target-pack.md), or to the framework

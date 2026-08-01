@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/context-package.json",
   "title": "Context package",
-  "description": "The artifact that names exactly the knowledge one run of context resolution puts in scope. What is required: the versioned schema; R2 makes the package the boundary of what may be read while it is in scope, so a consumer that needs something absent reports a gap rather than reading around it. R6 binds one package to one run — a validation failure sends the workflow back to implementation and the failed object enters the *next* resolution as a mandatory root, so a package carried across that boundary would state a scope the later attempt was never granted. its persistence claim-recorded: the body recomputes from the recorded roots, the graph, the budget, and the expansion contract version, and the identity is pinned from outside the run.",
+  "description": "The artifact that names exactly the knowledge one run of context resolution puts in scope. R1 requires the versioned schema; R2 makes the package the boundary of what may be read while it is in scope, so a consumer that needs something absent reports a gap rather than reading around it. R6 binds one package to one run — a validation failure sends the workflow back to implementation and the failed object enters the *next* resolution as a mandatory root, so a package carried across that boundary would state a scope the later attempt was never granted. R13 makes its persistence claim-recorded: the body recomputes from the recorded roots, the graph, the budget, and the expansion contract version, and the identity is pinned from outside the run.",
   "type": "object",
   "additionalProperties": false,
   "required": [

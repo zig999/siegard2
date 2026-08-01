@@ -265,7 +265,7 @@ def _load_system(graph: Graph) -> None:
     Spec 0003 defers this file's schema beyond the three defaults R26 requires and the
     `limits.body_lines` ceiling R48 requires, so this reads it without one and reports what
     is missing by name. The ceiling is a fact of the knowledge base rather than a hidden
-    default in a validator, which .claude/rules/distribution.md rejects; a maintainer settled
+    default in a validator, which is rejected as a hidden default; a maintainer settled
     that home on 2026-07-30 and R48 now names it. What value it should hold is still deferred
     to R52's measurement.
     """
@@ -295,7 +295,7 @@ def _load_adr(graph: Graph, path: Path, validator: Draft202012Validator) -> None
 
     Validated against schemas/knowledge-decision.json, which spec 0003 names as its contract. The
     similarity check in the validate adrs tool is not applied: it compares an ADR
-    against this repository's own CLAUDE.md, which says nothing about a governed one.
+    against the generator's own instructions, which say nothing about a governed one.
     """
     try:
         data, _body = split_frontmatter(path.read_text())

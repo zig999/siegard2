@@ -26,8 +26,17 @@ template's syntax, which is implementation.
 
 ### Provenance
 
-No template exists, and a scaffold directory is a path to create when
-the first artifact needs it. Templates arrive with the first artifact that needs one.
+Templates exist, in a fixture pack rather than in the framework: `fixtures/pack-typescript/` carries one
+deterministic producer per class it declares that way, each run twice over the same knowledge and compared,
+and each read by AST to confirm it reaches for no clock, environment, randomness, network, or file. That is
+what R4 through R6 are checked against today. The framework itself ships no template — what
+`src/claude/templates/` holds is [scaffolds](../docs/concepts/scaffold.md), which that concept
+distinguishes from a template, and `foundation/0006` R9 puts a template in a pack or in the framework only
+where its artifact class is technology-independent.
+
+An earlier version of this paragraph said no template existed and that a scaffold directory was a path to
+create. Both stopped being true and the paragraph did not move, which is why what remains unexercised is
+stated per requirement in **Outstanding evidence** instead.
 
 The determinism requirements below are not speculative, though. R4 through R6 are the generalization of a
 defect this framework already hit and fixed once: an early draft of the workflow event contract ordered
@@ -140,7 +149,9 @@ This specification uses these terms as the concept bundle defines them:
 ## Outstanding evidence
 
 What this document states and nothing has yet exercised. A condition kept here is a debt;
-removing one because the document binds would turn an open debt into a silent one.
+removing one because the document binds would turn an open debt into a silent one. A number is never reused: a condition that was met or
+withdrawn leaves its number behind, so a gap in the sequence records that something was settled rather
+than that an item is missing.
 
 1. One template exists, produces one artifact class, and a fixture expands it. Every requirement here is
    unexercised.

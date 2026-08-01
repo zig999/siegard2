@@ -1,13 +1,18 @@
 ---
 id: "0011"
 title: Record workflow history as an append-only event log, and replay it for state
-status: accepted
+status: superseded
 contract_version: adr/1
 ---
 
 # Record workflow history as an append-only event log, and replay it for state
 
 ## Context
+
+**Superseded by `docs/adr/0016-remove-the-workflow-machinery.md`.** The machinery this record
+chose was removed: the event contract, the guard, the replay, and the skill that drove them are gone,
+and `foundation/0001` R8, which required persisted and reconstructible workflow state, is retired. What follows is
+kept for history and for the reasoning, which 0016 answers rather than repeats.
 
 An open question asked which persistence model records workflow state, and named
 an append-only log with state derived by replay as the leading candidate rather than the answer. It

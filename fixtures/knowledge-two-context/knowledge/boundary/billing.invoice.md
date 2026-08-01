@@ -6,7 +6,7 @@ description: The consistency boundary holding an invoice raised for a signed con
 question: What is inside the Invoice aggregate?
 boundary: ko.boundary.billing
 ddd: aggregate
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

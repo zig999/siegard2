@@ -34,6 +34,32 @@ The draft is no longer in this repository. It was carried in `reference/` until 
 removed, and it is recoverable from git history through commit `8744312`, the last commit that contains
 it. This paragraph is the anchor for the phrase "the v0.1 draft" wherever this repository still uses it.
 
+**The workflow machinery this document's control flow rested on was removed** — a transition table, a
+guard, a replay-derived state, an event contract, and the skill that drove the seven phases
+(`docs/adr/0016-remove-the-workflow-machinery.md`). `foundation/0005` R23 then fixed the architecture that
+replaces it: Siegard refuses rather than sequences, and order follows from what each capability declares
+it requires.
+
+Four requirements here were settled against that, under one principle: **retire what names a component
+the framework no longer ships; keep what states a rule the method's actors can still honor.**
+
+| | |
+|---|---|
+| **R2** | kept, and demoted from a closed control-flow vocabulary to guidance taught through a skill |
+| **R5** | retired — it named an orchestrator, and there is none |
+| **R7** | kept, with the absence of any enforcing mechanism stated in the requirement itself |
+| **R8** | retired — it required a record nothing keeps, and resumption is given up with it |
+| **R21** | unaffected, and enforced by promotion plus the scope gate rather than by an acceptance phase |
+
+The method decision is taken here rather than in the framework family, because
+`foundation/README.md` states that a framework specification does not amend the method. The architectural
+decision the settlement answers to is
+`docs/adr/0017-order-follows-from-declarations-not-from-a-sequencer.md`.
+
+The one path that had a caller is now `skills/ingest-domain/`, a straight procedure with no phases and no
+event log. It does not satisfy R1: an ingestion originates in received material rather than in a recorded
+change request, and nothing yet records one.
+
 ### Decided elsewhere, deliberately not restated here
 
 | Question | Authority |
@@ -75,8 +101,6 @@ Terms used normatively below. Each is defined once, in the concept bundle.
 | assertion | [assertion](../docs/concepts/assertion.md) |
 | escalation | [escalation](../docs/concepts/escalation.md) |
 | fail-soft | [fail-soft](../docs/concepts/fail-soft.md) |
-| transition guard | [transition-guard](../docs/concepts/transition-guard.md) |
-| workflow state | [workflow-state](../docs/concepts/workflow-state.md) |
 | provenance | [provenance](../docs/concepts/provenance.md) |
 | accepted | [accepted](../docs/concepts/accepted.md) |
 | specification | [specification](../docs/concepts/specification.md) |
@@ -164,22 +188,48 @@ that outcome visible over time instead of surprising at the end.
 
 - **R1** — Every change to a governed repository originates in a change request. No phase runs without
   one.
-- **R2** — The default path is exactly: change request, impact analysis, context resolution,
-  specification delta, implementation, validation, acceptance, in that order. Escalation inserts
-  phases; it never removes one.
+- **R2** — The default path is: change request, impact analysis, context resolution, specification
+  delta, implementation, validation, acceptance. It is the order the work follows, and it is **guidance
+  rather than a control-flow vocabulary**. What fixes an order is what each capability declares it
+  requires — `foundation/0005` R10 and `foundation/0007` R24 — and this path is taught to the executor
+  through a skill rather than enforced by a component the framework ships. Escalation inserts steps; it
+  never removes one.
+
+  An earlier form of this requirement said the path was *exactly* that sequence in that order, and made
+  the seven names a closed vocabulary that a persisted event branched on. That vocabulary went with the
+  machinery that read it, and restating the order as a closed enum would now describe a mechanism nothing
+  implements. The order itself is unchanged and still worth following; what changed is what makes it
+  hold.
 - **R3** — Impact analysis runs for every change request, including one whose verdict turns out to be
   `none`.
 - **R4** — Impact analysis produces a validated artifact carrying a verdict from the closed set
   `none | update | create`, and naming every implicated knowledge object and ADR by identifier.
-- **R5** — An orchestrator chooses a transition by lookup on a closed field of an artifact that passed
-  its contract at the boundary. It never chooses a transition by interpreting prose.
+- **R5** — Retired. It required an orchestrator to choose a transition by lookup on a closed field, and
+  the framework ships no orchestrator: `foundation/0005` R23 states that Siegard refuses rather than
+  sequences, and R3 there puts sequence with the executor. The number is retained rather than reused so
+  that a citation of R5 still resolves to the statement it named. What survives of it is R6 below, which
+  needs no orchestrator to bind: an artifact that fails its contract is rejected. The rule against
+  deciding anything by interpreting prose survives as `foundation/0005` R6.
 - **R6** — An artifact that fails its contract at the boundary is rejected, never repaired.
-- **R7** — A validation failure returns the workflow to implementation under a stated attempt limit,
-  and the knowledge object of the failed check enters the next context resolution as a mandatory root.
-  Exhausting the limit is a terminal outcome that reports the failure; it is never an acceptance.
-- **R8** — Workflow state is persisted outside the conversation, and every transition is
-  reconstructible from persisted records alone. Conversation history and auto memory are not records.
-  Which persistence model satisfies this is not decided by this specification.
+- **R7** — A validation failure returns the work to implementation under a stated attempt limit, and the
+  knowledge object of the failed check enters the next context resolution as a mandatory root. Exhausting
+  the limit is a terminal outcome that reports the failure; it is never an acceptance.
+
+  **No mechanism enforces this.** The limit depended on a record of how many attempts had already
+  happened, and the framework keeps no such record — `foundation/0005` R23. It is kept rather than retired
+  because it states what the method requires of whoever does the work, and a maintainer can honor it; what
+  it no longer is, is a guarantee. Where it returns as one, it returns as a refusal at a boundary and not
+  as a component that counts attempts on the framework's behalf.
+- **R8** — Retired. It required workflow state persisted outside the conversation and every transition
+  reconstructible from persisted records alone. Both presume that the framework holds workflow state and
+  chooses transitions, and `foundation/0005` R23 states that it does neither; R14 there is retired for the
+  same reason. The number is retained rather than reused. What is given up with it is **resumption**: work
+  interrupted halfway leaves no record of where it stopped, and nothing can reconstruct it. That is a real
+  loss and it is recorded here rather than in the framework family, because whether the method needs
+  resumption is a method question.
+
+  R15 of `foundation/0005` is unaffected and still binds: a recorded decision names its inputs, its
+  artifact, and its contract version, so a later reader can reproduce it without the session that made it.
 
 ### Escalation
 
@@ -220,6 +270,13 @@ that outcome visible over time instead of surprising at the end.
   not present as a guarantee is meaningless where no gate reports anything.
 - **R21** — Acceptance requires a maintainer's decision, or a deterministic approval mechanism the
   governed repository defines. No workflow accepts its own output.
+
+  **This holds, and it is enforced.** It was counted among the guarantees the removal gave up, and that
+  was wrong: it is a refusal rather than a sequence, and the framework still performs it. A knowledge
+  object derived from existing material is born `proposed` under R26 and only a maintainer promotes it,
+  and `foundation/0004` R54 makes a generation scope compile accepted knowledge only — so nothing the
+  framework runs can accept its own output and then build on it. What is gone is the *acceptance phase*
+  that recorded the decision, not the requirement that a decision be someone's.
 - **R22** — Validation produces evidence that records what ran, its result, and the inputs needed to
   reproduce it. An acceptance with no evidence is a defect, not a fast path.
 

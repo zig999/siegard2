@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/specification-delta.json",
   "title": "Specification delta",
-  "description": "The transient artifact describing one requested change by reference. it to references rather than content: restating an artifact here would put a second copy of it in a temporary file, and the copy is the one that stops being maintained. Produced by spec-delta-author and consumed by bin/orchestrate.py, which chooses the transition out of the specification-delta phase from the closed `state` field. Its persistence is run-scoped — nothing outside the run reads it, and what survives is the event that records the phase.",
+  "description": "The transient artifact describing one requested change by reference. it to references rather than content: restating an artifact here would put a second copy of it in a temporary file, and the copy is the one that stops being maintained. Produced by spec-delta-author. It has no mechanical consumer since the workflow machinery was removed: the delta is read by whoever performs the change. Its persistence is run-scoped — nothing outside the run reads it, and what survives is the event that records the phase.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,7 +24,7 @@
         "recorded",
         "blocked"
       ],
-      "description": "The closed set the orchestrator branches on. Two rather than three: a delta is a description of what will change, so it has no `updated` counterpart the way an authoring result does — it is either written or it is blocked on something absent."
+      "description": "The closed set a consumer branches on. Two rather than three: a delta is a description of what will change, so it has no `updated` counterpart the way an authoring result does — it is either written or it is blocked on something absent."
     },
     "request_id": {
       "type": "string",

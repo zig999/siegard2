@@ -10,7 +10,7 @@ Every output is reproducible from the graph and none is a normative source (R51)
 is lexicographic by id throughout, which is what makes "identical input produces
 byte-identical output" true of a generated file rather than merely intended.
 
-Two modes, and the separation is the same one CLAUDE.md draws between `dist` and
+Two modes, and the separation is the same one the generator draws between `dist` and
 `dist-check`: writing regenerates, `--check` verifies and mutates nothing. A check that
 repairs what it was meant to detect reports success on a defect.
 

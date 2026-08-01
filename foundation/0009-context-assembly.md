@@ -39,16 +39,20 @@ resolver class is needed, and none is proposed here.
 
 ### Provenance
 
-Nothing here has been exercised. Nothing has yet built context resolution,
-and it has not started; the thin path of stage 2 ran with resolution degenerate, because in a bundle of a
-few objects the impact set already is the context.
+Context resolution is built, and the measurement R10 and R11 ask for has been taken — it is recorded below
+beside those requirements, and R11 is decided on it. An earlier version of this paragraph said nothing had
+been built and that it had not started, and it stayed saying so after the expansion, the degradation
+record, and the measurement all existed. What remains unexercised is per requirement in **Outstanding
+evidence** rather than a claim about the document as a whole.
 
-That has a consequence this document is built around rather than hiding. Stage 3 attaches an abandonment
-criterion — if selection recall is indistinguishable from sending the whole bundle, the mechanism is
-replaced by inclusion by tag or domain. A specification written before that measurement could easily
-specify machinery the evidence then discards. So this document fixes the *artifact* and the
-*measurement*, and states as little as possible about the resolution that produces it. R11 below makes
-the abandonment criterion a requirement rather than a note.
+The first run had resolution degenerate, because in a bundle of a few objects the impact set already is the
+context. That is what this document is built around rather than hiding: it carries an abandonment
+criterion, and if selection recall were indistinguishable from sending the whole bundle the mechanism would
+be replaced by inclusion by tag or domain. A specification written before that measurement could easily
+have specified machinery the evidence then discards. So this document fixes the *artifact* and the
+*measurement*, and states as little as possible about the resolution that produces it. R11 makes the
+abandonment criterion a requirement rather than a note, and the measurement recorded under it is what
+retained the mechanism — on evidence, and owed a re-measurement at a larger bundle.
 
 ### Decided elsewhere, deliberately not restated here
 

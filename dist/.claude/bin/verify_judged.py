@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run a judged artifact against the conformance suite its knowledge object generates.
 
-`the judged track is verified against a conformance suite generated from the
+R3 has the judged track verified against a conformance suite generated from the
 knowledge base, and "a judged artifact with no covering suite is not accepted output". R2 keeps
 byte identity for the deterministic track only, so this is what replaces it — and R5 forbids
 reporting one as the other.

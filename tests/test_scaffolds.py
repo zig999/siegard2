@@ -35,6 +35,14 @@ STAMP = {"generated_by": "claude-opus-5", "generated_at": "2026-07-31T10:00:00Z"
 # One plausible value per placeholder, per kind. Deliberately verbose rather than generated:
 # a value that happened to satisfy a pattern by accident would make a green test meaningless.
 CASES: dict[str, dict[str, str]] = {
+    "knowledge-system": {
+        "timezone": "America/Sao_Paulo",
+        "currency": "BRL",
+        "identity_strategy": "surrogate",
+        # The ceiling's *value* is still deferred to measurement; that it is supplied rather than
+        # defaulted is the part under test here.
+        "body_lines": "24",
+    },
     "specification": {
         "id": "0099",
         "title": "Decide one thing, and make the deciding checkable",
@@ -237,6 +245,49 @@ class Coverage(unittest.TestCase):
         """The artifact's own form decides how it is parsed; a delta is an object, not a file."""
         for kind in sorted(scaffold.JSON_KINDS):
             self.assertFalse(scaffold.template_path(kind).read_text().startswith("---"), kind)
+
+
+class SystemDefaults(unittest.TestCase):
+    """The one kind that names no schema, checked against the validator that owns it instead.
+
+    `conforms` returns nothing for `knowledge-system`, so the generic expansion test passes it
+    vacuously. That is exactly the case where a suite can look green and assert nothing, so the
+    real contract is exercised here: the knowledge materializer reads this file before any object
+    loads, and the body check reads the ceiling out of it. Both are asserted rather than assumed.
+    """
+
+    def expanded(self) -> Path:
+        text, problems = scaffold.expand("knowledge-system", CASES["knowledge-system"])
+        self.assertEqual([], problems)
+        root = Path(tempfile.mkdtemp()) / "knowledge"
+        root.mkdir(parents=True)
+        (root / "system.md").write_text(text)
+        return root
+
+    def test_the_materializer_resolves_all_three_defaults(self) -> None:
+        from knowledge_graph_lib import load
+
+        graph = load(self.expanded())
+        self.assertEqual([], graph.problems, "the scaffolded file reports nothing missing")
+        for key in ("timezone", "currency", "identity_strategy"):
+            self.assertIn(key, graph.defaults)
+
+    def test_the_body_ceiling_is_enforceable_from_it(self) -> None:
+        """Absent the ceiling the check reports itself unenforceable, which is the failure to avoid."""
+        from knowledge_graph_lib import load
+
+        ceiling = load(self.expanded()).limits.get("body_lines")
+        self.assertIsInstance(ceiling, int)
+        self.assertGreater(ceiling, 0)
+
+    def test_it_names_no_schema_on_purpose(self) -> None:
+        """A schema here would be a second home for the four facts the validator already checks."""
+        self.assertIsNone(scaffold.SCHEMA_BY_KIND["knowledge-system"])
+
+    def test_the_ceiling_is_supplied_and_never_defaulted(self) -> None:
+        values = {k: v for k, v in CASES["knowledge-system"].items() if k != "body_lines"}
+        _text, problems = scaffold.expand("knowledge-system", values)
+        self.assertNotEqual([], problems, "a ceiling nobody supplied is a hidden default")
 
 
 class Expansion(unittest.TestCase):

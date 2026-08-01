@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Expand a set of roots into a context package, deterministically.
 
-`the package as a contract and leaves the traversal free, with one
+The contract fixes the package and leaves the traversal free, with one
 constraint that does all the work: R17 pins expansion order to the contract version the
 package records and forbids an order free to differ between two runs of one version. Without
-that, R13's `claim-recorded` persistence is a label — `What is required: a discarded
+that, R13's `claim-recorded` persistence is a label — R48 requires a discarded
 body to recompute to the recorded content hash, and a package truncated by a budget recomputes
 to a different set the moment the traversal reorders.
 

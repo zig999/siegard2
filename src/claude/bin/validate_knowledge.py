@@ -26,13 +26,13 @@ materialized graph rather than against one file:
   R35 a synonym is declared in `aliases` and appears in no body
 
 Every problem is reported and none is repaired: R22 says so for the materializer, and
-CLAUDE.md says a check that repairs what it detects reports success on a defect. This
+A check that repairs what it detects reports success on a defect. This
 script writes nothing, so `make validate` stays non-mutating.
 
 Two rules of R46 are NOT enforced mechanically, named here rather than left to be
 discovered: that a body carries no rationale, history, alternatives, or motivating
 narrative, and that a body is not the only place a fact a machine reads appears. Both are
-judgments about meaning, and CLAUDE.md keeps model judgment out of enforcement.
+judgments about meaning, and model judgment stays out of enforcement.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
@@ -454,7 +454,7 @@ def check_bodies(graph: Graph) -> None:
             graph.root / "system.md",
             "declares no positive `limits.body_lines`, so R48's body length ceiling cannot be "
             "enforced. The ceiling is a fact of the knowledge base, and "
-            ".claude/rules/distribution.md rejects a validator that supplies it",
+            "a validator that supplied it would be a hidden default",
         )
         ceiling = None
 

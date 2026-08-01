@@ -109,9 +109,21 @@ class Thresholds(unittest.TestCase):
             )
 
     def test_a_caller_supplied_value_is_not_a_framework_threshold(self) -> None:
-        """R20's other route: the attempt limit comes from the workflow's opening event."""
-        log = REPO_ROOT / "fixtures" / "knowledge-change-loop" / "inputs" / "events" / "01-change-request.json"
-        self.assertIn("attempt_limit", json.loads(log.read_text()))
+        """R20's other route: a value the caller states is not a threshold the framework ships.
+
+        Read off the declaration of `ingest-domain`, whose `system_defaults` is the clearest live
+        instance: the body-line ceiling and the three attribute defaults are facts about a
+        repository, and the declared behaviour on their absence is to stop rather than to choose
+        one. A framework that picked a value here would be shipping the uncalibrated threshold R19
+        refuses.
+        """
+        declarations = json.loads(
+            (REPO_ROOT / "src" / "claude" / "capabilities.declaration.json").read_text()
+        )["declarations"]
+        entry = next(d for d in declarations if d["identifier"] == "ingest-domain")
+        defaults = next(i for i in entry["inputs"] if i["name"] == "system_defaults")
+        self.assertFalse(defaults["required"])
+        self.assertIn("stops rather than choosing", defaults["default"])
 
 
 class UpgradeSkill(unittest.TestCase):

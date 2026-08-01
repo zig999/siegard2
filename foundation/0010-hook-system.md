@@ -42,10 +42,16 @@ this document, and record the new retrieval date.
 
 ### Provenance
 
-No hook exists. No gate for it is met, and four candidates motivated this document — rejecting a write
-under `dist/` that the generator did not produce, rejecting an inter-agent artifact that fails its
-schema, rejecting a schema change with no contract version bump, and rejecting a write to a file only a
-maintainer may change.
+One hook exists and ships: it refuses a hand edit of a derived knowledge projection, declared in
+`src/claude/hooks/hooks.declaration.json` and tested in both directions. An earlier version of this
+paragraph said no hook existed and kept saying it after that one was built, which is the drift
+**Outstanding evidence** is meant to carry per requirement rather than a Provenance section is meant to
+summarize.
+
+Four candidates motivated this document, and the one that shipped is the first of them: rejecting a write
+to a derived artifact its generator owns, rejecting an inter-agent artifact that fails its schema,
+rejecting a schema change with no contract version bump, and rejecting a write to a file only a maintainer
+may change. The last three are still candidates.
 
 Two requirements below exist only because the documentation was read rather than remembered. R2 inverts
 what a Unix programmer would write: exit code 1 is a non-blocking error, so a hook that fails
@@ -69,7 +75,6 @@ in this document if it had been written from memory of how hooks probably work.
 This specification uses these terms as the concept bundle defines them:
 [capability](../docs/concepts/capability.md),
 [least privilege](../docs/concepts/least-privilege.md),
-[transition guard](../docs/concepts/transition-guard.md),
 [assertion](../docs/concepts/assertion.md),
 [distribution](../docs/concepts/distribution.md),
 [event log](../docs/concepts/event-log.md),

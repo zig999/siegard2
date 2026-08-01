@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/validation-evidence.json",
   "title": "Validation evidence",
-  "description": "What a validation phase actually ran, and what it reported. What is required: validation to carry evidence, and the workflow event already carries an inline form of it; this contract is the standalone artifact for a validation whose evidence outlives the event — a layered validation whose checks come from more than one source. Each check names the command, the verdict, and the detail, so a reader can tell a check that passed from one that never ran. A check with no command is the case this exists to make impossible: an assertion that validation happened, with nothing that could be re-run to confirm it.",
+  "description": "What a validation phase actually ran, and what it reported. R22 requires validation to carry evidence, and the workflow event already carries an inline form of it; this contract is the standalone artifact for a validation whose evidence outlives the event — a layered validation whose checks come from more than one source. Each check names the command, the verdict, and the detail, so a reader can tell a check that passed from one that never ran. A check with no command is the case this exists to make impossible: an assertion that validation happened, with nothing that could be re-run to confirm it.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -25,7 +25,7 @@
         "passed",
         "failed"
       ],
-      "description": "The closed set the orchestrator branches on. a failure back to implementation under the workflow's stated attempt limit."
+      "description": "The closed set a consumer branches on. a failure back to implementation under the workflow's stated attempt limit."
     },
     "request_id": {
       "type": "string",
@@ -59,7 +59,7 @@
           "detail": {
             "type": "string",
             "minLength": 1,
-            "description": "What it reported. On `not-run`, why it did not — CLAUDE.md requires a missing check to be named as not run rather than reported as satisfied."
+            "description": "What it reported. On `not-run`, why it did not — a missing check is named as not run rather than reported as satisfied."
           }
         }
       }

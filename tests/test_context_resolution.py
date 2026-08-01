@@ -277,15 +277,11 @@ class CommittedFixture(unittest.TestCase):
         self.assertEqual([], list(validator.iter_errors(self.document)))
 
     def test_it_is_a_truncated_package_and_says_so(self) -> None:
-        """The fixture exercises the degraded path, which the other workflow fixture does not."""
+        """A package that stopped on its budget records the stop and the degradation.
+
+        This is the case worth committing: resolution degrades rather than blocking, so the
+        interesting fixture is a truncated one. A package that fit inside its budget would exercise
+        the happy path only and prove nothing about fail-soft.
+        """
         self.assertEqual("budget_exhausted", self.document["stop_reason"])
         self.assertTrue(self.document["degradations"])
-
-    def test_the_workflow_event_agrees_with_the_package(self) -> None:
-        """foundation/0001 R14 makes the degradation an input to acceptance, so the two must not diverge."""
-        log = REPO_ROOT / "fixtures" / "consumer-knowledge" / "event-log.jsonl"
-        events = [json.loads(line) for line in log.read_text().splitlines() if line.strip()]
-        resolution = next(e for e in events if e["phase"] == "context-resolution")
-        self.assertEqual("degraded", resolution["outcome"])
-        self.assertIn(self.document["package_id"], resolution["degradation"])
-        self.assertIn(self.document["stop_reason"], resolution["degradation"])

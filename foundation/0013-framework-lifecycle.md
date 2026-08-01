@@ -124,9 +124,14 @@ This specification uses these terms as the concept bundle defines them:
   it changed, and is idempotent, so that running it twice is safe and running it once is a decision the
   consumer made.
 
-**Recorded exception, 2026-07-31.** `superseded_by` and `amends` were removed from `schemas/adr.json`,
-`schemas/adr.json`, `schemas/spec.json`, and `schemas/concept.json` **in place**, without the new
-version file R11 and R3a would otherwise require. R3a admits a documented break, and this is the document. It rests on three facts: the change only relaxes, so no
+**Recorded exception, 2026-07-31.** `superseded_by` and `amends` were removed **in place** from four
+contracts — `adr/1`, `adr/2`, `spec/1`, and `concept/1` — without the version bump R11 and R3a would
+otherwise require. The four are named by contract rather than by file because two of them lived in
+`adr.v1.json` and `adr.v2.json`, which the move to one file per contract collapsed onto `schemas/adr.json`;
+this record named that file twice for a while, which made it impossible to tell from the record which
+contracts were touched. `.claude/rules/compatibility.md` now fixes the convention that made the collapse
+lossy — the lock keeps a superseded entry naming its successor — so a later exception of this kind is
+readable from the lock rather than from prose. R3a admits a documented break, and this is the document. It rests on three facts: the change only relaxes, so no
 document valid before is invalid after; no artifact declared either field except one,
 changed in the same commit; and of the four contracts only `concept/1` ships, where `additionalProperties: true`
 leaves a downstream document still carrying `superseded_by` valid and merely unconstrained. What it costs: a
@@ -164,9 +169,12 @@ removing one because the document binds would turn an open debt into a silent on
 2. One migration is written, tested per R11 in both directions, and run against a fixture that was installed
    under the previous version. R11 is the requirement the framework has already violated twice, so satisfying
    it once is the minimum evidence that the mechanism exists.
-3. The two debts named in **Provenance** are settled or explicitly written off: the missing `adr/1` to
-   `adr/2` migration test recorded elsewhere, and the `workflow-event/1` exposure recorded in
-   the same exposure.
+3. The one debt left in **Provenance** is settled or explicitly written off: the missing `adr/1` to
+   `adr/2` migration test. The `workflow-event/1` exposure beside it is closed by subtraction rather than
+   by satisfying R11 — the contract was removed with the workflow machinery
+   (`docs/adr/0016-remove-the-workflow-machinery.md`), so there is no longer a bump without a migration
+   test to settle. A debt discharged by deleting its subject is worth distinguishing from one that was
+   paid.
 4. A deterministic check in `scripts/` reports any documentation page cited at two different retrieval
    dates, which is R14 made mechanical rather than read. The two dates in the framework today are not that
    case, and the distinction is worth recording because an earlier draft of this condition treated them as

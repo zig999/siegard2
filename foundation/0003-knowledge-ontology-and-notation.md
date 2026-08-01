@@ -710,9 +710,17 @@ Terms used normatively below.
 
 ### Identity and layout
 
-- **R38** — An id has the form `ko.<type>.<boundary>.<slug>`, and `ko.boundary.<slug>` for `type: boundary`,
-  with kebab-case segments. A path MUST be computable from an id and an id from a path, with no lookup:
-  `knowledge/<type>/<boundary>/<slug>.md`, and `knowledge/boundary/<slug>.md` for `type: boundary`.
+- **R38** — An id has the form `ko.<type>.<boundary>.<slug>` with kebab-case segments. For
+  `type: boundary` the form is `ko.boundary.<context>` for a bounded context and
+  `ko.boundary.<context>.<aggregate>` for an aggregate inside one, and depth is fixed at those two: a
+  boundary is the one type whose id names a scope rather than an object within a scope, so it takes the
+  segment its members put in *their* `<boundary>` position and nothing deeper. A path MUST be computable
+  from an id and an id from a path, with no lookup: `knowledge/<type>/<boundary>/<slug>.md`, and
+  `knowledge/boundary/<slug>.md` for `type: boundary`, where that `<slug>` carries the dot when the
+  boundary is an aggregate. The two boundary forms were stated only in **Folder structure** before, which
+  left this requirement rejecting `ko.boundary.billing.invoice` — an id `schemas/knowledge-object.json`
+  accepts and the fixture bundle uses — so a validator built from R38 alone would have refused the
+  framework's own evidence.
 - **R39** — An id MUST NOT be a sequential number, and no id allocator exists.
 - **R40** — A knowledge object that changes `type` or `boundary` MUST receive a new id, and the previous
   object MUST be retained with `status: superseded` and `superseded_by`.

@@ -3,9 +3,11 @@
 
 `.claude/rules/compatibility.md` requires a breaking change to "define the supported
 migration path" and to "add a compatibility or migration test that fails against the old
-behavior". The registry is empty: no contract in this repository carries a second version. The machinery
-stays because the first real bump needs it, and because check_contract_versions.py fails a bump
-that registers no path.
+behavior". Two contracts carry a second version and each registers its hop here;
+check_contract_versions.py fails a bump that registers no path, so the registry cannot fall behind
+the schemas without a check firing. An earlier version of this paragraph said the registry was
+empty and kept saying so after the first entry landed — which is the drift a docstring has and an
+assertion does not.
 
 A migration here is a function, not a description, for the reason this repository applies
 everywhere else: a path that is only written down is a path nobody has run. Registering one
@@ -55,10 +57,35 @@ def distribution_manifest_1_to_2(doc: dict) -> dict:
     return migrated
 
 
+def impact_analysis_1_to_2(doc: dict) -> dict:
+    """Stamp `base_state: populated`, which every valid `/1` instance was.
+
+    `/2` adds a required `base_state` so that the first change to a repository is expressible: a
+    `create` verdict over a base holding nothing implicates nothing, and `/1` rejected that. The
+    bump is breaking because a `/1` document is missing a field `/2` requires, so the value has to
+    come from somewhere — and it is derivable rather than guessed, for every valid `/1` document:
+
+    - `update` or `create` was only valid with a non-empty `implicated`, so something existed to
+      name and the state was `populated`;
+    - `none` asserts that what the request asks for is already held, which nothing empty can
+      assert, so `none` implies `populated` by its own meaning.
+
+    The three verdicts are exhaustive, so no valid `/1` instance is ambiguous and this migration
+    never has to refuse. An *invalid* `/1` document — `none` over a base that held nothing — was a
+    false statement before this contract moved, and stamping it `populated` preserves exactly what
+    it claimed rather than repairing it into something it did not say.
+    """
+    migrated = dict(doc)
+    migrated["contract_version"] = "impact-analysis/2"
+    migrated["base_state"] = "populated"
+    return migrated
+
+
 # Keyed by (from, to). A key here is the claim that a document can cross that boundary; the
 # coverage check in check_contract_versions.py fails when a boundary exists and a key does not.
 MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
     ("distribution-manifest/1", "distribution-manifest/2"): distribution_manifest_1_to_2,
+    ("impact-analysis/1", "impact-analysis/2"): impact_analysis_1_to_2,
 }
 
 

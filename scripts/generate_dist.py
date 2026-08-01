@@ -239,7 +239,8 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     for source in sorted(TEMPLATE_ROOT.glob("*.md")):
         add(f"templates/{source.name}", source)
 
-    # Executables. Their own directory is the import root, which is why workflow_lib.py is here.
+    # Executables. Their own directory is the import root, which is why a shipped module importing a
+    # sibling resolves it and one importing the generator's own tree does not.
     assert_imports_ship()
     for source in sorted(SCRIPT_ROOT.glob("*.py")):
         add(f"bin/{source.name}", source)

@@ -6,7 +6,7 @@ description: The consistency boundary holding the party a proposal is issued to.
 question: What is inside the Customer aggregate?
 boundary: ko.boundary.sales
 ddd: aggregate
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

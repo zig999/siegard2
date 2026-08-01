@@ -26,9 +26,17 @@ else. This document decides the unit around that declaration.
 
 ### Provenance
 
-No pack exists, and no fixture exercises one. This document is therefore written entirely from decisions
-already taken elsewhere, and its own contribution is deliberately small: five requirements about the unit,
-and a set of inheritances it does not restate.
+Two fixture packs exist. `fixtures/pack-typescript/` declares all twelve artifact classes of the closed
+vocabulary, ten deterministic with a template each and two judged with an agent each, and a generation runs
+end to end through it; `fixtures/pack-minimal/` is a declaration with no producers behind it, which is what
+exercises the pipeline as framework-owned and stack-independent. No pack is distributed, which is what
+condition 5 below is about rather than an absence of packs altogether.
+
+An earlier version of this paragraph said no pack existed and that no fixture exercised one, and it kept
+saying so after both did. What remains unexercised is stated per requirement in **Outstanding evidence**.
+
+This document is written largely from decisions already taken elsewhere, and its own contribution is
+deliberately small: requirements about the unit, and a set of inheritances it does not restate.
 
 The one thing it adds that nothing else holds is the consequence of the single-pack rule. That a pack may
 *assume* its technology rather than abstract over it is what makes a template concrete enough to promise

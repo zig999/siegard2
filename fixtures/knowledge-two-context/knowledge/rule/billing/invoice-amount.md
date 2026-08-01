@@ -14,7 +14,7 @@ examples:
   - given: { invoice.amount: "1300.00", invoice.contract_total: "1200.00" }
     when:  { trigger: pay }
     then:  { outcome: rejected }
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

@@ -30,6 +30,7 @@ The set is closed. `foundation/0003-knowledge-ontology-and-notation.md` R50 limi
 glossary, and a context map, and a fourth requires a recorded case that demands it. R51 holds both
 properties above.
 
-Derived workflow state is not a projection in this repository's vocabulary; it is
-[workflow state](workflow-state.md). `docs/adr/0010-projection-names-the-graph-derived-artifact.md` records
-why the term was assigned this way.
+Derived workflow state was never a projection in this repository's vocabulary, and had a term of its own.
+`docs/adr/0010-projection-names-the-graph-derived-artifact.md` records why the two were kept apart. That
+term has since left the bundle with the machinery that used it, so the distinction it drew no longer has a
+second side — a projection is now the only thing this word covers.

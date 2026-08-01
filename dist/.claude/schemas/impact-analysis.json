@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/impact-analysis.json",
   "title": "Impact analysis",
-  "description": "The validated artifact What is required: impact analysis to produce: a verdict from the closed set none | update | create, naming every implicated artifact by identifier. The named consumer is the thin-path orchestrator (bin/orchestrate.py), which reads `verdict` to choose the transition out of the impact-analysis phase; the named producer is whatever performed the analysis. This artifact carries control flow, so.claude/rules/contracts.md requires this versioned schema and boundary validation before consumption. R4 fixes the content of this contract, which is why it exists before a dedicated producing agent does — spec 0001 states each artifact's schema arrives with the phase that produces it, and that phase arrives with the thin path. What this contract deliberately does not carry: any escalation threshold. inventing one ahead of executed workflows, and the orchestrator holds it.",
+  "description": "The validated artifact R4 requires impact analysis to produce: a verdict from the closed set none | update | create, naming every implicated artifact by identifier. The named producer is whatever performed the analysis. It has no mechanical consumer: the orchestrator that read `verdict` to choose a transition was removed with the workflow machinery, so the consumer is the caller that asked for the classification. Recorded rather than left implied, because an inter-agent artifact owes a named consumer and this one currently has none. This artifact carries control flow, so it requires this versioned schema and boundary validation before consumption. R4 fixes the content of this contract, which is why it exists before a dedicated producing agent does — each artifact's schema arrives with the phase that produces it, and that phase arrives with the thin path. What this contract deliberately does not carry: any escalation threshold. R10 forbids inventing one ahead of executed workflows.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,17 +11,25 @@
     "request_id",
     "producer",
     "verdict",
+    "base_state",
     "implicated"
   ],
   "properties": {
     "contract_version": {
-      "const": "impact-analysis/1",
+      "const": "impact-analysis/2",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "base_state": {
+      "enum": [
+        "empty",
+        "populated"
+      ],
+      "description": "Whether anything this analysis could implicate existed when it ran — the knowledge base and the concept bundle together, since `implicated` may name either. Added in /2 to make the first change to a repository expressible: a `create` verdict over a base holding nothing implicates nothing, and /1 rejected that as a verdict with nothing behind it. The distinction /1 could not draw is between a verdict that named nothing because nothing existed and one that named nothing because the producer did not look. It is recorded rather than derived because the analysis is what observed the state, and a consumer reading the artifact later cannot re-observe it."
     },
     "analysis_id": {
       "type": "string",
       "pattern": "^ia_[0-9a-f]{8}$",
-      "description": "Stable identifier for this analysis, required for traceability by.claude/rules/contracts.md."
+      "description": "Stable identifier for this analysis, required for traceability."
     },
     "request_id": {
       "type": "string",
@@ -39,7 +47,7 @@
         "update",
         "create"
       ],
-      "description": "The closed set. This is the field the orchestrator looks up to choose its transition, which is what keeps the choice a table read rather than an interpretation (R5). `none` still runs to acceptance: R3 requires the phase to run for every request, and acceptance evaluates closure over the observed diff regardless (R17, R18)."
+      "description": "The closed set. A closed field, so a caller branches on a value rather than on a reading of prose. `none` still runs to acceptance: R3 requires the phase to run for every request, and acceptance evaluates closure over the observed diff regardless (R17, R18)."
     },
     "implicated": {
       "type": "array",
@@ -78,10 +86,14 @@
               "update",
               "create"
             ]
+          },
+          "base_state": {
+            "const": "populated"
           }
         },
         "required": [
-          "verdict"
+          "verdict",
+          "base_state"
         ]
       },
       "then": {
@@ -90,7 +102,29 @@
             "minItems": 1
           }
         },
-        "description": "A verdict that permanent knowledge must change, naming nothing it changes, is a verdict with nothing behind it. A `none` verdict may legitimately implicate nothing."
+        "description": "A verdict that permanent knowledge must change, naming nothing it changes, is a verdict with nothing behind it — while something existed to name. A `none` verdict may legitimately implicate nothing, and so may any verdict over a base that held nothing, which is what /2 added `base_state` to express."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "base_state": {
+            "const": "empty"
+          }
+        },
+        "required": [
+          "base_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "verdict": {
+            "not": {
+              "const": "update"
+            }
+          }
+        },
+        "description": "Nothing that does not exist can be updated. The relaxation /2 introduces is narrow on purpose: it admits a verdict that implicates nothing, and it does not admit a verdict that claims to change something over a base holding nothing."
       }
     }
   ]

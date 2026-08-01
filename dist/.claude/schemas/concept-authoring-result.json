@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/concept-authoring-result.json",
   "title": "Concept authoring result",
-  "description": "Result contract for the concept-author agent, the named producer. The named consumer is the thin-path orchestrator the orchestrator, which chooses its transition from the closed `state` field; until it exists, framework tests are the consumer. This artifact carries control flow, so it requires boundary validation before consumption per.claude/rules/contracts.md — that boundary check arrives with the orchestrator and is a named gap until then.",
+  "description": "Result contract for the concept-author agent, the named producer. The named consumer reads the closed `state` field to tell an authored concept from a blocked one; framework tests are that consumer today. This artifact carries control flow, so it requires boundary validation before consumption, and no shipped component performs that check today — a named gap rather than a silent one.",
   "type": "object",
   "additionalProperties": false,
   "required": [

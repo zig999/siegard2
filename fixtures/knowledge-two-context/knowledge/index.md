@@ -61,4 +61,4 @@ The bounded context that issues priced offers and records their acceptance.
 
 | id | title | status |
 |---|---|---|
-| `adr.0001` | Fix the proposal validity window at thirty days | proposed |
+| `adr.0001` | Fix the proposal validity window at thirty days | accepted |

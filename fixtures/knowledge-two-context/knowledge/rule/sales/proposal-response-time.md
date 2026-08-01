@@ -13,7 +13,7 @@ examples:
   - given: { load: nominal }
     when:  { trigger: issue }
     then:  { p99_ms: 4200, outcome: rejected }
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

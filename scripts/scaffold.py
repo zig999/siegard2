@@ -82,6 +82,14 @@ SCHEMA_BY_KIND = {
     "pack-declaration": "pack-declaration.json",
     "specification-delta": "specification-delta.json",
     "validation-evidence": "validation-evidence.json",
+    # `None` where no per-file contract governs the kind. `knowledge/system.md` is the one such
+    # artifact: spec 0003 defers its schema beyond the three defaults R26 requires and the
+    # `limits.body_lines` ceiling R48 requires, and the knowledge validator already checks all
+    # four by name — `_load_system` for the defaults, the body check for the ceiling. A schema
+    # here would be a second home for the same four facts, which is what one authoritative
+    # definition per concept forbids. The expansion is still checked: `expand` refuses a missing
+    # placeholder, so the scaffold cannot emit a file with a default nobody supplied.
+    "knowledge-system": None,
 }
 
 # Kinds whose artifact is a JSON document rather than markdown with frontmatter. The distinction
@@ -141,7 +149,14 @@ def expand(kind: str, values: dict[str, str]) -> tuple[str, list[str]]:
 
 
 def conforms(kind: str, text: str) -> list[str]:
-    """Validate the produced artifact against the contract its kind names."""
+    """Validate the produced artifact against the contract its kind names.
+
+    A kind mapped to `None` names no contract, and the table says why per entry. Returning no
+    problems here is not a claim that the artifact is unchecked — it is checked by the validator
+    that owns it, at the boundary where it is read.
+    """
+    if SCHEMA_BY_KIND[kind] is None:
+        return []
     schema_path = _first(SCHEMA_ROOTS, SCHEMA_BY_KIND[kind])
     if not schema_path.is_file():
         cannot_run(f"cannot run: schema {schema_path} does not exist")
@@ -175,7 +190,8 @@ def main() -> int:
         for kind in sorted(SCHEMA_BY_KIND):
             path = template_path(kind)
             names = ", ".join(placeholders(path.read_text())) if path.is_file() else "(no template)"
-            print(f"{kind}\n  schema: {SCHEMA_BY_KIND[kind]}\n  placeholders: {names}")
+            contract = SCHEMA_BY_KIND[kind] or "(none; the knowledge validator checks it)"
+            print(f"{kind}\n  schema: {contract}\n  placeholders: {names}")
         return 0
 
     if not args.kind:

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Hold every pack and every produced artifact to the framework-owned class contract.
 
-`the schema a template's output validates against in the framework, because
-a pack shipping one would extend a vocabulary R6 reserves. `the vocabulary.
+R4 keeps the schema a template's output validates against in the framework, because
+a pack shipping one would extend a vocabulary R6 reserves. R8 closes the vocabulary.
 `schemas/artifact-classes.json` is the instance and this is what enforces it.
 
 Three checks, and each is a rule that existed only as prose.
@@ -11,11 +11,11 @@ Three checks, and each is a rule that existed only as prose.
 same twelve. Four contracts spell that list out, and a fifth would have drifted from them eventually
 — comparing them here is cheaper than noticing later.
 
-**A pack's `from` column must be coherent.** `the node-type mapping to the
+**A pack's `from` column must be coherent.** R10 leaves the node-type mapping to the
 pack because it presumes a technology, but a pack claiming to produce a `state-machine` from a
 `definition` is not presuming a technology, it is contradicting what the class is.
 
-**Produced output names its source.** `produced source to knowledge through
+**Produced output names its source.** R42 binds produced source to knowledge through
 the manifest, and an artifact that did not name the object it came from would make a diff
 unreadable without one. `conformance-test` additionally carries the declaration R36 requires.
 

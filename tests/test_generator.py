@@ -328,7 +328,7 @@ class CommittedDistribution(unittest.TestCase):
 class ShippedExecutables(unittest.TestCase):
     """A shipped script must resolve its own schemas from the plugin root, not from this repo."""
 
-    def test_workflow_lib_resolves_schemas_beside_bin(self) -> None:
+    def test_a_shipped_module_resolves_schemas_beside_bin(self) -> None:
         """`bin/` and `schemas/` sit at the plugin root exactly as `scripts/` and `schemas/` do
         at the repository root, so `parent.parent / "schemas"` lands correctly in both. That is a
         structural correspondence rather than a coincidence, and this test is what keeps it one."""
@@ -340,29 +340,14 @@ class ShippedExecutables(unittest.TestCase):
                 sys.executable,
                 "-B",  # no bytecode: the distribution is verified byte for byte
                 "-c",
-                "import sys; sys.path.insert(0, sys.argv[1]); import workflow_lib as w; "
-                "print(w.EVENT_SCHEMA_PATH.is_file())",
+                "import sys; sys.path.insert(0, sys.argv[1]); import knowledge_graph_lib as k; "
+                "print(k.KO_SCHEMA_PATH.is_file())",
                 str(COMMITTED / "bin"),
             ],
             capture_output=True,
             text=True,
         )
         self.assertEqual("True", result.stdout.strip(), result.stderr)
-
-    def test_the_shipped_orchestrator_derives_state_from_a_real_log(self) -> None:
-        import subprocess
-        import sys
-
-        log = REPO_ROOT / "fixtures" / "knowledge-change-loop" / "event-log.jsonl"
-        workflow = json.loads(log.read_text().splitlines()[0])["workflow_id"]
-        result = subprocess.run(
-            [sys.executable, "-B", str(COMMITTED / "bin" / "orchestrate.py"), "state",
-             "--log", str(log), "--workflow", workflow],
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual("accepted", json.loads(result.stdout)["status"])
 
 
 if __name__ == "__main__":
@@ -387,7 +372,7 @@ class ShippedImports(unittest.TestCase):
         into `src/claude/bin/`, so the assertion runs against the real tree and leaves it
         exactly as it found it.
         """
-        target = SHIPPED_BIN / "orchestrate.py"
+        target = SHIPPED_BIN / "knowledge_graph_lib.py"
         original = target.read_text()
         target.write_text("import verify_dist\n" + original)
         self.addCleanup(target.write_text, original)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Execute a validated plan, record what it produced, and verify it without mutating anything.
 
-The last step`, and the one where the promise either holds or gets reduced.
+The last step, and the one where the promise either holds or gets reduced.
 
 **Verification is regenerate-and-diff into a temporary tree** (R34), never in place: a check that
 repairs what it detects reports success on a defect. A difference in a locked entry is reported as

@@ -180,14 +180,51 @@ This specification uses these terms as the concept bundle defines them:
   instead is a catalog derived from the declaration set, and that artifact is `foundation/0008`'s to fix —
   **Outstanding evidence** below records it as owed rather than assuming it.
 
+### What fixes the order
+
+R24 and R25 arrived after R1 through R23 and are numbered here rather than beside R5 and R8, so that an
+existing citation still resolves to the statement it named. They exist because `foundation/0005` R10 makes
+a declaration the only thing that fixes an order, and nothing here made a declaration carry enough for an
+order to be read off it.
+
+- **R24** — A capability declares, as a named input with its contract version, every artifact that must
+  exist before it can run. The declaration is therefore sufficient to derive the order two capabilities run
+  in without executing either, which is what `foundation/0005` R10 rests on and what R8 above does not
+  reach: R8 covers an artifact a capability reads without being given, and a prerequisite is a different
+  claim. A capability with an undeclared prerequisite is incomplete under R1 and is not installed.
+
+  An earlier reading let this pass vacuously, and the framework's own declaration showed it:
+  `knowledge-author` declared no artifact input while receiving the node type and the subject as bare
+  values that another capability had decided, so `foundation/0005` R10 was satisfied by declaring no order
+  rather than by declaring the true one. Three of thirteen orderings in the framework were derivable from
+  its declarations when this was measured.
+
+  A capability that genuinely has no prerequisite declares none, and that is not this defect. The test is
+  whether an artifact must exist, not whether the caller happens to pass values instead of a reference to
+  it: passing a decision as a scalar is how a declared prerequisite disappears while the real dependency
+  stays.
+
+- **R25** — Where more than one declared input can satisfy a capability, the declaration states that the
+  alternatives are alternatives, and names each. The choice among them is Claude Code's, per
+  `foundation/0005` R3 and R7. What the declaration must not do is leave the alternation implicit: a reader
+  cannot tell an input that is optional from one that is an alternative to another, and a consumer that
+  guessed would be sequencing by inference.
+
+  This bounds the choice rather than granting it. `foundation/0005` R5 keeps a property that must hold
+  regardless of model judgment out of prompt text, so an alternation whose resolution decides *whether a
+  validation runs* is not an alternation — it is a missing requirement, and the repair belongs in the
+  capability that permitted it.
+
 ## Outstanding evidence
 
 What this document states and nothing has yet exercised. A condition kept here is a debt;
 removing one because the document binds would turn an open debt into a silent one.
 
-1. Capabilities in at least three classes carry a full declaration, and a validator in `scripts/` rejects
-   an incomplete one. No declaration format is enforced anywhere today, so R1 binds without anything
-   checking it — which is the gap this condition exists to close, not a reason to soften R1.
+1. **Met 2026-07-31.** Every capability that has a component carries a full declaration — nine of nine,
+   across three classes: skill, specialized agent, and hook. `capability-declaration/1` is the contract and
+   `scripts/validate_components.py` rejects an incomplete declaration, an identifier that disagrees with its
+   component, a grant wider or narrower than the component states, and a declared hook the hook declaration
+   does not install.
 2. A consumer — a script, or a model given only the declarations — selects correctly between two
    capabilities whose objectives are close, on the strength of R4 alone. If it cannot, R4 is
    underspecified and the repair belongs here rather than in the capabilities.
@@ -201,13 +238,17 @@ removing one because the document binds would turn an open debt into a silent on
    `scripts/validate_components.py` checks the authored set against `capability-declaration/1` and holds
    each entry to its component's identity and grant, with the rejection covered in both directions. The
    catalog reaches a consumer through `foundation/0008` R12 and R12a. `docs/adr/0013` records the cost.
-7. Every capability carries a declaration, which R1 requires and condition 1 above owes. One does today,
-   and `scripts/validate_components.py` reports the count against the number of capabilities rather than
-   failing, because a check that failed the build for a debt this document already records would report it
-   twice. R1 binds all of them; nothing yet holds the other eight.
+7. A **script** carries a declaration. R1 binds every capability and `foundation/0006` R1 holds script as a
+   class, so the sixteen shipped executables are the coverage gap condition 1 does not reach: they have no
+   frontmatter and no second record, so nothing pairs a declaration to them and
+   `scripts/validate_components.py` counts only the classes that do. Whether a script needs one, or whether
+   a script is reached through the skill that runs it and declares nothing of its own, is the question this
+   condition asks rather than assumes.
 5. R19 is exercised: one threshold is either calibrated and recorded with its evidence, or removed from a
    declaration that asserted it.
-6. R20 is exercised in the direction that catches something: a report over a run whose attempt limit came
-   from the caller names it as caller-supplied, and a test asserts that the same value cannot be reported as
-   calibrated. `fixtures/knowledge-change-loop/` already runs under a caller-supplied attempt limit, so the
-   case exists and only the reporting does not.
+6. R20 is exercised in the direction that catches something: a report over a run whose value came from the
+   caller names it as caller-supplied, and a test asserts that the same value cannot be reported as
+   calibrated. The attempt limit that supplied this case went with the workflow machinery
+   (`docs/adr/0016-remove-the-workflow-machinery.md`). The live instance is `ingest-domain`, whose system
+   defaults are declared as caller-supplied with a stop rather than a chosen value on their absence; a test
+   asserts that declaration, and the reporting half is still owed.

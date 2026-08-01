@@ -1,6 +1,6 @@
 """Scope resolution, placement validation, plan derivation, and plan validation.
 
-The four steps `between a knowledge base and a written file, in one module
+The four steps between a knowledge base and a written file, in one module
 because each consumes the previous one's output and splitting them would multiply the
 serialization without separating anything.
 
@@ -28,6 +28,13 @@ from knowledge_graph_lib import EDGE_KINDS, Graph
 
 class Blocked(Exception):
     """Generation cannot proceed. Never a degradation: fails closed."""
+
+
+# The one status a scope compiles. A `proposed` object binds nothing and enters context only; a
+# `superseded` one was replaced and generating from it would produce the system that was retired.
+# The status vocabulary is the ontology's, and this names the single member of it that generation
+# reads rather than restating the other two.
+ACCEPTED_STATUS = "accepted"
 
 
 def _digest(text: str) -> str:
@@ -58,6 +65,19 @@ def resolve_scope(graph: Graph, scope_id: str, request_id: str, roots: list[str]
             f"to one"
         )
 
+    unaccepted = sorted(
+        f"{root} is '{graph.nodes[root].data.get('status')}'"
+        for root in roots
+        if graph.nodes[root].is_ko and graph.nodes[root].data.get("status") != ACCEPTED_STATUS
+    )
+    if unaccepted:
+        raise Blocked(
+            f"scope roots are not accepted: {', '.join(unaccepted)}. Only accepted knowledge is "
+            f"compiled — a proposed object binds nothing and enters context only, and a superseded "
+            f"one was replaced. Promotion is a decision, so this blocks rather than generating from "
+            f"knowledge nobody accepted"
+        )
+
     members: list[dict] = []
     seen: set[str] = set()
     frontier = list(roots)
@@ -68,6 +88,17 @@ def resolve_scope(graph: Graph, scope_id: str, request_id: str, roots: list[str]
         seen.add(node_id)
         node = graph.nodes[node_id]
         if node.is_ko:
+            # The gate applies to knowledge objects and not to ADRs. An ADR is a graph node and
+            # never a knowledge object; expansion reaches one through `governed_by` and it is not a
+            # member, produces no artifact, and carries its own acceptance elsewhere. Gating it
+            # would block generation on the status of a rationale record.
+            if node.data.get("status") != ACCEPTED_STATUS:
+                raise Blocked(
+                    f"{node_id} is '{node.data.get('status')}' and the scope would compile it. "
+                    f"Only accepted knowledge is compiled, and a scope fails closed — reached from "
+                    f"root(s) {', '.join(sorted(roots))}. Promote it or narrow the scope; nothing "
+                    f"here decides that a proposed object is good enough"
+                )
             members.append(
                 {"id": node_id, "type": node.kind, "content_hash": content_hash(node.path)}
             )

@@ -309,7 +309,7 @@
     "version": {
       "type": "string",
       "minLength": 1,
-      "description": "The interface's version. A break requires a bump and a migration under.claude/rules/compatibility.md, from which a `consumed` interface is exempt (R12)."
+      "description": "The interface's version. A break requires a version bump and a migration, from which a `consumed` interface is exempt (R12)."
     },
     "schema": {
       "type": "string",
@@ -329,7 +329,7 @@
         "supporting",
         "generic"
       ],
-      "description": "The subdomain classification of a bounded context (R13). Forbidden on an aggregate boundary, which inherits its context's classification: two homes for one fact is what CLAUDE.md Authority placement forbids."
+      "description": "The subdomain classification of a bounded context (R13). Forbidden on an aggregate boundary, which inherits its context's classification: two homes for one fact is what the authority rule forbids."
     },
     "owner": {
       "type": "string",

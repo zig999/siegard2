@@ -7,7 +7,7 @@ disable-model-invocation: true
 You move an installation forward, or you stop and say why.
 
 One rule governs everything below: **a local change is the repository's to keep or to discard, never
-the framework's to erase without saying so.** `it, and it is the reason this
+the framework's to erase without saying so.** That rule is the reason this
 is a skill rather than a copy.
 
 ## Required inputs
@@ -29,7 +29,7 @@ A missing input is a stop, not a default.
    only a file differing from what was recorded was changed by someone.
 3. **Where something diverged, stop.** Report each file and what changed. The repository decides
    whether to keep the change or discard it; you do not decide for it, and you do not merge.
-4. **Report shadowing either way.** `a project agent overrides a same-named plugin
+4. **Report shadowing either way.** A project agent overrides a same-named plugin
    agent, and the precedence resolves in the repository's favour, which is correct. What is not
    correct is the capability being lost silently.
 5. **Confirm the version moved.** A consumer reads the installed version from `plugin.json` and
@@ -41,7 +41,7 @@ A missing input is a stop, not a default.
 - Upgrade part of the way. A partial upgrade leaves an installation matching no manifest at all,
   which is worse than the state it started in.
 - Install where nothing is installed. That is a first installation and it is a different operation.
-- Add a permission or disable a check in the receiving repository. `an installation
+- Add a permission or disable a check in the receiving repository. An installation
   may narrow what is permitted and never widen it.
 
 ## Result

@@ -54,8 +54,9 @@ definition here, and the first component built against one is the thing most lik
 | [distribution](distribution.md) | The assembled release artifact under `dist/.claude/`. |
 | [distribution manifest](distribution-manifest.md) | The record of what an installation carries, beside the plugin manifest the harness reads. |
 | [domain knowledge](domain-knowledge.md) | A fact whose change changes this system, and the only kind the knowledge base holds. |
+| [domain model](domain-model.md) | The DDD analysis of a request, separating what the request stated from what the modeler decided. |
 | [escalation](escalation.md) | The insertion of workflow phases, decided by a predicate over a validated artifact. |
-| [event log](event-log.md) | The append-only record of workflow facts. |
+| [event log](event-log.md) | An append-only record of facts, kept by a repository rather than by the framework. |
 | [fail-soft](fail-soft.md) | Resolution degrades instead of blocking, and acceptance is evaluated independently. |
 | [fixture](fixture.md) | A downstream-shaped case exercising a framework capability. |
 | [framework source](framework-source.md) | The tree under `src/claude/` holding the components Siegard ships. |
@@ -68,11 +69,11 @@ definition here, and the first component built against one is the thing most lik
 | [interface](interface.md) | The knowledge object type describing what a bounded context exposes to, or consumes from, another. |
 | [knowledge base](knowledge-base.md) | The authored set of knowledge objects, distinct from the graph materialized from it. |
 | [knowledge graph](knowledge-graph.md) | The graph of knowledge objects and their declared relationships, derived from frontmatter. |
+| [knowledge intake plan](knowledge-intake-plan.md) | The validated classification of received domain material into the ontology, with every gap named. |
 | [knowledge object](knowledge-object.md) | One durable concept of a governed repository's knowledge. |
 | [least privilege](least-privilege.md) | Only the tools and permissions a component's contract names. |
 | [lifecycle](lifecycle.md) | The knowledge object type holding a definition's legal states and its total transition table. |
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
-| [orchestrator](orchestrator.md) | The component that chooses a transition by lookup on a validated artifact's closed field. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
 | [placement decision](placement-decision.md) | The validated, frozen record of where a pack puts each artifact the manifest does not lock. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
@@ -88,5 +89,3 @@ definition here, and the first component built against one is the thing most lik
 | [specification delta](specification-delta.md) | The temporary artifact describing one requested change by reference. |
 | [stack knowledge](stack-knowledge.md) | A fact whose change changes every system on the same technology, never held by the knowledge base. |
 | [target pack](target-pack.md) | The distributable unit carrying one technology stack: the agents and templates producing the classes it declares. |
-| [transition guard](transition-guard.md) | The condition that must hold for a workflow to change state. |
-| [workflow state](workflow-state.md) | Current state of a workflow, derived from the record of what happened. |

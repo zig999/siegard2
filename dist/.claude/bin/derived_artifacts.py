@@ -1,6 +1,6 @@
 """The closed set of files a knowledge base derives, and nothing else.
 
-`a projection derived and never hand-edited, and R50 closes the
+R42 and R51 make a projection derived and never hand-edited, and R50 closes the
 projection list at three. `graph.json` is the materialized graph rather than a projection, and
 R42 names it alongside `index.md`.
 

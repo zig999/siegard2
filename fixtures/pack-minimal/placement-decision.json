@@ -58,16 +58,6 @@
       "ko": "ko.rule.sales.proposal-expiration",
       "class": "validator",
       "path": "src/sales/validators/proposal-expiration.ts"
-    },
-    {
-      "ko": "ko.rule.sales.proposal-validity",
-      "class": "conformance-test",
-      "path": "src/sales/conformance/proposal-validity.test.ts"
-    },
-    {
-      "ko": "ko.rule.sales.proposal-validity",
-      "class": "validator",
-      "path": "src/sales/validators/proposal-validity.ts"
     }
   ]
 }

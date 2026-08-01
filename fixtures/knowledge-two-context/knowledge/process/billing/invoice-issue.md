@@ -11,7 +11,7 @@ steps:
   - { ko: ko.lifecycle.billing.invoice }
   - { ko: ko.rule.billing.invoice-amount }
   - { ko: ko.interface.billing.payment-received }
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

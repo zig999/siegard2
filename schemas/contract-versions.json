@@ -38,6 +38,10 @@
       "schema": "distribution-manifest.json",
       "constraint_digest": "sha256:a0258a13955465ad4dc86dd38f083b01fb4f9456c166f81ac94ea81664951925"
     },
+    "domain-model/1": {
+      "schema": "domain-model.json",
+      "constraint_digest": "sha256:7fdedc2ed4a03f5701b4f99c28f98bab8e734d5f7f9a4378310cf701bd3f0ff0"
+    },
     "generation-manifest/1": {
       "schema": "generation-manifest.json",
       "constraint_digest": "sha256:98cca8d41f1247d9fbe2b8b7dcc530b34020f53b0e95cf1e524419613a721016"
@@ -56,7 +60,12 @@
     },
     "impact-analysis/1": {
       "schema": "impact-analysis.json",
-      "constraint_digest": "sha256:900537a6ace874ec70b38b055c30b775746eb094a2b2883411c58f8e89de1069"
+      "constraint_digest": "sha256:900537a6ace874ec70b38b055c30b775746eb094a2b2883411c58f8e89de1069",
+      "superseded_by": "impact-analysis/2"
+    },
+    "impact-analysis/2": {
+      "schema": "impact-analysis.json",
+      "constraint_digest": "sha256:d6e038c021b6c39644114f89cde22e844ffafe5b58ebd662544f56245af0f0a0"
     },
     "knowledge-authoring-result/1": {
       "schema": "knowledge-authoring-result.json",
@@ -69,6 +78,10 @@
     "knowledge-graph/1": {
       "schema": "knowledge-graph.json",
       "constraint_digest": "sha256:0ca389e1375d75eacd76ecb9bf94c2852d8f77ee1cf179fa8a70ec2e52bc6958"
+    },
+    "knowledge-intake-plan/1": {
+      "schema": "knowledge-intake-plan.json",
+      "constraint_digest": "sha256:ae406d6228057df513c372c7feaf84471cfd38f25534eac74feafa82464587cc"
     },
     "knowledge-object/1": {
       "schema": "knowledge-object.json",
@@ -101,10 +114,6 @@
     "validation-evidence/1": {
       "schema": "validation-evidence.json",
       "constraint_digest": "sha256:e80c568cb32269f15242a4bf549e9658c64cb3317dde52e5b5b3aa85ab957f24"
-    },
-    "workflow-event/1": {
-      "schema": "workflow-event.json",
-      "constraint_digest": "sha256:ea7dfa0afe0df6883daa9a659a1fdd95533031e9fc4ba8c8139383afa6397ba0"
     }
   }
 }
