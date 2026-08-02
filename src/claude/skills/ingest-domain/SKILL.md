@@ -1,117 +1,73 @@
 ---
 name: ingest-domain
-description: Turns a domain model into a knowledge base — classifying every construct, then authoring one object per construct in strategic-before-tactical order. Use once a domain model exists and has been reviewed, including the first time a repository is brought under Siegard. Not for modelling the domain, which is model-domain; not for changing one recorded fact; not for filling a gap the model leaves; and not for generating code.
+description: Enriches a reviewed staging tree into a knowledge base — writes the four fields no analysis carries into each staged object, checks that nothing else moved, promotes what conforms, and derives the graph and its projections. Use once a staging tree exists and a person has read its diff. Not for producing that tree, which is model-domain; not for filling a gap only the domain can close; and not for generating code.
 disable-model-invocation: true
 ---
 
-You turn a domain model into a knowledge base. One invocation, one ingestion.
+You turn a reviewed staging tree into a knowledge base. One invocation, one ingestion.
+
+**You start where the review ended.** `/model-domain` produced the tree and stopped so a person
+could read `git diff` over it. That reading is the reason there are two entry points: a procedure
+that ends has stopped, where one that says "stop here" in the middle is asking the model to hold a
+place in a sequence. If nobody has read the diff, this is the wrong moment to run this.
 
 Two rules govern everything below, and neither is yours to relax:
 
-- **You supply no domain fact.** Where the model is silent, the answer is a gap you report. A plausible
-  attribute, an invented state, a guessed identity strategy: each is a domain fact authored by the
-  framework rather than by whoever knows the domain, and that is the failure this whole path exists to
-  prevent. The model's own open questions are the same thing one step earlier — carry them, never answer
-  them.
+- **You supply no domain fact.** A staged object carries `kind: domain` gaps naming what the domain
+  has not stated. Carry them; never close one. A plausible attribute, an invented state, a guessed
+  identity strategy: each is a domain fact authored by the framework rather than by whoever knows
+  the domain, and that is the failure this whole path exists to prevent.
 - **You record no status.** A knowledge object carries no maturity level and no approval state: what
-  you write into the base is current and binds from the moment it exists. What an object does record is
-  the material it was read from, in `sources` — reading knowledge out of an existing artifact can
-  canonize a defect as a rule, and naming the artifact is what lets a reviewer catch that. An entry you
-  are not certain enough to author is a gap you report, never an object written at a lower tier.
+  reaches the base is current and binds from the moment it is promoted. What an object does record
+  is the material it was read from, in `sources`, and whether the analysis decided the fact or the
+  material stated it, in `origin`.
 
 ## Required inputs
 
 Collect these before running anything. A missing input is a stop, not a default:
 
-1. **the domain model**, conforming to `schemas/domain-model.json`. It carries the request it answers and
-   the artifacts that request was read from, and both travel into each authored object's provenance — an
-   ingestion whose source cannot be named is not one. A model whose `state` is `blocked` ends the run.
+1. **the staging root** `/model-domain` wrote, and **the domain model** it was expanded from — the
+   enrichment check re-derives the expansion from the model rather than trusting a stored copy, so
+   both are needed and neither substitutes for the other.
 2. **the knowledge root**, and the path of the JSON Schema that governs a knowledge object.
-3. **the intake id** — `ki_` followed by eight hex digits, for the classification, and **the
-   analysis id** — `ia_` followed by eight hex digits, for the impact analysis.
-4. **the system defaults**, if the base does not already declare them: the timezone, the currency, and
-   the identity strategy every attribute inherits, plus the body-line ceiling. These are domain facts
-   about this repository and the framework holds none of them.
-5. **the instant and the producer identity** for every object's `generated` field. You own the clock;
-   the framework refuses to, because an object stamped from a clock could not be regenerated and
-   compared.
+3. **the intake id** the expansion used, and **a result id** — `er_` followed by eight hex digits —
+   for each enrichment. You own them; a report stamped by whoever wrote it could not be traced back
+   to the run that asked for it.
+4. **the material** the request was read from, so each enrichment can be checked against it rather
+   than composed from the object alone.
+5. **the system defaults**, if the base does not already declare them: the timezone, the currency,
+   and the identity strategy every attribute inherits, plus the body-line ceiling. These are domain
+   facts about this repository and the framework holds none of them.
 
 ## The order, and why it cannot be rearranged
 
 ```
-system defaults → impact → expand → review the diff → enrich → check → check gaps → promote → materialize
+system defaults → enrich in parallel → check → check gaps → promote → materialize
 ```
 
-Two passes with a human between them, and the ordering is not preference. The expansion decides what
-exists, and every object exists before any is enriched — which is what makes `out_of_scope`
-writable, because it is a claim about the objects around one and cannot be written while half of
-them do not exist yet.
+Every object already exists, which is what makes the enrichments independent: none is ordered behind
+another, and nothing has to be serialized to let one reference the next. That is also what makes
+`out_of_scope` writable at all — it is a claim about the objects around one, and it was being
+written while half of them did not exist yet.
 
 ### 1. The base must be able to hold knowledge
 
 `system.md` carries the three defaults every attribute inherits and the ceiling the body-length check
-enforces. Without it nothing inherits and the ceiling reports itself unenforceable. If it is absent,
-expand the `knowledge-system` scaffold with the values the caller supplied. If the caller supplied
-none, that is a stop: a default the framework chose would be a hidden default, and the value of the
-ceiling is a decision nobody made if nobody made it.
+enforces, and `knowledge-system/1` governs it. Without it nothing inherits and the ceiling reports
+itself unenforceable. If it is absent, expand the `knowledge-system` scaffold with the values the
+caller supplied. If the caller supplied none, that is a stop: a default the framework chose would be
+a hidden default, and the value of the ceiling is a decision nobody made if nobody made it.
 
-### 2. Learn what the model touches, before it touches anything
+### 2. Report what the tree still owes, before delegating anything
 
-One delegation to `impact-analyst`, with the model, the analysis id, and the knowledge root. It
-returns an `impact-analysis/4`: a verdict of `none`, `update`, or `create`, one entry per implicated
-artifact, and `base_state` recording whether anything existed to implicate.
-
-**It runs for every request, including the first one against an empty base.** A `create` over
-nothing implicates nothing that exists and is a full answer rather than a degenerate one — which is
-why `base_state` exists, and why an empty base is not a reason to skip this.
-
-Report the verdict and the implicated set before expanding. That is what makes the analysis a step
-rather than an artifact nobody opens:
-
-- **`none`** — the base already holds what the model describes. Stop and say so. Expanding would
-  restage objects the base already answers, and the diff a reviewer reads would be noise around
-  nothing;
-- **`update`** — name the stored objects the expansion will overwrite, before it overwrites them;
-- **`create`** — name what is new, which over a populated base is what a reviewer looks for first.
-
-A verdict does not decide whether to continue — that is the caller's, and `none` is the one case
-where continuing needs a reason.
-
-### 3. Expand the model into staging
-
-Run `bin/expand_model.py <model> <staging-root> <intake-id> <by> <at>`. It writes one staged object
-per classified construct and returns a `knowledge-intake-plan/6` recording what became of every
-construct — `classified`, `unmapped`, or `refused`.
-
-**Delegate nothing here.** The mapping from a DDD construct to a node type is a closed table and the
-identifiers are arithmetic; a measured run put the cost of doing it by judgment at 75,329 tokens for
-a result that matched the table in every one of 24 entries. The script decides nothing, so two runs
-over one model produce the same tree byte for byte.
-
-Nothing is written under the knowledge root by this step. A staged object declares
-`staged-knowledge-object/2`, which is a different contract from the base's — it does not require the
-three fields the next pass supplies.
-
-### 4. Report the three outcomes before delegating anything
-
-Say, from the plan: how many constructs were classified; which were `unmapped` and why; which were
-`refused` and why. Then the gaps, split by who closes them — a `kind: domain` gap waits on whoever
+Read the plan `/model-domain` returned. Say which constructs were `unmapped` and which `refused`,
+each with why, and then the gaps split by who closes them — a `kind: domain` gap waits on whoever
 knows the domain, and a `kind: authoring` gap waits on the next step.
 
 The split is the point. A report of thirty gaps with no way to see what is waiting on the reader is
 a report the reader stops reading.
 
-**A refusal is not a gap.** A construct is `refused` because the model states something the ontology
-rejects — an attribute typed outside the closed vocabulary, a reference resolving to no element or
-to two. That is a defect in the model, fixed by re-running the analysis, not a fact the domain owes.
-
-### 5. Stop, and let somebody read the diff
-
-The staging tree is the artifact a person reviews, and `git diff` is the surface: it shows exactly
-what would enter the base. This is the review the two-pass shape exists for, and running past it
-turns every unanswered question into an object nobody looked at.
-
-### 6. Enrich, in parallel, one delegation per object
+### 3. Enrich, in parallel, one delegation per object
 
 One delegation to `knowledge-enricher` per staged object. They are independent: every object already
 exists, so no ordering constrains them and nothing has to be serialized to let one reference another.
@@ -121,7 +77,7 @@ Give each the object's path, the material, the staging root, and a result id. It
 recorded and not retried, and a `findings` array is reported to the reviewer rather than acted on
 here. You are the consumer the contract names, and reporting the findings is what that means.
 
-### 7. Check that the enrichment stayed inside its fields
+### 4. Check that the enrichment stayed inside its fields
 
 Run `bin/check_enrichment.py <model> <staging-root> <intake-id> <by> <at>`. It re-derives what the
 expansion wrote and reports any difference outside the four fields and the body.
@@ -129,7 +85,7 @@ expansion wrote and reports any difference outside the four fields and the body.
 This is not defence in depth — it is the only enforcement there is. A tool grant names tools, not the
 keys of a file, so "edit these four fields" is prose until this runs.
 
-### 8. Check that every gap names something real
+### 5. Check that every gap names something real
 
 Run `bin/check_gap_fields.py <staging-root>`. A gap excuses an object from a field the contract
 requires, so the excuse is only as good as the field name — and the schema cannot check it, because
@@ -138,7 +94,7 @@ the requirement a gap excuses is a conditional elsewhere in the same document.
 Without this, `{kind: domain, field: colour}` excuses an object from declaring `attributes`, and an
 object incomplete in a way nobody named passes as one whose incompleteness is justified.
 
-### 9. Promote
+### 6. Promote
 
 Run `bin/promote_staged.py <staging-root> <knowledge-root>`. It validates each object against
 `knowledge-object/5` with its version line substituted, and writes only where every object passes.
@@ -147,7 +103,7 @@ An object whose `kind: domain` gaps are open is refused by default. Promote it a
 caller asks — `--with-open-domain-gaps` — and report that they did: the base then holds an object
 that says which fact it lacks, which is a decision somebody took rather than one that happened.
 
-### 10. Materialize
+### 7. Materialize
 
 Run `bin/materialize.py <knowledge-root>`. It derives `graph.json` and the three projections the
 ontology admits — an index, a glossary, a context map — from the objects, and reports any edge naming
@@ -161,9 +117,9 @@ in rather than only the pair that failed.
 Every file it writes is derived. Hand-editing one is editing a view of facts that live elsewhere, and
 `--check` is how a later run tells a stale view from a current one.
 
-### 11. Report what was not validated
+### 8. Report what was not validated
 
-A knowledge base needs checks a per-file schema cannot express. Step 10 performs one of them —
+A knowledge base needs checks a per-file schema cannot express. Step 7 performs one of them —
 every reference resolves, and an orphan is named — and the rest are still owed: that a lifecycle's
 transition table is total, that no two lifecycles claim one subject, that a cross-context reference
 targets an interface. **The distribution ships nothing that performs those three.** Do not perform
@@ -193,9 +149,8 @@ that passed from one that never ran.
 
 ## Result
 
-Report, in this order: whether the system defaults were already present or expanded; the impact
-verdict, its `base_state`, and every implicated artifact; the constructs
-classified, unmapped, and refused, each of the last two with why; the objects enriched and the ones
+Report, in this order: whether the system defaults were already present or expanded; the objects
+enriched and the ones
 blocked, each with what was missing; every finding an enricher reported, which is what the reviewer
 acts on; the objects promoted and any promoted with open domain gaps at the caller's request; the
 `kind: domain` gaps still open, by object; and the `verdict` the validation evidence records, with

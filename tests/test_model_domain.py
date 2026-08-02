@@ -105,3 +105,66 @@ class TwoEntryPoints(unittest.TestCase):
             f for f in self.model["failure_outcomes"] if f["outcome"] == "no_domain_in_request"
         )
         self.assertIn("negative result", blocked["reason"])
+
+class ThePassEndsAtTheReview(unittest.TestCase):
+    """Pass 1 produces the staging tree and stops, which is where the review sits.
+
+    It produced only the model and left the expansion to the next entry point, so the run that a
+    person was meant to review ended before there was anything to review. The correction is
+    structural rather than procedural: `foundation/0004` R2 says the framework ships nothing that
+    decides what runs next or records where a run stands, so a "stop here" written into the middle
+    of a procedure is a claim about sequence that nothing enforces. A procedure that *ends* has
+    stopped whether or not anyone honours it.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.body = SKILL.read_text()
+        cls.ingest = INGEST.read_text()
+        declarations = {e["identifier"]: e
+                        for e in json.loads(DECLARATION.read_text())["declarations"]}
+        cls.model = declarations["model-domain"]
+        cls.entry = declarations["ingest-domain"]
+
+    def test_it_runs_the_expansion(self) -> None:
+        self.assertIn("bin/expand_model.py", self.body)
+
+    def test_it_runs_the_impact_analysis_before_expanding(self) -> None:
+        """`foundation/0001` R3 runs one for every request, and it informs what the diff shows."""
+        self.assertIn("impact-analyst", self.body)
+        self.assertLess(self.body.index("impact-analyst"), self.body.index("bin/expand_model.py"))
+
+    def test_it_runs_over_an_empty_base_too(self) -> None:
+        self.assertIn("including the first one against an empty base", self.body)
+
+    def test_it_produces_the_tree_the_next_entry_point_requires(self) -> None:
+        """The order between the two is derivable from the declarations rather than from prose."""
+        produced = {o["artifact"] for o in self.model["outputs"]}
+        required = {i.get("artifact") for i in self.entry["inputs"]}
+        self.assertIn("staged-knowledge-object", produced & required)
+
+    def test_it_enriches_nothing_and_promotes_nothing(self) -> None:
+        for owned in ("knowledge-enricher", "promote_staged.py", "materialize.py"):
+            with self.subTest(step=owned):
+                self.assertNotIn(owned, self.body)
+
+    def test_the_next_entry_point_expands_nothing(self) -> None:
+        self.assertNotIn("bin/expand_model.py", self.ingest)
+
+    def test_the_stop_is_the_end_of_the_run(self) -> None:
+        """Not a step in the middle: the last thing the procedure says is that it is over."""
+        self.assertIn("### 5. Stop", self.body)
+        self.assertLess(self.body.index("### 5. Stop"), self.body.index("## What you never do"))
+
+    def test_it_writes_only_under_the_staging_root(self) -> None:
+        behaviour = " ".join(self.model["deterministic_behavior"])
+        self.assertIn("no file under the knowledge root is written", behaviour)
+        self.assertIn("staging root", behaviour)
+
+    def test_a_verdict_of_none_ends_it(self) -> None:
+        outcomes = {f["outcome"] for f in self.model["failure_outcomes"]}
+        self.assertIn("already_held", outcomes)
+
+
+if __name__ == "__main__":
+    unittest.main()

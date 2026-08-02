@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/2",
-  "source_revision": "sha256:be787bbddb6bac23414fcf9242fa9a8a5253ea667b0a7cbf547adddd1da2b551",
+  "source_revision": "sha256:e8f0561da5e40017a76227f49e6c62fa1e006a77d712cabfd54336c79908a055",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -126,17 +126,17 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:39d78b1a58ca66981d34dea1177beb2aacff2aacc53353b15397bb883873e1a3"
+      "digest": "sha256:18e0896bbd4ee875a2a4834022bbc99190d1041b5f70c6c72e6404626ad9b396"
     },
     {
       "path": "skills/ingest-domain/SKILL.md",
       "source": "src/claude/skills/ingest-domain/SKILL.md",
-      "digest": "sha256:a17e7d8a15eac13aeedc94ecdd61fcfc059c4a9a63e463133486a64a4f019375"
+      "digest": "sha256:6847257272c41e94d796e69e492bd33bb12ceec278e9a95c5056eafa4e4edf30"
     },
     {
       "path": "skills/model-domain/SKILL.md",
       "source": "src/claude/skills/model-domain/SKILL.md",
-      "digest": "sha256:4c60bef6a7731e66bc22482e0f36c82b1937e32f59405a0c4ec55da0a8b6da23"
+      "digest": "sha256:79872108256cb6a74973afa8713843569dc2887392d24e4baa198534b253e297"
     },
     {
       "path": "templates/knowledge-decision.md",
@@ -642,6 +642,12 @@
         "objective": "Turn a reviewed domain model into a knowledge base in two passes with a review between them: expand the model into staged objects deterministically, stop for a person to read the diff, enrich every object in parallel, check that the enrichment stayed inside its fields, and promote. Choose it once a domain model exists and has been reviewed, including the first time a repository is brought under Siegard. Not for modelling the domain, which is model-domain; not for changing one recorded fact; and not for generating code.",
         "inputs": [
           {
+            "name": "staging_root",
+            "artifact": "staged-knowledge-object",
+            "contract": "staged-knowledge-object/2",
+            "required": true
+          },
+          {
             "name": "domain_model",
             "artifact": "domain-model",
             "contract": "domain-model/4",
@@ -652,25 +658,17 @@
             "required": true
           },
           {
-            "name": "framework_script_root",
-            "required": true
-          },
-          {
             "name": "intake_id",
             "required": true
           },
           {
-            "name": "analysis_id",
+            "name": "material",
             "required": true
           },
           {
             "name": "system_defaults",
             "required": false,
             "default": "absent, and the ingestion stops rather than choosing a timezone, a currency, an identity strategy, or a body-line ceiling the framework has no basis to choose"
-          },
-          {
-            "name": "instant_and_producer_identity",
-            "required": true
           }
         ],
         "outputs": [
@@ -684,10 +682,6 @@
           }
         ],
         "consumed_artifacts": [
-          {
-            "artifact": "impact-analysis",
-            "access": "read"
-          },
           {
             "artifact": "knowledge-intake-plan",
             "access": "read"
@@ -718,11 +712,8 @@
           "note": "Ingestion authors into any of the six and orders the authoring by node type, so the whole vocabulary is in scope as a sequence rather than as a selection."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/4 before anything is expanded, and a model declaring itself blocked ends the run with nothing written",
-          "an impact analysis runs for every request before anything is expanded, including the first against an empty base \u2014 a `create` over nothing implicates nothing that exists and is a full answer rather than a degenerate one \u2014 and its verdict and implicated set are reported before the expansion writes",
-          "the expansion is a script rather than a delegation: the mapping is a closed table and the identifiers are arithmetic, so two runs over one model produce the same tree byte for byte",
-          "nothing is written under the knowledge root until promotion; the expansion writes into the staging root and a staged object declares a different contract from the base's",
-          "the run stops after expansion for a person to read the diff, and running past that turns every unanswered question into an object nobody looked at",
+          "it begins where the review ended: the staging tree already exists, and nothing here produces one",
+          "nothing is written under the knowledge root until promotion, and a staged object declares a different contract from the base's until then",
           "a fact the model does not state is recorded as a gap on the object rather than authored around, and an open question the analysis refused to decide is carried rather than answered: a question answered by whoever happened to run this is a domain fact invented by the framework",
           "every object exists before any is enriched, so the enrichments are independent and none is ordered behind another",
           "each enrichment result is read at the boundary to tell an enriched object from a blocked one, and a blocked one is recorded rather than retried",
@@ -749,19 +740,11 @@
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the system defaults it never chooses and the instant it never mints"
+            "reason": "a required input was not supplied, including the system defaults it never chooses and the identifiers it never mints"
           },
           {
-            "outcome": "model_blocked",
-            "reason": "the domain model declares itself blocked, so there is no design to expand; reported with its reason and nothing written"
-          },
-          {
-            "outcome": "already_held",
-            "reason": "the impact analysis returns `none`: the base already holds what the model describes. Reported and the run stops, because expanding would restage objects the base already answers and the diff a reviewer reads would be noise around nothing"
-          },
-          {
-            "outcome": "construct_refused",
-            "reason": "the model states something the ontology rejects, named per construct; the remaining constructs still expand, and this is a defect in the model rather than a fact the domain owes"
+            "outcome": "tree_absent",
+            "reason": "the staging root holds no staged object: `/model-domain` has not run for this request, or its tree was already promoted"
           },
           {
             "outcome": "object_blocked",
@@ -784,45 +767,80 @@
       "status": "active",
       "path": "skills/model-domain/SKILL.md",
       "declaration": {
-        "objective": "Run the domain analysis end to end and stop for review: delegate the modelling to domain-modeler, validate the model it returns at the boundary, persist it where the caller says, and report what the analysis decided rather than was told, what it refused to decide, and what it excluded. Choose it when a person has stated a request and no domain model exists. The model itself is authored by domain-modeler and this procedure produces no artifact of its own. Not for classifying constructs into node types, and not for authoring knowledge.",
+        "objective": "Turn a request into a reviewable staging tree: analyse it into a DDD domain model, map what that touches in the base, and expand it into one staged knowledge object per construct \u2014 then stop for a person to read the diff. Choose it when a request describes a problem or a solution and no staging tree exists for it. Not for enriching or promoting those objects, which is ingest-domain over the tree this produces.",
         "inputs": [
           {
             "name": "model_id",
             "required": true
           },
           {
+            "name": "analysis_id",
+            "required": true
+          },
+          {
+            "name": "intake_id",
+            "required": true
+          },
+          {
+            "name": "staging_root",
+            "required": true
+          },
+          {
+            "name": "knowledge_root",
+            "required": true
+          },
+          {
+            "name": "instant_and_producer_identity",
+            "required": true
+          },
+          {
             "name": "referenced_material",
             "required": false,
             "default": "absent, and the analysis rests on the request alone rather than on material nobody supplied"
-          },
-          {
-            "name": "model_destination",
-            "required": false,
-            "default": "absent, and the model is reported rather than written; where it survives the run is the caller's decision"
           }
         ],
         "outputs": [
           {
             "artifact": "domain-model",
             "contract": "domain-model/4"
+          },
+          {
+            "artifact": "impact-analysis",
+            "contract": "impact-analysis/4"
+          },
+          {
+            "artifact": "knowledge-intake-plan",
+            "contract": "knowledge-intake-plan/6"
+          },
+          {
+            "artifact": "staged-knowledge-object",
+            "contract": "staged-knowledge-object/2"
           }
         ],
         "produced_artifacts": [
-          "domain-model"
+          "domain-model",
+          "impact-analysis",
+          "knowledge-intake-plan",
+          "staged-knowledge-object"
         ],
         "required_context": {
           "note": "No node type is in scope. This procedure produces a design in DDD's vocabulary; the ontology's six types enter when the model is classified, which is a different entry point."
         },
         "deterministic_behavior": [
           "the model is validated against domain-model/4 at the boundary and rejected rather than repaired",
-          "a model whose state is blocked ends the run with the reason reported",
-          "the model id and the instant come from the caller and are never minted",
-          "every element whose origin is modeled is reported with its rationale, and every open question with what it blocks",
-          "no file under the knowledge root is written: the model is a design, and a separate entry point turns one into the base"
+          "a model whose state is blocked ends the run with the reason reported and nothing expanded",
+          "an impact analysis runs for every request before anything is written, including the first against an empty base, and a verdict of none ends the run",
+          "the expansion is a script rather than a delegation: the mapping is a closed table and the identifiers are arithmetic, so two runs over one model produce the same tree byte for byte",
+          "no file under the knowledge root is written: every file lands in the staging root, and a staged object declares a different contract from the base's until it is promoted",
+          "the four fields only judgment supplies are recorded as authoring gaps rather than guessed at, and the next entry point writes them",
+          "every gap is checked against what its node type actually requires before the run ends",
+          "the run ends with the tree unenriched and unpromoted: the review is a person reading its diff, and a procedure that ends has stopped where one that says so in the middle has not",
+          "every identifier and the instant come from the caller and are never minted"
         ],
         "judgment": [
           "how to phrase the delegation to the modelling agent",
-          "what to draw a reviewer's attention to in the report, which is the decided elements and the refusals rather than a summary"
+          "what to draw a reviewer's attention to, which is the decided elements, the refusals and the open domain gaps rather than a count",
+          "whether a verdict of none is worth overriding, which is the caller's call to take"
         ],
         "assertions": [
           {
@@ -836,7 +854,7 @@
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the model id it never mints"
+            "reason": "a required input was not supplied, including the three identifiers it never mints"
           },
           {
             "outcome": "no_domain_in_request",
@@ -845,6 +863,20 @@
           {
             "outcome": "model_invalid",
             "reason": "the analysis failed its own contract at the boundary, reported with what failed and rejected rather than repaired"
+          },
+          {
+            "outcome": "already_held",
+            "reason": "the impact analysis returns none: the base already holds what the model describes, so nothing is staged and the diff a reviewer would read would be noise around nothing"
+          },
+          {
+            "outcome": "construct_refused",
+            "reason": "the model states something the ontology rejects, named per construct; the remaining constructs still expand, and this is a defect in the model rather than a fact the domain owes"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "knowledge-object",
+            "access": "read"
           }
         ]
       }

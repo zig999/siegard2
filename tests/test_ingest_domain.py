@@ -30,7 +30,7 @@ class Procedure(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.body = SKILL.read_text()
 
-    def test_it_expands_before_enriching(self) -> None:
+    def test_it_starts_where_the_review_ended(self) -> None:
         """The two passes, in order, and the reason the order is not preference.
 
         It asserted that `domain-analyst` was delegated to before `knowledge-author`. Neither runs
@@ -38,9 +38,9 @@ class Procedure(unittest.TestCase):
         is the enrichment of an object that already exists. What survives is the property those two
         delegations were ordered for — that nothing is written against a base half built.
         """
-        self.assertLess(self.body.index("bin/expand_model.py"),
-                        self.body.index("`knowledge-enricher`"),
-                        "every object exists before any is enriched")
+        self.assertIn("You start where the review ended", self.body)
+        self.assertNotIn("bin/expand_model.py", self.body,
+                         "the expansion belongs to /model-domain, whose run ends at the review")
         self.assertNotIn("domain-analyst", self.body,
                          "the classification is a script, and delegating it would pay 75k tokens "
                          "for a table lookup")
@@ -56,8 +56,8 @@ class Procedure(unittest.TestCase):
         now is the passes — and the review between them, which is the step a run can skip and the
         one it must not.
         """
-        stages = ["expand_model.py", "read the diff", "knowledge-enricher",
-                  "check_enrichment.py", "promote_staged.py"]
+        stages = ["knowledge-enricher", "check_enrichment.py", "check_gap_fields.py",
+                  "promote_staged.py", "materialize.py"]
         positions = [self.body.index(stage) for stage in stages]
         self.assertEqual(sorted(positions), positions, f"order drifted: {stages}")
 
@@ -66,7 +66,7 @@ class Procedure(unittest.TestCase):
 
     def test_it_does_not_answer_the_models_open_questions(self) -> None:
         """A question the modeller refused to decide is not this procedure's to decide."""
-        self.assertIn("carry them, never answer\n  them", self.body)
+        self.assertIn("Carry them; never close one", self.body)
 
     def test_it_does_not_reopen_a_modelling_decision(self) -> None:
         self.assertIn("Re-open a modelling decision", self.body)
@@ -81,7 +81,7 @@ class Procedure(unittest.TestCase):
         what this test was watching for.
         """
         self.assertIn("You record no status", self.body)
-        self.assertIn("never an object written at a lower tier", self.body)
+        self.assertIn("no maturity level and no approval state", self.body)
 
     def test_it_authors_no_derived_file(self) -> None:
         """The materializer that regenerated them went with the generation path; the rule did not."""
@@ -105,7 +105,7 @@ class Procedure(unittest.TestCase):
         distribution performs none of those checks and reports them as owed, which is the honest
         form — and C04 has nothing to demand because there is no instruction left to run anything.
         """
-        for script in ("bin/expand_model.py", "bin/check_enrichment.py", "bin/check_gap_fields.py",
+        for script in ("bin/check_enrichment.py", "bin/check_gap_fields.py",
                        "bin/promote_staged.py", "bin/materialize.py"):
             with self.subTest(script=script):
                 self.assertIn(script, self.body)
@@ -143,15 +143,15 @@ class Declaration(unittest.TestCase):
         self.assertFalse(defaults["required"])
         self.assertIn("stops rather than choosing", defaults["default"])
 
-    def test_one_refused_construct_is_not_a_stop(self) -> None:
-        """One construct the model states wrongly must not abandon the ones it states well."""
-        refused = next(f for f in self.entry["failure_outcomes"]
-                       if f["outcome"] == "construct_refused")
-        self.assertIn("still expand", refused["reason"])
+    def test_one_blocked_object_is_not_a_stop(self) -> None:
+        """One object the material cannot support must not abandon the ones it can."""
+        blocked = next(f for f in self.entry["failure_outcomes"]
+                       if f["outcome"] == "object_blocked")
+        self.assertIn("stays staged", blocked["reason"])
 
-    def test_a_blocked_model_authors_nothing(self) -> None:
-        blocked = next(f for f in self.entry["failure_outcomes"] if f["outcome"] == "model_blocked")
-        self.assertIn("nothing written", blocked["reason"])
+    def test_an_absent_tree_is_a_declared_outcome(self) -> None:
+        absent = next(f for f in self.entry["failure_outcomes"] if f["outcome"] == "tree_absent")
+        self.assertIn("has not run", absent["reason"])
 
     def test_it_declares_the_domain_model_as_a_contracted_prerequisite(self) -> None:
         """The order between modelling and ingesting is what a declared input makes derivable."""
@@ -189,46 +189,6 @@ class Declaration(unittest.TestCase):
         behaviour = " ".join(self.entry["deterministic_behavior"])
         self.assertIn("never minted", behaviour)
         self.assertIn("never minted", behaviour)
-
-class TheImpactAnalysisIsConsumed(unittest.TestCase):
-    """`foundation/0001` R3 runs an impact analysis for every request, and nothing read one.
-
-    `impact-analyst` produced `impact-analysis` and no skill parsed it, so the requirement was
-    satisfied by an artifact that reached no reader — which is the same as not being satisfied. It
-    is now the second step of the ingestion, before anything is written.
-    """
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.body = SKILL.read_text()
-        cls.entry = next(
-            e for e in json.loads(DECLARATION.read_text())["declarations"]
-            if e["identifier"] == "ingest-domain"
-        )
-
-    def test_the_procedure_delegates_to_the_analyst(self) -> None:
-        self.assertIn("impact-analyst", self.body)
-
-    def test_it_runs_before_anything_is_written(self) -> None:
-        self.assertLess(self.body.index("impact-analyst"), self.body.index("bin/expand_model.py"))
-
-    def test_it_runs_over_an_empty_base_too(self) -> None:
-        """R5: a request made where nothing exists yields `create`, which is not `none`."""
-        self.assertIn("including the first one against an empty base", self.body)
-
-    def test_the_declaration_names_it_consumed(self) -> None:
-        consumed = {c["artifact"] for c in self.entry["consumed_artifacts"]}
-        self.assertIn("impact-analysis", consumed)
-
-    def test_a_verdict_of_none_is_a_declared_outcome(self) -> None:
-        """The one verdict that stops the run, named so continuing needs a reason."""
-        outcomes = {f["outcome"] for f in self.entry["failure_outcomes"]}
-        self.assertIn("already_held", outcomes)
-
-    def test_the_analysis_id_comes_from_the_caller(self) -> None:
-        names = {i["name"] for i in self.entry["inputs"]}
-        self.assertIn("analysis_id", names)
-
 
 if __name__ == "__main__":
     unittest.main()
