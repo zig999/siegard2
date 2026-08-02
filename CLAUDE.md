@@ -49,7 +49,6 @@ leaving a contract implicit is the worse form.
 |---|---|---|---|
 | `foundation/` | what the distributed framework must do | authority for the product's behavior | no |
 | `docs/concepts/` | framework vocabulary, one concept per file | authority for terms | no |
-| `docs/adr/` | decisions this repository took, and what each cost | binds where accepted; holds rationale, never the operative rule | no |
 | `schemas/` | contracts over this repository's own artifacts | authority for structure | no |
 | `scripts/` | the generator: assembly, verification, and this repository's checks | implementation | no |
 | `templates/` | scaffolds for artifacts only this repository authors | implementation | no |
@@ -68,15 +67,16 @@ is a dangling pointer in the consumer's hands.
 
 `.claude/` and `src/claude/` never mirror each other: `.claude/` configures the agent that develops the
 generator, `src/claude/` holds what the generator ships. A specification states what the *distributed*
-framework must do, so it may not derive authority from `.claude/` or `docs/adr/` — neither reaches the
-consumer who has to satisfy it.
+framework must do, so it may not derive authority from `.claude/` — it does not reach the consumer who
+has to satisfy it.
 
 ## Where authority lives
 
-A specification states what the framework must do. An accepted ADR decides what no specification defines.
-A concept fixes what a term means. A schema encodes the structure a contract requires. Code and tests
-implement them, and documentation explains them. When two disagree, the earlier one in that list wins, and
-the change that resolves it updates both — never one alone.
+A specification states what the framework must do. Where nothing states it, the specification is what
+gains the statement — there is no second authority to decide it elsewhere. A concept fixes what a term
+means. A schema encodes the structure a contract requires. Code and tests implement them, and
+documentation explains them. When two disagree, the earlier one in that list wins, and the change that
+resolves it updates both — never one alone.
 
 Keep one authoritative definition per concept, in one place. A prompt may say how to apply a rule; it
 must not be the sole home of one a specification, a schema, or a validator could hold.
@@ -163,9 +163,9 @@ excluded architecture — `foundation/0012` fixes the unit and `foundation/0005`
 
 Evidence that an abstraction is real may come from a test, an eval, an installation or upgrade incident,
 a Claude Code incompatibility, a dogfooding run, or a failure seen in a consuming repository. None admits
-that repository's business rules. A fixture is one more such channel and this repository holds none —
-`docs/adr/0019-the-repository-keeps-no-fixtures.md`. Adding one back needs maintainer authorization and a
-named failure mode it would catch; an agent never adds one unbidden.
+that repository's business rules. A fixture is one more such channel and this repository holds none.
+Adding one back needs maintainer authorization and a named failure mode it would catch; an agent never
+adds one unbidden.
 
 Do not generalize speculatively. Introduce an abstraction only when a current requirement needs it and
 its reusable contract can be tested. This applies to the framework's own architecture, and to this file.
