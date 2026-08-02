@@ -15,10 +15,10 @@ described, never a standing license, and approval of one edit does not carry to 
 Proposals are wanted, not merely tolerated. A rule this file should carry and does not is a gap worth
 naming — as a proposal.
 
-This binds this file only. Everything else — specifications, schemas, concepts, `.claude/rules/`,
-skills, templates, fixtures, and code — is ordinary work that an agent creates and changes without
-asking. **No artifact needs approval to take effect. It takes effect because it exists.** An artifact
-that is wrong is corrected by the next change, not held behind a gate.
+This binds this file only. Everything else — schemas, templates, and code — is ordinary work that an
+agent creates and changes without asking. **No artifact needs approval to take effect. It takes
+effect because it exists.** An artifact that is wrong is corrected by the next change, not held
+behind a gate.
 
 ## Language
 
@@ -66,9 +66,9 @@ picking one without saying so, is the failure to avoid.
 
 A change is **minor** when it alters no specification, no schema, no contract version, and no generated
 output — a typo, a comment, a clarification that narrows nothing, a test for behavior already specified.
-It runs the validation for the area it touches and stops there; `/siegard-change` does not apply.
+It runs the validation for the area it touches and stops there.
 
-Everything else follows `/siegard-change` in full; when unclear, treat the change as ordinary and say so.
+When unclear, treat the change as ordinary and say so.
 
 ## Determinism and state
 
