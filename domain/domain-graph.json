@@ -72,6 +72,11 @@
   },
   "x-composes-into": {
     "target": "src/claude/schemas/domain-object.json",
+    "emits": {
+      "title": "Domain object",
+      "description": "One construct of a domain analysis, stored in the knowledge notation. The vocabulary is the eight kinds the analysis records, 1:1 with them: nothing is collapsed into a field of something else, so every construct keeps an identifier and a file. The envelope is `schemas/knowledge-notation.json`'s and is carried rather than decided here.\n\nWhat this contract adds to the notation is per-kind content and the alternation over it: a node declares everything its kind requires, or declares a gap naming that field. A non-empty `gaps` is the node's incompleteness — there is no status, no maturity level and no flag saying which pass has run, because an open `kind: authoring` gap already says it.\n\n**Generated.** This document is composed from `domain/` and is not edited: every assertion in it is stated once, in the file of the table or the kind that owns it. See `domain/domain-graph.json`.",
+      "note": "The title and description the composed document carries. They are prose about the whole contract, which no single table owns, so they are declared beside the composition that emits them."
+    },
     "why": "The shipped contract is loaded standalone by a consumer's validator, which would resolve a cross-file $ref over the network. So the distribution carries one self-contained file and this tree is what it is composed from — the same arrangement schemas/knowledge-notation.json already uses.",
     "rules": {
       "note": "What a composer has to know beyond splicing files together. Each was learned by composing the tree and finding the result wrong, which is why it is written down rather than left to be rediscovered.",

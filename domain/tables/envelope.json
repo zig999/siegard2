@@ -48,6 +48,13 @@
         "status",
         "superseded_by"
       ]
+    },
+    "removed_by_profile": {
+      "note": "Carried by the authority and dropped by this profile, so a composer has to be told: the field is in `schemas/knowledge-notation.json` and must not reach the composed contract. Listed here rather than inferred from an absence, because a field this manifest simply failed to mention would look the same.",
+      "fields": [
+        "governed_by"
+      ],
+      "why": "tables/edges.json#/x-removed"
     }
   },
   "x-profile-decides": {
