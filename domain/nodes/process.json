@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/nodes/process.json",
+  "title": "process node",
+  "description": "An ordered path across the other kinds. A process names its steps in order and each step names a node already modelled; it does not restate what that node says. A process that restates its steps' content is a second copy of them, and the copy is the one that stops being maintained — which is why a step carries an identifier and nothing else.",
+  "x-kind": "process",
+  "x-ddd-vocabulary": "processDdd",
+  "x-body-sections": [
+    "## Answer",
+    "## Outcomes"
+  ],
+  "x-edges-declared": [
+    "boundary",
+    "steps[].node"
+  ],
+  "x-forbids": [],
+  "x-composes": [
+    "../tables/envelope.json",
+    "../tables/identifiers.json",
+    "../tables/vocabularies.json",
+    "../tables/edges.json",
+    "../tables/body-sections.json",
+    "../tables/invariants.json"
+  ],
+  "type": "object",
+  "properties": {
+    "ddd": {
+      "$ref": "../tables/vocabularies.json#/$defs/processDdd"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The ordered steps, each naming exactly one node.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node"
+        ],
+        "properties": {
+          "node": {
+            "$ref": "../tables/identifiers.json#/$defs/nodeId"
+          }
+        }
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "boundary",
+        "ddd",
+        "steps"
+      ]
+    },
+    {
+      "required": [
+        "gaps"
+      ]
+    }
+  ],
+  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "x-open": [
+    "`domain-object/1` spells the step's field `ko`. It is `node` here, and the rename is a breaking change to the frontmatter contract."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/nodes/aggregate.json",
+  "title": "aggregate node",
+  "description": "A consistency boundary: what must be consistent within one transaction. That is the whole test.\n\nPrefer small — a large aggregate is a contention point and a lock held too long. One root, and it is the only element outside code reaches. Other aggregates are referenced by identity, never held. An invariant spanning two aggregates is eventually consistent and says so, rather than being buried inside a boundary drawn too wide to be honest.",
+  "x-kind": "aggregate",
+  "x-body-sections": [
+    "## Answer",
+    "## Invariants"
+  ],
+  "x-edges-declared": [
+    "boundary",
+    "aggregate.root"
+  ],
+  "x-forbids": [
+    "ddd"
+  ],
+  "x-composes": [
+    "../tables/envelope.json",
+    "../tables/identifiers.json",
+    "../tables/vocabularies.json",
+    "../tables/edges.json",
+    "../tables/body-sections.json",
+    "../tables/invariants.json"
+  ],
+  "type": "object",
+  "properties": {
+    "root": {
+      "$ref": "../tables/identifiers.json#/$defs/definitionId",
+      "description": "The definition that is this aggregate's entry point. Exactly one, and its identity is the aggregate's."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Who owns this scope."
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "boundary",
+        "root"
+      ]
+    },
+    {
+      "required": [
+        "gaps"
+      ]
+    }
+  ],
+  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/nodes/interface.json",
+  "title": "interface node",
+  "description": "What a context publishes or consumes. A `domain-event` is something that happened inside a context, named in the past tense; an `integration-event` crosses a context boundary and is therefore a published contract someone else depends on; a `published-language` is a shared vocabulary for exchange; an `api` is an exposed operation.\n\nWhether the context publishes or consumes decides who owes whom compatibility. A break requires a version bump and a migration, from which a consumed interface is exempt.\n\nAn interface is also the only target a reference crossing a bounded context may name.",
+  "x-kind": "interface",
+  "x-ddd-vocabulary": "interfaceDdd",
+  "x-body-sections": [
+    "## Answer",
+    "## Semantics"
+  ],
+  "x-edges-declared": [
+    "boundary"
+  ],
+  "x-forbids": [],
+  "x-composes": [
+    "../tables/envelope.json",
+    "../tables/identifiers.json",
+    "../tables/vocabularies.json",
+    "../tables/edges.json",
+    "../tables/body-sections.json",
+    "../tables/invariants.json"
+  ],
+  "type": "object",
+  "properties": {
+    "ddd": {
+      "$ref": "../tables/vocabularies.json#/$defs/interfaceDdd"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the machine-readable payload contract lives. The form of this value is not closed."
+    },
+    "ownership": {
+      "$ref": "../tables/vocabularies.json#/$defs/ownership"
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "boundary",
+        "ddd",
+        "version",
+        "schema",
+        "ownership"
+      ]
+    },
+    {
+      "required": [
+        "gaps"
+      ]
+    }
+  ],
+  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+}

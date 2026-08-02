@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/nodes/lifecycle.json",
+  "title": "lifecycle node",
+  "description": "The states a definition holds and how it moves between them. Exactly one lifecycle per definition: a definition with two state machines has no single state set to generate from, and which one binds is a question neither file answers.\n\nTotality is the point. For every pairing of a state with a trigger the table mentions, either a transition or a rejection exists. An incomplete table is where whatever produces software later invents behaviour, and it invents it silently. A terminal state has no outgoing transition, which is a different statement from having no decision — what an instance does when triggered in a terminal state is a fact the domain owns.",
+  "x-kind": "lifecycle",
+  "x-body-sections": [
+    "## Answer",
+    "## State semantics"
+  ],
+  "x-edges-declared": [
+    "boundary",
+    "lifecycle.subject",
+    "transitions[].guard",
+    "rejections[].error"
+  ],
+  "x-forbids": [
+    "ddd"
+  ],
+  "x-composes": [
+    "../tables/envelope.json",
+    "../tables/identifiers.json",
+    "../tables/vocabularies.json",
+    "../tables/edges.json",
+    "../tables/body-sections.json",
+    "../tables/invariants.json"
+  ],
+  "type": "object",
+  "properties": {
+    "subject": {
+      "$ref": "../tables/identifiers.json#/$defs/definitionId",
+      "description": "The definition whose states this governs. Exactly one, and at most one lifecycle per definition."
+    },
+    "states": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "../tables/identifiers.json#/$defs/stateName"
+      },
+      "description": "The legal states. Two is the minimum that makes a transition table meaningful. `terminal` is reserved as a rejection shorthand and is never a state name."
+    },
+    "initial": {
+      "$ref": "../tables/identifiers.json#/$defs/stateName",
+      "description": "The state an instance starts in. Every state is reachable from it."
+    },
+    "terminal": {
+      "type": "array",
+      "items": {
+        "$ref": "../tables/identifiers.json#/$defs/stateName"
+      },
+      "description": "The states that accept no further trigger, declared rather than inferred, and expanded wherever a rejection names the reserved `terminal`."
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The legal moves. Every non-terminal state has an outgoing transition.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "trigger",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "../tables/identifiers.json#/$defs/stateName"
+          },
+          "trigger": {
+            "$ref": "../tables/identifiers.json#/$defs/triggerName"
+          },
+          "to": {
+            "$ref": "../tables/identifiers.json#/$defs/stateName"
+          },
+          "guard": {
+            "$ref": "../tables/identifiers.json#/$defs/ruleId",
+            "description": "The rule that decides this transition, at most one."
+          }
+        }
+      }
+    },
+    "rejections": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The decided non-transitions. Two shorthands keep the declaration from becoming padding: a trigger list expands to one entry per trigger, and `from: terminal` expands to every state listed as terminal. Both are expanded before totality is checked.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "trigger",
+          "error"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "../tables/identifiers.json#/$defs/stateName",
+            "description": "A declared state, or the reserved name `terminal`."
+          },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "../tables/identifiers.json#/$defs/triggerName"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "../tables/identifiers.json#/$defs/triggerName"
+                }
+              }
+            ]
+          },
+          "error": {
+            "$ref": "../tables/identifiers.json#/$defs/definitionId",
+            "description": "The domain error this rejection raises, recorded as a definition whose ddd is domain-error."
+          }
+        }
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "boundary",
+        "subject",
+        "states",
+        "initial",
+        "transitions",
+        "rejections"
+      ]
+    },
+    {
+      "required": [
+        "gaps"
+      ]
+    }
+  ],
+  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+}

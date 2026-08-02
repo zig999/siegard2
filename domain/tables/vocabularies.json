@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/tables/vocabularies.json",
+  "title": "Closed vocabularies",
+  "description": "Every enumeration this profile closes, in one place. A value outside one of these is refused rather than carried: a vocabulary that admits a free string is a vocabulary a consumer cannot branch on.\n\n`ddd` is carried only where a kind covers several constructs. Where it is absent the kind *is* the construct, and a `ddd` beside it would name one fact twice.",
+  "$defs": {
+    "kind": {
+      "enum": [
+        "subdomain",
+        "context",
+        "aggregate",
+        "definition",
+        "rule",
+        "lifecycle",
+        "interface",
+        "process"
+      ],
+      "description": "Closed at eight and 1:1 with the construct vocabulary the analysis records. Nothing is a field of something else, so nothing loses an identifier by being one."
+    },
+    "origin": {
+      "enum": [
+        "stated",
+        "modeled"
+      ],
+      "description": "`stated` where the material says it; `modeled` where the analysis decided it. A reviewer accepts the first and disagrees with the second, and can do neither if the two look alike."
+    },
+    "gapKind": {
+      "enum": [
+        "domain",
+        "authoring"
+      ],
+      "description": "`domain` waits on whoever knows the domain and no capability of this framework may close one. `authoring` waits on the enrichment pass."
+    },
+    "subdomainType": {
+      "enum": [
+        "core",
+        "supporting",
+        "generic"
+      ],
+      "description": "Where the business differs, where it is merely specific, and where the problem is solved. It decides where careful modelling is worth its cost."
+    },
+    "definitionDdd": {
+      "enum": [
+        "entity",
+        "value-object",
+        "aggregate-root",
+        "read-model",
+        "domain-error"
+      ]
+    },
+    "ruleDdd": {
+      "enum": [
+        "invariant",
+        "domain-rule",
+        "policy",
+        "specification",
+        "quality-attribute"
+      ]
+    },
+    "interfaceDdd": {
+      "enum": [
+        "domain-event",
+        "integration-event",
+        "published-language",
+        "api"
+      ]
+    },
+    "processDdd": {
+      "enum": [
+        "domain-service",
+        "saga",
+        "use-case"
+      ]
+    },
+    "ownership": {
+      "enum": [
+        "published",
+        "consumed"
+      ],
+      "description": "Whether this context exposes the interface or depends on someone else's. It decides who owes whom compatibility."
+    },
+    "contextRelationshipPattern": {
+      "enum": [
+        "anti-corruption-layer",
+        "conformist",
+        "shared-kernel",
+        "customer-supplier",
+        "separate-ways"
+      ],
+      "description": "`separate-ways` is a real answer: two contexts that do not need each other are not connected because a diagram looks better connected."
+    },
+    "binding": {
+      "enum": [
+        "embedded",
+        "by-identity"
+      ],
+      "description": "A reference whose target lies in another aggregate declares `by-identity`. How a binding becomes a storage representation is stack knowledge and is not recorded."
+    }
+  },
+  "x-ddd-by-kind": {
+    "subdomain": null,
+    "context": null,
+    "aggregate": null,
+    "lifecycle": null,
+    "definition": "definitionDdd",
+    "rule": "ruleDdd",
+    "interface": "interfaceDdd",
+    "process": "processDdd"
+  },
+  "x-rejected-fields": {
+    "status": "Rejected, not merely absent. A node declares no status, no maturity level and no approval state; an open `kind: authoring` gap is what says a pass has not run.",
+    "superseded_by": "Rejected. A node that changes kind, boundary or name takes a new identifier and the old one is removed with every reference to it. Version control holds what the base held."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/nodes/subdomain.json",
+  "title": "subdomain node",
+  "description": "A partition of the problem space, classified where careful modelling is worth its cost. It is itself a scope, so it belongs to none and declares no boundary.\n\nThe classification is not a label. `core` is where this business differs from its competitors; `supporting` is necessary and specific to it but not differentiating; `generic` is a solved problem where the right answer is usually to buy rather than to model. A request that treats everything as core has not been analysed.",
+  "x-kind": "subdomain",
+  "x-body-sections": [
+    "## Answer",
+    "## Responsibilities"
+  ],
+  "x-edges-declared": [],
+  "x-forbids": [
+    "boundary",
+    "ddd"
+  ],
+  "x-composes": [
+    "../tables/envelope.json",
+    "../tables/identifiers.json",
+    "../tables/vocabularies.json",
+    "../tables/edges.json",
+    "../tables/body-sections.json",
+    "../tables/invariants.json"
+  ],
+  "type": "object",
+  "properties": {
+    "subdomain_type": {
+      "$ref": "../tables/vocabularies.json#/$defs/subdomainType"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Who owns this scope."
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "subdomain_type"
+      ]
+    },
+    {
+      "required": [
+        "gaps"
+      ]
+    }
+  ],
+  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+}

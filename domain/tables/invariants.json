@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/tables/invariants.json",
+  "title": "Rules that are not per kind",
+  "description": "Two sets. The **cross-kind conditionals** hold of a node whatever its kind and cannot sit in one of the eight files without being written eight times. The **cross-node rules** need to see more than one node at once, so no per-file schema can express any of them and a validator over the whole network is the only place they can be decided.",
+  "x-cross-kind": {
+    "gap_alternation": {
+      "rule": "A node declares everything its kind requires, or declares a gap naming what it lacks.",
+      "shape": "anyOf: [ every field the kind requires, gaps ]",
+      "weakness": "`gaps` there is any gap over any field, so a gap about one fact would otherwise excuse the absence of another. Both directions are held by the network validator, not by the schema."
+    },
+    "modeled_needs_rationale": {
+      "rule": "A node whose `origin` is `modeled` carries `rationale`, or a gap.",
+      "why": "A reviewer accepts a fact the material stated and disagrees with one the analysis reached, and can do the second only against a reason."
+    },
+    "authoring_gap_excuses_three": {
+      "rule": "A node with no open `kind: authoring` gap declares `question`, `description` and `out_of_scope`.",
+      "why": "An open authoring gap is what says a pass has not run, which is why there is no status field and none to forget.",
+      "coarse": "Any authoring gap excuses all three; which field each gap owes is decided by the completeness check, where a per-field answer can be given."
+    },
+    "scope_has_no_boundary": {
+      "rule": "A `subdomain` and a `context` declare no `boundary`.",
+      "why": "A scope belongs to no scope. Its absence is what identifies a partition root."
+    },
+    "kind_is_the_construct": {
+      "rule": "A `subdomain`, `context`, `aggregate` and `lifecycle` declare no `ddd`.",
+      "why": "The kind is the construct here, so a `ddd` beside it would name the same fact twice."
+    },
+    "only_a_context_relates": {
+      "rule": "Only a `context` declares `context_relationships`."
+    }
+  },
+  "x-cross-node": {
+    "identifier_arithmetic": {
+      "rule": "Every identifier computes to the path it sits at, and the kind in the identifier agrees with the kind the node declares.",
+      "decided_by": "bin/check_knowledge.py"
+    },
+    "gaps_and_absences_agree": {
+      "rule": "Every gap names a fact the kind requires and the node lacks, and every fact it lacks is named by a gap.",
+      "decided_by": "bin/check_knowledge.py"
+    },
+    "lifecycle_totality": {
+      "rule": "For every pairing of a declared state with a trigger the table mentions, either a transition or a rejection exists.",
+      "decided_by": "bin/check_knowledge.py"
+    },
+    "one_lifecycle_per_subject": {
+      "rule": "No two lifecycles name one definition as subject.",
+      "decided_by": "bin/check_knowledge.py",
+      "also": "expressible as `in_max: 1` on the `lifecycle.subject` edge"
+    },
+    "crossing_targets_an_interface": {
+      "rule": "A reference whose origin and target sit in different bounded contexts targets an `interface`.",
+      "decided_by": "bin/check_knowledge.py"
+    },
+    "references_resolve": {
+      "rule": "An edge naming an identifier the network does not hold is reported as a defect, never repaired.",
+      "decided_by": "bin/materialize.py"
+    }
+  },
+  "x-owed": {
+    "state_reachability": "Every state is reachable from `initial`, and every non-terminal state has an outgoing transition. Specified; no shipped script decides it.",
+    "cycles": "A cycle is reported together with unresolved edges and orphans. Specified; no shipped script decides it.",
+    "cardinality": "Every edge's cardinality is enforced. Declared in tables/edges.json; only `lifecycle.subject`'s inverse bound is decided anywhere, and by hand.",
+    "orphans": "An orphan is reported. The materializer's rule counts a node as referenced when it is the *source* of any edge, and every node but a scope declares a `boundary` — so for six of the eight kinds the rule cannot fire. A semantically isolated node is not the same thing as an orphan, and nothing decides the first.",
+    "boundary_validation": "A node is validated against the frontmatter contract at the boundary. Specified; the distribution ships no validator that does it, and the record and result contracts are checked by model judgment rather than by a script.",
+    "body_form": "One sentence per line, exactly one RFC 2119 keyword, the two headings the kind names, and the body-length ceiling. Specified; nothing decides any of the four."
+  }
+}

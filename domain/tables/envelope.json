@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/tables/envelope.json",
+  "title": "The envelope",
+  "description": "The fields every node carries whatever its kind. This file **restates nothing**: `schemas/knowledge-notation.json` is the single authority for the envelope's assertions, and `scripts/check_notation_agreement.py` holds every profile to it. What this file holds is the manifest — which fields are the envelope's, which are the profile's, and where each is decided — so that a reader of one node file can tell a field the kind decides from a field it merely carries.\n\nThe split matters because it is what let two profiles be retired without the envelope going with them.",
+  "x-authority": "schemas/knowledge-notation.json",
+  "x-held-by": "scripts/check_notation_agreement.py",
+  "x-required-keys": [
+    "type",
+    "contract_version"
+  ],
+  "x-envelope-fields": [
+    "id",
+    "title",
+    "description",
+    "question",
+    "boundary",
+    "generated",
+    "origin",
+    "gaps",
+    "verified",
+    "out_of_scope",
+    "depends_on",
+    "governed_by",
+    "tags",
+    "sources",
+    "stale_after",
+    "aliases",
+    "status",
+    "superseded_by"
+  ],
+  "x-profile-decides": {
+    "type": "the vocabulary of kinds, which is what a profile is",
+    "contract_version": "each profile pins its own const, and that is how a consumer tells them apart",
+    "required": "which envelope fields the profile demands unconditionally",
+    "content": "the fields a kind requires of its own content",
+    "conditionals": "the per-kind alternation over gaps, and the cross-kind rules",
+    "identifiers": "the identifier patterns, which spell the kinds and therefore cannot be shared across profiles"
+  },
+  "x-required-unconditionally": [
+    "id",
+    "type",
+    "title",
+    "contract_version",
+    "generated",
+    "origin"
+  ],
+  "x-owned-by-enrichment": {
+    "fields": [
+      "question",
+      "description",
+      "out_of_scope"
+    ],
+    "body": true,
+    "note": "Required of a node declaring no open `kind: authoring` gap, and excused of one that does — which is what says the enrichment pass has not reached it. The line is declared once in `src/claude/bin/field_ownership.py` and consumed by the seal, the ownership check and the completeness check."
+  },
+  "x-unscoped": {
+    "owner": "Declared by the profile with no conditional, so any kind may carry it. Read as belonging to the three scope kinds; nothing states that, and nothing enforces it.",
+    "rationale": "Required wherever `origin` is `modeled`, on every kind. Held in tables/invariants.json rather than per kind."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/tables/body-sections.json",
+  "title": "Body sections by kind, and the form a body takes",
+  "description": "The two headings each kind names, in order, and the rules the body itself obeys. A body carries exactly these two and no third heading; a section with no content carries the literal line `None.`\n\n**Nothing verifies this table today.** The analysis places the headings and the enrichment fills them, and `check_field_ownership.py` compares the headings against the seal — that is, against what the analysis itself wrote. A kind given the wrong two headings is never compared to this table, and the body-length ceiling the base declares is read by no shipped script at all.",
+  "x-sections": {
+    "subdomain": [
+      "## Answer",
+      "## Responsibilities"
+    ],
+    "context": [
+      "## Answer",
+      "## Responsibilities"
+    ],
+    "aggregate": [
+      "## Answer",
+      "## Invariants"
+    ],
+    "definition": [
+      "## Answer",
+      "## Invariants"
+    ],
+    "rule": [
+      "## Answer",
+      "## Conditions"
+    ],
+    "lifecycle": [
+      "## Answer",
+      "## State semantics"
+    ],
+    "interface": [
+      "## Answer",
+      "## Semantics"
+    ],
+    "process": [
+      "## Answer",
+      "## Outcomes"
+    ]
+  },
+  "x-form": {
+    "one_sentence_per_line": "A body places one sentence per line.",
+    "rfc2119": "A normative statement uses exactly one RFC 2119 keyword, in uppercase, and no pronoun.",
+    "no_third_heading": "A third heading is one the contract refuses.",
+    "empty_section": "A section with no content carries the literal line `None.`",
+    "no_rationale": "A body carries no rationale, history, alternatives, or motivating narrative, and is never the only place a fact a machine reads appears.",
+    "no_alias": "A synonym is declared in `aliases` and appears in no body.",
+    "ceiling": "The body-length ceiling comes from `limits.body_lines` in the base's own system declaration. The framework supplies no value: where the declaration is absent, the check reports itself unenforceable rather than assuming one."
+  },
+  "x-open": [
+    "No shipped script reads `limits.body_lines`, so the ceiling is declared, validated in shape, and enforced by nothing.",
+    "No shipped script compares a body's headings against this table."
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/tables/primitives.json",
+  "title": "Attribute primitives",
+  "description": "The closed attribute type system. A parameter that changes what is produced is required; a parameter the primitive does not read is rejected rather than carried as dead representation. Two primitives inherit from the base's own declaration rather than from this table — `money` inherits `defaults.currency` and `datetime` inherits `defaults.timezone` — and each is overridden only where an attribute genuinely differs.\n\nA free-text type is refused. The vocabulary is closed at twelve, and a thirteenth arrives with a construct that needs it rather than for symmetry.",
+  "x-inherits-from": "src/claude/schemas/knowledge-system.json (defaults.currency, defaults.timezone)",
+  "x-table": {
+    "string": {
+      "required": [
+        "max_length"
+      ],
+      "optional": []
+    },
+    "text": {
+      "required": [],
+      "optional": []
+    },
+    "integer": {
+      "required": [],
+      "optional": [
+        "min",
+        "max"
+      ]
+    },
+    "decimal": {
+      "required": [
+        "precision",
+        "scale"
+      ],
+      "optional": []
+    },
+    "money": {
+      "required": [],
+      "optional": [
+        "currency"
+      ],
+      "inherits": "defaults.currency"
+    },
+    "boolean": {
+      "required": [],
+      "optional": []
+    },
+    "date": {
+      "required": [],
+      "optional": []
+    },
+    "datetime": {
+      "required": [],
+      "optional": [
+        "timezone"
+      ],
+      "inherits": "defaults.timezone"
+    },
+    "duration": {
+      "required": [],
+      "optional": []
+    },
+    "enum": {
+      "required": [
+        "lifecycle | values"
+      ],
+      "optional": [],
+      "note": "exactly one of the two forms; a lifecycle-bound enum names the lifecycle and never repeats its state names"
+    },
+    "ref": {
+      "required": [
+        "target",
+        "binding"
+      ],
+      "optional": []
+    },
+    "list": {
+      "required": [
+        "of",
+        "binding"
+      ],
+      "optional": [
+        "min_items",
+        "max_items"
+      ]
+    }
+  },
+  "$defs": {
+    "attribute": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "identifiers.json#/$defs/attributeName"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "text",
+            "integer",
+            "decimal",
+            "money",
+            "boolean",
+            "date",
+            "datetime",
+            "duration",
+            "enum",
+            "ref",
+            "list"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "max_length"
+            ],
+            "properties": {
+              "max_length": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "integer"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "min": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "decimal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "precision",
+              "scale"
+            ],
+            "properties": {
+              "precision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "scale": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "money"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "datetime"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "timezone": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "enum"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "description": "A lifecycle-bound enum keeps the state set in one authority. A free enum lists its own values.",
+            "oneOf": [
+              {
+                "required": [
+                  "lifecycle"
+                ],
+                "not": {
+                  "required": [
+                    "values"
+                  ]
+                },
+                "properties": {
+                  "lifecycle": {
+                    "$ref": "identifiers.json#/$defs/lifecycleId"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "values"
+                ],
+                "not": {
+                  "required": [
+                    "lifecycle"
+                  ]
+                },
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "identifiers.json#/$defs/slug"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ref"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "target",
+              "binding"
+            ],
+            "properties": {
+              "target": {
+                "$ref": "identifiers.json#/$defs/definitionId"
+              },
+              "binding": {
+                "$ref": "vocabularies.json#/$defs/binding"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "list"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "of",
+              "binding"
+            ],
+            "properties": {
+              "of": {
+                "$ref": "identifiers.json#/$defs/definitionId"
+              },
+              "binding": {
+                "$ref": "vocabularies.json#/$defs/binding"
+              },
+              "min_items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max_items": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

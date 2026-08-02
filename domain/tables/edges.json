@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/domain/tables/edges.json",
+  "title": "The edge table",
+  "description": "The closed edge vocabulary, with the cardinality a validator enforces and the traversal policy expansion reads. Every field that names another node and must resolve is an edge here; a relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs.\n\n**This table had no machine-readable home.** `foundation/0003` states it in prose, `materialize.py` carries a hand transcription in `EDGE_KINDS`, and `tests/test_edge_table_agreement.py` records that the comparison between the two was removed and 'returns with the component that carries the vocabulary again'. This file is that component: one transcription, consumed by the materializer and compared against the specification.\n\n`out` is edges leaving one node; `in_max` is edges arriving at one target, which is how at-most-one-lifecycle-per-definition becomes a check. `null` is unbounded.",
+  "x-columns": [
+    "origin",
+    "target",
+    "out_min",
+    "out_max",
+    "in_max",
+    "traversed",
+    "depth",
+    "crosses_context",
+    "locator"
+  ],
+  "x-edges": {
+    "boundary": {
+      "origin": [
+        "aggregate",
+        "definition",
+        "rule",
+        "lifecycle",
+        "interface",
+        "process"
+      ],
+      "target": [
+        "context",
+        "aggregate"
+      ],
+      "out_min": 1,
+      "out_max": 1,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": true,
+      "locator": "boundary",
+      "note": "Every node but a subdomain and a context declares exactly one. Membership is derived from this field; a scope never enumerates what it holds."
+    },
+    "subdomain": {
+      "origin": [
+        "context"
+      ],
+      "target": [
+        "subdomain"
+      ],
+      "out_min": 1,
+      "out_max": 1,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": true,
+      "locator": "subdomain"
+    },
+    "aggregate.root": {
+      "origin": [
+        "aggregate"
+      ],
+      "target": [
+        "definition"
+      ],
+      "out_min": 1,
+      "out_max": 1,
+      "in_max": 1,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "root"
+    },
+    "depends_on": {
+      "origin": null,
+      "target": null,
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 2,
+      "crosses_context": true,
+      "locator": "depends_on[<i>]",
+      "note": "The only content edge that may cross a bounded context, and the target must then be an interface. It is also the edge a rule declares to name what it constrains."
+    },
+    "attributes[].target": {
+      "origin": [
+        "definition"
+      ],
+      "target": [
+        "definition"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "attributes[<name>].target"
+    },
+    "attributes[].of": {
+      "origin": [
+        "definition"
+      ],
+      "target": [
+        "definition"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "attributes[<name>].of"
+    },
+    "attributes[].lifecycle": {
+      "origin": [
+        "definition"
+      ],
+      "target": [
+        "lifecycle"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "attributes[<name>].lifecycle"
+    },
+    "lifecycle.subject": {
+      "origin": [
+        "lifecycle"
+      ],
+      "target": [
+        "definition"
+      ],
+      "out_min": 1,
+      "out_max": 1,
+      "in_max": 1,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "subject",
+      "note": "`in_max: 1` is what makes 'no two lifecycles claim one subject' a cardinality check rather than a special case."
+    },
+    "transitions[].guard": {
+      "origin": [
+        "lifecycle"
+      ],
+      "target": [
+        "rule"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "transitions[<i>].guard"
+    },
+    "rejections[].error": {
+      "origin": [
+        "lifecycle"
+      ],
+      "target": [
+        "definition"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "rejections[<i>].error",
+      "note": "The target is a definition whose ddd is domain-error."
+    },
+    "steps[].node": {
+      "origin": [
+        "process"
+      ],
+      "target": null,
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "steps[<i>].node",
+      "note": "Spelled `steps[].ko` in domain-object/1. The rename is the vocabulary change this tree applies and the shipped contract has not."
+    },
+    "context_relationships[].with": {
+      "origin": [
+        "context"
+      ],
+      "target": [
+        "context"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": false,
+      "depth": 1,
+      "crosses_context": true,
+      "locator": "context_relationships[<i>].with",
+      "note": "Traversed only when expansion crosses a context."
+    }
+  },
+  "x-removed": {
+    "governed_by": "Carried by domain-object/1 as an edge to a decision record, `adr.NNNN`. A decision record is a graph node and never a knowledge object, and this framework holds no decision-record node — so every target is one the base cannot hold, and the materializer exempts `adr.` targets from resolution rather than reporting them. An edge no resolution reads is removed rather than retained for symmetry. Removing it is a breaking change to the frontmatter contract and is recorded here rather than applied to the shipped schema.",
+    "superseded_by": "Named a node and was never an edge. The field is gone; the name must appear in no vocabulary derived from this table."
+  },
+  "x-open": [
+    "`crosses_context` is set on three edges here — boundary, subdomain, context_relationships[].with — plus depends_on, whose exemption is conditional on the target being an interface. `src/claude/schemas/knowledge-graph.json` says the flag is 'True only for the three edges whose purpose is to leave or to name a partition' and `materialize.py` sets it on none. The three the shipped schema means are not named anywhere, so this column is a reading and not a transcription.",
+    "The `in` column's minimum is not modelled. Nothing requires a node to be referenced; whether an unreferenced node is a defect is the orphan rule, not a cardinality bound."
+  ]
+}
