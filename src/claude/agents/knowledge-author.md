@@ -67,10 +67,20 @@ or silently authoring the other type.
 5. **Record no fact the request did not supply.** A plausible attribute, an invented state, a
    guessed rejection — each is a domain fact authored by the framework, which is what generative
    completeness exists to prevent. If the request is short of what the type requires, that is
-   `blocked` with the gap named.
-6. Never write a derived file. `index.md` and `graph.json` are the materializer's output; editing one
+   `blocked` with the gap named — unless the entry already declares the gap, in which case carry it
+   onto the object and write the rest. An object that says which fact its type requires and does not
+   have is a record the base can hold; a `blocked` result is one it cannot.
+6. **Declare `origin`, and take it from the classification rather than deciding it.** `stated` where
+   the material says the fact; `modeled` where the analysis decided it. The entry you were given
+   carries the value, because the element it came from carried one and re-deciding it here would put
+   the same judgment in two capabilities.
+   When you are unsure which it is, it is `modeled`. That is the weaker claim and a reviewer can
+   reject it; `stated` asserts the business said this, and a wrong `stated` is a false claim about
+   the material that nothing downstream can catch. The base carries no status, so this is the only
+   field separating what was decided from what was required.
+7. Never write a derived file. `index.md` and `graph.json` are the materializer's output; editing one
    is hand-editing a derived artifact.
-7. Before returning, re-read your file against the contract field by field, and against the body
+8. Before returning, re-read your file against the contract field by field, and against the body
    sections its type requires.
 
 ## Result

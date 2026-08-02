@@ -79,10 +79,7 @@ SCHEMA_BY_KIND = {
     "knowledge-decision": "knowledge-decision.json",
     "skill": "skill.json",
     "agent": "agent.json",
-    "pack-declaration": "pack-declaration.json",
-    "specification-delta": "specification-delta.json",
     "validation-evidence": "validation-evidence.json",
-    "change-request": "change-request.json",
     # `None` where no per-file contract governs the kind. `knowledge/system.md` is the one such
     # artifact: spec 0003 defers its schema beyond the three defaults R26 requires and the
     # `limits.body_lines` ceiling R48 requires, and the knowledge validator already checks all
@@ -97,7 +94,7 @@ SCHEMA_BY_KIND = {
 # is the artifact's own form, not a property of scaffolding: a specification is a file with
 # frontmatter and a specification delta is a JSON object, and validating either against its
 # contract means parsing it the way its consumer will.
-JSON_KINDS = frozenset({"pack-declaration", "specification-delta", "validation-evidence", "change-request"})
+JSON_KINDS = frozenset({"validation-evidence"})
 
 try:
     import yaml

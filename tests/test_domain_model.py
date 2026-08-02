@@ -1,6 +1,6 @@
 """The DDD analysis contract, and the one field the whole thing turns on.
 
-`domain-model/1` is the artifact produced by analysing a request, before anything is normalized into the
+`domain-model/3` is the artifact produced by analysing a request, before anything is normalized into the
 ontology. It is the one artifact in this framework whose content is *invented*: everywhere else a fact
 nobody stated is the defect, and here deciding the aggregates, the boundaries, and the invariants is the
 work.
@@ -30,18 +30,18 @@ SCHEMA = SHIPPED_SCHEMAS / "domain-model.json"
 
 # Every element kind that carries provenance, with the smallest instance the contract accepts.
 ELEMENTS = {
-    "subdomains": {"name": "Sales", "type": "core"},
-    "contexts": {"name": "Sales", "subdomain": "Sales"},
-    "aggregates": {"name": "Proposal", "context": "Sales", "root": "Proposal"},
-    "definitions": {"name": "Proposal", "context": "Sales", "ddd": "aggregate-root", "attributes": []},
-    "rules": {"name": "Expiration", "context": "Sales", "ddd": "invariant", "statement": "A proposal expires."},
+    "subdomains": {"id": "dm.subdomain.sales", "name": "Sales", "type": "core"},
+    "contexts": {"id": "dm.context.sales", "name": "Sales", "subdomain": "Sales"},
+    "aggregates": {"id": "dm.aggregate.sales.proposal", "name": "Proposal", "context": "Sales", "root": "Proposal"},
+    "definitions": {"id": "dm.definition.sales.proposal", "name": "Proposal", "context": "Sales", "ddd": "aggregate-root", "attributes": []},
+    "rules": {"id": "dm.rule.sales.expiration", "name": "Expiration", "context": "Sales", "ddd": "invariant", "statement": "A proposal expires."},
     "lifecycles": {
-        "subject": "Proposal", "context": "Sales", "states": ["draft"], "initial": "draft",
+        "id": "dm.lifecycle.sales.proposal", "subject": "Proposal", "context": "Sales", "states": ["draft"], "initial": "draft",
         "transitions": [{"from": "draft", "trigger": "issue", "to": "issued"}],
     },
-    "interfaces": {"name": "ContractSigned", "context": "Sales", "ddd": "domain-event", "ownership": "published"},
+    "interfaces": {"id": "dm.interface.sales.contract-signed", "name": "ContractSigned", "context": "Sales", "ddd": "domain-event", "ownership": "published"},
     "processes": {
-        "name": "Approval", "context": "Sales", "ddd": "use-case",
+        "id": "dm.process.sales.approval", "name": "Approval", "context": "Sales", "ddd": "use-case",
         "steps": [{"order": 1, "element": "Proposal"}],
     },
 }
@@ -50,11 +50,11 @@ ELEMENTS = {
 def model(**over) -> dict:
     """The smallest `modeled` analysis the contract accepts."""
     document = {
-        "contract_version": "domain-model/1",
+        "contract_version": "domain-model/3",
         "model_id": "dm_1a2b3c4d",
         "producer": "domain-modeler",
         "request": {
-            "id": "cr_7a2e4d10",
+            "id": "rq_7a2e4d10",
             "description": "Sales must issue proposals that expire after a bounded period.",
             "artifacts": ["intake/sales-request.md"],
         },
@@ -143,10 +143,10 @@ class StateIsExclusive(Case):
     def test_blocked_requires_its_reason(self) -> None:
         self.assertRejected(
             {
-                "contract_version": "domain-model/1",
+                "contract_version": "domain-model/3",
                 "model_id": "dm_1a2b3c4d",
                 "producer": "domain-modeler",
-                "request": {"id": "cr_7a2e4d10", "description": "x", "artifacts": ["a.md"]},
+                "request": {"id": "rq_7a2e4d10", "description": "x", "artifacts": ["a.md"]},
                 "state": "blocked",
             },
             "a blocked analysis that does not say why leaves the caller to re-run it",
@@ -160,10 +160,10 @@ class StateIsExclusive(Case):
             [],
             self.errors(
                 {
-                    "contract_version": "domain-model/1",
+                    "contract_version": "domain-model/3",
                     "model_id": "dm_1a2b3c4d",
                     "producer": "domain-modeler",
-                    "request": {"id": "cr_7a2e4d10", "description": "x", "artifacts": ["a.md"]},
+                    "request": {"id": "rq_7a2e4d10", "description": "x", "artifacts": ["a.md"]},
                     "state": "blocked",
                     "blocking_reason": "the request names no domain this ontology can model",
                 }
@@ -210,17 +210,41 @@ class OneAuthorityPerVocabulary(Case):
 class RefusingIsPartOfModelling(Case):
     def test_an_open_question_must_say_what_the_answer_would_change(self) -> None:
         self.assertRejected(
-            model(open_questions=[{"question": "May an order be partly cancelled?"}]),
+            model(open_questions=[{"id": "oq_partial_cancellation",
+                                   "question": "May an order be partly cancelled?"}]),
             "a question with no stated consequence cannot be prioritized",
+        )
+
+    def test_an_open_question_must_be_identified(self) -> None:
+        """A gap on an authored object names the question that blocks it rather than restating it."""
+        self.assertRejected(
+            model(open_questions=[{
+                "question": "May an order be partly cancelled?",
+                "why_it_matters": "it decides whether cancellation is a state or a per-item flag",
+            }]),
+            "a question nothing can point at is a question restated per element",
+        )
+
+    def test_what_a_question_blocks_is_named_by_identifier(self) -> None:
+        """A name resolves against the element lists; where two kinds share one, it resolves twice."""
+        self.assertRejected(
+            model(open_questions=[{
+                "id": "oq_partial_cancellation",
+                "question": "May an order be partly cancelled?",
+                "why_it_matters": "it decides whether cancellation is a state or a per-item flag",
+                "blocks": ["Order"],
+            }]),
+            "an element named rather than identified cannot be resolved",
         )
 
     def test_an_open_question_with_its_consequence_is_accepted(self) -> None:
         document = model(
             open_questions=[
                 {
+                    "id": "oq_partial_cancellation",
                     "question": "May an order be partly cancelled?",
                     "why_it_matters": "it decides whether cancellation is a state or a per-item flag",
-                    "blocks": ["Order"],
+                    "blocks": ["dm.definition.sales.proposal"],
                 }
             ]
         )

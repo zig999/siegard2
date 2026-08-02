@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/validation-evidence.json",
+  "title": "Validation evidence",
+  "description": "What a validation phase actually ran, and what it reported. R22 requires validation to carry evidence, and the workflow event already carries an inline form of it; this contract is the standalone artifact for a validation whose evidence outlives the event — a layered validation whose checks come from more than one source. Each check names the command, the verdict, and the detail, so a reader can tell a check that passed from one that never ran. A check with no command is the case this exists to make impossible: an assertion that validation happened, with nothing that could be re-run to confirm it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "producer",
+    "verdict",
+    "request_id",
+    "checks"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "validation-evidence/2"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verdict": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "description": "The closed set a consumer branches on. a failure back to implementation under the workflow's stated attempt limit."
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^rq_[0-9a-f]{8}$"
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Every check that ran. Empty would be a verdict with nothing behind it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check",
+          "result",
+          "detail"
+        ],
+        "properties": {
+          "check": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The command, so the check can be re-run rather than believed."
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "not-run"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What it reported. On `not-run`, why it did not — a missing check is named as not run rather than reported as satisfied."
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "items": {
+              "properties": {
+                "result": {
+                  "enum": [
+                    "pass",
+                    "not-run"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "description": "A passing verdict over a failing check is a false report. A `not-run` check is permitted and visible, which is the honest form of partial coverage."
+      }
+    }
+  ]
+}

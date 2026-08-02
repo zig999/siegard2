@@ -43,12 +43,10 @@ definition here, and the first component built against one is the thing most lik
 |---|---|
 | [accepted](accepted.md) | The status of a specification or ADR whose decision binds. |
 | [artifact class](artifact-class.md) | What a produced artifact is, named independently of how any technology expresses it. |
-| [artifact persistence](artifact-persistence.md) | Whether an artifact is committed, recomputed from committed inputs, or discarded with its run. |
 | [assertion](assertion.md) | A mechanical check that rejects an implementation violating one knowledge object. |
 | [boundary](boundary.md) | The knowledge object type holding a scope — a bounded context or an aggregate — with derived membership. |
 | [capability](capability.md) | A reusable framework behavior with a testable contract. |
 | [change request](change-request.md) | The recorded request that originates every change to a governed repository. |
-| [context package](context-package.md) | The manifest naming exactly the knowledge one run of context resolution puts in scope. |
 | [contract version](contract-version.md) | The identifier a consumer reads to decide whether it can process an artifact. |
 | [definition](definition.md) | The knowledge object type saying what a domain concept is and which attributes it holds. |
 | [distribution](distribution.md) | The assembled release artifact under `dist/.claude/`. |
@@ -56,14 +54,9 @@ definition here, and the first component built against one is the thing most lik
 | [domain knowledge](domain-knowledge.md) | A fact whose change changes this system, and the only kind the knowledge base holds. |
 | [domain model](domain-model.md) | The DDD analysis of a request, separating what the request stated from what the modeler decided. |
 | [escalation](escalation.md) | The insertion of workflow phases, decided by a predicate over a validated artifact. |
-| [event log](event-log.md) | An append-only record of facts, kept by a repository rather than by the framework. |
 | [fail-soft](fail-soft.md) | Resolution degrades instead of blocking, and acceptance is evaluated independently. |
 | [fixture](fixture.md) | A downstream-shaped case exercising a framework capability. |
 | [framework source](framework-source.md) | The tree under `src/claude/` holding the components Siegard ships. |
-| [generation manifest](generation-manifest.md) | The lock recording where each produced artifact went, so a later run reuses the placement. |
-| [generation plan](generation-plan.md) | The derived, inspectable list of what one generation will produce, validated before any write. |
-| [generation scope](generation-scope.md) | The closed, frozen set of knowledge objects one generation compiles. |
-| [generation track](generation-track.md) | Whether an artifact class is produced by template expansion or by agent judgment. |
 | [generative completeness](generative-completeness.md) | Whether a scope holds every domain fact production needs, as a blocking validation. |
 | [impact analysis](impact-analysis.md) | The phase that decides whether a change request requires permanent knowledge to change. |
 | [interface](interface.md) | The knowledge object type describing what a bounded context exposes to, or consumes from, another. |
@@ -75,12 +68,9 @@ definition here, and the first component built against one is the thing most lik
 | [lifecycle](lifecycle.md) | The knowledge object type holding a definition's legal states and its total transition table. |
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
-| [placement decision](placement-decision.md) | The validated, frozen record of where a pack puts each artifact the manifest does not lock. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
 | [projection](projection.md) | A human-readable artifact generated from the knowledge graph, normative nowhere. |
 | [provenance](provenance.md) | The recorded origin of a material decision. |
-| [release record](release-record.md) | What changed between one framework version and the last. |
-| [representation ratio](representation-ratio.md) | Permanent knowledge volume measured against the source volume it produces. |
 | [rule](rule.md) | The knowledge object type stating one falsifiable condition; the only type an assertion binds to. |
 | [scaffold](scaffold.md) | A generator producing a conforming skeleton of an artifact this repository authors; not a template. |
 | [skill](skill.md) | A distributable procedure or knowledge unit, invocable as `/name`. |

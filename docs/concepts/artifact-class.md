@@ -2,33 +2,52 @@
 id: concept.artifact-class
 type: term
 title: artifact class
-description: What a produced artifact is, named independently of how any technology expresses it.
+description: The kind of artifact a capability produces, identified by the contract its instances satisfy.
 status: accepted
 contract_version: concept/1
-tags: [generation, kodd]
+tags: [capability, contracts]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
+verified:
+  - by: claude-opus-5
+    at: 2026-08-01T18:20:00Z
 sources:
-  - resource: foundation/0004-generation-and-reproducibility.md
-    title: Produce the system from knowledge, and lock what reproduces it
+  - resource: foundation/0005-capability-model.md
+    title: Close the set of capability classes, and give each one thing it owns
+  - resource: foundation/0006-capability-contracts.md
+    title: Make a capability describe itself well enough to be chosen without being read
 ---
 
 # artifact class
 
-What a produced artifact *is* — a type, a persistence schema, a migration, a validator, a conformance test —
-named independently of how any technology expresses it.
+The kind of artifact a capability produces, identified by the contract its instances satisfy.
+`domain-model`, `knowledge-object`, `impact-analysis`, and `knowledge-intake-plan` are four; the version
+a producer stamps — `domain-model/2` — names the class and the revision of its contract together.
 
-The vocabulary is closed and belongs to the framework, while the mapping from a node type to the classes it
-yields belongs to a [target pack](target-pack.md), which declares it. That division exists because the
-mapping presumes a technology and the vocabulary does not: "a definition yields a migration" is only true
-where a database exists, and [stack knowledge](stack-knowledge.md) has no place in a framework-owned enum.
+It is what `foundation/0005` R5 counts when it gives a specialized agent exactly one, and what R9 counts
+when it gives a template exactly one. Counting is the whole use: an agent producing two classes has two
+roles and cannot be delegated to for one of them, and a template producing two is two templates.
 
-The mapping is declared rather than left to the pack's agent because two model-free things need to read it:
-the [generation plan](generation-plan.md), which cannot work out what a knowledge object demands without it,
-and the report that a node type yields nothing under the active pack. Owning a fact and declaring it are
-different questions, and the pack answers both here.
+The class is not the file. One class may be written to many files — a knowledge base is one class in
+hundreds of instances — and the count that matters is of classes, never of outputs.
 
-An artifact class carries one thing a pack could not be trusted to supply informally: its
-[generation track](generation-track.md). Whether a class is produced by expansion or by judgment decides
-what a diff means, and that must be known before anything runs rather than inferred afterwards.
+## It is not a component class
 
-`foundation/0004-generation-and-reproducibility.md` holds the vocabulary and the requirements.
+`foundation/0005` R1 keeps the two apart, and says so in one line: *"An artifact is not a component and
+needs no class."* A component executes or is delegated to, and the closed set of what may execute is
+skill, specialized agent, hook, script, template, and target pack. An artifact is produced, and what
+closes its set is the contract set rather than that table.
+
+Confusing the two puts an artifact in front of the admission rule that governs components, which asks
+what runs it — a question an artifact has no answer to.
+
+## The earlier meaning, and why it is gone
+
+This concept previously named the vocabulary of things *generation* produced from a knowledge object — a
+type, a persistence schema, a migration, a validator, a conformance test — with the mapping from node
+type to class owned by a [target pack](target-pack.md). That vocabulary lived in a specification the
+repository removed with the generation path, and no capability reads it now.
+
+The term survived in `foundation/0005` with the meaning above, which is the one a reader of the current
+specification set needs. Recording the displacement rather than deleting the file is deliberate: the two
+meanings are close enough that a reader meeting the old one in an ADR would otherwise think the current
+requirements say something they do not.

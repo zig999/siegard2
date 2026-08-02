@@ -29,5 +29,5 @@ Two rules make traversal decidable:
   defect the materializer reports — together with orphans and cycles — rather than a gap it repairs.
 
 The graph is what [impact analysis](impact-analysis.md) classifies against and what expansion traverses
-to build a [context package](context-package.md). It holds permanent knowledge only: a request, a plan,
+to build a context package. It holds permanent knowledge only: a request, a plan,
 or evidence is never a node.

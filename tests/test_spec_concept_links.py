@@ -75,10 +75,10 @@ class ALinkThatNamesItsConceptIsAccepted(unittest.TestCase):
         self.assertEqual(problems(body), [], f"{body} names its concept")
 
     def test_the_exact_title(self):
-        self.accepts("[context package](../docs/concepts/context-package.md)")
+        self.accepts("[knowledge base](../docs/concepts/knowledge-base.md)")
 
     def test_the_file_slug_as_a_label(self):
-        self.accepts("[context-package](../docs/concepts/context-package.md)")
+        self.accepts("[knowledge-base](../docs/concepts/knowledge-base.md)")
 
     def test_a_plural(self):
         self.accepts("[artifact classes](../docs/concepts/artifact-class.md)")
@@ -86,8 +86,8 @@ class ALinkThatNamesItsConceptIsAccepted(unittest.TestCase):
         self.accepts("[capabilities](../docs/concepts/capability.md)")
 
     def test_a_shortened_label_that_keeps_the_head_noun(self):
-        self.accepts("[track](../docs/concepts/generation-track.md)")
-        self.accepts("[persistence](../docs/concepts/artifact-persistence.md)")
+        self.accepts("[pack](../docs/concepts/target-pack.md)")
+        self.accepts("[knowledge](../docs/concepts/domain-knowledge.md)")
 
     def test_a_link_outside_the_concept_bundle_is_not_this_check_s_business(self):
         self.accepts("[compatibility](../.claude/rules/compatibility.md)")

@@ -14,8 +14,9 @@ examples:
   - given: { {{given_field}}: "{{rejected_value}}" }
     when: { trigger: {{trigger}} }
     then: { outcome: rejected }
-contract_version: knowledge-object/2
+contract_version: knowledge-object/4
 generated: { by: {{generated_by}}, at: {{generated_at}} }
+origin: {{origin}}
 out_of_scope:
   - {{out_of_scope}}
 ---

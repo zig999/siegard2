@@ -68,7 +68,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 try:
@@ -120,7 +119,11 @@ RUNS_SOMETHING = re.compile(
 NAMED_SCRIPT = re.compile(r"`(?:[a-z_/]*/)?([a-z_]+\.py)(?:[^`]*)`")
 
 # Modules a component imports rather than runs. Naming one as a command would be wrong.
-LIBRARIES = frozenset({"cli.py", "frontmatter_lib.py", "generation_lib.py", "knowledge_graph_lib.py"})
+# Shipped modules a component imports rather than runs, exempt from C04's demand for a caller.
+# It emptied when the last shipped executable went with the generation path, and refilled with the
+# module that declares which pass owns which field of a staged object. Three capabilities import
+# that line and none runs it, so C04 has no caller to demand of it.
+LIBRARIES: frozenset[str] = frozenset({"field_ownership.py"})
 
 
 def load(path: Path) -> dict:
@@ -135,6 +138,12 @@ def vocabulary(schema_dir: Path, artifact: str) -> set[str]:
 
     Enum values and consts are in the set because prose legitimately names them — a state, a verdict,
     a `ddd` value — and excluding them made C01 report every closed field it saw.
+
+    A property whose subschema is `{"not": {}}` is excluded. That form is how a contract *rejects* a
+    field it once held rather than dropping it silently — `knowledge-object` carries `status` and
+    `superseded_by` that way, per `docs/adr/0018-a-knowledge-object-carries-no-status.md`. Counting
+    one as vocabulary would let prose tell a producer to write the one field the boundary is written
+    to refuse, which is precisely what C01 exists to catch.
     """
     path = schema_dir / f"{artifact}.json"
     if not path.is_file():
@@ -145,7 +154,10 @@ def vocabulary(schema_dir: Path, artifact: str) -> set[str]:
         if isinstance(node, dict):
             for key, value in node.items():
                 if key == "properties" and isinstance(value, dict):
-                    found.update(value.keys())
+                    found.update(
+                        name for name, sub in value.items()
+                        if not (isinstance(sub, dict) and sub.get("not") == {})
+                    )
                 elif key == "enum" and isinstance(value, list):
                     found.update(str(item) for item in value)
                 elif key == "const":

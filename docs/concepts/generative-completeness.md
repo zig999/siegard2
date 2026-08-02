@@ -8,13 +8,13 @@ contract_version: concept/1
 tags: [generation, validation, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
 sources:
-  - resource: foundation/0004-generation-and-reproducibility.md
-    title: Produce the system from knowledge, and lock what reproduces it
+  - resource: foundation/0001-knowledge-object-driven-development.md
+    title: Start every change from a recorded request, and say what it touches before touching it
 ---
 
 # generative completeness
 
-Whether a [generation scope](generation-scope.md) holds every [domain knowledge](domain-knowledge.md) fact
+Whether a generation scope holds every [domain knowledge](domain-knowledge.md) fact
 production needs: attributes fully typed, identities declared, stateful definitions carrying a total
 [lifecycle](lifecycle.md), every [rule](rule.md) expressible or exemplified, every reference resolving.
 

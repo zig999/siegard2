@@ -278,7 +278,7 @@ class Components(TreeCase):
         self.assertNames(output, "ingest-domain")
 
     def test_an_agent_filename_must_equal_its_name(self) -> None:
-        (self.root / "agents" / "concept-author.md").rename(self.root / "agents" / "author.md")
+        (self.root / "agents" / "knowledge-author.md").rename(self.root / "agents" / "author.md")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "author.md")
@@ -286,10 +286,10 @@ class Components(TreeCase):
     def test_a_duplicate_agent_name_is_reported(self) -> None:
         nested = self.root / "agents" / "nested"
         nested.mkdir()
-        shutil.copy(self.root / "agents" / "concept-author.md", nested / "concept-author.md")
+        shutil.copy(self.root / "agents" / "knowledge-author.md", nested / "knowledge-author.md")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "concept-author")
+        self.assertNames(output, "knowledge-author")
 
     def test_a_skill_directory_without_skill_md_is_reported(self) -> None:
         (self.root / "skills" / "orphan").mkdir()
@@ -319,10 +319,10 @@ class Components(TreeCase):
         self.assertNames(output, "workers", "no contract exists")
 
     def test_a_schema_violation_is_reported(self) -> None:
-        self.rewrite("agents/concept-author.md", "tools: Read, Grep, Glob, Write, Edit", "tools: 17")
+        self.rewrite("agents/knowledge-author.md", "tools: Read, Grep, Glob, Write, Edit", "tools: 17")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "concept-author")
+        self.assertNames(output, "knowledge-author")
 
     def test_an_absent_tree_is_reported_and_not_a_failure(self) -> None:
         """The contract precedes the first component by design (ADR-0009)."""
@@ -336,20 +336,52 @@ if __name__ == "__main__":
 
 
 class Hooks(TreeCase):
-    """The hook class, whose contract is its declaration rather than frontmatter."""
+    """The hook class, whose contract is its declaration rather than frontmatter.
+
+    Nothing ships a hook today — the class is open in `foundation/0005` and unoccupied — so each
+    case plants one into the copied tree instead of mutating a shipped file. That is the stronger
+    arrangement regardless: the checks below are about `check_hooks`, and tying them to whichever
+    hook happens to ship made them fail when the last one left rather than when the validator
+    broke.
+    """
 
     source = REPO_ROOT / "src" / "claude"
 
-    def test_the_real_tree_is_clean(self) -> None:
+    DECLARATION = """{
+  "contract_version": "hook/1",
+  "hooks": [
+    {
+      "file": "planted.py",
+      "event": "PreToolUse",
+      "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+      "timeout": 10,
+      "guarantee": "a knowledge projection is derived and never hand-edited"
+    }
+  ]
+}
+"""
+
+    def setUp(self) -> None:
+        super().setUp()
+        hooks = self.root / "hooks"
+        hooks.mkdir(exist_ok=True)
+        (hooks / "hooks.declaration.json").write_text(self.DECLARATION)
+        (hooks / "planted.py").write_text("#!/usr/bin/env python3\n")
+
+    def test_the_planted_tree_is_clean(self) -> None:
         code, output = run(validate_components, self.root)
         self.assertEqual(0, code, output)
         self.assertIn("1 hook(s)", output)
 
+    def test_the_committed_tree_ships_no_hook(self) -> None:
+        """Named so the planting above is read as scaffolding, not as a claim about what ships."""
+        self.assertFalse((self.source / "hooks").exists())
+
     def test_a_declared_hook_with_no_script_is_reported(self) -> None:
-        (self.root / "hooks" / "reject-derived-write.py").unlink()
+        (self.root / "hooks" / "planted.py").unlink()
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "reject-derived-write.py", "does not hold")
+        self.assertNames(output, "planted.py", "does not hold")
 
     def test_an_undeclared_script_is_reported(self) -> None:
         (self.root / "hooks" / "stowaway.py").write_text("#!/usr/bin/env python3\n")
@@ -493,17 +525,22 @@ class ExistenceClaims(unittest.TestCase):
         self.assertEqual([], problems, "\n".join(["", *problems]))
 
     def test_a_reintroduced_claim_is_reported(self) -> None:
-        """The exact drift that happened: 'No hook exists' while one ships."""
+        """The exact drift that happened, on a subject the check still carries.
+
+        It read 'No hook exists' against `src/claude/hooks/*.py` until that subject was dropped —
+        no hook ships, so the claim is true and the guard had nothing to catch. `generator` is the
+        same shape against a path that is occupied.
+        """
         problems = self._ce.problems_for(
-            self.FOUNDATION / "0010-hook-system.md", "No hook exists, and none is planned.\n"
+            self.FOUNDATION / "0004-runtime-architecture.md", "No generator exists, and none is planned.\n"
         )
         self.assertEqual(1, len(problems))
-        self.assertIn("claims 'hook' is absent", problems[0])
+        self.assertIn("claims 'generator' is absent", problems[0])
 
     def test_a_claim_is_matched_wherever_it_sits(self) -> None:
         """Moving the sentence out of Provenance does not exempt it."""
-        body = "## Requirements\n\n- **R1** — Because no pack exists, nothing binds.\n"
-        self.assertTrue(self._ce.problems_for(self.FOUNDATION / "0012-target-pack-model.md", body))
+        body = "## Requirements\n\n- **R1** — Because no generator exists, nothing binds.\n"
+        self.assertTrue(self._ce.problems_for(self.FOUNDATION / "0004-runtime-architecture.md", body))
 
     def test_a_claim_of_existence_is_not_checked(self) -> None:
         """Naming a mechanism a requirement needs is how one is written before it arrives."""
@@ -527,13 +564,20 @@ class DeclaredHooks(unittest.TestCase):
 
     SOURCE = Path(__file__).resolve().parent.parent / "src" / "claude"
 
-    def test_the_declared_hook_is_installed(self) -> None:
-        failures: list[str] = []
-        validate_components.declared_hook(self.SOURCE, "reject-derived-write", "rel", failures)
-        self.assertEqual([], failures)
+    def test_a_declared_hook_is_matched_against_what_installs_it(self) -> None:
+        """The positive half needs a tree that installs a hook, and none does today.
+
+        `foundation/0005` R2 removed the empty `hooks/` directory rather than keeping the class
+        open with nothing in it, so there is no shipped name to pass. The negative half below still
+        runs against the real tree, and the positive half returns with the first hook that ships.
+        """
+        self.assertFalse((self.SOURCE / "hooks").exists())
 
     def test_a_hook_nothing_installs_is_reported(self) -> None:
         failures: list[str] = []
         validate_components.declared_hook(self.SOURCE, "imaginary-hook", "rel", failures)
         self.assertEqual(1, len(failures))
-        self.assertIn("does not install", failures[0])
+        # Two shapes of the same finding: the tree installs some hooks and not this one, or it
+        # installs none at all. Today it is the second, and the assertion holds the part that is
+        # the point — the declared name is reported rather than passed over.
+        self.assertIn("imaginary-hook", failures[0])

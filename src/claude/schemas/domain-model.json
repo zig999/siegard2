@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/domain-model.json",
   "title": "Domain model",
-  "description": "The DDD analysis of a request, in DDD's own vocabulary, produced before anything is normalized into the ontology. The named consumer is the classification step, which reads each element to decide the node type it becomes; the named producer is the modelling agent. This artifact carries control flow \u2014 a consumer reads `state` to decide whether to classify at all \u2014 so it is a versioned schema validated at the boundary rather than prose. It is the one artifact in this framework whose content is invented: everywhere else a fact nobody stated is the defect, and here deciding the aggregates, the boundaries, and the invariants is the work. That is why every element carries `origin` and why `modeled` demands a rationale. Two vocabularies are deliberately not re-encoded here, each because it already has one authority: the closed primitive type system and the per-node-type `ddd` values both belong to knowledge-object.json, and a second copy would drift from the first. What that costs is stated under those fields rather than left to be discovered.",
+  "description": "The DDD analysis of a request, in DDD's own vocabulary, produced before anything is normalized into the ontology. The named consumer is the classification step, which reads each element to decide the node type it becomes; the named producer is the modelling agent. This artifact carries control flow — a consumer reads `state` to decide whether to classify at all — so it is a versioned schema validated at the boundary rather than prose. It is the one artifact in this framework whose content is invented: everywhere else a fact nobody stated is the defect, and here deciding the aggregates, the boundaries, and the invariants is the work. That is why every element carries `origin` and why `modeled` demands a rationale. Two vocabularies are deliberately not re-encoded here, each because it already has one authority: the closed primitive type system and the per-node-type `ddd` values both belong to knowledge-object.json, and a second copy would drift from the first. What that costs is stated under those fields rather than left to be discovered.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,7 +14,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "domain-model/1",
+      "const": "domain-model/3",
       "description": "The contract this instance declares. A consumer selects behaviour on this value and never infers a version from shape."
     },
     "model_id": {
@@ -63,7 +63,7 @@
         "modeled",
         "blocked"
       ],
-      "description": "The closed outcome a consumer branches on. `modeled` means the analysis reached a design, including where parts of it are recorded as open questions. `blocked` means no analysis was possible \u2014 the request is unintelligible, or names no domain at all."
+      "description": "The closed outcome a consumer branches on. `modeled` means the analysis reached a design, including where parts of it are recorded as open questions. `blocked` means no analysis was possible — the request is unintelligible, or names no domain at all."
     },
     "blocking_reason": {
       "type": "string",
@@ -191,7 +191,7 @@
           "subdomains",
           "contexts"
         ],
-        "description": "A model that classified no subdomain and drew no context did not reach a design. Everything below those two is legitimately absent from a first pass \u2014 a domain with no process yet is a domain, and an empty array would assert a search rather than a finding."
+        "description": "A model that classified no subdomain and drew no context did not reach a design. Everything below those two is legitimately absent from a first pass — a domain with no process yet is a domain, and an empty array would assert a search rather than a finding."
       }
     }
   ],
@@ -317,7 +317,7 @@
               "pattern": {
                 "type": "string",
                 "minLength": 1,
-                "description": "The integration pattern \u2014 an anti-corruption layer, conformist, shared kernel, customer-supplier, separate ways. Not enumerated here for the reason `ddd` gives."
+                "description": "The integration pattern — an anti-corruption layer, conformist, shared kernel, customer-supplier, separate ways. Not enumerated here for the reason `ddd` gives."
               }
             }
           }
@@ -457,7 +457,7 @@
         },
         "parameters": {
           "type": "object",
-          "description": "Whatever the primitive requires \u2014 a length, a precision and scale, a value set, a reference target and binding. Open on purpose: enumerating them would be the second copy of the type system this field exists to avoid."
+          "description": "Whatever the primitive requires — a length, a precision and scale, a value set, a reference target and binding. Open on purpose: enumerating them would be the second copy of the type system this field exists to avoid."
         },
         "required": {
           "type": "boolean"
@@ -758,10 +758,16 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "id",
         "question",
         "why_it_matters"
       ],
       "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^oq_[a-z0-9_]+$",
+          "description": "Derived from the question rather than allocated, like every other identifier in this model: `oq_` followed by the question's subject in snake_case. It exists so a gap on an authored object can name the question that blocks it instead of restating it. In the reference run nine of twelve questions bore on more than one construct, and a question copied into every file it blocks is a question that drifts between them."
+        },
         "question": {
           "type": "string",
           "minLength": 1,
@@ -777,9 +783,9 @@
           "minItems": 1,
           "items": {
             "type": "string",
-            "minLength": 1
+            "pattern": "^dm\\.[a-z]+\\.[a-z0-9-]+(\\.[a-z0-9-]+)?$"
           },
-          "description": "The elements that cannot be completed until this is answered, by name."
+          "description": "The elements that cannot be completed until this is answered, by the `dm.` identifier each carries. Named by identifier rather than by name so the reference survives a rewording, and so a reader can resolve it without searching."
         }
       }
     },

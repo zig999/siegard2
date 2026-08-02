@@ -11,7 +11,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "capability-declaration/1"
+      "const": "capability-declaration/3"
     },
     "declarations": {
       "type": "array",
@@ -132,7 +132,7 @@
           "items": {
             "$ref": "#/$defs/assertion"
           },
-          "description": "Which assertions bind its output, and where none does (R12). An assertion binds one knowledge object \u2014 a schema check is not one and belongs to the output's contract version instead."
+          "description": "Which assertions bind its output, and where none does (R12). An assertion binds one knowledge object — a schema check is not one and belongs to the output's contract version instead."
         },
         "grant": {
           "type": "object",
@@ -157,6 +157,27 @@
             "$ref": "#/$defs/failure"
           },
           "description": "How it reports being unable to proceed (R15). Each is a named closed value a consumer branches on, with a reason a caller can act on."
+        },
+        "deprecation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "replacement",
+            "reason"
+          ],
+          "description": "Present only while this capability is going away. Its presence is one of the two checkable facts a status is derived from — the other being whether the distribution installs it — so `deprecated` is computed rather than written down, which R17 requires. Absent means active.",
+          "properties": {
+            "replacement": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The capability that takes this one's work, or the words that state plainly that none does. R15 admits both and admits no silence: a consumer told a capability is going away and not told what replaces it has been given half a migration."
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why it is going away, in terms a consumer can act on rather than a changelog line."
+            }
+          }
         }
       }
     },

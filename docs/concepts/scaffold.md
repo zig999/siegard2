@@ -10,8 +10,8 @@ generated: { by: claude-opus-5, at: 2026-07-31T03:56:52Z }
 sources:
   - resource: CLAUDE.md
     title: Repository layout
-  - resource: foundation/0011-template-system.md
-    title: Hold a template to byte identity, and give it no way to reach outside its inputs
+  - resource: foundation/0005-capability-model.md
+    title: Close the set of capability classes, and give each one thing it owns
 ---
 
 # scaffold

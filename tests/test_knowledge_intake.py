@@ -1,6 +1,6 @@
 """The contract that carries a classification from received domain material into the ontology.
 
-`knowledge-intake-plan/1` is the artifact `domain-analyst` produces, and the boundary between
+`knowledge-intake-plan/3` is the artifact `domain-analyst` produces, and the boundary between
 judgment and authoring: deciding that a construct is an aggregate root is model work, and writing the
 file that records the decision is not. What makes the split worth a schema is that the plan drives
 control flow — a consumer reads `state` to decide whether to author at all — so it is rejected at the
@@ -39,7 +39,7 @@ FENCED_JSON = re.compile(r"```json\n(.*?)\n```", re.DOTALL)
 def valid() -> dict:
     """The smallest plan the contract accepts, with one gap because that is the normal case."""
     return {
-        "contract_version": "knowledge-intake-plan/1",
+        "contract_version": "knowledge-intake-plan/4",
         "intake_id": "ki_4c1e7a90",
         "producer": "domain-analyst",
         "source": {
@@ -50,11 +50,12 @@ def valid() -> dict:
         "entries": [
             {
                 "construct": "Proposal",
+                "outcome": "classified",
                 "node_type": "definition",
-                "ddd": "aggregate-root",
+                "ddd": "aggregate-root", "origin": "modeled",
                 "boundary": "ko.boundary.sales.proposal",
                 "proposed_id": "ko.definition.sales.proposal",
-                "gaps": [{"field": "question", "why": "no retrieval question is stated"}],
+                "gaps": [{"kind": "domain", "field": "question", "why": "no retrieval question is stated"}],
             }
         ],
     }
@@ -126,7 +127,7 @@ class BlockingIsExclusive(Case):
     def test_blocked_requires_its_reason(self) -> None:
         self.assertRejected(
             {
-                "contract_version": "knowledge-intake-plan/1",
+                "contract_version": "knowledge-intake-plan/4",
                 "intake_id": "ki_4c1e7a90",
                 "producer": "domain-analyst",
                 "source": {"description": "an empty file", "artifacts": ["intake/nothing.md"]},
@@ -145,7 +146,7 @@ class BlockingIsExclusive(Case):
             [],
             self.errors(
                 {
-                    "contract_version": "knowledge-intake-plan/1",
+                    "contract_version": "knowledge-intake-plan/4",
                     "intake_id": "ki_4c1e7a90",
                     "producer": "domain-analyst",
                     "source": {"description": "an empty file", "artifacts": ["intake/nothing.md"]},
@@ -155,7 +156,7 @@ class BlockingIsExclusive(Case):
             ),
         )
 
-    def test_a_classified_plan_must_carry_entries_or_unmapped_constructs(self) -> None:
+    def test_a_classified_plan_must_carry_entries(self) -> None:
         document = valid()
         del document["entries"]
         self.assertRejected(document, "a classification that classified nothing is not an outcome")
@@ -163,11 +164,35 @@ class BlockingIsExclusive(Case):
     def test_unmapped_alone_is_a_classification(self) -> None:
         """Material that is entirely stack knowledge reached a decision about every construct."""
         document = valid()
-        del document["entries"]
-        document["unmapped"] = [
-            {"construct": "ProposalRepository", "reason": "stack knowledge, excluded from the knowledge base"}
-        ]
+        document["entries"] = [{
+            "construct": "ProposalRepository", "outcome": "unmapped",
+            "reason": "stack knowledge, excluded from the knowledge base",
+        }]
         self.assertEqual([], self.errors(document))
+
+    def test_a_refused_construct_is_a_classification_too(self) -> None:
+        """A model that states something the ontology rejects is a finished run with a defect."""
+        document = valid()
+        document["entries"] = [{
+            "construct": "Proposal.issued_at", "outcome": "refused",
+            "reason": "typed `Date`, which is outside the closed primitive vocabulary",
+        }]
+        self.assertEqual([], self.errors(document))
+
+    def test_an_unclassified_entry_carries_no_identifier(self) -> None:
+        """A proposed identifier asserts a home the mapping did not give it."""
+        document = valid()
+        document["entries"] = [{
+            "construct": "ProposalRepository", "outcome": "unmapped",
+            "reason": "stack knowledge", "proposed_id": "ko.definition.sales.proposal-repository",
+        }]
+        self.assertRejected(document, "an unmapped construct has no node type to take an id from")
+
+    def test_a_classified_entry_carries_no_reason(self) -> None:
+        """It says what happened in its own fields; a reason beside them says two things."""
+        document = valid()
+        document["entries"][0]["reason"] = "it seemed like a definition"
+        self.assertRejected(document, "a classified entry explains itself by what it became")
 
 
 class Provenance(Case):
@@ -208,9 +233,10 @@ class DocumentedExample(unittest.TestCase):
     def test_the_example_shows_a_gap(self) -> None:
         """An example with no gap would teach that complete material is the norm; it is not."""
         example = json.loads(FENCED_JSON.findall(AGENT.read_text())[0])
-        self.assertTrue(any(entry["gaps"] for entry in example["entries"]))
+        self.assertTrue(any(entry.get("gaps") for entry in example["entries"]))
 
     def test_the_example_is_sorted_by_identifier(self) -> None:
         """The agent sorts before returning, so the example must show the order it asks for."""
-        ids = [entry["proposed_id"] for entry in json.loads(FENCED_JSON.findall(AGENT.read_text())[0])["entries"]]
+        entries = json.loads(FENCED_JSON.findall(AGENT.read_text())[0])["entries"]
+        ids = [e["proposed_id"] for e in entries if e["outcome"] == "classified"]
         self.assertEqual(sorted(ids), ids)

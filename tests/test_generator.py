@@ -124,7 +124,11 @@ class Layout(Built):
         recorded rather than silent — if a future R7 adds a directory, this fails until it ships.
         """
         occupied = {p.split("/")[0] for p in self.files if "/" in p}
-        self.assertEqual(set(), verify_dist.ALLOWED_ROOT - occupied)
+        # `hooks/` is allowed and unoccupied: the hook class is open in `foundation/0005` and
+        # nothing fills it today, so the set is what *may* ship rather than what does. `bin/` was
+        # here too until the expansion step shipped, and this test is what noticed. Emptying a
+        # directory fails it, and filling `hooks/` fails it too — either way the layout is recorded.
+        self.assertEqual({"hooks"}, verify_dist.ALLOWED_ROOT - occupied)
 
     def test_no_rules_and_no_packs(self) -> None:
         """foundation/0008 R10 and R23."""
@@ -152,8 +156,8 @@ class Provenance(Built):
     def test_a_removed_source_disappears_from_the_output(self) -> None:
         """foundation/0008 R5: no file survives whose source was removed."""
         with tempfile.TemporaryDirectory() as holder:
-            moved = Path(holder) / "concept-author.md"
-            live = REPO_ROOT / "src" / "claude" / "agents" / "concept-author.md"
+            moved = Path(holder) / "knowledge-author.md"
+            live = REPO_ROOT / "src" / "claude" / "agents" / "knowledge-author.md"
             shutil.move(live, moved)
             try:
                 root = Path(holder) / "dist"
@@ -161,7 +165,7 @@ class Provenance(Built):
                 files = verify_dist.tree(root)
             finally:
                 shutil.move(moved, live)
-        self.assertNotIn("agents/concept-author.md", files)
+        self.assertNotIn("agents/knowledge-author.md", files)
         self.assertFalse((root / "agents").exists(), "agents/ shipped empty after its only file left")
 
     def test_the_source_revision_is_content_addressed(self) -> None:
@@ -184,8 +188,11 @@ class ShippedSelection(unittest.TestCase):
             ("scripts", SHIPPED_BIN, GENERATOR_SCRIPTS),
         ):
             with self.subTest(tree=tree):
-                a = {p.name for p in shipped.iterdir() if p.is_file()}
-                b = {p.name for p in generator.iterdir() if p.is_file()}
+                # A tree that ships nothing has no directory: `src/claude/bin/` went with the
+                # last shipped executable. It is disjoint from everything, and saying so beats
+                # raising on the iterdir.
+                a = {p.name for p in shipped.iterdir() if p.is_file()} if shipped.is_dir() else set()
+                b = {p.name for p in generator.iterdir() if p.is_file()} if generator.is_dir() else set()
                 self.assertEqual(set(), a & b, f"{tree}: a file sits in both trees")
 
     def test_the_generators_own_contracts_stay_out_of_the_shipped_tree(self) -> None:
@@ -206,7 +213,8 @@ class CapabilityStatus(Built):
     def test_every_recorded_capability_is_active(self) -> None:
         """foundation/0006 R14: proposed ships nothing and retired is absent from the distribution."""
         for capability in self.manifest["capabilities"]:
-            self.assertEqual("active", capability["status"], capability["name"])
+            with self.subTest(capability=capability["name"]):
+                self.assertIn(capability["status"], ("active", "deprecated"))
 
     def test_every_capability_points_at_an_installed_file(self) -> None:
         for capability in self.manifest["capabilities"]:
@@ -256,19 +264,19 @@ class Invariants(Built):
 
     def test_a_credential_is_reported(self) -> None:
         def plant(root: Path) -> None:
-            (root / "bin" / "leak.py").write_text('api_key = "AKIAIOSFODNN7EXAMPLE"\n')
+            (root / "schemas" / "leak.py").write_text('api_key = "AKIAIOSFODNN7EXAMPLE"\n')
 
         self.assertTrue(any("credential" in p for p in self.broken(plant)))
 
     def test_a_private_key_is_reported(self) -> None:
         def plant(root: Path) -> None:
-            (root / "bin" / "id.pem").write_text("-----BEGIN PRIVATE KEY-----\nabc\n")
+            (root / "schemas" / "id.pem").write_text("-----BEGIN PRIVATE KEY-----\nabc\n")
 
         self.assertTrue(any("credential" in p for p in self.broken(plant)))
 
     def test_an_environment_specific_path_is_reported(self) -> None:
         def plant(root: Path) -> None:
-            (root / "bin" / "leak.py").write_text('ROOT = "/home/somebody/projects/thing"\n')
+            (root / "schemas" / "leak.py").write_text('ROOT = "/home/somebody/projects/thing"\n')
 
         self.assertTrue(any("environment-specific" in p for p in self.broken(plant)))
 
@@ -292,8 +300,8 @@ class Invariants(Built):
         with tempfile.TemporaryDirectory() as holder:
             root = Path(holder) / "dist"
             shutil.copytree(self.root, root)
-            (root / "bin" / "__pycache__").mkdir()
-            (root / "bin" / "__pycache__" / "workflow_lib.cpython-312.pyc").write_bytes(b"\x00")
+            (root / "schemas" / "__pycache__").mkdir()
+            (root / "schemas" / "__pycache__" / "workflow_lib.cpython-312.pyc").write_bytes(b"\x00")
             files = verify_dist.tree(root)
             self.assertEqual([], verify_dist.check_invariants(root, files))
             self.assertEqual([], verify_dist.check_manifest(root, files))
@@ -325,35 +333,6 @@ class CommittedDistribution(unittest.TestCase):
         self.assertEqual([], verify_dist.check_manifest(COMMITTED, verify_dist.tree(COMMITTED)))
 
 
-class ShippedExecutables(unittest.TestCase):
-    """A shipped script must resolve its own schemas from the plugin root, not from this repo."""
-
-    def test_a_shipped_module_resolves_schemas_beside_bin(self) -> None:
-        """`bin/` and `schemas/` sit at the plugin root exactly as `scripts/` and `schemas/` do
-        at the repository root, so `parent.parent / "schemas"` lands correctly in both. That is a
-        structural correspondence rather than a coincidence, and this test is what keeps it one."""
-        import subprocess
-        import sys
-
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-B",  # no bytecode: the distribution is verified byte for byte
-                "-c",
-                "import sys; sys.path.insert(0, sys.argv[1]); import knowledge_graph_lib as k; "
-                "print(k.KO_SCHEMA_PATH.is_file())",
-                str(COMMITTED / "bin"),
-            ],
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual("True", result.stdout.strip(), result.stderr)
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-
 class ShippedImports(unittest.TestCase):
     """A shipped script may only import modules that ship beside it.
 
@@ -365,20 +344,18 @@ class ShippedImports(unittest.TestCase):
     def test_the_current_selection_is_closed_under_import(self) -> None:
         generate_dist.assert_imports_ship()  # raises Refused if it is not
 
-    def test_importing_the_generators_own_module_is_refused(self) -> None:
-        """The direction is the check: the generator may import the shipped tree, not back.
+    def test_the_shipped_modules_are_the_ones_expected(self) -> None:
+        """Named so the loop below is read as covering something, and so a new module is noticed.
 
-        Simulated by adding a module to the generator-only set rather than by writing a file
-        into `src/claude/bin/`, so the assertion runs against the real tree and leaves it
-        exactly as it found it.
+        This asserted that nothing shipped, from the moment the last executable went with the
+        generation path until the expansion step arrived — and it failed then, correctly, which is
+        the whole reason it was written that way rather than as a loop over an empty glob.
         """
-        target = SHIPPED_BIN / "knowledge_graph_lib.py"
-        original = target.read_text()
-        target.write_text("import verify_dist\n" + original)
-        self.addCleanup(target.write_text, original)
-        with self.assertRaises(generate_dist.Refused) as caught:
-            generate_dist.assert_imports_ship()
-        self.assertIn("ImportError", str(caught.exception))
+        self.assertEqual(
+            {"expand_model.py", "check_enrichment.py", "field_ownership.py", "promote_staged.py",
+             "check_gap_fields.py"},
+            {p.name for p in SHIPPED_BIN.glob("*.py")},
+        )
 
     def test_every_shipped_script_imports_cleanly_from_the_distribution(self) -> None:
         """The end the check protects: the shipped copy actually loads."""

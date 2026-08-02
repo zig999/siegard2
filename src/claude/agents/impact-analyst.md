@@ -82,6 +82,12 @@ has no identifier.
    a base.
 5. Pair each element with what it implicates, and write the operation and the reason. Where a model
    element matches nothing, that is a `create` against the element's own identifier.
+   Where the model reads two ways between `update` and `create`, name the existing artifact among the
+   implicated either way: a `create` that implicates the objects it connects to carries the same
+   information a reader needs, and the verdict then differs without hiding anything. What you cannot do
+   is record the ambiguity itself — `impact-analysis/3` has no field for it, and the contract is closed.
+   Say nothing rather than inventing a field, and resolve toward the verdict whose implicated set is the
+   larger of the two.
 6. Sort the entries by `id` before returning, so two analyses of one model compare directly.
 
 An element the model records as `modeled` rather than `stated` implicates the base no differently — the

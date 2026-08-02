@@ -132,6 +132,16 @@ def schema_errors(validator: Draft202012Validator, data: dict, rel: str, failure
 # be a second authority over a file that already has one.
 PAYLOAD_DIRS = frozenset({"bin", "schemas", "templates"})
 
+# Files the harness *does* read and that still take no component contract. `foundation/0005` R1
+# closes the class set over "things that execute or are delegated to" and ends by saying an
+# artifact is not a component and needs no class — a memory file is read into context and does
+# neither, so holding it to a component contract applies the wrong test.
+#
+# It is listed rather than folded into PAYLOAD_DIRS because the two are exempt for opposite
+# reasons: a payload directory is exempt because the harness never reads it, and this is exempt
+# although the harness always does.
+HARNESS_READ_CONTENT = frozenset({"CLAUDE.md"})
+
 
 def check_skills(root: Path, failures: list[str]) -> int:
     validator = load_validator(SKILL_SCHEMA_PATH)
@@ -430,6 +440,8 @@ def main() -> int:
         elif entry.name == "commands":
             failures.append(f"{display(entry)}: {COMMANDS_MERGED}")
         elif entry.name in PAYLOAD_DIRS and entry.is_dir():
+            continue
+        elif entry.name in HARNESS_READ_CONTENT and entry.is_file():
             continue
         elif entry.name == CAPABILITY_DECLARATION:
             # Checked once, against the root, after the loop: an entry is held to a component in

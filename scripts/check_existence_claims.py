@@ -33,7 +33,6 @@ import re
 import sys
 from pathlib import Path
 
-import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -57,26 +56,23 @@ def nonempty(*patterns: str):
 # phrase is matched case-insensitively against the whole document, so a claim moved out of
 # Provenance is still caught.
 SUBJECTS: dict[str, dict] = {
-    "hook": {
-        "phrases": ["no hook exists", "nothing ships a hook", "no hook is installed"],
-        "evidence": nonempty("src/claude/hooks/*.py"),
-    },
     "generator": {
         "phrases": ["no generator exists", "no generator has been built"],
         "evidence": nonempty("scripts/generate_dist.py"),
     },
-    # `template` and `pack` were subjects here until `fixtures/` was removed. Both looked for
-    # their evidence under `fixtures/pack-*/`, so with that tree gone the claims they guarded —
-    # "no template exists", "no pack exists" — are true, and a subject whose evidence path can
-    # never be satisfied is a branch that reports nothing while looking like a check. They return
-    # with the first template or pack that ships from `src/claude/`.
-    "context resolution": {
-        "phrases": [
-            "nothing has yet built context resolution",
-            "context resolution does not exist",
-        ],
-        "evidence": nonempty("src/claude/bin/resolve_context.py"),
-    },
+    # Four subjects were dropped rather than kept unsatisfiable, and the same sentence covers all
+    # four: a subject whose evidence path can never be satisfied is a branch that reports nothing
+    # while looking like a check.
+    #
+    # `template` and `pack` went when `fixtures/` did — both looked under `fixtures/pack-*/`. Then
+    # `context resolution` went with `src/claude/bin/resolve_context.py`, removed with the
+    # generation path, and `hook` went with `src/claude/hooks/`, which held no hook and was
+    # removed under `foundation/0005` R2. Each claim they guarded — "no template exists", "no pack
+    # exists", "context resolution does not exist", "no hook exists" — is true today, so the guard
+    # has nothing to catch.
+    #
+    # Each returns with the artifact that makes its claim falsifiable again: the first template or
+    # pack that ships from `src/claude/`, the first context resolver, the first hook.
     "capability declaration": {
         "phrases": ["no declaration format is enforced anywhere today"],
         "evidence": nonempty("schemas/capability-declaration.json"),

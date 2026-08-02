@@ -22,10 +22,11 @@ import re
 import sys
 from pathlib import Path, PurePosixPath
 
-from frontmatter_lib import INVOCATION_ROOT, PLUGIN_ROOT, display, split_frontmatter
+from generator_lib import REPO_ROOT, display
+from frontmatter_lib import split_frontmatter
 from cli import cannot_run
 
-SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "concept.json"
+SCHEMA_PATH = REPO_ROOT / "schemas" / "concept.json"
 RESERVED = {"index.md", "log.md"}
 URI_SCHEME = re.compile(r"^[a-z][a-z0-9+.\-]*://")
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
@@ -68,7 +69,7 @@ def check_sources(data: dict) -> list[str]:
                 f"absolute URI"
             )
             continue
-        if not (INVOCATION_ROOT / resource).is_file():
+        if not (REPO_ROOT / resource).is_file():
             problems.append(
                 f"sources.{index}.resource: '{resource}' resolves to no file — a source that "
                 f"no longer exists is provenance nothing supports"

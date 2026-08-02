@@ -1,0 +1,1084 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/staged-knowledge-object.json",
+  "title": "staged knowledge object",
+  "description": "A knowledge object before the enrichment pass, in `staging/` and not in the base. It is the same contract as `knowledge-object` minus the four things only judgment supplies: the retrieval question, the one-sentence summary, the declared out-of-scope, and the body. The expansion step writes one of these per classified construct and writes nothing under the knowledge root.\n\nIt is a separate contract rather than a relaxation of the base's, and that is the whole point. Relaxing `knowledge-object` would relax it for the base too — the schema cannot see which directory a file sits in — so every object in every consumer's base would lose the guarantee that it answers a question and declares what it excludes. Two contracts keep the base's intact and give promotion a boundary with something real to check: a staged file is valid here, and becomes valid there only once the four fields exist.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "type",
+    "title",
+    "contract_version",
+    "generated",
+    "origin"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/knowledgeObjectId",
+      "description": "Stable identifier of the form ko.<type>.<context>.<slug>, and ko.boundary.<slug> for type boundary. Siegard addition: OKF has no identifier field, and an edge needs a target. The path is computable from the id and the id from the path, with no lookup (R38). That agreement is enforced by the validator, which is the only component that can see the filesystem."
+    },
+    "type": {
+      "enum": [
+        "definition",
+        "rule",
+        "lifecycle",
+        "interface",
+        "boundary",
+        "process"
+      ],
+      "description": "OKF field. OKF leaves type values unregistered; Siegard closes the vocabulary to six so a consumer branches on a known value (R5). A seventh type is admitted only under the three conditions R6 states. `term` is deliberately absent: a knowledge object records a fact about the domain, and the ubiquitous language is the set of definitions rather than a separate vocabulary."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "OKF field. Display name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "OKF field. Single-sentence summary. Optional here and required in the base: the enrichment pass writes it, and a staged object that already carries it is one that pass has reached."
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Siegard addition. The retrieval key, and the single-responsibility test of R8 made checkable: a knowledge object answers exactly one question. Optional here and required in the base: the enrichment pass writes it, and a staged object that already carries it is one that pass has reached."
+    },
+    "boundary": {
+      "$ref": "#/$defs/boundaryId",
+      "description": "The one boundary this object belongs to (R21). Required for every type, and forbidden on a boundary with ddd bounded-context, whose absence identifies a partition root. Membership is derived from this field; a boundary never enumerates its members."
+    },
+    "ddd": {
+      "type": "string",
+      "description": "Which DDD construct this object records. Not annotation: whatever produces software reads it, so a wrong value produces wrong output. The permitted values are closed per type, in the conditional branches below. Absent on `lifecycle`, which is the construct rather than a variant of one."
+    },
+    "status": {
+      "not": {},
+      "description": "Rejected, not merely absent. R26 forbids a knowledge object from declaring a status, a maturity level, or an approval state, and `additionalProperties` is true here because R30 requires an unknown field to be preserved — so silence would let the retired field through as one. `knowledge-object/1` carried `proposed | accepted | superseded`. The framework's own decision record states why it is gone and registers the migration; neither ships, and a path into the repository that produced this file would not resolve here."
+    },
+    "superseded_by": {
+      "not": {},
+      "description": "Rejected, for the reason `status` is. It named the object that replaced this one, and R35 no longer retains a replaced object: a knowledge object that changes `type` or `boundary` takes a new id and the old one is removed with every reference to it. Version control holds what the base held."
+    },
+    "contract_version": {
+      "const": "staged-knowledge-object/1",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape. Promotion rewrites this line, and validates before it does."
+    },
+    "generated": {
+      "$ref": "#/$defs/trustEvent",
+      "description": "OKF trust field. Siegard requires it; OKF leaves it optional. Provenance is not optional."
+    },
+    "origin": {
+      "enum": [
+        "stated",
+        "modeled"
+      ],
+      "description": "Siegard addition. `stated` where the material this object was read from says it; `modeled` where the analysis decided it. Required of every object, because a reviewer accepts a requirement and disagrees with a decision, and can do neither if the two look alike. `sources` names the material and `generated` names the writer; neither says whether the statement in *this* object was in that material or reached by reading it, and that is the one question a reader of a base with no status has no other way to ask. The reasoning behind a `modeled` fact is not recorded here: R4 keeps rationale out of a knowledge object, and the analysis that decided it holds it, reachable through `sources`."
+    },
+    "gaps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gap"
+      },
+      "description": "Siegard addition. Each fact this object's node type requires and does not have. A non-empty `gaps` IS the object's incompleteness: there is no flag to set and none to forget, and the per-type requirements below accept an object that declares one in place of the fields it lacks. An object with no `gaps` key asserts completeness and is held to every field its type requires. It is not a status — it records what the domain has not said, never what a reviewer has not done."
+    },
+    "verified": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trustEvent"
+      },
+      "description": "OKF trust field. Verification events, most recent last."
+    },
+    "out_of_scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Siegard addition, required and non-empty (R34). Absence cannot be inferred, and silence reads as permission. Optional here and required in the base: the enrichment pass writes it, and a staged object that already carries it is one that pass has reached."
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/knowledgeObjectId"
+      },
+      "description": "Authored edge, any to any, cardinality 0..n, traversed to depth 2. The only edge that may cross a bounded context, and R15 then requires the target to be an interface."
+    },
+    "governed_by": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/adrId"
+      },
+      "description": "Authored edge to the ADR that records why this was decided, cardinality 0..n, traversed to depth 1. Rationale lives in the ADR and never in a knowledge object (R7)."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "description": "OKF field. Cross-cutting categorization."
+    },
+    "sources": {
+      "type": "array",
+      "description": "OKF provenance field. Materials this object derives from.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource"
+        ],
+        "properties": {
+          "resource": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "stale_after": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "OKF lifecycle field. Date after which content should be re-verified."
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Synonyms for a definition's term. A synonym is declared here and MUST NOT appear in any body (R35), so one surface form per concept survives and alias resolution stays a lookup."
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attributes"
+      ],
+      "description": "Which attributes form this definition's identity. `strategy` inherits knowledge/system.md defaults.identity_strategy and is stated only where this definition differs (R26). The vocabulary of strategy values is not closed by spec 0003.",
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/attributeName"
+          }
+        },
+        "strategy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "attributes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/attribute"
+      },
+      "description": "What this definition holds. Every attribute is fully typed against the closed primitive vocabulary."
+    },
+    "expression": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule stated so a consumer can evaluate it. The grammar is deferred by spec 0003: it MUST be closed, total, side-effect free, and restricted to attributes reachable from the rule's boundary, and it arrives with the first consumer that evaluates one. A rule not expressible in it carries `examples` instead."
+    },
+    "examples": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Given/when/then cases a conformance test is derived from. Carried when `expression` is absent, and permitted alongside it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "given",
+          "when",
+          "then"
+        ],
+        "properties": {
+          "given": {
+            "type": "object"
+          },
+          "when": {
+            "type": "object"
+          },
+          "then": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule in prose, non-generative. Permitted on a rule, and never the only place a fact a machine reads appears (R46)."
+    },
+    "subject": {
+      "$ref": "#/$defs/definitionId",
+      "description": "The definition whose states this lifecycle governs. Exactly one, and at most one lifecycle per definition (R20) — a definition with two state machines has no single state set to generate from."
+    },
+    "states": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/stateName"
+      },
+      "description": "The legal states. Two is the minimum that makes a transition table meaningful. `terminal` is reserved as a rejection shorthand and MUST NOT be a state name."
+    },
+    "initial": {
+      "$ref": "#/$defs/stateName",
+      "description": "The state an instance starts in. Every state MUST be reachable from it (R11)."
+    },
+    "terminal": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stateName"
+      },
+      "description": "The states that accept no further trigger, declared rather than inferred. Expanded by the validator wherever a rejection names the reserved `terminal`."
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The legal moves. Every non-terminal state MUST have an outgoing transition (R11).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "trigger",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/stateName"
+          },
+          "trigger": {
+            "$ref": "#/$defs/triggerName"
+          },
+          "to": {
+            "$ref": "#/$defs/stateName"
+          },
+          "guard": {
+            "$ref": "#/$defs/ruleId",
+            "description": "Structural edge to the rule that decides this transition, cardinality 0..1 per transition."
+          }
+        }
+      }
+    },
+    "rejections": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The decided non-transitions. Totality is the product of states and triggers: every pair is either a transition or a rejection (R11). Two shorthands keep the declaration from becoming padding — a trigger list expands to one entry per trigger, and `from: terminal` expands to every state listed in `terminal`. The validator expands both before checking the product.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "trigger",
+          "error"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/stateName",
+            "description": "A declared state, or the reserved name `terminal`. The two share one pattern, so the reservation — `terminal` is a shorthand and never a state name — is enforced by the validator, which can see the whole state list."
+          },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/triggerName"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/triggerName"
+                }
+              }
+            ]
+          },
+          "error": {
+            "$ref": "#/$defs/definitionId",
+            "description": "The domain error this rejection raises, recorded as a definition with ddd domain-error."
+          }
+        }
+      }
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The interface's version. A break requires a version bump and a migration, from which a `consumed` interface is exempt (R12)."
+    },
+    "schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the interface's machine-readable payload contract lives. Spec 0003 does not close the form of this value."
+    },
+    "ownership": {
+      "enum": [
+        "published",
+        "consumed"
+      ],
+      "description": "Whether this context exposes the interface or depends on someone else's."
+    },
+    "subdomain_type": {
+      "enum": [
+        "core",
+        "supporting",
+        "generic"
+      ],
+      "description": "The subdomain classification of a bounded context (R13). Forbidden on an aggregate boundary, which inherits its context's classification: two homes for one fact is what the authority rule forbids."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Who owns this boundary."
+    },
+    "context_relationships": {
+      "type": "array",
+      "minItems": 1,
+      "description": "How this bounded context relates to another. Authored edge, traversed only when expansion crosses a context. The pattern vocabulary is closed to the five the DDD mapping table of spec 0003 names.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "with",
+          "pattern"
+        ],
+        "properties": {
+          "with": {
+            "$ref": "#/$defs/boundaryId"
+          },
+          "pattern": {
+            "enum": [
+              "anti-corruption-layer",
+              "conformist",
+              "shared-kernel",
+              "customer-supplier",
+              "separate-ways"
+            ]
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The ordered steps of a process, each naming exactly one knowledge object. A step MUST NOT restate the content of its object (R14), which is why an entry carries an id and nothing else.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ko"
+        ],
+        "properties": {
+          "ko": {
+            "$ref": "#/$defs/knowledgeObjectId"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "definition"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ddd": {
+            "enum": [
+              "entity",
+              "value-object",
+              "aggregate-root",
+              "read-model",
+              "domain-error"
+            ]
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "ddd",
+              "attributes"
+            ],
+            "allOf": [
+              {
+                "description": "R9 requires `identity` of the constructs that have one and forbids it of the two that do not. A value object is defined by holding no identity, and a domain error carries context rather than an identity, so requiring one of either would make this contract force a false statement about the domain.",
+                "if": {
+                  "properties": {
+                    "ddd": {
+                      "enum": [
+                        "entity",
+                        "aggregate-root",
+                        "read-model"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ddd"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "identity"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "required": [
+                      "identity"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "rule"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "ddd"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "properties": {
+          "ddd": {
+            "enum": [
+              "invariant",
+              "domain-rule",
+              "policy",
+              "specification",
+              "quality-attribute"
+            ]
+          }
+        },
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "lifecycle"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "ddd"
+          ]
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "subject",
+              "states",
+              "initial",
+              "transitions",
+              "rejections"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "interface"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ddd": {
+            "enum": [
+              "domain-event",
+              "integration-event",
+              "published-language",
+              "api"
+            ]
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "ddd",
+              "version",
+              "schema",
+              "ownership"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "boundary"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ddd": {
+            "enum": [
+              "bounded-context",
+              "aggregate"
+            ]
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "ddd"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "ddd": {
+                      "const": "bounded-context"
+                    }
+                  },
+                  "required": [
+                    "ddd"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "subdomain_type"
+                  ],
+                  "not": {
+                    "required": [
+                      "boundary"
+                    ]
+                  }
+                },
+                "else": {
+                  "required": [
+                    "boundary"
+                  ],
+                  "not": {
+                    "required": [
+                      "subdomain_type"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "process"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ddd": {
+            "enum": [
+              "domain-service",
+              "saga",
+              "use-case"
+            ]
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "ddd",
+              "steps"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "context_relationships"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ddd": {
+            "const": "bounded-context"
+          }
+        },
+        "required": [
+          "ddd"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "attributeName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$"
+    },
+    "stateName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "triggerName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "definitionId": {
+      "type": "string",
+      "pattern": "^ko\\.definition\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "ruleId": {
+      "type": "string",
+      "pattern": "^ko\\.rule\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "lifecycleId": {
+      "type": "string",
+      "pattern": "^ko\\.lifecycle\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "boundaryId": {
+      "type": "string",
+      "pattern": "^ko\\.boundary\\.[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)?$",
+      "description": "A bounded context is ko.boundary.<context>; an aggregate inside it is ko.boundary.<context>.<aggregate>. Depth is fixed at those two forms, because deeper nesting makes path computation ambiguous."
+    },
+    "knowledgeObjectId": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^ko\\.(definition|rule|lifecycle|interface|process)\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "^ko\\.boundary\\.[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)?$"
+        }
+      ]
+    },
+    "adrId": {
+      "type": "string",
+      "pattern": "^adr\\.[0-9]{4}$"
+    },
+    "trustEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "by",
+        "at"
+      ],
+      "properties": {
+        "by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+        }
+      }
+    },
+    "attribute": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "description": "The closed attribute type system of spec 0003 R24, and its single authority per R30. A parameter that changes what is produced is required; a parameter the primitive does not read is rejected by unevaluatedProperties rather than carried as dead representation. `money` inherits defaults.currency and `datetime` inherits defaults.timezone from knowledge/system.md, each overridable where an attribute genuinely differs (R26).\n\nA parameter the primitive requires is optional here and required in the base, and the line between the two is the same one that separates a gap from a refusal. An attribute whose `max_length` the request never stated is *incomplete*, and the object records the gap and carries the attribute; an attribute typed outside the closed vocabulary is *wrong*, and the expansion refuses the construct rather than staging it. So a staged object may hold an attribute the domain has not finished describing, and promotion refuses it until the domain does — which is what gives a `kind: domain` gap teeth at the boundary instead of letting every incompleteness through.",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/attributeName"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "text",
+            "integer",
+            "decimal",
+            "money",
+            "boolean",
+            "date",
+            "datetime",
+            "duration",
+            "enum",
+            "ref",
+            "list"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "max_length": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "integer"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "min": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "decimal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "precision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "scale": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "money"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "datetime"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "timezone": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "enum"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "description": "A lifecycle-bound enum names the lifecycle and MUST NOT repeat its state names, so the state set keeps one authority (R27). A free enum lists its own values. Exactly one of the two forms.",
+            "oneOf": [
+              {
+                "required": [
+                  "lifecycle"
+                ],
+                "not": {
+                  "required": [
+                    "values"
+                  ]
+                },
+                "properties": {
+                  "lifecycle": {
+                    "$ref": "#/$defs/lifecycleId"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "values"
+                ],
+                "not": {
+                  "required": [
+                    "lifecycle"
+                  ]
+                },
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "#/$defs/slug"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ref"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "$ref": "#/$defs/definitionId"
+              },
+              "binding": {
+                "enum": [
+                  "embedded",
+                  "by-identity"
+                ],
+                "description": "A ref whose target lies in another aggregate MUST declare by-identity (R28). How that binding becomes a storage representation is stack knowledge and MUST NOT be recorded."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "list"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "of": {
+                "$ref": "#/$defs/definitionId"
+              },
+              "binding": {
+                "enum": [
+                  "embedded",
+                  "by-identity"
+                ],
+                "description": "A list whose target lies in another aggregate MUST declare by-identity, identically to a `ref` (R28). An earlier draft gave `binding` only to `ref`, which left the same crossing rejected in one field and accepted in the other."
+              },
+              "min_items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max_items": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "field"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "domain",
+            "authoring"
+          ],
+          "description": "`domain` — only whoever knows the domain can close it, and no capability of this framework may. `authoring` — a step of this framework closes it. Conflating the two makes a report of thirty entries unreadable: a reader cannot tell what is waiting on them from what is waiting on the machine, and stops reading it."
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The field this node type requires and this object does not have, named as the contract names it, in dotted-path form: `attributes`, `identity.attributes`, `attributes[razao_social].max_length`. A validator checks that the path names a field the type would actually require — the schema cannot, because the requirement it excuses is a conditional elsewhere in this document."
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the domain would have to say to fill it. Required on `kind: domain`; absent on `kind: authoring`, where the field name is the whole content and a required sentence would be written to pass rather than to inform."
+        },
+        "question": {
+          "type": "string",
+          "pattern": "^oq_[a-z0-9_]+$",
+          "description": "The shared open question this gap instantiates, held once by the analysis rather than copied into every object it blocks. In the reference run nine of twelve open questions bore on more than one construct; without this the same question is restated per file and the restatements drift."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "domain"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "why"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "why"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

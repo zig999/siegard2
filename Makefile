@@ -36,7 +36,7 @@ validate:
 	@fail=0; \
 	python3 scripts/validate_adrs.py || fail=1; \
 	python3 scripts/check_contract_versions.py || fail=1; \
-	python3 src/claude/bin/validate_concepts.py docs/concepts || fail=1; \
+	python3 scripts/validate_concepts.py docs/concepts || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
 	python3 scripts/check_component_prose.py || fail=1; \
 	python3 scripts/check_capabilities.py || fail=1; \

@@ -81,7 +81,7 @@ class TwoEntryPoints(unittest.TestCase):
     def test_modelling_produces_what_ingestion_requires(self) -> None:
         produced = {o["contract"] for o in self.model["outputs"]}
         required = {i.get("contract") for i in self.ingest["inputs"]}
-        self.assertIn("domain-model/1", produced & required)
+        self.assertIn("domain-model/3", produced & required)
 
     def test_modelling_authors_nothing(self) -> None:
         self.assertNotIn("knowledge-object", self.model.get("produced_artifacts", []))

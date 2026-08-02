@@ -59,7 +59,6 @@ import re
 import sys
 from pathlib import Path
 
-import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 
@@ -116,27 +115,47 @@ def previous_lock() -> dict[str, dict]:
 
 
 def carry_superseded(previous: dict[str, dict], digests: dict[str, str]) -> dict[str, dict]:
-    """Entries no schema declares any more, marked with the version that replaced them.
+    """Entries no schema declares any more, marked with what became of each.
 
-    A contract is superseded rather than deleted when a later version of the same name is
-    present. Where no later version is present the entry is dropped, because a removal is a
-    breaking change the caller has to state rather than a record `--update` should preserve.
+    A contract is superseded when a later version of the same name is present, and `--update`
+    derives the pointer rather than trusting the old one: the latest declared version of that
+    name is the successor by construction.
+
+    A contract carrying `retired_by` is kept verbatim. Its producer was removed, so no later
+    version exists to derive a pointer from, and dropping the entry is exactly what
+    `docs/adr/0020-retire-the-generation-contracts.md` refuses — a contract that once existed
+    would become indistinguishable from one that never did. `--update` may not decide a
+    retirement either: the field names a record a person wrote, and inventing one would be the
+    regeneration this lock exists to make visible.
+
+    An entry that is neither — no successor and no retirement — is still dropped, because a
+    removal the caller has not stated is a breaking change rather than a record to preserve.
     """
     carried: dict[str, dict] = {}
     for contract, entry in previous.items():
         if contract in digests or "/" not in contract:
             continue
+        if entry.get("retired_by"):
+            carried[contract] = dict(entry)
+            continue
         name, version = contract.rsplit("/", 1)
-        successors = sorted(
-            other for other in digests
+        # The *next* version, not the latest. A chain reaches `/3` through `/2`, and each hop is
+        # what `migrate_contracts.py` registers: pointing `/1` straight at `/3` would name a
+        # boundary no function crosses. Candidates come from the lock as well as from the schema
+        # files, because one file per contract leaves an intermediate version with no file.
+        candidates = sorted(
+            (int(other.rsplit("/", 1)[1]), other)
+            for other in set(digests) | set(previous)
             if other.rsplit("/", 1)[0] == name and other != contract
+            and other.rsplit("/", 1)[1].isdigit()
         )
-        if not successors:
+        later = [other for number, other in candidates if number > int(version)] if version.isdigit() else []
+        if not later:
             continue
         carried[contract] = {
             "schema": entry.get("schema", f"{name}.json"),
             "constraint_digest": entry.get("constraint_digest", ""),
-            "superseded_by": successors[-1],
+            "superseded_by": later[0],
         }
     return carried
 
@@ -149,24 +168,46 @@ def registered_migrations() -> set[tuple[str, str]]:
 
 
 def check_superseded(contract: str, locked: dict[str, dict], digests: dict[str, str]) -> list[str]:
-    """A locked contract no schema declares is legitimate only as a migrated supersession.
+    """A locked contract no schema declares is legitimate as a supersession or a retirement.
 
     This is the coverage check the second-version-file convention used to carry. It is keyed on
     the lock rather than on two files sitting side by side, so it survives one file per contract,
     and it fires on a missing migration rather than on a missing file.
+
+    Two exits, and `docs/adr/0020-retire-the-generation-contracts.md` separates them. A
+    **superseded** contract has a successor, so an artifact declaring it has somewhere to go and
+    the compatibility rule owes it a registered hop. A **retired** one has no successor because
+    its producer was removed, and demanding a migration for it would demand a function with no
+    codomain. What a retirement owes instead is the record that removed the producer, named in
+    `retired_by` and verified to exist here — a retirement pointing at nothing is the drift the
+    field exists to end.
     """
     entry = locked.get(contract, {})
+    retired_by = entry.get("retired_by")
+    if retired_by:
+        if not (REPO_ROOT / retired_by).is_file():
+            return [
+                f"{contract}: retired_by names '{retired_by}', which resolves to no file — a "
+                f"retirement whose record does not exist states nothing"
+            ]
+        return []
     successor = entry.get("superseded_by")
     if not successor:
         return [
             f"{contract}: recorded in schemas/{LOCK_PATH.name} but no schema file declares it, and the "
-            f"entry names no superseded_by — a removed contract is a breaking change, not a deletion"
+            f"entry names neither superseded_by nor retired_by — a removed contract is a breaking "
+            f"change, not a deletion"
+        ]
+    if successor not in digests and successor not in locked:
+        return [
+            f"{contract}: superseded_by names '{successor}', which neither a schema file nor the lock "
+            f"declares — the record points at a version that does not exist"
         ]
     if successor not in digests:
-        return [
-            f"{contract}: superseded_by names '{successor}', which no schema file declares — the "
-            f"record points at a version that does not exist"
-        ]
+        # An intermediate hop in a chain: one file per contract means only the current version has
+        # one, so `/1 -> /2 -> /3` leaves `/2` fileless by construction. The lock entry is its
+        # record, and the migration below is what the chain still owes.
+        pass
     if (contract, successor) not in registered_migrations():
         return [
             f"{contract}: superseded by '{successor}' with no migration registered in "

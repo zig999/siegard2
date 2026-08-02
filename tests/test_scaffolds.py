@@ -31,18 +31,14 @@ TEMPLATES_SHIPPED = REPO_ROOT / "src" / "claude" / "templates"
 TEMPLATES_GENERATOR = REPO_ROOT / "templates"
 
 STAMP = {"generated_by": "claude-opus-5", "generated_at": "2026-07-31T10:00:00Z"}
+# `knowledge-object/3` requires `origin`, so every knowledge-object case supplies one.
+# `modeled` rather than `stated`: these are invented examples, and a case claiming the
+# business stated it would be the false claim the field exists to prevent.
+ORIGIN = {"origin": "modeled"}
 
 # One plausible value per placeholder, per kind. Deliberately verbose rather than generated:
 # a value that happened to satisfy a pattern by accident would make a green test meaningless.
 CASES: dict[str, dict[str, str]] = {
-    "change-request": {
-        "request_id": "cr_7a2e4d10",
-        "type": "ordinary",
-        "requested_by": "the sales team lead",
-        "requested_at": "2026-08-01T09:00:00Z",
-        "statement": "Sales must issue priced proposals that expire after a bounded period.",
-        "artifact": "intake/sales-request.md",
-    },
     "knowledge-system": {
         "timezone": "America/Sao_Paulo",
         "currency": "BRL",
@@ -100,6 +96,7 @@ CASES: dict[str, dict[str, str]] = {
         "result": "One JSON object conforming to the contract named above.",
     },
     "knowledge-object-definition": {
+        **ORIGIN,
         "context": "sales",
         "slug": "order-line",
         "title": "Order line",
@@ -113,6 +110,7 @@ CASES: dict[str, dict[str, str]] = {
         **STAMP,
     },
     "knowledge-object-rule": {
+        **ORIGIN,
         "context": "sales",
         "slug": "cancelled-order-not-billable",
         "title": "A cancelled order is not billable",
@@ -129,6 +127,7 @@ CASES: dict[str, dict[str, str]] = {
         **STAMP,
     },
     "knowledge-object-lifecycle": {
+        **ORIGIN,
         "context": "sales",
         "slug": "order",
         "title": "Order lifecycle",
@@ -146,6 +145,7 @@ CASES: dict[str, dict[str, str]] = {
         **STAMP,
     },
     "knowledge-object-interface": {
+        **ORIGIN,
         "context": "sales",
         "slug": "order-placed",
         "title": "Order placed",
@@ -160,6 +160,7 @@ CASES: dict[str, dict[str, str]] = {
         **STAMP,
     },
     "knowledge-object-boundary": {
+        **ORIGIN,
         "context": "sales",
         "slug": "sales",
         "title": "Sales",
@@ -169,30 +170,16 @@ CASES: dict[str, dict[str, str]] = {
         "owns": "the order, its lines, and its lifecycle",
         **STAMP,
     },
-    "pack-declaration": {
-        "pack": "worked-example",
-        "version": "0.1.0",
-        "framework_contract": "generation-plan/1",
-        "artifact_class": "type",
-        "track": "deterministic",
-        "node_type": "definition",
-    },
-    "specification-delta": {
-        "request_id": "cr_7a2e4d10",
-        "artifact_id": "ko.definition.sales.order-line",
-        "artifact_kind": "knowledge-object",
-        "operation": "update",
-        "reason": "the line gains a quantity, which the definition does not currently hold",
-    },
     "validation-evidence": {
         "producer": "worked-example",
         "verdict": "passed",
-        "request_id": "cr_7a2e4d10",
+        "request_id": "rq_7a2e4d10",
         "command": "make validate",
         "result": "pass",
         "detail": "all knowledge bases valid",
     },
     "knowledge-object-process": {
+        **ORIGIN,
         "context": "sales",
         "slug": "order-to-cash",
         "title": "Order to cash",
@@ -272,21 +259,17 @@ class SystemDefaults(unittest.TestCase):
         (root / "system.md").write_text(text)
         return root
 
-    def test_the_materializer_resolves_all_three_defaults(self) -> None:
-        from knowledge_graph_lib import load
+    def test_the_expansion_names_all_three_defaults_and_the_ceiling(self) -> None:
+        """The four facts `foundation/0003` R32 requires the base to declare, asserted in the output.
 
-        graph = load(self.expanded())
-        self.assertEqual([], graph.problems, "the scaffolded file reports nothing missing")
-        for key in ("timezone", "currency", "identity_strategy"):
-            self.assertIn(key, graph.defaults)
-
-    def test_the_body_ceiling_is_enforceable_from_it(self) -> None:
-        """Absent the ceiling the check reports itself unenforceable, which is the failure to avoid."""
-        from knowledge_graph_lib import load
-
-        ceiling = load(self.expanded()).limits.get("body_lines")
-        self.assertIsInstance(ceiling, int)
-        self.assertGreater(ceiling, 0)
+        This read them back through the knowledge materializer until that library went with the
+        generation path. What the materializer proved — that a reader finds all four — is asserted
+        against the expanded text instead, because the scaffold is what this module is about and a
+        test that needs an absent consumer to run asserts nothing at all.
+        """
+        text = (self.expanded() / "system.md").read_text()
+        for key in ("timezone", "currency", "identity_strategy", "body_lines"):
+            self.assertIn(key, text, f"the scaffolded system.md declares no {key}")
 
     def test_it_names_no_schema_on_purpose(self) -> None:
         """A schema here would be a second home for the four facts the validator already checks."""

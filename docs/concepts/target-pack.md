@@ -8,12 +8,8 @@ contract_version: concept/1
 tags: [generation, distribution, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
 sources:
-  - resource: foundation/0004-generation-and-reproducibility.md
-    title: Produce the system from knowledge, and lock what reproduces it
-  - resource: foundation/0008-distribution-layout.md
-    title: Ship the framework as a plugin, so enabling it installs the enforcement
-  - resource: foundation/0012-target-pack-model.md
-    title: Admit one stack at a time, and let a pack assume its technology instead of abstracting over it
+  - resource: foundation/0005-capability-model.md
+    title: Close the set of capability classes, and give each one thing it owns
 ---
 
 # target pack
@@ -31,7 +27,7 @@ excluded it. Naming conventions, directory layout, layering, idiom, and how a re
 representation are the pack's business and appear in no authored artifact.
 
 A pack declares almost nothing. Its identity, its version, and the artifact classes it produces with the
-[track](generation-track.md) of each and the node types each is yielded by — and nothing else. A pack that
+track of each and the node types each is yielded by — and nothing else. A pack that
 declared path derivation, expansion order, or naming rules would be re-authoring what its own agent knows,
 which is the economy `foundation/0002-knowledge-economy-principles.md` exists to protect. The node-type mapping
 is the exception that proves where the line runs: it names no path and no filename, and without it nothing

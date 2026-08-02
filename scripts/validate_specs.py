@@ -57,9 +57,17 @@ RESERVED = {"README.md"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 # Sections every specification requires, whatever its status. Scope bounds what the
-# document decides and what it leaves open; Definitions binds its vocabulary to the
-# concept bundle; Requirements holds the citable normative statements.
-REQUIRED_SECTIONS = ("## Scope", "## Definitions", "## Requirements")
+# document decides and what it leaves open; Requirements holds the citable normative
+# statements.
+#
+# **Definitions** was the third and is gone. It bound a document's vocabulary to the concept
+# bundle by restating each term inside the specification, and `docs/concepts/` is that binding
+# now: a concept names the specification it derives from in `sources`, that specification
+# outranks the concept where the two disagree, and `tests/test_spec_concept_links.py` and
+# `tests/test_concept_sources.py` check the link from each end. Requiring a per-document section
+# as well would give every term a second home, which is what one authoritative definition per
+# concept forbids — and none of the six specifications has carried one since they were rewritten.
+REQUIRED_SECTIONS = ("## Scope", "## Requirements")
 # Required only while a specification is proposed, mirroring docs/adr/README.md: it
 # states what must hold before the specification binds, and an accepted one records
 # what satisfied it instead.

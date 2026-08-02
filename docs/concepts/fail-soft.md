@@ -18,7 +18,7 @@ Two properties that only work together.
 
 **Resolution degrades instead of blocking.** Where context resolution cannot satisfy a selection rule —
 a root it cannot locate, a cycle it cannot resolve, contradictory knowledge, an exhausted budget — it
-records the degradation in the [context package](context-package.md) and the workflow continues. The
+records the degradation in the context package and the workflow continues. The
 v0.1 draft required resolution to fail and forbade implementation from starting, which stops a project
 on the knowledge gaps it is trying to fill.
 

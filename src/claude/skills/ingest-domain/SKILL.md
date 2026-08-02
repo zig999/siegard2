@@ -38,8 +38,13 @@ Collect these before running anything. A missing input is a stop, not a default:
 ## The order, and why it cannot be rearranged
 
 ```
-system defaults → classify → boundaries → definitions → rules → lifecycles → interfaces → processes
+system defaults → expand → review the diff → enrich in parallel → check → check gaps → promote
 ```
+
+Two passes with a human between them, and the ordering is not preference. The expansion decides what
+exists, and every object exists before any is enriched — which is what makes `out_of_scope`
+writable, because it is a claim about the objects around one and cannot be written while half of
+them do not exist yet.
 
 ### 1. The base must be able to hold knowledge
 
@@ -49,66 +54,88 @@ expand the `knowledge-system` scaffold with the values the caller supplied. If t
 none, that is a stop: a default the framework chose would be a hidden default, and the value of the
 ceiling is a decision nobody made if nobody made it.
 
-### 2. Classify before authoring anything
+### 2. Expand the model into staging
 
-Delegate to `domain-analyst`, once, with the domain model, the intake id, the knowledge root and its
-contract, and the boundaries the base already holds. It returns a classification: one entry per construct
-with its node type, its `ddd` value, the identifier it will take, and every required fact the model does
-not supply.
+Run `bin/expand_model.py <model> <staging-root> <intake-id> <by> <at>`. It writes one staged object
+per classified construct and returns a `knowledge-intake-plan/4` recording what became of every
+construct — `classified`, `unmapped`, or `refused`.
 
-A `blocked` classification stops the ingestion. Report the reason and author nothing.
+**Delegate nothing here.** The mapping from a DDD construct to a node type is a closed table and the
+identifiers are arithmetic; a measured run put the cost of doing it by judgment at 75,329 tokens for
+a result that matched the table in every one of 24 entries. The script decides nothing, so two runs
+over one model produce the same tree byte for byte.
 
-### 3. Report the gaps before you delegate the first authoring
+Nothing is written under the knowledge root by this step. A staged object declares
+`staged-knowledge-object/1`, which is a different contract from the base's — it does not require the
+three fields the next pass supplies.
 
-The classification names, per entry, what the model fails to supply. An entry carrying gaps will
-block when it is authored — `knowledge-author` refuses a request short of what its node type requires,
-and it is right to. Reporting the gaps first is the difference between one report the caller can act on
-and thirty delegations that each come back blocked.
+### 3. Report the three outcomes before delegating anything
 
-Say which entries are ready, which are short and of what, and which constructs have no home in the
-ontology at all. Then author the ready ones, unless the caller says otherwise.
+Say, from the plan: how many constructs were classified; which were `unmapped` and why; which were
+`refused` and why. Then the gaps, split by who closes them — a `kind: domain` gap waits on whoever
+knows the domain, and a `kind: authoring` gap waits on the next step.
 
-### 4. Author strategic before tactical
+The split is the point. A report of thirty gaps with no way to see what is waiting on the reader is
+a report the reader stops reading.
 
-The classification is sorted by identifier, not by node type, so group it yourself and author in this
-order:
+**A refusal is not a gap.** A construct is `refused` because the model states something the ontology
+rejects — an attribute typed outside the closed vocabulary, a reference resolving to no element or
+to two. That is a defect in the model, fixed by re-running the analysis, not a fact the domain owes.
 
-1. `boundary` with `ddd: bounded-context` — the partition roots, which declare no parent boundary;
-2. `boundary` with `ddd: aggregate` — each declaring the context it sits in;
-3. `definition`;
-4. `rule`;
-5. `lifecycle`;
-6. `interface`;
-7. `process`.
+### 4. Stop, and let somebody read the diff
 
-The order is not presentation. Every object except a bounded-context boundary declares the one boundary
-it belongs to, so a definition authored before its context has no boundary to name. A rule guards a
-lifecycle transition and a process step names an object, so both need their targets to exist. Authoring
-tactically first produces objects whose references resolve to nothing, and nothing in this distribution
-reports such a reference — so the order is the only thing preventing it.
+The staging tree is the artifact a person reviews, and `git diff` is the surface: it shows exactly
+what would enter the base. This is the review the two-pass shape exists for, and running past it
+turns every unanswered question into an object nobody looked at.
 
-One delegation to `knowledge-author` per object. Give it the classification, the proposed identifier of
-the entry to author, the knowledge root and contract, the material the fact came from, and the instant and
-producer identity. It reads the node type and the subject from the entry — you do not restate them, and
-neither does it decide them.
+### 5. Enrich, in parallel, one delegation per object
 
-Its return is a `knowledge-authoring-result/1`, and you read it rather than the filesystem: its `state`
-tells an authored entry from a blocked one, and a producer's own report of what it wrote is the only
-thing that distinguishes the two without guessing. A `blocked` result is a gap, not a retry — record it
-and move to the next entry. Do not restate the request to make the agent accept it.
+One delegation to `knowledge-enricher` per staged object. They are independent: every object already
+exists, so no ordering constrains them and nothing has to be serialized to let one reference another.
 
-### 5. Report what was not validated
+Give each the object's path, the material, the staging root, and a result id. Its return is a
+`knowledge-enrichment-result/1`, and you read it rather than the filesystem — a `blocked` result is
+recorded and not retried, and a `findings` array is reported to the reviewer rather than acted on
+here. You are the consumer the contract names, and reporting the findings is what that means.
 
-A knowledge base needs checks a per-file schema cannot express — that every reference resolves, that a
-lifecycle's transition table is total, that no two lifecycles claim one subject, that a cross-context
-reference targets an interface. **The distribution ships nothing that performs them.** Do not perform
-them yourself: a check a producer runs on its own output is not a check, and one improvised here would
-differ between two runs over the same base.
+### 6. Check that the enrichment stayed inside its fields
 
-**Record what did not validate.** The run produces a `validation-evidence/1` naming each check that was
-owed, its `verdict`, and why it did not run. An ingestion reported as validated with nothing saying what
-validated it is an assertion, and the point of evidence is that a reader can tell a check that passed
-from one that never ran — which is exactly the distinction this run has to record against itself.
+Run `bin/check_enrichment.py <model> <staging-root> <intake-id> <by> <at>`. It re-derives what the
+expansion wrote and reports any difference outside the four fields and the body.
+
+This is not defence in depth — it is the only enforcement there is. A tool grant names tools, not the
+keys of a file, so "edit these four fields" is prose until this runs.
+
+### 7. Check that every gap names something real
+
+Run `bin/check_gap_fields.py <staging-root>`. A gap excuses an object from a field the contract
+requires, so the excuse is only as good as the field name — and the schema cannot check it, because
+the requirement a gap excuses is a conditional elsewhere in the same document.
+
+Without this, `{kind: domain, field: colour}` excuses an object from declaring `attributes`, and an
+object incomplete in a way nobody named passes as one whose incompleteness is justified.
+
+### 8. Promote
+
+Run `bin/promote_staged.py <staging-root> <knowledge-root>`. It validates each object against
+`knowledge-object/4` with its version line substituted, and writes only where every object passes.
+
+An object whose `kind: domain` gaps are open is refused by default. Promote it anyway only if the
+caller asks — `--with-open-domain-gaps` — and report that they did: the base then holds an object
+that says which fact it lacks, which is a decision somebody took rather than one that happened.
+
+### 9. Report what was not validated
+
+A knowledge base needs checks a per-file schema cannot express — that every reference resolves, that
+a lifecycle's transition table is total, that no two lifecycles claim one subject, that a
+cross-context reference targets an interface. **The distribution ships nothing that performs them.**
+Do not perform them yourself: a check a producer runs on its own output is not a check, and one
+improvised here would differ between two runs over the same base.
+
+**Record what did not validate.** The run produces a `validation-evidence/2` naming each check that
+was owed, its `verdict`, and why it did not run. An ingestion reported as validated with nothing
+saying what validated it is an assertion, and the point of evidence is that a reader can tell a check
+that passed from one that never ran.
 
 ## What you never do
 
@@ -118,18 +145,22 @@ from one that never ran — which is exactly the distinction this run has to rec
 - Record a status, a maturity level, or an approval state on an object, or invent a field to carry one.
   The contract rejects `status` rather than preserving it, so an object that carries one fails at the
   boundary.
-- Author a construct the ontology's mapping has no home for. It is reported as unmapped, not forced
-  into the nearest node type.
+- Promote a construct whose entry is not `classified`. One the mapping has no home for is `unmapped`
+  and one the model states wrongly is `refused`; neither is forced into the nearest node type.
+- Edit a staged object yourself. The expansion writes the design and the enricher writes the four
+  fields; a third hand in the file is what the boundary check exists to find.
 - Author a derived file. The index, the glossary, the context map, and the graph restate what the
   objects already say, and a hand-written one is a second authority for the same facts.
 - Generate source. That is a separate entry point over an accepted base.
 
 ## Result
 
-Report, in this order: whether the system defaults were already present or expanded; the number of
-constructs classified; the entries authored, by node type; the entries blocked, each with the fact it
-lacked; the constructs recorded as unmapped, each with why; and the `verdict` the validation evidence
-records, with where that evidence was written and which owed checks had nothing to run them.
+Report, in this order: whether the system defaults were already present or expanded; the constructs
+classified, unmapped, and refused, each of the last two with why; the objects enriched and the ones
+blocked, each with what was missing; every finding an enricher reported, which is what the reviewer
+acts on; the objects promoted and any promoted with open domain gaps at the caller's request; the
+`kind: domain` gaps still open, by object; and the `verdict` the validation evidence records, with
+where it was written and which owed checks had nothing to run them.
 
 Every object you authored binds from the moment you wrote it, so what stands between this base and
 anything read from it is the blocked entries and the owed checks nothing ran — say so plainly rather

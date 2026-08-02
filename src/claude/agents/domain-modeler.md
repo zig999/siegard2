@@ -210,7 +210,10 @@ unintelligible. A request that is thin still yields a model plus open questions.
 3. Work the eight steps in order. Do not return to widen a boundary without revisiting what you placed
    inside it.
 4. For every element, decide `origin` honestly, and write the rationale where you decided.
-5. Collect what you refused to decide, and what you excluded.
+5. Collect what you refused to decide, and what you excluded. Give every open question an `oq_`
+   identifier derived from its subject, and name the elements it blocks by their `dm.` identifiers.
+   Both exist so that a question bearing on four constructs is held once and pointed at four times:
+   the same question restated per element is four statements that drift.
 6. Re-read your model against the request: every `stated` element should be findable in the request, and
    every `modeled` one should have a reason a reviewer could reject.
 
@@ -221,58 +224,122 @@ before it, no explanation after it. The consumer parses it.
 
 ```json
 {
-  "contract_version": "domain-model/1",
+  "contract_version": "domain-model/3",
   "model_id": "dm_4c1e7a90",
   "producer": "domain-modeler",
   "request": {
     "id": "rq_7a2e4d10",
     "description": "Sales issues priced proposals to customers; a proposal stops being acceptable after a bounded period.",
-    "artifacts": ["intake/sales-request.md"]
+    "artifacts": [
+      "intake/sales-request.md"
+    ]
   },
   "state": "modeled",
   "subdomains": [
-    { "name": "Sales", "type": "core", "origin": "modeled", "rationale": "the request is entirely about how this business wins work, which is where it differentiates" }
+    {
+      "name": "Sales",
+      "type": "core",
+      "origin": "modeled",
+      "rationale": "the request is entirely about how this business wins work, which is where it differentiates",
+      "id": "dm.subdomain.sales"
+    }
   ],
   "contexts": [
-    { "name": "Sales", "subdomain": "Sales", "origin": "stated" }
+    {
+      "name": "Sales",
+      "subdomain": "Sales",
+      "origin": "stated",
+      "id": "dm.context.sales"
+    }
   ],
   "aggregates": [
-    { "name": "Proposal", "context": "Sales", "root": "Proposal", "origin": "modeled", "rationale": "a proposal total must stay consistent with its item totals within one transaction, and nothing else in the request must change atomically with it" }
+    {
+      "name": "Proposal",
+      "context": "Sales",
+      "root": "Proposal",
+      "origin": "modeled",
+      "rationale": "a proposal total must stay consistent with its item totals within one transaction, and nothing else in the request must change atomically with it",
+      "id": "dm.aggregate.sales.proposal"
+    }
   ],
   "definitions": [
     {
-      "name": "Proposal", "context": "Sales", "aggregate": "Proposal", "ddd": "aggregate-root",
-      "identity": ["number"],
-      "attributes": [
-        { "name": "number", "type": "string", "required": true },
-        { "name": "issued_at", "type": "datetime", "required": true },
-        { "name": "total", "type": "money", "required": true },
-        { "name": "customer", "type": "ref", "target": "Customer", "required": true }
+      "name": "Proposal",
+      "context": "Sales",
+      "aggregate": "Proposal",
+      "ddd": "aggregate-root",
+      "identity": [
+        "number"
       ],
-      "origin": "stated"
+      "attributes": [
+        {
+          "name": "number",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "issued_at",
+          "type": "datetime",
+          "required": true
+        },
+        {
+          "name": "total",
+          "type": "money",
+          "required": true
+        },
+        {
+          "name": "customer",
+          "type": "ref",
+          "target": "Customer",
+          "required": true
+        }
+      ],
+      "origin": "stated",
+      "id": "dm.definition.sales.proposal"
     },
     {
-      "name": "Customer", "context": "Sales", "ddd": "entity", "identity": ["id"],
-      "attributes": [{ "name": "name", "type": "string", "required": true }],
-      "origin": "stated"
+      "name": "Customer",
+      "context": "Sales",
+      "ddd": "entity",
+      "identity": [
+        "id"
+      ],
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "origin": "stated",
+      "id": "dm.definition.sales.customer"
     }
   ],
   "rules": [
     {
-      "name": "Proposal expiration", "context": "Sales", "ddd": "invariant",
+      "name": "Proposal expiration",
+      "context": "Sales",
+      "ddd": "invariant",
       "statement": "A proposal MUST NOT be accepted after its validity period has passed.",
-      "origin": "stated"
+      "origin": "stated",
+      "id": "dm.rule.sales.proposal-expiration"
     }
   ],
   "open_questions": [
     {
+      "id": "oq_proposal_validity_period",
       "question": "How long is a proposal valid, and does the period count calendar or business days?",
       "why_it_matters": "it is the only parameter of the expiration invariant, and the invariant cannot be tested without it",
-      "blocks": ["Proposal expiration"]
+      "blocks": [
+        "dm.rule.sales.proposal-expiration"
+      ]
     }
   ],
   "excluded": [
-    { "subject": "Proposal storage and retrieval", "reason": "stack knowledge: how a construct is stored is excluded from the knowledge base" }
+    {
+      "subject": "Proposal storage and retrieval",
+      "reason": "stack knowledge: how a construct is stored is excluded from the knowledge base"
+    }
   ]
 }
 ```

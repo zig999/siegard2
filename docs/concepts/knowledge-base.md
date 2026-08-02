@@ -8,8 +8,10 @@ contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }
 sources:
-  - resource: foundation/0002-knowledge-economy-principles.md
-    title: Hold the minimum knowledge specialized agents need to reproduce the system
+  - resource: foundation/0003-knowledge-ontology-and-notation.md
+    title: Store the domain analysis as a typed ontology, and derive the graph from it
+  - resource: foundation/0001-knowledge-object-driven-development.md
+    title: Start every change from a recorded request, and say what it touches before touching it
 ---
 
 # knowledge base
@@ -24,4 +26,4 @@ derived artifact, which is the defect the graph's own definition guards against.
 What a base is permitted to hold is decided by `foundation/0002-knowledge-economy-principles.md`, which admits
 [domain knowledge](domain-knowledge.md) and excludes [stack knowledge](stack-knowledge.md). This file
 defines the container; that specification holds the obligation, and stating it in both would put one rule in
-two places. What the accumulation costs is the [representation ratio](representation-ratio.md).
+two places. What the accumulation costs is the representation ratio.

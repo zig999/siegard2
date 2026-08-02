@@ -1,5 +1,5 @@
 {
-  "contract_version": "validation-evidence/1",
+  "contract_version": "validation-evidence/2",
   "producer": "{{producer}}",
   "verdict": "{{verdict}}",
   "request_id": "{{request_id}}",

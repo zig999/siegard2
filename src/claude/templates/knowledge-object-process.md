@@ -9,8 +9,9 @@ ddd: {{ddd}}
 steps:
   - { ko: ko.definition.{{context}}.{{first_step_slug}} }
   - { ko: ko.definition.{{context}}.{{last_step_slug}} }
-contract_version: knowledge-object/2
+contract_version: knowledge-object/4
 generated: { by: {{generated_by}}, at: {{generated_at}} }
+origin: {{origin}}
 out_of_scope:
   - {{out_of_scope}}
 ---

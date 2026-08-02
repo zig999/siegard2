@@ -8,8 +8,10 @@ contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }
 sources:
-  - resource: foundation/0002-knowledge-economy-principles.md
-    title: Hold the minimum knowledge specialized agents need to reproduce the system
+  - resource: foundation/0002-domain-analysis.md
+    title: Analyse a request into a domain model, strategic before tactical
+  - resource: foundation/0003-knowledge-ontology-and-notation.md
+    title: Store the domain analysis as a typed ontology, and derive the graph from it
 ---
 
 # stack knowledge
@@ -25,7 +27,7 @@ than here.
 
 The reason is economic rather than aesthetic. Stack knowledge already exists inside a competent
 [specialized agent](specialized-agent.md), so authoring it buys no differentiating content and costs
-maintenance on every change — the failure the [representation ratio](representation-ratio.md) is
+maintenance on every change — the failure the representation ratio is
 instrumented to expose.
 
 Where stack knowledge *does* live is a separate question this term does not answer. Stating the boundary

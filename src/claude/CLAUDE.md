@@ -1,8 +1,8 @@
 # Siegard
 
-This repository's domain knowledge is recorded as knowledge objects, governed by Siegard, installed under
-`.claude/`. That set is the authority: source, tests, and documentation derive from it. When code and a
-knowledge object disagree, the object is what the business decided.
+This repository's domain knowledge is recorded as knowledge objects, governed by the Siegard plugin.
+That set is the authority: source, tests, and documentation derive from it. When code and a knowledge
+object disagree, the object is what the business decided.
 
 ## Entry points
 
@@ -31,5 +31,5 @@ blocked entry discovered a step too late.
 ## Where the rest lives
 
 The six node types, the fields each requires, the identifier arithmetic, the authoring order, and
-validation at the boundary are carried by `.claude/schemas/knowledge-object.json` and by the capabilities
-themselves. Read the contract before touching an object; do not reconstruct its rules from memory.
+validation at the boundary are carried by `${CLAUDE_PLUGIN_ROOT}/schemas/knowledge-object.json` and by
+the capabilities themselves. Read the contract before touching an object; do not reconstruct its rules from memory.

@@ -13,8 +13,9 @@ transitions:
   - { from: {{initial_state}}, trigger: {{trigger}}, to: {{terminal_state}} }
 rejections:
   - { from: {{terminal_state}}, trigger: {{trigger}}, error: ko.definition.{{context}}.{{error_slug}} }
-contract_version: knowledge-object/2
+contract_version: knowledge-object/4
 generated: { by: {{generated_by}}, at: {{generated_at}} }
+origin: {{origin}}
 out_of_scope:
   - {{out_of_scope}}
 ---

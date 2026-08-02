@@ -66,18 +66,24 @@ class TheRealTree(Case):
         }
         on_disk = {p.stem for p in (self.root / "agents").glob("*.md")}
         self.assertEqual(with_output, with_output & on_disk)
-        self.assertEqual(7, len(with_output & on_disk))
+        self.assertEqual(5, len(with_output & on_disk))
 
 
 class C01(Case):
     """A field the prose names must exist in a contract the component declares."""
 
     def test_the_original_defect_is_caught(self) -> None:
-        """`impact-analyst` told its producer to record an ambiguity in a field the contract lacks."""
+        """`impact-analyst` told its producer to record an ambiguity in a field the contract lacks.
+
+        The field it originally named was `notes`, and that stopped being unknown: the agent
+        declares `domain-model/2` as an input and the model carries a top-level `notes`, so the
+        vocabulary C01 builds legitimately holds it. The token here is one no contract this agent
+        declares or cites has — which is what the rule is about, not which word was used.
+        """
         self.rewrite(
             "agents/impact-analyst.md",
             "resolve toward the verdict whose implicated set is the",
-            "record the reading you did not take in `notes`, and resolve toward the verdict whose is the",
+            "record the reading you did not take in `superseded_by`, and resolve toward the verdict whose is the",
         )
         self.assertIn("C01", self.rules())
 
@@ -123,9 +129,9 @@ class C02(Case):
     def test_a_second_example_is_caught(self) -> None:
         """Two examples are two shapes to imitate."""
         self.rewrite(
-            "agents/concept-author.md",
+            "agents/knowledge-author.md",
             "## Result",
-            '## Result\n\n```json\n{"contract_version": "concept-authoring-result/1"}\n```\n',
+            '## Result\n\n```json\n{"contract_version": "knowledge-authoring-result/1"}\n```\n',
         )
         self.assertIn("C02", self.rules())
 
@@ -134,7 +140,7 @@ class C02(Case):
         self.assertIn("C02", self.rules())
 
     def test_an_example_that_is_not_json_is_caught(self) -> None:
-        self.rewrite("agents/concept-author.md", '"state": "authored"', '"state": authored')
+        self.rewrite("agents/knowledge-author.md", '"state": "authored"', '"state": authored')
         self.assertIn("C02", self.rules())
 
 
@@ -188,11 +194,15 @@ class C03(Case):
 class C04(Case):
     """A component that tells its executor to run a shipped script names the script."""
 
-    NAMED = "Run `bin/validate_knowledge.py <knowledge root>`"
-
     def test_an_unnamed_script_is_caught(self) -> None:
-        """The original defect: `Run the knowledge validator` names no file a consumer can resolve."""
-        self.rewrite("skills/ingest-domain/SKILL.md", self.NAMED, "Run the knowledge validator")
+        """The original defect: `Run the knowledge validator` names no file a consumer can resolve.
+
+        Planted rather than mutated. The instruction it was found in — a skill telling its executor
+        to run `bin/validate_knowledge.py` — went with the shipped executables, so there is nothing
+        left in the tree to break. The rule itself is unchanged and fires the same way.
+        """
+        path = self.root / "skills" / "ingest-domain" / "SKILL.md"
+        path.write_text(path.read_text() + "\nRun the knowledge validator over the base.\n")
         findings = self.findings()
         self.assertIn("C04", {f.split(None, 1)[0] for f in findings})
         self.assertTrue(any("names no shipped script" in f for f in findings))
@@ -200,12 +210,13 @@ class C04(Case):
     def test_naming_the_script_passes(self) -> None:
         self.assertNotIn("C04", self.rules())
 
-    def test_a_library_is_exempt_from_needing_a_caller(self) -> None:
-        """A module is imported rather than run; demanding a citation would invite a false one."""
-        self.assertIn("knowledge_graph_lib.py", cp.LIBRARIES)
-        self.assertIn("generation_lib.py", cp.LIBRARIES)
+    def test_every_exempt_name_is_a_file_that_ships(self) -> None:
+        """The exempt set must name real files, or the exemption drifts into covering nothing.
 
-    def test_every_shipped_executable_the_rule_covers_exists(self) -> None:
-        """The exempt set must name real files, or the exemption drifts into covering nothing."""
+        It held four library modules while the generation path shipped them, and emptied when they
+        went. The expansion step is a *runnable* script rather than a library, so it is not exempt
+        and the set stays empty — but the assertion is now about the set matching the tree rather
+        than about the tree being empty, which is what survives the next module either way.
+        """
         on_disk = {p.name for p in (self.root / "bin").glob("*.py")}
         self.assertEqual(set(), cp.LIBRARIES - on_disk)

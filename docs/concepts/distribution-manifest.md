@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [framework, distribution]
 generated: { by: claude-opus-5, at: 2026-07-31T01:49:02Z }
 sources:
-  - resource: foundation/0008-distribution-layout.md
-    title: Ship the framework as a plugin, so enabling it installs the enforcement
+  - resource: .claude/rules/distribution.md
+    title: Building the distribution
   - resource: docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md
     title: Distribute the framework as a Claude Code plugin, and let the harness namespace it
 ---
@@ -28,7 +28,7 @@ It sits beside, and never duplicates, the plugin manifest. `plugin.json` is the 
 identity and version because the harness reads them; this record is Siegard's, and carries what nothing else
 does.
 
-Distinct from the [generation manifest](generation-manifest.md), which records where each produced artifact
+Distinct from the generation manifest, which records where each produced artifact
 went. Two records with the same short name is the failure
 `docs/adr/0010-projection-names-the-graph-derived-artifact.md` exists to undo, so neither is called "the
 manifest" without its qualifier.

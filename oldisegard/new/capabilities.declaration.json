@@ -1,0 +1,193 @@
+{
+  "contract_version": "capability-declaration/3",
+  "declarations": [
+    {
+      "identifier": "security-pattern-scanner",
+      "class": "specialized-agent",
+      "objective": "Match a named set of source files against a closed taxonomy of twelve security patterns, returning one entry per match with quoted evidence, a location, a CWE, and a severity. Choose it once a change is written and the files it touched are known, to learn what the change exposes before anything depends on it. Not for judging architecture, style, or performance; not for deciding whether the change may proceed; and not for fixing what it finds.",
+      "inputs": [
+        { "name": "file_set", "required": true },
+        { "name": "scan_id", "required": true },
+        { "name": "repository_root", "required": true },
+        { "name": "security_profile", "required": false, "default": "absent — the two patterns that depend on it are reported as not evaluated rather than as clean" },
+        { "name": "dependency_audit", "required": false, "default": "absent — dependency_vulnerability is reported as not evaluated rather than as clean" }
+      ],
+      "outputs": [
+        { "artifact": "security-scan", "contract": "security-scan/1" }
+      ],
+      "produced_artifacts": ["security-scan"],
+      "deterministic_behavior": [
+        "the taxonomy is closed at twelve patterns, and a construct matching none of them is recorded in notes rather than in findings",
+        "a pattern whose required input was absent is listed in patterns_not_evaluated, so an unapplied pattern is never reported as clean",
+        "no path outside the supplied file set is read",
+        "findings are sorted by file then line, so two scans of one set compare directly"
+      ],
+      "judgment": [
+        "whether a construct matches a pattern",
+        "which severity the match carries, and what an attacker gains from it"
+      ],
+      "assertions": [
+        { "output": "security-scan", "bound": false }
+      ],
+      "grant": {
+        "tools": ["Read", "Grep", "Glob"],
+        "note": "Read-only. The scanner produces evidence a reviewer disagrees with, and one that could edit what it flagged would leave nothing to disagree with. No shell: the boundary validator checks the result, and a guarantee a producer self-reports is not a guarantee."
+      },
+      "failure_outcomes": [
+        { "outcome": "missing_input", "reason": "the file set, the scan id, or the repository root was not supplied; the producer names what is absent and returns no artifact" },
+        { "outcome": "unreadable_path", "reason": "a path in the file set does not exist or cannot be read; scanning the rest would report a clean result over a set nobody scanned" }
+      ]
+    },
+    {
+      "identifier": "test-failure-diagnostician",
+      "class": "specialized-agent",
+      "objective": "Read a captured test-run output and classify every failure into one of four causes — code, test, setup, or build — with the evidence for each and the correction it calls for. Choose it once a suite has been run and something failed, to learn what to fix before anyone edits either the code or the test. Not for running the suite, which is a script's; not for fixing what it diagnoses; and not for deciding whether the change may proceed.",
+      "inputs": [
+        { "name": "run_output", "required": true },
+        { "name": "diagnosis_id", "required": true },
+        { "name": "repository_root", "required": true },
+        { "name": "change_under_test", "required": false, "default": "absent — no failure is attributed to an untouched area, and the report says so" }
+      ],
+      "outputs": [
+        { "artifact": "test-failure-diagnosis", "contract": "test-failure-diagnosis/1" }
+      ],
+      "produced_artifacts": ["test-failure-diagnosis"],
+      "deterministic_behavior": [
+        "the cause vocabulary is closed at code, test, setup, and build",
+        "one diagnosis entry exists for every failure the runner reported, and the count is carried in the artifact so a shortfall is visible",
+        "where the output shows a compile or type error before the first test result, every failure in the run is build",
+        "where no specification statement settles code against test, the cause recorded is code",
+        "the suite is not executed by this capability"
+      ],
+      "judgment": [
+        "which cause a failure has, given the runner's message and the code path it exercises",
+        "what correction the failure calls for"
+      ],
+      "assertions": [
+        { "output": "test-failure-diagnosis", "bound": false }
+      ],
+      "grant": {
+        "tools": ["Read", "Grep", "Glob"],
+        "note": "Read-only, and it does not run the suite. Running is a script's work and its output is this capability's input, which keeps the run reproducible independently of the judgment about it."
+      },
+      "failure_outcomes": [
+        { "outcome": "missing_input", "reason": "the run output, the diagnosis id, or the repository root was not supplied" },
+        { "outcome": "no_failure_reported", "reason": "the captured output holds no failure; the delegation should not have happened, and saying so is the useful answer" }
+      ]
+    },
+    {
+      "identifier": "acceptance-coverage-auditor",
+      "class": "specialized-agent",
+      "objective": "Map every stated acceptance criterion to the test that covers it, returning one entry per criterion with the test that covers it or the reason nothing does. Choose it once tests exist and the criteria they answer to are written down, to learn which criteria are unproven while the change is still open. Not for writing tests; not for running them; not for diagnosing a failure; and not for deciding whether coverage is sufficient.",
+      "inputs": [
+        { "name": "criteria", "required": true },
+        { "name": "test_file_set", "required": true },
+        { "name": "audit_id", "required": true },
+        { "name": "repository_root", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "coverage-audit", "contract": "coverage-audit/1" }
+      ],
+      "produced_artifacts": ["coverage-audit"],
+      "deterministic_behavior": [
+        "one entry exists for every criterion supplied, including those the tests cover",
+        "the state vocabulary is closed at covered, partial, uncovered, and unauditable",
+        "no percentage, ratio, or score appears anywhere in the artifact",
+        "criteria are never derived from the implementation; only the supplied list is audited",
+        "entries are sorted by criterion identifier"
+      ],
+      "judgment": [
+        "whether a test would fail if the criterion stopped holding",
+        "which stated part of a criterion a test leaves unexercised"
+      ],
+      "assertions": [
+        { "output": "coverage-audit", "bound": false }
+      ],
+      "grant": {
+        "tools": ["Read", "Grep", "Glob"],
+        "note": "Read-only. An auditor that could write the missing test would be proving its own finding."
+      },
+      "failure_outcomes": [
+        { "outcome": "missing_input", "reason": "the criteria, the test file set, the audit id, or the repository root was not supplied" },
+        { "outcome": "unreadable_path", "reason": "a path in the test file set does not exist; a criterion reported uncovered against a set that was not fully read is a false gap" }
+      ]
+    },
+    {
+      "identifier": "codebase-surveyor",
+      "class": "specialized-agent",
+      "objective": "Survey the area of a codebase a stated change will touch, returning the modules already there, the conventions they follow, what must not be duplicated, and what the change risks breaking. Choose it before work is planned or written, to learn what already exists while nothing has been decided. Not for planning the change; not for judging the code's quality; not for mapping a domain model against stored knowledge, which is impact-analyst; and not for writing anything.",
+      "inputs": [
+        { "name": "stated_change", "required": true },
+        { "name": "survey_id", "required": true },
+        { "name": "repository_root", "required": true },
+        { "name": "entry_points", "required": false, "default": "absent — the area is found from the terms of the stated change, and the report says so" }
+      ],
+      "outputs": [
+        { "artifact": "code-inventory", "contract": "code-inventory/1" }
+      ],
+      "produced_artifacts": ["code-inventory"],
+      "deterministic_behavior": [
+        "every convention recorded carries a path where it can be observed",
+        "every risk recorded names at least one consumer that would notice",
+        "supplied entry points are a starting hint and never a boundary on the search",
+        "each section is sorted by path",
+        "an area where nothing exists yet returns an empty module set rather than a failure"
+      ],
+      "judgment": [
+        "which modules the stated change touches, depends on, or merely sits beside",
+        "what counts as an established convention rather than an incident",
+        "what already exists that the change would otherwise rebuild, and what it risks breaking"
+      ],
+      "assertions": [
+        { "output": "code-inventory", "bound": false }
+      ],
+      "grant": {
+        "tools": ["Read", "Grep", "Glob"],
+        "note": "Read-only. An inventory is what a planner argues with before committing, and a surveyor that could change the code would be describing a repository it had already altered."
+      },
+      "failure_outcomes": [
+        { "outcome": "missing_input", "reason": "the stated change, the survey id, or the repository root was not supplied" },
+        { "outcome": "area_not_locatable", "reason": "the stated change names nothing the producer can find in the repository; an empty survey would read as an empty area" }
+      ]
+    },
+    {
+      "identifier": "specification-gap-reporter",
+      "class": "specialized-agent",
+      "objective": "Check each fact an implementation requires against the authored specification, returning one entry per fact stating whether the specification answers it, answers it partially, is silent, contradicts itself, or states something that cannot be built. Choose it when work has hit something the specification does not settle, before anyone decides it. Not for deciding what the specification should say; not for authoring the answer; and not for choosing whether the work proceeds.",
+      "inputs": [
+        { "name": "required_facts", "required": true },
+        { "name": "specification_set", "required": true },
+        { "name": "report_id", "required": true },
+        { "name": "repository_root", "required": true }
+      ],
+      "outputs": [
+        { "artifact": "specification-gap", "contract": "specification-gap/1" }
+      ],
+      "produced_artifacts": ["specification-gap"],
+      "deterministic_behavior": [
+        "one entry exists for every required fact, including those the specification answers",
+        "the state vocabulary is closed at answered, partial, silent, contradictory, and infeasible",
+        "every state other than silent carries at least one exact quotation",
+        "a contradiction is recorded with both statements and is never resolved by the producer",
+        "no missing statement is drafted, and no answer is supplied for a fact the specification leaves open",
+        "entries are sorted by fact identifier"
+      ],
+      "judgment": [
+        "whether a specification statement settles a required fact or only bears on it",
+        "whether two statements genuinely conflict, and which of them constrains more",
+        "whether a stated requirement cannot be built, and what constraint makes it so"
+      ],
+      "assertions": [
+        { "output": "specification-gap", "bound": false }
+      ],
+      "grant": {
+        "tools": ["Read", "Grep", "Glob"],
+        "note": "Read-only, and this is the whole point. The failure this capability prevents is an implementer inventing the missing fact and shipping it as though the business had stated it; one that could write the answer would be that failure with a contract around it."
+      },
+      "failure_outcomes": [
+        { "outcome": "missing_input", "reason": "the required facts, the specification set, the report id, or the repository root was not supplied" },
+        { "outcome": "unreadable_path", "reason": "a path in the specification set does not exist; a fact reported silent across a set that was not fully read is a false gap" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "siegard",
+  "description": "Knowledge-object-driven development: a workflow whose transitions are chosen by lookup on validated artifacts, with the knowledge layer as the source every produced artifact traces back to.",
+  "version": "0.1.0"
+}

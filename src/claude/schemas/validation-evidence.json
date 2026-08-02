@@ -14,7 +14,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "validation-evidence/1"
+      "const": "validation-evidence/2"
     },
     "producer": {
       "type": "string",

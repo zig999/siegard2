@@ -45,7 +45,6 @@ import shutil
 import sys
 from pathlib import Path
 
-import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -90,6 +89,46 @@ def hook_declaration() -> list[dict]:
     if not path.is_file():
         return []
     return json.loads(path.read_text())["hooks"]
+
+
+def is_runnable(source: Path) -> bool:
+    """Whether a shipped module is a capability or a library its sibling imports.
+
+    Derived from the file rather than from a list. A module with an entry-point guard is run; one
+    without is imported, and `field_ownership.py` is the standing case — three capabilities read the
+    line it declares, and a list of exemptions maintained beside them would be a fourth place for
+    that fact to live.
+    """
+    return 'if __name__ == "__main__":' in source.read_text()
+
+
+def declared_deprecations() -> dict[str, dict]:
+    """Capabilities the authored declaration set records as going away, keyed by identifier.
+
+    `foundation/0005` R17 derives a status from two checkable facts: whether the distribution
+    installs the capability, and whether it is documented as going away. This reads the second. It
+    is not a label maintained by hand — the label is `deprecated`, and nothing writes that anywhere;
+    what a person writes is the replacement and the reason, and the status follows from their
+    presence beside an installed path.
+    """
+    path = SOURCE_ROOT / CAPABILITY_DECLARATION
+    if not path.is_file():
+        return {}
+    return {
+        entry["identifier"]: entry["deprecation"]
+        for entry in json.loads(path.read_text())["declarations"]
+        if entry.get("deprecation")
+    }
+
+
+def status_of(name: str, deprecations: dict[str, dict]) -> str:
+    """`deprecated` where the declaration says so and the distribution still installs it.
+
+    The two other values of R14 are unreachable from here by construction, and that is the point:
+    `proposed` ships nothing and `retired` is absent, so neither can describe a capability this
+    function is being asked about.
+    """
+    return "deprecated" if name in deprecations else "active"
 
 
 def contract_of(source: Path) -> str:
@@ -187,6 +226,8 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         raise Refused(f"{manifest_source} is missing; foundation/0008 R1 requires it at the plugin root")
     add(f"{PLUGIN_DIR}/plugin.json", manifest_source)
 
+    deprecations = declared_deprecations()
+
     # Skills: one directory per skill, SKILL.md the entrypoint.
     skills_root = SOURCE_ROOT / "skills"
     if skills_root.is_dir():
@@ -197,7 +238,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
                 {
                     "name": skill.name,
                     "class": CLASS_BY_TREE["skills"],
-                    "status": "active",
+                    "status": status_of(skill.name, deprecations),
                     "path": f"skills/{skill.name}/SKILL.md",
                 }
             )
@@ -212,7 +253,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
                 {
                     "name": name,
                     "class": CLASS_BY_TREE["agents"],
-                    "status": "active",
+                    "status": status_of(name, deprecations),
                     "path": f"agents/{name}.md",
                 }
             )
@@ -231,7 +272,8 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         for name in sorted(declared):
             add(f"hooks/{name}", hooks_root / name)
             capabilities.append(
-                {"name": Path(name).stem, "class": "hook", "status": "active",
+                {"name": Path(name).stem, "class": "hook",
+                 "status": status_of(Path(name).stem, deprecations),
                  "path": f"hooks/{name}"}
             )
 
@@ -244,8 +286,14 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     assert_imports_ship()
     for source in sorted(SCRIPT_ROOT.glob("*.py")):
         add(f"bin/{source.name}", source)
+        if not is_runnable(source):
+            # A library ships beside the capability that imports it and is not one itself: it
+            # executes nothing, is delegated to by nothing, and `foundation/0006` R1 would require
+            # a declaration for a capability that has no contract of its own to declare.
+            continue
         capabilities.append(
-            {"name": source.stem.replace("_", "-"), "class": "script", "status": "active",
+            {"name": source.stem.replace("_", "-"), "class": "script",
+             "status": status_of(source.stem.replace("_", "-"), deprecations),
              "path": f"bin/{source.name}"}
         )
 

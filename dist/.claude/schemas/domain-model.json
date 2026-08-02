@@ -1,0 +1,812 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/domain-model.json",
+  "title": "Domain model",
+  "description": "The DDD analysis of a request, in DDD's own vocabulary, produced before anything is normalized into the ontology. The named consumer is the classification step, which reads each element to decide the node type it becomes; the named producer is the modelling agent. This artifact carries control flow — a consumer reads `state` to decide whether to classify at all — so it is a versioned schema validated at the boundary rather than prose. It is the one artifact in this framework whose content is invented: everywhere else a fact nobody stated is the defect, and here deciding the aggregates, the boundaries, and the invariants is the work. That is why every element carries `origin` and why `modeled` demands a rationale. Two vocabularies are deliberately not re-encoded here, each because it already has one authority: the closed primitive type system and the per-node-type `ddd` values both belong to knowledge-object.json, and a second copy would drift from the first. What that costs is stated under those fields rather than left to be discovered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "model_id",
+    "producer",
+    "request",
+    "state"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "domain-model/3",
+      "description": "The contract this instance declares. A consumer selects behaviour on this value and never infers a version from shape."
+    },
+    "model_id": {
+      "type": "string",
+      "pattern": "^dm_[0-9a-f]{8}$",
+      "description": "Stable identifier for this model, required for traceability. The caller supplies it: a producer that minted its own could not have its run repeated and compared."
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What performed the analysis. Not a const: unlike a result contract owned by one named agent, an analysis is the artifact that matters rather than a particular producer of it."
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "artifacts"
+      ],
+      "description": "What was analysed. It travels with the model because a design decision is only reviewable against the request that prompted it, and because knowledge authored downstream records where it came from.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^rq_[0-9a-f]{8}$",
+          "description": "The request this analysis answers. A request is prose a person supplied plus the material it names; no capability produces one, so the identifier is the caller's to supply and is never minted here."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What was asked, in one paragraph a reviewer can check the model against."
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Each artifact the request was read from, by path or stable reference. Non-empty: an analysis whose source cannot be named cannot be reviewed, because nothing states what would have to be re-read to check it."
+        }
+      }
+    },
+    "state": {
+      "enum": [
+        "modeled",
+        "blocked"
+      ],
+      "description": "The closed outcome a consumer branches on. `modeled` means the analysis reached a design, including where parts of it are recorded as open questions. `blocked` means no analysis was possible — the request is unintelligible, or names no domain at all."
+    },
+    "blocking_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why no analysis was possible. Required on `blocked` and forbidden otherwise: a blocking reason on a successful result says two things at once."
+    },
+    "subdomains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/subdomain"
+      },
+      "description": "The domain classified into subdomains. Analysis proceeds strategic before tactical, and this is the first step of it: a construct classified before its subdomain has no place in the partition."
+    },
+    "contexts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/context"
+      },
+      "description": "The bounded contexts and how they relate. Every element below names the context it belongs to, so this is what the rest of the model hangs from."
+    },
+    "aggregates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/aggregate"
+      }
+    },
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/definition"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "lifecycles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/lifecycle"
+      }
+    },
+    "interfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/interface"
+      }
+    },
+    "processes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/process"
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/open_question"
+      },
+      "description": "What the request does not decide and the modeler refuses to decide for it. Refusing is part of modelling: a request silent on whether an order may be partly cancelled authorizes asking, not inventing."
+    },
+    "excluded": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/excluded"
+      },
+      "description": "What was considered and left out, with the reason. Absence cannot be inferred from silence, which is the same reason a knowledge object declares what it excludes."
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What a reviewer needs that no field above carries. Prose, and nothing branches on it."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "blocking_reason"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "blocking_reason"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "modeled"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "subdomains",
+          "contexts"
+        ],
+        "description": "A model that classified no subdomain and drew no context did not reach a design. Everything below those two is legitimately absent from a first pass — a domain with no process yet is a domain, and an empty array would assert a search rather than a finding."
+      }
+    }
+  ],
+  "$defs": {
+    "provenance": {
+      "description": "Applied to every element, so that a design decision is never indistinguishable from a stated requirement.",
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "modeled"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "required": [
+          "rationale"
+        ]
+      }
+    },
+    "origin": {
+      "enum": [
+        "stated",
+        "modeled"
+      ],
+      "description": "`stated` where the request says it; `modeled` where the modeler decided it. Closed, and the field the whole contract turns on: a reviewer disagrees with a decision and accepts a requirement, and cannot do either if the two look alike."
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why this element was decided as it was. Required where `origin` is `modeled`: a design decision with no reasoning is indistinguishable from a guess, and it is the only thing a reviewer can argue with."
+    },
+    "ddd": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$",
+      "description": "The DDD construct this element records, as the value the authored object's `ddd` field will carry. Deliberately not constrained per element kind here: knowledge-object.json holds the per-node-type sets conditionally and is their single authority, and those sets have already changed once. The cost is that a value wrong for its kind survives to authoring, where the boundary validator rejects it."
+    },
+    "subdomain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "type",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.subdomain\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "core",
+            "supporting",
+            "generic"
+          ],
+          "description": "The classification. Closed here because it is a three-value vocabulary the ontology carries as a single field rather than as a per-type conditional, so one authority is not at risk."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "subdomain",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.context\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subdomain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationships": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "with",
+              "pattern"
+            ],
+            "properties": {
+              "with": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pattern": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The integration pattern — an anti-corruption layer, conformist, shared kernel, customer-supplier, separate ways. Not enumerated here for the reason `ddd` gives."
+              }
+            }
+          }
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "context",
+        "root",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.aggregate\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The definition that is this aggregate's root. An aggregate is a consistency boundary and its root is a definition, which is why the two are separate elements here."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "context",
+        "ddd",
+        "attributes",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.definition\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ddd": {
+          "$ref": "#/$defs/ddd"
+        },
+        "identity": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "The attributes that identify an instance. Present for an entity, an aggregate root, or a read model; absent for a value object and a domain error, which are defined by holding no identity."
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/attribute"
+          },
+          "description": "May be empty, and an empty array is a claim rather than an omission: this definition holds no attribute the request states. The authoring step blocks on a definition the ontology requires attributes of, so a wrongly empty array surfaces there."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "required"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The attribute's type. Deliberately a string rather than the ontology's closed primitive vocabulary: that vocabulary and the parameters each primitive requires belong to knowledge-object.json, which the ontology names as their single authority. A free-text type is rejected there, so this field may carry one and the authoring step is where it dies."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Whatever the primitive requires — a length, a precision and scale, a value set, a reference target and binding. Open on purpose: enumerating them would be the second copy of the type system this field exists to avoid."
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "For a reference or a collection, the definition it points at, so the classification step can tell whether the reference crosses an aggregate or a context."
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "context",
+        "ddd",
+        "statement",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.rule\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ddd": {
+          "$ref": "#/$defs/ddd"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The condition in one sentence. Prose here because the ontology defers the expression grammar; what the authored object needs is an expression or examples, and this is what either is written from."
+        },
+        "expression": {
+          "type": "string",
+          "minLength": 1
+        },
+        "examples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "minProperties": 1
+          },
+          "description": "Cases on both sides of the condition. A rule with neither an expression nor examples cannot be authored, so recording them here is what keeps the classification from producing an entry that is bound to block."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "subject",
+        "context",
+        "states",
+        "initial",
+        "transitions",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.lifecycle\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The definition whose states these are. One lifecycle per subject: a definition with two state machines has no single state set to generate from."
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "initial": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "trigger",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1
+              },
+              "trigger": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1
+              },
+              "guard": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The rule that must hold, by the name this model gives it."
+              }
+            }
+          }
+        },
+        "rejections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "minProperties": 1
+          },
+          "description": "What a state refuses, and with which error. The ontology requires a total transition table, so a lifecycle recorded without rejections will block at authoring; recording them here is what makes the gap visible earlier."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "context",
+        "ddd",
+        "ownership",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.interface\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ddd": {
+          "$ref": "#/$defs/ddd"
+        },
+        "ownership": {
+          "enum": [
+            "published",
+            "consumed"
+          ],
+          "description": "Closed here because the ontology carries it as a single field with these two values and nothing conditional sits above it."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the payload is, by reference or by description. The authored interface requires it, so recording it here keeps the entry from being bound to block."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "process": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "context",
+        "ddd",
+        "steps",
+        "origin"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/provenance"
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^dm\\.process\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Derived identifier, never allocated: `dm.<kind>.<scope>.<slug>`, where `<scope>` is the context the element belongs to and `<slug>` is its name in kebab-case. A subdomain and a context take `dm.<kind>.<slug>`, each being a scope itself; a lifecycle takes the slug of its subject. Derived rather than minted so that the same model yields the same identifiers on every run and any reader can compute one without the producer having written it. An element that changes its kind, its scope, or its name becomes a different element and takes a different identifier."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ddd": {
+          "$ref": "#/$defs/ddd"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "order",
+              "element"
+            ],
+            "properties": {
+              "order": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "element": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The element this step is, by the name this model gives it. A step names something rather than restating it, which is the rule the authored process also follows."
+              },
+              "outcome": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "rationale": {
+          "$ref": "#/$defs/rationale"
+        }
+      }
+    },
+    "open_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "question",
+        "why_it_matters"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^oq_[a-z0-9_]+$",
+          "description": "Derived from the question rather than allocated, like every other identifier in this model: `oq_` followed by the question's subject in snake_case. It exists so a gap on an authored object can name the question that blocks it instead of restating it. In the reference run nine of twelve questions bore on more than one construct, and a question copied into every file it blocks is a question that drifts between them."
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the request does not answer, phrased so someone who knows the domain can answer it in a sentence."
+        },
+        "why_it_matters": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the answer would change in the model. A question with no consequence is noise, and one whose consequence is unstated cannot be prioritized."
+        },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^dm\\.[a-z]+\\.[a-z0-9-]+(\\.[a-z0-9-]+)?$"
+          },
+          "description": "The elements that cannot be completed until this is answered, by the `dm.` identifier each carries. Named by identifier rather than by name so the reference survives a rewording, and so a reader can resolve it without searching."
+        }
+      }
+    },
+    "excluded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "reason"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why it is out. The two ordinary answers are that it is stack knowledge the knowledge base excludes, and that the request does not reach it."
+        }
+      }
+    }
+  }
+}

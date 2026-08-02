@@ -30,10 +30,16 @@ class DerivedStatus(unittest.TestCase):
     def test_the_installed_statuses_agree_with_what_the_facts_derive(self) -> None:
         self.assertEqual([], cc.check_statuses(DIST))
 
-    def test_every_installed_capability_is_active(self) -> None:
-        """R14: proposed ships nothing and retired is absent from the distribution."""
+    def test_every_installed_capability_is_active_or_deprecated(self) -> None:
+        """R14: `proposed` ships nothing and `retired` is absent, so an installation holds neither.
+
+        This required `active` of everything, and was true for as long as `deprecated` had no
+        mechanism — the generator wrote the label and the label was always the same one. It fails
+        the moment a real deprecation lands, which is what it is for.
+        """
         for name, status in cc.installed_statuses(DIST).items():
-            self.assertEqual("active", status, name)
+            with self.subTest(capability=name):
+                self.assertIn(status, ("active", "deprecated"))
 
     def test_a_hand_edited_status_is_reported(self) -> None:
         with tempfile.TemporaryDirectory() as holder:
@@ -70,10 +76,88 @@ class DerivedStatus(unittest.TestCase):
             problems = cc.check_statuses(copy)
         self.assertTrue(any("retired" in p and "R14" in p for p in problems), problems)
 
-    def test_four_capability_classes_are_occupied(self) -> None:
-        """foundation/0006 condition 1: at least four classes, each with a fixture."""
+    def test_which_capability_classes_are_occupied(self) -> None:
+        """Which of the six classes the distribution fills, recorded so a change is noticed.
+
+        This required at least four, citing a condition in a specification that no longer exists —
+        and the fixture each was to be evidenced by went with
+        `docs/adr/0019-the-repository-keeps-no-fixtures.md`. Three are filled today, `script` having joined when the expansion step shipped — and this test is what noticed. Hook, script,
+        template, and target pack are open and empty; `foundation/0005` R2 removes a class rather
+        than keeping it open, and these stay because the *class* is occupied elsewhere in the
+        model — what is empty is this distribution's share of it.
+        """
         manifest = json.loads((DIST / generate_dist.MANIFEST_NAME).read_text())
-        self.assertGreaterEqual(len({c["class"] for c in manifest["capabilities"]}), 4)
+        self.assertEqual({"skill", "specialized-agent", "script"},
+                         {c["class"] for c in manifest["capabilities"]})
+
+
+class DeprecationIsDerived(unittest.TestCase):
+    """`foundation/0005` R17: a status comes from checkable facts, never from a label.
+
+    Two facts, and the generator reads both: whether the distribution installs the capability, and
+    whether its declaration documents it as going away. Nothing writes `deprecated` anywhere — what
+    a person writes is the replacement and the reason, and the status follows from their presence.
+
+    This fails against the old behavior in the way the compatibility rule asks for: before the
+    declaration could carry a deprecation, every installed capability derived `active`, and R15's
+    move through `deprecated` had no mechanism at all.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.manifest = json.loads((DIST / generate_dist.MANIFEST_NAME).read_text())
+        cls.declarations = {
+            entry["identifier"]: entry
+            for entry in json.loads(
+                (REPO_ROOT / "src" / "claude" / "capabilities.declaration.json").read_text()
+            )["declarations"]
+        }
+
+    def statuses(self) -> dict[str, str]:
+        return {c["name"]: c["status"] for c in self.manifest["capabilities"]}
+
+    def test_a_capability_with_a_declared_deprecation_derives_deprecated(self) -> None:
+        for name, entry in self.declarations.items():
+            if entry.get("deprecation"):
+                with self.subTest(capability=name):
+                    self.assertEqual("deprecated", self.statuses().get(name))
+
+    def test_a_capability_without_one_derives_active(self) -> None:
+        for name, status in self.statuses().items():
+            if not self.declarations.get(name, {}).get("deprecation"):
+                with self.subTest(capability=name):
+                    self.assertEqual("active", status)
+
+    def test_the_word_deprecated_is_written_nowhere_in_the_source(self) -> None:
+        """The label is derived. A file carrying it would be the hand-maintained status R17 forbids."""
+        source = REPO_ROOT / "src" / "claude" / "capabilities.declaration.json"
+        self.assertNotIn("deprecated", source.read_text())
+
+    def test_a_deprecation_names_its_replacement(self) -> None:
+        """R15: a consumer told a capability is going away and not what replaces it has half a migration."""
+        for name, entry in self.declarations.items():
+            deprecation = entry.get("deprecation")
+            if deprecation:
+                with self.subTest(capability=name):
+                    self.assertTrue(deprecation["replacement"])
+                    self.assertTrue(deprecation["reason"])
+
+    def test_a_deprecated_capability_is_still_installed(self) -> None:
+        """R14: `deprecated` is installed and going away; absent is `retired`, which is a later move."""
+        installed = {c["name"] for c in self.manifest["capabilities"]}
+        for name, entry in self.declarations.items():
+            if entry.get("deprecation"):
+                with self.subTest(capability=name):
+                    self.assertIn(name, installed)
+
+    def test_the_replacement_it_names_is_itself_installed(self) -> None:
+        """A replacement nothing installs is a migration path with no destination."""
+        installed = {c["name"] for c in self.manifest["capabilities"]}
+        for name, entry in self.declarations.items():
+            deprecation = entry.get("deprecation")
+            if deprecation and deprecation["replacement"] in self.declarations:
+                with self.subTest(capability=name):
+                    self.assertIn(deprecation["replacement"], installed)
 
 
 class Thresholds(unittest.TestCase):
@@ -86,7 +170,7 @@ class Thresholds(unittest.TestCase):
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "dist"
             shutil.copytree(DIST, copy)
-            (copy / "bin" / "eager.py").write_text("RETRY_COUNT = 3\n")
+            (copy / "schemas" / "eager.py").write_text("RETRY_COUNT = 3\n")
             problems = cc.check_thresholds(copy)
         self.assertTrue(any("eager.py" in p for p in problems), problems)
 
@@ -95,7 +179,7 @@ class Thresholds(unittest.TestCase):
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "dist"
             shutil.copytree(DIST, copy)
-            (copy / "bin" / "eager.py").write_text("BUDGET = 12_000\n")
+            (copy / "schemas" / "eager.py").write_text("BUDGET = 12_000\n")
             problems = cc.check_thresholds(copy)
         self.assertTrue(any("12_000" in p for p in problems), problems)
 
@@ -126,16 +210,13 @@ class Thresholds(unittest.TestCase):
         self.assertIn("stops rather than choosing", defaults["default"])
 
 
-class UpgradeSkill(unittest.TestCase):
-    def test_it_ships(self) -> None:
-        self.assertTrue((DIST / "skills" / "upgrade" / "SKILL.md").is_file())
+class ShippedSkills(unittest.TestCase):
+    """`skills/upgrade/` stood here and does not ship; what it was checked for still applies.
 
-    def test_it_is_not_model_invocable(self) -> None:
-        """foundation/0006 R4: a skill whose effects reach outside the session says so."""
-        from frontmatter_lib import split_frontmatter
-
-        data, _ = split_frontmatter((DIST / "skills" / "upgrade" / "SKILL.md").read_text())
-        self.assertTrue(data.get("disable-model-invocation"))
+    Two of its three tests asserted that one named skill exists and declares itself
+    non-model-invocable. The third asked the same of every skill that ships, which is the
+    assertion that survives a skill being removed — and it is the one kept.
+    """
 
     def test_every_shipped_skill_with_outside_effects_says_so(self) -> None:
         from frontmatter_lib import split_frontmatter

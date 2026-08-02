@@ -40,7 +40,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 from generate_dist import DEFAULT_TARGET, MANIFEST_NAME, plan
 

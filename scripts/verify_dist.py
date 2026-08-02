@@ -37,7 +37,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

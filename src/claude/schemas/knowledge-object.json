@@ -13,6 +13,7 @@
     "question",
     "contract_version",
     "generated",
+    "origin",
     "out_of_scope"
   ],
   "properties": {
@@ -56,19 +57,34 @@
     },
     "status": {
       "not": {},
-      "description": "Rejected, not merely absent. R26 forbids a knowledge object from declaring a status, a maturity level, or an approval state, and `additionalProperties` is true here because R30 requires an unknown field to be preserved — so silence would let the retired field through as one. `knowledge-object/1` carried `proposed | accepted | superseded`; ADR-0018 records why it is gone and `scripts/migrate_contracts.py` carries the hop."
+      "description": "Rejected, not merely absent. R26 forbids a knowledge object from declaring a status, a maturity level, or an approval state, and `additionalProperties` is true here because R30 requires an unknown field to be preserved — so silence would let the retired field through as one. `knowledge-object/1` carried `proposed | accepted | superseded`. The framework's own decision record states why it is gone and registers the migration; neither ships, and a path into the repository that produced this file would not resolve here."
     },
     "superseded_by": {
       "not": {},
       "description": "Rejected, for the reason `status` is. It named the object that replaced this one, and R35 no longer retains a replaced object: a knowledge object that changes `type` or `boundary` takes a new id and the old one is removed with every reference to it. Version control holds what the base held."
     },
     "contract_version": {
-      "const": "knowledge-object/2",
+      "const": "knowledge-object/4",
       "description": "Siegard addition. A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     },
     "generated": {
       "$ref": "#/$defs/trustEvent",
       "description": "OKF trust field. Siegard requires it; OKF leaves it optional. Provenance is not optional."
+    },
+    "origin": {
+      "enum": [
+        "stated",
+        "modeled"
+      ],
+      "description": "Siegard addition. `stated` where the material this object was read from says it; `modeled` where the analysis decided it. Required of every object, because a reviewer accepts a requirement and disagrees with a decision, and can do neither if the two look alike. `sources` names the material and `generated` names the writer; neither says whether the statement in *this* object was in that material or reached by reading it, and that is the one question a reader of a base with no status has no other way to ask. The reasoning behind a `modeled` fact is not recorded here: R4 keeps rationale out of a knowledge object, and the analysis that decided it holds it, reachable through `sources`."
+    },
+    "gaps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gap"
+      },
+      "description": "Siegard addition. Each fact this object's node type requires and does not have. A non-empty `gaps` IS the object's incompleteness: there is no flag to set and none to forget, and the per-type requirements below accept an object that declares one in place of the fields it lacks. An object with no `gaps` key asserts completeness and is held to every field its type requires. It is not a status — it records what the domain has not said, never what a reviewer has not done."
     },
     "verified": {
       "type": "array",
@@ -389,11 +405,6 @@
         ]
       },
       "then": {
-        "required": [
-          "boundary",
-          "ddd",
-          "attributes"
-        ],
         "properties": {
           "ddd": {
             "enum": [
@@ -405,37 +416,52 @@
             ]
           }
         },
-        "allOf": [
+        "anyOf": [
           {
-            "description": "R9 requires `identity` of the constructs that have one and forbids it of the two that do not. A value object is defined by holding no identity, and a domain error carries context rather than an identity, so requiring one of either would make this contract force a false statement about the domain.",
-            "if": {
-              "properties": {
-                "ddd": {
-                  "enum": [
-                    "entity",
-                    "aggregate-root",
-                    "read-model"
+            "required": [
+              "boundary",
+              "ddd",
+              "attributes"
+            ],
+            "allOf": [
+              {
+                "description": "R9 requires `identity` of the constructs that have one and forbids it of the two that do not. A value object is defined by holding no identity, and a domain error carries context rather than an identity, so requiring one of either would make this contract force a false statement about the domain.",
+                "if": {
+                  "properties": {
+                    "ddd": {
+                      "enum": [
+                        "entity",
+                        "aggregate-root",
+                        "read-model"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ddd"
                   ]
+                },
+                "then": {
+                  "required": [
+                    "identity"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "required": [
+                      "identity"
+                    ]
+                  }
                 }
-              },
-              "required": [
-                "ddd"
-              ]
-            },
-            "then": {
-              "required": [
-                "identity"
-              ]
-            },
-            "else": {
-              "not": {
-                "required": [
-                  "identity"
-                ]
               }
-            }
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
           }
-        ]
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
       }
     },
     {
@@ -450,19 +476,28 @@
         ]
       },
       "then": {
-        "required": [
-          "boundary",
-          "ddd"
-        ],
         "anyOf": [
           {
             "required": [
-              "expression"
+              "boundary",
+              "ddd"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "expression"
+                ]
+              },
+              {
+                "required": [
+                  "examples"
+                ]
+              }
             ]
           },
           {
             "required": [
-              "examples"
+              "gaps"
             ]
           }
         ],
@@ -476,7 +511,8 @@
               "quality-attribute"
             ]
           }
-        }
+        },
+        "description": "Either every field this type requires — including one of `expression` and `examples`, which is itself an alternation — or a declared gap in place of what is missing. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
       }
     },
     {
@@ -491,19 +527,29 @@
         ]
       },
       "then": {
-        "required": [
-          "boundary",
-          "subject",
-          "states",
-          "initial",
-          "transitions",
-          "rejections"
-        ],
         "not": {
           "required": [
             "ddd"
           ]
-        }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "subject",
+              "states",
+              "initial",
+              "transitions",
+              "rejections"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
       }
     },
     {
@@ -518,13 +564,6 @@
         ]
       },
       "then": {
-        "required": [
-          "boundary",
-          "ddd",
-          "version",
-          "schema",
-          "ownership"
-        ],
         "properties": {
           "ddd": {
             "enum": [
@@ -534,7 +573,24 @@
               "api"
             ]
           }
-        }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "ddd",
+              "version",
+              "schema",
+              "ownership"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
       }
     },
     {
@@ -549,9 +605,6 @@
         ]
       },
       "then": {
-        "required": [
-          "ddd"
-        ],
         "properties": {
           "ddd": {
             "enum": [
@@ -560,40 +613,53 @@
             ]
           }
         },
-        "allOf": [
+        "anyOf": [
           {
-            "if": {
-              "properties": {
-                "ddd": {
-                  "const": "bounded-context"
+            "required": [
+              "ddd"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "ddd": {
+                      "const": "bounded-context"
+                    }
+                  },
+                  "required": [
+                    "ddd"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "subdomain_type"
+                  ],
+                  "not": {
+                    "required": [
+                      "boundary"
+                    ]
+                  }
+                },
+                "else": {
+                  "required": [
+                    "boundary"
+                  ],
+                  "not": {
+                    "required": [
+                      "subdomain_type"
+                    ]
+                  }
                 }
-              },
-              "required": [
-                "ddd"
-              ]
-            },
-            "then": {
-              "required": [
-                "subdomain_type"
-              ],
-              "not": {
-                "required": [
-                  "boundary"
-                ]
               }
-            },
-            "else": {
-              "required": [
-                "boundary"
-              ],
-              "not": {
-                "required": [
-                  "subdomain_type"
-                ]
-              }
-            }
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
           }
-        ]
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
       }
     },
     {
@@ -608,11 +674,6 @@
         ]
       },
       "then": {
-        "required": [
-          "boundary",
-          "ddd",
-          "steps"
-        ],
         "properties": {
           "ddd": {
             "enum": [
@@ -621,7 +682,22 @@
               "use-case"
             ]
           }
-        }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "boundary",
+              "ddd",
+              "steps"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ]
+          }
+        ],
+        "description": "Either every field this type requires — including what a nested conditional requires of its `ddd` — or a declared gap in place of what is missing, per ADR-0021. A prohibition is not excused: a gap says a fact is absent, and cannot make a forbidden field allowed."
       }
     },
     {
@@ -975,6 +1051,64 @@
         }
       ],
       "unevaluatedProperties": false
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "field"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "domain",
+            "authoring"
+          ],
+          "description": "`domain` — only whoever knows the domain can close it, and no capability of this framework may. `authoring` — a step of this framework closes it. Conflating the two makes a report of thirty entries unreadable: a reader cannot tell what is waiting on them from what is waiting on the machine, and stops reading it."
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The field this node type requires and this object does not have, named as the contract names it, in dotted-path form: `attributes`, `identity.attributes`, `attributes[razao_social].max_length`. A validator checks that the path names a field the type would actually require — the schema cannot, because the requirement it excuses is a conditional elsewhere in this document."
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the domain would have to say to fill it. Required on `kind: domain`; absent on `kind: authoring`, where the field name is the whole content and a required sentence would be written to pass rather than to inform."
+        },
+        "question": {
+          "type": "string",
+          "pattern": "^oq_[a-z0-9_]+$",
+          "description": "The shared open question this gap instantiates, held once by the analysis rather than copied into every object it blocks. In the reference run nine of twelve open questions bore on more than one construct; without this the same question is restated per file and the restatements drift."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "domain"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "why"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "why"
+              ]
+            }
+          }
+        }
+      ]
     }
   }
 }

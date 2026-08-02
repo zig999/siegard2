@@ -36,6 +36,11 @@ A missing input is a stop. Say what is absent and return nothing else.
 You decide, for each construct: which of the six node types it becomes, which DDD value it carries,
 which boundary it belongs to, the identifier it will take, and what the model fails to supply.
 
+You also **copy** one field without deciding it: `origin`. The model declares, per element, whether
+the request stated the fact or the analysis decided it, and the authored object is required to carry
+the same value. Copy it. An entry whose origin you changed would tell the authoring step that the
+business said something the model recorded as a decision, and nothing downstream could catch it.
+
 You do **not** decide what the domain is. That was decided before you, by the modelling step, and the
 model records which of its elements were stated by the request and which it decided. **You do not
 re-open either.** A boundary you would have drawn differently is not yours to redraw here: say so in
@@ -68,13 +73,21 @@ construct in a *field* rather than a type, the entry's node type is the type tha
 an aggregate is a boundary, an aggregate root is a definition, a policy is a rule, a domain event is
 an interface, a saga is a process.
 
-Two answers are correct and neither is a node type. A construct that is stack knowledge — a
-repository, a factory, a module, a layering choice — is unmapped, because the ontology excludes it.
-A construct that is rationale — why an alternative was rejected, what the decision cost — is
-unmapped, because rationale belongs in a decision record and a knowledge object may not carry it.
+Every construct gets an entry, and the entry declares one of three outcomes.
 
-Record an unmapped construct rather than forcing it into the nearest type. The mapping is closed, and
-a construct with no home in it is not recorded until the mapping names one.
+- **`classified`** — it became a node type, and the entry carries what it became.
+- **`unmapped`** — the mapping has no home for it. Two answers are ordinary: a construct that is
+  stack knowledge, because the ontology excludes it, and a construct that is rationale, because
+  rationale belongs in a decision record and a knowledge object may not carry it.
+- **`refused`** — the model states something the ontology *rejects*, as against something it lacks.
+  An attribute typed outside the closed primitive vocabulary is the standing case. A missing fact is
+  a gap on a classified entry; a wrong fact is a refusal, and nothing is authored from it.
+
+Record the outcome rather than forcing a construct into the nearest type. The mapping is closed, and
+a construct with no home in it is not recorded until the mapping names one. The distinction that
+earns the third value: a gap says the domain has not spoken, and a refusal says the model said
+something the contract cannot accept — filling the first is the domain's to do, and the second is a
+defect to report back.
 
 ## Gaps are the answer
 
@@ -93,8 +106,18 @@ your value. It is a design in DDD's vocabulary; it is not a knowledge object, an
 - **totality** on a lifecycle: every pairing of a state with a trigger is either a transition or a
   declared rejection.
 
-Name each one you find, on the entry it belongs to, with what the model would have to say to fill it.
-Do not fill it. A plausible attribute, an invented state, a guessed rejection: each is a domain fact
+Name each one you find, on the entry it belongs to, and declare its `kind`.
+
+- **`domain`** — only whoever knows the domain can close it: a bounded string's length, an entity's
+  identity strategy, a lifecycle's missing rejection. It carries `why`, which is what the domain
+  would have to say to fill it.
+- **`authoring`** — a later step of this framework closes it: the retrieval `question`, the declared
+  `out_of_scope`, the one-sentence `description`. The field name is the whole content, and the
+  contract refuses a `why` on one rather than inviting a sentence written to satisfy it.
+
+The two were conflated for as long as the contract could not tell them apart, and the cost is a
+report the reader stops reading: thirty entries with no way to see what is waiting on them and what
+is waiting on the machine. Declare it, and do not fill either. A plausible attribute, an invented state, a guessed rejection: each is a domain fact
 authored by whatever read the model rather than by whoever knows the domain, and the whole mechanism
 exists to make that impossible.
 
@@ -133,7 +156,7 @@ else — no prose before it, no explanation after it. The consumer parses it.
 
 ```json
 {
-  "contract_version": "knowledge-intake-plan/1",
+  "contract_version": "knowledge-intake-plan/4",
   "intake_id": "ki_4c1e7a90",
   "producer": "domain-analyst",
   "source": {
@@ -144,35 +167,43 @@ else — no prose before it, no explanation after it. The consumer parses it.
   "entries": [
     {
       "construct": "Sales",
+      "outcome": "classified",
       "node_type": "boundary",
       "ddd": "bounded-context",
+      "origin": "stated",
       "proposed_id": "ko.boundary.sales",
       "gaps": [
-        { "field": "subdomain_type", "why": "the model records no subdomain classification for sales" }
+        { "kind": "domain", "field": "subdomain_type", "why": "the model records no subdomain classification for sales" }
       ]
     },
     {
       "construct": "Proposal",
+      "outcome": "classified",
       "node_type": "definition",
       "ddd": "aggregate-root",
+      "origin": "modeled",
       "boundary": "ko.boundary.sales.proposal",
       "proposed_id": "ko.definition.sales.proposal",
       "gaps": [
-        { "field": "question", "why": "no retrieval question is stated; the object answers what a Proposal is" },
-        { "field": "out_of_scope", "why": "the model names nothing this object excludes, and at least one entry is required" },
-        { "field": "attributes[].binding", "why": "the reference to Customer does not say whether it is embedded or held by identity" }
+        { "kind": "authoring", "field": "question" },
+        { "kind": "authoring", "field": "out_of_scope" },
+        { "kind": "domain", "field": "attributes[customer].binding", "why": "the reference to Customer does not say whether it is embedded or held by identity" }
       ]
+    },
+    {
+      "construct": "ProposalRepository",
+      "outcome": "unmapped",
+      "reason": "stack knowledge: how a construct is stored is excluded from the knowledge base"
     }
-  ],
-  "unmapped": [
-    { "construct": "ProposalRepository", "reason": "stack knowledge: how a construct is stored is excluded from the knowledge base" }
   ]
 }
 ```
 
 `state` is `classified` or `blocked` — never a third value and never prose. A `blocked` result carries
-`blocking_reason` and classifies nothing; a `classified` result carries entries, unmapped constructs,
-or both.
+`blocking_reason` and classifies nothing; a `classified` result carries one entry per construct,
+whatever became of each — a run where nothing could be classified is still `classified` if every
+construct got an outcome, because that is a finished run with a negative result rather than a run
+that could not start.
 
 If you cannot classify — the model is absent, the contract is not where you were told, the model does not
 conform to its own contract — say so plainly in one sentence and return no JSON. An invented
