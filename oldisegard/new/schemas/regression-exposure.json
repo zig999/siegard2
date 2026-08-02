@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/regression-exposure.json",
+  "title": "Regression exposure",
+  "description": "What a realized change exposes outside the files it modified: which consumers observe what changed, and what breaks for each. The after to code-inventory's before — a survey's risks are predictions from a plan, and these are consequences of code that exists. `unexposed` is carried alongside `exposures` because a consumer examined and cleared is not the same as one nobody looked at, and only the artifact can tell them apart. No severity: whether a break is acceptable is the caller's.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "report_id", "producer", "modified", "exposures", "unexposed"],
+  "properties": {
+    "contract_version": { "const": "regression-exposure/1" },
+    "report_id": { "type": "string", "pattern": "^re_[0-9a-f]{8}$", "description": "Supplied by the caller and never minted by the producer." },
+    "producer": { "type": "string", "minLength": 1 },
+    "modified": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The change as stated, one entry per path. Stated rather than derived from a diff, so the report names the change the caller has in mind.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "changed"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "changed": { "type": "string", "minLength": 1, "description": "What changed in it, in terms of what is observable from outside." }
+        }
+      }
+    },
+    "exposures": {
+      "type": "array",
+      "description": "One entry per consumer that could break, sorted by consumer path. Empty is a real result: the change was traced outward and nothing observes it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["consumer", "observes", "kind", "breaks", "evidence"],
+        "properties": {
+          "consumer": { "type": "string", "minLength": 1, "description": "The path that would notice. Importing is not observing: a consumer that never reaches the changed behavior does not belong here." },
+          "observes": { "type": "string", "minLength": 1, "description": "Which modified path it observes." },
+          "kind": {
+            "enum": ["signature", "return_shape", "raised_error", "stored_shape", "default", "timing", "removal"],
+            "description": "How the change is observable. `removal` breaks at load rather than at a branch, which is why it is found by searching for the name rather than by reading callers."
+          },
+          "breaks": { "type": "string", "minLength": 1, "description": "What goes wrong for this consumer, specifically." },
+          "evidence": { "type": "string", "minLength": 1, "description": "What in the consumer makes it so." }
+        }
+      }
+    },
+    "unexposed": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Consumers examined and cleared, with why. Required so a reader can tell a cleared consumer from an unexamined one."
+    },
+    "prior_risks_checked": {
+      "type": "array",
+      "description": "Where a code inventory predicted risks, each one confirmed or dropped. A predicted risk left unmentioned reads as still open.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["risk", "outcome"],
+        "properties": {
+          "risk": { "type": "string", "minLength": 1 },
+          "outcome": { "enum": ["confirmed", "not_realized"] }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

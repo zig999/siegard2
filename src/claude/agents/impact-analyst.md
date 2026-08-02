@@ -85,7 +85,7 @@ has no identifier.
    Where the model reads two ways between `update` and `create`, name the existing artifact among the
    implicated either way: a `create` that implicates the objects it connects to carries the same
    information a reader needs, and the verdict then differs without hiding anything. What you cannot do
-   is record the ambiguity itself — `impact-analysis/3` has no field for it, and the contract is closed.
+   is record the ambiguity itself — `impact-analysis/4` has no field for it, and the contract is closed.
    Say nothing rather than inventing a field, and resolve toward the verdict whose implicated set is the
    larger of the two.
 6. Sort the entries by `id` before returning, so two analyses of one model compare directly.
@@ -101,11 +101,12 @@ before it, no explanation after it. The consumer parses it.
 
 ```json
 {
-  "contract_version": "impact-analysis/3",
+  "contract_version": "impact-analysis/4",
   "analysis_id": "ia_3f9c1b02",
   "request_id": "rq_7a2e4d10",
   "model_id": "dm_4c1e7a90",
   "producer": "impact-analyst",
+  "consumer": "ingest-domain",
   "verdict": "update",
   "base_state": "populated",
   "implicated": [

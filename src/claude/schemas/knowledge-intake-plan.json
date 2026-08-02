@@ -9,12 +9,13 @@
     "contract_version",
     "intake_id",
     "producer",
+    "consumer",
     "source",
     "state"
   ],
   "properties": {
     "contract_version": {
-      "const": "knowledge-intake-plan/4",
+      "const": "knowledge-intake-plan/6",
       "description": "The contract this instance declares. A consumer selects behaviour on this value and never infers a version from shape."
     },
     "intake_id": {
@@ -28,6 +29,10 @@
         "domain-analyst"
       ],
       "description": "The named producer, closed rather than a free string so a document claiming another producer is not an instance of this contract. Two values while one replaces the other: `expand-model` derives the plan from the model deterministically, and `domain-analyst` is the agent it replaces, deprecated and still installed. The agent's entry goes when it is retired, and a consumer that must know which produced a plan reads this field rather than inferring it from shape — the two agree on every field, which is what makes the replacement safe and also what makes the label the only way to tell them apart."
+    },
+    "consumer": {
+      "const": "ingest-domain",
+      "description": "Who reads it. The ingestion procedure reports what became of every construct from this record; nothing else parses it, and a second consumer would be a second place the outcomes are interpreted."
     },
     "source": {
       "type": "object",
@@ -169,14 +174,14 @@
         "ddd": {
           "type": "string",
           "pattern": "^[a-z]+(-[a-z]+)*$",
-          "description": "The DDD construct the entry records, as the value the object's `ddd` field will carry. Deliberately not constrained per node type here: knowledge-object.json holds that pairing conditionally and is the single authority for it, and a second copy would drift from the first."
+          "description": "The DDD construct the entry records, as the value the object's `ddd` field will carry. Required of every classified entry except a `lifecycle`, which is the one node type that *is* a DDD construct rather than carrying one: the ontology maps a state machine to the type itself, so the object has no `ddd` and the contract rejects one. An entry that carried a value here would be naming a field the object may not hold, and the classification that produced it had to invent something to fill it."
         },
         "origin": {
           "enum": [
             "stated",
             "modeled"
           ],
-          "description": "Copied from the model element this entry classifies, never decided here. The model declares, per element, whether the request stated the fact or the analysis decided it, and `knowledge-object/4` requires the authored object to carry the same value — so this is the hop between them. Without it the authoring step would have to re-decide whether the material said the fact, which is the one judgment a classification may not reopen."
+          "description": "Copied from the model element this entry classifies, never decided here. The model declares, per element, whether the request stated the fact or the analysis decided it, and `knowledge-object/5` requires the authored object to carry the same value — so this is the hop between them. Without it the authoring step would have to re-decide whether the material said the fact, which is the one judgment a classification may not reopen."
         },
         "boundary": {
           "type": "string",
@@ -216,7 +221,6 @@
           "then": {
             "required": [
               "node_type",
-              "ddd",
               "origin",
               "proposed_id",
               "gaps"
@@ -225,7 +229,34 @@
               "required": [
                 "reason"
               ]
-            }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "node_type": {
+                      "const": "lifecycle"
+                    }
+                  },
+                  "required": [
+                    "node_type"
+                  ]
+                },
+                "then": {
+                  "not": {
+                    "required": [
+                      "ddd"
+                    ]
+                  }
+                },
+                "else": {
+                  "required": [
+                    "ddd"
+                  ]
+                },
+                "description": "`lifecycle` is the node type a state machine *becomes*, so there is no DDD value left to record beside it — and `knowledge-object` rejects `ddd` on one. Requiring it here forced a classification to invent a value the boundary would then refuse."
+              }
+            ]
           },
           "else": {
             "required": [

@@ -8,7 +8,7 @@ boundary: ko.boundary.{{context}}.{{boundary_slug}}
 ddd: {{ddd}}
 attributes:
   - { name: {{attribute_name}}, type: {{attribute_type}}, required: true }
-contract_version: knowledge-object/4
+contract_version: knowledge-object/5
 generated: { by: {{generated_by}}, at: {{generated_at}} }
 origin: {{origin}}
 out_of_scope:

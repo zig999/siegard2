@@ -39,9 +39,10 @@ FENCED_JSON = re.compile(r"```json\n(.*?)\n```", re.DOTALL)
 def valid() -> dict:
     """The smallest plan the contract accepts, with one gap because that is the normal case."""
     return {
-        "contract_version": "knowledge-intake-plan/4",
+        "contract_version": "knowledge-intake-plan/6",
         "intake_id": "ki_4c1e7a90",
         "producer": "domain-analyst",
+        "consumer": "ingest-domain",
         "source": {
             "description": "The sales domain analysis delivered as DDD entities",
             "artifacts": ["intake/sales-entities.md"],
@@ -127,9 +128,10 @@ class BlockingIsExclusive(Case):
     def test_blocked_requires_its_reason(self) -> None:
         self.assertRejected(
             {
-                "contract_version": "knowledge-intake-plan/4",
+                "contract_version": "knowledge-intake-plan/6",
                 "intake_id": "ki_4c1e7a90",
                 "producer": "domain-analyst",
+        "consumer": "ingest-domain",
                 "source": {"description": "an empty file", "artifacts": ["intake/nothing.md"]},
                 "state": "blocked",
             },
@@ -146,9 +148,10 @@ class BlockingIsExclusive(Case):
             [],
             self.errors(
                 {
-                    "contract_version": "knowledge-intake-plan/4",
+                    "contract_version": "knowledge-intake-plan/6",
                     "intake_id": "ki_4c1e7a90",
                     "producer": "domain-analyst",
+        "consumer": "ingest-domain",
                     "source": {"description": "an empty file", "artifacts": ["intake/nothing.md"]},
                     "state": "blocked",
                     "blocking_reason": "the material names no domain construct this ontology can classify",

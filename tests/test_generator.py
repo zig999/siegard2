@@ -353,7 +353,7 @@ class ShippedImports(unittest.TestCase):
         """
         self.assertEqual(
             {"expand_model.py", "check_enrichment.py", "field_ownership.py", "promote_staged.py",
-             "check_gap_fields.py"},
+             "check_gap_fields.py", "materialize.py"},
             {p.name for p in SHIPPED_BIN.glob("*.py")},
         )
 

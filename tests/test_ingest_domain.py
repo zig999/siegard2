@@ -95,7 +95,7 @@ class Procedure(unittest.TestCase):
 
     def test_it_records_what_validated(self) -> None:
         """`0001` R22: validation carries evidence, and nothing produced any until this skill did."""
-        self.assertIn("validation-evidence/2", self.body)
+        self.assertIn("validation-evidence/3", self.body)
         self.assertIn("saying what validated it is an assertion", self.body)
 
     def test_it_names_every_script_it_runs(self) -> None:
@@ -105,10 +105,13 @@ class Procedure(unittest.TestCase):
         distribution performs none of those checks and reports them as owed, which is the honest
         form — and C04 has nothing to demand because there is no instruction left to run anything.
         """
-        for script in ("bin/expand_model.py", "bin/check_enrichment.py", "bin/promote_staged.py"):
+        for script in ("bin/expand_model.py", "bin/check_enrichment.py", "bin/check_gap_fields.py",
+                       "bin/promote_staged.py", "bin/materialize.py"):
             with self.subTest(script=script):
                 self.assertIn(script, self.body)
-        self.assertIn("The distribution ships nothing that performs them", self.body)
+        # Three cross-object checks are still owed, and the sentence narrowed when the
+        # materializer took the fourth. Naming the count is what keeps it honest as they land.
+        self.assertIn("ships nothing that performs those three", self.body)
 
     def test_it_reports_what_stands_between_the_base_and_a_reader(self) -> None:
         """An ingestion reported as finished sends the caller into a block nobody warned about.
@@ -154,7 +157,7 @@ class Declaration(unittest.TestCase):
         """The order between modelling and ingesting is what a declared input makes derivable."""
         model = next(i for i in self.entry["inputs"] if i["name"] == "domain_model")
         self.assertEqual("domain-model", model["artifact"])
-        self.assertEqual("domain-model/3", model["contract"])
+        self.assertEqual("domain-model/4", model["contract"])
         self.assertTrue(model["required"])
 
     def test_it_declares_the_ordering_guarantee(self) -> None:
@@ -176,9 +179,9 @@ class Declaration(unittest.TestCase):
         self.assertIn("knowledge-enrichment-result", consumed)
 
     def test_it_produces_the_validation_evidence_the_method_requires(self) -> None:
-        """`validation-evidence/2` was the one contract with neither a producer nor a consumer."""
+        """`validation-evidence/3` was the one contract with neither a producer nor a consumer."""
         produced = {o["contract"] for o in self.entry["outputs"]}
-        self.assertIn("validation-evidence/2", produced)
+        self.assertIn("validation-evidence/3", produced)
         self.assertIn("validation-evidence", self.entry["produced_artifacts"])
 
     def test_it_declares_provenance_and_no_status(self) -> None:
@@ -186,3 +189,46 @@ class Declaration(unittest.TestCase):
         behaviour = " ".join(self.entry["deterministic_behavior"])
         self.assertIn("never minted", behaviour)
         self.assertIn("never minted", behaviour)
+
+class TheImpactAnalysisIsConsumed(unittest.TestCase):
+    """`foundation/0001` R3 runs an impact analysis for every request, and nothing read one.
+
+    `impact-analyst` produced `impact-analysis` and no skill parsed it, so the requirement was
+    satisfied by an artifact that reached no reader — which is the same as not being satisfied. It
+    is now the second step of the ingestion, before anything is written.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.body = SKILL.read_text()
+        cls.entry = next(
+            e for e in json.loads(DECLARATION.read_text())["declarations"]
+            if e["identifier"] == "ingest-domain"
+        )
+
+    def test_the_procedure_delegates_to_the_analyst(self) -> None:
+        self.assertIn("impact-analyst", self.body)
+
+    def test_it_runs_before_anything_is_written(self) -> None:
+        self.assertLess(self.body.index("impact-analyst"), self.body.index("bin/expand_model.py"))
+
+    def test_it_runs_over_an_empty_base_too(self) -> None:
+        """R5: a request made where nothing exists yields `create`, which is not `none`."""
+        self.assertIn("including the first one against an empty base", self.body)
+
+    def test_the_declaration_names_it_consumed(self) -> None:
+        consumed = {c["artifact"] for c in self.entry["consumed_artifacts"]}
+        self.assertIn("impact-analysis", consumed)
+
+    def test_a_verdict_of_none_is_a_declared_outcome(self) -> None:
+        """The one verdict that stops the run, named so continuing needs a reason."""
+        outcomes = {f["outcome"] for f in self.entry["failure_outcomes"]}
+        self.assertIn("already_held", outcomes)
+
+    def test_the_analysis_id_comes_from_the_caller(self) -> None:
+        names = {i["name"] for i in self.entry["inputs"]}
+        self.assertIn("analysis_id", names)
+
+
+if __name__ == "__main__":
+    unittest.main()

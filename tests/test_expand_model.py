@@ -7,7 +7,7 @@ What used to be an agent is a function here, so the assertions below are of a ki
 not offer — the same input yields the same tree, byte for byte, every run.
 
 The input is `domain-modeler`'s own worked example rather than a fixture. Two reasons. The example
-is already held to `domain-model/3` by C02 in `check_component_prose.py`, so it cannot drift out of
+is already held to `domain-model/4` by C02 in `check_component_prose.py`, so it cannot drift out of
 conformance without another check firing first; and this repository keeps no fixtures per
 `docs/adr/0019-the-repository-keeps-no-fixtures.md`, so a tree invented here would be one.
 
@@ -136,13 +136,13 @@ class TheContractAtEachEnd(Run):
         """The boundary promotion guards: the four fields only judgment supplies are absent."""
         for path in self.objects():
             with self.subTest(object=path.name):
-                document = dict(frontmatter(path), contract_version="knowledge-object/4")
+                document = dict(frontmatter(path), contract_version="knowledge-object/5")
                 self.assertNotEqual([], list(self.base.iter_errors(document)))
 
     def test_the_base_refuses_the_enrichment_fields_of_every_object(self) -> None:
         """Every staged object is short of the same three, whatever else it is short of."""
         for path in self.objects():
-            document = dict(frontmatter(path), contract_version="knowledge-object/4")
+            document = dict(frontmatter(path), contract_version="knowledge-object/5")
             missing = {
                 str(error).split("'")[1]
                 for error in self.base.iter_errors(document)
@@ -166,7 +166,7 @@ class TheContractAtEachEnd(Run):
         self.assertEqual([], list(self.staged.iter_errors(data)))
         missing = {
             str(error).split("'")[1]
-            for error in self.base.iter_errors(dict(data, contract_version="knowledge-object/4"))
+            for error in self.base.iter_errors(dict(data, contract_version="knowledge-object/5"))
             if "is a required property" in str(error)
         }
         self.assertIn("max_length", missing)
@@ -261,10 +261,10 @@ class ItIsDeterministic(Run):
 
 class ItRefusesRatherThanGuessing(Run):
     def test_a_model_of_another_version_is_refused(self) -> None:
-        model = dict(self.model, contract_version="domain-model/2")
+        model = dict(self.model, contract_version="domain-model/3")
         _plan, _root, result = self.expand(model)
         self.assertEqual(1, result.returncode)
-        self.assertIn("domain-model/3", result.stderr)
+        self.assertIn("domain-model/4", result.stderr)
 
     def test_a_blocked_model_ends_the_run(self) -> None:
         model = dict(self.model, state="blocked", blocking_reason="the request names no domain")
@@ -578,7 +578,7 @@ class Promotion(Run):
         for relative, text in before.items():
             with self.subTest(object=relative.name):
                 self.assertEqual(
-                    text.replace("staged-knowledge-object/1", "knowledge-object/4", 1),
+                    text.replace("staged-knowledge-object/2", "knowledge-object/5", 1),
                     (knowledge / relative).read_text(),
                 )
 
@@ -685,7 +685,7 @@ class TheGapFieldCheck(Run):
     def test_a_rule_short_of_both_is_still_refused_without_a_gap(self) -> None:
         """R7, restored: the gap alternation had overwritten it, and nothing noticed until now."""
         rule = {
-            "contract_version": "knowledge-object/4", "id": "ko.rule.sales.x", "type": "rule",
+            "contract_version": "knowledge-object/5", "id": "ko.rule.sales.x", "type": "rule",
             "title": "X", "description": "d", "question": "q?", "boundary": "ko.boundary.sales",
             "ddd": "invariant", "origin": "stated", "statement": "A MUST b.",
             "generated": {"by": "a", "at": "2026-08-01T09:00:00Z"}, "out_of_scope": ["y"],
@@ -699,6 +699,190 @@ class TheGapFieldCheck(Run):
         holder = Path(tempfile.mkdtemp())
         (holder / "empty").mkdir()
         result = self.check(holder / "empty")
+        self.assertEqual(2, result.returncode)
+        self.assertIn("cannot run", result.stderr)
+
+
+
+
+class TheOneTypeThatCarriesNoDdd(Run):
+    """A `lifecycle`, which the worked example does not hold — and that absence hid a live defect.
+
+    The ontology maps a state machine to the node type itself rather than to a `ddd` value beside
+    it, so `knowledge-object` rejects `ddd` on a lifecycle. `knowledge-intake-plan` required one of
+    every classified entry until `/5`, which meant a classification had to invent a value the
+    boundary would then refuse — the reference run recorded exactly that, `ddd: "lifecycle"`, in the
+    producer's own notes as a conflict it could not resolve.
+
+    Nothing here caught it because no test model held a lifecycle. This one does.
+    """
+
+    def with_lifecycle(self) -> dict:
+        model = json.loads(json.dumps(self.model))
+        model["lifecycles"] = [{
+            "id": "dm.lifecycle.sales.proposal", "subject": "Proposal", "context": "Sales",
+            "states": ["draft", "issued"], "initial": "draft",
+            "transitions": [{"from": "draft", "trigger": "issue", "to": "issued"}],
+            "origin": "stated",
+        }]
+        return model
+
+    def test_the_entry_carries_no_ddd(self) -> None:
+        plan, _root, _ = self.expand(self.with_lifecycle())
+        entry = next(e for e in plan["entries"] if e.get("node_type") == "lifecycle")
+        self.assertNotIn("ddd", entry)
+
+    def test_the_plan_conforms_with_a_lifecycle_in_it(self) -> None:
+        plan, _root, _ = self.expand(self.with_lifecycle())
+        self.assertEqual([], list(self.plan_contract.iter_errors(plan)))
+
+    def test_the_object_conforms_and_carries_no_ddd(self) -> None:
+        _plan, root, _ = self.expand(self.with_lifecycle())
+        data = frontmatter(root / "lifecycle" / "sales" / "proposal.md")
+        self.assertNotIn("ddd", data)
+        self.assertEqual([], list(self.staged.iter_errors(data)))
+
+    def test_every_other_type_still_requires_one(self) -> None:
+        """The conditional narrows to one node type and leaves the rest as they were."""
+        plan, _root, _ = self.expand(self.with_lifecycle())
+        for entry in plan["entries"]:
+            if entry["outcome"] == "classified" and entry["node_type"] != "lifecycle":
+                with self.subTest(construct=entry["construct"]):
+                    self.assertIn("ddd", entry)
+
+    def test_its_subject_and_states_survive_the_expansion(self) -> None:
+        _plan, root, _ = self.expand(self.with_lifecycle())
+        data = frontmatter(root / "lifecycle" / "sales" / "proposal.md")
+        self.assertEqual("ko.definition.sales.proposal", data["subject"])
+        self.assertEqual(["draft", "issued"], data["states"])
+        self.assertIn("rejections", {gap["field"] for gap in data["gaps"]},
+                      "totality is required and the model states no rejection")
+
+
+
+
+class TheMaterializer(Run):
+    """The derived files six shipped documents told a consumer never to hand-edit, and nothing wrote.
+
+    A rule about a file that does not exist is a rule a reader cannot follow. `knowledge-graph/2` had
+    no producer either, so a contract sat in the distribution describing an artifact nobody could
+    make. Both are closed here.
+
+    Everything asserted below is a property of a derivation rather than of a judgement: the graph is
+    the objects' declared relationships and nothing inferred, the ordering is fixed so two runs
+    agree byte for byte, and a defect is reported rather than repaired.
+    """
+
+    MATERIALIZER = SHIPPED_ROOT / "bin" / "materialize.py"
+    PROMOTER = SHIPPED_ROOT / "bin" / "promote_staged.py"
+
+    def promoted_base(self, model: dict | None = None) -> Path:
+        """A promoted knowledge base, which is what this reads."""
+        _plan, staging, _ = self.expand(model or self.complete_model())
+        for path in sorted(staging.rglob("*.md")):
+            head, body = path.read_text().split("\n---\n", 1)
+            data = yaml.safe_load(head[4:])
+            data["question"] = f"What is {data['title']}?"
+            data["description"] = f"{data['title']}."
+            data["out_of_scope"] = ["What another object answers."]
+            data.pop("gaps", None)
+            path.write_text("---\n" + yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+                            + "---\n" + body)
+        knowledge = staging.parent / "knowledge"
+        subprocess.run([sys.executable, "-B", str(self.PROMOTER), str(staging), str(knowledge)],
+                       capture_output=True, text=True, check=True)
+        return knowledge
+
+    def complete_model(self) -> dict:
+        model = json.loads(json.dumps(self.model))
+        model["definitions"][0]["attributes"][0]["max_length"] = 32
+        model["definitions"][0]["attributes"][3]["binding"] = "by-identity"
+        model["definitions"][1]["attributes"][0]["max_length"] = 120
+        model["rules"][0]["expression"] = "issued_at + validity < now"
+        return model
+
+    def materialize(self, root: Path, *flags: str):
+        return subprocess.run(
+            [sys.executable, "-B", str(self.MATERIALIZER), str(root), *flags],
+            capture_output=True, text=True)
+
+    def test_it_writes_the_four_derived_files(self) -> None:
+        root = self.promoted_base()
+        result = self.materialize(root)
+        self.assertEqual(0, result.returncode, result.stdout)
+        for name in ("graph.json", "index.md", "glossary.md", "context-map.md"):
+            with self.subTest(file=name):
+                self.assertTrue((root / name).is_file())
+
+    def test_the_graph_conforms_to_its_contract(self) -> None:
+        root = self.promoted_base()
+        self.materialize(root)
+        contract = validator("knowledge-graph.json")
+        self.assertEqual([], list(contract.iter_errors(json.loads((root / "graph.json").read_text()))))
+
+    def test_every_edge_is_declared_and_none_inferred(self) -> None:
+        """A relationship stated only in prose is not an edge: two readings give two graphs."""
+        root = self.promoted_base()
+        self.materialize(root)
+        graph = json.loads((root / "graph.json").read_text())
+        for edge in graph["edges"]:
+            with self.subTest(edge=edge["locator"]):
+                self.assertIn(edge["kind"], graph["edge_kinds"])
+                source = next(p for p in root.rglob("*.md")
+                              if p.name not in ("index.md", "glossary.md", "context-map.md")
+                              and frontmatter(p).get("id") == edge["source"])
+                self.assertIn(edge["target"], source.read_text())
+
+    def test_two_runs_agree_byte_for_byte(self) -> None:
+        root = self.promoted_base()
+        self.materialize(root)
+        first = {n: (root / n).read_text() for n in ("graph.json", "index.md", "glossary.md")}
+        self.materialize(root)
+        self.assertEqual(first, {n: (root / n).read_text() for n in first})
+
+    def test_check_reports_a_stale_derived_file_and_writes_nothing(self) -> None:
+        root = self.promoted_base()
+        self.materialize(root)
+        (root / "index.md").write_text("# Edited by hand\n")
+        result = self.materialize(root, "--check")
+        self.assertEqual(1, result.returncode)
+        self.assertIn("index.md", result.stdout)
+        self.assertEqual("# Edited by hand\n", (root / "index.md").read_text())
+
+    def test_an_unresolvable_edge_is_reported_and_not_repaired(self) -> None:
+        root = self.promoted_base()
+        target = root / "definition" / "sales" / "proposal.md"
+        head, body = target.read_text().split("\n---\n", 1)
+        data = yaml.safe_load(head[4:])
+        data["depends_on"] = ["ko.definition.sales.nobody"]
+        target.write_text("---\n" + yaml.safe_dump(data, sort_keys=False) + "---\n" + body)
+        result = self.materialize(root)
+        self.assertEqual(1, result.returncode)
+        self.assertIn("which the base does not hold", result.stdout)
+        self.assertTrue((root / "graph.json").is_file(),
+                        "the graph is still written, so a reader sees the shape the defect sits in")
+        self.assertIn("ko.definition.sales.nobody", (root / "definition" / "sales" / "proposal.md").read_text())
+
+    def test_the_glossary_is_the_set_of_definitions(self) -> None:
+        """The ubiquitous language is where the ontology says it is, not a separate list."""
+        root = self.promoted_base()
+        self.materialize(root)
+        glossary = (root / "glossary.md").read_text()
+        self.assertIn("Proposal", glossary)
+        self.assertIn("Customer", glossary)
+        self.assertNotIn("Proposal expiration", glossary, "a rule is not a term")
+
+    def test_a_derived_file_is_never_read_back_as_an_object(self) -> None:
+        root = self.promoted_base()
+        self.materialize(root)
+        self.materialize(root)
+        graph = json.loads((root / "graph.json").read_text())
+        self.assertFalse([n for n in graph["nodes"] if "index" in n["id"] or "glossary" in n["id"]])
+
+    def test_an_empty_base_cannot_run(self) -> None:
+        holder = Path(tempfile.mkdtemp())
+        (holder / "knowledge").mkdir()
+        result = self.materialize(holder / "knowledge")
         self.assertEqual(2, result.returncode)
         self.assertIn("cannot run", result.stderr)
 

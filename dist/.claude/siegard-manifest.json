@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/2",
-  "source_revision": "sha256:351675c0925637428a5a53d956874d25d61538a148028ddebcab44f1e38dea1c",
+  "source_revision": "sha256:be787bbddb6bac23414fcf9242fa9a8a5253ea667b0a7cbf547adddd1da2b551",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -11,22 +11,22 @@
     {
       "path": "agents/domain-analyst.md",
       "source": "src/claude/agents/domain-analyst.md",
-      "digest": "sha256:e287dce00fad93579172cab5a0505ce3a8724bc780175681e6713076abccecef"
+      "digest": "sha256:05e800321195ca95d709f3108697cdaa2a6e16d4e0966cae34855d1acdf0b798"
     },
     {
       "path": "agents/domain-modeler.md",
       "source": "src/claude/agents/domain-modeler.md",
-      "digest": "sha256:73691dac957c1f4ab4ee2120cc6ad3e0e2b808dbeea38bb275dfde57b0c4231c"
+      "digest": "sha256:5630541c2e23b2955b8a2fc03e62ddb88d386e04f0ab14fc18d729e2593caeef"
     },
     {
       "path": "agents/impact-analyst.md",
       "source": "src/claude/agents/impact-analyst.md",
-      "digest": "sha256:302373db14347b5cd48b9b51c71cc0f1a110da42117672c7ae44e53d58c44434"
+      "digest": "sha256:3add92e27920fbbf6f6598a048d86366ccf6d549a47b06db40da06b53bdf80e7"
     },
     {
       "path": "agents/knowledge-author.md",
       "source": "src/claude/agents/knowledge-author.md",
-      "digest": "sha256:44a6bd19a167d7e3a8bc97ee1e5a9b2122876b42f9c35a45998074506d7f79bd"
+      "digest": "sha256:85e3123c3739839e2004e0e5dfc1885f21e842df79f32ce1571a758c65bad2c2"
     },
     {
       "path": "agents/knowledge-enricher.md",
@@ -46,7 +46,7 @@
     {
       "path": "bin/expand_model.py",
       "source": "src/claude/bin/expand_model.py",
-      "digest": "sha256:a31f21bf671e4936e2c77bb1e942b623acd1474d43edb2866b30eaf2f3f32d3a"
+      "digest": "sha256:05e14b9e5fdad1c341590c3d20a918018c8f6594c322f54993c86ca57f9f6887"
     },
     {
       "path": "bin/field_ownership.py",
@@ -54,9 +54,14 @@
       "digest": "sha256:f03df6913be74678a4933bba52accad9309c48c1d9165607d00212d7695dac24"
     },
     {
+      "path": "bin/materialize.py",
+      "source": "src/claude/bin/materialize.py",
+      "digest": "sha256:0554f186d39fd947317ebfa74bb32e2f5b2f2374168254a349290c9eb35d5cac"
+    },
+    {
       "path": "bin/promote_staged.py",
       "source": "src/claude/bin/promote_staged.py",
-      "digest": "sha256:0469974e9beee47f6a287b8b896a3923e8cecfea44ee77acf7624394d862122e"
+      "digest": "sha256:413abd25a87c80e8d1022724e3ce3b8a37cb35b21932f13631efbb97ed982c0e"
     },
     {
       "path": "schemas/distribution-manifest.json",
@@ -66,17 +71,17 @@
     {
       "path": "schemas/domain-model.json",
       "source": "src/claude/schemas/domain-model.json",
-      "digest": "sha256:16d6ebfed825b0c62d7dfee8df2a10a51b0b57a63336213354ea486c2fb1d3a9"
+      "digest": "sha256:3ed129cf7c080b00fbb16ecea7b93c6c141fcd5e8861eace812eca196062050c"
     },
     {
       "path": "schemas/impact-analysis.json",
       "source": "src/claude/schemas/impact-analysis.json",
-      "digest": "sha256:ff4e5b71a6e131320517370212732f71eb94883e2c808389e6bd3f40d5b92488"
+      "digest": "sha256:e893e146285ea79246fcb7b3c2e4f3453be867d6796c357d197a893d38aca9b4"
     },
     {
       "path": "schemas/knowledge-authoring-result.json",
       "source": "src/claude/schemas/knowledge-authoring-result.json",
-      "digest": "sha256:e5071f6023cd47084a1049e343327a28d062f1ffaa5f2823bf086533b1582523"
+      "digest": "sha256:f427ec60f41cdf7637530e6124df37f0df6de2d73d14a2ae45a5bcb6bb1b2f4b"
     },
     {
       "path": "schemas/knowledge-decision.json",
@@ -96,32 +101,37 @@
     {
       "path": "schemas/knowledge-intake-plan.json",
       "source": "src/claude/schemas/knowledge-intake-plan.json",
-      "digest": "sha256:ec93a262243f0048c7ecb1eeb22c7fccc41b8adab446274b573f0f9c39b3a230"
+      "digest": "sha256:32786d756d72271fe2538825b3d71f7d6c15b73ad6d02fd54db60161263906f0"
     },
     {
       "path": "schemas/knowledge-object.json",
       "source": "src/claude/schemas/knowledge-object.json",
-      "digest": "sha256:b29732683f544b6a051d9fa87d5986e908d86560fe0f78424ac7d66330b943fd"
+      "digest": "sha256:0307ecfab25ab7e31f101b9c07925eb7a5c3a046705605a106784f62b46cd635"
+    },
+    {
+      "path": "schemas/knowledge-system.json",
+      "source": "src/claude/schemas/knowledge-system.json",
+      "digest": "sha256:a3a1f6c41539d21264423f11676eb6263e84520f57c94d45962213bd78b007aa"
     },
     {
       "path": "schemas/staged-knowledge-object.json",
       "source": "src/claude/schemas/staged-knowledge-object.json",
-      "digest": "sha256:3de943e5618ab668ac7f687c8bd338f5ff52b9a1bb42152d3ed13a867a2e561f"
+      "digest": "sha256:c63463c341106a9877bd0a4326a2ac5e4ca5b82185313622621bd31a57f8c755"
     },
     {
       "path": "schemas/validation-evidence.json",
       "source": "src/claude/schemas/validation-evidence.json",
-      "digest": "sha256:c499cd013943f9f25435ff5ab739b7a17ad0aaef980a5f3deb20936e9dfe199c"
+      "digest": "sha256:9ae5c4e116dc4e33100d25fcb808406863bad14619e901678fefeb08bcf919b6"
     },
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:b5af14e9fd8fd8b432a68d25a6968c15a3f4f564218056dbc5031bf2a2691f09"
+      "digest": "sha256:39d78b1a58ca66981d34dea1177beb2aacff2aacc53353b15397bb883873e1a3"
     },
     {
       "path": "skills/ingest-domain/SKILL.md",
       "source": "src/claude/skills/ingest-domain/SKILL.md",
-      "digest": "sha256:47c3441eaa6179725b6a02641e2e61a771f5abf7e4630a1dd254d9c051b95f79"
+      "digest": "sha256:a17e7d8a15eac13aeedc94ecdd61fcfc059c4a9a63e463133486a64a4f019375"
     },
     {
       "path": "skills/model-domain/SKILL.md",
@@ -136,42 +146,42 @@
     {
       "path": "templates/knowledge-object-boundary.md",
       "source": "src/claude/templates/knowledge-object-boundary.md",
-      "digest": "sha256:a5a1d323b0ca7ba5ddf748f4fea7c0d6fd508ce7bff72fe78e2e1052f55446ec"
+      "digest": "sha256:2a651cdf0819f1e6bf090bd0d8a476d5742b0104d0649e1f635d8f0d63d34abc"
     },
     {
       "path": "templates/knowledge-object-definition.md",
       "source": "src/claude/templates/knowledge-object-definition.md",
-      "digest": "sha256:b8f7860cfda23725a6b75b70f363ed37d645f94fc85f36fe639597901f056705"
+      "digest": "sha256:815b9e0d89098295103f789a5782046979c6af30c9aa6efa21bb4ad04dac4495"
     },
     {
       "path": "templates/knowledge-object-interface.md",
       "source": "src/claude/templates/knowledge-object-interface.md",
-      "digest": "sha256:35ea4f8575a5e4d4e30a5093a6bd3e1cbdf9c014e82da058a299d7b6369d073a"
+      "digest": "sha256:c367a88edfef2db30e7b335bdad889233ed41872a38d7760709d5ce250a0d0cf"
     },
     {
       "path": "templates/knowledge-object-lifecycle.md",
       "source": "src/claude/templates/knowledge-object-lifecycle.md",
-      "digest": "sha256:33ac9e18a1017926ff1dd6da744f95a43c2e085236eb01172dd2c95c72bdbb81"
+      "digest": "sha256:741a18d27a00b03911a353f230647337977005a74c8aa3e3dd4858eb8da420f9"
     },
     {
       "path": "templates/knowledge-object-process.md",
       "source": "src/claude/templates/knowledge-object-process.md",
-      "digest": "sha256:95c9a11fba913a836be2f1f099462624598b2bdf853c97afe186dfc510876fe8"
+      "digest": "sha256:605423ebd723d40bef0ca5d0e02af1e81f9c933d7d944213c9c014d7012e4c3b"
     },
     {
       "path": "templates/knowledge-object-rule.md",
       "source": "src/claude/templates/knowledge-object-rule.md",
-      "digest": "sha256:12d51db053bd4da0511f1271882e681c17baeec233545c92dbbc6069fdf25bd5"
+      "digest": "sha256:98c330d31a74ac314a88aca5027b68b65728b47293bda9d1e1286d2b7c2c50cb"
     },
     {
       "path": "templates/knowledge-system.md",
       "source": "src/claude/templates/knowledge-system.md",
-      "digest": "sha256:ce924b2f258a1ce49b97c0f5030bc85bb5503271f380cca6ebec9dc057378a0c"
+      "digest": "sha256:fd94977582093cbd2df19fa9f44a2f26af1a421d6b1d7d54acc10dcd00f8af07"
     },
     {
       "path": "templates/validation-evidence.md",
       "source": "src/claude/templates/validation-evidence.md",
-      "digest": "sha256:7456e68c2079ecdda7c82cd3fbd927e638d2761b4737dc5bf978fe96daecaea4"
+      "digest": "sha256:d9cb0ed5458f7304b012f820cc54a8bf1fbe93ff90740a4e399c0a3b35b0bc68"
     }
   ],
   "schemas": [
@@ -180,15 +190,15 @@
       "path": "schemas/distribution-manifest.json"
     },
     {
-      "contract_version": "domain-model/3",
+      "contract_version": "domain-model/4",
       "path": "schemas/domain-model.json"
     },
     {
-      "contract_version": "impact-analysis/3",
+      "contract_version": "impact-analysis/4",
       "path": "schemas/impact-analysis.json"
     },
     {
-      "contract_version": "knowledge-authoring-result/1",
+      "contract_version": "knowledge-authoring-result/2",
       "path": "schemas/knowledge-authoring-result.json"
     },
     {
@@ -204,19 +214,23 @@
       "path": "schemas/knowledge-graph.json"
     },
     {
-      "contract_version": "knowledge-intake-plan/4",
+      "contract_version": "knowledge-intake-plan/6",
       "path": "schemas/knowledge-intake-plan.json"
     },
     {
-      "contract_version": "knowledge-object/4",
+      "contract_version": "knowledge-object/5",
       "path": "schemas/knowledge-object.json"
     },
     {
-      "contract_version": "staged-knowledge-object/1",
+      "contract_version": "knowledge-system/1",
+      "path": "schemas/knowledge-system.json"
+    },
+    {
+      "contract_version": "staged-knowledge-object/2",
       "path": "schemas/staged-knowledge-object.json"
     },
     {
-      "contract_version": "validation-evidence/2",
+      "contract_version": "validation-evidence/3",
       "path": "schemas/validation-evidence.json"
     }
   ],
@@ -232,7 +246,7 @@
           {
             "name": "domain_model",
             "artifact": "domain-model",
-            "contract": "domain-model/3",
+            "contract": "domain-model/4",
             "required": true
           },
           {
@@ -364,7 +378,7 @@
           {
             "name": "domain_model",
             "artifact": "domain-model",
-            "contract": "domain-model/3",
+            "contract": "domain-model/4",
             "required": true
           },
           {
@@ -387,11 +401,11 @@
         "outputs": [
           {
             "artifact": "knowledge-intake-plan",
-            "contract": "knowledge-intake-plan/4"
+            "contract": "knowledge-intake-plan/6"
           },
           {
             "artifact": "staged-knowledge-object",
-            "contract": "staged-knowledge-object/1"
+            "contract": "staged-knowledge-object/2"
           }
         ],
         "consumed_artifacts": [
@@ -416,7 +430,7 @@
           "note": "It expands into any of the six, so the whole vocabulary is in scope. Unlike the agent it replaces, it selects nothing: the node type follows from the construct's kind by the ontology's own table."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/3 before anything is written, and a model declaring itself blocked ends the run",
+          "the domain model is validated against domain-model/4 before anything is written, and a model declaring itself blocked ends the run",
           "every construct in the model takes exactly one entry, whose outcome is classified, unmapped, or refused, so what happened to each is answerable in one place and the count checks against the input",
           "each identifier is computed from the node type and the boundary by the ontology's arithmetic, never allocated, so the same model yields the same identifiers on every run",
           "a fact the node type requires and the model does not state becomes a gap on the object, named with what the domain would have to say, and the object is still written",
@@ -460,6 +474,85 @@
       }
     },
     {
+      "name": "materialize",
+      "class": "script",
+      "status": "active",
+      "path": "bin/materialize.py",
+      "declaration": {
+        "objective": "Derive the knowledge graph and the three projections from the objects, or verify that the ones on disk are what the objects imply. Choose it after promotion, and again whenever the base changes. Six shipped documents told a consumer these files exist and must never be hand-edited, and nothing produced any of them. Not for authoring, not for validating an object against its contract, and not for repairing a defect it finds.",
+        "inputs": [
+          {
+            "name": "knowledge_root",
+            "required": true
+          },
+          {
+            "name": "check",
+            "required": false,
+            "default": "absent, and the derived files are written; with it they are compared and a stale one is reported without being replaced"
+          }
+        ],
+        "outputs": [
+          {
+            "artifact": "knowledge-graph",
+            "contract": "knowledge-graph/2"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "knowledge-object",
+            "access": "read"
+          }
+        ],
+        "produced_artifacts": [
+          "knowledge-graph"
+        ],
+        "required_context": {
+          "node_types": [
+            "boundary",
+            "definition",
+            "rule",
+            "lifecycle",
+            "interface",
+            "process"
+          ],
+          "note": "Every node type becomes a graph node, so all six are in scope. It reads their declared references and none of their prose."
+        },
+        "deterministic_behavior": [
+          "the graph is the objects' declared relationships and nothing inferred: a relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs",
+          "nodes and edges are ordered so identical input produces byte-identical output, and a derived file that reordered between two runs would show a diff nobody caused",
+          "the edge vocabulary is the closed table the ontology declares, with each kind's cardinality and whether expansion traverses it",
+          "the projections are limited to an index, a glossary and a context map, and the glossary is the set of definitions rather than a list beside them",
+          "an edge naming an id the base does not hold is reported as a defect together with orphans, and the graph is still written so a reader sees the shape the defect sits in",
+          "a derived file is never read back as an object, so a second run does not grow the graph",
+          "it repairs nothing, and under --check it writes nothing at all"
+        ],
+        "judgment": [],
+        "assertions": [
+          {
+            "output": "knowledge-graph",
+            "bound": false
+          }
+        ],
+        "grant": {
+          "note": "No tool grant: it is a script the caller runs. It reads the knowledge root it is given and writes four derived files into it, and reaches nothing else."
+        },
+        "failure_outcomes": [
+          {
+            "outcome": "cannot_run",
+            "reason": "the root does not exist, holds no knowledge object, or holds a file with no frontmatter fence; exit 2, distinguished from a check that ran and found a defect"
+          },
+          {
+            "outcome": "unresolved_reference",
+            "reason": "an edge names an id the base does not hold, or an object is referenced by nothing and references nothing; reported per edge with where in the object it sits, and never repaired"
+          },
+          {
+            "outcome": "stale_derived_file",
+            "reason": "under --check, a derived file on disk is not what the objects imply \u2014 it was hand-edited or the objects moved under it; reported and left as found, because regenerating during a check would repair what the check exists to detect"
+          }
+        ]
+      }
+    },
+    {
       "name": "promote-staged",
       "class": "script",
       "status": "active",
@@ -484,7 +577,7 @@
         "outputs": [
           {
             "artifact": "knowledge-object",
-            "contract": "knowledge-object/4"
+            "contract": "knowledge-object/5"
           }
         ],
         "consumed_artifacts": [
@@ -508,7 +601,7 @@
           "note": "It promotes whatever the expansion staged, so any of the six may pass through it. It reads none of them for meaning: what it checks is conformance."
         },
         "deterministic_behavior": [
-          "each object is validated against knowledge-object/4 with its version line substituted, and the substitution is textual so a promotion diff shows a moved file rather than a rewritten one",
+          "each object is validated against knowledge-object/5 with its version line substituted, and the substitution is textual so a promotion diff shows a moved file rather than a rewritten one",
           "nothing is written while anything is refused: a partial promotion leaves a base holding some of a run's objects and a staging tree holding the rest, with the edges between them resolving to whichever half a reader looked at",
           "an object carrying an open `kind: domain` gap is refused unless the caller asks otherwise, and the request is reported rather than defaulted",
           "the staged file is removed once its promoted copy is written, and an emptied directory with it",
@@ -551,7 +644,7 @@
           {
             "name": "domain_model",
             "artifact": "domain-model",
-            "contract": "domain-model/3",
+            "contract": "domain-model/4",
             "required": true
           },
           {
@@ -567,6 +660,10 @@
             "required": true
           },
           {
+            "name": "analysis_id",
+            "required": true
+          },
+          {
             "name": "system_defaults",
             "required": false,
             "default": "absent, and the ingestion stops rather than choosing a timezone, a currency, an identity strategy, or a body-line ceiling the framework has no basis to choose"
@@ -579,14 +676,18 @@
         "outputs": [
           {
             "artifact": "knowledge-object",
-            "contract": "knowledge-object/4"
+            "contract": "knowledge-object/5"
           },
           {
             "artifact": "validation-evidence",
-            "contract": "validation-evidence/2"
+            "contract": "validation-evidence/3"
           }
         ],
         "consumed_artifacts": [
+          {
+            "artifact": "impact-analysis",
+            "access": "read"
+          },
           {
             "artifact": "knowledge-intake-plan",
             "access": "read"
@@ -617,7 +718,8 @@
           "note": "Ingestion authors into any of the six and orders the authoring by node type, so the whole vocabulary is in scope as a sequence rather than as a selection."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/3 before anything is expanded, and a model declaring itself blocked ends the run with nothing written",
+          "the domain model is validated against domain-model/4 before anything is expanded, and a model declaring itself blocked ends the run with nothing written",
+          "an impact analysis runs for every request before anything is expanded, including the first against an empty base \u2014 a `create` over nothing implicates nothing that exists and is a full answer rather than a degenerate one \u2014 and its verdict and implicated set are reported before the expansion writes",
           "the expansion is a script rather than a delegation: the mapping is a closed table and the identifiers are arithmetic, so two runs over one model produce the same tree byte for byte",
           "nothing is written under the knowledge root until promotion; the expansion writes into the staging root and a staged object declares a different contract from the base's",
           "the run stops after expansion for a person to read the diff, and running past that turns every unanswered question into an object nobody looked at",
@@ -626,8 +728,7 @@
           "each enrichment result is read at the boundary to tell an enriched object from a blocked one, and a blocked one is recorded rather than retried",
           "a finding an enricher reports is relayed to the reviewer and never acted on here: the pass that could have edited the design has already finished, and this one may not",
           "the enrichment check runs before promotion, and it is the only thing enforcing which fields the enrichment may touch \u2014 a tool grant names tools, not the keys of a file",
-          "every gap is checked against what its node type actually requires before promotion: a gap naming a field the type does not demand excuses the object from nothing, and the schema cannot catch it because the requirement it excuses is a conditional elsewhere in the same document",
-          "promotion validates every object against knowledge-object/4 and writes nothing while any is refused; an object with an open domain gap is refused unless the caller asks otherwise, and the request is reported rather than defaulted",
+          "promotion validates every object against knowledge-object/5 and writes nothing while any is refused; an object with an open domain gap is refused unless the caller asks otherwise, and the request is reported rather than defaulted",
           "the timestamp, the producer identity, and every identifier come from the caller and are never minted",
           "the checks a per-file schema cannot express are reported as owed rather than run: the distribution ships nothing that performs them, and an improvised one would differ between two runs over the same base"
         ],
@@ -653,6 +754,10 @@
           {
             "outcome": "model_blocked",
             "reason": "the domain model declares itself blocked, so there is no design to expand; reported with its reason and nothing written"
+          },
+          {
+            "outcome": "already_held",
+            "reason": "the impact analysis returns `none`: the base already holds what the model describes. Reported and the run stops, because expanding would restage objects the base already answers and the diff a reviewer reads would be noise around nothing"
           },
           {
             "outcome": "construct_refused",
@@ -699,7 +804,7 @@
         "outputs": [
           {
             "artifact": "domain-model",
-            "contract": "domain-model/3"
+            "contract": "domain-model/4"
           }
         ],
         "produced_artifacts": [
@@ -709,7 +814,7 @@
           "note": "No node type is in scope. This procedure produces a design in DDD's vocabulary; the ontology's six types enter when the model is classified, which is a different entry point."
         },
         "deterministic_behavior": [
-          "the model is validated against domain-model/3 at the boundary and rejected rather than repaired",
+          "the model is validated against domain-model/4 at the boundary and rejected rather than repaired",
           "a model whose state is blocked ends the run with the reason reported",
           "the model id and the instant come from the caller and are never minted",
           "every element whose origin is modeled is reported with its rationale, and every open question with what it blocks",
@@ -755,7 +860,7 @@
           {
             "name": "domain_model",
             "artifact": "domain-model",
-            "contract": "domain-model/3",
+            "contract": "domain-model/4",
             "required": true
           },
           {
@@ -775,7 +880,7 @@
         "outputs": [
           {
             "artifact": "knowledge-intake-plan",
-            "contract": "knowledge-intake-plan/4"
+            "contract": "knowledge-intake-plan/6"
           }
         ],
         "consumed_artifacts": [
@@ -803,8 +908,8 @@
           "note": "Classification may land a construct in any of the six, so narrowing this would narrow what may be decided. It is the same reason root-selector names all six, arrived at from the opposite direction: that capability chooses among existing objects and this one decides what an object will be."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/3 at the boundary before it is read",
-          "the result is validated against knowledge-intake-plan/4 at the boundary before anything consumes it",
+          "the domain model is validated against domain-model/4 at the boundary before it is read",
+          "the result is validated against knowledge-intake-plan/6 at the boundary before anything consumes it",
           "the state is one of the closed set classified, blocked, and no other value is accepted",
           "every proposed identifier is computed from the node type and the boundary by the ontology's arithmetic rather than allocated",
           "entries are sorted by proposed identifier, so two classifications of one model compare directly",
@@ -875,7 +980,7 @@
         "outputs": [
           {
             "artifact": "domain-model",
-            "contract": "domain-model/3"
+            "contract": "domain-model/4"
           }
         ],
         "produced_artifacts": [
@@ -886,7 +991,7 @@
         },
         "deterministic_behavior": [
           "the request is received as prose and its identifier as a value; nothing about it is inferred",
-          "the result is validated against domain-model/3 at the boundary before anything consumes it",
+          "the result is validated against domain-model/4 at the boundary before anything consumes it",
           "the state is one of the closed set modeled, blocked, and no other value is accepted",
           "every element declares origin as stated or modeled, and an element it decided carries the rationale that decided it",
           "the model id comes from the caller and is never minted",
@@ -939,7 +1044,7 @@
             "name": "domain_model",
             "artifact": "domain-model",
             "required": true,
-            "contract": "domain-model/3"
+            "contract": "domain-model/4"
           },
           {
             "name": "analysis_id",
@@ -953,7 +1058,7 @@
         "outputs": [
           {
             "artifact": "impact-analysis",
-            "contract": "impact-analysis/3"
+            "contract": "impact-analysis/4"
           }
         ],
         "consumed_artifacts": [
@@ -974,7 +1079,7 @@
           "note": "Classification reads what a change touches, not the whole ontology. A lifecycle, an interface, and a process are reached through the objects above rather than selected directly, so naming all six would narrow nothing."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/3 at the boundary before it is analysed, and a blocked model ends the run",
+          "the domain model is validated against domain-model/4 at the boundary before it is analysed, and a blocked model ends the run",
           "base_state records whether anything existed to implicate, observed rather than inferred",
           "over an empty base the verdict is create and every entry names a domain model element",
           "entries are sorted by identifier, so two analyses of one model compare directly"
@@ -1024,7 +1129,7 @@
           {
             "name": "knowledge_intake_plan",
             "artifact": "knowledge-intake-plan",
-            "contract": "knowledge-intake-plan/4",
+            "contract": "knowledge-intake-plan/6",
             "required": true
           },
           {
@@ -1047,7 +1152,7 @@
         "outputs": [
           {
             "artifact": "knowledge-authoring-result",
-            "contract": "knowledge-authoring-result/1"
+            "contract": "knowledge-authoring-result/2"
           }
         ],
         "produced_artifacts": [
@@ -1065,8 +1170,8 @@
           "note": "It may author any of the six, and it must read the neighbours a new object declares edges to, so the whole vocabulary is genuinely in scope."
         },
         "deterministic_behavior": [
-          "the result is validated against knowledge-authoring-result/1 at the boundary",
-          "the object is validated against knowledge-object/4, including the per-type required fields",
+          "the result is validated against knowledge-authoring-result/2 at the boundary",
+          "the object is validated against knowledge-object/5, including the per-type required fields",
           "the node type and the subject are read from the entry the classification names, never decided again",
           "the timestamp and producer identity come from the caller and are never minted",
           "a fact that would need two node types is reported as blocked rather than compressed into one, because refusing is available here and choosing would author a construct nobody described"
@@ -1132,7 +1237,7 @@
           {
             "name": "staged_object",
             "artifact": "staged-knowledge-object",
-            "contract": "staged-knowledge-object/1",
+            "contract": "staged-knowledge-object/2",
             "required": true
           },
           {

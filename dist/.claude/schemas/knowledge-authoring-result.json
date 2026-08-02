@@ -8,17 +8,22 @@
   "required": [
     "contract_version",
     "producer",
+    "consumer",
     "state",
     "request"
   ],
   "properties": {
     "contract_version": {
-      "const": "knowledge-authoring-result/1",
+      "const": "knowledge-authoring-result/2",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     },
     "producer": {
       "const": "knowledge-author",
       "description": "The agent this contract belongs to. A const, not a free string: a result claiming another producer is not an instance of this contract."
+    },
+    "consumer": {
+      "const": "ingest-domain",
+      "description": "Who reads it. The ingestion tells an authored entry from a blocked one by this record rather than by the filesystem, because a producer's own report is the only thing that distinguishes the two without guessing."
     },
     "state": {
       "enum": [

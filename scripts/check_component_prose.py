@@ -52,6 +52,14 @@ The rule fires on a component that instructs an executor and names no path. It d
 shipped script to have a caller: a library is imported rather than run, and demanding a citation for
 one would push components to cite files they do not invoke.
 
+**C05 — a shipped script declares the dependencies it imports, and guards each one.** Origin: the
+plugin manifest is a harness-owned vocabulary and closes its object, so there is nowhere in it to
+declare that an installed script needs PyYAML. A consumer therefore meets a missing dependency at
+the moment they run something, and what they meet decides whether they can act: `cannot run: PyYAML
+is not installed (pip install pyyaml)` is actionable and a `ModuleNotFoundError` traceback is not.
+Every shipped script already states its dependencies in a `Declared dependencies:` line, and C05 is
+what keeps that line true and keeps every third-party import behind a guard that names the install.
+
 Declared dependencies: jsonschema — C02 validates a worked example against its contract.
 
 Usage:  scripts/check_component_prose.py [--source DIR]
@@ -263,6 +271,51 @@ def check_named_scripts(source: Path, findings: list[str]) -> None:
             )
 
 
+# C05. The standard library needs no guard and no declaration; anything else does. Listed rather
+# than detected because "is this module third-party" is not decidable from the import alone, and a
+# wrong answer either way is worse than a name a maintainer adds when a dependency does.
+THIRD_PARTY = frozenset({"yaml", "jsonschema"})
+DEPENDENCY_NAME = {"yaml": "PyYAML", "jsonschema": "jsonschema"}
+DECLARED_LINE = re.compile(r"^Declared dependencies: (.+?)\.?$", re.MULTILINE)
+GUARDED = re.compile(r"except ImportError.*?cannot run: (\S+) is not installed \(pip install \S+\)", re.S)
+
+
+def check_shipped_dependencies(source: Path, findings: list[str]) -> None:
+    """C05, over every script the distribution installs."""
+    for path in sorted((source / "bin").glob("*.py")):
+        rel = path.relative_to(source).as_posix()
+        body = path.read_text()
+        imported = {
+            module for module in re.findall(r"^\s*(?:import|from)\s+([a-z_][a-z0-9_]*)", body, re.M)
+            if module in THIRD_PARTY
+        }
+        stated = DECLARED_LINE.search(body)
+        if not stated:
+            findings.append(
+                f"C05 {rel}: states no `Declared dependencies:` line. A consumer meets a missing "
+                f"dependency when they run this, and nothing installed says which ones it has"
+            )
+            continue
+        named = set()
+        if "none beyond the standard library" not in stated.group(1):
+            named = {n.strip() for n in stated.group(1).split(",") if n.strip()}
+        expected = {DEPENDENCY_NAME[m] for m in imported}
+        if named != expected:
+            findings.append(
+                f"C05 {rel}: declares {sorted(named) or 'none'} and imports "
+                f"{sorted(expected) or 'none'}. The line is what a consumer reads instead of the "
+                f"manifest, which is a harness vocabulary with nowhere to put this"
+            )
+        guarded = set(GUARDED.findall(body))
+        missing = expected - guarded
+        if missing:
+            findings.append(
+                f"C05 {rel}: imports {sorted(missing)} without a guard naming the install. A "
+                f"traceback tells a consumer that something broke; `cannot run: X is not installed "
+                f"(pip install x)` tells them what to do"
+            )
+
+
 def check_selectability(source: Path, findings: list[str]) -> None:
     """C03, over each agent's description — the whole of what a selector sees."""
     for path in sorted((source / "agents").glob("*.md")):
@@ -317,8 +370,9 @@ def main() -> int:
 
     check_selectability(source, findings)
     check_named_scripts(source, findings)
+    check_shipped_dependencies(source, findings)
 
-    print(f"component prose checked: {checked} agent(s)  rules: C01, C02, C03, C04")
+    print(f"component prose checked: {checked} agent(s)  rules: C01, C02, C03, C04, C05")
     if findings:
         print(f"FAILED: {len(findings)} violation(s)\n")
         for finding in findings:

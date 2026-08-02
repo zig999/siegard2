@@ -25,8 +25,9 @@ blocked entry discovered a step too late.
   what the base holds is current and binds. A fact that is not settled is not recorded — it is reported
   as a gap. Where a fact takes effect on a date or moves through states, that is a typed attribute or a
   `lifecycle` about the domain, not a label on the object.
-- **Do not hand-edit a derived file.** An index, a glossary, a context map, or a graph restates what the
-  objects already say. Change the objects.
+- **Do not hand-edit a derived file.** `index.md`, `glossary.md`, `context-map.md` and `graph.json`
+  restate what the objects already say, and `${CLAUDE_PLUGIN_ROOT}/bin/materialize.py` derives all four.
+  Change the objects and run it again.
 
 ## Where the rest lives
 

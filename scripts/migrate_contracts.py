@@ -438,6 +438,84 @@ def capability_declaration_2_to_3(doc: dict) -> dict:
     return migrated
 
 
+def knowledge_intake_plan_4_to_5(doc: dict) -> dict:
+    """Drop `ddd` from a lifecycle entry, which is the one node type that may not carry it.
+
+    `/5` makes `ddd` conditional on the node type. `lifecycle` is the type a state machine
+    *becomes* — the ontology maps the construct to the type itself rather than to a value beside
+    it — so `knowledge-object` rejects `ddd` on one, while `/4` required it of every classified
+    entry. A classification had to invent a value the boundary would then refuse, and the reference
+    run shows exactly that: `ddd: "lifecycle"`, recorded by the producer in its own notes as a
+    conflict it could not resolve.
+
+    The migration is a deletion, and it loses nothing: whatever a `/4` plan carried there was
+    invented to satisfy a requirement that should not have existed. Any other entry keeps its value.
+    """
+    migrated = dict(doc)
+    migrated["entries"] = [
+        {k: v for k, v in entry.items() if not (k == "ddd" and entry.get("node_type") == "lifecycle")}
+        for entry in doc.get("entries", [])
+    ]
+    migrated["contract_version"] = "knowledge-intake-plan/5"
+    return migrated
+
+
+def _stamp(version: str):
+    """A hop that adds nothing but the version, for a bump that only narrows what was never used."""
+    def hop(doc: dict) -> dict:
+        migrated = dict(doc)
+        migrated["contract_version"] = version
+        return migrated
+    return hop
+
+
+def _name_consumer(version: str, consumer):
+    """Add the consumer the artifact always had and never stated.
+
+    `.claude/rules/contracts.md` requires a named producer *and* a named consumer of every artifact
+    passed between capabilities. Only the producer was ever recorded, so a reader tracing an
+    artifact forward had to search the declaration set for whoever parsed it. The value is not
+    invented: it is who reads the artifact today, and a document that predates the field was read by
+    the same capability.
+    """
+    def hop(doc: dict) -> dict:
+        migrated = dict(doc)
+        migrated["consumer"] = list(consumer) if isinstance(consumer, (list, tuple)) else consumer
+        migrated["contract_version"] = version
+        return migrated
+    return hop
+
+
+def knowledge_object_4_to_5(doc: dict) -> dict:
+    """Refuse an object whose `sources` cite an artifact this framework produced.
+
+    `/5` closes `sources` to material — what a person supplied, or what already existed in the
+    repository — and refuses the `dm_`, `ki_`, `ia_` and `er_` identifiers this framework mints. The
+    reference run shows why: six objects cited the domain model as their source, which says the
+    domain stated something the analysis decided, and makes the base depend on an intermediate
+    artifact surviving forever.
+
+    Dropping the offending entry is the obvious migration and the wrong one. `sources` is what a
+    reviewer reads to tell a fact read out of an existing artifact from one the business stated, so
+    an object left with fewer sources than it was written from is an object making a weaker claim
+    than the one somebody checked. The material the object was actually read from is recoverable —
+    the model names the request and the request names its artifacts — so this refuses and says where
+    to look.
+    """
+    minted = re.compile(r"^(dm|ki|ia|er)_[0-9a-f]{8}$")
+    offending = [s.get("id") for s in doc.get("sources") or [] if minted.fullmatch(s.get("id") or "")]
+    if offending:
+        raise MigrationError(
+            f"{doc.get('id')!r} cites {', '.join(offending)} as source material, and each is an "
+            "artifact this framework produced rather than material anybody supplied. Re-source it "
+            "from the request that model answers: dropping the entry would leave the object "
+            "claiming less provenance than it was written from"
+        )
+    migrated = dict(doc)
+    migrated["contract_version"] = "knowledge-object/5"
+    return migrated
+
+
 # Keyed by (from, to). A key here is the claim that a document can cross that boundary; the
 # coverage check in check_contract_versions.py fails when a boundary exists and a key does not.
 MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
@@ -452,9 +530,17 @@ MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
     ("knowledge-object/1", "knowledge-object/2"): knowledge_object_1_to_2,
     ("knowledge-object/2", "knowledge-object/3"): knowledge_object_2_to_3,
     ("knowledge-object/3", "knowledge-object/4"): knowledge_object_3_to_4,
+    ("knowledge-object/4", "knowledge-object/5"): knowledge_object_4_to_5,
+    ("staged-knowledge-object/1", "staged-knowledge-object/2"): _stamp("staged-knowledge-object/2"),
+    ("domain-model/3", "domain-model/4"): _name_consumer("domain-model/4", ["expand-model", "impact-analyst"]),
+    ("knowledge-intake-plan/5", "knowledge-intake-plan/6"): _name_consumer("knowledge-intake-plan/6", "ingest-domain"),
+    ("impact-analysis/3", "impact-analysis/4"): _name_consumer("impact-analysis/4", "ingest-domain"),
+    ("knowledge-authoring-result/1", "knowledge-authoring-result/2"): _name_consumer("knowledge-authoring-result/2", "ingest-domain"),
+    ("validation-evidence/2", "validation-evidence/3"): _name_consumer("validation-evidence/3", "ingest-domain"),
     ("knowledge-intake-plan/1", "knowledge-intake-plan/2"): knowledge_intake_plan_1_to_2,
     ("knowledge-intake-plan/2", "knowledge-intake-plan/3"): knowledge_intake_plan_2_to_3,
     ("knowledge-intake-plan/3", "knowledge-intake-plan/4"): knowledge_intake_plan_3_to_4,
+    ("knowledge-intake-plan/4", "knowledge-intake-plan/5"): knowledge_intake_plan_4_to_5,
     ("knowledge-graph/1", "knowledge-graph/2"): knowledge_graph_1_to_2,
     ("knowledge-decision/1", "knowledge-decision/2"): knowledge_decision_1_to_2,
 }

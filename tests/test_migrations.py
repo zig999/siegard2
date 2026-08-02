@@ -90,6 +90,7 @@ class ImpactAnalysisHop(unittest.TestCase):
             "analysis_id": "ia_3f9c1b02",
             "request_id": "cr_7a2e4d10",
             "producer": "impact-analyst",
+            "consumer": "ingest-domain",
             "verdict": "create",
             "base_state": "empty",
             "implicated": [],
@@ -107,7 +108,7 @@ class ImpactAnalysisHop(unittest.TestCase):
             "driver": "dm.definition.sales.proposal",
             "reason": "the base holds nothing answering to this element",
         }]
-        migrated = migrate(document, "impact-analysis/2", "impact-analysis/3")
+        migrated = migrate(document, "impact-analysis/2", "impact-analysis/4")
         self.assertEqual([], list(self.current.iter_errors(migrated)))
         self.assertEqual("rq_7a2e4d10", migrated["request_id"])
 
@@ -136,6 +137,7 @@ class ImpactAnalysisHop(unittest.TestCase):
                 "analysis_id": "ia_5c7d9e01",
                 "request_id": "cr_2b4f6a80",
                 "producer": "impact-analyst",
+            "consumer": "ingest-domain",
                 "verdict": "update",
                 "implicated": [{"id": "billing.invoice", "kind": "knowledge-object",
                                 "operation": "update", "reason": "the model narrows it"}],
@@ -146,7 +148,7 @@ class ImpactAnalysisHop(unittest.TestCase):
         self.assertEqual("impact-analysis/2", migrated["contract_version"])
         self.assertEqual("populated", migrated["base_state"])
         migrated["model_id"] = "dm_4c1e7a90"
-        current = migrate(migrated, "impact-analysis/2", "impact-analysis/3")
+        current = migrate(migrated, "impact-analysis/2", "impact-analysis/4")
         self.assertEqual([], list(self.current.iter_errors(current)))
 
     def test_the_migration_leaves_the_input_alone(self) -> None:
@@ -155,6 +157,7 @@ class ImpactAnalysisHop(unittest.TestCase):
             "analysis_id": "ia_5c7d9e01",
             "request_id": "cr_2b4f6a80",
             "producer": "impact-analyst",
+            "consumer": "ingest-domain",
             "verdict": "none",
             "implicated": [],
         }
@@ -170,6 +173,7 @@ class ImpactAnalysisHop(unittest.TestCase):
                 "analysis_id": "ia_5c7d9e01",
                 "request_id": "cr_2b4f6a80",
                 "producer": "impact-analyst",
+            "consumer": "ingest-domain",
                 "verdict": "none",
                 "implicated": [],
             },
@@ -221,7 +225,7 @@ class KnowledgeObjectOriginHop(unittest.TestCase):
     def test_the_hop_makes_it_conform(self) -> None:
         """Carried to the current contract: `/3` stopped being current when `/4` landed, and one
         file per contract leaves the intermediate with no schema of its own to check against."""
-        migrated = migrate(self.object_at_2(), "knowledge-object/2", "knowledge-object/4")
+        migrated = migrate(self.object_at_2(), "knowledge-object/2", "knowledge-object/5")
         self.assertEqual([], list(self.current.iter_errors(migrated)))
 
     def test_it_stamps_modeled_and_never_stated(self) -> None:
@@ -246,7 +250,7 @@ class KnowledgeObjectOriginHop(unittest.TestCase):
     def test_the_whole_chain_runs(self) -> None:
         """`/1` to `/3` in one call: the registry is walked one hop at a time."""
         at_one = self.object_at_2(contract_version="knowledge-object/1", status="accepted")
-        migrated = migrate(at_one, "knowledge-object/1", "knowledge-object/4")
+        migrated = migrate(at_one, "knowledge-object/1", "knowledge-object/5")
         self.assertEqual([], list(self.current.iter_errors(migrated)))
         self.assertNotIn("status", migrated)
         self.assertEqual("modeled", migrated["origin"])
@@ -272,7 +276,7 @@ class KnowledgeObjectGapsHop(unittest.TestCase):
     def incomplete(self, **over) -> dict:
         """An aggregate root whose attributes the request never named."""
         return {
-            "contract_version": "knowledge-object/4",
+            "contract_version": "knowledge-object/5",
             "id": "ko.definition.enderecos.endereco",
             "type": "definition",
             "title": "Endereco",
@@ -350,8 +354,8 @@ class KnowledgeObjectGapsHop(unittest.TestCase):
 
     def test_the_hop_adds_nothing_and_stamps_the_version(self) -> None:
         at_three = self.complete(contract_version="knowledge-object/3")
-        migrated = migrate(at_three, "knowledge-object/3", "knowledge-object/4")
-        self.assertEqual("knowledge-object/4", migrated["contract_version"])
+        migrated = migrate(at_three, "knowledge-object/3", "knowledge-object/5")
+        self.assertEqual("knowledge-object/5", migrated["contract_version"])
         self.assertNotIn("gaps", migrated)
         self.assertTrue(self.conforms(migrated))
 
@@ -377,6 +381,7 @@ class IntakePlanOutcomeHop(unittest.TestCase):
             "contract_version": "knowledge-intake-plan/3",
             "intake_id": "ki_4c1e7a90",
             "producer": "domain-analyst",
+            "consumer": "ingest-domain",
             "source": {"description": "The sales analysis", "artifacts": ["intake/sales.md"]},
             "state": "classified",
             "entries": [{
@@ -396,23 +401,23 @@ class IntakePlanOutcomeHop(unittest.TestCase):
         self.assertNotEqual([], list(self.current.iter_errors(self.at_three())))
 
     def test_the_hop_merges_both_lists_and_conforms(self) -> None:
-        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/4")
+        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/6")
         self.assertEqual([], list(self.current.iter_errors(migrated)))
         self.assertNotIn("unmapped", migrated)
         self.assertEqual(2, len(migrated["entries"]))
 
     def test_each_construct_keeps_what_it_was(self) -> None:
-        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/4")
+        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/6")
         outcomes = {e["construct"]: e["outcome"] for e in migrated["entries"]}
         self.assertEqual({"Proposal": "classified", "ProposalRepository": "unmapped"}, outcomes)
 
     def test_nothing_becomes_refused(self) -> None:
         """`/3` could not record a refusal, so no `/3` document holds one to recover."""
-        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/4")
+        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/6")
         self.assertNotIn("refused", {e["outcome"] for e in migrated["entries"]})
 
     def test_the_gaps_travel_unchanged(self) -> None:
-        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/4")
+        migrated = migrate(self.at_three(), "knowledge-intake-plan/3", "knowledge-intake-plan/6")
         entry = next(e for e in migrated["entries"] if e["construct"] == "Proposal")
         self.assertEqual([{"kind": "domain", "field": "attributes", "why": "none are named"}],
                          entry["gaps"])
@@ -420,7 +425,7 @@ class IntakePlanOutcomeHop(unittest.TestCase):
     def test_a_plan_with_no_unmapped_records_still_migrates(self) -> None:
         document = self.at_three()
         del document["unmapped"]
-        migrated = migrate(document, "knowledge-intake-plan/3", "knowledge-intake-plan/4")
+        migrated = migrate(document, "knowledge-intake-plan/3", "knowledge-intake-plan/6")
         self.assertEqual([], list(self.current.iter_errors(migrated)))
 
 

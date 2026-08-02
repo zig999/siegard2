@@ -9,12 +9,13 @@
     "contract_version",
     "model_id",
     "producer",
+    "consumer",
     "request",
     "state"
   ],
   "properties": {
     "contract_version": {
-      "const": "domain-model/3",
+      "const": "domain-model/4",
       "description": "The contract this instance declares. A consumer selects behaviour on this value and never infers a version from shape."
     },
     "model_id": {
@@ -26,6 +27,18 @@
       "type": "string",
       "minLength": 1,
       "description": "What performed the analysis. Not a const: unlike a result contract owned by one named agent, an analysis is the artifact that matters rather than a particular producer of it."
+    },
+    "consumer": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "expand-model",
+          "impact-analyst"
+        ]
+      },
+      "description": "Who reads it. Two, and both are named rather than one being left implicit: the expansion turns it into staged objects and the impact analysis maps it against what the base already holds. A reader tracing an artifact forward is entitled to find every step that consumes it."
     },
     "request": {
       "type": "object",

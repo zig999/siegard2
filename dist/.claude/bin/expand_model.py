@@ -92,7 +92,7 @@ AUTHORING_FIELDS = ENRICHMENT_FIELDS
 # What the expansion writes. Not `knowledge-object`: the four fields only judgment supplies are
 # absent by construction here, and a staged file declaring the base's contract would be a file
 # claiming to be something the boundary then rejects. Promotion rewrites this line after validating.
-STAGED_CONTRACT = "staged-knowledge-object/1"
+STAGED_CONTRACT = "staged-knowledge-object/2"
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
@@ -419,7 +419,12 @@ def expand(model: dict, staging: Path, intake_id: str, stamp: dict) -> dict:
             path.write_text(render(data, node_type, body))
             entries.append({
                 "construct": construct, "outcome": "classified", "node_type": node_type,
-                "ddd": data.get("ddd", BOUNDARY_DDD.get(kind, "")), "origin": element["origin"],
+                # A `lifecycle` carries no `ddd`: it is the node type a state machine becomes,
+                # rather than a type carrying which construct it is. Emitting one filled a field
+                # the object then rejects, which is what forced the classification to invent
+                # `ddd: "lifecycle"` before this was a conditional.
+                **({"ddd": data["ddd"]} if "ddd" in data else {}),
+                "origin": element["origin"],
                 **({"boundary": data["boundary"]} if "boundary" in data else {}),
                 "proposed_id": data["id"], "gaps": gaps,
             })
@@ -430,9 +435,10 @@ def expand(model: dict, staging: Path, intake_id: str, stamp: dict) -> dict:
 
     entries.sort(key=lambda e: (e["outcome"] != "classified", e.get("proposed_id", e["construct"])))
     return {
-        "contract_version": "knowledge-intake-plan/4",
+        "contract_version": "knowledge-intake-plan/6",
         "intake_id": intake_id,
         "producer": "expand-model",
+        "consumer": "ingest-domain",
         "source": {
             "description": f"The domain model {model['model_id']}, answering request "
                            f"{model['request']['id']}",
@@ -453,8 +459,8 @@ def main() -> int:
         print(f"cannot run: {model_path} is not a file", file=sys.stderr)
         return CANNOT_RUN
     model = json.loads(source.read_text())
-    if model.get("contract_version") != "domain-model/3":
-        fail(f"{model_path} declares {model.get('contract_version')!r}; this reads domain-model/3")
+    if model.get("contract_version") != "domain-model/4":
+        fail(f"{model_path} declares {model.get('contract_version')!r}; this reads domain-model/4")
     if model.get("state") == "blocked":
         fail(f"{model_path} declares itself blocked: {model.get('blocking_reason')}")
 

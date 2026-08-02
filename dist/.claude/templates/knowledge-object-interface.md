@@ -9,7 +9,7 @@ ddd: {{ddd}}
 version: "{{version}}"
 schema: {{schema}}
 ownership: {{ownership}}
-contract_version: knowledge-object/4
+contract_version: knowledge-object/5
 generated: { by: {{generated_by}}, at: {{generated_at}} }
 origin: {{origin}}
 out_of_scope:

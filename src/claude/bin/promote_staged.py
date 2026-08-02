@@ -2,7 +2,7 @@
 """Move an enriched staged object into the knowledge base, validating before it writes.
 
 The boundary between staging and the base is a contract change, not a directory change. A staged
-object declares `staged-knowledge-object/1`, which does not require the retrieval question, the
+object declares `staged-knowledge-object/2`, which does not require the retrieval question, the
 summary, or the declared out-of-scope, because the pass that supplies them has not run. A knowledge
 object requires all three. So promotion validates the file against the base's contract with its
 version line substituted, and writes only where that passes.
@@ -32,8 +32,8 @@ import sys
 from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-BASE_CONTRACT = "knowledge-object/4"
-STAGED_CONTRACT = "staged-knowledge-object/1"
+BASE_CONTRACT = "knowledge-object/5"
+STAGED_CONTRACT = "staged-knowledge-object/2"
 CANNOT_RUN = 2
 
 try:

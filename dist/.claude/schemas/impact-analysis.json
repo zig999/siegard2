@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/impact-analysis.json",
   "title": "Impact analysis",
-  "description": "What a request touches in the knowledge a repository already holds, computed from the domain model the request produced. /3 changes what the analysis reads and what it may name. /2 classified a change request against the knowledge base directly, from prose; the request is no longer a contracted artifact, and the analysis now runs after modelling, so its input is a domain model and its findings pair each model element with what that element implicates. Three consequences carry the version. `model_id` is required, because an analysis that cannot name the model it was computed from cannot be re-derived. `implicated[].kind` admits `domain-model-element`, without which a first analysis over an empty base can name nothing at all \u2014 every element is new and none has a knowledge-object identifier yet. And each entry carries `operation` and `reason`, which is what makes the artifact the map a person reads before anything is authored: a verdict says whether knowledge must change, an operation says what happens to each artifact, and the reason says why that artifact and not another. The two absorb what a separate specification delta used to carry, so one artifact answers what changes and why rather than two that must agree.",
+  "description": "What a request touches in the knowledge a repository already holds, computed from the domain model the request produced. /3 changes what the analysis reads and what it may name. /2 classified a change request against the knowledge base directly, from prose; the request is no longer a contracted artifact, and the analysis now runs after modelling, so its input is a domain model and its findings pair each model element with what that element implicates. Three consequences carry the version. `model_id` is required, because an analysis that cannot name the model it was computed from cannot be re-derived. `implicated[].kind` admits `domain-model-element`, without which a first analysis over an empty base can name nothing at all — every element is new and none has a knowledge-object identifier yet. And each entry carries `operation` and `reason`, which is what makes the artifact the map a person reads before anything is authored: a verdict says whether knowledge must change, an operation says what happens to each artifact, and the reason says why that artifact and not another. The two absorb what a separate specification delta used to carry, so one artifact answers what changes and why rather than two that must agree.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,13 +11,14 @@
     "request_id",
     "model_id",
     "producer",
+    "consumer",
     "verdict",
     "base_state",
     "implicated"
   ],
   "properties": {
     "contract_version": {
-      "const": "impact-analysis/3",
+      "const": "impact-analysis/4",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     },
     "analysis_id": {
@@ -39,6 +40,10 @@
       "type": "string",
       "minLength": 1,
       "description": "What performed the analysis. Not a const: the contract requires the artifact, not a particular producer of it."
+    },
+    "consumer": {
+      "const": "ingest-domain",
+      "description": "Who reads it. The ingestion reports the verdict and the implicated set before it expands, which is what makes the analysis a step rather than an artifact nobody opens."
     },
     "verdict": {
       "enum": [

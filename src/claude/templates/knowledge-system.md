@@ -1,4 +1,5 @@
 ---
+contract_version: knowledge-system/1
 defaults:
   timezone: {{timezone}}
   currency: {{currency}}

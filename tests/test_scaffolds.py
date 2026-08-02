@@ -271,9 +271,15 @@ class SystemDefaults(unittest.TestCase):
         for key in ("timezone", "currency", "identity_strategy", "body_lines"):
             self.assertIn(key, text, f"the scaffolded system.md declares no {key}")
 
-    def test_it_names_no_schema_on_purpose(self) -> None:
-        """A schema here would be a second home for the four facts the validator already checks."""
-        self.assertIsNone(scaffold.SCHEMA_BY_KIND["knowledge-system"])
+    def test_it_names_a_schema_now_that_nothing_else_checks_it(self) -> None:
+        """The inverse of what stood here, and the reason is that the other checker left.
+
+        It asserted `None`, because a schema would have been a second home for four facts the
+        knowledge validator already checked by name. That validator went with the generation path,
+        so the facts went from checked in one place to checked in none — and a scaffold that fills
+        in no default cannot catch a value somebody edited to nonsense afterwards.
+        """
+        self.assertEqual("knowledge-system.json", scaffold.SCHEMA_BY_KIND["knowledge-system"])
 
     def test_the_ceiling_is_supplied_and_never_defaulted(self) -> None:
         values = {k: v for k, v in CASES["knowledge-system"].items() if k != "body_lines"}

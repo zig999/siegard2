@@ -224,9 +224,13 @@ before it, no explanation after it. The consumer parses it.
 
 ```json
 {
-  "contract_version": "domain-model/3",
+  "contract_version": "domain-model/4",
   "model_id": "dm_4c1e7a90",
   "producer": "domain-modeler",
+  "consumer": [
+    "expand-model",
+    "impact-analyst"
+  ],
   "request": {
     "id": "rq_7a2e4d10",
     "description": "Sales issues priced proposals to customers; a proposal stops being acceptable after a bounded period.",

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/architecture-scan.json",
+  "title": "Architecture scan",
+  "description": "Three structural patterns a graph cannot settle: a service grown past one responsibility, a concept implemented twice, and a concept spelled out repeatedly rather than named. The taxonomy this comes from carried five more — import cycle, layer violation, domain file holding a transport or storage construct, hidden shared state, and undeclared debt — each decided by walking a graph or comparing two lists, which foundation/0004 R6 puts in a script. `thresholds_used` exists because every numeric bound the source agent shipped was uncalibrated: foundation/0006 R21 admits only a threshold calibrated from executed runs, so a value reaches this artifact from the caller or from observation, and R22 makes it say which. `framework` is not an admissible source for one.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "scan_id", "producer", "scanned", "thresholds_used", "findings"],
+  "properties": {
+    "contract_version": { "const": "architecture-scan/1" },
+    "scan_id": { "type": "string", "pattern": "^as_[0-9a-f]{8}$", "description": "Supplied by the caller and never minted by the producer." },
+    "producer": { "type": "string", "minLength": 1 },
+    "scanned": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Every path the scan covered. An empty findings array means nothing without it."
+    },
+    "thresholds_used": {
+      "type": "array",
+      "description": "Every numeric value the scan applied. Empty means none was applied and the findings rest on judgement alone, which is the default: this capability ships no threshold.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "source"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "value": { "type": "number" },
+          "source": {
+            "enum": ["caller", "observed"],
+            "description": "`caller` supplied for this run; `observed` counted from the scanned set. There is deliberately no `framework` value — a shipped threshold would need calibration recorded with the evidence that produced it, and none exists."
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "One entry per match, sorted by the first site's path. Empty is a real result.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pattern", "sites", "evidence", "cost"],
+        "properties": {
+          "pattern": {
+            "enum": ["over_broad_service", "duplicated_abstraction", "missing_abstraction"],
+            "description": "Closed at three. The five removed are a script's, and reporting both kinds here would make the script's findings look like opinions."
+          },
+          "sites": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Every site, not a representative one: the cost of the finding is proportional to how many places must change together.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path"],
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "symbol": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "evidence": { "type": "string", "minLength": 1, "description": "What was observed, quoted or counted, never inferred from naming." },
+          "cost": { "type": "string", "minLength": 1, "description": "What goes wrong later if it stays, as a consequence rather than a verdict. Naming a violated principle is not a cost." }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

@@ -78,8 +78,8 @@ or silently authoring the other type.
    reject it; `stated` asserts the business said this, and a wrong `stated` is a false claim about
    the material that nothing downstream can catch. The base carries no status, so this is the only
    field separating what was decided from what was required.
-7. Never write a derived file. `index.md` and `graph.json` are the materializer's output; editing one
-   is hand-editing a derived artifact.
+7. Never write a derived file. `index.md`, `glossary.md`, `context-map.md` and `graph.json` are
+   `bin/materialize.py`'s output; editing one is hand-editing a view of facts that live elsewhere.
 8. Before returning, re-read your file against the contract field by field, and against the body
    sections its type requires.
 
@@ -90,8 +90,9 @@ nothing else. The consumer parses it.
 
 ```json
 {
-  "contract_version": "knowledge-authoring-result/1",
+  "contract_version": "knowledge-authoring-result/2",
   "producer": "knowledge-author",
+  "consumer": "ingest-domain",
   "state": "authored",
   "request": "record that a cancelled order cannot be invoiced",
   "node_type": "rule",

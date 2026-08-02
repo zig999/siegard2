@@ -67,7 +67,12 @@
     },
     "domain-model/3": {
       "schema": "domain-model.json",
-      "constraint_digest": "sha256:53d27207252cb61b8e1160052552964c76e85620e18cf61c330fb3f900afad56"
+      "constraint_digest": "sha256:53d27207252cb61b8e1160052552964c76e85620e18cf61c330fb3f900afad56",
+      "superseded_by": "domain-model/4"
+    },
+    "domain-model/4": {
+      "schema": "domain-model.json",
+      "constraint_digest": "sha256:52fd81cb543c353c766ed24b16817e50591a9eb0ca127a7a2c85a5b747a6c509"
     },
     "generation-manifest/1": {
       "schema": "generation-manifest.json",
@@ -100,11 +105,21 @@
     },
     "impact-analysis/3": {
       "schema": "impact-analysis.json",
-      "constraint_digest": "sha256:6d69759c69542bcdc209b6c1e02596bc8d9d35dc526775e4c408cac147e89623"
+      "constraint_digest": "sha256:6d69759c69542bcdc209b6c1e02596bc8d9d35dc526775e4c408cac147e89623",
+      "superseded_by": "impact-analysis/4"
+    },
+    "impact-analysis/4": {
+      "schema": "impact-analysis.json",
+      "constraint_digest": "sha256:dd8d304f6ce6fff64e7de30f6ff988f1fbc11a46f5e1805e43bacc2c3000b71e"
     },
     "knowledge-authoring-result/1": {
       "schema": "knowledge-authoring-result.json",
-      "constraint_digest": "sha256:5699b718cbddf7c4c2b9c92406508917b73be7ee4ba9c24f30fcc5aaaad17c5b"
+      "constraint_digest": "sha256:5699b718cbddf7c4c2b9c92406508917b73be7ee4ba9c24f30fcc5aaaad17c5b",
+      "superseded_by": "knowledge-authoring-result/2"
+    },
+    "knowledge-authoring-result/2": {
+      "schema": "knowledge-authoring-result.json",
+      "constraint_digest": "sha256:23c6dd531c4cd83ba609c642eaa68ee0e56481f0ddd5f23c438ba48bd28c4f49"
     },
     "knowledge-decision/1": {
       "schema": "knowledge-decision.json",
@@ -145,7 +160,17 @@
     },
     "knowledge-intake-plan/4": {
       "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:30a98d59546cfd535676b63c991fef8bdbaf08dd222aba12c50d26b810d0a8d9"
+      "constraint_digest": "sha256:30a98d59546cfd535676b63c991fef8bdbaf08dd222aba12c50d26b810d0a8d9",
+      "superseded_by": "knowledge-intake-plan/5"
+    },
+    "knowledge-intake-plan/5": {
+      "schema": "knowledge-intake-plan.json",
+      "constraint_digest": "sha256:9ec3bea872e634e3e06e806eceb293040e86bd17a6965a6a43b07842199403ea",
+      "superseded_by": "knowledge-intake-plan/6"
+    },
+    "knowledge-intake-plan/6": {
+      "schema": "knowledge-intake-plan.json",
+      "constraint_digest": "sha256:0575e60cec0a5f2997c890b96ee0c5ff4c4612603b8af823ee2364c4c82ce6f5"
     },
     "knowledge-object/1": {
       "schema": "knowledge-object.json",
@@ -164,7 +189,16 @@
     },
     "knowledge-object/4": {
       "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:036c52e714236297b9f25495c755dbe088b5af7bb5ccaf8723732c1a36dee995"
+      "constraint_digest": "sha256:036c52e714236297b9f25495c755dbe088b5af7bb5ccaf8723732c1a36dee995",
+      "superseded_by": "knowledge-object/5"
+    },
+    "knowledge-object/5": {
+      "schema": "knowledge-object.json",
+      "constraint_digest": "sha256:0fad93f1415eaa0353010d6373e294dea1551f386a40e7c7edb9e1f7f18de15c"
+    },
+    "knowledge-system/1": {
+      "schema": "knowledge-system.json",
+      "constraint_digest": "sha256:3c62c19b6c53eb5d5eee5aa21375861b7c38d81f9e2b061b7639fe909801167b"
     },
     "pack-declaration/1": {
       "schema": "pack-declaration.json",
@@ -195,7 +229,12 @@
     },
     "staged-knowledge-object/1": {
       "schema": "staged-knowledge-object.json",
-      "constraint_digest": "sha256:f94760ffae015eba65fd6024c6b4599a8cbbf6392542aada5cbb5bb1ec8c8fdc"
+      "constraint_digest": "sha256:f94760ffae015eba65fd6024c6b4599a8cbbf6392542aada5cbb5bb1ec8c8fdc",
+      "superseded_by": "staged-knowledge-object/2"
+    },
+    "staged-knowledge-object/2": {
+      "schema": "staged-knowledge-object.json",
+      "constraint_digest": "sha256:6c80bcfd79823b64570415b83d34f725b1680bb5e297be65895938d9b07adf14"
     },
     "validation-evidence/1": {
       "schema": "validation-evidence.json",
@@ -204,7 +243,12 @@
     },
     "validation-evidence/2": {
       "schema": "validation-evidence.json",
-      "constraint_digest": "sha256:df0f6e49b3def8654a459c3dc323b452b25a14f5e50fdef8ade4403f4dc4c1f0"
+      "constraint_digest": "sha256:df0f6e49b3def8654a459c3dc323b452b25a14f5e50fdef8ade4403f4dc4c1f0",
+      "superseded_by": "validation-evidence/3"
+    },
+    "validation-evidence/3": {
+      "schema": "validation-evidence.json",
+      "constraint_digest": "sha256:9121187db4bf7f24a76a498e22cf0347da871a2484d11a8f940d5fca7c2ce92a"
     }
   }
 }

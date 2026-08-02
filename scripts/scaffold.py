@@ -80,14 +80,7 @@ SCHEMA_BY_KIND = {
     "skill": "skill.json",
     "agent": "agent.json",
     "validation-evidence": "validation-evidence.json",
-    # `None` where no per-file contract governs the kind. `knowledge/system.md` is the one such
-    # artifact: spec 0003 defers its schema beyond the three defaults R26 requires and the
-    # `limits.body_lines` ceiling R48 requires, and the knowledge validator already checks all
-    # four by name — `_load_system` for the defaults, the body check for the ceiling. A schema
-    # here would be a second home for the same four facts, which is what one authoritative
-    # definition per concept forbids. The expansion is still checked: `expand` refuses a missing
-    # placeholder, so the scaffold cannot emit a file with a default nobody supplied.
-    "knowledge-system": None,
+    "knowledge-system": "knowledge-system.json",
 }
 
 # Kinds whose artifact is a JSON document rather than markdown with frontmatter. The distinction

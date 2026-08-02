@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/test-authoring-record.json",
+  "title": "Test authoring record",
+  "description": "What tests were written for one task, what each proves, and what was deliberately left untested. `fails_when` is required on every test because a test that cannot be said to fail for a stated reason is a test nobody can evaluate — and a vacuous assertion is worse than a missing one, since it occupies the place the real test would go. `not_applicable` carries the edge cases considered and dismissed, with why: an edge case dismissed silently is indistinguishable from one nobody thought of. The producer does not run what it writes, so nothing here records a result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "record_id", "producer", "task", "implementation_record_id", "kind", "tests_written", "not_applicable", "untested", "contested"],
+  "properties": {
+    "contract_version": { "const": "test-authoring-record/1" },
+    "record_id": { "type": "string", "pattern": "^ta_[0-9a-f]{8}$", "description": "Supplied by the caller and never minted by the producer." },
+    "producer": { "type": "string", "minLength": 1 },
+    "task": { "type": "string", "pattern": "^TC-[0-9]+$" },
+    "implementation_record_id": {
+      "type": "string",
+      "pattern": "^im_[0-9a-f]{8}$",
+      "description": "The implementation these tests were written against. Required because its inferences are what the tests must pin: a decision nobody specified stays incidental until a test states it."
+    },
+    "kind": {
+      "enum": ["feature", "change", "restructure", "defect"],
+      "description": "What the task was, which decides what must exist afterwards. `restructure` requires no new behavioral test — tests written alongside a restructuring describe the arrangement just made and pass by construction."
+    },
+    "tests_written": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "name", "proves", "fails_when"],
+        "properties": {
+          "file": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "proves": { "type": "string", "minLength": 1, "description": "The criterion or the inference this test binds." },
+          "fails_when": { "type": "string", "minLength": 1, "description": "The change to the implementation that would make this test fail. A test with no such change proves nothing." }
+        }
+      }
+    },
+    "not_applicable": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["edge_case", "why"],
+        "properties": {
+          "edge_case": { "type": "string", "minLength": 1 },
+          "why": { "type": "string", "minLength": 1, "description": "Why it does not apply. Asserting a guarantee nobody made is a reason not to test something." }
+        }
+      }
+    },
+    "untested": {
+      "type": "array",
+      "description": "What remains unproven and why, including a restructured area the existing tests do not cover — which is a finding rather than a reason to write tests describing the new shape.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["what", "why"],
+        "properties": {
+          "what": { "type": "string", "minLength": 1 },
+          "why": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "contested": {
+      "type": "array",
+      "description": "Where the author believes the implementation is wrong. The test states what the criterion requires; the disagreement is recorded here rather than resolved by changing the implementation or by writing the test to pass.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["behavior", "why"],
+        "properties": {
+          "behavior": { "type": "string", "minLength": 1 },
+          "why": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

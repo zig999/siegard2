@@ -156,9 +156,10 @@ else — no prose before it, no explanation after it. The consumer parses it.
 
 ```json
 {
-  "contract_version": "knowledge-intake-plan/4",
+  "contract_version": "knowledge-intake-plan/6",
   "intake_id": "ki_4c1e7a90",
   "producer": "domain-analyst",
+  "consumer": "ingest-domain",
   "source": {
     "description": "The sales domain model dm_4c1e7a90, answering request rq_7a2e4d10",
     "artifacts": ["intake/sales-request.md"]

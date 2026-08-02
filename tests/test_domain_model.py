@@ -1,6 +1,6 @@
 """The DDD analysis contract, and the one field the whole thing turns on.
 
-`domain-model/3` is the artifact produced by analysing a request, before anything is normalized into the
+`domain-model/4` is the artifact produced by analysing a request, before anything is normalized into the
 ontology. It is the one artifact in this framework whose content is *invented*: everywhere else a fact
 nobody stated is the defect, and here deciding the aggregates, the boundaries, and the invariants is the
 work.
@@ -50,9 +50,10 @@ ELEMENTS = {
 def model(**over) -> dict:
     """The smallest `modeled` analysis the contract accepts."""
     document = {
-        "contract_version": "domain-model/3",
+        "contract_version": "domain-model/4",
         "model_id": "dm_1a2b3c4d",
         "producer": "domain-modeler",
+        "consumer": ["expand-model", "impact-analyst"],
         "request": {
             "id": "rq_7a2e4d10",
             "description": "Sales must issue proposals that expire after a bounded period.",
@@ -143,9 +144,10 @@ class StateIsExclusive(Case):
     def test_blocked_requires_its_reason(self) -> None:
         self.assertRejected(
             {
-                "contract_version": "domain-model/3",
+                "contract_version": "domain-model/4",
                 "model_id": "dm_1a2b3c4d",
                 "producer": "domain-modeler",
+        "consumer": ["expand-model", "impact-analyst"],
                 "request": {"id": "rq_7a2e4d10", "description": "x", "artifacts": ["a.md"]},
                 "state": "blocked",
             },
@@ -160,9 +162,10 @@ class StateIsExclusive(Case):
             [],
             self.errors(
                 {
-                    "contract_version": "domain-model/3",
+                    "contract_version": "domain-model/4",
                     "model_id": "dm_1a2b3c4d",
                     "producer": "domain-modeler",
+        "consumer": ["expand-model", "impact-analyst"],
                     "request": {"id": "rq_7a2e4d10", "description": "x", "artifacts": ["a.md"]},
                     "state": "blocked",
                     "blocking_reason": "the request names no domain this ontology can model",

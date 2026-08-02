@@ -41,6 +41,7 @@ class Case(unittest.TestCase):
                 cp.check_fields(self.root, entry, path, findings)
         cp.check_selectability(self.root, findings)
         cp.check_named_scripts(self.root, findings)
+        cp.check_shipped_dependencies(self.root, findings)
         return findings
 
     def rules(self) -> set[str]:
@@ -220,3 +221,51 @@ class C04(Case):
         """
         on_disk = {p.name for p in (self.root / "bin").glob("*.py")}
         self.assertEqual(set(), cp.LIBRARIES - on_disk)
+
+class C05(Case):
+    """A shipped script declares the dependencies it imports, and guards each one.
+
+    The plugin manifest is a harness-owned vocabulary and closes its object, so there is nowhere in
+    it to say that an installed script needs PyYAML — the correction CR-001 §CR-08 offers first is
+    not available. What is available is the second: a consumer meets a missing dependency when they
+    run something, and what they meet decides whether they can act on it.
+    """
+
+    def rewrite_script(self, name: str, old: str, new: str) -> None:
+        path = self.root / "bin" / name
+        text = path.read_text()
+        self.assertIn(old, text, f"{name} no longer holds the text this test mutates")
+        path.write_text(text.replace(old, new, 1))
+
+    def test_the_real_tree_declares_what_it_imports(self) -> None:
+        self.assertNotIn("C05", self.rules())
+
+    def test_declaring_less_than_it_imports_is_caught(self) -> None:
+        self.rewrite_script("expand_model.py", "Declared dependencies: PyYAML.",
+                            "Declared dependencies: none beyond the standard library.")
+        self.assertIn("C05", self.rules())
+
+    def test_an_unguarded_third_party_import_is_caught(self) -> None:
+        """A traceback says something broke; the guard says what to do about it."""
+        self.rewrite_script(
+            "check_gap_fields.py",
+            'print("cannot run: PyYAML is not installed (pip install pyyaml)", file=sys.stderr)',
+            'raise',
+        )
+        findings = self.findings()
+        self.assertTrue(any("without a guard" in f for f in findings), findings)
+
+    def test_a_script_with_no_dependency_line_is_caught(self) -> None:
+        self.rewrite_script("field_ownership.py",
+                            "Declared dependencies: none beyond the standard library.\n", "")
+        self.assertIn("C05", self.rules())
+
+    def test_a_library_declaring_none_is_accepted(self) -> None:
+        """The standard library needs no guard and no declaration; the line still has to say so."""
+        body = (self.root / "bin" / "field_ownership.py").read_text()
+        self.assertIn("Declared dependencies: none beyond the standard library.", body)
+        self.assertNotIn("C05", self.rules())
+
+
+if __name__ == "__main__":
+    unittest.main()
