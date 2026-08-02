@@ -42,6 +42,7 @@ definition here, and the first component built against one is the thing most lik
 | Concept | Summary |
 |---|---|
 | [accepted](accepted.md) | The status of a specification or ADR whose decision binds. |
+| [analysis seal](analysis-seal.md) | What the analysis wrote, recorded per object so a later pass can be held to the fields it owns. |
 | [artifact class](artifact-class.md) | What a produced artifact is, named independently of how any technology expresses it. |
 | [assertion](assertion.md) | A mechanical check that rejects an implementation violating one knowledge object. |
 | [boundary](boundary.md) | The knowledge object type holding a scope — a bounded context or an aggregate — with derived membership. |
@@ -66,6 +67,7 @@ definition here, and the first component built against one is the thing most lik
 | [knowledge object](knowledge-object.md) | One durable concept of a governed repository's knowledge. |
 | [least privilege](least-privilege.md) | Only the tools and permissions a component's contract names. |
 | [lifecycle](lifecycle.md) | The knowledge object type holding a definition's legal states and its total transition table. |
+| [notation](notation.md) | How a fact is stored — the envelope, the fence, the body sections, the identifier arithmetic. |
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |

@@ -17,6 +17,7 @@ declarations rather than from a sequence anything enforces.
 from __future__ import annotations
 
 import json
+import re
 import unittest
 
 from . import SHIPPED_ROOT
@@ -40,11 +41,11 @@ class Procedure(unittest.TestCase):
         self.assertIn("Stopping is the procedure", self.body)
 
     def test_it_writes_no_knowledge_object(self) -> None:
-        self.assertIn("You do not author knowledge", self.body)
+        self.assertIn("You do not write the four fields only judgment supplies", self.body)
 
     def test_it_does_not_answer_the_open_questions(self) -> None:
         """A question answered by whoever ran this is a domain fact invented by the framework."""
-        self.assertIn("You do not answer the model's open questions", self.body)
+        self.assertIn("You do not answer the analysis's open questions", self.body)
 
     def test_it_names_the_next_entry_point(self) -> None:
         """A procedure that stops without saying what follows leaves the caller to guess."""
@@ -58,7 +59,7 @@ class Procedure(unittest.TestCase):
 
     def test_it_rejects_a_failing_model_rather_than_repairing_it(self) -> None:
         """A patched design is a design nobody produced, and its origin fields would then be lying."""
-        self.assertIn("rejected,\nnever repaired", self.body)
+        self.assertIn("rejected, never\nrepaired", self.body)
 
     def test_it_is_not_model_invocable(self) -> None:
         self.assertIn("disable-model-invocation: true", self.body)
@@ -79,12 +80,16 @@ class TwoEntryPoints(unittest.TestCase):
         cls.ingest = next(d for d in cls.declarations if d["identifier"] == "ingest-domain")
 
     def test_modelling_produces_what_ingestion_requires(self) -> None:
+        """Asserted as an overlap rather than by naming one artifact, so the order survives a
+        change in which artifact carries it — as it did when the seal replaced the model."""
         produced = {o["contract"] for o in self.model["outputs"]}
         required = {i.get("contract") for i in self.ingest["inputs"]}
-        self.assertIn("domain-model/4", produced & required)
+        self.assertTrue(produced & required, "nothing the second entry point needs is produced here")
+        self.assertIn("analysis-seal/1", produced & required)
 
-    def test_modelling_authors_nothing(self) -> None:
-        self.assertNotIn("knowledge-object", self.model.get("produced_artifacts", []))
+    def test_modelling_writes_the_objects(self) -> None:
+        """It used to author nothing, and the conversion that stood between it and the base is gone."""
+        self.assertIn("domain-object", self.model.get("produced_artifacts", []))
 
     def test_ingestion_does_not_model(self) -> None:
         """The classifying and authoring procedure must not carry the modelling agent."""
@@ -95,9 +100,9 @@ class TwoEntryPoints(unittest.TestCase):
             with self.subTest(skill=path.name):
                 self.assertIn("open question", path.read_text())
 
-    def test_modelling_declares_it_writes_no_knowledge(self) -> None:
+    def test_modelling_declares_where_it_writes(self) -> None:
         behaviour = " ".join(self.model["deterministic_behavior"])
-        self.assertIn("no file under the knowledge root is written", behaviour)
+        self.assertIn("every object is written under the knowledge root", behaviour)
 
     def test_a_blocked_analysis_is_a_result_and_not_an_error(self) -> None:
         """A request that describes no domain is a finished run with a negative result."""
@@ -126,40 +131,53 @@ class ThePassEndsAtTheReview(unittest.TestCase):
         cls.model = declarations["model-domain"]
         cls.entry = declarations["ingest-domain"]
 
-    def test_it_runs_the_expansion(self) -> None:
-        self.assertIn("bin/expand_model.py", self.body)
+    def test_it_checks_what_the_analysis_wrote(self) -> None:
+        self.assertIn("bin/check_knowledge.py", self.body)
 
-    def test_it_runs_the_impact_analysis_before_expanding(self) -> None:
-        """`foundation/0001` R3 runs one for every request, and it informs what the diff shows."""
+    def test_it_runs_the_impact_analysis_before_the_checks(self) -> None:
+        """`foundation/0001` R3 runs one for every request, and it informs what the diff shows.
+
+        It used to run before anything was written and now runs after, because the analysis writes as
+        it goes — so a verdict of `none` asks for a discard rather than preventing a write. The skill
+        says so rather than leaving a reader to notice.
+        """
         self.assertIn("impact-analyst", self.body)
-        self.assertLess(self.body.index("impact-analyst"), self.body.index("bin/expand_model.py"))
+        self.assertIn("asks for a discard rather", self.body)
+        self.assertLess(self.body.index("impact-analyst"), self.body.index("bin/check_knowledge.py"))
 
     def test_it_runs_over_an_empty_base_too(self) -> None:
         self.assertIn("including the first one against an empty base", self.body)
 
-    def test_it_produces_the_tree_the_next_entry_point_requires(self) -> None:
+    def test_it_produces_what_the_next_entry_point_requires(self) -> None:
         """The order between the two is derivable from the declarations rather than from prose."""
         produced = {o["artifact"] for o in self.model["outputs"]}
         required = {i.get("artifact") for i in self.entry["inputs"]}
-        self.assertIn("staged-knowledge-object", produced & required)
+        self.assertIn("analysis-seal", produced & required)
 
-    def test_it_enriches_nothing_and_promotes_nothing(self) -> None:
-        for owned in ("knowledge-enricher", "promote_staged.py", "materialize.py"):
+    def test_it_enriches_nothing_and_materializes_nothing(self) -> None:
+        for owned in ("knowledge-enricher", "materialize.py"):
             with self.subTest(step=owned):
                 self.assertNotIn(owned, self.body)
 
-    def test_the_next_entry_point_expands_nothing(self) -> None:
-        self.assertNotIn("bin/expand_model.py", self.ingest)
+    def test_the_next_entry_point_writes_no_object(self) -> None:
+        self.assertNotIn("domain-modeler", self.ingest)
 
     def test_the_stop_is_the_end_of_the_run(self) -> None:
-        """Not a step in the middle: the last thing the procedure says is that it is over."""
-        self.assertIn("### 5. Stop", self.body)
-        self.assertLess(self.body.index("### 5. Stop"), self.body.index("## What you never do"))
+        """Not a step in the middle: the last thing the procedure says is that it is over.
 
-    def test_it_writes_only_under_the_staging_root(self) -> None:
+        Matched on the heading rather than its number, so adding a step before it moves the step
+        and not this assertion — what is asserted is that the run ends, never where.
+        """
+        steps = [line for line in self.body.splitlines() if re.match(r"^### \d+\. ", line)]
+        self.assertTrue(steps, "the procedure numbers its steps")
+        self.assertRegex(steps[-1], r"^### \d+\. Stop$")
+        self.assertLess(self.body.index(steps[-1]), self.body.index("## What you never do"))
+
+    def test_it_writes_the_objects_where_they_are_read(self) -> None:
+        """No staging tree: a schema cannot see a directory, so the boundary was never one."""
         behaviour = " ".join(self.model["deterministic_behavior"])
-        self.assertIn("no file under the knowledge root is written", behaviour)
-        self.assertIn("staging root", behaviour)
+        self.assertIn("every object is written under the knowledge root", behaviour)
+        self.assertNotIn("staging", behaviour)
 
     def test_a_verdict_of_none_ends_it(self) -> None:
         outcomes = {f["outcome"] for f in self.model["failure_outcomes"]}

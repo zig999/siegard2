@@ -9,6 +9,14 @@
       "schema": "agent.json",
       "constraint_digest": "sha256:9ee684c7fe4565569ba62922a4fbdeddcb59615e576daa3beda73b0477f7ff83"
     },
+    "analysis-record/1": {
+      "schema": "analysis-record.json",
+      "constraint_digest": "sha256:ecb2a2996747499c0610b89243c0888b36eb4d52787c8976405c345923a0e429"
+    },
+    "analysis-seal/1": {
+      "schema": "analysis-seal.json",
+      "constraint_digest": "sha256:fc5871bbf5b764516044f926fb7be04aa819f31dd2f6a03bd1c335e5bcf1a907"
+    },
     "artifact-class/1": {
       "schema": "artifact-class.json",
       "constraint_digest": "sha256:72bb1c40800d7fd2e17182d51ec3ba27f0f465070880711e2843adfab4130603",
@@ -72,7 +80,12 @@
     },
     "domain-model/4": {
       "schema": "domain-model.json",
-      "constraint_digest": "sha256:52fd81cb543c353c766ed24b16817e50591a9eb0ca127a7a2c85a5b747a6c509"
+      "constraint_digest": "sha256:52fd81cb543c353c766ed24b16817e50591a9eb0ca127a7a2c85a5b747a6c509",
+      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
+    },
+    "domain-object/1": {
+      "schema": "domain-object.json",
+      "constraint_digest": "sha256:3f52bddad96f48107ba105b83f96cbec9b61097c700c6950feffac79d13985d9"
     },
     "generation-manifest/1": {
       "schema": "generation-manifest.json",
@@ -110,7 +123,12 @@
     },
     "impact-analysis/4": {
       "schema": "impact-analysis.json",
-      "constraint_digest": "sha256:dd8d304f6ce6fff64e7de30f6ff988f1fbc11a46f5e1805e43bacc2c3000b71e"
+      "constraint_digest": "sha256:dd8d304f6ce6fff64e7de30f6ff988f1fbc11a46f5e1805e43bacc2c3000b71e",
+      "superseded_by": "impact-analysis/5"
+    },
+    "impact-analysis/5": {
+      "schema": "impact-analysis.json",
+      "constraint_digest": "sha256:c3fcbfb2126bea52ef6384847b37c994273b178e07675e2eb9f9e18c450cec21"
     },
     "knowledge-authoring-result/1": {
       "schema": "knowledge-authoring-result.json",
@@ -119,7 +137,8 @@
     },
     "knowledge-authoring-result/2": {
       "schema": "knowledge-authoring-result.json",
-      "constraint_digest": "sha256:23c6dd531c4cd83ba609c642eaa68ee0e56481f0ddd5f23c438ba48bd28c4f49"
+      "constraint_digest": "sha256:23c6dd531c4cd83ba609c642eaa68ee0e56481f0ddd5f23c438ba48bd28c4f49",
+      "retired_by": "docs/adr/0023-remove-the-agents-no-entry-point-invokes.md"
     },
     "knowledge-decision/1": {
       "schema": "knowledge-decision.json",
@@ -132,7 +151,12 @@
     },
     "knowledge-enrichment-result/1": {
       "schema": "knowledge-enrichment-result.json",
-      "constraint_digest": "sha256:1e70c8a299bfe90f576f083d77f15a96faeaef04f6d0f3b45eca7c976cc09838"
+      "constraint_digest": "sha256:1e70c8a299bfe90f576f083d77f15a96faeaef04f6d0f3b45eca7c976cc09838",
+      "superseded_by": "knowledge-enrichment-result/2"
+    },
+    "knowledge-enrichment-result/2": {
+      "schema": "knowledge-enrichment-result.json",
+      "constraint_digest": "sha256:7537d4ea1c331522d497ea52fd0703334bd6bb6564b7b38a4f3b1e1b3a9e3013"
     },
     "knowledge-graph/1": {
       "schema": "knowledge-graph.json",
@@ -170,7 +194,13 @@
     },
     "knowledge-intake-plan/6": {
       "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:0575e60cec0a5f2997c890b96ee0c5ff4c4612603b8af823ee2364c4c82ce6f5"
+      "constraint_digest": "sha256:0575e60cec0a5f2997c890b96ee0c5ff4c4612603b8af823ee2364c4c82ce6f5",
+      "superseded_by": "knowledge-intake-plan/7"
+    },
+    "knowledge-intake-plan/7": {
+      "schema": "knowledge-intake-plan.json",
+      "constraint_digest": "sha256:44dc9d95b10af7df9e759667b076ccf9ca458c3c82b04e0c0755d898f6627412",
+      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
     },
     "knowledge-object/1": {
       "schema": "knowledge-object.json",
@@ -194,7 +224,8 @@
     },
     "knowledge-object/5": {
       "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:0fad93f1415eaa0353010d6373e294dea1551f386a40e7c7edb9e1f7f18de15c"
+      "constraint_digest": "sha256:0fad93f1415eaa0353010d6373e294dea1551f386a40e7c7edb9e1f7f18de15c",
+      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
     },
     "knowledge-system/1": {
       "schema": "knowledge-system.json",
@@ -234,7 +265,8 @@
     },
     "staged-knowledge-object/2": {
       "schema": "staged-knowledge-object.json",
-      "constraint_digest": "sha256:6c80bcfd79823b64570415b83d34f725b1680bb5e297be65895938d9b07adf14"
+      "constraint_digest": "sha256:6c80bcfd79823b64570415b83d34f725b1680bb5e297be65895938d9b07adf14",
+      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
     },
     "validation-evidence/1": {
       "schema": "validation-evidence.json",

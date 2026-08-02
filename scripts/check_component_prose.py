@@ -96,7 +96,7 @@ FENCED_JSON = re.compile(r"```json\n(.*?)\n```", re.DOTALL)
 FIELD = re.compile(r"`([a-z][a-z0-9_]*)`")
 
 # A schema the prose names by filename. Citing one is how a component declares that it is talking
-# about that contract's vocabulary, which `domain-analyst` legitimately does for the ontology.
+# about that contract's vocabulary, which `knowledge-enricher` legitimately does for the ontology.
 CITED_SCHEMA = re.compile(r"schemas/([a-z0-9-]+)\.json")
 
 # Tokens that are field-shaped and are never fields. Kept short on purpose: a long allowlist is how

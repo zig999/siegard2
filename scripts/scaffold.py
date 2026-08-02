@@ -64,18 +64,20 @@ PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 
 # Which contract validates each kind's output. The mapping is explicit rather than derived from
 # the filename: `knowledge-object-rule` and `knowledge-object-definition` are two scaffolds over
-# one contract, because `foundation/0003` gives each node type its own required fields and its own
-# body sections, and one skeleton for six types would be a skeleton for none of them.
+# one contract, because `foundation/0003` gives each kind its own required fields and its own body
+# sections, and one skeleton for every kind would be a skeleton for none of them.
 SCHEMA_BY_KIND = {
     "specification": "spec.json",
     "adr": "adr.json",
     "concept": "concept.json",
-    "knowledge-object-definition": "knowledge-object.json",
-    "knowledge-object-rule": "knowledge-object.json",
-    "knowledge-object-lifecycle": "knowledge-object.json",
-    "knowledge-object-interface": "knowledge-object.json",
-    "knowledge-object-boundary": "knowledge-object.json",
-    "knowledge-object-process": "knowledge-object.json",
+    "domain-object-subdomain": "domain-object.json",
+    "domain-object-context": "domain-object.json",
+    "domain-object-aggregate": "domain-object.json",
+    "domain-object-definition": "domain-object.json",
+    "domain-object-rule": "domain-object.json",
+    "domain-object-lifecycle": "domain-object.json",
+    "domain-object-interface": "domain-object.json",
+    "domain-object-process": "domain-object.json",
     "knowledge-decision": "knowledge-decision.json",
     "skill": "skill.json",
     "agent": "agent.json",

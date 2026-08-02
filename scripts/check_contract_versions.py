@@ -82,7 +82,14 @@ def schema_files():
 # Files in schemas/ that are not contracts. Named rather than pattern-matched: a file that fails
 # the `<name>.vN.json` shape is either an instance like this one or a mistake, and letting the
 # pattern decide would silently forgive the second.
-NOT_A_CONTRACT = frozenset({"contract-versions.json", "artifact-classes.json"})
+#
+# `knowledge-notation.json` is the third kind: neither a contract nor an instance of one, but the
+# declaration of the envelope every knowledge profile writes in. No document declares it, nothing
+# validates against it, and it does not ship — `scripts/check_notation_agreement.py` is what reads
+# it, and holds each shipped profile to carrying what it states.
+NOT_A_CONTRACT = frozenset(
+    {"contract-versions.json", "artifact-classes.json", "knowledge-notation.json"}
+)
 
 FILENAME = re.compile(r"^(?P<name>[a-z0-9]+(?:-[a-z0-9]+)*)\.json$")
 

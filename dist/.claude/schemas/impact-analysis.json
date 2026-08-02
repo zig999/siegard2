@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/impact-analysis.json",
   "title": "Impact analysis",
-  "description": "What a request touches in the knowledge a repository already holds, computed from the domain model the request produced. /3 changes what the analysis reads and what it may name. /2 classified a change request against the knowledge base directly, from prose; the request is no longer a contracted artifact, and the analysis now runs after modelling, so its input is a domain model and its findings pair each model element with what that element implicates. Three consequences carry the version. `model_id` is required, because an analysis that cannot name the model it was computed from cannot be re-derived. `implicated[].kind` admits `domain-model-element`, without which a first analysis over an empty base can name nothing at all — every element is new and none has a knowledge-object identifier yet. And each entry carries `operation` and `reason`, which is what makes the artifact the map a person reads before anything is authored: a verdict says whether knowledge must change, an operation says what happens to each artifact, and the reason says why that artifact and not another. The two absorb what a separate specification delta used to carry, so one artifact answers what changes and why rather than two that must agree.",
+  "description": "What a request touched in the knowledge a repository already held, computed from the objects the analysis wrote. `/5` follows the constructs out of a document and into the base: `record_id` replaces `model_id`, because what names a run is the record holding what has no file, and `implicated[].kind` closes at `domain-object` and `adr`, because a construct is now an object rather than an element of a document held elsewhere. Each entry carries `operation` and `reason`, which is what makes the artifact the map a person reads: a verdict says whether knowledge changed, an operation says what happens to each artifact, and the reason says why that artifact and not another.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "contract_version",
     "analysis_id",
     "request_id",
-    "model_id",
+    "record_id",
     "producer",
     "consumer",
     "verdict",
@@ -18,7 +18,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "impact-analysis/4",
+      "const": "impact-analysis/5",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     },
     "analysis_id": {
@@ -30,11 +30,6 @@
       "type": "string",
       "pattern": "^rq_[0-9a-f]{8}$",
       "description": "The request this analysis answers. A request is prose a person supplied plus the material it names; no capability produces one, so the identifier is the caller's to supply."
-    },
-    "model_id": {
-      "type": "string",
-      "pattern": "^dm_[0-9a-f]{8}$",
-      "description": "The domain model this analysis was computed from. Required in /3: the analysis reads a model rather than prose, and every element it names as a driver belongs to that model. An analysis that cannot name its model states a conclusion nobody can re-derive."
     },
     "producer": {
       "type": "string",
@@ -80,11 +75,10 @@
           },
           "kind": {
             "enum": [
-              "knowledge-object",
-              "adr",
-              "domain-model-element"
+              "domain-object",
+              "adr"
             ],
-            "description": "Which class the identifier belongs to, so a consumer resolves it against the right contract. `domain-model-element` is what /3 adds: over an empty base every entry is new, and an analysis restricted to stored identifiers could name nothing at all. /2 also admitted `concept`; the concept bundle is the generator's own vocabulary mechanism and no governed repository holds one, so the value named a class a consumer could never produce."
+            "description": "Which contract resolves the identifier. `domain-object` is what the base holds; `adr` is a decision record, which is a graph node and never an object. `knowledge-object` and `domain-model-element` are gone with the profile and the document they named."
           },
           "operation": {
             "enum": [
@@ -106,6 +100,11 @@
           }
         }
       }
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^ar_[0-9a-f]{8}$",
+      "description": "The analysis this verdict was reached over. It replaces the model identifier the previous version carried: the constructs are files now, and what names the run is the record holding what has no file."
     }
   },
   "allOf": [
@@ -189,7 +188,7 @@
             "items": {
               "properties": {
                 "kind": {
-                  "const": "domain-model-element"
+                  "const": "domain-object"
                 },
                 "operation": {
                   "const": "create"
@@ -198,7 +197,7 @@
             }
           }
         },
-        "description": "Over a base that held nothing, every entry is a model element being brought into existence. An entry naming a stored artifact asserts something the observation denies."
+        "description": "Over a base that held nothing, every entry is a construct this run brought into existence. An entry naming a stored artifact asserts something the observation denies."
       }
     }
   ]

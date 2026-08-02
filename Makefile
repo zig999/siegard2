@@ -36,6 +36,7 @@ validate:
 	@fail=0; \
 	python3 scripts/validate_adrs.py || fail=1; \
 	python3 scripts/check_contract_versions.py || fail=1; \
+	python3 scripts/check_notation_agreement.py || fail=1; \
 	python3 scripts/validate_concepts.py docs/concepts || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
 	python3 scripts/check_component_prose.py || fail=1; \
@@ -53,6 +54,11 @@ validate:
 # distribution: foundation/0006 R17 derives each capability's status from whether the
 # distribution installs it and whether a fixture exercises it, and both facts are
 # only available once `make dist` has produced a manifest to compare against.
+#
+# `check_notation_agreement.py` sits right after it and asks the question a per-contract check
+# cannot: whether two schemas that each validate correctly still agree about the envelope they
+# share. Cross-file `$ref` would make the question unnecessary and is unavailable — a shipped
+# validator loads its schema standalone and must not resolve a reference over the network.
 #
 # `check_contract_versions.py` sits with the schema tier because it validates the contracts
 # every validator below it loads. Its polarity is inverted relative to the derived-tree

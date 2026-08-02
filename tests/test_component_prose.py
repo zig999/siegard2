@@ -67,7 +67,7 @@ class TheRealTree(Case):
         }
         on_disk = {p.stem for p in (self.root / "agents").glob("*.md")}
         self.assertEqual(with_output, with_output & on_disk)
-        self.assertEqual(5, len(with_output & on_disk))
+        self.assertEqual(3, len(with_output & on_disk))
 
 
 class C01(Case):
@@ -92,17 +92,17 @@ class C01(Case):
         """Prose legitimately names a state or a verdict; the first form of C01 flagged every one."""
         self.rewrite(
             "agents/domain-modeler.md",
-            "You model a domain.",
-            "You model a domain. A `blocked` result models nothing, and `stated` is not `modeled`.",
+            "You model a domain and write it down.",
+            "You model a domain and write it down. A `blocked` result writes nothing, and `stated` is not `modeled`.",
         )
         self.assertNotIn("C01", self.rules())
 
     def test_citing_a_schema_admits_its_vocabulary(self) -> None:
-        """How `domain-analyst` legitimately speaks in ontology field names."""
+        """How an agent legitimately speaks in the field names of a contract it cites."""
         self.rewrite(
             "agents/domain-modeler.md",
-            "You model a domain.",
-            "You model a domain. See `schemas/knowledge-object.json` for `out_of_scope`.",
+            "You model a domain and write it down.",
+            "You model a domain and write it down. See `schemas/domain-object.json` for `out_of_scope`.",
         )
         self.assertNotIn("C01", self.rules())
 
@@ -110,8 +110,8 @@ class C01(Case):
         """Neither declared nor cited: the check cannot tell an invention from a missing declaration."""
         self.rewrite(
             "agents/domain-modeler.md",
-            "You model a domain.",
-            "You model a domain. Record it under `superseded_by`.",
+            "You model a domain and write it down.",
+            "You model a domain and write it down. Record it under `superseded_by`.",
         )
         self.assertIn("C01", self.rules())
 
@@ -130,18 +130,18 @@ class C02(Case):
     def test_a_second_example_is_caught(self) -> None:
         """Two examples are two shapes to imitate."""
         self.rewrite(
-            "agents/knowledge-author.md",
+            "agents/knowledge-enricher.md",
             "## Result",
-            '## Result\n\n```json\n{"contract_version": "knowledge-authoring-result/1"}\n```\n',
+            '## Result\n\n```json\n{"contract_version": "knowledge-enrichment-result/1"}\n```\n',
         )
         self.assertIn("C02", self.rules())
 
     def test_an_example_that_does_not_conform_is_caught(self) -> None:
-        self.rewrite("agents/domain-modeler.md", '"state": "modeled"', '"state": "partially-modeled"')
+        self.rewrite("agents/domain-modeler.md", '"state": "analysed"', '"state": "partially-analysed"')
         self.assertIn("C02", self.rules())
 
     def test_an_example_that_is_not_json_is_caught(self) -> None:
-        self.rewrite("agents/knowledge-author.md", '"state": "authored"', '"state": authored')
+        self.rewrite("agents/knowledge-enricher.md", '"state": "enriched"', '"state": enriched')
         self.assertIn("C02", self.rules())
 
 
@@ -155,7 +155,7 @@ class C03(Case):
     the distribution.
     """
 
-    CLAUSE = "Delegate when a request describes a problem or a solution and no domain model exists yet."
+    CLAUSE = "Delegate when a request describes a problem or a solution and the base does not yet hold what it asks for."
 
     def test_a_phase_routed_delegation_is_caught(self) -> None:
         """The shape four agents carried until the phase order became guidance."""
@@ -241,14 +241,14 @@ class C05(Case):
         self.assertNotIn("C05", self.rules())
 
     def test_declaring_less_than_it_imports_is_caught(self) -> None:
-        self.rewrite_script("expand_model.py", "Declared dependencies: PyYAML.",
+        self.rewrite_script("check_knowledge.py", "Declared dependencies: PyYAML.",
                             "Declared dependencies: none beyond the standard library.")
         self.assertIn("C05", self.rules())
 
     def test_an_unguarded_third_party_import_is_caught(self) -> None:
         """A traceback says something broke; the guard says what to do about it."""
         self.rewrite_script(
-            "check_gap_fields.py",
+            "check_knowledge.py",
             'print("cannot run: PyYAML is not installed (pip install pyyaml)", file=sys.stderr)',
             'raise',
         )

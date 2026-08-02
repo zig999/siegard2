@@ -47,6 +47,8 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
 # a second spelling of the same fact, agreeing with the table and failing the schema.
 EDGE_KINDS = {
     "boundary": {"minimum": 1, "maximum": 1, "inverse_maximum": None, "traversed": True, "depth": 1},
+    "subdomain": {"minimum": 1, "maximum": 1, "inverse_maximum": None, "traversed": True, "depth": 1},
+    "aggregate.root": {"minimum": 1, "maximum": 1, "inverse_maximum": 1, "traversed": True, "depth": 1},
     "depends_on": {"minimum": 0, "maximum": None, "inverse_maximum": None, "traversed": True, "depth": 2},
     "governed_by": {"minimum": 0, "maximum": None, "inverse_maximum": None, "traversed": True, "depth": 1},
     "attributes[].target": {"minimum": 0, "maximum": None, "inverse_maximum": None, "traversed": True, "depth": 1},
@@ -100,6 +102,8 @@ def edges_of(data: dict) -> list[dict]:
             found.append({"source": source, "target": target, "kind": kind, "locator": locator})
 
     add("boundary", data.get("boundary"), "boundary")
+    add("subdomain", data.get("subdomain"), "subdomain")
+    add("aggregate.root", data.get("root"), "root")
     for index, target in enumerate(data.get("depends_on") or []):
         add("depends_on", target, f"depends_on[{index}]")
     for index, target in enumerate(data.get("governed_by") or []):
@@ -189,8 +193,7 @@ def context_map_of(graph: dict) -> str:
     """The bounded contexts and the relationships they declare with each other."""
     lines = ["# Context map", "",
              "Derived by `bin/materialize.py`. Do not edit: change the objects.", ""]
-    contexts = [n for n in graph["nodes"]
-                if n["kind"] == "boundary" and n.get("ddd") == "bounded-context"]
+    contexts = [n for n in graph["nodes"] if n["kind"] == "context"]
     if not contexts:
         lines.append("The base declares no bounded context yet.")
         return "\n".join(lines) + "\n"

@@ -31,7 +31,7 @@ TEMPLATES_SHIPPED = REPO_ROOT / "src" / "claude" / "templates"
 TEMPLATES_GENERATOR = REPO_ROOT / "templates"
 
 STAMP = {"generated_by": "claude-opus-5", "generated_at": "2026-07-31T10:00:00Z"}
-# `knowledge-object/3` requires `origin`, so every knowledge-object case supplies one.
+# `domain-object/1` requires `origin`, so every domain-object case supplies one.
 # `modeled` rather than `stated`: these are invented examples, and a case claiming the
 # business stated it would be the false claim the field exists to prevent.
 ORIGIN = {"origin": "modeled"}
@@ -95,81 +95,6 @@ CASES: dict[str, dict[str, str]] = {
         "first_step": "Read the contract before writing anything.",
         "result": "One JSON object conforming to the contract named above.",
     },
-    "knowledge-object-definition": {
-        **ORIGIN,
-        "context": "sales",
-        "slug": "order-line",
-        "title": "Order line",
-        "description": "One priced line inside an order, with no identity outside the order.",
-        "boundary_slug": "order",
-        "ddd": "value-object",
-        "attribute_name": "quantity",
-        "attribute_type": "integer",
-        "out_of_scope": "how a line price is calculated, which no knowledge object here holds",
-        "invariant": "carry a quantity greater than zero",
-        **STAMP,
-    },
-    "knowledge-object-rule": {
-        **ORIGIN,
-        "context": "sales",
-        "slug": "cancelled-order-not-billable",
-        "title": "A cancelled order is not billable",
-        "description": "An order may be invoiced only while it has not been cancelled.",
-        "question": "Which orders may be invoiced?",
-        "boundary_slug": "order",
-        "expression": "order.state != 'cancelled'",
-        "given_field": "order.state",
-        "allowed_value": "confirmed",
-        "trigger": "invoice",
-        "rejected_value": "cancelled",
-        "out_of_scope": "who may cancel an order, which the order lifecycle holds",
-        "condition": "the order has not reached its cancelled state",
-        **STAMP,
-    },
-    "knowledge-object-lifecycle": {
-        **ORIGIN,
-        "context": "sales",
-        "slug": "order",
-        "title": "Order lifecycle",
-        "description": "An order is placed and then either fulfilled or cancelled.",
-        "subject_title": "Order",
-        "boundary_slug": "order",
-        "subject_slug": "order",
-        "initial_state": "placed",
-        "terminal_state": "cancelled",
-        "trigger": "cancel",
-        "error_slug": "order-already-cancelled",
-        "out_of_scope": "how a cancellation is authorized, which no object here holds",
-        "initial_meaning": "has been recorded and not yet resolved",
-        "terminal_meaning": "will not be fulfilled and cannot be invoiced",
-        **STAMP,
-    },
-    "knowledge-object-interface": {
-        **ORIGIN,
-        "context": "sales",
-        "slug": "order-placed",
-        "title": "Order placed",
-        "description": "The event published when an order reaches its placed state.",
-        "boundary_slug": "order",
-        "ddd": "domain-event",
-        "version": "1",
-        "schema": "order-placed.v1",
-        "ownership": "published",
-        "out_of_scope": "who consumes the event, which is not a fact about the interface",
-        "semantics": "Published once, when the order is first recorded.",
-        **STAMP,
-    },
-    "knowledge-object-boundary": {
-        **ORIGIN,
-        "context": "sales",
-        "slug": "sales",
-        "title": "Sales",
-        "description": "The scope that owns an order and everything whose identity depends on it.",
-        "subdomain_type": "core",
-        "out_of_scope": "invoicing, which the billing boundary owns",
-        "owns": "the order, its lines, and its lifecycle",
-        **STAMP,
-    },
     "validation-evidence": {
         "producer": "worked-example",
         "verdict": "passed",
@@ -178,19 +103,120 @@ CASES: dict[str, dict[str, str]] = {
         "result": "pass",
         "detail": "all knowledge bases valid",
     },
-    "knowledge-object-process": {
-        **ORIGIN,
-        "context": "sales",
-        "slug": "order-to-cash",
-        "title": "Order to cash",
-        "description": "The path from a placed order to a settled invoice.",
-        "boundary_slug": "order",
-        "ddd": "saga",
-        "first_step_slug": "order",
-        "last_step_slug": "order-line",
-        "out_of_scope": "payment reconciliation, which no object here holds",
-        "outcome": "a settled invoice or a cancelled order",
-        **STAMP,
+    "domain-object-subdomain": {
+        'slug': 'sales',
+        'title': 'Sales',
+        'subdomain_type': 'core',
+        'description': 'Where this business wins the work it does.',
+        'question': 'What is the sales subdomain?',
+        'responsibility': 'how work is won, priced and committed to',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-context": {
+        'slug': 'sales',
+        'title': 'Sales',
+        'subdomain_slug': 'sales',
+        'description': 'The context that issues priced offers.',
+        'question': 'What is the sales context?',
+        'responsibility': 'issuing and tracking proposals',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-aggregate": {
+        'context': 'sales',
+        'slug': 'proposal',
+        'title': 'Proposal',
+        'root_slug': 'proposal',
+        'description': 'The consistency boundary around a priced offer.',
+        'question': 'What must stay consistent with a proposal?',
+        'invariant': 'keep its total equal to the sum of its items',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-definition": {
+        'context': 'sales',
+        'slug': 'proposal',
+        'title': 'Proposal',
+        'boundary_slug': 'proposal',
+        'ddd': 'aggregate-root',
+        'attribute_name': 'number',
+        'attribute_type': 'string',
+        'attribute_max_length': '30',
+        'description': 'A priced offer issued to a customer.',
+        'question': 'What is a proposal?',
+        'invariant': 'carry the number that identifies it',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-rule": {
+        'context': 'sales',
+        'slug': 'proposal-expiration',
+        'title': 'Proposal expiration',
+        'ddd': 'invariant',
+        'statement': 'A proposal MUST NOT be accepted after its validity period has passed.',
+        'expression': 'proposal.accepted_at <= proposal.valid_until',
+        'description': 'When a proposal stops being acceptable.',
+        'question': 'May a proposal be accepted after it expires?',
+        'condition': 'An acceptance dated after the validity period is refused',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-lifecycle": {
+        'context': 'sales',
+        'slug': 'proposal',
+        'title': 'Proposal lifecycle',
+        'initial_state': 'draft',
+        'next_state': 'issued',
+        'trigger': 'issue',
+        'error_slug': 'proposal-already-issued',
+        'description': 'The states a proposal holds and how it moves.',
+        'question': 'Which states may a proposal hold?',
+        'state_meaning': 'has not reached a customer',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-interface": {
+        'context': 'sales',
+        'slug': 'proposal-accepted',
+        'title': 'Proposal accepted',
+        'ddd': 'domain-event',
+        'version': '1',
+        'schema': 'events/proposal-accepted.json',
+        'ownership': 'published',
+        'description': 'Announced when a customer accepts a proposal.',
+        'question': 'What is published when a proposal is accepted?',
+        'payload_meaning': 'the proposal number and the instant it was accepted',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
+    },
+    "domain-object-process": {
+        'context': 'sales',
+        'slug': 'issue-proposal',
+        'title': 'Issue proposal',
+        'ddd': 'use-case',
+        'first_step_slug': 'proposal',
+        'description': 'How a proposal reaches a customer.',
+        'question': 'How is a proposal issued?',
+        'outcome': 'a proposal a customer can accept',
+        'generated_by': 'domain-modeler',
+        'generated_at': '2026-08-02T10:00:00Z',
+        'origin': 'stated',
+        'out_of_scope': 'How any of this is stored.',
     },
     "knowledge-decision": {
         "id": "0099",
@@ -315,7 +341,7 @@ class Expansion(unittest.TestCase):
 
     def test_nothing_is_minted(self) -> None:
         """Every stamp-shaped field is a placeholder, never a value the scaffold supplies."""
-        for kind in ("concept", "knowledge-object-definition"):
+        for kind in ("concept", "domain-object-definition"):
             text = scaffold.template_path(kind).read_text()
             names = scaffold.placeholders(text)
             self.assertIn("generated_at", names, kind)
@@ -331,11 +357,11 @@ class Rejection(unittest.TestCase):
         self.assertEqual([], problems)
         self.assertTrue(scaffold.conforms("concept", text), "the schema accepted an invalid id")
 
-    def test_a_knowledge_object_missing_its_type_fields_is_reported(self) -> None:
-        """Each node type has its own required fields; one skeleton for six would fit none."""
-        text, _ = scaffold.expand("knowledge-object-definition", CASES["knowledge-object-definition"])
+    def test_a_domain_object_missing_its_kind_fields_is_reported(self) -> None:
+        """Each kind has its own required fields; one skeleton for eight would fit none."""
+        text, _ = scaffold.expand("domain-object-definition", CASES["domain-object-definition"])
         broken = text.replace("type: definition", "type: lifecycle")
-        self.assertTrue(scaffold.conforms("knowledge-object-lifecycle", broken))
+        self.assertTrue(scaffold.conforms("domain-object-lifecycle", broken))
 
 
 class CommandLine(unittest.TestCase):

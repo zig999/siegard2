@@ -24,6 +24,9 @@ Declared dependencies: none beyond the standard library.
 
 from __future__ import annotations
 
+import hashlib
+import json
+
 # What only judgment supplies. Closed, and identical for every node type: no analysis carries them,
 # which is why the expansion records each as an `authoring` gap rather than guessing.
 ENRICHMENT_FIELDS = ("question", "description", "out_of_scope")
@@ -51,3 +54,23 @@ def closable(gap: dict) -> bool:
     that removed one would be asserting the domain answered.
     """
     return gap.get("kind") == "authoring"
+
+
+def digest(value) -> str:
+    """The recorded form of one field's value, for a seal to compare against later.
+
+    Here rather than in either script because two of them have to agree on it exactly: one writes
+    the seal and the other recomputes it, and a digest computed two ways is a difference nobody
+    made. It sits beside the ownership line for the same reason the line sits here at all.
+
+    Canonical JSON with sorted keys, so a mapping written in another order digests the same — YAML
+    round-trips do not promise key order, and a reordering the enrichment did not cause must not
+    read as a change it made.
+
+    `default=str` is there for a value YAML types and JSON does not: a timestamp written unquoted
+    parses as a datetime, and digesting it would otherwise fail on the first real object rather than
+    on any test that had quoted one. Stringifying is stable for every such value, which is all a
+    digest asks — it compares a value with itself under one function, never across two.
+    """
+    encoded = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"), default=str)
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()

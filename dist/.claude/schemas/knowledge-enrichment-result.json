@@ -16,7 +16,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "knowledge-enrichment-result/1",
+      "const": "knowledge-enrichment-result/2",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     },
     "result_id": {
@@ -33,7 +33,10 @@
       "description": "The named consumer. It reads `state` to tell an enriched object from a blocked one, and reports `findings` to whoever reviews the staging tree before promotion — which is the only place a finding is acted on, because the pass that could act on it has already finished."
     },
     "state": {
-      "enum": ["enriched", "blocked"],
+      "enum": [
+        "enriched",
+        "blocked"
+      ],
       "description": "`enriched` means the four fields were written and the authoring gaps they close were removed. `blocked` means they could not be, and `blocking_reason` names what was missing — never a field the pass filled to get past it."
     },
     "blocking_reason": {
@@ -43,8 +46,8 @@
     },
     "object_id": {
       "type": "string",
-      "pattern": "^ko\\.",
-      "description": "The object this pass read, by the identifier it carries."
+      "pattern": "^dm\\.",
+      "description": "The object this pass read, by the identifier it carries. The prefix moved with the profile: `ko.` spelled a vocabulary that collapsed eight kinds into six, and `dm.` spells the kinds themselves."
     },
     "object_path": {
       "type": "string",
@@ -54,7 +57,10 @@
     "gaps_closed": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "The `kind: authoring` gaps this pass closed, by field name. A `kind: domain` gap is never closed here: only whoever knows the domain closes one, and a pass that removed one would be asserting the domain answered."
     },
     "findings": {
@@ -64,14 +70,27 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["field", "severity", "finding"],
+        "required": [
+          "field",
+          "severity",
+          "finding"
+        ],
         "properties": {
-          "field": { "type": "string", "minLength": 1 },
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
           "severity": {
-            "enum": ["defect", "question"],
+            "enum": [
+              "defect",
+              "question"
+            ],
             "description": "`defect` — the object states something the material does not support. `question` — the pass could not tell, and says so rather than choosing."
           },
-          "finding": { "type": "string", "minLength": 1 }
+          "finding": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -82,16 +101,54 @@
   },
   "allOf": [
     {
-      "if": { "properties": { "state": { "const": "blocked" } }, "required": ["state"] },
-      "then": { "required": ["blocking_reason"], "not": { "required": ["gaps_closed"] } },
-      "else": { "required": ["gaps_closed", "searched"], "not": { "required": ["blocking_reason"] } },
+      "if": {
+        "properties": {
+          "state": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "blocking_reason"
+        ],
+        "not": {
+          "required": [
+            "gaps_closed"
+          ]
+        }
+      },
+      "else": {
+        "required": [
+          "gaps_closed",
+          "searched"
+        ],
+        "not": {
+          "required": [
+            "blocking_reason"
+          ]
+        }
+      },
       "description": "An enriched result says what it closed and whether it looked; a blocked one says what stopped it and closed nothing."
     },
     {
-      "if": { "required": ["findings"] },
+      "if": {
+        "required": [
+          "findings"
+        ]
+      },
       "then": {
-        "properties": { "searched": { "const": true } },
-        "required": ["searched"],
+        "properties": {
+          "searched": {
+            "const": true
+          }
+        },
+        "required": [
+          "searched"
+        ],
         "description": "A finding reported by a pass that says it did not search is a contradiction the contract refuses rather than a report a reader has to reconcile."
       }
     }

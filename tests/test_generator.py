@@ -156,8 +156,8 @@ class Provenance(Built):
     def test_a_removed_source_disappears_from_the_output(self) -> None:
         """foundation/0008 R5: no file survives whose source was removed."""
         with tempfile.TemporaryDirectory() as holder:
-            moved = Path(holder) / "knowledge-author.md"
-            live = REPO_ROOT / "src" / "claude" / "agents" / "knowledge-author.md"
+            moved = Path(holder) / "knowledge-enricher.md"
+            live = REPO_ROOT / "src" / "claude" / "agents" / "knowledge-enricher.md"
             shutil.move(live, moved)
             try:
                 root = Path(holder) / "dist"
@@ -165,7 +165,7 @@ class Provenance(Built):
                 files = verify_dist.tree(root)
             finally:
                 shutil.move(moved, live)
-        self.assertNotIn("agents/knowledge-author.md", files)
+        self.assertNotIn("agents/knowledge-enricher.md", files)
         self.assertFalse((root / "agents").exists(), "agents/ shipped empty after its only file left")
 
     def test_the_source_revision_is_content_addressed(self) -> None:
@@ -352,8 +352,8 @@ class ShippedImports(unittest.TestCase):
         the whole reason it was written that way rather than as a loop over an empty glob.
         """
         self.assertEqual(
-            {"expand_model.py", "check_enrichment.py", "field_ownership.py", "promote_staged.py",
-             "check_gap_fields.py", "materialize.py"},
+            {"check_field_ownership.py", "check_knowledge.py", "field_ownership.py",
+             "materialize.py", "seal_analysis.py"},
             {p.name for p in SHIPPED_BIN.glob("*.py")},
         )
 

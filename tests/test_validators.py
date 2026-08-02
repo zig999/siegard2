@@ -278,18 +278,18 @@ class Components(TreeCase):
         self.assertNames(output, "ingest-domain")
 
     def test_an_agent_filename_must_equal_its_name(self) -> None:
-        (self.root / "agents" / "knowledge-author.md").rename(self.root / "agents" / "author.md")
+        (self.root / "agents" / "knowledge-enricher.md").rename(self.root / "agents" / "enricher.md")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "author.md")
+        self.assertNames(output, "enricher.md")
 
     def test_a_duplicate_agent_name_is_reported(self) -> None:
         nested = self.root / "agents" / "nested"
         nested.mkdir()
-        shutil.copy(self.root / "agents" / "knowledge-author.md", nested / "knowledge-author.md")
+        shutil.copy(self.root / "agents" / "knowledge-enricher.md", nested / "knowledge-enricher.md")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "knowledge-author")
+        self.assertNames(output, "knowledge-enricher")
 
     def test_a_skill_directory_without_skill_md_is_reported(self) -> None:
         (self.root / "skills" / "orphan").mkdir()
@@ -319,10 +319,10 @@ class Components(TreeCase):
         self.assertNames(output, "workers", "no contract exists")
 
     def test_a_schema_violation_is_reported(self) -> None:
-        self.rewrite("agents/knowledge-author.md", "tools: Read, Grep, Glob, Write, Edit", "tools: 17")
+        self.rewrite("agents/knowledge-enricher.md", "tools: Read, Grep, Glob, Edit", "tools: 17")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "knowledge-author")
+        self.assertNames(output, "knowledge-enricher")
 
     def test_an_absent_tree_is_reported_and_not_a_failure(self) -> None:
         """The contract precedes the first component by design (ADR-0009)."""

@@ -46,18 +46,22 @@ class Procedure(unittest.TestCase):
                          "for a table lookup")
 
     def test_it_enriches_through_the_agent_that_owns_one_object(self) -> None:
-        self.assertIn("One delegation to `knowledge-enricher` per staged object", self.body)
+        self.assertIn("One delegation to `knowledge-enricher` per object", self.body)
 
     def test_it_names_the_pipeline_order(self) -> None:
         """The node order it asserted is gone, and so is the reason for it.
 
         Authoring one object at a time made a definition depend on its context existing first, so
-        the order was the guarantee. The expansion writes the whole tree at once, so what is ordered
-        now is the passes — and the review between them, which is the step a run can skip and the
-        one it must not.
+        the order was the guarantee. The analysis writes every object before this runs, so what is
+        ordered now is the passes — and the review between them, which is the step a run can skip and
+        the one it must not.
+
+        Promotion left the list with the contract it moved a file across. There is no second tree to
+        move anything into, and what says a pass has not reached an object is the object's own open
+        authoring gap.
         """
-        stages = ["knowledge-enricher", "check_enrichment.py", "check_gap_fields.py",
-                  "promote_staged.py", "materialize.py"]
+        stages = ["knowledge-enricher", "check_field_ownership.py", "check_knowledge.py",
+                  "materialize.py"]
         positions = [self.body.index(stage) for stage in stages]
         self.assertEqual(sorted(positions), positions, f"order drifted: {stages}")
 
@@ -105,13 +109,15 @@ class Procedure(unittest.TestCase):
         distribution performs none of those checks and reports them as owed, which is the honest
         form — and C04 has nothing to demand because there is no instruction left to run anything.
         """
-        for script in ("bin/check_enrichment.py", "bin/check_gap_fields.py",
-                       "bin/promote_staged.py", "bin/materialize.py"):
+        for script in ("bin/check_field_ownership.py", "bin/check_knowledge.py",
+                       "bin/materialize.py"):
             with self.subTest(script=script):
                 self.assertIn(script, self.body)
-        # Three cross-object checks are still owed, and the sentence narrowed when the
-        # materializer took the fourth. Naming the count is what keeps it honest as they land.
-        self.assertIn("ships nothing that performs those three", self.body)
+        # The count was the honest part of a sentence saying three cross-object checks were owed and
+        # unshipped. They are shipped now, so what is asserted is the other half of the same
+        # discipline: the procedure still does not improvise one of its own.
+        self.assertIn("the distribution now ships all\nfour", self.body)
+        self.assertIn("Do not improvise a fifth", self.body)
 
     def test_it_reports_what_stands_between_the_base_and_a_reader(self) -> None:
         """An ingestion reported as finished sends the caller into a block nobody warned about.
@@ -153,12 +159,22 @@ class Declaration(unittest.TestCase):
         absent = next(f for f in self.entry["failure_outcomes"] if f["outcome"] == "tree_absent")
         self.assertIn("has not run", absent["reason"])
 
-    def test_it_declares_the_domain_model_as_a_contracted_prerequisite(self) -> None:
-        """The order between modelling and ingesting is what a declared input makes derivable."""
-        model = next(i for i in self.entry["inputs"] if i["name"] == "domain_model")
-        self.assertEqual("domain-model", model["artifact"])
-        self.assertEqual("domain-model/4", model["contract"])
-        self.assertTrue(model["required"])
+    def test_it_declares_the_seal_as_a_contracted_prerequisite(self) -> None:
+        """The order between modelling and ingesting is what a declared input makes derivable.
+
+        It was the domain model that carried the order, because the enrichment check re-derived the
+        expansion from it. The check now compares against a seal, so the seal is what the second
+        entry point cannot start without — the property is the same one and the artifact carrying
+        it moved.
+        """
+        seal = next(i for i in self.entry["inputs"] if i["name"] == "analysis_seal")
+        self.assertEqual("analysis-seal", seal["artifact"])
+        self.assertEqual("analysis-seal/1", seal["contract"])
+        self.assertTrue(seal["required"])
+
+    def test_it_no_longer_requires_the_model_it_does_not_read(self) -> None:
+        """A required input nothing consumes is a prerequisite a caller cannot satisfy for a reason."""
+        self.assertNotIn("domain-model", {i.get("artifact") for i in self.entry["inputs"]})
 
     def test_it_declares_the_ordering_guarantee(self) -> None:
         """The order changed and the guarantee moved with it.

@@ -460,6 +460,97 @@ def knowledge_intake_plan_4_to_5(doc: dict) -> dict:
     return migrated
 
 
+def knowledge_intake_plan_6_to_7(doc: dict) -> dict:
+    """Close `producer` to the expansion, refusing a plan the removed agent produced.
+
+    `/7` drops `domain-analyst` from the enum, because the agent no longer ships —
+    `docs/adr/0023-remove-the-agents-no-entry-point-invokes.md`. A plan naming it therefore declares
+    a producer this distribution cannot contain.
+
+    Relabelling it `expand-model` is what this refuses. `producer` exists so a consumer can tell
+    which capability wrote a document without inferring it from shape, and the two producers agreed
+    on every field — that agreement is exactly what makes the label the only evidence, and rewriting
+    it would destroy the only evidence while leaving a document that validates. What a holder of such
+    a plan does instead is re-run the expansion over the model it was derived from: the plan is a
+    function of that model, so the result is the same document with an honest producer.
+
+    A plan already naming the expansion crosses by stamping the version, which loses nothing.
+    """
+    producer = doc.get("producer")
+    if producer != "expand-model":
+        raise MigrationError(
+            f"plan {doc.get('intake_id')!r} names producer {producer!r}, a capability "
+            f"knowledge-intake-plan/7 does not admit and this distribution no longer ships. "
+            f"Re-run bin/expand_model.py over the domain model this plan was derived from rather "
+            f"than relabelling it: the producer is the only record of which capability decided the "
+            f"classification, and the two producers agree on every other field"
+        )
+    migrated = dict(doc)
+    migrated["contract_version"] = "knowledge-intake-plan/7"
+    return migrated
+
+
+def impact_analysis_4_to_5(doc: dict) -> dict:
+    """Rename the model identifier and retype what an entry implicates.
+
+    `/5` drops `model_id` for `record_id` and replaces the `knowledge-object` and
+    `domain-model-element` kinds with `domain-object`. Both follow from the same change: the
+    constructs are objects in the base rather than elements of a document held elsewhere, so what
+    names a run is the record holding what has no file, and what an entry implicates is an object.
+
+    The rename is mechanical and loses nothing — one identifier for one run, under a new prefix. The
+    retype is not, and refuses rather than guessing: a `/4` entry naming an `adr` keeps its kind, and
+    one naming either retired kind becomes `domain-object`, but an identifier still spelled `ko.`
+    cannot be rewritten here. Its path came from a vocabulary that collapsed eight kinds into six,
+    and deriving the kind it would take now is the analysis, not a migration.
+    """
+    migrated = dict(doc)
+    identifier = migrated.pop("model_id", None)
+    if identifier:
+        migrated["record_id"] = "ar_" + identifier.split("_", 1)[1]
+    implicated = []
+    for entry in doc.get("implicated") or []:
+        moved = dict(entry)
+        if moved.get("kind") in ("knowledge-object", "domain-model-element"):
+            moved["kind"] = "domain-object"
+        for field in ("id", "driver"):
+            if str(moved.get(field, "")).startswith("ko."):
+                raise MigrationError(
+                    f"entry {entry.get('id')!r} names {moved[field]!r}, an identifier from the "
+                    f"profile that collapsed eight kinds into six. Which kind it takes now is what "
+                    f"an analysis decides, and a migration that guessed would put that decision "
+                    f"somewhere nobody could review it — re-run the analysis over the request"
+                )
+        implicated.append(moved)
+    migrated["implicated"] = implicated
+    migrated["contract_version"] = "impact-analysis/5"
+    return migrated
+
+
+def enrichment_result_1_to_2(doc: dict) -> dict:
+    """Refuse a result naming an object under the retired profile's identifier.
+
+    `/2` requires `object_id` to be a `dm.` identifier. A `/1` result names a `ko.` one, and which
+    `dm.` identifier that object takes now is not derivable here: the two vocabularies differ in what
+    a kind is, and a `ko.boundary.<context>` was a bounded context or an aggregate depending on a
+    field this document does not carry.
+
+    So the hop refuses rather than rewriting. What a holder does instead is discard the result: it
+    reports on one pass over one object, both of which are re-runnable, and an enrichment result is
+    not something a base keeps.
+    """
+    identifier = doc.get("object_id", "")
+    if not str(identifier).startswith("dm."):
+        raise MigrationError(
+            f"result {doc.get('result_id')!r} names {identifier!r}, an identifier from the profile "
+            f"that collapsed eight kinds into six. Which kind that object takes now is not derivable "
+            f"from this document — discard the result and re-run the enrichment over the object"
+        )
+    migrated = dict(doc)
+    migrated["contract_version"] = "knowledge-enrichment-result/2"
+    return migrated
+
+
 def _stamp(version: str):
     """A hop that adds nothing but the version, for a bump that only narrows what was never used."""
     def hop(doc: dict) -> dict:
@@ -534,7 +625,10 @@ MIGRATIONS: dict[tuple[str, str], Callable[[dict], dict]] = {
     ("staged-knowledge-object/1", "staged-knowledge-object/2"): _stamp("staged-knowledge-object/2"),
     ("domain-model/3", "domain-model/4"): _name_consumer("domain-model/4", ["expand-model", "impact-analyst"]),
     ("knowledge-intake-plan/5", "knowledge-intake-plan/6"): _name_consumer("knowledge-intake-plan/6", "ingest-domain"),
+    ("knowledge-intake-plan/6", "knowledge-intake-plan/7"): knowledge_intake_plan_6_to_7,
     ("impact-analysis/3", "impact-analysis/4"): _name_consumer("impact-analysis/4", "ingest-domain"),
+    ("impact-analysis/4", "impact-analysis/5"): impact_analysis_4_to_5,
+    ("knowledge-enrichment-result/1", "knowledge-enrichment-result/2"): enrichment_result_1_to_2,
     ("knowledge-authoring-result/1", "knowledge-authoring-result/2"): _name_consumer("knowledge-authoring-result/2", "ingest-domain"),
     ("validation-evidence/2", "validation-evidence/3"): _name_consumer("validation-evidence/3", "ingest-domain"),
     ("knowledge-intake-plan/1", "knowledge-intake-plan/2"): knowledge_intake_plan_1_to_2,

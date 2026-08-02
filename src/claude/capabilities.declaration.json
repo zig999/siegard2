@@ -4,13 +4,13 @@
     {
       "identifier": "impact-analyst",
       "class": "specialized-agent",
-      "objective": "Map a domain model against the knowledge a repository already holds, returning a closed verdict of none, update, or create and one entry per implicated artifact with the operation it takes, the reason, and the model element driving it. Choose it once a domain model exists and before any knowledge object is authored. Not for modelling, not for classifying constructs into node types, not for authoring, and not for judging whether the change is a good idea.",
+      "objective": "Map a domain model against the knowledge a repository already holds, returning a closed verdict of none, update, or create and one entry per implicated artifact with the operation it takes, the reason, and the model element driving it. Choose it once a domain model exists and before any knowledge object is staged. Not for modelling, not for classifying constructs into node types, which domain-modeler does from a closed table, not for staging or promoting an object, and not for judging whether the change is a good idea.",
       "inputs": [
         {
           "name": "domain_model",
-          "artifact": "domain-model",
+          "artifact": "analysis-record",
           "required": true,
-          "contract": "domain-model/4"
+          "contract": "analysis-record/1"
         },
         {
           "name": "analysis_id",
@@ -24,12 +24,12 @@
       "outputs": [
         {
           "artifact": "impact-analysis",
-          "contract": "impact-analysis/4"
+          "contract": "impact-analysis/5"
         }
       ],
       "consumed_artifacts": [
         {
-          "artifact": "knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         }
       ],
@@ -45,7 +45,7 @@
         "note": "Classification reads what a change touches, not the whole ontology. A lifecycle, an interface, and a process are reached through the objects above rather than selected directly, so naming all six would narrow nothing."
       },
       "deterministic_behavior": [
-        "the domain model is validated against domain-model/4 at the boundary before it is analysed, and a blocked model ends the run",
+        "the domain model is validated against analysis-record/1 at the boundary before it is analysed, and a blocked model ends the run",
         "base_state records whether anything existed to implicate, observed rather than inferred",
         "over an empty base the verdict is create and every entry names a domain model element",
         "entries are sorted by identifier, so two analyses of one model compare directly"
@@ -86,37 +86,57 @@
     {
       "identifier": "domain-modeler",
       "class": "specialized-agent",
-      "objective": "Analyse a request into a DDD domain model — subdomains, bounded contexts and their relationships, aggregates, entities and value objects, invariants, lifecycles, published interfaces, and processes — marking every element as stated by the request or decided by the analysis. Choose it when a request describes a problem or a solution and no domain model exists. Not for classifying a model into the ontology, which is domain-analyst; not for authoring knowledge objects; and not for deciding anything about a technology stack.",
+      "objective": "Analyse a request into a DDD domain model and write it — one file per construct, in the eight kinds the ontology records. Choose it when a request describes a problem or a solution and the base does not yet hold what it asks for. Not for writing the four fields only judgment supplies, which is knowledge-enricher; not for deciding anything about a technology stack; and not for judging whether the change should happen, which is impact-analyst.",
       "inputs": [
         {
-          "name": "model_id",
+          "name": "request",
+          "required": true
+        },
+        {
+          "name": "record_id",
+          "required": true
+        },
+        {
+          "name": "knowledge_root",
+          "required": true
+        },
+        {
+          "name": "generated_by",
+          "required": true
+        },
+        {
+          "name": "generated_at",
           "required": true
         },
         {
           "name": "referenced_material",
           "required": false,
-          "default": "absent, and the analysis rests on the request alone rather than on material nothing supplied"
+          "default": "absent, and the analysis rests on the request alone rather than on material nobody supplied"
         }
       ],
       "outputs": [
         {
-          "artifact": "domain-model",
-          "contract": "domain-model/4"
+          "artifact": "analysis-record",
+          "contract": "analysis-record/1"
         }
       ],
       "produced_artifacts": [
-        "domain-model"
+        "domain-object"
       ],
       "required_context": {
         "note": "No node type is in scope. This capability works in DDD's vocabulary and produces a design; the ontology's six types enter one step later, when the model is classified. Naming a node type here would put classification in two capabilities."
       },
       "deterministic_behavior": [
         "the request is received as prose and its identifier as a value; nothing about it is inferred",
-        "the result is validated against domain-model/4 at the boundary before anything consumes it",
+        "the result is validated against analysis-record/1 at the boundary before anything consumes it",
         "the state is one of the closed set modeled, blocked, and no other value is accepted",
         "every element declares origin as stated or modeled, and an element it decided carries the rationale that decided it",
         "the model id comes from the caller and is never minted",
-        "an element whose origin is unclear is recorded as modeled rather than stated, which is the stricter reading: it demands a rationale and invites review, where a wrong `stated` would claim the request said something it did not"
+        "an element whose origin is unclear is recorded as modeled rather than stated, which is the stricter reading: it demands a rationale and invites review, where a wrong `stated` would claim the request said something it did not",
+        "each object is written at the path its identifier computes to, so a path is derivable from an id and an id from a path with no lookup",
+        "the four fields only judgment supplies are left unwritten and recorded as `kind: authoring` gaps, which is what says the enrichment has not run — there is no status field to set",
+        "a fact a kind requires and the request does not state becomes a `kind: domain` gap naming what the domain would have to say, and the object is still written",
+        "the record names every object written and holds what has no file: the request, the outcome, the open questions and the exclusions"
       ],
       "judgment": [
         "the whole of the modelling: subdomain classification, context boundaries, aggregate boundaries, which constructs are entities and which are value objects, and which rules are invariants",
@@ -125,7 +145,7 @@
       ],
       "assertions": [
         {
-          "output": "domain-model",
+          "output": "analysis-record",
           "bound": false
         }
       ],
@@ -133,9 +153,11 @@
         "tools": [
           "Read",
           "Grep",
-          "Glob"
+          "Glob",
+          "Write",
+          "Edit"
         ],
-        "note": "Read-only on purpose. It produces a design and writes nothing, so the design is reviewable before the knowledge base changes; the boundary validator is not this agent's to run."
+        "note": "It writes the objects, which is what removed the conversion between two vocabularies. What holds the grant to something is not the grant: every object is validated against domain-object/1 and held to a completeness check that reads the same contract, and neither runs inside it."
       },
       "failure_outcomes": [
         {
@@ -150,214 +172,10 @@
           "outcome": "undecided_by_the_request",
           "reason": "a fact the request does not settle, recorded as an open question with what the answer would change; the model still returns and this is not a stop"
         }
-      ]
-    },
-    {
-      "identifier": "domain-analyst",
-      "class": "specialized-agent",
-      "objective": "Classify a domain model into the ontology, returning one entry per construct with its node type, its DDD value, the identifier it will take, and every required fact the model does not supply. Choose it once a domain model exists and before anything is authored. Not for modelling the domain, which is domain-modeler; not for authoring objects; and not for filling a gap the model leaves.",
-      "inputs": [
-        {
-          "name": "domain_model",
-          "artifact": "domain-model",
-          "contract": "domain-model/4",
-          "required": true
-        },
-        {
-          "name": "intake_id",
-          "required": true
-        },
-        {
-          "name": "knowledge_root",
-          "required": true
-        },
-        {
-          "name": "existing_boundaries",
-          "required": false,
-          "default": "absent, and every boundary in the plan is then a new one rather than silently reusing an identifier nothing confirmed"
-        }
-      ],
-      "outputs": [
-        {
-          "artifact": "knowledge-intake-plan",
-          "contract": "knowledge-intake-plan/6"
-        }
       ],
       "consumed_artifacts": [
         {
-          "artifact": "knowledge-graph",
-          "access": "read"
-        },
-        {
-          "artifact": "knowledge-object",
-          "access": "read"
-        }
-      ],
-      "produced_artifacts": [
-        "knowledge-intake-plan"
-      ],
-      "required_context": {
-        "node_types": [
-          "boundary",
-          "definition",
-          "rule",
-          "lifecycle",
-          "interface",
-          "process"
-        ],
-        "note": "Classification may land a construct in any of the six, so narrowing this would narrow what may be decided. It is the same reason root-selector names all six, arrived at from the opposite direction: that capability chooses among existing objects and this one decides what an object will be."
-      },
-      "deterministic_behavior": [
-        "the domain model is validated against domain-model/4 at the boundary before it is read",
-        "the result is validated against knowledge-intake-plan/6 at the boundary before anything consumes it",
-        "the state is one of the closed set classified, blocked, and no other value is accepted",
-        "every proposed identifier is computed from the node type and the boundary by the ontology's arithmetic rather than allocated",
-        "entries are sorted by proposed identifier, so two classifications of one model compare directly",
-        "the intake id comes from the caller and is never minted",
-        "a construct whose node type is genuinely ambiguous is classified as the model supports and the alternative is recorded, never resolved silently"
-      ],
-      "judgment": [
-        "which node type each DDD construct becomes, and the ddd value it carries",
-        "which boundary a construct belongs to, and therefore the identifier it takes",
-        "whether a construct has a home in the mapping at all, or is stack knowledge or rationale"
-      ],
-      "assertions": [
-        {
-          "output": "knowledge-intake-plan",
-          "bound": false
-        }
-      ],
-      "grant": {
-        "tools": [
-          "Read",
-          "Grep",
-          "Glob"
-        ],
-        "note": "Read-only on purpose. It decides what each construct becomes and writes nothing, so the classification is reviewable before the base changes; the boundary validator is not this agent's to run."
-      },
-      "failure_outcomes": [
-        {
-          "outcome": "missing_input",
-          "reason": "a required input was not supplied, including the intake id it never mints, named rather than substituted"
-        },
-        {
-          "outcome": "model_blocked",
-          "reason": "the domain model declares itself blocked, so there is no design to classify; reported rather than classified into nothing"
-        },
-        {
-          "outcome": "unmapped_construct",
-          "reason": "a construct the mapping has no home for, recorded on its own entry as `unmapped` rather than forced into a node type; the plan is still classified and the run still finished"
-        },
-        {
-          "outcome": "refused_construct",
-          "reason": "a construct the model states in a form the ontology rejects rather than one it leaves incomplete — an attribute typed outside the closed primitive vocabulary is the standing case. Recorded on its own entry as `refused` with the reason, and nothing is authored from it; a missing fact would have been a gap instead"
-        }
-      ],
-      "deprecation": {
-        "replacement": "expand-model",
-        "reason": "The classification it performs is a closed table and identifier arithmetic, and a measured run put the cost at 75,329 tokens for a mapping that was 1:1 with the model in every one of 24 entries. `expand-model` performs the same mapping as a function: same input, same tree, every run, at no token cost — and it writes the objects too, which this agent was read-only to avoid doing. A consumer delegating to this agent still gets a conforming plan; what it does not get is a result two runs can be compared byte for byte."
-      }
-    },
-    {
-      "identifier": "knowledge-author",
-      "class": "specialized-agent",
-      "objective": "Author or revise one knowledge object from the entry a validated classification names, in one of the six node types, conforming to the ontology contract. Choose it at authoring, once a classification exists. Not for deciding which node type a construct becomes, which is domain-analyst, and not for changing the ontology itself.",
-      "inputs": [
-        {
-          "name": "knowledge_intake_plan",
-          "artifact": "knowledge-intake-plan",
-          "contract": "knowledge-intake-plan/6",
-          "required": true
-        },
-        {
-          "name": "proposed_id",
-          "required": true
-        },
-        {
-          "name": "knowledge_root",
-          "required": true
-        },
-        {
-          "name": "generated_at",
-          "required": true
-        },
-        {
-          "name": "generated_by",
-          "required": true
-        }
-      ],
-      "outputs": [
-        {
-          "artifact": "knowledge-authoring-result",
-          "contract": "knowledge-authoring-result/2"
-        }
-      ],
-      "produced_artifacts": [
-        "knowledge-object"
-      ],
-      "required_context": {
-        "node_types": [
-          "boundary",
-          "definition",
-          "rule",
-          "lifecycle",
-          "interface",
-          "process"
-        ],
-        "note": "It may author any of the six, and it must read the neighbours a new object declares edges to, so the whole vocabulary is genuinely in scope."
-      },
-      "deterministic_behavior": [
-        "the result is validated against knowledge-authoring-result/2 at the boundary",
-        "the object is validated against knowledge-object/5, including the per-type required fields",
-        "the node type and the subject are read from the entry the classification names, never decided again",
-        "the timestamp and producer identity come from the caller and are never minted",
-        "a fact that would need two node types is reported as blocked rather than compressed into one, because refusing is available here and choosing would author a construct nobody described"
-      ],
-      "judgment": [
-        "the wording of the object's own body, and what belongs out of scope",
-        "whether the entry supplies enough for the node type it names, which is a blocking outcome rather than an invention"
-      ],
-      "assertions": [
-        {
-          "output": "knowledge-authoring-result",
-          "bound": false
-        }
-      ],
-      "grant": {
-        "tools": [
-          "Read",
-          "Grep",
-          "Glob",
-          "Write",
-          "Edit"
-        ],
-        "note": "Write tools to change exactly one object and no shell: the boundary validator runs after it returns, and a guarantee a producer self-reports is not a guarantee."
-      },
-      "failure_outcomes": [
-        {
-          "outcome": "missing_input",
-          "reason": "a required input was not supplied, including the instant and producer identity it never mints"
-        },
-        {
-          "outcome": "entry_absent",
-          "reason": "the classification holds no entry for the proposed id, named rather than guessed at"
-        },
-        {
-          "outcome": "duplicate_subject",
-          "reason": "an existing object already records this fact, named so the caller decides whether to revise it"
-        },
-        {
-          "outcome": "incomplete_entry",
-          "reason": "the entry is short of a fact its node type requires, named with the field; the object is not authored around it"
-        },
-        {
-          "outcome": "wrong_layer",
-          "reason": "the entry asks for a fact the classification does not supply, named so a caller can decide"
-        }
-      ],
-      "consumed_artifacts": [
-        {
-          "artifact": "knowledge-graph",
+          "artifact": "domain-object",
           "access": "read"
         }
       ]
@@ -365,7 +183,7 @@
     {
       "identifier": "model-domain",
       "class": "skill",
-      "objective": "Turn a request into a reviewable staging tree: analyse it into a DDD domain model, map what that touches in the base, and expand it into one staged knowledge object per construct — then stop for a person to read the diff. Choose it when a request describes a problem or a solution and no staging tree exists for it. Not for enriching or promoting those objects, which is ingest-domain over the tree this produces.",
+      "objective": "Turn a request into a reviewable set of domain objects: analyse it into a DDD domain model, map what that touches in the base, and expand it into one domain object per construct — then stop for a person to read the diff. Choose it when a request describes a problem or a solution and no set of domain objects exists for it. Not for enriching or promoting those objects, which is ingest-domain over the tree this produces.",
       "inputs": [
         {
           "name": "model_id",
@@ -373,14 +191,6 @@
         },
         {
           "name": "analysis_id",
-          "required": true
-        },
-        {
-          "name": "intake_id",
-          "required": true
-        },
-        {
-          "name": "staging_root",
           "required": true
         },
         {
@@ -395,45 +205,50 @@
           "name": "referenced_material",
           "required": false,
           "default": "absent, and the analysis rests on the request alone rather than on material nobody supplied"
+        },
+        {
+          "name": "seal_path",
+          "required": true
         }
       ],
       "outputs": [
         {
-          "artifact": "domain-model",
-          "contract": "domain-model/4"
+          "artifact": "analysis-record",
+          "contract": "analysis-record/1"
         },
         {
           "artifact": "impact-analysis",
-          "contract": "impact-analysis/4"
+          "contract": "impact-analysis/5"
         },
         {
-          "artifact": "knowledge-intake-plan",
-          "contract": "knowledge-intake-plan/6"
+          "artifact": "domain-object",
+          "contract": "domain-object/1"
         },
         {
-          "artifact": "staged-knowledge-object",
-          "contract": "staged-knowledge-object/2"
+          "artifact": "analysis-seal",
+          "contract": "analysis-seal/1"
         }
       ],
       "produced_artifacts": [
-        "domain-model",
+        "analysis-record",
         "impact-analysis",
-        "knowledge-intake-plan",
-        "staged-knowledge-object"
+        "domain-object",
+        "analysis-seal"
       ],
       "required_context": {
         "note": "No node type is in scope. This procedure produces a design in DDD's vocabulary; the ontology's six types enter when the model is classified, which is a different entry point."
       },
       "deterministic_behavior": [
-        "the model is validated against domain-model/4 at the boundary and rejected rather than repaired",
-        "a model whose state is blocked ends the run with the reason reported and nothing expanded",
-        "an impact analysis runs for every request before anything is written, including the first against an empty base, and a verdict of none ends the run",
-        "the expansion is a script rather than a delegation: the mapping is a closed table and the identifiers are arithmetic, so two runs over one model produce the same tree byte for byte",
-        "no file under the knowledge root is written: every file lands in the staging root, and a staged object declares a different contract from the base's until it is promoted",
+        "the analysis record is validated against analysis-record/1 at the boundary and rejected rather than repaired",
+        "a record whose state is blocked ends the run with the reason reported and nothing written",
+        "every object is written under the knowledge root, at the path its identifier computes to, and nowhere else",
         "the four fields only judgment supplies are recorded as authoring gaps rather than guessed at, and the next entry point writes them",
-        "every gap is checked against what its node type actually requires before the run ends",
-        "the run ends with the tree unenriched and unpromoted: the review is a person reading its diff, and a procedure that ends has stopped where one that says so in the middle has not",
-        "every identifier and the instant come from the caller and are never minted"
+        "every gap is checked against what its kind actually requires, in both directions, before the run ends",
+        "an impact analysis runs for every request, including the first against an empty base",
+        "the impact analysis runs after the objects exist rather than before, so a verdict of none asks for the run to be discarded rather than preventing a write; version control is the recovery",
+        "the run ends with the objects unenriched: the review is a person reading the diff, and a procedure that ends has stopped where one that says so in the middle has not",
+        "every identifier and the instant come from the caller and are never minted",
+        "the objects are sealed before the run ends, and the seal is what the next entry point compares an enrichment against: a tool grant names tools rather than the keys of a file, so nothing else records what the analysis wrote"
       ],
       "judgment": [
         "how to phrase the delegation to the modelling agent",
@@ -442,7 +257,7 @@
       ],
       "assertions": [
         {
-          "output": "domain-model",
+          "output": "analysis-record",
           "bound": false
         }
       ],
@@ -473,7 +288,7 @@
       ],
       "consumed_artifacts": [
         {
-          "artifact": "knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         }
       ]
@@ -485,22 +300,18 @@
       "inputs": [
         {
           "name": "staging_root",
-          "artifact": "staged-knowledge-object",
-          "contract": "staged-knowledge-object/2",
+          "artifact": "domain-object",
+          "contract": "domain-object/1",
           "required": true
         },
         {
-          "name": "domain_model",
-          "artifact": "domain-model",
-          "contract": "domain-model/4",
+          "name": "analysis_seal",
+          "artifact": "analysis-seal",
+          "contract": "analysis-seal/1",
           "required": true
         },
         {
           "name": "knowledge_root_and_contract",
-          "required": true
-        },
-        {
-          "name": "intake_id",
           "required": true
         },
         {
@@ -515,8 +326,8 @@
       ],
       "outputs": [
         {
-          "artifact": "knowledge-object",
-          "contract": "knowledge-object/5"
+          "artifact": "domain-object",
+          "contract": "domain-object/1"
         },
         {
           "artifact": "validation-evidence",
@@ -525,7 +336,7 @@
       ],
       "consumed_artifacts": [
         {
-          "artifact": "knowledge-intake-plan",
+          "artifact": "analysis-record",
           "access": "read"
         },
         {
@@ -533,14 +344,17 @@
           "access": "read"
         },
         {
-          "artifact": "staged-knowledge-object",
+          "artifact": "domain-object",
+          "access": "read"
+        },
+        {
+          "artifact": "analysis-seal",
           "access": "read"
         }
       ],
       "produced_artifacts": [
-        "staged-knowledge-object",
-        "knowledge-object",
-        "validation-evidence"
+        "validation-evidence",
+        "domain-object"
       ],
       "required_context": {
         "node_types": [
@@ -561,7 +375,7 @@
         "each enrichment result is read at the boundary to tell an enriched object from a blocked one, and a blocked one is recorded rather than retried",
         "a finding an enricher reports is relayed to the reviewer and never acted on here: the pass that could have edited the design has already finished, and this one may not",
         "the enrichment check runs before promotion, and it is the only thing enforcing which fields the enrichment may touch — a tool grant names tools, not the keys of a file",
-        "promotion validates every object against knowledge-object/5 and writes nothing while any is refused; an object with an open domain gap is refused unless the caller asks otherwise, and the request is reported rather than defaulted",
+        "promotion validates every object against domain-object/1 and writes nothing while any is refused; an object with an open domain gap is refused unless the caller asks otherwise, and the request is reported rather than defaulted",
         "the timestamp, the producer identity, and every identifier come from the caller and are never minted",
         "the checks a per-file schema cannot express are reported as owed rather than run: the distribution ships nothing that performs them, and an improvised one would differ between two runs over the same base"
       ],
@@ -572,7 +386,7 @@
       ],
       "assertions": [
         {
-          "output": "knowledge-intake-plan",
+          "output": "analysis-record",
           "bound": false
         }
       ],
@@ -603,143 +417,89 @@
       ]
     },
     {
-      "identifier": "expand-model",
+      "identifier": "seal-analysis",
       "class": "script",
-      "objective": "Turn a validated domain model into one staged knowledge object per classified construct and the plan that records what became of every construct. Choose it once a domain model exists and has been reviewed, in place of delegating the classification: the mapping from a DDD construct to a node type is a closed table and the identifiers are arithmetic, so nothing here needs judgment. Not for modelling the domain, and not for writing the four fields only judgment supplies — it records those as gaps and writes nothing under the knowledge root.",
+      "objective": "Record what the analysis wrote, per object, so the pass that comes next can be held to its own fields. Choose it at the end of the first entry point, after the gap check and before anything edits the tree. Not for checking the enrichment, which is check-field-ownership, and not for writing or repairing an object.",
       "inputs": [
         {
-          "name": "domain_model",
-          "artifact": "domain-model",
-          "contract": "domain-model/4",
+          "name": "root",
           "required": true
         },
         {
-          "name": "staging_root",
-          "required": true
-        },
-        {
-          "name": "intake_id",
-          "required": true
-        },
-        {
-          "name": "generated_by",
-          "required": true
-        },
-        {
-          "name": "generated_at",
+          "name": "seal_path",
           "required": true
         }
       ],
       "outputs": [
         {
-          "artifact": "knowledge-intake-plan",
-          "contract": "knowledge-intake-plan/6"
-        },
-        {
-          "artifact": "staged-knowledge-object",
-          "contract": "staged-knowledge-object/2"
+          "artifact": "analysis-seal",
+          "contract": "analysis-seal/1"
         }
       ],
       "consumed_artifacts": [
         {
-          "artifact": "domain-model",
+          "artifact": "domain-object",
           "access": "read"
         }
       ],
       "produced_artifacts": [
-        "knowledge-intake-plan",
-        "staged-knowledge-object"
+        "analysis-seal"
       ],
       "required_context": {
-        "node_types": [
-          "boundary",
-          "definition",
-          "rule",
-          "lifecycle",
-          "interface",
-          "process"
-        ],
-        "note": "It expands into any of the six, so the whole vocabulary is in scope. Unlike the agent it replaces, it selects nothing: the node type follows from the construct's kind by the ontology's own table."
+        "note": "No node type is in scope. It records the fields an object carries and reads nothing about what they mean."
       },
       "deterministic_behavior": [
-        "the domain model is validated against domain-model/4 before anything is written, and a model declaring itself blocked ends the run",
-        "every construct in the model takes exactly one entry, whose outcome is classified, unmapped, or refused, so what happened to each is answerable in one place and the count checks against the input",
-        "each identifier is computed from the node type and the boundary by the ontology's arithmetic, never allocated, so the same model yields the same identifiers on every run",
-        "a fact the node type requires and the model does not state becomes a gap on the object, named with what the domain would have to say, and the object is still written",
-        "a fact the model states in a form the ontology rejects — an attribute typed outside the closed primitive vocabulary, a reference resolving to no element or to two — refuses that construct, and no file is written for it",
-        "the whole run is a function of the model and the caller's stamp: two runs over one model produce byte-identical trees",
-        "nothing is written under the knowledge root; every file lands in the staging root the caller names",
-        "the intake id, the producer identity, and the instant come from the caller and are never minted"
+        "only the analysis's side of the ownership line is sealed, read from the one module that declares it: sealing a field the enrichment owns would record a value nobody had written and report every legitimate enrichment as a change",
+        "a `kind: domain` gap is recorded verbatim rather than digested, because a removed one is reported by the field it named and a digest names nothing a reader can open",
+        "the body headings are recorded in order, so a heading added or renamed is reported and the content under one is not read",
+        "a path is recorded relative to the root, so a seal is readable on a machine other than the one that wrote it",
+        "it writes the seal and verifies nothing: a check that could refresh the baseline it compares against would report success on the change it exists to catch"
       ],
       "judgment": [],
       "assertions": [
         {
-          "output": "knowledge-intake-plan",
-          "bound": false
-        },
-        {
-          "output": "staged-knowledge-object",
+          "output": "analysis-seal",
           "bound": false
         }
       ],
       "grant": {
-        "note": "No tool grant: it is a script the caller runs, not a component the harness delegates to. It reads the model it is given and writes under the staging root it is given, and reaches neither the knowledge root nor anything else."
+        "note": "No tool grant: it is a script the caller runs. It reads the tree it is given and writes one file at the path it is given."
       },
       "failure_outcomes": [
         {
           "outcome": "cannot_run",
-          "reason": "the model file is absent or the arguments make no sense; exit 2, distinguished from a check that ran and found a problem"
+          "reason": "the root does not exist or holds no object; exit 2, distinguished from a run that read the tree and failed"
         },
         {
-          "outcome": "wrong_contract",
-          "reason": "the model declares a version this does not read, named rather than coerced"
-        },
-        {
-          "outcome": "model_blocked",
-          "reason": "the model declares itself blocked, so there is no design to expand; reported with its reason and nothing written"
-        },
-        {
-          "outcome": "construct_refused",
-          "reason": "a construct the model states in a form the ontology rejects, recorded on its own entry with the reason and no file written; the remaining constructs still expand and this is not a stop"
+          "outcome": "unreadable_object",
+          "reason": "an object under the root carries no frontmatter fence; reported with its path and nothing is written"
         }
       ]
     },
     {
-      "identifier": "check-enrichment",
+      "identifier": "check-field-ownership",
       "class": "script",
-      "objective": "Hold the enrichment pass to the four fields and the body it owns, by re-deriving what the expansion wrote and comparing. Choose it after enrichment and before promotion. It is the only thing enforcing that restriction: a tool grant names tools, not the keys of a file, so `Edit` confined to four fields is prose until something checks it. Not for validating an object against its contract, which is a boundary check, and not for judging what the enrichment wrote.",
+      "objective": "Hold the enrichment pass to the four fields and the body it owns, by comparing each object against the seal the analysis left. Choose it after enrichment and before promotion. It is the only thing enforcing that restriction: a tool grant names tools, not the keys of a file, so `Edit` confined to four fields is prose until something checks it. Not for validating an object against its contract, which is a boundary check, and not for judging what the enrichment wrote.",
       "inputs": [
         {
-          "name": "domain_model",
-          "artifact": "domain-model",
-          "contract": "domain-model/4",
+          "name": "analysis_seal",
+          "artifact": "analysis-seal",
+          "contract": "analysis-seal/1",
           "required": true
         },
         {
-          "name": "staging_root",
-          "required": true
-        },
-        {
-          "name": "intake_id",
-          "required": true
-        },
-        {
-          "name": "generated_by",
-          "required": true
-        },
-        {
-          "name": "generated_at",
+          "name": "root",
           "required": true
         }
       ],
       "outputs": [],
       "consumed_artifacts": [
         {
-          "artifact": "domain-model",
+          "artifact": "analysis-seal",
           "access": "read"
         },
         {
-          "artifact": "staged-knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         }
       ],
@@ -747,7 +507,9 @@
         "note": "No node type is in scope. It compares two renderings of the same objects and reads nothing about what they mean."
       },
       "deterministic_behavior": [
-        "what the expansion wrote is re-derived from the model rather than read from a stored baseline: the expansion is a function, so a recorded copy would be a second artifact to keep in step",
+        "what the analysis wrote is read from the seal rather than re-derived: a producer that writes by judgment offers no function to run again, and two runs over one request agree in meaning and not in bytes",
+        "a field digested with sorted keys, so a mapping the enrichment rewrote in another order is not reported as a change it made",
+        "an object the seal does not name is reported, and so is one the seal names and the tree no longer holds",
         "a field the expansion owns that differs is reported, and the ownership line is read from the one module that declares it rather than restated here",
         "a `kind: domain` gap that was removed is reported: only whoever knows the domain closes one",
         "a field written whose `authoring` gap is still open is reported, because closing the gap is what records that the field was filled",
@@ -758,93 +520,16 @@
       "judgment": [],
       "assertions": [],
       "grant": {
-        "note": "No tool grant: it is a script the caller runs. It reads the model and the staging tree it is given, writes into a temporary directory it owns, and touches neither the staging tree nor the knowledge root."
+        "note": "No tool grant: it is a script the caller runs. It reads the seal and the tree it is given, writes nothing, and reaches neither the knowledge root nor anything else."
       },
       "failure_outcomes": [
         {
           "outcome": "cannot_run",
-          "reason": "the model or the staging root does not exist, or the expansion this compares against failed; exit 2, distinguished from a check that ran"
+          "reason": "the seal or the root does not exist, or the seal declares a contract this does not read; exit 2, distinguished from a check that ran"
         },
         {
           "outcome": "outside_its_fields",
           "reason": "the enrichment changed something on the expansion's side of the line, named per object and per field; reported and never repaired"
-        }
-      ]
-    },
-    {
-      "identifier": "promote-staged",
-      "class": "script",
-      "objective": "Move enriched staged objects into the knowledge base, validating each against the base's contract before anything is written. Choose it after the enrichment pass and after the enrichment check. The boundary between staging and the base is a contract change rather than a directory change, and this is where that change is checked. Not for authoring, not for filling a gap, and not for deciding whether an object should exist.",
-      "inputs": [
-        {
-          "name": "staging_root",
-          "required": true
-        },
-        {
-          "name": "knowledge_root",
-          "required": true
-        },
-        {
-          "name": "with_open_domain_gaps",
-          "required": false,
-          "default": "absent, and an object whose domain gaps are open is refused: a gap the domain has not closed is a fact the base would be asserting it has"
-        }
-      ],
-      "outputs": [
-        {
-          "artifact": "knowledge-object",
-          "contract": "knowledge-object/5"
-        }
-      ],
-      "consumed_artifacts": [
-        {
-          "artifact": "staged-knowledge-object",
-          "access": "read"
-        }
-      ],
-      "produced_artifacts": [
-        "knowledge-object"
-      ],
-      "required_context": {
-        "node_types": [
-          "boundary",
-          "definition",
-          "rule",
-          "lifecycle",
-          "interface",
-          "process"
-        ],
-        "note": "It promotes whatever the expansion staged, so any of the six may pass through it. It reads none of them for meaning: what it checks is conformance."
-      },
-      "deterministic_behavior": [
-        "each object is validated against knowledge-object/5 with its version line substituted, and the substitution is textual so a promotion diff shows a moved file rather than a rewritten one",
-        "nothing is written while anything is refused: a partial promotion leaves a base holding some of a run's objects and a staging tree holding the rest, with the edges between them resolving to whichever half a reader looked at",
-        "an object carrying an open `kind: domain` gap is refused unless the caller asks otherwise, and the request is reported rather than defaulted",
-        "the staged file is removed once its promoted copy is written, and an emptied directory with it",
-        "it repairs nothing: an object that fails the contract is named and left where it is"
-      ],
-      "judgment": [],
-      "assertions": [
-        {
-          "output": "knowledge-object",
-          "bound": false
-        }
-      ],
-      "grant": {
-        "note": "No tool grant: it is a script the caller runs. It reads the staging root and writes under the knowledge root, both named by the caller, and reaches nothing else."
-      },
-      "failure_outcomes": [
-        {
-          "outcome": "cannot_run",
-          "reason": "the staging root does not exist, holds no staged object, or the contract is missing; exit 2, distinguished from a check that ran and refused"
-        },
-        {
-          "outcome": "contract_refused",
-          "reason": "one or more objects fail the base's contract, each named with what it lacks; nothing is promoted and the staging tree is untouched"
-        },
-        {
-          "outcome": "open_domain_gap",
-          "reason": "an object still owes the domain a fact, named with what the domain would have to state; the caller may promote it anyway and that decision is recorded"
         }
       ]
     },
@@ -855,8 +540,8 @@
       "inputs": [
         {
           "name": "staged_object",
-          "artifact": "staged-knowledge-object",
-          "contract": "staged-knowledge-object/2",
+          "artifact": "domain-object",
+          "contract": "domain-object/1",
           "required": true
         },
         {
@@ -875,17 +560,17 @@
       "outputs": [
         {
           "artifact": "knowledge-enrichment-result",
-          "contract": "knowledge-enrichment-result/1"
+          "contract": "knowledge-enrichment-result/2"
         }
       ],
       "consumed_artifacts": [
         {
-          "artifact": "staged-knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         }
       ],
       "produced_artifacts": [
-        "staged-knowledge-object"
+        "domain-object"
       ],
       "required_context": {
         "node_types": [
@@ -925,7 +610,7 @@
           "Glob",
           "Edit"
         ],
-        "note": "`Edit` and no `Write`: it changes a file that exists and creates none. The grant cannot confine it to four fields of that file — a grant names tools, not keys — so the confinement is `check-enrichment`, which runs after and compares against a re-derived expansion. No shell."
+        "note": "`Edit` and no `Write`: it changes a file that exists and creates none. The grant cannot confine it to four fields of that file — a grant names tools, not keys — so the confinement is `check-field-ownership`, which runs after and compares against a re-derived expansion. No shell."
       },
       "failure_outcomes": [
         {
@@ -943,9 +628,9 @@
       ]
     },
     {
-      "identifier": "check-gap-fields",
+      "identifier": "check-knowledge",
       "class": "script",
-      "objective": "Hold every declared gap to naming a field its node type would actually require, over a staging tree or a knowledge base. Choose it after expansion and before promotion, and over a base whenever its objects change. A gap excuses an object from a field the contract requires, so the excuse is only as good as the field name — and the schema cannot check it, because the requirement a gap excuses is a conditional elsewhere in the same document. Not for validating an object against its contract, which is a boundary check, and not for closing a gap.",
+      "objective": "Hold a knowledge base to what a per-file schema cannot express: an object's gaps and its absences agree, a lifecycle's transition table is total, no two lifecycles claim one subject, and a reference crossing a bounded context targets an interface. Choose it after an analysis writes and again whenever the base changes. Not for validating an object against its contract, which is a boundary check, and not for closing a gap or repairing a defect.",
       "inputs": [
         {
           "name": "knowledge_or_staging_root",
@@ -955,11 +640,11 @@
       "outputs": [],
       "consumed_artifacts": [
         {
-          "artifact": "knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         },
         {
-          "artifact": "staged-knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         }
       ],
@@ -976,12 +661,20 @@
       },
       "deterministic_behavior": [
         "the fields a node type requires are read from the contract's own per-type conditionals rather than restated, so a second copy cannot fall out of step with the first",
+        "a requirement the object neither meets nor names in a gap is reported: the contract's alternation is satisfied by any gap over any field, so a gap about one fact would otherwise excuse the absence of another",
+        "an obligation with two sides is met by either: a rule carrying an expression owes no gap for its examples",
         "a nested alternation counts as a requirement and either side of it may be named: a rule short of both `expression` and `examples` may declare a gap on either",
         "a conditional on `ddd` is resolved against the object at hand, so `identity` is nameable on an entity and not on a value object",
         "`attributes[<name>].<parameter>` is nameable only where the object carries that attribute and its primitive requires that parameter",
+        "an unwritten field of the closed authoring set is reported where no `authoring` gap names it, because the gap is what tells a pass that has not run from a field nobody owes",
         "a `kind: authoring` gap is held to the closed set, derived as the fields the base requires and the staged contract does not",
         "a gap naming a fact the object already declares is reported: a gap records what is missing, and one beside the fact it names keeps an object out of the base for nothing",
-        "it writes nothing and repairs nothing"
+        "it writes nothing and repairs nothing",
+        "a lifecycle's transition table is checked over the product of its states and every trigger it mentions, with both rejection shorthands expanded first: a trigger list stands for one entry per trigger, and `from: terminal` for every terminal state",
+        "a terminal state is checked like any other: having no outgoing transition is a different statement from having no decision, and exempting it would let the table stay silent about what happens when a trigger arrives anyway",
+        "two lifecycles naming one subject are reported with both identifiers, because which of them binds is a question neither file answers",
+        "a reference is followed to the context its target sits in, through the scopes between, and one crossing a boundary is reported unless the target is an interface",
+        "the derived files are skipped by name rather than parsed and reported as malformed"
       ],
       "judgment": [],
       "assertions": [],
@@ -996,6 +689,22 @@
         {
           "outcome": "unnameable_field",
           "reason": "a gap names a field its node type does not require, or a parameter of an attribute the object does not carry; reported per object and per gap, and never repaired"
+        },
+        {
+          "outcome": "unnamed_absence",
+          "reason": "a fact the node type requires that the object neither declares nor covers with a gap; reported per object and per obligation, and never repaired"
+        },
+        {
+          "outcome": "incomplete_transition_table",
+          "reason": "a state-and-trigger pairing that is neither a transition nor a rejection; reported per lifecycle with the pairings, and never filled in"
+        },
+        {
+          "outcome": "contested_subject",
+          "reason": "two lifecycles claiming one definition; reported with both, and neither is chosen"
+        },
+        {
+          "outcome": "boundary_crossed_without_an_interface",
+          "reason": "a reference into another bounded context whose target is not an interface; reported with the locator, and never rewritten"
         }
       ]
     },
@@ -1022,7 +731,7 @@
       ],
       "consumed_artifacts": [
         {
-          "artifact": "knowledge-object",
+          "artifact": "domain-object",
           "access": "read"
         }
       ],
