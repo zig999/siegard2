@@ -10,7 +10,8 @@
     "## Semantics"
   ],
   "x-edges-declared": [
-    "boundary"
+    "boundary",
+    "depends_on"
   ],
   "x-forbids": [],
   "x-composes": [
@@ -39,21 +40,147 @@
       "$ref": "../tables/vocabularies.json#/$defs/ownership"
     }
   },
-  "anyOf": [
+  "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "allOf": [
     {
-      "required": [
-        "boundary",
-        "ddd",
-        "version",
-        "schema",
-        "ownership"
+      "anyOf": [
+        {
+          "required": [
+            "boundary"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "boundary"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     },
     {
-      "required": [
-        "gaps"
+      "anyOf": [
+        {
+          "required": [
+            "ddd"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "ddd"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "version"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "version"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "schema"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "schema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "ownership"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "ownership"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     }
-  ],
-  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+  ]
 }

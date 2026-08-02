@@ -89,6 +89,34 @@ def frontmatter(path: Path) -> dict:
     return yaml.safe_load(match.group(1)) or {}
 
 
+def excuses_by_gap(branch: dict) -> bool:
+    """True where this branch of an alternation is the one that accepts a gap in the field's place."""
+    return branch.get("required") == ["gaps"]
+
+
+def offered_by(clause: dict) -> set[str]:
+    """The fields one alternation demands, ignoring the branch that accepts a gap instead.
+
+    A single-field clause offers one name. The one genuine alternation — a `rule` declares
+    `expression` **or** `examples` — offers two, and they come back as one set because either
+    satisfies it and a gap may legitimately name either.
+    """
+    return {
+        field
+        for branch in clause.get("anyOf", [])
+        if not excuses_by_gap(branch)
+        for field in branch.get("required", [])
+    }
+
+
+def conditional_obligation(nested: dict, ddd: str | None) -> set[str]:
+    """The obligation a `ddd`-conditional adds, on whichever side this object's `ddd` selects."""
+    condition = nested.get("if", {}).get("properties", {}).get("ddd", {})
+    admitted = condition.get("enum") or ([condition["const"]] if "const" in condition else [])
+    side = nested.get("then" if ddd in admitted else "else") or {}
+    return offered_by(side) or set(side.get("required", []))
+
+
 def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str]]:
     """What this node type demands of an object with this `ddd`, as one entry per obligation.
 
@@ -97,27 +125,53 @@ def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str
     a `rule` declares `expression` **or** `examples` — and collapsing the two shapes into a flat
     set of names would lose the difference, which is exactly what the converse check needs: a rule
     carrying an expression owes no gap for its examples.
+
+    Two contract shapes are read, because the profile is being narrowed and the two have to be
+    readable by one checker while both exist.
+
+    `domain-object/1` alternates once per **kind**: every field the kind requires, or `gaps`. That
+    form is what made this function necessary — any gap over any field satisfies it, so the schema
+    cannot tell an object short of `attributes` from one short of nothing, and `unnamed_absences`
+    is where the difference is decided.
+
+    The narrowed form alternates once per **field**, each against a gap naming that field, so the
+    schema refuses what it used to admit. The obligations are the same either way, which is the
+    point: this function reports what the kind demands, and neither shape changes that.
+
+    A shape neither branch recognises yields an empty list, and an empty list is indistinguishable
+    from a kind that demands nothing — every object would pass while nothing was checked. So an
+    unrecognised `then` is raised rather than skipped.
     """
     found: list[set[str]] = []
     for clause in contract.get("allOf", []):
         if clause.get("if", {}).get("properties", {}).get("type", {}).get("const") != node_type:
             continue
-        branch = clause["then"]["anyOf"][0]
-        found += [{field} for field in branch.get("required", [])]
-        # The alternation, held as one obligation. Either side may be what is missing, so a gap may
-        # legitimately name either — and naming one is how a rule short of both says which it is
-        # short of.
-        alternatives = {
-            field for alternative in branch.get("anyOf", []) for field in alternative.get("required", [])
-        }
-        if alternatives:
-            found.append(alternatives)
-        for nested in branch.get("allOf", []):
-            condition = nested.get("if", {}).get("properties", {}).get("ddd", {})
-            admitted = condition.get("enum") or ([condition["const"]] if "const" in condition else [])
-            matched = ddd in admitted
-            side = nested.get("then" if matched else "else") or {}
-            found += [{field} for field in side.get("required", [])]
+        then = clause.get("then", {})
+
+        if "allOf" in then and "anyOf" not in then:
+            for nested in then["allOf"]:
+                offered = conditional_obligation(nested, ddd) if "if" in nested else offered_by(nested)
+                if offered:
+                    found.append(offered)
+            continue
+
+        if "anyOf" in then:
+            branch = then["anyOf"][0]
+            found += [{field} for field in branch.get("required", [])]
+            alternatives = offered_by(branch)
+            if alternatives:
+                found.append(alternatives)
+            for nested in branch.get("allOf", []):
+                offered = conditional_obligation(nested, ddd)
+                if offered:
+                    found.append(offered)
+            continue
+
+        raise ValueError(
+            f"the contract states `{node_type}`'s requirements in a shape this checker does not "
+            f"read: `then` carries {sorted(then)}. Reading it as no requirement would pass every "
+            f"object of this kind while reporting nothing"
+        )
     return found
 
 
@@ -361,10 +415,15 @@ def totality_of(data: dict, relative: str) -> list[str]:
 
 
 def cross_object(objects: dict[str, dict], paths: dict[str, str]) -> list[str]:
-    """The rules no single file can decide: one lifecycle per subject, and what may cross a context.
+    """The rules no single file can decide, each needing more than one object to answer.
 
-    Both need the whole base. A lifecycle cannot see whether another claims its subject, and an
-    object cannot see which context its reference target sits in without reading that target.
+    A lifecycle cannot see whether another claims its subject. An object cannot see which context
+    its reference target sits in without reading that target. Containment cannot be shown to be a
+    forest from inside one node, and an aggregate cannot see whether the definition it names as
+    root agrees that it is one.
+
+    What these have in common is that the schema cannot reach them: every one of them compares two
+    objects, and a boundary validator is handed one.
     """
     problems: list[str] = []
 
@@ -378,6 +437,60 @@ def cross_object(objects: dict[str, dict], paths: dict[str, str]) -> list[str]:
                 f"{subject} is claimed by {len(holders)} lifecycles — {', '.join(sorted(holders))}. "
                 f"A definition with two state machines has no single state set to generate from, and "
                 f"which one binds is a question neither file answers"
+            )
+
+    # Containment must be a forest before anything walks it. `boundary` admits an aggregate inside
+    # an aggregate, so a loop is expressible, and a loop makes the scope of every node on it
+    # undefined. Reported here rather than absorbed by the `seen` guard below: a walk that stops
+    # quietly on a cycle answers "no context" for a node whose context is not missing but circular,
+    # and the two want different repairs.
+    for identifier in sorted(objects):
+        seen: list[str] = []
+        current: str | None = identifier
+        while current and current in objects and current not in seen:
+            seen.append(current)
+            data = objects[current]
+            current = data.get("subdomain") if data.get("type") == "context" else data.get("boundary")
+        if current and current in seen:
+            loop = seen[seen.index(current):]
+            problems.append(
+                f"{paths.get(identifier, identifier)}: containment closes a loop — "
+                f"{' -> '.join(loop + [current])}. A scope that contains itself leaves every node "
+                f"inside it with no partition root, and the walk that resolves one does not end"
+            )
+
+    for identifier, data in sorted(objects.items()):
+        boundary = data.get("boundary")
+        if not boundary:
+            continue
+        own, parent = str(identifier).split("."), str(boundary).split(".")
+        if len(own) < 3 or len(parent) < 3 or own[2] == parent[2]:
+            continue
+        problems.append(
+            f"{paths.get(identifier, identifier)}: `{identifier}` is filed under context "
+            f"`{own[2]}` and declares `{boundary}`, which sits in `{parent[2]}`. The parent is "
+            f"written twice — once in the identifier, which fixes the path, and once in `boundary`, "
+            f"which fixes membership — and a node whose two parents disagree sits in two trees"
+        )
+
+    for identifier, data in sorted(objects.items()):
+        if data.get("type") != "aggregate" or not data.get("root"):
+            continue
+        root = data["root"]
+        if root not in objects:
+            continue  # an unresolved reference is the materializer's to report, and it does
+        held = objects[root]
+        if held.get("ddd") != "aggregate-root":
+            problems.append(
+                f"{paths.get(identifier, identifier)}: `root` names {root}, whose `ddd` is "
+                f"`{held.get('ddd')}`. That this definition heads an aggregate is stated twice — "
+                f"by this edge and by its own `ddd` — and the two disagree"
+            )
+        if held.get("boundary") != identifier:
+            problems.append(
+                f"{paths.get(identifier, identifier)}: `root` names {root}, whose `boundary` is "
+                f"`{held.get('boundary')}` rather than this aggregate. A root outside the aggregate "
+                f"it heads is not its entry point"
             )
 
     def context_of(identifier: str) -> str | None:
@@ -430,8 +543,13 @@ def references(data: dict) -> list[tuple[str, str]]:
         if rejection.get("error"):
             found.append((rejection["error"], f"rejections[{index}].error"))
     for index, step in enumerate(data.get("steps") or []):
-        if step.get("ko"):
-            found.append((step["ko"], f"steps[{index}].ko"))
+        # `domain-object/1` spells this `ko` and the narrowed profile spells it `node`. Both are
+        # read while both exist: a step whose target went unresolved because the checker knew one
+        # spelling is an edge missing from the graph, not an edge that resolves.
+        for spelling in ("node", "ko"):
+            if step.get(spelling):
+                found.append((step[spelling], f"steps[{index}].{spelling}"))
+                break
     if data.get("root"):
         found.append((data["root"], "root"))
     return found
@@ -488,8 +606,9 @@ def main() -> int:
     problems += cross_object(held, where)
 
     print(f"knowledge checked: {declared} gap(s) and {len(held)} object(s), with identifier "
-          f"arithmetic, lifecycle totality, one lifecycle per subject, and what may cross a context  "
-          f"contract: "
+          f"arithmetic, lifecycle totality, one lifecycle per subject, acyclic containment, "
+          f"boundary against identifier, an aggregate against its root, and what may cross a "
+          f"context  contract: "
           f"{contract['properties']['contract_version']['const']}")
     if problems:
         print(f"FAILED: {len(problems)} disagreement(s) between what is declared and what is named\n")
@@ -497,7 +616,7 @@ def main() -> int:
             print(f"  {problem}")
         return 1
     print("every identifier computes to the path it sits at, every gap names a fact its kind requires "
-          "and the object lacks, every fact it lacks is named by a gap, and the three cross-object "
+          "and the object lacks, every fact it lacks is named by a gap, and the six cross-object "
           "rules hold")
     return 0
 

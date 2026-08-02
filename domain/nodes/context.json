@@ -10,7 +10,8 @@
   ],
   "x-edges-declared": [
     "subdomain",
-    "context_relationships[].with"
+    "context_relationships[].with",
+    "depends_on"
   ],
   "x-forbids": [
     "boundary",
@@ -57,20 +58,38 @@
       "description": "Who owns this scope."
     }
   },
-  "anyOf": [
-    {
-      "required": [
-        "subdomain"
-      ]
-    },
-    {
-      "required": [
-        "gaps"
-      ]
-    }
-  ],
-  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
   "x-open": [
     "`domain-object/1` types `context_relationships[].with` as `boundaryId`, which admits an aggregate. Only a context relates to a context, so the reference is narrowed to `contextId` here."
+  ],
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "subdomain"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "subdomain"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
   ]
 }

@@ -2,83 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/domain/tables/primitives.json",
   "title": "Attribute primitives",
-  "description": "The closed attribute type system. A parameter that changes what is produced is required; a parameter the primitive does not read is rejected rather than carried as dead representation. Two primitives inherit from the base's own declaration rather than from this table — `money` inherits `defaults.currency` and `datetime` inherits `defaults.timezone` — and each is overridden only where an attribute genuinely differs.\n\nA free-text type is refused. The vocabulary is closed at twelve, and a thirteenth arrives with a construct that needs it rather than for symmetry.",
-  "x-inherits-from": "src/claude/schemas/knowledge-system.json (defaults.currency, defaults.timezone)",
-  "x-table": {
-    "string": {
-      "required": [
-        "max_length"
-      ],
-      "optional": []
-    },
-    "text": {
-      "required": [],
-      "optional": []
-    },
-    "integer": {
-      "required": [],
-      "optional": [
-        "min",
-        "max"
-      ]
-    },
-    "decimal": {
-      "required": [
-        "precision",
-        "scale"
-      ],
-      "optional": []
-    },
-    "money": {
-      "required": [],
-      "optional": [
-        "currency"
-      ],
-      "inherits": "defaults.currency"
-    },
-    "boolean": {
-      "required": [],
-      "optional": []
-    },
-    "date": {
-      "required": [],
-      "optional": []
-    },
-    "datetime": {
-      "required": [],
-      "optional": [
-        "timezone"
-      ],
-      "inherits": "defaults.timezone"
-    },
-    "duration": {
-      "required": [],
-      "optional": []
-    },
-    "enum": {
-      "required": [
-        "lifecycle | values"
-      ],
-      "optional": [],
-      "note": "exactly one of the two forms; a lifecycle-bound enum names the lifecycle and never repeats its state names"
-    },
-    "ref": {
-      "required": [
-        "target",
-        "binding"
-      ],
-      "optional": []
-    },
-    "list": {
-      "required": [
-        "of",
-        "binding"
-      ],
-      "optional": [
-        "min_items",
-        "max_items"
-      ]
-    }
+  "description": "The closed attribute type system. A parameter that changes what is produced is required; a parameter the primitive does not read is rejected rather than carried as dead representation.\n\nA free-text type is refused. The vocabulary is closed at twelve, and a thirteenth arrives with a construct that needs it rather than for symmetry.\n\n**Which parameter each primitive requires is stated once, in `$defs.attribute`, and nowhere else in this file.** It was previously stated twice — a readable table beside the assertions that enforce them — and two homes for one fact is two facts as soon as one is edited. What the assertions cannot express is carried below, and only that.",
+  "x-inherits": {
+    "note": "Two primitives take a value from the base's own declaration rather than from an attribute, so the parameter is optional here and absent means inherited rather than unstated. This is the fact `$defs.attribute` cannot express: a schema can say the key is optional and cannot say what fills it when it is missing.",
+    "source": "src/claude/schemas/knowledge-system.json",
+    "money.currency": "defaults.currency",
+    "datetime.timezone": "defaults.timezone",
+    "overridden": "only where an attribute genuinely differs from the base's default"
+  },
+  "x-unstated-parameter": {
+    "rule": "A required parameter the material does not state is declared absent **and named by a gap** — `attributes[<name>].<parameter>` — never chosen and never silently omitted.",
+    "why": "The two readings that are not this one both fail. Choosing a length invents a domain fact and it reads exactly like one the business stated. Omitting it silently produces an attribute nothing can generate from, and no record of why.",
+    "decided_by": "src/claude/bin/check_knowledge.py missing_parameters()",
+    "note": "`text` is the primitive for a string the domain genuinely does not bound. Reaching for `string` with a gap where `text` is meant records an open question that is not open."
   },
   "$defs": {
     "attribute": {

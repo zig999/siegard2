@@ -56,8 +56,15 @@
     },
     "boundaryId": {
       "type": "string",
-      "pattern": "^dm\\.(context|aggregate)\\.[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)?$",
-      "description": "The two scopes a node may belong to: a context is `dm.context.<context>`, an aggregate inside one is `dm.aggregate.<context>.<aggregate>`."
+      "anyOf": [
+        {
+          "pattern": "^dm\\.context\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "^dm\\.aggregate\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      ],
+      "description": "The two scopes a node may belong to: a context is `dm.context.<context>`, an aggregate inside one is `dm.aggregate.<context>.<aggregate>`. Written as two patterns rather than one with an optional tail, because the optional tail applies to both alternatives and so admits `dm.context.<a>.<b>` and `dm.aggregate.<a>` — neither of which is a scope this profile holds. `domain-object/1` carries the single-pattern form and admits both."
     },
     "adrId": {
       "type": "string",
@@ -92,6 +99,6 @@
       }
     ],
     "lifecycle_slug": "a lifecycle takes the slug of its subject",
-    "enforced_by": "bin/check_knowledge.py identity_of()"
+    "enforced_by": "src/claude/bin/check_knowledge.py identity_of()"
   }
 }

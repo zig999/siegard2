@@ -879,8 +879,15 @@
     },
     "boundaryId": {
       "type": "string",
-      "pattern": "^dm\\.(context|aggregate)\\.[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)?$",
-      "description": "A context is `dm.context.<context>`; an aggregate inside one is `dm.aggregate.<context>.<aggregate>`. Both are scopes an object may belong to."
+      "anyOf": [
+        {
+          "pattern": "^dm\\.context\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "^dm\\.aggregate\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      ],
+      "description": "A context is `dm.context.<context>`; an aggregate inside one is `dm.aggregate.<context>.<aggregate>`. Both are scopes an object may belong to. Written as two patterns rather than one with an optional tail: the tail applies to both alternatives, so a single pattern admits `dm.context.<a>.<b>` and `dm.aggregate.<a>`, and neither is a scope this contract holds."
     },
     "knowledgeObjectId": {
       "type": "string",

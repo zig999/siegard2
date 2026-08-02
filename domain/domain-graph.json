@@ -5,7 +5,7 @@
   "description": "What a domain graph is made of, and where each part is decided. A node file says what one kind is; this file says what has to exist besides the eight of them before a graph can be composed at all.\n\nThe graph itself is derived and never authored: its nodes are the authored files and its edges are the relationships those files declare in their own frontmatter. A relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs.",
   "x-composition": {
     "nodes": {
-      "what": "One file per kind, eight of them, each declaring what its kind requires of its own content.",
+      "what": "One file per kind, eight of them, each declaring what its kind requires of its own content and alternating each required field separately against a gap naming that field.",
       "home": "domain/nodes/*.json",
       "status": "authored here"
     },
@@ -13,37 +13,37 @@
       "what": "The fields every node carries whatever its kind, and which of them the enrichment owns.",
       "home": "schemas/knowledge-notation.json",
       "manifest": "domain/tables/envelope.json",
-      "status": "exists, held by scripts/check_notation_agreement.py"
+      "status": "exists; the check that held every profile to it was removed with the rest of `scripts/`, so the two now agree by assertion rather than by comparison"
     },
     "identifiers": {
       "what": "Every identifier pattern, and the arithmetic between an identifier and its path. A pattern spells the kinds, so it belongs to the profile and cannot be shared across profiles.",
       "home": "domain/tables/identifiers.json",
-      "status": "authored here; today inside the monolith's $defs"
+      "status": "authored here; also inside the shipped contract's $defs. `boundaryId` here refuses `dm.context.<a>.<b>` and `dm.aggregate.<a>`, which a single pattern with an optional tail admitted — the same correction has been applied to the shipped contract"
     },
     "primitives": {
       "what": "The twelve attribute types and the parameters each requires and does not inherit.",
       "home": "domain/tables/primitives.json",
-      "status": "authored here; today inside the monolith's $defs"
+      "status": "authored here; also inside the shipped contract's $defs"
     },
     "vocabularies": {
       "what": "Every closed enumeration: the kinds, the ddd sets per kind, origin, gap kind, subdomain type, ownership, context-relationship pattern, binding — and the two fields that are rejected rather than absent.",
       "home": "domain/tables/vocabularies.json",
-      "status": "authored here; today scattered across the monolith's properties"
+      "status": "authored here; also scattered across the shipped contract's properties"
     },
     "edges": {
       "what": "The closed edge vocabulary with cardinality, traversal and depth. It is what makes a reference resolvable and what a validator enforces.",
       "home": "domain/tables/edges.json",
-      "status": "authored here; had no machine-readable home — prose in the specification, a hand transcription in bin/materialize.py, and no comparison between them"
+      "status": "authored here, and now the only statement of it — the specification that stated it in prose was removed, leaving this file and the transcription in `src/claude/bin/materialize.py` that has to agree with it"
     },
     "body_sections": {
       "what": "The two headings each kind names, and the form a body takes.",
       "home": "domain/tables/body-sections.json",
-      "status": "authored here; had no machine-readable home"
+      "status": "authored here; the only home, and no shipped script reads it"
     },
     "invariants": {
-      "what": "The cross-kind conditionals, and the rules that need to see more than one node.",
+      "what": "The cross-kind conditionals, carried as the assertions a composer splices into `allOf`; the rules that need to see more than one node; and the `rationale` field, declared beside the conditional that requires it.",
       "home": "domain/tables/invariants.json",
-      "status": "authored here; the cross-kind half is inside the monolith's allOf, the cross-node half is inside bin/check_knowledge.py"
+      "status": "authored here; the cross-kind half matches the shipped contract's `allOf` clause for clause, and the cross-node half is decided by `src/claude/bin/check_knowledge.py`"
     },
     "system_defaults": {
       "what": "The timezone, currency and identity strategy every attribute inherits, plus the body-line ceiling. Facts about the repository that installs the framework, never shipped defaults.",
@@ -53,24 +53,28 @@
     "materialized_graph": {
       "what": "The derived form: nodes, edges, and the edge vocabulary carried with them so a consumer reads the traversal policy from the artifact rather than from whatever materialized it.",
       "home": "src/claude/schemas/knowledge-graph.json",
-      "status": "exists; its node-kind enum disagrees with the eight kinds, so a graph derived from a real base fails it"
+      "status": "exists; its node-kind enum is `definition, rule, lifecycle, interface, boundary, process, adr` — two names that are not kinds, and missing `subdomain`, `context` and `aggregate`, so a graph derived from a real base fails it"
     },
     "projections": {
       "what": "The three views the ontology admits — an index, a glossary, a context map. Reproducible from the graph and never a normative source.",
-      "home": "bin/materialize.py",
+      "home": "src/claude/bin/materialize.py",
       "status": "exists; no schema, because a projection is read and never parsed for a decision"
     }
   },
   "x-graph": {
     "nodes_are": "the authored files, one per construct",
     "edges_are": "the relationships those files declare, per domain/tables/edges.json",
-    "derived_by": "bin/materialize.py",
+    "derived_by": "src/claude/bin/materialize.py",
     "never": "authored, hand-edited, or inferred from prose"
+  },
+  "x-paths": {
+    "note": "A path in this tree names a file as this repository holds it. The distribution installs the contents of `src/claude/` at the plugin root, so `src/claude/bin/materialize.py` is what a consumer runs as `${CLAUDE_PLUGIN_ROOT}/bin/materialize.py`. Both spellings appeared in this tree before, with nothing saying they were one file."
   },
   "x-composes-into": {
     "target": "src/claude/schemas/domain-object.json",
-    "why": "The shipped contract is loaded standalone by a consumer's validator, which would resolve a cross-file $ref over the network. So the distribution carries one self-contained file and this tree is what it is composed from — the same arrangement schemas/knowledge-notation.json and schemas/contract-versions.json already use.",
-    "not_yet": "The composition step does not exist. Until it does, this tree and the shipped contract are two homes for one set of facts, and the shipped one is the authority.",
-    "version_effect": "Composing this tree carries three breaking changes into the frontmatter contract: `knowledgeObjectId` becomes `nodeId`, `steps[].ko` becomes `steps[].node`, and `governed_by` is removed. Each requires a contract version bump and a migration."
+    "why": "The shipped contract is loaded standalone by a consumer's validator, which would resolve a cross-file $ref over the network. So the distribution carries one self-contained file and this tree is what it is composed from — the same arrangement schemas/knowledge-notation.json already uses.",
+    "not_yet": "The composition step does not exist as a repository artifact, and neither does the generator that would install its output. Until it does, this tree and the shipped contract are two homes for one set of facts, and the shipped one is the authority.",
+    "composability": "The tree has been shown to compose: resolving the sibling `$ref`s and splicing `nodes/*.json` with `x-cross-kind[*].schema` yields one self-contained document carrying 13 `allOf` blocks, the same count the shipped contract holds, under which every cross-kind rule was exercised and held. What is missing is the artifact that performs it and the check that holds the committed distribution to its output — a check that repairs what it was meant to detect reports success on a defect.",
+    "version_effect": "Composing this tree carries breaking changes into the frontmatter contract: `knowledgeObjectId` becomes `nodeId`, `steps[].ko` becomes `steps[].node`, `governed_by` is removed, and every required field is alternated against a gap naming that field rather than against any gap. The last refuses objects `domain-object/1` admits, which is what makes it a break rather than a narrowing nobody notices. Each requires a contract version bump and a migration."
   }
 }

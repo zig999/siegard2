@@ -13,7 +13,8 @@
     "boundary",
     "attributes[].target",
     "attributes[].of",
-    "attributes[].lifecycle"
+    "attributes[].lifecycle",
+    "depends_on"
   ],
   "x-forbids": [],
   "x-composes": [
@@ -35,7 +36,7 @@
       "items": {
         "$ref": "../tables/primitives.json#/$defs/attribute"
       },
-      "description": "What this definition holds, fully typed against the closed primitive vocabulary. Where the material does not state a length, a precision or a currency, the parameter is left absent rather than chosen."
+      "description": "What this definition holds, fully typed against the closed primitive vocabulary. Where the material does not state a length or a precision, the parameter is left absent and a gap names it — see `../tables/primitives.json#/x-unstated-parameter`. Absent and unnamed is not the same statement, and only the second is refused."
     },
     "identity": {
       "type": "object",
@@ -59,43 +60,136 @@
       }
     }
   },
-  "anyOf": [
+  "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "allOf": [
     {
-      "required": [
-        "boundary",
-        "ddd",
-        "attributes"
-      ],
-      "allOf": [
+      "anyOf": [
         {
-          "if": {
-            "properties": {
-              "ddd": {
-                "enum": [
-                  "entity",
-                  "aggregate-root",
-                  "read-model"
-                ]
+          "required": [
+            "boundary"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "boundary"
+                  }
+                }
               }
-            },
-            "required": [
-              "ddd"
-            ]
-          },
-          "then": {
-            "required": [
-              "identity"
-            ],
-            "description": "A definition the domain asks *which one* about declares what forms that identity. A value object and a domain error declare none."
+            }
           }
         }
       ]
     },
     {
-      "required": [
-        "gaps"
+      "anyOf": [
+        {
+          "required": [
+            "ddd"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "ddd"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "attributes"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "attributes"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "if": {
+        "properties": {
+          "ddd": {
+            "enum": [
+              "entity",
+              "aggregate-root",
+              "read-model"
+            ]
+          }
+        },
+        "required": [
+          "ddd"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "identity"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ],
+            "properties": {
+              "gaps": {
+                "contains": {
+                  "required": [
+                    "field"
+                  ],
+                  "properties": {
+                    "field": {
+                      "const": "identity"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "description": "A definition the domain asks *which one* about declares what forms that identity. A value object and a domain error declare none."
     }
-  ],
-  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+  ]
 }

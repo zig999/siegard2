@@ -12,7 +12,8 @@
     "boundary",
     "lifecycle.subject",
     "transitions[].guard",
-    "rejections[].error"
+    "rejections[].error",
+    "depends_on"
   ],
   "x-forbids": [
     "ddd"
@@ -118,22 +119,175 @@
       }
     }
   },
-  "anyOf": [
+  "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "allOf": [
     {
-      "required": [
-        "boundary",
-        "subject",
-        "states",
-        "initial",
-        "transitions",
-        "rejections"
+      "anyOf": [
+        {
+          "required": [
+            "boundary"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "boundary"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     },
     {
-      "required": [
-        "gaps"
+      "anyOf": [
+        {
+          "required": [
+            "subject"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "subject"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "states"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "states"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "initial"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "initial"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "transitions"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "transitions"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "rejections"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "rejections"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     }
-  ],
-  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+  ]
 }

@@ -8,7 +8,9 @@
     "## Answer",
     "## Responsibilities"
   ],
-  "x-edges-declared": [],
+  "x-edges-declared": [
+    "depends_on"
+  ],
   "x-forbids": [
     "boundary",
     "ddd"
@@ -32,17 +34,35 @@
       "description": "Who owns this scope."
     }
   },
-  "anyOf": [
+  "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "allOf": [
     {
-      "required": [
-        "subdomain_type"
-      ]
-    },
-    {
-      "required": [
-        "gaps"
+      "anyOf": [
+        {
+          "required": [
+            "subdomain_type"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "subdomain_type"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     }
-  ],
-  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed."
+  ]
 }

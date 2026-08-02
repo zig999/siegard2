@@ -2,7 +2,25 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/domain/tables/edges.json",
   "title": "The edge table",
-  "description": "The closed edge vocabulary, with the cardinality a validator enforces and the traversal policy expansion reads. Every field that names another node and must resolve is an edge here; a relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs.\n\n**This table had no machine-readable home.** `foundation/0003` states it in prose, `materialize.py` carries a hand transcription in `EDGE_KINDS`, and `tests/test_edge_table_agreement.py` records that the comparison between the two was removed and 'returns with the component that carries the vocabulary again'. This file is that component: one transcription, consumed by the materializer and compared against the specification.\n\n`out` is edges leaving one node; `in_max` is edges arriving at one target, which is how at-most-one-lifecycle-per-definition becomes a check. `null` is unbounded.",
+  "description": "The closed edge vocabulary, with the cardinality a validator enforces and the traversal policy expansion reads. Every field that names another node and must resolve is an edge here; a relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs.\n\n**This table is the only home the vocabulary has.** It was written as a third copy — the specification stated it in prose, `EDGE_KINDS` in the materializer held a hand transcription, and nothing compared them. The specification has since been removed, so what was a transcription is now the statement, and the copy in `EDGE_KINDS` is the one that has to agree with this file rather than the reverse. See `x-agreement`.\n\n`out` is edges leaving one node; `in_max` is edges arriving at one target, which is how at-most-one-lifecycle-per-definition becomes a check. `null` is unbounded.",
+  "x-agreement": {
+    "with": "src/claude/bin/materialize.py EDGE_KINDS",
+    "compares": [
+      "out_min -> minimum",
+      "out_max -> maximum",
+      "in_max -> inverse_maximum",
+      "traversed",
+      "depth"
+    ],
+    "state": "The eleven edges both hold agree on every compared column. The two that differ are the two breaks this tree applies and the shipped side has not: `governed_by` is here only under `x-removed`, and `steps[].ko` there is `steps[].node` here.",
+    "not_compared": [
+      "origin",
+      "target",
+      "crosses_context",
+      "locator"
+    ],
+    "open": "Nothing performs this comparison. It was held by a test module removed with the rest of `tests/`, and the state recorded above was established by hand. A table whose agreement is asserted rather than checked drifts the same way the three copies did."
+  },
   "x-columns": [
     "origin",
     "target",
@@ -207,7 +225,9 @@
     "superseded_by": "Named a node and was never an edge. The field is gone; the name must appear in no vocabulary derived from this table."
   },
   "x-open": [
-    "`crosses_context` is set on three edges here — boundary, subdomain, context_relationships[].with — plus depends_on, whose exemption is conditional on the target being an interface. `src/claude/schemas/knowledge-graph.json` says the flag is 'True only for the three edges whose purpose is to leave or to name a partition' and `materialize.py` sets it on none. The three the shipped schema means are not named anywhere, so this column is a reading and not a transcription.",
-    "The `in` column's minimum is not modelled. Nothing requires a node to be referenced; whether an unreferenced node is a defect is the orphan rule, not a cardinality bound."
+    "`crosses_context` is set on three edges here — boundary, subdomain, context_relationships[].with — plus depends_on, whose exemption is conditional on the target being an interface. `src/claude/schemas/knowledge-graph.json` says the flag is 'True only for the three edges whose purpose is to leave or to name a partition' and `src/claude/bin/materialize.py` sets it on none. The three the shipped schema means are not named anywhere, so this column is a reading and not a transcription.",
+    "`crosses_context: true` on `boundary` says a node may belong to a scope in another context. Nothing states that this is wanted, and `src/claude/bin/check_knowledge.py` now reports it as a disagreement between a node's identifier and its parent — so the column and the check contradict each other. The check is the one that matches every other statement in this tree; this column is what is owed a correction.",
+    "The `in` column's minimum is not modelled. Nothing requires a node to be referenced; whether an unreferenced node is a defect is the orphan rule, not a cardinality bound.",
+    "`depends_on` and `steps[].node` carry `target: null`, so a process step may name a subdomain and a rule may depend on a context. The edge table admits what no reading of either field intends, and narrowing it needs the kinds each may legitimately reach to be decided rather than inferred."
   ]
 }

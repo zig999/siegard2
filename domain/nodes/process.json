@@ -11,7 +11,8 @@
   ],
   "x-edges-declared": [
     "boundary",
-    "steps[].node"
+    "steps[].node",
+    "depends_on"
   ],
   "x-forbids": [],
   "x-composes": [
@@ -45,22 +46,94 @@
       }
     }
   },
-  "anyOf": [
+  "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
+  "x-open": [
+    "`domain-object/1` spells the step's field `ko`. It is `node` here, and the rename is a breaking change to the frontmatter contract."
+  ],
+  "allOf": [
     {
-      "required": [
-        "boundary",
-        "ddd",
-        "steps"
+      "anyOf": [
+        {
+          "required": [
+            "boundary"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "boundary"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     },
     {
-      "required": [
-        "gaps"
+      "anyOf": [
+        {
+          "required": [
+            "ddd"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "ddd"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "steps"
+          ]
+        },
+        {
+          "required": [
+            "gaps"
+          ],
+          "properties": {
+            "gaps": {
+              "contains": {
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "const": "steps"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     }
-  ],
-  "x-alternation": "Everything this kind requires, or a declared gap naming what is missing. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",
-  "x-open": [
-    "`domain-object/1` spells the step's field `ko`. It is `node` here, and the rename is a breaking change to the frontmatter contract."
   ]
 }
