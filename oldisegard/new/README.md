@@ -1,9 +1,27 @@
 # oldisegard/new — the extracted components, in Siegard form
 
-Sixteen components — thirteen specialized agents and three skills — carrying the knowledge of the backend
-dev-phase components in `oldisegard/`, rebuilt against this framework's rules. Staging only: nothing here
-is under `src/claude/`, so nothing is installed, nothing is generated into `dist/`, and no validator in
-`make check` looks at it.
+Seventeen components — thirteen specialized agents, three skills, and one script — carrying the knowledge
+of the backend dev-phase components in `oldisegard/`, rebuilt against this framework's rules. Staging
+only: nothing here is under `src/claude/`, so nothing is installed, nothing is generated into `dist/`, and
+no validator in `make check` looks at it.
+
+## The one script
+
+`bin/run_suite.py` runs the caller's build and test commands, captures what each printed, and records the
+outcome as a `test-run/1`. It is the only component here that executes anything, and it holds no
+knowledge of any technology: the commands are the caller's, it composes none of them and infers none from
+the repository. Three properties are worth naming because each was a choice:
+
+- **no shell** — every command is split with `shlex` and executed directly, so `&&`, `|`, `>` and `$VAR`
+  reach the command as arguments rather than being acted on;
+- **no default timeout** — `foundation/0006` R21 admits only a calibrated threshold and none exists, so
+  the timeout is a required input rather than a shipped constant, and there is still no unbounded run;
+- **no parsing of results** — how many tests passed is not recorded. A reporter's format is stack-specific,
+  and a runner that parsed it would be a target pack wearing a framework's clothes. The count is read from
+  the output by whoever reads it.
+
+`test-failure-diagnostician` consumes the `test-run/1` and executes nothing, which is what keeps a run
+reproducible independently of the judgement about it.
 
 Each agent ships with the contract for the artifact it produces, because `foundation/0005` R5 gives a
 specialized agent exactly one artifact class and an agent with no contract for its output has none.
@@ -119,22 +137,39 @@ Run from the repository root, against this repository's real contracts:
   in its schema file;
 - every agent is named by exactly one skill — none unreachable, none reachable two ways.
 
-What is **not** verified: nothing here has been exercised by a test, an eval, or a run in a consuming
-repository, so under `foundation/0005` R11 none of these is a capability yet — they are sixteen
-candidates with contracts.
+- `bin/run_suite.py` was executed against a passing run, a failing step, a timeout, a command that does
+  not exist, and seven refused inputs; its output validates against `test-run/1` in every case. One
+  defect was found and fixed this way: a refused step created the run directory before refusing, which
+  left an empty directory behind and burned the identifier for any later run.
+
+What is **not** verified: the sixteen components other than the runner have not been exercised by a test,
+an eval, or a run in a consuming repository, so under `foundation/0005` R11 they are candidates with
+contracts rather than capabilities. The runner has been exercised and is the only one of the seventeen
+that has.
+
+## Open question
+
+Should `review-change` run the suite itself? Today it does not: the caller runs `bin/run_suite.py` and
+supplies the artifact, which keeps every pass in that skill read-only and puts the evidence on disk
+before any judgement is made of it. The alternative — the skill running it — would be more convenient and
+would re-couple running to judging one level above the agent, which is where the source framework's
+review agent went wrong. Recorded rather than decided.
 
 ## What stands between this and shipping
 
 1. **A target pack.** `security-pattern-scanner`, `architecture-pattern-scanner`, `conformance-reviewer`,
    `codebase-surveyor`, `implementer` and `test-author` read or write source in one technology's idiom.
    `docs/concepts/target-pack.md` is where stack-specific agents live, and no pack exists.
-2. **The scripts the components shed.** This is now the largest gap, and the agents themselves point at
-   it ten times: "a script's work", "a linter's", "the boundary validator". What is missing is an
-   import-graph checker, a lint pass, a dependency-cycle check over `backlog/1`, the runner whose output
-   the diagnostician reads, and a boundary validator for each of the thirteen contracts. Every one was
-   removed from an agent for the right reason under `foundation/0004` R6 and placed nowhere. Until they
-   exist, the coverage is smaller than sixteen components suggest, and no artifact here is validated
-   before it is consumed.
+2. **The six scripts still missing.** The runner is written; these are not, and the agents point at them
+   by name: a boundary validator over the fourteen contracts, the semantic checks no JSON Schema can
+   express (a dependency cycle in `backlog/1`, `failures_reported` against the diagnosis count, one
+   binding per task, one coverage entry per criterion supplied), an import-graph checker for the cycle,
+   cross-layer and responsibility-boundary patterns, a shared-state detector, an undeclared-debt check
+   against `implementation-record/1`, and a lint pass for naming, placement, type escapes and the
+   prohibition list. The lint pass may not include hardcoded credentials or unparameterized SQL: the
+   security taxonomy owns those as `hardcoded_secret` and `injection`, and two passes reporting one line
+   would disagree about it. Until the boundary validator exists, **no artifact here is validated before
+   it is consumed**, and the guarantee every agent says it does not self-report is reported by nobody.
 3. **Evidence.** `foundation/0005` R11 wants a test, an eval, or a run in a consuming repository.
 4. **A decision about scope.** These belong to an implementation phase this framework does not have. The
    product today goes from a request to knowledge objects and stops; `CLAUDE.md` **Scope** forbids

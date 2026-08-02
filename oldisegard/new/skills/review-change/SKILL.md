@@ -28,10 +28,14 @@ A missing input is a stop, not a default:
 3. **the identifiers** for the passes you run — `ss_`, `cr_`, `as_`, `re_`, `ca_`, `td_`. You mint none.
 
 Optionally, and each unlocking one pass: **the rule registry**, without which conformance cannot run;
-**the acceptance criteria** and the test file set, without which coverage cannot; **a captured test-run
-output**, without which failures cannot be diagnosed; **a prior `code-inventory/1`**, whose predicted
-risks the exposure pass then confirms or drops; **the declared architecture** and **the declared security
-profile**.
+**the acceptance criteria** and the test file set, without which coverage cannot; **a `test-run/1`**,
+without which failures cannot be diagnosed; **a prior `code-inventory/1`**, whose predicted risks the
+exposure pass then confirms or drops; **the declared architecture** and **the declared security profile**.
+
+The `test-run/1` is produced by `bin/run_suite.py`, and **the caller runs it, not this skill**. Nothing
+here executes: keeping the run outside means the evidence exists on disk before any judgement is made of
+it, and the same artifact can be handed to a second reviewer who reaches a different conclusion about the
+same run. Supply the artifact, or accept that the failures pass does not run.
 
 An absent optional input never becomes a default. It removes a pass, and the summary says which pass did
 not run. A review reported as clean over a pass that never ran is the failure this rule prevents.
@@ -48,7 +52,7 @@ another's output.
 | structure | `architecture-pattern-scanner` | always |
 | exposure | `regression-consumer-analyst` | the change states what changed in each file |
 | coverage | `acceptance-coverage-auditor` | criteria and a test file set were supplied |
-| failures | `test-failure-diagnostician` | a captured run output holding at least one failure was supplied |
+| failures | `test-failure-diagnostician` | a `test-run/1` whose `outcome` is not `passed` was supplied |
 
 Three of them divide work that one agent used to do badly, and the division is not arbitrary. Security
 belongs to the scanner, structure to the structural scanner, and everything else the registry names to
@@ -78,5 +82,8 @@ the one signal that tells a careful finding from a confident one.
 - an agent that stops for a missing input has named it — the pass did not run, and the summary says so;
 - **`unreadable_path`** stops the pass rather than narrowing it. A scan over the readable subset would
   report clean over files nobody read;
-- **`no_failure_reported`** from the diagnosis pass means the supplied run output holds no failure. That
-  is not an error in the run: the pass should not have been asked for, and saying so is the answer.
+- **`no_failure_reported`** from the diagnosis pass means the supplied run holds no failure. That is not
+  an error in the run: the pass should not have been asked for, and saying so is the answer.
+- a `test-run/1` whose outcome is `not_found` or `timed_out` still runs the pass. Nothing was proved
+  about the code, and that is exactly what the diagnosis says — a run that could not execute is a
+  finding, not an absent input.

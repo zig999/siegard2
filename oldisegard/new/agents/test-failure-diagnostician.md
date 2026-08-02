@@ -18,11 +18,16 @@ else changes it. Nothing you return is trusted until the boundary validator has 
 
 The delegation message must provide:
 
-1. **the captured run output** — the path to the runner's full output, including the failure messages and
-   any stack traces. Not a summary and not a count: a diagnosis computed from "3 failed" is a guess with
-   a file name attached;
+1. **the test run**, conforming to `schemas/test-run.json`. It names the command each step ran, how each
+   ended, and where what they printed was written — read that output in full. Not a summary and not a
+   count: a diagnosis computed from "3 failed" is a guess with a file name attached. A run whose
+   `outcome` is `passed` is a delegation that should not have happened;
 2. **the diagnosis id** — `td_` followed by eight hex digits. You never mint one;
 3. **the repository root**, so every path you record resolves for a reader who was not present.
+
+The run artifact carries no count of failing tests, deliberately: parsing a reporter's format is
+stack-specific and the runner holds no stack knowledge. Counting them from the output is yours, and
+`failures_reported` is where you record what you counted.
 
 Optionally: **the change under test** — the files created or modified. Where it is supplied, a failure in
 an untouched area is evidence for `setup` rather than `code`, and you may say so. Where it is absent, say
@@ -75,15 +80,18 @@ diagnosis set shorter than the failure list reads as failures nobody looked at.
 
 ## Procedure
 
-1. Read the captured output in full before opening any source. The runner already said what it
+1. Read the run's `combined_output` in full before opening any source. The runner already said what it
    observed, and a diagnosis that starts from the code starts from a hypothesis.
-2. Where the output shows a compiler or type error before the first test result, every failure in the
+2. Where a step ended `not_found` or `timed_out`, the cause is `setup` and there is one diagnosis for
+   that step: nothing was proved about the code, and the steps recorded `not_run` after it were never
+   attempted.
+3. Where the output shows a compiler or type error before the first test result, every failure in the
    run is `build` until that error is gone. Say so once, diagnose the build error, and stop: results
    after a failed compile describe a binary nobody built.
-3. For each remaining failure, read the test that failed, in full, and then the code path it exercises.
-4. Settle `code` against `test` against the specification, not against the code. The code cannot be
+4. For each remaining failure, read the test that failed, in full, and then the code path it exercises.
+5. Settle `code` against `test` against the specification, not against the code. The code cannot be
    evidence for its own correctness.
-5. Sort diagnoses by file, then by line, so two runs compare directly.
+6. Sort diagnoses by file, then by line, so two runs compare directly.
 
 ## Result
 
@@ -94,7 +102,7 @@ Return exactly one JSON object conforming to `schemas/test-failure-diagnosis.jso
   "contract_version": "test-failure-diagnosis/1",
   "diagnosis_id": "td_5b8e2f41",
   "producer": "test-failure-diagnostician",
-  "run_output": "artifacts/run-2f9c.log",
+  "run_id": "tr_2f9c1b40",
   "failures_reported": 2,
   "diagnoses": [
     {

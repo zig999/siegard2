@@ -79,7 +79,9 @@
       "objective": "Read a captured test-run output and classify every failure into one of four causes — code, test, setup, or build — with the evidence for each and the correction it calls for. Choose it once a suite has been run and something failed, to learn what to fix before anyone edits either the code or the test. Not for running the suite, which is a script's; not for fixing what it diagnoses; and not for deciding whether the change may proceed.",
       "inputs": [
         {
-          "name": "run_output",
+          "name": "test_run",
+          "artifact": "test-run",
+          "contract": "test-run/1",
           "required": true
         },
         {
@@ -110,7 +112,8 @@
         "one diagnosis entry exists for every failure the runner reported, and the count is carried in the artifact so a shortfall is visible",
         "where the output shows a compile or type error before the first test result, every failure in the run is build",
         "where no specification statement settles code against test, the cause recorded is code",
-        "the suite is not executed by this capability"
+        "the suite is not executed by this capability",
+        "a run whose outcome is not_found or timed_out yields one setup diagnosis for that step; the steps recorded not_run after it were never attempted"
       ],
       "judgment": [
         "which cause a failure has, given the runner's message and the code path it exercises",
@@ -138,6 +141,12 @@
         {
           "outcome": "no_failure_reported",
           "reason": "the captured output holds no failure; the delegation should not have happened, and saying so is the useful answer"
+        }
+      ],
+      "consumed_artifacts": [
+        {
+          "artifact": "test-run",
+          "access": "read"
         }
       ]
     },
@@ -1232,6 +1241,75 @@
         {
           "outcome": "delegate_stopped",
           "reason": "a delegated capability reported a closed failure outcome; the pass did not run and the summary says which"
+        }
+      ]
+    },
+    {
+      "identifier": "run-suite",
+      "class": "script",
+      "objective": "Run the caller's build and test commands in the order given, capture what each printed, and record how each ended. Choose it before anything judges a test run, so the evidence exists on disk independently of the judgement about it. Not for deciding which commands to run, which is the caller's; not for parsing how many tests passed, which is stack-specific; and not for diagnosing a failure, which is test-failure-diagnostician.",
+      "inputs": [
+        {
+          "name": "run_id",
+          "required": true
+        },
+        {
+          "name": "artifact_dir",
+          "required": true
+        },
+        {
+          "name": "timeout_seconds",
+          "required": true
+        },
+        {
+          "name": "steps",
+          "required": true
+        },
+        {
+          "name": "cwd",
+          "required": false,
+          "default": "the process working directory"
+        }
+      ],
+      "outputs": [
+        {
+          "artifact": "test-run",
+          "contract": "test-run/1"
+        }
+      ],
+      "produced_artifacts": [
+        "test-run"
+      ],
+      "deterministic_behavior": [
+        "each command is split with shlex and executed directly; no shell interprets a metacharacter, so nothing a command prints can start another one",
+        "every input is validated before the run directory is created, so a refusal leaves nothing behind and does not burn the identifier",
+        "a run directory that already exists is refused rather than overwritten",
+        "steps run in the order declared, and the first that does not pass records the rest as not_run",
+        "the timeout is a required input; no default is shipped, because no calibration for one exists",
+        "no timestamp, duration, or environment is recorded, so two runs over one tree differ only where the commands did",
+        "exit 0 where every step passed, 1 where a step failed or timed out, 2 where the input was refused"
+      ],
+      "judgment": [],
+      "assertions": [
+        {
+          "output": "test-run",
+          "bound": false
+        }
+      ],
+      "grant": {
+        "tools": [
+          "Bash"
+        ],
+        "note": "Executes the caller's commands and writes their output under the artifact directory. It composes no command, infers none from the repository, and reads no setting value. What a command prints lands on disk verbatim, so a command that prints a secret persists it — the framework cannot tell a secret from a string shaped like one, and a redaction heuristic would remove evidence a diagnosis needs while still missing the secret."
+      },
+      "failure_outcomes": [
+        {
+          "outcome": "cannot_run",
+          "reason": "an input was refused — a malformed run id, a non-positive timeout, a step that is not NAME=COMMAND, an empty or duplicated step, or an existing run directory. Nothing is executed and nothing is written."
+        },
+        {
+          "outcome": "step_failed",
+          "reason": "a step exited non-zero, timed out, or named a command that does not exist; the artifact records which and the steps after it as not_run"
         }
       ]
     }

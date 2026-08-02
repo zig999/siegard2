@@ -9,7 +9,7 @@
     "contract_version",
     "diagnosis_id",
     "producer",
-    "run_output",
+    "run_id",
     "failures_reported",
     "diagnoses"
   ],
@@ -28,10 +28,10 @@
       "minLength": 1,
       "description": "What performed the diagnosis. Not a const: the contract requires the artifact, not a particular producer of it."
     },
-    "run_output": {
+    "run_id": {
       "type": "string",
-      "minLength": 1,
-      "description": "Path of the captured runner output this diagnosis was computed from. Required: a diagnosis that cannot name its run states a conclusion nobody can re-derive."
+      "pattern": "^tr_[0-9a-f]{8}$",
+      "description": "The `test-run/1` this diagnosis was computed from. An identifier rather than a path: the run artifact already names where its output was written, and naming it twice invites the two to disagree. A diagnosis that cannot name its run states a conclusion nobody can re-derive."
     },
     "failures_reported": {
       "type": "integer",
