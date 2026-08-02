@@ -15,7 +15,7 @@ predicate over a path the repository holds. A document may say a tree is empty o
 The direction is deliberate. Claiming emptiness while something exists is the drift that happened
 and is reported. Claiming existence while nothing exists is not checked here: a specification
 naming a mechanism it needs is how a requirement is written before the mechanism arrives, and
-`foundation/0007` R1 is the standing example.
+`foundation/0006` R1 is the standing example.
 
 Adding a subject is adding a row. Where a document needs to say something about this repository
 that no row covers, the answer is usually that the statement belongs in **Outstanding evidence**

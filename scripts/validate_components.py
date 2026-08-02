@@ -53,7 +53,7 @@ HOOK_DECLARATION = "hooks.declaration.json"
 DECLARATION_SCHEMA_PATH = REPO_ROOT / "schemas" / "capability-declaration.json"
 CAPABILITY_DECLARATION = "capabilities.declaration.json"
 
-# The frontmatter field each class states its grant in. foundation/0007 R14 holds the grant to what
+# The frontmatter field each class states its grant in. foundation/0006 R16 holds the grant to what
 # the declared steps require, and foundation/0005 R11 puts the statement in the component; a
 # declaration claiming a grant the component does not is the disagreement R22 exists to catch.
 GRANT_FIELD = {"specialized-agent": "tools", "skill": "allowed-tools"}
@@ -261,21 +261,21 @@ def component_frontmatter(root: Path, entry: dict, rel: str, failures: list[str]
 def check_capability_declarations(root: Path, failures: list[str]) -> int:
     """Validate the authored declaration set, and hold each entry to its component.
 
-    `foundation/0007` R22 requires one validator over the declaration and the component it
+    `foundation/0006` R22 requires one validator over the declaration and the component it
     declares, which is why this lives beside the frontmatter checks rather than in a script of its
     own. R1 is what it enforces on the declaration; the agreement half is the cost R21's separate
     artifact accepts, and comparing the two records is what keeps that cost from becoming drift.
 
     A capability with no entry here is reported as a gap rather than a failure. R1 says a
     capability whose declaration is absent is not installed, and enforcing that today would reject
-    every component but one — `foundation/0007` **Outstanding evidence** condition 1 is where that
+    every component but one — `foundation/0006` **Outstanding evidence** condition 1 is where that
     debt is recorded, and a check that fails the build for it would be reporting the debt twice.
     """
     path = root / CAPABILITY_DECLARATION
     if not path.is_file():
         failures.append(
             f"{display(root)}: holds no {CAPABILITY_DECLARATION}, so no capability declares itself "
-            f"and foundation/0007 R1 is unenforceable"
+            f"and foundation/0006 R1 is unenforceable"
         )
         return 0
     rel = display(path)
@@ -469,7 +469,7 @@ def main() -> int:
     if declarations < skills + agents + hooks:
         print(
             f"  gap: {skills + agents + hooks - declarations} capability(ies) carry no declaration. "
-            f"foundation/0007 R1 binds them and nothing checks it — condition 1 there owes the rest."
+            f"foundation/0006 R1 binds them and nothing checks it — condition 1 there owes the rest."
         )
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")

@@ -72,7 +72,7 @@ CLASS_BY_TREE = {"skills": "skill", "agents": "specialized-agent"}
 HOOK_DECLARATION = "hooks.declaration.json"
 
 # The authored declaration set. It stays behind for the reason hooks.declaration.json does:
-# foundation/0007 R23 keeps a declaration out of the distribution, and R12a there makes the
+# foundation/0006 R25 keeps a declaration out of the distribution, and R12a there makes the
 # manifest the surface a consumer reads instead.
 CAPABILITY_DECLARATION = "capabilities.declaration.json"
 
@@ -305,7 +305,7 @@ def attach_declarations(capabilities: list[dict]) -> None:
     """Fold the authored declaration set into the catalog the manifest carries.
 
     `foundation/0008` R12 puts a declaration in the manifest and R12a makes the manifest the only
-    way one reaches a consumer, because `foundation/0007` R23 keeps the authored file out of the
+    way one reaches a consumer, because `foundation/0006` R23 keeps the authored file out of the
     distribution. Derived rather than authored a second time: an entry that disagreed with the
     declaration it came from would be the generator defect R12a names, so nothing here edits a
     field the declaration already carries.

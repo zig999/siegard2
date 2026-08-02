@@ -341,7 +341,7 @@ class Hooks(TreeCase):
 
 
 class CapabilityDeclarations(unittest.TestCase):
-    """`foundation/0007` R22: one validator over the declaration and the component it declares.
+    """`foundation/0006` R22: one validator over the declaration and the component it declares.
 
     R21 makes a declaration a separate artifact, which buys a closed harness contract and costs two
     records of one fact. These cover the check that keeps the cost from becoming drift, in the

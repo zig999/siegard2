@@ -19,7 +19,7 @@ R14 fixes the vocabulary and what each value means for an installation: `propose
 that vanishes between two versions is a breaking change made silently — which the release record
 in `docs/` would have to catch, and cannot if nothing lists what was installed before.
 
-**`foundation/0007` R19: no numeric threshold ships uncalibrated.** R20 draws the line this check
+**`foundation/0006` R19: no numeric threshold ships uncalibrated.** R20 draws the line this check
 enforces: a value the caller supplies per run is not a framework threshold, and a value the
 framework *ships* needs the evidence that calibrated it. A shipped component naming a bare number
 as a limit, a budget, or a retry count is the route R20 names — a value chosen once to get a first
@@ -46,7 +46,7 @@ from generate_dist import DEFAULT_TARGET, MANIFEST_NAME, plan
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # A bare number presented as a limit. Deliberately narrow: it looks for a *value*, not a mention,
-# so prose describing why a caller supplies one does not trip it. `foundation/0007` R20's distinction
+# so prose describing why a caller supplies one does not trip it. `foundation/0006` R20's distinction
 # is between a value the framework ships and one the caller supplies, and only the first is here.
 THRESHOLD = re.compile(
     r"(?i)\b(timeout|limit|max[_ ]?\w*|min[_ ]?\w*|budget|retries|retry[_ ]?count|attempts?)\b"
@@ -100,7 +100,7 @@ def check_statuses(root: Path) -> list[str]:
 
 
 def check_thresholds(root: Path) -> list[str]:
-    """foundation/0007 R19 and R20, over what the distribution actually ships."""
+    """foundation/0006 R21 and R20, over what the distribution actually ships."""
     problems: list[str] = []
     for path in sorted(root.rglob("*")):
         if not path.is_file() or "__pycache__" in path.parts:
@@ -116,7 +116,7 @@ def check_thresholds(root: Path) -> list[str]:
             line = text[: match.start()].count("\n") + 1
             problems.append(
                 f"{path.relative_to(root).as_posix()}:{line}: ships {match.group(0)!r}. "
-                f"foundation/0007 R19 admits a framework value only with the evidence that calibrated "
+                f"foundation/0006 R21 admits a framework value only with the evidence that calibrated "
                 f"it, and R20 makes a caller-supplied value the other route — neither is a bare "
                 f"number in a shipped file"
             )

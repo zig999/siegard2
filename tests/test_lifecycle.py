@@ -2,7 +2,7 @@
 
 `foundation/0006` R17 requires a capability's status to be derived from checkable facts "and not from a
 label maintained by hand", and `foundation/0008` R12 puts that status in the one record a consumer is
-told to trust. `foundation/0007` R19 refuses a shipped numeric threshold with no evidence behind it, and
+told to trust. `foundation/0006` R19 refuses a shipped numeric threshold with no evidence behind it, and
 R20 names the failure it prevents: a value chosen once to get a first run moving becoming a default
 nobody decided to ship.
 
@@ -161,7 +161,7 @@ class DeprecationIsDerived(unittest.TestCase):
 
 
 class Thresholds(unittest.TestCase):
-    """foundation/0007 R19 and R20."""
+    """foundation/0006 R21 and R20."""
 
     def test_the_distribution_ships_no_uncalibrated_threshold(self) -> None:
         self.assertEqual([], cc.check_thresholds(DIST))
