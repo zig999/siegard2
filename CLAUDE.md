@@ -77,7 +77,3 @@ Everything else follows `/siegard-change` in full; when unclear, treat the chang
 - Decide mechanically decidable checks in hooks or scripts. Use agents for work that genuinely requires
   model judgment.
 - Record the inputs, outputs, evidence, and contract version needed to reproduce a decision.
-
-## Where the rest lives
-
-- `.claude/rules/contracts.md` — inter-agent artifact contractss
