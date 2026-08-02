@@ -1,6 +1,6 @@
 """The generator's output contract, and the invariants that survive a bug in the generator.
 
-`foundation/0008` fixes what the distribution may contain and leaves the assembly free. These tests
+`foundation/0007` fixes what the distribution may contain and leaves the assembly free. These tests
 are the fixed half. They fall into two groups on purpose:
 
 - what the generator produces, asserted against a freshly built tree;
@@ -57,14 +57,14 @@ class Built(unittest.TestCase):
 
 class Determinism(unittest.TestCase):
     def test_two_runs_over_the_same_source_are_byte_identical(self) -> None:
-        """foundation/0008 R4: a difference is a defect in the generator, not a variation."""
+        """foundation/0007 R4: a difference is a defect in the generator, not a variation."""
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
             generate_dist.build(Path(a) / "dist")
             generate_dist.build(Path(b) / "dist")
             self.assertEqual(verify_dist.tree(Path(a) / "dist"), verify_dist.tree(Path(b) / "dist"))
 
     def test_the_manifest_carries_no_timestamp(self) -> None:
-        """The one field that would break R4; foundation/0008 R12 does not ask for it."""
+        """The one field that would break R4; foundation/0007 R12 does not ask for it."""
         with tempfile.TemporaryDirectory() as holder:
             generate_dist.build(Path(holder) / "dist")
             manifest = json.loads((Path(holder) / "dist" / "siegard-manifest.json").read_text())
@@ -81,11 +81,11 @@ class Determinism(unittest.TestCase):
 
 class Layout(Built):
     def test_the_plugin_manifest_is_present(self) -> None:
-        """foundation/0008 R1: a plugin root is a directory holding `.claude-plugin/plugin.json`."""
+        """foundation/0007 R1: a plugin root is a directory holding `.claude-plugin/plugin.json`."""
         self.assertIn(".claude-plugin/plugin.json", self.files)
 
     def test_the_plugin_manifest_sets_an_explicit_version(self) -> None:
-        """foundation/0008 R2: without one, every commit becomes a release."""
+        """foundation/0007 R2: without one, every commit becomes a release."""
         plugin = json.loads(self.files[".claude-plugin/plugin.json"])
         self.assertTrue(plugin.get("version"))
 
@@ -98,12 +98,12 @@ class Layout(Built):
         self.assertLessEqual(roots, verify_dist.ALLOWED_ROOT)
 
     def test_no_empty_directory_ships(self) -> None:
-        """foundation/0008 R7: an empty directory is omitted rather than shipped."""
+        """foundation/0007 R7: an empty directory is omitted rather than shipped."""
         for directory in {p.parent for p in self.root.rglob("*") if p.is_file()}:
             self.assertTrue(any(directory.iterdir()))
 
     def test_a_directory_in_the_closed_set_with_no_occupant_is_absent(self) -> None:
-        """foundation/0008 R7, derived rather than listed.
+        """foundation/0007 R7, derived rather than listed.
 
         This named `hooks` and `templates` until a hook shipped. The property is that every
         directory the closed set allows is either populated or absent — never present and empty —
@@ -114,7 +114,7 @@ class Layout(Built):
             self.assertFalse((self.root / name).exists(), f"{name}/ shipped with nothing in it")
 
     def test_the_closed_set_is_fully_occupied(self) -> None:
-        """Every directory foundation/0008 R7 allows now ships with something in it.
+        """Every directory foundation/0007 R7 allows now ships with something in it.
 
         This inverts what stood here. The old assertion required at least one allowed directory to
         be unoccupied, so that the emptiness check above had something to check; `templates/` was
@@ -131,14 +131,14 @@ class Layout(Built):
         self.assertEqual({"hooks"}, verify_dist.ALLOWED_ROOT - occupied)
 
     def test_no_rules_and_no_packs(self) -> None:
-        """foundation/0008 R10 and R23."""
+        """foundation/0007 R10 and R23."""
         self.assertFalse((self.root / "rules").exists())
         self.assertFalse((self.root / "packs").exists())
 
 
 class Provenance(Built):
     def test_every_installed_file_names_a_source_that_exists(self) -> None:
-        """foundation/0008 R5: no file is introduced that has no source."""
+        """foundation/0007 R5: no file is introduced that has no source."""
         for entry in self.manifest["installed"]:
             self.assertTrue(
                 (REPO_ROOT / entry["source"]).is_file(), f"{entry['path']} names {entry['source']}"
@@ -154,7 +154,7 @@ class Provenance(Built):
             self.assertEqual(entry["digest"], generate_dist.digest(self.files[entry["path"]]))
 
     def test_a_removed_source_disappears_from_the_output(self) -> None:
-        """foundation/0008 R5: no file survives whose source was removed."""
+        """foundation/0007 R5: no file survives whose source was removed."""
         with tempfile.TemporaryDirectory() as holder:
             moved = Path(holder) / "knowledge-enricher.md"
             live = REPO_ROOT / "src" / "claude" / "agents" / "knowledge-enricher.md"
@@ -292,7 +292,7 @@ class Invariants(Built):
             (root / "packs" / "one.json").write_text("{}\n")
 
         problems = self.broken(plant)
-        self.assertTrue(any("R23" in p for p in problems), problems)
+        self.assertTrue(any("R22" in p for p in problems), problems)
 
     def test_runtime_bytecode_is_not_reported_as_unmanaged(self) -> None:
         """A consumer who runs a shipped executable once has __pycache__ beside it. Reporting

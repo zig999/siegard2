@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assemble the Siegard distribution from framework source.
 
-foundation/0008 fixes the output contract and leaves the assembly free. What it fixes: the
+foundation/0007 fixes the output contract and leaves the assembly free. What it fixes: the
 distribution is a plugin root holding `.claude-plugin/plugin.json` (R1); running this twice
 over the same committed source produces byte-identical output (R4); every installed file
 originates in framework source and no file survives whose source was removed (R5); the
@@ -16,7 +16,7 @@ misfiled contract would then govern two audiences at once with nothing to catch 
 
 **Determinism has one requirement and one consequence.** Every iteration is sorted, and the
 manifest carries no timestamp: a value minted at generation time would differ between two runs
-over identical source, which R4 calls a defect rather than an acceptable variation. foundation/0008
+over identical source, which R4 calls a defect rather than an acceptable variation. foundation/0007
 R12 lists what the manifest records and a timestamp is not among them.
 
 **`source_revision` is a content digest, not a commit SHA.** A SHA would make the committed
@@ -58,7 +58,7 @@ SCRIPT_ROOT = SOURCE_ROOT / "bin"
 TEMPLATE_ROOT = SOURCE_ROOT / "templates"
 DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
 
-# Bumped whenever this script's output changes for unchanged source. foundation/0008 R4 makes the
+# Bumped whenever this script's output changes for unchanged source. foundation/0007 R4 makes the
 # distribution a function of the source *and* the generator, so a consumer that sees a
 # difference can attribute it to one or the other.
 GENERATOR_VERSION = "1.0.0"
@@ -158,7 +158,7 @@ def assert_imports_ship() -> None:
     Found the hard way: `orchestrate.py` gained `from cli import cannot_run`, and nothing
     noticed that `cli.py` did not ship with it. The distribution still built, still
     verified, and would have failed on the consumer's first invocation with an ImportError —
-    the worst place to discover it, because `foundation/0008` R9 exists so a shipped executable
+    the worst place to discover it, because `foundation/0007` R9 exists so a shipped executable
     "exits with a named error" rather than breaking in a way nobody can read.
 
     Only a module the generator holds is checked. A standard-library or third-party import is
@@ -196,7 +196,7 @@ def assert_total(actual: set[str], classified: set[str], tree: str, constant: st
     if stale:
         raise Refused(
             f"{constant} classifies {', '.join(stale)}, which {tree} no longer holds — "
-            f"foundation/0008 R5: no file survives whose source was removed"
+            f"foundation/0007 R5: no file survives whose source was removed"
         )
 
 
@@ -220,10 +220,10 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         )
         return body
 
-    # The plugin manifest. foundation/0008 R1 makes its presence what defines a plugin root.
+    # The plugin manifest. foundation/0007 R1 makes its presence what defines a plugin root.
     manifest_source = SOURCE_ROOT / PLUGIN_DIR / "plugin.json"
     if not manifest_source.is_file():
-        raise Refused(f"{manifest_source} is missing; foundation/0008 R1 requires it at the plugin root")
+        raise Refused(f"{manifest_source} is missing; foundation/0007 R1 requires it at the plugin root")
     add(f"{PLUGIN_DIR}/plugin.json", manifest_source)
 
     deprecations = declared_deprecations()
@@ -262,7 +262,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     for source in sorted(SCHEMA_ROOT.glob("*.json")):
         add(f"schemas/{source.name}", source)
 
-    # Hooks. foundation/0008 R3 puts them in force while the plugin is enabled, which is what makes a
+    # Hooks. foundation/0007 R3 puts them in force while the plugin is enabled, which is what makes a
     # session-wide guarantee installable at all.
     hooks_root = SOURCE_ROOT / "hooks"
     if hooks_root.is_dir():
@@ -277,7 +277,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
                  "path": f"hooks/{name}"}
             )
 
-    # Scaffolds a consumer expands. foundation/0008 names `templates/` in the closed set.
+    # Scaffolds a consumer expands. foundation/0007 names `templates/` in the closed set.
     for source in sorted(TEMPLATE_ROOT.glob("*.md")):
         add(f"templates/{source.name}", source)
 
@@ -304,7 +304,7 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
 def attach_declarations(capabilities: list[dict]) -> None:
     """Fold the authored declaration set into the catalog the manifest carries.
 
-    `foundation/0008` R12 puts a declaration in the manifest and R12a makes the manifest the only
+    `foundation/0007` R12 puts a declaration in the manifest and R12a makes the manifest the only
     way one reaches a consumer, because `foundation/0006` R23 keeps the authored file out of the
     distribution. Derived rather than authored a second time: an entry that disagreed with the
     declaration it came from would be the generator defect R12a names, so nothing here edits a

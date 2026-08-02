@@ -10,7 +10,7 @@ paths:
 `dist/.claude/` is what this repository produces. It is not a source tree, and nothing here is edited
 by hand.
 
-`foundation/0008` states what a distribution must be true of — the properties a consumer can check in the
+`foundation/0007` states what a distribution must be true of — the properties a consumer can check in the
 tree they installed. This file states what *this* repository must do to build one. A consumer never
 satisfies a rule below; the person or agent running `make dist` does.
 

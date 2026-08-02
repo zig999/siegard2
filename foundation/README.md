@@ -16,6 +16,7 @@ normative weight.
 | [0004](0004-runtime-architecture.md) | Runtime architecture | **`accepted`** | who executes, how a capability is found, where a guarantee lives |
 | [0005](0005-capability-model.md) | The capability model | **`accepted`** | the closed set of capability classes, what each owns, admission and retirement |
 | [0006](0006-capability-contracts.md) | Capability contracts | **`accepted`** | what a capability declares about itself |
+| [0007](0007-distribution-layout.md) | Distribution layout | **`accepted`** | what an installation is, the records it carries, and what the framework may not claim |
 
 ## This version of the framework
 

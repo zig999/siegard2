@@ -1,7 +1,7 @@
 """Capability lifecycle and shipped thresholds — the two rules that were maintained by reading.
 
 `foundation/0006` R17 requires a capability's status to be derived from checkable facts "and not from a
-label maintained by hand", and `foundation/0008` R12 puts that status in the one record a consumer is
+label maintained by hand", and `foundation/0007` R12 puts that status in the one record a consumer is
 told to trust. `foundation/0006` R19 refuses a shipped numeric threshold with no evidence behind it, and
 R20 names the failure it prevents: a value chosen once to get a first run moving becoming a default
 nobody decided to ship.

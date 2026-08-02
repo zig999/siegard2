@@ -19,7 +19,7 @@ templates that produce the [artifact classes](artifact-class.md) it declares, au
 like any other component and shipped as a plugin of its own. One producer per declared class — a template
 for a deterministic class, an agent for a judged one — because
 `foundation/0006-capability-model.md` R5 gives a specialized agent exactly one artifact class. A pack is not part of the framework [distribution](distribution.md) —
-`foundation/0008-distribution-layout.md` R23 and `foundation/0012-target-pack-model.md` R8 make it separately
+`foundation/0007-distribution-layout.md` R22 and `foundation/0012-target-pack-model.md` R8 make it separately
 installed and separately versioned, so adding a stack needs no framework release.
 
 A pack is where [stack knowledge](stack-knowledge.md) lives once the [knowledge base](knowledge-base.md) has

@@ -53,7 +53,7 @@ class AMislabelledLinkIsRejected(unittest.TestCase):
         self.assertOneProblem(found, "knowledge object", "knowledge base")
 
     def test_the_two_records_cannot_be_swapped(self):
-        """`foundation/0008` R15 forbids one manifest wearing the other's name in prose.
+        """`foundation/0007` R15 forbids one manifest wearing the other's name in prose.
 
         A link is where that confusion would survive review, because the target's title
         is not on the page the reader is looking at.
