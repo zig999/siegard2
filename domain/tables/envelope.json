@@ -8,6 +8,21 @@
     "type",
     "contract_version"
   ],
+  "x-contract-version": {
+    "const": "domain-object/2",
+    "supersedes": "domain-object/1",
+    "note": "The profile pins its own const, and that is how a consumer tells one profile from another. Bumped rather than narrowed in place: every change below refuses an object `domain-object/1` accepts, so a consumer built to read the first would mis-read the second as merely stricter.",
+    "breaks": [
+      "`knowledgeObjectId` is spelled `nodeId`",
+      "`steps[].ko` is spelled `steps[].node`",
+      "`governed_by` is removed, and does not come back",
+      "every required field alternates against a gap naming that field, not against any gap",
+      "`boundaryId` refuses `dm.context.<a>.<b>` and `dm.aggregate.<a>`",
+      "an interface whose ddd is not `api` declares a `payload`",
+      "an interface whose ownership is `consumed` declares an `upstream`",
+      "a directional `context_relationships[]` entry declares a `role`, and a symmetric one refuses it"
+    ]
+  },
   "x-envelope-fields": {
     "carried": [
       "id",

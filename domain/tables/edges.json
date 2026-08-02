@@ -173,6 +173,22 @@
       "crosses_context": false,
       "locator": "transitions[<i>].guard"
     },
+    "transitions[].emits": {
+      "origin": [
+        "lifecycle"
+      ],
+      "target": [
+        "interface"
+      ],
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "transitions[<i>].emits",
+      "note": "The target's ddd is `domain-event` or `integration-event`. A transition emitting an api or a command names something a state change does not raise."
+    },
     "rejections[].error": {
       "origin": [
         "lifecycle"
@@ -203,6 +219,20 @@
       "locator": "steps[<i>].node",
       "note": "Spelled `steps[].ko` in domain-object/1. The rename is the vocabulary change this tree applies and the shipped contract has not."
     },
+    "steps[].compensated_by": {
+      "origin": [
+        "process"
+      ],
+      "target": null,
+      "out_min": 0,
+      "out_max": null,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "steps[<i>].compensated_by",
+      "note": "What undoes a step. Absent on a step that needs no compensation, and on every process that is not a saga."
+    },
     "context_relationships[].with": {
       "origin": [
         "context"
@@ -218,10 +248,42 @@
       "crosses_context": true,
       "locator": "context_relationships[<i>].with",
       "note": "Traversed only when expansion crosses a context."
+    },
+    "payload": {
+      "origin": [
+        "interface"
+      ],
+      "target": [
+        "definition"
+      ],
+      "out_min": 0,
+      "out_max": 1,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": false,
+      "locator": "payload",
+      "note": "Required of every ddd but `api`, or a gap naming it. `in_max` is unbounded: one definition may shape several interfaces, and a published language exists to be shared."
+    },
+    "upstream": {
+      "origin": [
+        "interface"
+      ],
+      "target": [
+        "interface"
+      ],
+      "out_min": 0,
+      "out_max": 1,
+      "in_max": null,
+      "traversed": true,
+      "depth": 1,
+      "crosses_context": true,
+      "locator": "upstream",
+      "note": "Declared by the consumed side and required of it. `in_max` is unbounded because that is the point — the count of edges arriving at a published interface is the answer to who depends on it, and it is derived rather than declared."
     }
   },
   "x-removed": {
-    "governed_by": "Carried by domain-object/1 as an edge to a decision record, `adr.NNNN`. A decision record is a graph node and never a knowledge object, and this framework holds no decision-record node — so every target is one the base cannot hold, and the materializer exempts `adr.` targets from resolution rather than reporting them. An edge no resolution reads is removed rather than retained for symmetry. Removing it is a breaking change to the frontmatter contract and is recorded here rather than applied to the shipped schema.",
+    "governed_by": "Carried by `domain-object/1` as an edge to a decision record, `adr.NNNN`. A decision record is a graph node and never a knowledge object, and this framework holds no decision-record node — so every target is one the base cannot hold, and the materializer exempted `adr.` targets from resolution rather than reporting them. **It does not come back, and this is a decision rather than an omission.** A domain graph records what the business decided, not the deliberation that reached it; tracing a boundary to the discussion behind it is version control's work. Removing it is a breaking change to the frontmatter contract.",
     "superseded_by": "Named a node and was never an edge. The field is gone; the name must appear in no vocabulary derived from this table."
   },
   "x-open": [

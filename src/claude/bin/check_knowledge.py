@@ -38,8 +38,8 @@ Declared dependencies: PyYAML.
 path computes back to an identifier, with no lookup. While a script wrote both they could not disagree;
 written by judgment they can, and every reference in the base rests on them agreeing.
 
-**Three further checks a per-file schema cannot express** run here too, and every one was declared owed
-and unshipped for as long as this file existed without them. Each needs to see more than one object:
+**The checks a per-file schema cannot express** run here too. Each compares two objects, and a boundary
+validator is handed one:
 
 - a lifecycle's transition table is **total** — every pairing of a declared state with a trigger the
   table mentions is either a transition or a rejection. An incomplete table is where whatever produces
@@ -48,7 +48,19 @@ and unshipped for as long as this file existed without them. Each needs to see m
   set to generate from, and which one binds is a question neither file answers;
 - a reference **crossing a bounded context targets an interface** — a context that reaches into
   another's internals has no boundary, and the published contract is what the other side owes
-  compatibility on.
+  compatibility on;
+- **containment is acyclic** — `boundary` admits an aggregate inside an aggregate, so a loop is
+  expressible, and a loop leaves every node on it with no partition root;
+- a node's **`boundary` agrees with its identifier** — the parent is written twice, once fixing the
+  path and once fixing membership, and a node whose two parents disagree sits in two trees;
+- an aggregate's **`root` agrees that it is one** — its `ddd` says `aggregate-root` and its own
+  `boundary` is that aggregate;
+- a consumed interface's **`upstream` is published** — a chain of consumed interfaces records copies
+  of a contract and no owner;
+- a transition **emits an event** — an `api` is called and a `command` is sent, and a state change
+  raises neither;
+- a rule reaching **outside its own aggregate declares `consistency`** — what spans two aggregates
+  cannot hold inside one transaction, and a boundary wide enough to hide that is drawn wrong.
 
 Usage:  check_knowledge.py <knowledge-root>
 Exit:   0 gaps, absences and cross-object rules all hold, 1 one fails, 2 cannot run
@@ -109,15 +121,30 @@ def offered_by(clause: dict) -> set[str]:
     }
 
 
-def conditional_obligation(nested: dict, ddd: str | None) -> set[str]:
-    """The obligation a `ddd`-conditional adds, on whichever side this object's `ddd` selects."""
-    condition = nested.get("if", {}).get("properties", {}).get("ddd", {})
-    admitted = condition.get("enum") or ([condition["const"]] if "const" in condition else [])
-    side = nested.get("then" if ddd in admitted else "else") or {}
+def conditional_obligation(nested: dict, data: dict) -> set[str]:
+    """The obligation a conditional adds, on whichever side this object selects.
+
+    The condition is read from whatever property it names rather than from `ddd` alone. A
+    `definition` owes `identity` for three of its five `ddd` values, and an `interface` owes
+    `upstream` when its `ownership` is `consumed` — same shape, different property. Reading only
+    the first would leave `upstream` in no obligation, which is worse than missing a check: a gap
+    legitimately naming it would be reported as naming something the kind does not require.
+
+    Every named property must select the same side. A conditional over two properties is an `and`,
+    and taking `then` because one of them matched would demand a field the contract does not.
+    """
+    condition = nested.get("if", {}).get("properties", {})
+    if not condition:
+        return set()
+    matched = all(
+        data.get(name) in (against.get("enum") or ([against["const"]] if "const" in against else []))
+        for name, against in condition.items()
+    )
+    side = nested.get("then" if matched else "else") or {}
     return offered_by(side) or set(side.get("required", []))
 
 
-def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str]]:
+def obligations(contract: dict, data: dict) -> list[set[str]]:
     """What this node type demands of an object with this `ddd`, as one entry per obligation.
 
     An obligation is a set of alternatives and is met by any one of them. Most hold a single field:
@@ -142,6 +169,7 @@ def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str
     from a kind that demands nothing — every object would pass while nothing was checked. So an
     unrecognised `then` is raised rather than skipped.
     """
+    node_type = data.get("type")
     found: list[set[str]] = []
     for clause in contract.get("allOf", []):
         if clause.get("if", {}).get("properties", {}).get("type", {}).get("const") != node_type:
@@ -150,7 +178,7 @@ def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str
 
         if "allOf" in then and "anyOf" not in then:
             for nested in then["allOf"]:
-                offered = conditional_obligation(nested, ddd) if "if" in nested else offered_by(nested)
+                offered = conditional_obligation(nested, data) if "if" in nested else offered_by(nested)
                 if offered:
                     found.append(offered)
             continue
@@ -162,7 +190,7 @@ def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str
             if alternatives:
                 found.append(alternatives)
             for nested in branch.get("allOf", []):
-                offered = conditional_obligation(nested, ddd)
+                offered = conditional_obligation(nested, data)
                 if offered:
                     found.append(offered)
             continue
@@ -175,9 +203,9 @@ def obligations(contract: dict, node_type: str, ddd: str | None) -> list[set[str
     return found
 
 
-def type_requirements(contract: dict, node_type: str, ddd: str | None) -> set[str]:
-    """Every field name an obligation of this type mentions, flattened."""
-    return {field for obligation in obligations(contract, node_type, ddd) for field in obligation}
+def type_requirements(contract: dict, data: dict) -> set[str]:
+    """Every field name an obligation of this object's type mentions, flattened."""
+    return {field for obligation in obligations(contract, data) for field in obligation}
 
 
 def attribute_parameters(contract: dict, primitive: str) -> set[str]:
@@ -200,8 +228,7 @@ def nameable(contract: dict, data: dict) -> set[str]:
     is nameable only where `x` is an attribute this object holds and `y` is a parameter its
     primitive requires, so a gap naming a parameter of an attribute nobody declared is refused.
     """
-    node_type, ddd = data.get("type"), data.get("ddd")
-    fields = type_requirements(contract, node_type, ddd)
+    fields = type_requirements(contract, data)
     names = set(fields)
     if "identity" in fields:
         # A required object whose own required part may be what is missing. The contract states
@@ -294,9 +321,9 @@ def unnamed_absences(data: dict, contract: dict, authoring: set[str], relative: 
     """
     found: list[str] = []
     gapped = {gap.get("field") for gap in data.get("gaps") or [] if gap.get("field")}
-    node_type, ddd = data.get("type"), data.get("ddd")
+    node_type = data.get("type")
 
-    for obligation in obligations(contract, node_type, ddd):
+    for obligation in obligations(contract, data):
         # Present, rather than truthy. `attributes: []` on a domain error is the positive statement
         # that it holds none, and reading it as an absence would demand a gap for a fact the object
         # states. Whether empty is *allowed* is the schema's question, and it answers it per field.
@@ -493,6 +520,58 @@ def cross_object(objects: dict[str, dict], paths: dict[str, str]) -> list[str]:
                 f"it heads is not its entry point"
             )
 
+    for identifier, data in sorted(objects.items()):
+        if data.get("type") != "interface" or not data.get("upstream"):
+            continue
+        held = objects.get(data["upstream"])
+        if held is not None and held.get("ownership") != "published":
+            problems.append(
+                f"{paths.get(identifier, identifier)}: `upstream` names {data['upstream']}, whose "
+                f"`ownership` is `{held.get('ownership')}`. A consumed interface pointing at another "
+                f"consumed one records two copies of a contract and no owner — the chain ends at the "
+                f"context that owes compatibility"
+            )
+
+    for identifier, data in sorted(objects.items()):
+        if data.get("type") != "lifecycle":
+            continue
+        for index, transition in enumerate(data.get("transitions") or []):
+            for emitted in transition.get("emits") or []:
+                held = objects.get(emitted)
+                if held is None or held.get("ddd") in ("domain-event", "integration-event"):
+                    continue
+                problems.append(
+                    f"{paths.get(identifier, identifier)}: transitions[{index}].emits names "
+                    f"{emitted}, whose `ddd` is `{held.get('ddd')}`. A state change raises something "
+                    f"that happened; an api is called and a command is sent, and a transition raises "
+                    f"neither"
+                )
+
+    def aggregate_of(identifier: str) -> str | None:
+        """The aggregate an object sits in, or None where it sits directly in a context."""
+        boundary = objects.get(identifier, {}).get("boundary")
+        return boundary if str(boundary).startswith("dm.aggregate.") else None
+
+    for identifier, data in sorted(objects.items()):
+        if data.get("type") != "rule" or data.get("consistency"):
+            continue
+        home = aggregate_of(identifier)
+        reaches = [
+            target
+            for target in data.get("depends_on") or []
+            if target in objects and aggregate_of(target) != home
+        ]
+        if not reaches:
+            continue
+        if excused("consistency", {gap.get("field") for gap in data.get("gaps") or []}):
+            continue
+        problems.append(
+            f"{paths.get(identifier, identifier)}: this rule reaches {', '.join(sorted(reaches))}, "
+            f"outside the aggregate it is written in, and declares no `consistency`. A rule spanning "
+            f"two aggregates cannot hold inside one transaction, and a boundary wide enough to hide "
+            f"that question is drawn wrong"
+        )
+
     def context_of(identifier: str) -> str | None:
         """The bounded context an object sits in, followed up through its scopes."""
         seen: set[str] = set()
@@ -539,6 +618,11 @@ def references(data: dict) -> list[tuple[str, str]]:
     for index, transition in enumerate(data.get("transitions") or []):
         if transition.get("guard"):
             found.append((transition["guard"], f"transitions[{index}].guard"))
+        for position, emitted in enumerate(transition.get("emits") or []):
+            found.append((emitted, f"transitions[{index}].emits[{position}]"))
+    for field in ("payload", "upstream"):
+        if data.get(field):
+            found.append((data[field], field))
     for index, rejection in enumerate(data.get("rejections") or []):
         if rejection.get("error"):
             found.append((rejection["error"], f"rejections[{index}].error"))
@@ -550,6 +634,8 @@ def references(data: dict) -> list[tuple[str, str]]:
             if step.get(spelling):
                 found.append((step[spelling], f"steps[{index}].{spelling}"))
                 break
+        if step.get("compensated_by"):
+            found.append((step["compensated_by"], f"steps[{index}].compensated_by"))
     if data.get("root"):
         found.append((data["root"], "root"))
     return found
@@ -607,8 +693,9 @@ def main() -> int:
 
     print(f"knowledge checked: {declared} gap(s) and {len(held)} object(s), with identifier "
           f"arithmetic, lifecycle totality, one lifecycle per subject, acyclic containment, "
-          f"boundary against identifier, an aggregate against its root, and what may cross a "
-          f"context  contract: "
+          f"boundary against identifier, an aggregate against its root, a consumed interface "
+          f"against its publisher, what a transition may emit, consistency on a rule that reaches "
+          f"outside its aggregate, and what may cross a context  contract: "
           f"{contract['properties']['contract_version']['const']}")
     if problems:
         print(f"FAILED: {len(problems)} disagreement(s) between what is declared and what is named\n")
@@ -616,7 +703,7 @@ def main() -> int:
             print(f"  {problem}")
         return 1
     print("every identifier computes to the path it sits at, every gap names a fact its kind requires "
-          "and the object lacks, every fact it lacks is named by a gap, and the six cross-object "
+          "and the object lacks, every fact it lacks is named by a gap, and the nine cross-object "
           "rules hold")
     return 0
 

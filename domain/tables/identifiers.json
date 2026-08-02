@@ -46,6 +46,11 @@
       "type": "string",
       "pattern": "^dm\\.definition\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
     },
+    "interfaceId": {
+      "type": "string",
+      "pattern": "^dm\\.interface\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "An interface. Named by `payload`'s origin, by `transitions[].emits` and by `upstream`, which is why it needs a form of its own rather than being reached through `nodeId`."
+    },
     "ruleId": {
       "type": "string",
       "pattern": "^dm\\.rule\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"

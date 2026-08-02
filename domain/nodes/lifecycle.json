@@ -12,6 +12,7 @@
     "boundary",
     "lifecycle.subject",
     "transitions[].guard",
+    "transitions[].emits",
     "rejections[].error",
     "depends_on"
   ],
@@ -76,6 +77,14 @@
           "guard": {
             "$ref": "../tables/identifiers.json#/$defs/ruleId",
             "description": "The rule that decides this transition, at most one."
+          },
+          "emits": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "../tables/identifiers.json#/$defs/interfaceId"
+            },
+            "description": "The events this transition raises. A state change that publishes a domain event is the core of an event-driven model, and with no edge for it the fact lands in the body — which is where a relationship stops being in the graph. A list because one move may raise more than one, and absent where it raises none."
           }
         }
       }

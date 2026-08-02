@@ -12,6 +12,7 @@
   "x-edges-declared": [
     "boundary",
     "steps[].node",
+    "steps[].compensated_by",
     "depends_on"
   ],
   "x-forbids": [],
@@ -41,6 +42,10 @@
         "properties": {
           "node": {
             "$ref": "../tables/identifiers.json#/$defs/nodeId"
+          },
+          "compensated_by": {
+            "$ref": "../tables/identifiers.json#/$defs/nodeId",
+            "description": "What undoes this step when a later one fails. A saga is defined by its compensations, and a step carrying only an identifier cannot hold one — so `saga` named a construct the structure could not represent."
           }
         }
       }

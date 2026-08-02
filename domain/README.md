@@ -118,21 +118,35 @@ Both were previously described as following the shape of `make dist-check`. Ther
 `scripts/` in this repository any more, so there is no shape to follow and no harness to add either to —
 which is itself part of the work.
 
-## What this tree does not let an analysis record
+## What an analysis can now record, and what it still cannot
 
-Soundness and completeness are different questions, and the sections above are all about the first. Eight
-facts a domain analysis produces have no node, no edge and no field here, so each lands in a body — which
-`tables/edges.json` opens by saying is not knowledge, because two readings of one paragraph produce two
-graphs.
+Soundness and completeness are different questions. The sections above are about the first: the tree
+says what it means. This one is about the second, and it is what `domain-object/2` is for.
 
-- a state transition emitting a domain event — `transitions[]` has no edge to an `interface`
-- the payload of an interface — `schema` is a free string, with no edge to the definitions that form it
-- who consumes a published interface — `ownership` marks each node alone, and nothing links the pair
-- a saga's compensating steps — `steps[]` carries an identifier per step and nothing else
-- the direction of a context relationship — `customer-supplier` and `conformist` are directional, and
-  nothing says which side is upstream, nor requires the other context to agree
-- whether a rule spanning two aggregates is eventually consistent
-- a command, as distinct from an API operation or a use case
-- the decision behind a boundary — `governed_by` was removed and no kind replaced it
+Seven facts a domain analysis produces had no node, no edge and no field, so each landed in a body —
+which `tables/edges.json` opens by saying is not knowledge, because two readings of one paragraph
+produce two graphs. Each now has one:
 
-Each is a breaking change to add, so each belongs to a contract version rather than to a correction.
+| Fact | Where it lives |
+|---|---|
+| a transition raises a domain event | `transitions[].emits`, a list of `interfaceId` |
+| the shape of an interface | `payload`, a `definitionId`; required of every ddd but `api` |
+| who consumes a published interface | `upstream` on the consumed side; the count of edges arriving is the answer, derived and never declared |
+| a saga's compensations | `steps[].compensated_by` |
+| which side of a context relationship is upstream | `context_relationships[].role`, required of the four directional patterns and refused by the three symmetric ones |
+| a rule that spans two aggregates | `consistency`, required where the rule reaches outside its own aggregate |
+| a command | `command`, in `interfaceDdd` — a command is a message a context accepts, which is what an interface is |
+
+Three of the seven are decided across objects rather than within one, so they are checks in
+`src/claude/bin/check_knowledge.py` rather than assertions: an `upstream` names something published, a
+transition emits an event and not an api, and a rule reaching outside its aggregate says how it holds.
+
+The eighth is a decision rather than a gap. **The decision behind a boundary stays out.** `governed_by`
+named an `adr.NNNN` no node could hold, and it does not come back: a domain graph records what the
+business decided, not the deliberation that reached it, and tracing a boundary to the discussion behind
+it is version control's work. Recorded in `tables/edges.json#/x-removed`.
+
+What is still absent, and named rather than left to be discovered: a step carries a node and a
+compensation and no condition, so a process with a branch is still linear; `depends_on` and
+`steps[].node` are typed against every kind, so a step may name a subdomain; and nothing requires the
+context on the other side of a relationship to declare the reciprocal one.

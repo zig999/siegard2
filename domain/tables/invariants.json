@@ -230,6 +230,21 @@
       "why": "\"This is the root\" is stated twice — by the aggregate's `root` edge and by the definition's `ddd` — and nothing required them to agree. A root sitting outside the aggregate it heads is the same defect from the other side.",
       "decided_by": "src/claude/bin/check_knowledge.py cross_object()"
     },
+    "upstream_is_published": {
+      "rule": "An interface's `upstream` names an interface whose `ownership` is `published`.",
+      "why": "A consumed interface pointing at another consumed one records two copies of a contract and no owner. The chain has to end at the context that owes compatibility.",
+      "decided_by": "src/claude/bin/check_knowledge.py cross_object()"
+    },
+    "emits_an_event": {
+      "rule": "Every identifier in `transitions[].emits` names an interface whose `ddd` is `domain-event` or `integration-event`.",
+      "why": "A state change raises something that happened. An `api` is an operation somebody calls and a `command` is a request somebody sends; neither is raised by a transition.",
+      "decided_by": "src/claude/bin/check_knowledge.py cross_object()"
+    },
+    "reaching_rule_states_consistency": {
+      "rule": "A rule whose `depends_on` reaches a node outside its own aggregate declares `consistency`.",
+      "why": "An invariant spanning two aggregates cannot hold inside one transaction, and a boundary drawn wide enough to hide that question is drawn wrong. No single file can see it: the rule's aggregate and its target's are two objects.",
+      "decided_by": "src/claude/bin/check_knowledge.py cross_object()"
+    },
     "containment_is_acyclic": {
       "rule": "No node reaches itself by following `boundary`, and no context reaches itself by following `subdomain`.",
       "why": "`boundary` admits an aggregate inside an aggregate, so the containment relation is a forest only if nothing closes a loop. A cycle makes the scope of a node undefined and makes the walk that resolves it non-terminating.",

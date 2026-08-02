@@ -61,6 +61,10 @@
           }
         }
       }
+    },
+    "consistency": {
+      "$ref": "../tables/vocabularies.json#/$defs/consistency",
+      "description": "Whether this rule holds inside one transaction or converges after it. Required of a rule that reaches outside its own aggregate, which no single file can see — `src/claude/bin/check_knowledge.py` decides it."
     }
   },
   "x-alternation": "Every field this kind requires is alternated separately against a gap naming that field, so a gap about one fact never excuses the absence of another. The shape is stated once in `../tables/invariants.json#/x-gap-alternation`. A prohibition is not excused: a gap says a fact is absent and cannot make a forbidden field allowed.",

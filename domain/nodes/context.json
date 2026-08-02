@@ -48,8 +48,43 @@
           },
           "pattern": {
             "$ref": "../tables/vocabularies.json#/$defs/contextRelationshipPattern"
+          },
+          "role": {
+            "$ref": "../tables/vocabularies.json#/$defs/relationshipRole"
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "pattern": {
+                  "enum": [
+                    "anti-corruption-layer",
+                    "conformist",
+                    "customer-supplier",
+                    "open-host-service"
+                  ]
+                }
+              },
+              "required": [
+                "pattern"
+              ]
+            },
+            "then": {
+              "required": [
+                "role"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "role"
+                ]
+              }
+            },
+            "description": "A directional pattern names which side this context is on; a symmetric one has no side to name."
+          }
+        ]
       }
     },
     "owner": {

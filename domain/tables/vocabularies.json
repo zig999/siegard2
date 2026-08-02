@@ -62,8 +62,10 @@
         "domain-event",
         "integration-event",
         "published-language",
-        "api"
-      ]
+        "api",
+        "command"
+      ],
+      "description": "A `command` is a message a context accepts, and it belongs here because an interface is what a context publishes or consumes. `ownership: consumed` on a command says this context accepts it; `published` says this context sends it to another. A command that is refused never becomes a process, which is why it is not a `processDdd`."
     },
     "processDdd": {
       "enum": [
@@ -85,9 +87,11 @@
         "conformist",
         "shared-kernel",
         "customer-supplier",
-        "separate-ways"
+        "separate-ways",
+        "partnership",
+        "open-host-service"
       ],
-      "description": "`separate-ways` is a real answer: two contexts that do not need each other are not connected because a diagram looks better connected."
+      "description": "`separate-ways` is a real answer: two contexts that do not need each other are not connected because a diagram looks better connected. Four of the seven are directional and carry a `role`; three are symmetric and refuse one."
     },
     "binding": {
       "enum": [
@@ -95,6 +99,20 @@
         "by-identity"
       ],
       "description": "A reference whose target lies in another aggregate declares `by-identity`. How a binding becomes a storage representation is stack knowledge and is not recorded."
+    },
+    "relationshipRole": {
+      "enum": [
+        "upstream",
+        "downstream"
+      ],
+      "description": "What *this* context is relative to the one it names. Upstream decides and owes compatibility; downstream absorbs the decision. Carried only by a directional pattern: a `shared-kernel` has no upstream side, and a `role` beside one would name a fact that does not exist."
+    },
+    "consistency": {
+      "enum": [
+        "immediate",
+        "eventual"
+      ],
+      "description": "Whether this rule holds within one transaction or converges after it. An invariant spanning two aggregates is eventually consistent, and saying so is the difference between a boundary drawn honestly and one drawn wide enough to hide the question."
     }
   },
   "x-ddd-by-kind": {
@@ -110,5 +128,19 @@
   "x-rejected-fields": {
     "status": "Rejected, not merely absent. A node declares no status, no maturity level and no approval state; an open `kind: authoring` gap is what says a pass has not run.",
     "superseded_by": "Rejected. A node that changes kind, boundary or name takes a new identifier and the old one is removed with every reference to it. Version control holds what the base held."
+  },
+  "x-directional-patterns": {
+    "directional": [
+      "anti-corruption-layer",
+      "conformist",
+      "customer-supplier",
+      "open-host-service"
+    ],
+    "symmetric": [
+      "shared-kernel",
+      "separate-ways",
+      "partnership"
+    ],
+    "why": "A `customer-supplier` with no side named says two contexts integrate and not who owes whom compatibility, which is the whole content of the pattern. A `shared-kernel` has no sides to name."
   }
 }
