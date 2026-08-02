@@ -85,9 +85,9 @@ records, and nothing downstream can tell those apart from objects that passed bo
 Two checks ship, and both report without repairing:
 
 - `${CLAUDE_PLUGIN_ROOT}/bin/check_knowledge.py <knowledge-root>` — holds an object's gaps and its
-  absences to each other, holds every identifier to its path, checks that a lifecycle's transition table
-  is total over its states and triggers, that no two lifecycles claim one subject, and that a reference
-  crossing a bounded context targets an interface.
+  absences to each other, holds every identifier to the path it computes to, checks that a lifecycle's
+  transition table is total over its states and triggers, that no two lifecycles claim one subject, and
+  that a reference crossing a bounded context targets an interface.
 - `${CLAUDE_PLUGIN_ROOT}/bin/materialize.py <knowledge-root>` — rewrites the four derived files and
   reports any edge naming an id the base does not hold. With `--check` it compares instead of writing,
   which is how a later run tells a stale view from a current one.

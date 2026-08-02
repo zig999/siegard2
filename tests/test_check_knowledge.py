@@ -274,3 +274,32 @@ class TheSealHandlesWhatYamlTypes(Case):
             [sys.executable, "-B", str(self.OWNERSHIP), str(self.root.parent / "seal.json"), str(self.root)],
             capture_output=True, text=True)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
+class IdentifierArithmetic(Case):
+    """`dm.<kind>.<scope>.<slug>` computes to a path, and a path computes back to it.
+
+    It cost nothing to check while a script wrote both, so nothing did. The claim that it was checked
+    outlived the script by one commit — the entry point's prose said the identifiers were held to
+    their arithmetic and no line of code held them — which is the shape this repository calls a
+    description of something nothing does.
+    """
+
+    def test_a_path_that_disagrees_with_the_identifier_is_reported(self) -> None:
+        moved = self.root / "definition" / "sales" / "renamed.md"
+        (self.root / "definition" / "sales" / "already-issued.md").rename(moved)
+        self.assertReports("computes to `definition/sales/already-issued.md`")
+
+    def test_a_kind_that_disagrees_with_the_identifier_is_reported(self) -> None:
+        self.edit("definition/sales/proposal.md", "id: dm.definition.sales.proposal",
+                  "id: dm.rule.sales.proposal")
+        self.assertReports("names kind `rule` and the object declares `definition`")
+
+    def test_a_scope_takes_one_segment_fewer(self) -> None:
+        """`subdomain` and `context` are scopes, so their path has no scope of its own."""
+        self.assertClean()
+        self.assertTrue((self.root / "context" / "sales.md").is_file())
+
+    def test_an_identifier_of_the_wrong_shape_is_reported(self) -> None:
+        self.edit("context/sales.md", "id: dm.context.sales", "id: sales")
+        self.assertReports("is not of the form")

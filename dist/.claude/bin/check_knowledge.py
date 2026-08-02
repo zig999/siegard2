@@ -34,8 +34,12 @@ object carries. An attribute name the object does not carry is refused like any 
 
 Declared dependencies: PyYAML.
 
-**Three checks a per-file schema cannot express** run here too, and every one was declared owed and
-unshipped for as long as this file existed without them. Each needs to see more than one object:
+**The identifier is held to its arithmetic.** `dm.<kind>.<scope>.<slug>` computes to a path, and a
+path computes back to an identifier, with no lookup. While a script wrote both they could not disagree;
+written by judgment they can, and every reference in the base rests on them agreeing.
+
+**Three further checks a per-file schema cannot express** run here too, and every one was declared owed
+and unshipped for as long as this file existed without them. Each needs to see more than one object:
 
 - a lifecycle's transition table is **total** — every pairing of a declared state with a trigger the
   table mentions is either a transition or a rejection. An incomplete table is where whatever produces
@@ -185,6 +189,38 @@ def excused(field: str, gapped: set[str]) -> bool:
     without admitting a gap about some unrelated field that happens to start alike.
     """
     return any(gap == field or gap.split(".")[0].split("[")[0] == field for gap in gapped)
+
+
+def identity_of(data: dict, relative: str) -> list[str]:
+    """The identifier against the path it computes to, and against the kind it names.
+
+    An identifier is arithmetic — `dm.<kind>.<scope>.<slug>` becomes `<kind>/<scope>/<slug>.md`, and a
+    kind that is itself a scope takes one segment fewer. Nothing allocates one, so a mismatch is a
+    defect rather than a convention somebody is trusted to have followed.
+
+    It cost nothing to check while a script computed both. It stops being free the moment the objects
+    are written by judgment: an id that disagrees with its path breaks the one property every reference
+    rests on, which is that a target resolves to a file without a lookup.
+    """
+    identifier, kind = data.get("id"), data.get("type")
+    if not identifier or not kind:
+        return []
+    parts = identifier.split(".")
+    if len(parts) < 3 or parts[0] != "dm":
+        return [f"{relative}: `{identifier}` is not of the form dm.<kind>.<scope>.<slug>"]
+    if parts[1] != kind:
+        return [
+            f"{relative}: `{identifier}` names kind `{parts[1]}` and the object declares `{kind}`. "
+            f"The kind is in the identifier because the path is, and the two cannot disagree"
+        ]
+    expected = "/".join(parts[1:]) + ".md"
+    if expected != relative:
+        return [
+            f"{relative}: `{identifier}` computes to `{expected}`. A path is derivable from an "
+            f"identifier and an identifier from a path, with no lookup — a reference resolves by "
+            f"that arithmetic and by nothing else"
+        ]
+    return []
 
 
 def unnamed_absences(data: dict, contract: dict, authoring: set[str], relative: str) -> list[str]:
@@ -442,6 +478,7 @@ def main() -> int:
             continue
         declared += len(data.get("gaps") or [])
         problems += problems_for(data, contract, authoring, relative)
+        problems += identity_of(data, relative)
         if data.get("type") == "lifecycle":
             problems += totality_of(data, relative)
         if data.get("id"):
@@ -450,16 +487,18 @@ def main() -> int:
 
     problems += cross_object(held, where)
 
-    print(f"knowledge checked: {declared} gap(s) and {len(held)} object(s), with lifecycle totality, "
-          f"one lifecycle per subject, and what may cross a context  contract: "
+    print(f"knowledge checked: {declared} gap(s) and {len(held)} object(s), with identifier "
+          f"arithmetic, lifecycle totality, one lifecycle per subject, and what may cross a context  "
+          f"contract: "
           f"{contract['properties']['contract_version']['const']}")
     if problems:
         print(f"FAILED: {len(problems)} disagreement(s) between what is declared and what is named\n")
         for problem in problems:
             print(f"  {problem}")
         return 1
-    print("every gap names a fact its kind requires and the object lacks, every fact it lacks is "
-          "named by a gap, and the three cross-object rules hold")
+    print("every identifier computes to the path it sits at, every gap names a fact its kind requires "
+          "and the object lacks, every fact it lacks is named by a gap, and the three cross-object "
+          "rules hold")
     return 0
 
 

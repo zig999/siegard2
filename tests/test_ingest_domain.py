@@ -150,10 +150,17 @@ class Declaration(unittest.TestCase):
         self.assertIn("stops rather than choosing", defaults["default"])
 
     def test_one_blocked_object_is_not_a_stop(self) -> None:
-        """One object the material cannot support must not abandon the ones it can."""
+        """One object the material cannot support must not abandon the ones it can.
+
+        It asserted that the object "stays staged", which said the same thing while there was a
+        staging tree to stay in. With the objects written where they are read, what makes the
+        outcome survivable is that the blocked one is left as the analysis wrote it — its authoring
+        gaps still open, which is what says the enrichment has not reached it.
+        """
         blocked = next(f for f in self.entry["failure_outcomes"]
                        if f["outcome"] == "object_blocked")
-        self.assertIn("stays staged", blocked["reason"])
+        self.assertIn("left as found", blocked["reason"])
+        self.assertIn("authoring gaps", blocked["reason"])
 
     def test_an_absent_tree_is_a_declared_outcome(self) -> None:
         absent = next(f for f in self.entry["failure_outcomes"] if f["outcome"] == "tree_absent")
