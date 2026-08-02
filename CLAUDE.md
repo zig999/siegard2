@@ -54,9 +54,7 @@ resolves it updates both — never one alone.
 Keep one authoritative definition per concept, in one place. A prompt may say how to apply a rule; it
 must not be the sole home of one a specification, a schema, or a validator could hold.
 
-Use one name for a concept across specs, schemas, code, and tests. Add a file to `docs/concepts/` before
-using a term normatively; where a concept names a specification in its `sources`, that specification
-outranks the concept — correct the concept, never the reverse.
+Use one name for a concept across specs, schemas, code, and tests.
 
 When two sources genuinely conflict and neither wins, say so in the change: name the files and the
 incompatible statements, then proceed under the reading that constrains more. Silently merging them, or
