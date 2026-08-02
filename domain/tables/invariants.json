@@ -256,7 +256,9 @@
     },
     "references_resolve": {
       "rule": "An edge naming an identifier the network does not hold is reported as a defect, never repaired.",
-      "decided_by": "src/claude/bin/materialize.py"
+      "why": "Every edge is checked, including `boundary` and a context's `subdomain`. Those two are held apart from the content edges because the crossing rule must not see them — a `boundary` crossing a bounded context is what the field is for — but resolution has no such exemption, and a node whose parent is missing is the worst case of it, because the parent is what the path derives from.",
+      "decided_by": "src/claude/bin/check_knowledge.py cross_object()",
+      "also_reported_by": "src/claude/bin/materialize.py, which cannot derive a graph over an edge that does not resolve and says so while deriving"
     }
   },
   "x-owed": {

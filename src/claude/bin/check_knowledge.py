@@ -505,7 +505,7 @@ def cross_object(objects: dict[str, dict], paths: dict[str, str]) -> list[str]:
             continue
         root = data["root"]
         if root not in objects:
-            continue  # an unresolved reference is the materializer's to report, and it does
+            continue  # unresolved is reported above; this rule is about what a held root says
         held = objects[root]
         if held.get("ddd") != "aggregate-root":
             problems.append(
@@ -518,6 +518,20 @@ def cross_object(objects: dict[str, dict], paths: dict[str, str]) -> list[str]:
                 f"{paths.get(identifier, identifier)}: `root` names {root}, whose `boundary` is "
                 f"`{held.get('boundary')}` rather than this aggregate. A root outside the aggregate "
                 f"it heads is not its entry point"
+            )
+
+    # Every edge names an identifier, and every identifier has to be one the base holds. Reported
+    # and never repaired: a repair would either invent the missing node or drop the edge, and each
+    # decides a domain question on behalf of whoever owns it. This is also what makes a deletion
+    # safe to allow — removing a node is legal, and leaving something pointing at it is not.
+    for identifier, data in sorted(objects.items()):
+        for target, locator in references(data) + structural_references(data):
+            if target in objects:
+                continue
+            problems.append(
+                f"{paths.get(identifier, identifier)}: {locator} names {target}, which the base "
+                f"does not hold. A reference resolves by arithmetic and by nothing else, so an "
+                f"identifier nothing sits at is a defect rather than a node somewhere else"
             )
 
     for identifier, data in sorted(objects.items()):
@@ -603,8 +617,29 @@ def cross_object(objects: dict[str, dict], paths: dict[str, str]) -> list[str]:
     return problems
 
 
+def structural_references(data: dict) -> list[tuple[str, str]]:
+    """The two edges that say where an object sits: `boundary`, and a context's `subdomain`.
+
+    Held apart from `references` because the crossing rule must not see them. `boundary` crossing
+    a bounded context is not a violation — it is what the field is *for*, since the context a node
+    belongs to is named from outside it — so folding these in there would report every node in the
+    base. Resolution has no such exemption: a `boundary` naming a scope the base does not hold is
+    a node whose parent is missing, which is the same defect as any other unresolved edge and a
+    worse one, because the parent is what the path is derived from.
+    """
+    found: list[tuple[str, str]] = []
+    for field in ("boundary", "subdomain"):
+        target = data.get(field)
+        if isinstance(target, str) and target:
+            found.append((target, field))
+    return found
+
+
 def references(data: dict) -> list[tuple[str, str]]:
-    """Every identifier this object points at, with where it sits."""
+    """Every content identifier this object points at, with where it sits.
+
+    `boundary` and `subdomain` are not here; see `structural_references` for why.
+    """
     found: list[tuple[str, str]] = []
     for index, target in enumerate(data.get("depends_on") or []):
         found.append((target, f"depends_on[{index}]"))
@@ -641,33 +676,32 @@ def references(data: dict) -> list[tuple[str, str]]:
     return found
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("cannot run: expected <knowledge-root>", file=sys.stderr)
-        return CANNOT_RUN
-    root = Path(sys.argv[1])
-    if not root.is_dir():
-        print(f"cannot run: {root} is not a directory", file=sys.stderr)
-        return CANNOT_RUN
+def contract_path() -> Path:
+    """Where the frontmatter contract sits, for a caller that wants to read it once."""
+    return PLUGIN_ROOT / "schemas" / "domain-object.json"
 
-    contract_path = PLUGIN_ROOT / "schemas" / "domain-object.json"
-    if not contract_path.is_file():
-        print(f"cannot run: {contract_path} is missing", file=sys.stderr)
-        return CANNOT_RUN
-    contract = json.loads(contract_path.read_text())
+
+def problems_in(root: Path, contract: dict) -> tuple[list[str], int, int]:
+    """Every disagreement this whole base holds, with the gap and object counts behind it.
+
+    Separated from `main` so that something other than a command line can ask. The change door
+    calls this before it will let a change close: a change that finishes while the graph does not
+    resolve clears the set of touched nodes, and then the incoherence is still there with nothing
+    left saying where to look for it.
+
+    Returns rather than prints, and never repairs. A caller decides what a problem means — the
+    command line exits non-zero, the door refuses to close — and neither is this function's to
+    decide.
+    """
+    # The derived files carry no frontmatter and are not objects. Skipped by name rather than by
+    # trying to parse them: a reader who has just run the materializer would otherwise be told the
+    # index is malformed, which is true of every index and useful about none.
+    objects = [p for p in sorted(Path(root).rglob("*.md")) if p.name not in RESERVED]
 
     # The fields no analysis carries, read from the one module that declares the ownership line.
     # It used to be derived as the difference between two contracts' required sets, which worked
     # while a second contract existed to differ — and said nothing once the profile was one.
     authoring = set(ENRICHMENT_FIELDS)
-
-    # The derived files carry no frontmatter and are not objects. Skipped by name rather than by
-    # trying to parse them: a reader who has just run the materializer would otherwise be told the
-    # index is malformed, which is true of every index and useful about none.
-    objects = [p for p in sorted(root.rglob("*.md")) if p.name not in RESERVED]
-    if not objects:
-        print(f"cannot run: {root} holds no object", file=sys.stderr)
-        return CANNOT_RUN
 
     problems: list[str] = []
     held: dict[str, dict] = {}
@@ -690,12 +724,35 @@ def main() -> int:
             where[data["id"]] = relative
 
     problems += cross_object(held, where)
+    return problems, declared, len(held)
 
-    print(f"knowledge checked: {declared} gap(s) and {len(held)} object(s), with identifier "
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print("cannot run: expected <knowledge-root>", file=sys.stderr)
+        return CANNOT_RUN
+    root = Path(sys.argv[1])
+    if not root.is_dir():
+        print(f"cannot run: {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+
+    if not contract_path().is_file():
+        print(f"cannot run: {contract_path()} is missing", file=sys.stderr)
+        return CANNOT_RUN
+    contract = json.loads(contract_path().read_text())
+
+    if not [p for p in root.rglob("*.md") if p.name not in RESERVED]:
+        print(f"cannot run: {root} holds no object", file=sys.stderr)
+        return CANNOT_RUN
+
+    problems, declared, count = problems_in(root, contract)
+
+    print(f"knowledge checked: {declared} gap(s) and {count} object(s), with identifier "
           f"arithmetic, lifecycle totality, one lifecycle per subject, acyclic containment, "
           f"boundary against identifier, an aggregate against its root, a consumed interface "
           f"against its publisher, what a transition may emit, consistency on a rule that reaches "
-          f"outside its aggregate, and what may cross a context  contract: "
+          f"outside its aggregate, every reference resolving, and what may cross a context  "
+          f"contract: "
           f"{contract['properties']['contract_version']['const']}")
     if problems:
         print(f"FAILED: {len(problems)} disagreement(s) between what is declared and what is named\n")
