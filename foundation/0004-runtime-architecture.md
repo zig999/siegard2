@@ -33,7 +33,7 @@ Not here: which capability classes exist (`foundation/0005`), and how a capabili
 
 - **R6** — A property that must hold regardless of model judgment is enforced by a script or a hook,
   never by prompt text.
-- **R7** — Model judgment is used where meaning is the work: authoring, classification, root selection,
+- **R7** — Model judgment is used where meaning is the work: authoring, root selection,
   review. A requirement is never satisfied by asserting that a model will behave correctly.
 - **R8** — Determinism binds control flow, validation, and recorded state. It does not bind a model's
   semantic output.

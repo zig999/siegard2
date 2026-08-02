@@ -19,7 +19,7 @@
     "edge_kinds": {
       "type": "object",
       "minProperties": 1,
-      "description": "The closed edge vocabulary of spec 0003 R17, with the cardinality R18 requires enforced and the traversal policy R19 requires declared. Keyed by edge name.",
+      "description": "The closed edge vocabulary of spec 0003 R13, with the cardinality R18 requires enforced and the traversal policy R19 requires declared. Keyed by edge name.",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,

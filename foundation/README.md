@@ -10,9 +10,9 @@ normative weight.
 
 | Id | Title | Status | Decides |
 |---|---|---|---|
-| [0001](0001-knowledge-object-driven-development.md) | The method | **`accepted`** | what a change starts from, what impact establishes, what classification decides, what an authored object records |
+| [0001](0001-knowledge-object-driven-development.md) | The method | **`accepted`** | what a change starts from, what impact establishes, how a construct is recorded, what an authored object records |
 | [0002](0002-domain-analysis.md) | Domain analysis | **`accepted`** | the order the analysis follows, what the model records about its certainty, how an element is identified |
-| [0003](0003-knowledge-ontology-and-notation.md) | Knowledge ontology and notation | **`accepted`** | where each DDD construct lands, the node types, edges, attribute types, notation, identity, body form, and the derived graph |
+| [0003](0003-knowledge-ontology-and-notation.md) | Knowledge ontology and notation | **`accepted`** | the eight kinds, the notation they are written in, edges, attribute types, identity, body form, and the derived graph |
 | [0004](0004-runtime-architecture.md) | Runtime architecture | **`accepted`** | who executes, how a capability is found, where a guarantee lives |
 | [0005](0005-capability-model.md) | The capability model | **`accepted`** | the closed set of capability classes, what each owns, admission and retirement |
 | [0006](0006-capability-contracts.md) | Capability contracts | **`accepted`** | what a capability declares about itself |
@@ -20,8 +20,8 @@ normative weight.
 ## This version of the framework
 
 Siegard builds and modifies a knowledge graph from a system context a person supplies, mapping the
-impact of every request against what already exists. The path is: the request, a domain model, an impact
-analysis, a classification, the knowledge objects, and the graph derived from them.
+impact of every request against what already exists. The path is: the request, an analysis that writes
+the knowledge objects, an impact analysis over what it touched, and the graph derived from them.
 
 There is no change request artifact. A request is prose plus the material it names, and `0001` R2 says
 so rather than leaving it to be discovered.

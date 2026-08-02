@@ -9,51 +9,55 @@ contract_version: spec/1
 
 ## Scope
 
-How a governed repository stores the domain analysis: the six knowledge object types, where each DDD
-construct lands, the edges that connect them, the attribute type system, identity, body form, and the
-graph derived from the whole.
+How a governed repository stores the domain analysis: the notation every object is written in, the
+eight kinds a construct takes, the edges that connect them, the attribute type system, identity, body
+form, and the graph derived from the whole.
 
-Not here: how a request becomes a domain model (`foundation/0002`).
+Two things this document keeps apart, and its own title names both. The **notation** is how a fact is
+stored — the frontmatter fence, the envelope every object carries whatever it is, the two body
+sections, the arithmetic between an identifier and a path. The **ontology** is which kinds exist and
+what each demands of its own content. A profile is one ontology written in the notation, and a second
+profile would change the kinds without touching the form.
 
-## Where each DDD construct lands
+Not here: how a request becomes a domain analysis (`foundation/0002`).
 
-| DDD construct | Recorded as | Home |
+## The kinds, and what each records
+
+One kind per construct, and nothing folded into a field of something else. A subdomain and a
+relationship between contexts were once fields of another object, and neither could carry an origin, a
+reason, or a gap of its own — a construct with no identifier is a construct nothing can reference,
+review, or correct.
+
+| Kind | Records | `ddd` |
 |---|---|---|
-| Domain | nothing | the governed repository is the domain |
-| Subdomain | field | `boundary.subdomain_type` ∈ `core \| supporting \| generic` |
-| Bounded context | **type** | `boundary`, `ddd: bounded-context` |
-| Context map | field | `boundary.context_relationships[]` |
-| Context relationship pattern | field | `boundary.context_relationships[].pattern` |
-| Ubiquitous language | emergent | the set of `definition` objects; synonyms in `definition.aliases[]` |
-| Entity | field | `definition`, `ddd: entity` |
-| Value object | field | `definition`, `ddd: value-object` |
-| Aggregate | **type** | `boundary`, `ddd: aggregate` |
-| Aggregate root | field | `definition`, `ddd: aggregate-root` |
-| Read model | field | `definition`, `ddd: read-model` |
-| Domain error | field | `definition`, `ddd: domain-error` |
-| Invariant | field | `rule`, `ddd: invariant` |
-| Business rule | field | `rule`, `ddd: domain-rule` |
-| Policy | field | `rule`, `ddd: policy` |
-| Specification pattern | field | `rule`, `ddd: specification` |
-| Quality attribute | field | `rule`, `ddd: quality-attribute` |
-| State machine | **type** | `lifecycle` |
-| Domain event | field | `interface`, `ddd: domain-event` |
-| Integration event | field | `interface`, `ddd: integration-event` |
-| Published language | field | `interface`, `ddd: published-language` |
-| Open host service, API | field | `interface`, `ddd: api` |
-| Domain service | field | `process`, `ddd: domain-service` |
-| Saga, process manager | field | `process`, `ddd: saga` |
-| Use case | field | `process`, `ddd: use-case` |
-| Repository, factory, module, layering | nothing | stack knowledge |
-| Architectural decision | node, not a knowledge object | ADR |
+| `subdomain` | a partition of the problem space, classified where effort is worth its cost | — |
+| `context` | a bounded context, and the relationships it holds with others | — |
+| `aggregate` | a consistency boundary, with the definition that is its root | — |
+| `definition` | what a thing is, with its typed attributes | `entity`, `value-object`, `aggregate-root`, `read-model`, `domain-error` |
+| `rule` | one falsifiable condition | `invariant`, `domain-rule`, `policy`, `specification`, `quality-attribute` |
+| `lifecycle` | the states a definition holds and how it moves | — |
+| `interface` | what a context publishes or consumes | `domain-event`, `integration-event`, `published-language`, `api` |
+| `process` | an ordered path across the above | `domain-service`, `saga`, `use-case` |
+
+`ddd` is carried only where a kind covers several constructs. Where it is absent the kind **is** the
+construct, and a `ddd` beside it would name one fact twice.
+
+Two things a domain has and this ontology does not record. The domain itself is the governed
+repository, so it needs no object. The ubiquitous language is emergent: it is the set of `definition`
+objects, and a synonym is declared in `definition.aliases[]` rather than listed anywhere.
+
+Two things it refuses. Stack knowledge — a repository, a factory, a module, a layering choice — has no
+kind and is recorded as excluded. A decision record is a graph node and never an object.
 
 ## The edge table
 
 | Edge | Origin → target | Out | In | Traversed | Depth |
 |---|---|---|---|---|---|
-| `boundary` | any → `boundary` | 1..1 | 0..n | yes | 1 |
+| `boundary` | any → `context` or `aggregate` | 1..1 | 0..n | yes | 1 |
+| `subdomain` | `context` → `subdomain` | 1..1 | 0..n | yes | 1 |
+| `aggregate.root` | `aggregate` → `definition` | 1..1 | 0..1 | yes | 1 |
 | `depends_on` | any → any | 0..n | 0..n | yes | 2 |
-| `governed_by` | any → ADR | 0..n | 0..n | yes | 1 |
+| `governed_by` | any → decision record | 0..n | 0..n | yes | 1 |
 | `attributes[].target` | `definition` → `definition` | 0..n | 0..n | yes | 1 |
 | `attributes[].of` | `definition` → `definition` | 0..n | 0..n | yes | 1 |
 | `attributes[].lifecycle` | `definition` → `lifecycle` | 0..n | 0..n | yes | 1 |
@@ -61,7 +65,7 @@ Not here: how a request becomes a domain model (`foundation/0002`).
 | `transitions[].guard` | `lifecycle` → `rule` | 0..n | 0..n | yes | 1 |
 | `rejections[].error` | `lifecycle` → `definition` | 0..n | 0..n | yes | 1 |
 | `steps[].ko` | `process` → any | 0..n | 0..n | yes | 1 |
-| `context_relationships[].with` | `boundary` → `boundary` | 0..n | 0..n | only when expansion crosses a context | 1 |
+| `context_relationships[].with` | `context` → `context` | 0..n | 0..n | only when expansion crosses a context | 1 |
 
 ## The attribute primitives
 
@@ -80,42 +84,48 @@ Not here: how a request becomes a domain model (`foundation/0002`).
 | `ref` | `target`, `binding` |
 | `list` | `of`, `binding` (`min_items`, `max_items` optional) |
 
-## Body sections, by type
+## Body sections, by kind
 
-| type | sections, in order |
+| kind | sections, in order |
 |---|---|
+| `subdomain` | `## Answer` · `## Responsibilities` |
+| `context` | `## Answer` · `## Responsibilities` |
+| `aggregate` | `## Answer` · `## Invariants` |
 | `definition` | `## Answer` · `## Invariants` |
 | `rule` | `## Answer` · `## Conditions` |
 | `lifecycle` | `## Answer` · `## State semantics` |
 | `interface` | `## Answer` · `## Semantics` |
-| `boundary` | `## Answer` · `## Responsibilities` |
 | `process` | `## Answer` · `## Outcomes` |
 
 ## Requirements
 
-### Node types
+### Kinds
 
-- **R1** — The `type` vocabulary is closed: `definition`, `rule`, `lifecycle`, `interface`, `boundary`,
-  `process`.
-- **R2** — Every construct the analysis produces MUST land in exactly one place named by the mapping
-  above. A construct with no entry there MUST NOT be recorded until the mapping names its home.
-- **R3** — A seventh type is admitted only when it requires a frontmatter field no existing type requires
-  and enables a mechanical check no existing type enables. Both MUST be recorded with the case that
-  demanded it.
-- **R4** — An ADR is a permanent graph node and MUST NOT be a knowledge object. Rationale — the
-  alternative rejected, the cost accepted, what would falsify the decision — MUST NOT appear in a
-  knowledge object.
+- **R1** — The `type` vocabulary is closed: `subdomain`, `context`, `aggregate`, `definition`, `rule`,
+  `lifecycle`, `interface`, `process`. It is 1:1 with the construct vocabulary of `foundation/0002`:
+  every construct an analysis produces is a kind, and no kind is a field of another object.
+- **R2** — Every construct the analysis produces MUST take exactly one kind, or be recorded as excluded
+  with the reason. A construct fitting no kind MUST NOT be recorded silently.
+- **R3** — A ninth kind is admitted only when the analysis produces a construct none of the eight
+  records, and it MUST be recorded with the construct that demanded it. The vocabulary follows what an
+  analysis produces rather than what a validator finds convenient to distinguish, so a kind is refused
+  for having no construct behind it and never for being cheap to fold into another.
+- **R4** — A decision record is a permanent graph node and MUST NOT be a knowledge object. Rationale
+  belongs with the fact it decided: an object whose `origin` is `modeled` MUST carry the reason, and one
+  whose `origin` is `stated` MUST NOT be made to invent one. What a body may not carry is fixed by R41.
 - **R5** — A knowledge object MUST answer exactly one question, declared in `question`.
 - **R6** — A `definition` MUST declare `attributes`. One whose `ddd` is `entity`, `aggregate-root`, or
   `read-model` MUST declare `identity`; one whose `ddd` is `value-object` or `domain-error` MUST NOT.
-- **R7** — A `rule` MUST declare `expression` or `examples`. A `rule` with `ddd: quality-attribute` MUST
-  declare the bounded context it constrains, once per context.
+- **R7** — A `rule` MUST declare `statement`, and `expression` or `examples`. A `rule` with
+  `ddd: quality-attribute` MUST declare the bounded context it constrains, once per context.
 - **R8** — A `lifecycle` MUST declare `subject`, `states`, `initial`, `transitions`, and `rejections`,
   and its transition table MUST be total: for every pairing of a state with a trigger, either a
   transition or a rejection exists. Every state MUST be reachable from `initial`, and every non-terminal
   state MUST have an outgoing transition.
 - **R9** — An `interface` MUST declare `version`, `schema`, and `ownership` ∈ `published | consumed`.
-- **R10** — A `boundary` with `ddd: bounded-context` MUST declare `subdomain_type`.
+- **R10** — A `subdomain` MUST declare `subdomain_type` ∈ `core | supporting | generic`. A `context`
+  MUST declare the `subdomain` it partitions. An `aggregate` MUST declare the `context` it sits in and
+  the `definition` that is its `root`.
 - **R11** — A `process` MUST declare `steps` as an ordered list naming knowledge-object ids, and MUST NOT
   restate the content of any step's object.
 - **R12** — An edge or attribute reference whose origin and target lie in different bounded contexts MUST
@@ -128,9 +138,10 @@ Not here: how a request becomes a domain model (`foundation/0002`).
 - **R14** — Every edge type declares its cardinality and whether expansion traverses it, and a validator
   MUST enforce both. Expansion MUST follow only traversed edges.
 - **R15** — Two or more `lifecycle` objects MUST NOT name the same `definition` as `subject`.
-- **R16** — Every knowledge object MUST declare exactly one `boundary`, except a `boundary` with
-  `ddd: bounded-context`. Membership MUST be derived from each member's `boundary` field, and a
-  `boundary` MUST NOT enumerate its members.
+- **R16** — Every knowledge object MUST declare exactly one `boundary`, except a `subdomain` and a
+  `context`, which are scopes rather than members and whose absence of one identifies a partition root.
+  Membership MUST be derived from each member's `boundary` field, and a scope MUST NOT enumerate what it
+  holds.
 - **R17** — The knowledge graph is derived from the objects and MUST NOT be authored. It is the instance
   level; the ontology is the schema level, and the two MUST NOT be used interchangeably.
 - **R18** — An edge naming an id the graph does not hold MUST be reported as a defect, together with
@@ -154,12 +165,16 @@ Not here: how a request becomes a domain model (`foundation/0002`).
 
 ### The notation
 
-- **R26** — `id`, `question`, `type`, `contract_version`, `generated`, `out_of_scope`, and `boundary` are
-  required. A knowledge object MUST NOT declare a status, a maturity level, or an approval state: what
-  the base holds is current and binds, and a consumer MUST NOT gate on such a field.
+- **R26** — `id`, `type`, `title`, `contract_version`, `generated`, and `origin` are required of every
+  object. `question`, `description`, and `out_of_scope` are required of one that declares no open
+  `kind: authoring` gap, and excused of one that does — which is what says a pass has not reached it. A
+  knowledge object MUST NOT declare a status, a maturity level, or an approval state, and which pass has
+  run is not one either: an open gap already records it, and a field saying so would be a second home
+  for one fact. A consumer MUST NOT gate on such a field.
 - **R27** — Every fact a machine reads to produce or validate something MUST live in frontmatter. Nothing
   decides anything by parsing body prose.
-- **R28** — Every knowledge object MUST declare `out_of_scope` with at least one entry.
+- **R28** — Where R26 requires `out_of_scope`, it MUST carry at least one entry. Absence cannot be
+  inferred, and silence reads as permission.
 - **R29** — A synonym MUST be declared in `aliases` and MUST NOT appear in any body.
 - **R30** — A consumer MUST preserve a frontmatter field it does not know.
 - **R31** — The frontmatter contract MUST ship as a schema with per-type required fields expressed
@@ -170,12 +185,14 @@ Not here: how a request becomes a domain model (`foundation/0002`).
 
 ### Identity and layout
 
-- **R33** — An id has the form `ko.<type>.<boundary>.<slug>` with kebab-case segments. For
-  `type: boundary` the form is `ko.boundary.<context>` for a bounded context and
-  `ko.boundary.<context>.<aggregate>` for an aggregate. A path MUST be computable from an id and an id
-  from a path, with no lookup.
+- **R33** — An id has the form `dm.<kind>.<scope>.<slug>` with kebab-case segments, where `<scope>` is
+  the bounded context the object sits in. A `subdomain` and a `context` take `dm.<kind>.<slug>`, because
+  each is itself a scope. A `lifecycle` takes the slug of its subject. A path MUST be computable from an
+  id and an id from a path, with no lookup, and a validator MUST enforce the agreement — nothing
+  allocates an id, so a disagreement is a defect rather than a convention a writer is trusted to have
+  followed.
 - **R34** — An id MUST NOT be sequential, and no id allocator exists.
-- **R35** — A knowledge object that changes `type` or `boundary` MUST receive a new id, and the object
+- **R35** — A knowledge object that changes `type`, `boundary`, or its name MUST receive a new id, and the object
   under the previous id MUST be removed together with every reference to it. A retired revision MUST NOT
   be retained in the base; version control holds what the base held.
 - **R36** — A file MUST hold exactly one knowledge object, at the depth R33 fixes.

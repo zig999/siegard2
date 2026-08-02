@@ -12,7 +12,7 @@ contract_version: spec/1
 How a request becomes a domain model: the order the analysis follows, what the model records about its
 own certainty, and how an element in it is identified.
 
-Not here: how the analysis is stored once classified (`foundation/0003`), or who executes it
+Not here: the notation and the kinds the analysis is written in (`foundation/0003`), or who executes it
 (`foundation/0004`).
 
 ## The DDD vocabulary

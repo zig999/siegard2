@@ -38,17 +38,19 @@ stored (`foundation/0003`).
 - **R6** — Impact analysis decides what a change touches and nothing else. It does not author, does not
   alter what it analysed, and does not decide whether the change should happen.
 
-### Classification
+### Recording a construct
 
-- **R7** — Every construct MUST be classified before any knowledge object is authored. Classification
-  produces a validated artifact naming, per construct, the node type it becomes, the identifier it will
-  take, and every fact the analysis does not supply.
-- **R8** — Classification decides node type and identity. It does not decide what the domain is, and it
-  MUST NOT re-open a decision the analysis recorded.
-- **R9** — A fact the analysis does not supply is reported as a gap on the construct it belongs to, with
+- **R7** — Every construct the analysis produces MUST be recorded as a validated knowledge object of one
+  kind, at the path its identifier computes to, carrying every fact the analysis supplied and a gap for
+  every fact it did not. There is no step between deciding a construct and recording it: a construct is
+  the kind the analysis decided, and its identifier is arithmetic over that decision.
+- **R8** — The kind and the identifier follow from the construct itself and are verified rather than
+  chosen twice. Recording does not decide what the domain is, and MUST NOT re-open a decision the
+  analysis recorded.
+- **R9** — A fact the analysis does not supply is reported as a gap on the object it belongs to, with
   what would fill it. Nothing fills a gap on the domain's behalf.
-- **R10** — A construct the ontology has no home for is recorded as unmapped rather than forced into the
-  nearest node type.
+- **R10** — A construct the ontology has no kind for is recorded as excluded, with the reason, rather
+  than forced into the nearest kind.
 
 ### Authoring
 

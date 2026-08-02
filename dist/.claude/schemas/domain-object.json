@@ -922,7 +922,7 @@
         "name",
         "type"
       ],
-      "description": "The closed attribute type system of spec 0003 R24, and its single authority per R30. A parameter that changes what is produced is required; a parameter the primitive does not read is rejected by unevaluatedProperties rather than carried as dead representation. `money` inherits defaults.currency and `datetime` inherits defaults.timezone from knowledge/system.md, each overridable where an attribute genuinely differs (R26).",
+      "description": "The closed attribute type system of spec 0003 R19, and its single authority per R30. A parameter that changes what is produced is required; a parameter the primitive does not read is rejected by unevaluatedProperties rather than carried as dead representation. `money` inherits defaults.currency and `datetime` inherits defaults.timezone from knowledge/system.md, each overridable where an attribute genuinely differs (R26).",
       "properties": {
         "name": {
           "$ref": "#/$defs/attributeName"

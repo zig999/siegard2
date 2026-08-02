@@ -27,8 +27,8 @@ Two residuals, named rather than left to be assumed:
 
 - the **In** column's minimum is not modelled. Nothing requires a node to be referenced, and
   whether an unreferenced node is a defect is the orphan rule of R18, not a cardinality bound.
-- the zero-`boundary` exception for a bounded-context boundary cannot live in a table cell. R16
-  states it in prose, so this module checks the rule and not its exception.
+- the zero-`boundary` exception for a scope — a `subdomain` or a `context` — cannot live in a table
+  cell. R16 states it in prose, so this module checks the rule and not its exception.
 """
 
 from __future__ import annotations
