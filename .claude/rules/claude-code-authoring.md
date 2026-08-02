@@ -44,6 +44,15 @@ specification nobody loads by default would otherwise be missed.
 How work divides across orchestrators, specialized agents, skills, hooks, and scripts is not yet fixed.
 The placement table in `CLAUDE.md` is what constrains the answer in the meantime.
 
+**No hook ships, and `schemas/hook.json` is waiting rather than orphaned.** The contract precedes the
+first component of its class by design — `validate_components.py` reports an absent class and exits 0
+for the same reason — so a hook contract with nothing to validate is the state this repository expects
+before the first hook, not a leftover from one that went. What would put a hook in `src/claude/hooks/`
+is a guarantee that must hold regardless of model judgment, which is the only row of the placement
+table that names one; until such a guarantee is found, the class stays empty and the contract stays
+ready. Deleting it would mean re-deriving the frontmatter shape from the harness documentation the
+first time one is needed.
+
 ## Relying on harness behavior
 
 `CLAUDE.md` **Authoring Claude Code components** holds the rule: cite the documentation page that

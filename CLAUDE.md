@@ -49,7 +49,7 @@ leaving a contract implicit is the worse form.
 |---|---|---|---|
 | `foundation/` | what the distributed framework must do | authority for the product's behavior | no |
 | `docs/concepts/` | framework vocabulary, one concept per file | authority for terms | no |
-| `schemas/` | contracts over this repository's own artifacts | authority for structure | no |
+| `schemas/` | contracts this repository validates against, whoever owns the artifact | authority for structure | no |
 | `scripts/` | the generator: assembly, verification, and this repository's checks | implementation | no |
 | `templates/` | scaffolds for artifacts only this repository authors | implementation | no |
 | `tests/` | contract, transition, validation, and packaging tests | implementation | no |
