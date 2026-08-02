@@ -79,28 +79,28 @@ That is the argument for the check made better than this record could have made 
 it caught was not a consumer's invented field name but a requirement this change had quietly
 dropped.
 
-### Why this is not the field ADR-0018 removed
+### Why this is not the status field that was removed
 
-`docs/adr/0018-a-knowledge-object-carries-no-status.md` removed `status` and warned about exactly this
-shape: "the first consumer to build a gate on it rebuilds ADR-0015 without its argument." The warning
+The change that removed `status` warned about exactly this shape: the first consumer to build a gate
+on a field like it rebuilds the maturity ladder without the argument that justified one. The warning
 is answered rather than ignored.
 
 **`status` was asserted; `gaps` is derived.** A maintainer wrote `accepted` on an object, and nothing
-could tell a considered `accepted` from a default that survived by omission — ADR-0015 records that
+could tell a considered `accepted` from a default that survived by omission — the gate that read it recorded that
 every object in the framework's own fixture sat at `proposed` because seven scaffolds hardcoded it.
 A gap names a field, and whether that field is required and absent is decidable by reading the object
 against its contract. A wrong `gaps` is a checkable defect; a wrong `status` was not.
 
-**`status` had no consumer; `gaps` has the contract itself.** That was ADR-0015's whole complaint: a
+**`status` had no consumer; `gaps` has the contract itself.** That was the whole complaint against it: a
 required field the schema validated and no capability branched on. Here the branch is *in* the
 schema — the per-type alternation accepts a different document depending on the field — so the
 consumer is the boundary validator, which cannot drift from the rule because it is the rule.
 
-**It is not review state.** ADR-0018's falsification clause admits the field's return for "review
-state per object, with a mechanism that sets it and a capability that reads it". `gaps` is not that:
-it records what the *domain* has not said, not what a *reviewer* has not done. An object with no gaps
-has not been reviewed and does not claim to have been. ADR-0018 stands unamended, and this record
-adds a field beside its decision rather than reversing it.
+**It is not review state.** The decision that removed `status` left one opening — a field could
+return for review state per object, with a mechanism that sets it and a capability that reads it.
+`gaps` is not that: it records what the *domain* has not said, not what a *reviewer* has not done. An
+object with no gaps has not been reviewed and does not claim to have been. So this record adds a
+field beside that decision rather than reversing it.
 
 ### What was rejected
 

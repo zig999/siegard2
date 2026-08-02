@@ -76,7 +76,7 @@ class Procedure(unittest.TestCase):
         self.assertIn("Re-open a modelling decision", self.body)
 
     def test_it_records_no_status(self) -> None:
-        """The inverse of what stood here, and `docs/adr/0018-...` is why.
+        """The inverse of what stood here, and the removal of the maturity ladder is why.
 
         This asserted `You do not promote` and a birth at `proposed`. Both described a maturity
         ladder the framework removed: what the base holds is current and binds, the contract rejects
@@ -201,7 +201,7 @@ class Declaration(unittest.TestCase):
         self.assertIn("validation-evidence", self.entry["produced_artifacts"])
 
     def test_it_declares_provenance_and_no_status(self) -> None:
-        """`born proposed` stood here until `docs/adr/0018-...` removed the ladder it named."""
+        """`born proposed` stood here until the maturity ladder it named was removed."""
         behaviour = " ".join(self.entry["deterministic_behavior"])
         self.assertIn("never minted", behaviour)
         self.assertIn("never minted", behaviour)

@@ -45,7 +45,7 @@ BOUNDS = re.compile(r"^(\d+)\.\.(\d+|n)$")
 
 # `superseded_by` named a node and was deliberately absent from the table: it was a resolvable
 # reference rather than an edge, with a traversal prohibition written for it in both directions.
-# `docs/adr/0018-a-knowledge-object-carries-no-status.md` then removed the field itself, so the
+# The change that removed the maturity ladder then removed the field itself, so the
 # name must appear in neither the table nor any vocabulary derived from it — now because there is
 # nothing left for it to point at, which is a stronger reason than the one it was excluded for.
 NOT_AN_EDGE = "superseded_by"

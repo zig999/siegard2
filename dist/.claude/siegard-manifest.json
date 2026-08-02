@@ -1,6 +1,6 @@
 {
   "contract_version": "distribution-manifest/2",
-  "source_revision": "sha256:c69bd11169e42b2084bbe0afeb3265df6fc2522a03fff1decdf164df37d7ae3d",
+  "source_revision": "sha256:cc65c74e2afdba4a4c54bf81b92b82655153fa0a5dbd0d01c5269712c0a523c2",
   "generator_version": "1.0.0",
   "installed": [
     {
@@ -76,7 +76,7 @@
     {
       "path": "schemas/knowledge-decision.json",
       "source": "src/claude/schemas/knowledge-decision.json",
-      "digest": "sha256:0d968cb2e082d91900006c228bbca915aa2c8ea5e32e1ae0c8cd3a3a1fa515bb"
+      "digest": "sha256:65db993767577dfde95559f91f993e8adc83f6d54cadae381bcdf3d0357181a4"
     },
     {
       "path": "schemas/knowledge-enrichment-result.json",
@@ -86,7 +86,7 @@
     {
       "path": "schemas/knowledge-graph.json",
       "source": "src/claude/schemas/knowledge-graph.json",
-      "digest": "sha256:db564fc13c8a97ab336e388f5ca539be1d987621b7d755e9de6eb3840cd82925"
+      "digest": "sha256:2966dd1372d5689d1272b5d751b66e427caa6857b1b149f1d8de3681384005ae"
     },
     {
       "path": "schemas/knowledge-system.json",
@@ -101,7 +101,7 @@
     {
       "path": "siegard-manifest.json",
       "source": "scripts/generate_dist.py",
-      "digest": "sha256:f638f6d21c0f8ec5c9133d925bf2ceae7fc58ebec33e3dcde333d465368b47ba"
+      "digest": "sha256:5715c51fd1bc9a992bdef63a6809ae45e7318ea85e08f6ddcb5abf1f499bba33"
     },
     {
       "path": "skills/ingest-domain/SKILL.md",

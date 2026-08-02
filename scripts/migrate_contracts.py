@@ -111,8 +111,7 @@ def knowledge_object_1_to_2(doc: dict) -> dict:
 
     `/2` removes the knowledge lifecycle: `foundation/0003` R26 forbids a status on a knowledge
     object and the schema rejects the field rather than preserving it, so the migration is a
-    deletion plus the version stamp. `docs/adr/0018-a-knowledge-object-carries-no-status.md`
-    records the decision.
+    deletion plus the version stamp: the knowledge lifecycle was removed, and the field with it.
 
     For `proposed` and `accepted` the deletion loses nothing a reader can act on. Both meant "this
     is what the base says", differing only in a gate that no longer exists, and `sources` still

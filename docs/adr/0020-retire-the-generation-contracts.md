@@ -17,8 +17,8 @@ Seven contracts sit in `schemas/contract-versions.json` with no schema file left
 
 Each lost its schema when the capability that produced it was removed. The generation path went
 first — the scope, the plan, the manifest, the materializer, the pack model, and the `generate`
-skill — and `docs/adr/0018-a-knowledge-object-carries-no-status.md` records its absence as the
-condition that emptied `status` of consumers. `change-request/1` went with
+skill — and its absence is the condition that emptied `status` of consumers, which is why the
+field was removed rather than kept for a reader. `change-request/1` went with
 `foundation/0001` R2, which states that a request is not a contracted artifact of this framework
 and that no capability produces one.
 

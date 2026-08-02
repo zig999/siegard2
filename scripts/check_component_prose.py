@@ -149,7 +149,7 @@ def vocabulary(schema_dir: Path, artifact: str) -> set[str]:
 
     A property whose subschema is `{"not": {}}` is excluded. That form is how a contract *rejects* a
     field it once held rather than dropping it silently — `knowledge-object` carries `status` and
-    `superseded_by` that way, per `docs/adr/0018-a-knowledge-object-carries-no-status.md`. Counting
+    `superseded_by` that way, because the contract rejects both rather than omitting them. Counting
     one as vocabulary would let prose tell a producer to write the one field the boundary is written
     to refuse, which is precisely what C01 exists to catch.
     """

@@ -26,9 +26,8 @@ decision — and not because code changed.
 
 Everything the repository states about the fact it answers. A knowledge object carries no status and no
 maturity level: it is in the base, so it is current, it enters the [knowledge
-graph](knowledge-graph.md) and selection, and it binds review. Spec 0001 R11 says so and
-`docs/adr/0018-a-knowledge-object-carries-no-status.md` records why the ladder was removed. A fact that
-is not settled is not an object at a lower tier — it is a gap, reported.
+graph](knowledge-graph.md) and selection, and it binds review. `foundation/0001` R11 says so, and a
+fact that is not settled is not an object at a lower tier — it is a gap, reported.
 
 One thing is still layered on top: an [assertion](assertion.md) over an object binds mechanical
 rejection at validation as well as review. That is a property of the assertion existing, derived from

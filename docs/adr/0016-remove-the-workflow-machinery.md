@@ -12,8 +12,8 @@ contract_version: adr/1
 `foundation/0001-knowledge-object-driven-development.md` fixes a seven-phase workflow: R2 the phases and
 their order, R5 an orchestrator choosing a transition by lookup on a closed field, R7 an attempt limit
 with a terminal exhaustion, R8 workflow state persisted outside the conversation and every transition
-reconstructible from records alone. `docs/adr/0011-append-only-workflow-events-derived-by-replay.md`
-chose the persistence model, and the implementation followed: a transition table, a guard, a replay, an
+reconstructible from records alone. An earlier record chose the persistence model — append-only
+events, with state derived by replay — and the implementation followed: a transition table, a guard, a replay, an
 event contract, and a skill that drove them.
 
 A maintainer raised the objection this record exists for. Deciding what runs and when is the harness's
@@ -49,7 +49,8 @@ The workflow machinery is removed outright:
 | `fixtures/knowledge-change-loop/`, the log half of `fixtures/consumer-knowledge/` | the end-to-end evidence |
 | `tests/test_workflow_events.py` | 582 lines holding the guard to both directions |
 
-`docs/adr/0011-append-only-workflow-events-derived-by-replay.md` is superseded by this record.
+The decision that chose the event model is superseded by this record, and removed with the
+machinery it decided.
 
 Ingestion replaces the one path that had a caller: `skills/ingest-domain/` turns received domain
 material into a knowledge base as a straight procedure — classify, author in strategic-before-tactical

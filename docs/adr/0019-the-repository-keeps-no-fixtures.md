@@ -19,7 +19,7 @@ Most of that had already stopped working. This branch deletes `src/claude/bin/`,
 materializer, and projector the fixture checks called lived there. `make validate`, `make test`, and
 `make knowledge` fail at import today, before reaching anything a fixture could prove. What remained
 was a large committed tree that nothing could execute against and that every subsequent change had to
-be migrated through — `docs/adr/0018-a-knowledge-object-carries-no-status.md` had just paid that cost,
+be migrated through — the change that removed the knowledge lifecycle had just paid that cost,
 migrating 27 objects by hand-driven script because the generator could not.
 
 The import failure is narrower than it looks, and the measurement is recorded here because the first

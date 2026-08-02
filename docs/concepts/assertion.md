@@ -18,7 +18,7 @@ A mechanical check that rejects an implementation violating one specific [knowle
 object](knowledge-object.md). An object without one binds review; an object with one also binds
 rejection at validation. That is the only layering left over a knowledge object, and it is derived from
 whether the assertion exists rather than declared on the object —
-`docs/adr/0018-a-knowledge-object-carries-no-status.md` removed the maturity ladder that used to carry it.
+The maturity ladder that used to carry it was removed; `foundation/0001` R11 is what forbids one now.
 
 An assertion is **never required** to author a knowledge object. Requiring one at authoring
 time taxes every rule to guard the few that are actually violated, and a rule too expensive to follow
