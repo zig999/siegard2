@@ -10,7 +10,7 @@ exactly one thing, assert the validator names it. The pristine copy is asserted 
 each class, because a rejection test alone cannot distinguish a working check from one that
 rejects everything.
 
-`validate_adrs.py` exposes only `main()`, so it is driven through `sys.argv` and its stdout is
+Each validator exposes only `main()`, so it is driven through `sys.argv` and its stdout is
 captured. That is the real entry point rather than an internal seam, which is the right thing to
 pin: `make validate` calls the CLI, and a refactor that broke the CLI while leaving a helper
 intact would be a regression this suite should catch.
@@ -26,7 +26,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import validate_adrs
 import validate_components
 from validate_concepts import validate as validate_concepts
 
@@ -49,7 +48,7 @@ def run(module, root: Path) -> tuple[int, str]:
 class TreeCase(unittest.TestCase):
     """A disposable copy of one real tree, or of a named subset of it.
 
-    `subset` exists for cost, not for convenience. `validate_adrs.py` compares every line of
+    `subset` exists for cost, not for convenience. A validator compares every line of
     every `## Decision` against 215 operative statements, so one run over the full tree costs
     about five seconds; ten mutation tests over it would cost a minute and make `make test`
     something a maintainer avoids running. Each mutation needs one or two documents, so each
@@ -182,87 +181,6 @@ class Concepts(TreeCase):
         self.assertEqual([], validate_concepts(self.root))
 
 
-ADR_UNDER_TEST = "0010-projection-names-the-graph-derived-artifact.md"
-
-
-class AdrsFullTree(unittest.TestCase):
-    """One run over every ADR, which is the scale `make validate` actually pays."""
-
-    def test_the_real_tree_is_clean(self) -> None:
-        code, output = run(validate_adrs, REPO_ROOT / "docs" / "adr")
-        self.assertEqual(0, code, output)
-        self.assertIn("all ADRs valid", output)
-
-
-class Adrs(TreeCase):
-    source = REPO_ROOT / "docs" / "adr"
-    subset = (ADR_UNDER_TEST,)
-
-    def test_the_subset_is_clean_before_any_mutation(self) -> None:
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(0, code, output)
-
-    def test_id_and_filename_must_agree(self) -> None:
-        target = next(self.root.glob("0010-*.md"))
-        target.rename(self.root / f"0099-{target.name.split('-', 1)[1]}")
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0099-", "filename must start with")
-
-    def test_a_missing_required_section_is_reported(self) -> None:
-        self.rewrite(ADR_UNDER_TEST, "## Consequences", "## Fallout")
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0010-", "## Consequences")
-
-    def test_a_proposed_adr_needs_its_validation_section(self) -> None:
-        self.rewrite(
-            ADR_UNDER_TEST,
-            "status: accepted",
-            "status: proposed",
-        )
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0010-", "status is proposed")
-
-    def test_an_unknown_contract_version_is_reported(self) -> None:
-        self.rewrite(
-            ADR_UNDER_TEST,
-            "contract_version: adr/1",
-            "contract_version: adr/7",
-        )
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0010-", "names no contract")
-
-    def test_a_duplicate_id_is_reported(self) -> None:
-        source = next(self.root.glob("0010-*.md"))
-        shutil.copy(source, self.root / "0010-a-second-file-with-one-id.md")
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "already used by")
-
-    def test_restating_an_operative_rule_is_reported(self) -> None:
-        """The non-restatement check, driven by a line lifted out of CLAUDE.md itself."""
-        operative = validate_adrs.operative_lines()
-        self.assertTrue(operative, "no operative lines were extracted; the check cannot fire")
-        _source, line = max(operative, key=lambda pair: len(pair[1]))
-        target = self.root / ADR_UNDER_TEST
-        text = target.read_text().replace("## Decision", f"## Decision\n\n{line}\n", 1)
-        target.write_text(text)
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "restates")
-
-    def test_an_unquoted_id_is_explained_rather_than_type_checked(self) -> None:
-        self.rewrite(
-            ADR_UNDER_TEST, 'id: "0010"', "id: 0010"
-        )
-        code, output = run(validate_adrs, self.root)
-        self.assertEqual(1, code, output)
-        self.assertNames(output, "0010-")
-
-
 class Components(TreeCase):
     source = REPO_ROOT / "src" / "claude"
 
@@ -306,7 +224,7 @@ class Components(TreeCase):
         self.assertNames(output, "ingest-domain")
 
     def test_a_commands_directory_is_rejected_by_name(self) -> None:
-        """ADR-0009 merged custom commands into skills; the class is rejected, not empty."""
+        """Custom commands were merged into skills; the class is rejected, not empty."""
         (self.root / "commands").mkdir()
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
@@ -325,7 +243,7 @@ class Components(TreeCase):
         self.assertNames(output, "knowledge-enricher")
 
     def test_an_absent_tree_is_reported_and_not_a_failure(self) -> None:
-        """The contract precedes the first component by design (ADR-0009)."""
+        """The contract precedes the first component by design."""
         code, output = run(validate_components, self.root / "does-not-exist")
         self.assertEqual(0, code, output)
         self.assertIn("does not exist yet", output)

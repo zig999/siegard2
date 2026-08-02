@@ -105,7 +105,7 @@ NAME_MAPS = frozenset({"properties", "patternProperties", "$defs", "definitions"
 
 # Contracts whose artifact cannot carry a `contract_version` field, with the condition that
 # has to hold for the exemption to be real. Claude Code owns component frontmatter and ignores
-# unknown fields silently, so both contracts close the object; see ADR-0009.
+# unknown fields silently, so both contracts close the object, and this asserts that they do.
 HARNESS_OWNED = frozenset({"skill", "agent", "plugin"})
 
 
@@ -128,22 +128,18 @@ def carry_superseded(previous: dict[str, dict], digests: dict[str, str]) -> dict
     derives the pointer rather than trusting the old one: the latest declared version of that
     name is the successor by construction.
 
-    A contract carrying `retired_by` is kept verbatim. Its producer was removed, so no later
-    version exists to derive a pointer from, and dropping the entry is exactly what
-    `docs/adr/0020-retire-the-generation-contracts.md` refuses — a contract that once existed
-    would become indistinguishable from one that never did. `--update` may not decide a
-    retirement either: the field names a record a person wrote, and inventing one would be the
-    regeneration this lock exists to make visible.
+    An entry with no later version is dropped. The lock records what a contract *is*, not that one
+    was: a version nothing declares and nothing supersedes has no consumer left to serve, and a
+    reader meeting it in an old artifact reads version control rather than a tombstone.
 
-    An entry that is neither — no successor and no retirement — is still dropped, because a
-    removal the caller has not stated is a breaking change rather than a record to preserve.
+    This lock once kept such an entry, marked `retired_by` and pointing at a decision record. The
+    records went, and the marker went with the argument that justified it — which was that deleting
+    the entry would make a contract that once existed indistinguishable from one that never did.
+    That is the kind of thing this repository decided to stop keeping.
     """
     carried: dict[str, dict] = {}
     for contract, entry in previous.items():
         if contract in digests or "/" not in contract:
-            continue
-        if entry.get("retired_by"):
-            carried[contract] = dict(entry)
             continue
         name, version = contract.rsplit("/", 1)
         # The *next* version, not the latest. A chain reaches `/3` through `/2`, and each hop is
@@ -181,29 +177,18 @@ def check_superseded(contract: str, locked: dict[str, dict], digests: dict[str, 
     the lock rather than on two files sitting side by side, so it survives one file per contract,
     and it fires on a missing migration rather than on a missing file.
 
-    Two exits, and `docs/adr/0020-retire-the-generation-contracts.md` separates them. A
-    **superseded** contract has a successor, so an artifact declaring it has somewhere to go and
-    the compatibility rule owes it a registered hop. A **retired** one has no successor because
-    its producer was removed, and demanding a migration for it would demand a function with no
-    codomain. What a retirement owes instead is the record that removed the producer, named in
-    `retired_by` and verified to exist here — a retirement pointing at nothing is the drift the
-    field exists to end.
+    One exit. A **superseded** contract has a successor, so an artifact declaring it has somewhere
+    to go and the compatibility rule owes it a registered hop. A contract with no successor is not
+    recorded at all: it left the lock when its schema left the tree, and what it said is in version
+    control rather than in an entry kept to say it once existed.
     """
     entry = locked.get(contract, {})
-    retired_by = entry.get("retired_by")
-    if retired_by:
-        if not (REPO_ROOT / retired_by).is_file():
-            return [
-                f"{contract}: retired_by names '{retired_by}', which resolves to no file — a "
-                f"retirement whose record does not exist states nothing"
-            ]
-        return []
     successor = entry.get("superseded_by")
     if not successor:
         return [
-            f"{contract}: recorded in schemas/{LOCK_PATH.name} but no schema file declares it, and the "
-            f"entry names neither superseded_by nor retired_by — a removed contract is a breaking "
-            f"change, not a deletion"
+            f"{contract}: recorded in schemas/{LOCK_PATH.name} but no schema file declares it and "
+            f"nothing supersedes it. Remove the entry: the lock records what a contract is, not that "
+            f"one was"
         ]
     if successor not in digests and successor not in locked:
         return [

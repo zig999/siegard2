@@ -59,7 +59,7 @@ THRESHOLD = re.compile(
 CALIBRATED = {
     "timeout": "foundation/0010 R11 requires a hook to state its own timeout rather than inherit 600",
     "max_reason": "foundation/0010 R13 caps a hook's output at 10,000 characters",
-    "max_skill_body_lines": "ADR-0009 records the documented 500-line guidance made a hard limit",
+    "max_skill_body_lines": "https://code.claude.com/docs/en/skills documents 500 lines as guidance, made a hard limit here",
 }
 
 

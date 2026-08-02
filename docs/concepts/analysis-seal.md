@@ -10,8 +10,6 @@ generated: { by: claude-opus-5, at: 2026-08-02T11:45:00Z }
 sources:
   - resource: foundation/0004-runtime-architecture.md
     title: Run the framework as capabilities a harness invokes, with determinism at the boundaries
-  - resource: docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md
-    title: Let the analysis write the knowledge, and stop converting one vocabulary into another
 ---
 
 # analysis seal

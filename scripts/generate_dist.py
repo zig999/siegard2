@@ -334,7 +334,7 @@ def hooks_document() -> str | None:
     matcher, and its guarantee, and R11 requires it to state its own timeout. Those facts live in
     `SHIPPED_HOOKS` beside the decision to ship, so a hook cannot be installed with a matcher
     nobody wrote down. `${CLAUDE_PLUGIN_ROOT}` is what makes the command path resolve wherever the
-    consumer installed the plugin — ADR-0012 cites the documentation that establishes it.
+    consumer installed the plugin — the harness documentation is what fixes that establishes it.
     """
     declared = hook_declaration()
     if not declared:

@@ -10,7 +10,8 @@ generated: { by: claude-opus-5, at: 2026-07-31T01:49:02Z }
 sources:
   - resource: .claude/rules/distribution.md
     title: Building the distribution
-  - resource: docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md
+  - resource: src/claude/schemas/distribution-manifest.json
+    title: Distribution manifest contract
     title: Distribute the framework as a Claude Code plugin, and let the harness namespace it
 ---
 
@@ -29,6 +30,5 @@ identity and version because the harness reads them; this record is Siegard's, a
 does.
 
 Distinct from the generation manifest, which records where each produced artifact
-went. Two records with the same short name is the failure
-`docs/adr/0010-projection-names-the-graph-derived-artifact.md` exists to undo, so neither is called "the
-manifest" without its qualifier.
+went. Two records with the same short name is a failure this bundle exists to undo, so neither is called
+"the manifest" without its qualifier.

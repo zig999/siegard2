@@ -10,7 +10,7 @@ applies. It adds only the order of operations and the derived artifacts that are
 
 ## 1. Change the source, not the symptom
 
-Find where the concept is defined — `foundation/`, then `docs/adr/`, then `schemas/`, then implementation —
+Find where the concept is defined — `foundation/`, then `schemas/`, then implementation —
 and change the highest-level source that owns it, then update what derives from it. Editing an
 implementation to work around a specification is a defect, not a change.
 

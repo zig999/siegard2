@@ -5,7 +5,7 @@
     "properties.contract_version": "each profile pins its own const, and that is how a consumer tells them apart",
     "required": "which envelope fields a profile demands unconditionally, which is a completeness decision",
     "content_properties": "the fields a type requires of its own content — attributes, statement, states, steps and the rest",
-    "conditionals": "the per-type alternation ADR-0021 fixed: every field the type requires, or a declared gap",
+    "conditionals": "the per-type alternation: every field the kind requires, or a declared gap naming what is missing",
     "$defs": "the identifier patterns and shapes its own content references",
     "$defs.knowledgeObjectId": "the identifier form, which encodes the vocabulary: a profile's kinds appear in the pattern, so two profiles cannot share one. `properties.id` stays in the envelope because the reference is the same in both; what it points at is not"
   },

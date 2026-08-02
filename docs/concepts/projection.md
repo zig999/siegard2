@@ -10,7 +10,6 @@ generated: { by: claude-opus-5, at: 2026-07-30T23:18:39Z }
 sources:
   - resource: foundation/0003-knowledge-ontology-and-notation.md
     title: Represent domain knowledge as a typed ontology in an AI-first notation
-  - resource: docs/adr/0010-projection-names-the-graph-derived-artifact.md
     title: The term projection names the graph-derived artifact, and derived workflow state is renamed
 ---
 
@@ -31,6 +30,5 @@ glossary, and a context map, and a fourth requires a recorded case that demands 
 properties above.
 
 Derived workflow state was never a projection in this repository's vocabulary, and had a term of its own.
-`docs/adr/0010-projection-names-the-graph-derived-artifact.md` records why the two were kept apart. That
-term has since left the bundle with the machinery that used it, so the distinction it drew no longer has a
-second side — a projection is now the only thing this word covers.
+That term has since left the bundle with the machinery that used it, so the distinction it drew no longer
+has a second side — a projection is now the only thing this word covers.

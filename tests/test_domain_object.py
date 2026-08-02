@@ -1,7 +1,6 @@
 """The profile the analysis writes in: eight kinds, 1:1 with the vocabulary it records.
 
-`docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md` removed the conversion that mapped
-eight DDD kinds onto six node types. Three of those collapses were reversible through `ddd`; two were
+The conversion that mapped eight DDD kinds onto six node types is gone. Three of those collapses were reversible through `ddd`; two were
 not — a subdomain became a field of a boundary and a context relationship became an entry in a list —
 so neither survived as something an identifier could reach.
 
@@ -183,7 +182,7 @@ class StagedIsDerivedAndNeverStored(Case):
 
     An open `kind: authoring` gap says the enrichment has not reached this object. That is the same
     fact a `staged` flag would carry, and two homes for one fact can disagree — which is why
-    `docs/adr/0021-an-object-carries-its-own-gaps.md` says there is no flag to set and none to forget.
+    an object's own gaps are its incompleteness: there is no flag to set and none to forget.
     """
 
     def unenriched(self, kind: str = "subdomain") -> dict:

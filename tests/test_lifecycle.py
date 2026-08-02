@@ -81,7 +81,7 @@ class DerivedStatus(unittest.TestCase):
 
         This required at least four, citing a condition in a specification that no longer exists —
         and the fixture each was to be evidenced by went with
-        `docs/adr/0019-the-repository-keeps-no-fixtures.md`. Three are filled today, `script` having joined when the expansion step shipped — and this test is what noticed. Hook, script,
+        This repository keeps no fixture. Three are filled today, `script` having joined when the expansion step shipped — and this test is what noticed. Hook, script,
         template, and target pack are open and empty; `foundation/0005` R2 removes a class rather
         than keeping it open, and these stay because the *class* is occupied elsewhere in the
         model — what is empty is this distribution's share of it.
@@ -184,12 +184,19 @@ class Thresholds(unittest.TestCase):
         self.assertTrue(any("12_000" in p for p in problems), problems)
 
     def test_every_exemption_carries_its_evidence(self) -> None:
-        """R19 admits a shipped value only with the evidence that calibrated it."""
+        """R19 admits a shipped value only with the evidence that calibrated it.
+
+        Two shapes of evidence, and the second was reached the hard way. A value this framework
+        chose cites the requirement that fixed it. A value the *harness* imposes cites the harness's
+        own documentation — which is the source `CLAUDE.md` demands for any dependency on Claude
+        Code behaviour, and which one threshold reached only through a decision record that cited it
+        for us. The record went; the documentation is where the number was all along.
+        """
         for field, reason in cc.CALIBRATED.items():
             self.assertTrue(reason.strip(), field)
             self.assertTrue(
-                "foundation/" in reason or "ADR-" in reason,
-                f"{field}: {reason!r} cites no requirement",
+                "foundation/" in reason or reason.startswith("https://"),
+                f"{field}: {reason!r} cites neither a requirement nor a documentation page",
             )
 
     def test_a_caller_supplied_value_is_not_a_framework_threshold(self) -> None:

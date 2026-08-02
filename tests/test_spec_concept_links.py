@@ -91,7 +91,7 @@ class ALinkThatNamesItsConceptIsAccepted(unittest.TestCase):
 
     def test_a_link_outside_the_concept_bundle_is_not_this_check_s_business(self):
         self.accepts("[compatibility](../.claude/rules/compatibility.md)")
-        self.accepts("[ADR-0012](../docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md)")
+        self.accepts("[the plugin contract](../schemas/plugin.json)")
 
 
 class TheMatchingRule(unittest.TestCase):

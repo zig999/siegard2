@@ -10,8 +10,6 @@ generated: { by: claude-opus-5, at: 2026-08-02T11:40:00Z }
 sources:
   - resource: foundation/0003-knowledge-ontology-and-notation.md
     title: Represent domain knowledge as a typed ontology in an AI-first notation
-  - resource: docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md
-    title: Let the analysis write the knowledge, and stop converting one vocabulary into another
 ---
 
 # notation

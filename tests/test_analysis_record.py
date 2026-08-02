@@ -3,8 +3,7 @@
 `analysis-record/1` replaced `domain-model/4` when the constructs became files. What is left in the
 record is exactly what has no file: a request is not a construct, an exclusion is the absence of one,
 and an open question bears on several at once. Holding the constructs here as well would put one fact
-in two places with nothing keeping them in step —
-`docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md`.
+in two places with nothing keeping them in step.
 
 The second half of this module outlives the contract it was written beside. `foundation/0005` R24 says
 ambiguity resolves in the fail-safe direction, and the risk it closes is a future capability resolving
@@ -189,10 +188,9 @@ class AmbiguityHasADirection(unittest.TestCase):
     coverage. `domain-modeler` defaulting to `stated` instead of `modeled` would be the inversion — it
     would claim the request said something it did not, and drop the rationale a reviewer needs.
 
-    The subjects have moved twice. `docs/adr/0023-remove-the-agents-no-entry-point-invokes.md` retired
-    two agents, and `docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md` removed the
-    expansion that had inherited one of them — so what refuses a construct now is the analysis itself,
-    and the count of capabilities carrying the rule has not dropped.
+    The subjects have moved twice: two agents were retired, and the expansion that had inherited one
+    of them went with the conversion — so what refuses a construct now is the analysis itself, and the
+    count of capabilities carrying the rule has not dropped.
     """
 
     AGENTS = SHIPPED_ROOT / "agents"

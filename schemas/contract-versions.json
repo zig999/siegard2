@@ -1,10 +1,6 @@
 {
   "$comment": "Constraint digest per contract version, written by scripts/check_contract_versions.py --update. A digest covers the assertion vocabulary only: annotation keywords are stripped, so clarifying a description is not a version bump and changing what a schema accepts is. Regenerating this file to silence a mismatch discards the only record that a contract moved. An entry carrying superseded_by names the version that replaced it and is kept for as long as a persisted artifact may declare it.",
   "contracts": {
-    "adr/1": {
-      "schema": "adr.json",
-      "constraint_digest": "sha256:0d305c78dee9cf81e8ef1123d8eaa17edfc443e88e34349d19342dcb36031963"
-    },
     "agent": {
       "schema": "agent.json",
       "constraint_digest": "sha256:9ee684c7fe4565569ba62922a4fbdeddcb59615e576daa3beda73b0477f7ff83"
@@ -16,11 +12,6 @@
     "analysis-seal/1": {
       "schema": "analysis-seal.json",
       "constraint_digest": "sha256:fc5871bbf5b764516044f926fb7be04aa819f31dd2f6a03bd1c335e5bcf1a907"
-    },
-    "artifact-class/1": {
-      "schema": "artifact-class.json",
-      "constraint_digest": "sha256:72bb1c40800d7fd2e17182d51ec3ba27f0f465070880711e2843adfab4130603",
-      "retired_by": "docs/adr/0020-retire-the-generation-contracts.md"
     },
     "capability-declaration/1": {
       "schema": "capability-declaration.json",
@@ -36,11 +27,6 @@
       "schema": "capability-declaration.json",
       "constraint_digest": "sha256:2ee4e179eab528ce16b809a38794801e71d8cb9bc96d053b8d910a66f16ba1ac"
     },
-    "change-request/1": {
-      "schema": "change-request.json",
-      "constraint_digest": "sha256:110ad829770b8941bd69fefe226831f30f19d6ba14a0018d5d84de2eaf14cd4c",
-      "retired_by": "foundation/0001-knowledge-object-driven-development.md"
-    },
     "concept-authoring-result/1": {
       "schema": "concept-authoring-result.json",
       "constraint_digest": "sha256:b2696304532298979d66006ec9f9d28e19c7c3cbc628eab2fe7fcfac9f58acfc"
@@ -48,11 +34,6 @@
     "concept/1": {
       "schema": "concept.json",
       "constraint_digest": "sha256:063c21561833ba95a79b98152c7a527e1f08d14e21fc3d2c3826fba4baef9462"
-    },
-    "context-package/1": {
-      "schema": "context-package.json",
-      "constraint_digest": "sha256:462413a5dea7d865c528fd75d3b80f9dd3febcdbf3253e8aa9ad6013e015ad87",
-      "retired_by": "docs/adr/0016-remove-the-workflow-machinery.md"
     },
     "distribution-manifest/1": {
       "schema": "distribution-manifest.json",
@@ -63,44 +44,9 @@
       "schema": "distribution-manifest.json",
       "constraint_digest": "sha256:a0258a13955465ad4dc86dd38f083b01fb4f9456c166f81ac94ea81664951925"
     },
-    "domain-model/1": {
-      "schema": "domain-model.json",
-      "constraint_digest": "sha256:7fdedc2ed4a03f5701b4f99c28f98bab8e734d5f7f9a4378310cf701bd3f0ff0",
-      "superseded_by": "domain-model/2"
-    },
-    "domain-model/2": {
-      "schema": "domain-model.json",
-      "constraint_digest": "sha256:c1cfbaa8dccbff45bf381c4fa8d81c63c33dba65c34844f7a5a158717040ba34",
-      "superseded_by": "domain-model/3"
-    },
-    "domain-model/3": {
-      "schema": "domain-model.json",
-      "constraint_digest": "sha256:53d27207252cb61b8e1160052552964c76e85620e18cf61c330fb3f900afad56",
-      "superseded_by": "domain-model/4"
-    },
-    "domain-model/4": {
-      "schema": "domain-model.json",
-      "constraint_digest": "sha256:52fd81cb543c353c766ed24b16817e50591a9eb0ca127a7a2c85a5b747a6c509",
-      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
-    },
     "domain-object/1": {
       "schema": "domain-object.json",
       "constraint_digest": "sha256:3f52bddad96f48107ba105b83f96cbec9b61097c700c6950feffac79d13985d9"
-    },
-    "generation-manifest/1": {
-      "schema": "generation-manifest.json",
-      "constraint_digest": "sha256:98cca8d41f1247d9fbe2b8b7dcc530b34020f53b0e95cf1e524419613a721016",
-      "retired_by": "docs/adr/0020-retire-the-generation-contracts.md"
-    },
-    "generation-plan/1": {
-      "schema": "generation-plan.json",
-      "constraint_digest": "sha256:bf4d96ff921a648dcc8404d166af11a8c90e75aad6206503a201bcf7169db57b",
-      "retired_by": "docs/adr/0020-retire-the-generation-contracts.md"
-    },
-    "generation-scope/1": {
-      "schema": "generation-scope.json",
-      "constraint_digest": "sha256:d4adf545ea3623f7c86a23c0d83d6f97964199f3ded39c3e8eed8038736e8e09",
-      "retired_by": "docs/adr/0020-retire-the-generation-contracts.md"
     },
     "hook/1": {
       "schema": "hook.json",
@@ -130,16 +76,6 @@
       "schema": "impact-analysis.json",
       "constraint_digest": "sha256:c3fcbfb2126bea52ef6384847b37c994273b178e07675e2eb9f9e18c450cec21"
     },
-    "knowledge-authoring-result/1": {
-      "schema": "knowledge-authoring-result.json",
-      "constraint_digest": "sha256:5699b718cbddf7c4c2b9c92406508917b73be7ee4ba9c24f30fcc5aaaad17c5b",
-      "superseded_by": "knowledge-authoring-result/2"
-    },
-    "knowledge-authoring-result/2": {
-      "schema": "knowledge-authoring-result.json",
-      "constraint_digest": "sha256:23c6dd531c4cd83ba609c642eaa68ee0e56481f0ddd5f23c438ba48bd28c4f49",
-      "retired_by": "docs/adr/0023-remove-the-agents-no-entry-point-invokes.md"
-    },
     "knowledge-decision/1": {
       "schema": "knowledge-decision.json",
       "constraint_digest": "sha256:a99341ba1236208c18c5aea5c57f25b42f8ba9f348be0f3bc8ff561ddc4b0671",
@@ -167,79 +103,9 @@
       "schema": "knowledge-graph.json",
       "constraint_digest": "sha256:863bc1df9d297572fcf47dd126d9ebd0dd0433a1cd6b684ba4e675f4b8e18d23"
     },
-    "knowledge-intake-plan/1": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:ae406d6228057df513c372c7feaf84471cfd38f25534eac74feafa82464587cc",
-      "superseded_by": "knowledge-intake-plan/2"
-    },
-    "knowledge-intake-plan/2": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:3fef819d325d8f11c3cacfeb8d6543f8c7fbf92ad6d3f60c900a1f5dac575f17",
-      "superseded_by": "knowledge-intake-plan/3"
-    },
-    "knowledge-intake-plan/3": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:467ddaafb72245709adf0e4bf4d0dd9a5f12fcbc8f7ed1c346169182aa7273eb",
-      "superseded_by": "knowledge-intake-plan/4"
-    },
-    "knowledge-intake-plan/4": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:30a98d59546cfd535676b63c991fef8bdbaf08dd222aba12c50d26b810d0a8d9",
-      "superseded_by": "knowledge-intake-plan/5"
-    },
-    "knowledge-intake-plan/5": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:9ec3bea872e634e3e06e806eceb293040e86bd17a6965a6a43b07842199403ea",
-      "superseded_by": "knowledge-intake-plan/6"
-    },
-    "knowledge-intake-plan/6": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:0575e60cec0a5f2997c890b96ee0c5ff4c4612603b8af823ee2364c4c82ce6f5",
-      "superseded_by": "knowledge-intake-plan/7"
-    },
-    "knowledge-intake-plan/7": {
-      "schema": "knowledge-intake-plan.json",
-      "constraint_digest": "sha256:44dc9d95b10af7df9e759667b076ccf9ca458c3c82b04e0c0755d898f6627412",
-      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
-    },
-    "knowledge-object/1": {
-      "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:e357e60e0580b4a5ef2647d3cc969b56de0e5ecd617aa8f954ccc171a0676703",
-      "superseded_by": "knowledge-object/2"
-    },
-    "knowledge-object/2": {
-      "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:9a8f1cff9860e06109ce3aa5897b3f0f2860160706f687dfcfeeaf76dfd7036a",
-      "superseded_by": "knowledge-object/3"
-    },
-    "knowledge-object/3": {
-      "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:2354ce8dfab4f6714333af671a7b9ab8532e5df7771cf8e134ac246835896f39",
-      "superseded_by": "knowledge-object/4"
-    },
-    "knowledge-object/4": {
-      "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:036c52e714236297b9f25495c755dbe088b5af7bb5ccaf8723732c1a36dee995",
-      "superseded_by": "knowledge-object/5"
-    },
-    "knowledge-object/5": {
-      "schema": "knowledge-object.json",
-      "constraint_digest": "sha256:0fad93f1415eaa0353010d6373e294dea1551f386a40e7c7edb9e1f7f18de15c",
-      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
-    },
     "knowledge-system/1": {
       "schema": "knowledge-system.json",
       "constraint_digest": "sha256:3c62c19b6c53eb5d5eee5aa21375861b7c38d81f9e2b061b7639fe909801167b"
-    },
-    "pack-declaration/1": {
-      "schema": "pack-declaration.json",
-      "constraint_digest": "sha256:d53e9ca8f7a6ad374da518e4d734c364044ebd14a2f03f58e88db66c17730264",
-      "retired_by": "docs/adr/0020-retire-the-generation-contracts.md"
-    },
-    "placement-decision/1": {
-      "schema": "placement-decision.json",
-      "constraint_digest": "sha256:89ba6b50c148a809ccb160ad93f472321cf32daa97458f5b42070b22acfcf9e0",
-      "retired_by": "docs/adr/0020-retire-the-generation-contracts.md"
     },
     "plugin": {
       "schema": "plugin.json",
@@ -252,21 +118,6 @@
     "spec/1": {
       "schema": "spec.json",
       "constraint_digest": "sha256:b8ed5c3dcd26fb6309bdff75f1ac73b1cb1c75b66682b54888093f3870224c67"
-    },
-    "specification-delta/1": {
-      "schema": "specification-delta.json",
-      "constraint_digest": "sha256:3598019392d13ffdec7a33fa62da2b75890e399954424dfe7f9391e79cddd220",
-      "retired_by": "docs/adr/0016-remove-the-workflow-machinery.md"
-    },
-    "staged-knowledge-object/1": {
-      "schema": "staged-knowledge-object.json",
-      "constraint_digest": "sha256:f94760ffae015eba65fd6024c6b4599a8cbbf6392542aada5cbb5bb1ec8c8fdc",
-      "superseded_by": "staged-knowledge-object/2"
-    },
-    "staged-knowledge-object/2": {
-      "schema": "staged-knowledge-object.json",
-      "constraint_digest": "sha256:6c80bcfd79823b64570415b83d34f725b1680bb5e297be65895938d9b07adf14",
-      "retired_by": "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
     },
     "validation-evidence/1": {
       "schema": "validation-evidence.json",

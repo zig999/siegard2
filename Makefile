@@ -24,17 +24,15 @@ foundation:
 
 # Every validator runs even when an earlier one fails: a report that names one
 # gap and hides the rest is the failure mode this repository is built against.
-# Ordered by the precedence in CLAUDE.md: ADRs, then the schema-derived layers.
+# Ordered by the precedence in CLAUDE.md: contracts, then the schema-derived layers.
 #
 # `scripts/validate_specs.py` is deliberately absent, by a maintainer's decision of
 # 2026-07-31: `foundation/` is the authority this work answers to rather than an artifact
 # the build produces or verifies. It runs under `make foundation` instead. The line is that
-# decision and not a rule derived from what ships — `docs/adr/` and `docs/concepts/` do not
-# reach a consumer either, and both are validated here, because each has a contract a
-# validator can decide.
+# decision and not a rule derived from what ships — `docs/concepts/` does not reach a consumer
+# either, and is validated here, because it has a contract a validator can decide.
 validate:
 	@fail=0; \
-	python3 scripts/validate_adrs.py || fail=1; \
 	python3 scripts/check_contract_versions.py || fail=1; \
 	python3 scripts/check_notation_agreement.py || fail=1; \
 	python3 scripts/validate_concepts.py docs/concepts || fail=1; \

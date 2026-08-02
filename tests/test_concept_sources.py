@@ -1,9 +1,9 @@
 """A concept's declared sources must still exist, and the live bundle must satisfy that.
 
-The check exists because of the failure ADR-0010 records: docs/concepts/projection.md was
-sourced from docs/adr/0001-event-sourced-workflow-state.md, that ADR was deleted, the
-dangling source was replaced rather than reported, and the definition then drifted from
-what cited it while every file still validated on its own.
+The check exists because of a failure this bundle met once: docs/concepts/projection.md was sourced
+from a decision record, that record was deleted, the dangling source was replaced rather than
+reported, and the definition then drifted from what cited it while every file still validated on its
+own.
 
 Both outcomes are covered here for the reason tests/support.py states about the knowledge
 fixture: a rejection test alone cannot tell a working check from one that rejects
@@ -63,9 +63,9 @@ class SourcesMustResolve(unittest.TestCase):
     # --- rejections ---------------------------------------------------------------
 
     def test_a_source_that_resolves_to_no_file_is_rejected(self):
-        problems = self.problems_for([{"resource": "docs/adr/0001-event-sourced-workflow-state.md"}])
+        problems = self.problems_for([{"resource": "foundation/0099-does-not-exist.md"}])
         self.assertOneProblem(
-            problems, "sources.0.resource", "0001-event-sourced-workflow-state.md", "no file"
+            problems, "sources.0.resource", "0099-does-not-exist.md", "no file"
         )
 
     def test_the_second_source_is_reported_by_its_own_index(self):
@@ -83,7 +83,7 @@ class SourcesMustResolve(unittest.TestCase):
         self.assertOneProblem(problems, "sources.0.resource", "repo-relative")
 
     def test_a_directory_is_not_a_source(self):
-        problems = self.problems_for([{"resource": "docs/adr"}])
+        problems = self.problems_for([{"resource": "docs/concepts"}])
         self.assertOneProblem(problems, "sources.0.resource", "no file")
 
     # --- acceptances --------------------------------------------------------------

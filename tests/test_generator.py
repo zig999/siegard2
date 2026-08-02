@@ -196,8 +196,8 @@ class ShippedSelection(unittest.TestCase):
                 self.assertEqual(set(), a & b, f"{tree}: a file sits in both trees")
 
     def test_the_generators_own_contracts_stay_out_of_the_shipped_tree(self) -> None:
-        """A governed repository writes no specification, ADR, or framework component."""
-        for name in ("spec.json", "adr.json", "skill.json", "agent.json"):
+        """A governed repository writes no specification or framework component."""
+        for name in ("spec.json", "skill.json", "agent.json"):
             with self.subTest(schema=name):
                 self.assertFalse((SHIPPED_SCHEMAS / name).exists(), name)
                 self.assertTrue((GENERATOR_SCHEMAS / name).is_file(), name)

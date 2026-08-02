@@ -6,7 +6,7 @@ crossing a bounded context targets an interface. Each needs to see more than one
 why no boundary validator could ever have carried them.
 
 The base below is written by hand, and that is a change from how this suite used to work. While a
-deterministic script expanded a domain model, the input was the model — `docs/adr/0019` keeps no
+deterministic script expanded a domain model, the input was the model — this repository keeps no
 fixtures, and a tree invented here would have been one. There is no expansion now: the analysis
 writes by judgment, so a test cannot run it and compare bytes. What is left to assert is the
 *checker*, and a checker is asserted against inputs chosen to make it fire.

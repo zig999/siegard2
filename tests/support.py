@@ -8,7 +8,7 @@ unrelated to the framework.
 This module used to carry more. Every knowledge test followed one shape — copy the fixture,
 break exactly one thing, assert the validator names it — and the `KnowledgeCase` base class
 that did the copying lived here, beside the `validate_knowledge` import it called. Both went
-with `fixtures/`, per `docs/adr/0019-the-repository-keeps-no-fixtures.md`: there is no tree to
+with `fixtures/`: this repository keeps none, so there is no tree to
 copy and no shipped validator to run over one.
 
 What is left is what the four modules that still import this actually used — a root and a

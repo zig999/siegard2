@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [component, framework-source]
 generated: { by: claude-opus-5, at: 2026-07-29T20:54:56Z }
 sources:
-  - resource: docs/adr/0009-component-contracts-from-anthropic-documentation.md
-    title: Derive component contracts from Anthropic's documented constraints
+  - resource: schemas/skill.json
+    title: Skill frontmatter contract
   - resource: https://code.claude.com/docs/en/skills
     title: Extend Claude with skills (retrieved 2026-07-29)
 ---

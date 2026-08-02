@@ -15,7 +15,7 @@ A case shaped like a real downstream application need, used to exercise a framew
 [capability](capability.md).
 
 **This repository holds none.** `fixtures/` was removed by a maintainer's decision —
-`docs/adr/0019-the-repository-keeps-no-fixtures.md`. The term stays defined because
+This repository holds none. The term stays defined because
 `foundation/0005` R11 uses it normatively, naming a fixture as one of the four things that can
 exercise a capability, and a term a binding requirement uses needs a definition whether or not an
 instance exists.

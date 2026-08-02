@@ -40,9 +40,8 @@ which records the assembly and therefore cannot precede it.
 - Reject a hidden default: if an installed component behaves differently when a setting is absent,
   state that default in the component itself, not in the generator.
 - A fixture is optional evidence and never a gate. Nothing is withheld from the distribution for want
-  of one — `foundation/0005` R11, and `CLAUDE.md` **Scope**. This repository holds none;
-  `docs/adr/0019-the-repository-keeps-no-fixtures.md` records why, and the rule stays because it is
-  what keeps their absence from being read as a reason to withhold anything.
+  of one — `foundation/0005` R11, and `CLAUDE.md` **Scope**. This repository holds none, and the rule
+  stays because it is what keeps their absence from being read as a reason to withhold anything.
 
 `make dist` regenerates; `make dist-check` verifies. Reporting the first as if it were the second
 reports success on a defect.

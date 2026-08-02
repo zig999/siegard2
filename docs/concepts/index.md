@@ -10,13 +10,13 @@ interpretation waiting to drift.
 
 This bundle is a Siegard concept bundle and a valid OKF v0.2 bundle. The frontmatter contract is
 `schemas/concept.json`; the decision and its one divergence from OKF are recorded in
-`docs/adr/0005-okf-derived-concept-model.md`. Validate with `make validate`.
+`schemas/concept.json`. Validate with `make validate`.
 
 One concept per file. The filename is the concept `id` without its `concept.` prefix.
 
-Each concept's `status` lives in its own frontmatter and is not repeated here. `docs/adr/README.md` states
-when a concept crosses between the tiers: a concept becomes `accepted` when an artifact that binds uses the
-term normatively, and one cited only by a `proposed` specification stays `proposed`. A `proposed` concept
+Each concept's `status` lives in its own frontmatter and is not repeated here. A concept becomes
+`accepted` when an artifact that binds uses the term normatively, and one cited only by a `proposed`
+specification stays `proposed`. A `proposed` concept
 names a term without binding its definition — see [accepted](accepted.md). The rule governs every concept
 added from here on, and [scaffold](scaffold.md) is the first to exercise it.
 
@@ -27,9 +27,8 @@ things that use the term are `templates/` and a script, and `CLAUDE.md` **Where 
 implementation below the tiers that bind. It becomes `accepted` when a specification or a rule file uses it
 normatively — not when the scaffolds it names begin to work.
 
-What that decision changed, and what it did not, is worth being exact about. The condition
-`docs/adr/README.md` states for the crossing — a term used normatively by an artifact that binds — was
-already satisfied for the entries citing `foundation/0001-knowledge-object-driven-development.md`, and the
+What that decision changed, and what it did not, is worth being exact about. The condition for the
+crossing — a term used normatively by an artifact that binds — was already satisfied for the entries citing `foundation/0001-knowledge-object-driven-development.md`, and the
 promotion recorded a fact for those. It was not satisfied for the vocabulary of
 `foundation/0004-generation-and-reproducibility.md` and the framework specifications: those documents were
 accepted on the same authority and on the same day, with their own validation conditions open, so a

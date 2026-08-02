@@ -8,7 +8,8 @@ contract_version: concept/1
 tags: [governance, normative-source]
 generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 sources:
-  - resource: docs/adr/README.md
+  - resource: schemas/spec.json
+    title: Specification frontmatter contract
     title: Architecture decision records
 ---
 
@@ -21,5 +22,7 @@ An artifact with `status: proposed` records a decision under consideration and b
 carries no normative weight in the precedence order. A `proposed` artifact is not a weaker rule; it is
 not a rule.
 
-`docs/adr/README.md` defines the status vocabulary and the conditions for moving from `proposed` to
-`accepted`.
+The vocabulary is `proposed | accepted | superseded`, and it is closed: `schemas/spec.json` encodes it
+as an enum. Moving away from `proposed` is a maintainer's act or that of a deterministic approval
+mechanism this repository defines — never an agent's, and never a side effect of the artifact being
+written.

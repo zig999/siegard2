@@ -2,10 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/plugin.json",
   "title": "Claude Code plugin manifest",
-  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in docs/adr/0012-distribute-the-framework-as-a-claude-code-plugin.md: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. foundation/0008 R11 fixes what this record owns and what it does not: identity, description, version, and nothing the distribution manifest already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and foundation/0008 relies on no behaviour absent from the documentation on the date above.",
+  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in the decision to distribute as a Claude Code plugin: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. foundation/0008 R11 fixes what this record owns and what it does not: identity, description, version, and nothing the distribution manifest already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and foundation/0008 relies on no behaviour absent from the documentation on the date above.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["name", "description", "version"],
+  "required": [
+    "name",
+    "description",
+    "version"
+  ],
   "properties": {
     "name": {
       "type": "string",

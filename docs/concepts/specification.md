@@ -10,7 +10,6 @@ generated: { by: claude-opus-5, at: 2026-07-30T01:59:07Z }
 sources:
   - resource: schemas/spec.json
     title: Siegard specification frontmatter
-  - resource: docs/adr/README.md
     title: Architecture decision records
 ---
 

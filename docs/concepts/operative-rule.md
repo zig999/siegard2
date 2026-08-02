@@ -8,8 +8,6 @@ contract_version: concept/1
 tags: [governance, normative-source]
 generated: { by: claude-opus-5, at: 2026-07-30T11:18:24Z }
 sources:
-  - resource: docs/adr/README.md
-    title: Architecture decision records
   - resource: CLAUDE.md
     title: Siegard Code repository instructions
 ---

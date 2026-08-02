@@ -22,7 +22,7 @@ and never ship.
 
 A scaffold is not a [template](target-pack.md). The two were one word until the inventory of what the
 framework builds put them side by side, and the collision is the kind
-`docs/adr/0010-projection-names-the-graph-derived-artifact.md` exists to prevent: `projection` named two
+this bundle exists to prevent: `projection` named two
 referents once already.
 
 | | scaffold | template |

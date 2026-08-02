@@ -391,11 +391,13 @@ class SupersededContracts(unittest.TestCase):
         self.assertEqual(1, len(problems))
         self.assertIn("no migration registered", problems[0])
 
-    def test_an_entry_naming_no_successor_is_still_a_removal(self) -> None:
+    def test_an_entry_naming_no_successor_is_told_to_leave(self) -> None:
+        """It used to be told a removal is a breaking change and it must name a retirement. There is
+        no third state now: an entry no schema declares and nothing supersedes is simply removed."""
         locked = self.entry()
         del locked["distribution-manifest/1"]["superseded_by"]
         problems = cv.check_superseded("distribution-manifest/1", locked, self.SUCCESSOR)
-        self.assertIn("a removed contract is a breaking change", problems[0])
+        self.assertIn("Remove the entry", problems[0])
 
     def test_a_successor_no_schema_declares_is_reported(self) -> None:
         problems = cv.check_superseded("distribution-manifest/1", self.entry(), {})
@@ -435,62 +437,53 @@ class SupersededContracts(unittest.TestCase):
         self.assertEqual([], list(Draft202012Validator(schema).iter_errors(migrated)))
 
 
-class RetiredContracts(unittest.TestCase):
-    """Four contracts left with the vocabulary they spelled, and the record of them did not.
+class AContractWithNoSuccessorLeavesTheLock(unittest.TestCase):
+    """What the lock records, and what it stopped recording.
 
-    `docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md` retired `knowledge-object/5`,
-    `staged-knowledge-object/2`, `knowledge-intake-plan/7` and `domain-model/4`. A retired contract is
-    the third state `docs/adr/0020-retire-the-generation-contracts.md` defines: no schema declares it,
-    no successor replaces it, and demanding a migration would demand a function with no codomain.
+    It kept an entry for a contract no schema declared, marked `retired_by` and pointing at a decision
+    record — so a reader meeting an old version could tell a contract that had existed from one that
+    never did. The decision records are gone, and the marker went with the argument for it: this
+    repository keeps what binds, and a tombstone binds nothing.
 
-    What the lock keeps is the fact that each one shipped. Delete the entry and a contract a reader
-    meets in an old artifact becomes indistinguishable from one that never existed — and version
-    control holds the schema text, not the fact that it was real.
-
-    The hop tests that validated documents against these are gone rather than adapted. A test that
-    asserts conformance to a version nothing declares is asserting against nothing.
+    So the lock now holds a contract that is, never one that was. An entry whose schema left and whose
+    successor is absent is removed, and what it said is in version control.
     """
-
-    ADR = "docs/adr/0025-one-vocabulary-written-once-where-it-is-read.md"
-    RETIRED = ("knowledge-object/5", "staged-knowledge-object/2",
-               "knowledge-intake-plan/7", "domain-model/4")
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.lock = json.loads((GENERATOR_SCHEMAS / "contract-versions.json").read_text())["contracts"]
 
-    def test_each_is_recorded_as_retired_by_the_decision_that_removed_it(self) -> None:
-        for contract in self.RETIRED:
-            with self.subTest(contract=contract):
-                self.assertEqual(self.ADR, self.lock[contract].get("retired_by"))
+    def test_no_entry_carries_a_retirement_marker(self) -> None:
+        carrying = [name for name, entry in self.lock.items() if "retired_by" in entry]
+        self.assertEqual([], carrying, "the marker went with the records it pointed at")
 
-    def test_the_record_that_retired_them_exists(self) -> None:
-        """A retirement pointing at nothing states nothing."""
-        self.assertTrue((REPO_ROOT / self.ADR).is_file())
+    def test_the_mechanism_is_gone_from_the_checker(self) -> None:
+        """Left in the code, it would be a field nothing writes and one check still honours."""
+        source = (REPO_ROOT / "scripts" / "check_contract_versions.py").read_text()
+        self.assertNotIn('entry.get("retired_by")', source)
 
-    def test_none_of_them_names_a_successor(self) -> None:
-        """`retired_by` is not `superseded_by` with a softer name: there is nowhere to go."""
-        for contract in self.RETIRED:
-            with self.subTest(contract=contract):
-                self.assertNotIn("superseded_by", self.lock[contract])
+    def test_every_remaining_entry_is_declared_or_superseded(self) -> None:
+        """The invariant that replaces the third state: two ways to be in the lock, not three."""
+        declared = set(cv.contracts()[0])
+        for name, entry in sorted(self.lock.items()):
+            with self.subTest(contract=name):
+                self.assertTrue(
+                    name in declared or entry.get("superseded_by"),
+                    f"{name} is neither declared by a schema nor superseded by a later version",
+                )
 
-    def test_no_schema_file_declares_one(self) -> None:
-        for contract in self.RETIRED:
-            name = contract.split("/")[0] + ".json"
-            with self.subTest(schema=name):
-                self.assertFalse((SHIPPED_SCHEMAS / name).exists())
+    def test_a_superseded_entry_still_points_somewhere_real(self) -> None:
+        for name, entry in sorted(self.lock.items()):
+            successor = entry.get("superseded_by")
+            if successor:
+                with self.subTest(contract=name):
+                    self.assertIn(successor, self.lock, "a chain that ends nowhere is a dead pointer")
 
-    def test_the_hops_that_led_to_them_stay_registered(self) -> None:
-        """A holder of an older document can still read it forward to the version that was retired.
-
-        Retiring the endpoint does not unregister the path to it. What it removes is a *current*
-        contract to validate the result against, which is why the tests that did so are gone.
-        """
-        for hop in (("knowledge-object/4", "knowledge-object/5"),
-                    ("knowledge-intake-plan/6", "knowledge-intake-plan/7"),
-                    ("domain-model/3", "domain-model/4")):
-            with self.subTest(hop=hop):
-                self.assertIn(hop, MIGRATIONS)
+    def test_every_registered_hop_ends_at_a_contract_the_lock_holds(self) -> None:
+        """The converse: a migration to a version nothing records is a path to nowhere."""
+        for source, target in sorted(MIGRATIONS):
+            with self.subTest(hop=f"{source} -> {target}"):
+                self.assertIn(target, self.lock)
 
 
 class ImpactAnalysisFourToFive(unittest.TestCase):

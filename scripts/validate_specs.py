@@ -9,7 +9,7 @@ status, requirement ids that must be citable, concept links that must resolve, a
 acceptance order the set declares about itself.
 Frontmatter parsing is shared via scripts/frontmatter_lib.py.
 
-Three checks exist because a specification carries obligations an ADR does not:
+Three checks exist because a specification carries obligations a concept does not:
 
 - A requirement must be individually citable, so an impact artifact, a test, or an
   acceptance report can name the statement it satisfies or violates. Unnumbered prose
@@ -68,7 +68,7 @@ SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # as well would give every term a second home, which is what one authoritative definition per
 # concept forbids — and none of the six specifications has carried one since they were rewritten.
 REQUIRED_SECTIONS = ("## Scope", "## Requirements")
-# Required only while a specification is proposed, mirroring docs/adr/README.md: it
+# Required only while a specification is proposed: it
 # states what must hold before the specification binds, and an accepted one records
 # what satisfied it instead.
 PROPOSED_SECTION = "## Validation required before acceptance"
@@ -233,7 +233,7 @@ def check_spec_references(body: str, filenames: dict[str, str]) -> list[str]:
     """Every `foundation/NNNN` citation must name a specification that exists, by its real name.
 
     Both halves matter. An id nothing holds is a normative citation pointing at nothing,
-    which is the failure ADR-0010 recorded for a deleted concept source. A filename that
+    which is the failure this bundle met once, for a deleted concept source. A filename that
     disagrees with the id is the same defect after a rename: the reference still looks
     right, and following it lands on nothing.
     """

@@ -60,14 +60,6 @@ CASES: dict[str, dict[str, str]] = {
         "requirement": "A scaffolded specification MUST be filled in before it is proposed.",
         "acceptance_condition": "Someone replaced every placeholder with a decision.",
     },
-    "adr": {
-        "id": "0099",
-        "title": "Record one decision, and say what it costs",
-        "context": "A scaffold needs a worked example to be testable.",
-        "decision": "Ship this skeleton and require it to be filled in.",
-        "consequences": "An unfilled ADR is visibly unfilled rather than plausibly complete.",
-        "acceptance_condition": "Someone replaced every placeholder with a decision.",
-    },
     "concept": {
         "slug": "worked-example",
         "title": "worked example",

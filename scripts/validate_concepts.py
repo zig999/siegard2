@@ -50,7 +50,7 @@ def check_sources(data: dict) -> list[str]:
 
     What it catches is provenance rot: a concept outliving the artifact that minted it.
     the decision that `projection` names the graph-derived artifact records the instance that
-    demanded the check. the projection definition was sourced from an ADR that was later
+    demanded the check: the projection definition was sourced from an ADR that was later
     deleted, the dangling reference was replaced rather than reported, and the definition
     then drifted from what cited it while every file still validated on its own.
 

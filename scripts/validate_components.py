@@ -20,7 +20,7 @@ the ones a per-file JSON Schema cannot express:
 Frontmatter parsing is shared via scripts/frontmatter_lib.py.
 
 src/claude/ may not exist yet: the contract precedes the first component by design
-(docs/adr/0009). That state is reported and exits 0 — it is a declared commitment,
+That state is reported and exits 0 — it is a declared commitment,
 not a validation failure.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
@@ -44,7 +44,7 @@ SKILL_SCHEMA_PATH = REPO_ROOT / "schemas" / "skill.json"
 AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.json"
 
 # Documented guidance ("Keep SKILL.md under 500 lines"), made a hard limit here —
-# the rationale is recorded in docs/adr/0009-component-contracts-from-anthropic-documentation.md.
+# the reason is that Claude Code owns the vocabulary, per its own documentation.md.
 MAX_SKILL_BODY_LINES = 500
 
 HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.json"
