@@ -12,7 +12,7 @@ validated and known to have been recorded. A change made around it is neither, a
 touched nodes cannot say so — an empty set means either that nothing changed or that nothing came
 through here.
 
-**Three rules the door applies that the layers below do not.**
+**Four rules the door applies that the layers below do not.**
 
 *A node is written inside a change or not at all.* Which nodes a requirement moved is the question
 the change set exists to answer, and a write outside a change is a node that moved with nobody
@@ -22,6 +22,10 @@ recording it.
 generates source from it, so an invalid node is not a file to fix later — it is a generator input
 that either fails far from the cause or produces something nobody specified. Refusing at the write
 is the last point where the error still names the node that caused it.
+
+*A node is not deleted while anything still points at it.* The close gate would catch the
+orphaned reference regardless, so this is about when: refused at the delete, the graph is coherent
+after every operation, and a change abandoned halfway leaves a base somebody else can work in.
 
 *A change does not close while the graph does not hold together.* Closing clears the set, so a
 change allowed to close over a dangling reference or a containment loop takes with it the only
@@ -53,6 +57,7 @@ from pathlib import Path
 
 import change_set
 import check_knowledge
+import graph_query
 import node_io
 from change_set import ChangeError, discard_change, is_open, requirement_of, touched
 from node_io import NodeIOError
@@ -151,13 +156,21 @@ def edit_node(root: Path, node_id: str, frontmatter: dict, body: str) -> Path:
 
 
 def delete_node(root: Path, node_id: str) -> Path:
-    """Remove a node the graph holds.
+    """Remove a node the graph holds, refusing while anything still points at it.
 
-    Nothing here checks what still points at the node. A deletion that orphans a reference is
-    caught when the change closes, by the same sweep that catches everything else — and refusing
-    here instead would make the only legal order of work "unpick every reference first", which is
-    not how the removal of a node is arrived at. The change stays open until the references are
-    gone; the door is what will not let it close before then.
+    The close gate would catch an orphaned reference anyway, so refusing here is not about
+    catching it — it is about *when*. Refused at the delete, the graph is coherent after every
+    operation, and a change abandoned halfway leaves a base somebody else can still work in.
+    Allowed here and caught at the close, the graph is broken for the whole middle of the change,
+    and `discard_change` leaves it broken.
+
+    The order it imposes — deal with what points at the node, then remove it — is always
+    reachable. Deleting a scope means deleting or re-homing what sits inside it first, which is
+    the order that reads correctly anyway; renaming means creating the new identifier, repointing,
+    then removing the old, which is what a rename already is.
+
+    The refusal names every edge that arrives, so the work it asks for is listed rather than
+    hunted for.
     """
     _require_open(root)
     if not node_io.exists(root, node_id):
@@ -165,6 +178,13 @@ def delete_node(root: Path, node_id: str) -> Path:
             f"the graph holds no `{node_id}`, so there is nothing to delete. Recording a deletion "
             f"that did not happen would send whatever consumes the change set looking for a node "
             f"that was never there"
+        )
+    arriving = graph_query.references_to(root, node_id)
+    if arriving:
+        raise GraphEditError(
+            f"`{node_id}` is not deleted: {len(arriving)} edge(s) still arrive at it. Removing it "
+            f"now would leave every one of them naming a node the base does not hold.\n"
+            f"{graph_query.describe(arriving)}"
         )
     change_set.record(root, node_id)
     return node_io.remove(root, node_id)
