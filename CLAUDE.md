@@ -141,9 +141,9 @@ Everything else follows `/siegard-change` in full; when unclear, treat the chang
 - Record the inputs, outputs, evidence, and contract version needed to reproduce a decision.
 
 Determinism applies to control flow, validation, and recorded state. It does not require a model's
-semantic output to be byte-identical across runs. What the *product* must make deterministic —
-persisted workflow state, transition guards, boundary rejection — is `foundation/0005` R5 through R8 and
-R14 through R16, and is not restated here.
+semantic output to be byte-identical across runs. What the *product* must make deterministic — the
+same three, with an artifact that fails its contract rejected rather than repaired — is
+`foundation/0004` R8, R12, R13 and R19, and is not restated here.
 
 ## Security
 
