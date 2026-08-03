@@ -10,3 +10,5 @@ __pycache__/
 
 # Working material, never committed
 temp/
+__pycache__/
+.pytest_cache/
