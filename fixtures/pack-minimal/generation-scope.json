@@ -1,0 +1,81 @@
+{
+  "contract_version": "generation-scope/1",
+  "scope_id": "gs_1a2b3c4d",
+  "request_id": "cr_2b4f6a80",
+  "roots": [
+    "ko.rule.sales.proposal-validity"
+  ],
+  "members": [
+    {
+      "id": "ko.boundary.billing",
+      "type": "boundary",
+      "content_hash": "sha256:1aaa2e1dfe25e28ceda236722c2a44d00f102c7f5de8106eff4d3bcf7167bf99"
+    },
+    {
+      "id": "ko.boundary.sales",
+      "type": "boundary",
+      "content_hash": "sha256:ca5f96b99af1eb95399a3ec953f2e748188e3d47e1efc2573fb1208f3e28d5a3"
+    },
+    {
+      "id": "ko.boundary.sales.customer",
+      "type": "boundary",
+      "content_hash": "sha256:fdf7c2726f0d47f2ba944c4b7e5838dcc1b0c2897ed8d261bf9ba3e7c8ec354e"
+    },
+    {
+      "id": "ko.boundary.sales.proposal",
+      "type": "boundary",
+      "content_hash": "sha256:d6ea716daa5ced16ea541036837fb0ca012b5c02a0308f0722ee1a866794c76e"
+    },
+    {
+      "id": "ko.definition.sales.customer",
+      "type": "definition",
+      "content_hash": "sha256:c8830eab7b3c80fa194f71f825d8ee8de31b19fd7346abc2837e65cb577d1d4e"
+    },
+    {
+      "id": "ko.definition.sales.proposal",
+      "type": "definition",
+      "content_hash": "sha256:e356fba9941606a81445166ce3fc4f8a609ac08c3e4c14d7412eb0d3c0a349b9"
+    },
+    {
+      "id": "ko.definition.sales.proposal-already-issued",
+      "type": "definition",
+      "content_hash": "sha256:1dfed64dae096036455a16ff4215a2dab9f0b5e086fee1ee7664ac7885d60df9"
+    },
+    {
+      "id": "ko.definition.sales.proposal-expired",
+      "type": "definition",
+      "content_hash": "sha256:729aba21aaac76c523867eff45e3b79b1ac720d809cb0b09666a3371fd33344e"
+    },
+    {
+      "id": "ko.definition.sales.proposal-item",
+      "type": "definition",
+      "content_hash": "sha256:33c9368d8d74dc3ea70777e731f083758431be0c1e52fa70ec193df62b917bbd"
+    },
+    {
+      "id": "ko.definition.sales.proposal-not-issued",
+      "type": "definition",
+      "content_hash": "sha256:1d6d664249353f920a711d316b4352298ffa3bddd84ebc171388fb4bfe04a7d0"
+    },
+    {
+      "id": "ko.definition.sales.proposal-terminal",
+      "type": "definition",
+      "content_hash": "sha256:46a6b9ac7c41c281880761f47c67c77b9d2604729a6338e07b78928217bbe760"
+    },
+    {
+      "id": "ko.lifecycle.sales.proposal",
+      "type": "lifecycle",
+      "content_hash": "sha256:2582137e43ee636e30b48c3e5a9b8bdbbd18d37f11e04147c8d992a5ce96a238"
+    },
+    {
+      "id": "ko.rule.sales.proposal-expiration",
+      "type": "rule",
+      "content_hash": "sha256:0aa0be28e72db45e69367278599bae8a88a2ec41bf7f95b1b8005421fa239379"
+    },
+    {
+      "id": "ko.rule.sales.proposal-validity",
+      "type": "rule",
+      "content_hash": "sha256:f4decf90cc3200ae0ec23948d629eb6695b8429139785c1d5eb161277bb0c9e3"
+    }
+  ],
+  "frozen_digest": "sha256:4bc1d1b4359116e402bff87f8d868937bdd9a78b1b54d47a7bc387a18d3cc57d"
+}

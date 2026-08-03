@@ -1,0 +1,73 @@
+{
+  "contract_version": "placement-decision/1",
+  "decision_id": "pd_9e8d7c6b",
+  "scope_id": "gs_1a2b3c4d",
+  "pack": "fixture-minimal",
+  "entries": [
+    {
+      "ko": "ko.definition.sales.customer",
+      "class": "type",
+      "path": "src/sales/types/customer.ts"
+    },
+    {
+      "ko": "ko.definition.sales.proposal",
+      "class": "type",
+      "path": "src/sales/types/proposal.ts"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-already-issued",
+      "class": "type",
+      "path": "src/sales/types/proposal-already-issued.ts"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-expired",
+      "class": "type",
+      "path": "src/sales/types/proposal-expired.ts"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-item",
+      "class": "type",
+      "path": "src/sales/types/proposal-item.ts"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-not-issued",
+      "class": "type",
+      "path": "src/sales/types/proposal-not-issued.ts"
+    },
+    {
+      "ko": "ko.definition.sales.proposal-terminal",
+      "class": "type",
+      "path": "src/sales/types/proposal-terminal.ts"
+    },
+    {
+      "ko": "ko.lifecycle.sales.proposal",
+      "class": "conformance-test",
+      "path": "src/sales/conformance/proposal.test.ts"
+    },
+    {
+      "ko": "ko.lifecycle.sales.proposal",
+      "class": "state-machine",
+      "path": "src/sales/state/proposal.ts"
+    },
+    {
+      "ko": "ko.rule.sales.proposal-expiration",
+      "class": "conformance-test",
+      "path": "src/sales/conformance/proposal-expiration.test.ts"
+    },
+    {
+      "ko": "ko.rule.sales.proposal-expiration",
+      "class": "validator",
+      "path": "src/sales/validators/proposal-expiration.ts"
+    },
+    {
+      "ko": "ko.rule.sales.proposal-validity",
+      "class": "conformance-test",
+      "path": "src/sales/conformance/proposal-validity.test.ts"
+    },
+    {
+      "ko": "ko.rule.sales.proposal-validity",
+      "class": "validator",
+      "path": "src/sales/validators/proposal-validity.ts"
+    }
+  ]
+}

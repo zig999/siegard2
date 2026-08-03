@@ -48,8 +48,8 @@ Changed, because Siegard requires more than OKF does:
   contract rules require a consumer to branch on a known value, so the vocabulary is closed and grows
   only when a second type actually exists. It currently holds one value, `term`.
 - `id` is **required and stable**, and the filename must match it. OKF has no identifier field.
-- `contract_version` is **required**, so a consumer rejects an artifact it was not built to read rather
-  than inferring version from shape.
+- `contract_version` is **required**, for the reason `.claude/rules/contracts.md` gives. OKF has no such
+  field, so a consumer would have to infer version from shape.
 - `generated` is **required**. OKF leaves it optional; provenance is not optional here.
 - A **validator ships**, and the schema is the single authority it reads. OKF deliberately provides
   neither.
@@ -84,7 +84,8 @@ ever needed — `proposed` → `draft`, `accepted` → `stable`, `superseded` �
 
 ## Why this is accepted rather than proposed
 
-Unlike ADR-0001 through ADR-0003, this decision presupposes no unbuilt component, and it is exercised
+This decision presupposes no unbuilt component, and it is exercised
 in the same change that records it: ten concepts converted, a schema enforcing them, and a validator
-proven to reject a bad `type`, a missing `generated`, a wrong `contract_version`, a `superseded` concept
-without `superseded_by`, a duplicate `id`, and a filename that disagrees with its `id`.
+proven to reject a bad `type`, a missing `generated`, a wrong `contract_version`, a duplicate `id`, and a
+filename that disagrees with its `id`. A `superseded` concept naming no replacement was rejected too, until
+`superseded_by` was removed from the contract on 2026-07-31.

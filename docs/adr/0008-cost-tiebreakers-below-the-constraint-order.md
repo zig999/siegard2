@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: Rank cost and maintainability as tiebreakers below the constraint order
-status: proposed
+status: accepted
 contract_version: adr/1
 ---
 
@@ -9,10 +9,10 @@ contract_version: adr/1
 
 ## Context
 
-ADR-0004 fixes the decision order in `CLAUDE.md` at four criteria and explicitly drops two others. Its
-Consequences section states: "Two other criteria were also dropped as non-binding: maintainability and
-lower context cost. They are real concerns and belong in review, but they never override correctness,
-contracts, determinism, or traceability, so listing them as tiebreakers overstated their force."
+ADR-0004 fixed the decision order at four criteria and explicitly dropped two others. Its Consequences
+section stated: "Two other criteria were also dropped as non-binding: maintainability and lower context
+cost. They are real concerns and belong in review, but they never override correctness, contracts,
+determinism, or traceability, so listing them as tiebreakers overstated their force."
 
 That argument answers a *ranking* proposal, where a fifth criterion sits below the fourth and could in
 principle be traded against it. It does not answer a second tier that applies only among options which
@@ -31,62 +31,66 @@ the consumer's context window, an expensive outcome is a real defect.
 
 ## Decision
 
-Two groups instead of one list.
+The ranking carries two groups instead of one list, and `CLAUDE.md` **Decision order** is the operative
+authority for both groups and for how they interact. This ADR does not reproduce either group.
 
-A valid option must preserve, in order:
+What this record holds is the reasoning that rule cannot carry.
 
-1. correctness and safety;
-2. explicit, testable contracts and stated compatibility guarantees;
-3. deterministic control flow, validation, and state;
-4. traceability and reproducibility.
+A tier beneath the constraints cannot weaken them, because no option arrives there until every constraint
+is already met. That is precisely what distinguishes this from the ranking proposal ADR-0004 rejected,
+where a fifth criterion sat beside the fourth and could be traded against it. The rejection was correct
+about ranking and silent about tiering, and this ADR fills that silence rather than reversing a judgment.
 
-Among options that satisfy all four, prefer, in order:
+Recoverability and diagnosability were kept out of the second tier deliberately, and that was the
+substantive risk in admitting a tier at all. Something nobody can recover or diagnose is unsafe, which
+places it in the first group; filing it among tiebreakers would have made the most important property
+here the most negotiable one.
 
-1. the smallest sufficient design;
-2. lower runtime and context cost;
-3. easier testing, recovery, and maintenance.
+## How the conflict with ADR-0004 was resolved
 
-A tier-two criterion never settles a question tier one has already settled, and never licenses giving up
-a constraint. Recoverability and diagnosability do not belong to tier two: an artifact nobody can
-recover or diagnose is a safety problem, and it is criterion 1.
+This reverses one sentence of an accepted ADR. Superseding ADR-0004 wholesale would have been wrong: it
+would have dragged an unrelated and working decision — the criticality-tiered schema requirement —
+through a restatement.
 
-## Conflict with ADR-0004
+Three routes were open. A maintainer took the first: revise rather than supersede, leaving ADR-0004
+accepted for its artifact-contract decision. That revision is recorded in prose on both sides — this
+record names what it reverses, and ADR-0004 cites this id at the point of the change.
 
-This reverses one sentence of an accepted ADR, and does so deliberately. It restores exactly the two
-criteria ADR-0004 dropped, in exactly the form — tiebreakers — that its Consequences section rejects.
-
-It does not touch ADR-0004's other decision, the criticality-tiered schema requirement. Superseding
-ADR-0004 wholesale would therefore be wrong: it would drag an unrelated and working decision through a
-restatement.
-
-`CLAUDE.md`'s **Decision order** section is unchanged by the change that recorded this ADR. Under the
-conflict protocol, an agent does not merge or choose between contradictory statements at equal
-precedence. Resolution requires a maintainer choosing one of:
-
-1. accept this ADR and amend ADR-0004's Consequences to cite it, leaving ADR-0004 accepted for its
-   artifact-contract decision — the smallest resolution, and one the status vocabulary does not yet
-   describe;
-2. supersede ADR-0004 with an ADR restating both decisions, at the cost of duplicating the tier
-   definitions;
-3. reject this ADR, and record why the inconsistency with the 200-line cap is acceptable.
+The two rejected routes are recorded because a reader should see what the choice cost. Superseding
+ADR-0004 would have duplicated the contract tiers into a new record. Rejecting this ADR would have
+required recording why the inconsistency with the 200-line cap is acceptable, and no such reason was
+found.
 
 ## Consequences
 
 - Two equally correct designs become comparable. "Smallest sufficient" gains a stated basis instead of
   being implied by the existing prohibition on speculative generalization.
-- A reviewer gains vocabulary for rejecting an over-built but correct design, which is currently
+- A reviewer gains vocabulary for rejecting an over-built but correct design, which was previously
   unrejectable on any stated ground.
 - Cost: the second tier is a tiebreaker, not a test. Two readers can disagree about which design is
   smallest without either violating a constraint, and the tier does not make that choice mechanical.
   It bounds the argument rather than settling it.
-- If the maintainer takes route 1 above, the ADR vocabulary gains an amendment relation, and
-  `schemas/adr.v1.json` gains the field that makes the relation validatable. Route 2 needs neither, and
-  costs a duplicated decision instead.
+- Cost: a reader of ADR-0004 must follow its prose citation of this record to know that one sentence of
+  what they are reading has been reversed. Nothing validates that citation, so it can rot unnoticed.
 
-## Validation required before acceptance
+## What satisfied acceptance
 
-1. a maintainer resolves the conflict with ADR-0004 by one of the three routes above;
-2. `CLAUDE.md`'s **Decision order** section is rewritten in the same change, since it currently states
-   ADR-0004's four-criterion form and would otherwise contradict this decision;
-3. the amendment or supersession relation is recorded in frontmatter, not only in prose, so
-   `make validate` can decide it.
+A maintainer accepted this ADR on 2026-07-30. All three conditions it set were met first:
+
+1. a maintainer resolved the conflict with ADR-0004 by the amendment route rather than by supersession;
+2. `CLAUDE.md` **Decision order** carries the two-group form, so it no longer states the four-criterion
+   version this ADR revises;
+3. the relation was in frontmatter as `amends: "0004"`, not only in prose, so `make validate` decided it
+   rather than a reader inferring it — and ADR-0004 cites the amending id at the point of the change,
+   which the validator also checked. That field was removed on 2026-07-31; the prose citation on both
+   sides is what remains, and nothing checks it.
+
+Acceptance changes one thing beyond this record's own status: the amendment now **binds**. ADR-0004 stays
+`accepted` for its artifact-contract decision, and the sentence of its Consequences that dropped
+maintainability and context cost is reversed in force rather than merely annotated. `CLAUDE.md` **Decision
+order** was already carrying the amended rule; it now carries it with a binding record behind it instead of
+on its own authority.
+
+This ADR was also the only one ever to declare `amends`. The relation was removed on 2026-07-31 as
+ceremony carried for a single case — which is the cost this record's own Consequences section had
+already named.

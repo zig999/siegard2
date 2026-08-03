@@ -37,7 +37,9 @@ The change is complete only when these agree. Name any that do not:
 - the generated distribution reflects the source;
 - the documentation describes the current behavior, not the previous one.
 
-## 3. Check authority placement
+## 3. Check where authority landed
+
+`CLAUDE.md` **Where authority lives** is the rule; this step is when to apply it.
 
 - Does any rule introduced by this change now exist in two places? Remove the duplicate; keep the
   higher-level source.

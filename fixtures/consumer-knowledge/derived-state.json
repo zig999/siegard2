@@ -1,0 +1,51 @@
+{
+  "attempt_limit": 3,
+  "attempts": 1,
+  "degradations": [
+    {
+      "detail": "budget_exhausted on cp_5c7d9e01: expansion stopped at the caller's 12-object budget with 16 of 28 objects unread",
+      "seq": 3
+    }
+  ],
+  "history": [
+    {
+      "outcome": "recorded",
+      "phase": "change-request",
+      "seq": 1
+    },
+    {
+      "outcome": "update",
+      "phase": "impact-analysis",
+      "seq": 2
+    },
+    {
+      "outcome": "degraded",
+      "phase": "context-resolution",
+      "seq": 3
+    },
+    {
+      "outcome": "recorded",
+      "phase": "specification-delta",
+      "seq": 4
+    },
+    {
+      "outcome": "updated",
+      "phase": "implementation",
+      "seq": 5
+    },
+    {
+      "outcome": "passed",
+      "phase": "validation",
+      "seq": 6
+    },
+    {
+      "outcome": "accepted",
+      "phase": "acceptance",
+      "seq": 7
+    }
+  ],
+  "phase": "acceptance",
+  "seq": 7,
+  "status": "accepted",
+  "workflow_id": "wf_cancelled-order-not-billable"
+}

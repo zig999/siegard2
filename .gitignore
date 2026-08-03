@@ -7,3 +7,6 @@ CLAUDE.local.md
 
 # Python bytecode from running the validators
 __pycache__/
+
+# Working material, never committed
+temp/

@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [packaging, source, scope]
 generated: { by: claude-opus-5, at: 2026-07-29T18:50:25Z }
 sources:
-  - resource: docs/adr/0006-separate-development-environment-from-framework-source.md
-    title: Separate the development environment from distributable framework source
+  - resource: CLAUDE.md
+    title: Siegard Code repository instructions
 ---
 
 # framework source
@@ -22,4 +22,5 @@ Siegard and never ships; `src/claude/` holds what ships and is inert in this rep
 that would be installed into a target repository belongs in framework source from the moment it is
 first authored — a [capability](capability.md) has no other origin.
 
-`src/claude/` does not exist yet: no distributable component has been authored.
+`src/claude/` holds two components as of 2026-07-31 — the `concept-author` agent and the
+`knowledge-change` skill — and no generator reads them yet, so both are inert here.

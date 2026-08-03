@@ -17,4 +17,4 @@ A guard must be deterministic and testable — decidable by a script or hook rat
 judgment. A guard that requires interpreting prose is not a guard; it is a suggestion, and two runs
 will disagree.
 
-Guards read [projection](projection.md) state, not conversation history.
+Guards read [workflow state](workflow-state.md), not conversation history.

@@ -1,7 +1,7 @@
 ---
 id: "0009"
 title: Derive component contracts from Anthropic's documented constraints
-status: proposed
+status: accepted
 contract_version: adr/1
 ---
 
@@ -100,13 +100,28 @@ them into `.claude/rules/claude-code-authoring.md` when the first components exe
 - The contracts encode a snapshot. The retrieval date is recorded so staleness is a checkable
   fact rather than a suspicion; nothing yet forces re-verification, and that gap stays open until
   a mechanism needs it.
-- ADR-0003's component taxonomy names "commands" as a class. That ADR is `proposed` and binds
-  nothing; when it is revisited for acceptance, its taxonomy must reflect the merge recorded here.
+- Any later decision about component classes must reflect the commands-into-skills merge recorded
+  here, rather than reintroducing a command class the harness no longer has.
 - Two enforcement gaps are deliberate: the validator checks structure, not that a component works
   (fixtures and evals own that), and nothing verifies `src/claude/` against the live documentation
   continuously (re-verification happens at contract bumps).
 
-## Validation required before acceptance
+## What satisfied acceptance
+
+Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
+its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
+because they are the evidence this document still owes and removing them on acceptance would turn an open
+debt into a silent one.
+
+What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
+document, so a change to a requirement is a breaking change owing a migration path and a migration test
+rather than a revision — and the first component built against it is the thing most likely to demand
+exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
+evidence, with the requirements its three unmet conditions covered moved out to
+`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
+available and was not taken here.
+
+### Conditions recorded before acceptance, still outstanding
 
 1. The first skill and the first agent under `src/claude/` pass `scripts/validate_components.py`,
    and at least one deliberately malformed component is shown to fail it.

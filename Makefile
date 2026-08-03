@@ -7,27 +7,70 @@
 # verify: a check that repairs what it was meant to detect reports success on a
 # defect. Verification of the distribution is `dist-check`.
 
-.PHONY: validate test dist dist-check check
+.PHONY: validate knowledge test dist dist-check check
 
 # Every validator runs even when an earlier one fails: a report that names one
 # gap and hides the rest is the failure mode this repository is built against.
+# Ordered by the precedence in CLAUDE.md: specifications, then ADRs, then the
+# schema-derived layers.
 validate:
 	@fail=0; \
-	python3 scripts/validate_concepts.py || fail=1; \
+	python3 scripts/validate_specs.py || fail=1; \
 	python3 scripts/validate_adrs.py || fail=1; \
+	python3 scripts/check_contract_versions.py || fail=1; \
+	python3 scripts/validate_concepts.py || fail=1; \
 	python3 scripts/validate_components.py || fail=1; \
+	python3 scripts/validate_artifacts.py || fail=1; \
+	python3 scripts/validate_knowledge.py || fail=1; \
+	python3 scripts/project_knowledge.py --check || fail=1; \
+	python3 scripts/measure_ontology.py --check || fail=1; \
+	python3 scripts/replay_workflow.py --check || fail=1; \
+	python3 scripts/verify_judged.py --run fixtures/generation-run/run.json || fail=1; \
+	python3 scripts/check_capabilities.py || fail=1; \
 	exit $$fail
 
-test:
-	@echo "test: no framework test suite exists yet — see docs/bootstrap.md" >&2
-	@exit 1
+# `check_capabilities.py` runs last in the chain because it reads the committed
+# distribution: specs/0006 R17 derives each capability's status from whether the
+# distribution installs it and whether a fixture exercises it, and both facts are
+# only available once `make dist` has produced a manifest to compare against.
+#
+# `check_contract_versions.py` sits with the schema tier because it validates the contracts
+# every validator below it loads. Its polarity is inverted relative to the derived-tree
+# checks: it verifies by default and rewrites only under `--update`, which is deliberately
+# absent from this target. A lock regenerated to silence a mismatch discards the only record
+# that a contract moved.
+#
+# The knowledge validator is wired above, as specs/0003 R37 requires. Both derived
+# trees are verified rather than regenerated here: `--check` compares and mutates
+# nothing, so `validate` stays safe to run on a dirty tree. Regeneration is
+# `make knowledge`.
+#
+# Nothing in `validate` gates on a figure. `measure_ontology.py --check` verifies
+# that the recorded R52 measurement matches the fixture, not that any value in it
+# clears a threshold: spec 0002 R8 and spec 0001 R25 both forbid the latter.
+#
+# `replay_workflow.py --check` replays every workflow fixture through the real guard
+# and compares the result against the committed log and derived state. It is verified
+# and not regenerated here for the same reason as the two trees above. Regeneration is
+# `python3 scripts/replay_workflow.py`, which has no target: CLAUDE.md **Commands**
+# fixes the canonical entry points, and only the maintainer changes that file.
+knowledge:
+	python3 scripts/project_knowledge.py
+	python3 scripts/measure_ontology.py
 
+test:
+	python3 -m unittest discover -s tests -t .
+
+# `dist` regenerates dist/.claude/ from src/claude/, schemas/, and the executables
+# scripts/generate_dist.py selects. `dist-check` regenerates into a temporary tree and
+# compares, and additionally holds the committed tree to the invariants specs/0008 states
+# about the output itself. Both layers matter: a comparison alone cannot catch a generator
+# that is consistently wrong, because it would produce the same defect twice and report
+# agreement.
 dist:
-	@echo "dist: no generator exists yet — see docs/adr/0002-generated-distribution.md" >&2
-	@exit 1
+	python3 scripts/generate_dist.py
 
 dist-check:
-	@echo "dist-check: no generator exists yet, so there is no committed distribution to compare against — see docs/adr/0002-generated-distribution.md" >&2
-	@exit 1
+	python3 scripts/verify_dist.py
 
 check: validate test dist-check

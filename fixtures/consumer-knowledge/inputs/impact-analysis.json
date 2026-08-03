@@ -1,0 +1,12 @@
+{
+  "contract_version": "impact-analysis/1",
+  "analysis_id": "ia_5c7d9e01",
+  "request_id": "cr_2b4f6a80",
+  "producer": "impact-analyst",
+  "verdict": "update",
+  "implicated": [
+    { "id": "sales.order", "kind": "knowledge-object" },
+    { "id": "lifecycle.order", "kind": "knowledge-object" },
+    { "id": "billing.invoice", "kind": "knowledge-object" }
+  ]
+}

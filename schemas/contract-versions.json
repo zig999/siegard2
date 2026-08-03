@@ -1,0 +1,101 @@
+{
+  "$comment": "Constraint digest per contract version, written by scripts/check_contract_versions.py --update. A digest covers the assertion vocabulary only: annotation keywords are stripped, so clarifying a description is not a version bump and changing what a schema accepts is. Regenerating this file to silence a mismatch discards the only record that a contract moved.",
+  "contracts": {
+    "adr/1": {
+      "schema": "adr.v1.json",
+      "constraint_digest": "sha256:925b59d935c94420d523a10ce8e87421bbccc0a83e392f13c258ad42ae52e32e"
+    },
+    "agent/1": {
+      "schema": "agent.v1.json",
+      "constraint_digest": "sha256:2764414c5851b79eab258afbe71bc1ccdcb4e23cdd1e0aeb9f72334896ebf252"
+    },
+    "artifact-class/1": {
+      "schema": "artifact-class.v1.json",
+      "constraint_digest": "sha256:e388b8559071f085c342f16dc6cc6fd1cb9dab85a1dd65600ef3ef86927d0fd3"
+    },
+    "concept-authoring-result/1": {
+      "schema": "concept-authoring-result.v1.json",
+      "constraint_digest": "sha256:2ea8d966552f63c87d2cc76befd92b5acd5cd69ecd3ae76fcaf6deb474c21cf0"
+    },
+    "concept/1": {
+      "schema": "concept.v1.json",
+      "constraint_digest": "sha256:12a0eaed5a25a3fc4264c4712e0807e6842d53d62b117ebefb2140c6c331a54a"
+    },
+    "context-package/1": {
+      "schema": "context-package.v1.json",
+      "constraint_digest": "sha256:454b846c424d77b1134f2771c5ad481d6ad7f6de09f3dafa5c049f5a3853b7d6"
+    },
+    "distribution-manifest/1": {
+      "schema": "distribution-manifest.v1.json",
+      "constraint_digest": "sha256:bc87c97c564f4a5af3305835525b39404080510d363c4351a00e01f01f294109"
+    },
+    "generation-manifest/1": {
+      "schema": "generation-manifest.v1.json",
+      "constraint_digest": "sha256:2a53d070c947a86e5063228bc0ff37441d53dde37d0976cba7122a09fcfec782"
+    },
+    "generation-plan/1": {
+      "schema": "generation-plan.v1.json",
+      "constraint_digest": "sha256:8c41ceb345a8b15c10956692b6ffc34b6097a2e77514a52ce6926d64f2bd0ef9"
+    },
+    "generation-scope/1": {
+      "schema": "generation-scope.v1.json",
+      "constraint_digest": "sha256:61953471aa0775403dd9e64af729fca71abf943543129574dfd262826a471361"
+    },
+    "hook/1": {
+      "schema": "hook.v1.json",
+      "constraint_digest": "sha256:73627fd421ef00150ce17b57888b939f66c2d106caabc896ff2b7b34b133291c"
+    },
+    "impact-analysis/1": {
+      "schema": "impact-analysis.v1.json",
+      "constraint_digest": "sha256:d2a371c8a167f212314ab74fcb80f89e6af5781b4e13929c4083a0af7431c5e4"
+    },
+    "knowledge-authoring-result/1": {
+      "schema": "knowledge-authoring-result.v1.json",
+      "constraint_digest": "sha256:69bf72be9dcbee4f3615e5df77127f3eb145856b690b0393f8fefbfc8e4029d8"
+    },
+    "knowledge-decision/1": {
+      "schema": "knowledge-decision.v1.json",
+      "constraint_digest": "sha256:d183715b3132167facd6aa00722b844a208315605be60b5d89063cadaafd481a"
+    },
+    "knowledge-graph/1": {
+      "schema": "knowledge-graph.v1.json",
+      "constraint_digest": "sha256:8e2670c7e92b0b53164a66fcc50db320b59f4a90690726cfe87d06d7480cc684"
+    },
+    "knowledge-object/1": {
+      "schema": "knowledge-object.v1.json",
+      "constraint_digest": "sha256:6d4523381bbd0d545df018ae5a789e6db2f9f8c2dc70e00fbce02f72dfa18628"
+    },
+    "pack-declaration/1": {
+      "schema": "pack-declaration.v1.json",
+      "constraint_digest": "sha256:3e37865778951d0a7bc9bc2029921ddc29aff714aaa35741cf8bec2c6a28eaa1"
+    },
+    "placement-decision/1": {
+      "schema": "placement-decision.v1.json",
+      "constraint_digest": "sha256:25bc5a671e7b9bec3aa6da2e8ca547274b6d166daf3d9455cbe422879f62fd40"
+    },
+    "plugin/1": {
+      "schema": "plugin.v1.json",
+      "constraint_digest": "sha256:0324abe009ca521aeee0b612bb3c83cc8c0a7df711c33ea61e114647ba2a1ba5"
+    },
+    "skill/1": {
+      "schema": "skill.v1.json",
+      "constraint_digest": "sha256:aaaaf5e5baa6b8fb295177e00b1f007fc0464fb758944687dd510ab114a3ed91"
+    },
+    "spec/1": {
+      "schema": "spec.v1.json",
+      "constraint_digest": "sha256:ca8550904c512de7f76b22c03b48f9572698473920f4b939b377eaae41fc0a06"
+    },
+    "specification-delta/1": {
+      "schema": "specification-delta.v1.json",
+      "constraint_digest": "sha256:6da3feea9a0a64bbf7e164c1a08e8c23a4e235e91765fe5aca28ff543d1c1365"
+    },
+    "validation-evidence/1": {
+      "schema": "validation-evidence.v1.json",
+      "constraint_digest": "sha256:9bd4db1e7714746c21ad09fc938d61783ba8955dcef0195272bcec85110172ab"
+    },
+    "workflow-event/1": {
+      "schema": "workflow-event.v1.json",
+      "constraint_digest": "sha256:decf0097f4e702240a8312b54bbfd67cf64f8f8802ee9d49b3ceef4e45749756"
+    }
+  }
+}

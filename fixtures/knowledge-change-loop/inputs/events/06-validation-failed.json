@@ -1,0 +1,22 @@
+{
+  "contract_version": "workflow-event/1",
+  "event_id": "ev_0000000000a6",
+  "workflow_id": "wf_dunning-term",
+  "seq": 6,
+  "occurred_at": "2026-07-30T12:25:00Z",
+  "producer": "knowledge-change",
+  "phase": "validation",
+  "outcome": "failed",
+  "evidence": [
+    {
+      "check": "scripts/validate_concepts.py knowledge/concepts",
+      "result": "fail",
+      "detail": "knowledge/concepts/dunning.md: sources: entry 0 resolves to no file — 'knowledge/lifecycle/invoice.md' does not exist"
+    },
+    {
+      "check": "grep -c 'dunning' knowledge/concepts/index.md",
+      "result": "pass",
+      "detail": "1 — the index row the agent added is present, so the failure is isolated to the sources field"
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/distribution-manifest.v1.json",
+  "title": "Siegard distribution manifest",
+  "description": "Contract for siegard-manifest.json at the plugin root. specs/0008 R11 makes this one of exactly two records an installation carries, and fixes what it owns: everything except the identity, description, and version that plugin.json holds. R12 lists the fields, and this contract holds exactly those: no timestamp, because a value the generator minted would differ between two runs over identical source and R4 calls that a defect. R13 makes it the only thing a consumer reads besides the plugin version, so nothing here may require inspecting a component's contents to interpret. R14 makes it the provenance record an upgrade diffs against, which is why every installed path carries a digest: an upgrade that could not tell a consumer's edit from a framework change would have to overwrite or guess, and R17 forbids both. R15 keeps it distinct from the generation manifest, which answers where a generation put things rather than what is installed here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "source_revision",
+    "generator_version",
+    "installed",
+    "schemas",
+    "capabilities",
+    "overrides"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "distribution-manifest/1",
+      "description": "A consumer rejects a manifest it was not built to read rather than inferring version from shape."
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 1,
+      "description": "specs/0008 R12. The framework source commit this distribution was built from. Reproducing a distribution needs the source it came from; a manifest that named only a version could not distinguish two builds of the same version."
+    },
+    "generator_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "specs/0008 R4 makes the output a function of the framework source AND the generator, so R12 records both. A difference in output traced to neither would be the nondeterminism R4 calls a defect."
+    },
+    "installed": {
+      "type": "array",
+      "minItems": 1,
+      "description": "specs/0008 R12: every installed path. R5 requires each to originate in framework source, and R14 makes this the state an upgrade diffs against.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "source",
+          "digest"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^[^/][^\\\\]*$",
+            "description": "Plugin-root-relative path of the installed file. Never absolute and never traversing: a manifest entry is also an instruction to an installer, and one naming a path outside the plugin root would be an instruction to write there."
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The repository-relative framework source this file came from. specs/0008 R5: no file is introduced that has no source. A generated file with no source would be one nothing can regenerate."
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "Content hash of the installed file. specs/0008 R17 requires an upgrade to detect a file the consumer changed and stop rather than overwrite it; without a recorded digest there is nothing to detect it against."
+          }
+        }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "description": "specs/0008 R12: the contract version of every schema shipped. A consumer selects behaviour on these rather than on what a schema file happens to contain.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "contract_version",
+          "path"
+        ],
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*/\\d+$",
+            "description": "The `<name>/<N>` a conforming instance declares."
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Plugin-root-relative path of the shipped schema."
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "specs/0008 R12: each capability's lifecycle status. specs/0006 R17 requires that status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release \u2014 this field is where a consumer observes it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "class",
+          "status",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The capability's stable identifier, as the harness invokes or resolves it."
+          },
+          "class": {
+            "enum": [
+              "skill",
+              "specialized-agent",
+              "hook",
+              "script",
+              "template",
+              "target-pack"
+            ],
+            "description": "specs/0006 R1 closes this set. A component fitting none of them is not shipped until a class for it exists."
+          },
+          "status": {
+            "enum": [
+              "proposed",
+              "active",
+              "deprecated",
+              "retired"
+            ],
+            "description": "specs/0006 R14. `proposed` ships nothing, so it never appears here; `retired` is absent from the distribution, so it never appears here either. The enum is complete rather than reduced because R15 requires the transition through `deprecated` to be expressible."
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Plugin-root-relative path of the component that carries this capability."
+          }
+        }
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "description": "specs/0008 R12: every declared override. specs/0011 R16 states the case this exists for \u2014 a consumer replaces a shipped template by declaring it here, so a later upgrade can tell a customization from a divergence and stop rather than overwrite. Empty in a freshly generated distribution: the framework declares none, and only an installation acquires them.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Plugin-root-relative path the consumer replaced."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why it was replaced. An override with no stated reason is indistinguishable from a divergence nobody meant, which is the pair specs/0008 R17 exists to keep apart."
+          }
+        }
+      }
+    }
+  }
+}

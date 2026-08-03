@@ -1,0 +1,12 @@
+{
+  "contract_version": "concept-authoring-result/1",
+  "producer": "concept-author",
+  "state": "authored",
+  "term": "dunning",
+  "concept_id": "concept.dunning",
+  "concept_path": "knowledge/concepts/dunning.md",
+  "files_changed": [
+    "knowledge/concepts/dunning.md",
+    "knowledge/concepts/index.md"
+  ]
+}

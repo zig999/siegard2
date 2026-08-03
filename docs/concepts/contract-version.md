@@ -8,8 +8,8 @@ contract_version: concept/1
 tags: [contracts, compatibility]
 generated: { by: claude-opus-5, at: 2026-07-29T16:33:28Z }
 sources:
-  - resource: docs/adr/0004-ai-first-artifact-contracts.md
-    title: Make inter-agent artifacts machine-consumable
+  - resource: .claude/rules/contracts.md
+    title: Inter-agent artifact contracts
 ---
 
 # contract version

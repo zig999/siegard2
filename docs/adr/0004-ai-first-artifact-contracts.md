@@ -20,20 +20,21 @@ document is routinely ignored, the document's authority degrades as a whole.
 
 ## Decision
 
-Artifacts crossing an agent or phase boundary must be consumable without human interpretation:
-named producer and consumer, valid states and transitions and failure outcomes, stable identifier,
-provenance for material decisions, and validation at the boundary before consumption.
+Two decisions, and the operative authority for each lives outside this record.
 
-The schema requirement is **tiered by criticality**, not universal: an artifact that carries control
-flow or becomes persisted state requires a versioned schema validated at the boundary; an artifact that
-only explains something to a human does not.
+`.claude/rules/contracts.md` governs any artifact crossing an agent or phase boundary: what such an
+artifact must carry, when a versioned schema is required and when prose is the correct form, and a worked
+example of each. This ADR deliberately does not reproduce that content — two copies of a table diverge,
+and the rule is the copy that loads while someone is authoring an artifact.
 
-`.claude/rules/contracts.md` is the single operative authority for the tier definitions and carries a
-worked example. This ADR deliberately does not restate the tiers — two copies of a table diverge, and
-the rule is the copy that loads when someone is authoring an artifact.
+`CLAUDE.md` **Decision order** governs how competing designs are ranked. This ADR fixed its original
+four-criterion form. **ADR-0008 revises that form**, admitting a second tier of tiebreakers beneath the
+constraints, and `CLAUDE.md` carries the revised version rather than the one this ADR first recorded. That
+revision reverses one sentence of **Consequences** below, which is the sentence that dropped
+maintainability and context cost; every other decision here stands.
 
-This ADR also fixes the repository's decision order, in `CLAUDE.md`: correctness and safety, then
-explicit testable contracts, then deterministic control flow and validation, then traceability.
+What this record holds that has no other home is why human convenience was excluded from the ranking at
+all, and what that exclusion costs.
 
 ## Consequences
 
@@ -46,10 +47,12 @@ explicit testable contracts, then deterministic control flow and validation, the
   prose companion for the reader; never let control flow depend on it.
 - Two other criteria were also dropped as non-binding: maintainability and lower context cost. They are
   real concerns and belong in review, but they never override correctness, contracts, determinism, or
-  traceability, so listing them as tiebreakers overstated their force.
+  traceability, so listing them as tiebreakers overstated their force. **ADR-0008 reverses this
+  sentence**: it restores both criteria as a second tier that cannot override anything, because no option
+  reaches that tier until every constraint is already satisfied.
 
 ## Why this one is accepted
 
-Unlike ADR-0001 through ADR-0003, this decision presupposes no unbuilt component. It governs how any
-artifact is authored, starting with the next one, and it is falsifiable immediately: an inter-agent
-artifact either carries a versioned schema at a control-flow boundary or it does not.
+This decision presupposes no unbuilt component. It governs how any artifact is authored, starting with
+the next one, and it is falsifiable immediately: an inter-agent artifact either carries a versioned
+schema at a control-flow boundary or it does not.
