@@ -51,14 +51,18 @@ Collect these before running anything. A missing input is a stop, not a default:
 ## The order
 
 ```
-analyse and write → impact → check → seal → stop
+analyse → write through the door → impact → check → seal → stop
 ```
 
-### 1. Delegate the analysis, which writes the objects
+### 1. Delegate the analysis, which produces the objects
 
 One delegation to `domain-modeler`, with the request, the record id, the knowledge root, the stamp,
-and whatever material the request references. It writes one object per construct and returns an
-`analysis-record/1` naming what it wrote and what it refused to decide.
+and whatever material the request references. It returns an `analysis-record/2` carrying one entry per
+construct — the identifier, the whole frontmatter, and the body — plus what it refused to decide.
+
+**It writes nothing, and holds no grant that could.** The objects travel in the record and you are
+what puts them on disk. A producer that cannot reach the base cannot be trusted to have stayed inside
+its bounds by self-report, because it was never able to leave them.
 
 It is the one capability in this framework that is supposed to invent: a request describes a problem,
 and deciding the aggregate boundaries, the context boundaries and the invariants is what it produces.
@@ -70,7 +74,44 @@ repaired: a design you patched is a design nobody produced, and its `origin` fie
 lying about who decided what. A record whose `state` is `blocked` is a finished run with a negative
 result and an empty `written` — report the reason and stop.
 
-### 2. Learn what the analysis touched
+### 2. Write them, through the change door
+
+```
+bin/change.py open <knowledge-root> --requirement=<rq_ id>
+```
+
+Then, for each entry of `written` **in the order the record gives**, in Python:
+
+```python
+from graph_edit import create_node
+create_node(root, entry["id"], entry["frontmatter"], entry["body"])
+```
+
+The order is the analysis's and is not yours to sort. A reference resolves only once its target
+exists, so a scope precedes what sits inside it.
+
+**The door validates each object against the frontmatter contract before it lands.** An object that
+fails is not written, and the failure names it. Do not repair it and do not write it another way:
+a construct the analysis produced and the contract refuses is a disagreement between the two, and
+patching it here would make the record describe an object that is not on disk.
+
+**The door refuses a write outside an open change**, which is why the change is opened first, and it
+records every node written so that what this run touched is known while it is being touched.
+
+Then:
+
+```
+bin/change.py close <knowledge-root>
+```
+
+Closing prints the nodes the run touched and clears the record of them, so **capture what it prints**
+— that call is the last moment anything can see it, and it is what you report at the end.
+
+Closing is refused while the graph does not hold together: a dangling reference, a containment loop, a
+gap naming nothing. That refusal is a result, not an error to route around. Report what it names and
+stop; `discard` is for abandoning a run, and abandoning is a different statement from finishing.
+
+### 3. Learn what the analysis touched
 
 One delegation to `impact-analyst`, with the record, the analysis id, and the knowledge root. It
 returns an `impact-analysis/5`: a verdict of `none`, `update`, or `create`, one entry per implicated
@@ -91,19 +132,24 @@ control. Nothing is lost, and nothing was written anywhere a reader could mistak
 - **`update`** — name the objects that were already there and are now implicated;
 - **`create`** — name what is new, which over a populated base is what a reviewer looks for first.
 
-### 3. Check that gaps and absences agree
+### 4. Check that gaps and absences agree
 
-Run `bin/check_knowledge.py <knowledge-root>`. It holds the two directions to each other: every gap
-names a fact the kind requires and the object lacks, and every fact it lacks is named by a gap. The
-schema enforces neither — its per-kind alternation reads "everything this kind requires, or `gaps`",
-and `gaps` there is any gap over any field, so a gap about one fact would otherwise excuse the absence
-of another.
+Run `bin/check_knowledge.py <knowledge-root>`. The close in step 2 already ran it over the whole base,
+so this repeats a check that passed — and it is kept because the two answer for different things. The
+close answers for the graph at the moment the change ended; this answers for the base you are handing
+on, after whatever else touched it. A run where the two disagree is a run where something moved
+between them, which is the thing worth knowing.
+
+What it holds is both directions of the alternation: every gap names a fact the kind requires and the
+object lacks, and every fact it lacks is named by a gap. The schema narrows the first — each field is
+alternated against a gap naming that field — and the converse still needs the whole object, because
+whether a gap names something *missing* cannot be seen from the gap alone.
 
 **This is where the identifiers are held to their arithmetic too.** A path is computable from an
 identifier and an identifier from a path, and nothing allocates either — so a mismatch is a defect the
 check reports rather than a convention the writer is trusted to have followed.
 
-### 4. Seal what was written
+### 5. Seal what was written
 
 Run `bin/seal_analysis.py <knowledge-root> <seal-path>`. It records, per object, a digest of every
 field on the analysis's side of the line, the `kind: domain` gaps verbatim, and the body headings.
@@ -115,7 +161,7 @@ afterwards records the edit as though the analysis had made it.
 
 Hand the seal path to `/ingest-domain` with the knowledge root.
 
-### 5. Stop
+### 6. Stop
 
 The objects are the artifact. Do not enrich them, and do not run the checks that belong to the next
 entry point.
@@ -133,7 +179,8 @@ entry point.
 
 ## Result
 
-Report, in this order: the record id and the request it answers; the count of objects by kind; then
+Report, in this order: the record id and the request it answers; the nodes the close printed, which is
+what this run touched; the count of objects by kind; then
 the three things a reviewer needs and the artifacts do not surface on their own —
 
 - **what was decided rather than stated** — every object whose `origin` is `modeled`, with its

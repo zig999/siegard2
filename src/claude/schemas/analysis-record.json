@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/analysis-record.json",
   "title": "Analysis record",
-  "description": "What one analysis of one request produced that is not a construct: the request it answers, the outcome it reached, the questions it refused to decide, and what it deliberately left out. The named producer is domain-modeler; the named consumers are the impact analysis and the ingestion. This artifact carries control flow — a consumer reads `state` to decide whether there is anything to act on — so it is a versioned schema validated at the boundary rather than prose.\n\nThe constructs are absent by design. Each is a file in the knowledge base, addressable by an identifier this record can name, and holding them here as well would put one fact in two places with nothing keeping them in step. What is left is exactly what has no file: a request is not a construct, an exclusion is the absence of one, and an open question bears on several at once.",
+  "description": "What one analysis of one request produced: the constructs themselves, the request they answer, the outcome the run reached, the questions it refused to decide, and what it deliberately left out. The named producer is domain-modeler; the named consumers are the impact analysis and the ingestion.\n\n`/2` carries the objects rather than naming them. In `/1` the analysis wrote the files itself and this recorded which ones it was responsible for; the objects now travel here and the entry point writes them through the change door, which validates each against the frontmatter contract before it lands and records what the run touched. The producer needs no write grant at all, and an object reaches the base having been checked rather than having been checked afterwards.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,7 +16,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "analysis-record/1",
+      "const": "analysis-record/2",
       "description": "The contract this instance declares. A consumer selects behaviour on this value and never infers a version from shape."
     },
     "record_id": {
@@ -110,9 +110,9 @@
       "minItems": 0,
       "uniqueItems": true,
       "items": {
-        "$ref": "#/$defs/objectId"
+        "$ref": "#/$defs/writtenObject"
       },
-      "description": "Every object this run wrote, by identifier. The objects themselves are files and are not repeated here — what this answers is which of them this run is responsible for, so a reviewer reading a diff can tell a construct this analysis produced from one that was already there. Empty is legitimate: a run whose every construct was refused wrote nothing and still reached an outcome."
+      "description": "Every construct this run produced, whole. Empty is legitimate: a run whose every construct was refused produced nothing and still reached an outcome. The order is the order they are written in, which matters — a reference resolves only once its target exists, so scopes precede what sits inside them."
     }
   },
   "allOf": [
@@ -240,6 +240,30 @@
           "pattern": "^dm\\.(aggregate|definition|rule|lifecycle|interface|process)\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
         }
       ]
+    },
+    "writtenObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "frontmatter",
+        "body"
+      ],
+      "description": "One construct, whole. Frontmatter and body are handed over rather than written, so the door is what puts them on disk and nothing reaches the base unvalidated.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/objectId"
+        },
+        "frontmatter": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "The object's frontmatter as a mapping. Not validated here — the frontmatter contract is a separate document with its own version, and restating its rules would put them in two places. The door validates against it at the moment of writing, which is the last point where a failure still names the object that caused it."
+        },
+        "body": {
+          "type": "string",
+          "description": "The body verbatim, including its two headings. Empty where the kind's body is entirely the enrichment's to write."
+        }
+      }
     }
   }
 }
