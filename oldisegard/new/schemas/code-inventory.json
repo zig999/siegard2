@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/code-inventory.json",
+  "title": "Code inventory",
+  "description": "What already exists where a stated change will land: the modules involved, the conventions the area follows, what must not be rebuilt, and what the change risks breaking. The code-side counterpart of impact-analysis, which maps a domain model against stored knowledge — same shape, different subject. Every convention carries a path and every risk carries its consumers, because an assertion without one is something the producer assumed rather than found. Nothing here says how to make the change: a survey that recommended a design would have made the planning decision while calling it an observation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "survey_id",
+    "producer",
+    "change",
+    "modules",
+    "conventions",
+    "must_not_duplicate",
+    "risks"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "code-inventory/1",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "survey_id": {
+      "type": "string",
+      "pattern": "^ci_[0-9a-f]{8}$",
+      "description": "Stable identifier for this survey, supplied by the caller and never minted by the producer."
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What performed the survey. Not a const: the contract requires the artifact, not a particular producer of it."
+    },
+    "change": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The change as the caller stated it, carried forward verbatim. A survey read without the intention it was made against cannot be judged for scope."
+    },
+    "modules": {
+      "type": "array",
+      "description": "One entry per module, sorted by path. Empty is the greenfield case and a real answer.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "does", "relation", "reason"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "does": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What the module does, in one sentence, in terms of behavior rather than of the files it contains."
+          },
+          "relation": {
+            "enum": ["touched", "depends_on", "adjacent"],
+            "description": "`touched` the change must modify it; `depends_on` the change calls it unchanged; `adjacent` neither, but a planner needs to know it is there."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What makes it that relation. Restating the relation is not a reason."
+          }
+        }
+      }
+    },
+    "conventions": {
+      "type": "array",
+      "description": "Patterns the area already follows. Where the area is internally inconsistent, both forms appear and the note says which is more recent — a planner choosing between them needs to know one is drift rather than a rule.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["convention", "seen_at"],
+        "properties": {
+          "convention": { "type": "string", "minLength": 1 },
+          "seen_at": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A path where the convention can be observed. Required: a convention asserted without one is a convention the producer assumed."
+          },
+          "note": {
+            "type": "string",
+            "description": "Where the repository states a rule the code diverges from, or where a second inconsistent form exists."
+          }
+        }
+      }
+    },
+    "must_not_duplicate": {
+      "type": "array",
+      "description": "What already exists that the change would otherwise rebuild. The section that pays for the survey.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "provides"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "provides": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What it already does, and why the change would otherwise write it again."
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "description": "What could break. A risk with no named consumer is a worry rather than a finding, which is why consumers is required.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["risk", "consumers", "evidence"],
+        "properties": {
+          "risk": { "type": "string", "minLength": 1 },
+          "consumers": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 },
+            "description": "The callers or dependents that would notice, by path."
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What in the code makes the producer say so."
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Anything a reader needs that no other field holds — most importantly, where the area found is larger or smaller than the stated change implies. Trimming the survey to fit the intention would hide exactly that."
+    }
+  }
+}

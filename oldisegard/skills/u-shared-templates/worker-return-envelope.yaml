@@ -1,0 +1,36 @@
+# worker-return-envelope — canonical template (v3 worker->orchestrator contract)
+#
+# A worker's FINAL assistant message is exactly one fenced json block with this
+# shape — nothing after it. Copy the fields, replace the placeholders, DELETE
+# the fields that do not apply to your status:
+#   status=completed -> keep artifacts (may be []); no error, no blocked
+#   status=failed    -> keep error; no blocked
+#   status=blocked   -> keep blocked; no error
+#   verdict          -> ONLY verdict task types (spec-reviewer, spec-validator, qa)
+envelope: "siegard-worker-return/v1"
+task_id: "sdd_wf1_auth_spec-writer"
+attempt: 1
+phase: "sdd"
+status: "completed"
+summary: "auth domain spec + openapi written; 3 BR pairs sourced"
+artifacts:
+  - "docs/specs/domains/auth/auth.spec.md"
+  - "docs/specs/domains/auth/openapi.yaml"
+verdict: "approved"
+metrics:
+  findings:
+    critical: 0
+    major: 1
+    minor: 2
+error:
+  reason: "internal_error"
+  retryable: true
+  detail: "<single objective sentence>"
+blocked:
+  reason: "missing_input"
+  missing_inputs:
+    - field: "openapi.yaml"
+      expected: "domains/auth/openapi.yaml present"
+      source: "spec-writer output"
+  required_action: "run spec-writer for the auth domain first"
+  escalate_to: "orchestrator"

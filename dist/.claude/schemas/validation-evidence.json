@@ -8,17 +8,22 @@
   "required": [
     "contract_version",
     "producer",
+    "consumer",
     "verdict",
     "request_id",
     "checks"
   ],
   "properties": {
     "contract_version": {
-      "const": "validation-evidence/1"
+      "const": "validation-evidence/3"
     },
     "producer": {
       "type": "string",
       "minLength": 1
+    },
+    "consumer": {
+      "const": "ingest-domain",
+      "description": "Who reads it. The ingestion reports the verdict and where the evidence was written; beyond that its reader is a person, and naming the capability is what keeps the record from being produced for nobody."
     },
     "verdict": {
       "enum": [
@@ -29,7 +34,7 @@
     },
     "request_id": {
       "type": "string",
-      "pattern": "^cr_[0-9a-f]{8}$"
+      "pattern": "^rq_[0-9a-f]{8}$"
     },
     "checks": {
       "type": "array",

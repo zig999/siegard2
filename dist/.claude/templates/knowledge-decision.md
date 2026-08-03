@@ -1,8 +1,7 @@
 ---
 id: "{{id}}"
 title: {{title}}
-status: proposed
-contract_version: knowledge-decision/1
+contract_version: knowledge-decision/2
 ---
 
 # {{title}}

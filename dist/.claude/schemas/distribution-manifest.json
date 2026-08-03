@@ -86,7 +86,7 @@
     },
     "capabilities": {
       "type": "array",
-      "description": "Each capability's lifecycle status. R17 requires that status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release \u2014 this field is where a consumer observes it.",
+      "description": "Each capability's lifecycle status. R17 requires that status to be derived from checkable facts rather than maintained by hand, and R14 makes `deprecated` observable from an installation rather than only from a release — this field is where a consumer observes it.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -138,14 +138,14 @@
               "assertions",
               "failure_outcomes"
             ],
-            "description": "The declaration this capability carries, derived from the authored set rather than written here. `identifier` and `class` are absent because the entry around it already holds both. This is the only way a declaration reaches a consumer: the authored file is not installed. The parts required here are the ones every capability class must declare; the full contract is `capability-declaration/1` and is enforced where the set is authored, so this checks that a derived entry carries the parts rather than restating a contract that would then have two homes. Absent where the capability carries no declaration yet."
+            "description": "The declaration this capability carries, derived from the authored set rather than written here. `identifier` and `class` are absent because the entry around it already holds both. This is the only way a declaration reaches a consumer: the authored file is not installed. The parts required here are the ones every capability class must declare; the full contract is `capability-declaration/3` and is enforced where the set is authored, so this checks that a derived entry carries the parts rather than restating a contract that would then have two homes. Absent where the capability carries no declaration yet."
           }
         }
       }
     },
     "overrides": {
       "type": "array",
-      "description": "every declared override. the case this exists for \u2014 a consumer replaces a shipped template by declaring it here, so a later upgrade can tell a customization from a divergence and stop rather than overwrite. Empty in a freshly generated distribution: the framework declares none, and only an installation acquires them.",
+      "description": "every declared override. the case this exists for — a consumer replaces a shipped template by declaring it here, so a later upgrade can tell a customization from a divergence and stop rather than overwrite. Empty in a freshly generated distribution: the framework declares none, and only an installation acquires them.",
       "items": {
         "type": "object",
         "additionalProperties": false,

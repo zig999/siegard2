@@ -2,13 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/knowledge-decision.json",
   "title": "Siegard knowledge decision",
-  "description": "Frontmatter contract for a `decision` node in a consumer repository's knowledge tree. This is product surface: it ships, and the records it governs are the consumer's own business decisions — why a domain choice was made and what it rejected. It governs the consumer's own records and nothing the framework's authors decide about the framework.",
+  "description": "Frontmatter contract for a `decision` node in a consumer repository's knowledge tree. This is product surface: it ships, and the records it governs are the consumer's own business decisions — why a domain choice was made and what it rejected. It governs the consumer's own records and nothing the framework's authors decide about the framework. `knowledge-decision/1` carried a `proposed | accepted | superseded` status; the knowledge lifecycle was removed and the field with it, and `additionalProperties: false` now rejects it rather than ignoring it. A record in the tree is one the consumer decided.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "id",
     "title",
-    "status",
     "contract_version"
   ],
   "properties": {
@@ -22,16 +21,8 @@
       "minLength": 1,
       "description": "The decision stated as an outcome."
     },
-    "status": {
-      "enum": [
-        "proposed",
-        "accepted",
-        "superseded"
-      ],
-      "description": "Whether this decision binds in the consumer's domain. The consumer owns the transition; nothing in the framework decides it."
-    },
     "contract_version": {
-      "const": "knowledge-decision/1",
+      "const": "knowledge-decision/2",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     }
   }

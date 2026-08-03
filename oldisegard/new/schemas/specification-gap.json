@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/specification-gap.json",
+  "title": "Specification gap",
+  "description": "Which facts an implementation requires the specification settles, and which it does not. One entry per required fact, including the ones the specification answers: reporting only the gaps would leave a caller unable to tell a fact that was checked and answered from one that was never checked. Not a change request — change-request/1 is retired from this repository, and what to do about a gap is a decision someone takes after reading this. The producer never drafts the missing statement: an answer recorded here becomes a fact nobody decided, indistinguishable from one that was.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "report_id",
+    "producer",
+    "specification_set",
+    "entries"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "specification-gap/1",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^sg_[0-9a-f]{8}$",
+      "description": "Stable identifier for this report, supplied by the caller and never minted by the producer."
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What produced the report. Not a const: the contract requires the artifact, not a particular producer of it."
+    },
+    "specification_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "The paths treated as authoritative for these facts. Required so a `silent` entry states what it was silent across: a fact answered in a document nobody named is a fact answered by accident."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per required fact, sorted by fact identifier.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact", "state", "citations", "detail"],
+        "properties": {
+          "fact": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The identifier the caller assigned to the required fact. Never minted here."
+          },
+          "state": {
+            "enum": ["answered", "partial", "silent", "contradictory", "infeasible"],
+            "description": "`answered` the specification settles it; `partial` it bears on the fact without settling it; `silent` nothing in the set bears on it; `contradictory` two statements answer it differently and the producer does not choose between them; `infeasible` it is settled and cannot be built as stated. `infeasible` is the only state that is a claim about the world rather than about the document, and carries the higher bar of naming the constraint. Hard and expensive are `answered`."
+          },
+          "citations": {
+            "type": "array",
+            "description": "Every statement relied on, quoted. Empty only for `silent`, where there is nothing to quote. For `answered` and `contradictory` the quotation is the entire evidence, and a state asserted without one was inferred.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source", "quote"],
+              "properties": {
+                "source": { "type": "string", "minLength": 1 },
+                "locator": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Section, heading, or requirement identifier within the source."
+                },
+                "quote": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The statement, copied exactly rather than paraphrased."
+                }
+              }
+            }
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "description": "For `partial`, precisely what remains open. For `contradictory`, why the quoted statements cannot both hold, and which constrains more — the choice itself stays with the caller. For `infeasible`, the constraint that makes it impossible. For `answered`, what is settled and that nothing is open."
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Anything a reader needs to interpret the result that no other field holds."
+    }
+  }
+}

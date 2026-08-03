@@ -1,7 +1,7 @@
 {
   "contract_version": "distribution-manifest/2",
-  "source_revision": "sha256:8f3f57a8502c3bda05b8dbb7fa05249f30d72ca9cb6c48a1234cf4e7694c5859",
-  "generator_version": "1.0.0",
+  "source_revision": "sha256:1a0000299d646445d1069e46e9cae8aa78e9dcb709d640c2449c7ec711d30f54",
+  "generator_version": "2.0.0",
   "installed": [
     {
       "path": ".claude-plugin/plugin.json",
@@ -9,617 +9,568 @@
       "digest": "sha256:90bfe5332f8deae56cd38e20542ae9c63fc9f8611b86c3625cb235731eb0e79c"
     },
     {
-      "path": "agents/concept-author.md",
-      "source": "src/claude/agents/concept-author.md",
-      "digest": "sha256:eb73976f4e21d094509c3f7934068ac56d374618188faee9e845b4f7c4debe0f"
-    },
-    {
-      "path": "agents/domain-analyst.md",
-      "source": "src/claude/agents/domain-analyst.md",
-      "digest": "sha256:48ea117e02bbc0a870be1ae10abf101d035616c87b5e016ee5ff0f7374a371b7"
-    },
-    {
       "path": "agents/domain-modeler.md",
       "source": "src/claude/agents/domain-modeler.md",
-      "digest": "sha256:a06363189805e1014f05bee9bbaf90b99cc3e692a970c1a32ef78ea528ceae2e"
+      "digest": "sha256:e5bd3326d46f0cc67a085b680650734a7f4c0c4c314822cfa9e84d3fa65842f2"
     },
     {
       "path": "agents/impact-analyst.md",
       "source": "src/claude/agents/impact-analyst.md",
-      "digest": "sha256:e9142a1274ce0872ad787f271097f4ffe41ae7078d9bbd83f14f8f83b583770d"
+      "digest": "sha256:35f9eb37b5653745e2ca3568d974a9ae6acadfff837ff0ff4678879c167b8907"
     },
     {
-      "path": "agents/knowledge-author.md",
-      "source": "src/claude/agents/knowledge-author.md",
-      "digest": "sha256:7e68f33a33936bc3efeddc594399546308a23a5dab3a41222a8e39b3c316cb12"
+      "path": "agents/knowledge-enricher.md",
+      "source": "src/claude/agents/knowledge-enricher.md",
+      "digest": "sha256:8c37d272239a8155c99bf3874d4a324ff34aab5b9adce8e9d645475a90224158"
     },
     {
-      "path": "agents/root-selector.md",
-      "source": "src/claude/agents/root-selector.md",
-      "digest": "sha256:dc0d14dc5661645b63b27326556efd101ced0b1e5d8e3b0244d14688b4b748b8"
+      "path": "bin/change.py",
+      "source": "src/claude/bin/change.py",
+      "digest": "sha256:5ef380dc4c88e1cb91cf848ffe8797c24926e1535903fbd4b565537a0d85face"
     },
     {
-      "path": "agents/spec-delta-author.md",
-      "source": "src/claude/agents/spec-delta-author.md",
-      "digest": "sha256:87e944d0521e8ded4363e3ea9c3b344d983372708540ed0becdfa573d766cb97"
+      "path": "bin/change_set.py",
+      "source": "src/claude/bin/change_set.py",
+      "digest": "sha256:577cebfa93d182e8ba4bdb74ffb0f713b47c447684d1d57a2d5eef0d214a1bcd"
     },
     {
-      "path": "bin/cli.py",
-      "source": "src/claude/bin/cli.py",
-      "digest": "sha256:7739ad70d0d7338e011327056e0594a1d3b695058d86a00cf63541b180fb61c1"
+      "path": "bin/check_field_ownership.py",
+      "source": "src/claude/bin/check_field_ownership.py",
+      "digest": "sha256:c62c9189911f16b17f2a0985c33659ee3225fbd1bc660d03fc7fd28fd5f0e2cb"
     },
     {
-      "path": "bin/derived_artifacts.py",
-      "source": "src/claude/bin/derived_artifacts.py",
-      "digest": "sha256:00fbeaf361980d26ecf6a16d2dc47a8ee05d4b5612638b20edd2d4d4da22afd8"
+      "path": "bin/check_knowledge.py",
+      "source": "src/claude/bin/check_knowledge.py",
+      "digest": "sha256:ace8ba61df9f206feadd52f2e578be7860ef8d6b4881ff5d136844d95b98c14a"
     },
     {
-      "path": "bin/frontmatter_lib.py",
-      "source": "src/claude/bin/frontmatter_lib.py",
-      "digest": "sha256:ea5c712ea30d00e7796c404432edf8755313b6d5e242d31ab428489a7d71e4a8"
+      "path": "bin/field_ownership.py",
+      "source": "src/claude/bin/field_ownership.py",
+      "digest": "sha256:b27a5abc8ced22144e331937ca8b5c64ccc65a65053a8bff5d72022f369939bf"
     },
     {
-      "path": "bin/generate_code.py",
-      "source": "src/claude/bin/generate_code.py",
-      "digest": "sha256:9df7ae0d0fc93359d4ea2307721564b79bd30c8ad518582a3c8722f678ffb27c"
+      "path": "bin/graph_edit.py",
+      "source": "src/claude/bin/graph_edit.py",
+      "digest": "sha256:07103054b39d30aa39d00a0efe187b584f786b047db50bb4cdbd4552520722fc"
     },
     {
-      "path": "bin/generation_lib.py",
-      "source": "src/claude/bin/generation_lib.py",
-      "digest": "sha256:696ece4419bc47fea8f9695d038d6a46b2d4ec81f69055bfa1e17eeb8829b7d6"
+      "path": "bin/graph_query.py",
+      "source": "src/claude/bin/graph_query.py",
+      "digest": "sha256:fd5a2baba218dc518547b72a638f855ee4aaf9cdb2b24bf93923981c584e1f60"
     },
     {
-      "path": "bin/install_dist.py",
-      "source": "src/claude/bin/install_dist.py",
-      "digest": "sha256:c1a7a2bafc315ee84a8c83abc6520a197a05cfb7a9dca039a8584e7c9eeb02bb"
+      "path": "bin/materialize.py",
+      "source": "src/claude/bin/materialize.py",
+      "digest": "sha256:8a484c9342666788bd814aa010757d82511bbe6b92636b8c4267618b62723a64"
     },
     {
-      "path": "bin/knowledge_graph_lib.py",
-      "source": "src/claude/bin/knowledge_graph_lib.py",
-      "digest": "sha256:62b8ba793c6019863754b75ab6473bcac0cb8c7e7b2eaf708d33d389cbc08619"
+      "path": "bin/node_io.py",
+      "source": "src/claude/bin/node_io.py",
+      "digest": "sha256:c4ea4f708f77f7fc4ec121426c88560ec0f44ce12f3d0305c714abca83f3f044"
     },
     {
-      "path": "bin/project_knowledge.py",
-      "source": "src/claude/bin/project_knowledge.py",
-      "digest": "sha256:2634ea5d2970154b566f976482173dbce14a17b02f5ad2952591f04b9fce640f"
+      "path": "bin/seal_analysis.py",
+      "source": "src/claude/bin/seal_analysis.py",
+      "digest": "sha256:e5040bc9614174eb99d35c83908023b27315261ef24f126ae68f656b0764ac2b"
     },
     {
-      "path": "bin/resolve_context.py",
-      "source": "src/claude/bin/resolve_context.py",
-      "digest": "sha256:efac37c90e65f38424204a30a62ced70c365add635ece0378a45d2cb6665d29b"
+      "path": "schemas/analysis-record.json",
+      "source": "src/claude/schemas/analysis-record.json",
+      "digest": "sha256:b8684c25be073744fca5fad1a397b53ca76290f0571f753e5beb69136b2d2690"
     },
     {
-      "path": "bin/validate_artifacts.py",
-      "source": "src/claude/bin/validate_artifacts.py",
-      "digest": "sha256:7eec681a99d0f7e62f9d02e48ecda594f9ce95a81fa89ac0d1e779759ee13663"
-    },
-    {
-      "path": "bin/validate_concepts.py",
-      "source": "src/claude/bin/validate_concepts.py",
-      "digest": "sha256:937a1cf830ab4f2c530ba518546618d8eff70a04698851aaa8dfc88ece3bfb1e"
-    },
-    {
-      "path": "bin/validate_knowledge.py",
-      "source": "src/claude/bin/validate_knowledge.py",
-      "digest": "sha256:1ad8c6d455f098ac7059fa26627173149e28ebe6c610f61009ed380ad12c9b5f"
-    },
-    {
-      "path": "bin/verify_judged.py",
-      "source": "src/claude/bin/verify_judged.py",
-      "digest": "sha256:26d8d763079cc51dc11200cd9d26fb8c8037267f14f203ebfeeac83722ab4c52"
-    },
-    {
-      "path": "hooks/hooks.json",
-      "source": "scripts/generate_dist.py",
-      "digest": "sha256:012bd25136c194d56a939e18ad12d5b1e4f713573ed77e7cb69d51bd81552728"
-    },
-    {
-      "path": "hooks/reject-derived-write.py",
-      "source": "src/claude/hooks/reject-derived-write.py",
-      "digest": "sha256:91abe01688901e3bf4ec370bcf024c8a7e8bd9ce306c5a4dc545cc90abf17d60"
-    },
-    {
-      "path": "schemas/artifact-class.json",
-      "source": "src/claude/schemas/artifact-class.json",
-      "digest": "sha256:0edb908f6c11c7e7c25c515a0d7e9b6e23b3311301f298671bf16a12d0b54496"
-    },
-    {
-      "path": "schemas/artifact-classes.json",
-      "source": "src/claude/schemas/artifact-classes.json",
-      "digest": "sha256:9396ba3e2f2ad6ea47a6bebf03639429d636bbc5b349aff9f4285fc1cfd2d53d"
-    },
-    {
-      "path": "schemas/change-request.json",
-      "source": "src/claude/schemas/change-request.json",
-      "digest": "sha256:5d49d1e826d843720e0746304a3a407d4b86092b01d59ef5f01401f98e1baf43"
-    },
-    {
-      "path": "schemas/concept-authoring-result.json",
-      "source": "src/claude/schemas/concept-authoring-result.json",
-      "digest": "sha256:d4e7427d69e8a15938803efd2f000b3c5fd0ada36b2555cfc8b18c69649a90dd"
-    },
-    {
-      "path": "schemas/concept.json",
-      "source": "src/claude/schemas/concept.json",
-      "digest": "sha256:0677a5f8979bbb3512a7d413614b7abdabaab9608b415bc297204a306a8efce2"
-    },
-    {
-      "path": "schemas/context-package.json",
-      "source": "src/claude/schemas/context-package.json",
-      "digest": "sha256:e77273551bdfe4dad3cdc8f266502c8d61b56178c247429571f26e53433b0254"
+      "path": "schemas/analysis-seal.json",
+      "source": "src/claude/schemas/analysis-seal.json",
+      "digest": "sha256:efb5d28bf63b4d017bc9b122dc09f6f3bfd8f4259852ef391ebbe4de275ef111"
     },
     {
       "path": "schemas/distribution-manifest.json",
       "source": "src/claude/schemas/distribution-manifest.json",
-      "digest": "sha256:84c95c22a4d72aeb050fd4f080f7ea5e9ba5f21a68c9a74d087ca5421cecaacd"
+      "digest": "sha256:7a849b5965768d3ad4a6f2d3c9d705f4562684733f2c59fd938dd6565ef2f135"
     },
     {
-      "path": "schemas/domain-model.json",
-      "source": "src/claude/schemas/domain-model.json",
-      "digest": "sha256:8ccd5108782f89a6261c218de97da44cd38728039a44b2f877b5f51ba3f10639"
-    },
-    {
-      "path": "schemas/generation-manifest.json",
-      "source": "src/claude/schemas/generation-manifest.json",
-      "digest": "sha256:a50363a74413635b671530fe5e97c4ce467e2be9c220358a63569ad82b4ea052"
-    },
-    {
-      "path": "schemas/generation-plan.json",
-      "source": "src/claude/schemas/generation-plan.json",
-      "digest": "sha256:d19f7e1252b668dba3c96e28b8470103a8b1e8d383c9fc1e47c2cf1ef1c5cd36"
-    },
-    {
-      "path": "schemas/generation-scope.json",
-      "source": "src/claude/schemas/generation-scope.json",
-      "digest": "sha256:1bc73661c48fa0f0216a2c735a3795057e0cc45297017a3bbc931f882d6b9f34"
+      "path": "schemas/domain-object.json",
+      "source": "src/claude/schemas/domain-object.json",
+      "digest": "sha256:02cb05d3abe1e5f26d37dc6853de50723e479bb61679990cba0dca32260eb7fe"
     },
     {
       "path": "schemas/impact-analysis.json",
       "source": "src/claude/schemas/impact-analysis.json",
-      "digest": "sha256:d98d9dc0bbedf2bcbbf8b6e533e55e490c4167c82aa4c0fcb29bf558372a1c45"
-    },
-    {
-      "path": "schemas/knowledge-authoring-result.json",
-      "source": "src/claude/schemas/knowledge-authoring-result.json",
-      "digest": "sha256:e8eb1a150b4ea0b2936758a2139f8ceac0c26d6d24f632e8fa5816cf2627c069"
+      "digest": "sha256:c08d2ecf620ab148450bc617dcfd948268f8f1a2487e6263c83fc4cdaa4ad602"
     },
     {
       "path": "schemas/knowledge-decision.json",
       "source": "src/claude/schemas/knowledge-decision.json",
-      "digest": "sha256:d251b13acabf40117330598d7aedb290c35cc65a9e2ad39397a6d821faf69c92"
+      "digest": "sha256:65db993767577dfde95559f91f993e8adc83f6d54cadae381bcdf3d0357181a4"
+    },
+    {
+      "path": "schemas/knowledge-enrichment-result.json",
+      "source": "src/claude/schemas/knowledge-enrichment-result.json",
+      "digest": "sha256:e468e4337bca2ada9a8c325577c20bebbaa0e6c6895d2ad872fd3ad839bd6b91"
     },
     {
       "path": "schemas/knowledge-graph.json",
       "source": "src/claude/schemas/knowledge-graph.json",
-      "digest": "sha256:984efc73e702e599788d32d73c0f61c9dbfd06e88fb327995c05a1534db679b2"
+      "digest": "sha256:508c2d263333904299818194c1c15c2006c32bbbb09ffe76b9470712a2c560c3"
     },
     {
-      "path": "schemas/knowledge-intake-plan.json",
-      "source": "src/claude/schemas/knowledge-intake-plan.json",
-      "digest": "sha256:6319bbb9c5337cd4f35e532971611bd30279d633f059386ced846f759bf9d43f"
-    },
-    {
-      "path": "schemas/knowledge-object.json",
-      "source": "src/claude/schemas/knowledge-object.json",
-      "digest": "sha256:53e01d70021cb066131ee0aca66b0a3c01fb82a4ff410d8003a66b49b613099b"
-    },
-    {
-      "path": "schemas/pack-declaration.json",
-      "source": "src/claude/schemas/pack-declaration.json",
-      "digest": "sha256:5384792c5d776995098470637fedb0cfeaf461b391986496c50995af1836e79d"
-    },
-    {
-      "path": "schemas/placement-decision.json",
-      "source": "src/claude/schemas/placement-decision.json",
-      "digest": "sha256:7eff3c9746ec37de23fce81dbc65be25d56bb481973bf3080eb779210b0fbdde"
-    },
-    {
-      "path": "schemas/specification-delta.json",
-      "source": "src/claude/schemas/specification-delta.json",
-      "digest": "sha256:02fdaf1098948955965c3deb9f5415e0ec1cbd5bbea8d6ef99c2fe1adab133cf"
+      "path": "schemas/knowledge-system.json",
+      "source": "src/claude/schemas/knowledge-system.json",
+      "digest": "sha256:a3a1f6c41539d21264423f11676eb6263e84520f57c94d45962213bd78b007aa"
     },
     {
       "path": "schemas/validation-evidence.json",
       "source": "src/claude/schemas/validation-evidence.json",
-      "digest": "sha256:6df82e7fefd5fae98f81eaed4f6b0730aa44e6cfcc55162f23a68bb30c31f418"
-    },
-    {
-      "path": "siegard-manifest.json",
-      "source": "scripts/generate_dist.py",
-      "digest": "sha256:e2cf8665611e5295d493b80d4fd21f8a85ddd6f7b518451c05c2bf76a1321dbb"
-    },
-    {
-      "path": "skills/generate/SKILL.md",
-      "source": "src/claude/skills/generate/SKILL.md",
-      "digest": "sha256:c75ae1bbd5a3d9115fa9826b7eeb40ddafe473e48d90d2c7f9c9f93bf8bb7b51"
+      "digest": "sha256:9ae5c4e116dc4e33100d25fcb808406863bad14619e901678fefeb08bcf919b6"
     },
     {
       "path": "skills/ingest-domain/SKILL.md",
       "source": "src/claude/skills/ingest-domain/SKILL.md",
-      "digest": "sha256:6e4abd65c94b582f2611f1ee82818abd44dd369e7e9bed19869fd12175082a5d"
+      "digest": "sha256:0c4853e1e5466c28112049abc45f50aa381221382012dfee95ce7143c72913d8"
     },
     {
       "path": "skills/model-domain/SKILL.md",
       "source": "src/claude/skills/model-domain/SKILL.md",
-      "digest": "sha256:bc33997576c0b9c11bb56fde827e32a382cc15a6b1376f73fba16b9bc7e93b32"
+      "digest": "sha256:c2fe08184a423d9c2fe6abf47944fcaa107f8e34b7405801f5d1d90a532610b4"
     },
     {
-      "path": "skills/upgrade/SKILL.md",
-      "source": "src/claude/skills/upgrade/SKILL.md",
-      "digest": "sha256:a55fb0f4573d2413ef298a81e8738013c5b65beae0383344ad3e6fabd8710e7d"
+      "path": "templates/domain-object-aggregate.md",
+      "source": "src/claude/templates/domain-object-aggregate.md",
+      "digest": "sha256:384df9dac192e1242b81350ce454bd7c9f292e2439c9cac328c8f0934d8796b2"
     },
     {
-      "path": "templates/change-request.md",
-      "source": "src/claude/templates/change-request.md",
-      "digest": "sha256:a67ca963bc651f7f4d381acef3966286b3c0608a3ae8626154fc008080749d88"
+      "path": "templates/domain-object-context.md",
+      "source": "src/claude/templates/domain-object-context.md",
+      "digest": "sha256:b4ea5dca662d86cb5bc77cca88de3555429b9ae793e361752e2a7e8118754dc7"
     },
     {
-      "path": "templates/concept.md",
-      "source": "src/claude/templates/concept.md",
-      "digest": "sha256:28f909c28f115c7e63743c4ce5f599ee5af43853165360a79801383fb613af80"
+      "path": "templates/domain-object-definition.md",
+      "source": "src/claude/templates/domain-object-definition.md",
+      "digest": "sha256:416f0a860f855b41700d442096472fdeeda9b7826ac94635112636606a089dc4"
+    },
+    {
+      "path": "templates/domain-object-interface.md",
+      "source": "src/claude/templates/domain-object-interface.md",
+      "digest": "sha256:c96a4c23ad730046e460260fd69b6064eba023642934003274ab793c2729f226"
+    },
+    {
+      "path": "templates/domain-object-lifecycle.md",
+      "source": "src/claude/templates/domain-object-lifecycle.md",
+      "digest": "sha256:273f04dc5c55a16488cd6ed9e2d76ef5e21720b878861a603cfd70c4966507ac"
+    },
+    {
+      "path": "templates/domain-object-process.md",
+      "source": "src/claude/templates/domain-object-process.md",
+      "digest": "sha256:13f11257f8b9510e25f81e87da18439b44f1014b9efc7d1656fe37e1d798da16"
+    },
+    {
+      "path": "templates/domain-object-rule.md",
+      "source": "src/claude/templates/domain-object-rule.md",
+      "digest": "sha256:9bff6749f9c5eabcfdcd620e033f9f5410b8885cb0512ff4d1820fa00dafd731"
+    },
+    {
+      "path": "templates/domain-object-subdomain.md",
+      "source": "src/claude/templates/domain-object-subdomain.md",
+      "digest": "sha256:edeeb3fe68f1721d7d47ff5a6a7e89d3df7863186f01785c00a1b1e3605dd6ee"
     },
     {
       "path": "templates/knowledge-decision.md",
       "source": "src/claude/templates/knowledge-decision.md",
-      "digest": "sha256:5e4f691281097d2949ac67bca7802bab98fd2bcddc5b54244eeaba38e8572a44"
-    },
-    {
-      "path": "templates/knowledge-object-boundary.md",
-      "source": "src/claude/templates/knowledge-object-boundary.md",
-      "digest": "sha256:52fce4a8e3fff39261f3b8c00199f45f5166e5c5b56376a5dc01f789206266f5"
-    },
-    {
-      "path": "templates/knowledge-object-definition.md",
-      "source": "src/claude/templates/knowledge-object-definition.md",
-      "digest": "sha256:8a468f9126c8d09c3ac717e8d12b65be69889db920d5f2dc58d8e5286fe76fe9"
-    },
-    {
-      "path": "templates/knowledge-object-interface.md",
-      "source": "src/claude/templates/knowledge-object-interface.md",
-      "digest": "sha256:0136826281d3d1e884a36e48a8d85fc708b1bb771102869536d62e95428952da"
-    },
-    {
-      "path": "templates/knowledge-object-lifecycle.md",
-      "source": "src/claude/templates/knowledge-object-lifecycle.md",
-      "digest": "sha256:9cca1d645f8722d2c126b1f00f07a0597c69d1982f55cd7436020c23b4fe1a70"
-    },
-    {
-      "path": "templates/knowledge-object-process.md",
-      "source": "src/claude/templates/knowledge-object-process.md",
-      "digest": "sha256:1ba9f7ca804399f1dcfd9aa93ef08350d691ca14566ef9f6f132aa1e4b5edd4f"
-    },
-    {
-      "path": "templates/knowledge-object-rule.md",
-      "source": "src/claude/templates/knowledge-object-rule.md",
-      "digest": "sha256:2e4d9cae4187e81d15bd80eec976937370063d35c49ae072b926cb60e274877d"
+      "digest": "sha256:29528594831ef087ef130845d73c8ecd3a9d07930032da3ddd80ccdaf52216df"
     },
     {
       "path": "templates/knowledge-system.md",
       "source": "src/claude/templates/knowledge-system.md",
-      "digest": "sha256:ce924b2f258a1ce49b97c0f5030bc85bb5503271f380cca6ebec9dc057378a0c"
-    },
-    {
-      "path": "templates/pack-declaration.md",
-      "source": "src/claude/templates/pack-declaration.md",
-      "digest": "sha256:ecae922b5600d890e0eabd6906cf68483d6aac96f6818b525436190c6de7865f"
-    },
-    {
-      "path": "templates/specification-delta.md",
-      "source": "src/claude/templates/specification-delta.md",
-      "digest": "sha256:7d5de5600bfc21762346326a458a053744530e07e8356a8ae9a5452a0154459e"
+      "digest": "sha256:fd94977582093cbd2df19fa9f44a2f26af1a421d6b1d7d54acc10dcd00f8af07"
     },
     {
       "path": "templates/validation-evidence.md",
       "source": "src/claude/templates/validation-evidence.md",
-      "digest": "sha256:35840737426b76bd82dc330f370fb07173839acb320bfcef3e1ba53059a287de"
+      "digest": "sha256:d9cb0ed5458f7304b012f820cc54a8bf1fbe93ff90740a4e399c0a3b35b0bc68"
     }
   ],
   "schemas": [
     {
-      "contract_version": "artifact-class/1",
-      "path": "schemas/artifact-class.json"
+      "contract_version": "analysis-record/2",
+      "path": "schemas/analysis-record.json"
     },
     {
-      "contract_version": "artifact-class/1",
-      "path": "schemas/artifact-classes.json"
-    },
-    {
-      "contract_version": "change-request/1",
-      "path": "schemas/change-request.json"
-    },
-    {
-      "contract_version": "concept-authoring-result/1",
-      "path": "schemas/concept-authoring-result.json"
-    },
-    {
-      "contract_version": "concept/1",
-      "path": "schemas/concept.json"
-    },
-    {
-      "contract_version": "context-package/1",
-      "path": "schemas/context-package.json"
+      "contract_version": "analysis-seal/1",
+      "path": "schemas/analysis-seal.json"
     },
     {
       "contract_version": "distribution-manifest/2",
       "path": "schemas/distribution-manifest.json"
     },
     {
-      "contract_version": "domain-model/1",
-      "path": "schemas/domain-model.json"
+      "contract_version": "domain-object/2",
+      "path": "schemas/domain-object.json"
     },
     {
-      "contract_version": "generation-manifest/1",
-      "path": "schemas/generation-manifest.json"
-    },
-    {
-      "contract_version": "generation-plan/1",
-      "path": "schemas/generation-plan.json"
-    },
-    {
-      "contract_version": "generation-scope/1",
-      "path": "schemas/generation-scope.json"
-    },
-    {
-      "contract_version": "impact-analysis/2",
+      "contract_version": "impact-analysis/5",
       "path": "schemas/impact-analysis.json"
     },
     {
-      "contract_version": "knowledge-authoring-result/1",
-      "path": "schemas/knowledge-authoring-result.json"
-    },
-    {
-      "contract_version": "knowledge-decision/1",
+      "contract_version": "knowledge-decision/2",
       "path": "schemas/knowledge-decision.json"
     },
     {
-      "contract_version": "knowledge-graph/1",
+      "contract_version": "knowledge-enrichment-result/2",
+      "path": "schemas/knowledge-enrichment-result.json"
+    },
+    {
+      "contract_version": "knowledge-graph/2",
       "path": "schemas/knowledge-graph.json"
     },
     {
-      "contract_version": "knowledge-intake-plan/1",
-      "path": "schemas/knowledge-intake-plan.json"
+      "contract_version": "knowledge-system/1",
+      "path": "schemas/knowledge-system.json"
     },
     {
-      "contract_version": "knowledge-object/1",
-      "path": "schemas/knowledge-object.json"
-    },
-    {
-      "contract_version": "pack-declaration/1",
-      "path": "schemas/pack-declaration.json"
-    },
-    {
-      "contract_version": "placement-decision/1",
-      "path": "schemas/placement-decision.json"
-    },
-    {
-      "contract_version": "specification-delta/1",
-      "path": "schemas/specification-delta.json"
-    },
-    {
-      "contract_version": "validation-evidence/1",
+      "contract_version": "validation-evidence/3",
       "path": "schemas/validation-evidence.json"
     }
   ],
   "capabilities": [
     {
-      "name": "reject-derived-write",
-      "class": "hook",
+      "name": "change",
+      "class": "script",
       "status": "active",
-      "path": "hooks/reject-derived-write.py",
+      "path": "bin/change.py",
       "declaration": {
-        "objective": "Refuse a write to a knowledge projection the materializer owns, so a derived artifact cannot be hand-edited. It binds PreToolUse on the write tools and needs no choosing: the harness runs it while the plugin is enabled. Not a substitute for the validator in the consuming path, which is what holds when hooks are disabled.",
+        "objective": "Open, inspect, close and abandon a change to the knowledge base, so that which nodes a requirement moved is known while it is being moved. Choose it to bound a piece of work before editing any node, and again to end it. Not for creating, editing or deleting a node — those are Python calls through the door, `graph_edit` — and not for validating a base, which is `check-knowledge`.",
         "inputs": [
           {
-            "name": "tool_input",
+            "name": "command",
             "required": true
-          }
-        ],
-        "outputs": [
+          },
           {
-            "artifact": "hook-decision",
-            "contract": "hook/1"
+            "name": "knowledge_root",
+            "required": true
+          },
+          {
+            "name": "requirement",
+            "required": false
           }
         ],
+        "outputs": [],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
+          }
+        ],
+        "required_context": {
+          "note": "It reads no object for meaning. Closing reads every object in the root, because the graph has to hold together before the record of what was touched is cleared."
+        },
         "deterministic_behavior": [
-          "a denial exits with code 2, because any other non-zero code is a non-blocking error that permits the action",
-          "it fails closed: an unreadable file, a malformed payload, or an internal error exits 2 with the reason on stderr",
-          "every field of the input is treated as untrusted, and a path is resolved and confirmed inside the governed tree before it is acted on",
-          "it re-validates its own preconditions rather than trusting the matcher that selected it",
-          "it rejects and never repairs: updatedInput is not used"
+          "a change records the identifier of every node written through the door while it is open, and nothing else: not the operation, not the fields, not the previous value",
+          "the operation is recoverable rather than recorded — an identifier computes to a path, so a recorded node with no file there was deleted and one with a file was created or edited",
+          "recording is idempotent and keeps first-seen order: a node written twice in one change moved once",
+          "a second change cannot be opened while one is open, because two changes sharing one set is two changes where neither knows which nodes are its own",
+          "closing clears the set and prints it, because that call is the last moment anything can see it",
+          "closing is refused while the graph does not hold together: clearing the set over a dangling reference or a containment loop would take with it the only record of where to look",
+          "discarding clears the set without the coherence check and rolls nothing back, because abandoning a change is a different statement from finishing one",
+          "a corrupt state file is reported and never repaired: a repair would invent a set of touched nodes, and an invented one is worse than none"
         ],
         "judgment": [],
-        "assertions": [
-          {
-            "output": "hook-decision",
-            "bound": false
-          }
-        ],
+        "assertions": [],
         "grant": {
-          "note": "A command handler with no tool grant of its own: it reads the payload the harness passes and its own governed tree, and performs no side effect beyond its decision. A prompt or agent handler would decide with a model, and a guarantee a model decides is not enforced."
+          "note": "No tool grant: it is a script the caller runs. It reads the root it is given and writes only the change state under it, at `.siegard/change.json`, which the directory ignores itself so it never reaches version control."
         },
         "failure_outcomes": [
           {
-            "outcome": "denied",
-            "reason": "the write targets a derived projection; the reason names the file and the condition, never the content"
+            "outcome": "cannot_run",
+            "reason": "the command is unknown, the arguments are wrong, the root is not a directory, or the contract the close gate reads is missing; exit 2, distinguished from a refusal"
           },
           {
-            "outcome": "undecidable",
-            "reason": "the decision could not be reached, which exits 2 rather than 0 because an uncaught failure reads as permission"
+            "outcome": "change_already_open",
+            "reason": "`open` while one is open; exit 1, and the open change is left exactly as it was"
+          },
+          {
+            "outcome": "no_change_open",
+            "reason": "`close` or `discard` with none open; exit 1"
+          },
+          {
+            "outcome": "graph_does_not_hold_together",
+            "reason": "`close` over a base with a disagreement; every one is reported, the change stays open, and the set of touched nodes survives"
+          },
+          {
+            "outcome": "set_is_empty_because_the_door_was_bypassed",
+            "reason": "a node written without going through the door is not recorded, and an empty set cannot be told from one where nothing changed. Nothing here detects it"
           }
         ]
       }
     },
     {
-      "name": "cli",
+      "name": "check-field-ownership",
       "class": "script",
       "status": "active",
-      "path": "bin/cli.py"
-    },
-    {
-      "name": "derived-artifacts",
-      "class": "script",
-      "status": "active",
-      "path": "bin/derived_artifacts.py"
-    },
-    {
-      "name": "frontmatter-lib",
-      "class": "script",
-      "status": "active",
-      "path": "bin/frontmatter_lib.py"
-    },
-    {
-      "name": "generate-code",
-      "class": "script",
-      "status": "active",
-      "path": "bin/generate_code.py"
-    },
-    {
-      "name": "generation-lib",
-      "class": "script",
-      "status": "active",
-      "path": "bin/generation_lib.py"
-    },
-    {
-      "name": "install-dist",
-      "class": "script",
-      "status": "active",
-      "path": "bin/install_dist.py"
-    },
-    {
-      "name": "knowledge-graph-lib",
-      "class": "script",
-      "status": "active",
-      "path": "bin/knowledge_graph_lib.py"
-    },
-    {
-      "name": "project-knowledge",
-      "class": "script",
-      "status": "active",
-      "path": "bin/project_knowledge.py"
-    },
-    {
-      "name": "resolve-context",
-      "class": "script",
-      "status": "active",
-      "path": "bin/resolve_context.py"
-    },
-    {
-      "name": "validate-artifacts",
-      "class": "script",
-      "status": "active",
-      "path": "bin/validate_artifacts.py"
-    },
-    {
-      "name": "validate-concepts",
-      "class": "script",
-      "status": "active",
-      "path": "bin/validate_concepts.py"
-    },
-    {
-      "name": "validate-knowledge",
-      "class": "script",
-      "status": "active",
-      "path": "bin/validate_knowledge.py"
-    },
-    {
-      "name": "verify-judged",
-      "class": "script",
-      "status": "active",
-      "path": "bin/verify_judged.py"
-    },
-    {
-      "name": "generate",
-      "class": "skill",
-      "status": "active",
-      "path": "skills/generate/SKILL.md",
+      "path": "bin/check_field_ownership.py",
       "declaration": {
-        "objective": "Produce source from the knowledge base through the active target pack, deriving and validating a plan before writing anything. Choose it when an accepted knowledge change implies code that must be produced or regenerated. Not for authoring knowledge, and not for deciding what the change should say.",
+        "objective": "Hold the enrichment pass to the four fields and the body it owns, by comparing each object against the seal the analysis left. Choose it after enrichment and before anything is read from the base. It is the only thing enforcing that restriction: a tool grant names tools, not the keys of a file, so `Edit` confined to four fields is prose until something checks it. Not for validating an object against its contract, which is a boundary check, and not for judging what the enrichment wrote.",
+        "inputs": [
+          {
+            "name": "analysis_seal",
+            "artifact": "analysis-seal",
+            "contract": "analysis-seal/1",
+            "required": true
+          },
+          {
+            "name": "root",
+            "required": true
+          }
+        ],
+        "outputs": [],
+        "consumed_artifacts": [
+          {
+            "artifact": "analysis-seal",
+            "access": "read"
+          },
+          {
+            "artifact": "domain-object",
+            "access": "read"
+          }
+        ],
+        "required_context": {
+          "note": "No kind is in scope. It compares two renderings of the same objects and reads nothing about what they mean."
+        },
+        "deterministic_behavior": [
+          "what the analysis wrote is read from the seal rather than re-derived: a producer that writes by judgment offers no function to run again, and two runs over one request agree in meaning and not in bytes",
+          "a field is digested with sorted keys, so a mapping the enrichment rewrote in another order is not reported as a change it made",
+          "an object the seal does not name is reported, and so is one the seal names and the tree no longer holds",
+          "a field the analysis owns that differs is reported, and the ownership line is read from the one module that declares it rather than restated here",
+          "a `kind: domain` gap that was removed is reported: only whoever knows the domain closes one",
+          "a field written whose `authoring` gap is still open is reported, because closing the gap is what records that the field was filled",
+          "a body heading added, removed, or renamed is reported; the content under a heading is not read",
+          "it writes nothing and repairs nothing"
+        ],
+        "judgment": [],
+        "assertions": [],
+        "grant": {
+          "note": "No tool grant: it is a script the caller runs. It reads the seal and the tree it is given, writes nothing, and reaches nothing else."
+        },
+        "failure_outcomes": [
+          {
+            "outcome": "cannot_run",
+            "reason": "the seal or the root does not exist, or the seal declares a contract this does not read; exit 2, distinguished from a check that ran"
+          },
+          {
+            "outcome": "outside_its_fields",
+            "reason": "the enrichment changed something on the analysis's side of the line, named per object and per field; reported and never repaired"
+          }
+        ]
+      }
+    },
+    {
+      "name": "check-knowledge",
+      "class": "script",
+      "status": "active",
+      "path": "bin/check_knowledge.py",
+      "declaration": {
+        "objective": "Hold a knowledge base to what a per-file schema cannot express: an object's gaps and its absences agree, a lifecycle's transition table is total, no two lifecycles claim one subject, and a reference crossing a bounded context targets an interface. Choose it after an analysis writes and again whenever the base changes. Not for validating an object against its contract, which is a boundary check, and not for closing a gap or repairing a defect.",
+        "inputs": [
+          {
+            "name": "knowledge_root",
+            "required": true
+          }
+        ],
+        "outputs": [],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
+          }
+        ],
+        "required_context": {
+          "note": "What a gap may name depends on the kind, so all eight are in scope. It reads no object for meaning."
+        },
+        "deterministic_behavior": [
+          "each identifier is recomputed against the path it sits at and the kind it declares: nothing allocates one, so a disagreement is a defect rather than a convention the writer is trusted to have followed",
+          "the fields a kind requires are read from the contract's own per-kind conditionals rather than restated, so a second copy cannot fall out of step with the first",
+          "a requirement the object neither meets nor names in a gap is reported: the contract's alternation is satisfied by any gap over any field, so a gap about one fact would otherwise excuse the absence of another",
+          "an obligation with two sides is met by either: a rule carrying an expression owes no gap for its examples",
+          "a nested alternation counts as a requirement and either side of it may be named: a rule short of both `expression` and `examples` may declare a gap on either",
+          "a conditional on `ddd` is resolved against the object at hand, so `identity` is nameable on an entity and not on a value object",
+          "`attributes[<name>].<parameter>` is nameable only where the object carries that attribute and its primitive requires that parameter",
+          "an unwritten field of the closed authoring set is reported where no `authoring` gap names it, because the gap is what tells a pass that has not run from a field nobody owes",
+          "a `kind: authoring` gap is held to that closed set, which is the fields the enrichment owns and nothing else",
+          "a gap naming a fact the object already declares is reported: a gap records what is missing, and one beside the fact it names keeps an object incomplete for nothing",
+          "a lifecycle's transition table is checked over the product of its states and every trigger it mentions, with both rejection shorthands expanded first: a trigger list stands for one entry per trigger, and `from: terminal` for every terminal state",
+          "a terminal state is checked like any other: having no outgoing transition is a different statement from having no decision, and exempting it would let the table stay silent about what happens when a trigger arrives anyway",
+          "two lifecycles naming one subject are reported with both identifiers, because which of them binds is a question neither file answers",
+          "a reference is followed to the context its target sits in, through the scopes between, and one crossing a boundary is reported unless the target is an interface",
+          "the derived files are skipped by name rather than parsed and reported as malformed",
+          "it writes nothing and repairs nothing"
+        ],
+        "judgment": [],
+        "assertions": [],
+        "grant": {
+          "note": "No tool grant: it is a script the caller runs. It reads the root it is given and the contract that ships beside it, and writes nothing."
+        },
+        "failure_outcomes": [
+          {
+            "outcome": "cannot_run",
+            "reason": "the root does not exist, holds no object, or the contract is missing; exit 2, distinguished from a check that ran and found a problem"
+          },
+          {
+            "outcome": "identifier_disagrees_with_its_path",
+            "reason": "an object whose identifier does not compute to the path it sits at, or names a kind other than the one it declares; reported per object and never moved or rewritten"
+          },
+          {
+            "outcome": "unnameable_field",
+            "reason": "a gap names a field its kind does not require, or a parameter of an attribute the object does not carry; reported per object and per gap, and never repaired"
+          },
+          {
+            "outcome": "unnamed_absence",
+            "reason": "a fact the kind requires that the object neither declares nor covers with a gap; reported per object and per obligation, and never repaired"
+          },
+          {
+            "outcome": "incomplete_transition_table",
+            "reason": "a state-and-trigger pairing that is neither a transition nor a rejection; reported per lifecycle with the pairings, and never filled in"
+          },
+          {
+            "outcome": "contested_subject",
+            "reason": "two lifecycles claiming one definition; reported with both, and neither is chosen"
+          },
+          {
+            "outcome": "boundary_crossed_without_an_interface",
+            "reason": "a reference into another bounded context whose target is not an interface; reported with the locator, and never rewritten"
+          }
+        ]
+      }
+    },
+    {
+      "name": "materialize",
+      "class": "script",
+      "status": "active",
+      "path": "bin/materialize.py",
+      "declaration": {
+        "objective": "Derive the knowledge graph and the three projections from the objects, or verify that the ones on disk are what the objects imply. Choose it after enrichment, and again whenever the base changes. It is also where every reference is resolved, which no per-file schema can do. Not for authoring, not for validating an object against its contract, and not for repairing a defect it finds.",
         "inputs": [
           {
             "name": "knowledge_root",
             "required": true
           },
           {
-            "name": "pack_declaration",
-            "artifact": "pack-declaration",
-            "contract": "pack-declaration/1",
+            "name": "check",
+            "required": false,
+            "default": "absent, and the derived files are written; with it they are compared and a stale one is reported without being replaced"
+          }
+        ],
+        "outputs": [
+          {
+            "artifact": "knowledge-graph",
+            "contract": "knowledge-graph/2"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
+          }
+        ],
+        "produced_artifacts": [
+          "knowledge-graph"
+        ],
+        "required_context": {
+          "note": "Every kind becomes a graph node, so all eight are in scope. It reads their declared references and none of their prose."
+        },
+        "deterministic_behavior": [
+          "the graph is the objects' declared relationships and nothing inferred: a relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs",
+          "nodes and edges are ordered so identical input produces byte-identical output, and a derived file that reordered between two runs would show a diff nobody caused",
+          "the edge vocabulary is the closed table the ontology declares, with each kind's cardinality and whether expansion traverses it",
+          "the projections are limited to an index, a glossary and a context map, and the glossary is the set of definitions rather than a list beside them",
+          "an edge naming an id the base does not hold is reported as a defect together with orphans, and the graph is still written so a reader sees the shape the defect sits in",
+          "a derived file is never read back as an object, so a second run does not grow the graph",
+          "it repairs nothing, and under --check it writes nothing at all"
+        ],
+        "judgment": [],
+        "assertions": [
+          {
+            "output": "knowledge-graph",
+            "bound": false
+          }
+        ],
+        "grant": {
+          "note": "No tool grant: it is a script the caller runs. It reads the knowledge root it is given and writes four derived files into it, and reaches nothing else."
+        },
+        "failure_outcomes": [
+          {
+            "outcome": "cannot_run",
+            "reason": "the root does not exist, holds no knowledge object, or holds a file with no frontmatter fence; exit 2, distinguished from a check that ran and found a defect"
+          },
+          {
+            "outcome": "unresolved_reference",
+            "reason": "an edge names an id the base does not hold, or an object is referenced by nothing and references nothing; reported per edge with where in the object it sits, and never repaired"
+          },
+          {
+            "outcome": "stale_derived_file",
+            "reason": "under --check, a derived file on disk is not what the objects imply — it was hand-edited or the objects moved under it; reported and left as found, because regenerating during a check would repair what the check exists to detect"
+          }
+        ]
+      }
+    },
+    {
+      "name": "seal-analysis",
+      "class": "script",
+      "status": "active",
+      "path": "bin/seal_analysis.py",
+      "declaration": {
+        "objective": "Record what the analysis wrote, per object, so the pass that comes next can be held to its own fields. Choose it at the end of the first entry point, after the gap check and before anything edits the tree. Not for checking the enrichment, which is check-field-ownership, and not for writing or repairing an object.",
+        "inputs": [
+          {
+            "name": "root",
             "required": true
           },
           {
-            "name": "scope_id",
-            "required": true
-          },
-          {
-            "name": "placement_id",
-            "required": true
-          },
-          {
-            "name": "plan_id",
+            "name": "seal_path",
             "required": true
           }
         ],
         "outputs": [
           {
-            "artifact": "generation-manifest",
-            "contract": "generation-manifest/1"
+            "artifact": "analysis-seal",
+            "contract": "analysis-seal/1"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
           }
         ],
         "produced_artifacts": [
-          "generation-scope",
-          "generation-plan",
-          "generation-manifest"
+          "analysis-seal"
         ],
         "required_context": {
-          "node_types": [
-            "boundary",
-            "definition",
-            "rule",
-            "lifecycle",
-            "interface",
-            "process"
-          ],
-          "note": "A pack's from entries decide which node types yield artifacts, and a pack may declare any of the six, so the whole vocabulary is reachable."
+          "note": "No kind is in scope. It records the fields an object carries and reads nothing about what they mean."
         },
         "deterministic_behavior": [
-          "the scope is a closed frozen set of ids with content hashes, and a member that cannot be resolved blocks generation",
-          "only accepted knowledge is compiled: a proposed or superseded member blocks the scope rather than being dropped from it",
-          "the plan is derived from the scope, the pack declaration, the manifest, and the frozen placement decision, with no model in the derivation",
-          "the plan is validated before any file is written, and a failing plan is rejected rather than repaired",
-          "a target path the manifest locks is read back rather than decided again",
-          "a target-path collision is reported as a defect rather than resolved by policy"
+          "only the analysis's side of the ownership line is sealed, read from the one module that declares it: sealing a field the enrichment owns would record a value nobody had written and report every legitimate enrichment as a change",
+          "a `kind: domain` gap is recorded verbatim rather than digested, because a removed one is reported by the field it named and a digest names nothing a reader can open",
+          "the body headings are recorded in order, so a heading added or renamed is reported and the content under one is not read",
+          "a path is recorded relative to the root, so a seal is readable on a machine other than the one that wrote it",
+          "it writes the seal and verifies nothing: a check that could refresh the baseline it compares against would report success on the change it exists to catch"
         ],
-        "judgment": [
-          "the target path of an entry the manifest does not yet lock, through the placement decision it freezes before deriving the plan"
-        ],
+        "judgment": [],
         "assertions": [
           {
-            "output": "generation-manifest",
+            "output": "analysis-seal",
             "bound": false
           }
         ],
         "grant": {
-          "note": "The skill states no allowed-tools, so it runs under the session's grant, recorded rather than implied. It is not model-invocable: it writes source."
+          "note": "No tool grant: it is a script the caller runs. It reads the tree it is given and writes one file at the path it is given."
         },
         "failure_outcomes": [
           {
-            "outcome": "missing_input",
-            "reason": "a required input was not supplied, including an id it never mints"
+            "outcome": "cannot_run",
+            "reason": "the root does not exist or holds no object; exit 2, distinguished from a run that read the tree and failed"
           },
           {
-            "outcome": "no_active_pack",
-            "reason": "no pack is recorded as active, or more than one is; a pack inferred at run time is a hidden default and is refused"
-          },
-          {
-            "outcome": "generative_gap",
-            "reason": "the knowledge base does not hold a domain fact a producer needs, naming the gap rather than inventing the fact"
-          },
-          {
-            "outcome": "unaccepted_knowledge",
-            "reason": "a root or a member the scope reaches is not accepted, named with its status; promotion is a maintainer's decision and this capability never makes it"
-          },
-          {
-            "outcome": "plan_invalid",
-            "reason": "the derived plan failed validation, reported with the failing entries and nothing written"
+            "outcome": "unreadable_object",
+            "reason": "an object under the root carries no frontmatter fence; reported with its path and nothing is written"
           }
         ]
       }
@@ -630,112 +581,123 @@
       "status": "active",
       "path": "skills/ingest-domain/SKILL.md",
       "declaration": {
-        "objective": "Turn a domain model into a validated knowledge base, classifying every construct and authoring one object per construct in strategic-before-tactical order. Choose it once a domain model exists and has been reviewed, including the first time a repository is brought under Siegard. Not for modelling the domain, which is model-domain; not for changing one recorded fact; and not for generating code.",
+        "objective": "Finish the objects an analysis wrote: write into each the four fields no analysis carries, check that nothing else moved, hold the base to the rules no per-file schema can express, and derive the graph and its projections. Choose it once an analysis has written its objects and a person has read the diff. Not for producing those objects, which is model-domain; not for filling a gap only the domain can close; and not for generating code.",
         "inputs": [
           {
-            "name": "domain_model",
-            "artifact": "domain-model",
-            "contract": "domain-model/1",
+            "name": "knowledge_root",
+            "artifact": "domain-object",
+            "contract": "domain-object/2",
             "required": true
           },
           {
-            "name": "knowledge_root_and_contract",
+            "name": "analysis_seal",
+            "artifact": "analysis-seal",
+            "contract": "analysis-seal/1",
             "required": true
           },
           {
-            "name": "framework_script_root",
+            "name": "material",
             "required": true
           },
           {
-            "name": "intake_id",
+            "name": "result_ids",
             "required": true
           },
           {
             "name": "system_defaults",
             "required": false,
-            "default": "absent, and the ingestion stops rather than choosing a timezone, a currency, an identity strategy, or a body-line ceiling the framework has no basis to choose"
-          },
-          {
-            "name": "instant_and_producer_identity",
-            "required": true
+            "default": "absent, and the base's own system.md supplies them; where neither does, the ingestion stops rather than choosing a timezone, a currency, an identity strategy, or a body-line ceiling the framework has no basis to choose"
           }
         ],
         "outputs": [
           {
-            "artifact": "knowledge-intake-plan",
-            "contract": "knowledge-intake-plan/1"
+            "artifact": "domain-object",
+            "contract": "domain-object/2"
           },
           {
             "artifact": "validation-evidence",
-            "contract": "validation-evidence/1"
+            "contract": "validation-evidence/3"
           }
         ],
         "consumed_artifacts": [
           {
-            "artifact": "knowledge-graph",
+            "artifact": "analysis-record",
             "access": "read"
           },
           {
-            "artifact": "knowledge-authoring-result",
+            "artifact": "knowledge-enrichment-result",
+            "access": "read"
+          },
+          {
+            "artifact": "domain-object",
+            "access": "read"
+          },
+          {
+            "artifact": "analysis-seal",
             "access": "read"
           }
         ],
         "produced_artifacts": [
-          "knowledge-object",
-          "knowledge-intake-plan",
-          "validation-evidence"
+          "domain-object",
+          "validation-evidence",
+          "knowledge-graph"
         ],
         "required_context": {
-          "node_types": [
-            "boundary",
-            "definition",
-            "rule",
-            "lifecycle",
-            "interface",
-            "process"
-          ],
-          "note": "Ingestion authors into any of the six and orders the authoring by node type, so the whole vocabulary is in scope as a sequence rather than as a selection."
+          "note": "Every kind is in scope: it delegates an enrichment over each object the analysis wrote, and the checks it runs read the per-kind requirements from the contract itself. It selects no kind and orders nothing by one, because every object already exists."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/1 before anything is classified, and a model declaring itself blocked ends the run",
-          "the classification is validated against knowledge-intake-plan/1 before any object is authored",
-          "authoring follows the node-type order strategic before tactical, so an object's boundary and every reference it declares exist before it does",
-          "each authoring result is read at the boundary to tell an authored entry from a blocked one, and a blocked entry is recorded rather than retried",
-          "every authored object is born proposed and records the request the model answers",
-          "the knowledge validator and the materializer run after authoring, and the derived files are regenerated rather than written",
-          "the timestamp and producer identity come from the caller and are never minted",
-          "an entry short of a fact is reported as a gap rather than authored around, and an open question the model refused to decide is carried rather than answered",
-          "the validators are run and what they reported is recorded as validation evidence \u2014 the checks, their results, and enough to re-run them \u2014 so an ingestion cannot be reported as validated without saying what validated it"
+          "it begins where the review ended: every object already exists, and nothing here writes one",
+          "there is no staging tree and no promotion — an object is written where it is read, and what says the enrichment has not reached one is its own open `kind: authoring` gap",
+          "the base declares its own defaults in system.md under knowledge-system/1 before anything is enriched, and a caller who supplies none is a stop rather than a default the framework chose",
+          "every object exists before any is enriched, so the enrichments are independent and none is ordered behind another",
+          "each enrichment result is read at the boundary to tell an enriched object from a blocked one, and a blocked one is recorded rather than retried",
+          "a finding an enricher reports is relayed to the reviewer and never acted on here: the pass that could have edited the design has already finished, and this one may not",
+          "a fact the analysis did not state stays a gap, and an open question the analysis refused is carried rather than answered: a question answered by whoever happened to run this is a domain fact invented by the framework",
+          "the field-ownership check compares each object against the seal, and it is the only thing enforcing which fields the enrichment may touch — a tool grant names tools, not the keys of a file",
+          "the knowledge check holds both directions of the gap alternation and the three rules no per-file schema can express: a lifecycle's table is total, no two lifecycles claim one subject, and a reference crossing a bounded context targets an interface",
+          "materialization performs the fourth: every reference resolves, and an edge naming an id the base does not hold is reported together with orphans while the graph is still written",
+          "a defect any check reports is reported and never repaired, and no fifth check is improvised: one written here would differ between two runs over the same base",
+          "the run records a validation-evidence/3 naming each owed check, its verdict, and why one did not run, so a reader can tell a check that passed from one that never ran",
+          "every identifier comes from the caller and is never minted"
         ],
         "judgment": [
-          "how to phrase each authoring delegation",
-          "whether to author the ready entries when others are short of a fact, which is the caller's call to override"
+          "how to phrase each enrichment delegation, and which material to hand it",
+          "what to draw the reviewer's attention to, which is the enrichers' findings, the blocked objects and the open domain gaps rather than a count",
+          "whether the base is fit to be built on while entries blocked and owed checks had nothing to run them, which is the caller's call to take"
         ],
         "assertions": [
           {
-            "output": "knowledge-intake-plan",
+            "output": "validation-evidence",
             "bound": false
           }
         ],
         "grant": {
-          "note": "The skill states no allowed-tools, so it runs under the session's grant, recorded rather than implied. It is not model-invocable: it writes a knowledge base."
+          "note": "The skill states no allowed-tools, so it runs under the session's grant, recorded rather than implied. It is not model-invocable: it edits a knowledge base and runs the checks over it."
         },
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the system defaults it never chooses and the instant it never mints"
+            "reason": "a required input was not supplied, including the system defaults it never chooses and the result ids it never mints"
           },
           {
-            "outcome": "model_blocked",
-            "reason": "the domain model declares itself blocked, so there is no design to ingest; reported with its reason and nothing authored"
+            "outcome": "tree_absent",
+            "reason": "the knowledge root holds no object, or the seal does not exist: model-domain has not run for this request, or the seal it left was not kept"
           },
           {
-            "outcome": "entry_blocked",
-            "reason": "a construct is short of a fact its node type requires, named with the fact; the remaining entries still author and this is not a stop"
+            "outcome": "object_blocked",
+            "reason": "an enricher could not write the four fields because the material does not support them, named with what was missing; the object keeps its authoring gaps and is left as found"
           },
           {
-            "outcome": "validation_failed",
-            "reason": "the authored base fails the knowledge validator; the evidence records every check and its result, and the run reports rather than repairs"
+            "outcome": "enrichment_out_of_bounds",
+            "reason": "an enrichment changed something on the analysis's side of the seal, named per object and per field; reported rather than reverted, because a repair here would hide which pass made the change"
+          },
+          {
+            "outcome": "knowledge_check_failed",
+            "reason": "a gap and an absence disagree, a lifecycle's transition table is incomplete, two lifecycles claim one subject, or a reference crosses a bounded context without targeting an interface; reported per object and never repaired"
+          },
+          {
+            "outcome": "unresolved_reference",
+            "reason": "an edge names an id the base does not hold, or an object is referenced by nothing and references nothing; reported with where it sits and the graph is still written"
           }
         ]
       }
@@ -746,243 +708,18 @@
       "status": "active",
       "path": "skills/model-domain/SKILL.md",
       "declaration": {
-        "objective": "Analyse a request into a DDD domain model and stop, so the design is reviewable before any knowledge object exists. Choose it when a request describes a problem or a solution and no domain model exists. Not for authoring knowledge objects, which is ingest-domain over the model this produces, and not for generating code.",
+        "objective": "Turn a request into a reviewable set of domain objects: analyse it into a DDD domain model written one object per construct, map what that touched in the base, hold the gaps to what each kind requires, and seal what was written — then stop for a person to read the diff. Choose it when a request describes a problem or a solution and the base does not yet hold what it asks for. Not for writing the four fields only judgment supplies, which is ingest-domain over what this produces, and not for generating code.",
         "inputs": [
           {
             "name": "request",
-            "required": true,
-            "artifact": "change-request",
-            "contract": "change-request/1"
-          },
-          {
-            "name": "model_id",
             "required": true
           },
           {
-            "name": "referenced_material",
-            "required": false,
-            "default": "absent, and the analysis rests on the request alone rather than on material nobody supplied"
-          },
-          {
-            "name": "model_destination",
-            "required": false,
-            "default": "absent, and the model is reported rather than written; where it survives the run is the caller's decision"
-          }
-        ],
-        "outputs": [
-          {
-            "artifact": "domain-model",
-            "contract": "domain-model/1"
-          }
-        ],
-        "produced_artifacts": [
-          "domain-model"
-        ],
-        "required_context": {
-          "note": "No node type is in scope. This procedure produces a design in DDD's vocabulary; the ontology's six types enter when the model is classified, which is a different entry point."
-        },
-        "deterministic_behavior": [
-          "the model is validated against domain-model/1 at the boundary and a failing model is rejected rather than repaired",
-          "a model declaring itself blocked ends the run with its reason reported and nothing authored",
-          "no file under the knowledge root is written",
-          "the model id comes from the caller and is never minted"
-        ],
-        "judgment": [
-          "how to phrase the delegation to the modelling agent",
-          "what to draw a reviewer's attention to in the report, which is the decided elements and the refusals rather than a summary"
-        ],
-        "assertions": [
-          {
-            "output": "domain-model",
-            "bound": false
-          }
-        ],
-        "grant": {
-          "note": "The skill states no allowed-tools, so it runs under the session's grant, recorded rather than implied. It is not model-invocable: it may write the model it produces."
-        },
-        "failure_outcomes": [
-          {
-            "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the model id it never mints"
-          },
-          {
-            "outcome": "no_domain_in_request",
-            "reason": "the analysis returned blocked because the request describes no domain; a finished run with a negative result rather than an error"
-          },
-          {
-            "outcome": "model_invalid",
-            "reason": "the analysis failed its own contract at the boundary, reported with what failed and rejected rather than repaired"
-          }
-        ]
-      }
-    },
-    {
-      "name": "upgrade",
-      "class": "skill",
-      "status": "active",
-      "path": "skills/upgrade/SKILL.md",
-      "declaration": {
-        "objective": "Move an installed distribution to a newer version, detecting any file the repository changed and stopping rather than overwriting it. Choose it when a new framework version is available, or to check whether an installation has diverged. Not for the first installation, and not for changing what the framework ships.",
-        "inputs": [
-          {
-            "name": "framework_script_root",
+            "name": "record_id",
             "required": true
           },
           {
-            "name": "installed_plugin_root",
-            "required": true
-          },
-          {
-            "name": "target_distribution",
-            "required": true
-          },
-          {
-            "name": "repository_root",
-            "required": false,
-            "default": "absent, and shadowing is then not reported rather than reported as none"
-          }
-        ],
-        "outputs": [
-          {
-            "artifact": "distribution-manifest",
-            "contract": "distribution-manifest/2"
-          }
-        ],
-        "consumed_artifacts": [
-          {
-            "artifact": "distribution-manifest",
-            "access": "read"
-          }
-        ],
-        "deterministic_behavior": [
-          "a file diverging from what the manifest records is detected by digest and named, and the upgrade stops",
-          "enabling the same version twice leaves the installation as enabling it once did",
-          "retiring a capability removes its files and its manifest entries together",
-          "no permission is added and no check is disabled in the receiving repository"
-        ],
-        "judgment": [
-          "what to report to the operator about a divergence, whose resolution is the repository's decision rather than this capability's"
-        ],
-        "assertions": [
-          {
-            "output": "distribution-manifest",
-            "bound": false
-          }
-        ],
-        "grant": {
-          "note": "The skill states no allowed-tools, so it runs under the session's grant, recorded rather than implied. It is not model-invocable: it writes into an installation."
-        },
-        "failure_outcomes": [
-          {
-            "outcome": "missing_input",
-            "reason": "a required input was not supplied; a guessed path would fail silently in a repository laid out differently"
-          },
-          {
-            "outcome": "local_divergence",
-            "reason": "an installed file differs from what the manifest records, named, with nothing overwritten"
-          },
-          {
-            "outcome": "nothing_installed",
-            "reason": "the target holds no installation to upgrade, which is an installation rather than an upgrade"
-          }
-        ]
-      }
-    },
-    {
-      "name": "concept-author",
-      "class": "specialized-agent",
-      "status": "active",
-      "path": "agents/concept-author.md",
-      "declaration": {
-        "objective": "Author or update one concept file in an OKF-derived concept bundle and keep the bundle index in step. Choose it when a workflow needs a term defined, an existing concept revised, or an index row repaired. Not for changing the bundle's contract, and not for renaming concept ids.",
-        "inputs": [
-          {
-            "name": "bundle_root",
-            "required": true
-          },
-          {
-            "name": "contract_path",
-            "required": true
-          },
-          {
-            "name": "term",
-            "required": true
-          },
-          {
-            "name": "generated_at",
-            "required": true
-          },
-          {
-            "name": "generated_by",
-            "required": true
-          }
-        ],
-        "outputs": [
-          {
-            "artifact": "concept-authoring-result",
-            "contract": "concept-authoring-result/1"
-          }
-        ],
-        "produced_artifacts": [
-          "concept"
-        ],
-        "required_context": {
-          "note": "The concept bundle rather than the knowledge base. The two vocabularies are disjoint, so no ontology node type is in scope for this capability."
-        },
-        "deterministic_behavior": [
-          "the result is validated against concept-authoring-result/1 at the boundary",
-          "the concept is validated against the bundle contract the caller names",
-          "the filename equals the id without its concept. prefix",
-          "the timestamp and producer identity come from the caller and are never minted"
-        ],
-        "judgment": [
-          "the definition itself, in prose a stranger can apply",
-          "whether an existing concept already covers the semantics, which is a blocking outcome rather than a merge"
-        ],
-        "assertions": [
-          {
-            "output": "concept-authoring-result",
-            "bound": false
-          }
-        ],
-        "grant": {
-          "tools": [
-            "Read",
-            "Grep",
-            "Glob",
-            "Write",
-            "Edit"
-          ],
-          "note": "Read tools to learn the contract and the bundle, write tools for exactly one concept and its index row. No shell: the boundary validator is not this agent's to run."
-        },
-        "failure_outcomes": [
-          {
-            "outcome": "missing_input",
-            "reason": "a required input was not supplied, named rather than substituted"
-          },
-          {
-            "outcome": "already_covered",
-            "reason": "an existing concept covers the semantics, named so the caller decides whether to reuse it"
-          }
-        ]
-      }
-    },
-    {
-      "name": "domain-analyst",
-      "class": "specialized-agent",
-      "status": "active",
-      "path": "agents/domain-analyst.md",
-      "declaration": {
-        "objective": "Classify a domain model into the ontology, returning one entry per construct with its node type, its DDD value, the identifier it will take, and every required fact the model does not supply. Choose it once a domain model exists and before anything is authored. Not for modelling the domain, which is domain-modeler; not for authoring objects; and not for filling a gap the model leaves.",
-        "inputs": [
-          {
-            "name": "domain_model",
-            "artifact": "domain-model",
-            "contract": "domain-model/1",
-            "required": true
-          },
-          {
-            "name": "intake_id",
+            "name": "analysis_id",
             "required": true
           },
           {
@@ -990,81 +727,100 @@
             "required": true
           },
           {
-            "name": "existing_boundaries",
+            "name": "instant_and_producer_identity",
+            "required": true
+          },
+          {
+            "name": "seal_path",
+            "required": true
+          },
+          {
+            "name": "referenced_material",
             "required": false,
-            "default": "absent, and every boundary in the plan is then a new one rather than silently reusing an identifier nothing confirmed"
+            "default": "absent, and the analysis rests on the request alone rather than on material nobody supplied"
           }
         ],
         "outputs": [
           {
-            "artifact": "knowledge-intake-plan",
-            "contract": "knowledge-intake-plan/1"
-          }
-        ],
-        "consumed_artifacts": [
-          {
-            "artifact": "knowledge-graph",
-            "access": "read"
+            "artifact": "analysis-record",
+            "contract": "analysis-record/2"
           },
           {
-            "artifact": "knowledge-object",
-            "access": "read"
+            "artifact": "impact-analysis",
+            "contract": "impact-analysis/5"
+          },
+          {
+            "artifact": "domain-object",
+            "contract": "domain-object/2"
+          },
+          {
+            "artifact": "analysis-seal",
+            "contract": "analysis-seal/1"
           }
         ],
         "produced_artifacts": [
-          "knowledge-intake-plan"
+          "analysis-record",
+          "impact-analysis",
+          "domain-object",
+          "analysis-seal"
         ],
         "required_context": {
-          "node_types": [
-            "boundary",
-            "definition",
-            "rule",
-            "lifecycle",
-            "interface",
-            "process"
-          ],
-          "note": "Classification may land a construct in any of the six, so narrowing this would narrow what may be decided. It is the same reason root-selector names all six, arrived at from the opposite direction: that capability chooses among existing objects and this one decides what an object will be."
+          "note": "All eight kinds are in scope through the analysis it delegates, which works the strategic kinds before the tactical ones. The procedure itself selects none: it reads the record and the checks' output rather than the objects."
         },
         "deterministic_behavior": [
-          "the domain model is validated against domain-model/1 at the boundary before it is read",
-          "the result is validated against knowledge-intake-plan/1 at the boundary before anything consumes it",
-          "the state is one of the closed set classified, blocked, and no other value is accepted",
-          "every proposed identifier is computed from the node type and the boundary by the ontology's arithmetic rather than allocated",
-          "entries are sorted by proposed identifier, so two classifications of one model compare directly",
-          "the intake id comes from the caller and is never minted",
-          "a construct whose node type is genuinely ambiguous is classified as the model supports and the alternative is recorded, never resolved silently"
+          "the analysis record is validated against analysis-record/2 at the boundary and rejected rather than repaired, because a design that was patched is a design nobody produced",
+          "a record whose state is blocked ends the run with the reason reported and nothing written",
+          "every object is written under the knowledge root, at the path its identifier computes to, and nowhere else: an object is written where it is read, and nothing is promoted",
+          "the four fields only judgment supplies are recorded as `kind: authoring` gaps rather than guessed at, and the next entry point writes them",
+          "an open question the analysis refused is carried rather than answered, because a question answered by whoever happened to run this is a domain fact invented by the framework",
+          "every gap is checked against what its kind actually requires, in both directions, before the run ends",
+          "an impact analysis runs for every request, including the first against an empty base",
+          "the impact analysis runs after the objects exist rather than before, so a verdict of none asks for the run to be discarded rather than preventing a write; version control is the recovery",
+          "the gap check runs before the seal, so no seal is taken over a tree whose gaps and absences disagree",
+          "the objects are sealed before the run ends and before anything edits them, and the seal is what the next entry point compares an enrichment against: a tool grant names tools rather than the keys of a file, so nothing else records what the analysis wrote",
+          "every identifier and the instant come from the caller and are never minted",
+          "the run ends with the objects unenriched: the review is a person reading the diff, and a procedure that ends has stopped where one that says so in the middle has not"
         ],
         "judgment": [
-          "which node type each DDD construct becomes, and the ddd value it carries",
-          "which boundary a construct belongs to, and therefore the identifier it takes",
-          "whether a construct has a home in the mapping at all, or is stack knowledge or rationale"
+          "how to phrase the delegation to the modelling agent, undivided, because a request handed over in pieces produces boundaries drawn without seeing the whole",
+          "what to draw a reviewer's attention to, which is the decided constructs with their rationale, the refusals and the open domain gaps rather than a count",
+          "whether a verdict of none is worth overriding, which is the caller's call to take"
         ],
         "assertions": [
           {
-            "output": "knowledge-intake-plan",
+            "output": "analysis-record",
             "bound": false
           }
         ],
         "grant": {
-          "tools": [
-            "Read",
-            "Grep",
-            "Glob"
-          ],
-          "note": "Read-only on purpose. It decides what each construct becomes and writes nothing, so the classification is reviewable before the base changes; the boundary validator is not this agent's to run."
+          "note": "The skill states no allowed-tools, so it runs under the session's grant, recorded rather than implied. It is not model-invocable: it writes into the knowledge base, and it is the only thing in this run that does — the analysis it delegates to holds no write grant, and every object reaches disk through the change door."
         },
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the intake id it never mints, named rather than substituted"
+            "reason": "a required input was not supplied, including the identifiers and the instant it never mints"
           },
           {
-            "outcome": "model_blocked",
-            "reason": "the domain model declares itself blocked, so there is no design to classify; reported rather than classified into nothing"
+            "outcome": "no_domain_in_request",
+            "reason": "the analysis returned blocked because the request describes no domain; a finished run with a negative result rather than an error"
           },
           {
-            "outcome": "unmapped_construct",
-            "reason": "a construct the mapping has no home for, recorded on the plan rather than forced into a node type; the plan still classifies and this is not a stop"
+            "outcome": "record_invalid",
+            "reason": "the analysis failed its own contract at the boundary, reported with what failed and rejected rather than repaired"
+          },
+          {
+            "outcome": "already_held",
+            "reason": "the impact analysis returns none: the base already holds what the analysis describes, so the run is reported for discard rather than for review and the objects are dropped through version control"
+          },
+          {
+            "outcome": "knowledge_check_failed",
+            "reason": "a gap names a fact its kind does not require, or a fact a kind requires is named by no gap; reported per object, and no seal is taken over a tree in that state"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
           }
         ]
       }
@@ -1075,52 +831,70 @@
       "status": "active",
       "path": "agents/domain-modeler.md",
       "declaration": {
-        "objective": "Analyse a request into a DDD domain model \u2014 subdomains, bounded contexts and their relationships, aggregates, entities and value objects, invariants, lifecycles, published interfaces, and processes \u2014 marking every element as stated by the request or decided by the analysis. Choose it when a request describes a problem or a solution and no domain model exists. Not for classifying a model into the ontology, which is domain-analyst; not for authoring knowledge objects; and not for deciding anything about a technology stack.",
+        "objective": "Analyse a request into a DDD domain model and write it — one file per construct, in the eight kinds the ontology records: subdomains, bounded contexts and their relationships, aggregates, entities and value objects, invariants, lifecycles, published interfaces, and processes. Choose it when a request describes a problem or a solution and the base does not yet hold what it asks for. Not for writing the four fields only judgment supplies, which is knowledge-enricher; not for deciding anything about a technology stack; and not for judging whether the change should happen, which is impact-analyst.",
         "inputs": [
           {
             "name": "request",
-            "required": true,
-            "artifact": "change-request",
-            "contract": "change-request/1"
+            "required": true
           },
           {
-            "name": "model_id",
+            "name": "record_id",
+            "required": true
+          },
+          {
+            "name": "knowledge_root",
+            "required": true
+          },
+          {
+            "name": "generated_by",
+            "required": true
+          },
+          {
+            "name": "generated_at",
             "required": true
           },
           {
             "name": "referenced_material",
             "required": false,
-            "default": "absent, and the analysis rests on the request alone rather than on material nothing supplied"
+            "default": "absent, and the analysis rests on the request alone rather than on material nobody supplied"
           }
         ],
         "outputs": [
           {
-            "artifact": "domain-model",
-            "contract": "domain-model/1"
+            "artifact": "analysis-record",
+            "contract": "analysis-record/2"
           }
         ],
         "produced_artifacts": [
-          "domain-model"
+          "domain-object"
         ],
         "required_context": {
-          "note": "No node type is in scope. This capability works in DDD's vocabulary and produces a design; the ontology's six types enter one step later, when the model is classified. Naming a node type here would put classification in two capabilities."
+          "note": "It writes in all eight kinds and works the strategic ones before the tactical ones, so the whole vocabulary is in scope as a sequence rather than as a selection. It also reads what the base already holds in the scopes the request touches, because a construct already recorded is one to reference rather than write again."
         },
         "deterministic_behavior": [
-          "the change request is validated against change-request/1 at the boundary before it is analysed",
-          "the result is validated against domain-model/1 at the boundary before anything consumes it",
-          "the state is one of the closed set modeled, blocked, and no other value is accepted",
-          "every element declares origin as stated or modeled, and an element it decided carries the rationale that decided it",
-          "the model id comes from the caller and is never minted",
-          "an element whose origin is unclear is recorded as modeled rather than stated, which is the stricter reading: it demands a rationale and invites review, where a wrong `stated` would claim the request said something it did not"
+          "it writes nothing: every construct is returned whole in the record, and the entry point writes it through the door, so an object is validated before it lands rather than swept for afterwards",
+          "the order of `written` is the order the objects must be written in — a scope before what sits inside it, a definition before the lifecycle whose subject it is — because a reference resolves only once its target exists",
+          "the request is received as prose and its identifier as a value; nothing about it is inferred",
+          "the result is validated against analysis-record/2 at the boundary before anything consumes it",
+          "the state is one of the closed set analysed, blocked, and no other value is accepted",
+          "every construct declares origin as stated or modeled, and one it decided carries the rationale that decided it",
+          "the record id comes from the caller and is never minted, and so do the instant and the producer identity every object is stamped with",
+          "a construct whose origin is unclear is recorded as modeled rather than stated, which is the stricter reading: it demands a rationale and invites review, where a wrong `stated` would claim the request said something it did not",
+          "each object is written at the path its identifier computes to, so a path is derivable from an id and an id from a path with no lookup",
+          "a name that will not reduce to kebab-case is refused rather than transliterated, because stripping an accent takes a rule no contract states",
+          "the four fields only judgment supplies are left unwritten and recorded as `kind: authoring` gaps, which is what says the enrichment has not run — there is no status field to set",
+          "a fact a kind requires and the request does not state becomes a `kind: domain` gap naming what the domain would have to say, and the object is still written",
+          "an open question is held once, with an identifier derived from its subject, and each object it blocks carries a gap naming that question rather than restating it",
+          "the record names every object written and holds what has no file: the request, the outcome, the open questions and the exclusions"
         ],
         "judgment": [
-          "the whole of the modelling: subdomain classification, context boundaries, aggregate boundaries, which constructs are entities and which are value objects, and which rules are invariants",
+          "the whole of the modelling: subdomain classification, context boundaries and their relationships, aggregate boundaries, which constructs are entities and which are value objects, which rules are invariants, and the totality of a lifecycle's transition table",
           "what the request leaves undecided, which is recorded as an open question rather than filled",
-          "what falls outside domain knowledge and is recorded as excluded"
+          "what falls outside domain knowledge and is recorded as excluded, because absence cannot be inferred from silence"
         ],
         "assertions": [
           {
-            "output": "domain-model",
+            "output": "analysis-record",
             "bound": false
           }
         ],
@@ -1130,20 +904,26 @@
             "Grep",
             "Glob"
           ],
-          "note": "Read-only on purpose. It produces a design and writes nothing, so the design is reviewable before the knowledge base changes; the boundary validator is not this agent's to run."
+          "note": "It holds no write grant of any kind. The objects travel whole in its record and the entry point puts them on disk through the change door, which validates each against domain-object/2 before it lands. A guarantee a producer self-reports is not a guarantee, and the shortest way to keep that true is for the producer to be unable to reach the base at all. It previously held Write and Edit."
         },
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the model id it never mints, named rather than substituted"
+            "reason": "a required input was not supplied, including the record id and the stamp it never mints, named rather than substituted"
           },
           {
             "outcome": "no_domain_in_request",
-            "reason": "the request describes no domain to model, reported as blocked rather than modelled into something plausible"
+            "reason": "the request describes no domain to model, or is unintelligible; reported as blocked with an empty written list rather than modelled into something plausible"
           },
           {
             "outcome": "undecided_by_the_request",
-            "reason": "a fact the request does not settle, recorded as an open question with what the answer would change; the model still returns and this is not a stop"
+            "reason": "a fact the request does not settle, recorded as an open question with what the answer would change and which objects it blocks; the analysis still returns and this is not a stop"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
           }
         ]
       }
@@ -1154,13 +934,13 @@
       "status": "active",
       "path": "agents/impact-analyst.md",
       "declaration": {
-        "objective": "Classify one change request against the knowledge a repository already holds, returning a closed verdict of none, update, or create and naming every implicated knowledge object and ADR. Choose it at the impact-analysis phase, before anything is authored. Not for authoring, not for deciding the next phase, and not for judging whether the change is a good idea.",
+        "objective": "Map what an analysis wrote against the knowledge a repository already held, returning a closed verdict of none, update, or create and one entry per implicated artifact with the operation it takes, the reason, and the construct driving it. Choose it once an analysis has written its objects and what it touched is the open question. Not for modelling the domain, which is domain-modeler; not for writing or editing an object; and not for judging whether the change is a good idea.",
         "inputs": [
           {
-            "name": "change_request",
-            "artifact": "change-request",
+            "name": "analysis_record",
+            "artifact": "analysis-record",
             "required": true,
-            "contract": "change-request/1"
+            "contract": "analysis-record/2"
           },
           {
             "name": "analysis_id",
@@ -1174,12 +954,12 @@
         "outputs": [
           {
             "artifact": "impact-analysis",
-            "contract": "impact-analysis/2"
+            "contract": "impact-analysis/5"
           }
         ],
         "consumed_artifacts": [
           {
-            "artifact": "knowledge-graph",
+            "artifact": "domain-object",
             "access": "read"
           }
         ],
@@ -1187,24 +967,20 @@
           "impact-analysis"
         ],
         "required_context": {
-          "node_types": [
-            "boundary",
-            "definition",
-            "rule"
-          ],
-          "note": "Classification reads what a change touches, not the whole ontology. A lifecycle, an interface, and a process are reached through the objects above rather than selected directly, so naming all six would narrow nothing."
+          "note": "Every kind is reachable, because the objects it reads are whatever the analysis wrote. It resolves each by identifier, by scope, and by the terms it uses, and reads none of them for anything but what they touch — so no kind is selected and none is excluded."
         },
         "deterministic_behavior": [
-          "the change request is validated against change-request/1 at the boundary before it is classified",
-          "the result is validated against impact-analysis/2 at the boundary before anything consumes it",
-          "every knowledge-object and ADR identifier the result names is checked to resolve in the graph",
-          "the verdict is one of the closed set none, update, create, and no other value is accepted",
-          "the state of the base is recorded as empty or populated, and an empty base admits no update verdict",
-          "a request ambiguous between update and create names both the existing artifact and the ambiguity, and the base is recorded as populated whenever anything existed \u2014 the reading that keeps the non-empty implicated rule in force"
+          "the analysis record is validated against analysis-record/2 at the boundary before it is read, and a record whose state is blocked ends the run with nothing analysed",
+          "base_state records whether anything existed to implicate, observed rather than inferred, and populated is recorded whenever anything existed even where the analysis implicates none of it",
+          "over an empty base the verdict is create, every entry names a construct by its own identifier, and every operation is create",
+          "a driver is recorded on every create and every update; a retire driven by a construct the analysis no longer holds carries none, because an absence has no identifier",
+          "an analysis that reads two ways between update and create resolves toward the verdict whose implicated set is larger, because impact-analysis/5 is closed and has no field for the ambiguity itself",
+          "entries are sorted by identifier, so two analyses of one run compare directly"
         ],
         "judgment": [
-          "which knowledge objects a change request semantically implicates",
-          "whether the implication amounts to none, an update, or a creation"
+          "which stored artifacts the analysis semantically implicates, searched by identifier, by scope, and by the terms the constructs use",
+          "whether the implication amounts to none, an update, or a creation",
+          "what about each implicated artifact the analysis makes wrong, incomplete, or absent"
         ],
         "assertions": [
           {
@@ -1223,35 +999,35 @@
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, named in the result rather than substituted"
+            "reason": "a required input was not supplied, including the analysis id it never mints, named in the result rather than substituted"
           },
           {
-            "outcome": "unresolved_reference",
-            "reason": "an identifier the analysis would name does not resolve in the graph"
+            "outcome": "record_blocked",
+            "reason": "the analysis record declares state blocked, so no design was reached and nothing was written; reported and nothing is analysed"
           },
           {
-            "outcome": "contradictory_request",
-            "reason": "the change request asks for two things that cannot both hold, named so a caller can decide"
+            "outcome": "base_unreadable",
+            "reason": "the knowledge root or the contract that governs an object does not exist; said in one sentence with no verdict returned, because an invented verdict cannot be told from a real one"
           }
         ]
       }
     },
     {
-      "name": "knowledge-author",
+      "name": "knowledge-enricher",
       "class": "specialized-agent",
       "status": "active",
-      "path": "agents/knowledge-author.md",
+      "path": "agents/knowledge-enricher.md",
       "declaration": {
-        "objective": "Author or revise one knowledge object from the entry a validated classification names, in one of the six node types, conforming to the ontology contract. Choose it at authoring, once a classification exists. Not for deciding which node type a construct becomes, which is domain-analyst, not for defining vocabulary, which is concept-author, and not for changing the ontology itself.",
+        "objective": "Write the four fields of one domain object that no analysis carries — its retrieval question, its one-sentence summary, what it excludes, and the two body sections its kind names — reading the material and the objects around it. Choose it once an analysis has written the objects and a person has read the diff. Not for deciding what an object is, which the analysis settled; not for closing a gap only the domain can close; and not for editing another object.",
         "inputs": [
           {
-            "name": "knowledge_intake_plan",
-            "artifact": "knowledge-intake-plan",
-            "contract": "knowledge-intake-plan/1",
+            "name": "object_path",
+            "artifact": "domain-object",
+            "contract": "domain-object/2",
             "required": true
           },
           {
-            "name": "proposed_id",
+            "name": "material",
             "required": true
           },
           {
@@ -1259,48 +1035,46 @@
             "required": true
           },
           {
-            "name": "generated_at",
-            "required": true
-          },
-          {
-            "name": "generated_by",
+            "name": "result_id",
             "required": true
           }
         ],
         "outputs": [
           {
-            "artifact": "knowledge-authoring-result",
-            "contract": "knowledge-authoring-result/1"
+            "artifact": "knowledge-enrichment-result",
+            "contract": "knowledge-enrichment-result/2"
+          }
+        ],
+        "consumed_artifacts": [
+          {
+            "artifact": "domain-object",
+            "access": "read"
           }
         ],
         "produced_artifacts": [
-          "knowledge-object"
+          "domain-object"
         ],
         "required_context": {
-          "node_types": [
-            "boundary",
-            "definition",
-            "rule",
-            "lifecycle",
-            "interface",
-            "process"
-          ],
-          "note": "It may author any of the six, and it must read the neighbours a new object declares edges to, so the whole vocabulary is genuinely in scope."
+          "note": "It enriches an object of any kind, and it reads the objects around the one it was given — `out_of_scope` is a claim about the neighbours, so the whole vocabulary is in scope as context even though exactly one object is edited."
         },
         "deterministic_behavior": [
-          "the result is validated against knowledge-authoring-result/1 at the boundary",
-          "the object is validated against knowledge-object/1, including the per-type required fields",
-          "the node type and the subject are read from the entry the classification names, never decided again",
-          "the timestamp and producer identity come from the caller and are never minted",
-          "a fact that would need two node types is reported as blocked rather than compressed into one, because refusing is available here and choosing would author a construct nobody described"
+          "exactly one object is edited, the one whose path was given, and no file is created",
+          "the fields it may write are a closed list, and a change outside them is found by the ownership check rather than trusted: a tool grant names tools, not the keys of a file",
+          "a `kind: domain` gap is left exactly as found — only whoever knows the domain closes one",
+          "the `kind: authoring` gap for each field written is removed, because closing it is what records that the field was filled",
+          "the result id comes from the caller and is never minted",
+          "a disagreement with what the analysis decided is reported as a finding and never edited",
+          "`searched` records whether the neighbours were read at all, so a pass that looked and found nothing is distinguishable from one that never looked"
         ],
         "judgment": [
-          "the wording of the object's own body, and what belongs out of scope",
-          "whether the entry supplies enough for the node type it names, which is a blocking outcome rather than an invention"
+          "the one question this object answers, and the sentence that summarizes it",
+          "what this object does not cover, which is a claim about the objects around it",
+          "the two body sections its kind names",
+          "whether what the analysis decided is supported by the material, reported and never corrected"
         ],
         "assertions": [
           {
-            "output": "knowledge-authoring-result",
+            "output": "knowledge-enrichment-result",
             "bound": false
           }
         ],
@@ -1309,195 +1083,22 @@
             "Read",
             "Grep",
             "Glob",
-            "Write",
             "Edit"
           ],
-          "note": "Write tools to change exactly one object and no shell: the boundary validator runs after it returns, and a guarantee a producer self-reports is not a guarantee."
+          "note": "`Edit` and no `Write`: it changes a file that exists and creates none. The grant cannot confine it to four fields of that file — a grant names tools, not keys — so the confinement is `check-field-ownership`, which runs after and compares each object against the seal the analysis left. No shell."
         },
         "failure_outcomes": [
           {
             "outcome": "missing_input",
-            "reason": "a required input was not supplied, including the instant and producer identity it never mints"
+            "reason": "a required input was not supplied, including the result id it never mints"
           },
           {
-            "outcome": "entry_absent",
-            "reason": "the classification holds no entry for the proposed id, named rather than guessed at"
+            "outcome": "unsupported_by_the_material",
+            "reason": "the material does not say what this object is for, so the question it answers cannot be written; blocked with the reason and nothing written, rather than a plausible sentence composed to fill the field"
           },
           {
-            "outcome": "duplicate_subject",
-            "reason": "an existing object already records this fact, named so the caller decides whether to revise it"
-          },
-          {
-            "outcome": "incomplete_entry",
-            "reason": "the entry is short of a fact its node type requires, named with the field; the object is not authored around it"
-          },
-          {
-            "outcome": "wrong_layer",
-            "reason": "the request is to define what a word means, which is the concept bundle rather than the knowledge base"
-          }
-        ],
-        "consumed_artifacts": [
-          {
-            "artifact": "knowledge-graph",
-            "access": "read"
-          }
-        ]
-      }
-    },
-    {
-      "name": "root-selector",
-      "class": "specialized-agent",
-      "status": "active",
-      "path": "agents/root-selector.md",
-      "declaration": {
-        "objective": "Choose the knowledge objects a change request starts from, each with the claim that justifies it, before expansion runs. Choose it at the context-resolution phase, after impact analysis and before anything is authored. Not for expanding the closure, which is deterministic, and not for deciding what the change should say.",
-        "inputs": [
-          {
-            "name": "change_request",
-            "artifact": "change-request",
-            "required": true,
-            "contract": "change-request/1"
-          },
-          {
-            "name": "impact_analysis",
-            "artifact": "impact-analysis",
-            "contract": "impact-analysis/2",
-            "required": true
-          },
-          {
-            "name": "knowledge_root",
-            "required": true
-          }
-        ],
-        "outputs": [
-          {
-            "artifact": "selected-roots",
-            "contract": "context-package/1"
-          }
-        ],
-        "consumed_artifacts": [
-          {
-            "artifact": "knowledge-graph",
-            "access": "read"
-          }
-        ],
-        "required_context": {
-          "node_types": [
-            "boundary",
-            "definition",
-            "rule",
-            "lifecycle",
-            "interface",
-            "process"
-          ],
-          "note": "The one capability for which naming all six is a constraint rather than a formality: a root may be any node type, and selecting well means seeing the whole bundle. Narrowing this would narrow what may be chosen."
-        },
-        "deterministic_behavior": [
-          "every selected identifier is checked to resolve in the graph before it is returned"
-        ],
-        "judgment": [
-          "which objects a change starts from, which is where model judgment enters resolution",
-          "the claim that justifies each root, which is the only thing a review has to read"
-        ],
-        "assertions": [
-          {
-            "output": "selected-roots",
-            "bound": false
-          }
-        ],
-        "grant": {
-          "tools": [
-            "Read",
-            "Grep",
-            "Glob"
-          ],
-          "note": "Read-only. It selects; it does not author and it does not expand."
-        },
-        "failure_outcomes": [
-          {
-            "outcome": "missing_input",
-            "reason": "a required input was not supplied, named rather than substituted"
-          },
-          {
-            "outcome": "no_defensible_root",
-            "reason": "nothing in the graph justifies a root for this request, said plainly and with no root invented"
-          }
-        ]
-      }
-    },
-    {
-      "name": "spec-delta-author",
-      "class": "specialized-agent",
-      "status": "active",
-      "path": "agents/spec-delta-author.md",
-      "declaration": {
-        "objective": "Write the specification delta for one change request \u2014 every artifact the change touches, by reference, with the operation and the reason. Choose it after context resolution and before implementation. Not for authoring the artifacts themselves, and not for deciding whether the change should happen.",
-        "inputs": [
-          {
-            "name": "change_request",
-            "artifact": "change-request",
-            "required": true,
-            "contract": "change-request/1"
-          },
-          {
-            "name": "impact_analysis",
-            "artifact": "impact-analysis",
-            "contract": "impact-analysis/2",
-            "required": true
-          },
-          {
-            "name": "context_package",
-            "artifact": "context-package",
-            "contract": "context-package/1",
-            "required": true
-          },
-          {
-            "name": "delta_id",
-            "required": true
-          }
-        ],
-        "outputs": [
-          {
-            "artifact": "specification-delta",
-            "contract": "specification-delta/1"
-          }
-        ],
-        "produced_artifacts": [
-          "specification-delta"
-        ],
-        "required_context": {
-          "note": "Whatever the context package names, and nothing else. A delta is references and reasons, so what it needs in scope is fixed by the package rather than by node type."
-        },
-        "deterministic_behavior": [
-          "the result is validated against specification-delta/1 at the boundary before anything consumes it",
-          "every artifact the delta references is named by identifier rather than restated"
-        ],
-        "judgment": [
-          "which artifacts a change touches, and the operation each requires",
-          "the reason each change is needed, stated so a reviewer can disagree with it"
-        ],
-        "assertions": [
-          {
-            "output": "specification-delta",
-            "bound": false
-          }
-        ],
-        "grant": {
-          "tools": [
-            "Read",
-            "Grep",
-            "Glob"
-          ],
-          "note": "Read-only. It describes a change before anything performs it, and does not write the artifacts it describes."
-        },
-        "failure_outcomes": [
-          {
-            "outcome": "missing_input",
-            "reason": "a required input was not supplied, named rather than substituted"
-          },
-          {
-            "outcome": "unresolved_reference",
-            "reason": "an artifact the delta would reference does not exist"
+            "outcome": "design_defect",
+            "reason": "what the analysis decided is not supported by the material; reported as a finding on the result and never edited, and the object is still enriched"
           }
         ]
       }

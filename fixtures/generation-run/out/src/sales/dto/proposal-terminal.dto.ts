@@ -1,7 +1,0 @@
-// Generated from ko.definition.sales.proposal-terminal by typescript-node 0.1.0.
-// foundation/0004 R7: this file is not hand-edited. Change the knowledge object.
-
-export interface ProposalTerminalDto {
-  proposal_number: string;
-  state: string;
-}

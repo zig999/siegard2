@@ -1,0 +1,2363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/domain-object.json",
+  "title": "Domain object",
+  "description": "One construct of a domain analysis, stored in the knowledge notation. The vocabulary is the eight kinds the analysis records, 1:1 with them: nothing is collapsed into a field of something else, so every construct keeps an identifier and a file. The envelope is `schemas/knowledge-notation.json`'s and is carried rather than decided here.\n\nWhat this contract adds to the notation is per-kind content and the alternation over it: a node declares everything its kind requires, or declares a gap naming that field. A non-empty `gaps` is the node's incompleteness — there is no status, no maturity level and no flag saying which pass has run, because an open `kind: authoring` gap already says it.\n\n**Generated.** This document is composed from `domain/` and is not edited: every assertion in it is stated once, in the file of the table or the kind that owns it. See `domain/domain-graph.json`.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "type",
+    "title",
+    "contract_version",
+    "generated",
+    "origin"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/knowledgeObjectId"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "boundary": {
+      "$ref": "#/$defs/boundaryId"
+    },
+    "generated": {
+      "$ref": "#/$defs/trustEvent"
+    },
+    "origin": {
+      "enum": [
+        "stated",
+        "modeled"
+      ]
+    },
+    "gaps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gap"
+      }
+    },
+    "verified": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trustEvent"
+      }
+    },
+    "out_of_scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/knowledgeObjectId"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource"
+        ],
+        "properties": {
+          "resource": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "not": {
+              "pattern": "^(dm|ki|ia|er)_[0-9a-f]{8}$"
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "stale_after": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "status": {
+      "not": {}
+    },
+    "superseded_by": {
+      "not": {}
+    },
+    "type": {
+      "$ref": "#/$defs/kind"
+    },
+    "contract_version": {
+      "const": "domain-object/2",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why the analysis decided this, required wherever `origin` is `modeled`. A reviewer accepts a fact the material stated and disagrees with one the analysis reached, and can do the second only against a reason."
+    },
+    "attributes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/attribute"
+      },
+      "description": "What this definition holds, fully typed against the closed primitive vocabulary. Where the material does not state a length or a precision, the parameter is left absent and a gap names it — see `../tables/primitives.json#/x-unstated-parameter`. Absent and unnamed is not the same statement, and only the second is refused."
+    },
+    "consistency": {
+      "$ref": "#/$defs/consistency",
+      "description": "Whether this rule holds inside one transaction or converges after it. Required of a rule that reaches outside its own aggregate, which no single file can see — `src/claude/bin/check_knowledge.py` decides it."
+    },
+    "context_relationships": {
+      "type": "array",
+      "minItems": 1,
+      "description": "How this context relates to another. Authored edge, traversed only when expansion crosses a context.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "with",
+          "pattern"
+        ],
+        "properties": {
+          "with": {
+            "$ref": "#/$defs/contextId"
+          },
+          "pattern": {
+            "$ref": "#/$defs/contextRelationshipPattern"
+          },
+          "role": {
+            "$ref": "#/$defs/relationshipRole"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "pattern": {
+                  "enum": [
+                    "anti-corruption-layer",
+                    "conformist",
+                    "customer-supplier",
+                    "open-host-service"
+                  ]
+                }
+              },
+              "required": [
+                "pattern"
+              ]
+            },
+            "then": {
+              "required": [
+                "role"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "role"
+                ]
+              }
+            },
+            "description": "A directional pattern names which side this context is on; a symmetric one has no side to name."
+          }
+        ]
+      }
+    },
+    "examples": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Given/when/then cases a conformance test is derived from. Carried when `expression` is absent, and permitted alongside it. Where the material gives cases, both sides of the condition are recorded — a case that holds and a case that does not.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "given",
+          "when",
+          "then"
+        ],
+        "properties": {
+          "given": {
+            "type": "object"
+          },
+          "when": {
+            "type": "object"
+          },
+          "then": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "expression": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule stated so a consumer can evaluate it. The grammar is deferred: it must be closed, total, side-effect free, and restricted to attributes reachable from the rule's boundary, and it arrives with the first consumer that evaluates one."
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attributes"
+      ],
+      "description": "Which attributes form this definition's identity. `strategy` inherits the base's declared default and is stated only where this definition differs.",
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/attributeName"
+          }
+        },
+        "strategy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "initial": {
+      "$ref": "#/$defs/stateName",
+      "description": "The state an instance starts in. Every state is reachable from it."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Who owns this scope."
+    },
+    "ownership": {
+      "$ref": "#/$defs/ownership"
+    },
+    "payload": {
+      "$ref": "#/$defs/definitionId",
+      "description": "The definition that gives this interface its shape. One home for the payload's type, in the same vocabulary every other typed thing uses — an event whose fields live only in an external file is a contract the graph cannot read. `schema` still points at the wire contract, which is stack knowledge."
+    },
+    "rejections": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The decided non-transitions. Two shorthands keep the declaration from becoming padding: a trigger list expands to one entry per trigger, and `from: terminal` expands to every state listed as terminal. Both are expanded before totality is checked.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "trigger",
+          "error"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/stateName",
+            "description": "A declared state, or the reserved name `terminal`."
+          },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/triggerName"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/triggerName"
+                }
+              }
+            ]
+          },
+          "error": {
+            "$ref": "#/$defs/definitionId",
+            "description": "The domain error this rejection raises, recorded as a definition whose ddd is domain-error."
+          }
+        }
+      }
+    },
+    "root": {
+      "$ref": "#/$defs/definitionId",
+      "description": "The definition that is this aggregate's entry point. Exactly one, and its identity is the aggregate's."
+    },
+    "schema": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the machine-readable payload contract lives. The form of this value is not closed."
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule in prose, non-generative, and never the only place a fact a machine reads appears."
+    },
+    "states": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/stateName"
+      },
+      "description": "The legal states. Two is the minimum that makes a transition table meaningful. `terminal` is reserved as a rejection shorthand and is never a state name."
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The ordered steps, each naming exactly one node.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node"
+        ],
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/nodeId"
+          },
+          "compensated_by": {
+            "$ref": "#/$defs/nodeId",
+            "description": "What undoes this step when a later one fails. A saga is defined by its compensations, and a step carrying only an identifier cannot hold one — so `saga` named a construct the structure could not represent."
+          }
+        }
+      }
+    },
+    "subdomain": {
+      "$ref": "#/$defs/subdomainId",
+      "description": "The subdomain this context partitions. Exactly one; the classification lives on the subdomain rather than being copied here."
+    },
+    "subdomain_type": {
+      "$ref": "#/$defs/subdomainType"
+    },
+    "subject": {
+      "$ref": "#/$defs/definitionId",
+      "description": "The definition whose states this governs. Exactly one, and at most one lifecycle per definition."
+    },
+    "terminal": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stateName"
+      },
+      "description": "The states that accept no further trigger, declared rather than inferred, and expanded wherever a rejection names the reserved `terminal`."
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The legal moves. Every non-terminal state has an outgoing transition.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "trigger",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/stateName"
+          },
+          "trigger": {
+            "$ref": "#/$defs/triggerName"
+          },
+          "to": {
+            "$ref": "#/$defs/stateName"
+          },
+          "guard": {
+            "$ref": "#/$defs/ruleId",
+            "description": "The rule that decides this transition, at most one."
+          },
+          "emits": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/interfaceId"
+            },
+            "description": "The events this transition raises. A state change that publishes a domain event is the core of an event-driven model, and with no edge for it the fact lands in the body — which is where a relationship stops being in the graph. A list because one move may raise more than one, and absent where it raises none."
+          }
+        }
+      }
+    },
+    "upstream": {
+      "$ref": "#/$defs/interfaceId",
+      "description": "The published interface this one consumes. A consumed interface is a local record of somebody else's contract, so without this the graph holds two nodes for one contract and cannot tell they are the same one. The consumer declares it; the publisher never enumerates who depends on it, for the reason a scope never enumerates what it holds."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "subdomain"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "subdomain_type"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "subdomain_type"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "subdomain_type": {
+            "$ref": "#/$defs/subdomainType"
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Who owns this scope."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "context"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "subdomain"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "subdomain"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "subdomain": {
+            "$ref": "#/$defs/subdomainId",
+            "description": "The subdomain this context partitions. Exactly one; the classification lives on the subdomain rather than being copied here."
+          },
+          "context_relationships": {
+            "type": "array",
+            "minItems": 1,
+            "description": "How this context relates to another. Authored edge, traversed only when expansion crosses a context.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "with",
+                "pattern"
+              ],
+              "properties": {
+                "with": {
+                  "$ref": "#/$defs/contextId"
+                },
+                "pattern": {
+                  "$ref": "#/$defs/contextRelationshipPattern"
+                },
+                "role": {
+                  "$ref": "#/$defs/relationshipRole"
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "pattern": {
+                        "enum": [
+                          "anti-corruption-layer",
+                          "conformist",
+                          "customer-supplier",
+                          "open-host-service"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "pattern"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "role"
+                    ]
+                  },
+                  "else": {
+                    "not": {
+                      "required": [
+                        "role"
+                      ]
+                    }
+                  },
+                  "description": "A directional pattern names which side this context is on; a symmetric one has no side to name."
+                }
+              ]
+            }
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Who owns this scope."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "aggregate"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "boundary"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "boundary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "root"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "root"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "root": {
+            "$ref": "#/$defs/definitionId",
+            "description": "The definition that is this aggregate's entry point. Exactly one, and its identity is the aggregate's."
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Who owns this scope."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "definition"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "boundary"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "boundary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "ddd"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "ddd"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "attributes"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "attributes"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "if": {
+              "properties": {
+                "ddd": {
+                  "enum": [
+                    "entity",
+                    "aggregate-root",
+                    "read-model"
+                  ]
+                }
+              },
+              "required": [
+                "ddd"
+              ]
+            },
+            "then": {
+              "anyOf": [
+                {
+                  "required": [
+                    "identity"
+                  ]
+                },
+                {
+                  "required": [
+                    "gaps"
+                  ],
+                  "properties": {
+                    "gaps": {
+                      "contains": {
+                        "required": [
+                          "field"
+                        ],
+                        "properties": {
+                          "field": {
+                            "const": "identity"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "description": "A definition the domain asks *which one* about declares what forms that identity. A value object and a domain error declare none."
+          }
+        ],
+        "properties": {
+          "ddd": {
+            "$ref": "#/$defs/definitionDdd"
+          },
+          "attributes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/attribute"
+            },
+            "description": "What this definition holds, fully typed against the closed primitive vocabulary. Where the material does not state a length or a precision, the parameter is left absent and a gap names it — see `../tables/primitives.json#/x-unstated-parameter`. Absent and unnamed is not the same statement, and only the second is refused."
+          },
+          "identity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "attributes"
+            ],
+            "description": "Which attributes form this definition's identity. `strategy` inherits the base's declared default and is stated only where this definition differs.",
+            "properties": {
+              "attributes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/attributeName"
+                }
+              },
+              "strategy": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "rule"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "boundary"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "boundary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "ddd"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "ddd"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "statement"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "statement"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "expression"
+                ]
+              },
+              {
+                "required": [
+                  "examples"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "expression"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "examples"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "description": "A rule with neither an expression nor examples cannot become a test. Either side may be what is missing, so a gap naming either is what says which."
+          }
+        ],
+        "properties": {
+          "ddd": {
+            "$ref": "#/$defs/ruleDdd"
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The rule in prose, non-generative, and never the only place a fact a machine reads appears."
+          },
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The rule stated so a consumer can evaluate it. The grammar is deferred: it must be closed, total, side-effect free, and restricted to attributes reachable from the rule's boundary, and it arrives with the first consumer that evaluates one."
+          },
+          "examples": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Given/when/then cases a conformance test is derived from. Carried when `expression` is absent, and permitted alongside it. Where the material gives cases, both sides of the condition are recorded — a case that holds and a case that does not.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "given",
+                "when",
+                "then"
+              ],
+              "properties": {
+                "given": {
+                  "type": "object"
+                },
+                "when": {
+                  "type": "object"
+                },
+                "then": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "consistency": {
+            "$ref": "#/$defs/consistency",
+            "description": "Whether this rule holds inside one transaction or converges after it. Required of a rule that reaches outside its own aggregate, which no single file can see — `src/claude/bin/check_knowledge.py` decides it."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "lifecycle"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "boundary"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "boundary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "subject"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "subject"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "states"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "states"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "initial"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "initial"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "transitions"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "transitions"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "rejections"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "rejections"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "subject": {
+            "$ref": "#/$defs/definitionId",
+            "description": "The definition whose states this governs. Exactly one, and at most one lifecycle per definition."
+          },
+          "states": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "$ref": "#/$defs/stateName"
+            },
+            "description": "The legal states. Two is the minimum that makes a transition table meaningful. `terminal` is reserved as a rejection shorthand and is never a state name."
+          },
+          "initial": {
+            "$ref": "#/$defs/stateName",
+            "description": "The state an instance starts in. Every state is reachable from it."
+          },
+          "terminal": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/stateName"
+            },
+            "description": "The states that accept no further trigger, declared rather than inferred, and expanded wherever a rejection names the reserved `terminal`."
+          },
+          "transitions": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The legal moves. Every non-terminal state has an outgoing transition.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "from",
+                "trigger",
+                "to"
+              ],
+              "properties": {
+                "from": {
+                  "$ref": "#/$defs/stateName"
+                },
+                "trigger": {
+                  "$ref": "#/$defs/triggerName"
+                },
+                "to": {
+                  "$ref": "#/$defs/stateName"
+                },
+                "guard": {
+                  "$ref": "#/$defs/ruleId",
+                  "description": "The rule that decides this transition, at most one."
+                },
+                "emits": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "#/$defs/interfaceId"
+                  },
+                  "description": "The events this transition raises. A state change that publishes a domain event is the core of an event-driven model, and with no edge for it the fact lands in the body — which is where a relationship stops being in the graph. A list because one move may raise more than one, and absent where it raises none."
+                }
+              }
+            }
+          },
+          "rejections": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The decided non-transitions. Two shorthands keep the declaration from becoming padding: a trigger list expands to one entry per trigger, and `from: terminal` expands to every state listed as terminal. Both are expanded before totality is checked.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "from",
+                "trigger",
+                "error"
+              ],
+              "properties": {
+                "from": {
+                  "$ref": "#/$defs/stateName",
+                  "description": "A declared state, or the reserved name `terminal`."
+                },
+                "trigger": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/triggerName"
+                    },
+                    {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/$defs/triggerName"
+                      }
+                    }
+                  ]
+                },
+                "error": {
+                  "$ref": "#/$defs/definitionId",
+                  "description": "The domain error this rejection raises, recorded as a definition whose ddd is domain-error."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "interface"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "boundary"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "boundary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "ddd"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "ddd"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "version"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "version"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "schema"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "schema"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "ownership"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "ownership"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "if": {
+              "properties": {
+                "ddd": {
+                  "enum": [
+                    "domain-event",
+                    "integration-event",
+                    "published-language",
+                    "command"
+                  ]
+                }
+              },
+              "required": [
+                "ddd"
+              ]
+            },
+            "then": {
+              "anyOf": [
+                {
+                  "required": [
+                    "payload"
+                  ]
+                },
+                {
+                  "required": [
+                    "gaps"
+                  ],
+                  "properties": {
+                    "gaps": {
+                      "contains": {
+                        "required": [
+                          "field"
+                        ],
+                        "properties": {
+                          "field": {
+                            "const": "payload"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "description": "A message or a shared vocabulary carries a shape. An `api` is an exposed operation and names none here."
+          },
+          {
+            "if": {
+              "properties": {
+                "ownership": {
+                  "const": "consumed"
+                }
+              },
+              "required": [
+                "ownership"
+              ]
+            },
+            "then": {
+              "anyOf": [
+                {
+                  "required": [
+                    "upstream"
+                  ]
+                },
+                {
+                  "required": [
+                    "gaps"
+                  ],
+                  "properties": {
+                    "gaps": {
+                      "contains": {
+                        "required": [
+                          "field"
+                        ],
+                        "properties": {
+                          "field": {
+                            "const": "upstream"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "upstream"
+                ]
+              }
+            },
+            "description": "Only a consumed interface names what it consumes. `upstream` on a published one would say this context both owns the contract and depends on someone else's."
+          }
+        ],
+        "properties": {
+          "ddd": {
+            "$ref": "#/$defs/interfaceDdd"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where the machine-readable payload contract lives. The form of this value is not closed."
+          },
+          "ownership": {
+            "$ref": "#/$defs/ownership"
+          },
+          "payload": {
+            "$ref": "#/$defs/definitionId",
+            "description": "The definition that gives this interface its shape. One home for the payload's type, in the same vocabulary every other typed thing uses — an event whose fields live only in an external file is a contract the graph cannot read. `schema` still points at the wire contract, which is stack knowledge."
+          },
+          "upstream": {
+            "$ref": "#/$defs/interfaceId",
+            "description": "The published interface this one consumes. A consumed interface is a local record of somebody else's contract, so without this the graph holds two nodes for one contract and cannot tell they are the same one. The consumer declares it; the publisher never enumerates who depends on it, for the reason a scope never enumerates what it holds."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "process"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "boundary"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "boundary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "ddd"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "ddd"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "required": [
+                  "steps"
+                ]
+              },
+              {
+                "required": [
+                  "gaps"
+                ],
+                "properties": {
+                  "gaps": {
+                    "contains": {
+                      "required": [
+                        "field"
+                      ],
+                      "properties": {
+                        "field": {
+                          "const": "steps"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "ddd": {
+            "$ref": "#/$defs/processDdd"
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The ordered steps, each naming exactly one node.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "node"
+              ],
+              "properties": {
+                "node": {
+                  "$ref": "#/$defs/nodeId"
+                },
+                "compensated_by": {
+                  "$ref": "#/$defs/nodeId",
+                  "description": "What undoes this step when a later one fails. A saga is defined by its compensations, and a step carrying only an identifier cannot hold one — so `saga` named a construct the structure could not represent."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "subdomain",
+              "context"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "boundary"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "subdomain",
+              "context",
+              "aggregate",
+              "lifecycle"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "ddd"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "modeled"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "rationale"
+            ]
+          },
+          {
+            "required": [
+              "gaps"
+            ],
+            "properties": {
+              "gaps": {
+                "contains": {
+                  "required": [
+                    "field"
+                  ],
+                  "properties": {
+                    "field": {
+                      "const": "rationale"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "allOf": [
+            {
+              "required": [
+                "gaps"
+              ]
+            },
+            {
+              "properties": {
+                "gaps": {
+                  "contains": {
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "authoring"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "question",
+          "description",
+          "out_of_scope"
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "context_relationships"
+        ]
+      },
+      "then": {
+        "properties": {
+          "type": {
+            "const": "context"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "attribute": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/attributeName"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "text",
+            "integer",
+            "decimal",
+            "money",
+            "boolean",
+            "date",
+            "datetime",
+            "duration",
+            "enum",
+            "ref",
+            "list"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "max_length"
+            ],
+            "properties": {
+              "max_length": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "integer"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "min": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "decimal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "precision",
+              "scale"
+            ],
+            "properties": {
+              "precision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "scale": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "money"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "datetime"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "timezone": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "enum"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "description": "A lifecycle-bound enum keeps the state set in one authority. A free enum lists its own values.",
+            "oneOf": [
+              {
+                "required": [
+                  "lifecycle"
+                ],
+                "not": {
+                  "required": [
+                    "values"
+                  ]
+                },
+                "properties": {
+                  "lifecycle": {
+                    "$ref": "#/$defs/lifecycleId"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "values"
+                ],
+                "not": {
+                  "required": [
+                    "lifecycle"
+                  ]
+                },
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "$ref": "#/$defs/slug"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ref"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "target",
+              "binding"
+            ],
+            "properties": {
+              "target": {
+                "$ref": "#/$defs/definitionId"
+              },
+              "binding": {
+                "$ref": "#/$defs/binding"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "list"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "of",
+              "binding"
+            ],
+            "properties": {
+              "of": {
+                "$ref": "#/$defs/definitionId"
+              },
+              "binding": {
+                "$ref": "#/$defs/binding"
+              },
+              "min_items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max_items": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "attributeName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$"
+    },
+    "binding": {
+      "enum": [
+        "embedded",
+        "by-identity"
+      ],
+      "description": "A reference whose target lies in another aggregate declares `by-identity`. How a binding becomes a storage representation is stack knowledge and is not recorded."
+    },
+    "boundaryId": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^dm\\.context\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "^dm\\.aggregate\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      ],
+      "description": "The two scopes a node may belong to: a context is `dm.context.<context>`, an aggregate inside one is `dm.aggregate.<context>.<aggregate>`. Written as two patterns rather than one with an optional tail, because the optional tail applies to both alternatives and so admits `dm.context.<a>.<b>` and `dm.aggregate.<a>` — neither of which is a scope this profile holds. `domain-object/1` carries the single-pattern form and admits both."
+    },
+    "consistency": {
+      "enum": [
+        "immediate",
+        "eventual"
+      ],
+      "description": "Whether this rule holds within one transaction or converges after it. An invariant spanning two aggregates is eventually consistent, and saying so is the difference between a boundary drawn honestly and one drawn wide enough to hide the question."
+    },
+    "contextId": {
+      "type": "string",
+      "pattern": "^dm\\.context\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "contextRelationshipPattern": {
+      "enum": [
+        "anti-corruption-layer",
+        "conformist",
+        "shared-kernel",
+        "customer-supplier",
+        "separate-ways",
+        "partnership",
+        "open-host-service"
+      ],
+      "description": "`separate-ways` is a real answer: two contexts that do not need each other are not connected because a diagram looks better connected. Four of the seven are directional and carry a `role`; three are symmetric and refuse one."
+    },
+    "definitionDdd": {
+      "enum": [
+        "entity",
+        "value-object",
+        "aggregate-root",
+        "read-model",
+        "domain-error"
+      ]
+    },
+    "definitionId": {
+      "type": "string",
+      "pattern": "^dm\\.definition\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "field"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "domain",
+            "authoring"
+          ]
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question": {
+          "type": "string",
+          "pattern": "^oq_[a-z0-9_]+$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "domain"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "why"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "why"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "interfaceDdd": {
+      "enum": [
+        "domain-event",
+        "integration-event",
+        "published-language",
+        "api",
+        "command"
+      ],
+      "description": "A `command` is a message a context accepts, and it belongs here because an interface is what a context publishes or consumes. `ownership: consumed` on a command says this context accepts it; `published` says this context sends it to another. A command that is refused never becomes a process, which is why it is not a `processDdd`."
+    },
+    "interfaceId": {
+      "type": "string",
+      "pattern": "^dm\\.interface\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "An interface. Named by `payload`'s origin, by `transitions[].emits` and by `upstream`, which is why it needs a form of its own rather than being reached through `nodeId`."
+    },
+    "kind": {
+      "enum": [
+        "subdomain",
+        "context",
+        "aggregate",
+        "definition",
+        "rule",
+        "lifecycle",
+        "interface",
+        "process"
+      ],
+      "description": "Closed at eight and 1:1 with the construct vocabulary the analysis records. Nothing is a field of something else, so nothing loses an identifier by being one."
+    },
+    "knowledgeObjectId": {
+      "$ref": "#/$defs/nodeId"
+    },
+    "lifecycleId": {
+      "type": "string",
+      "pattern": "^dm\\.lifecycle\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "nodeId": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^dm\\.(subdomain|context)\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "^dm\\.(aggregate|definition|rule|lifecycle|interface|process)\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      ],
+      "description": "Any node of this profile. `dm.<kind>.<scope>.<slug>`, with `subdomain` and `context` taking `dm.<kind>.<slug>` because each is itself a scope."
+    },
+    "ownership": {
+      "enum": [
+        "published",
+        "consumed"
+      ],
+      "description": "Whether this context exposes the interface or depends on someone else's. It decides who owes whom compatibility."
+    },
+    "processDdd": {
+      "enum": [
+        "domain-service",
+        "saga",
+        "use-case"
+      ]
+    },
+    "relationshipRole": {
+      "enum": [
+        "upstream",
+        "downstream"
+      ],
+      "description": "What *this* context is relative to the one it names. Upstream decides and owes compatibility; downstream absorbs the decision. Carried only by a directional pattern: a `shared-kernel` has no upstream side, and a `role` beside one would name a fact that does not exist."
+    },
+    "ruleDdd": {
+      "enum": [
+        "invariant",
+        "domain-rule",
+        "policy",
+        "specification",
+        "quality-attribute"
+      ]
+    },
+    "ruleId": {
+      "type": "string",
+      "pattern": "^dm\\.rule\\.[a-z0-9]+(-[a-z0-9]+)*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A name reduced to kebab-case. A name that will not reduce is a refusal rather than a transliteration: stripping an accent takes a rule no specification states, and the same name would reduce differently next time."
+    },
+    "stateName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A lifecycle state. `terminal` is reserved as a rejection shorthand and is refused as a state name by the validator, which can see the whole state list; the pattern cannot express the reservation."
+    },
+    "subdomainId": {
+      "type": "string",
+      "pattern": "^dm\\.subdomain\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "subdomainType": {
+      "enum": [
+        "core",
+        "supporting",
+        "generic"
+      ],
+      "description": "Where the business differs, where it is merely specific, and where the problem is solved. It decides where careful modelling is worth its cost."
+    },
+    "triggerName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "trustEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "by",
+        "at"
+      ],
+      "properties": {
+        "by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+        }
+      }
+    }
+  }
+}

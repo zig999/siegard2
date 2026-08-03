@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/knowledge-graph.json",
   "title": "Siegard materialized knowledge graph",
-  "description": "Contract for knowledge/graph.json, the materialized form of a knowledge base. The ontology defers this schema to the materializer, and bin/knowledge_graph_lib.py is it. The artifact is derived and R42 forbids hand-editing it. It exists because expansion, impact analysis, and the projections all need the same resolved graph, and a versioned schema is required for data a downstream agent parses to reach a decision. `edge_kinds` makes the graph self-describing: a consumer reads the traversal policy R19 requires from the artifact rather than importing the materializer.",
+  "description": "Contract for knowledge/graph.json, the materialized form of a knowledge base. The ontology defers this schema to the materializer, and this distribution ships none. The artifact is derived and R42 forbids hand-editing it. It exists because expansion, impact analysis, and the projections all need the same resolved graph, and a versioned schema is required for data a downstream agent parses to reach a decision. `edge_kinds` makes the graph self-describing: a consumer reads the traversal policy R19 requires from the artifact rather than from whatever materialized it. A node carries no status: `knowledge-graph/1` mirrored the knowledge object's, and both went when the maturity ladder did, so every node in the graph is a current fact and expansion has nothing to filter on.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,13 +13,13 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "knowledge-graph/1",
+      "const": "knowledge-graph/2",
       "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
     },
     "edge_kinds": {
       "type": "object",
       "minProperties": 1,
-      "description": "The closed edge vocabulary of spec 0003 R17, with the cardinality R18 requires enforced and the traversal policy R19 requires declared. Keyed by edge name.",
+      "description": "The closed edge vocabulary of spec 0003 R13, with the cardinality R18 requires enforced and the traversal policy R19 requires declared. Keyed by edge name.",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
@@ -91,8 +91,7 @@
         "required": [
           "id",
           "kind",
-          "title",
-          "status"
+          "title"
         ],
         "properties": {
           "id": {
@@ -114,13 +113,6 @@
           "title": {
             "type": "string",
             "minLength": 1
-          },
-          "status": {
-            "enum": [
-              "proposed",
-              "accepted",
-              "superseded"
-            ]
           },
           "question": {
             "type": "string",
