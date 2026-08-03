@@ -137,7 +137,10 @@ def compose() -> dict:
     dropped = set(manifest["x-envelope-fields"].get("removed_by_profile", {}).get("fields", []))
     properties: dict = {name: schema for name, schema in envelope["properties"].items()
                         if name not in dropped}
-    properties["type"] = tables["vocabularies"]["$defs"]["kind"]
+    # Referenced rather than inlined. Inlining copies the vocabulary into `properties`
+    # and leaves the `$def` unreferenced, which is the same fact in two places and one
+    # of them dead.
+    properties["type"] = {"$ref": "vocabularies.json#/$defs/kind"}
     properties["contract_version"] = {
         "const": version,
         "description": "A consumer rejects an artifact it was not built to read rather than "
@@ -199,7 +202,30 @@ def compose() -> dict:
             f"the composed document references {len(unresolved)} definition(s) nothing states: "
             f"{', '.join(unresolved)}"
         )
-    return document
+
+    # A definition nothing points at is dead representation in a shipped file, so it is dropped —
+    # and named, because dropping it silently would hide the reason it went unreferenced. Two
+    # reasons are legitimate: the authority states a shape this profile removed (`adrId`, once
+    # `governed_by` went), and a table states a vocabulary the envelope also states inline
+    # (`origin`, `gapKind`). The second is a duplication in the tree that this only reveals.
+    used = referenced(document)
+    document["$defs"] = {name: schema for name, schema in document["$defs"].items() if name in used}
+    return document, sorted(set(defs) - used)
+
+
+def referenced(node, found: set[str] | None = None) -> set[str]:
+    """Every `#/$defs/<name>` the document points at."""
+    found = set() if found is None else found
+    if isinstance(node, dict):
+        ref = node.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/$defs/"):
+            found.add(ref[len("#/$defs/"):])
+        for value in node.values():
+            referenced(value, found)
+    elif isinstance(node, list):
+        for value in node:
+            referenced(value, found)
+    return found
 
 
 def missing_refs(node, known: set[str]) -> set[str]:
@@ -230,7 +256,8 @@ def main() -> int:
         return CANNOT_RUN
 
     try:
-        text = rendered(compose())
+        document, unreferenced = compose()
+        text = rendered(document)
     except CompositionError as broken:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
@@ -248,7 +275,9 @@ def main() -> int:
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text, encoding="utf-8")
-    document = json.loads(text)
+    if unreferenced:
+        print(f"dropped {len(unreferenced)} definition(s) nothing references: "
+              f"{', '.join(unreferenced)}")
     print(f"composed {out.relative_to(REPO)}: {len(document['properties'])} properties, "
           f"{len(document['allOf'])} allOf blocks, {len(document['$defs'])} definitions, "
           f"contract {document['properties']['contract_version']['const']}")

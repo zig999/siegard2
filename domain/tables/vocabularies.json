@@ -142,5 +142,8 @@
       "partnership"
     ],
     "why": "A `customer-supplier` with no side named says two contexts integrate and not who owes whom compatibility, which is the whole content of the pattern. A `shared-kernel` has no sides to name."
-  }
+  },
+  "x-open": [
+    "`origin` and `gapKind` are stated here **and** by the authority: `schemas/knowledge-notation.json` carries the first as an inline enum on `properties.origin` and the second inside its `gap` shape. Both are envelope fields, so their vocabularies are the envelope's to close, and `tables/envelope.json` opens by saying it restates nothing. These two are the exception nobody declared. The composer drops them from the shipped contract because nothing references them there — so the duplication costs nothing today and the prose beside them, which is this profile's reading and not the authority's, reaches no consumer. Resolving it means either the envelope referencing these definitions or this table losing them, and neither is decided."
+  ]
 }

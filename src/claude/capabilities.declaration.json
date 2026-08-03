@@ -157,7 +157,7 @@
           "Write",
           "Edit"
         ],
-        "note": "It writes the objects, which is what removed the conversion between two vocabularies. What holds the grant to something is not the grant: every object is validated against domain-object/1 and held to a completeness check that reads the same contract, and neither runs inside it."
+        "note": "It writes the objects, which is what removed the conversion between two vocabularies. What holds the grant to something is not the grant: every object is validated against domain-object/2 and held to a completeness check that reads the same contract, and neither runs inside it."
       },
       "failure_outcomes": [
         {
@@ -226,7 +226,7 @@
         },
         {
           "artifact": "domain-object",
-          "contract": "domain-object/1"
+          "contract": "domain-object/2"
         },
         {
           "artifact": "analysis-seal",
@@ -307,7 +307,7 @@
         {
           "name": "knowledge_root",
           "artifact": "domain-object",
-          "contract": "domain-object/1",
+          "contract": "domain-object/2",
           "required": true
         },
         {
@@ -333,7 +333,7 @@
       "outputs": [
         {
           "artifact": "domain-object",
-          "contract": "domain-object/1"
+          "contract": "domain-object/2"
         },
         {
           "artifact": "validation-evidence",
@@ -546,7 +546,7 @@
         {
           "name": "object_path",
           "artifact": "domain-object",
-          "contract": "domain-object/1",
+          "contract": "domain-object/2",
           "required": true
         },
         {

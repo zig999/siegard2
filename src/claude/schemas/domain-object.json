@@ -121,17 +121,7 @@
       "not": {}
     },
     "type": {
-      "enum": [
-        "subdomain",
-        "context",
-        "aggregate",
-        "definition",
-        "rule",
-        "lifecycle",
-        "interface",
-        "process"
-      ],
-      "description": "Closed at eight and 1:1 with the construct vocabulary the analysis records. Nothing is a field of something else, so nothing loses an identifier by being one."
+      "$ref": "#/$defs/kind"
     },
     "contract_version": {
       "const": "domain-object/2",
@@ -1873,11 +1863,6 @@
     }
   ],
   "$defs": {
-    "adrId": {
-      "type": "string",
-      "pattern": "^adr\\.[0-9]{4}$",
-      "description": "A decision record. Retained for faithfulness to `domain-object/1` and unusable in this network: the framework holds no decision-record node, so every `governed_by` target is a node the base cannot hold. See `x-open` in tables/edges.json."
-    },
     "attribute": {
       "type": "object",
       "required": [
@@ -2249,13 +2234,6 @@
         }
       ]
     },
-    "gapKind": {
-      "enum": [
-        "domain",
-        "authoring"
-      ],
-      "description": "`domain` waits on whoever knows the domain and no capability of this framework may close one. `authoring` waits on the enrichment pass."
-    },
     "interfaceDdd": {
       "enum": [
         "domain-event",
@@ -2302,13 +2280,6 @@
         }
       ],
       "description": "Any node of this profile. `dm.<kind>.<scope>.<slug>`, with `subdomain` and `context` taking `dm.<kind>.<slug>` because each is itself a scope."
-    },
-    "origin": {
-      "enum": [
-        "stated",
-        "modeled"
-      ],
-      "description": "`stated` where the material says it; `modeled` where the analysis decided it. A reviewer accepts the first and disagrees with the second, and can do neither if the two look alike."
     },
     "ownership": {
       "enum": [

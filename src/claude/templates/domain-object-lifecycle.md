@@ -14,8 +14,8 @@ rejections:
   - { from: {{next_state}}, trigger: {{trigger}}, error: dm.definition.{{context}}.{{error_slug}} }
 description: {{description}}
 question: {{question}}
-contract_version: domain-object/1
-generated: { by: {{generated_by}}, at: {{generated_at}} }
+contract_version: domain-object/2
+generated: { by: {{generated_by}}, at: "{{generated_at}}" }
 origin: {{origin}}
 out_of_scope:
   - {{out_of_scope}}
