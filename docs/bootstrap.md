@@ -32,6 +32,12 @@ Concretely, in order:
    goes under `src/claude/agents/`, one that only serves this repository under `.claude/agents/`
    (ADR-0006). This is the first component that has to answer that question, and answering it is what
    makes the boundary real rather than declared.
+
+   **Authored.** `src/claude/agents/concept-author.md` — distributable, since the knowledge layer is
+   a framework capability — with its result contract in `schemas/concept-authoring-result.v1.json`.
+   Authored is not done: the agent is inert here (ADR-0006), so "output validated at the boundary"
+   is only proven when steps 3–6 run it against a fixture. Its tool grant deliberately excludes the
+   shell — the boundary validator is the consumer's check, not the producer's self-report.
 3. **An orchestrator that consumes it** and chooses a transition from the artifact's closed `state`
    field — a lookup, not an interpretation.
 4. **One appended event** recording what happened, and **one projection** deriving current state by
@@ -52,7 +58,8 @@ at a specific point:
 |---|---|---|
 | concept frontmatter contract (`schemas/concept.v1.json`) | the validator runs in `make validate` | **active** |
 | ADR frontmatter contract (`schemas/adr.v1.json`), including supersession | the validator runs in `make validate` | **active** |
-| component contracts (`schemas/skill.v1.json`, `schemas/agent.v1.json`) | wired into `make validate`; exercised when the first component lands under `src/claude/` | **active**, nothing to check yet |
+| component contracts (`schemas/skill.v1.json`, `schemas/agent.v1.json`) | the validator runs in `make validate` | **active**, exercised by `concept-author` |
+| result contract (`schemas/concept-authoring-result.v1.json`) validated at the boundary | the thin-path orchestrator or a test consumes the agent's result | pending |
 | `make validate` in `/siegard-verify` step 1 | a `Makefile` target exists | **active**, concepts and ADRs only |
 | `make test` in `/siegard-verify` step 1 | a framework test suite exists | pending |
 | `make dist-check` in `make check` | a generator and a committed `dist/` exist | pending |
@@ -96,17 +103,23 @@ depend on cooperation.
   (`schemas/adr.v1.json`), and distributable components (`schemas/skill.v1.json`,
   `schemas/agent.v1.json`), each with a boundary validator in `scripts/`, all wired to
   `make validate`. These are the only rules in this repository that are checked rather than trusted.
-  The component contracts were authored before the first component, deliberately, so it is born
-  against them (ADR-0009); their validator reports the empty tree until then.
+  The component contracts were authored before the first component, deliberately, so it was born
+  against them (ADR-0009).
+- **The first distributable component.** `src/claude/agents/concept-author.md`, with its result
+  contract in `schemas/concept-authoring-result.v1.json`. It satisfies condition 1 of ADR-0006's
+  validation section — a component under `src/claude/` that nothing under `.claude/` duplicates —
+  and exercises the component contract for the first time. Conditions 2–4 (generator, exclusion
+  test, fixture) remain open.
 
 ## Not yet in place
 
-- No `specs/`, `src/claude/`, `templates/`, `tests/`, or `fixtures/`.
+- No `specs/`, `templates/`, `tests/`, or `fixtures/`.
 - `schemas/` and `scripts/` hold only the four artifact contracts, their validators, and the shared
   frontmatter plumbing (`scripts/frontmatter_lib.py`).
 - No framework test suite, so `make test` fails by design rather than passing vacuously. The three
   validators and their shared plumbing are therefore untested code enforcing tested contracts.
 - No `.claude/rules/security.md`. ADR-0007 states the security invariants and defers sanitization, path,
   subprocess, and network detail until the first hook or script needs it.
-- No generator, therefore no authoritative `dist/`. No distributable component has been authored
-  either, so `src/claude/` has nothing to hold yet and the generator has no input to read.
+- No generator, therefore no authoritative `dist/`. `src/claude/` now holds the generator's first
+  input, and until steps 3–6 exist, `concept-author` is authored-but-unexercised: no orchestrator
+  consumes its result, no test validates the result contract at the boundary, and no fixture runs it.
