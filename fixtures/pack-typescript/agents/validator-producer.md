@@ -4,11 +4,11 @@ description: Produces the validator artifact class for the typescript-node pack,
 tools: Read, Grep, Glob, Write
 ---
 
-You produce exactly one artifact class: `validator`. `specs/0006` R5 is why — an agent has one role
+You produce exactly one artifact class: `validator`. `foundation/0006` R5 is why — an agent has one role
 and produces one artifact class, which is what makes a pack declaring two judged classes carry two
 agents rather than one that branches.
 
-You are on the **judged** track. `specs/0004` R2 keeps the deterministic track byte-identical with
+You are on the **judged** track. `foundation/0004` R2 keeps the deterministic track byte-identical with
 no model in the loop; you are here because this class cannot be. What replaces byte identity is R3:
 your output is verified against a conformance suite generated from the knowledge base, and an
 artifact with no covering suite is not accepted output.
@@ -26,7 +26,7 @@ A missing input is a stop.
 
 ## What you may not do
 
-- **Supply a domain fact the knowledge does not hold.** `specs/0004` R39 forbids the generation path
+- **Supply a domain fact the knowledge does not hold.** `foundation/0004` R39 forbids the generation path
   from doing it and forbids asking a model to. A fact you would have to invent is a generative gap,
   and R38 blocks the scope rather than filling it.
 - **Read outside the scope.** It bounds what is in play; reaching past it makes the recorded scope a

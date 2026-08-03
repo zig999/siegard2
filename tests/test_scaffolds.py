@@ -2,12 +2,12 @@
 
 `CLAUDE.md` gives `templates/` the role "artifact generators that conform to schemas".
 `docs/concepts/scaffold.md` records what that is and what it is not — a scaffold is not a
-template in the sense of `specs/0011`, which expands domain knowledge into an artifact class
-from the closed vocabulary of `specs/0004` R8 and holds byte identity.
+template in the sense of `foundation/0011`, which expands domain knowledge into an artifact class
+from the closed vocabulary of `foundation/0004` R8 and holds byte identity.
 
 What the two share is enforced here: output validates before it is written, and nothing is
 minted. Every placeholder is required, so a scaffold cannot quietly supply a timestamp, an
-identifier, or a version — the values a caller owns and `specs/0011` R5 forbids a generator
+identifier, or a version — the values a caller owns and `foundation/0011` R5 forbids a generator
 from inventing.
 
 Each kind gets a full expansion with plausible values and an assertion that the result passes
@@ -24,24 +24,40 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import generate_dist
 import scaffold
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TEMPLATES = REPO_ROOT / "templates"
+TEMPLATES_SHIPPED = REPO_ROOT / "src" / "claude" / "templates"
+TEMPLATES_GENERATOR = REPO_ROOT / "templates"
 
 STAMP = {"generated_by": "claude-opus-5", "generated_at": "2026-07-31T10:00:00Z"}
 
 # One plausible value per placeholder, per kind. Deliberately verbose rather than generated:
 # a value that happened to satisfy a pattern by accident would make a green test meaningless.
 CASES: dict[str, dict[str, str]] = {
+    "change-request": {
+        "request_id": "cr_7a2e4d10",
+        "type": "ordinary",
+        "requested_by": "the sales team lead",
+        "requested_at": "2026-08-01T09:00:00Z",
+        "statement": "Sales must issue priced proposals that expire after a bounded period.",
+        "artifact": "intake/sales-request.md",
+    },
+    "knowledge-system": {
+        "timezone": "America/Sao_Paulo",
+        "currency": "BRL",
+        "identity_strategy": "surrogate",
+        # The ceiling's *value* is still deferred to measurement; that it is supplied rather than
+        # defaulted is the part under test here.
+        "body_lines": "24",
+    },
     "specification": {
         "id": "0099",
         "title": "Decide one thing, and make the deciding checkable",
         "short_title": "A worked example",
         "scope": "what a scaffolded specification looks like before anyone has written one",
         "decides": "nothing; it is a skeleton",
-        "decided_elsewhere": "`CLAUDE.md` **Normative sources** fixes precedence and this does not restate it.",
+        "decided_elsewhere": "`CLAUDE.md` **Where authority lives** fixes precedence and this does not restate it.",
         "concept_title": "specification",
         "concept_slug": "specification",
         "requirement_group": "The example",
@@ -206,25 +222,25 @@ class Coverage(unittest.TestCase):
 
     def test_every_template_has_a_kind(self) -> None:
         """A template nothing maps to a schema would produce an unvalidated artifact."""
-        present = {p.stem for p in TEMPLATES.glob("*.md")}
+        present = {p.stem for p in list(TEMPLATES_SHIPPED.glob("*.md")) + list(TEMPLATES_GENERATOR.glob("*.md"))}
         self.assertEqual(present, set(scaffold.SCHEMA_BY_KIND))
 
     def test_every_kind_has_a_case(self) -> None:
         self.assertEqual(set(scaffold.SCHEMA_BY_KIND), set(CASES))
 
-    def test_every_scaffold_is_classified_for_shipping(self) -> None:
-        """A scaffold is authored for this repository or for a consumer, and never for neither.
+    def test_every_scaffold_sits_in_the_tree_its_audience_reads(self) -> None:
+        """A scaffold ships exactly when the artifact it skeletons is a consumer's to author.
 
-        This replaces a bare count. `templates/` served two audiences out of one flat directory
-        and shipped nothing until 2026-07-31; the count could not tell the two apart, so it went
-        stale the moment one was added. `generate_dist.SHIPPED_SCAFFOLDS` is the classification,
-        asserted total against the directory by the generator itself — this pins that the test
-        suite and the generator read the same set.
+        This is the third form of the same check. It was a count of fourteen, which could not
+        tell the two audiences apart; then a classification table in the generator, which was a
+        second place for a fact the filesystem already held. The location is now the whole of
+        the decision, so what is left to assert is that the two directories partition the kinds
+        `scaffold.py` knows — a scaffold in neither tree, or in both, is the defect.
         """
-        self.assertEqual(
-            {f"{kind}.md" for kind in scaffold.SCHEMA_BY_KIND},
-            set(generate_dist.SHIPPED_SCAFFOLDS),
-        )
+        shipped = {p.stem for p in TEMPLATES_SHIPPED.glob("*.md")}
+        generator = {p.stem for p in TEMPLATES_GENERATOR.glob("*.md")}
+        self.assertEqual(set(), shipped & generator, "a scaffold sits in both trees")
+        self.assertEqual(set(scaffold.SCHEMA_BY_KIND), shipped | generator)
 
     def test_every_json_kind_expands_to_valid_json(self) -> None:
         for kind in sorted(scaffold.JSON_KINDS):
@@ -237,6 +253,49 @@ class Coverage(unittest.TestCase):
         """The artifact's own form decides how it is parsed; a delta is an object, not a file."""
         for kind in sorted(scaffold.JSON_KINDS):
             self.assertFalse(scaffold.template_path(kind).read_text().startswith("---"), kind)
+
+
+class SystemDefaults(unittest.TestCase):
+    """The one kind that names no schema, checked against the validator that owns it instead.
+
+    `conforms` returns nothing for `knowledge-system`, so the generic expansion test passes it
+    vacuously. That is exactly the case where a suite can look green and assert nothing, so the
+    real contract is exercised here: the knowledge materializer reads this file before any object
+    loads, and the body check reads the ceiling out of it. Both are asserted rather than assumed.
+    """
+
+    def expanded(self) -> Path:
+        text, problems = scaffold.expand("knowledge-system", CASES["knowledge-system"])
+        self.assertEqual([], problems)
+        root = Path(tempfile.mkdtemp()) / "knowledge"
+        root.mkdir(parents=True)
+        (root / "system.md").write_text(text)
+        return root
+
+    def test_the_materializer_resolves_all_three_defaults(self) -> None:
+        from knowledge_graph_lib import load
+
+        graph = load(self.expanded())
+        self.assertEqual([], graph.problems, "the scaffolded file reports nothing missing")
+        for key in ("timezone", "currency", "identity_strategy"):
+            self.assertIn(key, graph.defaults)
+
+    def test_the_body_ceiling_is_enforceable_from_it(self) -> None:
+        """Absent the ceiling the check reports itself unenforceable, which is the failure to avoid."""
+        from knowledge_graph_lib import load
+
+        ceiling = load(self.expanded()).limits.get("body_lines")
+        self.assertIsInstance(ceiling, int)
+        self.assertGreater(ceiling, 0)
+
+    def test_it_names_no_schema_on_purpose(self) -> None:
+        """A schema here would be a second home for the four facts the validator already checks."""
+        self.assertIsNone(scaffold.SCHEMA_BY_KIND["knowledge-system"])
+
+    def test_the_ceiling_is_supplied_and_never_defaulted(self) -> None:
+        values = {k: v for k, v in CASES["knowledge-system"].items() if k != "body_lines"}
+        _text, problems = scaffold.expand("knowledge-system", values)
+        self.assertNotEqual([], problems, "a ceiling nobody supplied is a hidden default")
 
 
 class Expansion(unittest.TestCase):

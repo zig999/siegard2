@@ -1,10 +1,10 @@
 """The closed set of files a knowledge base derives, and nothing else.
 
-`specs/0003` R42 and R51 make a projection derived and never hand-edited, and R50 closes the
+R42 and R51 make a projection derived and never hand-edited, and R50 closes the
 projection list at three. `graph.json` is the materialized graph rather than a projection, and
 R42 names it alongside `index.md`.
 
-This module exists so the list has one home. `scripts/project_knowledge.py` writes these files
+This module exists so the list has one home. `bin/project_knowledge.py` writes these files
 and `src/claude/hooks/reject-derived-write.py` refuses writes to them; two copies of the list
 would drift, and the drift would be silent in the worst direction — a hook protecting a file the
 materializer no longer produces, and not protecting one it does.
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from pathlib import PurePosixPath
 
-# Keyed by name relative to the knowledge root. `scripts/project_knowledge.py` asserts that its
+# Keyed by name relative to the knowledge root. `bin/project_knowledge.py` asserts that its
 # own output keys equal this set, so adding a projection there without adding it here fails.
 DERIVED_NAMES = frozenset({"graph.json", "index.md", "glossary.md", "context-map.md"})
 

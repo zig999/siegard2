@@ -1,4 +1,4 @@
-"""The four repairs building the evidence forced on specs/0003, each proven both ways.
+"""The four repairs building the evidence forced on foundation/0003, each proven both ways.
 
 A repair with no test is a claim. Each class below covers one of the four contradictions the
 fixture exposed, and each asserts the accepted shape as well as the rejected one — a contract

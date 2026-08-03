@@ -1,7 +1,7 @@
 """Shared frontmatter plumbing for Siegard boundary validators.
 
 Extracted when the third artifact class (Claude Code components) arrived, exactly as
-scripts/validate_adrs.py recorded it would be. This module holds no rules: schemas hold
+the validate adrs tool recorded it would be. This module holds no rules: schemas hold
 the constraints, each validator holds its own cross-file checks, and this module only
 parses and formats.
 
@@ -17,7 +17,18 @@ from pathlib import Path
 
 from cli import cannot_run
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# Two roots, because the shipped tree resolves two different kinds of path and one name for
+# both is what let a contract governing this repository's decision records also govern a
+# consumer's business decisions.
+#
+# PLUGIN_ROOT is where this code ships: `src/claude/` from source, the plugin root once
+# installed. Everything the framework carries with it — a schema, a scaffold — resolves here.
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+
+# INVOCATION_ROOT is the directory the caller ran from, and is where the caller's own files
+# are. A consumer's knowledge base, specifications, and concept sources resolve here; they
+# never sit inside the framework's installed files.
+INVOCATION_ROOT = Path.cwd()
 
 try:
     import yaml
@@ -50,7 +61,7 @@ def display(path: Path) -> str:
     Validator roots are CLI arguments, so they can legitimately point outside the repo.
     """
     try:
-        return str(path.relative_to(REPO_ROOT))
+        return str(path.relative_to(INVOCATION_ROOT))
     except ValueError:
         return str(path)
 

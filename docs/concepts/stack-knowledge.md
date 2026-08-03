@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }
 sources:
-  - resource: specs/0002-knowledge-economy-principles.md
+  - resource: foundation/0002-knowledge-economy-principles.md
     title: Hold the minimum knowledge specialized agents need to reproduce the system
 ---
 
@@ -20,7 +20,7 @@ project, how a guard clause is expressed idiomatically, how a by-identity refere
 
 Stack knowledge is not a smaller kind of [domain knowledge](domain-knowledge.md). It is a different kind,
 and it differentiates one technology from another rather than one system from another. Its exclusion from
-the [knowledge base](knowledge-base.md) is stated by `specs/0002-knowledge-economy-principles.md` rather
+the [knowledge base](knowledge-base.md) is stated by `foundation/0002-knowledge-economy-principles.md` rather
 than here.
 
 The reason is economic rather than aesthetic. Stack knowledge already exists inside a competent

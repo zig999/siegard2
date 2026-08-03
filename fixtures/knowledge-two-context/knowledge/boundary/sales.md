@@ -7,7 +7,7 @@ question: What does the Sales context own?
 ddd: bounded-context
 subdomain_type: core
 owner: sales
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

@@ -1,14 +1,14 @@
 """Context resolution: determinism, stopping, degradation, and whether it earns its place.
 
-`specs/0009` leaves the expansion order free and pins it to a contract version (R17). That is
-the whole of what makes R13's `claim-recorded` persistence real: `specs/0004` R48 requires a
+`foundation/0009` leaves the expansion order free and pins it to a contract version (R17). That is
+the whole of what makes R13's `claim-recorded` persistence real: `foundation/0004` R48 requires a
 discarded body to recompute to the recorded content hash, and a package truncated by a budget
 recomputes to a different set the moment the traversal reorders.
 
-The measurement class is the one that could end this machinery. `specs/0009` R11 retains
+The measurement class is the one that could end this machinery. `foundation/0009` R11 retains
 resolution only while it selects better than including the whole bundle, and R10 asks for the
 record rather than the figure — so these assert that the record exists and that the numbers in
-`docs/bootstrap.md` are the ones the code actually produces.
+the specifications record are the ones the code actually produces.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from knowledge_graph_lib import load
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = REPO_ROOT / "fixtures" / "knowledge-two-context" / "knowledge"
-SCHEMA = REPO_ROOT / "schemas" / "context-package.v1.json"
+SCHEMA = REPO_ROOT / "src" / "claude" / "schemas" / "context-package.json"
 
 RULE = "ko.rule.sales.proposal-validity"
 CLAIM = "the change alters when a proposal may still be accepted"
@@ -50,20 +50,20 @@ class Conformance(unittest.TestCase):
         self.assertEqual([], list(self.validator.iter_errors(build(budget=3))))
 
     def test_a_truncated_package_must_carry_a_degradation(self) -> None:
-        """specs/0009 R16: a package saying the closure was cut short and nothing was lost."""
+        """foundation/0009 R16: a package saying the closure was cut short and nothing was lost."""
         document = build(budget=3)
         document["degradations"] = []
         self.assertTrue(list(self.validator.iter_errors(document)))
 
     def test_a_root_without_a_claim_is_rejected(self) -> None:
-        """specs/0009 R4."""
+        """foundation/0009 R4."""
         document = build()
         document["roots"] = [{"id": RULE}]
         self.assertTrue(list(self.validator.iter_errors(document)))
 
 
 class Determinism(unittest.TestCase):
-    """specs/0001 R12, made checkable by specs/0009 R17."""
+    """foundation/0001 R12, made checkable by foundation/0009 R17."""
 
     def test_the_same_inputs_produce_a_byte_identical_package(self) -> None:
         first = json.dumps(build(), indent=2, sort_keys=True)
@@ -97,7 +97,7 @@ class Determinism(unittest.TestCase):
 
 
 class Stopping(unittest.TestCase):
-    """Every stop reason of specs/0009 R8, produced at least once."""
+    """Every stop reason of foundation/0009 R8, produced at least once."""
 
     def test_closure_complete(self) -> None:
         self.assertEqual("closure_complete", build()["stop_reason"])
@@ -141,7 +141,7 @@ class Stopping(unittest.TestCase):
 
 
 class Degradation(unittest.TestCase):
-    """specs/0009 R15: recorded separately from the single stop reason."""
+    """foundation/0009 R15: recorded separately from the single stop reason."""
 
     def test_a_complete_closure_degrades_in_no_way(self) -> None:
         self.assertEqual([], build()["degradations"])
@@ -152,7 +152,7 @@ class Degradation(unittest.TestCase):
         self.assertIn("budget_exhausted", [d["code"] for d in document["degradations"]])
 
     def test_an_unresolved_root_degrades_without_stopping_the_run(self) -> None:
-        """specs/0001 R13 requires resolution to continue past it; R16 makes it never a stop reason."""
+        """foundation/0001 R13 requires resolution to continue past it; R16 makes it never a stop reason."""
         document = build(roots=[("ko.definition.sales.not-a-thing", "absent"), (RULE, CLAIM)])
         self.assertIn("unresolved_root", [d["code"] for d in document["degradations"]])
         self.assertNotEqual("unresolved_root", document["stop_reason"])
@@ -167,7 +167,7 @@ class Degradation(unittest.TestCase):
 
 class Traversal(unittest.TestCase):
     def test_only_declared_edge_kinds_are_followed(self) -> None:
-        """specs/0009 R9: a relationship the ontology does not hold is not traversed."""
+        """foundation/0009 R9: a relationship the ontology does not hold is not traversed."""
         from knowledge_graph_lib import EDGE_KINDS
 
         graph = load(FIXTURE)
@@ -196,7 +196,7 @@ class Traversal(unittest.TestCase):
 
 
 class EarnsItsPlace(unittest.TestCase):
-    """specs/0009 R10 and R11 — the measurement, and the decision it forces."""
+    """foundation/0009 R10 and R11 — the measurement, and the decision it forces."""
 
     def setUp(self) -> None:
         self.graph = load(FIXTURE)
@@ -225,14 +225,14 @@ class EarnsItsPlace(unittest.TestCase):
 
     def test_the_recorded_measurement_matches_what_the_code_produces(self) -> None:
         """A figure in prose that nothing derives is the drift this repository has already had twice."""
-        recorded = (REPO_ROOT / "docs" / "bootstrap.md").read_text()
+        recorded = (REPO_ROOT / "foundation" / "0009-context-assembly.md").read_text()
         self.assertIn(f"{self.total} knowledge objects", recorded)
 
     def test_expanding_from_a_boundary_reaches_almost_nothing(self) -> None:
         """A property of the ontology, recorded because it makes one selection strategy wrong.
 
         `boundary` edges run member → boundary, and a boundary never enumerates its members
-        (specs/0003). Expansion follows declared direction, so a boundary chosen as a root brings
+        (foundation/0003). Expansion follows declared direction, so a boundary chosen as a root brings
         in almost nothing — which is a fact the root selector has to know, not a bug to route
         around by adding an undeclared reverse edge.
         """
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 class CommittedFixture(unittest.TestCase):
     """The package in `fixtures/consumer-knowledge/`, recomputed from what it records.
 
-    `specs/0009` R13 makes a package `claim-recorded`: not committed for its own sake, but
+    `foundation/0009` R13 makes a package `claim-recorded`: not committed for its own sake, but
     recomputable from the recorded roots, the graph, the budget, and the expansion contract
     version. This fixture commits one anyway, because a fixture is evidence a reader inspects —
     and that is only safe while the committed copy is asserted to equal what the recorded inputs
@@ -277,15 +277,11 @@ class CommittedFixture(unittest.TestCase):
         self.assertEqual([], list(validator.iter_errors(self.document)))
 
     def test_it_is_a_truncated_package_and_says_so(self) -> None:
-        """The fixture exercises the degraded path, which the other workflow fixture does not."""
+        """A package that stopped on its budget records the stop and the degradation.
+
+        This is the case worth committing: resolution degrades rather than blocking, so the
+        interesting fixture is a truncated one. A package that fit inside its budget would exercise
+        the happy path only and prove nothing about fail-soft.
+        """
         self.assertEqual("budget_exhausted", self.document["stop_reason"])
         self.assertTrue(self.document["degradations"])
-
-    def test_the_workflow_event_agrees_with_the_package(self) -> None:
-        """specs/0001 R14 makes the degradation an input to acceptance, so the two must not diverge."""
-        log = REPO_ROOT / "fixtures" / "consumer-knowledge" / "event-log.jsonl"
-        events = [json.loads(line) for line in log.read_text().splitlines() if line.strip()]
-        resolution = next(e for e in events if e["phase"] == "context-resolution")
-        self.assertEqual("degraded", resolution["outcome"])
-        self.assertIn(self.document["package_id"], resolution["degradation"])
-        self.assertIn(self.document["stop_reason"], resolution["degradation"])

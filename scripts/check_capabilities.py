@@ -3,9 +3,9 @@
 
 Two rules that were maintained by reading until this script existed.
 
-**`specs/0006` R17: a capability's status is derived from checkable facts** — whether the
+**`foundation/0006` R17: a capability's status is derived from checkable facts** — whether the
 distribution installs it, whether a fixture exercises it — "and not from a label maintained by
-hand". The distribution manifest carries the status under `specs/0008` R12, so a hand-written one
+hand". The distribution manifest carries the status under `foundation/0008` R12, so a hand-written one
 would be a label in the one place a consumer is told to trust. Both facts are computed here from
 the same inputs the generator uses, and disagreeing with the generator is a failure.
 
@@ -15,7 +15,7 @@ R14 fixes the vocabulary and what each value means for an installation: `propose
 that vanishes between two versions is a breaking change made silently — which the release record
 in `docs/` would have to catch, and cannot if nothing lists what was installed before.
 
-**`specs/0007` R19: no numeric threshold ships uncalibrated.** R20 draws the line this check
+**`foundation/0007` R19: no numeric threshold ships uncalibrated.** R20 draws the line this check
 enforces: a value the caller supplies per run is not a framework threshold, and a value the
 framework *ships* needs the evidence that calibrated it. A shipped component naming a bare number
 as a limit, a budget, or a retry count is the route R20 names — a value chosen once to get a first
@@ -36,13 +36,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 from generate_dist import DEFAULT_TARGET, MANIFEST_NAME, plan
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # A bare number presented as a limit. Deliberately narrow: it looks for a *value*, not a mention,
-# so prose describing why a caller supplies one does not trip it. `specs/0007` R20's distinction
+# so prose describing why a caller supplies one does not trip it. `foundation/0007` R20's distinction
 # is between a value the framework ships and one the caller supplies, and only the first is here.
 THRESHOLD = re.compile(
     r"(?i)\b(timeout|limit|max[_ ]?\w*|min[_ ]?\w*|budget|retries|retry[_ ]?count|attempts?)\b"
@@ -50,11 +51,11 @@ THRESHOLD = re.compile(
 )
 
 # Where a number is a framework fact rather than a threshold, with the reason. A hook's timeout is
-# the case `specs/0010` R11 requires to be stated rather than inherited, so it is a value the
+# the case `foundation/0010` R11 requires to be stated rather than inherited, so it is a value the
 # framework ships *by requirement* — and R11 is the evidence R19 asks for.
 CALIBRATED = {
-    "timeout": "specs/0010 R11 requires a hook to state its own timeout rather than inherit 600",
-    "max_reason": "specs/0010 R13 caps a hook's output at 10,000 characters",
+    "timeout": "foundation/0010 R11 requires a hook to state its own timeout rather than inherit 600",
+    "max_reason": "foundation/0010 R13 caps a hook's output at 10,000 characters",
     "max_skill_body_lines": "ADR-0009 records the documented 500-line guidance made a hard limit",
 }
 
@@ -78,7 +79,7 @@ def check_statuses(root: Path) -> list[str]:
             problems.append(f"{name}: derived as {derived[name]!r} and absent from the manifest")
         elif name not in derived:
             problems.append(
-                f"{name}: recorded in the manifest and derivable from nothing — specs/0006 R17 "
+                f"{name}: recorded in the manifest and derivable from nothing — foundation/0006 R17 "
                 f"forbids a status maintained by hand"
             )
         elif derived[name] != installed[name]:
@@ -89,14 +90,14 @@ def check_statuses(root: Path) -> list[str]:
     for name, status in sorted(installed.items()):
         if status in ("proposed", "retired"):
             problems.append(
-                f"{name}: status {status!r} must not appear in an installation — specs/0006 R14, "
+                f"{name}: status {status!r} must not appear in an installation — foundation/0006 R14, "
                 f"proposed ships nothing and retired is absent from the distribution"
             )
     return problems
 
 
 def check_thresholds(root: Path) -> list[str]:
-    """specs/0007 R19 and R20, over what the distribution actually ships."""
+    """foundation/0007 R19 and R20, over what the distribution actually ships."""
     problems: list[str] = []
     for path in sorted(root.rglob("*")):
         if not path.is_file() or "__pycache__" in path.parts:
@@ -112,7 +113,7 @@ def check_thresholds(root: Path) -> list[str]:
             line = text[: match.start()].count("\n") + 1
             problems.append(
                 f"{path.relative_to(root).as_posix()}:{line}: ships {match.group(0)!r}. "
-                f"specs/0007 R19 admits a framework value only with the evidence that calibrated "
+                f"foundation/0007 R19 admits a framework value only with the evidence that calibrated "
                 f"it, and R20 makes a caller-supplied value the other route — neither is a bare "
                 f"number in a shipped file"
             )
@@ -149,7 +150,7 @@ LIFECYCLE_ORDER = {"proposed": 0, "active": 1, "deprecated": 2, "retired": 3}
 
 
 def check_release_sequence(releases: list[dict]) -> list[str]:
-    """Every reason a capability's observed history violates specs/0006 R14 through R16.
+    """Every reason a capability's observed history violates foundation/0006 R14 through R16.
 
     R15's clause is the one that needs a mechanism: a capability moves to `deprecated` before
     `retired`, and removing an installed one without that step is "a breaking change made
@@ -161,29 +162,29 @@ def check_release_sequence(releases: list[dict]) -> list[str]:
     for release in releases:
         status = release["status"]
         if status not in LIFECYCLE_ORDER:
-            problems.append(f"{release['version']}: status {status!r} is outside specs/0006 R14")
+            problems.append(f"{release['version']}: status {status!r} is outside foundation/0006 R14")
             continue
         if previous is not None:
             before, after = LIFECYCLE_ORDER[previous["status"]], LIFECYCLE_ORDER[status]
             if after < before:
                 problems.append(
                     f"{release['version']}: moves from {previous['status']!r} back to {status!r}; "
-                    f"the lifecycle of specs/0006 R14 does not run backwards"
+                    f"the lifecycle of foundation/0006 R14 does not run backwards"
                 )
             if previous["status"] == "active" and status == "retired":
                 problems.append(
                     f"{release['version']}: retires a capability that was active in "
-                    f"{previous['version']} without passing through 'deprecated' — specs/0006 R15 "
+                    f"{previous['version']} without passing through 'deprecated' — foundation/0006 R15 "
                     f"calls that a breaking change made silently"
                 )
         if status == "deprecated" and not release.get("replacement"):
             problems.append(
                 f"{release['version']}: deprecated without naming a replacement or stating plainly "
-                f"that none exists (specs/0006 R15)"
+                f"that none exists (foundation/0006 R15)"
             )
         if status == "retired" and not release.get("migration"):
             problems.append(
-                f"{release['version']}: retired with no migration recorded — specs/0006 R16 requires "
+                f"{release['version']}: retired with no migration recorded — foundation/0006 R16 requires "
                 f"the migration .claude/rules/compatibility.md demands"
             )
         previous = release

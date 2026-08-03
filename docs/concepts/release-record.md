@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [framework, lifecycle]
 generated: { by: claude-opus-5, at: 2026-07-31T01:49:02Z }
 sources:
-  - resource: specs/0013-framework-lifecycle.md
+  - resource: foundation/0013-framework-lifecycle.md
     title: Version the framework so a break is always announced, and a migration is always executable
 ---
 

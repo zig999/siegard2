@@ -1,6 +1,6 @@
 ---
 name: concept-author
-description: Authors or updates a single concept file in an OKF-derived concept bundle, conforming to the bundle's frontmatter contract, and keeps the bundle index in step. Delegate when a workflow needs a new term defined, an existing concept revised, or an index row repaired. Not for changing the contract itself or renaming concept ids.
+description: Authors or updates a single concept file in an OKF-derived concept bundle, conforming to the bundle's frontmatter contract, and keeps the bundle index in step. Delegate when what must be recorded is the meaning of a term rather than a fact about a domain — a term used normatively and undefined, a definition that has drifted, an index row that disagrees with the file. It needs a bundle and a term, and no prior artifact. Not for recording a domain fact, which is knowledge-author; not for changing the bundle contract; and not for renaming concept ids.
 tools: Read, Grep, Glob, Write, Edit
 ---
 
@@ -48,4 +48,20 @@ around the block is noise it must ignore.
 - `state`: `authored` (new file) | `updated` (existing file revised) | `blocked` (nothing written)
 - `term`: the term as delegated
 - `concept_id`, `concept_path`, `files_changed`: required unless blocked
+
+```json
+{
+  "contract_version": "concept-authoring-result/1",
+  "producer": "concept-author",
+  "state": "authored",
+  "term": "dunning",
+  "concept_id": "concept.dunning",
+  "concept_path": "concepts/dunning.md",
+  "files_changed": ["concepts/dunning.md", "concepts/index.md"]
+}
+```
+
+A `blocked` result carries `blocking_reason` and writes nothing; any other result carries the three
+fields above. The contract rejects the combinations that contradict each other, and it should: a
+blocking reason on a successful result says two things at once.
 - `blocking_reason`: required when blocked — name the missing input or the conflicting concept

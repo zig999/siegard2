@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Expand a set of roots into a context package, deterministically.
 
-`specs/0009` fixes the package as a contract and leaves the traversal free, with one
+The contract fixes the package and leaves the traversal free, with one
 constraint that does all the work: R17 pins expansion order to the contract version the
 package records and forbids an order free to differ between two runs of one version. Without
-that, R13's `claim-recorded` persistence is a label — `specs/0004` R48 requires a discarded
+that, R13's `claim-recorded` persistence is a label — R48 requires a discarded
 body to recompute to the recorded content hash, and a package truncated by a budget recomputes
 to a different set the moment the traversal reorders.
 
@@ -25,12 +25,12 @@ flag it already carries — supersessions are structurally unreachable because
 R15 records every degradation separately. A run can exhaust its budget *and* fail to resolve a
 relationship, and a single field would report one of them. R16 fixes which codes can be which.
 
-Declared dependencies: PyYAML and jsonschema, via scripts/knowledge_graph_lib.py.
+Declared dependencies: PyYAML and jsonschema, via bin/knowledge_graph_lib.py.
 
-Usage:  resolve_context.py --knowledge DIR --request cr_xxxxxxxx --package cp_xxxxxxxx
+Usage: resolve_context.py --knowledge DIR --request cr_xxxxxxxx --package cp_xxxxxxxx
                            --root ID:CLAIM [--root ...] --budget N [--unit objects|bytes]
                            [--depth-limit N] [--out PATH]
-Exit:   0 a package was produced, 1 the roots or the graph make one impossible, 2 cannot run
+Exit: 0 a package was produced, 1 the roots or the graph make one impossible, 2 cannot run
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ from pathlib import Path
 from cli import cannot_run
 from knowledge_graph_lib import EDGE_KINDS, Graph, load
 
-# specs/0009 R17. Bumped when a change to the order changes which objects a package holds; a
+# . Bumped when a change to the order changes which objects a package holds; a
 # consumer reads it to know whether a recorded hash is still recomputable.
 EXPANSION_CONTRACT = "context-expansion/1"
 
@@ -159,7 +159,7 @@ def resolve(
                 }
                 if degradation not in degradations:
                     degradations.append(degradation)
-                    # R8: an unresolvable relationship is a stop reason, and R13 of specs/0001
+                    # R8: an unresolvable relationship is a stop reason, and R13
                     # requires resolution to continue past it — so it is recorded as the reason
                     # only when nothing stronger truncated the run.
                     if stop == CLOSURE_COMPLETE:
@@ -216,7 +216,7 @@ def main() -> int:
         node_id, sep, claim = pair.partition(":")
         if not sep or not claim.strip():
             cannot_run(
-                f"cannot run: --root expects ID:CLAIM, got {pair!r} — specs/0009 R4 makes a root "
+                f"cannot run: --root expects ID:CLAIM, got {pair!r} — a root "
                 f"without a claim indistinguishable from an arbitrary inclusion"
             )
         roots.append((node_id, claim.strip()))
@@ -225,7 +225,7 @@ def main() -> int:
     if graph.problems:
         print(f"FAILED: the knowledge base has {len(graph.problems)} problem(s)", file=sys.stderr)
         for problem in graph.problems[:10]:
-            print(f"  {problem}", file=sys.stderr)
+            print(f" {problem}", file=sys.stderr)
         return 1
 
     document = package(

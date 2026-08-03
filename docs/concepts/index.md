@@ -9,7 +9,7 @@ concept here before using a term normatively. A term used in a rule but absent f
 interpretation waiting to drift.
 
 This bundle is a Siegard concept bundle and a valid OKF v0.2 bundle. The frontmatter contract is
-`schemas/concept.v1.json`; the decision and its one divergence from OKF are recorded in
+`schemas/concept.json`; the decision and its one divergence from OKF are recorded in
 `docs/adr/0005-okf-derived-concept-model.md`. Validate with `make validate`.
 
 One concept per file. The filename is the concept `id` without its `concept.` prefix.
@@ -23,18 +23,18 @@ added from here on, and [scaffold](scaffold.md) is the first to exercise it.
 On 2026-07-31 every entry then in the bundle was promoted to `accepted` in one maintainer decision, together
 with every specification and ADR that was still `proposed`. For a short while the tier distinguished nothing
 here. [scaffold](scaffold.md) restored the distinction the same day: it is `proposed`, because the only
-things that use the term are `templates/` and a script, and `CLAUDE.md` **Normative sources** places
+things that use the term are `templates/` and a script, and `CLAUDE.md` **Where authority lives** places
 implementation below the tiers that bind. It becomes `accepted` when a specification or a rule file uses it
 normatively — not when the scaffolds it names begin to work.
 
 What that decision changed, and what it did not, is worth being exact about. The condition
 `docs/adr/README.md` states for the crossing — a term used normatively by an artifact that binds — was
-already satisfied for the entries citing `specs/0001-knowledge-object-driven-development.md`, and the
+already satisfied for the entries citing `foundation/0001-knowledge-object-driven-development.md`, and the
 promotion recorded a fact for those. It was not satisfied for the vocabulary of
-`specs/0004-generation-and-reproducibility.md` and the framework specifications: those documents were
+`foundation/0004-generation-and-reproducibility.md` and the framework specifications: those documents were
 accepted on the same authority and on the same day, with their own validation conditions open, so a
 definition here binds a mechanism that in several cases does not exist yet. Each of those specifications
-records that in its **What satisfied acceptance** section, and this bundle does not restate it per concept.
+records that, and this bundle does not restate it per concept.
 
 The consequence is the same one they carry: `.claude/rules/compatibility.md` now governs a change to any
 definition here, and the first component built against one is the thing most likely to demand a change.
@@ -54,8 +54,9 @@ definition here, and the first component built against one is the thing most lik
 | [distribution](distribution.md) | The assembled release artifact under `dist/.claude/`. |
 | [distribution manifest](distribution-manifest.md) | The record of what an installation carries, beside the plugin manifest the harness reads. |
 | [domain knowledge](domain-knowledge.md) | A fact whose change changes this system, and the only kind the knowledge base holds. |
+| [domain model](domain-model.md) | The DDD analysis of a request, separating what the request stated from what the modeler decided. |
 | [escalation](escalation.md) | The insertion of workflow phases, decided by a predicate over a validated artifact. |
-| [event log](event-log.md) | The append-only record of workflow facts. |
+| [event log](event-log.md) | An append-only record of facts, kept by a repository rather than by the framework. |
 | [fail-soft](fail-soft.md) | Resolution degrades instead of blocking, and acceptance is evaluated independently. |
 | [fixture](fixture.md) | A downstream-shaped case exercising a framework capability. |
 | [framework source](framework-source.md) | The tree under `src/claude/` holding the components Siegard ships. |
@@ -68,11 +69,11 @@ definition here, and the first component built against one is the thing most lik
 | [interface](interface.md) | The knowledge object type describing what a bounded context exposes to, or consumes from, another. |
 | [knowledge base](knowledge-base.md) | The authored set of knowledge objects, distinct from the graph materialized from it. |
 | [knowledge graph](knowledge-graph.md) | The graph of knowledge objects and their declared relationships, derived from frontmatter. |
+| [knowledge intake plan](knowledge-intake-plan.md) | The validated classification of received domain material into the ontology, with every gap named. |
 | [knowledge object](knowledge-object.md) | One durable concept of a governed repository's knowledge. |
 | [least privilege](least-privilege.md) | Only the tools and permissions a component's contract names. |
 | [lifecycle](lifecycle.md) | The knowledge object type holding a definition's legal states and its total transition table. |
 | [ontology](ontology.md) | The schema level of the knowledge model: node types, edges, cardinality, meaning. |
-| [orchestrator](orchestrator.md) | The component that chooses a transition by lookup on a validated artifact's closed field. |
 | [operative rule](operative-rule.md) | The imperative form of a rule, held by one artifact and separate from why it was decided. |
 | [placement decision](placement-decision.md) | The validated, frozen record of where a pack puts each artifact the manifest does not lock. |
 | [process](process.md) | The knowledge object type holding an ordered sequence of steps that reference other objects by id. |
@@ -84,9 +85,7 @@ definition here, and the first component built against one is the thing most lik
 | [scaffold](scaffold.md) | A generator producing a conforming skeleton of an artifact this repository authors; not a template. |
 | [skill](skill.md) | A distributable procedure or knowledge unit, invocable as `/name`. |
 | [specialized agent](specialized-agent.md) | An agent with one declared role and minimum tools. |
-| [specification](specification.md) | A normative document in `specs/`, the highest precedence source in this repository. |
+| [specification](specification.md) | A normative document in `foundation/`, the highest precedence source in this repository. |
 | [specification delta](specification-delta.md) | The temporary artifact describing one requested change by reference. |
 | [stack knowledge](stack-knowledge.md) | A fact whose change changes every system on the same technology, never held by the knowledge base. |
 | [target pack](target-pack.md) | The distributable unit carrying one technology stack: the agents and templates producing the classes it declares. |
-| [transition guard](transition-guard.md) | The condition that must hold for a workflow to change state. |
-| [workflow state](workflow-state.md) | Current state of a workflow, derived from the record of what happened. |

@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd, ddd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }
 sources:
-  - resource: specs/0003-knowledge-ontology-and-notation.md
+  - resource: foundation/0003-knowledge-ontology-and-notation.md
     title: Represent domain knowledge as a typed ontology in an AI-first notation
 ---
 
@@ -28,4 +28,4 @@ And a bounded context declares its relationships to other contexts using DDD's c
 is what makes an anti-corruption layer or a conformist relationship a recorded fact rather than a diagram.
 
 A boundary is also the unit of scope for selection and for generation, which is what makes the partition
-worth its cost. `specs/0003-knowledge-ontology-and-notation.md` holds the requirements.
+worth its cost. `foundation/0003-knowledge-ontology-and-notation.md` holds the requirements.

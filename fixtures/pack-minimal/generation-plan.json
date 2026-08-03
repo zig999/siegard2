@@ -81,20 +81,6 @@
       "track": "judged",
       "path": "src/sales/validators/proposal-expiration.ts",
       "state": "new"
-    },
-    {
-      "ko": "ko.rule.sales.proposal-validity",
-      "class": "conformance-test",
-      "track": "deterministic",
-      "path": "src/sales/conformance/proposal-validity.test.ts",
-      "state": "new"
-    },
-    {
-      "ko": "ko.rule.sales.proposal-validity",
-      "class": "validator",
-      "track": "judged",
-      "path": "src/sales/validators/proposal-validity.ts",
-      "state": "new"
     }
   ]
 }

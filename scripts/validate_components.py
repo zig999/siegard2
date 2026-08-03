@@ -2,7 +2,7 @@
 """Validate distributable Claude Code components under src/claude/.
 
 This script is a boundary validator: it holds no rules of its own. Every frontmatter
-constraint lives in schemas/skill.v1.json and schemas/agent.v1.json, which are the
+constraint lives in schemas/skill.json and schemas/agent.json, which are the
 single authorities and carry their source citations. The checks implemented here are
 the ones a per-file JSON Schema cannot express:
 
@@ -36,20 +36,37 @@ import json
 import sys
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from generator_lib import REPO_ROOT, display
+from frontmatter_lib import split_frontmatter
 from cli import cannot_run
 
-SKILL_SCHEMA_PATH = REPO_ROOT / "schemas" / "skill.v1.json"
-AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.v1.json"
+SKILL_SCHEMA_PATH = REPO_ROOT / "schemas" / "skill.json"
+AGENT_SCHEMA_PATH = REPO_ROOT / "schemas" / "agent.json"
 
 # Documented guidance ("Keep SKILL.md under 500 lines"), made a hard limit here —
 # the rationale is recorded in docs/adr/0009-component-contracts-from-anthropic-documentation.md.
 MAX_SKILL_BODY_LINES = 500
 
-HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.v1.json"
+HOOK_SCHEMA_PATH = REPO_ROOT / "schemas" / "hook.json"
 HOOK_DECLARATION = "hooks.declaration.json"
 
-PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.v1.json"
+DECLARATION_SCHEMA_PATH = REPO_ROOT / "schemas" / "capability-declaration.json"
+CAPABILITY_DECLARATION = "capabilities.declaration.json"
+
+# The frontmatter field each class states its grant in. foundation/0007 R14 holds the grant to what
+# the declared steps require, and foundation/0005 R11 puts the statement in the component; a
+# declaration claiming a grant the component does not is the disagreement R22 exists to catch.
+GRANT_FIELD = {"specialized-agent": "tools", "skill": "allowed-tools"}
+
+# Where a component of each class lives, relative to the framework source root. A declaration whose
+# class does not match the tree its component sits in is two records of one fact disagreeing.
+#
+# A hook is absent on purpose: it is a script with no frontmatter, so its second record is
+# `hooks.declaration.json` rather than a header, and `declared_hook` below compares against that.
+# A script and a template are absent because they have no second record at all.
+CLASS_TREE = {"specialized-agent": "agents", "skill": "skills"}
+
+PLUGIN_SCHEMA_PATH = REPO_ROOT / "schemas" / "plugin.json"
 PLUGIN_DIR = ".claude-plugin"
 PLUGIN_MANIFEST = "plugin.json"
 
@@ -106,6 +123,14 @@ def schema_errors(validator: Draft202012Validator, data: dict, rel: str, failure
             seen.add(line)
             failures.append(line)
     return bool(errors)
+
+
+# Directories under the framework source that carry payload rather than a Claude Code
+# component. The harness never reads them: foundation/0008 calls them "Siegard's own", resolved
+# through ${CLAUDE_PLUGIN_ROOT}. They have contracts of their own — check_contract_versions.py
+# locks the schemas and scaffold.py expands the templates — so a component contract here would
+# be a second authority over a file that already has one.
+PAYLOAD_DIRS = frozenset({"bin", "schemas", "templates"})
 
 
 def check_skills(root: Path, failures: list[str]) -> int:
@@ -174,23 +199,149 @@ def check_agents(root: Path, failures: list[str]) -> int:
     return checked
 
 
+def declared_hook(root: Path, identifier: str, rel: str, failures: list[str]) -> None:
+    """A declared hook must be one the hook declaration actually installs.
+
+    `hooks.declaration.json` is a hook's second record: it names the file, the event, the matcher,
+    and the guarantee. A capability declaration naming a hook that document does not is the same
+    disagreement `component_frontmatter` catches for a class that has frontmatter.
+    """
+    path = root / "hooks" / HOOK_DECLARATION
+    if not path.is_file():
+        failures.append(
+            f"{rel}: declares hook '{identifier}' while hooks/ holds no {HOOK_DECLARATION}"
+        )
+        return
+    try:
+        installed = {Path(e["file"]).stem for e in json.loads(path.read_text())["hooks"]}
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        failures.append(f"{rel}: {HOOK_DECLARATION} cannot be read to check '{identifier}': {exc}")
+        return
+    if identifier not in installed:
+        failures.append(
+            f"{rel}: declares hook '{identifier}', which {HOOK_DECLARATION} does not install "
+            f"(it installs {sorted(installed) or 'nothing'}) — a declared hook nothing installs "
+            f"describes a guarantee that never fires"
+        )
+
+
+def component_frontmatter(root: Path, entry: dict, rel: str, failures: list[str]) -> dict | None:
+    """The frontmatter of the component an entry declares, or None with the reason recorded."""
+    if entry["class"] == "hook":
+        declared_hook(root, entry["identifier"], rel, failures)
+        return {}
+    tree = CLASS_TREE.get(entry["class"])
+    if tree is None:
+        # A script and a template have no second record to agree with. The declaration still
+        # validates; there is simply nothing to compare it against.
+        return {}
+    identifier = entry["identifier"]
+    candidates = [root / tree / f"{identifier}.md", root / tree / identifier / "SKILL.md"]
+    for candidate in candidates:
+        if candidate.is_file():
+            parsed = parse(candidate, failures)
+            return None if parsed is None else parsed[0]
+    failures.append(
+        f"{rel}: declares '{identifier}' as a {entry['class']}, and no component answers to it "
+        f"under {tree}/ — a declaration with no component declares nothing"
+    )
+    return None
+
+
+def check_capability_declarations(root: Path, failures: list[str]) -> int:
+    """Validate the authored declaration set, and hold each entry to its component.
+
+    `foundation/0007` R22 requires one validator over the declaration and the component it
+    declares, which is why this lives beside the frontmatter checks rather than in a script of its
+    own. R1 is what it enforces on the declaration; the agreement half is the cost R21's separate
+    artifact accepts, and comparing the two records is what keeps that cost from becoming drift.
+
+    A capability with no entry here is reported as a gap rather than a failure. R1 says a
+    capability whose declaration is absent is not installed, and enforcing that today would reject
+    every component but one — `foundation/0007` **Outstanding evidence** condition 1 is where that
+    debt is recorded, and a check that fails the build for it would be reporting the debt twice.
+    """
+    path = root / CAPABILITY_DECLARATION
+    if not path.is_file():
+        failures.append(
+            f"{display(root)}: holds no {CAPABILITY_DECLARATION}, so no capability declares itself "
+            f"and foundation/0007 R1 is unenforceable"
+        )
+        return 0
+    rel = display(path)
+    try:
+        document = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        failures.append(f"{rel}: not valid JSON: {exc}")
+        return 0
+    if schema_errors(load_validator(DECLARATION_SCHEMA_PATH), document, rel, failures):
+        return 0
+
+    checked = 0
+    declared: set[str] = set()
+    for entry in document["declarations"]:
+        checked += 1
+        identifier = entry["identifier"]
+        if identifier in declared:
+            failures.append(f"{rel}: declares '{identifier}' twice; one capability has one declaration")
+            continue
+        declared.add(identifier)
+        data = component_frontmatter(root, entry, rel, failures)
+        if data is None or not data:
+            continue
+        if data.get("name") != identifier:
+            failures.append(
+                f"{rel}: declares identifier '{identifier}' while its component's frontmatter says "
+                f"name '{data.get('name')}' — two records of one identity must agree"
+            )
+        field = GRANT_FIELD.get(entry["class"])
+        if field is None:
+            continue
+        component_grant = data.get(field)
+        declared_grant = (entry.get("grant") or {}).get("tools")
+        if declared_grant is None:
+            if component_grant:
+                failures.append(
+                    f"{rel}: '{identifier}' declares no grant while its component states "
+                    f"{field}: {component_grant} — the absence of a statement is not a grant"
+                )
+            continue
+        if isinstance(component_grant, list):
+            stated = component_grant
+        elif isinstance(component_grant, str):
+            stated = [item.strip() for item in component_grant.split(",") if item.strip()]
+        else:
+            # The frontmatter states its grant as something neither a list nor a string. Its own
+            # schema rejects that, and this check does not duplicate the rejection — it declines to
+            # compare against a value whose shape is already a reported defect, and carries on to
+            # the next entry rather than abandoning the remaining declarations.
+            continue
+        if sorted(stated) != sorted(declared_grant):
+            failures.append(
+                f"{rel}: '{identifier}' declares grant {sorted(declared_grant)} while its component "
+                f"states {field}: {sorted(stated)} — a grant wider than the steps is a defect even "
+                f"when unused, and a narrower one misdescribes what runs"
+            )
+    return checked
+
+
 def check_hooks(root: Path, failures: list[str]) -> int:
     """Validate the hook declaration, and hold it to the files beside it.
 
     A hook is a script rather than a frontmatter artifact, so what a per-file schema can check is
-    its declaration: `specs/0010` R10 requires a hook to state its event, its matcher, and its
-    guarantee, and R11 its own timeout. `schemas/hook.v1.json` is that contract.
+    its declaration: `foundation/0010` R10 requires a hook to state its event, its matcher, and its
+    guarantee, and R11 its own timeout. `schemas/hook.json` is that contract.
 
     The cross-file half is the correspondence. A declared hook with no script would install a
     `hooks.json` pointing at nothing, and a script nobody declared would sit in `src/claude/hooks/`
-    looking installed while the harness never loads it — the silent failure `specs/0008` R8 names
+    looking installed while the harness never loads it — the silent failure `foundation/0008` R8 names
     for a different directory and which applies here for the same reason.
     """
     declaration = root / HOOK_DECLARATION
     if not declaration.is_file():
         failures.append(
             f"{display(root)}: hooks/ holds no {HOOK_DECLARATION}, so nothing states what these "
-            f"scripts bind (specs/0010 R10)"
+            f"scripts bind (foundation/0010 R10)"
         )
         return 0
 
@@ -218,7 +369,7 @@ def check_hooks(root: Path, failures: list[str]) -> int:
     for name in sorted(present - declared):
         failures.append(
             f"{display(root / name)}: no entry in {HOOK_DECLARATION} declares it, so it would "
-            f"never be loaded (specs/0010 R10)"
+            f"never be loaded (foundation/0010 R10)"
         )
     return len(declared & present)
 
@@ -227,7 +378,7 @@ def check_plugin_manifest(entry: Path, failures: list[str]) -> int:
     """Validate `.claude-plugin/plugin.json`, and refuse anything else in that directory.
 
     The manifest is not a component and has no frontmatter, so it is checked here rather than
-    beside skills and agents. `specs/0008` R8 states that only `plugin.json` goes inside
+    beside skills and agents. `foundation/0008` R8 states that only `plugin.json` goes inside
     `.claude-plugin/`, and that a component placed there is not loaded at all — a failure that
     is silent at run time, which is why it is loud here.
     """
@@ -236,7 +387,7 @@ def check_plugin_manifest(entry: Path, failures: list[str]) -> int:
         if stray.name != PLUGIN_MANIFEST:
             failures.append(
                 f"{display(stray)}: only {PLUGIN_MANIFEST} goes inside {PLUGIN_DIR}/ — anything "
-                f"else placed there is not loaded (specs/0008 R8)"
+                f"else placed there is not loaded (foundation/0008 R8)"
             )
     if not manifest.is_file():
         failures.append(f"{display(entry)}: {PLUGIN_MANIFEST} is missing — a plugin root requires it")
@@ -260,7 +411,7 @@ def main() -> int:
     if not root.is_dir():
         print(
             f"components checked: 0 — {display(root)} does not exist yet; the contract "
-            f"precedes the first component (docs/bootstrap.md)"
+            f"precedes the first component (the build plan)"
         )
         return 0
 
@@ -278,11 +429,19 @@ def main() -> int:
             manifests = check_plugin_manifest(entry, failures)
         elif entry.name == "commands":
             failures.append(f"{display(entry)}: {COMMANDS_MERGED}")
+        elif entry.name in PAYLOAD_DIRS and entry.is_dir():
+            continue
+        elif entry.name == CAPABILITY_DECLARATION:
+            # Checked once, against the root, after the loop: an entry is held to a component in
+            # another tree, so this cannot run from inside a per-directory branch.
+            continue
         else:
             failures.append(
                 f"{display(entry)}: no contract exists for this component class — add the "
                 f"schema and wire it here before shipping the class (CLAUDE.md, Commands)"
             )
+
+    declarations = check_capability_declarations(root, failures)
 
     print(
         f"components checked: {skills + agents + hooks} ({skills} skill(s), {agents} agent(s), "
@@ -291,6 +450,15 @@ def main() -> int:
         f"schemas: {display(SKILL_SCHEMA_PATH)}, {display(AGENT_SCHEMA_PATH)}, "
         f"{display(PLUGIN_SCHEMA_PATH)}, {display(HOOK_SCHEMA_PATH)}"
     )
+    print(
+        f"capability declarations: {declarations} of {skills + agents + hooks} capabilities  "
+        f"contract: {display(DECLARATION_SCHEMA_PATH)}"
+    )
+    if declarations < skills + agents + hooks:
+        print(
+            f"  gap: {skills + agents + hooks - declarations} capability(ies) carry no declaration. "
+            f"foundation/0007 R1 binds them and nothing checks it — condition 1 there owes the rest."
+        )
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")
         for f in failures:

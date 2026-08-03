@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [generation, determinism, kodd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:26:04Z }
 sources:
-  - resource: specs/0004-generation-and-reproducibility.md
+  - resource: foundation/0004-generation-and-reproducibility.md
     title: Produce the system from knowledge, and lock what reproduces it
 ---
 
@@ -36,4 +36,4 @@ records the declared roots and the frozen content hash instead. Expansion is det
 recompute — and comparing a recomputed hash against the recorded one is what turns invalidation from a
 statement into a check.
 
-`specs/0004-generation-and-reproducibility.md` holds the requirements.
+`foundation/0004-generation-and-reproducibility.md` holds the requirements.

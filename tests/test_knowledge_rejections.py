@@ -1,4 +1,4 @@
-"""The eleven rejections specs/0003 requires before it may be accepted.
+"""The eleven rejections foundation/0003 requires before it may be accepted.
 
 Validation item 2 of that specification enumerates what tests must prove the contract
 rejects. Each case below names the item it discharges, and each mutates the fixture in

@@ -1,6 +1,6 @@
 """A concept link in a specification must resolve, and must name what it resolves to.
 
-The check exists because of a defect the review of `specs/0009-context-assembly.md`
+The check exists because of a defect the review of `foundation/0009-context-assembly.md`
 found: its **Definitions** section labelled a link `knowledge object` while pointing at
 `docs/concepts/knowledge-base.md`. Both files exist, so the resolution check passed it.
 A mislabelled link to an existing file was invisible to `make validate` across every
@@ -20,7 +20,7 @@ from validate_specs import check_concept_links, label_names
 
 from tests.support import REPO_ROOT
 
-SPECS = REPO_ROOT / "specs"
+SPECS = REPO_ROOT / "foundation"
 # Only the parent directory is read, to resolve a link the way a real specification
 # would. The file itself is never opened, so it does not need to exist.
 AS_IF_IN_SPECS = SPECS / "0000-a-specification-under-test.md"
@@ -48,12 +48,12 @@ class AMislabelledLinkIsRejected(unittest.TestCase):
             self.fail(f"no single problem holds all of {needles}. Reported:\n{listing}")
 
     def test_the_defect_this_check_was_written_for(self):
-        """The `specs/0009` case: a label naming one concept, a target holding another."""
+        """The `foundation/0009` case: a label naming one concept, a target holding another."""
         found = problems("[knowledge object](../docs/concepts/knowledge-base.md)")
         self.assertOneProblem(found, "knowledge object", "knowledge base")
 
     def test_the_two_records_cannot_be_swapped(self):
-        """`specs/0008` R15 forbids one manifest wearing the other's name in prose.
+        """`foundation/0008` R15 forbids one manifest wearing the other's name in prose.
 
         A link is where that confusion would survive review, because the target's title
         is not on the page the reader is looking at.

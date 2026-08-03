@@ -73,24 +73,3 @@ found.
 - Cost: a reader of ADR-0004 must follow its prose citation of this record to know that one sentence of
   what they are reading has been reversed. Nothing validates that citation, so it can rot unnoticed.
 
-## What satisfied acceptance
-
-A maintainer accepted this ADR on 2026-07-30. All three conditions it set were met first:
-
-1. a maintainer resolved the conflict with ADR-0004 by the amendment route rather than by supersession;
-2. `CLAUDE.md` **Decision order** carries the two-group form, so it no longer states the four-criterion
-   version this ADR revises;
-3. the relation was in frontmatter as `amends: "0004"`, not only in prose, so `make validate` decided it
-   rather than a reader inferring it — and ADR-0004 cites the amending id at the point of the change,
-   which the validator also checked. That field was removed on 2026-07-31; the prose citation on both
-   sides is what remains, and nothing checks it.
-
-Acceptance changes one thing beyond this record's own status: the amendment now **binds**. ADR-0004 stays
-`accepted` for its artifact-contract decision, and the sentence of its Consequences that dropped
-maintainability and context cost is reversed in force rather than merely annotated. `CLAUDE.md` **Decision
-order** was already carrying the amended rule; it now carries it with a binding record behind it instead of
-on its own authority.
-
-This ADR was also the only one ever to declare `amends`. The relation was removed on 2026-07-31 as
-ceremony carried for a single case — which is the cost this record's own Consequences section had
-already named.

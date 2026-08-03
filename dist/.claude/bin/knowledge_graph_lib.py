@@ -1,11 +1,11 @@
-"""Materialize a knowledge base into the graph specs/0003 defines, and check it.
+"""Materialize a knowledge base into the graph , and check it.
 
 The materializer and the checks live together because every check the specification
 defers to a script needs the same resolved graph: totality (R11), cross-context
 targeting (R15), edge cardinality (R18), one lifecycle per subject (R20), unresolved
 targets (R22, R29). Building that graph twice would be two answers to one question.
 
-This module holds no frontmatter constraint. Those live in schemas/knowledge-object.v1.json,
+This module holds no frontmatter constraint. Those live in schemas/knowledge-object.json,
 which R30 makes the single authority for the attribute type system. What lives here is
 what a per-file schema cannot see: the filesystem, other files, and the closure of edges.
 
@@ -13,11 +13,11 @@ The one fact this module copies from the specification is the edge table under *
 ontology: edges, cardinality, and traversal** — origin, target, cardinality, and whether
 expansion traverses each edge. Prose is not machine-readable, R18 requires a validator to
 enforce cardinality, and R19 requires expansion to follow only traversed edges, so the
-table arrives here as data. `schemas/knowledge-graph.v1.json` holds the edge *names* it
+table arrives here as data. `schemas/knowledge-graph.json` holds the edge *names* it
 emits; this module holds the cardinality and traversal policy the names carry.
 
-Consumers: scripts/validate_knowledge.py (validation), scripts/project_knowledge.py
-(projections and graph.json), scripts/measure_ontology.py (the R52 measurement).
+Consumers: bin/validate_knowledge.py (validation), bin/project_knowledge.py
+(projections and graph.json), the measure ontology tool (the R52 measurement).
 """
 
 from __future__ import annotations
@@ -27,20 +27,20 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from frontmatter_lib import PLUGIN_ROOT, display, split_frontmatter
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - frontmatter_lib already exits on this
+except ImportError: # pragma: no cover - frontmatter_lib already exits on this
     raise
 
 try:
     from jsonschema import Draft202012Validator
-except ImportError:  # pragma: no cover - callers exit with a named error
+except ImportError: # pragma: no cover - callers exit with a named error
     raise
 
-KO_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-object.v1.json"
-ADR_SCHEMA_PATH = REPO_ROOT / "schemas" / "knowledge-decision.v1.json"
+KO_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "knowledge-object.json"
+ADR_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "knowledge-decision.json"
 GRAPH_CONTRACT = "knowledge-graph/1"
 
 # Files inside a knowledge tree that are not knowledge objects. `system.md` is authored;
@@ -95,7 +95,7 @@ NUMERIC = re.compile(r"^[0-9]+$")
 
 @dataclass(frozen=True)
 class EdgeKind:
-    """One row of the edge table of specs/0003.
+    """One row of the edge table.
 
     `minimum` and `maximum` bound how many edges of this kind one origin declares;
     `inverse_maximum` bounds how many arrive at one target, which is how R20's "at most
@@ -104,14 +104,14 @@ class EdgeKind:
     """
 
     name: str
-    origin_types: tuple[str, ...]  # empty means any knowledge object
-    target_types: tuple[str, ...]  # empty means any node
+    origin_types: tuple[str, ...] # empty means any knowledge object
+    target_types: tuple[str, ...] # empty means any node
     minimum: int
     maximum: int | None
     inverse_maximum: int | None
     traversed: bool
     depth: int | None
-    crosses_context: bool = False  # exempt from R15
+    crosses_context: bool = False # exempt from R15
 
 
 EDGE_KINDS: dict[str, EdgeKind] = {
@@ -174,7 +174,7 @@ ACYCLIC_KINDS = ("boundary", "depends_on", "steps[].ko")
 @dataclass
 class Node:
     id: str
-    kind: str  # a knowledge-object type, or "adr"
+    kind: str # a knowledge-object type, or "adr"
     path: Path
     data: dict
     body: str = ""
@@ -189,7 +189,7 @@ class Edge:
     source: str
     target: str
     kind: str
-    locator: str  # where in the source frontmatter this edge was declared
+    locator: str # where in the source frontmatter this edge was declared
 
 
 @dataclass
@@ -265,7 +265,7 @@ def _load_system(graph: Graph) -> None:
     Spec 0003 defers this file's schema beyond the three defaults R26 requires and the
     `limits.body_lines` ceiling R48 requires, so this reads it without one and reports what
     is missing by name. The ceiling is a fact of the knowledge base rather than a hidden
-    default in a validator, which .claude/rules/distribution.md rejects; a maintainer settled
+    default in a validator, which is rejected as a hidden default; a maintainer settled
     that home on 2026-07-30 and R48 now names it. What value it should hold is still deferred
     to R52's measurement.
     """
@@ -293,9 +293,9 @@ def _load_system(graph: Graph) -> None:
 def _load_adr(graph: Graph, path: Path, validator: Draft202012Validator) -> None:
     """An ADR is a permanent graph node and never a knowledge object (R7).
 
-    Validated against schemas/knowledge-decision.v1.json, which spec 0003 names as its contract. The
-    similarity check in scripts/validate_adrs.py is not applied: it compares an ADR
-    against this repository's own CLAUDE.md, which says nothing about a governed one.
+    Validated against schemas/knowledge-decision.json, which spec 0003 names as its contract. The
+    similarity check in the validate adrs tool is not applied: it compares an ADR
+    against the generator's own instructions, which say nothing about a governed one.
     """
     try:
         data, _body = split_frontmatter(path.read_text())
@@ -361,7 +361,7 @@ def _materialize_edges(graph: Graph) -> None:
         if not node.is_ko:
             continue
         data = node.data
-        add = lambda kind, target, locator: graph.edges.append(  # noqa: E731
+        add = lambda kind, target, locator: graph.edges.append( # noqa: E731
             Edge(source=node.id, target=target, kind=kind, locator=locator)
         )
         if "boundary" in data:

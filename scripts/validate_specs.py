@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the specification set in specs/ against schemas/spec.v1.json.
+"""Validate the specification set in foundation/ against schemas/spec.json.
 
 This script is a boundary validator: it holds no rules of its own. Every frontmatter
 constraint lives in the schema file, which is the single authority. The checks
@@ -19,7 +19,7 @@ Three checks exist because a specification carries obligations an ADR does not:
   vocabulary drift the moment it is written, and a link whose label names one concept
   while pointing at another is the same drift with the evidence hidden: it resolves, so
   a check that only follows the path reports nothing.
-- A specification cites other specifications normatively, and specs/README.md states an
+- A specification cites other specifications normatively, and foundation/README.md states an
   acceptance rule over those citations: no specification is accepted before the one it
   depends on. That rule was prose nothing checked. The dependency edges are derived from
   the acceptance conditions the documents already write — an unresolved reference, a
@@ -28,7 +28,7 @@ Three checks exist because a specification carries obligations an ADR does not:
 
 What this last check does not do is worth stating, because a reader could mistake its
 green run for more than it is. It derives edges only from the "## Validation required
-before acceptance" section, in the form the set already uses ("`specs/NNNN` is
+before acceptance" section, in the form the set already uses ("`foundation/NNNN` is
 accepted"). An accepted specification replaces that section with what satisfied it, so
 the prerequisite disappears from the text on acceptance and this script cannot audit a
 promotion after the fact. What it catches is the drift while a document is still
@@ -48,10 +48,11 @@ import re
 import sys
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from generator_lib import REPO_ROOT, display
+from frontmatter_lib import split_frontmatter
 from cli import cannot_run
 
-SCHEMA_PATH = REPO_ROOT / "schemas" / "spec.v1.json"
+SCHEMA_PATH = REPO_ROOT / "schemas" / "spec.json"
 RESERVED = {"README.md"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
@@ -69,13 +70,13 @@ REQUIREMENT = re.compile(r"^- \*\*R(\d+)\*\*", re.MULTILINE)
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
 
 # A citation of another specification, in the two forms the set uses: the bare
-# `specs/0004`, and the full `specs/0004-generation-and-reproducibility.md`.
-SPEC_REFERENCE = re.compile(r"specs/(\d{4})(-[a-z0-9-]+\.md)?")
+# `foundation/0004`, and the full `foundation/0004-generation-and-reproducibility.md`.
+SPEC_REFERENCE = re.compile(r"foundation/(\d{4})(-[a-z0-9-]+\.md)?")
 # A numbered item in an acceptance-condition list, with its continuation lines.
 LIST_ITEM = re.compile(r"^\d+\. ", re.MULTILINE)
 # The phrase the set uses for "this document cannot be accepted until that one is".
 PREREQUISITE_PHRASE = "is accepted"
-# How a met condition is marked, per the convention specs/0009 established.
+# How a met condition is marked, per the convention foundation/0009 established.
 MET_MARKER = "**Met**"
 
 try:
@@ -221,7 +222,7 @@ def check_concept_links(path: Path, body: str) -> list[str]:
 
 
 def check_spec_references(body: str, filenames: dict[str, str]) -> list[str]:
-    """Every `specs/NNNN` citation must name a specification that exists, by its real name.
+    """Every `foundation/NNNN` citation must name a specification that exists, by its real name.
 
     Both halves matter. An id nothing holds is a normative citation pointing at nothing,
     which is the failure ADR-0010 recorded for a deleted concept source. A filename that
@@ -231,11 +232,11 @@ def check_spec_references(body: str, filenames: dict[str, str]) -> list[str]:
     problems: list[str] = []
     for sid, filename in dict.fromkeys(SPEC_REFERENCE.findall(body)):
         if sid not in filenames:
-            problems.append(f"reference 'specs/{sid}' names no specification")
+            problems.append(f"reference 'foundation/{sid}' names no specification")
             continue
         if filename and filenames[sid] != f"{sid}{filename}":
             problems.append(
-                f"reference 'specs/{sid}{filename}' names a file that does not exist — "
+                f"reference 'foundation/{sid}{filename}' names a file that does not exist — "
                 f"specification {sid} is '{filenames[sid]}'"
             )
     return problems
@@ -300,7 +301,7 @@ def check_acceptance_order(
     statuses: dict[str, str],
     paths: dict[str, str],
 ) -> list[str]:
-    """The acceptance rule specs/README.md states, over the derived prerequisite graph."""
+    """The acceptance rule foundation/README.md states, over the derived prerequisite graph."""
     problems: list[str] = []
     edges: dict[str, set[str]] = {}
     for sid, entries in prerequisites.items():
@@ -324,7 +325,7 @@ def check_acceptance_order(
                 problems.append(
                     f"{paths[sid]}: accepted, but it still carries an unmet acceptance "
                     f"condition on specification {target}, which is "
-                    f"'{statuses[target]}' — specs/README.md forbids accepting a "
+                    f"'{statuses[target]}' — foundation/README.md forbids accepting a "
                     f"specification before the one it depends on"
                 )
 
@@ -338,7 +339,7 @@ def check_acceptance_order(
 
 
 def main() -> int:
-    root = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "specs"
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO_ROOT / "foundation"
     if not root.is_dir():
         cannot_run(f"cannot run: specification root {root} does not exist")
     if not SCHEMA_PATH.is_file():

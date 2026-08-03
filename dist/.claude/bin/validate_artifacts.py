@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Hold every pack and every produced artifact to the framework-owned class contract.
 
-`specs/0012` R4 keeps the schema a template's output validates against in the framework, because
-a pack shipping one would extend a vocabulary R6 reserves. `specs/0004` R8 closes the vocabulary.
+R4 keeps the schema a template's output validates against in the framework, because
+a pack shipping one would extend a vocabulary R6 reserves. R8 closes the vocabulary.
 `schemas/artifact-classes.json` is the instance and this is what enforces it.
 
 Three checks, and each is a rule that existed only as prose.
@@ -11,18 +11,18 @@ Three checks, and each is a rule that existed only as prose.
 same twelve. Four contracts spell that list out, and a fifth would have drifted from them eventually
 — comparing them here is cheaper than noticing later.
 
-**A pack's `from` column must be coherent.** `specs/0004` R10 leaves the node-type mapping to the
+**A pack's `from` column must be coherent.** R10 leaves the node-type mapping to the
 pack because it presumes a technology, but a pack claiming to produce a `state-machine` from a
 `definition` is not presuming a technology, it is contradicting what the class is.
 
-**Produced output names its source.** `specs/0004` R42 binds produced source to knowledge through
+**Produced output names its source.** R42 binds produced source to knowledge through
 the manifest, and an artifact that did not name the object it came from would make a diff
 unreadable without one. `conformance-test` additionally carries the declaration R36 requires.
 
 Declared dependencies: jsonschema.
 
-Usage:  scripts/validate_artifacts.py
-Exit:   0 valid, 1 problems, 2 cannot run
+Usage: bin/validate_artifacts.py
+Exit: 0 valid, 1 problems, 2 cannot run
 """
 
 from __future__ import annotations
@@ -34,15 +34,15 @@ from pathlib import Path
 from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CONTRACT = REPO_ROOT / "schemas" / "artifact-class.v1.json"
+CONTRACT = REPO_ROOT / "schemas" / "artifact-class.json"
 INSTANCE = REPO_ROOT / "schemas" / "artifact-classes.json"
 
 # Every schema that spells the vocabulary out, and where. One closed set, four copies of the list.
 VOCABULARY_SITES = (
-    ("pack-declaration.v1.json", ("properties", "produces", "items", "properties", "class", "enum")),
-    ("placement-decision.v1.json", ("properties", "entries", "items", "properties", "class", "enum")),
-    ("generation-plan.v1.json", ("properties", "entries", "items", "properties", "class", "enum")),
-    ("generation-manifest.v1.json", ("properties", "artifacts", "items", "properties", "class", "enum")),
+    ("pack-declaration.json", ("properties", "produces", "items", "properties", "class", "enum")),
+    ("placement-decision.json", ("properties", "entries", "items", "properties", "class", "enum")),
+    ("generation-plan.json", ("properties", "entries", "items", "properties", "class", "enum")),
+    ("generation-manifest.json", ("properties", "artifacts", "items", "properties", "class", "enum")),
 )
 
 try:
@@ -65,16 +65,16 @@ def check_vocabulary(classes: set[str]) -> list[str]:
         if declared != classes:
             problems.append(
                 f"schemas/{name}: names {sorted(declared ^ classes)} differently from "
-                f"schemas/artifact-classes.json — specs/0004 R8 closes the vocabulary once"
+                f"schemas/artifact-classes.json — the vocabulary once"
             )
     return problems
 
 
-def check_packs(contract: dict) -> list[str]:
+def check_packs(contract: dict, root: Path) -> list[str]:
     problems = []
-    for declaration_path in sorted((REPO_ROOT / "fixtures").glob("*/pack-declaration.json")):
+    for declaration_path in sorted(root.glob("*/pack-declaration.json")):
         declaration = json.loads(declaration_path.read_text())
-        rel = declaration_path.relative_to(REPO_ROOT).as_posix()
+        rel = declaration_path.relative_to(root).as_posix()
         for entry in declaration["produces"]:
             allowed = set(contract["classes"][entry["class"]]["from"])
             claimed = set(entry["from"])
@@ -86,14 +86,14 @@ def check_packs(contract: dict) -> list[str]:
     return problems
 
 
-def check_produced(contract: dict) -> list[str]:
+def check_produced(contract: dict, root: Path) -> list[str]:
     problems = []
-    for manifest_path in sorted((REPO_ROOT / "fixtures").glob("*/generation-manifest.json")):
+    for manifest_path in sorted(root.glob("*/generation-manifest.json")):
         manifest = json.loads(manifest_path.read_text())
         run_path = manifest_path.parent / "run.json"
         if not run_path.is_file():
             continue
-        out = REPO_ROOT / json.loads(run_path.read_text())["output_root"]
+        out = Path.cwd() / json.loads(run_path.read_text())["output_root"]
         for artifact in manifest["artifacts"]:
             path = out / artifact["path"]
             if not path.is_file():
@@ -103,18 +103,29 @@ def check_produced(contract: dict) -> list[str]:
             if spec["declares_source"] and artifact["ko"] not in body:
                 problems.append(
                     f"{artifact['path']}: does not name {artifact['ko']}, the knowledge object it "
-                    f"was produced from — specs/0004 R42 binds produced source through the manifest"
+                    f"was produced from — produced source through the manifest"
                 )
             for marker in spec.get("requires_markers", []):
                 if marker not in body:
                     problems.append(
                         f"{artifact['path']}: a {artifact['class']} must carry {marker!r} "
-                        f"(specs/0004 R36)"
+                        f""
                     )
     return problems
 
 
 def main() -> int:
+    """Hold every declared pack and produced artifact to the class contract.
+
+    The search root is named, never defaulted. A default would resolve to a path that may
+    not exist in the repository this runs against, and searching nothing while reporting
+    success is worse than refusing to start.
+    """
+    if len(sys.argv) < 2:
+        cannot_run("cannot run: name the root holding packs and generation runs; there is no default")
+    root = Path(sys.argv[1])
+    if not root.is_dir():
+        cannot_run(f"cannot run: root {root} does not exist")
     if not INSTANCE.is_file():
         cannot_run(f"cannot run: {INSTANCE} does not exist")
     contract = json.loads(INSTANCE.read_text())
@@ -126,13 +137,13 @@ def main() -> int:
     ]
     if not problems:
         classes = set(contract["classes"])
-        problems = check_vocabulary(classes) + check_packs(contract) + check_produced(contract)
+        problems = check_vocabulary(classes) + check_packs(contract, root) + check_produced(contract, root)
 
-    print(f"artifact classes checked: {len(contract['classes'])}  contract: schemas/{CONTRACT.name}")
+    print(f"artifact classes checked: {len(contract['classes'])} contract: schemas/{CONTRACT.name}")
     if problems:
         print(f"FAILED: {len(problems)} problem(s)\n")
         for problem in problems:
-            print(f"  {problem}")
+            print(f" {problem}")
         return 1
     print("every pack and every produced artifact conforms to its class contract")
     return 0

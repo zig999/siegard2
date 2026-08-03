@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Execute a validated plan, record what it produced, and verify it without mutating anything.
 
-The last step of `specs/0004`, and the one where the promise either holds or gets reduced.
+The last step, and the one where the promise either holds or gets reduced.
 
 **Verification is regenerate-and-diff into a temporary tree** (R34), never in place: a check that
 repairs what it detects reports success on a defect. A difference in a locked entry is reported as
@@ -23,12 +23,12 @@ binds through the manifest; hand-authored source binds through a declaration it 
 hand-maintained mapping from knowledge to code must not exist, so both are computed here and
 neither is authored.
 
-Declared dependencies: PyYAML and jsonschema, via scripts/knowledge_graph_lib.py.
+Declared dependencies: PyYAML and jsonschema, via bin/knowledge_graph_lib.py.
 
 Usage:
-  generate_code.py run    --run PATH [--into DIR]
+  generate_code.py run --run PATH [--into DIR]
   generate_code.py verify --run PATH
-  generate_code.py index  --run PATH
+  generate_code.py index --run PATH
 Exit: 0 done, 1 a finding or a blocked scope, 2 cannot run
 """
 
@@ -45,9 +45,14 @@ from cli import cannot_run
 from generation_lib import Blocked, content_hash, derive_plan, resolve_scope, validate_plan
 from knowledge_graph_lib import load
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# Two roots, and conflating them is what shipped a script looking for a consumer's pack
+# inside the framework's own installed files. PLUGIN_ROOT is where this code ships and is
+# where the framework's own facts are; INVOCATION_ROOT is the repository being generated
+# into, which is the directory the command runs from.
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+INVOCATION_ROOT = Path.cwd()
 
-# specs/0004 R7: a produced file is not hand-edited, and extension happens through an extension
+# a produced file is not hand-edited, and extension happens through an extension
 # point the plan declares, in a separate hand-authored file. This is the suffix that names one.
 EXTENSION_SUFFIX = ".ext"
 
@@ -72,7 +77,7 @@ def prepare(run: dict, repo_root: Path | None = None) -> tuple[dict, dict, dict,
     `repo_root` is an argument rather than a module constant so a caller can resolve a run
     against a copy of the tree. A test that had to patch the constant would be testing the patch.
     """
-    repo_root = repo_root or REPO_ROOT
+    repo_root = repo_root or INVOCATION_ROOT
     pack_root = repo_root / run["pack_root"]
     declaration = json.loads((pack_root / "pack-declaration.json").read_text())
     graph = load(repo_root / run["knowledge_root"])
@@ -83,7 +88,7 @@ def prepare(run: dict, repo_root: Path | None = None) -> tuple[dict, dict, dict,
 
 def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dict, list[str], list[str]]:
     """Write the plan's deterministic entries into `target`. Returns manifest, gaps, skipped."""
-    repo_root = repo_root or REPO_ROOT
+    repo_root = repo_root or INVOCATION_ROOT
     pack_root = repo_root / run["pack_root"]
     templates = load_templates(pack_root)
     declaration, graph, scope, placement = prepare(run, repo_root)
@@ -110,8 +115,8 @@ def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dic
     problems = validate_plan(plan, scope, declaration, repo_root / run["output_root"])
     if problems:
         raise Blocked(
-            "the plan does not validate, so nothing is written — specs/0004 R25 rejects a plan "
-            "rather than repairing it:\n  " + "\n  ".join(problems)
+            "the plan does not validate, so nothing is written — rejects a plan "
+            "rather than repairing it:\n " + "\n ".join(problems)
         )
 
     members = {member["id"]: graph.nodes[member["id"]].data for member in scope["members"]}
@@ -121,7 +126,7 @@ def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dic
 
     for entry in plan["entries"]:
         if entry["track"] == "judged":
-            # specs/0004 R3: a judged artifact comes from an agent and is verified against a
+            # a judged artifact comes from an agent and is verified against a
             # generated conformance suite. Nothing here invokes one, so it is reported rather
             # than silently missing from the manifest.
             judged.append(f"{entry['ko']}/{entry['class']}")
@@ -150,7 +155,7 @@ def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dic
         "pack": declaration["pack"],
         "pack_version": declaration["version"],
         "framework_version": json.loads(
-            (REPO_ROOT / "src" / "claude" / ".claude-plugin" / "plugin.json").read_text()
+            (PLUGIN_ROOT / ".claude-plugin" / "plugin.json").read_text()
         )["version"],
         "artifacts": sorted(artifacts, key=lambda a: (a["ko"], a["class"])),
     }
@@ -158,7 +163,7 @@ def produce(run: dict, target: Path, repo_root: Path | None = None) -> tuple[dic
 
 
 def deterministic_share(manifest: dict, plan: dict) -> tuple[int, int]:
-    """specs/0004 R6: the share of source produced on the deterministic track, measured."""
+    """the share of source produced on the deterministic track, measured."""
     total = len(plan["entries"])
     deterministic = sum(1 for entry in plan["entries"] if entry["track"] == "deterministic")
     return deterministic, total
@@ -185,7 +190,7 @@ def findings(committed: Path, fresh: Path, manifest: dict) -> list[str]:
         if on_disk != artifact["content_hash"]:
             problems.append(
                 f"{path}: differs from what the manifest recorded — the cause is a hand edit of a "
-                f"produced file, which specs/0004 R7 forbids"
+                f"produced file, which "
             )
         else:
             problems.append(
@@ -249,30 +254,30 @@ def main() -> int:
 
     try:
         if args.action == "run":
-            target = args.into or (REPO_ROOT / run["output_root"])
+            target = args.into or (INVOCATION_ROOT / run["output_root"])
             manifest, gaps, skipped = produce(run, target)
-            (REPO_ROOT / run["manifest"]).write_text(json.dumps(manifest, indent=2) + "\n")
+            (INVOCATION_ROOT / run["manifest"]).write_text(json.dumps(manifest, indent=2) + "\n")
             print(f"produced {len(manifest['artifacts'])} artifact(s) into {target}")
             for note in skipped:
-                print(f"  not produced here: {note}")
+                print(f" not produced here: {note}")
             for gap in gaps:
-                print(f"  generative gap: {gap}", file=sys.stderr)
+                print(f" generative gap: {gap}", file=sys.stderr)
             return 1 if gaps else 0
 
-        manifest = json.loads((REPO_ROOT / run["manifest"]).read_text())
+        manifest = json.loads((INVOCATION_ROOT / run["manifest"]).read_text())
         if args.action == "index":
-            print(json.dumps(binding_indexes(manifest, REPO_ROOT / run["output_root"]), indent=2))
+            print(json.dumps(binding_indexes(manifest, INVOCATION_ROOT / run["output_root"]), indent=2))
             return 0
 
         with tempfile.TemporaryDirectory() as holder:
             fresh = Path(holder) / "out"
             produce(run, fresh)
-            problems = findings(REPO_ROOT / run["output_root"], fresh, manifest)
+            problems = findings(INVOCATION_ROOT / run["output_root"], fresh, manifest)
         print(f"verified {len(manifest['artifacts'])} artifact(s), regenerate-and-diff")
         if problems:
             print(f"FAILED: {len(problems)} finding(s)\n")
             for problem in problems:
-                print(f"  {problem}")
+                print(f" {problem}")
             return 1
         print("every produced artifact matches a fresh generation")
         return 0

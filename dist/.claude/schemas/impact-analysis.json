@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/impact-analysis.json",
+  "title": "Impact analysis",
+  "description": "The validated artifact R4 requires impact analysis to produce: a verdict from the closed set none | update | create, naming every implicated artifact by identifier. The named producer is whatever performed the analysis. It has no mechanical consumer: the orchestrator that read `verdict` to choose a transition was removed with the workflow machinery, so the consumer is the caller that asked for the classification. Recorded rather than left implied, because an inter-agent artifact owes a named consumer and this one currently has none. This artifact carries control flow, so it requires this versioned schema and boundary validation before consumption. R4 fixes the content of this contract, which is why it exists before a dedicated producing agent does — each artifact's schema arrives with the phase that produces it, and that phase arrives with the thin path. What this contract deliberately does not carry: any escalation threshold. R10 forbids inventing one ahead of executed workflows. What it carries and should not is nothing; what it lacks and should carry is a place for a resolved ambiguity. A producer that had to choose between `update` and `create` cannot record the reading it did not take, which is what the general rule on ambiguity requires of a capability that must resolve one to produce anything. The field is owed and the bump is not taken here, because adding a property to a closed object makes a previously invalid instance valid and is a breaking change with its own migration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "analysis_id",
+    "request_id",
+    "producer",
+    "verdict",
+    "base_state",
+    "implicated"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "impact-analysis/2",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "base_state": {
+      "enum": [
+        "empty",
+        "populated"
+      ],
+      "description": "Whether anything this analysis could implicate existed when it ran — the knowledge base and the concept bundle together, since `implicated` may name either. Added in /2 to make the first change to a repository expressible: a `create` verdict over a base holding nothing implicates nothing, and /1 rejected that as a verdict with nothing behind it. The distinction /1 could not draw is between a verdict that named nothing because nothing existed and one that named nothing because the producer did not look. It is recorded rather than derived because the analysis is what observed the state, and a consumer reading the artifact later cannot re-observe it."
+    },
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^ia_[0-9a-f]{8}$",
+      "description": "Stable identifier for this analysis, required for traceability."
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^cr_[0-9a-f]{8}$",
+      "description": "The change request this analysis classifies. no phase runs without a change request, so an analysis that names none is not traceable to a reason for existing."
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What performed the analysis. Not a const: unlike concept-authoring-result/1, this contract is not owned by one named agent — R4 requires the artifact, not a particular producer of it."
+    },
+    "verdict": {
+      "enum": [
+        "none",
+        "update",
+        "create"
+      ],
+      "description": "The closed set. A closed field, so a caller branches on a value rather than on a reading of prose. `none` still runs to acceptance: R3 requires the phase to run for every request, and acceptance evaluates closure over the observed diff regardless (R17, R18)."
+    },
+    "implicated": {
+      "type": "array",
+      "description": "Every artifact this change implicates, by identifier. R4 requires knowledge objects and ADRs to be named; `concept` is admitted because the concept bundle is the knowledge layer the only existing producer operates on. Identifiers rather than content: restating an artifact here would put a second copy of it in a temporary file (the same rule to the specification delta).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The artifact's own identifier, as that artifact declares it."
+          },
+          "kind": {
+            "enum": [
+              "knowledge-object",
+              "adr",
+              "concept"
+            ],
+            "description": "Which class the identifier belongs to, so a consumer resolves it against the right contract."
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "enum": [
+              "update",
+              "create"
+            ]
+          },
+          "base_state": {
+            "const": "populated"
+          }
+        },
+        "required": [
+          "verdict",
+          "base_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "implicated": {
+            "minItems": 1
+          }
+        },
+        "description": "A verdict that permanent knowledge must change, naming nothing it changes, is a verdict with nothing behind it — while something existed to name. A `none` verdict may legitimately implicate nothing, and so may any verdict over a base that held nothing, which is what /2 added `base_state` to express."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "base_state": {
+            "const": "empty"
+          }
+        },
+        "required": [
+          "base_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "verdict": {
+            "not": {
+              "const": "update"
+            }
+          }
+        },
+        "description": "Nothing that does not exist can be updated. The relaxation /2 introduces is narrow on purpose: it admits a verdict that implicates nothing, and it does not admit a verdict that claims to change something over a base holding nothing."
+      }
+    }
+  ]
+}

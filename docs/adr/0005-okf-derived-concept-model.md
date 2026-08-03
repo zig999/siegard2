@@ -30,7 +30,7 @@ vocabulary, and no shipped schema or validator.
 
 Adopt OKF's **concepts**, not its portability goal. The knowledge layer becomes a concept bundle at
 `docs/concepts/`: one concept per file, markdown body, YAML frontmatter governed by
-`schemas/concept.v1.json`, validated by `scripts/validate_concepts.py` via `make validate`.
+`schemas/concept.json`, validated by `scripts/validate_concepts.py` via `make validate`.
 
 Taken from OKF, semantics preserved:
 

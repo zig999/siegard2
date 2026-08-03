@@ -1,68 +1,69 @@
 #!/usr/bin/env python3
-"""Validate a governed repository's knowledge base against specs/0003.
+"""Validate a governed repository's knowledge base against .
 
 This script is a boundary validator. Every frontmatter constraint lives in
-schemas/knowledge-object.v1.json, which R30 makes the single authority for the attribute
-type system; materialization lives in scripts/knowledge_graph_lib.py. What lives here is
+schemas/knowledge-object.json, which R30 makes the single authority for the attribute
+type system; materialization lives in bin/knowledge_graph_lib.py. What lives here is
 the set of checks the specification defers to a script, each decided against the
 materialized graph rather than against one file:
 
-  R11  lifecycle totality, with both shorthands expanded before the product is checked,
+  R11 lifecycle totality, with both shorthands expanded before the product is checked,
        plus reachability from `initial` and an outgoing transition for every non-terminal
-  R15  a reference crossing a bounded context targets an `interface`
-  R18  edge cardinality, in both directions where the table declares an inverse
-  R20  at most one lifecycle names one definition as `subject`
-  R21  exactly one boundary per object, derived from the member's own field
-  R22  an edge naming an id the graph does not hold, together with orphans and cycles
-  R27  a lifecycle-bound enum resolves to a lifecycle
-  R28  a `ref` crossing an aggregate declares `binding: by-identity`
-  R29  a `ref` or `list` target the graph does not hold
-  R38  id and path compute each other, with no lookup
-  R39  no id segment is a sequential number
-  R43  exactly the two body sections the type names, in order, none empty
-  R44  one sentence per line
-  R45  one RFC 2119 keyword and no pronoun in a normative statement
-  R48  a body length ceiling, read from the knowledge base rather than invented here
-  R35  a synonym is declared in `aliases` and appears in no body
+  R15 a reference crossing a bounded context targets an `interface`
+  R18 edge cardinality, in both directions where the table declares an inverse
+  R20 at most one lifecycle names one definition as `subject`
+  R21 exactly one boundary per object, derived from the member's own field
+  R22 an edge naming an id the graph does not hold, together with orphans and cycles
+  R27 a lifecycle-bound enum resolves to a lifecycle
+  R28 a `ref` crossing an aggregate declares `binding: by-identity`
+  R29 a `ref` or `list` target the graph does not hold
+  R38 id and path compute each other, with no lookup
+  R39 no id segment is a sequential number
+  R43 exactly the two body sections the type names, in order, none empty
+  R44 one sentence per line
+  R45 one RFC 2119 keyword and no pronoun in a normative statement
+  R48 a body length ceiling, read from the knowledge base rather than invented here
+  R35 a synonym is declared in `aliases` and appears in no body
 
 Every problem is reported and none is repaired: R22 says so for the materializer, and
-CLAUDE.md says a check that repairs what it detects reports success on a defect. This
+A check that repairs what it detects reports success on a defect. This
 script writes nothing, so `make validate` stays non-mutating.
 
 Two rules of R46 are NOT enforced mechanically, named here rather than left to be
 discovered: that a body carries no rationale, history, alternatives, or motivating
 narrative, and that a body is not the only place a fact a machine reads appears. Both are
-judgments about meaning, and CLAUDE.md keeps model judgment out of enforcement.
+judgments about meaning, and model judgment stays out of enforcement.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
 
-Usage:  scripts/validate_knowledge.py [knowledge_root ...]
-        with no argument, every fixtures/*/knowledge tree is validated
-Exit:   0 every knowledge base valid, 1 validation failures, 2 cannot run
+Usage: bin/validate_knowledge.py [knowledge_root ...]
+        with no argument, every the named root tree is validated
+Exit: 0 every knowledge base valid, 1 validation failures, 2 cannot run
 """
 
 from __future__ import annotations
 
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display
+from frontmatter_lib import PLUGIN_ROOT, display
 
 from cli import cannot_run
 
 try:
-    import yaml  # noqa: F401  (imported for the named-error path below)
+    import yaml # noqa: F401 (imported for the named-error path below)
 except ImportError:
     cannot_run("cannot run: PyYAML is not installed (pip install pyyaml)")
 
 try:
-    from jsonschema import Draft202012Validator  # noqa: F401
+    from jsonschema import Draft202012Validator # noqa: F401
 except ImportError:
     cannot_run("cannot run: jsonschema is not installed (pip install jsonschema)")
 
-from knowledge_graph_lib import (  # noqa: E402  (after the dependency guards)
+from knowledge_graph_lib import ( # noqa: E402 (after the dependency guards)
     ACYCLIC_KINDS,
     EDGE_KINDS,
     KO_SCHEMA_PATH,
@@ -77,6 +78,11 @@ from knowledge_graph_lib import (  # noqa: E402  (after the dependency guards)
     context_of,
     load,
 )
+
+
+# What a scaffold leaves behind when a value is not substituted. The generator's expander refuses one;
+# a consumer's agent has no expander, so the refusal has to happen here instead.
+PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 
 
 # --- resolution, cardinality, and shape of the graph itself -------------------------
@@ -454,7 +460,7 @@ def check_bodies(graph: Graph) -> None:
             graph.root / "system.md",
             "declares no positive `limits.body_lines`, so R48's body length ceiling cannot be "
             "enforced. The ceiling is a fact of the knowledge base, and "
-            ".claude/rules/distribution.md rejects a validator that supplies it",
+            "a validator that supplied it would be a hidden default",
         )
         ceiling = None
 
@@ -555,7 +561,42 @@ def _holds_word(body: str, word: str) -> bool:
     return word.lower() in {w.lower() for w in WORD.findall(body)}
 
 
+def check_unexpanded_scaffold(graph: Graph) -> None:
+    """No authored object carries a placeholder a scaffold left behind.
+
+    The distribution ships thirteen scaffolds and no expander, and the check does not rest on that. It
+    rests on the fact that no expander could carry this guarantee anywhere. Four paths go around one and
+    none needs bad faith: not running it, running it and editing the output, writing the object by hand,
+    and passing a placeholder as a value — the generator's own expander accepts `title: "{{title}}"`,
+    because it checks that every placeholder received a value and not that the value is one.
+
+    So the guarantee belongs where a producer's work is checked rather than where it is intended: at the
+    boundary, after the agent returns, on the artifact. That is the same reason the boundary validator
+    runs after an authoring agent rather than inside it — a guarantee a producer self-reports is not a
+    guarantee, whatever tools the producer was granted.
+
+    A bare `{{name}}` in frontmatter already fails, but by accident and unhelpfully — YAML reads it as a
+    flow mapping and reports an unhashable key. Quoted, or in the body, it passes everything: `"{{title}}"`
+    is a non-empty string, and no schema can tell it from a title. It then reaches the graph, the
+    projections, and generation, because every one of those reads the same objects.
+    """
+    for node in graph.nodes.values():
+        seen: list[str] = []
+        for number, line in enumerate(node.path.read_text().splitlines(), 1):
+            for name in PLACEHOLDER.findall(line):
+                if name not in seen:
+                    seen.append(name)
+                    graph.report(
+                        node.path,
+                        f"line {number} still holds the scaffold placeholder `{{{{{name}}}}}`. A "
+                        f"scaffold is a skeleton and every value in it is the author's to supply; one "
+                        f"left behind is a decision nobody made, and it is a valid string that no "
+                        f"schema can refuse",
+                    )
+
+
 CHECKS = (
+    check_unexpanded_scaffold,
     check_resolution,
     check_cardinality,
     check_boundary_partition,
@@ -582,20 +623,21 @@ def validate(root: Path) -> list[str]:
     return graph.problems
 
 
-def discover() -> list[Path]:
-    return sorted(p for p in (REPO_ROOT / "fixtures").glob("*/knowledge") if p.is_dir())
-
-
 def main() -> int:
+    """Validate every knowledge root named on the command line.
+
+    A root is named, never defaulted. This script shipped with the generator's own
+    layout as its fallback, which resolved to a path that exists only in that
+    repository — in an installation the default found nothing and the run reported
+    success over an empty set.
+    A validator that passes over nothing reports a guarantee it never checked.
+    """
     if not KO_SCHEMA_PATH.is_file():
         cannot_run(f"cannot run: schema {KO_SCHEMA_PATH} does not exist")
 
-    roots = [Path(a) for a in sys.argv[1:]] or discover()
+    roots = [Path(a) for a in sys.argv[1:]]
     if not roots:
-        cannot_run(
-            "cannot run: no knowledge base given and no fixtures/*/knowledge tree exists. "
-            "A validator that passes over nothing reports a guarantee it never checked"
-        )
+        cannot_run("cannot run: name at least one knowledge root; there is no default")
     for root in roots:
         if not root.is_dir():
             cannot_run(f"cannot run: knowledge root {root} does not exist")
@@ -609,11 +651,11 @@ def main() -> int:
         print(f"knowledge base {display(root)}: {objects} file(s), {len(problems)} problem(s)")
         failures.extend(problems)
 
-    print(f"knowledge files checked: {total}  schema: {display(KO_SCHEMA_PATH)}")
+    print(f"knowledge files checked: {total} schema: {display(KO_SCHEMA_PATH)}")
     if failures:
         print(f"FAILED: {len(failures)} problem(s)\n")
         for problem in failures:
-            print(f"  {problem}")
+            print(f" {problem}")
         return 1
     print("all knowledge bases valid")
     return 0

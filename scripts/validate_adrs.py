@@ -9,12 +9,11 @@ status, and the non-restatement rule that same file states: a Decision section c
 operative rule, it does not reproduce one. Frontmatter parsing is shared via
 scripts/frontmatter_lib.py.
 
-Supersession and amendment relations were removed on 2026-07-31 by maintainer decision:
-a retired or revised decision says so in prose, and no validator resolves the target.
+Supersession and amendment are not structured: a retired or revised decision says so in
+prose, and no validator resolves the target.
 
-One contract version exists. A maintainer decided on 2026-07-31 that this repository does
-not manage ADR versions, so `adr/1` is the only readable contract and an ADR declaring
-anything else is rejected by name rather than migrated.
+One contract version exists. This repository does not manage ADR versions, so `adr/1` is the
+only readable contract and an ADR declaring anything else is rejected by name.
 
 Declared dependencies: PyYAML, jsonschema. Both are required; the script exits with a
 named error rather than degrading silently if either is missing.
@@ -31,11 +30,12 @@ import re
 import sys
 from pathlib import Path
 
-from frontmatter_lib import REPO_ROOT, display, split_frontmatter
+from generator_lib import REPO_ROOT, display
+from frontmatter_lib import split_frontmatter
 from cli import cannot_run
 
 SCHEMA_BY_VERSION = {
-    "adr/1": REPO_ROOT / "schemas" / "adr.v1.json",
+    "adr/1": REPO_ROOT / "schemas" / "adr.json",
 }
 RESERVED = {"README.md"}
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")

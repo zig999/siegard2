@@ -12,7 +12,7 @@ a gate: spec 0002 R8 and spec 0001 R25 both forbid expressing an acceptance crit
 coverage figure, and the same reasoning holds for this one.
 
 "A check branching on it" is answered from two mechanical signals rather than from an
-opinion: whether schemas/knowledge-object.v1.json carries a conditional branch on the type,
+opinion: whether schemas/knowledge-object.json carries a conditional branch on the type,
 and whether the edge table names the type as an origin or a target. Both are read from the
 artifacts, so the answer moves when they move.
 
@@ -30,8 +30,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from generator_lib import REPO_ROOT, display
 from cli import cannot_run
-from frontmatter_lib import REPO_ROOT, display
 
 try:
     import yaml  # noqa: F401

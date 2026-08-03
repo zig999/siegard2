@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assemble the Siegard distribution from framework source.
 
-specs/0008 fixes the output contract and leaves the assembly free. What it fixes: the
+foundation/0008 fixes the output contract and leaves the assembly free. What it fixes: the
 distribution is a plugin root holding `.claude-plugin/plugin.json` (R1); running this twice
 over the same committed source produces byte-identical output (R4); every installed file
 originates in framework source and no file survives whose source was removed (R5); the
@@ -9,14 +9,14 @@ directory set is closed and an empty one is omitted rather than shipped (R7); on
 `plugin.json` goes inside `.claude-plugin/` (R8); a shipped executable lives in `bin/` (R9);
 no `rules/` (R10) and no `packs/` (R23).
 
-**What ships is decided here, and every candidate is classified.** A schema or a script that
-is neither shipped nor excluded would be shipped or dropped by whichever branch happened to
-run, so `SHIPPED_SCHEMAS` and `SHIPPED_EXECUTABLES` are asserted total against the trees they
-select from — adding a schema forces a decision instead of inheriting one.
+**What ships is decided by location, not by this script.** `src/claude/` is the framework
+source and assembly copies it; nothing outside it can reach the output. Classifying a mixed
+tree file by file would put the fact in two places — the table and the filesystem — and a
+misfiled contract would then govern two audiences at once with nothing to catch it.
 
 **Determinism has one requirement and one consequence.** Every iteration is sorted, and the
 manifest carries no timestamp: a value minted at generation time would differ between two runs
-over identical source, which R4 calls a defect rather than an acceptable variation. specs/0008
+over identical source, which R4 calls a defect rather than an acceptable variation. foundation/0008
 R12 lists what the manifest records and a timestamp is not among them.
 
 **`source_revision` is a content digest, not a commit SHA.** A SHA would make the committed
@@ -25,11 +25,10 @@ commit N, and the next `make dist-check` would regenerate, read HEAD as N, and r
 difference nobody introduced. A digest over the framework source inputs identifies the source
 exactly, is stable across commits that do not touch it, and needs no VCS at all.
 
-**Capability status is derived, never labelled.** specs/0006 R17 requires exactly that, and R14
-states `proposed` ships nothing. The checkable fact R17 names is whether a fixture exercises the
-capability, read here as its name appearing as a value in fixture data — `.json` and `.jsonl`,
-not prose in a README, because a name in a paragraph is a mention and a name in a recorded event
-is use. A capability that fails the test is reported as skipped rather than dropped quietly.
+**Capability status is derived, never labelled.** foundation/0006 R17 requires exactly that, and R14
+states `proposed` ships nothing. What ships is what `src/claude/` holds, so every capability
+assembled here is `active` by derivation. A fixture is evidence and never a gate: gating on one
+lets an optional support tool decide what a consumer receives.
 
 Declared dependencies: none beyond the standard library.
 
@@ -46,17 +45,21 @@ import shutil
 import sys
 from pathlib import Path
 
+import generator_lib  # noqa: F401  (puts src/claude/bin on the import path)
 from cli import cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# Everything that ships lives under one root, and nothing else does. That is the whole of
+# the boundary: assembly copies this tree, so a file ships because of where it sits rather
+# than because a table in this script says so. A table would be a second place for a fact the
+# filesystem already holds, and the two diverge silently.
 SOURCE_ROOT = REPO_ROOT / "src" / "claude"
-SCHEMA_ROOT = REPO_ROOT / "schemas"
-SCRIPT_ROOT = REPO_ROOT / "scripts"
-TEMPLATE_ROOT = REPO_ROOT / "templates"
-FIXTURE_ROOT = REPO_ROOT / "fixtures"
+SCHEMA_ROOT = SOURCE_ROOT / "schemas"
+SCRIPT_ROOT = SOURCE_ROOT / "bin"
+TEMPLATE_ROOT = SOURCE_ROOT / "templates"
 DEFAULT_TARGET = REPO_ROOT / "dist" / ".claude"
 
-# Bumped whenever this script's output changes for unchanged source. specs/0008 R4 makes the
+# Bumped whenever this script's output changes for unchanged source. foundation/0008 R4 makes the
 # distribution a function of the source *and* the generator, so a consumer that sees a
 # difference can attribute it to one or the other.
 GENERATOR_VERSION = "1.0.0"
@@ -64,106 +67,23 @@ GENERATOR_VERSION = "1.0.0"
 MANIFEST_NAME = "siegard-manifest.json"
 PLUGIN_DIR = ".claude-plugin"
 
-# The lock is this repository's bookkeeping and never ships. The class instance does ship, and is
-# classified below like any other file — it is data rather than a contract, so it is excluded from
-# the contract totality assertion and named here instead.
-NOT_A_SCHEMA = frozenset({"contract-versions.json"})
-
-# Every schema in schemas/, and whether a governed repository needs it. A schema ships when a
-# shipped component or executable validates against it downstream; the rest govern this
-# repository's own artifacts and would be dead weight a consumer could mistake for a contract
-# it must satisfy. The reason is recorded per entry because a bare boolean would be a decision
-# with no argument attached.
-SHIPPED_SCHEMAS = {
-    "workflow-event.v1.json": "the governed repository's event log; workflow_lib.py validates against it",
-    "impact-analysis.v1.json": "consumed at the boundary by orchestrate.py",
-    "concept-authoring-result.v1.json": "consumed at the boundary by orchestrate.py",
-    "knowledge-authoring-result.v1.json": "consumed at the boundary by orchestrate.py",
-    "knowledge-object.v1.json": "the governed repository's knowledge base",
-    "knowledge-graph.v1.json": "the materialized graph derived from that base",
-    "concept.v1.json": "the bundle concept-author writes into",
-    "context-package.v1.json": "the scope a governed repository resolves and its consumers read",
-    "pack-declaration.v1.json": "a governed repository reads its active pack's declaration",
-    "generation-scope.v1.json": "produced and validated during generation in the governed repository",
-    "placement-decision.v1.json": "produced and validated during generation in the governed repository",
-    "generation-plan.v1.json": "produced and validated during generation in the governed repository",
-    "generation-manifest.v1.json": "committed in the governed repository and read on every later run",
-    "specification-delta.v1.json": "consumed at the boundary by orchestrate.py",
-    "validation-evidence.v1.json": "the standalone evidence a layered validation records",
-    "distribution-manifest.v1.json": "so a consumer can validate the manifest it is told to read",
-    # Not shipped, and why.
-    "spec.v1.json": None,  # governs specs/ in this repository; a governed repository writes none
-    "adr.v1.json": None,  # same: the only ADR contract, and it governs this repository alone
-    "skill.v1.json": None,  # a governed repository does not author framework components
-    "agent.v1.json": None,  # same
-    "plugin.v1.json": None,  # same; the harness reads plugin.json, the consumer does not validate it
-    "artifact-class.v1.json": "the class contract a governed repository validates produced artifacts against",
-    "artifact-classes.json": "its instance: the closed vocabulary of specs/0004 R8, framework-owned per specs/0012 R4",
-    "hook.v1.json": None,  # governs the source-only declaration; the consumer reads hooks/hooks.json
-    "knowledge-decision.v1.json": "the contract for a `decision` node in the consumer's knowledge tree",
-}
-
-# Every scaffold in templates/, and whether a consumer authors the artifact it skeletons. The two
-# audiences were mixed in one flat directory until 2026-07-31 and neither shipped. A scaffold ships
-# exactly when the contract it names ships, so this classification cannot drift from SHIPPED_SCHEMAS
-# without one of the two totality assertions catching it.
-SHIPPED_SCAFFOLDS = {
-    "concept.md": "the consumer's own bundle; concept/1 ships and concept-author writes into it",
-    "knowledge-object-definition.md": "the consumer authors knowledge objects; knowledge-object/1 ships",
-    "knowledge-object-rule.md": "same",
-    "knowledge-object-lifecycle.md": "same",
-    "knowledge-object-interface.md": "same",
-    "knowledge-object-boundary.md": "same",
-    "knowledge-object-process.md": "same",
-    "knowledge-decision.md": "the consumer's own decision records; knowledge-decision/1 ships",
-    "pack-declaration.md": "a consumer authoring a target pack declares it against pack-declaration/1",
-    "specification-delta.md": "produced during the consumer's workflow; specification-delta/1 ships",
-    "validation-evidence.md": "recorded by the consumer's layered validation; validation-evidence/1 ships",
-    # Not shipped, and why: each skeletons an artifact only this repository authors.
-    "specification.md": None,  # specs/ is the generator's; spec.v1.json does not ship
-    "adr.md": None,  # docs/adr/ is the generator's governance; adr.v1.json does not ship
-    "skill.md": None,  # a governed repository does not author framework components
-    "agent.md": None,  # same
-}
-
-# Scripts that ship as executables. specs/0008 R9 gives them `bin/`. workflow_lib.py is a
-# library rather than an executable and ships beside them because Python resolves an import
-# from the importing script's own directory; splitting it elsewhere would need a path shim
-# that R9's "declares the runtime dependencies it requires" is meant to make unnecessary.
-SHIPPED_EXECUTABLES = {
-    "orchestrate.py": "the transition lookup the knowledge-change skill invokes",
-    "replay_workflow.py": "state reconstruction from the event log",
-    "workflow_lib.py": "imported by both; ships beside them so the import resolves",
-    "cli.py": "the exit-code convention orchestrate.py imports; a shipped import must ship",
-    "derived_artifacts.py": "the closed derived set the reject-derived-write hook imports",
-    # A schema that ships needs a validator that ships, and a shipped skill or agent needs its
-    # machinery. Until 2026-07-31 the distribution carried contracts and prompts with neither, so
-    # a consumer could author a knowledge object and had nothing to check it with.
-    "frontmatter_lib.py": "import closure: every knowledge script below parses frontmatter through it",
-    "knowledge_graph_lib.py": "materializes knowledge-graph/1; imported by everything that reads the tree",
-    "validate_knowledge.py": "the boundary validator for knowledge-object/1, which ships",
-    "project_knowledge.py": "derives the projections the reject-derived-write hook protects",
-    "resolve_context.py": "produces context-package/1 for the root-selector agent, both of which ship",
-    "validate_concepts.py": "the boundary validator for concept/1, which ships with the concept-author agent",
-    "validate_artifacts.py": "holds a produced artifact to artifact-class/1 and artifacts-classes, both shipped",
-    "verify_judged.py": "checks the judged track against validation-evidence/1, which ships",
-    "generation_lib.py": "the plan derivation the generate skill drives",
-    "generate_code.py": "the generation pipeline the generate skill invokes",
-    "install_dist.py": "the installer and divergence check the upgrade skill invokes",
-}
-
-# Which capability class each source subtree carries, per specs/0006 R1.
+# Which capability class each source subtree carries, per foundation/0006 R1.
 CLASS_BY_TREE = {"skills": "skill", "agents": "specialized-agent"}
 
 HOOK_DECLARATION = "hooks.declaration.json"
+
+# The authored declaration set. It stays behind for the reason hooks.declaration.json does:
+# foundation/0007 R23 keeps a declaration out of the distribution, and R12a there makes the
+# manifest the surface a consumer reads instead.
+CAPABILITY_DECLARATION = "capabilities.declaration.json"
 
 
 def hook_declaration() -> list[dict]:
     """The authored hook declarations, or an empty list when no hook ships.
 
-    Read rather than hardcoded: `specs/0010` R10 and R11 require a hook to state its event,
+    Read rather than hardcoded: `foundation/0010` R10 and R11 require a hook to state its event,
     matcher, guarantee, and timeout, and a registry living inside this script would be a rule only
-    a script could see. `schemas/hook.v1.json` is its contract and `validate_components.py` checks
+    a script could see. `schemas/hook.json` is its contract and `validate_components.py` checks
     it, so the generator consumes something already validated.
     """
     path = SOURCE_ROOT / "hooks" / HOOK_DECLARATION
@@ -172,18 +92,17 @@ def hook_declaration() -> list[dict]:
     return json.loads(path.read_text())["hooks"]
 
 
-def contract_of(name: str) -> str:
-    """The contract version a shipped schema file carries.
+def contract_of(source: Path) -> str:
+    """The contract version a shipped schema file declares.
 
-    From the filename where it has one — `concept.v1.json` is `concept/1` — and from the document
-    otherwise. `artifact-classes.json` is an instance rather than a contract: it declares its own
-    `contract_version` and has no version in its name, and inferring one from the filename would
-    give it a contract nothing else recognises.
+    From the document, which is the only place it lives: a filename carries the contract's
+    identity and never its version, so one contract has one file and the version inside it moves
+    without anything being renamed. `artifact-classes.json` is an instance rather than a contract
+    and declares its own `contract_version` at the top level, which is why both shapes are read.
     """
-    if ".v" in name:
-        stem, _, rest = name.partition(".v")
-        return f"{stem}/{rest.split('.json')[0]}"
-    return json.loads((SCHEMA_ROOT / name).read_text())["contract_version"]
+    document = json.loads(source.read_text())
+    declared = document.get("properties", {}).get("contract_version", {}).get("const")
+    return declared or document["contract_version"]
 
 
 class Refused(Exception):
@@ -194,58 +113,24 @@ def digest(data: bytes) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
-def exercised_names() -> set[str]:
-    """Every string value appearing in fixture data, as the checkable half of specs/0006 R17.
-
-    Data only. A README naming a component records an intention; an event log naming it records
-    that something ran, and R11 draws the line in the same place.
-    """
-    names: set[str] = set()
-
-    def walk(node) -> None:
-        if isinstance(node, str):
-            names.add(node)
-        elif isinstance(node, list):
-            for item in node:
-                walk(item)
-        elif isinstance(node, dict):
-            for value in node.values():
-                walk(value)
-
-    if not FIXTURE_ROOT.is_dir():
-        return names
-    for path in sorted(FIXTURE_ROOT.rglob("*")):
-        if path.suffix not in (".json", ".jsonl") or not path.is_file():
-            continue
-        text = path.read_text()
-        lines = text.splitlines() if path.suffix == ".jsonl" else [text]
-        for line in lines:
-            if line.strip():
-                try:
-                    walk(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    return names
-
-
 def assert_imports_ship() -> None:
     """A shipped script may only import modules that ship beside it.
 
     Found the hard way: `orchestrate.py` gained `from cli import cannot_run`, and nothing
-    noticed that `cli.py` was not in `SHIPPED_EXECUTABLES`. The distribution still built, still
+    noticed that `cli.py` did not ship with it. The distribution still built, still
     verified, and would have failed on the consumer's first invocation with an ImportError —
-    the worst place to discover it, because `specs/0008` R9 exists so a shipped executable
+    the worst place to discover it, because `foundation/0008` R9 exists so a shipped executable
     "exits with a named error" rather than breaking in a way nobody can read.
 
-    Only modules that live in `scripts/` are checked. A standard-library or third-party import
-    is R9's other half, which each script declares in its own docstring.
+    Only a module the generator holds is checked. A standard-library or third-party import is
+    R9's other half, which each script declares in its own docstring. The direction is the whole
+    check: the generator may import from the shipped tree, and the shipped tree may not import
+    back.
     """
-    available = {p.stem for p in SCRIPT_ROOT.glob("*.py")}
-    shipped = {Path(name).stem for name in SHIPPED_EXECUTABLES}
-    for name in sorted(SHIPPED_EXECUTABLES):
-        source = SCRIPT_ROOT / name
-        if not source.is_file():
-            continue
+    shipped = {p.stem for p in SCRIPT_ROOT.glob("*.py")}
+    generator_only = {p.stem for p in (REPO_ROOT / "scripts").glob("*.py")} - shipped
+    for source in sorted(SCRIPT_ROOT.glob("*.py")):
+        name = source.name
         for node in ast.walk(ast.parse(source.read_text())):
             if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
                 imported = node.module.split(".")[0]
@@ -253,11 +138,11 @@ def assert_imports_ship() -> None:
                 imported = node.names[0].name.split(".")[0]
             else:
                 continue
-            if imported in available and imported not in shipped:
+            if imported in generator_only:
                 raise Refused(
-                    f"{name} imports {imported}, which scripts/ holds and SHIPPED_EXECUTABLES "
-                    f"does not — the shipped copy would fail with an ImportError on the "
-                    f"consumer's first invocation"
+                    f"{name} imports {imported}, which is the generator's and does not ship — "
+                    f"the installed copy would fail with an ImportError on the consumer's "
+                    f"first invocation"
                 )
 
 
@@ -272,7 +157,7 @@ def assert_total(actual: set[str], classified: set[str], tree: str, constant: st
     if stale:
         raise Refused(
             f"{constant} classifies {', '.join(stale)}, which {tree} no longer holds — "
-            f"specs/0008 R5: no file survives whose source was removed"
+            f"foundation/0008 R5: no file survives whose source was removed"
         )
 
 
@@ -288,7 +173,6 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     files: list[dict] = []
     capabilities: list[dict] = []
     skipped: list[str] = []
-    exercised = exercised_names()
 
     def add(dest: str, source: Path) -> bytes:
         body = source.read_bytes()
@@ -297,19 +181,16 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
         )
         return body
 
-    # The plugin manifest. specs/0008 R1 makes its presence what defines a plugin root.
+    # The plugin manifest. foundation/0008 R1 makes its presence what defines a plugin root.
     manifest_source = SOURCE_ROOT / PLUGIN_DIR / "plugin.json"
     if not manifest_source.is_file():
-        raise Refused(f"{manifest_source} is missing; specs/0008 R1 requires it at the plugin root")
+        raise Refused(f"{manifest_source} is missing; foundation/0008 R1 requires it at the plugin root")
     add(f"{PLUGIN_DIR}/plugin.json", manifest_source)
 
     # Skills: one directory per skill, SKILL.md the entrypoint.
     skills_root = SOURCE_ROOT / "skills"
     if skills_root.is_dir():
         for skill in sorted(p for p in skills_root.iterdir() if p.is_dir()):
-            if skill.name not in exercised:
-                skipped.append(f"skill {skill.name}: no fixture exercises it (specs/0006 R11, R14)")
-                continue
             for source in sorted(p for p in skill.rglob("*") if p.is_file()):
                 add(f"skills/{skill.name}/{source.relative_to(skill).as_posix()}", source)
             capabilities.append(
@@ -326,9 +207,6 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
     if agents_root.is_dir():
         for source in sorted(agents_root.rglob("*.md")):
             name = source.stem
-            if name not in exercised:
-                skipped.append(f"agent {name}: no fixture exercises it (specs/0006 R11, R14)")
-                continue
             add(f"agents/{name}.md", source)
             capabilities.append(
                 {
@@ -340,15 +218,10 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
             )
 
     # Schemas Siegard resolves through ${CLAUDE_PLUGIN_ROOT}; the harness never reads these.
-    present = {p.name for p in SCHEMA_ROOT.glob("*.json") if p.name not in NOT_A_SCHEMA}
-    assert_total(present, set(SHIPPED_SCHEMAS), "schemas/", "SHIPPED_SCHEMAS")
-    schemas: list[dict] = []
-    for name in sorted(n for n, reason in SHIPPED_SCHEMAS.items() if reason):
-        source = SCHEMA_ROOT / name
-        add(f"schemas/{name}", source)
-        schemas.append({"contract_version": contract_of(name), "path": f"schemas/{name}"})
+    for source in sorted(SCHEMA_ROOT.glob("*.json")):
+        add(f"schemas/{source.name}", source)
 
-    # Hooks. specs/0008 R3 puts them in force while the plugin is enabled, which is what makes a
+    # Hooks. foundation/0008 R3 puts them in force while the plugin is enabled, which is what makes a
     # session-wide guarantee installable at all.
     hooks_root = SOURCE_ROOT / "hooks"
     if hooks_root.is_dir():
@@ -362,34 +235,54 @@ def plan() -> tuple[list[dict], list[dict], list[str]]:
                  "path": f"hooks/{name}"}
             )
 
-    # Scaffolds. specs/0008 names `templates/` in the closed set as "Siegard's own", and until
-    # 2026-07-31 nothing populated it: a consumer authoring a knowledge object got the contract and
-    # no skeleton to start from. A scaffold ships when the contract it names ships, which is the
-    # same test SHIPPED_SCHEMAS applies one level up.
-    present = {p.name for p in TEMPLATE_ROOT.glob("*.md")}
-    assert_total(present, set(SHIPPED_SCAFFOLDS), "templates/", "SHIPPED_SCAFFOLDS")
-    for name in sorted(n for n, reason in SHIPPED_SCAFFOLDS.items() if reason):
-        add(f"templates/{name}", TEMPLATE_ROOT / name)
+    # Scaffolds a consumer expands. foundation/0008 names `templates/` in the closed set.
+    for source in sorted(TEMPLATE_ROOT.glob("*.md")):
+        add(f"templates/{source.name}", source)
 
-    # Executables. Their own directory is the import root, which is why workflow_lib.py is here.
+    # Executables. Their own directory is the import root, which is why a shipped module importing a
+    # sibling resolves it and one importing the generator's own tree does not.
     assert_imports_ship()
-    for name in sorted(SHIPPED_EXECUTABLES):
-        source = SCRIPT_ROOT / name
-        if not source.is_file():
-            raise Refused(f"SHIPPED_EXECUTABLES names {name}, which scripts/ does not hold")
-        add(f"bin/{name}", source)
+    for source in sorted(SCRIPT_ROOT.glob("*.py")):
+        add(f"bin/{source.name}", source)
         capabilities.append(
             {"name": source.stem.replace("_", "-"), "class": "script", "status": "active",
-             "path": f"bin/{name}"}
+             "path": f"bin/{source.name}"}
         )
 
+    attach_declarations(capabilities)
     return files, capabilities, skipped
+
+
+def attach_declarations(capabilities: list[dict]) -> None:
+    """Fold the authored declaration set into the catalog the manifest carries.
+
+    `foundation/0008` R12 puts a declaration in the manifest and R12a makes the manifest the only
+    way one reaches a consumer, because `foundation/0007` R23 keeps the authored file out of the
+    distribution. Derived rather than authored a second time: an entry that disagreed with the
+    declaration it came from would be the generator defect R12a names, so nothing here edits a
+    field the declaration already carries.
+
+    `identifier` and `class` are dropped from what is attached. The manifest entry already holds
+    both, and copying them in would put the same fact twice inside one record.
+    """
+    path = SOURCE_ROOT / CAPABILITY_DECLARATION
+    if not path.is_file():
+        return
+    document = json.loads(path.read_text())
+    by_identifier = {entry["identifier"]: entry for entry in document["declarations"]}
+    for capability in capabilities:
+        entry = by_identifier.get(capability["name"])
+        if entry is None:
+            continue
+        capability["declaration"] = {
+            key: value for key, value in entry.items() if key not in ("identifier", "class")
+        }
 
 
 def hooks_document() -> str | None:
     """`hooks/hooks.json`, or None when nothing ships a hook.
 
-    Computed rather than authored: `specs/0010` R10 requires each hook to state its event, its
+    Computed rather than authored: `foundation/0010` R10 requires each hook to state its event, its
     matcher, and its guarantee, and R11 requires it to state its own timeout. Those facts live in
     `SHIPPED_HOOKS` beside the decision to ship, so a hook cannot be installed with a matcher
     nobody wrote down. `${CLAUDE_PLUGIN_ROOT}` is what makes the command path resolve wherever the
@@ -451,15 +344,18 @@ def build(target: Path) -> tuple[list[dict], list[str]]:
     )
 
     manifest = {
-        "contract_version": "distribution-manifest/1",
+        "contract_version": "distribution-manifest/2",
         "source_revision": source_digest,
         "generator_version": GENERATOR_VERSION,
         "installed": sorted(files, key=lambda e: e["path"]),
         "schemas": sorted(
             (
-                {"contract_version": contract_of(n), "path": f"schemas/{n}"}
-                for n, reason in SHIPPED_SCHEMAS.items()
-                if reason
+                {
+                    "contract_version": contract_of(REPO_ROOT / entry["source"]),
+                    "path": entry["path"],
+                }
+                for entry in files
+                if entry["path"].startswith("schemas/")
             ),
             key=lambda s: s["path"],
         ),

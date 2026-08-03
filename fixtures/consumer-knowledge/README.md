@@ -2,7 +2,7 @@
 
 A downstream-shaped case: an order-to-cash domain already holds an order lifecycle and an invoice,
 and the rule that a cancelled order cannot be invoiced is missing. One change request runs the full
-default path of `specs/0001-knowledge-object-driven-development.md` and reaches a maintainer's
+default path of `foundation/0001-knowledge-object-driven-development.md` and reaches a maintainer's
 acceptance.
 
 This is the second workflow fixture, and it exists for what the first one does not cover.
@@ -36,12 +36,12 @@ seq  phase                 outcome     how it was recorded
 ## What it is evidence for
 
 - **The `update` transition, which `knowledge-change-loop` never takes.** That fixture runs a
-  `create` verdict. `specs/0001` R4 fixes three, and the guard table has a row for each; a fixture
+  `create` verdict. `foundation/0001` R4 fixes three, and the guard table has a row for each; a fixture
   set exercising two of three left one row asserted and unrun.
 - **`impact-analyst` is the named producer of `impact-analysis/1`.** The contract had a consumer and
   no producer: `scripts/orchestrate.py` records that its entry carries no `producer` key because R4
   requires the artifact rather than a particular producer of it. An agent now exists for it, and this
-  fixture is what makes the generator ship it — `specs/0006` R11 admits a capability when a fixture
+  fixture is what makes the generator ship it — `foundation/0006` R11 admits a capability when a fixture
   exercises it, and R14 keeps a `proposed` one out of the distribution entirely.
 - **A workflow with no failure and no recovery.** `knowledge-change-loop` runs one validation failure
   and one recovery under an attempt limit. This one passes first time, which is the other direction

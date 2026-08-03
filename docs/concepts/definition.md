@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd, ddd]
 generated: { by: claude-opus-5, at: 2026-07-30T15:19:55Z }
 sources:
-  - resource: specs/0003-knowledge-ontology-and-notation.md
+  - resource: foundation/0003-knowledge-ontology-and-notation.md
     title: Represent domain knowledge as a typed ontology in an AI-first notation
 ---
 
@@ -23,7 +23,7 @@ field, because none of them requires a frontmatter field the others lack.
 
 A definition is the type whose attributes must be fully typed. An attribute with a free-text type cannot be
 expanded into a column or a class, so an incompletely typed definition is where a generator would guess —
-which is why `specs/0003-knowledge-ontology-and-notation.md` requires the attribute type system rather than
+which is why `foundation/0003-knowledge-ontology-and-notation.md` requires the attribute type system rather than
 recommending it.
 
 A definition is not a [boundary](boundary.md): a definition says what a thing is, a boundary says what a

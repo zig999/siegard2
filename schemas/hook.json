@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/hook.json",
+  "title": "Siegard hook declaration",
+  "description": "Contract for src/claude/hooks/hooks.declaration.json, the authored source the generator turns into the distribution's hooks/hooks.json. foundation/0010 R10 requires a hook to state the event it binds, the matcher that selects it, the single guarantee it enforces, and the reason it emits on denial; R11 requires it to state its own timeout rather than inherit the 600-second default. Those facts have to live somewhere authored and checkable, and a registry inside the generator would be a rule that only a script could see. This file is source-only: the generator reads it and never ships it, because a consumer reads hooks/hooks.json and foundation/0008 R7 closes the directory set to what the harness or Siegard actually loads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "hooks"],
+  "properties": {
+    "contract_version": {
+      "const": "hook/1",
+      "description": "A consumer rejects a declaration it was not built to read rather than inferring version from shape."
+    },
+    "hooks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per shipped hook. An empty declaration would ship an empty hooks/ directory, which foundation/0008 R7 omits rather than installs.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "event", "matcher", "timeout", "guarantee"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.py$",
+            "description": "The hook script, resolved relative to src/claude/hooks/ in source and to ${CLAUDE_PLUGIN_ROOT}/hooks/ once installed."
+          },
+          "event": {
+            "enum": ["PreToolUse"],
+            "description": "foundation/0010 R12: a hook binds an event the documentation lists as able to block, when its purpose is to block. The enum holds only the event a shipped hook has actually used — an event admitted here without a hook occupying it would be a claim about harness behaviour nothing has exercised, which foundation/0008's sourcing rule refuses."
+          },
+          "matcher": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Which tool invocations select this hook. It narrows what the hook is asked about and never substitutes for the hook's own check: foundation/0010 R9 requires the hook to re-validate, because a matcher can select it on input the filter was written to exclude."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 599,
+            "description": "foundation/0010 R11: stated rather than inherited. Bounded below 600 because that is the default the requirement exists to displace — a hook allowed to declare it would be inheriting it by hand."
+          },
+          "guarantee": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The single thing this hook enforces, with the requirement it comes from. foundation/0006 R7 keeps it to one so a denial names a single condition and the hook can be retired without taking another guarantee with it."
+          }
+        }
+      }
+    }
+  }
+}

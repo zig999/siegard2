@@ -1,6 +1,6 @@
 """Both directions for the three validators that enforced tested contracts untested.
 
-`docs/bootstrap.md` named the gap plainly: "The validators for ADRs, concepts, and components
+The gap was named plainly: "The validators for ADRs, concepts, and components
 remain untested code enforcing tested contracts." A schema being covered says nothing about the
 script that loads it — the cross-file checks, the ones a JSON Schema cannot express, are exactly
 the part with no coverage, and they are the part with logic in it.
@@ -103,8 +103,34 @@ class Concepts(TreeCase):
             f"expected a duplicate-id report; got {problems}",
         )
 
+    def test_a_link_to_a_removed_concept_is_reported(self) -> None:
+        """The bundle's own cross-references, which nothing checked until three of them dangled.
+
+        Three concepts kept linking to two that had been removed, and every validator passed. The
+        specification validator had always held specifications to this; the bundle was the asymmetry.
+        """
+        path = self.root / "boundary.md"
+        path.write_text(path.read_text() + "\nSee [a removed concept](gone-from-the-bundle.md).\n")
+        problems = validate_concepts(self.root)
+        self.assertTrue(
+            any("gone-from-the-bundle.md" in p and "resolves to no file" in p for p in problems),
+            f"expected a dangling concept link; got {problems}",
+        )
+
+    def test_a_link_to_a_present_concept_is_accepted(self) -> None:
+        """Otherwise the check above could be passing because it rejects every link."""
+        path = self.root / "boundary.md"
+        path.write_text(path.read_text() + "\nSee [definition](definition.md).\n")
+        self.assertEqual([], validate_concepts(self.root))
+
+    def test_an_absolute_uri_is_not_followed(self) -> None:
+        """A link out of the repository is not a cross-reference and is not this check's to resolve."""
+        path = self.root / "boundary.md"
+        path.write_text(path.read_text() + "\nSee [the harness docs](https://code.claude.com/docs/en/hooks).\n")
+        self.assertEqual([], validate_concepts(self.root))
+
     def test_a_source_that_resolves_to_no_file_is_reported(self) -> None:
-        self.rewrite("boundary.md", "resource: specs/", "resource: specs/9999-gone-")
+        self.rewrite("boundary.md", "resource: foundation/", "resource: foundation/9999-gone-")
         problems = validate_concepts(self.root)
         self.assertTrue(
             any("resolves to no file" in p for p in problems),
@@ -114,7 +140,7 @@ class Concepts(TreeCase):
     def test_an_absolute_source_path_is_reported(self) -> None:
         self.rewrite(
             "boundary.md",
-            "resource: specs/0003-knowledge-ontology-and-notation.md",
+            "resource: foundation/0003-knowledge-ontology-and-notation.md",
             "resource: /etc/passwd",
         )
         problems = validate_concepts(self.root)
@@ -126,7 +152,7 @@ class Concepts(TreeCase):
     def test_a_traversing_source_path_is_reported(self) -> None:
         self.rewrite(
             "boundary.md",
-            "resource: specs/0003-knowledge-ontology-and-notation.md",
+            "resource: foundation/0003-knowledge-ontology-and-notation.md",
             "resource: ../../etc/passwd",
         )
         problems = validate_concepts(self.root)
@@ -246,10 +272,10 @@ class Components(TreeCase):
         self.assertIn("all components valid", output)
 
     def test_a_skill_name_must_equal_its_directory(self) -> None:
-        self.rewrite("skills/knowledge-change/SKILL.md", "name: knowledge-change", "name: knowledge-shift")
+        self.rewrite("skills/ingest-domain/SKILL.md", "name: ingest-domain", "name: ingest-domains")
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "knowledge-change")
+        self.assertNames(output, "ingest-domain")
 
     def test_an_agent_filename_must_equal_its_name(self) -> None:
         (self.root / "agents" / "concept-author.md").rename(self.root / "agents" / "author.md")
@@ -273,11 +299,11 @@ class Components(TreeCase):
         self.assertNames(output, "orphan")
 
     def test_an_overlong_skill_body_is_reported(self) -> None:
-        path = self.root / "skills" / "knowledge-change" / "SKILL.md"
+        path = self.root / "skills" / "ingest-domain" / "SKILL.md"
         path.write_text(path.read_text() + "\nfiller\n" * 600)
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
-        self.assertNames(output, "knowledge-change")
+        self.assertNames(output, "ingest-domain")
 
     def test_a_commands_directory_is_rejected_by_name(self) -> None:
         """ADR-0009 merged custom commands into skills; the class is rejected, not empty."""
@@ -338,21 +364,21 @@ class Hooks(TreeCase):
         self.assertNames(output, "hooks.declaration.json")
 
     def test_a_default_timeout_is_refused(self) -> None:
-        """specs/0010 R11: 600 is the default the requirement exists to displace."""
+        """foundation/0010 R11: 600 is the default the requirement exists to displace."""
         self.rewrite("hooks/hooks.declaration.json", '"timeout": 10', '"timeout": 600')
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "timeout")
 
     def test_an_event_that_cannot_block_is_refused(self) -> None:
-        """specs/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
+        """foundation/0010 R12: a guarantee bound to an event that cannot deny is one that logs."""
         self.rewrite("hooks/hooks.declaration.json", '"PreToolUse"', '"PostToolUse"')
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "event")
 
     def test_a_hook_with_no_stated_guarantee_is_refused(self) -> None:
-        """specs/0010 R10 and specs/0006 R7: one hook, one named guarantee."""
+        """foundation/0010 R10 and foundation/0006 R7: one hook, one named guarantee."""
         import json as _json
 
         path = self.root / "hooks" / "hooks.declaration.json"
@@ -362,3 +388,152 @@ class Hooks(TreeCase):
         code, output = run(validate_components, self.root)
         self.assertEqual(1, code, output)
         self.assertNames(output, "guarantee")
+
+
+class CapabilityDeclarations(unittest.TestCase):
+    """`foundation/0007` R22: one validator over the declaration and the component it declares.
+
+    R21 makes a declaration a separate artifact, which buys a closed harness contract and costs two
+    records of one fact. These cover the check that keeps the cost from becoming drift, in the
+    direction that matters — each mutation below is a disagreement a reader would not notice.
+    """
+
+    import json as _json
+
+    SOURCE = Path(__file__).resolve().parent.parent / "src" / "claude"
+
+    def tree(self) -> Path:
+        holder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, holder)
+        root = Path(holder) / "claude"
+        shutil.copytree(self.SOURCE, root, ignore=shutil.ignore_patterns("__pycache__"))
+        return root
+
+    def problems(self, mutate=None) -> list[str]:
+        root = self.tree()
+        path = root / validate_components.CAPABILITY_DECLARATION
+        if mutate is not None:
+            document = self._json.loads(path.read_text())
+            mutate(document)
+            path.write_text(self._json.dumps(document))
+        failures: list[str] = []
+        validate_components.check_capability_declarations(root, failures)
+        return failures
+
+    def test_the_authored_set_passes_as_committed(self) -> None:
+        self.assertEqual([], self.problems())
+
+    def test_a_grant_wider_than_the_component_is_reported(self) -> None:
+        """R14: a grant wider than the steps is a defect even when unused."""
+        found = self.problems(lambda d: d["declarations"][0]["grant"]["tools"].append("Bash"))
+        self.assertEqual(1, len(found))
+        self.assertIn("declares grant", found[0])
+
+    def test_a_grant_narrower_than_the_component_is_reported(self) -> None:
+        """The other direction: a declaration that misdescribes what actually runs."""
+        found = self.problems(lambda d: d["declarations"][0]["grant"]["tools"].pop())
+        self.assertIn("declares grant", found[0])
+
+    def test_an_identifier_that_does_not_match_the_component_name_is_reported(self) -> None:
+        """The disagreement has to be injected into the component, not the declaration.
+
+        Pointing the declaration at a different component finds one whose name matches its own
+        filename, so identity still agrees and only the grant diverges. What this covers is the
+        case a rename produces: the component's frontmatter moves and the declaration does not.
+        """
+        root = self.tree()
+        agent = root / "agents" / "impact-analyst.md"
+        agent.write_text(agent.read_text().replace("name: impact-analyst", "name: renamed-analyst", 1))
+        failures: list[str] = []
+        validate_components.check_capability_declarations(root, failures)
+        self.assertTrue(failures)
+        self.assertIn("must agree", failures[0])
+
+    def test_a_declaration_with_no_component_is_reported(self) -> None:
+        found = self.problems(lambda d: d["declarations"][0].update(identifier="not-a-component"))
+        self.assertIn("no component answers to it", found[0])
+
+    def test_an_incomplete_declaration_is_reported(self) -> None:
+        """R1: a declaration that is incomplete is not a declaration."""
+        found = self.problems(lambda d: d["declarations"][0].pop("failure_outcomes"))
+        self.assertTrue(found)
+        self.assertIn("failure_outcomes", found[0])
+
+    def test_a_duplicate_identifier_is_reported(self) -> None:
+        found = self.problems(
+            lambda d: d["declarations"].append(dict(d["declarations"][0]))
+        )
+        self.assertIn("twice", found[0])
+
+    def test_a_missing_set_is_reported(self) -> None:
+        root = self.tree()
+        (root / validate_components.CAPABILITY_DECLARATION).unlink()
+        failures: list[str] = []
+        validate_components.check_capability_declarations(root, failures)
+        self.assertIn("R1 is unenforceable", failures[0])
+
+
+class ExistenceClaims(unittest.TestCase):
+    """A foundation document may say a tree is empty only while it is.
+
+    Six specifications drifted the same way — each opened Provenance with an existence claim about
+    this repository and kept it after the thing was built. Every document still validated, because
+    nothing compared prose against the filesystem. These cover the check that closes it, including
+    that it can fail: a check over prose is worth exactly what its negative case proves.
+    """
+
+    import check_existence_claims as _ce
+
+    FOUNDATION = Path(__file__).resolve().parent.parent / "foundation"
+
+    def test_every_claim_in_foundation_holds(self) -> None:
+        problems: list[str] = []
+        for path in sorted(self.FOUNDATION.glob("*.md")):
+            problems.extend(self._ce.problems_for(path, path.read_text()))
+        self.assertEqual([], problems, "\n".join(["", *problems]))
+
+    def test_a_reintroduced_claim_is_reported(self) -> None:
+        """The exact drift that happened: 'No hook exists' while one ships."""
+        problems = self._ce.problems_for(
+            self.FOUNDATION / "0010-hook-system.md", "No hook exists, and none is planned.\n"
+        )
+        self.assertEqual(1, len(problems))
+        self.assertIn("claims 'hook' is absent", problems[0])
+
+    def test_a_claim_is_matched_wherever_it_sits(self) -> None:
+        """Moving the sentence out of Provenance does not exempt it."""
+        body = "## Requirements\n\n- **R1** — Because no pack exists, nothing binds.\n"
+        self.assertTrue(self._ce.problems_for(self.FOUNDATION / "0012-target-pack-model.md", body))
+
+    def test_a_claim_of_existence_is_not_checked(self) -> None:
+        """Naming a mechanism a requirement needs is how one is written before it arrives."""
+        body = "A validator in scripts/ rejects an incomplete declaration.\n"
+        self.assertEqual([], self._ce.problems_for(self.FOUNDATION / "0007-capability-contracts.md", body))
+
+    def test_every_subject_names_evidence_that_resolves(self) -> None:
+        """A row whose predicate can never be true would make its phrases unreachable."""
+        for subject, spec in self._ce.SUBJECTS.items():
+            with self.subTest(subject=subject):
+                self.assertTrue(spec["evidence"](), f"{subject}: predicate matches nothing")
+
+
+class DeclaredHooks(unittest.TestCase):
+    """A declared hook must be one the hook declaration installs.
+
+    A hook has no frontmatter, so `hooks.declaration.json` is its second record and the agreement
+    half of R22 compares against that instead. Without this, a declaration could describe a
+    guarantee nothing ever fires.
+    """
+
+    SOURCE = Path(__file__).resolve().parent.parent / "src" / "claude"
+
+    def test_the_declared_hook_is_installed(self) -> None:
+        failures: list[str] = []
+        validate_components.declared_hook(self.SOURCE, "reject-derived-write", "rel", failures)
+        self.assertEqual([], failures)
+
+    def test_a_hook_nothing_installs_is_reported(self) -> None:
+        failures: list[str] = []
+        validate_components.declared_hook(self.SOURCE, "imaginary-hook", "rel", failures)
+        self.assertEqual(1, len(failures))
+        self.assertIn("does not install", failures[0])

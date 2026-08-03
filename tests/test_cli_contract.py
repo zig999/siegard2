@@ -6,7 +6,7 @@ checked is wrong". The documented distinction did not exist anywhere.
 
 `make validate` never noticed, because it treats any non-zero as a failure. That is the argument
 for fixing it rather than deleting it from the docstrings: this repository does not keep a stated
-contract that nothing honours, and `docs/bootstrap.md` says so in the general form — until a
+contract that nothing honours — until a
 condition holds, report a rule as not run rather than as satisfied.
 
 The last test is the one that keeps this from rotting: it reads every script's own docstring and
@@ -25,6 +25,7 @@ from cli import CANNOT_RUN, cannot_run
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
+SHIPPED_BIN = REPO_ROOT / "src" / "claude" / "bin"
 
 
 def run(*args: str) -> subprocess.CompletedProcess:
@@ -40,20 +41,20 @@ class Helper(unittest.TestCase):
     def test_it_prefixes_a_message_that_lacks_the_marker(self) -> None:
         result = run("-c", "import sys; sys.path.insert(0, sys.argv[1]); "
                            "from cli import cannot_run; cannot_run('the root is absent')",
-                     str(SCRIPTS))
+                     str(SHIPPED_BIN))
         self.assertEqual(CANNOT_RUN, result.returncode)
         self.assertTrue(result.stderr.startswith("cannot run:"), result.stderr)
 
     def test_it_does_not_double_the_marker(self) -> None:
         result = run("-c", "import sys; sys.path.insert(0, sys.argv[1]); "
                            "from cli import cannot_run; cannot_run('cannot run: already said')",
-                     str(SCRIPTS))
+                     str(SHIPPED_BIN))
         self.assertEqual(1, result.stderr.count("cannot run"), result.stderr)
 
     def test_it_writes_to_stderr_and_not_stdout(self) -> None:
         result = run("-c", "import sys; sys.path.insert(0, sys.argv[1]); "
                            "from cli import cannot_run; cannot_run('gone')",
-                     str(SCRIPTS))
+                     str(SHIPPED_BIN))
         self.assertEqual("", result.stdout)
 
 
@@ -61,7 +62,7 @@ class RealScripts(unittest.TestCase):
     """The three exit codes, distinguished, on scripts that actually run."""
 
     def test_a_clean_run_exits_zero(self) -> None:
-        result = run(str(SCRIPTS / "validate_concepts.py"))
+        result = run(str(SHIPPED_BIN / "validate_concepts.py"), str(REPO_ROOT / "docs" / "concepts"))
         self.assertEqual(0, result.returncode, result.stderr)
 
     def test_a_failed_check_exits_one(self) -> None:
@@ -70,7 +71,7 @@ class RealScripts(unittest.TestCase):
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
 
     def test_an_absent_root_exits_two(self) -> None:
-        result = run(str(SCRIPTS / "validate_concepts.py"), "/definitely/not/here")
+        result = run(str(SHIPPED_BIN / "validate_concepts.py"), "/definitely/not/here")
         self.assertEqual(CANNOT_RUN, result.returncode, result.stderr)
         self.assertIn("cannot run", result.stderr)
 

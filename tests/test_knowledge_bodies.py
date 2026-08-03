@@ -1,4 +1,4 @@
-"""The body form rules of specs/0003, each proven to reject and to accept.
+"""The body form rules of foundation/0003, each proven to reject and to accept.
 
 R43 through R48 are where the specification pays a stated human cost for machine
 consumption. A form rule nothing enforces is a style suggestion, so each rule that can be

@@ -1,4 +1,4 @@
-"""Both outcomes for each check specs/0003 requires a script to decide.
+"""Both outcomes for each check foundation/0003 requires a script to decide.
 
 Validation item 3 names three by requirement — the cross-context check of R15, the totality
 check of R11 including both shorthand expansions, and the cardinality checks of R18 — and

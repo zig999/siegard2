@@ -1,13 +1,13 @@
 """The four steps between a knowledge base and a written file, and the refusals at each.
 
-`specs/0004` puts a scope, a placement decision, a plan, and a manifest between knowledge and
+`foundation/0004` puts a scope, a placement decision, a plan, and a manifest between knowledge and
 source. The property that makes the whole thing testable is R23: no model participates in
 deriving the plan, so R28's byte identity is checkable on its own — and R29 requires it to be
 checked here rather than only at the output, because a test covering produced source cannot
 distinguish a nondeterministic plan from a nondeterministic template.
 
 Exercised against `fixtures/pack-minimal/`, a pack declaration with no producers behind it. That
-is deliberate: the pipeline is framework-owned and stack-independent (`specs/0012` R4), and
+is deliberate: the pipeline is framework-owned and stack-independent (`foundation/0012` R4), and
 testing it against a real pack would conflate "the pipeline works" with "the pack works".
 """
 
@@ -27,8 +27,15 @@ from knowledge_graph_lib import load
 REPO_ROOT = Path(__file__).resolve().parent.parent
 KNOWLEDGE = REPO_ROOT / "fixtures" / "knowledge-two-context" / "knowledge"
 PACK = REPO_ROOT / "fixtures" / "pack-minimal"
-SCHEMAS = REPO_ROOT / "schemas"
-ROOT_KO = "ko.rule.sales.proposal-validity"
+SCHEMAS = REPO_ROOT / "src" / "claude" / "schemas"
+# An **accepted** rule. This was `ko.rule.sales.proposal-validity` — a superseded object —
+# which resolved a scope happily because no gate read `status`. Rooting generation on retired
+# knowledge was always wrong; nothing reported it until the scope gate existed to refuse it.
+ROOT_KO = "ko.rule.sales.proposal-expiration"
+# Derived by the ontology's own id arithmetic rather than written out, so a change of root
+# moves the file every mutation test targets with it. Two tests mutated the *previous* root's
+# file and kept passing vacuously once the root moved, which is the drift this closes.
+ROOT_RELATIVE = Path("/".join(ROOT_KO.split(".")[1:3]) + "/" + ROOT_KO.split(".", 3)[3] + ".md")
 
 
 def load_json(path: Path) -> dict:
@@ -58,30 +65,30 @@ class Fixture(unittest.TestCase):
 class Conformance(Fixture):
     def test_each_artifact_conforms_to_its_contract(self) -> None:
         for name, document in (
-            ("pack-declaration.v1.json", self.declaration),
-            ("generation-scope.v1.json", self.scope),
-            ("placement-decision.v1.json", self.placement),
-            ("generation-plan.v1.json", self.plan),
-            ("generation-manifest.v1.json", self.manifest),
+            ("pack-declaration.json", self.declaration),
+            ("generation-scope.json", self.scope),
+            ("placement-decision.json", self.placement),
+            ("generation-plan.json", self.plan),
+            ("generation-manifest.json", self.manifest),
         ):
             with self.subTest(contract=name):
                 self.assertEqual([], list(validator(name).iter_errors(document)))
 
     def test_the_class_vocabulary_is_the_same_in_every_contract(self) -> None:
-        """specs/0004 R8 closes it once; four contracts naming it must not drift apart."""
+        """foundation/0004 R8 closes it once; four contracts naming it must not drift apart."""
         def classes(name: str, pointer) -> set:
             return set(pointer(load_json(SCHEMAS / name)))
 
         declared = classes(
-            "pack-declaration.v1.json",
+            "pack-declaration.json",
             lambda s: s["properties"]["produces"]["items"]["properties"]["class"]["enum"],
         )
         for name, pointer in (
-            ("placement-decision.v1.json",
+            ("placement-decision.json",
              lambda s: s["properties"]["entries"]["items"]["properties"]["class"]["enum"]),
-            ("generation-plan.v1.json",
+            ("generation-plan.json",
              lambda s: s["properties"]["entries"]["items"]["properties"]["class"]["enum"]),
-            ("generation-manifest.v1.json",
+            ("generation-manifest.json",
              lambda s: s["properties"]["artifacts"]["items"]["properties"]["class"]["enum"]),
         ):
             with self.subTest(contract=name):
@@ -90,18 +97,96 @@ class Conformance(Fixture):
     def test_the_vocabulary_has_twelve_classes(self) -> None:
         self.assertEqual(
             12,
-            len(load_json(SCHEMAS / "pack-declaration.v1.json")
+            len(load_json(SCHEMAS / "pack-declaration.json")
                 ["properties"]["produces"]["items"]["properties"]["class"]["enum"]),
         )
 
     def test_a_traversing_placement_path_is_rejected_by_the_contract(self) -> None:
         document = json.loads(json.dumps(self.placement))
         document["entries"][0]["path"] = "/etc/passwd"
-        self.assertTrue(list(validator("placement-decision.v1.json").iter_errors(document)))
+        self.assertTrue(list(validator("placement-decision.json").iter_errors(document)))
+
+
+class AcceptedOnly(Fixture):
+    """Only accepted knowledge is compiled — the gate on scope resolution.
+
+    It resolves a conflict between two accepted specifications rather than adding a preference.
+    `foundation/0001` R23 puts a `proposed` object at level 0, where it "binds nothing" and "enters
+    context only", and R26 makes knowledge derived from existing material born `proposed` and
+    promotable only by a maintainer. `foundation/0004` said nothing about status, so generation read
+    `proposed` knowledge and the promotion R26 demands was demanded for nothing.
+
+    The gate is on the scope and deliberately not on the materializer: validation has to keep
+    validating a `proposed` object, and resolution has to keep reading one. What changes is what
+    *compiles*. `foundation/0004` R21 already makes a scope fail closed, so an unaccepted member
+    blocks rather than being skipped — a scope that quietly dropped one would generate less software
+    than was asked for with no signal.
+    """
+
+    def temp_graph(self, mutate) -> object:
+        """A mutated copy whose lifetime is the test's.
+
+        `TemporaryDirectory` as a context manager is wrong here: the graph holds `Path`s into the
+        copy and hashes them lazily, so the directory has to outlive the `with` block. Cleanup is
+        registered against the test instead.
+        """
+        holder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, holder, True)
+        copy = Path(holder) / "knowledge"
+        shutil.copytree(KNOWLEDGE, copy)
+        mutate(copy)
+        return load(copy)
+
+    def demote(self, relative: str):
+        def mutate(copy: Path) -> None:
+            target = copy / relative
+            target.write_text(
+                target.read_text().replace("\nstatus: accepted\n", "\nstatus: proposed\n", 1)
+            )
+        return mutate
+
+    def test_a_proposed_root_blocks(self) -> None:
+        graph = self.temp_graph(self.demote(str(ROOT_RELATIVE)))
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        self.assertIn("not accepted", str(caught.exception))
+
+    def test_a_proposed_member_reached_by_expansion_blocks(self) -> None:
+        """The root is accepted and something the closure reaches is not."""
+        graph = self.temp_graph(self.demote("definition/sales/proposal.md"))
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        message = str(caught.exception)
+        self.assertIn("ko.definition.sales.proposal", message)
+        self.assertIn("would compile it", message)
+
+    def test_a_superseded_root_blocks(self) -> None:
+        """Retired knowledge would generate the system that was replaced."""
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(self.graph, "gs_1a2b3c4d", "cr_2b4f6a80", ["ko.rule.sales.proposal-validity"])
+        self.assertIn("superseded", str(caught.exception))
+
+    def test_the_message_says_what_to_do(self) -> None:
+        """A block that names no remedy leaves the caller re-running it to find one."""
+        graph = self.temp_graph(self.demote("definition/sales/proposal.md"))
+        with self.assertRaises(gl.Blocked) as caught:
+            gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        self.assertIn("Promote it or narrow the scope", str(caught.exception))
+
+    def test_a_proposed_adr_does_not_block(self) -> None:
+        """An ADR is a graph node and never a knowledge object; it is no member and yields nothing."""
+        graph = self.temp_graph(self.demote("decision/0001-proposal-validity-window.md"))
+        scope = gl.resolve_scope(graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
+        self.assertTrue(scope["members"])
+        self.assertNotIn("adr", {m["type"] for m in scope["members"]})
+
+    def test_the_accepted_scope_still_resolves(self) -> None:
+        """The positive case, so the four above are not passing because everything blocks."""
+        self.assertTrue(gl.resolve_scope(self.graph, "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])["members"])
 
 
 class Scope(Fixture):
-    """specs/0004 R19 through R22."""
+    """foundation/0004 R19 through R22."""
 
     def test_it_recomputes_from_its_roots(self) -> None:
         fresh = gl.resolve_scope(
@@ -120,16 +205,23 @@ class Scope(Fixture):
         self.assertNotIn("adr", types)
 
     def test_an_unresolvable_root_blocks_rather_than_degrades(self) -> None:
-        """specs/0004 R21: fail-soft must not be applied to a generation scope."""
+        """A generation scope fails closed; fail-soft belongs to context resolution.
+
+        Asserted on what the message says rather than on a requirement id. A shipped component
+        cites no requirement, because the specification it would cite is the generator's and
+        never reaches the repository the message is read in.
+        """
         with self.assertRaises(gl.Blocked) as caught:
             gl.resolve_scope(self.graph, "gs_1a2b3c4d", "cr_2b4f6a80", ["ko.rule.sales.absent"])
-        self.assertIn("R21", str(caught.exception))
+        message = str(caught.exception)
+        self.assertIn("resolve to no knowledge object", message)
+        self.assertIn("blocks generation", message)
 
     def test_an_unresolvable_member_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "knowledge"
             shutil.copytree(KNOWLEDGE, copy)
-            target = copy / "rule" / "sales" / "proposal-validity.md"
+            target = copy / ROOT_RELATIVE
             target.write_text(
                 target.read_text().replace("depends_on: [", "depends_on: [ko.definition.sales.gone, ", 1)
             )
@@ -137,12 +229,12 @@ class Scope(Fixture):
                 gl.resolve_scope(load(copy), "gs_1a2b3c4d", "cr_2b4f6a80", [ROOT_KO])
 
     def test_a_changed_member_invalidates_the_scope(self) -> None:
-        """specs/0004 R20: a change invalidates rather than alters."""
+        """foundation/0004 R20: a change invalidates rather than alters."""
         self.assertEqual([], gl.scope_is_stale(self.scope, self.graph))
         with tempfile.TemporaryDirectory() as holder:
             copy = Path(holder) / "knowledge"
             shutil.copytree(KNOWLEDGE, copy)
-            target = copy / "rule" / "sales" / "proposal-validity.md"
+            target = copy / ROOT_RELATIVE
             target.write_text(target.read_text() + "\nAn added line.\n")
             stale = gl.scope_is_stale(self.scope, load(copy))
         self.assertIn(ROOT_KO, stale)
@@ -153,7 +245,7 @@ class Scope(Fixture):
 
 
 class Demand(Fixture):
-    """specs/0004 R14's `from` column, which is what makes the plan derivable without a model."""
+    """foundation/0004 R14's `from` column, which is what makes the plan derivable without a model."""
 
     def test_every_demanded_artifact_names_a_declared_class(self) -> None:
         declared = {entry["class"] for entry in self.declaration["produces"]}
@@ -163,7 +255,7 @@ class Demand(Fixture):
             self.assertIn(artifact_class, declared)
 
     def test_a_node_type_yielding_nothing_is_reported(self) -> None:
-        """specs/0004 R11: silence about it reads as coverage that does not exist."""
+        """foundation/0004 R11: silence about it reads as coverage that does not exist."""
         _demanded, uncovered = gl.demand(self.scope, self.declaration)
         self.assertIn("boundary", uncovered)
 
@@ -172,7 +264,7 @@ class Demand(Fixture):
 
 
 class Placement(Fixture):
-    """specs/0004 R52. Rejects, never repairs."""
+    """foundation/0004 R52. Rejects, never repairs."""
 
     def broken(self, mutate) -> list[str]:
         document = json.loads(json.dumps(self.placement))
@@ -208,7 +300,7 @@ class Placement(Fixture):
 
 
 class Plan(Fixture):
-    """specs/0004 R23 through R29."""
+    """foundation/0004 R23 through R29."""
 
     def derive(self, manifest=None, placement=None) -> dict:
         plan, _ = gl.derive_plan(
@@ -221,7 +313,7 @@ class Plan(Fixture):
         self.assertEqual(self.plan, self.derive())
 
     def test_identical_inputs_yield_a_byte_identical_plan(self) -> None:
-        """specs/0004 R28, and R29 requires it tested here rather than only at the output."""
+        """foundation/0004 R28, and R29 requires it tested here rather than only at the output."""
         self.assertEqual(
             json.dumps(self.derive(), indent=2, sort_keys=True),
             json.dumps(self.derive(), indent=2, sort_keys=True),
@@ -231,7 +323,7 @@ class Plan(Fixture):
         self.assertTrue(all(entry["state"] == "new" for entry in self.derive()["entries"]))
 
     def test_a_regeneration_is_entirely_locked(self) -> None:
-        """specs/0004 R31: the path is read on every later run and never decided again."""
+        """foundation/0004 R31: the path is read on every later run and never decided again."""
         second = self.derive(manifest=self.manifest)
         self.assertTrue(all(entry["state"] == "locked" for entry in second["entries"]))
 
@@ -252,7 +344,7 @@ class Plan(Fixture):
         )
 
     def test_a_demanded_artifact_with_no_path_blocks(self) -> None:
-        """specs/0004 R24: an entry with no target path cannot be validated under R25."""
+        """foundation/0004 R24: an entry with no target path cannot be validated under R25."""
         short = json.loads(json.dumps(self.placement))
         short["entries"] = short["entries"][1:]
         with self.assertRaises(gl.Blocked) as caught:
@@ -269,14 +361,14 @@ class Plan(Fixture):
         self.assertEqual({"deterministic", "judged"}, {e["track"] for e in self.plan["entries"]})
 
     def test_no_model_is_reachable_from_the_derivation(self) -> None:
-        """specs/0004 R23, read off the module rather than asserted in prose."""
-        source = (REPO_ROOT / "scripts" / "generation_lib.py").read_text()
+        """foundation/0004 R23, read off the module rather than asserted in prose."""
+        source = (REPO_ROOT / "src" / "claude" / "bin" / "generation_lib.py").read_text()
         for forbidden in ("subprocess", "urllib", "socket", "requests", "http"):
             self.assertNotIn(f"import {forbidden}", source)
 
 
 class PlanValidation(Fixture):
-    """specs/0004 R25 and R27 — before any file is written."""
+    """foundation/0004 R25 and R27 — before any file is written."""
 
     def test_the_fixture_plan_validates(self) -> None:
         plan = json.loads(json.dumps(self.plan))
@@ -298,7 +390,7 @@ class PlanValidation(Fixture):
         self.assertTrue(any("no longer exists" in p for p in problems), problems)
 
     def test_validation_writes_nothing(self) -> None:
-        """specs/0004 R26: a plan is producible and inspectable without writing any file."""
+        """foundation/0004 R26: a plan is producible and inspectable without writing any file."""
         before = {p for p in REPO_ROOT.rglob("*") if p.is_file() and ".git" not in p.parts}
         gl.derive_plan("gp_4f5a6b7c", self.scope, self.declaration, self.empty_manifest, self.placement)
         gl.validate_plan(self.plan, self.scope, self.declaration, REPO_ROOT)
@@ -345,7 +437,7 @@ class CommittedFixture(unittest.TestCase):
         self.assertEqual(load_json(PACK / "generation-plan.json"), plan)
 
     def test_the_manifest_locks_every_planned_path(self) -> None:
-        """specs/0004 R53: the run transcribes the decision into the manifest before it ends."""
+        """foundation/0004 R53: the run transcribes the decision into the manifest before it ends."""
         plan = load_json(PACK / "generation-plan.json")
         manifest = load_json(PACK / "generation-manifest.json")
         self.assertEqual(
@@ -354,10 +446,10 @@ class CommittedFixture(unittest.TestCase):
         )
 
     def test_the_manifest_names_the_framework_it_was_produced_under(self) -> None:
-        """specs/0004 R4 names four pinned identities a reproducibility claim must carry."""
+        """foundation/0004 R4 names four pinned identities a reproducibility claim must carry."""
         installed = load_json(REPO_ROOT / "src" / "claude" / ".claude-plugin" / "plugin.json")
         self.assertEqual(installed["version"], load_json(PACK / "generation-manifest.json")["framework_version"])
 
     def test_the_run_names_the_skill_that_drives_it(self) -> None:
-        """specs/0004 R18: the entry point that runs generation is a skill."""
+        """foundation/0004 R18: the entry point that runs generation is a skill."""
         self.assertEqual("generate", self.run["producer"])

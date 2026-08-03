@@ -8,7 +8,7 @@ contract_version: concept/1
 tags: [knowledge, kodd, observability]
 generated: { by: claude-opus-5, at: 2026-07-30T14:49:05Z }
 sources:
-  - resource: specs/0002-knowledge-economy-principles.md
+  - resource: foundation/0002-knowledge-economy-principles.md
     title: Hold the minimum knowledge specialized agents need to reproduce the system
 ---
 

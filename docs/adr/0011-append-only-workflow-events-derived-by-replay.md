@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Record workflow history as an append-only event log, and replay it for state
-status: accepted
+status: superseded
 contract_version: adr/1
 ---
 
@@ -9,7 +9,12 @@ contract_version: adr/1
 
 ## Context
 
-`docs/bootstrap.md` open question 1 asked which persistence model records workflow state, and named
+**Superseded by `docs/adr/0016-remove-the-workflow-machinery.md`.** The machinery this record
+chose was removed: the event contract, the guard, the replay, and the skill that drove them are gone,
+and `foundation/0001` R8, which required persisted and reconstructible workflow state, is retired. What follows is
+kept for history and for the reasoning, which 0016 answers rather than repeats.
+
+An open question asked which persistence model records workflow state, and named
 an append-only log with state derived by replay as the leading candidate rather than the answer. It
 attached a gate — an event schema carrying `contract_version`, a derivation with a determinism test, a
 transition guard tested in both directions, and a fixture running the loop end to end — and warned that
@@ -21,7 +26,7 @@ does not exist is a guess. The thin path of stage 2 is the first thing that made
 answerable with evidence instead of preference.
 
 Two facts from building it bear on the choice. First, the loop needs history, not only current state:
-`specs/0001` R7 returns a failed validation to implementation under a stated attempt limit, so the
+`foundation/0001` R7 returns a failed validation to implementation under a stated attempt limit, so the
 guard has to know how many attempts have already happened. A mutable record holding only the current
 phase cannot answer that without keeping a counter beside it — a second piece of state that can
 disagree with the first. Second, the interesting property turned out to be reproducibility of the
@@ -34,7 +39,7 @@ framework does not control.
 
 ## Decision
 
-Workflow history is a JSONL log of entries conforming to `schemas/workflow-event.v1.json`, and state is
+Workflow history is a JSONL log of entries conforming to `schemas/workflow-event.json`, and state is
 computed from it by `derive()` in `scripts/workflow_lib.py`. Nothing stores state.
 
 Four specifics this contract fixes, each because the alternative failed a test rather than because it
@@ -48,18 +53,18 @@ reads better:
   same allocation of the clock that `src/claude/agents/concept-author.md` already required of its
   caller.
 - **The transition table is data.** `TRANSITIONS` maps a `(phase, outcome)` pair to the next phase or
-  to a terminal status, and `guard()` refuses a pair the table does not hold. `specs/0001` R5 is the
+  to a terminal status, and `guard()` refuses a pair the table does not hold. `foundation/0001` R5 is the
   authority for why the choice is a lookup; the table is where that choice is written down.
 - **The attempt limit is a property of the workflow's own opening entry**, not of the framework. R7
   requires the limit stated; a framework-wide default would be the calibrated threshold R10 forbids
   inventing ahead of executed workflows.
 
-`schemas/impact-analysis.v1.json` arrives in the same change, because the loop cannot run without the
+`schemas/impact-analysis.json` arrives in the same change, because the loop cannot run without the
 artifact R4 requires and R4 already fixes its content.
 
 ## Consequences
 
-- Open question 1's gate is met, and `docs/bootstrap.md` records that. A met gate is evidence, not
+- That gate is met, and this records that. A met gate is evidence, not
   authority, so this ADR stayed `proposed` until a maintainer accepted it on 2026-07-31 — which makes it
   the one record in this repository promoted on evidence that was already in place rather than ahead of it.
 - The migration burden the open question warned about is now real and unpaid. `workflow-event/1` has one
@@ -78,22 +83,10 @@ artifact R4 requires and R4 already fixes its content.
   that the orchestrator's logic is a tested script, which is a narrower claim; open question 3 keeps the
   rest.
 
-## What satisfied acceptance
+## Outstanding evidence
 
-Accepted on 2026-07-31 by maintainer decision, which `CLAUDE.md` **Normative sources** makes sufficient on
-its own. The conditions this document had set were **not** met. They are kept below rather than deleted,
-because they are the evidence this document still owes and removing them on acceptance would turn an open
-debt into a silent one.
-
-What that costs is stated rather than glossed. From here `.claude/rules/compatibility.md` governs this
-document, so a change to a requirement is a breaking change owing a migration path and a migration test
-rather than a revision — and the first component built against it is the thing most likely to demand
-exactly such a change. `specs/0001-knowledge-object-driven-development.md` was accepted the other way, on
-evidence, with the requirements its three unmet conditions covered moved out to
-`specs/0014-acceptance-closure-and-escalation.md` rather than accepted unexercised. That route was
-available and was not taken here.
-
-### Conditions recorded before acceptance, still outstanding
+What this document states and nothing has yet exercised. A condition kept here is a debt;
+removing one because the document binds would turn an open debt into a silent one.
 
 1. A second workflow fixture whose path differs from the first — a `none` verdict, or a workflow that
    exhausts its attempt limit — replays and is checked, showing the table generalizes beyond one

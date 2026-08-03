@@ -11,7 +11,7 @@ attributes:
   - { name: customer,   type: ref,     target: ko.definition.sales.customer, binding: by-identity, required: true }
   - { name: proposals,  type: list,    of: ko.definition.sales.proposal, binding: by-identity, required: true }
   - { name: open_total, type: money,   required: true }
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

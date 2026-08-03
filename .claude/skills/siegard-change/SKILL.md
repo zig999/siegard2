@@ -10,14 +10,14 @@ applies. It adds only the order of operations and the derived artifacts that are
 
 ## 1. Change the source, not the symptom
 
-Find where the concept is defined — `specs/`, then `docs/adr/`, then `schemas/`, then implementation —
+Find where the concept is defined — `foundation/`, then `docs/adr/`, then `schemas/`, then implementation —
 and change the highest-level source that owns it, then update what derives from it. Editing an
 implementation to work around a specification is a defect, not a change.
 
 ## 2. Name it once
 
 One name for the concept across specs, schemas, code, tests, and docs. A term used normatively needs a
-file in `docs/concepts/` and a row in `docs/concepts/index.md`; the contract is `schemas/concept.v1.json`.
+file in `docs/concepts/` and a row in `docs/concepts/index.md`; the contract is `schemas/concept.json`.
 
 ## 3. Update everything derived, in the same change
 

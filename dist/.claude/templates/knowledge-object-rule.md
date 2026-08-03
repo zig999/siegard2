@@ -9,11 +9,11 @@ ddd: domain-rule
 expression: "{{expression}}"
 examples:
   - given: { {{given_field}}: "{{allowed_value}}" }
-    when:  { trigger: {{trigger}} }
-    then:  { outcome: allowed }
+    when: { trigger: {{trigger}} }
+    then: { outcome: allowed }
   - given: { {{given_field}}: "{{rejected_value}}" }
-    when:  { trigger: {{trigger}} }
-    then:  { outcome: rejected }
+    when: { trigger: {{trigger}} }
+    then: { outcome: rejected }
 status: proposed
 contract_version: knowledge-object/1
 generated: { by: {{generated_by}}, at: {{generated_at}} }

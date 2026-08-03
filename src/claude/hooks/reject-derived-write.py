@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Refuse a write to a file the knowledge materializer owns.
 
-One hook, one guarantee — `specs/0006` R7, so a denial names a single condition and this can be
-retired without taking another guarantee with it. The guarantee is `specs/0003` R42 and R51: a
+One hook, one guarantee, so a denial names a single condition and this can be
+retired without taking another guarantee with it. The guarantee is R42 and R51: a
 projection is derived and never hand-edited.
 
 Until now that rule existed only as `project_knowledge.py --check` in a Makefile a consumer may
 never run. Reporting a hand edit afterwards is a different thing from preventing it, and
-`CLAUDE.md` **Security** requires a guarantee that must hold regardless of model judgment to be
+a guarantee that must hold regardless of model judgment is
 enforced by a hook or a script rather than by a prompt.
 
-What `specs/0010` fixes, and where each requirement lands:
+What the hook contract fixes, and where each requirement lands:
 
 - **R1** — a `command` handler. `prompt` and `agent` evaluate with a model, and a guarantee a
   model decides is not enforced.
@@ -34,8 +34,8 @@ What `specs/0010` fixes, and where each requirement lands:
 Declared dependencies: none beyond the standard library. `derived_artifacts` ships in `bin/` at
 the plugin root, which is the sibling directory this file resolves.
 
-Input:  a PreToolUse payload on stdin.
-Exit:   0 the write is not this hook's business, 2 denied with the reason on stderr.
+Input: a PreToolUse payload on stdin.
+Exit: 0 the write is not this hook's business, 2 denied with the reason on stderr.
 """
 
 from __future__ import annotations
@@ -132,7 +132,7 @@ def decide(payload: dict, root: Path) -> tuple[int, str]:
         return ALLOW, ""
 
     return DENY, (
-        f"{relative} is a derived projection. specs/0003 R42 and R51 make it the knowledge "
+        f"{relative} is a derived projection. it the knowledge "
         f"materializer's output rather than an authored file, so an edit to it is discarded by "
         f"the next regeneration and is not a change to the knowledge it projects. The derived "
         f"names are {', '.join(sorted(DERIVED_NAMES))}, and the knowledge objects a projection "
@@ -166,7 +166,7 @@ def main() -> int:
 
     try:
         code, reason = decide(payload, Path.cwd().resolve())
-    except Exception as exc:  # R3: an uncaught failure reads as permission.
+    except Exception as exc: # R3: an uncaught failure reads as permission.
         print(
             f"The hook failed while deciding: {type(exc).__name__}. The action is denied because "
             f"an internal error is not a permission.",

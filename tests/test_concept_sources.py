@@ -70,7 +70,7 @@ class SourcesMustResolve(unittest.TestCase):
 
     def test_the_second_source_is_reported_by_its_own_index(self):
         problems = self.problems_for(
-            [{"resource": "CLAUDE.md"}, {"resource": "specs/9999-does-not-exist.md"}]
+            [{"resource": "CLAUDE.md"}, {"resource": "foundation/9999-does-not-exist.md"}]
         )
         self.assertOneProblem(problems, "sources.1.resource", "no file")
 

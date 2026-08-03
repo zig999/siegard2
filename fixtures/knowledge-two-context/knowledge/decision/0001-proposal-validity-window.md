@@ -1,7 +1,7 @@
 ---
 id: "0001"
 title: Fix the proposal validity window at thirty days
-status: proposed
+status: accepted
 contract_version: knowledge-decision/1
 ---
 

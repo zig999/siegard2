@@ -7,7 +7,7 @@ question: What does the Billing context own?
 ddd: bounded-context
 subdomain_type: supporting
 owner: billing
-status: proposed
+status: accepted
 contract_version: knowledge-object/1
 generated: { by: claude-opus-5, at: 2026-07-30T13:00:00Z }
 out_of_scope:

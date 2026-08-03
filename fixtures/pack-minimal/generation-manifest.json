@@ -80,20 +80,6 @@
       "path": "src/sales/validators/proposal-expiration.ts",
       "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "pack_version": "0.1.0"
-    },
-    {
-      "ko": "ko.rule.sales.proposal-validity",
-      "class": "conformance-test",
-      "path": "src/sales/conformance/proposal-validity.test.ts",
-      "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-      "pack_version": "0.1.0"
-    },
-    {
-      "ko": "ko.rule.sales.proposal-validity",
-      "class": "validator",
-      "path": "src/sales/validators/proposal-validity.ts",
-      "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-      "pack_version": "0.1.0"
     }
   ]
 }

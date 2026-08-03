@@ -3,8 +3,8 @@
 
 A [scaffold](../docs/concepts/scaffold.md) is a generator for an artifact *this repository
 authors* — a specification, an ADR, a concept, a knowledge object, a component. It is not a
-template in the sense of `specs/0011`: a template expands structured domain knowledge into an
-artifact class from the closed vocabulary of `specs/0004` R8, holds byte identity, and ships
+template in the sense of `foundation/0011`: a template expands structured domain knowledge into an
+artifact class from the closed vocabulary of `foundation/0004` R8, holds byte identity, and ships
 inside a target pack. None of that applies here, and using one word for both is the collision
 `docs/adr/0010-projection-names-the-graph-derived-artifact.md` exists to prevent.
 
@@ -15,7 +15,7 @@ would put the author in the worst position: a file that looks finished and fails
 later, with no indication which part was the scaffold's fault.
 
 **Nothing is minted.** A timestamp, an identifier, and a version come from the caller and are
-never invented — `specs/0011` R5 states it for templates, and a scaffold that invented one would
+never invented — `foundation/0011` R5 states it for templates, and a scaffold that invented one would
 make the artifact irreproducible in the same way. Every placeholder is required for the same
 reason: a default filled in silently is a decision nobody made.
 
@@ -39,40 +39,65 @@ import re
 import sys
 from pathlib import Path
 
+from generator_lib import REPO_ROOT
 from cli import cannot_run
-from frontmatter_lib import REPO_ROOT, split_frontmatter
+from frontmatter_lib import split_frontmatter
 
-TEMPLATE_ROOT = REPO_ROOT / "templates"
-SCHEMA_ROOT = REPO_ROOT / "schemas"
+# Both trees, in the order a name is looked up. `src/claude/` holds the scaffolds and
+# contracts a consumer receives; the bare directories hold the ones that only ever describe
+# this repository's own artifacts. Scaffolding spans the two because the generator is the
+# thing that authors on both sides — it writes this repository's specifications and it is
+# what a consumer's `concept.md` was written for.
+SHIPPED_ROOT = REPO_ROOT / "src" / "claude"
+TEMPLATE_ROOTS = (SHIPPED_ROOT / "templates", REPO_ROOT / "templates")
+SCHEMA_ROOTS = (SHIPPED_ROOT / "schemas", REPO_ROOT / "schemas")
+
+
+def _first(roots, name: str) -> Path:
+    """The first tree holding `name`, or the shipped path so the error names one place."""
+    for root in roots:
+        candidate = root / name
+        if candidate.is_file():
+            return candidate
+    return roots[0] / name
 PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 
 # Which contract validates each kind's output. The mapping is explicit rather than derived from
 # the filename: `knowledge-object-rule` and `knowledge-object-definition` are two scaffolds over
-# one contract, because `specs/0003` gives each node type its own required fields and its own
+# one contract, because `foundation/0003` gives each node type its own required fields and its own
 # body sections, and one skeleton for six types would be a skeleton for none of them.
 SCHEMA_BY_KIND = {
-    "specification": "spec.v1.json",
-    "adr": "adr.v1.json",
-    "concept": "concept.v1.json",
-    "knowledge-object-definition": "knowledge-object.v1.json",
-    "knowledge-object-rule": "knowledge-object.v1.json",
-    "knowledge-object-lifecycle": "knowledge-object.v1.json",
-    "knowledge-object-interface": "knowledge-object.v1.json",
-    "knowledge-object-boundary": "knowledge-object.v1.json",
-    "knowledge-object-process": "knowledge-object.v1.json",
-    "knowledge-decision": "knowledge-decision.v1.json",
-    "skill": "skill.v1.json",
-    "agent": "agent.v1.json",
-    "pack-declaration": "pack-declaration.v1.json",
-    "specification-delta": "specification-delta.v1.json",
-    "validation-evidence": "validation-evidence.v1.json",
+    "specification": "spec.json",
+    "adr": "adr.json",
+    "concept": "concept.json",
+    "knowledge-object-definition": "knowledge-object.json",
+    "knowledge-object-rule": "knowledge-object.json",
+    "knowledge-object-lifecycle": "knowledge-object.json",
+    "knowledge-object-interface": "knowledge-object.json",
+    "knowledge-object-boundary": "knowledge-object.json",
+    "knowledge-object-process": "knowledge-object.json",
+    "knowledge-decision": "knowledge-decision.json",
+    "skill": "skill.json",
+    "agent": "agent.json",
+    "pack-declaration": "pack-declaration.json",
+    "specification-delta": "specification-delta.json",
+    "validation-evidence": "validation-evidence.json",
+    "change-request": "change-request.json",
+    # `None` where no per-file contract governs the kind. `knowledge/system.md` is the one such
+    # artifact: spec 0003 defers its schema beyond the three defaults R26 requires and the
+    # `limits.body_lines` ceiling R48 requires, and the knowledge validator already checks all
+    # four by name — `_load_system` for the defaults, the body check for the ceiling. A schema
+    # here would be a second home for the same four facts, which is what one authoritative
+    # definition per concept forbids. The expansion is still checked: `expand` refuses a missing
+    # placeholder, so the scaffold cannot emit a file with a default nobody supplied.
+    "knowledge-system": None,
 }
 
 # Kinds whose artifact is a JSON document rather than markdown with frontmatter. The distinction
 # is the artifact's own form, not a property of scaffolding: a specification is a file with
 # frontmatter and a specification delta is a JSON object, and validating either against its
 # contract means parsing it the way its consumer will.
-JSON_KINDS = frozenset({"pack-declaration", "specification-delta", "validation-evidence"})
+JSON_KINDS = frozenset({"pack-declaration", "specification-delta", "validation-evidence", "change-request"})
 
 try:
     import yaml
@@ -86,7 +111,7 @@ except ImportError:
 
 
 def template_path(kind: str) -> Path:
-    return TEMPLATE_ROOT / f"{kind}.md"
+    return _first(TEMPLATE_ROOTS, f"{kind}.md")
 
 
 def placeholders(text: str) -> list[str]:
@@ -125,8 +150,15 @@ def expand(kind: str, values: dict[str, str]) -> tuple[str, list[str]]:
 
 
 def conforms(kind: str, text: str) -> list[str]:
-    """Validate the produced artifact against the contract its kind names."""
-    schema_path = SCHEMA_ROOT / SCHEMA_BY_KIND[kind]
+    """Validate the produced artifact against the contract its kind names.
+
+    A kind mapped to `None` names no contract, and the table says why per entry. Returning no
+    problems here is not a claim that the artifact is unchecked — it is checked by the validator
+    that owns it, at the boundary where it is read.
+    """
+    if SCHEMA_BY_KIND[kind] is None:
+        return []
+    schema_path = _first(SCHEMA_ROOTS, SCHEMA_BY_KIND[kind])
     if not schema_path.is_file():
         cannot_run(f"cannot run: schema {schema_path} does not exist")
     if kind in JSON_KINDS:
@@ -159,7 +191,8 @@ def main() -> int:
         for kind in sorted(SCHEMA_BY_KIND):
             path = template_path(kind)
             names = ", ".join(placeholders(path.read_text())) if path.is_file() else "(no template)"
-            print(f"{kind}\n  schema: {SCHEMA_BY_KIND[kind]}\n  placeholders: {names}")
+            contract = SCHEMA_BY_KIND[kind] or "(none; the knowledge validator checks it)"
+            print(f"{kind}\n  schema: {contract}\n  placeholders: {names}")
         return 0
 
     if not args.kind:

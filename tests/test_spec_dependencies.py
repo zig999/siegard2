@@ -1,6 +1,6 @@
 """The acceptance order the specification set declares about itself must hold.
 
-`specs/README.md` states the rule in prose — "No framework specification is accepted
+`foundation/README.md` states the rule in prose — "No framework specification is accepted
 before the method specification it depends on" — and nothing checked it. The edges are
 derived from the acceptance conditions the documents already write, so the check adds no
 authored field that could disagree with the text.
@@ -33,7 +33,7 @@ from validate_specs import (
 
 from tests.support import REPO_ROOT
 
-SPECS = REPO_ROOT / "specs"
+SPECS = REPO_ROOT / "foundation"
 
 
 def committed() -> dict[str, tuple[str, str, str]]:
@@ -52,7 +52,7 @@ class TheCommittedSetIsClean(unittest.TestCase):
         self.specs = committed()
         self.filenames = {sid: name for sid, (name, _, _) in self.specs.items()}
         self.statuses = {sid: status for sid, (_, status, _) in self.specs.items()}
-        self.paths = {sid: f"specs/{name}" for sid, (name, _, _) in self.specs.items()}
+        self.paths = {sid: f"foundation/{name}" for sid, (name, _, _) in self.specs.items()}
 
     def test_every_cross_reference_resolves(self):
         for sid, (name, _, body) in self.specs.items():
@@ -71,26 +71,26 @@ class ReferencesAreResolved(unittest.TestCase):
         return check_spec_references(body, self.FILENAMES)
 
     def test_an_unknown_id_is_reported(self):
-        found = self.problems("as `specs/0099` requires")
+        found = self.problems("as `foundation/0099` requires")
         self.assertEqual(len(found), 1)
-        self.assertIn("specs/0099", found[0])
+        self.assertIn("foundation/0099", found[0])
 
     def test_a_filename_that_disagrees_with_the_id_is_reported(self):
-        found = self.problems("see `specs/0004-renamed-yesterday.md` R3")
+        found = self.problems("see `foundation/0004-renamed-yesterday.md` R3")
         self.assertEqual(len(found), 1)
         self.assertIn("0004-fourth.md", found[0])
 
     def test_the_two_accepted_forms_pass(self):
-        self.assertEqual(self.problems("`specs/0001` and `specs/0004-fourth.md`"), [])
+        self.assertEqual(self.problems("`foundation/0001` and `foundation/0004-fourth.md`"), [])
 
     def test_one_bad_reference_is_reported_once_however_often_it_appears(self):
-        self.assertEqual(len(self.problems("`specs/0099` … `specs/0099` … `specs/0099`")), 1)
+        self.assertEqual(len(self.problems("`foundation/0099` … `foundation/0099` … `foundation/0099`")), 1)
 
 
 class PrerequisitesAreDerivedFromTheAcceptanceSection(unittest.TestCase):
     def test_a_prerequisite_outside_the_section_is_not_an_edge(self):
         body = (
-            "## Scope\n\nThis rests on `specs/0004`, which is accepted nowhere yet.\n\n"
+            "## Scope\n\nThis rests on `foundation/0004`, which is accepted nowhere yet.\n\n"
             "## Validation required before acceptance\n\n1. A maintainer accepts this.\n"
         )
         self.assertEqual(acceptance_prerequisites(body), [])
@@ -98,15 +98,15 @@ class PrerequisitesAreDerivedFromTheAcceptanceSection(unittest.TestCase):
     def test_a_condition_naming_a_specification_without_the_phrase_is_not_an_edge(self):
         body = (
             "## Validation required before acceptance\n\n"
-            "1. A fixture exercises `specs/0003` R38 in both directions.\n"
+            "1. A fixture exercises `foundation/0003` R38 in both directions.\n"
         )
         self.assertEqual(acceptance_prerequisites(body), [])
 
     def test_an_unmet_and_a_met_condition_are_distinguished(self):
         body = (
             "## Validation required before acceptance\n\n"
-            "1. `specs/0004` is accepted. It is the authority for artifact classes.\n"
-            "2. ~~`specs/0001` is accepted.~~ **Met** on 2026-07-31.\n"
+            "1. `foundation/0004` is accepted. It is the authority for artifact classes.\n"
+            "2. ~~`foundation/0001` is accepted.~~ **Met** on 2026-07-31.\n"
         )
         self.assertEqual(acceptance_prerequisites(body), [("0004", False), ("0001", True)])
 
@@ -115,7 +115,7 @@ class PrerequisitesAreDerivedFromTheAcceptanceSection(unittest.TestCase):
 
 
 class TheAcceptanceOrderIsEnforced(unittest.TestCase):
-    PATHS = {"0001": "specs/0001-a.md", "0004": "specs/0004-b.md", "0011": "specs/0011-c.md"}
+    PATHS = {"0001": "foundation/0001-a.md", "0004": "foundation/0004-b.md", "0011": "foundation/0011-c.md"}
 
     def order(self, prerequisites: dict, statuses: dict) -> list[str]:
         return check_acceptance_order(prerequisites, statuses, self.PATHS)

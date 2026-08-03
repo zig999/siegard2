@@ -1,7 +1,7 @@
 # Generated from ko.rule.billing.invoice-amount by typescript-node 0.1.0 (judged track).
-# specs/0004 R7: this file is not hand-edited. Change the knowledge object.
+# foundation/0004 R7: this file is not hand-edited. Change the knowledge object.
 #
-# Recorded rather than observed. specs/0004 R3 puts this class on the judged track, which means an
+# Recorded rather than observed. foundation/0004 R3 puts this class on the judged track, which means an
 # agent produces it — `validator-producer`. No agent ran here, exactly as no agent ran for the
 # recorded results in fixtures/knowledge-change-loop/, and the fixture README says so. What this
 # file makes testable is the half R3 actually specifies: a judged artifact is verified against a
@@ -9,7 +9,7 @@
 # not accepted output.
 #
 # Python rather than TypeScript for one reason: the conformance suite has to *execute* against it,
-# and a TypeScript file in this repository would be checked by reading. specs/0004 R5 forbids
+# and a TypeScript file in this repository would be checked by reading. foundation/0004 R5 forbids
 # presenting a passing suite as byte identity, and it equally forbids presenting an unread file as
 # a passing suite.
 

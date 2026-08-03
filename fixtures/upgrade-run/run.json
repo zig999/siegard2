@@ -1,13 +1,13 @@
 {
   "producer": "upgrade",
-  "description": "Three upgrade outcomes, recorded so a test reproduces each rather than asserting them from memory. specs/0008 R16 and R17 are what they cover, and specs/0008 R21 the third.",
+  "description": "Three upgrade outcomes, recorded so a test reproduces each rather than asserting them from memory. foundation/0008 R16 and R17 are what they cover, and foundation/0008 R21 the third.",
   "cases": [
     {
       "name": "same-version",
       "situation": "the installed distribution is the one being installed",
       "expected_outcome": "no-op",
       "expected_marker": "nothing to do",
-      "requirement": "specs/0008 R16"
+      "requirement": "foundation/0008 R16"
     },
     {
       "name": "local-divergence",
@@ -15,7 +15,7 @@
       "diverge": "agents/concept-author.md",
       "expected_outcome": "refused",
       "expected_marker": "changed since installation",
-      "requirement": "specs/0008 R17"
+      "requirement": "foundation/0008 R17"
     },
     {
       "name": "shadowed-agent",
@@ -23,7 +23,7 @@
       "shadow": "concept-author",
       "expected_outcome": "reported",
       "expected_marker": "not reachable",
-      "requirement": "specs/0008 R21"
+      "requirement": "foundation/0008 R21"
     }
   ]
 }
