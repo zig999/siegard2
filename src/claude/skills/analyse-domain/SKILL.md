@@ -39,6 +39,44 @@ rules bind the analysis:
 - **A fact the analysis decided — rather than read — carries `rationale`.** That is what lets a
   reviewer accept what the material stated and argue with what you concluded.
 
+How to decide, kind by kind. The schema says what each kind may declare; this is the judgment
+that decides what goes in it:
+
+- **Language first.** The material's recurring nouns, with the meanings the material gives them,
+  are the candidate definitions — the set of definitions is the ubiquitous language. A term that
+  keeps one meaning everywhere is one definition. A term whose meaning shifts between departments
+  is the strongest boundary signal you will get: two meanings, two contexts, one definition in
+  each.
+- **A context is a linguistic boundary.** Not a team, not a deployment unit, not a module. Draw
+  one where the language changes or where somebody else's model gets translated at the edge.
+  In a first pass, fewer and larger contexts beat many thin ones.
+- **Identity decides a definition.** Ask whether the domain cares *which one* it is or only
+  *what it holds*. Most things a first pass calls entities are value objects: where two
+  instances with equal attributes are interchangeable, the thing is replaced, not modified.
+- **An aggregate is a consistency boundary, not an object graph.** Group only what must change
+  together in one transaction; the default size is small. A reference that leaves the boundary
+  goes by identity, never by containment. When an invariant seems to demand a bigger aggregate,
+  first ask whether it truly needs to hold immediately — most such rules converge, and that is a
+  rule declaring eventual consistency, not a wider boundary.
+- **One rule, one falsifiable condition.** "Orders are validated" is prose; "an order total MUST
+  be greater than zero" is a rule. Where the material states a policy vaguely, record the part
+  that is falsifiable and gap the rest.
+- **A lifecycle only where the domain tracks states.** It needs transitions whose triggers the
+  business names. A flag, or a value computed from other facts, is an attribute. Record
+  rejections deliberately: refusing a trigger is a business decision worth keeping.
+- **An interface is what crosses a boundary.** An event records a fact that already happened and
+  is named in the past tense; a command requests something that may still be refused. What a
+  context consumes from another is recorded on the consuming side, pointing at the published
+  contract that owes it compatibility.
+- **A process only for a flow that crosses nodes.** A saga exists because of its compensations;
+  a flow with no failure path worth recording is rarely worth a process node.
+- **A relationship records power, not plumbing.** It says who owes compatibility to whom. Two
+  contexts that do not need each other stay unconnected — going separate ways is a real answer,
+  and a map that connects everything says nothing.
+- **What never enters the base:** persistence, UI, stack, performance — implementation knowledge
+  is not domain knowledge. And no fact enters because it is plausible. Plausible is the failure
+  mode this framework exists to catch.
+
 ### 2. Write
 
 The path is the identity. A context sits at `context/<slug>.md`; every other node sits at
