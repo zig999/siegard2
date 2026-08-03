@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/knowledge-system.json",
+  "title": "knowledge system defaults",
+  "description": "The frontmatter of `knowledge/system.md`: the values every attribute inherits and the ceiling the body-length check enforces, declared once for the base.\n\nIt had no contract, and the argument for leaving it that way was that the knowledge validator already checked the four facts by name — so a schema would be a second home for them. That argument stopped holding when the validator it named was removed with the generation path: the facts went from checked in one place to checked in none, and a scaffold that fills in no default cannot catch a value somebody edited to nonsense afterwards.\n\nThis is deliberately narrow. It fixes the shape of four values and says nothing about what they should be — a timezone, a currency and an identity strategy are facts about the repository that installs Siegard, and a framework that shipped defaults for them would be shipping domain decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "defaults",
+    "limits"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "knowledge-system/1",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape. It is declared rather than exempt: the exemption belongs to vocabularies Claude Code owns and silently ignores unknown fields in, and this frontmatter is Siegard's own."
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timezone",
+        "currency",
+        "identity_strategy"
+      ],
+      "description": "What every attribute inherits and no attribute repeats. An override is a fact about the attribute that carries it; a repetition is the noise declaring them once removes.",
+      "properties": {
+        "timezone": {
+          "type": "string",
+          "pattern": "^[A-Za-z]+(_[A-Za-z]+)*(/[A-Za-z]+(_[A-Za-z]+)*)+$",
+          "description": "An IANA zone name, `America/Sao_Paulo` rather than an offset. An offset is a fact about one instant and a zone is a fact about a place, and a `datetime` attribute inherits the second."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "An ISO 4217 code, which every `money` attribute inherits. Three uppercase letters is the whole constraint: which currency a repository trades in is its own fact, and a framework naming one would be naming a domain decision."
+        },
+        "identity_strategy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How an entity's identity is formed where the object does not say. Deliberately a free string: the vocabulary belongs to the stack a repository runs on, and closing it here would put stack knowledge in a framework contract."
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "body_lines"
+      ],
+      "description": "What a validator enforces and may not supply. A ceiling chosen by whatever reads the base is a hidden default, and a hidden default is rejected — so where this is absent the check reports itself unenforceable rather than assuming a value.",
+      "properties": {
+        "body_lines": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The body-length ceiling, in lines. A number rather than a range because the check is a comparison, and it is the repository's to choose: a value shipped by the framework would be a threshold nobody calibrated."
+        }
+      }
+    }
+  }
+}

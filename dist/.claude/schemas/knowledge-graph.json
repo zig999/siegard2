@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/knowledge-graph.json",
+  "title": "Siegard materialized knowledge graph",
+  "description": "Contract for knowledge/graph.json, the materialized form of a knowledge base. The ontology defers this schema to the materializer, and this distribution ships none. The artifact is derived and R42 forbids hand-editing it. It exists because expansion, impact analysis, and the projections all need the same resolved graph, and a versioned schema is required for data a downstream agent parses to reach a decision. `edge_kinds` makes the graph self-describing: a consumer reads the traversal policy R19 requires from the artifact rather than from whatever materialized it. A node carries no status: `knowledge-graph/1` mirrored the knowledge object's, and both went when the maturity ladder did, so every node in the graph is a current fact and expansion has nothing to filter on.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "edge_kinds",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "knowledge-graph/2",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "edge_kinds": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "The closed edge vocabulary of spec 0003 R13, with the cardinality R18 requires enforced and the traversal policy R19 requires declared. Keyed by edge name.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "minimum",
+          "maximum",
+          "inverse_maximum",
+          "traversed",
+          "depth"
+        ],
+        "properties": {
+          "origin_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Node types that may declare this edge. Absent or empty means any knowledge object."
+          },
+          "target_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Node types this edge may name. Absent or empty means any node."
+          },
+          "minimum": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maximum": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "inverse_maximum": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "How many edges of this kind may arrive at one target. This is how R20's at-most-one-lifecycle-per-definition becomes a check."
+          },
+          "traversed": {
+            "type": "boolean",
+            "description": "Whether expansion follows this edge. R19 requires the policy to be declared, and expansion MUST follow only traversed edges."
+          },
+          "depth": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "crosses_context": {
+            "type": "boolean",
+            "description": "Whether this edge is exempt from R15. True only for the three edges whose purpose is to leave or to name a partition."
+          }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Every permanent node, ordered lexicographically by id so identical input produces byte-identical output.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "definition",
+              "rule",
+              "lifecycle",
+              "interface",
+              "boundary",
+              "process",
+              "adr"
+            ],
+            "description": "The six knowledge-object types, plus `adr`. An ADR is a node and never a knowledge object (R7)."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "question": {
+            "type": "string",
+            "description": "The retrieval key. Absent on an ADR, which answers why rather than what."
+          },
+          "boundary": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string",
+            "description": "The bounded context the boundary chain resolves to. Absent on an ADR and on a bounded context itself."
+          },
+          "ddd": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Every declared relationship. Only a declared relationship is an edge: a relationship inferred from prose is not, because two readings of one paragraph produce two graphs.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "target",
+          "kind",
+          "locator"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where in the source's frontmatter this edge was declared, so a report names the field rather than the file."
+          }
+        }
+      }
+    }
+  }
+}

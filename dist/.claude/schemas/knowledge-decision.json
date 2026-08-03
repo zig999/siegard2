@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/knowledge-decision.json",
+  "title": "Siegard knowledge decision",
+  "description": "Frontmatter contract for a `decision` node in a consumer repository's knowledge tree. This is product surface: it ships, and the records it governs are the consumer's own business decisions — why a domain choice was made and what it rejected. It governs the consumer's own records and nothing the framework's authors decide about the framework. `knowledge-decision/1` carried a `proposed | accepted | superseded` status; the knowledge lifecycle was removed and the field with it, and `additionalProperties: false` now rejects it rather than ignoring it. A record in the tree is one the consumer decided.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "contract_version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}$",
+      "description": "Four-digit id, unique within the knowledge tree's decision directory and never reused. Must be a quoted string: YAML reads an unquoted 0010 as octal 8 and an unquoted 0008 as a string, so the unquoted form is neither safe nor type-stable."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The decision stated as an outcome."
+    },
+    "contract_version": {
+      "const": "knowledge-decision/2",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    }
+  }
+}

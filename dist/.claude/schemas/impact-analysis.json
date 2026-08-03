@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/impact-analysis.json",
+  "title": "Impact analysis",
+  "description": "What a request touched in the knowledge a repository already held, computed from the objects the analysis wrote. `/5` follows the constructs out of a document and into the base: `record_id` replaces `model_id`, because what names a run is the record holding what has no file, and `implicated[].kind` closes at `domain-object` and `adr`, because a construct is now an object rather than an element of a document held elsewhere. Each entry carries `operation` and `reason`, which is what makes the artifact the map a person reads: a verdict says whether knowledge changed, an operation says what happens to each artifact, and the reason says why that artifact and not another.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "analysis_id",
+    "request_id",
+    "record_id",
+    "producer",
+    "consumer",
+    "verdict",
+    "base_state",
+    "implicated"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "impact-analysis/5",
+      "description": "A consumer rejects an artifact it was not built to read rather than inferring version from shape."
+    },
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^ia_[0-9a-f]{8}$",
+      "description": "Stable identifier for this analysis, supplied by the caller and never minted by the producer: an analysis stamped from a clock could not be repeated and compared."
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^rq_[0-9a-f]{8}$",
+      "description": "The request this analysis answers. A request is prose a person supplied plus the material it names; no capability produces one, so the identifier is the caller's to supply."
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What performed the analysis. Not a const: the contract requires the artifact, not a particular producer of it."
+    },
+    "consumer": {
+      "const": "ingest-domain",
+      "description": "Who reads it. The ingestion reports the verdict and the implicated set before it expands, which is what makes the analysis a step rather than an artifact nobody opens."
+    },
+    "verdict": {
+      "enum": [
+        "none",
+        "update",
+        "create"
+      ],
+      "description": "Whether permanent knowledge must change at all. A closed field, so a caller branches on a value rather than on a reading of prose. `none` means the knowledge already holds what the request asks for, and is a real outcome rather than a failure."
+    },
+    "base_state": {
+      "enum": [
+        "empty",
+        "populated"
+      ],
+      "description": "Whether anything this analysis could implicate existed when it ran. It is an observation, not a judgment: the producer looked and records what was there. It exists because the first request against a repository has nothing to implicate, and a verdict naming nothing is honest there and empty everywhere else. Recorded rather than derived, because the analysis is what observed the state and a later reader cannot re-observe it."
+    },
+    "implicated": {
+      "type": "array",
+      "description": "Every artifact this request implicates, by identifier, with what happens to it and why. Identifiers rather than content: restating an artifact here would put a second copy of it in a temporary file, and the copy is the one that stops being maintained.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "operation",
+          "reason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The artifact's own identifier, as that artifact declares it. A knowledge object or ADR identifier where the artifact exists; a domain model element identifier where the operation is `create` and no stored artifact answers to it yet."
+          },
+          "kind": {
+            "enum": [
+              "domain-object",
+              "adr"
+            ],
+            "description": "Which contract resolves the identifier. `domain-object` is what the base holds; `adr` is a decision record, which is a graph node and never an object. `knowledge-object` and `domain-model-element` are gone with the profile and the document they named."
+          },
+          "operation": {
+            "enum": [
+              "create",
+              "update",
+              "retire"
+            ],
+            "description": "What this request does to this artifact. The verdict says whether knowledge must change; this says what happens to each thing that changes, which is what a reviewer reads before anything is authored. A change that both narrows an existing artifact and introduces a new one is two entries, because compressing them into one loses the fact that something new appears."
+          },
+          "driver": {
+            "type": "string",
+            "pattern": "^dm\\.[a-z]+\\.[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "The domain model element that causes this entry. Present for `create` and `update`, where a model element is what drives the change. Absent for a `retire` driven by an element the model no longer holds, which is an absence and has no identifier to name."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What about this artifact the request makes wrong, incomplete, or absent. `because the request asks for it` is not a reason: it restates that the artifact is in the list. A reason names the property of this artifact that changed, which is the only thing distinguishing a considered entry from a swept-in one."
+          }
+        }
+      }
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^ar_[0-9a-f]{8}$",
+      "description": "The analysis this verdict was reached over. It replaces the model identifier the previous version carried: the constructs are files now, and what names the run is the record holding what has no file."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "enum": [
+              "update",
+              "create"
+            ]
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "implicated": {
+            "minItems": 1
+          }
+        },
+        "description": "A verdict that knowledge must change while naming nothing that changes is a verdict with nothing behind it. /2 relaxed this over an empty base because no stored identifier existed to name; /3 removes the relaxation, because `domain-model-element` gives a first analysis identifiers of its own."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "none"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "implicated": {
+            "maxItems": 0
+          }
+        },
+        "description": "`none` states that the knowledge already holds what was asked. An entry alongside it claims something changes, which contradicts the verdict."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "base_state": {
+            "const": "empty"
+          }
+        },
+        "required": [
+          "base_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "verdict": {
+            "const": "create"
+          }
+        },
+        "description": "Where nothing exists, nothing can be updated and nothing can already hold the answer. The one verdict an empty base admits is `create`, and reporting it as `none` would say the request was answered by knowledge that is not there."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "base_state": {
+            "const": "empty"
+          }
+        },
+        "required": [
+          "base_state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "implicated": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "const": "domain-object"
+                },
+                "operation": {
+                  "const": "create"
+                }
+              }
+            }
+          }
+        },
+        "description": "Over a base that held nothing, every entry is a construct this run brought into existence. An entry naming a stored artifact asserts something the observation denies."
+      }
+    }
+  ]
+}
