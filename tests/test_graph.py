@@ -239,9 +239,69 @@ def test_totality_covers_nonterminal_states_and_exempts_terminal_ones(root, soun
         "states": ["draft", "placed", "done"], "initial": "draft", "terminal": ["done"],
         "transitions": [{"from": "draft", "trigger": "place", "to": "placed"}]})
     problems = problems_in(root)
-    assert any("state `placed` has no transition and no rejection for trigger `place`" in p
-               for p in problems)
+    assert any("state `placed` has no transition, no rejection and no gap for trigger `place`"
+               in p for p in problems)
     assert not any("state `done`" in p for p in problems)
+
+
+def test_a_gap_excuses_an_uncovered_pairing(root, sound_base):
+    sound_base("lifecycle/sales/order", {
+        "title": "Order lifecycle", "summary": "States of an order.",
+        "subject": "definition/sales/order",
+        "states": ["draft", "placed"], "initial": "draft",
+        "transitions": [{"from": "draft", "trigger": "place", "to": "placed"}],
+        "gaps": [{"field": "transitions.placed.place",
+                  "why": "The material does not say what placing a placed order does."}]})
+    assert problems_in(root) == []
+
+
+def test_a_totality_gap_naming_an_unknown_state_is_refused(root, sound_base):
+    sound_base("lifecycle/sales/order", {
+        "title": "Order lifecycle", "summary": "States of an order.",
+        "subject": "definition/sales/order",
+        "states": ["draft", "placed"], "initial": "draft",
+        "transitions": [{"from": "draft", "trigger": "place", "to": "placed"}],
+        "gaps": [{"field": "transitions.plased.place",
+                  "why": "A typo would otherwise hide an uncovered pairing."}]})
+    assert any("names `plased`, which is not a declared state" in p for p in problems_in(root))
+
+
+def test_a_totality_gap_on_a_covered_pairing_is_refused(root, sound_base):
+    sound_base("lifecycle/sales/order", {
+        "title": "Order lifecycle", "summary": "States of an order.",
+        "subject": "definition/sales/order",
+        "states": ["draft", "placed"], "initial": "draft", "terminal": ["placed"],
+        "transitions": [{"from": "draft", "trigger": "place", "to": "placed"}],
+        "gaps": [{"field": "transitions.draft.place",
+                  "why": "This pairing is covered; the gap contradicts the table."}]})
+    assert any("names a covered pairing" in p for p in problems_in(root))
+
+
+def test_a_rejection_without_an_error_needs_a_gap(root, sound_base):
+    lifecycle = {
+        "title": "Order lifecycle", "summary": "States of an order.",
+        "subject": "definition/sales/order",
+        "states": ["draft", "placed"], "initial": "draft",
+        "transitions": [{"from": "draft", "trigger": "place", "to": "placed"}],
+        "rejections": [{"from": "placed", "trigger": "place"}]}
+    sound_base("lifecycle/sales/order", lifecycle)
+    assert any("no gap names `rejections.placed.place.error`" in p for p in problems_in(root))
+    sound_base("lifecycle/sales/order", {**lifecycle, "gaps": [
+        {"field": "rejections.placed.place.error",
+         "why": "The material refuses the trigger but names no error."}]})
+    assert problems_in(root) == []
+
+
+def test_intake_holds_material_and_is_never_validated(root, sound_base):
+    (root / "intake").mkdir()
+    (root / "intake" / "request.md").write_text("The material, as supplied.\n", encoding="utf-8")
+    done = run(root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    derived = json.loads((root / "graph.json").read_text())
+    assert all(not n["id"].startswith("intake") for n in derived["nodes"])
+    single = run("--node", root / "intake" / "request.md", root)
+    assert single.returncode == 0
+    assert "never validated" in single.stdout
 
 
 def test_a_rule_reaching_outside_its_aggregate_declares_consistency(root, sound_base):

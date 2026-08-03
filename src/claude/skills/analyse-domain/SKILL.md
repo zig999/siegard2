@@ -89,6 +89,11 @@ The path is the identity. A context sits at `context/<slug>.md`; every other nod
 `<kind>/<context>/<slug>.md`. There is no id field, no type field and no boundary field — the
 path already says all three, so there is nothing to keep in step.
 
+Before any node, persist the material: the prose as supplied, plus any files it references, go
+under `intake/` in the knowledge root. The validator ignores that directory the way it ignores
+`graph.json`. Point every `sources` entry at a file under it — what a node was read from should
+be something a reviewer can open, not a conversation nobody can reread.
+
 Write contexts first, then aggregates and definitions, then the rest. The body of every file
 carries exactly two headings, in order: `## What it is`, then `## Rules`. One sentence per line;
 a section with nothing to say carries the literal line `None.`

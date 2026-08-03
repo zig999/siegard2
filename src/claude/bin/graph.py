@@ -11,7 +11,10 @@ a required field may be absent when a `gaps` entry names it. A gap excuses knowl
 a malformed value is an error whatever the gaps say. On top of that run the checks no per-file
 schema can express: references resolve, one lifecycle per subject, one root per aggregate, a
 consumed interface's upstream is published, a transition emits an event, a rule reaching outside
-its aggregate says how it holds, and a transition table is total over its non-terminal states.
+its aggregate says how it holds, and a transition table is total over its non-terminal states —
+where a gap names `transitions.<state>.<trigger>`, or a rejection's absent error as
+`rejections.<from>.<trigger>.error`, the absence is declared and accepted. `intake/` under the
+root holds the material the analysis read: kept for `sources` to point at, never validated.
 
 **graph.json is derived, never edited.** It is refused entirely while the base has problems: an
 index over a broken base reports a shape nobody decided. `--check` compares and never repairs,
@@ -195,6 +198,8 @@ def lifecycle_problems(nid: str, front: dict) -> list[str]:
     terminal = {s for s in (front.get("terminal") or []) if isinstance(s, str)}
     transitions = [t for t in (front.get("transitions") or []) if isinstance(t, dict)]
     rejections = [r for r in (front.get("rejections") or []) if isinstance(r, dict)]
+    gap_fields = {g["field"] for g in (front.get("gaps") or [])
+                  if isinstance(g, dict) and isinstance(g.get("field"), str)}
 
     def held(state, at: str) -> None:
         if isinstance(state, str) and state not in declared:
@@ -208,18 +213,39 @@ def lifecycle_problems(nid: str, front: dict) -> list[str]:
         held(transition.get("to"), f"transitions[{index}].to")
     for index, rejection in enumerate(rejections):
         held(rejection.get("from"), f"rejections[{index}].from")
+        if "error" in rejection or not (isinstance(rejection.get("from"), str)
+                                        and isinstance(rejection.get("trigger"), str)):
+            continue  # named, or a shape the schema already reported
+        field = f"rejections.{rejection['from']}.{rejection['trigger']}.error"
+        if field not in gap_fields:
+            problems.append(
+                f"{nid}: rejections[{index}] carries no error and no gap names `{field}`; "
+                f"an unnamed refusal is a gap, never an invented domain error")
 
     covered = {(entry.get("from"), entry.get("trigger")) for entry in transitions + rejections}
+    excused = set()
+    for field in sorted(gap_fields):
+        parts = field.split(".")
+        if len(parts) != 3 or parts[0] != "transitions":
+            continue
+        state, trigger = parts[1], parts[2]
+        held(state, f"the gap on `{field}`")
+        if (state, trigger) in covered:
+            problems.append(f"{nid}: the gap on `{field}` names a covered pairing; "
+                            f"a gap names an absent fact")
+        excused.add((state, trigger))
+
     triggers = sorted({entry.get("trigger") for entry in transitions + rejections
                        if isinstance(entry.get("trigger"), str)})
     for state in states:
         if state in terminal:
             continue  # terminal is declared, and declared is what exempts it
         for trigger in triggers:
-            if (state, trigger) not in covered:
+            if (state, trigger) not in covered and (state, trigger) not in excused:
                 problems.append(
-                    f"{nid}: state `{state}` has no transition and no rejection for trigger "
-                    f"`{trigger}`; an uncovered pairing is where behaviour gets invented later")
+                    f"{nid}: state `{state}` has no transition, no rejection and no gap for "
+                    f"trigger `{trigger}`; an uncovered pairing is where behaviour gets "
+                    f"invented later")
     return problems
 
 
@@ -304,6 +330,8 @@ def collect(root: Path, validator, allowed, obligations) -> tuple[dict[str, dict
     problems: list[str] = []
     for path in sorted(root.rglob("*.md")):
         relative = path.relative_to(root)
+        if relative.parts[0] == "intake":
+            continue  # the material the analysis read: kept for sources, never validated
         nid = id_of(relative)
         if nid is None:
             problems.append(f"{relative.as_posix()}: not context/<slug>.md or "
@@ -367,6 +395,10 @@ def check_single(root: Path, named: str, validator, allowed, obligations) -> int
     except ValueError:
         print(f"cannot run: {named} is not under {root}", file=sys.stderr)
         return CANNOT_RUN
+    if relative.parts[0] == "intake":
+        print(f"{relative.as_posix()}: sits under intake/, which holds the material the "
+              f"analysis read and is never validated")
+        return 0
     nid = id_of(relative)
     if nid is None:
         print(f"{relative.as_posix()}: the path computes to no identifier")

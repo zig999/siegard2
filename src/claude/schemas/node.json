@@ -26,7 +26,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "type": "string", "minLength": 1 },
-      "description": "Where this node was read from."
+      "description": "Where this node was read from — ordinarily files under the knowledge root's `intake/`, which the validator never reads."
     },
     "gaps": {
       "type": "array",
@@ -126,7 +126,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/rejection" },
-      "description": "Decided non-transitions. Every pairing of a non-terminal state with a mentioned trigger is a transition or a rejection."
+      "description": "Decided non-transitions. Every pairing of a non-terminal state with a mentioned trigger is a transition, a rejection, or a gap naming `transitions.<state>.<trigger>` — the pairing the material left open."
     },
     "ownership": {
       "enum": ["published", "consumed"],
@@ -463,12 +463,15 @@
     },
     "rejection": {
       "type": "object",
-      "required": ["from", "trigger", "error"],
+      "required": ["from", "trigger"],
       "additionalProperties": false,
       "properties": {
         "from": { "$ref": "#/$defs/stateName" },
         "trigger": { "$ref": "#/$defs/slug" },
-        "error": { "$ref": "#/$defs/definitionRef" }
+        "error": {
+          "$ref": "#/$defs/definitionRef",
+          "description": "The domain error this refusal surfaces. Absent only where a gap names `rejections.<from>.<trigger>.error` — a refusal the material states without naming what it raises."
+        }
       }
     },
     "step": {
