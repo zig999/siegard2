@@ -20,14 +20,18 @@ root holds the material the analysis read: kept for `sources` to point at, never
 index over a broken base reports a shape nobody decided. `--check` compares and never repairs,
 because a check that fixes what it was meant to detect reports success on a defect.
 
-**This script validates and derives; it does not query.** What a reader wants to know about a
-sound base is read from `graph.json`, never asked of this script — a question the index cannot
-answer is grounds to enrich `derive()`, never to grow a subcommand.
+**This script validates, derives and reports from the nodes; it never reads graph.json to
+answer a question.** The index is something it writes and checks, never consults. Bulk context —
+identifiers, titles, summaries, edges — is read from `graph.json` by whoever needs it; a pointed
+report (`--gaps`) is asked of this script. Both derive from the nodes by the same pipeline, so
+neither can disagree with the other, and neither can be stale.
 
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  graph.py <knowledge-root>              validate everything, then write graph.json
         graph.py --check <knowledge-root>      validate and compare; write nothing
+        graph.py --gaps <knowledge-root>       validate, then print `<node>: <gap fields>`;
+                                               write nothing
         graph.py --node <file> <knowledge-root>  validate one file (cross-node checks do not run)
 Exit:   0 sound (and, with --check, current)
         1 problems, or --check and graph.json is stale
@@ -431,10 +435,24 @@ def check_single(root: Path, named: str, validator, allowed, obligations) -> int
     return 0
 
 
+def gaps_report(nodes: dict[str, dict]) -> str:
+    """One line per node with gaps — `<id>: <field>, <field>` — derived from the nodes the
+    same way graph.json is, so the two can never disagree. The `why` behind each field stays
+    in the node file the line names."""
+    lines = []
+    for nid in sorted(nodes):
+        gaps = nodes[nid]["front"].get("gaps") or []
+        if gaps:
+            lines.append(f"{nid}: {', '.join(sorted(g['field'] for g in gaps))}")
+    return "\n".join(lines) if lines else "no gaps declared"
+
+
 def main() -> int:
     args = sys.argv[1:]
     verify = "--check" in args
     args = [a for a in args if a != "--check"]
+    report = "--gaps" in args
+    args = [a for a in args if a != "--gaps"]
     single = None
     if "--node" in args:
         at = args.index("--node")
@@ -443,8 +461,12 @@ def main() -> int:
             return CANNOT_RUN
         single = args[at + 1]
         del args[at:at + 2]
+    if report and (verify or single is not None):
+        print("cannot run: --gaps stands alone", file=sys.stderr)
+        return CANNOT_RUN
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected [--check] [--node <file>] <knowledge-root>", file=sys.stderr)
+        print("cannot run: expected [--check | --gaps | --node <file>] <knowledge-root>",
+              file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
     if not root.is_dir():
@@ -465,9 +487,14 @@ def main() -> int:
     if problems:
         for problem in sorted(set(problems)):
             print(problem)
+        refused = "the gap report" if report else "graph.json"
         print(f"\n{len(set(problems))} problem(s) over {len(nodes)} node(s). "
-              f"graph.json is not derived over a base that does not hold together.")
+              f"{refused} is not derived over a base that does not hold together.")
         return 1
+
+    if report:
+        print(gaps_report(nodes))
+        return 0
 
     graph = derive(nodes)
     graph_contract = json.loads(GRAPH_CONTRACT.read_text(encoding="utf-8"))

@@ -18,9 +18,10 @@ than read, says so with `rationale`.
 
 `graph.json` is derived by `bin/graph.py` and is never edited: its nodes are the files and its
 edges are the references their frontmatter declares. Each node's entry lists its open gap fields,
-so what the base declares absent is read from the index without opening a file; the `why` behind
-a gap lives in the node. The same script is the validator, and it refuses to derive a graph over
-a base that does not hold together.
+and `bin/graph.py --gaps <knowledge-root>` prints that list straight from the nodes — both come
+from the same pipeline, so neither can disagree with the other; the `why` behind a gap lives in
+the node. The same script is the validator, and it refuses to derive a graph over a base that
+does not hold together.
 
 ## Entry point
 
