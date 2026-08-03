@@ -1,10 +1,12 @@
 ---
 name: analyse-domain
-description: Turns material a human supplies into a DDD analysis recorded as markdown nodes under a knowledge root, validates them, and derives graph.json. Use when a request describes a problem or a system and the base does not yet hold it. Not for generating code.
+description: Turns material a human supplies into a DDD analysis recorded as markdown nodes under a knowledge root, validates them, and derives graph.json. Use when a request describes a problem, a system, or a change to one the base already holds. Not for generating code.
 disable-model-invocation: true
 ---
 
-You turn material into domain nodes, and you stop. One invocation, one analysis.
+You turn material into domain nodes, and you stop. One invocation, one increment: the first
+fills an empty root, and every later one evolves what the root already holds — same order,
+same discipline.
 
 ## Required inputs
 
@@ -12,8 +14,16 @@ A missing input is a stop, not a default:
 
 1. **the material** — what the human supplied, in prose, plus any files it references.
 2. **the knowledge root** — the directory the nodes are written into. Empty is the ordinary
-   first run. Named by the human and absent, it is created empty; inferred rather than named,
-   its absence is a stop.
+   first run; populated, the invocation is a change to the base it holds. Named by the human
+   and absent, it is created empty; inferred rather than named, its absence is a stop.
+
+## Before anything: the tree
+
+The review is `git diff` over the knowledge root, and a diff only says what this invocation
+did when the root starts clean. Before any write, `git status --porcelain -- <knowledge-root>`
+must print nothing. Output is a stop: report what is pending and go no further — committing,
+discarding, or overriding is the human's decision, never the analysis's. A root not under git
+control is the same stop: without git there is no review.
 
 ## Before anything: read the contract
 
@@ -30,10 +40,28 @@ same way.
 ## The order
 
 ```
-analyse → write → validate → report → stop
+situate → analyse → write → validate → report → stop
 ```
 
-### 1. Analyse
+### 1. Situate
+
+An empty root has nothing to situate: skip to the analysis. A populated root is a standing
+decision set, and this invocation is a change to it — located, not re-derived:
+
+- **Trust the index only after checking it.** Run the validator with `--check`; a stale
+  `graph.json` is rederived by a full validation run before anything relies on it.
+- **Read `graph.json`, and only it**: identifiers, titles, summaries and every edge, at a
+  fraction of the cost of opening the base. Locate the nodes the material speaks to. Where the
+  material's vocabulary does not surface in the index, grep the root for its terms — aliases
+  and bodies answer by filename, costing nothing to read.
+- **Close the impact set over the edges, in both directions**: what the entry nodes reference,
+  and what references them. The whole-base checks the validator runs are what propagation
+  means — the impact set is every node that must still satisfy them after the change.
+- **Read the impact set and nothing else.** Outside it, standing decisions stand: this
+  invocation does not reopen them, however improvable they look. Material that invalidates a
+  context boundary is a finding for the report, never a change this invocation makes.
+
+### 2. Analyse
 
 Decide the contexts, the aggregates inside each, the definitions with their typed attributes, the
 rules, the lifecycles, the interfaces between contexts, and the processes that cross them. Two
@@ -88,7 +116,7 @@ that decides what goes in it:
   is not domain knowledge. And no fact enters because it is plausible. Plausible is the failure
   mode this framework exists to catch.
 
-### 2. Write
+### 3. Write
 
 The path is the identity. A context sits at `context/<slug>.md`; every other node sits at
 `<kind>/<context>/<slug>.md`. There is no id field, no type field and no boundary field — the
@@ -98,6 +126,14 @@ Before any node, persist the material: the prose as supplied, plus any files it 
 under `intake/` in the knowledge root. The validator ignores that directory the way it ignores
 `graph.json`. Point every `sources` entry at a file under it — what a node was read from should
 be something a reviewer can open, not a conversation nobody can reread.
+
+A change persists the same way: a new file under `intake/`, never an edit to what intake
+already holds — it is the record of what was read, and records do not move. A touched node
+appends the new source. Where the new material contradicts a standing fact, the newer material
+wins and the diff shows the cost; closing a gap takes exactly that — material stating the
+fact, cited from the new intake — and nothing else closes one. Removing a node decides every
+node that references it, in the same invocation: the validator refuses a base with the
+reference left hanging.
 
 Write contexts first, then aggregates and definitions, then the rest. The body of every file
 carries exactly two headings, in order: `## What it is`, then `## Rules`. One sentence per line;
@@ -109,7 +145,7 @@ While writing, a single file can be checked on its own:
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/graph.py --node <file> <knowledge-root>
 ```
 
-### 3. Validate, and derive the graph
+### 4. Validate, and derive the graph
 
 When every node is written, run:
 
@@ -131,13 +167,17 @@ nobody stated, an unnamed upstream contract, a consistency nobody decided — is
 never a value you supply. If the validator names a missing field and the material does not answer
 it, the correction is a gap naming that field, not an answer.
 
-### 4. Report, and stop
+### 5. Report, and stop
 
 Report, in this order:
 
-- every node written, by identifier;
+- every node written, by identifier — on a populated root, created, changed and removed
+  listed apart;
+- the impact set that was read, so the reviewer can judge what the analysis looked at, not
+  only what it touched;
 - every node carrying `rationale` — these are the claims a reviewer can reject;
-- every question the material left open, and the gap that records it;
+- every gap closed, with the material that closed it, and every question the material left
+  open with the gap that records it;
 - the validator's final output, verbatim.
 
 Then stop. `git diff` over the knowledge root is the review, and it belongs to a person.
@@ -150,3 +190,8 @@ Then stop. `git diff` over the knowledge root is the review, and it belongs to a
 - Record a status, a maturity level or an approval state — an absent fact is a gap, and nothing
   else says how "done" a node is.
 - Restate the contract's vocabularies from memory instead of reading the schema.
+- Reopen a decision outside the impact set, or redraw a context boundary as a side effect of a
+  change — a boundary the material invalidates is reported, and the decision belongs to a
+  person.
+- Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
+  what to do with it is the human's call.
