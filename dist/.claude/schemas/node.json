@@ -126,7 +126,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/rejection" },
-      "description": "Decided non-transitions. Every pairing of a non-terminal state with a mentioned trigger is a transition, a rejection, or a gap naming `transitions.<state>.<trigger>` — the pairing the material left open."
+      "description": "Decided non-transitions. Every pairing of a non-terminal state with a mentioned trigger is a transition, a rejection, or a gap naming `transitions.<state>.<trigger>` — the pairing the material left open. Only that three-segment form excuses a pairing from the totality check; a two-segment `transitions.<state>` records that the material names no way out of a state, and excuses nothing."
     },
     "ownership": {
       "enum": ["published", "consumed"],
@@ -366,7 +366,7 @@
         "field": {
           "type": "string",
           "pattern": "^[a-z_]+(\\.[a-z0-9_.\\[\\]-]+)*$",
-          "description": "The absent field, by name. A dotted path names something missing inside a field the node does declare."
+          "description": "The absent field, by name. A bare name is accepted only while the node does not declare the field; once the field is declared, an absence inside it takes a dotted path. Two canonical tails keep gaps comparable across analyses: `<field>.[]` says entries are missing whose names the material does not give, and `<field>.<label>` names the one missing thing."
         },
         "why": { "type": "string", "minLength": 1 }
       }

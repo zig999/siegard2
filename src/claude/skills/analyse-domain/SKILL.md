@@ -66,14 +66,19 @@ that decides what goes in it:
   rule declaring eventual consistency, not a wider boundary.
 - **One rule, one falsifiable condition.** "Orders are validated" is prose; "an order total MUST
   be greater than zero" is a rule. Where the material states a policy vaguely, record the part
-  that is falsifiable and gap the rest.
+  that is falsifiable and gap the rest. A concept the material names and a rule must bind is a
+  definition, however thin — a node whose gaps say what the material left unsaid, not a gap
+  label coined on the rule.
 - **A lifecycle only where the domain tracks states.** It needs transitions whose triggers the
   business names. A flag, or a value computed from other facts, is an attribute. Record
   rejections deliberately: refusing a trigger is a business decision worth keeping.
 - **An interface is what crosses a boundary.** An event records a fact that already happened and
   is named in the past tense; a command requests something that may still be refused. What a
   context consumes from another is recorded on the consuming side, pointing at the published
-  contract that owes it compatibility.
+  contract that owes it compatibility. A third-party system is an upstream context like any
+  other: name it by the capability it supplies, record its interface there as published, and
+  leave the concrete vendor in the intake. A gap on `upstream` says the contract is unknown —
+  never that it is external.
 - **A process only for a flow that crosses nodes.** A saga exists because of its compensations;
   a flow with no failure path worth recording is rarely worth a process node.
 - **A relationship records power, not plumbing.** It says who owes compatibility to whom. Two

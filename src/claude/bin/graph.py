@@ -131,7 +131,8 @@ def node_problems(front, kind: str, validator, allowed, obligations) -> list[str
                                 f"which the node does not declare")
         elif head in front:
             problems.append(f"gaps[{index}]: `{field}` is declared by the node; "
-                            f"a gap names an absent fact")
+                            f"a gap names an absent fact. An absence inside `{field}` "
+                            f"takes a dotted path (`{field}.<what-is-missing>`)")
     return problems
 
 

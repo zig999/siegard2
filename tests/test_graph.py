@@ -161,7 +161,9 @@ def test_a_gap_on_a_declared_field_is_refused(root, sound_base):
         "title": "Invoice", "summary": "The bill.", "ddd": "value-object",
         "attributes": [{"name": "number", "type": "string", "max_length": 10}],
         "gaps": [{"field": "attributes", "why": "but it is right there"}]})
-    assert any("absent fact" in p for p in problems_in(root))
+    problems = problems_in(root)
+    assert any("absent fact" in p for p in problems)
+    assert any("takes a dotted path (`attributes.<what-is-missing>`)" in p for p in problems)
 
 
 def test_a_gap_on_a_field_the_kind_never_declares_is_refused(root, sound_base):
