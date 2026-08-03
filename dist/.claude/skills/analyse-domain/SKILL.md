@@ -71,7 +71,11 @@ rules bind the analysis:
   the absent field, with `why` saying what was missing. An invented value reads exactly like one
   the business stated, and that is the failure this framework exists to prevent.
 - **A fact the analysis decided — rather than read — carries `rationale`.** That is what lets a
-  reviewer accept what the material stated and argue with what you concluded.
+  reviewer accept what the material stated and argue with what you concluded. The line between
+  the two is what the material gives you to read: `rationale` covers a reading of stated
+  material — where a boundary falls, which construct a stated thing is — never a value the
+  material is silent on. A plausible value is a gap, not a decision; a lifecycle's initial
+  state nobody stated is the canonical case.
 
 How to decide, kind by kind. The schema says what each kind may declare; this is the judgment
 that decides what goes in it:
@@ -175,7 +179,8 @@ Report, in this order:
   listed apart;
 - the impact set that was read, so the reviewer can judge what the analysis looked at, not
   only what it touched;
-- every node carrying `rationale` — these are the claims a reviewer can reject;
+- every node carrying `rationale`, each by identifier — these are the claims a reviewer can
+  reject, and a claim without an identifier cannot be rejected in place;
 - every gap closed, with the material that closed it, and every question the material left
   open with the gap that records it;
 - the validator's final output, verbatim.
