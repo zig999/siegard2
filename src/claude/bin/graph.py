@@ -20,6 +20,10 @@ root holds the material the analysis read: kept for `sources` to point at, never
 index over a broken base reports a shape nobody decided. `--check` compares and never repairs,
 because a check that fixes what it was meant to detect reports success on a defect.
 
+**This script validates and derives; it does not query.** What a reader wants to know about a
+sound base is read from `graph.json`, never asked of this script — a question the index cannot
+answer is grounds to enrich `derive()`, never to grow a subcommand.
+
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  graph.py <knowledge-root>              validate everything, then write graph.json
@@ -379,7 +383,7 @@ def derive(nodes: dict[str, dict]) -> dict:
             entry["ddd"] = front["ddd"]
         gaps = front.get("gaps") or []
         if gaps:
-            entry["gaps"] = len(gaps)
+            entry["gaps"] = sorted(g["field"] for g in gaps)
         out_nodes.append(entry)
         for target, edge_kind, at in references(front, node["kind"], node["context"]):
             out_edges.append({"from": nid, "to": target, "kind": edge_kind, "at": at})

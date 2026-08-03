@@ -39,9 +39,10 @@
           },
           "ddd": { "type": "string" },
           "gaps": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "How many facts this node declares absent. Omitted when zero."
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[a-z_]+(\\.[a-z0-9_.\\[\\]-]+)*$" },
+            "description": "The fields this node declares absent, by gap `field` name, sorted. Omitted when none. The `why` behind each stays in the node file."
           }
         }
       }
