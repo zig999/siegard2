@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/graph.json",
+  "title": "Siegard graph",
+  "description": "The derived index of a knowledge root. Never authored and never edited: `bin/graph.py` derives it from the markdown nodes, and `--check` holds a committed copy to them. Nodes are the files; edges are the references their frontmatter declares. A relationship stated only in prose is not an edge, because two readings of one paragraph produce two graphs.",
+  "type": "object",
+  "required": ["contract_version", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "const": "siegard/1" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "file", "context", "title", "summary"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(context/[a-z0-9]+(-[a-z0-9]+)*|(aggregate|definition|rule|lifecycle|interface|process)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$"
+          },
+          "kind": {
+            "enum": ["context", "aggregate", "definition", "rule", "lifecycle", "interface", "process"]
+          },
+          "file": {
+            "type": "string",
+            "pattern": "\\.md$",
+            "description": "The node's file, relative to the knowledge root. Always `<id>.md`."
+          },
+          "context": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "title": { "type": "string" },
+          "summary": { "type": "string" },
+          "aggregate": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "ddd": { "type": "string" },
+          "gaps": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many facts this node declares absent. Omitted when zero."
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind", "at"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "kind": {
+            "enum": [
+              "aggregate", "relationship",
+              "attribute.ref", "attribute.of", "attribute.lifecycle",
+              "constrains", "subject", "emits", "rejection.error",
+              "payload", "upstream", "step", "compensation"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "description": "Where in the source node the reference sits, so a reader can open the place a defect names."
+          }
+        }
+      }
+    }
+  }
+}

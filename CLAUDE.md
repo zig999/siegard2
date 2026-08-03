@@ -1,8 +1,9 @@
 # Siegard Generator
 
-This repository is `siegard-generator`. It authors the Siegard framework's source under `src/claude/`
-and generates the distribution consumers install, at `dist/.claude/`. It is not the framework: the
-framework is what `make dist` produces. This repository does not build a business application.
+This repository is `siegard-generator`. It authors the framework's source under `src/claude/`;
+assembling the distribution a consumer installs is owed work, and `dist/.claude/` currently holds a
+stale copy of a retired design. It is not the framework: the framework is what an assembly of
+`src/claude/` produces. This repository does not build a business application.
 
 ## Golden rule: this file
 
