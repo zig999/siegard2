@@ -51,9 +51,9 @@ decision set, and this invocation is a change to it — located, not re-derived:
 - **Trust the index only after checking it.** Run the validator with `--check`; a stale
   `graph.json` is rederived by a full validation run before anything relies on it.
 - **Read `graph.json`, and only it**: identifiers, titles, summaries, each node's open gap
-  fields, and every edge, at a fraction of the cost of opening the base. Locate the nodes the material speaks to. Where the
-  material's vocabulary does not surface in the index, grep the root for its terms — aliases
-  and bodies answer by filename, costing nothing to read.
+  fields, and every edge, at a fraction of the cost of opening the base. Locate the nodes the
+  material speaks to. Where the material's vocabulary does not surface in the index, grep the
+  root for its terms — aliases and bodies answer by filename, costing nothing to read.
 - **Close the impact set over the edges, in both directions**: what the entry nodes reference,
   and what references them. The whole-base checks the validator runs are what propagation
   means — the impact set is every node that must still satisfy them after the change.
