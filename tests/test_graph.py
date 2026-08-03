@@ -64,6 +64,19 @@ def test_node_entries_carry_the_index_and_edges_the_locator(root, sound_base):
                     "kind": "aggregate", "at": "aggregate"}
 
 
+def test_the_derivation_summary_counts_kinds_gaps_and_rationale(root, sound_base):
+    sound_base("definition/sales/customer", {
+        "title": "Customer", "summary": "Who buys.", "ddd": "value-object",
+        "rationale": "The analysis decided this shape.",
+        "attributes": [{"name": "name", "type": "string"}],
+        "gaps": [{"field": "aggregate", "why": "Nobody said where it sits."}]})
+    done = run(root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 context, 1 aggregate, 2 definition" in done.stdout
+    assert "1 gap(s)" in done.stdout
+    assert "1 node(s) with rationale" in done.stdout
+
+
 # ---------------------------------------------------------------- staleness
 
 def test_check_before_any_derivation_is_stale(root, sound_base):

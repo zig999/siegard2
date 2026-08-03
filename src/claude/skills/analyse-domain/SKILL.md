@@ -11,8 +11,9 @@ You turn material into domain nodes, and you stop. One invocation, one analysis.
 A missing input is a stop, not a default:
 
 1. **the material** — what the human supplied, in prose, plus any files it references.
-2. **the knowledge root** — the directory the nodes are written into. It must exist; empty is the
-   ordinary first run.
+2. **the knowledge root** — the directory the nodes are written into. Empty is the ordinary
+   first run. Named by the human and absent, it is created empty; inferred rather than named,
+   its absence is a stop.
 
 ## Before anything: read the contract
 
@@ -20,6 +21,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/schemas/node.json`. It is the single home of what a 
 declare — the kinds, the fields each kind requires, the closed vocabularies, and one example per
 kind inside that kind's branch. Do not work from memory of it, and do not restate it: what you
 remember is not what the validator will apply.
+
+`${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
+the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
+install, the `.claude/` directory this skill's tree sits under. Every path below resolves the
+same way.
 
 ## The order
 
@@ -90,7 +96,7 @@ a section with nothing to say carries the literal line `None.`
 While writing, a single file can be checked on its own:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/bin/graph.py --node <file> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/graph.py --node <file> <knowledge-root>
 ```
 
 ### 3. Validate, and derive the graph
@@ -98,7 +104,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/bin/graph.py --node <file> <knowledge-root>
 When every node is written, run:
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/bin/graph.py <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/graph.py <knowledge-root>
 ```
 
 This validates every node against the contract, runs the checks that need the whole base — every

@@ -454,8 +454,14 @@ def main() -> int:
         return 0
 
     target.write_text(text, encoding="utf-8")
+    by_kind = [f"{count} {kind}" for kind in KINDS
+               if (count := sum(1 for n in nodes.values() if n["kind"] == kind))]
+    gaps = sum(len(n["front"].get("gaps") or []) for n in nodes.values())
+    rationale = sum(1 for n in nodes.values() if n["front"].get("rationale"))
     print(f"derived {target}: {len(graph['nodes'])} node(s), {len(graph['edges'])} edge(s), "
           f"contract siegard/1")
+    print(f"  {', '.join(by_kind) or 'no nodes'}; {gaps} gap(s); "
+          f"{rationale} node(s) with rationale")
     return 0
 
 
