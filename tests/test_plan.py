@@ -75,9 +75,40 @@ def test_the_derivation_summary_counts_kinds_and_triage(work, root, sound_plan):
     done = run(work, root)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "1 inventory, 1 epic, 2 task" in done.stdout
-    assert "1 unresolved gap(s)" in done.stdout
+    assert "1 unresolved gap citation(s) (1 unique)" in done.stdout
     assert "0 open question(s)" in done.stdout
     assert "0 waived" in done.stdout
+
+
+def test_a_gap_cited_by_two_tasks_counts_once_as_unique(work, root, sound_plan):
+    sound_plan("task/checkout/refuse-unbilled-order", {
+        "title": "Refuse unbilled order", "summary": "Refuse shipping an unbilled order.",
+        "objective": "An order without an invoice is refused at shipping.",
+        "criteria": ["Shipping an order with no invoice returns the stated domain error."],
+        "nodes": ["definition/sales/invoice"],
+        "base": base_pin_of(root),
+        "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
+    })
+    done = run(work, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "2 unresolved gap citation(s) (1 unique)" in done.stdout
+
+
+def test_two_epics_may_cover_the_same_base_node(work, root, sound_plan):
+    sound_plan("epic/billing", {
+        "title": "Billing", "summary": "Everything invoicing needs, cut as its own claim.",
+        "covers": ["definition/sales/invoice"],
+    })
+    sound_plan("task/billing/raise-invoice", {
+        "title": "Raise invoice", "summary": "Produce the invoice billing answers for.",
+        "objective": "A recorded order reaches billing as exactly one raised invoice.",
+        "criteria": ["A recorded order is billable exactly once."],
+        "nodes": ["definition/sales/invoice"],
+        "base": base_pin_of(root),
+        "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
+    })
+    done = run(work, root)
+    assert done.returncode == 0, done.stdout + done.stderr
 
 
 def test_a_question_is_counted_and_indexed(work, root, sound_plan):
