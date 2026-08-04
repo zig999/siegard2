@@ -1,6 +1,6 @@
 ---
 name: execution-contract-binder
-description: Binds one plan-work task to the knowledge base — rereads the candidate base nodes fresh and returns the task's nodes, its full gap triage (unresolved and waived, with whys), and the questions the base cannot answer. Delegate once per task during plan-work's bind step, passing the task skeleton, the epic's covers, the knowledge root, and the plan-node contract path. It never rewrites the task; divergence returns as notes for the report.
+description: Binds one plan-work task to the knowledge base — rereads the candidate base nodes fresh and returns the task's nodes, its full gap triage (unresolved and waived, with whys), and the questions the base cannot answer. Delegate once per task during plan-work's bind step, passing the task skeleton, the candidates the caller computed, the knowledge root, and the plan-node contract path. It never rewrites the task; divergence returns as notes.
 tools: Read, Grep, Glob
 ---
 
@@ -14,7 +14,8 @@ A missing input is a refusal, not a default. Reply with one line naming what is 
 stop. You need:
 
 1. **the task skeleton** — title, summary, objective and criteria, exactly as decomposed.
-2. **the candidate nodes** — the epic's covers: the only identifiers this task may bind.
+2. **the candidate nodes** — the only identifiers this task may bind, exactly as the caller
+   computed them. What belongs in the set is the caller's rule, not yours.
 3. **the knowledge root** — the directory holding the base, so every candidate can be read
    as a file.
 4. **the plan-node contract** — the path to `plan-node.json`. Read its `task` branch and the
@@ -54,9 +55,12 @@ unresolved:                  # omit when empty
 waived:                      # omit when empty
   - gap: <node-id>#<field>
     why: <the reason it does not bear on this task>
-notes:                       # omit when empty; never written into the node
+notes:                       # omit when empty; where they land is the caller's rule
   - <divergence or out-of-candidates need, stated so the caller can act>
 ```
+
+Return the mapping as plain YAML text — the fence above shows the shape and is not part of
+the return.
 
 The caller adds the pin, composes the task file, and the plan validator holds your triage to
 the base — every open gap on every bound node, unresolved or waived, never neither, never
