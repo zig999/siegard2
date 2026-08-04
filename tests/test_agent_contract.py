@@ -42,6 +42,14 @@ def test_the_directory_holds_exactly_the_named_agents():
         "an agent file nothing names, or a named agent without a file, breaks traceability"
 
 
+def test_every_agent_is_some_skills_delegate():
+    from test_skill_contract import SKILLS
+    delegated = sorted({name for case in SKILLS.values() for name in case["delegates"]})
+    assert delegated == sorted(AGENTS), \
+        "an agent no skill delegates to is dead weight, and a delegate this suite does not " \
+        "hold to the agent contract is untested — the two lists are one truth"
+
+
 def test_frontmatter_satisfies_the_agent_contract(agent, agent_schema):
     problems = [e.message for e in agent_schema.iter_errors(agent["front"])]
     assert problems == [], f"{agent['stem']}: {problems}"
