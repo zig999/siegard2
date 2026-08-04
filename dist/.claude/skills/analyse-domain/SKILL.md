@@ -1,6 +1,6 @@
 ---
 name: analyse-domain
-description: Turns material a human supplies into a DDD analysis recorded as markdown nodes under a knowledge root, validates them, and derives graph.json. Use when a request describes a problem, a system, or a change to one the base already holds. Not for generating code.
+description: Turns material a human supplies into a DDD analysis recorded as markdown nodes under a knowledge root, validates them, and derives graph.json. Use when a request describes a problem, a system, or a change to one the base already holds. Not for planning development work (that is /plan-work), and not for generating code.
 disable-model-invocation: true
 ---
 

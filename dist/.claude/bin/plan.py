@@ -105,9 +105,16 @@ def contract() -> tuple[Draft202012Validator, dict[str, set[str]]]:
     return Draft202012Validator(schema), allowed
 
 
+def listed(front: dict, field: str) -> list:
+    """A list field read defensively: anything but a list reads as empty, because the schema
+    already reported the shape and iterating a string would report its characters."""
+    value = front.get(field)
+    return value if isinstance(value, list) else []
+
+
 def triage_of(front: dict, field: str) -> set[str]:
     """The gap references one triage field carries, read defensively."""
-    return {entry["gap"] for entry in (front.get(field) or [])
+    return {entry["gap"] for entry in listed(front, field)
             if isinstance(entry, dict) and isinstance(entry.get("gap"), str)}
 
 
@@ -150,12 +157,12 @@ def references(front: dict, kind: str) -> list[tuple[str, str, str]]:
             refs.append((target, edge_kind, at))
 
     if kind == "task":
-        for index, target in enumerate(front.get("depends_on") or []):
+        for index, target in enumerate(listed(front, "depends_on")):
             add(target, "depends_on", f"depends_on[{index}]")
-        for index, target in enumerate(front.get("nodes") or []):
+        for index, target in enumerate(listed(front, "nodes")):
             add(target, "binds", f"nodes[{index}]")
     if kind == "epic":
-        for index, target in enumerate(front.get("covers") or []):
+        for index, target in enumerate(listed(front, "covers")):
             add(target, "covers", f"covers[{index}]")
     return refs
 
@@ -168,7 +175,7 @@ def dependency_problems(nodes: dict[str, dict]) -> list[str]:
         if nodes[nid]["kind"] != "task":
             continue
         edges[nid] = []
-        for index, target in enumerate(nodes[nid]["front"].get("depends_on") or []):
+        for index, target in enumerate(listed(nodes[nid]["front"], "depends_on")):
             if not isinstance(target, str):
                 continue  # the schema already reported the shape
             if target == nid:
@@ -206,10 +213,10 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) 
     """One task against the base: the binding resolves, the triage is total and honest, and the
     pin matches the base as it stands."""
     problems: list[str] = []
-    bound = {t for t in (front.get("nodes") or []) if isinstance(t, str)}
+    bound = {t for t in listed(front, "nodes") if isinstance(t, str)}
 
     for field in ("unresolved", "waived"):
-        for index, entry in enumerate(front.get(field) or []):
+        for index, entry in enumerate(listed(front, field)):
             if not isinstance(entry, dict) or not isinstance(entry.get("gap"), str):
                 continue  # a question, or a shape the schema already reported
             node_ref, _, gap_field = entry["gap"].partition("#")
@@ -246,20 +253,29 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) 
 
 def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
                   base_nodes: dict[str, dict]) -> list[str]:
-    """One epic against its tasks: every covered base node is bound by a task under the epic or
-    declared uncovered — never neither, never both."""
+    """One epic against its tasks, in both directions: every covered base node is bound by a
+    task under the epic or declared uncovered — never neither, never both — and every node a
+    task binds sits in the epic's covers, because a binding outside the claim is scope the
+    plan does not declare."""
     problems: list[str] = []
     slug = nid.split("/")[1]
-    covers = [t for t in (front.get("covers") or []) if isinstance(t, str)]
+    covers = [t for t in listed(front, "covers") if isinstance(t, str)]
 
     bound_below: set[str] = set()
     for tid in sorted(nodes):
-        if nodes[tid]["kind"] == "task" and nodes[tid]["epic"] == slug:
-            bound_below |= {t for t in (nodes[tid]["front"].get("nodes") or [])
-                            if isinstance(t, str)}
+        if nodes[tid]["kind"] != "task" or nodes[tid]["epic"] != slug:
+            continue
+        for index, target in enumerate(listed(nodes[tid]["front"], "nodes")):
+            if not isinstance(target, str):
+                continue  # the schema already reported the shape
+            bound_below.add(target)
+            if target not in covers:
+                problems.append(f"{tid}: nodes[{index}] binds {target}, which {nid} does not "
+                                f"cover; a binding outside the epic's claim is scope the plan "
+                                f"does not declare — grow `covers`, or move the task")
 
     declared_uncovered: set[str] = set()
-    for index, entry in enumerate(front.get("uncovered") or []):
+    for index, entry in enumerate(listed(front, "uncovered")):
         if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
             continue  # the schema already reported the shape
         node_ref = entry["node"]
@@ -371,7 +387,7 @@ def derive(nodes: dict[str, dict]) -> dict:
             unresolved = sorted(triage_of(front, "unresolved"))
             if unresolved:
                 entry["unresolved"] = unresolved
-            questions = sum(1 for e in (front.get("unresolved") or [])
+            questions = sum(1 for e in listed(front, "unresolved")
                             if isinstance(e, dict) and isinstance(e.get("question"), str))
             if questions:
                 entry["questions"] = questions
@@ -431,7 +447,7 @@ def unresolved_report(nodes: dict[str, dict]) -> str:
         if nodes[nid]["kind"] != "task":
             continue
         front = nodes[nid]["front"]
-        entries = front.get("unresolved") or []
+        entries = listed(front, "unresolved")
         gaps = sorted(e["gap"] for e in entries
                       if isinstance(e, dict) and isinstance(e.get("gap"), str))
         questions = [e["question"] for e in entries
@@ -530,7 +546,7 @@ def main() -> int:
                if (count := sum(1 for n in nodes.values() if n["kind"] == kind))]
     tasks = [n for n in nodes.values() if n["kind"] == "task"]
     unresolved = sum(len(triage_of(n["front"], "unresolved")) for n in tasks)
-    questions = sum(1 for n in tasks for e in (n["front"].get("unresolved") or [])
+    questions = sum(1 for n in tasks for e in listed(n["front"], "unresolved")
                     if isinstance(e, dict) and isinstance(e.get("question"), str))
     waived = sum(len(triage_of(n["front"], "waived")) for n in tasks)
     print(f"derived {target}: {len(plan['nodes'])} node(s), {len(plan['edges'])} edge(s), "
