@@ -84,7 +84,9 @@ Two indexes, one rule: read the index, never the whole tree.
   nodes the scope speaks to, and close the impact set over the edges in both directions —
   what those nodes reference, and what references them. Where the scope's vocabulary does not
   surface in the index, grep the base for its terms. Read the impact-set nodes and nothing
-  else: the plan binds to what governs the scope, not to everything the base holds.
+  else: the plan binds to what governs the scope, not to everything the base holds. When the
+  impact set is the whole base, the index is all this step reads — the node files belong to
+  the binders, each reading its own candidates fresh.
 - **The plan, when the work root is populated.** Trust its index only after checking it: run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <knowledge-root>`, and a
   stale `plan.json` is rederived by a full validation run before anything relies on it.
@@ -128,7 +130,9 @@ skeleton is not yet a valid node, and it only touches disk bound and pinned.
 
 Binding is per task and per judge: spawn one `execution-contract-binder` subagent per
 skeleton — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/execution-contract-binder.md`
-— passing four things: the skeleton, the candidates — its epic's `covers` less its
+— passing four things: the skeleton as its title, summary, objective and criteria — never
+its `rationale`, its dependencies or its body, because an opinion about the binding travels
+with them and the clean context is the point — the candidates — its epic's `covers` less its
 `uncovered`, because binding what the epic declared untouched is a contradiction the
 validator refuses — the knowledge root, and the plan-node contract's path. The binder rereads the node files fresh and returns the task's `nodes`, its
 full gap triage — `unresolved` and `waived`, with whys — and the questions the base cannot
@@ -143,7 +147,8 @@ scaffolding is real work, but ungoverned work is a claim someone reviews. Where 
 the task needs what the candidates do not hold, the cut is wrong: grow the epic's `covers`
 or move the task, and re-bind — never widen a binding by hand.
 
-While writing, a single file can be checked on its own:
+Each task file is checked on its own as soon as it is composed — a composition error is
+caught at the file that made it, never discovered at the end:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --node <file> <work-root> <knowledge-root>

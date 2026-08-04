@@ -83,4 +83,6 @@ binder's and the caller's to add>
 Return the blocks as plain text — the fences above show the shape and are not part of the
 return. Point every `sources` entry at the scope file the caller named. Where the scope left
 a decomposition choice to you, say so in that node's `rationale` — a reviewer accepts what
-the scope stated and argues with what you decided.
+the scope stated and argues with what you decided. A `rationale` says why you cut, never
+what the binding will find: a sentence predicting gaps, triage or unresolved entries is an
+opinion about another judge's work, and it has no home in your return.
