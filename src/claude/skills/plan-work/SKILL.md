@@ -126,8 +126,9 @@ skeleton is not yet a valid node, and it only touches disk bound and pinned.
 
 Binding is per task and per judge: delegate each skeleton, one invocation each, to the agent
 at `${CLAUDE_PLUGIN_ROOT}/agents/execution-contract-binder.md`, passing four things: the
-skeleton, its epic's `covers` as the only candidates, the knowledge root, and the plan-node
-contract's path. The binder rereads the node files fresh and returns the task's `nodes`, its
+skeleton, the candidates — its epic's `covers` less its `uncovered`, because binding what the
+epic declared untouched is a contradiction the validator refuses — the knowledge root, and
+the plan-node contract's path. The binder rereads the node files fresh and returns the task's `nodes`, its
 full gap triage — `unresolved` and `waived`, with whys — and the questions the base cannot
 answer; a divergence between the task and the nodes comes back as notes.
 
