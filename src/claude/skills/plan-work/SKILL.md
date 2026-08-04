@@ -147,6 +147,14 @@ scaffolding is real work, but ungoverned work is a claim someone reviews. Where 
 the task needs what the candidates do not hold, the cut is wrong: grow the epic's `covers`
 or move the task, and re-bind — never widen a binding by hand.
 
+A note that contradicts a criterion or the objective — not merely conditions it — is settled
+before the task is written, and the skeleton's `rationale` says by whom. Where the
+contradicted statement was the decomposer's decision — the skeleton carries `rationale` over
+that cut — the skeleton goes back to the decomposer with the note, is re-cut, and re-bound.
+Where it came from the scope, the task is written with the note, and the report names the
+contradiction as one only the human settles — through the scope, or through
+`/analyse-domain`. A conditional note stays a note.
+
 Each task file is checked on its own as soon as it is composed — a composition error is
 caught at the file that made it, never discovered at the end:
 
