@@ -33,10 +33,11 @@ nodes by `bin/plan.py`, which validates the plan against the base and is never e
 
 A task binds the base nodes that govern it and pins the base it read. Two checks keep the plan
 honest, and both are the validator's: every open gap on a bound node is `unresolved` on the
-task or waived with a why — never silently ignored — and every base node an epic covers is
-bound by one of its tasks or declared uncovered. A plan node carries no status, estimate,
-priority or order field: execution state lives in git, and order is derived from dependencies
-by whoever executes.
+task or waived with a why — never silently ignored — and coverage reconciles in both
+directions: every base node an epic covers is bound by one of its tasks or declared uncovered,
+and a task binding outside its epic's covers is refused. A plan node carries no status,
+estimate, priority or order field: execution state lives in git, and order is derived from
+dependencies by whoever executes.
 
 ## Entry points
 
