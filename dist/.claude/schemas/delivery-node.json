@@ -17,9 +17,9 @@
       "minLength": 1,
       "description": "One sentence saying what this record holds, not what kind it is."
     },
-    "plan": {
+    "task": {
       "$ref": "#/$defs/pin",
-      "description": "The plan this record read, pinned by content: the SHA-256 of the work root's derived plan.json text, computable by hand as `sha256sum <work-root>/plan.json` once the plan has been derived. A pin the validator finds diverging says the plan moved after the work was done — the record is restated deliberately, or the task is delivered again against the plan as it now stands. What the pin holds is the plan's shape: its nodes, its dependencies, its bindings and its base pins. It does not hold each task's criteria, which plan.json does not carry, and it does not have to: the validator pairs this record's answers against the criteria the task states today, so a criterion that changed under a delivered record is caught by that pairing rather than by this pin. The two together are what make a record answerable to the plan as it now stands."
+      "description": "The task this record answered, pinned by content: the SHA-256 of that task file's text, computable by hand as `sha256sum <work-root>/task/<epic>/<slug>.md`. Which task it is comes from the path both records share; this says which version of it the source was written against. A pin the validator finds diverging says the task changed after the work was done — deliver it again against the task as it now stands, or restate the pin deliberately. It pins the task rather than the plan's derived index on purpose. The index carries the plan's shape and not each task's criteria, so pinning it would have left the one thing a record answers for uncovered while making every record in the root stale the moment any unrelated task was added — and no entry point owns re-pinning records it was forbidden to read. The task file carries the objective, the criteria, the binding and the triage together, so this pin covers exactly what this record answers to, and nothing else moving can disturb it."
     },
     "files": {
       "type": "array",
@@ -105,7 +105,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/taskRef" },
-      "description": "The tasks this review answers to. Each must already hold an implementation record: a review of a task nothing delivered has no subject. Absent, the review is over a change no task claims, and the coverage pass cannot run — there are no stated criteria to pair tests with."
+      "description": "The tasks this review answers to. Each must already hold an implementation record: a review of a task nothing delivered has no subject. Absent, the review is over a change no task claims, and the coverage pass cannot run — there are no stated criteria to pair tests with. A review carries no pin of its own: it answers to the criteria those tasks state today, and the coverage pass is held to exactly those, so a task that changed since surfaces as a criterion the review did not answer for rather than as a hash nobody can read."
     },
     "passes": {
       "type": "array",
@@ -146,15 +146,15 @@
     {
       "if": { "properties": { "kind": { "const": "implementation" } }, "required": ["kind"] },
       "then": {
-        "required": ["plan", "files", "criteria"],
+        "required": ["task", "files", "criteria"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "plan", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
+          "enum": ["kind", "title", "summary", "task", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
         },
         "examples": [
           {
             "title": "Record a placed order",
             "summary": "The entry point that persists a valid order, written for task/checkout/record-order.",
-            "plan": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+            "task": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
             "files": [
               { "path": "src/orders/place.ts", "effect": "accepts a submitted order, refuses a non-positive total, and persists the rest" },
               { "path": "src/orders/routes.ts", "effect": "routes the submission to place() and returns the order_number it answers with" }
@@ -216,13 +216,12 @@
       "then": {
         "required": ["reviewed", "passes"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "plan", "reviewed", "tasks", "passes", "coverage", "findings", "standard", "failures_counted", "run"]
+          "enum": ["kind", "title", "summary", "reviewed", "tasks", "passes", "coverage", "findings", "standard", "failures_counted", "run"]
         },
         "examples": [
           {
             "title": "Checkout, first review",
-            "summary": "What three passes found over the source and tests recording a placed order.",
-            "plan": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+            "summary": "What four passes found over the source and tests recording a placed order.",
             "reviewed": ["src/orders/order.service.ts", "src/orders/routes.ts", "tests/orders/place.spec.ts"],
             "tasks": ["task/checkout/record-order"],
             "passes": [

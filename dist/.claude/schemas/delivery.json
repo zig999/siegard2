@@ -34,11 +34,6 @@
             "pattern": "^task/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$",
             "description": "The task this record answers, read from its path. Implementations and proofs only."
           },
-          "plan": {
-            "type": "string",
-            "pattern": "^sha256:[0-9a-f]{64}$",
-            "description": "The plan pin the record carries. Implementations, and reviews that name tasks."
-          },
           "unmet": {
             "type": "array",
             "minItems": 1,

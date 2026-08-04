@@ -111,12 +111,10 @@ def gapped_base(sound_base):
     return sound_base
 
 
-def plan_pin_of(work: Path, root: Path) -> str:
-    """The pin the plan at `work` computes to right now, by the validator's own pipeline."""
+def task_pin_of(work: Path, tid: str) -> str:
+    """The pin one task computes to right now: the SHA-256 of its own file."""
     import deliver
-    nodes, problems = deliver.load_plan(work, root)
-    assert problems == [], f"the fixture plan does not hold together: {problems}"
-    return deliver.plan_pin(nodes)
+    return deliver.task_pin(work, tid)
 
 
 @pytest.fixture
@@ -220,12 +218,12 @@ def sound_delivery(root, work, sound_plan, write_delivery, delivery):
     """The smallest delivery every check passes: one task of the fixture plan implemented and
     proven. The plan's other task stays undelivered on purpose — the base leaves it unresolved,
     so delivering it is exactly what the gate refuses."""
-    pin = plan_pin_of(work, root)
+    pin = task_pin_of(work, "task/checkout/record-order")
     delivery_root = delivery
     write_delivery("implementation/checkout/record-order", {
         "title": "Record a placed order",
         "summary": "The entry point that persists a valid order.",
-        "plan": pin,
+        "task": pin,
         "files": [{"path": "src/orders/place.ts",
                    "effect": "persists a submitted order and answers with its order_number"}],
         "criteria": [{"criterion": "Submitting a valid order returns its order_number.",

@@ -60,8 +60,9 @@ A review over a plan or a delivery that does not hold together reports a soundne
 Neither repair is this invocation's: a plan is fixed through `/plan-work`, a record through
 `/implement-task`.
 
-The pin this review carries is the SHA-256 of `plan.json` as just checked, computable as
-`sha256sum <work-root>/plan.json`.
+A review carries no pin. It answers to the criteria its tasks state today, and the coverage pass is
+held to exactly those — so a task that changed since is a criterion the review did not answer for,
+which reads better than a hash nobody can compare by eye.
 
 Before any write, `git status --porcelain` must print nothing over the delivery root: the review's
 own diff is its own review. A dirty root is reported, and what to do with it is the human's call.
@@ -220,8 +221,7 @@ so a reader never mistakes four passes for every pass.
 ### 4. Compose
 
 Write `review/<slug>.md` under the delivery root — the slug names this review, and the path is its
-identity. It carries the file set it was computed over, the tasks it answers, the pin, one entry per
-pass, the coverage entries where that pass ran, the standard's copy and the pin of its text where
+identity. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's copy and the pin of its text where
 that one ran, how many failures were counted where that one did, the run's directory where there was
 one, and every finding.
 
@@ -256,8 +256,7 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <kno
 This validates the review against the contract, runs the checks that need the plan — every task
 named is a delivered task of this plan, the coverage pass answers for every criterion of them and
 for nothing else, the failures counted match the findings recorded, the run it points at exists,
-every finding of a pass that scans the file set sits in a file that set lists, and the pin matches
-the plan as it stands — and, where the standard pass ran, the checks that need the copied registry:
+every finding of a pass that scans the file set sits in a file that set lists — and, where the standard pass ran, the checks that need the copied registry:
 it holds together, its pin is the text the findings were written against, and every citation names a
 rule that copy declares, leaves to a reading rather than to a tool, and whose scope reaches the file
 the finding names. Then it derives `delivery.json`. **Never write or edit `delivery.json` yourself.**

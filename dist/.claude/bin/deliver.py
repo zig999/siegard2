@@ -20,9 +20,9 @@ root holds what the commands printed: kept for a review to point at, never valid
 **The plan is read through plan.py's own pipeline, never through its plan.json** — an index this
 script did not just derive could be stale, and a delivery validated against a stale index reports
 a soundness nobody has. A plan that does not hold together is a refusal to run: fix it with
-plan.py first. The pin each record carries is the SHA-256 of the plan.json text a sound plan
-derives to, so `sha256sum <work-root>/plan.json` computes the same value by hand once the plan
-has been derived.
+plan.py first. The pin each record carries is the SHA-256 of its own task's file, so
+`sha256sum <work-root>/task/<epic>/<slug>.md` computes the same value by hand — a record answers
+one task, and that is what it is held to.
 
 **There is no status here.** What is delivered is what has a record, and the record's presence
 in git is the whole of that state — this script stores nothing about progress and no node
@@ -406,7 +406,7 @@ def references(nid: str, front: dict, kind: str) -> list[tuple[str, str, str]]:
     return refs
 
 
-def implementation_problems(nid: str, front: dict, task: dict, pin: str,
+def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             delivered: set[str]) -> list[str]:
     """One implementation against the task it answers: the plan's own triage decides whether the
     task could be implemented at all, the criteria and the binding are each answered in full,
@@ -456,15 +456,15 @@ def implementation_problems(nid: str, front: dict, task: dict, pin: str,
                             f"implementation record answers; the dependency is what has to be "
                             f"delivered first, and the records are how that is known")
 
-    declared = front.get("plan")
-    if isinstance(declared, str) and declared != pin:
-        problems.append(f"{nid}: plan pin {declared} is not the plan as it stands ({pin}); the "
-                        f"record answers a task that has since changed — deliver it again "
-                        f"against the plan as it now stands, or restate the pin deliberately")
+    declared, actual = front.get("task"), task_pin(work, task_of(nid))
+    if isinstance(declared, str) and actual is not None and declared != actual:
+        problems.append(f"{nid}: task pin {declared} is not {task_of(nid)} as it stands ({actual}); "
+                        f"the record answers a task that has since changed — deliver it again "
+                        f"against the task as it now stands, or restate the pin deliberately")
     return problems
 
 
-def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict], pin: str,
+def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict],
                          delivered: set[str], names: list[str], root: Path) -> list[str]:
     """One review against the plan and the delivery: the tasks it names are delivered tasks, the
     coverage pass answers for every criterion of them, and the run it read exists."""
@@ -479,14 +479,6 @@ def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict], pin
             problems.append(f"{nid}: tasks[{index}] names {target}, which no implementation "
                             f"record answers; a review of a task nothing delivered has no "
                             f"subject")
-
-    if tasks and "plan" not in front:
-        problems.append(f"{nid}: names tasks and carries no plan pin; a review that read the "
-                        f"criteria of a task read a plan, and says which one")
-    declared = front.get("plan")
-    if isinstance(declared, str) and declared != pin:
-        problems.append(f"{nid}: plan pin {declared} is not the plan as it stands ({pin}); the "
-                        f"review read criteria that have since changed")
 
     if "coverage" in ran_passes(front, names) and tasks:
         stated = [c for target in tasks if target in plan_nodes
@@ -547,7 +539,7 @@ def run_problems(nid: str, front: dict, root: Path) -> list[str]:
     return problems
 
 
-def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str,
+def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Path,
                    names: list[str], root: Path,
                    standard: Draft202012Validator | None = None) -> list[str]:
     """The rules that need to see more than one node at once — or the plan, or the copy of a
@@ -565,7 +557,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str
                                 f"task; the path is the identity and this one names nothing")
                 continue
             if node["kind"] == "implementation":
-                problems.extend(implementation_problems(nid, front, plan_nodes[task], pin,
+                problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
                                                         delivered))
             else:
                 pair = f"implementation/{nid.split('/', 1)[1]}"
@@ -582,7 +574,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str
                             f"the proof has not — write the proof again, or restate the pin "
                             f"deliberately")
         if node["kind"] == "review":
-            problems.extend(review_plan_problems(nid, front, plan_nodes, pin, delivered,
+            problems.extend(review_plan_problems(nid, front, plan_nodes, delivered,
                                                  names, root))
             problems.extend(standard_problems(nid, front, root,
                                               standard or standard_contract()))
@@ -641,12 +633,17 @@ def load_plan(work: Path, knowledge: Path | None) -> tuple[dict[str, dict], list
     return nodes, sorted(set(problems))
 
 
-def plan_pin(plan_nodes: dict[str, dict]) -> str:
-    """The pin of the plan as it stands: the SHA-256 of the plan.json text the plan derives to,
-    so `sha256sum <work-root>/plan.json` computes the same value by hand once plan.py has
-    written it."""
-    text = json.dumps(plan.derive(plan_nodes), indent=2, ensure_ascii=False) + "\n"
-    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+def task_pin(work: Path, tid: str) -> str | None:
+    """The pin of one task as it stands: the SHA-256 of its file's text, so
+    `sha256sum <work-root>/<tid>.md` computes the same value by hand. None where the file is gone,
+    which the plan checks report before this is consulted.
+
+    It pins the task rather than the plan's derived index deliberately. The index carries the
+    plan's shape and not each task's criteria, so pinning it left the one thing a record answers
+    for uncovered while making every record in the root stale the moment any unrelated task was
+    added — and no entry point owns re-pinning records it was forbidden to read."""
+    path = work / f"{tid}.md"
+    return pin_of(path) if path.is_file() else None
 
 
 def derive(nodes: dict[str, dict], names: list[str]) -> dict:
@@ -665,8 +662,6 @@ def derive(nodes: dict[str, dict], names: list[str]) -> dict:
         task = task_of(nid)
         if task is not None:
             entry["task"] = task
-        if isinstance(front.get("plan"), str):
-            entry["plan"] = front["plan"]
         if node["kind"] == "implementation":
             unmet = sorted(e["criterion"] for e in listed(front, "criteria")
                            if isinstance(e, dict) and e.get("met") is False
@@ -864,10 +859,8 @@ def main() -> int:
               f"({len(plan_problems)} problem(s) above); fix it with plan.py before "
               f"delivering against it", file=sys.stderr)
         return CANNOT_RUN
-    pin = plan_pin(plan_nodes)
-
     nodes, problems = collect(root, validator, allowed, names)
-    problems += cross_problems(nodes, plan_nodes, pin, names, root, standard)
+    problems += cross_problems(nodes, plan_nodes, work, names, root, standard)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)

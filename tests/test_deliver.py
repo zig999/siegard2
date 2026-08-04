@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 import deliver
-from conftest import plan_pin_of
+from conftest import task_pin_of
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -26,9 +26,8 @@ def problems_of(delivery: Path, work: Path, root: Path) -> list[str]:
     names = deliver.pass_names()
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], f"the fixture plan does not hold together: {plan_problems}"
-    pin = deliver.plan_pin(plan_nodes)
     nodes, found = deliver.collect(delivery, validator, allowed, names)
-    return found + deliver.cross_problems(nodes, plan_nodes, pin, names, delivery)
+    return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery)
 
 
 def said(problems: list[str], fragment: str) -> None:
@@ -117,7 +116,7 @@ def test_a_status_field_does_not_exist(delivery, work, root, sound_delivery, wri
 def test_a_record_for_a_task_the_plan_does_not_hold(delivery, work, root, sound_delivery,
                                                     write_delivery):
     write_delivery("implementation/checkout/ship-order", {
-        "title": "Ship", "summary": "Ship it.", "plan": plan_pin_of(work, root),
+        "title": "Ship", "summary": "Ship it.", "task": "sha256:" + "0" * 64,
         "files": [{"path": "src/ship.ts", "effect": "ships"}],
         "criteria": [{"criterion": "c", "met": True, "how": "h"}],
         "nodes": [{"node": "definition/sales/order", "how": "read only"}],
@@ -163,7 +162,8 @@ def test_an_unresolved_task_is_not_delivered(delivery, work, root, sound_deliver
     """The gate that matters most: the plan's own triage decides whether a task can be written
     at all, and it is decided mechanically rather than by anybody's judgment at delivery time."""
     write_delivery("implementation/checkout/bill-order", {
-        "title": "Bill", "summary": "Raise the bill.", "plan": plan_pin_of(work, root),
+        "title": "Bill", "summary": "Raise the bill.",
+        "task": task_pin_of(work, "task/checkout/bill-order"),
         "files": [{"path": "src/bill.ts", "effect": "bills"}],
         "criteria": [{"criterion": "Recording an order twice produces one invoice.",
                       "met": True, "how": "idempotent on order_number"}],
@@ -189,7 +189,8 @@ def test_nothing_is_delivered_before_what_it_builds_on(delivery, work, root, sou
                             "the unresolved gate rather than the dependency one"
     task.write_text(after, encoding="utf-8")
     write_delivery("implementation/checkout/bill-order", {
-        "title": "Bill", "summary": "Raise the bill.", "plan": plan_pin_of(work, root),
+        "title": "Bill", "summary": "Raise the bill.",
+        "task": task_pin_of(work, "task/checkout/bill-order"),
         "files": [{"path": "src/bill.ts", "effect": "bills"}],
         "criteria": [{"criterion": "Recording an order twice produces one invoice.",
                       "met": True, "how": "idempotent on order_number"}],
@@ -201,7 +202,19 @@ def test_nothing_is_delivered_before_what_it_builds_on(delivery, work, root, sou
         "the waived triage means the unresolved gate must not fire; only the dependency one does"
 
 
-def test_a_pin_that_outlived_its_plan(delivery, work, root, sound_delivery, write_plan):
+def test_a_pin_that_outlived_its_task(delivery, work, root, sound_delivery, write_plan):
+    """The record answers one task, so only that task moving disturbs it."""
+    task = work / "task/checkout/record-order.md"
+    task.write_text(task.read_text(encoding="utf-8").replace(
+        "summary: Persist a placed order.", "summary: Persist a placed order, once."),
+        encoding="utf-8")
+    said(problems_of(delivery, work, root), "as it stands")
+
+
+def test_another_task_moving_leaves_a_record_alone(delivery, work, root, sound_delivery,
+                                                   write_plan):
+    """Pinning the plan's index made every record in the root stale the moment any unrelated task
+    was added, and no entry point owns re-pinning records it was forbidden to read."""
     write_plan("epic/shipping", {"title": "Shipping", "summary": "Later.",
                                  "covers": ["definition/sales/order"]})
     write_plan("task/shipping/ship-order", {
@@ -211,7 +224,7 @@ def test_a_pin_that_outlived_its_plan(delivery, work, root, sound_delivery, writ
         "nodes": ["definition/sales/order"],
         "base": _base_pin(work),
     })
-    said(problems_of(delivery, work, root), "is not the plan as it stands")
+    assert problems_of(delivery, work, root) == []
 
 
 def test_a_proof_without_an_implementation(delivery, work, root, sound_delivery):
@@ -226,7 +239,6 @@ def review_front(work: Path, root: Path, **overrides) -> dict:
     front = {
         "title": "Checkout, first review",
         "summary": "What the passes found.",
-        "plan": plan_pin_of(work, root),
         "reviewed": ["src/orders/place.ts", "tests/place.spec.ts"],
         "tasks": ["task/checkout/record-order"],
         "passes": [
@@ -449,7 +461,6 @@ def test_the_coverage_pass_cannot_run_without_a_task(delivery, work, root, sound
                                                     write_delivery):
     front = review_front(work, root)
     del front["tasks"]
-    del front["plan"]
     write_delivery("review/first", front)
     said(problems_of(delivery, work, root), "pairing tests with criteria nobody wrote")
 
@@ -470,7 +481,7 @@ def test_a_task_that_binds_nothing_can_be_delivered(delivery, work, root, sound_
         "rationale": "No base node governs the toolchain; the plan decided this cut itself."})
     write_delivery("implementation/checkout/scaffold", {
         "title": "Scaffold", "summary": "The toolchain this project builds with.",
-        "plan": plan_pin_of(work, root),
+        "task": task_pin_of(work, "task/checkout/scaffold"),
         "files": [{"path": "package.json", "effect": "declares the build and the suite"}],
         "criteria": [{"criterion": "The suite runs and reports.", "met": True,
                       "how": "the suite script runs the runner over the test tree"}]})
@@ -676,7 +687,7 @@ def test_a_closed_plan_is_delivered_against_without_the_base(delivery, work, roo
     validator, allowed = deliver.contract()
     names = deliver.pass_names()
     found, _ = deliver.collect(delivery, validator, allowed, names)
-    assert deliver.cross_problems(found, nodes, deliver.plan_pin(nodes), names, delivery) == []
+    assert deliver.cross_problems(found, nodes, work, names, delivery) == []
 
 
 def test_the_cli_derives_checks_and_reports(delivery, work, root, sound_delivery):

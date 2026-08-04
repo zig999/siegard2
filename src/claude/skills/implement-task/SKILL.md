@@ -42,10 +42,11 @@ problems is fixed through `/plan-work`; a stale index is rederived by whoever ow
 Neither repair is this invocation's to make — delivering never writes into the work root, and
 never into the knowledge root either.
 
-The pin the implementation record carries is the SHA-256 of the plan's `plan.json` as just
-checked: `sha256:<hexdigest>`, computable as `sha256sum <work-root>/plan.json`. Compute it once,
-after the check passes. The proof carries no plan pin — the record beside it holds that one, and
-two records pinning one plan would be two places for the same fact to be wrong. What the proof
+The pin the implementation record carries is the SHA-256 of the task's own file:
+`sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`. It pins the task
+and not the plan's index, because a record answers one task and that is what it should be held to —
+and because pinning the index made every record in the root stale the moment any unrelated task was
+added, which no entry point here is allowed to go and fix. The proof carries no task pin: what it
 pins is the implementation record itself, and step 3 says why.
 
 ## Before anything: the tree
@@ -145,7 +146,7 @@ preserved and deferred.
 
 Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
 the path is the identity and nothing else names which task a record answers — from what the agent
-returned plus the pin stamped on `plan`. The body is exactly two headings, in order:
+returned plus the pin stamped on `task`. The body is exactly two headings, in order:
 `## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
 literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
 as in its field — the diff is the review, and what only the conversation held the reviewer never
