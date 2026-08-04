@@ -465,6 +465,120 @@ def test_the_coverage_pass_cannot_run_without_a_task(delivery, work, root, sound
     said(problems_of(delivery, work, root), "pairing tests with criteria nobody wrote")
 
 
+# ------------------------------- what an implementation discloses about the standard
+
+
+def disclosed(delivery: Path, work: Path, ref: dict, **overrides) -> dict:
+    """The sound implementation record, plus a standard and one disclosed departure from it."""
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["standard"] = ref
+    front["divergences"] = [{"cites": "ARC-01", "file": "src/orders/place.ts",
+                             "departure": "place() constructs the store rather than receiving it.",
+                             "why": "no factory exists for this module yet, and adding one reaches "
+                                    "past this task"}]
+    front.update(overrides)
+    return front
+
+
+def repin_proof(delivery: Path, write_delivery) -> None:
+    """The proof pins the implementation, so rewriting one rewrites the other."""
+    import hashlib
+    front = json_front(delivery, "proof/checkout/record-order")
+    written = (delivery / "implementation/checkout/record-order.md").read_bytes()
+    front["implementation"] = "sha256:" + hashlib.sha256(written).hexdigest()
+    write_delivery("proof/checkout/record-order", front)
+
+
+def test_a_disclosed_departure_from_a_standard_rule_holds(delivery, work, root, sound_delivery,
+                                                          write_delivery, write_standard):
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard()))
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, root) == []
+
+
+def test_an_implementation_may_depart_from_a_rule_a_tool_decides(delivery, work, root,
+                                                                 sound_delivery, write_delivery,
+                                                                 write_standard):
+    """The asymmetry that matters: a review may not judge a rule a tool decides, and a record may
+    depart from one — it obeys the whole standard, and the run will show the tool's own failure."""
+    front = disclosed(delivery, work, write_standard())
+    front["divergences"][0]["cites"] = "PRH-01"
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, root) == []
+
+
+def test_a_disclosure_citing_a_rule_the_standard_does_not_declare(delivery, work, root,
+                                                                  sound_delivery, write_delivery,
+                                                                  write_standard):
+    front = disclosed(delivery, work, write_standard())
+    front["divergences"][0]["cites"] = "ZZZ-99"
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "which standards/example-service.yaml does not declare")
+
+
+def test_a_disclosure_hung_on_a_file_the_rule_does_not_reach(delivery, work, root, sound_delivery,
+                                                             write_delivery, write_standard):
+    """ARC-02's scope is src/routes/ and the departure sits under src/orders/."""
+    front = disclosed(delivery, work, write_standard())
+    front["divergences"][0]["cites"] = "ARC-02"
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "which that rule's scope does not reach")
+
+
+def test_a_disclosure_citing_a_rule_with_no_standard_named(delivery, work, root, sound_delivery,
+                                                           write_delivery):
+    front = disclosed(delivery, work, {"at": "standards/x.yaml", "pin": "sha256:" + "0" * 64})
+    del front["standard"]
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "this record names no standard")
+
+
+def test_a_disclosure_naming_a_file_the_record_did_not_write(delivery, work, root, sound_delivery,
+                                                             write_delivery, write_standard):
+    front = disclosed(delivery, work, write_standard())
+    front["divergences"][0]["file"] = "src/elsewhere.ts"
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "which `files` does not list")
+
+
+@pytest.mark.parametrize("departure, fragment", [
+    ({"departure": "d.", "why": "w."},
+     "names neither"),
+    ({"departure": "d.", "why": "w.", "from": "a convention", "cites": "ARC-01",
+      "file": "src/orders/place.ts"},
+     "names both"),
+    ({"departure": "d.", "why": "w.", "cites": "ARC-01"},
+     "names no `file`"),
+    ({"departure": "d.", "why": "w.", "file": "src/orders/place.ts"},
+     "cites no rule"),
+])
+def test_a_departure_departs_from_exactly_one_thing(delivery, work, root, sound_delivery,
+                                                    write_delivery, write_standard,
+                                                    departure, fragment):
+    front = disclosed(delivery, work, write_standard(), divergences=[departure])
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), fragment)
+
+
+def test_an_implementation_pin_that_is_not_the_copy_it_points_at(delivery, work, root,
+                                                                 sound_delivery, write_delivery,
+                                                                 write_standard):
+    ref = write_standard()
+    write_delivery("implementation/checkout/record-order", disclosed(delivery, work, ref))
+    path = delivery / ref["at"]
+    path.write_text(path.read_text(encoding="utf-8") + "\n# edited after the record\n",
+                    encoding="utf-8")
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "is not the one it was written against")
+
+
 # ------------------------------------------- a task the plan leaves ungoverned
 
 
@@ -567,7 +681,7 @@ def test_a_pin_that_is_not_the_copy_it_points_at(delivery, work, root, sound_del
     path.write_text(path.read_text(encoding="utf-8") + "\n# edited after the review\n",
                     encoding="utf-8")
     write_delivery("review/first", standard_review(work, root, ref))
-    said(problems_of(delivery, work, root), "is not the one its findings were written against")
+    said(problems_of(delivery, work, root), "is not the one it was written against")
 
 
 

@@ -122,6 +122,13 @@ the point: the registry lives in the project's tree and will move on, and a reco
 file no root holds is a record nobody can check later. It is kept the way `run/` is kept — material
 a judgment was read from, never validated as a node.
 
+**A copy is never overwritten.** Where `standards/` already holds a file of that name whose text
+differs from the registry as it stands, the rulebook changed since some earlier record was written:
+name this copy differently. Overwriting would leave that record pinning text it never read, and the
+validator would refuse a record that was honest. A second rulebook is a second name, the way a
+second run is. Where a copy of that name is already there and its text matches, that copy is the one
+to point at — an implementation may have taken it first, and nothing is written twice.
+
 The standard is read here rather than at its own pass for two reasons, and both are about order.
 The rules it leaves to a tool decide which steps the next step should run, so a review that met the
 registry later would have already chosen its commands. And the pass that reads it is handed the
@@ -313,6 +320,11 @@ to a person.
   hangs a departure on a sentence that does not govern the file.
 - Lower a failure count, or drop a failure, to make the record validate. The two disagreeing is the
   signal, not the obstacle.
+- Show the standard pass what an implementation record disclosed. A record may name the very rules
+  this pass reads, and a pass told which departures were already admitted is a pass the producer
+  shaped. It reads the source; a person reads both records and learns something neither says alone.
+- Overwrite a copy under `standards/` whose text differs from the registry as it stands, or edit a
+  copy after a record has pinned it.
 - Add to, edit or reinterpret the project's standard. It is the project's; a rule that seems wrong is
   reported as a departure exactly as written, and changed by whoever owns it.
 - Write into the work root, the knowledge root, or the target source root.

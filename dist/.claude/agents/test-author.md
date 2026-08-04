@@ -29,6 +29,12 @@ stop. You need:
 4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `proof` branch
    before writing a single field.
 
+Optionally, **the project's standard** — the path to a copy of the rules this project set for
+itself. Where one is given, read the rules whose scope reaches the test files you write and follow
+them: how a test is arranged, how it is named, what a stand-in may replace, where the file sits.
+Unlike the record beside yours, a proof has nowhere to disclose a departure — so do not depart. A
+rule you cannot satisfy is worth saying plainly to the caller instead.
+
 Where the task's criteria name a failure that must stop happening, you also need **the
 reproduction** — how the failure is observed. Without it the tests prove the fix rather than
 the defect, and afterwards nobody can tell the difference.

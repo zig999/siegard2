@@ -127,7 +127,7 @@
     },
     "standard": {
       "$ref": "#/$defs/standardRef",
-      "description": "The project's standard this review read, and which of its rules were in scope — present exactly when the standard pass ran. A project that has authored no standard records the pass as not run and says so, which is the honest narrow result rather than a clean one."
+      "description": "The project's standard this record read. On a review it is present exactly when the standard pass ran, and a project that has authored none records the pass as not run and says so — the honest narrow result rather than a clean one. On an implementation it says what the source was written against, and it is required once any divergence cites a rule, because a citation resolves against the copy this record pins and without one it names nothing. Absent on an implementation is a claim that no standard was supplied, which nothing can verify and a reader reads as one — the skill's report and the diff are what carry it."
     },
     "failures_counted": {
       "type": "integer",
@@ -148,7 +148,7 @@
       "then": {
         "required": ["task", "files", "criteria"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "task", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
+          "enum": ["kind", "title", "summary", "task", "standard", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
         },
         "examples": [
           {
@@ -167,8 +167,15 @@
               { "node": "definition/sales/order", "encoded_at": ["src/orders/place.ts"], "how": "the order's identity and attributes are the shape place() persists" },
               { "node": "rule/sales/order-total-positive", "encoded_at": ["src/orders/place.ts"], "how": "the refusal is the rule's condition, checked before the write" }
             ],
+            "standard": {
+              "at": "standards/example-service.yaml",
+              "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
+            },
             "inferences": [
               { "inferred": "a submission carrying no line items is refused as an invalid order rather than persisted empty.", "from": "the order definition requires at least one line, and no node states what an empty submission answers" }
+            ],
+            "divergences": [
+              { "cites": "ARC-02", "file": "src/orders/place.ts", "departure": "place() constructs the store rather than receiving it, because no factory exists for this module yet.", "why": "the task's objective is the entry point, and adding the module's wiring point reaches past it — deferred below, and disclosed here so the review's finding is not read as news" }
             ],
             "deferred": [
               { "what": "src/invoices holds a second total calculation.", "why": "unifying them reaches outside this task's objective" }
@@ -350,13 +357,23 @@
     },
     "divergence": {
       "type": "object",
-      "required": ["from", "departure", "why"],
+      "required": ["departure", "why"],
       "additionalProperties": false,
+      "description": "One departure, from exactly one thing: either `from`, naming a bound node or a convention in prose, or `cites` with `file`, naming a rule of the project's standard and the path the departure sits in. Never both and never neither — bin/deliver.py holds that pairing, and holds a cited rule to the standard the record pins. A divergence is a disclosure and never a permission: nothing downstream reads it as leave to depart, the pass that reviews the same rules is not shown it, and a reader who meets a finding can look here to learn whether the departure was known and reasoned. Recording one does not settle it.",
       "properties": {
         "from": {
           "type": "string",
           "minLength": 1,
-          "description": "What was departed from — a bound node by identifier, or a convention with the path it was seen at."
+          "description": "What was departed from — a bound node by identifier, or a convention with the path it was seen at. For a rule of the project's standard, use `cites` instead: a rule has an identifier, and a departure named in prose is one nobody can pair with the finding that reports it."
+        },
+        "cites": {
+          "$ref": "#/$defs/ruleRef",
+          "description": "The rule of the project's standard this departs from, by its identifier. Unlike a review's citation, which may only name a rule the standard leaves to a reading, this may name either kind: a record obeys the whole standard, and a departure from a rule a tool decides is a real departure — it will surface as that tool's failure in a captured run, and the disclosure is what lets a reader pair the two."
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The path this departure sits in, as `files` lists it. Present with `cites` and held to that list, so a disclosure names a place a reader can open and the cited rule can be checked against the scope it declares."
         },
         "departure": { "type": "string", "minLength": 1 },
         "why": { "type": "string", "minLength": 1 }

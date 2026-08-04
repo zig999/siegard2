@@ -13,10 +13,15 @@
 # application is a reading reaches the standard pass. A model applying `no-explicit-any` to a
 # five-hundred-line file has strictly worse recall than tsc and costs more.
 #
-# `elsewhere` says what this registry does not hold. Most of those entries are there because the
-# rule states *what the system answers* — a status, an error code, an authorization outcome — and
-# that is what the business decided. It lives in the knowledge base. A rule here stating one
-# would put this pass and the base-conformance pass in contradiction over the same line.
+# `elsewhere` says what this registry does not hold, and where each of those lives instead. Three
+# homes, and the boundary between them is where a first draft of this file got it wrong. An error's
+# identity is what the business decided, so it belongs to the knowledge base as a domain error whose
+# node identifier is its name — a code written in source that no bound node holds is what the
+# base-conformance pass exists to report, so naming codes here would require exactly what that pass
+# reports. But which transport status such an error maps to is not a domain fact either: two
+# projects map the same error differently. That is this project's decision, so COR-04 below requires
+# the mapping to live in one place without stating any mapping, and the table is code in the place
+# it names.
 
 contract_version: siegard-standard/1
 standard: backend-typescript
@@ -208,6 +213,18 @@ rules:
       - { under: src, suffix: .service.ts, nested: true }
       - { under: src, suffix: .repository.ts, nested: true }
     seen_at: src/errors/not-found.error.ts
+
+  - id: COR-04
+    statement: Every domain error maps to a transport status in one place, and no handler chooses a
+      status inline.
+    because: A status chosen where it is answered is a status chosen differently at the next
+      endpoint, and the one nobody remembers is the one a client branches on.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
+      - { under: src/errors, suffix: .ts, nested: true }
+    seen_at: src/errors/status-map.ts
 
   - id: COR-03
     statement: A service raises business errors, a repository raises data errors, and the error
@@ -491,27 +508,42 @@ rules:
 # drifts.
 elsewhere:
 
-  - what: Which status a refusal answers with — that a missing resource answers 404, a uniqueness
-      conflict 409, a forbidden state 422, a missing or expired credential 401, an insufficient
-      one 403, a rate limit 429, a creation 201, a delete without a body 204.
-    lives_in: The knowledge base, as rule and interface nodes.
-    why: It is what the business decided about what the system answers, not how this project is
-      arranged. Stated here it would put this pass and the base-conformance pass in contradiction
-      over one line — this one requiring in code exactly what that one reports as a fact the base
-      does not hold. The rules above keep only the mechanism — that the refusal is raised as a
-      typed error, in the right layer, before any write.
+  - what: Which errors exist and what each one names — the duplicate registration, the invalid
+      order total, the expired credential.
+    lives_in: The knowledge base, as definitions whose kind is a domain error, where the node's own
+      identifier is the error's name.
+    why: An error's identity is what the business decided, and a code written in source that no
+      bound node holds is the archetypal base-conformance finding. Naming them here would require
+      in code exactly what that pass exists to report.
 
-  - what: Which error codes exist, and what each one names.
-    lives_in: The knowledge base, as rule and interface nodes.
-    why: Same. An error code written in source and in no bound node is the archetypal
-      base-conformance finding, and a standard that mandated one would be requiring the thing the
-      other pass exists to report.
+  - what: Which transport status each of those errors maps to — 404, 409, 422, 401, 403, 429, 201,
+      204.
+    lives_in: This file, in COR-04, which requires the mapping to live in one place — and that
+      place, in code.
+    why: This is the entry that was wrong until it was rewritten, and the mistake is worth keeping
+      visible. A status is transport, and the knowledge base excludes transport, so sending these
+      there sent them to a home that refuses them and they lived nowhere at all. But which status a
+      domain error maps to is not a domain fact either — two projects map the same error differently.
+      It is this project's decision about how it answers. So the rule above states where the mapping
+      belongs without stating any mapping, the table is code in the place it names, and the three
+      passes stop disagreeing — the base has the errors, this file requires one map, and the code
+      holds it.
 
   - what: Who may see which resource, beyond the requirement that the check happen against the
       resource itself.
     lives_in: The knowledge base, as rule nodes.
     why: An authorization outcome is a domain decision. SEC-01 above says where the check belongs;
       what it decides is not this file's.
+
+  - what: Falsifying the cause of a timeout, a flake or a performance finding — reproducing it in
+      isolation and then under load, varying the knob, and recording whether the cause was verified
+      or only inferred.
+    lives_in: Nowhere, and deliberately.
+    why: The skill this was transcribed from carried it as a procedure that *executes*, and no agent
+      of this framework holds a shell. A read-only agent writing a confidence label restores the
+      label of an unfalsified cause rather than the falsification, and having a reviewer commission
+      a second run would let it choose what runs next. What was portable is already in the delivery
+      contract, which forces the cause that constrains more where nothing settles it.
 
   - what: Which tests must exist for a task, by the kind of work it is — a new behavior, a change,
       a rearrangement, a defect.

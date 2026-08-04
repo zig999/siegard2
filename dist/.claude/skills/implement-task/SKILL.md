@@ -29,6 +29,12 @@ A missing input is a stop, not a default:
    held what was delivered would be recording progress, and that is the orchestrator's state
    file this framework refuses to have.
 
+One optional input: **the project's standard** — the path to the registry of rules the project set
+for itself, in the project's own tree. Named, the source is written to follow it; not named, the
+only convention this invocation follows is what the inventory evidenced, and the report says so.
+The framework ships no rule and never owns the registry: `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json`
+is the contract a project's own file answers to.
+
 ## Before anything: the plan
 
 Nothing is written over a plan that does not hold together. Run:
@@ -128,6 +134,27 @@ records are rewritten whole rather than amended — a record amended across two 
 describes neither, and the proof's pin on the implementation refuses the pair if you rewrite one
 and leave the other. `git diff` over the two is then the history of the delivery.
 
+Where a standard was named, take it in before anything is written. Run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
+```
+
+Anything but a clean pass is a stop, reported verbatim: source written against a registry that does
+not hold together answers to nothing, and fixing the registry belongs to whoever owns it.
+
+Then copy the registry into `standards/` under the delivery root, keeping the name the project gave
+it, and note the SHA-256 of the copy — `sha256sum <delivery-root>/standards/<file>`. The copy is
+what makes a disclosure checkable afterwards: the registry lives in the project's tree and will move
+on, and a record pointing at a file no root holds is a record nobody can check later. It is kept the
+way `run/` is kept — material a judgment was read from, never validated as a node.
+
+**A copy is never overwritten.** Where `standards/` already holds a file of that name whose text
+differs from the registry as it stands, the rulebook changed since some earlier record was written:
+name this copy differently. Overwriting would leave that record pinning text it never read, and the
+validator would refuse a record that was honest. A second rulebook is a second name, the way a
+second run is.
+
 Then read the task file itself, and the plan's inventory nodes. `plan.json` lists every node the
 plan holds with its kind and its file, so the inventory is found there rather than by walking the
 root; pass on the ones whose `area` reaches where this task lands, and leave the rest — an
@@ -139,14 +166,16 @@ Read the epic only for what it covers. Read no other task: this invocation deliv
 Spawn a `task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
 the knowledge root, the target source root, the paths of the plan's inventory nodes, and the
-delivery-node contract's path. It reads the task and the nodes it binds, writes the source, and
+delivery-node contract's path — plus, where one was named, the path of **the copy** of the standard,
+so what it read is exactly what the record pins. It reads the task and the nodes it binds, writes the source, and
 returns the record: every path it created or modified and what each now does, every criterion of
 the task answered, every bound node accounted for, and what it inferred, departed from,
 preserved and deferred.
 
 Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
 the path is the identity and nothing else names which task a record answers — from what the agent
-returned plus the pin stamped on `task`. The body is exactly two headings, in order:
+returned plus the pin stamped on `task`, and — where a standard was named — where its copy sits and
+the pin of its text. The body is exactly two headings, in order:
 `## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
 literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
 as in its field — the diff is the review, and what only the conversation held the reviewer never
@@ -168,7 +197,9 @@ say which files exist, and leave them for a person to look at rather than tidyin
 
 Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
-implementation record's path, the target source root, and the delivery-node contract's path.
+implementation record's path, the target source root, and the delivery-node contract's path — plus
+the copy of the standard where one was named, because a project's rules about how its tests are
+written are the test author's to follow.
 Where the task's criteria name a failure that must stop happening, pass the reproduction too;
 without it the tests prove the fix rather than the defect, and afterwards nobody can tell the
 difference.
@@ -198,8 +229,10 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <kno
 This validates every delivery node against the contract, runs the checks that need the plan — the
 task exists, a proof sits beside an implementation, every criterion of the task is answered
 exactly once and nothing else is, every base node the task binds is accounted for, no task the
-base leaves unresolved is delivered, no task is delivered before what it builds on, and every pin
-matches the plan as it stands — and derives `delivery.json`. **Never write or edit
+base leaves unresolved is delivered, no task is delivered before what it builds on, every record's
+pin matches its own task as it stands, each proof's pin matches the implementation beside it, and
+every departure disclosed against a standard rule cites one that standard declares and sits in a
+file this record says it wrote — and derives `delivery.json`. **Never write or edit
 `delivery.json` yourself.** Report the command's output verbatim. If it exits non-zero, the run
 failed — fix and rerun, and never describe the delivery as sound while it is not.
 
@@ -223,11 +256,12 @@ Report, in this order:
 - what the implementation deferred, and what it says must keep working;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
-- that nothing was run, and that `/review-change` is what runs the suite and judges the change —
-  and that where the project holds a standard of its own, the review applies its rules to what was
-  just written. This invocation is not given that standard and does not read it: the only project
-  convention it follows is what the inventory evidenced. Saying so is what keeps a person from
-  meeting a rule for the first time as a finding.
+- the standard this invocation followed, by the copy it took and that copy's pin, and every
+  departure disclosed against it — or, where none was named, that the only project convention
+  followed is what the inventory evidenced, which is the honestly narrow answer rather than a clean
+  one;
+- that nothing was run, and that `/review-change` is what runs the suite and judges the change,
+  including holding the same source to the same standard.
 
 Then stop. `git diff` over the target source root and the delivery root is the review, and it
 belongs to a person.
@@ -252,4 +286,13 @@ belongs to a person.
 - Settle a disagreement the proof recorded, or delete an inference to make a record read cleanly.
 - Commit, stash, branch, or otherwise change the consumer's git state — a dirty tree is reported,
   and what to do with it is the human's call.
+- Record which rules of the standard were in scope. That set derives from the copy and the files
+  written, both of which this root holds, so a stored list would be a second answer to a question
+  the root already answers — and the one nobody could check, because the producer would be writing
+  it.
+- Overwrite a copy under `standards/` whose text differs from the registry as it stands, or edit a
+  copy after a record has pinned it.
+- Treat a disclosed departure as leave to depart. It says the departure was known and reasoned, and
+  it settles nothing: the review holds the same source to the same rules and is not shown what was
+  disclosed.
 - Restate the contract's vocabularies from memory instead of reading the schema.

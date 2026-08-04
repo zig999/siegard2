@@ -33,6 +33,10 @@ stop. You need:
    `implementation` branch before writing a single field: the fields, their shapes and their
    vocabularies live there, and what you remember is not what the validator will apply.
 
+Optionally, **the project's standard** — the path to a copy of the rules this project set for
+itself. Named, you write to it; not named, the only project convention you have is what the
+inventory evidenced, and you say nothing about rules you were not given.
+
 ## Before anything is written
 
 Read what the task leaves unresolved. If it holds anything at all, **stop** and say so: an
@@ -76,6 +80,20 @@ halfway through a file would be most of the way to filling it.
 - **Reuse what the inventory named.** The helper someone would innocently duplicate is exactly
   the one the survey wrote down. Where you depart from a convention it evidenced, that is a
   divergence and it is recorded with the reason.
+- **Where a standard was given, write to all of it.** Read it in full before you open the target
+  tree. Each rule says where it reaches; apply the ones that reach the files you write. It also
+  marks each rule by what decides it, and **that mark is about who judges, not about what you
+  obey** — a rule a linter or a compiler decides is exactly the kind that will fail the build if
+  you ignore it, so it binds you at least as hard as one a reader judges. Where you cannot satisfy
+  a rule, depart from it and disclose the departure citing the rule's identifier and the file it
+  sits in; the contract's `divergence` says what that entry carries.
+- **Declared beats observed.** Where a rule of the standard and a convention the inventory
+  evidenced pull against each other, the rule wins: one is what the project decided, the other is
+  what its code happens to do. Departing from the convention is then the divergence, and it names
+  the convention.
+- **A disclosure is not permission.** Recording a departure does not settle it. Something else
+  holds the same source to the same rules and is not told what you disclosed — which is the point:
+  a departure that survives both is one two judgments saw.
 - **Never widen the task.** Code you find that should change and that this task does not reach
   is deferred, with why it sat outside — recorded, never changed. A task that grew while being
   implemented is a task nobody planned.
@@ -87,8 +105,8 @@ halfway through a file would be most of the way to filling it.
 
 ## Procedure
 
-1. Read the task file, then every node it binds, then the inventory. Only then open the target
-   tree.
+1. Read the task file, then every node it binds, then the inventory, then the standard where one
+   was given. Only then open the target tree.
 2. Read the files the task touches, in full.
 3. Where the task changes behavior that exists, write down what must keep working.
 4. Implement against the criteria, one at a time.
@@ -105,7 +123,8 @@ files: [...]                 # every path created or modified, and what each now
 criteria: [...]              # one entry per criterion the task states, quoted as it states it
 nodes: [...]                 # one entry per node the task binds, and how the source answers it
 inferences: [...]            # omit when nothing was inferred
-divergences: [...]           # omit when none
+divergences: [...]           # omit when none; a departure from a standard rule cites it by
+                             # identifier and names the file it sits in
 preserved: [...]             # omit where the task changed nothing that existed
 deferred: [...]              # omit when none
 ```

@@ -306,30 +306,68 @@ def in_scope(rule: dict, paths: list[str]) -> bool:
                for scope in listed(rule, "applies_to") for path in paths)
 
 
-def standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
-    """One review against the standard it read. The copy under the delivery root is the text the
-    findings were written against, and every citation resolves to a rule that copy declares, that
-    it leaves to a reading rather than to a tool, and whose scope reaches the file the finding
-    names. Which rules were in scope is not read from the record: it is a function of the copy and
-    `reviewed`, and both sit in this root."""
+def standard_of(nid: str, front: dict, root: Path,
+                validator) -> tuple[dict | None, str | None, list[str]]:
+    """The standard a record read, loaded from the copy this root holds and held to its pin. The
+    copy is why a citation can be resolved at all: the project's registry lives in the project's
+    tree and moves on, and a record pointing outside every root could not be checked afterwards."""
     declared = front.get("standard")
     if not isinstance(declared, dict) or not isinstance(declared.get("at"), str):
-        return []  # the schema already reported the shape
+        return None, None, []  # the schema already reported the shape
 
     at = declared["at"]
     path = root / at
     data, found = load_standard(path, validator)
     problems = [f"{nid}: {at}: {p}" for p in found]
     if data is None:
-        return problems
+        return None, at, problems
 
     if declared.get("pin") != pin_of(path):
         problems.append(f"{nid}: the standard's pin is not the text at {at} ({pin_of(path)}); the "
-                        f"copy this review points at is not the one its findings were written "
-                        f"against")
+                        f"copy this record points at is not the one it was written against")
+    return data, at, problems
 
-    rules = {r["id"]: r for r in listed(data, "rules")
-             if isinstance(r, dict) and isinstance(r.get("id"), str)}
+
+def rules_of(data: dict) -> dict[str, dict]:
+    return {r["id"]: r for r in listed(data, "rules")
+            if isinstance(r, dict) and isinstance(r.get("id"), str)}
+
+
+def implementation_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
+    """Every rule an implementation says it departed from, resolved against the standard it pins.
+    Unlike a review's citation this may name a rule a tool decides: a record obeys the whole
+    standard, and departing from a rule the compiler owns is a real departure that the run will
+    show. The validator holds the citation and says nothing about whether departing was right,
+    which is a reader's to judge."""
+    data, at, problems = standard_of(nid, front, root, validator)
+    if data is None:
+        return problems
+    rules = rules_of(data)
+
+    for index, entry in enumerate(listed(front, "divergences")):
+        if not isinstance(entry, dict) or not isinstance(entry.get("cites"), str):
+            continue  # reported by the shape checks, or a departure from something else
+        cited, where = entry["cites"], entry.get("file")
+        rule = rules.get(cited)
+        if rule is None:
+            problems.append(f"{nid}: divergences[{index}] cites {cited}, which {at} does not "
+                            f"declare")
+        elif isinstance(where, str) and not in_scope(rule, [where]):
+            problems.append(f"{nid}: divergences[{index}] cites {cited} against {where}, which "
+                            f"that rule's scope does not reach")
+    return problems
+
+
+def review_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
+    """Every citation a review makes, resolved against the standard it pins. A review may only cite
+    a rule the standard leaves to a reading — judging one a tool decides exactly would re-decide it
+    in a model at worse recall, and would make the tool's own findings look like opinions. Which
+    rules were in scope is not read from the record: it is a function of the copy and `reviewed`,
+    and both sit in this root."""
+    data, at, problems = standard_of(nid, front, root, validator)
+    if data is None:
+        return problems
+    rules = rules_of(data)
 
     for index, finding in enumerate(listed(front, "findings")):
         if not isinstance(finding, dict) or finding.get("pass") != "standard":
@@ -348,6 +386,43 @@ def standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]
         elif isinstance(where, str) and not in_scope(rule, [where]):
             problems.append(f"{nid}: findings[{index}] cites {cited} against {where}, which that "
                             f"rule's scope does not reach")
+    return problems
+
+
+def divergence_problems(front: dict) -> list[str]:
+    """One implementation's disclosed departures, against itself. A departure names exactly one
+    thing it departed from, and where a standard's rule is what it names, it says which file — so
+    the citation can be checked against the scope the rule declares and a reader can open the
+    place. Whether the departure was justified is nobody's here to decide."""
+    problems: list[str] = []
+    written = {f["path"] for f in listed(front, "files")
+               if isinstance(f, dict) and isinstance(f.get("path"), str)}
+    for index, entry in enumerate(listed(front, "divergences")):
+        if not isinstance(entry, dict):
+            continue  # the schema already reported the shape
+        names_from, cites, where = "from" in entry, "cites" in entry, entry.get("file")
+        if names_from and cites:
+            problems.append(f"divergences[{index}] names both `from` and `cites`; one departure "
+                            f"departs from one thing, and a rule of the standard is cited rather "
+                            f"than described")
+        elif not names_from and not cites:
+            problems.append(f"divergences[{index}] names neither `from` nor `cites`; a departure "
+                            f"from nothing stated is a departure nobody can pair with anything")
+        if cites and not isinstance(where, str):
+            problems.append(f"divergences[{index}] cites {entry['cites']} and names no `file`; a "
+                            f"citation is checked against the scope its rule declares, and "
+                            f"without a path there is nothing to check it against")
+        if isinstance(where, str) and not cites:
+            problems.append(f"divergences[{index}] names the file {where} and cites no rule; "
+                            f"`file` locates a citation, and a departure described in prose is "
+                            f"located in that prose")
+        if isinstance(where, str) and where not in written:
+            problems.append(f"divergences[{index}] names {where}, which `files` does not list; a "
+                            f"departure sits in a file this record says it wrote")
+        if cites and "standard" not in front:
+            problems.append(f"divergences[{index}] cites {entry['cites']} and this record names no "
+                            f"standard; a citation resolves against the copy the record pins, and "
+                            f"without one it names nothing")
     return problems
 
 
@@ -374,6 +449,8 @@ def node_problems(front, kind: str, validator, allowed, names: list[str]) -> lis
 
     if kind == "review":
         problems.extend(review_problems(front, names))
+    if kind == "implementation":
+        problems.extend(divergence_problems(front))
     return problems
 
 
@@ -559,6 +636,8 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
             if node["kind"] == "implementation":
                 problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
                                                         delivered))
+                problems.extend(implementation_standard_problems(
+                    nid, front, root, standard or standard_contract()))
             else:
                 pair = f"implementation/{nid.split('/', 1)[1]}"
                 if pair not in nodes:
@@ -576,8 +655,8 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
         if node["kind"] == "review":
             problems.extend(review_plan_problems(nid, front, plan_nodes, delivered,
                                                  names, root))
-            problems.extend(standard_problems(nid, front, root,
-                                              standard or standard_contract()))
+            problems.extend(review_standard_problems(nid, front, root,
+                                                     standard or standard_contract()))
     return problems
 
 
