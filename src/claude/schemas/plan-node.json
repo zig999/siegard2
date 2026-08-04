@@ -31,6 +31,7 @@
     "area": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 },
       "description": "The paths the survey walked, relative to the target source root. Required even when the target is empty: a greenfield area is a full answer, said in `summary`, and this field still records where the survey looked."
     },
@@ -61,6 +62,7 @@
     "covers": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "$ref": "#/$defs/baseNodeRef" },
       "description": "The base nodes this epic answers for, in both directions: the validator requires every entry to be bound by one of the epic's tasks or declared in `uncovered` — a covered node reaches a task or a stated why, never neither — and refuses a task binding outside this list, because a binding outside the claim is scope the plan does not declare."
     },
@@ -78,18 +80,21 @@
     "criteria": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 },
       "description": "The conditions under which the objective counts as met, each falsifiable on its own. \"Works correctly\" is prose; \"a rejected order returns the stated domain error\" is a criterion."
     },
     "depends_on": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "$ref": "#/$defs/taskRef" },
       "description": "Tasks whose delivered outcome this one builds on. Dependency, never order: the validator refuses a cycle, and any schedule satisfying these edges is equally valid."
     },
     "nodes": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "$ref": "#/$defs/baseNodeRef" },
       "description": "The base nodes that govern this task, by identifier. This is the binding: the executor reads exactly these, and every entry sits inside the epic's `covers` — a task needing more grows the claim or moves. A task that binds nothing is ungoverned by the base and must say why in `rationale`."
     },

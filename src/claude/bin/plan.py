@@ -157,12 +157,12 @@ def references(front: dict, kind: str) -> list[tuple[str, str, str]]:
             refs.append((target, edge_kind, at))
 
     if kind == "task":
-        for index, target in enumerate(front.get("depends_on") or []):
+        for index, target in enumerate(listed(front, "depends_on")):
             add(target, "depends_on", f"depends_on[{index}]")
-        for index, target in enumerate(front.get("nodes") or []):
+        for index, target in enumerate(listed(front, "nodes")):
             add(target, "binds", f"nodes[{index}]")
     if kind == "epic":
-        for index, target in enumerate(front.get("covers") or []):
+        for index, target in enumerate(listed(front, "covers")):
             add(target, "covers", f"covers[{index}]")
     return refs
 
@@ -175,7 +175,7 @@ def dependency_problems(nodes: dict[str, dict]) -> list[str]:
         if nodes[nid]["kind"] != "task":
             continue
         edges[nid] = []
-        for index, target in enumerate(nodes[nid]["front"].get("depends_on") or []):
+        for index, target in enumerate(listed(nodes[nid]["front"], "depends_on")):
             if not isinstance(target, str):
                 continue  # the schema already reported the shape
             if target == nid:
@@ -213,10 +213,10 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) 
     """One task against the base: the binding resolves, the triage is total and honest, and the
     pin matches the base as it stands."""
     problems: list[str] = []
-    bound = {t for t in (front.get("nodes") or []) if isinstance(t, str)}
+    bound = {t for t in listed(front, "nodes") if isinstance(t, str)}
 
     for field in ("unresolved", "waived"):
-        for index, entry in enumerate(front.get(field) or []):
+        for index, entry in enumerate(listed(front, field)):
             if not isinstance(entry, dict) or not isinstance(entry.get("gap"), str):
                 continue  # a question, or a shape the schema already reported
             node_ref, _, gap_field = entry["gap"].partition("#")
@@ -275,7 +275,7 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
                                 f"does not declare — grow `covers`, or move the task")
 
     declared_uncovered: set[str] = set()
-    for index, entry in enumerate(front.get("uncovered") or []):
+    for index, entry in enumerate(listed(front, "uncovered")):
         if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
             continue  # the schema already reported the shape
         node_ref = entry["node"]
@@ -387,7 +387,7 @@ def derive(nodes: dict[str, dict]) -> dict:
             unresolved = sorted(triage_of(front, "unresolved"))
             if unresolved:
                 entry["unresolved"] = unresolved
-            questions = sum(1 for e in (front.get("unresolved") or [])
+            questions = sum(1 for e in listed(front, "unresolved")
                             if isinstance(e, dict) and isinstance(e.get("question"), str))
             if questions:
                 entry["questions"] = questions
@@ -447,7 +447,7 @@ def unresolved_report(nodes: dict[str, dict]) -> str:
         if nodes[nid]["kind"] != "task":
             continue
         front = nodes[nid]["front"]
-        entries = front.get("unresolved") or []
+        entries = listed(front, "unresolved")
         gaps = sorted(e["gap"] for e in entries
                       if isinstance(e, dict) and isinstance(e.get("gap"), str))
         questions = [e["question"] for e in entries
@@ -546,7 +546,7 @@ def main() -> int:
                if (count := sum(1 for n in nodes.values() if n["kind"] == kind))]
     tasks = [n for n in nodes.values() if n["kind"] == "task"]
     unresolved = sum(len(triage_of(n["front"], "unresolved")) for n in tasks)
-    questions = sum(1 for n in tasks for e in (n["front"].get("unresolved") or [])
+    questions = sum(1 for n in tasks for e in listed(n["front"], "unresolved")
                     if isinstance(e, dict) and isinstance(e.get("question"), str))
     waived = sum(len(triage_of(n["front"], "waived")) for n in tasks)
     print(f"derived {target}: {len(plan['nodes'])} node(s), {len(plan['edges'])} edge(s), "

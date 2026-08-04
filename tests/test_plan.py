@@ -153,6 +153,20 @@ def test_the_unresolved_report_over_a_settled_plan_says_so(work, root, gapped_ba
     assert "no unresolved entries" in done.stdout
 
 
+def test_the_unresolved_report_is_refused_over_a_broken_plan(work, root, sound_plan,
+                                                             write_plan):
+    write_plan("task/checkout/orphan", {
+        "title": "Orphan", "summary": "Depends on nothing that exists.",
+        "objective": "Something demonstrable.",
+        "criteria": ["Something falsifiable."],
+        "nodes": ["definition/sales/order"],
+        "base": base_pin_of(root),
+        "depends_on": ["task/checkout/nothing"]})
+    done = run("--unresolved", work, root)
+    assert done.returncode == 1
+    assert "the unresolved report is not derived" in done.stdout
+
+
 def test_unresolved_stands_alone(work, root, sound_plan):
     done = run("--unresolved", "--check", work, root)
     assert done.returncode == 2
@@ -395,6 +409,37 @@ def test_a_task_binding_nothing_needs_a_rationale(work, root, sound_plan):
     sound_plan("task/checkout/scaffold", {
         **task, "rationale": "No base node governs scaffolding; the toolchain is the plan's own."})
     assert problems_in(work, root) == []
+
+
+def test_a_string_where_a_list_belongs_reports_once_not_per_character(work, root, sound_plan,
+                                                                      write_plan):
+    write_plan("epic/checkout", {
+        "title": "Checkout", "summary": "Covers written as a string, not a list.",
+        "covers": "definition/sales/order"})
+    problems = problems_in(work, root)
+    assert any("is not of type 'array'" in p for p in problems)
+    assert not any("covers names" in p for p in problems), \
+        "a wrong shape is the schema's report alone; its characters are not references"
+
+
+def test_duplicate_references_are_refused(work, root, sound_plan):
+    pin = base_pin_of(root)
+    sound_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted.",
+        "criteria": ["A valid order is retrievable."],
+        "nodes": ["definition/sales/order", "definition/sales/order"],
+        "base": pin})
+    assert any("non-unique" in p and "nodes" in p for p in problems_in(work, root))
+    sound_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted.",
+        "criteria": ["A valid order is retrievable."],
+        "nodes": ["definition/sales/order"],
+        "base": pin,
+        "depends_on": ["task/checkout/bill-order", "task/checkout/bill-order"]})
+    problems = problems_in(work, root)
+    assert any("non-unique" in p and "depends_on" in p for p in problems)
 
 
 def test_a_stray_file_is_reported(work, root, sound_plan):
