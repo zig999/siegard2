@@ -67,11 +67,13 @@ situate → inventory → decompose → bind → validate → report → stop
 Three of these steps are another judge's. The survey, the decomposition, and each task's
 binding are delegated to the subagents this framework ships, each in a clean context, and
 the judgment of each step lives in the agent's file — not here, and not in your memory of
-it. The binder's isolation is the point of the whole arrangement: it arrives with no memory
-of how the tasks were cut, so the base is read for what it says today, never to fit a task.
-Where the session cannot spawn subagents, read the agent's file under the plugin root's
-`agents/` directory and apply its discipline in place — the file stays the single home of
-that judgment — and the report must say which steps ran inline.
+it. Delegating means spawning the named subagent — in a plugin install the name may be
+plugin-scoped — and reading the agent's file yourself is the fallback, never the
+delegation. The binder's isolation is the point of the whole arrangement: it arrives with
+no memory of how the tasks were cut, so the base is read for what it says today, never to
+fit a task. Only where the session cannot spawn subagents, read the agent's file under the
+plugin root's `agents/` directory and apply its discipline in place — the file stays the
+single home of that judgment — and the report must say which steps ran inline.
 
 ### 1. Situate
 
@@ -103,8 +105,8 @@ Every plan node this skill writes — this one and every one after it — carrie
 exactly two headings, in order: `## What it is`, then `## Notes`. One sentence per line; a
 section with nothing to say carries the literal line `None.`
 
-Then delegate the survey to the agent at
-`${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md`, passing three things: the target source
+Then spawn a `codebase-surveyor` subagent — its judgment lives at
+`${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md` — passing three things: the target source
 root, the scope's path under `intake/`, and the plan-node contract's path. It returns
 inventory nodes — modules, evidenced conventions, reuse points, consumer-named risks, and
 the empty tree as a full answer where that is what it found. Write each returned node at the
@@ -112,8 +114,8 @@ path its identifier computes to, verbatim.
 
 ### 3. Decompose
 
-Delegate the cut to the agent at `${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md`,
-passing four things: the scope's path, the impact set as you read it from the base's index —
+Spawn a `backlog-decomposer` subagent — its judgment lives at
+`${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md` — passing four things: the scope's path, the impact set as you read it from the base's index —
 identifiers, titles, summaries, and each node's open gap fields — the surveyor's inventory,
 and the plan-node contract's path. Its file holds the boundary tests that shape every task;
 what comes back is epics, complete, and task skeletons — objective, criteria, dependencies —
@@ -124,17 +126,19 @@ skeleton is not yet a valid node, and it only touches disk bound and pinned.
 
 ### 4. Bind
 
-Binding is per task and per judge: delegate each skeleton, one invocation each, to the agent
-at `${CLAUDE_PLUGIN_ROOT}/agents/execution-contract-binder.md`, passing four things: the
-skeleton, the candidates — its epic's `covers` less its `uncovered`, because binding what the
-epic declared untouched is a contradiction the validator refuses — the knowledge root, and
-the plan-node contract's path. The binder rereads the node files fresh and returns the task's `nodes`, its
+Binding is per task and per judge: spawn one `execution-contract-binder` subagent per
+skeleton — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/execution-contract-binder.md`
+— passing four things: the skeleton, the candidates — its epic's `covers` less its
+`uncovered`, because binding what the epic declared untouched is a contradiction the
+validator refuses — the knowledge root, and the plan-node contract's path. The binder rereads the node files fresh and returns the task's `nodes`, its
 full gap triage — `unresolved` and `waived`, with whys — and the questions the base cannot
 answer; a divergence between the task and the nodes comes back as notes.
 
 Then compose and write each task: the skeleton, plus what its binder returned, plus the pin
-from the base check stamped on `base`. Notes are never written into the node — they go to
-the report. Where the binder bound nothing, the task carries `rationale` saying why —
+from the base check stamped on `base`. A binder's notes are appended to the task body's
+`## Notes`, one sentence per line — the diff is the review, and a divergence only the
+conversation holds is a divergence the reviewer never sees — and the report repeats them by
+task. Where the binder bound nothing, the task carries `rationale` saying why —
 scaffolding is real work, but ungoverned work is a claim someone reviews. Where a note says
 the task needs what the candidates do not hold, the cut is wrong: grow the epic's `covers`
 or move the task, and re-bind — never widen a binding by hand.
@@ -177,7 +181,8 @@ Report, in this order:
 - every unresolved entry, by task identifier — the gaps that block and the questions that
   outran the base, the latter with the pointer back to `/analyse-domain`;
 - every waiver, by task identifier — these are the claims a reviewer can reject;
-- every note a binder returned, by task identifier — divergences the plan did not encode;
+- every note a binder returned, by task identifier — the same divergences written into each
+  task's `## Notes`, repeated here so the reviewer meets them before the diff;
 - every node carrying `rationale`, by identifier;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim.

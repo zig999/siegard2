@@ -54,5 +54,7 @@ inventory/<slug>
 <one sentence per line, or the literal line None.>
 ```
 
-Point every `sources` entry at the scope file the caller named. One inventory node is the
-ordinary answer; return more only when the scope lands in genuinely separate territories.
+Return the blocks as plain text — the fence above shows the shape and is not part of the
+return. Point every `sources` entry at the scope file the caller named. One inventory node
+is the ordinary answer; return more only when the scope lands in genuinely separate
+territories.

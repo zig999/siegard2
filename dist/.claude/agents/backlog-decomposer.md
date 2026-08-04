@@ -80,6 +80,7 @@ binder's and the caller's to add>
 <one sentence per line, or the literal line None.>
 ```
 
-Point every `sources` entry at the scope file the caller named. Where the scope left a
-decomposition choice to you, say so in that node's `rationale` — a reviewer accepts what the
-scope stated and argues with what you decided.
+Return the blocks as plain text — the fences above show the shape and are not part of the
+return. Point every `sources` entry at the scope file the caller named. Where the scope left
+a decomposition choice to you, say so in that node's `rationale` — a reviewer accepts what
+the scope stated and argues with what you decided.
