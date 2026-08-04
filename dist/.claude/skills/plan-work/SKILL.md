@@ -140,20 +140,25 @@ answer; a divergence between the task and the nodes comes back as notes.
 
 Then compose and write each task: the skeleton, plus what its binder returned, plus the pin
 from the base check stamped on `base`. A binder's notes are appended to the task body's
-`## Notes`, one sentence per line — the diff is the review, and a divergence only the
-conversation holds is a divergence the reviewer never sees — and the report repeats them by
-task. Where the binder bound nothing, the task carries `rationale` saying why —
+`## Notes`, one sentence per line, a blocking one saying so — the diff is the review, and a
+divergence only the conversation holds is a divergence the reviewer never sees — and the
+report repeats them by task. Where the binder bound nothing, the task carries `rationale` saying why —
 scaffolding is real work, but ungoverned work is a claim someone reviews. Where a note says
 the task needs what the candidates do not hold, the cut is wrong: grow the epic's `covers`
 or move the task, and re-bind — never widen a binding by hand.
 
-A note that contradicts a criterion or the objective — not merely conditions it — is settled
-before the task is written, and the skeleton's `rationale` says by whom. Where the
-contradicted statement was the decomposer's decision — the skeleton carries `rationale` over
-that cut — the skeleton goes back to the decomposer with the note, is re-cut, and re-bound.
-Where it came from the scope, the task is written with the note, and the report names the
-contradiction as one only the human settles — through the scope, or through
-`/analyse-domain`. A conditional note stays a note.
+A note the binder classed `blocking` — the objective or a criterion cannot be demonstrated
+as written without contradicting or exceeding the base — is settled before the task is
+written, and the skeleton's `rationale` says by whom. Where the blocked statement was the
+decomposer's decision — the skeleton carries `rationale` over that cut — the skeleton goes
+back to the decomposer with the note, is re-cut, and re-bound. Where it came from the scope,
+the task is written with the note, and the report names it as a conflict only the human
+settles — through the scope, or through `/analyse-domain`. An `advisory` note stays a note —
+except one naming nodes outside the epic's covers, which never travels alone: the caller's
+decision is recorded beside it in `## Notes` — grow the claim and re-bind, move the task and
+re-bind, or stand with the why. The class is the binder's judgment, not yours to overrule: a
+blocking note you disagree with is still settled as blocking, and the disagreement goes in
+the report.
 
 Each task file is checked on its own as soon as it is composed — a composition error is
 caught at the file that made it, never discovered at the end:
