@@ -31,6 +31,11 @@ root, in three kinds — `inventory`, `epic`, `task` — with the path as the id
 must declare is stated once, in `schemas/plan-node.json`; `plan.json` is derived beside the
 nodes by `bin/plan.py`, which validates the plan against the base and is never edited by hand.
 
+The plan's three producing judgments — the survey, the decomposition, and each task's binding —
+belong to shipped subagents (`codebase-surveyor`, `backlog-decomposer`,
+`execution-contract-binder`), each in a clean context: the binder never sees the cut it binds,
+so the base is read for what it says, never to fit a task.
+
 A task binds the base nodes that govern it and pins the base it read. Two checks keep the plan
 honest, and both are the validator's: every open gap on a bound node is `unresolved` on the
 task or waived with a why — never silently ignored — and coverage reconciles in both
