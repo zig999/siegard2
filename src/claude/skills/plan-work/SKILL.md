@@ -153,9 +153,12 @@ written, and the skeleton's `rationale` says by whom. Where the blocked statemen
 decomposer's decision — the skeleton carries `rationale` over that cut — the skeleton goes
 back to the decomposer with the note, is re-cut, and re-bound. Where it came from the scope,
 the task is written with the note, and the report names it as a conflict only the human
-settles — through the scope, or through `/analyse-domain`. An `advisory` note stays a note.
-The class is the binder's judgment, not yours to overrule: a blocking note you disagree with
-is still settled as blocking, and the disagreement goes in the report.
+settles — through the scope, or through `/analyse-domain`. An `advisory` note stays a note —
+except one naming nodes outside the epic's covers, which never travels alone: the caller's
+decision is recorded beside it in `## Notes` — grow the claim and re-bind, move the task and
+re-bind, or stand with the why. The class is the binder's judgment, not yours to overrule: a
+blocking note you disagree with is still settled as blocking, and the disagreement goes in
+the report.
 
 Each task file is checked on its own as soon as it is composed — a composition error is
 caught at the file that made it, never discovered at the end:
