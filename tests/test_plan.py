@@ -236,6 +236,66 @@ def test_a_moved_base_stales_the_pin(work, root, sound_plan, gapped_base):
     assert "has since moved" in done.stdout
 
 
+# ---------------------------------------------------------------- the closed plan
+
+def test_a_closed_plan_derives_without_the_base(work, root, sound_plan):
+    (work / "closure.md").write_text("The initiative shipped; see intake/.\n", encoding="utf-8")
+    done = run(work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "; closed" in done.stdout
+    assert (work / "plan.json").is_file()
+
+
+def test_a_closed_plan_ignores_a_broken_base_path(work, root, sound_plan, tmp_path):
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    done = run(work, tmp_path / "no-such-base")
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_live_plan_requires_the_knowledge_root(work, root, sound_plan):
+    done = run(work)
+    assert done.returncode == 2
+    assert "a live plan validates against its base" in done.stderr
+
+
+def test_a_moved_base_does_not_stale_a_closed_plan(work, root, sound_plan, gapped_base):
+    assert run(work, root).returncode == 0
+    gapped_base("definition/sales/customer", {
+        "title": "Customer", "summary": "Who buys.", "ddd": "value-object",
+        "attributes": [{"name": "name", "type": "string", "max_length": 80}]})
+    (work / "closure.md").write_text("Closed after the base moved on.\n", encoding="utf-8")
+    assert run("--check", work, root).returncode == 0
+    assert run("--check", work).returncode == 0
+
+
+def test_a_closed_plan_still_refuses_broken_structure(work, root, sound_plan):
+    sound_plan("task/checkout/rogue", {
+        "title": "Rogue", "summary": "Binds outside the epic's claim.",
+        "objective": "An unclaimed binding is refused even in history.",
+        "criteria": ["The validator refuses this task."],
+        "nodes": ["definition/sales/order", "context/sales"],
+        "base": base_pin_of(root),
+    })
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    done = run(work)
+    assert done.returncode == 1
+    assert "does not cover" in done.stdout
+
+
+def test_the_unresolved_report_works_on_a_closed_plan(work, root, sound_plan):
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    done = run("--unresolved", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "definition/sales/invoice#attributes" in done.stdout
+
+
+def test_the_closure_marker_is_not_a_node(work, root, sound_plan):
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    done = run("--node", "closure.md", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "marks the plan closed" in done.stdout
+
+
 # ---------------------------------------------------------------- the triage discipline
 
 def test_an_untriaged_gap_on_a_bound_node_is_refused(work, root, sound_plan):
