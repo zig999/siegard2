@@ -74,8 +74,10 @@ Two indexes, one rule: read the index, never the whole tree.
   what those nodes reference, and what references them. Where the scope's vocabulary does not
   surface in the index, grep the base for its terms. Read the impact-set nodes and nothing
   else: the plan binds to what governs the scope, not to everything the base holds.
-- **The plan, when the work root is populated.** A stale `plan.json` is rederived by a full
-  validation run before anything relies on it. Read `plan.json`, and only it: locate the
+- **The plan, when the work root is populated.** Trust its index only after checking it: run
+  `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <knowledge-root>`, and a
+  stale `plan.json` is rederived by a full validation run before anything relies on it.
+  Read `plan.json`, and only it: locate the
   epics and tasks the scope touches, and close the impact set over its edges — dependencies
   in both directions, and bindings that reach the base's impact set. Read those files alone.
   Outside the set, standing decisions stand: a task this change does not touch is not
@@ -87,6 +89,10 @@ Before any node, persist the scope: the prose as supplied, plus any files it ref
 under `intake/` in the work root. Point every `sources` entry at a file under it. A change
 persists the same way — a new file under `intake/`, never an edit to what intake already
 holds.
+
+Every plan node this skill writes — this one and every one after it — carries a body of
+exactly two headings, in order: `## What it is`, then `## Notes`. One sentence per line; a
+section with nothing to say carries the literal line `None.`
 
 Then survey the target source root and record the territory the plan lands in:
 
