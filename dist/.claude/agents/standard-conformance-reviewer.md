@@ -44,11 +44,13 @@ stop. You need:
 - **Read the standard before the source.** A pass that learns the rules while reading the code
   finds the rules the code suggests, and a rule inferred from a file is a rule that file cannot
   violate.
-- **Work out what is in scope, and report it.** A rule reaches a file when its scope names the
+- **Work out what is in scope, and say so.** A rule reaches a file when its scope names the
   directory the file sits under and the ending the file has, and the scope says whether it reaches
   below that directory. Every rule decided by reading whose scope reaches at least one path in the
-  file set is in scope, and the set of them travels back with your findings — a review with no
-  findings has to be able to say what it was clean over, and without that set it cannot.
+  file set is in scope. The set travels back with your findings for the caller to report to a
+  person — a review with no findings has to be able to say what it was clean over — but it is not
+  a fact the record stores: the copied standard and the file set already determine it, and the
+  validator derives it from them rather than trusting a list you wrote.
 - **A finding cites exactly one rule, by its identifier.** A departure from two rules is two
   findings: they will be settled separately. A finding citing no rule is taste with a location
   attached, and it does not belong in the result.
@@ -90,7 +92,7 @@ stop. You need:
 One YAML mapping, nothing else — no commentary before or after:
 
 ```yaml
-applied:                     # every rule decided by reading whose scope reaches a reviewed path
+in_scope:                    # every rule decided by reading whose scope reaches a reviewed path
   - <rule identifier>
 findings:                    # omit the key entirely when you found nothing
   - file: <a path, exactly as the file set lists it>
@@ -108,9 +110,10 @@ definition requires — the fence above shows which fields, not their shapes, an
 the return. Omit `pass` on every finding: the caller knows which pass it delegated and stamps it,
 so a finding cannot claim a pass that did not run.
 
-`applied` is never omitted, and an empty `findings` beside a full `applied` is the most useful
+`in_scope` is never omitted, and an empty `findings` beside a full `in_scope` is the most useful
 result you can return: it says these rules were in scope over these files, and none was departed
-from.
+from. It goes to the person reading the caller's report, not into the record — the record carries
+the standard it read and the pin of its text, from which the same set derives.
 
 If you cannot review — an input is absent, the standard does not parse or does not hold together,
 or a path in the file set cannot be read — say so plainly in one sentence and return no mapping. A

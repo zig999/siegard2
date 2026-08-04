@@ -211,16 +211,17 @@ def write_standard(delivery: Path):
         path = where / name
         path.write_text(yaml.safe_dump(data or STANDARD, sort_keys=False), encoding="utf-8")
         pin = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        return {"at": f"standards/{name}", "pin": pin, "applied": ["ARC-01"]}
+        return {"at": f"standards/{name}", "pin": pin}
     return put
 
 
 @pytest.fixture
-def sound_delivery(root, work, sound_plan, write_delivery):
+def sound_delivery(root, work, sound_plan, write_delivery, delivery):
     """The smallest delivery every check passes: one task of the fixture plan implemented and
     proven. The plan's other task stays undelivered on purpose — the base leaves it unresolved,
     so delivering it is exactly what the gate refuses."""
     pin = plan_pin_of(work, root)
+    delivery_root = delivery
     write_delivery("implementation/checkout/record-order", {
         "title": "Record a placed order",
         "summary": "The entry point that persists a valid order.",
@@ -234,9 +235,12 @@ def sound_delivery(root, work, sound_plan, write_delivery):
                    "encoded_at": ["src/orders/place.ts"],
                    "how": "the order's identity and attributes are the shape place() persists"}],
     })
+    import hashlib
+    written = delivery_root / "implementation/checkout/record-order.md"
     write_delivery("proof/checkout/record-order", {
         "title": "Proof for recording a placed order",
         "summary": "What proves the recorded order.",
+        "implementation": "sha256:" + hashlib.sha256(written.read_bytes()).hexdigest(),
         "tests": [{"file": "tests/place.spec.ts",
                    "name": "returns the order_number for a valid submission",
                    "proves": "Submitting a valid order returns its order_number.",

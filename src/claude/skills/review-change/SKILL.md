@@ -86,7 +86,7 @@ way.
 situate → capture → pass → compose → validate → report → stop
 ```
 
-Each pass is another judge's. The three are delegated to the subagents this framework ships, each
+Each pass is another judge's. The four are delegated to the subagents this framework ships, each
 in a clean context, and the judgment of each lives in the agent's file — not here, and not in your
 memory of it. Delegating means spawning the named subagent — in a plugin install the name may be
 plugin-scoped — and reading the agent's file yourself is the fallback, never the delegation. Only
@@ -104,24 +104,48 @@ from, and what the proof left unproven or contested.
 Read the task files themselves for the criteria — `plan.json` does not carry them — and read
 nothing else in either root. The base node files belong to the passes, each reading its own.
 
+Then, where the caller named a standard, take it in and read it here — before anything is run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
+```
+
+Anything but a clean pass is a stop, reported verbatim: a review against a registry that does not
+hold together reports a conformance nobody has, and fixing the registry belongs to whoever owns it.
+The command prints the split — how many rules a reading decides, how many a tool does, and the
+names of the steps those expect — which is exactly what the next step needs.
+
+Then copy the registry into `standards/` under the delivery root, keeping the name the project gave
+it, and note the SHA-256 of the copy — `sha256sum <delivery-root>/standards/<file>`. The copy is
+the point: the registry lives in the project's tree and will move on, and a record pointing at a
+file no root holds is a record nobody can check later. It is kept the way `run/` is kept — material
+a judgment was read from, never validated as a node.
+
+The standard is read here rather than at its own pass for two reasons, and both are about order.
+The rules it leaves to a tool decide which steps the next step should run, so a review that met the
+registry later would have already chosen its commands. And the pass that reads it is handed the
+copy's path, which has to exist before the pass is spawned.
+
 ### 2. Capture
 
 Where the caller named commands, run them, once, into a run named for this review:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <slug> --timeout-seconds <n> --step <name>="<command>" [--step ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <slug> --cwd <target-source-root> --timeout-seconds <n> --step <name>="<command>" [--step ...]
 ```
 
-The timeout is the caller's; there is no default, because a bound this framework shipped would be
-one nobody calibrated. The commands are the caller's too: nothing here composes a build or a test
-command, or infers one from what the tree looks like.
+The working directory is the target source root, and it is stated rather than defaulted: the
+commands are the project's build and test commands, they only mean anything where the project sits,
+and a run from anywhere else reports failures about a tree nobody built. The timeout is the
+caller's for the same reason — a bound this framework shipped would be one nobody calibrated. The
+commands are the caller's too: nothing here composes a build or a test command, or infers one from
+what the tree looks like.
 
-Where a standard was named, its rules decided by a tool belong in these steps — each such rule names
-the step that decides it, and a project whose standard names `lint` and `typecheck` expects those
-steps here. You do not compose them either: if the caller named the rules but not the commands, the
-steps that would have decided them did not run, and the report says which rules that leaves
-unanswered. This is the whole reason the standard is split in two, and it is why running comes before
-the passes.
+Where a standard was named, the rules it leaves to a tool belong in these steps — the previous step
+printed which steps they expect, and a project whose standard names `lint` and `typecheck` expects
+those steps here. You do not compose them either: where the caller named a standard but not the
+commands a rule expects, the step that would have decided it did not run, and the report names that
+rule as unanswered. This is the whole reason the standard is split in two.
 
 Running belongs here rather than in `/implement-task` for one reason: whoever wrote the source
 must not be the one who witnesses whether it passed, or the writing quietly iterates until the
@@ -195,18 +219,16 @@ so a reader never mistakes four passes for every pass.
 
 ### 4. Compose
 
-Where the standard pass ran, first take a copy of the registry into `standards/` under the delivery
-root, keeping its filename, and record where it sits and the SHA-256 of its text — computable as
-`sha256sum <delivery-root>/standards/<file>`. The copy is the point: the registry lives in the
-project's tree and will move on, and a record pointing at a file no root holds is a record nobody
-can check later. It is kept the way `run/` is kept — material a judgment was read from, never
-validated as a node.
+Write `review/<slug>.md` under the delivery root — the slug names this review, and the path is its
+identity. It carries the file set it was computed over, the tasks it answers, the pin, one entry per
+pass, the coverage entries where that pass ran, the standard's copy and the pin of its text where
+that one ran, how many failures were counted where that one did, the run's directory where there was
+one, and every finding.
 
-Then write `review/<slug>.md` under the delivery root — the slug names this review, and the path is
-its identity. It carries the file set it was computed over, the tasks it answers, the pin, one entry
-per pass, the coverage entries where that pass ran, the standard with the rules that were in scope
-where that one ran, how many failures were counted where that one did, the run's directory where
-there was one, and every finding.
+The record holds no list of the rules that were in scope. The copy and its pin already determine
+that set, both sit in this root, and the validator derives it — so a stored list would be a second
+answer to a question the root answers, and the one nobody could check, because the reviewer would
+be the one writing it. Which rules were in scope belongs in the report, for the person.
 
 Stamp each finding's pass yourself: the agents return findings without one, so a finding cannot
 claim a pass that did not run. An entry for a pass that did not run names what was missing — that
@@ -234,19 +256,18 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <kno
 This validates the review against the contract, runs the checks that need the plan — every task
 named is a delivered task of this plan, the coverage pass answers for every criterion of them and
 for nothing else, the failures counted match the findings recorded, the run it points at exists,
-every finding sits in a file the set lists, and the pin matches the plan as it stands — and, where
-the standard pass ran, the checks that need the copied registry: it holds together, its pin is the
-text the findings were written against, every rule recorded as in scope is one the standard decides
-by reading and whose scope reaches something reviewed, no such rule is left out, and every citation
-resolves to one of them against a file its scope reaches. Then it derives `delivery.json`. **Never
-write or edit `delivery.json` yourself.** Report the output verbatim, and never describe the review
-as sound while the command exits non-zero.
+every finding of a pass that scans the file set sits in a file that set lists, and the pin matches
+the plan as it stands — and, where the standard pass ran, the checks that need the copied registry:
+it holds together, its pin is the text the findings were written against, and every citation names a
+rule that copy declares, leaves to a reading rather than to a tool, and whose scope reaches the file
+the finding names. Then it derives `delivery.json`. **Never write or edit `delivery.json` yourself.**
+Report the output verbatim, and never describe the review as sound while the command exits non-zero.
 
 **Fixing means form, never judgment.** A criterion paraphrased instead of quoted, a finding
-attributed to a pass that did not run, a citation of a rule that was not in scope, a count that
-does not match — yours to correct. A finding is never dropped to make the record read cleanly, a
-state is never raised to make coverage look better, a rule is never left out of the applied set to
-make a citation legal, and a pass that did not run is never recorded as having run.
+attributed to a pass that did not run, a citation hung on a rule that does not govern the file —
+yours to correct. A finding is never dropped and a count is never lowered to make the two agree: if
+they disagree, one of them is wrong and the answer is to find out which. A state is never raised to
+make coverage look better, and a pass that did not run is never recorded as having run.
 
 ### 6. Report, and stop
 
@@ -291,6 +312,8 @@ to a person.
 - Record a finding against a rule a standard says a tool decides, or against a rule whose scope does
   not reach the file — the first re-decides in a model what a tool decides exactly, and the second
   hangs a departure on a sentence that does not govern the file.
+- Lower a failure count, or drop a failure, to make the record validate. The two disagreeing is the
+  signal, not the obstacle.
 - Add to, edit or reinterpret the project's standard. It is the project's; a rule that seems wrong is
   reported as a departure exactly as written, and changed by whoever owns it.
 - Write into the work root, the knowledge root, or the target source root.

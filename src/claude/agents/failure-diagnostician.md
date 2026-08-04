@@ -44,12 +44,15 @@ same thing.
   and a bound node is where that is written. Read the node before you settle it. The contract
   states which way the doubt falls and why; apply it rather than restating it.
 - **Nothing ran until something compiled.** Where the output shows a compilation or type error
-  before the first test result, every failure in that run belongs to that error. Say it once,
-  diagnose the error, and stop: results printed after a failed compile describe a binary nobody
-  built.
+  before the first test result, every failure in that run belongs to that error: diagnose the
+  errors the compiler reported, one finding each, and stop before the test results, which describe
+  a binary nobody built. Your count is the compiler's errors, not the test lines that follow them —
+  say so, so a reader can tell what you counted from what you ignored.
 - **A step that was never found, or that was terminated, is not a failure of the code.** Nothing
   was proved about it, and that is exactly what the diagnosis says. One finding for that step,
-  and the steps recorded after it were never attempted.
+  located by the step's own name because no file is its subject, and the steps recorded after it
+  were never attempted. Count it as one: a run that could not execute reported one thing, which is
+  that it could not execute.
 - **Count the failures yourself, and say how many.** The run carries no count on purpose:
   counting means parsing a reporter's format, which is knowledge of a stack that nothing in this
   framework holds. Your count and your findings are held against each other, and the two
@@ -88,7 +91,8 @@ One YAML mapping, nothing else — no commentary before or after:
 ```yaml
 failures_counted: <how many failures the output reported>
 findings:                    # one per counted failure; omit the key only when the count is zero
-  - where: <path, and the test's name or the line>
+  - file: <the path the run's own output named; omit only where it named none>
+    where: <the test's name or the line within that file — or, with no file, the step of the run>
     evidence: <the runner's own message, quoted>
     cause: <the contract's vocabulary; read it there>
     cost: <what this failure costs, in the terms a reader can weigh>
@@ -96,6 +100,12 @@ findings:                    # one per counted failure; omit the key only when t
 notes: <one sentence on what you diagnosed without — the file set, a node you could not read;
        omit when nothing was missing>
 ```
+
+The `file` you record is the path the output named, and it is often not one the change touched — a
+test in another area, a consumer a signature broke, a file the compiler reached before the first
+test result. Record it as the run named it. Unlike the passes that scan a file set, you are not
+held to what the change modified: a run breaking something nobody edited is the most useful thing
+it can tell anybody, and it is the reason you read the run rather than the diff.
 
 Return the mapping as plain YAML text, with each finding shaped as the contract's `finding`
 definition requires — the fence above shows which fields, not their shapes, and is not part of

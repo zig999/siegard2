@@ -69,6 +69,14 @@ more (`coverage-auditor`, `base-conformance-reviewer`, `standard-conformance-rev
 `failure-diagnostician`), and running the suite is none of them — `bin/run.py` executes the
 caller's commands and records what they printed, so nothing that judges a run also performs it.
 
+A record answers every criterion its task states and every base node its task binds, and the
+validator holds both totalities: silence over either is refused the way silence over a gap is
+refused in a plan. A task the base leaves `unresolved` is not delivered at all — the fact is
+produced in the base first. **No delivery node carries a status, a readiness or an approval.**
+What is delivered is what has a record, and the record's presence in git is the whole of that
+state; `bin/deliver.py --outstanding` answers what remains from the records themselves, so
+nothing has to be kept true by hand.
+
 ## The project's own standard
 
 The base says what the business decided; a project also decides how its own source is arranged,
@@ -92,13 +100,16 @@ applying a forbidden-construct rule has strictly worse recall than the compiler 
 A project that has authored no standard gets an honestly narrow review — the pass records that it
 did not run, and what was absent — never a clean one.
 
-A record answers every criterion its task states and every base node its task binds, and the
-validator holds both totalities: silence over either is refused the way silence over a gap is
-refused in a plan. A task the base leaves `unresolved` is not delivered at all — the fact is
-produced in the base first. **No delivery node carries a status, a readiness or an approval.**
-What is delivered is what has a record, and the record's presence in git is the whole of that
-state; `bin/deliver.py --outstanding` answers what remains from the records themselves, so
-nothing has to be kept true by hand.
+## What a delivery root serves
+
+One plan, one delivery root, for the same reason a work root serves one initiative: a record
+answers a task, and a root holding records for tasks a plan does not contain is a root the
+validator refuses whole. A plan closed by its `closure.md` takes its delivery root into history
+with it — reviewing what it delivered stays possible and is sometimes the point, but writing new
+source against a plan declared over is not: the initiative ended, and its inventory returns to the
+next plan through the survey of the code. **A new initiative names a new work root and a new
+delivery root.** Reusing the old one is the one mistake this arrangement cannot catch cheaply, and
+the sentence above is why nothing has to.
 
 ## Entry points
 

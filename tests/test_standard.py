@@ -216,6 +216,20 @@ def test_the_subcommand_needs_a_file():
     assert "--standard takes a file" in done.stderr
 
 
+def test_a_path_under_standards_is_reported_as_material(tmp_path):
+    """`--node` pointed at the copy a review took must say what it is, the way it does for a run —
+    reporting "the path computes to no identifier" over material is reporting a problem where
+    there is none."""
+    delivery, work = tmp_path / "delivery", tmp_path / "work"
+    (delivery / "standards").mkdir(parents=True)
+    work.mkdir()
+    copy = delivery / "standards" / "backend.yaml"
+    copy.write_text(EXAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+    done = invoke("--node", str(copy), str(delivery), str(work), str(tmp_path))
+    assert done.returncode == 0, done.stderr + done.stdout
+    assert "never validated as a node" in done.stdout
+
+
 def test_the_example_is_not_distributed():
     """Siegard ships the slot and the enforcement, never the content."""
     assert not (REPO / "dist/.claude/standards").exists()

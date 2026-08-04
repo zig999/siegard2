@@ -37,7 +37,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/nodeAnswer" },
-      "description": "One entry per base node the task binds, saying how the written source answers to it. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's binding: a bound node this record passes over in silence is the base going unanswered in code, which is the failure this field exists to expose."
+      "description": "One entry per base node the task binds, saying how the written source answers to it. Absent only where the task binds nothing at all — a plan may cut such a task, and it must then say why in its own `rationale`, so there is nothing here to answer for. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's binding: a bound node this record passes over in silence is the base going unanswered in code, which is the failure this field exists to expose."
     },
     "inferences": {
       "type": "array",
@@ -63,6 +63,10 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/deferral" },
       "description": "What this delivery found and did not change, with why it sat outside the task. Recording it is how a task stays one task."
+    },
+    "implementation": {
+      "$ref": "#/$defs/pin",
+      "description": "The implementation record this proof holds up, pinned by content: the SHA-256 of that file's text, computable by hand as `sha256sum <delivery-root>/implementation/<epic>/<slug>.md`. Which record it is comes from the path, which both nodes share; this says which version of it these tests were written against. A pin the validator finds diverging says the implementation was rewritten and the proof was not — and that is the failure it exists to catch, because a delivery is written again more often than anyone expects, and a proof left behind still claims to prove criteria the source now satisfies some other way, or no longer satisfies at all. It is not a second pin of the plan: the implementation beside it holds that one, and two records pinning one plan would be two places for the same fact to be wrong."
     },
     "tests": {
       "type": "array",
@@ -142,7 +146,7 @@
     {
       "if": { "properties": { "kind": { "const": "implementation" } }, "required": ["kind"] },
       "then": {
-        "required": ["plan", "files", "criteria", "nodes"],
+        "required": ["plan", "files", "criteria"],
         "propertyNames": {
           "enum": ["kind", "title", "summary", "plan", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
         },
@@ -176,14 +180,15 @@
     {
       "if": { "properties": { "kind": { "const": "proof" } }, "required": ["kind"] },
       "then": {
-        "required": ["tests"],
+        "required": ["implementation", "tests"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "tests", "not_applicable", "untested", "contested"]
+          "enum": ["kind", "title", "summary", "implementation", "tests", "not_applicable", "untested", "contested"]
         },
         "examples": [
           {
             "title": "Proof for recording a placed order",
             "summary": "What proves task/checkout/record-order, written against its implementation record.",
+            "implementation": "sha256:2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
             "tests": [
               {
                 "file": "tests/orders/place.spec.ts",
@@ -218,7 +223,7 @@
             "title": "Checkout, first review",
             "summary": "What three passes found over the source and tests recording a placed order.",
             "plan": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
-            "reviewed": ["src/orders/place.ts", "src/orders/routes.ts", "tests/orders/place.spec.ts"],
+            "reviewed": ["src/orders/order.service.ts", "src/orders/routes.ts", "tests/orders/place.spec.ts"],
             "tasks": ["task/checkout/record-order"],
             "passes": [
               { "pass": "coverage" },
@@ -227,9 +232,8 @@
               { "pass": "failures", "missing": "no captured run was supplied, so nothing was diagnosed" }
             ],
             "standard": {
-              "at": "standards/backend-typescript.yaml",
-              "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f",
-              "applied": ["ARC-01", "ARC-04", "COR-02"]
+              "at": "standards/example-service.yaml",
+              "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
             "coverage": [
               {
@@ -246,18 +250,18 @@
             "findings": [
               {
                 "pass": "conformance",
-                "file": "src/orders/place.ts",
+                "file": "src/orders/order.service.ts",
                 "where": "line 34, the refusal branch",
                 "evidence": "if (order.total <= 0) return refuse('ORDER_TOTAL_INVALID')",
                 "cost": "the refusal code is stated in code and in no bound node, so the code became the place that decision lives and a reader looking for it in the base will not find it"
               },
               {
                 "pass": "standard",
-                "file": "src/orders/place.ts",
+                "file": "src/orders/order.service.ts",
                 "where": "line 12, the constructor",
                 "cites": "ARC-01",
                 "evidence": "constructor(private readonly store: PostgresOrderStore)",
-                "cost": "the entry point cannot be exercised without a live store, so every test of the refusal has to stand one up",
+                "cost": "the service cannot be exercised without a live store, so every test of the refusal has to stand one up",
                 "correction": "take the store as the interface the repository already declares, and let the factory choose the implementation"
               }
             ]
@@ -428,25 +432,18 @@
     },
     "standardRef": {
       "type": "object",
-      "required": ["at", "pin", "applied"],
+      "required": ["at", "pin"],
       "additionalProperties": false,
       "properties": {
         "at": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^standards/[a-z0-9]+(-[a-z0-9]+)*\\.(yaml|yml|json)$",
-          "description": "The standard this review read, as its file under the delivery root's `standards/`. The registry is the project's and lives in the project's own tree; a copy is taken here at review time, the way `run/` holds what a suite printed — so the record is readable, and checkable, long after the project's copy has moved on. A path outside the delivery root would make this record depend on a file no root holds."
+          "pattern": "^standards/[^/]+\\.(yaml|yml|json)$",
+          "description": "The standard this review read, as its file under the delivery root's `standards/`, keeping the name the project gave it. The registry is the project's and lives in the project's own tree; a copy is taken here at review time, the way `run/` holds what a suite printed — so the record is readable, and checkable, long after the project's copy has moved on. A path outside the delivery root would make this record depend on a file no root holds."
         },
         "pin": {
           "$ref": "#/$defs/pin",
-          "description": "The SHA-256 of the standard's text as this review read it, computable by hand as `sha256sum <delivery-root>/<at>`. A pin the validator finds diverging says the copy taken here is not the text the findings were written against."
-        },
-        "applied": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": { "$ref": "#/$defs/ruleRef" },
-          "description": "Every rule that was in scope — those the standard decides by reading and whose scope reaches at least one path in `reviewed`. It is recorded rather than left to be recomputed because the standard is not a root this framework validates and may not exist when someone reads this record, and because without it a review with no findings cannot say what it was clean over. The validator holds it against the standard: an id here the standard does not declare, a rule a tool decides, or a rule whose scope reaches nothing reviewed, are each refused."
+          "description": "The SHA-256 of the standard's text as this review read it, computable by hand as `sha256sum <delivery-root>/<at>`. A pin the validator finds diverging says the copy taken here is not the text the findings were written against. These two fields are the whole of what a review records about a standard, and together they are what says what the pass was clean over: which rules were in scope is a function of this copy and `reviewed`, both of which this root holds, so the validator derives it rather than reading a list somebody maintained. A stored list would have been a second answer to a question the root already answers — and, being the reviewer's to write, the one nobody could check."
         }
       }
     },
@@ -493,19 +490,27 @@
     },
     "finding": {
       "type": "object",
-      "required": ["pass", "file", "where", "evidence", "cost"],
+      "required": ["pass", "where", "evidence", "cost"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "pass": { "const": "failures" } }, "required": ["pass"] },
+          "then": {},
+          "else": { "required": ["file"] },
+          "$comment": "A pass that scans the file set always observes a finding in one of its files. The failures pass does not scan: its subject is a captured run, whose failures may land in a file the change never touched, or in no file at all where a step could not execute. So `file` is required of the scanning passes and optional of that one, and bin/deliver.py holds it to `reviewed` on the same terms."
+        }
+      ],
       "properties": {
         "pass": { "$ref": "#/$defs/passName" },
         "file": {
           "type": "string",
           "minLength": 1,
-          "description": "The path this was observed in, exactly as `reviewed` lists it. The validator holds every finding to that list, because a finding outside the file set is a finding over something nobody said was under review — a constraint this contract stated in prose before it was a field anything could check."
+          "description": "The path this was observed in. For a pass that scans the file set it is required, is exactly as `reviewed` lists it, and the validator holds it to that list — a finding outside the set is a finding over something nobody said was under review. For the failures pass it is the path the run's own output named, which need not be in `reviewed`: a change breaks tests it never touched, and refusing to record that would be refusing the most useful thing a run says. It is absent there only where the run named no file at all — a command that could not be found, a step that was terminated."
         },
         "where": {
           "type": "string",
           "minLength": 1,
-          "description": "Where in that file — the line, or the construct — so a reader opens the place rather than searching for it."
+          "description": "Where in that file — the line, or the construct — so a reader opens the place rather than searching for it. Where no file is the subject, it names the step of the run instead, which is the whole of what a step that never executed can be located by."
         },
         "evidence": {
           "type": "string",

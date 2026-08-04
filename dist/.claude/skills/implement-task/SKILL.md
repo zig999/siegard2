@@ -17,7 +17,10 @@ A missing input is a stop, not a default:
 2. **the work root** — the plan holding the task. Named by the human; inferred rather than
    named, its absence is a stop.
 3. **the knowledge root** — the base the plan binds to, required exactly as the plan validator
-   requires it: while the plan is live, and ignored once it is closed.
+   requires it: while the plan is live, and ignored once it is closed. A work root holding
+   `closure.md` is a different matter: the plan is history, its initiative is over, and writing new
+   source against it is a stop. Reviewing what it already delivered is not — that is
+   `/review-change`'s, and it stays possible for as long as the records do.
 4. **the target source root** — where the code lives or will live. An empty tree is an answer;
    which tree it is, the human says.
 5. **the delivery root** — the directory the records are written into, under git, beside neither
@@ -39,9 +42,11 @@ problems is fixed through `/plan-work`; a stale index is rederived by whoever ow
 Neither repair is this invocation's to make — delivering never writes into the work root, and
 never into the knowledge root either.
 
-The pin every record carries is the SHA-256 of the plan's `plan.json` as just checked:
-`sha256:<hexdigest>`, computable as `sha256sum <work-root>/plan.json`. Compute it once, after
-the check passes, and stamp it on every record this invocation writes.
+The pin the implementation record carries is the SHA-256 of the plan's `plan.json` as just
+checked: `sha256:<hexdigest>`, computable as `sha256sum <work-root>/plan.json`. Compute it once,
+after the check passes. The proof carries no plan pin — the record beside it holds that one, and
+two records pinning one plan would be two places for the same fact to be wrong. What the proof
+pins is the implementation record itself, and step 3 says why.
 
 ## Before anything: the tree
 
@@ -103,7 +108,7 @@ reports, per task, what the base leaves unresolved and which dependencies have n
 Anything but a clean run is a stop, reported verbatim: a delivery that does not hold together is
 not added to.
 
-Three of its lines are refusals, and each is settled before anything is written:
+Two of its lines are refusals, and each is settled before anything is written:
 
 - **The task carries unresolved entries.** Stop. An unresolved entry is a fact the base does not
   hold that bears on the objective or a criterion, and there is no honest way to write source
@@ -115,13 +120,18 @@ Three of its lines are refusals, and each is settled before anything is written:
 - **A task this one builds on has no record.** Stop, and name it. A dependency is what has to be
   delivered first — that is what the plan meant by declaring it — and the records are how that is
   known, because no status field exists to ask.
-- **This task already has a record.** Not a stop: it is a re-delivery, and the report says so.
-  The record is rewritten whole rather than amended, because a record amended across two acts of
-  writing describes neither, and `git diff` over it is then the history of the delivery.
 
-Then read the task file itself, and the plan's inventory nodes — the conventions the existing
-code follows, and what this work must reuse rather than rewrite. Read the epic only for what it
-covers. Read no other task: this invocation delivers one.
+A third fact the report does not carry, because you can see it directly: **a record already at the
+path this task computes to.** That is a re-delivery, not a stop, and the report says so. Both
+records are rewritten whole rather than amended — a record amended across two acts of writing
+describes neither, and the proof's pin on the implementation refuses the pair if you rewrite one
+and leave the other. `git diff` over the two is then the history of the delivery.
+
+Then read the task file itself, and the plan's inventory nodes. `plan.json` lists every node the
+plan holds with its kind and its file, so the inventory is found there rather than by walking the
+root; pass on the ones whose `area` reaches where this task lands, and leave the rest — an
+inventory surveyed for another territory carries conventions this task has no business following.
+Read the epic only for what it covers. Read no other task: this invocation delivers one.
 
 ### 2. Implement
 
@@ -166,6 +176,12 @@ It writes the tests and returns what each proves, what would make each fail, whi
 dismissed and why, what stays unproven, and where it disagrees with the implementation. Write
 `proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way.
 
+Stamp on it the SHA-256 of the implementation record you just wrote — `sha256sum <that file>`. It
+says which version of that record these tests were written against, and it is what makes a
+re-delivery honest: rewrite the implementation later and leave the proof alone, and the validator
+refuses the pair instead of letting tests stand that claim to prove criteria the source now
+satisfies some other way.
+
 A disagreement the author recorded is not settled here. It stays recorded: this invocation holds
 two producers precisely so that one cannot overrule the other, and resolving it now would discard
 the signal.
@@ -206,7 +222,11 @@ Report, in this order:
 - what the implementation deferred, and what it says must keep working;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
-- that nothing was run, and that `/review-change` is what runs the suite and judges the change.
+- that nothing was run, and that `/review-change` is what runs the suite and judges the change —
+  and that where the project holds a standard of its own, the review applies its rules to what was
+  just written. This invocation is not given that standard and does not read it: the only project
+  convention it follows is what the inventory evidenced. Saying so is what keeps a person from
+  meeting a rule for the first time as a finding.
 
 Then stop. `git diff` over the target source root and the delivery root is the review, and it
 belongs to a person.

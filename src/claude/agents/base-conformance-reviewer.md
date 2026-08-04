@@ -81,7 +81,8 @@ One YAML mapping, nothing else — no commentary before or after:
 
 ```yaml
 findings:                    # omit the key entirely when you found nothing
-  - where: <path, and the line or the construct>
+  - file: <a path, exactly as the file set lists it>
+    where: <the line, or the construct, within that file>
     evidence: <quoted from the source>
     cost: <the consequence, in the terms a reader can weigh>
     correction: <what would have to change; omit where you cannot say>

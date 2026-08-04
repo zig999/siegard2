@@ -309,6 +309,7 @@ def test_a_failure_finding_without_a_cause(delivery, work, root, sound_delivery,
 
 def test_a_count_that_disagrees_with_the_findings(delivery, work, root, sound_delivery,
                                                   write_delivery, run_dir):
+    run_dir()
     front = review_front(work, root)
     set_pass(front, "failures")
     front["run"] = "run/first"
@@ -358,6 +359,149 @@ def test_a_run_the_delivery_root_does_not_hold(delivery, work, root, sound_deliv
     said(problems_of(delivery, work, root), "which the delivery root does not hold")
 
 
+# ------------------------------------------------ what a review says about its run
+
+
+def test_a_failure_may_land_in_a_file_the_change_never_touched(delivery, work, root,
+                                                               sound_delivery, write_delivery,
+                                                               run_dir):
+    """The passes that scan a file set are held to it. The failures pass is not: its subject is a
+    captured run, and a change breaks tests it never touched. Refusing to record that would refuse
+    the most useful thing a run says."""
+    run_dir()
+    front = review_front(work, root)
+    set_pass(front, "failures")
+    front["run"] = "run/first"
+    front["failures_counted"] = 1
+    front["findings"] = [{"pass": "failures", "file": "src/cart/total.spec.ts", "where": "line 4",
+                          "cause": "code", "evidence": "expected 1, got 0",
+                          "cost": "an area the change never touched now fails"}]
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, root) == []
+
+
+def test_a_failure_may_name_no_file_at_all(delivery, work, root, sound_delivery, write_delivery,
+                                           run_dir):
+    """A command that could not be found, or a step that was terminated, is located by the step's
+    own name because no file is its subject."""
+    run_dir("not_found")
+    front = review_front(work, root)
+    set_pass(front, "failures")
+    front["run"] = "run/first"
+    front["failures_counted"] = 1
+    front["findings"] = [{"pass": "failures", "where": "the suite step", "cause": "setup",
+                          "evidence": "command not found: pnpm",
+                          "cost": "nothing was proved about this code at all"}]
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, root) == []
+
+
+def test_a_scanning_pass_still_may_not_leave_the_file_set(delivery, work, root, sound_delivery,
+                                                          write_delivery):
+    front = review_front(work, root)
+    front["findings"] = [{"pass": "conformance", "file": "src/cart/total.ts", "where": "line 4",
+                          "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "which `reviewed` does not list")
+
+
+def test_a_review_cannot_report_no_failures_over_a_run_that_failed(delivery, work, root,
+                                                                   sound_delivery,
+                                                                   write_delivery, run_dir):
+    """The hole this closes: every fact a review states about a run used to be the reviewer's own,
+    so a record could claim the pass ran and counted nothing over a run that failed."""
+    run_dir()
+    front = review_front(work, root)
+    set_pass(front, "failures")
+    front["run"] = "run/first"
+    front["failures_counted"] = 0
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "and this review counted no failures")
+
+
+def test_the_failures_pass_does_not_read_a_run_that_passed(delivery, work, root, sound_delivery,
+                                                           write_delivery, run_dir):
+    run_dir("passed")
+    front = review_front(work, root)
+    set_pass(front, "failures")
+    front["run"] = "run/first"
+    front["failures_counted"] = 1
+    front["findings"] = [{"pass": "failures", "file": "src/orders/place.ts", "where": "line 4",
+                          "cause": "code", "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "a pass that should not have been asked for")
+
+
+def test_a_run_directory_the_runner_did_not_write(delivery, work, root, sound_delivery,
+                                                  write_delivery):
+    (delivery / "run" / "first").mkdir(parents=True)
+    front = review_front(work, root)
+    set_pass(front, "failures")
+    front["run"] = "run/first"
+    front["failures_counted"] = 1
+    front["findings"] = [{"pass": "failures", "file": "src/orders/place.ts", "where": "line 4",
+                          "cause": "code", "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "holds no run.json")
+
+
+def test_the_coverage_pass_cannot_run_without_a_task(delivery, work, root, sound_delivery,
+                                                    write_delivery):
+    front = review_front(work, root)
+    del front["tasks"]
+    del front["plan"]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "pairing tests with criteria nobody wrote")
+
+
+# ------------------------------------------- a task the plan leaves ungoverned
+
+
+def test_a_task_that_binds_nothing_can_be_delivered(delivery, work, root, sound_plan,
+                                                    write_plan, write_delivery):
+    """plan-work cuts such a task deliberately — scaffolding is real work, and the plan says why in
+    its own `rationale`. The record answers for no bound node because there is none to answer for,
+    and before this the contract made that record impossible to write at all."""
+    write_plan("task/checkout/scaffold", {
+        "title": "Scaffold", "summary": "Set the toolchain up.",
+        "objective": "The project builds and its suite runs.",
+        "criteria": ["The suite runs and reports."],
+        "base": json_front(work, "task/checkout/record-order")["base"],
+        "rationale": "No base node governs the toolchain; the plan decided this cut itself."})
+    write_delivery("implementation/checkout/scaffold", {
+        "title": "Scaffold", "summary": "The toolchain this project builds with.",
+        "plan": plan_pin_of(work, root),
+        "files": [{"path": "package.json", "effect": "declares the build and the suite"}],
+        "criteria": [{"criterion": "The suite runs and reports.", "met": True,
+                      "how": "the suite script runs the runner over the test tree"}]})
+    assert problems_of(delivery, work, root) == []
+
+
+# ---------------------------------------------------- the proof and its subject
+
+
+def test_a_proof_left_behind_by_a_rewritten_implementation(delivery, work, root, sound_delivery,
+                                                           write_delivery):
+    """A re-delivery that rewrites the implementation and leaves the proof alone would otherwise
+    validate clean, with tests claiming to prove criteria the source now satisfies another way."""
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["files"][0]["effect"] = "persists a submitted order through the new store"
+    write_delivery("implementation/checkout/record-order", front)
+    said(problems_of(delivery, work, root), "the proof has not")
+
+
+# --------------------------------------------------- standards/ holds material
+
+
+def test_standards_holds_material_and_is_never_a_node(delivery, work, root, sound_delivery,
+                                                      write_standard):
+    write_standard()
+    (delivery / "standards" / "README.md").write_text("# Why these copies exist\n",
+                                                      encoding="utf-8")
+    assert problems_of(delivery, work, root) == [], \
+        "standards/ holds the registry a review read; validating it as a node would refuse a note"
+
+
 # ------------------------------------------------------- the project's own standard
 
 
@@ -380,10 +524,11 @@ def test_a_review_against_a_standard_holds(delivery, work, root, sound_delivery,
     assert problems_of(delivery, work, root) == []
 
 
-def test_a_clean_standard_pass_still_says_what_it_was_clean_over(delivery, work, root,
-                                                                 sound_delivery, write_delivery,
-                                                                 write_standard):
-    """No findings and a full applied set is the most useful result the pass returns."""
+def test_a_clean_standard_pass_says_what_it_was_clean_over(delivery, work, root,
+                                                           sound_delivery, write_delivery,
+                                                           write_standard):
+    """No findings at all is a real result: the copy and its pin are what the set of rules in
+    scope derives from, so the record needs no list of them to be answerable."""
     write_delivery("review/first", standard_review(work, root, write_standard()))
     assert problems_of(delivery, work, root) == []
 
@@ -414,41 +559,36 @@ def test_a_pin_that_is_not_the_copy_it_points_at(delivery, work, root, sound_del
     said(problems_of(delivery, work, root), "is not the one its findings were written against")
 
 
-def test_a_rule_in_scope_that_applied_leaves_out(delivery, work, root, sound_delivery,
-                                                 write_delivery, write_standard):
-    """ARC-01 reaches src/orders/place.ts. Leaving it out would make a clean review look narrow
-    without saying so."""
-    ref = write_standard()
-    ref["applied"] = ["ARC-02"]
-    write_delivery("review/first", standard_review(work, root, ref))
-    found = problems_of(delivery, work, root)
-    said(found, "applied does not name it")
-    said(found, "ARC-02, whose scope reaches no reviewed path")
 
-
-def test_a_rule_a_tool_decides_is_not_the_review_to_read(delivery, work, root, sound_delivery,
-                                                         write_delivery, write_standard):
-    ref = write_standard()
-    ref["applied"] = ["ARC-01", "PRH-01"]
-    write_delivery("review/first", standard_review(work, root, ref))
+def test_a_finding_citing_a_rule_a_tool_decides(delivery, work, root, sound_delivery,
+                                                write_delivery, write_standard):
+    front = standard_review(work, root, write_standard())
+    front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts", "where": "line 3",
+                          "cites": "PRH-01", "evidence": "console.log(order)", "cost": "y"}]
+    write_delivery("review/first", front)
     said(problems_of(delivery, work, root), "says a tool decides")
 
 
-def test_a_citation_the_standard_does_not_declare(delivery, work, root, sound_delivery,
-                                                  write_delivery, write_standard):
-    ref = write_standard()
-    ref["applied"] = ["ARC-01", "ZZZ-99"]
-    write_delivery("review/first", standard_review(work, root, ref))
+def test_a_finding_citing_a_rule_the_standard_does_not_declare(delivery, work, root,
+                                                               sound_delivery, write_delivery,
+                                                               write_standard):
+    front = standard_review(work, root, write_standard())
+    front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts", "where": "line 3",
+                          "cites": "ZZZ-99", "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
     said(problems_of(delivery, work, root), "which standards/example-service.yaml does not declare")
 
 
-def test_a_finding_citing_a_rule_that_was_not_in_scope(delivery, work, root, sound_delivery,
-                                                       write_delivery, write_standard):
+
+def test_a_finding_hung_on_a_rule_that_does_not_govern_the_file(delivery, work, root,
+                                                                sound_delivery, write_delivery,
+                                                                write_standard):
+    """ARC-02's scope is src/routes/ and the finding names a file under src/orders/."""
     front = standard_review(work, root, write_standard())
     front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts", "where": "line 12",
                           "cites": "ARC-02", "evidence": "x", "cost": "y"}]
     write_delivery("review/first", front)
-    said(problems_of(delivery, work, root), "which applied does not name")
+    said(problems_of(delivery, work, root), "which that rule's scope does not reach")
 
 
 def test_a_finding_against_a_file_the_rule_does_not_reach(delivery, work, root, sound_delivery,
@@ -458,7 +598,7 @@ def test_a_finding_against_a_file_the_rule_does_not_reach(delivery, work, root, 
     front["findings"] = [{"pass": "standard", "file": "tests/place.spec.ts", "where": "line 3",
                           "cites": "ARC-01", "evidence": "x", "cost": "y"}]
     write_delivery("review/first", front)
-    said(problems_of(delivery, work, root), "which that\nrule's scope does not reach".replace("\n", " "))
+    said(problems_of(delivery, work, root), "which that rule's scope does not reach")
 
 
 def test_the_standard_and_its_pass_agree(delivery, work, root, sound_delivery, write_delivery,
@@ -593,7 +733,7 @@ def test_a_captured_run_reaches_a_review(delivery, work, root, sound_delivery, w
     import sys
     captured = subprocess.run(
         [sys.executable, "-B", str(REPO / "src/claude/bin/run.py"), str(delivery),
-         "--run", "first", "--timeout-seconds", "20",
+         "--run", "first", "--cwd", str(REPO), "--timeout-seconds", "20",
          "--step", "suite=python3 -c 'raise SystemExit(1)'"],
         capture_output=True, text=True)
     assert captured.returncode == 1, captured.stderr
@@ -617,10 +757,21 @@ def test_a_captured_run_reaches_a_review(delivery, work, root, sound_delivery, w
 
 
 @pytest.fixture
-def run_dir(delivery: Path) -> Path:
-    where = delivery / "run" / "first"
-    where.mkdir(parents=True)
-    return where
+def run_dir(delivery: Path):
+    """A captured run, as the runner writes one. The validator opens it, so a bare directory is
+    not a run."""
+    def put(outcome: str = "failed") -> Path:
+        where = delivery / "run" / "first"
+        where.mkdir(parents=True, exist_ok=True)
+        (where / "run.json").write_text(json.dumps({
+            "contract_version": "siegard-run/1", "run": "run/first", "cwd": "/tmp/project",
+            "timeout_seconds": 20, "outcome": outcome,
+            "failed_step": None if outcome == "passed" else "suite",
+            "steps": [{"name": "suite", "command": "pytest", "outcome": outcome,
+                       "exit_code": 0 if outcome == "passed" else 1, "output": "suite.log"}],
+            "combined_output": "run.log"}, indent=2), encoding="utf-8")
+        return where
+    return put
 
 
 def json_front(delivery: Path, did: str) -> dict:

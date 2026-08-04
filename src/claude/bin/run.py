@@ -24,9 +24,12 @@ directly. Nothing expands `&&`, `|`, `>`, `$VAR`, or a glob, and nothing a comma
 start another one. A caller who needs a pipeline writes it into a file and names that file as
 the command.
 
-**No default timeout.** A number this framework ships is a number nobody calibrated, and an
-unbounded run is worse. So the timeout is a required input, stated per run by whoever knows how
-long the suite takes, and it is recorded with the run.
+**No default timeout, and no default working directory.** A number this framework ships is a
+number nobody calibrated, and an unbounded run is worse — so the timeout is a required input,
+stated per run by whoever knows how long the suite takes, and recorded with the run. The directory
+is required for the same reason: the commands only mean anything where the project sits, and a
+directory this script chose in silence would produce a run against a tree nobody named, whose
+every step failed for a reason the record could not show.
 
 **A step that fails stops the run.** Later steps are recorded as not run rather than executed,
 because a suite run against a tree that did not compile reports failures about a binary nobody
@@ -44,8 +47,8 @@ reporter's format is knowledge of a stack, and this holds none.
 
 Declared dependencies: none beyond the standard library.
 
-Usage:  run.py <delivery-root> --run <slug> --timeout-seconds N
-               --step NAME="COMMAND" [--step NAME="COMMAND" ...] [--cwd DIR]
+Usage:  run.py <delivery-root> --run <slug> --cwd DIR --timeout-seconds N
+               --step NAME="COMMAND" [--step NAME="COMMAND" ...]
 Exit:   0 every step passed
         1 a step failed, timed out, or could not be found
         2 cannot run
@@ -121,7 +124,7 @@ def main() -> int:
     parser.add_argument("--run", required=True, metavar="SLUG")
     parser.add_argument("--timeout-seconds", required=True, type=int)
     parser.add_argument("--step", action="append", required=True, metavar="NAME=COMMAND")
-    parser.add_argument("--cwd", default=".")
+    parser.add_argument("--cwd", required=True)
     args = parser.parse_args()
 
     root = Path(args.delivery_root)

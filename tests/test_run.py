@@ -34,7 +34,9 @@ def delivery(tmp_path: Path) -> Path:
 
 
 def invoke(delivery: Path, *args: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, "-B", str(RUNNER), str(delivery), *args],
+    """Every invocation states its working directory: the runner refuses to choose one."""
+    cwd = [] if "--cwd" in args else ["--cwd", str(REPO)]
+    return subprocess.run([sys.executable, "-B", str(RUNNER), str(delivery), *cwd, *args],
                           capture_output=True, text=True, timeout=timeout)
 
 
@@ -153,6 +155,19 @@ def test_it_never_overwrites_a_run(delivery):
                    "--step", "a=python3 -c 'pass'")
     assert again.returncode == 2
     assert "would overwrite" in again.stderr
+
+
+def test_it_refuses_to_choose_a_working_directory(delivery):
+    """The commands only mean anything where the project sits; a directory chosen in silence would
+    produce a run whose every step failed for a reason the record could not show. Invoked past the
+    helper, so nothing supplies the flag on the caller's behalf."""
+    done = subprocess.run([sys.executable, "-B", str(RUNNER), str(delivery),
+                           "--run", "green", "--timeout-seconds", "20",
+                           "--step", "a=python3 -c 'pass'"],
+                          capture_output=True, text=True)
+    assert done.returncode == 2
+    assert "--cwd" in done.stderr, done.stderr
+    assert not (delivery / "run").exists(), "a refused run leaves nothing behind"
 
 
 def test_it_refuses_a_delivery_root_that_is_not_there(tmp_path):

@@ -95,6 +95,7 @@ DELIVERY_GRAPH_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery.json"
 STANDARD_CONTRACT = PLUGIN_ROOT / "schemas" / "standard.json"
 DELIVERY_FILE = "delivery.json"
 RUN_DIR = "run"
+STANDARDS_DIR = "standards"
 
 KINDS = ("implementation", "proof", "review")
 PAIRED = ("implementation", "proof")
@@ -189,7 +190,10 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
         if name in names and name not in ran:
             problems.append(f"findings[{index}] is attributed to `{name}`, which did not run; "
                             f"a pass that did not run found nothing")
-        if isinstance(finding.get("file"), str) and finding["file"] not in reviewed:
+        # A pass that scans the file set is held to it. The failures pass is not: its subject is a
+        # captured run, and a change breaks tests it never touched.
+        if (name != "failures" and isinstance(finding.get("file"), str)
+                and finding["file"] not in reviewed):
             problems.append(f"findings[{index}] is in {finding['file']}, which `reviewed` does "
                             f"not list; a finding outside the file set is a finding over "
                             f"something nobody said was under review")
@@ -221,6 +225,11 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
         if field not in front and name in ran:
             problems.append(f"the {name} pass ran and `{field}` is absent; a pass that ran "
                             f"records {want}")
+
+    if "coverage" in ran and not listed(front, "tasks"):
+        problems.append("the coverage pass ran and this review names no task; the criteria it "
+                        "pairs tests with are the tasks', and without them it would be pairing "
+                        "tests with criteria nobody wrote")
 
     counted = front.get("failures_counted")
     if isinstance(counted, int) and not isinstance(counted, bool):
@@ -299,9 +308,10 @@ def in_scope(rule: dict, paths: list[str]) -> bool:
 
 def standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
     """One review against the standard it read. The copy under the delivery root is the text the
-    findings were written against; every rule recorded as in scope is one the standard decides by
-    reading and whose scope reaches something reviewed; and every citation resolves to such a
-    rule. Without the last three, a review with no findings cannot say what it was clean over."""
+    findings were written against, and every citation resolves to a rule that copy declares, that
+    it leaves to a reading rather than to a tool, and whose scope reaches the file the finding
+    names. Which rules were in scope is not read from the record: it is a function of the copy and
+    `reviewed`, and both sit in this root."""
     declared = front.get("standard")
     if not isinstance(declared, dict) or not isinstance(declared.get("at"), str):
         return []  # the schema already reported the shape
@@ -320,29 +330,6 @@ def standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]
 
     rules = {r["id"]: r for r in listed(data, "rules")
              if isinstance(r, dict) and isinstance(r.get("id"), str)}
-    reviewed = [p for p in listed(front, "reviewed") if isinstance(p, str)]
-    applied = [r for r in listed(declared, "applied") if isinstance(r, str)]
-
-    for rid in applied:
-        rule = rules.get(rid)
-        if rule is None:
-            problems.append(f"{nid}: applied names {rid}, which {at} does not declare")
-        elif rule.get("decided_by") != "reading":
-            problems.append(f"{nid}: applied names {rid}, which {at} says a tool decides; a rule a "
-                            f"linter or a compiler decides exactly runs as a step of the "
-                            f"project's own suite, and what it finds arrives through the failures "
-                            f"pass instead")
-        elif not in_scope(rule, reviewed):
-            problems.append(f"{nid}: applied names {rid}, whose scope reaches no reviewed path; a "
-                            f"rule that was never in scope cannot be one the review was clean "
-                            f"over")
-
-    for rid, rule in sorted(rules.items()):
-        if (rule.get("decided_by") == "reading" and in_scope(rule, reviewed)
-                and rid not in applied):
-            problems.append(f"{nid}: {at} declares {rid}, whose scope reaches a reviewed path, and "
-                            f"applied does not name it; a rule left out of scope in silence reads "
-                            f"as one that found nothing")
 
     for index, finding in enumerate(listed(front, "findings")):
         if not isinstance(finding, dict) or finding.get("pass") != "standard":
@@ -350,10 +337,15 @@ def standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]
         cited, where = finding.get("cites"), finding.get("file")
         if not isinstance(cited, str):
             continue  # the schema already reported it
-        if cited not in applied:
-            problems.append(f"{nid}: findings[{index}] cites {cited}, which applied does not name; "
-                            f"a finding cites a rule that was in scope for this review")
-        elif isinstance(where, str) and not in_scope(rules[cited], [where]):
+        rule = rules.get(cited)
+        if rule is None:
+            problems.append(f"{nid}: findings[{index}] cites {cited}, which {at} does not declare")
+        elif rule.get("decided_by") != "reading":
+            problems.append(f"{nid}: findings[{index}] cites {cited}, which {at} says a tool "
+                            f"decides; a rule a linter or a compiler decides exactly runs as a "
+                            f"step of the project's own suite, and what it finds arrives through "
+                            f"the failures pass instead")
+        elif isinstance(where, str) and not in_scope(rule, [where]):
             problems.append(f"{nid}: findings[{index}] cites {cited} against {where}, which that "
                             f"rule's scope does not reach")
     return problems
@@ -512,10 +504,46 @@ def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict], pin
                                 f"this review names states; the criterion is quoted as the "
                                 f"task states it")
 
+    problems.extend(run_problems(nid, front, root))
+    return problems
+
+
+def run_problems(nid: str, front: dict, root: Path) -> list[str]:
+    """One review against the run it read. The record says a run failed and says how many failures
+    it counted; this opens the run and holds both to it. Without that, every fact a review states
+    about a run is the reviewer's own, and a review claiming the failures pass ran and found
+    nothing over a run that failed passes every other check — which is exactly the failure the
+    count was written to expose."""
+    problems: list[str] = []
     where = front.get("run")
-    if isinstance(where, str) and not (root / where).is_dir():
-        problems.append(f"{nid}: run names {where}, which the delivery root does not hold; "
-                        f"the captured run is the evidence a diagnosis was read from")
+    if not isinstance(where, str):
+        return problems
+    directory = root / where
+    if not directory.is_dir():
+        return [f"{nid}: run names {where}, which the delivery root does not hold; "
+                f"the captured run is the evidence a diagnosis was read from"]
+
+    record = directory / "run.json"
+    if not record.is_file():
+        return [f"{nid}: {where} holds no run.json; the runner writes one for every run, so a "
+                f"directory without it is not a run this framework captured"]
+    try:
+        captured = json.loads(record.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        return [f"{nid}: {where}/run.json cannot be read: {broken}"]
+    if not isinstance(captured, dict):
+        return [f"{nid}: {where}/run.json is not a mapping"]
+
+    outcome = captured.get("outcome")
+    if outcome == "passed":
+        problems.append(f"{nid}: {where} passed, and the failures pass reads a run to say why it "
+                        f"failed; a run holding no failure is a pass that should not have been "
+                        f"asked for, and the entry says so instead")
+    counted = front.get("failures_counted")
+    if outcome != "passed" and counted == 0:
+        problems.append(f"{nid}: {where} ended `{outcome}` and this review counted no failures; a "
+                        f"run that did not pass reported something, and a count of none over it "
+                        f"is how a failure goes unexamined while the record still looks complete")
     return problems
 
 
@@ -544,6 +572,15 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str
                 if pair not in nodes:
                     problems.append(f"{nid}: proves a task with no implementation record at "
                                     f"{pair}; what a proof holds up has to exist first")
+                else:
+                    declared = front.get("implementation")
+                    actual = pin_of(root / f"{pair}.md")
+                    if isinstance(declared, str) and declared != actual:
+                        problems.append(
+                            f"{nid}: the implementation pin is not {pair} as it stands ({actual}); "
+                            f"the record these tests were written against has been rewritten and "
+                            f"the proof has not — write the proof again, or restate the pin "
+                            f"deliberately")
         if node["kind"] == "review":
             problems.extend(review_plan_problems(nid, front, plan_nodes, pin, delivered,
                                                  names, root))
@@ -559,13 +596,15 @@ def collect(root: Path, validator, allowed, names: list[str]) -> tuple[dict[str,
     problems: list[str] = []
     for path in sorted(root.rglob("*.md")):
         relative = path.relative_to(root)
-        if relative.parts[0] == RUN_DIR:
-            continue  # what the commands printed: kept for a review to point at, never a node
+        if relative.parts[0] in (RUN_DIR, STANDARDS_DIR):
+            continue  # what a run printed, and the standard a review read: material, never a node
         nid = id_of(relative)
         if nid is None:
             problems.append(f"{relative.as_posix()}: not implementation/<epic>/<slug>.md, "
                             f"proof/<epic>/<slug>.md or review/<slug>.md; the path is the "
-                            f"identity and this one computes to none")
+                            f"identity and this one computes to none. Material a judgment was "
+                            f"read from belongs under run/ or standards/, which are never "
+                            f"validated as nodes")
             continue
         text = path.read_text(encoding="utf-8")
         match = FENCE.match(text)
@@ -662,9 +701,11 @@ def check_single(root: Path, named: str, validator, allowed, names: list[str]) -
     except ValueError:
         print(f"cannot run: {named} is not under {root}", file=sys.stderr)
         return CANNOT_RUN
-    if relative.parts[0] == RUN_DIR:
-        print(f"{relative.as_posix()}: sits under run/, which holds what the commands printed "
-              f"and is never validated")
+    if relative.parts[0] in (RUN_DIR, STANDARDS_DIR):
+        held = ("what the commands printed" if relative.parts[0] == RUN_DIR
+                else "the standard a review read")
+        print(f"{relative.as_posix()}: sits under {relative.parts[0]}/, which holds {held} "
+              f"and is never validated as a node")
         return 0
     nid = id_of(relative)
     if nid is None:
