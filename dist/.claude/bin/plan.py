@@ -23,6 +23,13 @@ reports a soundness nobody has. A base that does not hold together is a refusal 
 with graph.py first. The pin each task carries is the SHA-256 of the graph.json text a sound
 base derives to, so `sha256sum <knowledge-root>/graph.json` computes the same value by hand.
 
+**A `closure.md` at the work root marks the plan closed.** A closed plan is history: every
+structural check still runs — corrupted history is refused — but the base is never touched,
+because history must stay checkable after the base moves on, breaks, or disappears. Each
+task's pin stops being a currency constraint and stands as the historical anchor naming the
+base the binding read. The marker itself is prose for the reviewer, kept like `intake/` and
+never validated as a node; the knowledge root becomes optional, and when given it is ignored.
+
 **plan.json is derived, never edited.** It is refused entirely while the plan has problems: an
 index over a broken plan reports a shape nobody decided. `--check` compares and never repairs.
 This script answers pointed questions itself (`--unresolved`) and never reads plan.json to do it:
@@ -31,14 +38,16 @@ disagree with the other, and neither can be stale.
 
 Declared dependencies: PyYAML, jsonschema.
 
-Usage:  plan.py <work-root> <knowledge-root>            validate everything, then write plan.json
-        plan.py --check <work-root> <knowledge-root>    validate and compare; write nothing
-        plan.py --unresolved <work-root> <knowledge-root>
+Usage:  plan.py <work-root> [<knowledge-root>]          validate everything, then write plan.json
+        plan.py --check <work-root> [<knowledge-root>]  validate and compare; write nothing
+        plan.py --unresolved <work-root> [<knowledge-root>]
                                                         validate, then print each task's open
                                                         gaps and questions; write nothing
-        plan.py --node <file> <work-root> <knowledge-root>
+        plan.py --node <file> <work-root> [<knowledge-root>]
                                                         validate one file (cross-node checks and
                                                         base checks do not run)
+        The knowledge root is required while the plan is live, and ignored once closure.md
+        marks it closed.
 Exit:   0 sound (and, with --check, current)
         1 problems, or --check and plan.json is stale
         2 cannot run (including a knowledge base that does not hold together)
@@ -68,6 +77,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 PLAN_CONTRACT = PLUGIN_ROOT / "schemas" / "plan-node.json"
 PLAN_GRAPH_CONTRACT = PLUGIN_ROOT / "schemas" / "plan.json"
 PLAN_FILE = "plan.json"
+CLOSURE_FILE = "closure.md"
 
 KINDS = ("inventory", "epic", "task")
 HEADINGS = ["## What it is", "## Notes"]
@@ -209,9 +219,11 @@ def gap_fields_of(base_node: dict) -> set[str]:
             if isinstance(g, dict) and isinstance(g.get("field"), str)}
 
 
-def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) -> list[str]:
+def task_problems(nid: str, front: dict, base_nodes: dict[str, dict] | None,
+                  pin: str | None) -> list[str]:
     """One task against the base: the binding resolves, the triage is total and honest, and the
-    pin matches the base as it stands."""
+    pin matches the base as it stands. A closed plan passes base_nodes=None — its base is
+    history's, not today's — so only the checks internal to the plan run."""
     problems: list[str] = []
     bound = {t for t in listed(front, "nodes") if isinstance(t, str)}
 
@@ -220,17 +232,20 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) 
             if not isinstance(entry, dict) or not isinstance(entry.get("gap"), str):
                 continue  # a question, or a shape the schema already reported
             node_ref, _, gap_field = entry["gap"].partition("#")
-            if node_ref not in base_nodes:
+            if base_nodes is not None and node_ref not in base_nodes:
                 problems.append(f"{nid}: {field}[{index}] names {node_ref}, "
                                 f"which the base does not hold")
                 continue
             if node_ref not in bound:
                 problems.append(f"{nid}: {field}[{index}] triages a gap on {node_ref}, which "
                                 f"`nodes` does not bind; triage covers the nodes the task cites")
-            if gap_field not in gap_fields_of(base_nodes[node_ref]):
+            if base_nodes is not None and gap_field not in gap_fields_of(base_nodes[node_ref]):
                 problems.append(f"{nid}: {field}[{index}] names `{entry['gap']}`, and "
                                 f"{node_ref} declares no open gap on `{gap_field}`; a triage "
                                 f"entry answers a gap the base still holds")
+
+    if base_nodes is None:
+        return problems
 
     triaged = triage_of(front, "unresolved") | triage_of(front, "waived")
     for node_ref in sorted(bound):
@@ -252,7 +267,7 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) 
 
 
 def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
-                  base_nodes: dict[str, dict]) -> list[str]:
+                  base_nodes: dict[str, dict] | None) -> list[str]:
     """One epic against its tasks, in both directions: every covered base node is bound by a
     task under the epic or declared uncovered — never neither, never both — and every node a
     task binds sits in the epic's covers, because a binding outside the claim is scope the
@@ -280,7 +295,7 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
             continue  # the schema already reported the shape
         node_ref = entry["node"]
         declared_uncovered.add(node_ref)
-        if node_ref not in base_nodes:
+        if base_nodes is not None and node_ref not in base_nodes:
             problems.append(f"{nid}: uncovered[{index}].node names {node_ref}, "
                             f"which the base does not hold")
         if node_ref not in covers:
@@ -299,8 +314,11 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
     return problems
 
 
-def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict], pin: str) -> list[str]:
-    """The rules that need to see more than one node at once — or the base."""
+def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict] | None,
+                   pin: str | None) -> list[str]:
+    """The rules that need to see more than one node at once — or the base. With
+    base_nodes=None the plan is closed: every internal rule still runs, and every rule that
+    would open today's base is skipped, because a closed plan answers to the base it pinned."""
     problems: list[str] = []
     for nid in sorted(nodes):
         node, front = nodes[nid], nodes[nid]["front"]
@@ -309,7 +327,8 @@ def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict], pin: str
                             f"epic/{node['epic']} does not exist; the path names an epic "
                             f"the plan does not hold")
         for target, edge_kind, at in references(front, node["kind"]):
-            if edge_kind in ("binds", "covers") and target not in base_nodes:
+            if (edge_kind in ("binds", "covers") and base_nodes is not None
+                    and target not in base_nodes):
                 problems.append(f"{nid}: {at} names {target}, which the base does not hold")
         if node["kind"] == "task":
             problems.extend(task_problems(nid, front, base_nodes, pin))
@@ -327,6 +346,8 @@ def collect(root: Path, validator, allowed) -> tuple[dict[str, dict], list[str]]
         relative = path.relative_to(root)
         if relative.parts[0] == "intake":
             continue  # the material the planning read: kept for sources, never validated
+        if relative.parts == (CLOSURE_FILE,):
+            continue  # the closure marker: it says the plan is closed, and is never a node
         nid = id_of(relative)
         if nid is None:
             problems.append(f"{relative.as_posix()}: not inventory/<slug>.md, epic/<slug>.md "
@@ -411,6 +432,9 @@ def check_single(root: Path, named: str, validator, allowed) -> int:
         print(f"{relative.as_posix()}: sits under intake/, which holds the material the "
               f"planning read and is never validated")
         return 0
+    if relative.parts == (CLOSURE_FILE,):
+        print(f"{relative.as_posix()}: marks the plan closed and is never validated as a node")
+        return 0
     nid = id_of(relative)
     if nid is None:
         print(f"{relative.as_posix()}: the path computes to no identifier")
@@ -477,14 +501,24 @@ def main() -> int:
     if report and (verify or single is not None):
         print("cannot run: --unresolved stands alone", file=sys.stderr)
         return CANNOT_RUN
-    if len(args) != 2 or any(a.startswith("--") for a in args):
+    if len(args) not in (1, 2) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --unresolved | --node <file>] "
-              "<work-root> <knowledge-root>", file=sys.stderr)
+              "<work-root> [<knowledge-root>]", file=sys.stderr)
         return CANNOT_RUN
-    work, knowledge = Path(args[0]), Path(args[1])
-    for root, name in ((work, "work root"), (knowledge, "knowledge root")):
-        if not root.is_dir():
-            print(f"cannot run: {name} {root} is not a directory", file=sys.stderr)
+    work = Path(args[0])
+    if not work.is_dir():
+        print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    closed = (work / CLOSURE_FILE).is_file()
+    knowledge = Path(args[1]) if len(args) == 2 else None
+    if not closed:
+        if knowledge is None:
+            print("cannot run: a live plan validates against its base; name the "
+                  "knowledge root", file=sys.stderr)
+            return CANNOT_RUN
+        if not knowledge.is_dir():
+            print(f"cannot run: knowledge root {knowledge} is not a directory",
+                  file=sys.stderr)
             return CANNOT_RUN
 
     try:
@@ -496,15 +530,18 @@ def main() -> int:
     if single is not None:
         return check_single(work, single, validator, allowed)
 
-    base_nodes, base_problems = load_base(knowledge)
-    if base_problems:
-        for problem in base_problems:
-            print(problem, file=sys.stderr)
-        print(f"cannot run: the knowledge base at {knowledge} does not hold together "
-              f"({len(base_problems)} problem(s) above); fix it with graph.py before "
-              f"planning over it", file=sys.stderr)
-        return CANNOT_RUN
-    pin = base_pin(base_nodes)
+    if closed:
+        base_nodes, pin = None, None  # a closed plan never opens today's base
+    else:
+        base_nodes, base_problems = load_base(knowledge)
+        if base_problems:
+            for problem in base_problems:
+                print(problem, file=sys.stderr)
+            print(f"cannot run: the knowledge base at {knowledge} does not hold together "
+                  f"({len(base_problems)} problem(s) above); fix it with graph.py before "
+                  f"planning over it", file=sys.stderr)
+            return CANNOT_RUN
+        pin = base_pin(base_nodes)
 
     nodes, problems = collect(work, validator, allowed)
     problems += cross_problems(nodes, base_nodes, pin)
@@ -553,7 +590,8 @@ def main() -> int:
     print(f"derived {target}: {len(plan['nodes'])} node(s), {len(plan['edges'])} edge(s), "
           f"contract siegard-plan/1")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {unresolved} unresolved gap citation(s) "
-          f"({unique} unique); {questions} open question(s); {waived} waived")
+          f"({unique} unique); {questions} open question(s); {waived} waived"
+          + ("; closed" if closed else ""))
     return 0
 
 

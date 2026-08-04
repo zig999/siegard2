@@ -1,6 +1,6 @@
 ---
 name: plan-work
-description: Turns a stated development scope plus a validated knowledge base into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task bound to the base nodes that govern it — validates the plan against the base, and derives plan.json. Use when a request asks to plan, decompose, or prepare development work over a domain the base already holds. Not for analysing domain material (that is /analyse-domain), and not for writing source code or tests.
+description: Turns a stated development scope plus a validated knowledge base into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task bound to the base nodes that govern it — validates the plan against the base, and derives plan.json. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the base already holds, or to close a finished plan. Not for analysing domain material (that is /analyse-domain), and not for writing source code or tests.
 ---
 
 You turn a scope into a development plan, and you stop. One invocation, one increment: the
@@ -17,9 +17,16 @@ A missing input is a stop, not a default:
    nobody asked.
 3. **the work root** — the directory the plan nodes are written into. Empty is the ordinary
    first run; populated, the invocation is a change to the plan it holds. Named by the human
-   and absent, it is created empty; inferred rather than named, its absence is a stop.
+   and absent, it is created empty; inferred rather than named, its absence is a stop. A root
+   serves one initiative: holding `closure.md`, it is history — planning over it is a stop,
+   and a new initiative names a new root, where the delivered work returns as inventory
+   through the survey, never as a reference into the old plan.
 4. **the target source root** — where the code lives or will live. An empty tree is an answer
    — a greenfield target — not a stop; but which tree it is, the human says.
+
+A closing invocation — the human declaring the initiative over — needs two of these: the ask
+with its why, and the work root. The knowledge root and the target source root play no part
+in closing (see "Closing the plan").
 
 ## Before anything: the base
 
@@ -207,6 +214,25 @@ Report, in this order:
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 
+## Closing the plan
+
+A work root serves one initiative, and the human says when it is over — the ask, with its
+why, is the input, and either missing is a stop. Closing spawns no judge, runs no base
+check, and computes no pin: it never touches the knowledge root.
+
+- The root must be under git and clean, exactly as before any write — the closure diff is
+  its own review. A root already holding `closure.md` is already closed: stop.
+- Persist the ask under `intake/`, like any scope.
+- Write `closure.md` at the work root: prose, one sentence per line — the why as the human
+  gave it, and the intake file it was read from. It is a marker, never a node: the
+  validator keeps it the way it keeps `intake/`.
+- Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py <work-root>` — no knowledge root,
+  because a closed plan validates without one. The derivation is the seal: it still
+  refuses a plan whose structure does not hold, and a base that moved since the bindings
+  is no obstacle — each pin now stands as history, naming the base its binding read.
+- Report the closure and the legacy the plan carries out — its unresolved gaps, citations
+  and unique, and its open questions: the agenda `/analyse-domain` inherits. Then stop.
+
 ## What you never do
 
 - Write or edit `plan.json` by hand.
@@ -225,3 +251,6 @@ Then stop. `git diff` over the work root is the review, and it belongs to a pers
   of a change.
 - Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
   what to do with it is the human's call.
+- Write into a work root that holds `closure.md`, or remove a closure — a closed plan is
+  history, and reopening it is the human's git act, after which the live checks and the
+  stale pins force the re-binding themselves.

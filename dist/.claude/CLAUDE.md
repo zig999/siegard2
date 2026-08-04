@@ -44,6 +44,13 @@ and a task binding outside its epic's covers is refused. A plan node carries no 
 estimate, priority or order field: execution state lives in git, and order is derived from
 dependencies by whoever executes.
 
+A work root serves one initiative. A `closure.md` at its root marks the plan closed: closed,
+it is history — validated without the base, every structural check still held, each pin
+standing as the anchor naming the base its binding read — and it is never evolved again. A
+new initiative names a new work root, and what the closed one delivered returns to the next
+plan as inventory, through the survey of the code itself — never as a reference into the old
+plan.
+
 ## Entry points
 
 - **`/analyse-domain`** — turns material into nodes, validates them, derives the graph, and stops
