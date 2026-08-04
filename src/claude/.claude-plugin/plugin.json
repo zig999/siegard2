@@ -1,5 +1,5 @@
 {
   "name": "siegard",
   "description": "DDD analysis and the plans it governs, recorded as markdown nodes: the path is the identity, absent facts are declared as gaps, and each derived index — graph.json over the knowledge root, plan.json over the work root — comes from a validator that refuses a base that does not hold together. Tasks bind the base nodes that govern them, pin the base they read, and triage every open gap they inherit; the plan's three producing judgments run in shipped subagents, and the binder never sees the cut it binds.",
-  "version": "1.5.0"
+  "version": "1.6.0"
 }

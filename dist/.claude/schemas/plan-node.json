@@ -33,7 +33,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 },
-      "description": "The paths the survey walked, relative to the target source root. Required even when the target is empty: a greenfield area is a full answer, said in `summary`, and this field still records where the survey looked."
+      "description": "The paths the survey walked, as the caller named the target source root — the root itself when the survey walked all of it. Required even when the target is empty: a greenfield area is a full answer, said in `summary`, and this field still records where the survey looked."
     },
     "modules": {
       "type": "array",
