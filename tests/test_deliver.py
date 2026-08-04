@@ -232,6 +232,7 @@ def review_front(work: Path, root: Path, **overrides) -> dict:
         "passes": [
             {"pass": "coverage"},
             {"pass": "conformance"},
+            {"pass": "standard", "missing": "this project has authored no standard"},
             {"pass": "failures", "missing": "no run was captured"},
         ],
         "coverage": [{"criterion": "Submitting a valid order returns its order_number.",
@@ -241,6 +242,19 @@ def review_front(work: Path, root: Path, **overrides) -> dict:
     }
     front.update(overrides)
     return front
+
+
+def set_pass(front: dict, name: str, **fields) -> None:
+    """Rewrite one pass entry, found by its name. Never by index: a pass inserted before it would
+    silently rewrite the wrong entry, and the test would keep passing while asserting something
+    else."""
+    for entry in front["passes"]:
+        if entry["pass"] == name:
+            entry.clear()
+            entry["pass"] = name
+            entry.update(fields)
+            return
+    raise AssertionError(f"the fixture holds no {name} pass entry")
 
 
 def test_a_review_that_answers_for_every_pass_holds(delivery, work, root, sound_delivery,
@@ -260,9 +274,10 @@ def test_a_pass_left_unanswered_is_refused(delivery, work, root, sound_delivery,
 def test_a_finding_cannot_claim_a_pass_that_did_not_run(delivery, work, root, sound_delivery,
                                                         write_delivery):
     front = review_front(work, root)
-    front["findings"] = [{"pass": "failures", "where": "src/orders/place.ts:3",
+    front["findings"] = [{"pass": "failures", "file": "src/orders/place.ts",
+                          "where": "line 3", "cause": "code",
                           "evidence": "expected the stated refusal, got a generic error",
-                          "cost": "the refusal is unproven", "cause": "code"}]
+                          "cost": "the refusal is unproven"}]
     write_delivery("review/first", front)
     said(problems_of(delivery, work, root), "a pass that did not run found nothing")
 
@@ -270,22 +285,22 @@ def test_a_finding_cannot_claim_a_pass_that_did_not_run(delivery, work, root, so
 def test_a_cause_belongs_to_the_failures_pass_and_nowhere_else(delivery, work, root,
                                                                sound_delivery, write_delivery):
     front = review_front(work, root)
-    front["findings"] = [{"pass": "conformance", "where": "src/orders/place.ts:3",
+    front["findings"] = [{"pass": "conformance", "file": "src/orders/place.ts",
+                          "where": "line 3", "cause": "code",
                           "evidence": "return refuse('ORDER_TOTAL_INVALID')",
-                          "cost": "the code became the home of the refusal code",
-                          "cause": "code"}]
+                          "cost": "the code became the home of the refusal code"}]
     write_delivery("review/first", front)
-    said(problems_of(delivery, work, root),
-         "states a `cause` outside the failures pass")
+    said(problems_of(delivery, work, root), "states `cause` outside the failures pass")
 
 
 def test_a_failure_finding_without_a_cause(delivery, work, root, sound_delivery, write_delivery,
                                            run_dir):
     front = review_front(work, root)
-    front["passes"][2] = {"pass": "failures"}
+    set_pass(front, "failures")
     front["run"] = "run/first"
     front["failures_counted"] = 1
-    front["findings"] = [{"pass": "failures", "where": "tests/place.spec.ts:8",
+    front["findings"] = [{"pass": "failures", "file": "tests/place.spec.ts",
+                          "where": "line 8",
                           "evidence": "expected 409, got 500",
                           "cost": "the refusal answers the wrong way"}]
     write_delivery("review/first", front)
@@ -295,11 +310,12 @@ def test_a_failure_finding_without_a_cause(delivery, work, root, sound_delivery,
 def test_a_count_that_disagrees_with_the_findings(delivery, work, root, sound_delivery,
                                                   write_delivery, run_dir):
     front = review_front(work, root)
-    front["passes"][2] = {"pass": "failures"}
+    set_pass(front, "failures")
     front["run"] = "run/first"
     front["failures_counted"] = 3
-    front["findings"] = [{"pass": "failures", "where": "tests/place.spec.ts:8",
-                          "evidence": "expected 409, got 500", "cause": "code",
+    front["findings"] = [{"pass": "failures", "file": "tests/place.spec.ts",
+                          "where": "line 8", "cause": "code",
+                          "evidence": "expected 409, got 500",
                           "cost": "the refusal answers the wrong way"}]
     write_delivery("review/first", front)
     said(problems_of(delivery, work, root),
@@ -335,11 +351,148 @@ def test_a_review_of_a_task_nothing_delivered(delivery, work, root, sound_delive
 def test_a_run_the_delivery_root_does_not_hold(delivery, work, root, sound_delivery,
                                                write_delivery):
     front = review_front(work, root)
-    front["passes"][2] = {"pass": "failures"}
+    set_pass(front, "failures")
     front["run"] = "run/nowhere"
     front["failures_counted"] = 0
     write_delivery("review/first", front)
     said(problems_of(delivery, work, root), "which the delivery root does not hold")
+
+
+# ------------------------------------------------------- the project's own standard
+
+
+def standard_review(work: Path, root: Path, ref: dict, **overrides) -> dict:
+    front = review_front(work, root)
+    set_pass(front, "standard")
+    front["standard"] = ref
+    front.update(overrides)
+    return front
+
+
+def test_a_review_against_a_standard_holds(delivery, work, root, sound_delivery,
+                                           write_delivery, write_standard):
+    front = standard_review(work, root, write_standard())
+    front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts",
+                          "where": "line 12, the constructor", "cites": "ARC-01",
+                          "evidence": "constructor(private readonly store: PostgresStore)",
+                          "cost": "the entry point cannot be exercised without a live store"}]
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, root) == []
+
+
+def test_a_clean_standard_pass_still_says_what_it_was_clean_over(delivery, work, root,
+                                                                 sound_delivery, write_delivery,
+                                                                 write_standard):
+    """No findings and a full applied set is the most useful result the pass returns."""
+    write_delivery("review/first", standard_review(work, root, write_standard()))
+    assert problems_of(delivery, work, root) == []
+
+
+def test_the_standard_must_be_there_to_be_checked(delivery, work, root, sound_delivery,
+                                                  write_delivery, write_standard):
+    ref = write_standard()
+    (delivery / ref["at"]).unlink()
+    write_delivery("review/first", standard_review(work, root, ref))
+    said(problems_of(delivery, work, root), "does not exist")
+
+
+def test_a_standard_that_does_not_hold_together(delivery, work, root, sound_delivery,
+                                                write_delivery, write_standard):
+    from conftest import STANDARD
+    broken = {**STANDARD, "rules": [{**STANDARD["rules"][0], "decided_by": "tool"}]}
+    write_delivery("review/first", standard_review(work, root, write_standard(broken)))
+    said(problems_of(delivery, work, root), "'tool' is a required property")
+
+
+def test_a_pin_that_is_not_the_copy_it_points_at(delivery, work, root, sound_delivery,
+                                                 write_delivery, write_standard):
+    ref = write_standard()
+    path = delivery / ref["at"]
+    path.write_text(path.read_text(encoding="utf-8") + "\n# edited after the review\n",
+                    encoding="utf-8")
+    write_delivery("review/first", standard_review(work, root, ref))
+    said(problems_of(delivery, work, root), "is not the one its findings were written against")
+
+
+def test_a_rule_in_scope_that_applied_leaves_out(delivery, work, root, sound_delivery,
+                                                 write_delivery, write_standard):
+    """ARC-01 reaches src/orders/place.ts. Leaving it out would make a clean review look narrow
+    without saying so."""
+    ref = write_standard()
+    ref["applied"] = ["ARC-02"]
+    write_delivery("review/first", standard_review(work, root, ref))
+    found = problems_of(delivery, work, root)
+    said(found, "applied does not name it")
+    said(found, "ARC-02, whose scope reaches no reviewed path")
+
+
+def test_a_rule_a_tool_decides_is_not_the_review_to_read(delivery, work, root, sound_delivery,
+                                                         write_delivery, write_standard):
+    ref = write_standard()
+    ref["applied"] = ["ARC-01", "PRH-01"]
+    write_delivery("review/first", standard_review(work, root, ref))
+    said(problems_of(delivery, work, root), "says a tool decides")
+
+
+def test_a_citation_the_standard_does_not_declare(delivery, work, root, sound_delivery,
+                                                  write_delivery, write_standard):
+    ref = write_standard()
+    ref["applied"] = ["ARC-01", "ZZZ-99"]
+    write_delivery("review/first", standard_review(work, root, ref))
+    said(problems_of(delivery, work, root), "which standards/example-service.yaml does not declare")
+
+
+def test_a_finding_citing_a_rule_that_was_not_in_scope(delivery, work, root, sound_delivery,
+                                                       write_delivery, write_standard):
+    front = standard_review(work, root, write_standard())
+    front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts", "where": "line 12",
+                          "cites": "ARC-02", "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "which applied does not name")
+
+
+def test_a_finding_against_a_file_the_rule_does_not_reach(delivery, work, root, sound_delivery,
+                                                          write_delivery, write_standard):
+    """ARC-01's scope is src/, and the finding names a test file that `reviewed` does list."""
+    front = standard_review(work, root, write_standard())
+    front["findings"] = [{"pass": "standard", "file": "tests/place.spec.ts", "where": "line 3",
+                          "cites": "ARC-01", "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "which that\nrule's scope does not reach".replace("\n", " "))
+
+
+def test_the_standard_and_its_pass_agree(delivery, work, root, sound_delivery, write_delivery,
+                                         write_standard):
+    front = review_front(work, root)          # the standard pass records itself as not run
+    front["standard"] = write_standard()
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "`standard` is present and the standard pass did not run")
+
+
+def test_a_finding_outside_the_file_set(delivery, work, root, sound_delivery, write_delivery,
+                                        write_standard):
+    front = standard_review(work, root, write_standard())
+    front["findings"] = [{"pass": "standard", "file": "src/nowhere.ts", "where": "line 1",
+                          "cites": "ARC-01", "evidence": "x", "cost": "y"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, root), "which `reviewed` does not list")
+
+
+def test_a_review_records_which_passes_ran_in_the_index(delivery, work, root, sound_delivery,
+                                                        write_delivery, write_standard):
+    """The derivation emits every pass the contract allows. Before a review reached a fixture,
+    delivery.json's own enum held three names and this path exited as a defect in the script."""
+    write_delivery("review/first", standard_review(work, root, write_standard()))
+    validator, allowed = deliver.contract()
+    names = deliver.pass_names()
+    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    graph = deliver.derive(nodes, names)
+    entry = next(n for n in graph["nodes"] if n["kind"] == "review")
+    assert entry["ran"] == ["coverage", "conformance", "standard"], \
+        "the index names the passes that ran, in the order the contract declares them"
+    from jsonschema import Draft202012Validator
+    schema = json.loads((REPO / "src/claude/schemas/delivery.json").read_text(encoding="utf-8"))
+    assert [e.message for e in Draft202012Validator(schema).iter_errors(graph)] == []
 
 
 # ----------------------------------------------------------------- what remains open
@@ -448,12 +601,13 @@ def test_a_captured_run_reaches_a_review(delivery, work, root, sound_delivery, w
     assert record["run"] == "run/first" and record["outcome"] == "failed"
 
     front = review_front(work, root)
-    front["passes"][2] = {"pass": "failures"}
+    set_pass(front, "failures")
     front["run"] = record["run"]
     front["failures_counted"] = 1
-    front["findings"] = [{"pass": "failures", "where": "tests/place.spec.ts:8",
+    front["findings"] = [{"pass": "failures", "file": "tests/place.spec.ts",
+                          "where": "line 8", "cause": "code",
                           "evidence": "expected the stated refusal, got a generic error",
-                          "cause": "code", "cost": "the refusal answers the wrong way",
+                          "cost": "the refusal answers the wrong way",
                           "correction": "answer with the refusal the bound rule names"}]
     write_delivery("review/first", front)
     assert problems_of(delivery, work, root) == []

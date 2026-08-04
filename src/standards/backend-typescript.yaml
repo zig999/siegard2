@@ -3,17 +3,24 @@
 # This file is NOT part of the distribution. It sits under src/standards/ rather than
 # src/claude/, so no assembly ships it: Siegard ships the slot a standard fits into and the
 # enforcement that holds code to it, never the content. A consumer project owns its own
-# registry, in its own repository, and names it when invoking the skills.
+# registry, in its own repository, and names it when invoking the review.
 #
-# It is a registry and not prose, for one reason: every finding a review records must cite
-# exactly one rule by id, and prose cannot be cited. A finding citing no rule is taste with a
-# location attached.
+# Two lines run through it, and both are the point.
 #
-# No rule carries a severity, and nothing here derives a verdict. A finding states what it costs
-# and a person decides what that means — see `elsewhere` at the foot of this file.
+# `decided_by` splits the registry in half. A rule a linter, a compiler or a secret scanner
+# decides exactly is a step of the project's own suite — it runs through bin/run.py, its failures
+# arrive as a captured run, and the failures pass reads what the tool printed. Only a rule whose
+# application is a reading reaches the standard pass. A model applying `no-explicit-any` to a
+# five-hundred-line file has strictly worse recall than tsc and costs more.
+#
+# `elsewhere` says what this registry does not hold. Most of those entries are there because the
+# rule states *what the system answers* — a status, an error code, an authorization outcome — and
+# that is what the business decided. It lives in the knowledge base. A rule here stating one
+# would put this pass and the base-conformance pass in contradiction over the same line.
 
+contract_version: siegard-standard/1
 standard: backend-typescript
-summary: How this project's TypeScript services are layered, validated, paginated and refused.
+summary: How this project's TypeScript services are layered, wired, validated and named.
 
 rules:
 
@@ -21,25 +28,36 @@ rules:
 
   - id: ARC-01
     statement: A constructor receives interfaces, never concrete implementations.
-    because: A class bound to a concrete collaborator cannot be exercised without it, so the
-      test has to stand up the collaborator's world to assert one line of this one.
-    applies_to: ["src/**/*.service.ts", "src/**/*.controller.ts", "src/**/*.repository.ts"]
+    because: A class bound to a concrete collaborator cannot be exercised without it, so the test
+      has to stand up the collaborator's world to assert one line of this one.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
     seen_at: src/orders/order.service.ts
 
   - id: ARC-02
     statement: A service or controller never constructs a dependency; instantiation happens only
       inside a factory function.
     because: Wiring scattered through the layers has no single place to change, so swapping an
-      implementation means finding every `new` that named it.
-    applies_to: ["src/**/*.service.ts", "src/**/*.controller.ts"]
+      implementation means finding every construction that named it.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
     seen_at: src/factories/order.factory.ts
 
   - id: ARC-03
     statement: Each module wires itself in one factory function under src/factories/, named
       <resource>.factory.ts.
-    because: A module whose wiring point cannot be found by its path is a module nobody can
+    because: A module whose wiring point cannot be found from its path is a module nobody can
       re-wire with confidence.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src/factories, suffix: .ts }
     seen_at: src/factories/order.factory.ts
 
   - id: ARC-04
@@ -47,31 +65,43 @@ rules:
       and a repository only reads and writes.
     because: A rule implemented in a controller is a rule that only exists over HTTP, and it will
       be reimplemented the day a queue or a job needs it.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.repository.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
 
   - id: ARC-05
-    statement: A DTO is declared in src/dto/ or src/modules/<domain>/dto/, never inline in a
-      controller.
+    statement: A DTO is declared under a dto directory, never inline in a controller.
     because: A shape declared where it is used is a shape the next caller redeclares slightly
       differently, and neither copy is the contract.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.dto.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
     seen_at: src/dto/create-order.dto.ts
 
   # ---------------------------------------------------------------- input and validation
 
   - id: DTO-01
     statement: Validation happens at the route or middleware boundary; a service receives a typed
-      DTO and never a raw request body or an unknown.
+      DTO and never a raw request body.
     because: A service that validates its own input validates it differently at each entry point,
       and the one nobody remembered is the one that accepts anything.
-    applies_to: ["src/**/*.service.ts", "src/**/*.routes.ts", "src/**/*.controller.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .routes.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
     seen_at: src/routes/order.routes.ts
 
   - id: DTO-02
     statement: A DTO schema is a Zod object plus the type inferred from it.
     because: A hand-written type beside a schema drifts from it silently, and the compiler cannot
       tell you which of the two the request actually satisfied.
-    applies_to: ["src/**/*.dto.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .dto.ts, nested: true }
     seen_at: src/dto/create-order.dto.ts
 
   - id: DTO-03
@@ -79,274 +109,409 @@ rules:
       create-<resource>.dto.ts, and likewise for Update, Response and Query.
     because: A reader looking for the shape a route accepts should find it from the route's name
       alone, without opening three files to see which one it was.
-    applies_to: ["src/**/*.dto.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .dto.ts, nested: true }
 
   - id: DTO-04
-    statement: A test imports the DTO schema from src/dto/ instead of redefining it.
+    statement: A test imports the DTO schema from the dto directory instead of redefining it.
     because: A schema redefined in a test passes against a shape production never accepted, so the
       test proves the copy rather than the contract.
-    applies_to: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/__tests__/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
 
-  # ---------------------------------------------------------------- what the API answers
+  # ---------------------------------------------------------------- the shape of a response
 
   - id: API-01
-    statement: A paginated response is the shared PaginatedResponse<T> imported from
-      src/types/pagination.ts, never redeclared per module and never an ad-hoc data-and-meta
-      object.
+    statement: A paginated response is the shared PaginatedResponse type imported from
+      src/types/pagination.ts, never redeclared per module.
     because: Two declarations drift, and the day they disagree nobody can say which one the API
       promised.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.dto.ts", "src/types/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .dto.ts, nested: true }
+      - { under: src/types, suffix: .ts }
     seen_at: src/types/pagination.ts
 
   - id: API-02
     statement: An empty list answers with the paginated envelope carrying an empty data array,
-      never null.
-    because: A caller that has to test for null before iterating will forget once, and the failure
-      lands in the caller rather than here.
-    applies_to: ["src/**/*.service.ts", "src/**/*.controller.ts"]
+      never with an absent value.
+    because: A caller that has to test for absence before iterating will forget once, and the
+      failure lands in the caller rather than here.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
 
   - id: API-03
-    statement: Offset pagination always computes meta.pages as the ceiling of total over limit,
-      and never hardcodes or omits it.
+    statement: Offset pagination always computes the page count from the total and the limit, and
+      never hardcodes or omits it.
     because: A page count the client computes itself is a page count that disagrees with the one
       the server would have given.
-    applies_to: ["src/**/*.service.ts", "src/**/*.controller.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
 
   - id: API-04
-    statement: A limit above the project's max_limit is refused with 400 and the error code
-      PAGINATION_LIMIT_EXCEEDED; default_limit and max_limit are read from configuration and never
-      hardcoded.
-    because: An unbounded limit is a denial of service with a query string, and a hardcoded bound
-      is one nobody can raise without a deploy.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.routes.ts"]
+    statement: A page limit is bounded by a configured maximum, and neither the default nor the
+      maximum is written in source.
+    because: An unbounded limit is a denial of service with a query string, and a bound written in
+      source is one nobody can raise without a deploy.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .routes.ts, nested: true }
 
   - id: API-05
-    statement: An error answers in the standard envelope — an error object carrying code, message
-      and details.
+    statement: An error answers in one envelope, carrying a code, a message and its details.
     because: A client that has to branch on the shape of the error cannot handle an error it has
       not seen before.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.middleware.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
 
   - id: API-06
-    statement: A route sits under the versioned prefix /api/v1/.
+    statement: A route sits under a versioned prefix.
     because: An unversioned route cannot be changed without breaking whoever already calls it.
-    applies_to: ["src/**/*.routes.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .routes.ts, nested: true }
 
-  - id: API-07
-    statement: The HTTP status matches the semantics — 201 on create, 204 on a delete with no
-      body, 422 on a validation failure.
-    because: A status chosen for convenience makes every client's retry and cache logic wrong in a
-      way no test of ours will notice.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.routes.ts"]
-
-  # ---------------------------------------------------------------- refusals and failure
+  # ---------------------------------------------------------------- how failure is raised
 
   - id: COR-01
     statement: A catch either handles the error or rethrows it wrapped with the original as its
       cause; an empty catch is forbidden.
     because: A swallowed error is a failure nobody will ever see, and the symptom surfaces
       somewhere with no trace back to here.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: COR-02
-    statement: A failure throws a typed error class carrying name, message, statusCode and a
-      context field, never a generic Error with a sentence in it.
+    statement: A failure raises a typed error class carrying a name, a message, its status and a
+      context field, never a generic error with a sentence in it.
     because: A generic error cannot be mapped to a response or handled by a caller, so every layer
       above has to match on its message.
-    applies_to: ["src/**/*.service.ts", "src/**/*.repository.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
     seen_at: src/errors/not-found.error.ts
 
   - id: COR-03
-    statement: A service throws business errors, a repository throws data errors, and the error
+    statement: A service raises business errors, a repository raises data errors, and the error
       middleware formats whatever reaches it.
-    because: An error mapped to a status inside a service makes the service unusable outside HTTP.
-    applies_to: ["src/**/*.service.ts", "src/**/*.repository.ts", "src/**/*.middleware.ts"]
+    because: An error mapped to a transport status inside a service makes the service unusable
+      outside that transport.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
 
   - id: EDG-01
-    statement: Absent, null or empty input is refused at the validation boundary, before the
-      service is reached.
+    statement: Absent and empty input is refused at the validation boundary, before the service is
+      reached.
     because: A service that receives input nothing validated has to validate it, and then two
       places decide what is acceptable.
-    applies_to: ["src/**/*.routes.ts", "src/**/*.middleware.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .routes.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
 
   - id: EDG-02
-    statement: A resource that does not exist answers 404 through a typed not-found error, never a
-      500.
-    because: A 500 tells the client to retry something that will never succeed.
-    applies_to: ["src/**/*.service.ts", "src/**/*.controller.ts"]
+    statement: A resource that does not exist is refused through a typed error raised in the
+      service, never by letting a driver or generic error reach the client.
+    because: An internal failure shown to a client tells it to retry something that will never
+      succeed, and tells a stranger the shape of the store.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
 
   - id: EDG-03
-    statement: A uniqueness violation is caught and answers 409, and is never allowed to reach the
-      default error handler as a driver error.
-    because: A constraint error reaching the client as a 500 exposes the schema and reads as a bug
-      in the server rather than a conflict in the request.
-    applies_to: ["src/**/*.service.ts", "src/**/*.repository.ts"]
+    statement: A uniqueness violation is caught where it is raised and answered through a typed
+      error; it never reaches the default error handler as a driver error.
+    because: A constraint error arriving as an internal failure exposes the schema and reads as a
+      bug in the server rather than a conflict in the request.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
 
   - id: EDG-04
-    statement: An operation attempted against state that forbids it answers 422.
-    because: The request was well formed and the state refused it; a 400 would tell the client to
-      fix the payload it got right.
-    applies_to: ["src/**/*.service.ts", "src/**/*.controller.ts"]
+    statement: An operation attempted against state that forbids it is refused through a typed
+      error raised before any write.
+    because: A refusal raised after a partial write leaves the store in a state the refusal claims
+      never happened.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
 
   - id: EDG-05
     statement: A write spanning more than one statement runs in a transaction that rolls back as a
       whole.
     because: A half-applied write leaves data no code path expects to find, and nothing later will
       tell you when it happened.
-    applies_to: ["src/**/*.service.ts", "src/**/*.repository.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
 
   - id: EDG-06
     statement: A payload above the configured size limit is refused at the middleware boundary.
     because: A body read into memory before it is measured is a body that can exhaust the process.
-    applies_to: ["src/**/*.middleware.ts", "src/config/*.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .middleware.ts, nested: true }
+      - { under: src/config, suffix: .ts }
 
   - id: EDG-07
-    statement: A rate limit answers 429 with a Retry-After header.
-    because: A refusal that does not say when to try again turns every client into a tight retry
-      loop.
-    applies_to: ["src/**/*.middleware.ts", "src/**/*.routes.ts"]
+    statement: A rate limit is applied at the boundary, and its refusal tells the caller when to
+      try again.
+    because: A refusal that does not say when to retry turns every client into a tight retry loop.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .middleware.ts, nested: true }
+      - { under: src, suffix: .routes.ts, nested: true }
 
   - id: EDG-08
     statement: A dependency that is unavailable, slow or answers in an unexpected shape is handled
       as an error rather than allowed to crash the process.
     because: A dependency's bad day should degrade one endpoint, not take down everything the
       process serves.
-    applies_to: ["src/**/*.repository.ts", "src/clients/**/*.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .repository.ts, nested: true }
+      - { under: src/clients, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- what must not leak
 
   - id: SEC-01
-    statement: A request with no token, or an expired one, answers 401; a valid token without the
-      permission answers 403.
-    because: Collapsing the two tells an attacker whether the resource exists and tells a
-      legitimate client the wrong thing to fix.
-    applies_to: ["src/**/*.middleware.ts", "src/**/*.controller.ts"]
+    statement: Authorization is checked in the handler against the specific resource, never
+      inferred from the presence of a valid credential.
+    because: An identifier in a URL is not authorization, and a handler that only checks the
+      credential hands out every row by counting.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .service.ts, nested: true }
 
   - id: SEC-02
-    statement: A request for a resource belonging to someone else answers 403 or 404 — never the
-      resource.
-    because: An identifier in a URL is not authorization, and a handler that only checks the token
-      hands out every row by counting.
-    applies_to: ["src/**/*.controller.ts", "src/**/*.service.ts"]
+    statement: Every database statement is parameterized; no query is built by concatenating or
+      interpolating input.
+    because: One interpolated value is a full read of the store, and the value that reaches it is
+      not the one you tested with.
+    decided_by: tool
+    tool: secret-scan
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: SEC-03
-    statement: Every SQL statement is parameterized; no query is built by concatenating or
-      interpolating input.
-    because: One interpolated value is a full read of the database, and the value that reaches it
-      is not the one you tested with.
-    applies_to: ["src/**/*.repository.ts", "src/**/*.ts"]
-
-  - id: SEC-04
     statement: No credential, token, secret or environment URL is written in source.
     because: A secret in source is a secret in every clone, every fork and every log of the clone.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: secret-scan
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
-  - id: SEC-05
+  - id: SEC-04
     statement: No secret, stack trace or internal detail reaches a log or a client response.
-    because: A log is read by more people than the database is, and a stack trace tells a stranger
-      the shape of the thing they are attacking.
-    applies_to: ["src/**/*.ts"]
+    because: A log is read by more people than the store is, and a stack trace tells a stranger the
+      shape of the thing they are attacking.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   # ---------------------------------------------------------------- the code itself
 
   - id: TYP-01
-    statement: The compiler runs strict, and any is never used; prefer unknown, a generic, or an
-      explicit type.
-    because: One any propagates through every call it touches, and the errors it hides surface at
-      runtime in a caller that never mentioned it.
-    applies_to: ["src/**/*.ts"]
+    statement: The compiler runs strict, and the escape-hatch any type is never used; prefer
+      unknown, a generic, or an explicit type.
+    because: One escape hatch propagates through every call it touches, and the errors it hides
+      surface at runtime in a caller that never mentioned it.
+    decided_by: tool
+    tool: typecheck
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: TYP-02
     statement: A type assertion is accompanied by a guard that narrows it.
     because: An assertion is a claim the compiler stops checking, so the first wrong one is found
       by a user.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: TYP-03
     statement: A public signature declares its parameter and return types explicitly.
-    because: An inferred public type changes when the body changes, so a caller breaks from an
-      edit nobody thought was a contract change.
-    applies_to: ["src/**/*.ts"]
+    because: An inferred public type changes when the body changes, so a caller breaks from an edit
+      nobody thought was a contract change.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: TYP-04
     statement: A value with meaning is a named constant, not a number or string spelled out where
       it is used.
     because: The same literal in three places is three places to change and two to forget.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: CON-01
     statement: Files are kebab-case, classes and types PascalCase, functions and variables
-      camelCase, constants and environment variables SCREAMING_SNAKE, interfaces PascalCase
+      camelCase, constants and environment variables screaming snake case, interfaces PascalCase
       prefixed with I, database tables snake_case plural and columns snake_case, routes kebab-case
       plural.
     because: A name that does not say what kind of thing it is costs a reader an extra file open,
       every time.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: MNT-01
-    statement: A function stays around thirty lines and takes at most three positional parameters;
+    statement: A function stays within thirty lines and takes at most three positional parameters;
       beyond that, extract a named helper or pass an object.
     because: A function nobody can hold in their head is a function that gets a fourth branch
       instead of a second function.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: MNT-02
     statement: Commented-out code is deleted, and unused imports are removed.
     because: Code kept in a comment is code nobody maintains and everybody trusts, and it is read
       as intent long after it stopped compiling.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: MNT-03
+    statement: A block of logic that already exists somewhere in this project is called, not
+      copied.
+    because: Two copies of one rule diverge on the day one of them is fixed, and the reader of the
+      other has no way to know it was.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: PRH-01
     statement: Production code logs through the configured logger; console output is not used.
     because: A console line goes nowhere in production — no level, no correlation, no retention.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: PRH-02
-    statement: A TODO or FIXME carries a reference to the work that will settle it.
-    because: An unreferenced TODO is a decision deferred to nobody, and it survives every review
+    statement: A deferred-work marker carries a reference to the work that will settle it.
+    because: An unreferenced marker is a decision deferred to nobody, and it survives every review
       by looking temporary.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: PRH-03
-    statement: A lint rule is disabled only with a comment stating why.
+    statement: A lint rule is suppressed only with a comment stating why.
     because: A silent suppression removes the rule for everyone who reads the line afterwards.
-    applies_to: ["src/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
 
   - id: PRH-04
-    statement: A migration that destroys or alters data ships with a working rollback.
+    statement: A migration that destroys or alters data ships with a reverse migration beside it.
     because: A migration you cannot reverse turns a bad deploy into a restore from backup.
-    applies_to: ["src/migrations/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src/migrations, suffix: .ts, nested: true }
 
   # ---------------------------------------------------------------- how tests are written here
 
   - id: TST-01
-    statement: A test follows arrange, act, assert, in that order and visibly.
+    statement: A test arranges, then acts, then asserts, in that order and visibly.
     because: A test whose setup and assertions are interleaved cannot be read to find out what it
       actually claims.
-    applies_to: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/__tests__/**/*.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
 
   - id: TST-02
     statement: A test is named for the behavior it expects, as a sentence.
     because: A run's output is a list of test names, and a name like "works" tells the reader of a
       failure nothing at all.
-    applies_to: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/__tests__/**/*.ts"]
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
 
   - id: TST-03
-    statement: A mock stands in for a boundary — the database, the network, the filesystem, an
-      external API — and never for business logic.
-    because: A mocked rule is a rule the suite asserts about itself, and it passes after the real
-      rule is deleted.
-    applies_to: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/__tests__/**/*.ts"]
+    statement: A stand-in stands in for a boundary — the store, the network, the filesystem, an
+      external service — and never for business logic.
+    because: A rule replaced by a stand-in is a rule the suite asserts about itself, and it passes
+      after the real rule is deleted.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
 
   - id: TST-04
     statement: A test file mirrors the path of the unit under test, under src/__tests__/ with unit
       and integration subtrees.
     because: A test nobody can find from the file it covers is a test that gets written twice and
       deleted once.
-    applies_to: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/__tests__/**/*.ts"]
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src/__tests__, suffix: .ts, nested: true }
 
-# What this registry deliberately does not hold, so a reader does not read an absence as an
-# oversight. Each of these is owned somewhere else, and stating it twice would create a second
-# home that drifts.
+# What this standard deliberately does not hold, so a reader does not read an absence as an
+# oversight. Each is owned somewhere else, and stating it twice would create a second home that
+# drifts.
 elsewhere:
+
+  - what: Which status a refusal answers with — that a missing resource answers 404, a uniqueness
+      conflict 409, a forbidden state 422, a missing or expired credential 401, an insufficient
+      one 403, a rate limit 429, a creation 201, a delete without a body 204.
+    lives_in: The knowledge base, as rule and interface nodes.
+    why: It is what the business decided about what the system answers, not how this project is
+      arranged. Stated here it would put this pass and the base-conformance pass in contradiction
+      over one line — this one requiring in code exactly what that one reports as a fact the base
+      does not hold. The rules above keep only the mechanism — that the refusal is raised as a
+      typed error, in the right layer, before any write.
+
+  - what: Which error codes exist, and what each one names.
+    lives_in: The knowledge base, as rule and interface nodes.
+    why: Same. An error code written in source and in no bound node is the archetypal
+      base-conformance finding, and a standard that mandated one would be requiring the thing the
+      other pass exists to report.
+
+  - what: Who may see which resource, beyond the requirement that the check happen against the
+      resource itself.
+    lives_in: The knowledge base, as rule nodes.
+    why: An authorization outcome is a domain decision. SEC-01 above says where the check belongs;
+      what it decides is not this file's.
 
   - what: Which tests must exist for a task, by the kind of work it is — a new behavior, a change,
       a rearrangement, a defect.
@@ -357,32 +522,33 @@ elsewhere:
       reason, cannot pass vacuously, tears down what it sets up, and treats an error path as a
       behavior.
     lives_in: The framework, in agents/test-author.md and agents/coverage-auditor.md.
-    why: Same — universal, and already enforced by the passes that read the tests.
+    why: Universal, and already enforced by the passes that read the tests. The TST rules above add
+      only what is this project's taste — the order inside a test, how it is named, what a stand-in
+      may replace.
 
   - what: Which edge cases a task must account for, and the requirement to say why a dismissed one
       does not apply.
     lives_in: The framework, in agents/test-author.md.
-    why: The checklist is behavior-shaped and universal. What this registry adds is the policy for
-      how each one is answered here — the EDG and SEC rules above.
+    why: The checklist is behavior-shaped and universal. What this registry adds is where each one
+      is handled here — the EDG rules above.
 
   - what: Whether every acceptance criterion has a test that would fail if it stopped holding.
     lives_in: The framework, in agents/coverage-auditor.md.
     why: It is judged against the task's criteria, which live in the plan, not against a rule here.
 
-  - what: Any domain fact — what an order is, when a total is invalid, which states a lifecycle
-      allows.
-    lives_in: The knowledge base, as nodes.
-    why: A domain fact stated here would be a second home for what the business decided, and
-      correcting it here would never correct the base.
-
   - what: A severity for any of these rules, and any verdict derived from the findings.
     lives_in: Nowhere — deliberately.
-    why: The registry's ancestor graded each finding Critical to Low and fed that to an approval
-      gate, which made the reviewer the gate. A finding states what it costs; a person decides
-      what that means.
+    why: The registry this comes from graded each finding from critical to low and fed the grade to
+      an approval gate, which made the reviewer the gate. A finding states what it costs; a person
+      decides what that means.
 
-  - what: A numeric threshold the framework supplies — a function length, a parameter count, a
-      timeout.
-    lives_in: This file, inside the rule that needs it (MNT-01).
-    why: A number is only defensible where somebody chose it for a reason. Shipped in a framework
-      it would be a bound nobody calibrated; stated here it is this project's, and arguable.
+  - what: Whether two modules import each other in a cycle.
+    lives_in: Nowhere yet — a declared gap.
+    why: It is decidable by walking the import graph, so it belongs to a script rather than to a
+      rule an agent judges. No such script ships, and stating the rule here would hand a mechanical
+      question to a reading.
+
+  - what: The shape of a commit message, and which branch work happens on.
+    lives_in: The project's own git conventions, outside this framework.
+    why: Siegard never touches the consumer's git state, and a rule here could not be checked by
+      reading the files a review is given.

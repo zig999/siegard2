@@ -64,10 +64,33 @@ suite printed, kept for a review to point at and never validated as a node.
 
 Writing the source and writing what proves it are two judgments, and two shipped subagents
 (`task-implementer`, `test-author`) in separate contexts: an implementation and its tests
-written in one pass agree by construction, including where both are wrong. Reviewing is three
-more (`coverage-auditor`, `base-conformance-reviewer`, `failure-diagnostician`), and running the
-suite is none of them — `bin/run.py` executes the caller's commands and records what they
-printed, so nothing that judges a run also performs it.
+written in one pass agree by construction, including where both are wrong. Reviewing is four
+more (`coverage-auditor`, `base-conformance-reviewer`, `standard-conformance-reviewer`,
+`failure-diagnostician`), and running the suite is none of them — `bin/run.py` executes the
+caller's commands and records what they printed, so nothing that judges a run also performs it.
+
+## The project's own standard
+
+The base says what the business decided; a project also decides how its own source is arranged,
+and that is neither a domain fact nor this framework's to state. A stack's conventions are not a
+domain's, and a framework shipping them would prescribe one language to a project written in
+another. So the framework ships the slot and the enforcement: `schemas/standard.json` is the
+contract a project's registry of rules answers to, `bin/deliver.py --standard <file>` holds a
+registry to it, and the standard pass reports departures — each finding citing exactly one rule by
+its identifier, because a finding citing no rule is taste with a location attached.
+
+Two lines bound it, and both are the whole of its scope. **No rule of a standard states what the
+system answers or who may see what** — a status, an error code, a refusal, an authorization
+outcome. Those are what the business decided, they belong to the base, and a standard stating one
+would put two review passes in contradiction over the same line: one requiring in code exactly
+what the other reports as a fact the base does not hold. And **a rule a tool decides is not a
+review's to read**: a standard marks each rule by whether its application is a reading or a tool's
+exact decision, the latter run as steps of the project's own suite through `bin/run.py`, their
+findings arriving through the failures pass with the tool's own message as evidence. A model
+applying a forbidden-construct rule has strictly worse recall than the compiler that owns it.
+
+A project that has authored no standard gets an honestly narrow review — the pass records that it
+did not run, and what was absent — never a clean one.
 
 A record answers every criterion its task states and every base node its task binds, and the
 validator holds both totalities: silence over either is refused the way silence over a gap is
@@ -88,7 +111,7 @@ nothing has to be kept true by hand.
   it, records both under the delivery root, validates against the plan, derives `delivery.json`,
   and stops the same way. One invocation, one task. Invoke it by name rather than writing code
   ad hoc.
-- **`/review-change`** — captures a run of the caller's commands, then reports what three passes
+- **`/review-change`** — captures a run of the caller's commands, then reports what four passes
   found over a delivered change — evidence, never a verdict — records it, and stops the same way.
   Invoke it by name rather than reviewing ad hoc.
 

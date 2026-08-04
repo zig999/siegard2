@@ -48,8 +48,8 @@
           "ran": {
             "type": "array",
             "minItems": 1,
-            "items": { "enum": ["coverage", "conformance", "failures"] },
-            "description": "The passes that ran, sorted. Reviews only. A pass absent from this list did not run, and the input it wanted is named in the record."
+            "items": { "enum": ["coverage", "conformance", "failures", "standard"] },
+            "description": "The passes that ran, in the order the delivery-node contract declares them. Reviews only. A pass absent from this list did not run, and what it wanted is named in the record. This list must hold every value that contract's `passName` allows: a name it accepts and this enum does not would make the derivation refuse an index for a review nobody could have written differently."
           },
           "unproven": {
             "type": "array",

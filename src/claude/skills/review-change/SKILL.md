@@ -1,6 +1,6 @@
 ---
 name: review-change
-description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the knowledge base holds, and why a captured run failed — captures the run itself when given the commands, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
+description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the knowledge base holds, whether it follows the standard the project set for itself, and why a captured run failed — captures the run itself when given the commands, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
 ---
 
 You review a delivered change and report what is there. One invocation, one review.
@@ -31,12 +31,21 @@ A missing input is a stop, not a default:
    it; without the base there is nothing to hold the source to.
 6. **the target source root** — where the code and the tests sit.
 
-Optionally, and this is what decides whether the third pass runs: **the commands to run** — each a
-name and a command, as `${CLAUDE_PLUGIN_ROOT}/bin/run.py` takes them — or **a run already
-captured**, by its directory under the delivery root's `run/`. With neither, the failures pass
-does not run, and the record says which input was missing. An absent optional input never becomes
-a default: a review reported as clean over a pass that never ran is the failure that rule exists
-to prevent.
+Two optional inputs, and each decides whether one pass runs.
+
+**The commands to run** — each a name and a command, as `${CLAUDE_PLUGIN_ROOT}/bin/run.py` takes
+them — or **a run already captured**, by its directory under the delivery root's `run/`. With
+neither, the failures pass does not run.
+
+**The project's standard** — the path to the registry of rules the project set for itself, in the
+project's own tree. Its contract is `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json`, and a consumer
+holds a registry to it with `deliver.py --standard <file>`; a standard that does not hold together
+is a stop, reported verbatim, and fixing it belongs to whoever owns it. With no standard named, the
+standard pass does not run and the record says the project has authored none — which is a different
+absence from an input this invocation was not given, and is said in those words.
+
+An absent optional input never becomes a default: a review reported as clean over a pass that never
+ran is the failure that rule exists to prevent.
 
 ## Before anything: the plan, the delivery, the tree
 
@@ -107,6 +116,13 @@ The timeout is the caller's; there is no default, because a bound this framework
 one nobody calibrated. The commands are the caller's too: nothing here composes a build or a test
 command, or infers one from what the tree looks like.
 
+Where a standard was named, its rules decided by a tool belong in these steps — each such rule names
+the step that decides it, and a project whose standard names `lint` and `typecheck` expects those
+steps here. You do not compose them either: if the caller named the rules but not the commands, the
+steps that would have decided them did not run, and the report says which rules that leaves
+unanswered. This is the whole reason the standard is split in two, and it is why running comes before
+the passes.
+
 Running belongs here rather than in `/implement-task` for one reason: whoever wrote the source
 must not be the one who witnesses whether it passed, or the writing quietly iterates until the
 suite goes green and what failed on the way exists nowhere. Running it here is safe in a way it is
@@ -124,7 +140,7 @@ passed is the one case where the pass does not run: there was no failure to read
 
 ### 3. The passes
 
-Three, independent, in any order or together. None reads another's output, and none decides what
+Four, independent, in any order or together. None reads another's output, and none decides what
 runs next.
 
 - **coverage** — spawn a `coverage-auditor` subagent, its judgment at
@@ -136,33 +152,67 @@ runs next.
   node identifiers, the knowledge root, and the contract's path. It returns where the source
   states a domain fact the base does not hold, contradicts one it does, or became a second home
   for one.
+- **standard** — where the caller named a project standard, spawn a
+  `standard-conformance-reviewer` subagent, its judgment at
+  `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing the standard's path
+  under the delivery root, the file set, the target source root, and the contract's path. It
+  returns the rules that were in scope and, for each departure, a finding citing exactly one of
+  them. Where the caller named no standard, the pass does not run and the record says the project
+  has authored none.
 - **failures** — spawn a `failure-diagnostician` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md`, passing the run's directory, the target
   source root, the bound nodes with the knowledge root, the file set, and the contract's path. It
   returns how many failures it counted and one finding for each.
 
 The division is deliberate and it is not arbitrary: whether the tests prove the criteria has one
-home, whether the source answers to the base has another, and why a run failed has a third. One
-judgment per pass is what keeps two passes from disagreeing about one line, and it is what makes a
-clean result from any one of them mean something specific.
+home, whether the source answers to the base has another, whether it follows the rules the project
+set for itself has a third, and why a run failed has a fourth. One judgment per pass is what keeps
+two passes from disagreeing about one line, and it is what makes a clean result from any one of
+them mean something specific.
 
-What none of these passes covers, this framework does not ship: no security scan, no structural or
-duplication scan, no analysis of what the change exposes to its consumers. Those are real
-judgments and this is not their home — the ecosystem the consumer already works in has tools for
-them, and a pass here would compete with tools this framework does not own while pretending the
-question was answered. Say as much in the report, so a reader never mistakes three passes for
-every pass.
+The two conformance passes divide by authority and must not be confused. The base holds what the
+business decided — what the system answers, which refusal, which code, who may see what — and a
+fact of that kind written in source and in no bound node is the base pass's finding. A standard
+holds how the project is arranged — its layers, its wiring, its naming — and a rule of that kind is
+the standard pass's. A standard that stated what the system answers would put the two in
+contradiction over one line, one requiring in code exactly what the other reports; that is why the
+standard's contract excludes it, and why a rule you find doing it is a defect in the standard rather
+than a finding to record.
+
+The line all four passes stop at is not a subject line — it is the line between a rule whose
+application is a reading and a rule a tool decides. A model hunting an interpolated query competes
+with a scanner built for it and loses; hunting a forbidden construct it competes with the compiler
+and loses. So this framework runs the consumer's own tools rather than imitating them: a standard
+marks those rules as a tool's, they become steps of the captured run above, and what they print
+reaches the failures pass carrying the tool's own message as its evidence. What is left — a
+responsibility spanning two layers, an interface a caller cannot satisfy, a fact the base does not
+hold — is what a reading is for.
+
+What this framework never supplies is the content of any of it: no rule, no threshold, no security
+profile. A standard is the project's and its tools are the project's, and a project that has
+authored neither gets an honestly narrow review rather than a clean one. Say as much in the report,
+so a reader never mistakes four passes for every pass.
 
 ### 4. Compose
 
-Write `review/<slug>.md` under the delivery root — the slug names this review, and the path is its
-identity. It carries the file set it was computed over, the tasks it answers, the pin, one entry
-per pass, the coverage entries where that pass ran, how many failures were counted where that one
-did, the run's directory where there was one, and every finding.
+Where the standard pass ran, first take a copy of the registry into `standards/` under the delivery
+root, keeping its filename, and record where it sits and the SHA-256 of its text — computable as
+`sha256sum <delivery-root>/standards/<file>`. The copy is the point: the registry lives in the
+project's tree and will move on, and a record pointing at a file no root holds is a record nobody
+can check later. It is kept the way `run/` is kept — material a judgment was read from, never
+validated as a node.
+
+Then write `review/<slug>.md` under the delivery root — the slug names this review, and the path is
+its identity. It carries the file set it was computed over, the tasks it answers, the pin, one entry
+per pass, the coverage entries where that pass ran, the standard with the rules that were in scope
+where that one ran, how many failures were counted where that one did, the run's directory where
+there was one, and every finding.
 
 Stamp each finding's pass yourself: the agents return findings without one, so a finding cannot
 claim a pass that did not run. An entry for a pass that did not run names what was missing — that
-is what says it did not run, and the validator refuses a finding attributed to it.
+is what says it did not run, and the validator refuses a finding attributed to it. Every finding
+names the file it was observed in, exactly as the file set lists it, and the validator holds it
+there.
 
 The body is exactly two headings, in order: `## What it is`, then `## Notes`. One sentence per
 line; a section with nothing to say carries the literal line `None.` What the passes looked past,
@@ -184,14 +234,19 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <kno
 This validates the review against the contract, runs the checks that need the plan — every task
 named is a delivered task of this plan, the coverage pass answers for every criterion of them and
 for nothing else, the failures counted match the findings recorded, the run it points at exists,
-and the pin matches the plan as it stands — and derives `delivery.json`. **Never write or edit
-`delivery.json` yourself.** Report the output verbatim, and never describe the review as sound
-while the command exits non-zero.
+every finding sits in a file the set lists, and the pin matches the plan as it stands — and, where
+the standard pass ran, the checks that need the copied registry: it holds together, its pin is the
+text the findings were written against, every rule recorded as in scope is one the standard decides
+by reading and whose scope reaches something reviewed, no such rule is left out, and every citation
+resolves to one of them against a file its scope reaches. Then it derives `delivery.json`. **Never
+write or edit `delivery.json` yourself.** Report the output verbatim, and never describe the review
+as sound while the command exits non-zero.
 
 **Fixing means form, never judgment.** A criterion paraphrased instead of quoted, a finding
-attributed to a pass that did not run, a count that does not match — yours to correct. A finding
-is never dropped to make the record read cleanly, a state is never raised to make coverage look
-better, and a pass that did not run is never recorded as having run.
+attributed to a pass that did not run, a citation of a rule that was not in scope, a count that
+does not match — yours to correct. A finding is never dropped to make the record read cleanly, a
+state is never raised to make coverage look better, a rule is never left out of the applied set to
+make a citation legal, and a pass that did not run is never recorded as having run.
 
 ### 6. Report, and stop
 
@@ -201,9 +256,13 @@ Report, in this order:
 - **which passes did not run, and which input was missing** — this line is not optional, and it is
   what separates a clean review from a narrow one;
 - every criterion the coverage pass did not find covered, and what is unexercised in each;
+- the standard: which of its rules were in scope over this file set, and which it leaves to a tool
+  — naming, for those, whether the step that decides each one ran. A rule left to a tool that never
+  ran is unanswered, and saying so is what keeps the split between reading and tool honest instead
+  of convenient;
 - the run: what was executed, how it ended, how many failures were counted, and where the output
   sits;
-- what this framework does not review at all, so three passes are never mistaken for every pass;
+- what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim.
@@ -229,6 +288,11 @@ to a person.
   a second run is a second name, and the first one's evidence stays on disk.
 - Record a pass as having run when its input was absent, or attribute a finding to a pass that did
   not run.
+- Record a finding against a rule a standard says a tool decides, or against a rule whose scope does
+  not reach the file — the first re-decides in a model what a tool decides exactly, and the second
+  hangs a departure on a sentence that does not govern the file.
+- Add to, edit or reinterpret the project's standard. It is the project's; a rule that seems wrong is
+  reported as a departure exactly as written, and changed by whoever owns it.
 - Write into the work root, the knowledge root, or the target source root.
 - Commit, stash, or otherwise change the consumer's git state.
 - Restate the contract's vocabularies from memory instead of reading the schema.

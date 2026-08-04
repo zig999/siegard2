@@ -1,13 +1,13 @@
 """Every skill stays bound to its contract: it cites what exists, and restates nothing.
 
-The last test is the unusual one. Every closed-vocabulary value the shipped node contracts
-declare must be absent from every skill's text — a value listed in a prompt is a second home the
-moment the schema changes, and the prompt is the copy nothing validates. The subject is the union
-of all three node contracts rather than each skill's own, for two reasons: a skill has no more
-business restating another root's vocabulary than its own, and one contract (`delivery-node.json`)
-happens to declare no hyphenated value at all, which would leave a per-skill guard with nothing
-to check. Only hyphenated values are checked: they are distinctive tokens, where bare words like
-`core`, `task` or `covered` occur in ordinary prose.
+The last test is the unusual one. Every closed-vocabulary value the shipped contracts declare must
+be absent from every skill's text — a value listed in a prompt is a second home the moment the
+schema changes, and the prompt is the copy nothing validates. The subject is the union of all of
+them rather than each skill's own, for two reasons: a skill has no more business restating another
+root's vocabulary than its own, and two of the contracts happen to declare no hyphenated value at
+all, which would leave a per-skill guard with nothing to check. Only hyphenated values are checked:
+they are distinctive tokens, where bare words like `core`, `task`, `covered` or `standard` occur in
+ordinary prose.
 """
 from __future__ import annotations
 
@@ -21,7 +21,8 @@ REPO = Path(__file__).resolve().parent.parent
 CITATION = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]+)")
 FENCE = re.compile(r"^---\n(.*?)\n---\n", re.S)
 
-NODE_CONTRACTS = ("schemas/node.json", "schemas/plan-node.json", "schemas/delivery-node.json")
+NODE_CONTRACTS = ("schemas/node.json", "schemas/plan-node.json", "schemas/delivery-node.json",
+                  "schemas/standard.json")
 
 SKILLS = {
     "analyse-domain": {"contract": "schemas/node.json", "validator": "bin/graph.py",
@@ -33,7 +34,7 @@ SKILLS = {
                        "delegates": ["task-implementer", "test-author"]},
     "review-change": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
                       "delegates": ["coverage-auditor", "base-conformance-reviewer",
-                                    "failure-diagnostician"]},
+                                    "standard-conformance-reviewer", "failure-diagnostician"]},
 }
 
 

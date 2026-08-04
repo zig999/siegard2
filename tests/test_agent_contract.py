@@ -35,6 +35,7 @@ GRANTS = {
     "coverage-auditor": READS,
     "execution-contract-binder": READS,
     "failure-diagnostician": READS,
+    "standard-conformance-reviewer": READS,
     "task-implementer": WRITES,
     "test-author": WRITES,
 }

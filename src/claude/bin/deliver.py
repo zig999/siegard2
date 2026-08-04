@@ -30,11 +30,20 @@ carries a field for it. `--outstanding` answers the question a status field woul
 from the tasks that have no record and the dependencies they declare, so the answer is derived
 from the files every time and can never be stale or wrong.
 
+**A project's own standard is the project's, and it is read from inside the delivery root.** Where
+a review answers for the standard pass, it points at a copy of the registry under `standards/` and
+pins its text — kept the way `run/` is kept, because a record that pointed at a file no root holds
+could not be checked once the project's copy moved on. So no invocation of this script needs an
+extra argument to validate a review: the correct command line stays a function of the roots and
+never of what a node happens to say. `--standard <file>` validates a registry on its own, which is
+what a consumer runs before any review reads it.
+
 **delivery.json is derived, never edited.** It is refused entirely while the delivery has
 problems: an index over a broken delivery reports a shape nobody decided. `--check` compares and
 never repairs. This script answers pointed questions itself (`--outstanding`) and never reads
 delivery.json to do it: both the index and the report derive from the nodes by the same
-pipeline, so neither can disagree with the other, and neither can be stale.
+pipeline, so neither can disagree with the other, and neither can be stale. Nothing a standard
+decides reaches the index, so the derivation stays a function of the delivery root alone.
 
 Declared dependencies: PyYAML, jsonschema.
 
@@ -48,8 +57,11 @@ Usage:  deliver.py <delivery-root> <work-root> [<knowledge-root>]
                                                         record and what it waits on; write
                                                         nothing
         deliver.py --node <file> <delivery-root> <work-root> [<knowledge-root>]
-                                                        validate one file (cross-node checks and
-                                                        plan checks do not run)
+                                                        validate one file (cross-node checks,
+                                                        plan checks and standard checks do not
+                                                        run)
+        deliver.py --standard <file>                    validate one project standard on its own;
+                                                        stands alone, needs no root
         The knowledge root is required while the plan is live, and ignored once closure.md
         marks it closed — the same rule plan.py applies, because the plan is read through it.
 Exit:   0 sound (and, with --check, current)
@@ -80,6 +92,7 @@ import plan
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 DELIVERY_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery-node.json"
 DELIVERY_GRAPH_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery.json"
+STANDARD_CONTRACT = PLUGIN_ROOT / "schemas" / "standard.json"
 DELIVERY_FILE = "delivery.json"
 RUN_DIR = "run"
 
@@ -168,6 +181,7 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
                             f"a review records one answer per pass")
 
     ran = ran_passes(front, names)
+    reviewed = [p for p in listed(front, "reviewed") if isinstance(p, str)]
     for index, finding in enumerate(listed(front, "findings")):
         if not isinstance(finding, dict) or not isinstance(finding.get("pass"), str):
             continue  # the schema already reported the shape
@@ -175,17 +189,32 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
         if name in names and name not in ran:
             problems.append(f"findings[{index}] is attributed to `{name}`, which did not run; "
                             f"a pass that did not run found nothing")
-        if name == "failures" and "cause" not in finding:
-            problems.append(f"findings[{index}] belongs to the failures pass and states no "
-                            f"`cause`; a failure with no cause named is a failure nobody read")
-        if name != "failures" and "cause" in finding:
-            problems.append(f"findings[{index}] states a `cause` outside the failures pass; "
-                            f"cause explains why a captured run failed and nothing else")
+        if isinstance(finding.get("file"), str) and finding["file"] not in reviewed:
+            problems.append(f"findings[{index}] is in {finding['file']}, which `reviewed` does "
+                            f"not list; a finding outside the file set is a finding over "
+                            f"something nobody said was under review")
+        # Each of these fields belongs to exactly one pass, and both halves are held: a pass that
+        # states nothing where its own field is required, and a pass that states another's.
+        for field, owner, absent, foreign in (
+                ("cause", "failures",
+                 "a failure with no cause named is a failure nobody read",
+                 "cause explains why a captured run failed and nothing else"),
+                ("cites", "standard",
+                 "a finding citing no rule is taste with a location attached",
+                 "only a rule of the project's standard is cited, and only that pass reads one")):
+            if name == owner and field not in finding:
+                problems.append(f"findings[{index}] belongs to the {owner} pass and states no "
+                                f"`{field}`; {absent}")
+            if name != owner and field in finding:
+                problems.append(f"findings[{index}] states `{field}` outside the {owner} pass; "
+                                f"{foreign}")
 
     for field, name, want in (("coverage", "coverage", "the criteria it paired with tests"),
                               ("run", "failures", "the captured run it read"),
                               ("failures_counted", "failures",
-                               "how many failures the run reported")):
+                               "how many failures the run reported"),
+                              ("standard", "standard",
+                               "the standard it read and the rules that were in scope")):
         if field in front and name not in ran:
             problems.append(f"`{field}` is present and the {name} pass did not run; "
                             f"a pass that did not run holds {want} over nothing")
@@ -201,6 +230,132 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
             problems.append(f"failures_counted is {counted} and the failures pass recorded "
                             f"{recorded} finding(s); the two disagreeing is how a failure goes "
                             f"unexamined while the record still looks complete")
+    return problems
+
+
+def standard_contract() -> Draft202012Validator:
+    """The validator for a project's own standard. The registry is the project's artifact, so this
+    framework holds it to a contract and authors none of its content."""
+    if not STANDARD_CONTRACT.is_file():
+        raise FileNotFoundError(
+            f"{STANDARD_CONTRACT} is missing; a standard cannot be validated without it")
+    return Draft202012Validator(json.loads(STANDARD_CONTRACT.read_text(encoding="utf-8")))
+
+
+def load_standard(path: Path, validator) -> tuple[dict | None, list[str]]:
+    """One standard, read and held to its contract. Returns nothing usable while it has problems:
+    a review is never checked against a registry that does not hold together."""
+    if not path.is_file():
+        return None, [f"{path} does not exist"]
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as broken:
+        return None, [f"{path} cannot be read: {broken}"]
+    if not isinstance(data, dict):
+        return None, [f"{path} is a {type(data).__name__}, not a mapping"]
+
+    problems = []
+    for error in sorted(validator.iter_errors(data), key=str):
+        where = ".".join(str(part) for part in error.absolute_path) or "the standard"
+        problems.append(f"{where}: {error.message}")
+    ids = [r["id"] for r in listed(data, "rules")
+           if isinstance(r, dict) and isinstance(r.get("id"), str)]
+    for value in sorted({i for i in ids if ids.count(i) > 1}):
+        problems.append(f"declares `{value}` {ids.count(value)} times; two rules under one id "
+                        f"cannot be told apart by the finding that cites it")
+    for rule in listed(data, "rules"):
+        if isinstance(rule, dict) and rule.get("decided_by") == "reading" and "tool" in rule:
+            problems.append(f"{rule.get('id')} is decided by reading and names the tool "
+                            f"`{rule['tool']}`; a rule is one or the other, and a rule a tool "
+                            f"decides is not a review's to read")
+    return (None if problems else data), problems
+
+
+def pin_of(path: Path) -> str:
+    """The pin of a file's bytes, computable by hand as `sha256sum <path>`."""
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def reaches(scope, path: str) -> bool:
+    """Whether one scope of a standard rule reaches one path. The scope is stated in parts rather
+    than as a glob pattern deliberately: one tool's single star crosses a separator and another's
+    double star means exactly one directory, and that difference would decide whether a finding is
+    refused."""
+    if not isinstance(scope, dict):
+        return False
+    under, suffix = scope.get("under"), scope.get("suffix")
+    if not isinstance(under, str) or not isinstance(suffix, str):
+        return False
+    prefix = f"{under.rstrip('/')}/"
+    if not path.startswith(prefix) or not path.endswith(suffix):
+        return False
+    return bool(scope.get("nested")) or "/" not in path[len(prefix):]
+
+
+def in_scope(rule: dict, paths: list[str]) -> bool:
+    return any(reaches(scope, path)
+               for scope in listed(rule, "applies_to") for path in paths)
+
+
+def standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
+    """One review against the standard it read. The copy under the delivery root is the text the
+    findings were written against; every rule recorded as in scope is one the standard decides by
+    reading and whose scope reaches something reviewed; and every citation resolves to such a
+    rule. Without the last three, a review with no findings cannot say what it was clean over."""
+    declared = front.get("standard")
+    if not isinstance(declared, dict) or not isinstance(declared.get("at"), str):
+        return []  # the schema already reported the shape
+
+    at = declared["at"]
+    path = root / at
+    data, found = load_standard(path, validator)
+    problems = [f"{nid}: {at}: {p}" for p in found]
+    if data is None:
+        return problems
+
+    if declared.get("pin") != pin_of(path):
+        problems.append(f"{nid}: the standard's pin is not the text at {at} ({pin_of(path)}); the "
+                        f"copy this review points at is not the one its findings were written "
+                        f"against")
+
+    rules = {r["id"]: r for r in listed(data, "rules")
+             if isinstance(r, dict) and isinstance(r.get("id"), str)}
+    reviewed = [p for p in listed(front, "reviewed") if isinstance(p, str)]
+    applied = [r for r in listed(declared, "applied") if isinstance(r, str)]
+
+    for rid in applied:
+        rule = rules.get(rid)
+        if rule is None:
+            problems.append(f"{nid}: applied names {rid}, which {at} does not declare")
+        elif rule.get("decided_by") != "reading":
+            problems.append(f"{nid}: applied names {rid}, which {at} says a tool decides; a rule a "
+                            f"linter or a compiler decides exactly runs as a step of the "
+                            f"project's own suite, and what it finds arrives through the failures "
+                            f"pass instead")
+        elif not in_scope(rule, reviewed):
+            problems.append(f"{nid}: applied names {rid}, whose scope reaches no reviewed path; a "
+                            f"rule that was never in scope cannot be one the review was clean "
+                            f"over")
+
+    for rid, rule in sorted(rules.items()):
+        if (rule.get("decided_by") == "reading" and in_scope(rule, reviewed)
+                and rid not in applied):
+            problems.append(f"{nid}: {at} declares {rid}, whose scope reaches a reviewed path, and "
+                            f"applied does not name it; a rule left out of scope in silence reads "
+                            f"as one that found nothing")
+
+    for index, finding in enumerate(listed(front, "findings")):
+        if not isinstance(finding, dict) or finding.get("pass") != "standard":
+            continue
+        cited, where = finding.get("cites"), finding.get("file")
+        if not isinstance(cited, str):
+            continue  # the schema already reported it
+        if cited not in applied:
+            problems.append(f"{nid}: findings[{index}] cites {cited}, which applied does not name; "
+                            f"a finding cites a rule that was in scope for this review")
+        elif isinstance(where, str) and not in_scope(rules[cited], [where]):
+            problems.append(f"{nid}: findings[{index}] cites {cited} against {where}, which that "
+                            f"rule's scope does not reach")
     return problems
 
 
@@ -365,8 +520,10 @@ def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict], pin
 
 
 def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str,
-                   names: list[str], root: Path) -> list[str]:
-    """The rules that need to see more than one node at once — or the plan."""
+                   names: list[str], root: Path,
+                   standard: Draft202012Validator | None = None) -> list[str]:
+    """The rules that need to see more than one node at once — or the plan, or the copy of a
+    standard the delivery root holds."""
     problems: list[str] = []
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
@@ -390,6 +547,8 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str
         if node["kind"] == "review":
             problems.extend(review_plan_problems(nid, front, plan_nodes, pin, delivered,
                                                  names, root))
+            problems.extend(standard_problems(nid, front, root,
+                                              standard or standard_contract()))
     return problems
 
 
@@ -564,6 +723,34 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict]) -> s
     return "\n".join(lines) if lines else "every task has a record, and every record its proof"
 
 
+def check_standard(named: str) -> int:
+    """Validate one project standard on its own, so a consumer can hold a registry to its contract
+    before any review reads it. Every root this framework validates has a validator; a standard is
+    not a root, and this is the closest thing it gets."""
+    try:
+        validator = standard_contract()
+    except (FileNotFoundError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    path = Path(named)
+    data, problems = load_standard(path, validator)
+    for problem in problems:
+        print(f"{path.name}: {problem}")
+    if data is None:
+        print(f"\n{len(problems)} problem(s). A review is never checked against a standard that "
+              f"does not hold together.")
+        return 1
+    rules = [r for r in listed(data, "rules") if isinstance(r, dict)]
+    reading = sum(1 for r in rules if r.get("decided_by") == "reading")
+    steps = sorted({r["tool"] for r in rules if isinstance(r.get("tool"), str)})
+    print(f"standard checked: {path} declares {len(rules)} rule(s) — {reading} decided by "
+          f"reading, {len(rules) - reading} by a tool")
+    print(f"  pin {pin_of(path)}")
+    print(f"  the rules a tool decides run as step(s) named {', '.join(steps) or 'nothing'}; "
+          f"a review reads only the {reading} decided by reading")
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     verify = "--check" in args
@@ -578,12 +765,24 @@ def main() -> int:
             return CANNOT_RUN
         single = args[at + 1]
         del args[at:at + 2]
+    if "--standard" in args:
+        at = args.index("--standard")
+        if at + 1 >= len(args):
+            print("cannot run: --standard takes a file", file=sys.stderr)
+            return CANNOT_RUN
+        named = args[at + 1]
+        del args[at:at + 2]
+        if verify or report or single is not None or args:
+            print("cannot run: --standard stands alone", file=sys.stderr)
+            return CANNOT_RUN
+        return check_standard(named)
     if report and (verify or single is not None):
         print("cannot run: --outstanding stands alone", file=sys.stderr)
         return CANNOT_RUN
     if len(args) not in (2, 3) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --outstanding | --node <file>] "
-              "<delivery-root> <work-root> [<knowledge-root>]", file=sys.stderr)
+              "<delivery-root> <work-root> [<knowledge-root>], "
+              "or --standard <file> on its own", file=sys.stderr)
         return CANNOT_RUN
 
     root = Path(args[0])
@@ -608,6 +807,7 @@ def main() -> int:
     try:
         validator, allowed = contract()
         names = pass_names()
+        standard = standard_contract()
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
@@ -626,7 +826,7 @@ def main() -> int:
     pin = plan_pin(plan_nodes)
 
     nodes, problems = collect(root, validator, allowed, names)
-    problems += cross_problems(nodes, plan_nodes, pin, names, root)
+    problems += cross_problems(nodes, plan_nodes, pin, names, root, standard)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)

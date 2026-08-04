@@ -121,6 +121,10 @@
       "items": { "$ref": "#/$defs/finding" },
       "description": "What the passes found, each with the evidence it was observed from and the cost it carries. Absent is a claim that nothing was found, over the file set `reviewed` and the passes that ran — no more than that. There is no severity, no action and no verdict: this record is evidence, and what it means for the change is a person's to decide."
     },
+    "standard": {
+      "$ref": "#/$defs/standardRef",
+      "description": "The project's standard this review read, and which of its rules were in scope — present exactly when the standard pass ran. A project that has authored no standard records the pass as not run and says so, which is the honest narrow result rather than a clean one."
+    },
     "failures_counted": {
       "type": "integer",
       "minimum": 0,
@@ -207,7 +211,7 @@
       "then": {
         "required": ["reviewed", "passes"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "plan", "reviewed", "tasks", "passes", "coverage", "findings", "failures_counted", "run"]
+          "enum": ["kind", "title", "summary", "plan", "reviewed", "tasks", "passes", "coverage", "findings", "standard", "failures_counted", "run"]
         },
         "examples": [
           {
@@ -219,8 +223,14 @@
             "passes": [
               { "pass": "coverage" },
               { "pass": "conformance" },
+              { "pass": "standard" },
               { "pass": "failures", "missing": "no captured run was supplied, so nothing was diagnosed" }
             ],
+            "standard": {
+              "at": "standards/backend-typescript.yaml",
+              "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f",
+              "applied": ["ARC-01", "ARC-04", "COR-02"]
+            },
             "coverage": [
               {
                 "criterion": "Submitting a valid order returns its order_number.",
@@ -236,9 +246,19 @@
             "findings": [
               {
                 "pass": "conformance",
-                "where": "src/orders/place.ts",
+                "file": "src/orders/place.ts",
+                "where": "line 34, the refusal branch",
                 "evidence": "if (order.total <= 0) return refuse('ORDER_TOTAL_INVALID')",
                 "cost": "the refusal code is stated in code and in no bound node, so the code became the place that decision lives and a reader looking for it in the base will not find it"
+              },
+              {
+                "pass": "standard",
+                "file": "src/orders/place.ts",
+                "where": "line 12, the constructor",
+                "cites": "ARC-01",
+                "evidence": "constructor(private readonly store: PostgresOrderStore)",
+                "cost": "the entry point cannot be exercised without a live store, so every test of the refusal has to stand one up",
+                "correction": "take the store as the interface the repository already declares, and let the factory choose the implementation"
               }
             ]
           }
@@ -398,13 +418,42 @@
         "missing": {
           "type": "string",
           "minLength": 1,
-          "description": "The input that was absent, named so a reader knows what to supply for the pass to run. Its presence is what says the pass did not run; an absent input never becomes a default, and it never becomes a clean result."
+          "description": "What was absent, named so a reader knows what would make the pass run. Ordinarily an input this invocation was not given; for the standard pass it may instead be an artifact this project has never authored, which is a different kind of absence and is said in those words. Either way its presence is what says the pass did not run: an absent input never becomes a default, and it never becomes a clean result."
         }
       }
     },
     "passName": {
-      "enum": ["coverage", "conformance", "failures"],
-      "description": "Which judgment the entry is about: whether the tests prove the task's criteria, whether the source states only what the base holds, or why a captured run failed."
+      "enum": ["coverage", "conformance", "failures", "standard"],
+      "description": "Which judgment the entry is about — whether the tests prove the task's criteria, whether the source states only what the base holds, why a captured run failed, or whether the source follows the rules this project set for itself. The last is the only one whose subject the project authors rather than the framework, and it reaches only the rules of that standard whose application is a reading: a rule a linter or a compiler decides exactly runs as a step of the project's own suite, and its failures arrive through the failures pass instead."
+    },
+    "standardRef": {
+      "type": "object",
+      "required": ["at", "pin", "applied"],
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^standards/[a-z0-9]+(-[a-z0-9]+)*\\.(yaml|yml|json)$",
+          "description": "The standard this review read, as its file under the delivery root's `standards/`. The registry is the project's and lives in the project's own tree; a copy is taken here at review time, the way `run/` holds what a suite printed — so the record is readable, and checkable, long after the project's copy has moved on. A path outside the delivery root would make this record depend on a file no root holds."
+        },
+        "pin": {
+          "$ref": "#/$defs/pin",
+          "description": "The SHA-256 of the standard's text as this review read it, computable by hand as `sha256sum <delivery-root>/<at>`. A pin the validator finds diverging says the copy taken here is not the text the findings were written against."
+        },
+        "applied": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ruleRef" },
+          "description": "Every rule that was in scope — those the standard decides by reading and whose scope reaches at least one path in `reviewed`. It is recorded rather than left to be recomputed because the standard is not a root this framework validates and may not exist when someone reads this record, and because without it a review with no findings cannot say what it was clean over. The validator holds it against the standard: an id here the standard does not declare, a rule a tool decides, or a rule whose scope reaches nothing reviewed, are each refused."
+        }
+      }
+    },
+    "ruleRef": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-[0-9]{2}$",
+      "description": "One rule of the project's standard, by the identifier the standard gives it. Deliberately unlike a base node reference, which is a path: a rule of a standard and a `rule` node of the knowledge base are different authorities, and the two must not be readable as one another."
     },
     "coverageEntry": {
       "type": "object",
@@ -444,14 +493,19 @@
     },
     "finding": {
       "type": "object",
-      "required": ["pass", "where", "evidence", "cost"],
+      "required": ["pass", "file", "where", "evidence", "cost"],
       "additionalProperties": false,
       "properties": {
         "pass": { "$ref": "#/$defs/passName" },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The path this was observed in, exactly as `reviewed` lists it. The validator holds every finding to that list, because a finding outside the file set is a finding over something nobody said was under review — a constraint this contract stated in prose before it was a field anything could check."
+        },
         "where": {
           "type": "string",
           "minLength": 1,
-          "description": "The path, and the line or the construct, this was observed at — inside `reviewed`, because a finding outside the file set is a finding over something nobody said was under review."
+          "description": "Where in that file — the line, or the construct — so a reader opens the place rather than searching for it."
         },
         "evidence": {
           "type": "string",
@@ -467,6 +521,10 @@
           "type": "string",
           "minLength": 1,
           "description": "What would have to change for this to stop being true, in the terms the evidence gives. \"Fix the assertion\" says nothing; \"the refusal code belongs in the base as a fact, and the code reads it from there\" says what to do. It is not a decision about the change — whether to act on it, and when, is a person's — and nothing downstream reads it as one."
+        },
+        "cites": {
+          "$ref": "#/$defs/ruleRef",
+          "description": "The rule of the project's standard this finding is against, on a finding of the standard pass and nowhere else — the validator holds both halves of that, the same way it holds `cause` to the failures pass. Exactly one rule: a departure from two is two findings, because they will be settled separately, and a finding citing no rule at all is taste with a location attached. The validator also holds the cited rule to the standard — it must be declared, it must be one the standard decides by reading rather than one a tool decides, and its scope must reach this finding's file."
         },
         "cause": {
           "enum": ["code", "test", "setup", "build"],

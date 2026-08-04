@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/standard.json",
+  "title": "Siegard project standard",
+  "description": "A project's own rules about how its source is arranged, authored by the project and never by this framework. Siegard ships this contract, the pass that holds code to a registry, and the checks that keep a finding answerable to one rule — it ships no rule. A stack's conventions are not a domain's, and a framework that shipped them would prescribe TypeScript to a Go project; the predecessor this comes from did exactly that and its own weakness list said so. It is a registry rather than prose because every finding a review records must cite exactly one rule by its id, and prose cannot be cited: a finding citing no rule is taste with a location attached. Two exclusions are the whole of its scope. First, **no rule here states what the system answers or who may see what** — a status, an error code, a refusal, an authorization outcome. Those are what the business decided, they live in the knowledge base as nodes, and a rule here stating one would put the standard pass and the base-conformance pass in contradiction over the same line: one requiring in code what the other reports as a fact the base does not hold. Second, **no rule carries a severity and nothing here derives a verdict** — the registry's ancestor graded every finding and fed the grade to an approval gate, which made the reviewer the gate. A finding states what it costs; a person decides what that means.",
+  "type": "object",
+  "required": ["contract_version", "standard", "summary", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "const": "siegard-standard/1" },
+    "standard": {
+      "$ref": "#/$defs/slug",
+      "description": "This standard's name, as the review that read it records it. One project may hold several — a backend's rules are not a frontend's — and each is named where it is used."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One sentence saying what this standard governs, not that it is a standard."
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rule" },
+      "description": "Every rule this standard declares, each with an identifier a finding can cite. Ids are unique across the registry: two rules under one id cannot be told apart by the finding that cites it."
+    },
+    "elsewhere": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/exclusion" },
+      "description": "What this standard deliberately does not hold, and where each of those lives instead. It is written for the reader who looks for a rule, does not find it, and would otherwise conclude nobody thought of it — the same reason a plan declares its uncovered remainder and a review declares the passes that did not run. Nothing validates the destinations, and nothing has to: this is the registry saying out loud which of the three homes a question belongs to."
+    }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A name reduced to kebab-case."
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "statement", "because", "decided_by", "applies_to"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "decided_by": { "const": "tool" } }, "required": ["decided_by"] },
+          "then": { "required": ["tool"] },
+          "$comment": "The reverse — a rule decided by reading naming a tool — is refused by bin/deliver.py, which can say so in a sentence a reader acts on."
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,4}-[0-9]{2}$",
+          "description": "How a finding cites this rule. Short and stable: an id that changes orphans every finding that cited it, and a review from last month is read beside the registry as it stands."
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the rule requires, as one condition a reader can hold a file to. \"Keep the code clean\" is not a statement; \"a service or controller never constructs a dependency\" is."
+        },
+        "because": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What goes wrong when the rule is departed from, as a consequence rather than as the rule restated. It is required because a rule with no stated reason is an arbitrary constraint that nobody can weigh a departure against, and because it is the material a finding's `cost` is written from: the reviewer says what this departure costs here, in the terms this field gives."
+        },
+        "decided_by": {
+          "enum": ["reading", "tool"],
+          "description": "Which half of the standard this rule sits in, and this is the field that decides who applies it. `reading` means telling whether the rule holds requires understanding what the code means — a responsibility that spans two layers, an interface a caller cannot satisfy. Those are the standard pass's, and a review's findings cite them. `tool` means a linter, a compiler, a formatter or a secret scanner decides it exactly and cheaply — a forbidden construct, a name's shape, a file's length, an interpolated query. Those are not a model's work: they run as steps of the caller's own suite, their failures arrive as a captured run, and the failures pass reads what the tool printed. A model applying a rule a linter owns has strictly worse recall than the linter and costs more, and the validator refuses a standard-pass finding that cites one."
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Which step decides this rule, named as the caller names it to the runner. Required when `decided_by` is `tool`: a rule declared mechanical with nothing named to decide it is a rule nobody applies, which is worse than one nobody wrote."
+        },
+        "applies_to": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/scope" },
+          "description": "Where this rule reaches. A rule with no scope is a rule that fires on every file including the tests, and the finding it produces is one nobody can act on. The scope is stated in parts rather than as a glob pattern so that a validator can check a finding against it without a pattern language: what a glob means differs between tools, and the difference would decide whether a finding is refused."
+        },
+        "seen_at": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A path in this project where the rule is already obeyed. Optional and worth writing: a rule with an example is a rule an implementer can follow without guessing the shape, and it is the same discipline an inventory node applies to a convention — one observed at nowhere is an opinion."
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": ["under", "suffix"],
+      "additionalProperties": false,
+      "properties": {
+        "under": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/][^\\\\]*[^/]$|^[^/\\\\]$",
+          "description": "The directory this scope starts at, relative to the target source root and without a trailing separator."
+        },
+        "suffix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What a path must end with — an extension, or a role and an extension together such as `.service.ts`."
+        },
+        "nested": {
+          "type": "boolean",
+          "description": "Whether the scope reaches directories below `under`. Absent is false: the scope is exactly the files sitting directly in `under`. This is the distinction a glob language gets wrong in both directions — one tool's single star crosses a separator and another's double star means exactly one directory — so it is stated rather than pattern-matched."
+        }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "required": ["what", "lives_in", "why"],
+      "additionalProperties": false,
+      "properties": {
+        "what": { "type": "string", "minLength": 1 },
+        "lives_in": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where this actually lives — the knowledge base, a named agent of the framework, a tool, or nowhere on purpose."
+        },
+        "why": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "examples": [
+    {
+      "contract_version": "siegard-standard/1",
+      "standard": "example-service",
+      "summary": "How this service layers its modules and wires them together.",
+      "rules": [
+        {
+          "id": "ARC-01",
+          "statement": "A constructor receives interfaces, never concrete implementations.",
+          "because": "A class bound to a concrete collaborator cannot be exercised without it, so a test has to stand up the collaborator's world to assert one line of this one.",
+          "decided_by": "reading",
+          "applies_to": [{ "under": "src", "suffix": ".service.ts", "nested": true }],
+          "seen_at": "src/orders/order.service.ts"
+        },
+        {
+          "id": "PRH-01",
+          "statement": "Production code logs through the configured logger; console output is not used.",
+          "because": "A console line goes nowhere in production — no level, no correlation, no retention.",
+          "decided_by": "tool",
+          "tool": "lint",
+          "applies_to": [{ "under": "src", "suffix": ".ts", "nested": true }]
+        }
+      ],
+      "elsewhere": [
+        {
+          "what": "Which status a refusal answers with.",
+          "lives_in": "The knowledge base, as a rule or interface node.",
+          "why": "It is what the business decided, and stating it here would make two review passes disagree over one line."
+        }
+      ]
+    }
+  ]
+}

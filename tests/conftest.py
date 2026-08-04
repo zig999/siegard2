@@ -176,6 +176,45 @@ def write_delivery(delivery: Path):
     return put
 
 
+STANDARD = {
+    "contract_version": "siegard-standard/1",
+    "standard": "example-service",
+    "summary": "How this project's modules are layered and wired.",
+    "rules": [
+        {"id": "ARC-01",
+         "statement": "A constructor receives interfaces, never concrete implementations.",
+         "because": "A class bound to a concrete collaborator cannot be exercised without it.",
+         "decided_by": "reading",
+         "applies_to": [{"under": "src", "suffix": ".ts", "nested": True}]},
+        {"id": "ARC-02",
+         "statement": "Business logic lives in a service, never in a route handler.",
+         "because": "A rule implemented in a handler only exists over that transport.",
+         "decided_by": "reading",
+         "applies_to": [{"under": "src/routes", "suffix": ".ts"}]},
+        {"id": "PRH-01",
+         "statement": "Production code logs through the configured logger.",
+         "because": "A console line goes nowhere in production.",
+         "decided_by": "tool",
+         "tool": "lint",
+         "applies_to": [{"under": "src", "suffix": ".ts", "nested": True}]},
+    ],
+}
+
+
+@pytest.fixture
+def write_standard(delivery: Path):
+    """Copy a standard into the delivery root the way a review does, and return its reference."""
+    def put(data: dict = None, name: str = "example-service.yaml") -> dict:
+        import hashlib
+        where = delivery / "standards"
+        where.mkdir(exist_ok=True)
+        path = where / name
+        path.write_text(yaml.safe_dump(data or STANDARD, sort_keys=False), encoding="utf-8")
+        pin = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+        return {"at": f"standards/{name}", "pin": pin, "applied": ["ARC-01"]}
+    return put
+
+
 @pytest.fixture
 def sound_delivery(root, work, sound_plan, write_delivery):
     """The smallest delivery every check passes: one task of the fixture plan implemented and
