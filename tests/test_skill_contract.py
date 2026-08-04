@@ -18,8 +18,11 @@ REPO = Path(__file__).resolve().parent.parent
 CITATION = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]+)")
 
 SKILLS = {
-    "analyse-domain": {"contract": "schemas/node.json", "validator": "bin/graph.py"},
-    "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py"},
+    "analyse-domain": {"contract": "schemas/node.json", "validator": "bin/graph.py",
+                       "delegates": []},
+    "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
+                  "delegates": ["codebase-surveyor", "backlog-decomposer",
+                                "execution-contract-binder"]},
 }
 
 
@@ -44,6 +47,14 @@ def test_the_contract_and_the_validator_are_both_cited(case):
     cited = set(CITATION.findall(case["text"]))
     assert case["contract"] in cited
     assert case["validator"] in cited
+
+
+def test_every_delegate_is_cited_and_exists(repo, case):
+    for name in case["delegates"]:
+        assert f"agents/{name}.md" in case["text"], \
+            f"{case['name']} delegates to {name} and never cites its file"
+        assert (repo / "src/claude/agents" / f"{name}.md").is_file(), \
+            f"{case['name']} delegates to {name}, which src/claude/agents does not hold"
 
 
 def enum_values(node):
