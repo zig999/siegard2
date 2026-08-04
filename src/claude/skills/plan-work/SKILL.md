@@ -125,8 +125,11 @@ Binding is per task, against the node files — never against your memory of the
 Reread each node the task cites; what governs the task is what the node says today, not what
 the analysis meant when it was written.
 
-- Cite the governing nodes by identifier in `nodes`. A task that binds nothing must say why
-  in `rationale` — scaffolding is real work, but ungoverned work is a claim someone reviews.
+- Cite the governing nodes by identifier in `nodes`. A task binds inside its epic's claim: a
+  node the epic does not cover means `covers` grew and says so, or the task sits under the
+  wrong epic — the validator refuses the third option, binding beyond the claim in silence.
+- A task that binds nothing must say why in `rationale` — scaffolding is real work, but
+  ungoverned work is a claim someone reviews.
 - **Triage every open gap on every bound node** — the validator refuses silence. A gap that
   bears on the task is `unresolved`; one that does not is waived with a why. The why is a
   claim a reviewer can reject, so write the reason, not a formality.

@@ -105,9 +105,16 @@ def contract() -> tuple[Draft202012Validator, dict[str, set[str]]]:
     return Draft202012Validator(schema), allowed
 
 
+def listed(front: dict, field: str) -> list:
+    """A list field read defensively: anything but a list reads as empty, because the schema
+    already reported the shape and iterating a string would report its characters."""
+    value = front.get(field)
+    return value if isinstance(value, list) else []
+
+
 def triage_of(front: dict, field: str) -> set[str]:
     """The gap references one triage field carries, read defensively."""
-    return {entry["gap"] for entry in (front.get(field) or [])
+    return {entry["gap"] for entry in listed(front, field)
             if isinstance(entry, dict) and isinstance(entry.get("gap"), str)}
 
 
@@ -246,17 +253,26 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict], pin: str) 
 
 def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
                   base_nodes: dict[str, dict]) -> list[str]:
-    """One epic against its tasks: every covered base node is bound by a task under the epic or
-    declared uncovered — never neither, never both."""
+    """One epic against its tasks, in both directions: every covered base node is bound by a
+    task under the epic or declared uncovered — never neither, never both — and every node a
+    task binds sits in the epic's covers, because a binding outside the claim is scope the
+    plan does not declare."""
     problems: list[str] = []
     slug = nid.split("/")[1]
-    covers = [t for t in (front.get("covers") or []) if isinstance(t, str)]
+    covers = [t for t in listed(front, "covers") if isinstance(t, str)]
 
     bound_below: set[str] = set()
     for tid in sorted(nodes):
-        if nodes[tid]["kind"] == "task" and nodes[tid]["epic"] == slug:
-            bound_below |= {t for t in (nodes[tid]["front"].get("nodes") or [])
-                            if isinstance(t, str)}
+        if nodes[tid]["kind"] != "task" or nodes[tid]["epic"] != slug:
+            continue
+        for index, target in enumerate(listed(nodes[tid]["front"], "nodes")):
+            if not isinstance(target, str):
+                continue  # the schema already reported the shape
+            bound_below.add(target)
+            if target not in covers:
+                problems.append(f"{tid}: nodes[{index}] binds {target}, which {nid} does not "
+                                f"cover; a binding outside the epic's claim is scope the plan "
+                                f"does not declare — grow `covers`, or move the task")
 
     declared_uncovered: set[str] = set()
     for index, entry in enumerate(front.get("uncovered") or []):

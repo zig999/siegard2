@@ -290,6 +290,18 @@ def test_uncovered_contradicting_a_binding_is_refused(work, root, sound_plan):
     assert any("which a task under this epic binds" in p for p in problems_in(work, root))
 
 
+def test_a_binding_outside_the_epics_covers_is_refused(work, root, sound_plan):
+    sound_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted.",
+        "criteria": ["A valid order is retrievable."],
+        "nodes": ["definition/sales/order", "context/sales"],
+        "base": base_pin_of(root)})
+    problems = problems_in(work, root)
+    assert any("binds context/sales, which epic/checkout does not cover" in p
+               and "grow `covers`, or move the task" in p for p in problems)
+
+
 def test_uncovered_outside_covers_is_refused(work, root, sound_plan):
     sound_plan("epic/checkout", {
         "title": "Checkout", "summary": "Everything order placement needs.",
