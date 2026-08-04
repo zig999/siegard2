@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/run.json",
+  "title": "Siegard captured run",
+  "description": "What one run of the caller's commands did: written by `bin/run.py` at `run/<slug>/run.json` under the delivery root, beside the logs the commands printed. It is material, not a node — the delivery validator keeps it and never validates it, the way a work root keeps `intake/` — and a review points at the directory rather than restating what is in it. There is no timestamp, no duration and no record of the environment: two runs of the same commands over the same tree produce records that differ only where the commands did, and a record that changes on its own could not be compared with another. There is no count of tests either, passing or failing: counting them means parsing a reporter's format, which is knowledge of a stack that neither this contract nor the script that writes it holds. Whoever diagnoses the failures counts them from the output, and says how many they counted.",
+  "type": "object",
+  "required": ["contract_version", "run", "cwd", "timeout_seconds", "outcome", "failed_step", "steps", "combined_output"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "const": "siegard-run/1" },
+    "run": {
+      "type": "string",
+      "pattern": "^run/[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "This run's directory under the delivery root, which is also its identity — the caller named it, and nothing here was minted from a clock."
+    },
+    "cwd": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The directory the commands ran in, resolved. A run says where it happened, because the same command in two trees is two runs."
+    },
+    "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The bound the caller set, recorded with the run it bounded. No value is shipped: a number this framework supplied would be one nobody calibrated, and a step recorded as timed out is only readable against the bound it exceeded."
+    },
+    "outcome": {
+      "enum": ["passed", "failed", "timed_out", "not_found"],
+      "description": "How the run ended: the outcome of the first step that did not pass, or `passed` when every step did. Never absent and never `not_run` — a record exists because a run happened."
+    },
+    "failed_step": {
+      "type": ["string", "null"],
+      "description": "The name of the first step that did not pass, or null. Null with an outcome other than `passed` is a contradiction; the two are written together and read together."
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "command", "outcome", "exit_code", "output"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The caller's name for this step. Unique within the run: one step, one outcome."
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The argument vector that was executed, joined for a reader. No shell saw it, so nothing in it expanded."
+          },
+          "outcome": {
+            "enum": ["passed", "failed", "timed_out", "not_found", "not_run"],
+            "description": "`not_run` means a step before this one did not pass and this one was never attempted — never that it was skipped for any other reason. A suite run against a tree that did not compile would report failures about a binary nobody built, so a failed step stops the run."
+          },
+          "exit_code": {
+            "type": ["integer", "null"],
+            "description": "What the command exited with, or null where it never exited — timed out, was not found, or was never attempted."
+          },
+          "output": {
+            "type": ["string", "null"],
+            "description": "The log holding everything this step printed, relative to the run's own directory; null where the step was never attempted. Byte-exact: what a diagnosis reads is what the command wrote."
+          }
+        }
+      }
+    },
+    "combined_output": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The log holding every step's output in order, each under a header naming the step, its command and its outcome — relative to the run's own directory. It is the file a diagnosis reads in full; the per-step logs stay byte-exact beside it."
+    }
+  }
+}

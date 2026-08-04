@@ -111,6 +111,14 @@ def gapped_base(sound_base):
     return sound_base
 
 
+def plan_pin_of(work: Path, root: Path) -> str:
+    """The pin the plan at `work` computes to right now, by the validator's own pipeline."""
+    import deliver
+    nodes, problems = deliver.load_plan(work, root)
+    assert problems == [], f"the fixture plan does not hold together: {problems}"
+    return deliver.plan_pin(nodes)
+
+
 @pytest.fixture
 def sound_plan(root, gapped_base, write_plan):
     """The smallest plan every cross-node check passes, bound to the gapped fixture base:
@@ -144,3 +152,55 @@ def sound_plan(root, gapped_base, write_plan):
         "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
     })
     return write_plan
+
+
+# ------------------------------------------------------------ the delivery side
+
+
+@pytest.fixture
+def delivery(tmp_path: Path) -> Path:
+    base = tmp_path / "delivery"
+    base.mkdir()
+    return base
+
+
+@pytest.fixture
+def write_delivery(delivery: Path):
+    """Write one delivery node file at the path its identifier computes to."""
+    def put(did: str, front: dict, body: str = PLAN_BODY) -> Path:
+        path = delivery / f"{did}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text = yaml.safe_dump(front, sort_keys=False, allow_unicode=True)
+        path.write_text(f"---\n{text}---\n{body}", encoding="utf-8")
+        return path
+    return put
+
+
+@pytest.fixture
+def sound_delivery(root, work, sound_plan, write_delivery):
+    """The smallest delivery every check passes: one task of the fixture plan implemented and
+    proven. The plan's other task stays undelivered on purpose — the base leaves it unresolved,
+    so delivering it is exactly what the gate refuses."""
+    pin = plan_pin_of(work, root)
+    write_delivery("implementation/checkout/record-order", {
+        "title": "Record a placed order",
+        "summary": "The entry point that persists a valid order.",
+        "plan": pin,
+        "files": [{"path": "src/orders/place.ts",
+                   "effect": "persists a submitted order and answers with its order_number"}],
+        "criteria": [{"criterion": "Submitting a valid order returns its order_number.",
+                      "met": True,
+                      "how": "place() returns the persisted order_number unchanged"}],
+        "nodes": [{"node": "definition/sales/order",
+                   "encoded_at": ["src/orders/place.ts"],
+                   "how": "the order's identity and attributes are the shape place() persists"}],
+    })
+    write_delivery("proof/checkout/record-order", {
+        "title": "Proof for recording a placed order",
+        "summary": "What proves the recorded order.",
+        "tests": [{"file": "tests/place.spec.ts",
+                   "name": "returns the order_number for a valid submission",
+                   "proves": "Submitting a valid order returns its order_number.",
+                   "fails_when": "place() answers with anything but the stored order_number"}],
+    })
+    return write_delivery

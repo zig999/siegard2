@@ -1,0 +1,234 @@
+---
+name: implement-task
+description: Writes the source one planned task requires and the tests that prove it, records both under a delivery root — what was written, every criterion answered, every bound base node accounted for, every inference and every departure — validates the delivery against the plan, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse-domain), not for running the suite or reviewing what was written (that is /review-change), and never for more than one task.
+---
+
+You carry one planned task from the plan into written source and the tests that prove it, and
+you stop. One invocation, one task: two tasks in one invocation is two deliveries nobody can
+review apart.
+
+## Required inputs
+
+A missing input is a stop, not a default:
+
+1. **the task** — which one, by identifier. Named by the human, or named in a request that
+   names exactly one; a request that names none, or several, is a stop, and the answer is to
+   ask which. Choosing for the human is choosing what gets built.
+2. **the work root** — the plan holding the task. Named by the human; inferred rather than
+   named, its absence is a stop.
+3. **the knowledge root** — the base the plan binds to, required exactly as the plan validator
+   requires it: while the plan is live, and ignored once it is closed.
+4. **the target source root** — where the code lives or will live. An empty tree is an answer;
+   which tree it is, the human says.
+5. **the delivery root** — the directory the records are written into, under git, beside neither
+   of the other two roots. Named by the human and absent, it is created empty; inferred rather
+   than named, its absence is a stop. Records are not written into the work root: a plan that
+   held what was delivered would be recording progress, and that is the orchestrator's state
+   file this framework refuses to have.
+
+## Before anything: the plan
+
+Nothing is written over a plan that does not hold together. Run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <knowledge-root>
+```
+
+Anything but a clean pass is a stop: report the output verbatim and go no further. A plan with
+problems is fixed through `/plan-work`; a stale index is rederived by whoever owns the plan.
+Neither repair is this invocation's to make — delivering never writes into the work root, and
+never into the knowledge root either.
+
+The pin every record carries is the SHA-256 of the plan's `plan.json` as just checked:
+`sha256:<hexdigest>`, computable as `sha256sum <work-root>/plan.json`. Compute it once, after
+the check passes, and stamp it on every record this invocation writes.
+
+## Before anything: the tree
+
+The review is `git diff`, and a diff only says what this invocation did when the tree starts
+clean. Before any write, `git status --porcelain` must print nothing over the delivery root and
+nothing over the target source root. Output is a stop: report what is pending and go no further
+— committing, discarding or overriding is the human's decision, never this skill's. A root not
+under git control is the same stop: without git there is no review, and source is the one thing
+here nobody can review any other way.
+
+## Read the contract
+
+Read `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`. It is the single home of what a
+delivery node may and must declare — the kinds, the fields each kind requires, and one example
+per kind inside that kind's branch. Do not work from memory of it, and do not restate it: what
+you remember is not what the validator will apply.
+
+`${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
+the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
+install, the `.claude/` directory this skill's tree sits under. Every path below resolves the
+same way.
+
+## This invocation runs nothing
+
+No build, no suite, no command of the target project's. Running is a script's work —
+`${CLAUDE_PLUGIN_ROOT}/bin/run.py` — and it is invoked from `/review-change`, over a change
+somebody else wrote. Whoever writes the source must not also be the one who witnesses whether
+it passed: a session that could run the suite it just wrote would iterate quietly until the
+suite went green, and what failed on the way would exist nowhere. What this invocation produces
+is source, tests, and the record of both. What they are worth is decided elsewhere.
+
+## The order
+
+```
+situate → implement → prove → validate → report → stop
+```
+
+Two of these steps are another judge's. Writing the source and writing what proves it are
+delegated to the subagents this framework ships, each in a clean context, and the judgment of
+each step lives in the agent's file — not here, and not in your memory of it. Delegating means
+spawning the named subagent — in a plugin install the name may be plugin-scoped — and reading
+the agent's file yourself is the fallback, never the delegation. The separation between the two
+is the point of the arrangement: an implementation and its tests written in one pass agree by
+construction, including where both are wrong. Only where the session cannot spawn subagents,
+read the agent's file under the plugin root's `agents/` directory and apply its discipline in
+place — the file stays the single home of that judgment — and the report must say which steps
+ran inline.
+
+### 1. Situate
+
+One command answers where the task stands, and it validates the delivery on the way:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <knowledge-root>
+```
+
+On an empty delivery root it reports every task without a record; on a populated one it also
+reports, per task, what the base leaves unresolved and which dependencies have no record yet.
+Anything but a clean run is a stop, reported verbatim: a delivery that does not hold together is
+not added to.
+
+Three of its lines are refusals, and each is settled before anything is written:
+
+- **The task carries unresolved entries.** Stop. An unresolved entry is a fact the base does not
+  hold that bears on the objective or a criterion, and there is no honest way to write source
+  over one — what gets written reads exactly like a decision the business made, in the one place
+  nobody will look for a decision. Report the entries; the answer is produced in the base,
+  through `/analyse-domain`, and the task is re-bound through `/plan-work` afterwards. The
+  validator refuses such a record too, but by then the source exists; the point of stopping here
+  is that it does not.
+- **A task this one builds on has no record.** Stop, and name it. A dependency is what has to be
+  delivered first — that is what the plan meant by declaring it — and the records are how that is
+  known, because no status field exists to ask.
+- **This task already has a record.** Not a stop: it is a re-delivery, and the report says so.
+  The record is rewritten whole rather than amended, because a record amended across two acts of
+  writing describes neither, and `git diff` over it is then the history of the delivery.
+
+Then read the task file itself, and the plan's inventory nodes — the conventions the existing
+code follows, and what this work must reuse rather than rewrite. Read the epic only for what it
+covers. Read no other task: this invocation delivers one.
+
+### 2. Implement
+
+Spawn a `task-implementer` subagent — its judgment lives at
+`${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
+the knowledge root, the target source root, the paths of the plan's inventory nodes, and the
+delivery-node contract's path. It reads the task and the nodes it binds, writes the source, and
+returns the record: every path it created or modified and what each now does, every criterion of
+the task answered, every bound node accounted for, and what it inferred, departed from,
+preserved and deferred.
+
+Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
+the path is the identity and nothing else names which task a record answers — from what the agent
+returned plus the pin stamped on `plan`. The body is exactly two headings, in order:
+`## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
+literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
+as in its field — the diff is the review, and what only the conversation held the reviewer never
+sees.
+
+Check the file on its own as soon as it is composed, so a composition error is caught at the file
+that made it:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <knowledge-root>
+```
+
+Where the agent stopped instead of writing — an input absent, a bound node missing, the base
+silent on a fact the work needs — that is a successful stop and not a failure of this invocation:
+report what it said and write no record. Where it wrote files and then stopped, the run failed:
+say which files exist, and leave them for a person to look at rather than tidying them away.
+
+### 3. Prove
+
+Spawn a `test-author` subagent — its judgment lives at
+`${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
+implementation record's path, the target source root, and the delivery-node contract's path.
+Where the task's criteria name a failure that must stop happening, pass the reproduction too;
+without it the tests prove the fix rather than the defect, and afterwards nobody can tell the
+difference.
+
+It writes the tests and returns what each proves, what would make each fail, which edge cases it
+dismissed and why, what stays unproven, and where it disagrees with the implementation. Write
+`proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way.
+
+A disagreement the author recorded is not settled here. It stays recorded: this invocation holds
+two producers precisely so that one cannot overrule the other, and resolving it now would discard
+the signal.
+
+### 4. Validate, and derive the delivery
+
+When both records are written, run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <knowledge-root>
+```
+
+This validates every delivery node against the contract, runs the checks that need the plan — the
+task exists, a proof sits beside an implementation, every criterion of the task is answered
+exactly once and nothing else is, every base node the task binds is accounted for, no task the
+base leaves unresolved is delivered, no task is delivered before what it builds on, and every pin
+matches the plan as it stands — and derives `delivery.json`. **Never write or edit
+`delivery.json` yourself.** Report the command's output verbatim. If it exits non-zero, the run
+failed — fix and rerun, and never describe the delivery as sound while it is not.
+
+**Fixing means form, never knowledge.** A wrong shape — a malformed pin, a criterion paraphrased
+instead of quoted, a missing entry for a bound node — is yours to correct. A criterion the source
+does not satisfy is recorded as unmet, not talked into met. A fact the base does not hold is not
+supplied to make a check pass: it is a stop, and it was one before the source was written.
+
+### 5. Report, and stop
+
+Report, in this order:
+
+- the two nodes written, by identifier, and whether this was a re-delivery;
+- every path the delivery created or modified — this is the file set `/review-change` needs, and
+  the one thing it must never discover for itself;
+- every criterion recorded unmet, with what the record says about it;
+- every inference recorded, and every departure — these are the decisions nobody asked for, and
+  they are what a reviewer reads first;
+- everything the proof left unproven, every edge case it dismissed, and every disagreement it
+  recorded;
+- what the implementation deferred, and what it says must keep working;
+- which steps, if any, ran inline instead of in a subagent, and why;
+- the validator's final output, verbatim;
+- that nothing was run, and that `/review-change` is what runs the suite and judges the change.
+
+Then stop. `git diff` over the target source root and the delivery root is the review, and it
+belongs to a person.
+
+## What you never do
+
+- Write or edit `delivery.json` by hand.
+- Take a second task, or widen the one you were given — code that should change and that this
+  task does not reach is deferred in the record, never changed.
+- Write source over a task the base leaves unresolved, or supply the fact yourself. A fact is
+  produced in the base, through `/analyse-domain`, never in code, a comment, a test or a record.
+- Record a status, a readiness, an approval or a progress figure — those fields do not exist, and
+  prose does not get to hold what the contract refused.
+- Judge whether the work is correct, done well enough, or fit to merge. Nothing here carries a
+  ready flag: a producer that certified its own output would be the validator of its own work.
+- Run a build, a suite, a linter or any command of the target project's — see "This invocation
+  runs nothing".
+- Write into the work root or the knowledge root; a plan or a base that is wrong is reported with
+  its fix.
+- Write the tests in the context that wrote the source — the inline fallback is for a session that
+  cannot spawn subagents, is declared in the report, and still applies each agent's file.
+- Settle a disagreement the proof recorded, or delete an inference to make a record read cleanly.
+- Commit, stash, branch, or otherwise change the consumer's git state — a dirty tree is reported,
+  and what to do with it is the human's call.
+- Restate the contract's vocabularies from memory instead of reading the schema.

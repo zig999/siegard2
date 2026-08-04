@@ -1,0 +1,682 @@
+#!/usr/bin/env python3
+"""Derive the delivery graph from the markdown delivery nodes, and refuse what breaks it.
+
+The path is the identity. `implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` sit at
+the path of the task they answer — `task/<epic>/<slug>` — and `review/<slug>.md` names one
+review. No node carries an id, a type or a task field, so none of the three can disagree with
+where the file sits, and the task a record answers is not something anybody types.
+
+**The schema decides one file; this script decides what needs two — and what needs the plan.**
+Per-node validation is `schemas/delivery-node.json` applied as written, plus the contradictions
+one file can hold: a finding attributed to a pass that did not run, a `cause` on a pass that is
+not the failures pass or missing from one that is, and a coverage or run reference that
+disagrees with whether its pass ran. On top of that run the checks no per-file schema can
+express: the task exists, a proof sits beside an implementation, every criterion of the task is
+answered exactly once and nothing else is, every base node the task binds is answered, the
+plan pin matches the plan as it stands, a task the plan leaves unresolved has no record at all,
+and no task is delivered before the tasks it declares it builds on. `run/` under the delivery
+root holds what the commands printed: kept for a review to point at, never validated as a node.
+
+**The plan is read through plan.py's own pipeline, never through its plan.json** — an index this
+script did not just derive could be stale, and a delivery validated against a stale index reports
+a soundness nobody has. A plan that does not hold together is a refusal to run: fix it with
+plan.py first. The pin each record carries is the SHA-256 of the plan.json text a sound plan
+derives to, so `sha256sum <work-root>/plan.json` computes the same value by hand once the plan
+has been derived.
+
+**There is no status here.** What is delivered is what has a record, and the record's presence
+in git is the whole of that state — this script stores nothing about progress and no node
+carries a field for it. `--outstanding` answers the question a status field would have answered,
+from the tasks that have no record and the dependencies they declare, so the answer is derived
+from the files every time and can never be stale or wrong.
+
+**delivery.json is derived, never edited.** It is refused entirely while the delivery has
+problems: an index over a broken delivery reports a shape nobody decided. `--check` compares and
+never repairs. This script answers pointed questions itself (`--outstanding`) and never reads
+delivery.json to do it: both the index and the report derive from the nodes by the same
+pipeline, so neither can disagree with the other, and neither can be stale.
+
+Declared dependencies: PyYAML, jsonschema.
+
+Usage:  deliver.py <delivery-root> <work-root> [<knowledge-root>]
+                                                        validate everything, then write
+                                                        delivery.json
+        deliver.py --check <delivery-root> <work-root> [<knowledge-root>]
+                                                        validate and compare; write nothing
+        deliver.py --outstanding <delivery-root> <work-root> [<knowledge-root>]
+                                                        validate, then print every task with no
+                                                        record and what it waits on; write
+                                                        nothing
+        deliver.py --node <file> <delivery-root> <work-root> [<knowledge-root>]
+                                                        validate one file (cross-node checks and
+                                                        plan checks do not run)
+        The knowledge root is required while the plan is live, and ignored once closure.md
+        marks it closed — the same rule plan.py applies, because the plan is read through it.
+Exit:   0 sound (and, with --check, current)
+        1 problems, or --check and delivery.json is stale
+        2 cannot run (including a plan that does not hold together)
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+CANNOT_RUN = 2
+
+try:
+    import yaml
+    from jsonschema import Draft202012Validator
+except ImportError:  # pragma: no cover - exercised by the environment, not the suite
+    print("cannot run: PyYAML and jsonschema are required (pip install pyyaml jsonschema)",
+          file=sys.stderr)
+    raise SystemExit(CANNOT_RUN)
+
+import plan
+
+PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+DELIVERY_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery-node.json"
+DELIVERY_GRAPH_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery.json"
+DELIVERY_FILE = "delivery.json"
+RUN_DIR = "run"
+
+KINDS = ("implementation", "proof", "review")
+PAIRED = ("implementation", "proof")
+HEADINGS = ["## What it is", "## Notes"]
+
+SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
+
+
+def id_of(relative: Path) -> str | None:
+    """The identifier this path computes to, or None where it computes to nothing."""
+    if relative.suffix != ".md":
+        return None
+    parts = relative.with_suffix("").parts
+    if len(parts) == 3 and parts[0] in PAIRED:
+        pass
+    elif len(parts) == 2 and parts[0] == "review":
+        pass
+    else:
+        return None
+    if not all(SLUG.match(p) for p in parts[1:]):
+        return None
+    return "/".join(parts)
+
+
+def task_of(nid: str) -> str | None:
+    """The task a paired record answers, read from its path — never from a field."""
+    parts = nid.split("/")
+    return f"task/{parts[1]}/{parts[2]}" if parts[0] in PAIRED else None
+
+
+def contract() -> tuple[Draft202012Validator, dict[str, set[str]]]:
+    """The delivery-node validator, and the per-kind field table read out of the contract rather
+    than restated here."""
+    if not DELIVERY_CONTRACT.is_file():
+        raise FileNotFoundError(
+            f"{DELIVERY_CONTRACT} is missing; nothing can be validated without it")
+    schema = json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8"))
+    allowed: dict[str, set[str]] = {}
+    for branch in schema.get("allOf", []):
+        kind = branch["if"]["properties"]["kind"]["const"]
+        allowed[kind] = set(branch["then"]["propertyNames"]["enum"])
+    return Draft202012Validator(schema), allowed
+
+
+def pass_names() -> list[str]:
+    """The passes a review answers for, read out of the contract rather than restated here."""
+    schema = json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8"))
+    return list(schema["$defs"]["passName"]["enum"])
+
+
+def listed(front: dict, field: str) -> list:
+    """A list field read defensively: anything but a list reads as empty, because the schema
+    already reported the shape and iterating a string would report its characters."""
+    value = front.get(field)
+    return value if isinstance(value, list) else []
+
+
+def texts(entries: list, field: str) -> list[str]:
+    """The string values one field carries across a list of mappings, read defensively."""
+    return [e[field] for e in entries
+            if isinstance(e, dict) and isinstance(e.get(field), str)]
+
+
+def ran_passes(front: dict, names: list[str]) -> set[str]:
+    """The passes a review recorded as having run: an entry naming no missing input."""
+    return {e["pass"] for e in listed(front, "passes")
+            if isinstance(e, dict) and e.get("pass") in names and "missing" not in e}
+
+
+def review_problems(front: dict, names: list[str]) -> list[str]:
+    """One review against itself: the passes are total, and every field that depends on a pass
+    having run agrees with whether it ran. A review reported as clean over a pass that never ran
+    is the failure these checks refuse."""
+    problems: list[str] = []
+    entries = [e for e in listed(front, "passes") if isinstance(e, dict)]
+    declared = [e["pass"] for e in entries if isinstance(e.get("pass"), str)]
+    for name in names:
+        if declared.count(name) == 0:
+            problems.append(f"passes names no entry for `{name}`; every pass is answered for, "
+                            f"and one that did not run says which input was missing")
+        elif declared.count(name) > 1:
+            problems.append(f"passes names `{name}` {declared.count(name)} times; "
+                            f"a review records one answer per pass")
+
+    ran = ran_passes(front, names)
+    for index, finding in enumerate(listed(front, "findings")):
+        if not isinstance(finding, dict) or not isinstance(finding.get("pass"), str):
+            continue  # the schema already reported the shape
+        name = finding["pass"]
+        if name in names and name not in ran:
+            problems.append(f"findings[{index}] is attributed to `{name}`, which did not run; "
+                            f"a pass that did not run found nothing")
+        if name == "failures" and "cause" not in finding:
+            problems.append(f"findings[{index}] belongs to the failures pass and states no "
+                            f"`cause`; a failure with no cause named is a failure nobody read")
+        if name != "failures" and "cause" in finding:
+            problems.append(f"findings[{index}] states a `cause` outside the failures pass; "
+                            f"cause explains why a captured run failed and nothing else")
+
+    for field, name, want in (("coverage", "coverage", "the criteria it paired with tests"),
+                              ("run", "failures", "the captured run it read"),
+                              ("failures_counted", "failures",
+                               "how many failures the run reported")):
+        if field in front and name not in ran:
+            problems.append(f"`{field}` is present and the {name} pass did not run; "
+                            f"a pass that did not run holds {want} over nothing")
+        if field not in front and name in ran:
+            problems.append(f"the {name} pass ran and `{field}` is absent; a pass that ran "
+                            f"records {want}")
+
+    counted = front.get("failures_counted")
+    if isinstance(counted, int) and not isinstance(counted, bool):
+        recorded = sum(1 for f in listed(front, "findings")
+                       if isinstance(f, dict) and f.get("pass") == "failures")
+        if counted != recorded:
+            problems.append(f"failures_counted is {counted} and the failures pass recorded "
+                            f"{recorded} finding(s); the two disagreeing is how a failure goes "
+                            f"unexamined while the record still looks complete")
+    return problems
+
+
+def node_problems(front, kind: str, validator, allowed, names: list[str]) -> list[str]:
+    """Everything wrong with one delivery node on its own: the schema, applied as written, plus
+    the contradictions a single file can hold."""
+    if not isinstance(front, dict):
+        return [f"frontmatter is a {type(front).__name__}, not a mapping"]
+    if any(not isinstance(key, str) for key in front):
+        return ["frontmatter carries a non-string key"]
+
+    problems: list[str] = []
+    data = {**front, "kind": kind}
+    for error in validator.iter_errors(data):
+        where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
+        problems.append(f"{where}: {error.message}")
+
+    for field, quoted in (("criteria", "criterion"), ("coverage", "criterion"),
+                          ("nodes", "node")):
+        seen = texts(listed(front, field), quoted)
+        for value in sorted({v for v in seen if seen.count(v) > 1}):
+            problems.append(f"{field} answers for `{value}` {seen.count(value)} times; "
+                            f"a record answers each of them once")
+
+    if kind == "review":
+        problems.extend(review_problems(front, names))
+    return problems
+
+
+def body_problems(body: str) -> list[str]:
+    headings = [line.rstrip() for line in body.splitlines() if line.startswith("## ")]
+    if headings != HEADINGS:
+        return [f"body headings are {headings if headings else 'absent'}; "
+                f"every delivery node carries exactly {HEADINGS}"]
+    return []
+
+
+def references(nid: str, front: dict, kind: str) -> list[tuple[str, str, str]]:
+    """Every reference this node declares: (target, edge kind, locator). `implements` and
+    `reviews` point at tasks of the plan, `proves` at the implementation this proof sits beside,
+    and `encodes` at the base nodes the source now holds a fact of. Read defensively, because
+    this also runs over nodes the schema has already reported."""
+    refs: list[tuple[str, str, str]] = []
+    if kind == "implementation":
+        refs.append((task_of(nid), "implements", "the path"))
+        for index, entry in enumerate(listed(front, "nodes")):
+            if isinstance(entry, dict) and isinstance(entry.get("node"), str) \
+                    and entry.get("encoded_at"):
+                refs.append((entry["node"], "encodes", f"nodes[{index}]"))
+    if kind == "proof":
+        refs.append((f"implementation/{nid.split('/', 1)[1]}", "proves", "the path"))
+    if kind == "review":
+        for index, target in enumerate(listed(front, "tasks")):
+            if isinstance(target, str):
+                refs.append((target, "reviews", f"tasks[{index}]"))
+    return refs
+
+
+def implementation_problems(nid: str, front: dict, task: dict, pin: str,
+                            delivered: set[str]) -> list[str]:
+    """One implementation against the task it answers: the plan's own triage decides whether the
+    task could be implemented at all, the criteria and the binding are each answered in full,
+    the dependencies it declares are delivered first, and the pin matches the plan as it
+    stands."""
+    problems: list[str] = []
+    tfront = task["front"]
+
+    open_entries = listed(tfront, "unresolved")
+    if open_entries:
+        problems.append(
+            f"{nid}: {task_of(nid)} carries {len(open_entries)} unresolved entry(ies), and this "
+            f"record delivers it anyway; an unresolved entry is a fact the base does not hold "
+            f"that bears on the objective or a criterion, so implementing over it writes an "
+            f"invention where nobody will look for a decision — settle it through "
+            f"/analyse-domain and re-plan the task")
+
+    stated = [c for c in listed(tfront, "criteria") if isinstance(c, str)]
+    answered = texts(listed(front, "criteria"), "criterion")
+    for criterion in stated:
+        if criterion not in answered:
+            problems.append(f"{nid}: the task states the criterion `{criterion}`, and this "
+                            f"record answers for no such criterion; a record answering only "
+                            f"some of them cannot be read as complete")
+    for criterion in answered:
+        if criterion not in stated:
+            problems.append(f"{nid}: criteria answers for `{criterion}`, which the task does "
+                            f"not state; the criterion is quoted as the task states it, or it "
+                            f"is a criterion nobody wrote")
+
+    bound = [n for n in listed(tfront, "nodes") if isinstance(n, str)]
+    accounted = texts(listed(front, "nodes"), "node")
+    for node_ref in bound:
+        if node_ref not in accounted:
+            problems.append(f"{nid}: the task binds {node_ref}, and this record does not say "
+                            f"how the source answers to it; a bound node passed over in "
+                            f"silence is the base going unanswered in code")
+    for node_ref in accounted:
+        if node_ref not in bound:
+            problems.append(f"{nid}: nodes answers for {node_ref}, which the task does not "
+                            f"bind; a record reaches exactly what the plan bound, and more is "
+                            f"work the plan does not declare")
+
+    for index, target in enumerate(listed(tfront, "depends_on")):
+        if isinstance(target, str) and target not in delivered:
+            problems.append(f"{nid}: the task declares it builds on {target}, which no "
+                            f"implementation record answers; the dependency is what has to be "
+                            f"delivered first, and the records are how that is known")
+
+    declared = front.get("plan")
+    if isinstance(declared, str) and declared != pin:
+        problems.append(f"{nid}: plan pin {declared} is not the plan as it stands ({pin}); the "
+                        f"record answers a task that has since changed — deliver it again "
+                        f"against the plan as it now stands, or restate the pin deliberately")
+    return problems
+
+
+def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict], pin: str,
+                         delivered: set[str], names: list[str], root: Path) -> list[str]:
+    """One review against the plan and the delivery: the tasks it names are delivered tasks, the
+    coverage pass answers for every criterion of them, and the run it read exists."""
+    problems: list[str] = []
+    tasks = [t for t in listed(front, "tasks") if isinstance(t, str)]
+
+    for index, target in enumerate(tasks):
+        if target not in plan_nodes or plan_nodes[target]["kind"] != "task":
+            problems.append(f"{nid}: tasks[{index}] names {target}, which the plan does not "
+                            f"hold as a task")
+        elif target not in delivered:
+            problems.append(f"{nid}: tasks[{index}] names {target}, which no implementation "
+                            f"record answers; a review of a task nothing delivered has no "
+                            f"subject")
+
+    if tasks and "plan" not in front:
+        problems.append(f"{nid}: names tasks and carries no plan pin; a review that read the "
+                        f"criteria of a task read a plan, and says which one")
+    declared = front.get("plan")
+    if isinstance(declared, str) and declared != pin:
+        problems.append(f"{nid}: plan pin {declared} is not the plan as it stands ({pin}); the "
+                        f"review read criteria that have since changed")
+
+    if "coverage" in ran_passes(front, names) and tasks:
+        stated = [c for target in tasks if target in plan_nodes
+                  for c in listed(plan_nodes[target]["front"], "criteria")
+                  if isinstance(c, str)]
+        audited = texts(listed(front, "coverage"), "criterion")
+        for criterion in stated:
+            if criterion not in audited:
+                problems.append(f"{nid}: the review names a task stating the criterion "
+                                f"`{criterion}`, and coverage answers for no such criterion; "
+                                f"an omitted criterion reads as one that passed")
+        for criterion in audited:
+            if criterion not in stated:
+                problems.append(f"{nid}: coverage answers for `{criterion}`, which no task "
+                                f"this review names states; the criterion is quoted as the "
+                                f"task states it")
+
+    where = front.get("run")
+    if isinstance(where, str) and not (root / where).is_dir():
+        problems.append(f"{nid}: run names {where}, which the delivery root does not hold; "
+                        f"the captured run is the evidence a diagnosis was read from")
+    return problems
+
+
+def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], pin: str,
+                   names: list[str], root: Path) -> list[str]:
+    """The rules that need to see more than one node at once — or the plan."""
+    problems: list[str] = []
+    delivered = {task_of(nid) for nid, node in nodes.items()
+                 if node["kind"] == "implementation"}
+
+    for nid in sorted(nodes):
+        node, front = nodes[nid], nodes[nid]["front"]
+        task = task_of(nid)
+        if task is not None:
+            if task not in plan_nodes or plan_nodes[task]["kind"] != "task":
+                problems.append(f"{nid}: answers {task}, which the plan does not hold as a "
+                                f"task; the path is the identity and this one names nothing")
+                continue
+            if node["kind"] == "implementation":
+                problems.extend(implementation_problems(nid, front, plan_nodes[task], pin,
+                                                        delivered))
+            else:
+                pair = f"implementation/{nid.split('/', 1)[1]}"
+                if pair not in nodes:
+                    problems.append(f"{nid}: proves a task with no implementation record at "
+                                    f"{pair}; what a proof holds up has to exist first")
+        if node["kind"] == "review":
+            problems.extend(review_plan_problems(nid, front, plan_nodes, pin, delivered,
+                                                 names, root))
+    return problems
+
+
+def collect(root: Path, validator, allowed, names: list[str]) -> tuple[dict[str, dict],
+                                                                      list[str]]:
+    """Every node in the delivery, and everything wrong with the files as files."""
+    nodes: dict[str, dict] = {}
+    problems: list[str] = []
+    for path in sorted(root.rglob("*.md")):
+        relative = path.relative_to(root)
+        if relative.parts[0] == RUN_DIR:
+            continue  # what the commands printed: kept for a review to point at, never a node
+        nid = id_of(relative)
+        if nid is None:
+            problems.append(f"{relative.as_posix()}: not implementation/<epic>/<slug>.md, "
+                            f"proof/<epic>/<slug>.md or review/<slug>.md; the path is the "
+                            f"identity and this one computes to none")
+            continue
+        text = path.read_text(encoding="utf-8")
+        match = FENCE.match(text)
+        if not match:
+            problems.append(f"{nid}: carries no frontmatter fence")
+            continue
+        try:
+            front = yaml.safe_load(match.group(1)) or {}
+        except yaml.YAMLError as broken:
+            problems.append(f"{nid}: frontmatter does not parse: {broken}")
+            continue
+        kind = relative.parts[0]
+        problems += [f"{nid}: {p}"
+                     for p in node_problems(front, kind, validator, allowed, names)]
+        problems += [f"{nid}: {p}" for p in body_problems(text[match.end():])]
+        if isinstance(front, dict):
+            nodes[nid] = {"front": front, "kind": kind}
+    return nodes, problems
+
+
+def load_plan(work: Path, knowledge: Path | None) -> tuple[dict[str, dict], list[str]]:
+    """The plan, read through plan.py's own pipeline — never through a plan.json that could be
+    stale. A closed plan is read the way plan.py reads it: without opening today's base."""
+    validator, allowed = plan.contract()
+    if (work / plan.CLOSURE_FILE).is_file():
+        base_nodes, pin = None, None
+    else:
+        base_nodes, base_problems = plan.load_base(knowledge)
+        if base_problems:
+            return {}, base_problems
+        pin = plan.base_pin(base_nodes)
+    nodes, problems = plan.collect(work, validator, allowed)
+    problems += plan.cross_problems(nodes, base_nodes, pin)
+    return nodes, sorted(set(problems))
+
+
+def plan_pin(plan_nodes: dict[str, dict]) -> str:
+    """The pin of the plan as it stands: the SHA-256 of the plan.json text the plan derives to,
+    so `sha256sum <work-root>/plan.json` computes the same value by hand once plan.py has
+    written it."""
+    text = json.dumps(plan.derive(plan_nodes), indent=2, ensure_ascii=False) + "\n"
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def derive(nodes: dict[str, dict], names: list[str]) -> dict:
+    """The delivery graph a sound delivery derives to. Sorted throughout, so identical input is
+    byte-identical output."""
+    out_nodes, out_edges = [], []
+    for nid in sorted(nodes):
+        node, front = nodes[nid], nodes[nid]["front"]
+        entry = {
+            "id": nid,
+            "kind": node["kind"],
+            "file": f"{nid}.md",
+            "title": front.get("title", ""),
+            "summary": front.get("summary", ""),
+        }
+        task = task_of(nid)
+        if task is not None:
+            entry["task"] = task
+        if isinstance(front.get("plan"), str):
+            entry["plan"] = front["plan"]
+        if node["kind"] == "implementation":
+            unmet = sorted(e["criterion"] for e in listed(front, "criteria")
+                           if isinstance(e, dict) and e.get("met") is False
+                           and isinstance(e.get("criterion"), str))
+            if unmet:
+                entry["unmet"] = unmet
+        if node["kind"] == "review":
+            ran = sorted(ran_passes(front, names), key=names.index)
+            if ran:
+                entry["ran"] = ran
+            unproven = sorted(e["criterion"] for e in listed(front, "coverage")
+                              if isinstance(e, dict) and e.get("state") != "covered"
+                              and isinstance(e.get("criterion"), str))
+            if unproven:
+                entry["unproven"] = unproven
+            findings = len(listed(front, "findings"))
+            if findings:
+                entry["findings"] = findings
+        out_nodes.append(entry)
+        for target, edge_kind, at in references(nid, front, node["kind"]):
+            out_edges.append({"from": nid, "to": target, "kind": edge_kind, "at": at})
+    out_edges.sort(key=lambda e: (e["from"], e["kind"], e["at"], e["to"]))
+    return {"contract_version": "siegard-delivery/1", "nodes": out_nodes, "edges": out_edges}
+
+
+def check_single(root: Path, named: str, validator, allowed, names: list[str]) -> int:
+    path = Path(named)
+    if not path.is_absolute():
+        path = (root / named) if (root / named).is_file() else Path.cwd() / named
+    try:
+        relative = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        print(f"cannot run: {named} is not under {root}", file=sys.stderr)
+        return CANNOT_RUN
+    if relative.parts[0] == RUN_DIR:
+        print(f"{relative.as_posix()}: sits under run/, which holds what the commands printed "
+              f"and is never validated")
+        return 0
+    nid = id_of(relative)
+    if nid is None:
+        print(f"{relative.as_posix()}: the path computes to no identifier")
+        return 1
+    if not path.is_file():
+        print(f"cannot run: {path} does not exist", file=sys.stderr)
+        return CANNOT_RUN
+    text = path.read_text(encoding="utf-8")
+    match = FENCE.match(text)
+    if not match:
+        print(f"{nid}: carries no frontmatter fence")
+        return 1
+    try:
+        front = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as broken:
+        print(f"{nid}: frontmatter does not parse: {broken}")
+        return 1
+    problems = node_problems(front, relative.parts[0], validator, allowed, names)
+    problems += body_problems(text[match.end():])
+    for problem in problems:
+        print(f"{nid}: {problem}")
+    if problems:
+        return 1
+    print(f"{nid}: sound on its own. Cross-node checks and plan checks did not run; "
+          f"they run on the whole delivery.")
+    return 0
+
+
+def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict]) -> str:
+    """What the plan still holds and the delivery does not — derived from the records every
+    time, which is why no field records it. A task waits on the dependencies it declares and
+    on the entries the base leaves unresolved; both are facts of the plan, read here rather
+    than tracked."""
+    delivered = {task_of(nid) for nid, node in nodes.items()
+                 if node["kind"] == "implementation"}
+    proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"}
+    lines = []
+    for tid in sorted(plan_nodes):
+        if plan_nodes[tid]["kind"] != "task":
+            continue
+        front = plan_nodes[tid]["front"]
+        if tid in delivered:
+            if tid not in proven:
+                lines.append(f"{tid}: implemented, and no proof record holds it up")
+            continue
+        waits = [t for t in listed(front, "depends_on")
+                 if isinstance(t, str) and t not in delivered]
+        open_entries = len(listed(front, "unresolved"))
+        said = [f"no record"]
+        if open_entries:
+            said.append(f"{open_entries} unresolved entry(ies), which /analyse-domain settles")
+        if waits:
+            said.append(f"waits on {', '.join(sorted(waits))}")
+        lines.append(f"{tid}: {'; '.join(said)}")
+    return "\n".join(lines) if lines else "every task has a record, and every record its proof"
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    verify = "--check" in args
+    args = [a for a in args if a != "--check"]
+    report = "--outstanding" in args
+    args = [a for a in args if a != "--outstanding"]
+    single = None
+    if "--node" in args:
+        at = args.index("--node")
+        if at + 1 >= len(args):
+            print("cannot run: --node takes a file", file=sys.stderr)
+            return CANNOT_RUN
+        single = args[at + 1]
+        del args[at:at + 2]
+    if report and (verify or single is not None):
+        print("cannot run: --outstanding stands alone", file=sys.stderr)
+        return CANNOT_RUN
+    if len(args) not in (2, 3) or any(a.startswith("--") for a in args):
+        print("cannot run: expected [--check | --outstanding | --node <file>] "
+              "<delivery-root> <work-root> [<knowledge-root>]", file=sys.stderr)
+        return CANNOT_RUN
+
+    root = Path(args[0])
+    if not root.is_dir():
+        print(f"cannot run: delivery root {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    work = Path(args[1])
+    if not work.is_dir():
+        print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    closed = (work / plan.CLOSURE_FILE).is_file()
+    knowledge = Path(args[2]) if len(args) == 3 else None
+    if not closed:
+        if knowledge is None:
+            print("cannot run: a live plan validates against its base, and this validates "
+                  "against the plan; name the knowledge root", file=sys.stderr)
+            return CANNOT_RUN
+        if not knowledge.is_dir():
+            print(f"cannot run: knowledge root {knowledge} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+
+    try:
+        validator, allowed = contract()
+        names = pass_names()
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+
+    if single is not None:
+        return check_single(root, single, validator, allowed, names)
+
+    plan_nodes, plan_problems = load_plan(work, knowledge)
+    if plan_problems:
+        for problem in plan_problems:
+            print(problem, file=sys.stderr)
+        print(f"cannot run: the plan at {work} does not hold together "
+              f"({len(plan_problems)} problem(s) above); fix it with plan.py before "
+              f"delivering against it", file=sys.stderr)
+        return CANNOT_RUN
+    pin = plan_pin(plan_nodes)
+
+    nodes, problems = collect(root, validator, allowed, names)
+    problems += cross_problems(nodes, plan_nodes, pin, names, root)
+    if problems:
+        for problem in sorted(set(problems)):
+            print(problem)
+        refused = "the outstanding report" if report else DELIVERY_FILE
+        print(f"\n{len(set(problems))} problem(s) over {len(nodes)} node(s). "
+              f"{refused} is not derived over a delivery that does not hold together.")
+        return 1
+
+    if report:
+        print(outstanding_report(nodes, plan_nodes))
+        return 0
+
+    delivery = derive(nodes, names)
+    graph_contract = json.loads(DELIVERY_GRAPH_CONTRACT.read_text(encoding="utf-8"))
+    broken = sorted(Draft202012Validator(graph_contract).iter_errors(delivery), key=str)
+    if broken:  # a derivation this script produced and cannot ship is a defect in this script
+        print(f"cannot run: the derived delivery does not satisfy "
+              f"{DELIVERY_GRAPH_CONTRACT.name}: {broken[0].message}", file=sys.stderr)
+        return CANNOT_RUN
+    text = json.dumps(delivery, indent=2, ensure_ascii=False) + "\n"
+    target = root / DELIVERY_FILE
+
+    if verify:
+        if not target.is_file():
+            print(f"STALE: {target} does not exist; the delivery has never been derived")
+            return 1
+        if target.read_text(encoding="utf-8") != text:
+            print(f"STALE: {target} is not what the nodes derive to. Run without --check to "
+                  f"rewrite it; do not edit it, because every fact in it lives in a node file")
+            return 1
+        print(f"delivery checked: {target} matches {len(delivery['nodes'])} node(s)")
+        return 0
+
+    target.write_text(text, encoding="utf-8")
+    by_kind = [f"{count} {kind}" for kind in KINDS
+               if (count := sum(1 for n in nodes.values() if n["kind"] == kind))]
+    tasks = sum(1 for n in plan_nodes.values() if n["kind"] == "task")
+    done = len({task_of(nid) for nid, node in nodes.items()
+                if node["kind"] == "implementation"})
+    unmet = sum(len(n.get("unmet", [])) for n in delivery["nodes"])
+    unproven = sum(len(n.get("unproven", [])) for n in delivery["nodes"])
+    findings = sum(n.get("findings", 0) for n in delivery["nodes"])
+    print(f"derived {target}: {len(delivery['nodes'])} node(s), "
+          f"{len(delivery['edges'])} edge(s), contract siegard-delivery/1")
+    print(f"  {', '.join(by_kind) or 'no nodes'}; {done} of {tasks} task(s) hold a record; "
+          f"{unmet} criterion(s) recorded unmet; {unproven} recorded unproven; "
+          f"{findings} finding(s)"
+          + ("; the plan is closed" if closed else ""))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

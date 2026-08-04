@@ -1,10 +1,13 @@
 """Every skill stays bound to its contract: it cites what exists, and restates nothing.
 
-The third test is the unusual one. Every closed-vocabulary value the paired schema declares
-must be absent from the skill text — a value listed in the prompt is a second home the moment
-the schema changes, and the prompt is the copy nothing validates. Only hyphenated values are
-checked: they are distinctive tokens, where bare words like `core` or `task` occur in ordinary
-prose.
+The last test is the unusual one. Every closed-vocabulary value the shipped node contracts
+declare must be absent from every skill's text — a value listed in a prompt is a second home the
+moment the schema changes, and the prompt is the copy nothing validates. The subject is the union
+of all three node contracts rather than each skill's own, for two reasons: a skill has no more
+business restating another root's vocabulary than its own, and one contract (`delivery-node.json`)
+happens to declare no hyphenated value at all, which would leave a per-skill guard with nothing
+to check. Only hyphenated values are checked: they are distinctive tokens, where bare words like
+`core`, `task` or `covered` occur in ordinary prose.
 """
 from __future__ import annotations
 
@@ -16,6 +19,9 @@ import pytest
 
 REPO = Path(__file__).resolve().parent.parent
 CITATION = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]+)")
+FENCE = re.compile(r"^---\n(.*?)\n---\n", re.S)
+
+NODE_CONTRACTS = ("schemas/node.json", "schemas/plan-node.json", "schemas/delivery-node.json")
 
 SKILLS = {
     "analyse-domain": {"contract": "schemas/node.json", "validator": "bin/graph.py",
@@ -23,6 +29,11 @@ SKILLS = {
     "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
                                 "execution-contract-binder"]},
+    "implement-task": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
+                       "delegates": ["task-implementer", "test-author"]},
+    "review-change": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
+                      "delegates": ["coverage-auditor", "base-conformance-reviewer",
+                                    "failure-diagnostician"]},
 }
 
 
@@ -33,6 +44,20 @@ def case(request) -> dict:
     text = (REPO / "src/claude/skills" / name / "SKILL.md").read_text(encoding="utf-8")
     schema = json.loads((REPO / "src/claude" / pairing["contract"]).read_text(encoding="utf-8"))
     return {"name": name, "text": text, "schema": schema, **pairing}
+
+
+def test_the_frontmatter_parses_and_names_the_skill(case):
+    """A description holding an unquoted `: ` is not a description — it is a mapping the loader
+    refuses, and the skill never loads at all. Cheap to write and cheap to break."""
+    import yaml
+    match = FENCE.match(case["text"])
+    assert match, f"{case['name']} carries no frontmatter fence"
+    front = yaml.safe_load(match.group(1))
+    assert isinstance(front, dict), f"{case['name']}: frontmatter is not a mapping"
+    assert front.get("name") == case["name"], \
+        "a skill whose name is not its directory's breaks path-based traceability"
+    assert isinstance(front.get("description"), str) and front["description"], \
+        f"{case['name']}: the description is the trigger, and it must be a non-empty string"
 
 
 def test_every_cited_path_exists(repo, case):
@@ -69,9 +94,18 @@ def enum_values(node):
             yield from enum_values(value)
 
 
+def shipped_vocabulary() -> list[str]:
+    """Every distinctive value the node contracts declare, across all three roots."""
+    values: set[str] = set()
+    for relative in NODE_CONTRACTS:
+        schema = json.loads((REPO / "src/claude" / relative).read_text(encoding="utf-8"))
+        values |= {v for v in enum_values(schema) if "-" in v}
+    return sorted(values)
+
+
 def test_the_skill_restates_no_vocabulary(case):
-    distinctive = sorted({v for v in enum_values(case["schema"]) if "-" in v})
-    assert distinctive, "the schema declares no hyphenated vocabulary; the guard lost its subject"
+    distinctive = shipped_vocabulary()
+    assert distinctive, "the contracts declare no hyphenated vocabulary; the guard lost its subject"
     restated = [v for v in distinctive if v in case["text"]]
     assert restated == [], \
         f"{case['name']} restates {restated}; a vocabulary listed in a prompt is a second home"

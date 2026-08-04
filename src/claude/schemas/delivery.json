@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/delivery.json",
+  "title": "Siegard delivery graph",
+  "description": "The derived index of a delivery root. Never authored and never edited: `bin/deliver.py` derives it from the markdown delivery nodes, and `--check` holds a committed copy to them. Nodes are the files; edges are the references their frontmatter and their paths declare. `implements` and `reviews` edges point outside the delivery, at tasks of the work root, and `encodes` edges point past that again, at knowledge-base nodes — so a consumer resolving them opens the plan and the base, not this file. What is delivered is what has a node here; nothing records how far the work has got, and `--outstanding` answers that question from the tasks with no record rather than from a field anybody maintains.",
+  "type": "object",
+  "required": ["contract_version", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "const": "siegard-delivery/1" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "file", "title", "summary"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^((implementation|proof)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|review/[a-z0-9]+(-[a-z0-9]+)*)$"
+          },
+          "kind": {
+            "enum": ["implementation", "proof", "review"]
+          },
+          "file": {
+            "type": "string",
+            "pattern": "\\.md$",
+            "description": "The node's file, relative to the delivery root. Always `<id>.md`."
+          },
+          "title": { "type": "string" },
+          "summary": { "type": "string" },
+          "task": {
+            "type": "string",
+            "pattern": "^task/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The task this record answers, read from its path. Implementations and proofs only."
+          },
+          "plan": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "The plan pin the record carries. Implementations, and reviews that name tasks."
+          },
+          "unmet": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "The criteria this implementation records as not met, sorted and quoted as the task states them. Omitted when none. It is what the record answered, never a status: nothing schedules from it, and the judgment behind each stays in the record."
+          },
+          "ran": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "enum": ["coverage", "conformance", "failures"] },
+            "description": "The passes that ran, sorted. Reviews only. A pass absent from this list did not run, and the input it wanted is named in the record."
+          },
+          "unproven": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "The criteria this review's coverage pass found partial, uncovered or unauditable, sorted and quoted. Reviews only, omitted when none. The state of each, and why, stay in the record."
+          },
+          "findings": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many findings the review recorded. Reviews only, omitted when none. A count for a reader scanning the index — never a score, and no threshold reads it: what a finding costs is in the record, and what it means for the change is a person's."
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind", "at"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "string" },
+          "to": {
+            "type": "string",
+            "description": "A task of the work root for `implements` and `reviews`; an implementation of this delivery for `proves`; a knowledge-base node for `encodes`."
+          },
+          "kind": {
+            "enum": ["implements", "proves", "reviews", "encodes"]
+          },
+          "at": {
+            "type": "string",
+            "description": "Where the reference sits — the field that declared it, or the path that did. So a reader can open the place a defect names."
+          }
+        }
+      }
+    }
+  }
+}

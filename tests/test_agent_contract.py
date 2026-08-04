@@ -1,7 +1,14 @@
 """Every distributable agent stays bound to its contracts: the frontmatter satisfies
-`schemas/agent.json`, the grant is the read-only minimum the role defends, and the body
-restates no vocabulary the plan-node contract owns — an enum listed in a prompt is a second
-home the moment the schema changes, and the prompt is the copy nothing validates."""
+`schemas/agent.json`, the grant is the minimum the role defends, and the body restates no
+vocabulary a node contract owns — an enum listed in a prompt is a second home the moment the
+schema changes, and the prompt is the copy nothing validates.
+
+The grant table is the interesting part. Most of these agents return content and write nothing, so
+their grant is read-only. Two of them write — the source, and the tests over it — and their grant
+says so explicitly. **None of them holds Bash**, and that is the structural half of a guarantee no
+prompt can make: an agent that could run a suite would be the only witness to what happened, so
+running lives in `bin/run.py` and nowhere else.
+"""
 from __future__ import annotations
 
 import json
@@ -16,8 +23,22 @@ REPO = Path(__file__).resolve().parent.parent
 AGENTS_DIR = REPO / "src/claude/agents"
 FENCE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.S)
 
-AGENTS = ("backlog-decomposer", "codebase-surveyor", "execution-contract-binder")
-READ_ONLY = {"Read", "Grep", "Glob"}
+READS = {"Read", "Grep", "Glob"}
+WRITES = READS | {"Write", "Edit"}
+
+# Every shipped agent, and the grant its role defends. A grant wider than the role is a finding
+# here, not a preference: the tools are the enforcement, and the prose is only the explanation.
+GRANTS = {
+    "backlog-decomposer": READS,
+    "base-conformance-reviewer": READS,
+    "codebase-surveyor": READS,
+    "coverage-auditor": READS,
+    "execution-contract-binder": READS,
+    "failure-diagnostician": READS,
+    "task-implementer": WRITES,
+    "test-author": WRITES,
+}
+AGENTS = tuple(sorted(GRANTS))
 
 
 @pytest.fixture(scope="module")
@@ -34,6 +55,11 @@ def agent(request) -> dict:
     return {"stem": request.param,
             "front": yaml.safe_load(match.group(1)),
             "body": match.group(2)}
+
+
+def granted(front: dict) -> set[str]:
+    tools = front["tools"]
+    return {t.strip() for t in (tools.split(",") if isinstance(tools, str) else tools)}
 
 
 def test_the_directory_holds_exactly_the_named_agents():
@@ -60,30 +86,35 @@ def test_the_filename_stem_is_the_name(agent):
         "a file whose name is not the agent's name breaks path-based traceability"
 
 
-def test_the_grant_is_the_read_only_minimum(agent):
-    tools = agent["front"]["tools"]
-    granted = {t.strip() for t in (tools.split(",") if isinstance(tools, str) else tools)}
-    assert granted == READ_ONLY, \
-        f"{agent['stem']} grants {sorted(granted)}; these agents return content and write " \
-        f"nothing, so the grant is exactly {sorted(READ_ONLY)}"
+def test_the_grant_is_the_minimum_the_role_defends(agent):
+    assert granted(agent["front"]) == GRANTS[agent["stem"]], \
+        f"{agent['stem']} grants {sorted(granted(agent['front']))}; its role defends exactly " \
+        f"{sorted(GRANTS[agent['stem']])}"
 
 
-def test_the_agent_restates_no_plan_vocabulary(agent):
-    schema = json.loads((REPO / "src/claude/schemas/plan-node.json").read_text(encoding="utf-8"))
+def test_no_agent_can_run_anything(agent):
+    forbidden = granted(agent["front"]) & {"Bash", "BashOutput", "KillShell"}
+    assert forbidden == set(), \
+        f"{agent['stem']} grants {sorted(forbidden)}; nothing that judges a run may perform " \
+        f"one, and nothing that writes source may witness whether it passed — running is " \
+        f"bin/run.py's and nothing else's"
 
-    def enum_values(node):
-        if isinstance(node, dict):
-            for key, value in node.items():
-                if key == "enum" and isinstance(value, list):
-                    yield from (v for v in value if isinstance(v, str))
-                else:
-                    yield from enum_values(value)
-        elif isinstance(node, list):
-            for value in node:
-                yield from enum_values(value)
 
-    distinctive = sorted({v for v in enum_values(schema) if "-" in v})
-    assert distinctive, "the schema declares no hyphenated vocabulary; the guard lost its subject"
+def test_only_the_writers_write(agent):
+    writes = granted(agent["front"]) & {"Write", "Edit"}
+    if agent["stem"] in ("task-implementer", "test-author"):
+        assert writes == {"Write", "Edit"}, \
+            f"{agent['stem']} writes what the delivery is made of and needs both"
+    else:
+        assert writes == set(), \
+            f"{agent['stem']} grants {sorted(writes)}; it returns content and the caller " \
+            f"writes it, so a reviewer cannot edit what it flagged"
+
+
+def test_the_agent_restates_no_node_vocabulary(agent):
+    from test_skill_contract import shipped_vocabulary
+    distinctive = shipped_vocabulary()
+    assert distinctive, "the contracts declare no hyphenated vocabulary; the guard lost its subject"
     text = yaml.safe_dump(agent["front"]) + agent["body"]
     restated = [v for v in distinctive if v in text]
     assert restated == [], \
