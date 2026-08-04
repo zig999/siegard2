@@ -546,13 +546,14 @@ def main() -> int:
                if (count := sum(1 for n in nodes.values() if n["kind"] == kind))]
     tasks = [n for n in nodes.values() if n["kind"] == "task"]
     unresolved = sum(len(triage_of(n["front"], "unresolved")) for n in tasks)
+    unique = len({ref for n in tasks for ref in triage_of(n["front"], "unresolved")})
     questions = sum(1 for n in tasks for e in listed(n["front"], "unresolved")
                     if isinstance(e, dict) and isinstance(e.get("question"), str))
     waived = sum(len(triage_of(n["front"], "waived")) for n in tasks)
     print(f"derived {target}: {len(plan['nodes'])} node(s), {len(plan['edges'])} edge(s), "
           f"contract siegard-plan/1")
-    print(f"  {', '.join(by_kind) or 'no nodes'}; {unresolved} unresolved gap(s); "
-          f"{questions} open question(s); {waived} waived")
+    print(f"  {', '.join(by_kind) or 'no nodes'}; {unresolved} unresolved gap citation(s) "
+          f"({unique} unique); {questions} open question(s); {waived} waived")
     return 0
 
 

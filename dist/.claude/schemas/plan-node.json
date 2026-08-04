@@ -64,7 +64,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/baseNodeRef" },
-      "description": "The base nodes this epic answers for, in both directions: the validator requires every entry to be bound by one of the epic's tasks or declared in `uncovered` — a covered node reaches a task or a stated why, never neither — and refuses a task binding outside this list, because a binding outside the claim is scope the plan does not declare."
+      "description": "The base nodes this epic answers for, in both directions: the validator requires every entry to be bound by one of the epic's tasks or declared in `uncovered` — a covered node reaches a task or a stated why, never neither — and refuses a task binding outside this list, because a binding outside the claim is scope the plan does not declare. Two epics may cover the same base node — overlap is shared scope declared, never an error — and each reconciles its own claim independently."
     },
     "uncovered": {
       "type": "array",
