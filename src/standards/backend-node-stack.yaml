@@ -1,0 +1,220 @@
+# A second example project standard, transcribed from a real service's toolchain (a Node/TypeScript
+# BFF: Fastify, the MCP SDK, the `pg` driver, Neon-hosted Postgres, jose, Zod, pino, Vitest).
+#
+# Like the file beside it, this is NOT part of the distribution. It sits under src/standards/
+# rather than src/claude/, so no assembly ships it: Siegard ships the slot a standard fits into,
+# never its content. A consumer project owns its own registry.
+#
+# It exists to show the split the contract's `standard` field implies — "One project may hold
+# several — a backend's rules are not a frontend's". This one holds only **what the service is
+# built on**; `backend-typescript.yaml` holds how the service is arranged. The two are separated
+# because they change for different reasons and at different rates: swapping a driver does not
+# move a boundary, and moving a boundary does not swap a driver. A registry that mixed them would
+# force a review of every layering rule each time a dependency was reconsidered.
+#
+# The `decided_by` split is lopsided here, and that is the honest reading of the service it came
+# from: it runs `tsc --noEmit` and `vitest run` and has no linter, so exactly one rule below has a
+# tool to decide it. Every other rule a linter could own is `reading` until one is configured, and
+# the last `elsewhere` entry says so rather than leaving the reader to infer that nobody thought
+# of it. Declaring a rule mechanical with nothing named to apply it is the worse failure: the
+# contract refuses `decided_by: tool` without a `tool`, and a `tool` naming a step the suite does
+# not run is a rule nobody applies.
+
+contract_version: siegard-standard/1
+standard: backend-node-stack
+summary: Which runtime, framework, driver and libraries this service is built on, and what is not introduced beside them.
+
+rules:
+  - id: STK-01
+    statement: Every source file type-checks under the project's `strict` compiler configuration.
+    because: >-
+      A file that only compiles with the strictness turned down moves its cost to whoever next
+      touches it, and the null it hid surfaces in production instead of in the build.
+    decided_by: tool
+    tool: typecheck
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/config/env.ts
+
+  - id: STK-02
+    statement: >-
+      Modules use ESM `import`/`export`; `require` and `module.exports` do not appear in source.
+    because: >-
+      The package declares `"type": "module"`, so a CommonJS construct resolves differently under
+      Node than under the type-checker, and the mismatch surfaces at runtime in whichever file
+      imported it rather than in the file that used it.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/app.ts
+
+  - id: STK-03
+    statement: >-
+      HTTP is served by Fastify and its official plugins; no second HTTP server, router or
+      middleware framework is introduced.
+    because: >-
+      Two frameworks means two places where a hook, an error handler and a schema are registered,
+      and a request served by the wrong one skips the other's authentication without saying so.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/app.ts
+
+  - id: STK-04
+    statement: >-
+      MCP endpoints mount through `@modelcontextprotocol/sdk` on the single transport kernel; a
+      hand-written JSON-RPC handler is not added beside it.
+    because: >-
+      A second implementation of the protocol drifts from the SDK's on framing, error rendering and
+      protocol version, so a standard client fails against one endpoint while passing against
+      another and the difference is invisible from inside either.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/mcp/sdk-http-transport.ts
+
+  - id: STK-05
+    statement: >-
+      Database access goes through the `pg` driver with parameterized queries; no ORM or query
+      builder is introduced, and no value is concatenated into SQL text.
+    because: >-
+      A query builder becomes a second dialect that nobody can grep for when a column changes, and
+      a concatenated value is an injection the driver would otherwise have made impossible.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/modules/knowledge-graph/repository/graph.repository.ts
+
+  - id: STK-06
+    statement: >-
+      Source issues no DDL: schema changes are versioned SQL files applied by the migration step,
+      never statements run from a module.
+    because: >-
+      Schema that exists only as a code path cannot be read before it runs or replayed onto a fresh
+      database, so two environments drift with nothing recording when they diverged.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+
+  - id: STK-07
+    statement: >-
+      JWT verification uses `jose` against the JWKS endpoint named in the environment; no second
+      JWT or crypto library is introduced for it, and no verification key is embedded in source.
+    because: >-
+      A second verifier is a second set of accepted algorithms, and the one nobody audits is the
+      one that accepts an unsigned token.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/middleware/auth.ts
+
+  - id: STK-08
+    statement: >-
+      Boundary input — HTTP bodies, tool arguments and environment — is parsed by a Zod schema; no
+      second validation library is introduced, and no hand-written type guard stands in for a
+      schema at a boundary.
+    because: >-
+      A hand-written guard and a schema disagree the moment a field is added, and the one that was
+      not updated lets the field through with a type nothing checked.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/config/env.ts
+
+  - id: STK-09
+    statement: Log output goes through the configured pino logger; `console` is not used in source.
+    because: >-
+      A console line carries no level, no correlation id and no redaction, so it neither reaches the
+      log pipeline nor is held to the rule about which fields may be written.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/config/logger.ts
+
+  - id: STK-10
+    statement: >-
+      Tests run under Vitest through the project's `test` script; no second test runner or assertion
+      library is introduced.
+    because: >-
+      A second runner brings its own config, its own globals and its own idea of what the test
+      command covers, so the suite reports green while a directory of it never ran.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .spec.ts
+        nested: true
+
+  - id: STK-11
+    statement: >-
+      Calls to the model go through `@anthropic-ai/sdk` from server code with the credential read
+      from the environment; no hand-built HTTP client for the API is added, and the credential
+      reaches no response and no log line.
+    because: >-
+      A bespoke client misses the retries, streaming and error shapes the SDK already handles, and a
+      credential that leaves the server is one that has to be rotated everywhere it went.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/modules/chat/service/chat-agent.service.ts
+
+  - id: STK-12
+    statement: >-
+      PostgreSQL is the only datastore this service talks to; no second search engine, cache server,
+      queue or object store is introduced as a dependency.
+    because: >-
+      A second store is a second thing to keep consistent, and the reconciliation nobody wrote is
+      discovered when the two disagree in front of a user.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+
+elsewhere:
+  - what: Which status or error code an outcome answers with, and what a refusal says.
+    lives_in: The knowledge base, as a rule or interface node.
+    why: >-
+      It is what the business decided. A rule here stating one would put the standard pass and the
+      base-conformance pass in contradiction over the same line — one requiring in code what the
+      other reports as a fact the base does not hold.
+
+  - what: How modules are layered, named and wired to each other.
+    lives_in: The project's arrangement standard, `backend-typescript`, named beside this one.
+    why: >-
+      A stack choice and a layering rule change for different reasons and at different rates.
+      Holding both here would put every boundary rule up for review each time a dependency was
+      reconsidered.
+
+  - what: Whether the product retrieves by meaning — embeddings, vector columns, a vector store.
+    lives_in: The normative specification, as a permanent non-goal.
+    why: >-
+      It is a decision about what the product does, not about which dependency implements it.
+      Recorded here it would read as a constraint a later version could lift by adding a library,
+      which is exactly the reading the specification refuses.
+
+  - what: Rules a linter would decide — a forbidden construct, a name's shape, a file's length.
+    lives_in: Nowhere. This service configures no linter; its suite is `typecheck` and `test`.
+    why: >-
+      Naming a `tool` that the suite does not run would declare a rule mechanical while nothing
+      applies it, which is worse than not writing it at all. Every rule above that a linter could
+      own is `reading` until one is configured, and each would move on the day it is.
