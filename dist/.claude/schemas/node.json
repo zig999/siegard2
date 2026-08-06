@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/node.json",
   "title": "Siegard node",
-  "description": "One node of a domain analysis: the frontmatter of one markdown file under the knowledge root. The path is the identity — `context/<slug>.md` for a context, `<kind>/<context>/<slug>.md` for everything else — so no id, type or boundary field exists to disagree with it. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A fact the material does not state is declared absent by a `gaps` entry, never invented: the validator accepts a gap in place of any field its kind requires. One example per kind sits in that kind's branch. The body below the frontmatter carries exactly two headings, `## What it is` and `## Rules`.",
+  "description": "One node of a domain analysis: the frontmatter of one markdown file under the knowledge root. The path is the identity — `context/<slug>.md` for a context, `<kind>/<context>/<slug>.md` for everything else — so no id, type or boundary field exists to disagree with it. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A fact the material does not state is declared absent by a `gaps` entry, never invented: the validator accepts a gap in place of any field its kind requires. One example per kind sits in that kind's branch. The body below the frontmatter carries exactly two headings, `## What it is` and `## Rules` — the second points at the rule nodes and declared constraints that govern the node, and holds no rule of its own.",
   "type": "object",
   "required": ["kind", "title", "summary"],
   "additionalProperties": false,
