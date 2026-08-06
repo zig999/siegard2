@@ -51,9 +51,12 @@ problems is fixed through `/analyse-domain`; a stale `graph.json` is rederived b
 the base. Neither repair is this invocation's to make — planning never writes into the
 knowledge root.
 
-The pin every task carries is the SHA-256 of the base's `graph.json` as just checked:
-`sha256:<hexdigest>`, computable as `sha256sum <knowledge-root>/graph.json`. Compute it once,
-after the check passes, and stamp it on every task this invocation binds or re-binds.
+A task pins the base per node, not in one value. Each entry of its binding carries the digest
+of that node as the binding read it — read the value out of the node's entry in the base's
+`graph.json`, which the check above has just made current, rather than hashing anything yourself.
+By hand it is `sha256sum <knowledge-root>/<node>.md`, and a reader who wants to check one can.
+Stamp them as each task is composed, so a task stales when a node it binds moves and stays
+untouched when the base grows elsewhere.
 
 ## Before anything: the tree
 
@@ -160,8 +163,11 @@ validator refuses — the knowledge root, and the plan-node contract's path. The
 full gap triage — `unresolved` and `waived`, with whys — and the questions the base cannot
 answer; a divergence between the task and the nodes comes back as notes.
 
-Then compose and write each task: the skeleton, plus what its binder returned, plus the pin
-from the base check stamped on `base`. A binder's notes are appended to the task body's
+Then compose and write each task: the skeleton, plus what its binder returned, with each node
+it returned carried as `node` and the digest the index lists for it as `digest`. The binder
+returns identifiers and no digests: which version was read is bookkeeping the caller holds, and
+an agent that stamped its own would be attesting to a file nobody
+watched it open. A binder's notes are appended to the task body's
 `## Notes`, one sentence per line — the diff is the review, and a divergence only the
 conversation holds is a divergence the reviewer never sees — and the report repeats them by
 task. A note classed `blocking`, `underdetermined` or `remainder` opens with its class,
@@ -214,12 +220,13 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py <work-root> <knowledge-root>
 
 This validates every plan node against the contract, runs the checks that need the whole plan
 and the base — dependencies resolve without cycles, bindings resolve, every open gap on a
-bound node is triaged, every covered node reaches a task or a stated why, every pin matches
-the base as it stands — and derives `plan.json`. **Never write or edit `plan.json` yourself.**
+bound node is triaged, every covered node reaches a task or a stated why, every bound node's
+digest matches that node as it stands — and derives `plan.json`.
+**Never write or edit `plan.json` yourself.**
 Report the command's output verbatim. If it exits non-zero, the run failed — fix and rerun,
 and never describe the plan as valid while it is not.
 
-**Fixing means form, never knowledge.** A wrong shape — a malformed pin, a bad reference, a
+**Fixing means form, never knowledge.** A wrong shape — a malformed digest, a bad reference, a
 forbidden field — is yours to correct. An untriaged gap is settled by judgment — unresolved
 or waived — never by inventing the fact it names. A question is never answered by the plan. A
 coverage hole is settled by a task or by `uncovered` with a why — whichever the scope actually
@@ -266,7 +273,7 @@ Then stop. `git diff` over the work root is the review, and it belongs to a pers
 
 A work root serves one initiative, and the human says when it is over — the ask, with its
 why, is the input, and either missing is a stop. Closing spawns no judge, runs no base
-check, and computes no pin: it never touches the knowledge root.
+check, and computes no digest: it never touches the knowledge root.
 
 - The root must be under git and clean, exactly as before any write — the closure diff is
   its own review. A root already holding `closure.md` is already closed: stop.
@@ -277,7 +284,8 @@ check, and computes no pin: it never touches the knowledge root.
 - Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py <work-root>` — no knowledge root,
   because a closed plan validates without one. The derivation is the seal: it still
   refuses a plan whose structure does not hold, and a base that moved since the bindings
-  is no obstacle — each pin now stands as history, naming the base its binding read.
+  is no obstacle — each digest now stands as history, naming a node the binding read and the
+  version of it that was read.
 - Report the closure and the legacy the plan carries out — its unresolved gaps, citations
   and unique, and its open questions — in handoff form: the `/analyse-domain` invocation
   ready to paste, its knowledge root a slot closing cannot fill, the questions listed as
@@ -306,4 +314,4 @@ check, and computes no pin: it never touches the knowledge root.
   what to do with it is the human's call.
 - Write into a work root that holds `closure.md`, or remove a closure — a closed plan is
   history, and reopening it is the human's git act, after which the live checks and the
-  stale pins force the re-binding themselves.
+  stale digests force the re-binding themselves.

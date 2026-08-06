@@ -11,8 +11,9 @@ One file per node, in seven kinds — `context`, `aggregate`, `definition`, `rul
 `context/<slug>.md`, everything else at `<kind>/<context>/<slug>.md`. No node carries an id, a
 type or a boundary field, so none of the three can disagree with where the file sits.
 
-Two things share the word: the base itself, this root and its nodes, and a task's `base` field,
-which is not a root but the pin naming the derived index a binding read.
+Each node's entry in the index carries its `digest` — the SHA-256 of that node's file — which is
+what a plan's binding pins. The word `base` names this root and nothing else; the task field that
+used to share it is gone.
 
 What a node may and must declare is stated once, in `schemas/node.json`, with one example per
 kind inside it. A fact the material did not state is declared absent by a `gaps` entry naming the
@@ -39,18 +40,21 @@ belong to shipped subagents (`codebase-surveyor`, `backlog-decomposer`,
 `execution-contract-binder`), each in a clean context: the binder never sees the cut it binds,
 so the base is read for what it says, never to fit a task.
 
-A task binds the base nodes that govern it and pins the base it read. Two checks keep the plan
-honest, and both are the validator's: every open gap on a bound node is `unresolved` on the
-task or waived with a why — never silently ignored — and coverage reconciles in both
+A task binds the base nodes that govern it, carrying with each the digest of that node as the
+binding read it, so a task stales when a node it binds moves and the refusal names which. Two
+checks keep the plan honest, and both are the validator's: every open gap on a bound node is
+`unresolved` on the task or waived with a why — never silently ignored — and coverage reconciles
+in both
 directions: every base node an epic covers is bound by one of its tasks or declared uncovered,
 and a task binding outside its epic's covers is refused. A plan node carries no status,
 estimate, priority or order field: execution state lives in git, and order is derived from
 dependencies by whoever executes.
 
 A work root serves one initiative. A `closure.md` at its root marks the plan closed: closed,
-it is history — validated without the base, every structural check still held, each pin
-standing as the anchor naming the base its binding read — and it is never evolved again. A
-new initiative names a new work root, and what the closed one delivered returns to the next
+it is history — validated without the base, every structural check still held, each digest
+standing as the anchor naming a node the binding read and the version of it that was read — and
+it is never evolved again. A new initiative names a new work root, and what the closed one
+delivered returns to the next
 plan as inventory, through the survey of the code itself — never as a reference into the old
 plan.
 
@@ -184,8 +188,10 @@ slots empty: filling them and running it are yours.
 ## What the three roots hold to each other
 
 Every domain fact the code encodes traces to a base node, every change traces to a task, and
-every task traces to the base it was bound against — each hop pinned by content, so a root that
-moved after the hop was made is visible rather than assumed. A fact no root holds is reported: a
+every task traces to the base nodes it was bound against — each hop pinned by the content of what
+it read, so a node that moved after the hop was made is visible rather than assumed, and named. A
+base that grew elsewhere reaches no binding and says nothing, which is what keeps a real move worth
+reading. A fact no root holds is reported: a
 gap in the base, an unresolved entry on the task, a stop before any source is written. It is
 never supplied in code.
 

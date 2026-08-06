@@ -141,7 +141,7 @@ deferred: [...]              # omit when none
 Return the mapping as plain YAML text, with each field shaped as the contract's
 `implementation` branch requires — the fence above shows which fields, not their shapes, and is
 not part of the return. Omit the pin: the caller stamps it, the way a plan's caller stamps
-the base pin on a task.
+each bound node's digest on a task.
 
 If you cannot write the source — an input is absent, a bound node does not exist, the task
 leaves something unresolved, its notes carry a blocking entry, or the base is silent on a fact
