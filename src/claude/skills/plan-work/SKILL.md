@@ -24,6 +24,16 @@ A missing input is a stop, not a default:
 4. **the target source root** — where the code lives or will live. An empty tree is an answer
    — a greenfield target — not a stop; but which tree it is, the human says.
 
+Naming can go by reference when the reference carries the path: "the base we just validated
+at `knowledge/`" names `knowledge/`, and the handoff an `/analyse-domain` report ends with
+names roots the same way. A reference without a path resolves only through the conversation's
+memory, which is not state — it is an absent input, and a stop. However named, every root is
+taken as disk holds it — the checks below are that verification — and the report states each
+path as it resolved.
+
+Absent inputs stop once, together: one stop naming everything missing, so the human answers
+once — never a question at a time.
+
 A closing invocation — the human declaring the initiative over — needs two of these: the ask
 with its why, and the work root. The knowledge root and the target source root play no part
 in closing (see "Closing the plan").
@@ -109,6 +119,11 @@ Before any node, persist the scope: the prose as supplied, plus any files it ref
 under `intake/` in the work root. Point every `sources` entry at a file under it. A change
 persists the same way — a new file under `intake/`, never an edit to what intake already
 holds.
+
+A scope that points at the base's open agenda as its material is persisted from what disk
+says: run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/graph.py --gaps <knowledge-root>` and write
+what it prints into the intake file, citing the command — never the conversation's memory of
+a report.
 
 Every plan node this skill writes — this one and every one after it — carries a body of
 exactly two headings, in order: `## What it is`, then `## Notes`. One sentence per line; a
@@ -214,7 +229,9 @@ Report, in this order:
 - the impact set that was read — in the base and, on evolution, in the plan — so the reviewer
   can judge what the planning looked at, not only what it touched;
 - every unresolved entry, by task identifier — the gaps that block and the questions that
-  outran the base, the latter with the pointer back to `/analyse-domain`;
+  outran the base; after them, their handoff: the `/analyse-domain` invocation ready to
+  paste — this knowledge root named, the open questions listed as the asks the material
+  must answer — because a fact is produced in the base, never in a task;
 - every waiver, by task identifier — these are the claims a reviewer can reject;
 - every note a binder returned, by task identifier — the same divergences written into each
   task's `## Notes`, repeated here so the reviewer meets them before the diff — an
@@ -243,7 +260,12 @@ check, and computes no pin: it never touches the knowledge root.
   refuses a plan whose structure does not hold, and a base that moved since the bindings
   is no obstacle — each pin now stands as history, naming the base its binding read.
 - Report the closure and the legacy the plan carries out — its unresolved gaps, citations
-  and unique, and its open questions: the agenda `/analyse-domain` inherits. Then stop.
+  and unique, and its open questions — in handoff form: the `/analyse-domain` invocation
+  ready to paste, its knowledge root a slot closing cannot fill, the questions listed as
+  the asks the material must answer; and the same agenda named as candidate scope material
+  for the `/plan-work` that opens the successor initiative's new work root, where it
+  arrives as intake the human supplies — never as a reference into this closed plan. Then
+  stop.
 
 ## What you never do
 

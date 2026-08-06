@@ -110,3 +110,41 @@ def test_the_skill_restates_no_vocabulary(case):
     restated = [v for v in distinctive if v in case["text"]]
     assert restated == [], \
         f"{case['name']} restates {restated}; a vocabulary listed in a prompt is a second home"
+
+
+INPUT_TERM = re.compile(r"^\d+\. \*\*the ([a-z ]+)\*\*", re.M)
+
+
+def handoff_blocks(text: str, invocation: str) -> list[str]:
+    """Paragraph-shaped chunks holding a handoff, whitespace collapsed so prose may wrap."""
+    marker = f"`{invocation}` invocation ready to paste"
+    chunks = (re.sub(r"\s+", " ", chunk) for chunk in text.split("\n\n"))
+    return [chunk for chunk in chunks if marker in chunk]
+
+
+def test_the_seam_hands_off_every_input_the_other_skill_requires():
+    """The analyse report ends with a /plan-work invocation ready to paste, and the plan report
+    and the closure hand open questions back the same way. A handoff that omits an input the
+    receiving skill requires reintroduces the stop it exists to spare, so the seam is held
+    mechanically: change what one side requires or hands off and this test forces the other
+    file into the same change."""
+    plan = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
+    analyse = (REPO / "src/claude/skills/analyse-domain/SKILL.md").read_text(encoding="utf-8")
+
+    plan_inputs = INPUT_TERM.findall(plan)
+    assert plan_inputs, "plan-work numbers no required inputs; the seam guard lost its subject"
+    outgoing = handoff_blocks(analyse, "/plan-work")
+    assert len(outgoing) == 1, "the analyse report ends with exactly one /plan-work handoff"
+    for term in plan_inputs:
+        assert term in outgoing[0], \
+            f"the analyse handoff never names '{term}'; the stop it exists to spare returns"
+
+    analyse_inputs = INPUT_TERM.findall(analyse)
+    assert analyse_inputs, "analyse-domain numbers no required inputs; the seam guard lost its subject"
+    returning = handoff_blocks(plan, "/analyse-domain")
+    assert len(returning) == 2, \
+        "the plan report and the closure each hand the open questions back as an invocation"
+    for block in returning:
+        for term in analyse_inputs:
+            assert term in block, \
+                f"a questions handoff never names '{term}'; the stop it exists to spare returns"
