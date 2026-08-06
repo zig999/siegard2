@@ -51,6 +51,41 @@ def test_the_example_registry_holds_together(contract):
     assert data is not None
 
 
+SAMPLES = sorted((REPO / "src/standards").glob("*.yaml"))
+
+
+def test_the_sample_directory_is_not_empty():
+    """The guard below is parametrized over a glob, and a glob that matches nothing passes in
+    silence. If the samples ever move, this is what says so."""
+    assert SAMPLES, "src/standards holds no registry; the sample guard lost its subject"
+
+
+@pytest.mark.parametrize("sample", SAMPLES, ids=lambda p: p.stem)
+def test_every_sample_registry_holds_to_the_contract(sample, contract):
+    """Every registry under `src/standards/`, not only the one the rest of this module reads. These
+    are worked examples a consumer copies, so one that stopped holding would teach the wrong shape —
+    and nothing read them at all until this test was parametrized, which left two of the three
+    unchecked whenever the contract moved."""
+    data, problems = deliver.load_standard(sample, contract)
+    assert problems == [], f"{sample.name}: {problems}"
+    assert data is not None
+
+
+def test_the_merged_sample_is_exactly_its_parts(contract):
+    """`backend-node-service` is the two split registries in one file, and the only way that stays
+    true is mechanically: a rule edited in one place and not the other would leave the merged sample
+    teaching something neither of its sources says. Only the rules are held — the merged file's
+    `elsewhere` deliberately drops two entries that stop being true once the boundary they describe
+    is internal, and its own header says which."""
+    merged = yaml.safe_load((REPO / "src/standards/backend-node-service.yaml").read_text("utf-8"))
+    parts = [yaml.safe_load((REPO / f"src/standards/{name}.yaml").read_text("utf-8"))
+             for name in ("backend-node-stack", "backend-typescript")]
+    assert merged["rules"] == parts[0]["rules"] + parts[1]["rules"], \
+        "the merged sample is no longer the concatenation of the two it was built from"
+    ids = [r["id"] for r in merged["rules"]]
+    assert len(set(ids)) == len(ids), "the merge collided two rules under one id"
+
+
 def test_the_example_registry_parses_as_yaml():
     """A description holding an unquoted `: ` is not a description — it is a mapping the loader
     refuses, and the file never loads at all."""

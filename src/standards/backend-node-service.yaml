@@ -1,0 +1,770 @@
+# A third example project standard: the two registries beside this one, merged into one file.
+#
+# Like both of them, this is NOT part of the distribution. It sits under src/standards/ rather than
+# src/claude/, so no assembly ships it: Siegard ships the slot a standard fits into, never its
+# content. A consumer project owns its own registry.
+#
+# It exists because one registry per project is a legitimate shape and a consumer will want to see
+# it. What it is NOT is a recommendation. The contract's own `standard` field says "One project may
+# hold several — a backend's rules are not a frontend's — and each is named where it is used", and
+# the two files beside this one are that split: `backend-node-stack` holds what the service is built
+# on, `backend-typescript` holds how it is arranged. They are separate because they change for
+# different reasons and at different rates, and merging them, as here, gives that up: a dependency
+# reconsidered now puts every layering rule in the same file up for reading.
+#
+# The merge is not a concatenation, and the difference is the thing worth learning from this file.
+# The rules concatenate cleanly — 12 plus 47, and the id prefixes never collide. Two `elsewhere`
+# entries of `backend-node-stack` do not survive, because each described a boundary that merging
+# erases:
+#
+#   - "How modules are layered, named and wired to each other → the project's arrangement standard,
+#     `backend-typescript`, named beside this one". That is now inside this file, so the entry would
+#     point a reader out of the document that answers it.
+#   - "Rules a linter would decide → Nowhere. This service configures no linter; its suite is
+#     `typecheck` and `test`". This file carries 23 rules decided by a tool, naming `lint` and
+#     `secret-scan`, so the entry would deny what the rules beside it declare.
+#
+# A merged registry whose `elsewhere` had been copied along with its rules would therefore have
+# stated two falsehoods about itself, and nothing in the contract would have caught either: the
+# validator holds ids, scopes and the reading/tool split, and it does not read prose for whether a
+# boundary still stands. That is the cost of the merge, stated where a reader meets it.
+#
+# One entry of `backend-node-stack` does survive and is kept below — the embeddings non-goal, which
+# is owned by the specification and unaffected by which file the rules live in. The other, on which
+# status an outcome answers with, is dropped as a duplicate: `backend-typescript` states the same
+# boundary in two more precise entries, which are kept.
+
+contract_version: siegard-standard/1
+standard: backend-node-service
+summary: >-
+  Everything a Node/TypeScript service's source answers to: which runtime, framework, driver and libraries it is built on, and how it is layered, wired, validated and named.
+
+rules:
+  - id: STK-01
+    statement: Every source file type-checks under the project's `strict` compiler configuration.
+    because: >-
+      A file that only compiles with the strictness turned down moves its cost to whoever next
+      touches it, and the null it hid surfaces in production instead of in the build.
+    decided_by: tool
+    tool: typecheck
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/config/env.ts
+
+  - id: STK-02
+    statement: >-
+      Modules use ESM `import`/`export`; `require` and `module.exports` do not appear in source.
+    because: >-
+      The package declares `"type": "module"`, so a CommonJS construct resolves differently under
+      Node than under the type-checker, and the mismatch surfaces at runtime in whichever file
+      imported it rather than in the file that used it.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/app.ts
+
+  - id: STK-03
+    statement: >-
+      HTTP is served by Fastify and its official plugins; no second HTTP server, router or
+      middleware framework is introduced.
+    because: >-
+      Two frameworks means two places where a hook, an error handler and a schema are registered,
+      and a request served by the wrong one skips the other's authentication without saying so.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/app.ts
+
+  - id: STK-04
+    statement: >-
+      MCP endpoints mount through `@modelcontextprotocol/sdk` on the single transport kernel; a
+      hand-written JSON-RPC handler is not added beside it.
+    because: >-
+      A second implementation of the protocol drifts from the SDK's on framing, error rendering and
+      protocol version, so a standard client fails against one endpoint while passing against
+      another and the difference is invisible from inside either.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/mcp/sdk-http-transport.ts
+
+  - id: STK-05
+    statement: >-
+      Database access goes through the `pg` driver with parameterized queries; no ORM or query
+      builder is introduced, and no value is concatenated into SQL text.
+    because: >-
+      A query builder becomes a second dialect that nobody can grep for when a column changes, and
+      a concatenated value is an injection the driver would otherwise have made impossible.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/modules/knowledge-graph/repository/graph.repository.ts
+
+  - id: STK-06
+    statement: >-
+      Source issues no DDL: schema changes are versioned SQL files applied by the migration step,
+      never statements run from a module.
+    because: >-
+      Schema that exists only as a code path cannot be read before it runs or replayed onto a fresh
+      database, so two environments drift with nothing recording when they diverged.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+
+  - id: STK-07
+    statement: >-
+      JWT verification uses `jose` against the JWKS endpoint named in the environment; no second
+      JWT or crypto library is introduced for it, and no verification key is embedded in source.
+    because: >-
+      A second verifier is a second set of accepted algorithms, and the one nobody audits is the
+      one that accepts an unsigned token.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/middleware/auth.ts
+
+  - id: STK-08
+    statement: >-
+      Boundary input — HTTP bodies, tool arguments and environment — is parsed by a Zod schema; no
+      second validation library is introduced, and no hand-written type guard stands in for a
+      schema at a boundary.
+    because: >-
+      A hand-written guard and a schema disagree the moment a field is added, and the one that was
+      not updated lets the field through with a type nothing checked.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/config/env.ts
+
+  - id: STK-09
+    statement: Log output goes through the configured pino logger; `console` is not used in source.
+    because: >-
+      A console line carries no level, no correlation id and no redaction, so it neither reaches the
+      log pipeline nor is held to the rule about which fields may be written.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/config/logger.ts
+
+  - id: STK-10
+    statement: >-
+      Tests run under Vitest through the project's `test` script; no second test runner or assertion
+      library is introduced.
+    because: >-
+      A second runner brings its own config, its own globals and its own idea of what the test
+      command covers, so the suite reports green while a directory of it never ran.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .spec.ts
+        nested: true
+
+  - id: STK-11
+    statement: >-
+      Calls to the model go through `@anthropic-ai/sdk` from server code with the credential read
+      from the environment; no hand-built HTTP client for the API is added, and the credential
+      reaches no response and no log line.
+    because: >-
+      A bespoke client misses the retries, streaming and error shapes the SDK already handles, and a
+      credential that leaves the server is one that has to be rotated everywhere it went.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+    seen_at: src/modules/chat/service/chat-agent.service.ts
+
+  - id: STK-12
+    statement: >-
+      PostgreSQL is the only datastore this service talks to; no second search engine, cache server,
+      queue or object store is introduced as a dependency.
+    because: >-
+      A second store is a second thing to keep consistent, and the reconciliation nobody wrote is
+      discovered when the two disagree in front of a user.
+    decided_by: reading
+    applies_to:
+      - under: src
+        suffix: .ts
+        nested: true
+
+  # ---------------------------------------------------------------- layering and wiring
+
+  - id: ARC-01
+    statement: A constructor receives interfaces, never concrete implementations.
+    because: A class bound to a concrete collaborator cannot be exercised without it, so the test
+      has to stand up the collaborator's world to assert one line of this one.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+    seen_at: src/orders/order.service.ts
+
+  - id: ARC-02
+    statement: A service or controller never constructs a dependency; instantiation happens only
+      inside a factory function.
+    because: Wiring scattered through the layers has no single place to change, so swapping an
+      implementation means finding every construction that named it.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+    seen_at: src/factories/order.factory.ts
+
+  - id: ARC-03
+    statement: Each module wires itself in one factory function under src/factories/, named
+      <resource>.factory.ts.
+    because: A module whose wiring point cannot be found from its path is a module nobody can
+      re-wire with confidence.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src/factories, suffix: .ts }
+    seen_at: src/factories/order.factory.ts
+
+  - id: ARC-04
+    statement: Business logic lives in a service; a controller maps transport to a call and back,
+      and a repository only reads and writes.
+    because: A rule implemented in a controller is a rule that only exists over HTTP, and it will
+      be reimplemented the day a queue or a job needs it.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+
+  - id: ARC-05
+    statement: A DTO is declared under a dto directory, never inline in a controller.
+    because: A shape declared where it is used is a shape the next caller redeclares slightly
+      differently, and neither copy is the contract.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+    seen_at: src/dto/create-order.dto.ts
+
+  # ---------------------------------------------------------------- input and validation
+
+  - id: DTO-01
+    statement: Validation happens at the route or middleware boundary; a service receives a typed
+      DTO and never a raw request body.
+    because: A service that validates its own input validates it differently at each entry point,
+      and the one nobody remembered is the one that accepts anything.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .routes.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+    seen_at: src/routes/order.routes.ts
+
+  - id: DTO-02
+    statement: A DTO schema is a Zod object plus the type inferred from it.
+    because: A hand-written type beside a schema drifts from it silently, and the compiler cannot
+      tell you which of the two the request actually satisfied.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .dto.ts, nested: true }
+    seen_at: src/dto/create-order.dto.ts
+
+  - id: DTO-03
+    statement: A DTO is named for its use case — Create<Resource>Schema and Create<Resource>Dto in
+      create-<resource>.dto.ts, and likewise for Update, Response and Query.
+    because: A reader looking for the shape a route accepts should find it from the route's name
+      alone, without opening three files to see which one it was.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .dto.ts, nested: true }
+
+  - id: DTO-04
+    statement: A test imports the DTO schema from the dto directory instead of redefining it.
+    because: A schema redefined in a test passes against a shape production never accepted, so the
+      test proves the copy rather than the contract.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- the shape of a response
+
+  - id: API-01
+    statement: A paginated response is the shared PaginatedResponse type imported from
+      src/types/pagination.ts, never redeclared per module.
+    because: Two declarations drift, and the day they disagree nobody can say which one the API
+      promised.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .dto.ts, nested: true }
+      - { under: src/types, suffix: .ts }
+    seen_at: src/types/pagination.ts
+
+  - id: API-02
+    statement: An empty list answers with the paginated envelope carrying an empty data array,
+      never with an absent value.
+    because: A caller that has to test for absence before iterating will forget once, and the
+      failure lands in the caller rather than here.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+
+  - id: API-03
+    statement: Offset pagination always computes the page count from the total and the limit, and
+      never hardcodes or omits it.
+    because: A page count the client computes itself is a page count that disagrees with the one
+      the server would have given.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+
+  - id: API-04
+    statement: A page limit is bounded by a configured maximum, and neither the default nor the
+      maximum is written in source.
+    because: An unbounded limit is a denial of service with a query string, and a bound written in
+      source is one nobody can raise without a deploy.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .routes.ts, nested: true }
+
+  - id: API-05
+    statement: An error answers in one envelope, carrying a code, a message and its details.
+    because: A client that has to branch on the shape of the error cannot handle an error it has
+      not seen before.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
+
+  - id: API-06
+    statement: A route sits under a versioned prefix.
+    because: An unversioned route cannot be changed without breaking whoever already calls it.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .routes.ts, nested: true }
+
+  # ---------------------------------------------------------------- how failure is raised
+
+  - id: COR-01
+    statement: A catch either handles the error or rethrows it wrapped with the original as its
+      cause; an empty catch is forbidden.
+    because: A swallowed error is a failure nobody will ever see, and the symptom surfaces
+      somewhere with no trace back to here.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: COR-02
+    statement: A failure raises a typed error class carrying a name, a message, its status and a
+      context field, never a generic error with a sentence in it.
+    because: A generic error cannot be mapped to a response or handled by a caller, so every layer
+      above has to match on its message.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+    seen_at: src/errors/not-found.error.ts
+
+  - id: COR-04
+    statement: Every domain error maps to a transport status in one place, and no handler chooses a
+      status inline.
+    because: A status chosen where it is answered is a status chosen differently at the next
+      endpoint, and the one nobody remembers is the one a client branches on.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
+      - { under: src/errors, suffix: .ts, nested: true }
+    seen_at: src/errors/status-map.ts
+
+  - id: COR-03
+    statement: A service raises business errors, a repository raises data errors, and the error
+      middleware formats whatever reaches it.
+    because: An error mapped to a transport status inside a service makes the service unusable
+      outside that transport.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
+
+  - id: EDG-01
+    statement: Absent and empty input is refused at the validation boundary, before the service is
+      reached.
+    because: A service that receives input nothing validated has to validate it, and then two
+      places decide what is acceptable.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .routes.ts, nested: true }
+      - { under: src, suffix: .middleware.ts, nested: true }
+
+  - id: EDG-02
+    statement: A resource that does not exist is refused through a typed error raised in the
+      service, never by letting a driver or generic error reach the client.
+    because: An internal failure shown to a client tells it to retry something that will never
+      succeed, and tells a stranger the shape of the store.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .controller.ts, nested: true }
+
+  - id: EDG-03
+    statement: A uniqueness violation is caught where it is raised and answered through a typed
+      error; it never reaches the default error handler as a driver error.
+    because: A constraint error arriving as an internal failure exposes the schema and reads as a
+      bug in the server rather than a conflict in the request.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+
+  - id: EDG-04
+    statement: An operation attempted against state that forbids it is refused through a typed
+      error raised before any write.
+    because: A refusal raised after a partial write leaves the store in a state the refusal claims
+      never happened.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+
+  - id: EDG-05
+    statement: A write spanning more than one statement runs in a transaction that rolls back as a
+      whole.
+    because: A half-applied write leaves data no code path expects to find, and nothing later will
+      tell you when it happened.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .service.ts, nested: true }
+      - { under: src, suffix: .repository.ts, nested: true }
+
+  - id: EDG-06
+    statement: A payload above the configured size limit is refused at the middleware boundary.
+    because: A body read into memory before it is measured is a body that can exhaust the process.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .middleware.ts, nested: true }
+      - { under: src/config, suffix: .ts }
+
+  - id: EDG-07
+    statement: A rate limit is applied at the boundary, and its refusal tells the caller when to
+      try again.
+    because: A refusal that does not say when to retry turns every client into a tight retry loop.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .middleware.ts, nested: true }
+      - { under: src, suffix: .routes.ts, nested: true }
+
+  - id: EDG-08
+    statement: A dependency that is unavailable, slow or answers in an unexpected shape is handled
+      as an error rather than allowed to crash the process.
+    because: A dependency's bad day should degrade one endpoint, not take down everything the
+      process serves.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .repository.ts, nested: true }
+      - { under: src/clients, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- what must not leak
+
+  - id: SEC-01
+    statement: Authorization is checked in the handler against the specific resource, never
+      inferred from the presence of a valid credential.
+    because: An identifier in a URL is not authorization, and a handler that only checks the
+      credential hands out every row by counting.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .controller.ts, nested: true }
+      - { under: src, suffix: .service.ts, nested: true }
+
+  - id: SEC-02
+    statement: Every database statement is parameterized; no query is built by concatenating or
+      interpolating input.
+    because: One interpolated value is a full read of the store, and the value that reaches it is
+      not the one you tested with.
+    decided_by: tool
+    tool: secret-scan
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: SEC-03
+    statement: No credential, token, secret or environment URL is written in source.
+    because: A secret in source is a secret in every clone, every fork and every log of the clone.
+    decided_by: tool
+    tool: secret-scan
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: SEC-04
+    statement: No secret, stack trace or internal detail reaches a log or a client response.
+    because: A log is read by more people than the store is, and a stack trace tells a stranger the
+      shape of the thing they are attacking.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- the code itself
+
+  - id: TYP-01
+    statement: The compiler runs strict, and the escape-hatch any type is never used; prefer
+      unknown, a generic, or an explicit type.
+    because: One escape hatch propagates through every call it touches, and the errors it hides
+      surface at runtime in a caller that never mentioned it.
+    decided_by: tool
+    tool: typecheck
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: TYP-02
+    statement: A type assertion is accompanied by a guard that narrows it.
+    because: An assertion is a claim the compiler stops checking, so the first wrong one is found
+      by a user.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: TYP-03
+    statement: A public signature declares its parameter and return types explicitly.
+    because: An inferred public type changes when the body changes, so a caller breaks from an edit
+      nobody thought was a contract change.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: TYP-04
+    statement: A value with meaning is a named constant, not a number or string spelled out where
+      it is used.
+    because: The same literal in three places is three places to change and two to forget.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: CON-01
+    statement: Files are kebab-case, classes and types PascalCase, functions and variables
+      camelCase, constants and environment variables screaming snake case, interfaces PascalCase
+      prefixed with I, database tables snake_case plural and columns snake_case, routes kebab-case
+      plural.
+    because: A name that does not say what kind of thing it is costs a reader an extra file open,
+      every time.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: MNT-01
+    statement: A function stays within thirty lines and takes at most three positional parameters;
+      beyond that, extract a named helper or pass an object.
+    because: A function nobody can hold in their head is a function that gets a fourth branch
+      instead of a second function.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: MNT-02
+    statement: Commented-out code is deleted, and unused imports are removed.
+    because: Code kept in a comment is code nobody maintains and everybody trusts, and it is read
+      as intent long after it stopped compiling.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: MNT-03
+    statement: A block of logic that already exists somewhere in this project is called, not
+      copied.
+    because: Two copies of one rule diverge on the day one of them is fixed, and the reader of the
+      other has no way to know it was.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: PRH-01
+    statement: Production code logs through the configured logger; console output is not used.
+    because: A console line goes nowhere in production — no level, no correlation, no retention.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: PRH-02
+    statement: A deferred-work marker carries a reference to the work that will settle it.
+    because: An unreferenced marker is a decision deferred to nobody, and it survives every review
+      by looking temporary.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: PRH-03
+    statement: A lint rule is suppressed only with a comment stating why.
+    because: A silent suppression removes the rule for everyone who reads the line afterwards.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  - id: PRH-04
+    statement: A migration that destroys or alters data ships with a reverse migration beside it.
+    because: A migration you cannot reverse turns a bad deploy into a restore from backup.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src/migrations, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- how tests are written here
+
+  - id: TST-01
+    statement: A test arranges, then acts, then asserts, in that order and visibly.
+    because: A test whose setup and assertions are interleaved cannot be read to find out what it
+      actually claims.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
+
+  - id: TST-02
+    statement: A test is named for the behavior it expects, as a sentence.
+    because: A run's output is a list of test names, and a name like "works" tells the reader of a
+      failure nothing at all.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
+
+  - id: TST-03
+    statement: A stand-in stands in for a boundary — the store, the network, the filesystem, an
+      external service — and never for business logic.
+    because: A rule replaced by a stand-in is a rule the suite asserts about itself, and it passes
+      after the real rule is deleted.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.ts, nested: true }
+      - { under: src/__tests__, suffix: .ts, nested: true }
+
+  - id: TST-04
+    statement: A test file mirrors the path of the unit under test, under src/__tests__/ with unit
+      and integration subtrees.
+    because: A test nobody can find from the file it covers is a test that gets written twice and
+      deleted once.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src/__tests__, suffix: .ts, nested: true }
+
+# What this standard deliberately does not hold, so a reader does not read an absence as an
+# oversight. Each is owned somewhere else, and stating it twice would create a second home that
+# drifts. Two entries that `backend-node-stack` carries are absent here on purpose; the header
+# says which and why.
+elsewhere:
+
+  - what: Which errors exist and what each one names — the duplicate registration, the invalid
+      order total, the expired credential.
+    lives_in: The knowledge base, as definitions whose kind is a domain error, where the node's own
+      identifier is the error's name.
+    why: An error's identity is what the business decided, and a code written in source that no
+      bound node holds is the archetypal base-conformance finding. Naming them here would require
+      in code exactly what that pass exists to report.
+
+  - what: Which transport status each of those errors maps to — 404, 409, 422, 401, 403, 429, 201,
+      204.
+    lives_in: This file, in COR-04, which requires the mapping to live in one place — and that
+      place, in code.
+    why: This is the entry that was wrong until it was rewritten, and the mistake is worth keeping
+      visible. A status is transport, and the knowledge base excludes transport, so sending these
+      there sent them to a home that refuses them and they lived nowhere at all. But which status a
+      domain error maps to is not a domain fact either — two projects map the same error differently.
+      It is this project's decision about how it answers. So the rule above states where the mapping
+      belongs without stating any mapping, the table is code in the place it names, and the three
+      passes stop disagreeing — the base has the errors, this file requires one map, and the code
+      holds it.
+
+  - what: Who may see which resource, beyond the requirement that the check happen against the
+      resource itself.
+    lives_in: The knowledge base, as rule nodes.
+    why: An authorization outcome is a domain decision. SEC-01 above says where the check belongs;
+      what it decides is not this file's.
+
+  - what: Falsifying the cause of a timeout, a flake or a performance finding — reproducing it in
+      isolation and then under load, varying the knob, and recording whether the cause was verified
+      or only inferred.
+    lives_in: Nowhere, and deliberately.
+    why: The skill this was transcribed from carried it as a procedure that *executes*, and no agent
+      of this framework holds a shell. A read-only agent writing a confidence label restores the
+      label of an unfalsified cause rather than the falsification, and having a reviewer commission
+      a second run would let it choose what runs next. What was portable is already in the delivery
+      contract, which forces the cause that constrains more where nothing settles it.
+
+  - what: Which tests must exist for a task, by the kind of work it is — a new behavior, a change,
+      a rearrangement, a defect.
+    lives_in: The framework, in agents/test-author.md.
+    why: It is the same question in every language, so it is not this project's to answer.
+
+  - what: That a test asserts observable behavior rather than an internal call, fails for one
+      reason, cannot pass vacuously, tears down what it sets up, and treats an error path as a
+      behavior.
+    lives_in: The framework, in agents/test-author.md and agents/coverage-auditor.md.
+    why: Universal, and already enforced by the passes that read the tests. The TST rules above add
+      only what is this project's taste — the order inside a test, how it is named, what a stand-in
+      may replace.
+
+  - what: Which edge cases a task must account for, and the requirement to say why a dismissed one
+      does not apply.
+    lives_in: The framework, in agents/test-author.md.
+    why: The checklist is behavior-shaped and universal. What this registry adds is where each one
+      is handled here — the EDG rules above.
+
+  - what: Whether every acceptance criterion has a test that would fail if it stopped holding.
+    lives_in: The framework, in agents/coverage-auditor.md.
+    why: It is judged against the task's criteria, which live in the plan, not against a rule here.
+
+  - what: A severity for any of these rules, and any verdict derived from the findings.
+    lives_in: Nowhere — deliberately.
+    why: The registry this comes from graded each finding from critical to low and fed the grade to
+      an approval gate, which made the reviewer the gate. A finding states what it costs; a person
+      decides what that means.
+
+  - what: Whether two modules import each other in a cycle.
+    lives_in: Nowhere yet — a declared gap.
+    why: It is decidable by walking the import graph, so it belongs to a script rather than to a
+      rule an agent judges. No such script ships, and stating the rule here would hand a mechanical
+      question to a reading.
+
+  - what: The shape of a commit message, and which branch work happens on.
+    lives_in: The project's own git conventions, outside this framework.
+    why: Siegard never touches the consumer's git state, and a rule here could not be checked by
+      reading the files a review is given.
+
+  - what: Whether the product retrieves by meaning — embeddings, vector columns, a vector store.
+    lives_in: The normative specification, as a permanent non-goal.
+    why: >-
+      It is a decision about what the product does, not about which dependency implements it.
+      Recorded here it would read as a constraint a later version could lift by adding a library,
+      which is exactly the reading the specification refuses.
