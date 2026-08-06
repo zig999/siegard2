@@ -11,7 +11,7 @@ import pytest
 
 import plan
 
-from conftest import base_pin_of
+from conftest import bind
 
 PLAN_PY = Path(plan.__file__)
 
@@ -26,8 +26,7 @@ def problems_in(work, root) -> list[str]:
     nodes, problems = plan.collect(work, validator, allowed)
     base_nodes, base_problems = plan.load_base(root)
     assert base_problems == [], f"the fixture base does not hold together: {base_problems}"
-    pin = plan.base_pin(base_nodes)
-    return sorted(set(problems + plan.cross_problems(nodes, base_nodes, pin)))
+    return sorted(set(problems + plan.cross_problems(nodes, base_nodes)))
 
 
 # ---------------------------------------------------------------- the sound path
@@ -54,14 +53,15 @@ def test_the_derived_plan_satisfies_its_own_contract(repo, work, root, sound_pla
     assert list(Draft202012Validator(contract).iter_errors(derived)) == []
 
 
-def test_task_entries_carry_epic_pin_unresolved_and_edges(work, root, sound_plan):
+def test_task_entries_carry_epic_unresolved_and_edges(work, root, sound_plan):
     assert run(work, root).returncode == 0
     derived = json.loads((work / "plan.json").read_text())
     task = next(n for n in derived["nodes"] if n["id"] == "task/checkout/bill-order")
     assert task["kind"] == "task"
     assert task["file"] == "task/checkout/bill-order.md"
     assert task["epic"] == "checkout"
-    assert task["base"] == base_pin_of(root)
+    assert "base" not in task, \
+        "the index carries no aggregate pin; a binding is pinned per node, in the node file"
     assert task["unresolved"] == ["definition/sales/invoice#attributes"]
     assert "questions" not in task
     kinds = {e["kind"] for e in derived["edges"]}
@@ -85,8 +85,7 @@ def test_a_gap_cited_by_two_tasks_counts_once_as_unique(work, root, sound_plan):
         "title": "Refuse unbilled order", "summary": "Refuse shipping an unbilled order.",
         "objective": "An order without an invoice is refused at shipping.",
         "criteria": ["Shipping an order with no invoice returns the stated domain error."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/invoice"),
         "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
     })
     done = run(work, root)
@@ -103,8 +102,7 @@ def test_two_epics_may_cover_the_same_base_node(work, root, sound_plan):
         "title": "Raise invoice", "summary": "Produce the invoice billing answers for.",
         "objective": "A recorded order reaches billing as exactly one raised invoice.",
         "criteria": ["A recorded order is billable exactly once."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/invoice"),
         "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
     })
     done = run(work, root)
@@ -116,8 +114,7 @@ def test_a_question_is_counted_and_indexed(work, root, sound_plan):
         "title": "Bill order", "summary": "Raise the bill.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/invoice"),
         "unresolved": [{"gap": "definition/sales/invoice#attributes"},
                        {"question": "Nobody said what currency the bill is raised in."}],
     })
@@ -155,8 +152,7 @@ def test_the_unresolved_report_names_gaps_and_questions(work, root, sound_plan):
         "title": "Bill order", "summary": "Raise the bill.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/invoice"),
         "unresolved": [{"gap": "definition/sales/invoice#attributes"},
                        {"question": "Nobody said what currency the bill is raised in."}],
     })
@@ -177,8 +173,7 @@ def test_the_unresolved_report_over_a_settled_plan_says_so(work, root, gapped_ba
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root)})
+        "nodes": bind(root, "definition/sales/order")})
     done = run("--unresolved", work, root)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "no unresolved entries" in done.stdout
@@ -190,8 +185,7 @@ def test_the_unresolved_report_is_refused_over_a_broken_plan(work, root, sound_p
         "title": "Orphan", "summary": "Depends on nothing that exists.",
         "objective": "Something demonstrable.",
         "criteria": ["Something falsifiable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order"),
         "depends_on": ["task/checkout/nothing"]})
     done = run("--unresolved", work, root)
     assert done.returncode == 1
@@ -218,22 +212,36 @@ def test_check_after_an_edit_is_stale(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order, renamed.",
         "objective": "A valid order is persisted and retrievable by its order_number.",
         "criteria": ["Submitting a valid order returns its order_number."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root)})
+        "nodes": bind(root, "definition/sales/order")})
     done = run("--check", work, root)
     assert done.returncode == 1
     assert "STALE" in done.stdout
 
 
-def test_a_moved_base_stales_the_pin(work, root, sound_plan, gapped_base):
+def test_a_moved_bound_node_stales_the_task_that_binds_it(work, root, sound_plan, gapped_base):
+    """The node `record-order` binds is rewritten under it. What moved is named, and the task that
+    binds a different node is not — an aggregate over the whole base could do neither."""
+    assert run(work, root).returncode == 0
+    gapped_base("definition/sales/order", {
+        "title": "Order", "summary": "A customer's order.",
+        "ddd": "aggregate-root", "aggregate": "orders",
+        "identity": ["order_number"],
+        "attributes": [{"name": "order_number", "type": "string", "max_length": 8}]})
+    done = run("--check", work, root)
+    assert done.returncode == 1
+    assert "task/checkout/record-order: definition/sales/order is pinned at" in done.stdout
+    assert "task/checkout/bill-order" not in done.stdout, \
+        "a task binding a node nothing touched was staled by another task's node moving"
+
+
+def test_a_base_that_grew_elsewhere_stales_nothing(work, root, sound_plan, gapped_base):
+    """A node nobody binds is added. Under the aggregate pin this staled every task in the plan,
+    which is the noise that made a real stale easy to wave through."""
     assert run(work, root).returncode == 0
     gapped_base("definition/sales/customer", {
         "title": "Customer", "summary": "Who buys.", "ddd": "value-object",
         "attributes": [{"name": "name", "type": "string", "max_length": 80}]})
-    done = run("--check", work, root)
-    assert done.returncode == 1
-    assert "base pin" in done.stdout
-    assert "has since moved" in done.stdout
+    assert run(work, root).returncode == 0
 
 
 # ---------------------------------------------------------------- the closed plan
@@ -260,9 +268,11 @@ def test_a_live_plan_requires_the_knowledge_root(work, root, sound_plan):
 
 def test_a_moved_base_does_not_stale_a_closed_plan(work, root, sound_plan, gapped_base):
     assert run(work, root).returncode == 0
-    gapped_base("definition/sales/customer", {
-        "title": "Customer", "summary": "Who buys.", "ddd": "value-object",
-        "attributes": [{"name": "name", "type": "string", "max_length": 80}]})
+    gapped_base("definition/sales/order", {
+        "title": "Order", "summary": "A customer's order.",
+        "ddd": "aggregate-root", "aggregate": "orders",
+        "identity": ["order_number"],
+        "attributes": [{"name": "order_number", "type": "string", "max_length": 8}]})
     (work / "closure.md").write_text("Closed after the base moved on.\n", encoding="utf-8")
     assert run("--check", work, root).returncode == 0
     assert run("--check", work).returncode == 0
@@ -273,8 +283,7 @@ def test_a_closed_plan_still_refuses_broken_structure(work, root, sound_plan):
         "title": "Rogue", "summary": "Binds outside the epic's claim.",
         "objective": "An unclaimed binding is refused even in history.",
         "criteria": ["The validator refuses this task."],
-        "nodes": ["definition/sales/order", "context/sales"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order", "context/sales"),
     })
     (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
     done = run(work)
@@ -303,8 +312,7 @@ def test_an_untriaged_gap_on_a_bound_node_is_refused(work, root, sound_plan):
         "title": "Bill order", "summary": "Raise the bill.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root)})
+        "nodes": bind(root, "definition/sales/invoice")})
     problems = problems_in(work, root)
     assert any("open gap on `attributes`" in p and "ignored in silence" in p for p in problems)
 
@@ -314,8 +322,7 @@ def test_a_waiver_settles_an_untriaged_gap(work, root, sound_plan):
         "title": "Bill order", "summary": "Raise the bill.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/invoice"),
         "waived": [{"gap": "definition/sales/invoice#attributes",
                     "why": "Billing reads the invoice as opaque; its fields are not on this path."}]})
     assert problems_in(work, root) == []
@@ -326,8 +333,7 @@ def test_a_triage_entry_on_a_closed_gap_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order"),
         "unresolved": [{"gap": "definition/sales/order#attributes"}]})
     assert any("declares no open gap on `attributes`" in p for p in problems_in(work, root))
 
@@ -337,8 +343,7 @@ def test_a_triage_entry_on_an_unbound_node_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order"),
         "waived": [{"gap": "definition/sales/invoice#attributes",
                     "why": "Not this task's node at all."}]})
     reported = problems_in(work, root)
@@ -354,22 +359,22 @@ def test_a_gap_both_unresolved_and_waived_is_refused(work, root, sound_plan):
         "title": "Bill order", "summary": "Raise the bill.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": ["definition/sales/invoice"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/invoice"),
         "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
         "waived": [{"gap": "definition/sales/invoice#attributes", "why": "Also not needed."}]})
     assert any("both unresolved and waived" in p for p in problems_in(work, root))
 
 
-def test_a_stale_pin_is_refused_with_its_own_message(work, root, sound_plan):
+def test_a_stale_digest_is_refused_with_its_own_message(work, root, sound_plan):
     sound_plan("task/checkout/record-order", {
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": "sha256:" + "0" * 64})
+        "nodes": [{"node": "definition/sales/order", "digest": "sha256:" + "0" * 64}]})
     problems = problems_in(work, root)
-    assert any("base pin" in p and "re-bind the task" in p for p in problems)
+    assert any("definition/sales/order is pinned at" in p and "re-bind the task" in p
+               for p in problems), \
+        "the refusal must name the node that moved; naming only the task is what it replaced"
 
 
 # ---------------------------------------------------------------- coverage
@@ -409,8 +414,7 @@ def test_a_binding_outside_the_epics_covers_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order", "context/sales"],
-        "base": base_pin_of(root)})
+        "nodes": bind(root, "definition/sales/order", "context/sales")})
     problems = problems_in(work, root)
     assert any("binds context/sales, which epic/checkout does not cover" in p
                and "grow `covers`, or move the task" in p for p in problems)
@@ -430,7 +434,6 @@ RECORD_ORDER = {
     "title": "Record order", "summary": "Persist a placed order.",
     "objective": "A valid order is persisted and retrievable by its order_number.",
     "criteria": ["Submitting a valid order returns its order_number."],
-    "nodes": ["definition/sales/order"],
 }
 
 
@@ -441,7 +444,7 @@ def noted(*lines: str) -> str:
 
 def test_a_note_naming_a_node_beyond_covers_without_a_decision_is_refused(work, root,
                                                                           sound_plan):
-    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "nodes": bind(root, "definition/sales/order")},
                body=noted("From the binding — the recount is governed by context/sales, "
                           "which sits outside this epic's claim."))
     problems = problems_in(work, root)
@@ -451,7 +454,7 @@ def test_a_note_naming_a_node_beyond_covers_without_a_decision_is_refused(work, 
 
 
 def test_a_decision_line_beside_the_note_settles_it(work, root, sound_plan):
-    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "nodes": bind(root, "definition/sales/order")},
                body=noted("From the binding — the recount is governed by context/sales, "
                           "which sits outside this epic's claim.",
                           "Decision, beyond the covers — stand: context/sales carries no "
@@ -460,21 +463,21 @@ def test_a_decision_line_beside_the_note_settles_it(work, root, sound_plan):
 
 
 def test_a_note_naming_a_covered_node_demands_nothing(work, root, sound_plan):
-    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "nodes": bind(root, "definition/sales/order")},
                body=noted("From the binding — definition/sales/invoice answers the billing "
                           "seam this task stops at."))
     assert problems_in(work, root) == []
 
 
 def test_a_name_matches_whole_never_inside_a_longer_one(work, root, sound_plan):
-    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "nodes": bind(root, "definition/sales/order")},
                body=noted("From the binding — the recount lives in "
                           "aggregate/sales/orders-archive today."))
     assert problems_in(work, root) == []
 
 
 def test_a_decision_line_alone_demands_nothing(work, root, sound_plan):
-    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "nodes": bind(root, "definition/sales/order")},
                body=noted("Decision, beyond the covers — stand: context/sales stays the "
                           "neighbouring claim this plan reads and never touches."))
     assert problems_in(work, root) == []
@@ -490,7 +493,7 @@ def test_an_epics_notes_are_not_a_tasks(work, root, sound_plan):
 
 
 def test_a_closed_plan_never_demands_a_decision(work, root, sound_plan):
-    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "nodes": bind(root, "definition/sales/order")},
                body=noted("From the binding — the recount is governed by context/sales, "
                           "which sits outside this epic's claim."))
     assert run(work, root).returncode == 1
@@ -506,8 +509,8 @@ def test_a_binding_to_a_node_the_base_does_not_hold_is_refused(work, root, sound
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/nothing"],
-        "base": base_pin_of(root)})
+        "nodes": [{"node": "definition/sales/nothing",
+                   "digest": "sha256:" + "0" * 64}]})
     done = run(work, root)
     assert done.returncode == 1
     assert "definition/sales/nothing" in done.stdout
@@ -519,21 +522,18 @@ def test_an_orphan_dependency_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order"),
         "depends_on": ["task/checkout/nothing"]})
     assert any("task/checkout/nothing, which the plan does not hold" in p
                for p in problems_in(work, root))
 
 
 def test_a_dependency_cycle_is_refused(work, root, sound_plan):
-    pin = base_pin_of(root)
     sound_plan("task/checkout/record-order", {
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": pin,
+        "nodes": bind(root, "definition/sales/order"),
         "depends_on": ["task/checkout/bill-order"]})
     problems = problems_in(work, root)
     assert any("closes a cycle" in p and "no startable task" in p for p in problems)
@@ -544,8 +544,7 @@ def test_a_self_dependency_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order"),
         "depends_on": ["task/checkout/record-order"]})
     assert any("names itself" in p for p in problems_in(work, root))
 
@@ -555,8 +554,7 @@ def test_a_task_under_no_epic_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root)})
+        "nodes": bind(root, "definition/sales/order")})
     assert any("epic/ghost does not exist" in p for p in problems_in(work, root))
 
 
@@ -567,8 +565,7 @@ def test_a_status_field_is_refused(work, root, sound_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": base_pin_of(root),
+        "nodes": bind(root, "definition/sales/order"),
         "status": "done"})
     assert any("status" in p for p in problems_in(work, root))
 
@@ -577,8 +574,7 @@ def test_a_task_binding_nothing_needs_a_rationale(work, root, sound_plan):
     task = {
         "title": "Wire the toolchain", "summary": "Scaffolding before any bound task.",
         "objective": "The repository builds and tests run.",
-        "criteria": ["The test runner exits zero on an empty suite."],
-        "base": base_pin_of(root)}
+        "criteria": ["The test runner exits zero on an empty suite."]}
     sound_plan("task/checkout/scaffold", task)
     assert any("'rationale' is a required property" in p for p in problems_in(work, root))
     sound_plan("task/checkout/scaffold", {
@@ -598,20 +594,17 @@ def test_a_string_where_a_list_belongs_reports_once_not_per_character(work, root
 
 
 def test_duplicate_references_are_refused(work, root, sound_plan):
-    pin = base_pin_of(root)
     sound_plan("task/checkout/record-order", {
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order", "definition/sales/order"],
-        "base": pin})
+        "nodes": bind(root, "definition/sales/order", "definition/sales/order")})
     assert any("non-unique" in p and "nodes" in p for p in problems_in(work, root))
     sound_plan("task/checkout/record-order", {
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted.",
         "criteria": ["A valid order is retrievable."],
-        "nodes": ["definition/sales/order"],
-        "base": pin,
+        "nodes": bind(root, "definition/sales/order"),
         "depends_on": ["task/checkout/bill-order", "task/checkout/bill-order"]})
     problems = problems_in(work, root)
     assert any("non-unique" in p and "depends_on" in p for p in problems)
@@ -658,8 +651,8 @@ def test_single_node_mode_ignores_unresolved_references(work, root, sound_plan, 
         "title": "Later", "summary": "Binds a node not yet in the base.",
         "objective": "Something demonstrable.",
         "criteria": ["Something falsifiable."],
-        "nodes": ["definition/sales/not-yet-written"],
-        "base": "sha256:" + "0" * 64})
+        "nodes": [{"node": "definition/sales/not-yet-written",
+                   "digest": "sha256:" + "0" * 64}]})
     done = run("--node", path, work, root)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Cross-node checks and base checks did not run" in done.stdout
@@ -668,7 +661,8 @@ def test_single_node_mode_ignores_unresolved_references(work, root, sound_plan, 
 def test_single_node_mode_still_refuses_bad_form(work, root, sound_plan, write_plan):
     path = write_plan("task/checkout/broken", {
         "title": "Broken", "summary": "Malformed.", "objective": "X.",
-        "criteria": ["Y."], "base": "not-a-pin"})
+        "criteria": ["Y."],
+        "nodes": [{"node": "definition/sales/order", "digest": "not-a-pin"}]})
     done = run("--node", path, work, root)
     assert done.returncode == 1
     assert "not-a-pin" in done.stdout

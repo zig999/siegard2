@@ -1,46 +1,38 @@
-"""What the base pin must catch, and about which task — the scenarios option C has to satisfy.
+"""What the base pin catches, and about which task.
 
-**The defect these tests describe.** A task's `base` pin is the SHA-256 of the whole derived
-`graph.json` text, and that index carries per node only `id, kind, file, context, title, summary`
-plus `aggregate`, `ddd` and the names of its open gap fields. It does not carry the node's content.
-Measured on this tree:
+**What this replaced.** A task's `base` pin was the SHA-256 of the whole derived `graph.json` text,
+and that index carried per node only `id, kind, file, context, title, summary` plus `aggregate`,
+`ddd` and the names of its open gap fields — no node content. Measured on this tree before the
+change: rewriting a bound node's attributes moved nothing and the task binding it validated clean,
+while changing that node's title staled every task in the plan, including one binding a different
+node. Silent on the case the pin exists for, loud on the case that reaches no task.
 
-    rewrote definition/sales/order's attributes (max_length 20 → 8, one field added)
-      → the pin did not move, and a task binding that node validated clean
-    changed the same node's title, and nothing else
-      → the pin moved, and BOTH tasks of the plan went stale, including the one
-        that binds a different node
-
-So the granularity is inverted twice over: silent on a change to what a bound node says, and loud on
-a change that reaches no task at all. `src/claude/CLAUDE.md` claims "each hop pinned by content, so a
-root that moved after the hop was made is visible rather than assumed", which is not true of the
-first case.
-
-**Option C, which these tests specify.** The derived index carries a `digest` per node — the SHA-256
-of that node's file — and a task's binding carries, per bound node, the digest it read:
+**What holds now.** The index carries a `digest` per node — the SHA-256 of that node's file — and a
+task's binding carries, per bound node, the digest it read:
 
     nodes:
       - node: definition/sales/order
         digest: sha256:<the digest the index listed>
 
-The aggregate `base` field goes away. A task is stale when a node **it binds** has moved, the
-refusal names that node, and a reader recomputes any digest by hand with
+A task stales when a node it binds moves, in any way; the refusal names that node; a base that grew
+elsewhere reaches no binding and says nothing; and any digest is recomputable by hand with
 `sha256sum <knowledge-root>/<node-id>.md`.
 
-**How this module behaves before and after.** Every test that requires C is marked
-`xfail(strict=True)`. Before C they fail and the suite stays green; the day C lands they pass, strict
-xfail turns an unexpected pass into a failure, and the markers have to come off in the same change
-that earns it. Nothing here can be left behind quietly.
+These were written before the change and every one of them failed, marked `xfail(strict=True)` so
+the suite stayed green while the specification sat in the tree. The markers came off in the change
+that earned them, which is what strict is for: an unexpected pass is a failure, so none could be
+left behind quietly.
 
-The tests that carry no marker are the opposite: they pass today and must still pass after C. They
-are the properties C must not cost — a bound node that was removed is still refused, a task that
-binds nothing still validates, a closed plan still validates without the base, and the derivation
-stays byte-stable.
+**Why these drive the CLI rather than the library.** The change altered `base_pin`, the arity of
+`cross_problems` and the shape `references` reads. A test importing those would have been rewritten
+by the change it existed to hold, which is how a guard ends up adjusted until it passes. What did
+not change is how a consumer runs the validators, so that is the surface used here.
 
-**Why these drive the CLI rather than the library.** C changes `base_pin`, the signature of
-`cross_problems` and the shape `references` reads. A test importing those would have to be rewritten
-by the same change it exists to hold, which is how a guard ends up adjusted until it passes. What C
-does not change is how a consumer runs the validators, so that is the surface used here.
+Four tests carry no scenario of their own and are the properties the change had to not cost: a
+removed bound node is still refused by its own check, a closed plan still validates with no base,
+the derivation stays byte-stable, and `--check` still reports a stale index — which matters more
+now, because a digest read out of a stale index would pin a version of a node that is not the one
+on disk, the exact failure a pin exists to prevent.
 """
 from __future__ import annotations
 
@@ -55,10 +47,6 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent
 GRAPH = REPO / "src/claude/bin/graph.py"
 PLAN = REPO / "src/claude/bin/plan.py"
-
-NEEDS_C = pytest.mark.xfail(strict=True, reason="option C is not implemented: the index carries no "
-                                               "per-node digest and the pin is one value over the "
-                                               "whole base")
 
 BASE_BODY = "## What it is\nProse for a reader.\n\n## Rules\nNone.\n"
 PLAN_BODY = "## What it is\nProse for a reader.\n\n## Notes\nNone.\n"
@@ -154,29 +142,16 @@ def target_plan(base: Path, tmp_path: Path) -> Path:
     return work
 
 
-@pytest.fixture
-def current_plan(base: Path, tmp_path: Path) -> Path:
-    """The plan as it is shaped today: bare identifiers, and one aggregate pin on every task,
-    computed the way the contract says a reader computes it by hand."""
-    work = tmp_path / "work"
-    scaffold(work)
-    pin = digest_of(base / "graph.json")
-    for tid, node in TASKS.items():
-        put(work, f"{tid}.md", task_front(tid.split("/")[-1],
-            f"nodes:\n  - {node}\nbase: {pin}\n"), PLAN_BODY)
-    return work
-
-
 # ------------------------------------------------------------------------------------ the canary
 
 
-def test_the_fixture_builds_a_sound_plan_today(base, current_plan):
-    """The canary. Every expected failure below is only evidence about C if the tree the tests
-    build is otherwise sound — an `xfail` over a malformed fixture reads exactly like an `xfail`
-    over a missing feature, and reports success either way."""
-    done = run(PLAN, str(current_plan), str(base))
+def test_the_fixture_builds_a_sound_plan(base, target_plan):
+    """The canary, kept: every refusal these tests read is only evidence about granularity if the
+    tree they build is otherwise sound. A malformed fixture produces refusals too, and they look
+    the same from the outside."""
+    done = run(PLAN, str(target_plan), str(base))
     assert done.returncode == 0, done.stdout + done.stderr
-    assert (current_plan / "plan.json").is_file()
+    assert (target_plan / "plan.json").is_file()
 
 
 # -------------------------------------------------------------------- what the index must carry
@@ -200,7 +175,6 @@ def test_each_digest_is_the_sha256_of_that_node_file(base):
 # ------------------------------------------------------------------------- the granularity table
 
 
-@NEEDS_C
 def test_a_change_to_what_a_bound_node_says_stales_the_task_that_binds_it(base, target_plan):
     """The defect, stated as the requirement. `max_length` 20 → 8 narrows what the domain admits;
     a task bound to that node was written against the wider field and nobody is told."""
@@ -211,7 +185,6 @@ def test_a_change_to_what_a_bound_node_says_stales_the_task_that_binds_it(base, 
     assert stale_tasks(target_plan, base) == {"task/checkout/record-order"}
 
 
-@NEEDS_C
 def test_a_change_to_a_bound_node_leaves_the_other_task_alone(base, target_plan):
     """The other half of the same event, and the half today gets wrong in the opposite direction:
     `apply-coupon` binds a node nothing touched, so it has nothing to re-read."""
@@ -225,7 +198,6 @@ def test_a_change_to_a_bound_node_leaves_the_other_task_alone(base, target_plan)
         "a task binding a node nothing touched was staled by another task's node moving"
 
 
-@NEEDS_C
 def test_a_new_unrelated_node_stales_nothing(base, target_plan):
     """A base that grew says nothing about a binding that already holds. Today this stales every
     task in the plan, which is the noise that makes a real stale easy to wave through.
@@ -241,7 +213,6 @@ def test_a_new_unrelated_node_stales_nothing(base, target_plan):
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-@NEEDS_C
 def test_the_refusal_names_the_node_that_moved(base, target_plan):
     """Diagnosability is criterion 1 in this repository's decision order, and two opaque hashes are
     not a diagnosis. The aggregate pin cannot name the node because the old per-node digests are
@@ -266,7 +237,6 @@ def test_the_refusal_names_the_node_that_moved(base, target_plan):
 # ------------------------------------------- the check C could disable without saying anything
 
 
-@NEEDS_C
 def test_a_record_still_cannot_pass_over_a_bound_node(base, target_plan, tmp_path):
     """The riskiest line in implementing C, held from the outside.
 
@@ -303,16 +273,15 @@ def test_a_record_still_cannot_pass_over_a_bound_node(base, target_plan, tmp_pat
 # ------------------------------------------------------------- what C must not cost (no marker)
 
 
-def test_a_bound_node_that_was_removed_is_still_refused(base, current_plan):
+def test_a_bound_node_that_was_removed_is_still_refused(base, target_plan):
     """The pin is not what catches a deleted node, and must not become what catches it: a binding
     that resolves to nothing is refused on its own, before any digest is compared."""
     (base / "definition/sales/coupon.md").unlink()
     assert run(GRAPH, str(base)).returncode == 0
-    said = refusals(current_plan, base)
+    said = refusals(target_plan, base)
     assert "definition/sales/coupon" in said and "does not hold" in said, said
 
 
-@NEEDS_C
 def test_a_task_that_binds_nothing_carries_no_digest_and_still_validates(base, tmp_path):
     """A task may be ungoverned by the base if it says why. Under C it carries no digest at all —
     there is nothing it read — and that must read as a valid task rather than as a missing pin.
@@ -334,13 +303,13 @@ def test_a_task_that_binds_nothing_carries_no_digest_and_still_validates(base, t
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-def test_a_closed_plan_still_validates_without_the_base(base, current_plan):
+def test_a_closed_plan_still_validates_without_the_base(base, target_plan):
     """Closed, a plan is history and every pin stands as the anchor naming what its binding read.
     C changes what a pin is; it must not change that a closed plan validates with no base at all,
     and with no complaint about pins it can no longer compare."""
-    (current_plan / "closure.md").write_text(
+    (target_plan / "closure.md").write_text(
         "The initiative is over.\nRead from intake/ask.md.\n", encoding="utf-8")
-    done = run(PLAN, str(current_plan))
+    done = run(PLAN, str(target_plan))
     assert done.returncode == 0, done.stdout + done.stderr
 
 

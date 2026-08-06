@@ -516,7 +516,7 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             f"not state; the criterion is quoted as the task states it, or it "
                             f"is a criterion nobody wrote")
 
-    bound = [n for n in listed(tfront, "nodes") if isinstance(n, str)]
+    bound = sorted(plan.bound_of(tfront))
     accounted = texts(listed(front, "nodes"), "node")
     for node_ref in bound:
         if node_ref not in accounted:
@@ -705,14 +705,13 @@ def load_plan(work: Path, knowledge: Path | None) -> tuple[dict[str, dict], list
     stale. A closed plan is read the way plan.py reads it: without opening today's base."""
     validator, allowed = plan.contract()
     if (work / plan.CLOSURE_FILE).is_file():
-        base_nodes, pin = None, None
+        base_nodes = None
     else:
         base_nodes, base_problems = plan.load_base(knowledge)
         if base_problems:
             return {}, base_problems
-        pin = plan.base_pin(base_nodes)
     nodes, problems = plan.collect(work, validator, allowed)
-    problems += plan.cross_problems(nodes, base_nodes, pin)
+    problems += plan.cross_problems(nodes, base_nodes)
     return nodes, sorted(set(problems))
 
 
@@ -987,7 +986,7 @@ def main() -> int:
     unproven = sum(len(n.get("unproven", [])) for n in delivery["nodes"])
     findings = sum(n.get("findings", 0) for n in delivery["nodes"])
     print(f"derived {target}: {len(delivery['nodes'])} node(s), "
-          f"{len(delivery['edges'])} edge(s), contract siegard-delivery/1")
+          f"{len(delivery['edges'])} edge(s), contract {delivery['contract_version']}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {done} of {tasks} task(s) hold a record; "
           f"{unmet} criterion(s) recorded unmet; {unproven} recorded unproven; "
           f"{findings} finding(s)"

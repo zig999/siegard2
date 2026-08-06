@@ -71,15 +71,18 @@ def sound_base(write):
 # ---------------------------------------------------------------- the plan side
 
 
-def base_pin_of(root: Path) -> str:
-    """The pin the base at `root` computes to right now, by the validator's own pipeline."""
+def digest_of(root: Path, nid: str) -> str:
+    """The digest one base node computes to right now — the value its entry carries in the index,
+    taken from the node's own file the way the derivation takes it."""
     import graph
-    import plan
-    validator, allowed, obligations = graph.contract()
-    nodes, problems = graph.collect(root, validator, allowed, obligations)
-    problems += graph.cross_problems(nodes)
-    assert problems == [], f"the fixture base does not hold together: {problems}"
-    return plan.base_pin(nodes)
+    return graph.digest_of(root / f"{nid}.md")
+
+
+def bind(root: Path, *nids: str) -> list[dict]:
+    """A task's binding: each base node with the digest of it as it now stands. Fixtures compute
+    this rather than carrying literals, so a fixture base that changes shape does not silently
+    leave every task in the suite pinned to a node nobody has."""
+    return [{"node": nid, "digest": digest_of(root, nid)} for nid in nids]
 
 
 @pytest.fixture
@@ -122,7 +125,6 @@ def sound_plan(root, gapped_base, write_plan):
     """The smallest plan every cross-node check passes, bound to the gapped fixture base:
     an inventory, one epic covering two base nodes, and a task for each — one of them
     triaging the seeded gap."""
-    pin = base_pin_of(root)
     write_plan("inventory/order-service", {
         "title": "Order service", "summary": "One layered service under src/.",
         "area": ["src/"],
@@ -137,15 +139,13 @@ def sound_plan(root, gapped_base, write_plan):
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted and retrievable by its order_number.",
         "criteria": ["Submitting a valid order returns its order_number."],
-        "nodes": ["definition/sales/order"],
-        "base": pin,
+        "nodes": bind(root, "definition/sales/order"),
     })
     write_plan("task/checkout/bill-order", {
         "title": "Bill order", "summary": "Raise the bill for a recorded order.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": ["definition/sales/invoice"],
-        "base": pin,
+        "nodes": bind(root, "definition/sales/invoice"),
         "depends_on": ["task/checkout/record-order"],
         "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
     })

@@ -536,7 +536,7 @@ def main() -> int:
     gaps = sum(len(n["front"].get("gaps") or []) for n in nodes.values())
     rationale = sum(1 for n in nodes.values() if n["front"].get("rationale"))
     print(f"derived {target}: {len(graph['nodes'])} node(s), {len(graph['edges'])} edge(s), "
-          f"contract siegard/1")
+          f"contract {graph['contract_version']}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {gaps} gap(s); "
           f"{rationale} node(s) with rationale")
     return 0

@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 import deliver
-from conftest import task_pin_of
+from conftest import bind, task_pin_of
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -225,8 +225,7 @@ def test_another_task_moving_leaves_a_record_alone(delivery, work, root, sound_d
         "title": "Ship order", "summary": "Ship it.",
         "objective": "A recorded order ships once.",
         "criteria": ["A recorded order ships once."],
-        "nodes": ["definition/sales/order"],
-        "base": _base_pin(work),
+        "nodes": bind(root, "definition/sales/order"),
     })
     assert problems_of(delivery, work, root) == []
 
@@ -598,7 +597,6 @@ def test_a_task_that_binds_nothing_can_be_delivered(delivery, work, root, sound_
         "title": "Scaffold", "summary": "Set the toolchain up.",
         "objective": "The project builds and its suite runs.",
         "criteria": ["The suite runs and reports."],
-        "base": json_front(work, "task/checkout/record-order")["base"],
         "rationale": "No base node governs the toolchain; the plan decided this cut itself."})
     write_delivery("implementation/checkout/scaffold", {
         "title": "Scaffold", "summary": "The toolchain this project builds with.",
@@ -914,7 +912,3 @@ def json_front(delivery: Path, did: str) -> dict:
     text = (delivery / f"{did}.md").read_text(encoding="utf-8")
     return yaml.safe_load(re.match(r"^---\n(.*?)\n---\n", text, re.S).group(1))
 
-
-def _base_pin(work: Path) -> str:
-    """The base pin the plan's existing tasks already carry, reused for a task added mid-test."""
-    return json_front(work, "task/checkout/record-order")["base"]

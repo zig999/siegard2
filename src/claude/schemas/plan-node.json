@@ -95,12 +95,8 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/baseNodeRef" },
-      "description": "The base nodes that govern this task, by identifier. This is the binding: the executor reads exactly these, and every entry sits inside the epic's `covers` — a task needing more grows the claim or moves. A task that binds nothing is ungoverned by the base and must say why in `rationale`."
-    },
-    "base": {
-      "$ref": "#/$defs/pin",
-      "description": "The knowledge base this binding read, pinned by content: the SHA-256 of the base's derived graph.json text, computable by hand as `sha256sum <knowledge-root>/graph.json`. A pin the validator finds diverging says the base moved after the binding — the task is re-bound, or the pin restated deliberately."
+      "items": { "$ref": "#/$defs/boundNode" },
+      "description": "The base nodes that govern this task, each with the digest of the node as this binding read it. This is the binding: the executor reads exactly these, and every entry sits inside the epic's `covers` — a task needing more grows the claim or moves. A task that binds nothing is ungoverned by the base and must say why in `rationale`; it carries no digest, because it read nothing."
     },
     "unresolved": {
       "type": "array",
@@ -173,9 +169,9 @@
     {
       "if": { "properties": { "kind": { "const": "task" } }, "required": ["kind"] },
       "then": {
-        "required": ["objective", "criteria", "base"],
+        "required": ["objective", "criteria"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "rationale", "sources", "objective", "criteria", "depends_on", "nodes", "base", "unresolved", "waived"]
+          "enum": ["kind", "title", "summary", "rationale", "sources", "objective", "criteria", "depends_on", "nodes", "unresolved", "waived"]
         },
         "allOf": [
           {
@@ -194,11 +190,10 @@
             ],
             "depends_on": ["task/checkout/order-schema"],
             "nodes": [
-              "definition/sales/order",
-              "rule/sales/order-total-positive",
-              "lifecycle/sales/order"
+              { "node": "definition/sales/order", "digest": "sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c" },
+              { "node": "rule/sales/order-total-positive", "digest": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef" },
+              { "node": "lifecycle/sales/order", "digest": "sha256:7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730" }
             ],
-            "base": "sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c",
             "unresolved": [
               { "gap": "definition/sales/order#attributes.currency" },
               { "question": "The scope does not say whether submission is idempotent per order_number." }
@@ -222,6 +217,19 @@
       "type": "string",
       "pattern": "^(context/[a-z0-9]+(-[a-z0-9]+)*|(aggregate|definition|rule|lifecycle|interface|process)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$",
       "description": "A knowledge-base node, by identifier — the node's file path under the knowledge root, without `.md`."
+    },
+    "boundNode": {
+      "type": "object",
+      "required": ["node", "digest"],
+      "additionalProperties": false,
+      "description": "One node of the binding: which base node governs this task, and which version of it the binding read. The pair sits in one entry rather than in two parallel lists, so a node and its digest cannot come apart. A digest the validator finds diverging names this node and no other — that is the point of carrying it per node instead of one value over the whole base, which said only that something somewhere had moved.",
+      "properties": {
+        "node": { "$ref": "#/$defs/baseNodeRef" },
+        "digest": {
+          "$ref": "#/$defs/pin",
+          "description": "The node as this binding read it, taken from the `digest` its entry carries in the base's derived graph.json and computable by hand as `sha256sum <knowledge-root>/<node>.md`. Diverging, it says this node moved after the binding — the task is re-bound, or the digest restated deliberately. Two entries naming one node are refused however their digests differ: a binding says once which version it read."
+        }
+      }
     },
     "taskRef": {
       "type": "string",

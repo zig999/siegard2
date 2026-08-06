@@ -4,9 +4,9 @@
 Every term below is already defined, once, in a schema this framework ships — almost always in the
 `description` of the field that carries it. The problem this solves is not that the definitions are
 missing; it is that they sit in files only an agent opens, while the same words come back at a human
-in the validators' refusals: `a bound node passed over in silence`, `base pin ... is not the base as
-it stands`, `a covered node reaches a task or a stated why`. Three terms in one line, each defined in
-a schema nobody reading that line has open.
+in the validators' refusals: `a bound node passed over in silence`, `is pinned at ... and stands at
+...`, `a covered node reaches a task or a stated why`. Three terms in one line, each defined in a
+schema nobody reading that line has open.
 
 **This script holds pointers, never text.** A term maps to a file and a JSON pointer, and what gets
 printed is read out of the schema at that pointer. Nothing here paraphrases a definition, and there is
@@ -25,8 +25,8 @@ absence a reader discovers. Closing an entry means writing the definition into a
 the term into the table above it; it does not mean writing a definition here.
 
 **One term, one entry, even where the word has two senses.** Where a word means two different things
-in two roots — `covers` over base nodes and `covers` over a criterion, `base` the knowledge root and
-`base` the pin field — each sense is its own row, named apart. A single row for a word with two
+in two places — `covers` over base nodes and `covers` over a criterion, `digest` on the index and
+`digest` on a binding — each sense is its own row, named apart. A single row for a word with two
 meanings is the collision left in place with a definition on top of it.
 
 Declared dependencies: none beyond the standard library.
@@ -52,7 +52,6 @@ SCHEMAS = Path(__file__).resolve().parent.parent / "schemas"
 # Never a definition. Add a term by pointing at where a contract already states it; where no
 # contract states it, the term belongs in OPEN below until one does.
 TERMS: dict[str, tuple[str, str]] = {
-    "base (the pin on a task)": ("plan-node.json", "/properties/base"),
     "base node": ("node.json", ""),
     "binding": ("plan-node.json", "/properties/nodes"),
     "cause": ("delivery-node.json", "/$defs/finding/properties/cause"),
@@ -63,6 +62,8 @@ TERMS: dict[str, tuple[str, str]] = {
     "ddd": ("node.json", "/properties/ddd"),
     "decided_by": ("standard.json", "/$defs/rule/properties/decided_by"),
     "delivery node": ("delivery-node.json", ""),
+    "digest (on a binding)": ("plan-node.json", "/$defs/boundNode/properties/digest"),
+    "digest (on the index)": ("graph.json", "/properties/nodes/items/properties/digest"),
     "delivery.json": ("delivery.json", ""),
     "gap": ("node.json", "/properties/gaps"),
     "gap.field": ("node.json", "/$defs/gap/properties/field"),
@@ -85,10 +86,9 @@ TERMS: dict[str, tuple[str, str]] = {
 OPEN: dict[str, str] = {
     "base (the knowledge root)": "the root the analysis writes into and every plan binds to, defined "
                                  "as an input in each skill's required inputs and in CLAUDE.md's "
-                                 "`What the base is`, and by no contract. The same word is a task's "
-                                 "pin field, which a contract does define — see `base (the pin on a "
-                                 "task)` above; one paragraph of skills/plan-work/SKILL.md uses both "
-                                 "senses.",
+                                 "`What the base is`, and by no contract. It no longer collides with "
+                                 "a field: the task-level `base` pin was replaced by a digest per "
+                                 "bound node, so the word now names one thing.",
     "bound": "used of a base node a task's `nodes` names, in the validators' refusals and in every "
              "skill; inferable only from `binding`, and never stated.",
     "construct": "four unrelated senses, none defined: the DDD construct (`ddd`), an implementation "

@@ -15,20 +15,22 @@ every open gap on every bound node is unresolved or waived (never silently ignor
 entry answers a gap the base still holds on a node the task binds, an epic's covered nodes are
 each bound by a task or declared uncovered (never neither, never both), a task's `## Notes`
 naming a base node outside its epic's covers carries the caller's decision line beside it
-(never silence), and each task's `base` pin matches the base as it stands. `intake/` under the work root holds the material the planning
-read: kept for `sources` to point at, never validated.
+(never silence), and each bound node's digest matches that node as it stands. `intake/` under the
+work root holds the material the planning read: kept for `sources` to point at, never validated.
 
 **The base is read through graph.py's own pipeline, never through its graph.json** — an index
 this script did not just derive could be stale, and a plan validated against a stale index
 reports a soundness nobody has. A base that does not hold together is a refusal to run: fix it
-with graph.py first. The pin each task carries is the SHA-256 of the graph.json text a sound
-base derives to, so `sha256sum <knowledge-root>/graph.json` computes the same value by hand.
+with graph.py first. A task pins the base per node, not in one value: each entry of its binding
+carries the digest of that node as the binding read it, taken from the index and computable by hand
+as `sha256sum <knowledge-root>/<node>.md`. So a task stales when a node it binds moves, and the
+refusal names that node — a base that grew elsewhere reaches no binding and says nothing.
 
 **A `closure.md` at the work root marks the plan closed.** A closed plan is history: every
 structural check still runs — corrupted history is refused — but the base is never touched,
 because history must stay checkable after the base moves on, breaks, or disappears. Each
-task's pin stops being a currency constraint and stands as the historical anchor naming the
-base the binding read. The marker itself is prose for the reviewer, kept like `intake/` and
+task's digests stop being a currency constraint and stand as the historical anchor naming the
+nodes the binding read, and the versions of them it read. The marker itself is prose for the reviewer, kept like `intake/` and
 never validated as a node; the knowledge root becomes optional, and when given it is ignored.
 
 **plan.json is derived, never edited.** It is refused entirely while the plan has problems: an
@@ -56,7 +58,6 @@ Exit:   0 sound (and, with --check, current)
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import sys
@@ -128,6 +129,24 @@ def triage_of(front: dict, field: str) -> set[str]:
     """The gap references one triage field carries, read defensively."""
     return {entry["gap"] for entry in listed(front, field)
             if isinstance(entry, dict) and isinstance(entry.get("gap"), str)}
+
+
+def binding_of(front: dict) -> list[tuple[str, str]]:
+    """The binding as (node, digest) pairs, read defensively — this also runs over nodes the
+    schema has already reported. Every read of a task's binding goes through here rather than
+    walking `nodes` in place: an entry shape the caller filters for itself is a check that
+    silently sees nothing the day the shape changes."""
+    pairs = []
+    for entry in listed(front, "nodes"):
+        if isinstance(entry, dict) and isinstance(entry.get("node"), str):
+            digest = entry.get("digest")
+            pairs.append((entry["node"], digest if isinstance(digest, str) else ""))
+    return pairs
+
+
+def bound_of(front: dict) -> set[str]:
+    """Just the identifiers the binding names."""
+    return {node for node, _ in binding_of(front)}
 
 
 def node_problems(front, kind: str, validator, allowed) -> list[str]:
@@ -209,7 +228,7 @@ def references(front: dict, kind: str) -> list[tuple[str, str, str]]:
     if kind == "task":
         for index, target in enumerate(listed(front, "depends_on")):
             add(target, "depends_on", f"depends_on[{index}]")
-        for index, target in enumerate(listed(front, "nodes")):
+        for index, (target, _) in enumerate(binding_of(front)):
             add(target, "binds", f"nodes[{index}]")
     if kind == "epic":
         for index, target in enumerate(listed(front, "covers")):
@@ -259,13 +278,20 @@ def gap_fields_of(base_node: dict) -> set[str]:
             if isinstance(g, dict) and isinstance(g.get("field"), str)}
 
 
-def task_problems(nid: str, front: dict, base_nodes: dict[str, dict] | None,
-                  pin: str | None) -> list[str]:
-    """One task against the base: the binding resolves, the triage is total and honest, and the
-    pin matches the base as it stands. A closed plan passes base_nodes=None — its base is
-    history's, not today's — so only the checks internal to the plan run."""
+def task_problems(nid: str, front: dict, base_nodes: dict[str, dict] | None) -> list[str]:
+    """One task against the base: the binding resolves, the triage is total and honest, and each
+    bound node's digest matches that node as it stands. A closed plan passes base_nodes=None — its
+    base is history's, not today's — so only the checks internal to the plan run."""
     problems: list[str] = []
-    bound = {t for t in listed(front, "nodes") if isinstance(t, str)}
+    bound = bound_of(front)
+
+    seen: set[str] = set()
+    for index, (node_ref, _) in enumerate(binding_of(front)):
+        if node_ref in seen:
+            problems.append(f"{nid}: nodes[{index}] names {node_ref}, which the binding already "
+                            f"names; a binding says once which version of a node it read, and "
+                            f"two entries under one node cannot both be that answer")
+        seen.add(node_ref)
 
     for field in ("unresolved", "waived"):
         for index, entry in enumerate(listed(front, field)):
@@ -299,11 +325,15 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict] | None,
                                 f"the task neither lists `{ref}` as unresolved nor waives it; "
                                 f"a gap ignored in silence is the failure this check refuses")
 
-    declared = front.get("base")
-    if isinstance(declared, str) and declared != pin:
-        problems.append(f"{nid}: base pin {declared} is not the base as it stands ({pin}); "
-                        f"the binding read a base that has since moved — re-bind the task, "
-                        f"or restate the pin deliberately")
+    for node_ref, digest in binding_of(front):
+        if node_ref not in base_nodes:
+            continue  # already reported as a broken binding
+        standing = base_nodes[node_ref]["digest"]
+        if digest and digest != standing:
+            problems.append(f"{nid}: {node_ref} is pinned at {digest} and stands at {standing}; "
+                            f"the binding read this node before it moved — re-bind the task "
+                            f"against the node as it now reads, or restate the digest "
+                            f"deliberately once the change is known not to bear on it")
     return problems
 
 
@@ -321,9 +351,7 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
     for tid in sorted(nodes):
         if nodes[tid]["kind"] != "task" or nodes[tid]["epic"] != slug:
             continue
-        for index, target in enumerate(listed(nodes[tid]["front"], "nodes")):
-            if not isinstance(target, str):
-                continue  # the schema already reported the shape
+        for index, (target, _) in enumerate(binding_of(nodes[tid]["front"])):
             bound_below.add(target)
             if target not in covers:
                 problems.append(f"{tid}: nodes[{index}] binds {target}, which {nid} does not "
@@ -356,8 +384,7 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
     return problems
 
 
-def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict] | None,
-                   pin: str | None) -> list[str]:
+def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict] | None) -> list[str]:
     """The rules that need to see more than one node at once — or the base. With
     base_nodes=None the plan is closed: every internal rule still runs, and every rule that
     would open today's base is skipped, because a closed plan answers to the base it pinned."""
@@ -373,7 +400,7 @@ def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict] | None,
                     and target not in base_nodes):
                 problems.append(f"{nid}: {at} names {target}, which the base does not hold")
         if node["kind"] == "task":
-            problems.extend(task_problems(nid, front, base_nodes, pin))
+            problems.extend(task_problems(nid, front, base_nodes))
             epic_node = nodes.get(f"epic/{node['epic']}")
             if base_nodes is not None and epic_node is not None:
                 covers = {t for t in listed(epic_node["front"], "covers")
@@ -431,13 +458,6 @@ def load_base(root: Path) -> tuple[dict[str, dict], list[str]]:
     return nodes, sorted(set(problems + graph.cross_problems(nodes)))
 
 
-def base_pin(base_nodes: dict[str, dict]) -> str:
-    """The pin of the base as it stands: the SHA-256 of the graph.json text the base derives
-    to, so `sha256sum <knowledge-root>/graph.json` computes the same value by hand."""
-    text = json.dumps(graph.derive(base_nodes), indent=2, ensure_ascii=False) + "\n"
-    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
 def derive(nodes: dict[str, dict]) -> dict:
     """The plan graph a sound plan derives to. Sorted throughout, so identical input is
     byte-identical output."""
@@ -453,8 +473,6 @@ def derive(nodes: dict[str, dict]) -> dict:
         }
         if node["kind"] == "task":
             entry["epic"] = node["epic"]
-            if isinstance(front.get("base"), str):
-                entry["base"] = front["base"]
             unresolved = sorted(triage_of(front, "unresolved"))
             if unresolved:
                 entry["unresolved"] = unresolved
@@ -466,7 +484,7 @@ def derive(nodes: dict[str, dict]) -> dict:
         for target, edge_kind, at in references(front, node["kind"]):
             out_edges.append({"from": nid, "to": target, "kind": edge_kind, "at": at})
     out_edges.sort(key=lambda e: (e["from"], e["at"], e["to"]))
-    return {"contract_version": "siegard-plan/1", "nodes": out_nodes, "edges": out_edges}
+    return {"contract_version": "siegard-plan/2", "nodes": out_nodes, "edges": out_edges}
 
 
 def check_single(root: Path, named: str, validator, allowed) -> int:
@@ -581,7 +599,7 @@ def main() -> int:
         return check_single(work, single, validator, allowed)
 
     if closed:
-        base_nodes, pin = None, None  # a closed plan never opens today's base
+        base_nodes = None  # a closed plan never opens today's base
     else:
         base_nodes, base_problems = load_base(knowledge)
         if base_problems:
@@ -591,10 +609,9 @@ def main() -> int:
                   f"({len(base_problems)} problem(s) above); fix it with graph.py before "
                   f"planning over it", file=sys.stderr)
             return CANNOT_RUN
-        pin = base_pin(base_nodes)
 
     nodes, problems = collect(work, validator, allowed)
-    problems += cross_problems(nodes, base_nodes, pin)
+    problems += cross_problems(nodes, base_nodes)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)
@@ -638,7 +655,7 @@ def main() -> int:
                     if isinstance(e, dict) and isinstance(e.get("question"), str))
     waived = sum(len(triage_of(n["front"], "waived")) for n in tasks)
     print(f"derived {target}: {len(plan['nodes'])} node(s), {len(plan['edges'])} edge(s), "
-          f"contract siegard-plan/1")
+          f"contract {plan['contract_version']}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {unresolved} unresolved gap citation(s) "
           f"({unique} unique); {questions} open question(s); {waived} waived"
           + ("; closed" if closed else ""))
