@@ -47,7 +47,16 @@ for a decision at all. The answer is produced in the base, through `/analyse-dom
 task is re-bound afterwards. The validator refuses such a record too, but by then the source is
 written — the point of stopping here is that nothing was.
 
-This check is why writing source is separated from planning. An implementer that met the gap
+Read the task's `## Notes` for the same reason, and **stop** on any entry opening
+`BLOCKING, from the binding —`. That class is the binding's finding that the objective, or a
+criterion, cannot be demonstrated as written without contradicting or exceeding the base. Where the
+base is silent you would be inventing a fact; here you would be overruling one it holds, which is
+worse and which reads identically in the source afterwards — nothing in a file says whether the
+business decided a value or somebody wrote past it. Name the entries, leave the tree as you found
+it, and return no record. The settlement is the human's, through the scope or through the base, and
+the task re-binds before anything is written against it.
+
+Both checks are why writing source is separated from planning. An implementer that met the gap
 halfway through a file would be most of the way to filling it.
 
 ## The judgment
@@ -135,7 +144,8 @@ not part of the return. Omit the pin: the caller stamps it, the way a plan's cal
 the base pin on a task.
 
 If you cannot write the source — an input is absent, a bound node does not exist, the task
-leaves something unresolved, or the base is silent on a fact the work needs — say so plainly
+leaves something unresolved, its notes carry a blocking entry, or the base is silent on a fact
+the work needs — say so plainly
 in one sentence, leave the tree as you found it, and return no mapping. Source written and then
 abandoned halfway is worse than none: where you have already written files and must stop, say
 which ones, so the caller reports a failure over a tree somebody has to look at.

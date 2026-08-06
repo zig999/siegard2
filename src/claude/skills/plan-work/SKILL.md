@@ -244,7 +244,21 @@ Report, in this order:
   it belongs;
 - every node carrying `rationale`, by identifier;
 - which steps, if any, ran inline instead of in a subagent, and why;
-- the validator's final output, verbatim.
+- the validator's final output, verbatim;
+- the handoff: the `/implement-task` invocation ready to paste — this work root and this
+  knowledge root named by path as just validated, one named slot for each input only the human
+  decides (the target source root, the delivery root, and the project's standard where there
+  is one), and the task, which is a slot as well and the one that matters: one invocation
+  carries one task, and choosing it is choosing what gets built. What the handoff offers in
+  its place is where the deliverable set is read from, as a command rather than as a list —
+  `deliver.py --outstanding <delivery-root> <work-root> <knowledge-root>` names, per task,
+  what has no record, what the base leaves unresolved and what it waits on; with no delivery
+  root yet, `plan.py --unresolved <work-root> <knowledge-root>` names every task that is not
+  deliverable, and the rest are. A set restated here instead is a set that was true when it
+  was printed. A task whose `## Notes` still holds a `BLOCKING, from the binding —` entry is
+  not among the deliverable while that note stands — `/implement-task` stops on one — and the
+  notes this report already repeated are where those tasks are named. The handoff offers the
+  next step and never takes it: filling the slots and invoking are the human's.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 

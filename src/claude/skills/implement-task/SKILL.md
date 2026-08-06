@@ -128,7 +128,27 @@ Two of its lines are refusals, and each is settled before anything is written:
   delivered first — that is what the plan meant by declaring it — and the records are how that is
   known, because no status field exists to ask.
 
-A third fact the report does not carry, because you can see it directly: **a record already at the
+A third refusal is not in that report, because the plan's index is not what holds it — the task file
+does. So open the task file here, before the copying below writes anything, and read its `## Notes`:
+**an entry opening `BLOCKING, from the binding —` is a stop.** Quote the entries whole. That class is
+the binder's finding that the objective, or a criterion, cannot be demonstrated
+as written without contradicting or exceeding the base, and a task that arrives here still carrying
+one is the scope-origin kind — the other kind is re-cut and re-bound before the task is ever
+written. What the plan said of it, in as many words, is that only the human settles it: through the
+scope, re-planned in `/plan-work`, or through `/analyse-domain` producing the fact the base lacks,
+after which the task re-binds and the note is gone. Writing source in the meantime encodes the
+contradiction as though the business had decided it — the same failure an unresolved entry names,
+and the worse half of it, because here the base is not silent but overruled. The class is the
+binder's judgment and not yours to overrule: a note you disagree with is still a stop, and the
+disagreement goes in what you report.
+
+This stop is the skill's and not the validator's. `deliver.py` refuses a record over an unresolved
+entry and says nothing about notes, deliberately: a blocking note is cleared by amending the scope
+or the base, and by the time either lands the task has re-bound and the note is gone — so a second
+gate in the validator would only ever fire on a state this stop already refuses. What the plan
+records, the code cannot embody; those are different acts and they get different answers.
+
+A fourth fact the report does not carry, because you can see it directly: **a record already at the
 path this task computes to.** That is a re-delivery, not a stop, and the report says so. Both
 records are rewritten whole rather than amended — a record amended across two acts of writing
 describes neither, and the proof's pin on the implementation refuses the pair if you rewrite one
@@ -155,7 +175,7 @@ name this copy differently. Overwriting would leave that record pinning text it 
 validator would refuse a record that was honest. A second rulebook is a second name, the way a
 second run is.
 
-Then read the task file itself, and the plan's inventory nodes. `plan.json` lists every node the
+Then read the rest of the task file — the notes were read above — and the plan's inventory nodes. `plan.json` lists every node the
 plan holds with its kind and its file, so the inventory is found there rather than by walking the
 root; pass on the ones whose `area` reaches where this task lands, and leave the rest — an
 inventory surveyed for another territory carries conventions this task has no business following.
@@ -275,6 +295,9 @@ belongs to a person.
   task does not reach is deferred in the record, never changed.
 - Write source over a task the base leaves unresolved, or supply the fact yourself. A fact is
   produced in the base, through `/analyse-domain`, never in code, a comment, a test or a record.
+- Write source over a task whose `## Notes` still carries a `BLOCKING, from the binding —` entry,
+  or settle the conflict it names. The class is the binder's, the settlement is the human's, and
+  both ways out of it run through another entry point.
 - Record a status, a readiness, an approval or a progress figure — those fields do not exist, and
   prose does not get to hold what the contract refused.
 - Judge whether the work is correct, done well enough, or fit to merge. Nothing here carries a

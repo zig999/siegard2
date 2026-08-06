@@ -70,7 +70,13 @@ the defect, and afterwards nobody can tell the difference.
   you owe.** Each names an implementation that satisfies every criterion as written and that
   the base refuses — the binding went and found which accident the criteria let through.
   Write the test that fails over exactly the implementation the entry names: its `proves` is
-  the entry, and its `fails_when` is that implementation.
+  the entry, and its `fails_when` is that implementation. Where an entry names no such
+  implementation — it observes that a clause of a bound node reaches no criterion, or that what
+  would settle it sits outside what the task binds — you owe no test, and you do not invent one.
+  Naming the implementation the binding declined to name would put your guess where its finding
+  belongs, and the test would then prove the guess. Record the entry in `untested`, saying why
+  nothing excludes it: that absence is a finding about the binding, and it is the one thing a
+  reader cannot recover from the entry itself.
 - **A criterion the base does not back is still tested as the criterion states it.** Where you
   believe the implementation is wrong, write the test that states what the criterion requires
   and record the disagreement. Do not change the implementation, and do not write a test to
@@ -88,7 +94,8 @@ the defect, and afterwards nobody can tell the difference.
    test.
 3. Write a test for each inference the record states, so a silent choice becomes a stated one.
 4. Write a test for each `UNDERDETERMINED, from the binding —` entry of the task's `## Notes`,
-   failing over exactly the implementation it names.
+   failing over exactly the implementation it names; an entry that names none goes to `untested`
+   instead.
 5. Work through the edge cases, and account for every one.
 6. Write the record last, from the tests that exist rather than the ones you meant to write.
 
