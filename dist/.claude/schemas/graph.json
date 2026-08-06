@@ -12,7 +12,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "kind", "file", "context", "title", "summary"],
+        "required": ["id", "kind", "file", "context", "title", "summary", "digest"],
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -33,6 +33,11 @@
           },
           "title": { "type": "string" },
           "summary": { "type": "string" },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "Content identity: the SHA-256 of this node's file, computable by hand as `sha256sum <knowledge-root>/<id>.md`. A task's binding carries the digest of each node it read, and this is where it reads them from — so what a binding pinned is the node's own bytes, not the shape of the index around it. Whole file, frontmatter and body: a digest over the frontmatter alone would miss what `## Rules` points at and could not be recomputed with one command."
+          },
           "aggregate": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"

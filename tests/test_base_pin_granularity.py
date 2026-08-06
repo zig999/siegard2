@@ -182,14 +182,12 @@ def test_the_fixture_builds_a_sound_plan_today(base, current_plan):
 # -------------------------------------------------------------------- what the index must carry
 
 
-@NEEDS_C
 def test_the_index_carries_a_digest_for_every_node(base):
     index = json.loads((base / "graph.json").read_text(encoding="utf-8"))
     missing = [entry["id"] for entry in index["nodes"] if "digest" not in entry]
     assert missing == [], f"the index lists no digest for {missing}"
 
 
-@NEEDS_C
 def test_each_digest_is_the_sha256_of_that_node_file(base):
     """Recomputable by hand, which is the whole reason a pin is a hash: a value only the tool can
     verify is a claim, and the point of a pin is to be a verification."""

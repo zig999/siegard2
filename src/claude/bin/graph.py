@@ -40,6 +40,7 @@ Exit:   0 sound (and, with --check, current)
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -333,6 +334,16 @@ def cross_problems(nodes: dict[str, dict]) -> list[str]:
     return problems
 
 
+def digest_of(path: Path) -> str:
+    """The content identity of one node: the SHA-256 of its file's bytes, so
+    `sha256sum <knowledge-root>/<id>.md` computes the same value by hand.
+
+    The whole file, frontmatter and body together. A digest over the frontmatter alone would miss
+    what `## Rules` points at and could not be recomputed with one command, and a pin nobody but
+    this script can verify is a claim rather than a verification."""
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def collect(root: Path, validator, allowed, obligations) -> tuple[dict[str, dict], list[str]]:
     """Every node in the base, and everything wrong with the files as files."""
     nodes: dict[str, dict] = {}
@@ -363,7 +374,8 @@ def collect(root: Path, validator, allowed, obligations) -> tuple[dict[str, dict
                                                           allowed, obligations)]
         problems += [f"{nid}: {p}" for p in body_problems(text[match.end():])]
         if isinstance(front, dict):
-            nodes[nid] = {"front": front, "kind": kind, "context": context}
+            nodes[nid] = {"front": front, "kind": kind, "context": context,
+                          "digest": digest_of(path)}
     return nodes, problems
 
 
@@ -380,6 +392,7 @@ def derive(nodes: dict[str, dict]) -> dict:
             "context": node["context"],
             "title": front.get("title", ""),
             "summary": front.get("summary", ""),
+            "digest": node["digest"],
         }
         if isinstance(front.get("aggregate"), str):
             entry["aggregate"] = front["aggregate"]
