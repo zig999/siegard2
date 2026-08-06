@@ -238,7 +238,9 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
         if counted != recorded:
             problems.append(f"failures_counted is {counted} and the failures pass recorded "
                             f"{recorded} finding(s); the two disagreeing is how a failure goes "
-                            f"unexamined while the record still looks complete")
+                            f"unexamined while the record still looks complete — read the run "
+                            f"again and find out which is wrong, never lower the count or drop "
+                            f"a finding to make the two agree")
     return problems
 
 
@@ -520,7 +522,9 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
         if node_ref not in accounted:
             problems.append(f"{nid}: the task binds {node_ref}, and this record does not say "
                             f"how the source answers to it; a bound node passed over in "
-                            f"silence is the base going unanswered in code")
+                            f"silence is the base going unanswered in code — answer it in "
+                            f"`nodes`, or re-bind the task through /plan-work if it does not "
+                            f"govern this work")
     for node_ref in accounted:
         if node_ref not in bound:
             problems.append(f"{nid}: nodes answers for {node_ref}, which the task does not "

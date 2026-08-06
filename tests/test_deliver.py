@@ -147,7 +147,11 @@ def test_a_bound_node_the_record_passes_over(delivery, work, root, sound_deliver
     front = json_front(delivery, "implementation/checkout/record-order")
     front["nodes"] = []
     write_delivery("implementation/checkout/record-order", front)
-    said(problems_of(delivery, work, root), "the base going unanswered in code")
+    problems = problems_of(delivery, work, root)
+    said(problems, "the base going unanswered in code")
+    # The corrective act, not only the cost: two repairs are legitimate here and they live in
+    # different roots, so a message naming neither leaves the reader to guess which.
+    said(problems, "answer it in `nodes`, or re-bind the task through /plan-work")
 
 
 def test_a_node_the_task_never_bound(delivery, work, root, sound_delivery, write_delivery):
@@ -331,8 +335,11 @@ def test_a_count_that_disagrees_with_the_findings(delivery, work, root, sound_de
                           "evidence": "expected 409, got 500",
                           "cost": "the refusal answers the wrong way"}]
     write_delivery("review/first", front)
-    said(problems_of(delivery, work, root),
-         "how a failure goes unexamined while the record still looks complete")
+    problems = problems_of(delivery, work, root)
+    said(problems, "how a failure goes unexamined while the record still looks complete")
+    # The obvious repair here is the forbidden one, so the message names it as forbidden rather
+    # than leaving the reader to reach for the count.
+    said(problems, "never lower the count or drop a finding to make the two agree")
 
 
 def test_a_pass_that_ran_and_recorded_nothing_of_what_it_read(delivery, work, root,

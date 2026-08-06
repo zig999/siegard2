@@ -31,6 +31,9 @@ A missing input is a stop, not a default:
    it; without the base there is nothing to hold the source to.
 6. **the target source root** — where the code and the tests sit.
 
+Absent inputs stop once, together: one stop naming everything missing, so the human answers once —
+never a question at a time.
+
 Two optional inputs, and each decides whether one pass runs.
 
 **The commands to run** — each a name and a command, as `${CLAUDE_PLUGIN_ROOT}/bin/run.py` takes
@@ -292,7 +295,14 @@ Report, in this order:
 - what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;
-- the validator's final output, verbatim.
+- the validator's final output, verbatim;
+- where the repairs live, as routes and not as a reading of the findings: source, or a criterion
+  recorded unmet, is answered by `/implement-task` over the same task; a fact stated in source that
+  no bound node holds is produced in the base by `/analyse-domain` and reaches the task through
+  `/plan-work`; a rule of the standard that seems wrong is changed by whoever owns the registry.
+  This skill hands nothing forward as an invocation, and the reason is the one stated above: which
+  route any finding deserves — or whether it deserves one at all — is the decision this pass does
+  not make. Naming where a repair would go is not choosing to make it.
 
 Then stop. Do not compute a verdict, rank the findings, decide what blocks, open work from them,
 or fix any of them. A disagreement a proof record holds stays a disagreement: settling it here

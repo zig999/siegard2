@@ -235,7 +235,8 @@
     },
     "pin": {
       "type": "string",
-      "pattern": "^sha256:[0-9a-f]{64}$"
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Content identity: the SHA-256 of the bytes of whatever artifact the field carrying it names, written `sha256:<hexdigest>` and computable by hand with `sha256sum`. A pin records which version of that artifact a judgment read, so an artifact that moved afterwards is visible to the validator rather than assumed unchanged. The field names the artifact; this is what the value means."
     },
     "module": {
       "type": "object",

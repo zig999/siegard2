@@ -341,7 +341,12 @@ def test_a_triage_entry_on_an_unbound_node_is_refused(work, root, sound_plan):
         "base": base_pin_of(root),
         "waived": [{"gap": "definition/sales/invoice#attributes",
                     "why": "Not this task's node at all."}]})
-    assert any("`nodes` does not bind" in p for p in problems_in(work, root))
+    reported = problems_in(work, root)
+    assert any("`nodes` does not bind" in p for p in reported)
+    # Which of the two repairs this wants depends on whether the node governs the task, so the
+    # message offers both instead of implying the triage was the mistake.
+    assert any("bind definition/sales/invoice if it governs this task, or drop the entry" in p
+               for p in reported)
 
 
 def test_a_gap_both_unresolved_and_waived_is_refused(work, root, sound_plan):
@@ -373,8 +378,12 @@ def test_a_covered_node_no_task_binds_is_refused(work, root, sound_plan):
     sound_plan("epic/checkout", {
         "title": "Checkout", "summary": "Everything order placement needs.",
         "covers": ["definition/sales/order", "definition/sales/invoice", "context/sales"]})
-    assert any("covers names context/sales" in p and "never neither" in p
-               for p in problems_in(work, root))
+    reported = problems_in(work, root)
+    assert any("covers names context/sales" in p and "never neither" in p for p in reported)
+    # Both repairs named, because they live in different files and the message is where the reader
+    # finds out which one this hole wants.
+    assert any("bind it in a task under this epic, or declare it in `uncovered` with a why" in p
+               for p in reported)
 
 
 def test_uncovered_settles_a_coverage_hole(work, root, sound_plan):

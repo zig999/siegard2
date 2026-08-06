@@ -122,29 +122,52 @@ def handoff_blocks(text: str, invocation: str) -> list[str]:
     return [chunk for chunk in chunks if marker in chunk]
 
 
-def test_the_seam_hands_off_every_input_the_other_skill_requires():
-    """The analyse report ends with a /plan-work invocation ready to paste, and the plan report
-    and the closure hand open questions back the same way. A handoff that omits an input the
-    receiving skill requires reintroduces the stop it exists to spare, so the seam is held
-    mechanically: change what one side requires or hands off and this test forces the other
-    file into the same change."""
-    plan = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
-    analyse = (REPO / "src/claude/skills/analyse-domain/SKILL.md").read_text(encoding="utf-8")
+def skill_text(name: str) -> str:
+    return (REPO / "src/claude/skills" / name / "SKILL.md").read_text(encoding="utf-8")
 
-    plan_inputs = INPUT_TERM.findall(plan)
-    assert plan_inputs, "plan-work numbers no required inputs; the seam guard lost its subject"
-    outgoing = handoff_blocks(analyse, "/plan-work")
-    assert len(outgoing) == 1, "the analyse report ends with exactly one /plan-work handoff"
-    for term in plan_inputs:
+
+FORWARD_SEAMS = (("analyse-domain", "plan-work"),
+                 ("plan-work", "implement-task"),
+                 ("implement-task", "review-change"))
+
+
+@pytest.mark.parametrize("handing,receiving", FORWARD_SEAMS)
+def test_the_seam_hands_off_every_input_the_other_skill_requires(handing, receiving):
+    """Each report ends with the next skill's invocation ready to paste. A handoff that omits an
+    input the receiving skill requires reintroduces the stop it exists to spare, so every seam is
+    held mechanically: change what one side requires or hands off and this test forces the other
+    file into the same change. Every forward seam is covered — a seam left out of this list is a
+    seam where the two files can drift apart in silence, which is how the first two ended up being
+    the only ones anybody checked."""
+    required = INPUT_TERM.findall(skill_text(receiving))
+    assert required, f"{receiving} numbers no required inputs; the seam guard lost its subject"
+    outgoing = handoff_blocks(skill_text(handing), f"/{receiving}")
+    assert len(outgoing) == 1, \
+        f"the {handing} report ends with exactly one /{receiving} handoff"
+    for term in required:
         assert term in outgoing[0], \
-            f"the analyse handoff never names '{term}'; the stop it exists to spare returns"
+            f"the {handing} handoff never names '{term}'; the stop it exists to spare returns"
 
-    analyse_inputs = INPUT_TERM.findall(analyse)
+
+def test_the_plan_hands_open_questions_back_to_the_analysis():
+    """The plan report and the closure each hand what outran the base back as an invocation, because
+    a fact is produced in the base and never in a task."""
+    analyse_inputs = INPUT_TERM.findall(skill_text("analyse-domain"))
     assert analyse_inputs, "analyse-domain numbers no required inputs; the seam guard lost its subject"
-    returning = handoff_blocks(plan, "/analyse-domain")
+    returning = handoff_blocks(skill_text("plan-work"), "/analyse-domain")
     assert len(returning) == 2, \
         "the plan report and the closure each hand the open questions back as an invocation"
     for block in returning:
         for term in analyse_inputs:
             assert term in block, \
                 f"a questions handoff never names '{term}'; the stop it exists to spare returns"
+
+
+def test_the_review_hands_nothing_forward_as_an_invocation():
+    """The one skill that ends the chain, and deliberately: which route a finding deserves — or
+    whether it deserves one — is the decision this pass does not make. A pasteable invocation here
+    would be that decision, taken by the reviewer, so its absence is held rather than assumed."""
+    text = skill_text("review-change")
+    assert handoff_blocks(text, "/implement-task") == []
+    assert handoff_blocks(text, "/plan-work") == []
+    assert handoff_blocks(text, "/analyse-domain") == []

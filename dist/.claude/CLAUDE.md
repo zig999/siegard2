@@ -6,10 +6,13 @@ derive from it. When code and a node disagree, the node is what the business dec
 
 ## What the base is
 
-One file per construct, in seven kinds — `context`, `aggregate`, `definition`, `rule`,
+One file per node, in seven kinds — `context`, `aggregate`, `definition`, `rule`,
 `lifecycle`, `interface`, `process`. **The path is the identity**: a context sits at
 `context/<slug>.md`, everything else at `<kind>/<context>/<slug>.md`. No node carries an id, a
 type or a boundary field, so none of the three can disagree with where the file sits.
+
+Two things share the word: the base itself, this root and its nodes, and a task's `base` field,
+which is not a root but the pin naming the derived index a binding read.
 
 What a node may and must declare is stated once, in `schemas/node.json`, with one example per
 kind inside it. A fact the material did not state is declared absent by a `gaps` entry naming the
@@ -125,6 +128,37 @@ the sentence above is why nothing has to.
 - **`/review-change`** — captures a run of the caller's commands, then reports what four passes
   found over a delivered change — evidence, never a verdict — records it, and stops the same way.
   Invoke it by name rather than reviewing ad hoc.
+- **`bin/terms.py`** — prints what a term means, read out of the contract that defines it. Not an
+  entry point and not a skill: a reader's command, for the words a validator's refusal uses. A term
+  it names as holding no definition is a term no contract states, said so rather than left out.
+
+## How this file reaches a session
+
+Vendored, it loads: Claude Code reads `./CLAUDE.md` and `./.claude/CLAUDE.md` both, concatenated, so
+a project that copies `dist/.claude/` into itself gets these rules beside its own and loses neither.
+**Installed as a plugin, this file loads nowhere.** A plugin contributes skills, agents and hooks,
+and its root `CLAUDE.md` is never read as project context — verified both ways against Claude Code
+2.1.223, where a marker placed here never arrived and a marker emitted by a plugin-shipped
+`SessionStart` hook did. Until this framework ships that hook, the plugin install is the install
+where every rule below holds only where a skill repeats it, and the vendored install is the one
+these rules actually bind.
+
+## What a stop is
+
+A stop is this framework working, not failing. Every entry point refuses before it writes rather
+than writing what a reviewer would have to catch: a root with uncommitted changes, a base that does
+not hold together, an input nobody named, a fact the base leaves open under a task about to be
+built. What comes back names everything missing and goes no further — once and together, so the
+answer is given once rather than a question at a time.
+
+Three of those only a person settles. A gap names a fact whoever knows the domain states, and an
+invented value reads exactly like a stated one. Uncommitted changes are a git decision — commit,
+discard, or override — and none of the three is a skill's. A `BLOCKING` note is the scope and the
+base contradicting each other, and both ways out run through an entry point somebody invokes.
+Everything else is form, and form is the invocation's own to fix.
+
+What a stop never does is choose. A report ends with the next invocation ready to paste and its
+slots empty: filling them and running it are yours.
 
 ## Rules that bind every session
 

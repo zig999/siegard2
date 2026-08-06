@@ -29,6 +29,9 @@ A missing input is a stop, not a default:
    held what was delivered would be recording progress, and that is the orchestrator's state
    file this framework refuses to have.
 
+Absent inputs stop once, together: one stop naming everything missing — the task among them, where
+the request named none — so the human answers once, never a question at a time.
+
 One optional input: **the project's standard** — the path to the registry of rules the project set
 for itself, in the project's own tree. Named, the source is written to follow it; not named, the
 only convention this invocation follows is what the inventory evidenced, and the report says so.
@@ -283,7 +286,15 @@ Report, in this order:
   followed is what the inventory evidenced, which is the honestly narrow answer rather than a clean
   one;
 - that nothing was run, and that `/review-change` is what runs the suite and judges the change,
-  including holding the same source to the same standard.
+  including holding the same source to the same standard;
+- the handoff: the `/review-change` invocation ready to paste — this delivery root, this work
+  root, this knowledge root and this target source root named by path as just validated; the
+  tasks under review being the one task this invocation delivered, by identifier; and the file
+  set being exactly the paths named above, because a review never discovers its own scope and
+  this report is the only place that set exists. Two slots stay the human's: the commands to run,
+  without which the failures pass does not run, and the project's standard where the project
+  authored one. The handoff offers the next step and never takes it: filling the slots and
+  invoking are the human's.
 
 Then stop. `git diff` over the target source root and the delivery root is the review, and it
 belongs to a person.

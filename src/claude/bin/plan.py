@@ -278,7 +278,8 @@ def task_problems(nid: str, front: dict, base_nodes: dict[str, dict] | None,
                 continue
             if node_ref not in bound:
                 problems.append(f"{nid}: {field}[{index}] triages a gap on {node_ref}, which "
-                                f"`nodes` does not bind; triage covers the nodes the task cites")
+                                f"`nodes` does not bind; triage covers the nodes the task cites "
+                                f"— bind {node_ref} if it governs this task, or drop the entry")
             if base_nodes is not None and gap_field not in gap_fields_of(base_nodes[node_ref]):
                 problems.append(f"{nid}: {field}[{index}] names `{entry['gap']}`, and "
                                 f"{node_ref} declares no open gap on `{gap_field}`; a triage "
@@ -350,7 +351,8 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
         if node_ref not in bound_below and node_ref not in declared_uncovered:
             problems.append(f"{nid}: covers names {node_ref}, which no task under it binds and "
                             f"uncovered does not declare; a covered node reaches a task or "
-                            f"a stated why, never neither")
+                            f"a stated why, never neither — bind it in a task under this epic, "
+                            f"or declare it in `uncovered` with a why")
     return problems
 
 
