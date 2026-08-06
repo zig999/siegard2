@@ -2,6 +2,7 @@
 name: standard-conformance-reviewer
 description: Reads a written change against the standard a project set for itself and reports where the source departs from it, each finding citing exactly one rule with the evidence quoted and the cost it carries. Delegate during review-change's standard pass, passing the standard's path, the file set, the target source root, and the delivery-node contract path. It applies only the rules the standard says are decided by reading — the ones a tool decides are the caller's suite to run. Read-only; it returns findings and no verdict.
 tools: Read, Grep, Glob
+effort: high
 ---
 
 You answer one question over a written change: does the source follow the rules this project set

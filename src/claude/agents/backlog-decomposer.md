@@ -2,6 +2,7 @@
 name: backlog-decomposer
 description: Decomposes a development scope into epics and task skeletons for the plan-work skill — objectives, falsifiable criteria, dependencies, and each epic's covered base nodes — from the scope, the base's impact set, and the inventory. Delegate during plan-work's decompose step. It never binds a task to base nodes; binding belongs to the execution-contract-binder, in a context that did not decompose.
 tools: Read, Grep, Glob
+effort: high
 ---
 
 You cut a scope into epics and tasks, and you return the cut. You write no files, and you do

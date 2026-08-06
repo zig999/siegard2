@@ -1,6 +1,7 @@
 ---
 name: review-change
 description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the knowledge base holds, whether it follows the standard the project set for itself, and why a captured run failed — captures the run itself when given the commands, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
+effort: medium
 ---
 
 You review a delivered change and report what is there. One invocation, one review.

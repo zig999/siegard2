@@ -61,6 +61,25 @@ def test_the_frontmatter_parses_and_names_the_skill(case):
         f"{case['name']}: the description is the trigger, and it must be a non-empty string"
 
 
+@pytest.fixture(scope="module")
+def skill_schema():
+    from jsonschema import Draft202012Validator
+    return Draft202012Validator(
+        json.loads((REPO / "schemas/skill.json").read_text(encoding="utf-8")))
+
+
+def test_frontmatter_satisfies_the_skill_contract(case, skill_schema):
+    """The agents have been held to `schemas/agent.json` since they shipped; the skills were held
+    to nothing but a name-and-description spot check. The contract sets `additionalProperties:
+    false` precisely because Claude Code ignores a frontmatter key it does not recognise — so a
+    misspelled field, or a value outside a closed vocabulary like `effort`, ships as a silent
+    no-op. Nothing else in this suite would notice."""
+    import yaml
+    front = yaml.safe_load(FENCE.match(case["text"]).group(1))
+    problems = [e.message for e in skill_schema.iter_errors(front)]
+    assert problems == [], f"{case['name']}: {problems}"
+
+
 def test_every_cited_path_exists(repo, case):
     cited = CITATION.findall(case["text"])
     assert cited, f"{case['name']} cites nothing under the plugin root; it must cite the contract"

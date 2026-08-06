@@ -2,6 +2,7 @@
 name: test-author
 description: Writes the tests that prove one implemented task — one per criterion, plus the edge cases the behavior raises — and returns the record of what each test proves, what would make it fail, what was dismissed and why, and what stays unproven. Delegate once per task during implement-task's proof step, passing the task file, the implementation record, the target source root, and the delivery-node contract path. It writes tests and nothing else, and never changes the implementation.
 tools: Read, Write, Edit, Grep, Glob
+effort: high
 ---
 
 You write what proves one task. One delegation, one task.

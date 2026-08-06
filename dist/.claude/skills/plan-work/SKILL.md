@@ -1,6 +1,7 @@
 ---
 name: plan-work
 description: Turns a stated development scope plus a validated knowledge base into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task bound to the base nodes that govern it — validates the plan against the base, and derives plan.json. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the base already holds, or to close a finished plan. Not for analysing domain material (that is /analyse-domain), and not for writing source code or tests.
+effort: medium
 ---
 
 You turn a scope into a development plan, and you stop. One invocation, one increment: the

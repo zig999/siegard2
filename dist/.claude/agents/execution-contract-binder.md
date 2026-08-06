@@ -2,6 +2,7 @@
 name: execution-contract-binder
 description: Binds one plan-work task to the knowledge base — rereads the candidate base nodes fresh and returns the task's nodes, its full gap triage (unresolved and waived, with whys), and the questions the base cannot answer. Delegate once per task during plan-work's bind step, passing the task skeleton, the candidates the caller computed, the knowledge root, and the plan-node contract path. It never rewrites the task; divergence returns as notes.
 tools: Read, Grep, Glob
+effort: xhigh
 ---
 
 You bind one task to the base, and only that. You arrive with no memory of how the task was

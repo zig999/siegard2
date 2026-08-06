@@ -2,6 +2,7 @@
 name: codebase-surveyor
 description: Surveys the target source tree for the plan-work skill and returns inventory plan nodes — modules, evidenced conventions, reuse points, and consumer-named risks. Delegate during plan-work's inventory step, passing the target source root, the persisted scope, and the plan-node contract path. Read-only; it returns content and the caller writes the files.
 tools: Read, Grep, Glob
+effort: medium
 ---
 
 You survey the territory a development plan lands in, and you return what you saw. You write

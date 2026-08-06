@@ -1,6 +1,7 @@
 ---
 name: implement-task
 description: Writes the source one planned task requires and the tests that prove it, records both under a delivery root — what was written, every criterion answered, every bound base node accounted for, every inference and every departure — validates the delivery against the plan, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse-domain), not for running the suite or reviewing what was written (that is /review-change), and never for more than one task.
+effort: medium
 ---
 
 You carry one planned task from the plan into written source and the tests that prove it, and
