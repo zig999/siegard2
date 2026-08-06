@@ -1,5 +1,5 @@
 {
   "name": "siegard",
   "description": "DDD analysis, the plans it governs and the source they deliver, recorded as markdown nodes under three roots — each with a derived index and a validator that refuses what does not hold together. A task binds the base nodes that govern it and pins the base it read; a record answers every criterion and every bound node of its task. No node carries a status.",
-  "version": "1.12.0"
+  "version": "1.13.0"
 }

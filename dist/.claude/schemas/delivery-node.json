@@ -531,7 +531,7 @@
         "evidence": {
           "type": "string",
           "minLength": 1,
-          "description": "What was observed, quoted from the source or from what the run printed. Not a restatement of it: a finding whose evidence cannot be quoted is a finding nobody observed, and it does not belong here."
+          "description": "What was observed, quoted from the source or from what the run printed. Not a restatement of it: a finding whose evidence cannot be quoted is a finding nobody observed, and it does not belong here. A quote that joins passages the file does not hold together says where the join is; an unmarked jump reads as one continuous passage, and the reader who opens the file finds something else there. And what is cut never qualifies what is kept — dropping the sentence in which the code explains itself leaves the finding answering an author who was not allowed to speak, which is the one way a faithful quotation still misleads."
         },
         "cost": {
           "type": "string",
