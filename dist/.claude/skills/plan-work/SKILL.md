@@ -147,9 +147,14 @@ answer; a divergence between the task and the nodes comes back as notes.
 
 Then compose and write each task: the skeleton, plus what its binder returned, plus the pin
 from the base check stamped on `base`. A binder's notes are appended to the task body's
-`## Notes`, one sentence per line, a blocking one saying so — the diff is the review, and a
-divergence only the conversation holds is a divergence the reviewer never sees — and the
-report repeats them by task. Where the binder bound nothing, the task carries `rationale` saying why —
+`## Notes`, one sentence per line — the diff is the review, and a divergence only the
+conversation holds is a divergence the reviewer never sees — and the report repeats them by
+task. A note classed `blocking`, `underdetermined` or `remainder` opens with its class,
+literally — `BLOCKING, from the binding —`, `UNDERDETERMINED, from the binding —`,
+`REMAINDER, from the binding —` — the exact text and not a style, because `/implement-task`
+collects underdetermined entries by that opening and nothing else marks them; an
+underdetermined note carries the implementation the binder named in `passes`, and a
+remainder note the destination it named in `belongs`. Where the binder bound nothing, the task carries `rationale` saying why —
 scaffolding is real work, but ungoverned work is a claim someone reviews. Where a note says
 the task needs what the candidates do not hold, the cut is wrong: grow the epic's `covers`
 or move the task, and re-bind — never widen a binding by hand.
@@ -160,12 +165,17 @@ written, and the skeleton's `rationale` says by whom. Where the blocked statemen
 decomposer's decision — the skeleton carries `rationale` over that cut — the skeleton goes
 back to the decomposer with the note, is re-cut, and re-bound. Where it came from the scope,
 the task is written with the note, and the report names it as a conflict only the human
-settles — through the scope, or through `/analyse-domain`. An `advisory` note stays a note —
-except one naming nodes outside the epic's covers, which never travels alone: the caller's
-decision is recorded beside it in `## Notes` — grow the claim and re-bind, move the task and
-re-bind, or stand with the why. The class is the binder's judgment, not yours to overrule: a
-blocking note you disagree with is still settled as blocking, and the disagreement goes in
-the report.
+settles — through the scope, or through `/analyse-domain`. An `underdetermined` note travels with
+the task and re-cuts nothing: it is what a test must exclude, and `/implement-task` hands it
+to whoever writes the tests. A `remainder` note travels the same way and re-cuts nothing: an
+unreached clause is answered where it belongs — another task's binding, the epic's
+`uncovered`, or scope this plan does not yet hold — and no validator walks clauses, so the
+report is where a reviewer checks that something answers it. An `advisory` note stays a
+note. A note of any class written into `## Notes` that names nodes outside the epic's covers
+never travels alone: the caller's decision is recorded beside it — grow the claim and
+re-bind, move the task and re-bind, or stand with the why. The class is the binder's
+judgment, not yours to overrule: a blocking note you disagree with is still settled as
+blocking, and the disagreement goes in the report.
 
 Each task file is checked on its own as soon as it is composed — a composition error is
 caught at the file that made it, never discovered at the end:
@@ -207,7 +217,9 @@ Report, in this order:
   outran the base, the latter with the pointer back to `/analyse-domain`;
 - every waiver, by task identifier — these are the claims a reviewer can reject;
 - every note a binder returned, by task identifier — the same divergences written into each
-  task's `## Notes`, repeated here so the reviewer meets them before the diff;
+  task's `## Notes`, repeated here so the reviewer meets them before the diff — an
+  underdetermined one carrying the implementation it names, a remainder one carrying where
+  it belongs;
 - every node carrying `rationale`, by identifier;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim.

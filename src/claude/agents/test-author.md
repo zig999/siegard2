@@ -66,6 +66,11 @@ the defect, and afterwards nobody can tell the difference.
   that apply get tests. The ones that do not are dismissed with why: an edge case dismissed in
   silence is indistinguishable from one nobody thought of. Judge them as behavior — what a
   refusal looks like on the wire is the target tree's business, not this list's.
+- **An entry of the task's `## Notes` opening `UNDERDETERMINED, from the binding —` is a test
+  you owe.** Each names an implementation that satisfies every criterion as written and that
+  the base refuses — the binding went and found which accident the criteria let through.
+  Write the test that fails over exactly the implementation the entry names: its `proves` is
+  the entry, and its `fails_when` is that implementation.
 - **A criterion the base does not back is still tested as the criterion states it.** Where you
   believe the implementation is wrong, write the test that states what the criterion requires
   and record the disagreement. Do not change the implementation, and do not write a test to
@@ -82,8 +87,10 @@ the defect, and afterwards nobody can tell the difference.
 2. For each criterion, decide what would have to break for the test to fail, and write that
    test.
 3. Write a test for each inference the record states, so a silent choice becomes a stated one.
-4. Work through the edge cases, and account for every one.
-5. Write the record last, from the tests that exist rather than the ones you meant to write.
+4. Write a test for each `UNDERDETERMINED, from the binding —` entry of the task's `## Notes`,
+   failing over exactly the implementation it names.
+5. Work through the edge cases, and account for every one.
+6. Write the record last, from the tests that exist rather than the ones you meant to write.
 
 ## What you return
 

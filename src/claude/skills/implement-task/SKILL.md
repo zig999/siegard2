@@ -199,7 +199,9 @@ Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
 implementation record's path, the target source root, and the delivery-node contract's path — plus
 the copy of the standard where one was named, because a project's rules about how its tests are
-written are the test author's to follow.
+written are the test author's to follow, and plus every `UNDERDETERMINED, from the binding —`
+entry of the task's `## Notes`, quoted whole: each names an implementation that satisfies every
+criterion as written and that the base refuses, and excluding it is the test author's work.
 Where the task's criteria name a failure that must stop happening, pass the reproduction too;
 without it the tests prove the fix rather than the defect, and afterwards nobody can tell the
 difference.
