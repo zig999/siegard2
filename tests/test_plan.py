@@ -415,6 +415,81 @@ def test_uncovered_outside_covers_is_refused(work, root, sound_plan):
     assert any("which `covers` does not claim" in p for p in problems_in(work, root))
 
 
+# ---------------------------------------------------------------- beyond the covers
+
+RECORD_ORDER = {
+    "title": "Record order", "summary": "Persist a placed order.",
+    "objective": "A valid order is persisted and retrievable by its order_number.",
+    "criteria": ["Submitting a valid order returns its order_number."],
+    "nodes": ["definition/sales/order"],
+}
+
+
+def noted(*lines: str) -> str:
+    return "## What it is\nPersist a placed order.\n\n## Notes\n" + "".join(
+        f"{line}\n" for line in lines)
+
+
+def test_a_note_naming_a_node_beyond_covers_without_a_decision_is_refused(work, root,
+                                                                          sound_plan):
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+               body=noted("From the binding — the recount is governed by context/sales, "
+                          "which sits outside this epic's claim."))
+    problems = problems_in(work, root)
+    assert any("## Notes names context/sales, which the epic's covers do not claim" in p
+               and "`Decision, beyond the covers —` line names it" in p
+               and "never travels alone" in p for p in problems)
+
+
+def test_a_decision_line_beside_the_note_settles_it(work, root, sound_plan):
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+               body=noted("From the binding — the recount is governed by context/sales, "
+                          "which sits outside this epic's claim.",
+                          "Decision, beyond the covers — stand: context/sales carries no "
+                          "work here; the recount belongs to the follow-up initiative."))
+    assert problems_in(work, root) == []
+
+
+def test_a_note_naming_a_covered_node_demands_nothing(work, root, sound_plan):
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+               body=noted("From the binding — definition/sales/invoice answers the billing "
+                          "seam this task stops at."))
+    assert problems_in(work, root) == []
+
+
+def test_a_name_matches_whole_never_inside_a_longer_one(work, root, sound_plan):
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+               body=noted("From the binding — the recount lives in "
+                          "aggregate/sales/orders-archive today."))
+    assert problems_in(work, root) == []
+
+
+def test_a_decision_line_alone_demands_nothing(work, root, sound_plan):
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+               body=noted("Decision, beyond the covers — stand: context/sales stays the "
+                          "neighbouring claim this plan reads and never touches."))
+    assert problems_in(work, root) == []
+
+
+def test_an_epics_notes_are_not_a_tasks(work, root, sound_plan):
+    sound_plan("epic/checkout", {
+        "title": "Checkout", "summary": "Everything order placement needs.",
+        "covers": ["definition/sales/order", "definition/sales/invoice"]},
+        body="## What it is\nEverything order placement needs.\n\n## Notes\n"
+             "The recount is governed by context/sales, outside this claim.\n")
+    assert problems_in(work, root) == []
+
+
+def test_a_closed_plan_never_demands_a_decision(work, root, sound_plan):
+    sound_plan("task/checkout/record-order", {**RECORD_ORDER, "base": base_pin_of(root)},
+               body=noted("From the binding — the recount is governed by context/sales, "
+                          "which sits outside this epic's claim."))
+    assert run(work, root).returncode == 1
+    (work / "closure.md").write_text("The initiative ended; the why lives in intake.\n",
+                                     encoding="utf-8")
+    assert run(work).returncode == 0
+
+
 # ---------------------------------------------------------------- broken references
 
 def test_a_binding_to_a_node_the_base_does_not_hold_is_refused(work, root, sound_plan):

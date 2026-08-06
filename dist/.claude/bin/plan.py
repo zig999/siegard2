@@ -13,8 +13,9 @@ fields like any other. On top of that run the checks no per-file schema can expr
 epic exists, dependencies resolve and close no cycle, every bound or covered base node exists,
 every open gap on every bound node is unresolved or waived (never silently ignored), a triage
 entry answers a gap the base still holds on a node the task binds, an epic's covered nodes are
-each bound by a task or declared uncovered (never neither, never both), and each task's `base`
-pin matches the base as it stands. `intake/` under the work root holds the material the planning
+each bound by a task or declared uncovered (never neither, never both), a task's `## Notes`
+naming a base node outside its epic's covers carries the caller's decision line beside it
+(never silence), and each task's `base` pin matches the base as it stands. `intake/` under the work root holds the material the planning
 read: kept for `sources` to point at, never validated.
 
 **The base is read through graph.py's own pipeline, never through its graph.json** — an index
@@ -81,6 +82,7 @@ CLOSURE_FILE = "closure.md"
 
 KINDS = ("inventory", "epic", "task")
 HEADINGS = ["## What it is", "## Notes"]
+DECISION_OPENING = "Decision, beyond the covers — "
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
@@ -154,6 +156,44 @@ def body_problems(body: str) -> list[str]:
         return [f"body headings are {headings if headings else 'absent'}; "
                 f"every plan node carries exactly {HEADINGS}"]
     return []
+
+
+def notes_of(body: str) -> str:
+    """The text under `## Notes`, as composed. Absent — a shape body_problems already
+    reported — it reads as empty."""
+    lines = body.splitlines()
+    for at, line in enumerate(lines):
+        if line.rstrip() == "## Notes":
+            return "\n".join(lines[at + 1:])
+    return ""
+
+
+def named_in(line: str, base_ids: set[str]) -> set[str]:
+    """Every base node one line of prose names by identifier. A name matches whole: an
+    identifier inside a longer path or slug is that construct's name, never this one's."""
+    return {ref for ref in base_ids
+            if re.search(rf"(?<![a-z0-9/-]){re.escape(ref)}(?![a-z0-9/-])", line)}
+
+
+def beyond_covers_problems(nid: str, notes: str, covers: set[str],
+                           base_ids: set[str]) -> list[str]:
+    """A task's `## Notes` naming a base node outside its epic's covers carries the caller's
+    decision beside it — a `Decision, beyond the covers — ` line naming that node. Growing
+    the claim or moving the task erases the condition through the re-bind; standing is the
+    decision that persists; silence is what this check refuses."""
+    named: set[str] = set()
+    decided: set[str] = set()
+    for raw in notes.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        beyond = {ref for ref in named_in(line, base_ids) if ref not in covers}
+        (decided if line.startswith(DECISION_OPENING) else named).update(beyond)
+    return [f"{nid}: ## Notes names {ref}, which the epic's covers do not claim, and no "
+            f"`{DECISION_OPENING.rstrip()}` line names it; a claim beyond the covers never "
+            f"travels alone — grow the claim and re-bind, move the task and re-bind, or "
+            f"stand and record the decision beside the note"
+            for ref in sorted(named - decided)]
 
 
 def references(front: dict, kind: str) -> list[tuple[str, str, str]]:
@@ -332,6 +372,12 @@ def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict] | None,
                 problems.append(f"{nid}: {at} names {target}, which the base does not hold")
         if node["kind"] == "task":
             problems.extend(task_problems(nid, front, base_nodes, pin))
+            epic_node = nodes.get(f"epic/{node['epic']}")
+            if base_nodes is not None and epic_node is not None:
+                covers = {t for t in listed(epic_node["front"], "covers")
+                          if isinstance(t, str)}
+                problems.extend(beyond_covers_problems(
+                    nid, node.get("notes", ""), covers, set(base_nodes)))
         if node["kind"] == "epic":
             problems.extend(epic_problems(nid, front, nodes, base_nodes))
     problems.extend(dependency_problems(nodes))
@@ -370,6 +416,8 @@ def collect(root: Path, validator, allowed) -> tuple[dict[str, dict], list[str]]
         problems += [f"{nid}: {p}" for p in body_problems(text[match.end():])]
         if isinstance(front, dict):
             nodes[nid] = {"front": front, "kind": kind, "epic": epic}
+            if kind == "task":
+                nodes[nid]["notes"] = notes_of(text[match.end():])
     return nodes, problems
 
 

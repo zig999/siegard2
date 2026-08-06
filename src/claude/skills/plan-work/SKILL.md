@@ -186,9 +186,14 @@ to whoever writes the tests. A `remainder` note travels the same way and re-cuts
 unreached clause is answered where it belongs — another task's binding, the epic's
 `uncovered`, or scope this plan does not yet hold — and no validator walks clauses, so the
 report is where a reviewer checks that something answers it. An `advisory` note stays a
-note. A note of any class written into `## Notes` that names nodes outside the epic's covers
-never travels alone: the caller's decision is recorded beside it — grow the claim and
-re-bind, move the task and re-bind, or stand with the why. The class is the binder's
+note. A note of any class that names base nodes outside the epic's covers never travels
+alone. Two of the caller's three decisions erase the condition rather than record it: grow
+the claim and re-bind, or move the task and re-bind — the replacement binding answers
+inside the new covers. The third persists, and is recorded on its own line immediately
+after the note in `## Notes`: `Decision, beyond the covers — stand: <why>` — the exact
+opening and not a style, because the validator refuses a task whose `## Notes` names a
+base node outside its epic's covers with no such line naming that node, and a refused
+plan derives no plan.json. The class is the binder's
 judgment, not yours to overrule: a blocking note you disagree with is still settled as
 blocking, and the disagreement goes in the report.
 

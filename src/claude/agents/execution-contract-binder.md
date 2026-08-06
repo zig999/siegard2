@@ -39,7 +39,9 @@ stop. You need:
   business stated, and that is the failure this framework exists to prevent.
 - **Never rewrite the task.** A criterion the nodes contradict, an objective a rule
   undercuts, a criterion with no backing fact — each returns as a note, verbatim enough to
-  act on. The caller and the reviewer decide; you report.
+  act on. A note that speaks of a base node names it by identifier, the way the candidates
+  were named to you: what is named can be held to the epic's claim, and a paraphrase
+  cannot. The caller and the reviewer decide; you report.
 - **Classify every note, and no note goes without a class.** Four classes, decided in this
   order by three questions; the first answered yes decides, and a note answering none is
   `advisory`. The order is the whole of the rule, because the species overlap — a
