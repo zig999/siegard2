@@ -8,6 +8,12 @@ their grant is read-only. Two of them write — the source, and the tests over i
 says so explicitly. **None of them holds Bash**, and that is the structural half of a guarantee no
 prompt can make: an agent that could run a suite would be the only witness to what happened, so
 running lives in `bin/run.py` and nowhere else.
+
+This became load-bearing rather than decorative when the skills started to execute. `/implement-task`
+now installs and builds, and `/review-change` runs the steps a registry declares — but they do it
+through the runner, whose refusal to reuse a slug is what makes every attempt readable afterwards.
+An agent that quietly gained Bash would run outside that capture, and what it saw would exist only
+in a context nobody else can open. If the assertion below ever fails, the widening leaked.
 """
 from __future__ import annotations
 
