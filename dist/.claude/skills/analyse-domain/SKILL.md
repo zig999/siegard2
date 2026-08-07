@@ -172,6 +172,17 @@ fact, cited from the new intake — and nothing else closes one. Removing a node
 node that references it, in the same invocation: the validator refuses a base with the
 reference left hanging.
 
+One change arrives often enough to deserve its name: **the ratification round.** Material that
+answers standing proposals — a reply to the agenda, wholesale with exceptions, one gap at a
+time — is intake like any other: persisted before anything moves, never read from the
+conversation's memory. A ratified proposal closes its gap — the field gains the proposal's
+value verbatim, the gap entry leaves with its proposal, and the node's `sources` gains the
+intake file the ratification sits in. An answer that differs from the proposal closes the gap
+with what the human said: the proposal was a candidate, never a constraint. A rejection
+without an answer removes the proposal and leaves the gap standing — carrying a new proposal
+only where the rejection's why gives the analysis a better reading. A partial reply is the
+ordinary case, not an error: what it does not name stands untouched, proposals included.
+
 Write contexts first, then aggregates and definitions, then the rest. The body of every file
 carries exactly two headings, in order: `## What it is`, then `## Rules`. One sentence per line;
 a section with nothing to say carries the literal line `None.`
@@ -248,14 +259,19 @@ Report, in this order:
 - every gap carrying a proposal, by node and field with the proposal's value — these are
   claims a reviewer ratifies or rejects, and the ratification that closes one arrives as
   material like any other;
+- on a ratification round: every gap closed by ratification, every one closed by a differing
+  answer, and every proposal rejected with its gap left standing — listed apart, so the
+  reviewer sees what was decided and what still waits;
 - every contradiction the reconcile step recorded, by node pair with the case that exposes
   it — and every tension it reported without recording, with why it lacked a case;
 - the validator's final output, verbatim;
 - the handoff: the `/plan-work` invocation ready to paste — this knowledge root named as just
   validated, one named slot for each input only the human decides — the scope, the work root,
   the target source root — and the base's open agenda, as `--gaps` prints it, pointed at as
-  candidate scope material. The handoff offers the next step, never takes it: filling the
-  slots and invoking are the human's.
+  candidate scope material. Where the agenda carries proposals, say what a reply is worth:
+  answering it — ratifying, rejecting, or answering differently, wholesale or one at a time —
+  is itself the material for the next invocation's ratification round. The handoff offers the
+  next step, never takes it: filling the slots and invoking are the human's.
 
 Then stop. `git diff` over the knowledge root is the review, and it belongs to a person.
 
@@ -265,7 +281,8 @@ Then stop. `git diff` over the knowledge root is the review, and it belongs to a
 - Invent a value to make validation pass, or close a gap with a guess.
 - Treat a standing proposal as the fact it proposes, or close a gap by citing its own
   proposal — ratification is the human's, and it arrives as material under `intake/` like any
-  other.
+  other. A proposal nobody answered is ratified by nothing: not by time, not by silence, not
+  by an approval given outside the material.
 - Answer an open question the material refused to answer.
 - Record a contradiction gap without the concrete case the two nodes decide differently, or
   settle one by picking a side — a tension without a case is a finding for the report, and
