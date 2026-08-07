@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/project.json",
+  "title": "Siegard project file",
+  "description": "What a project declares once instead of naming per invocation: `siegard.json`, at the git toplevel of the target source root, beside the tree it speaks for. It is the consumer's own file — the framework ships this contract and `bin/project.py` to hold the file to it, and writes neither. Resolution order is stated here and nowhere else: a standard named in the invocation wins over this file, and the report says both existed and which won; where the invocation names nothing, this file answers; where neither answers, the entry points that take a standard stop — once, together with every other absent input — because an absence nobody declared is indistinguishable from an input somebody forgot. An answer given in a session persists only by this file gaining it.",
+  "type": "object",
+  "required": ["standard"],
+  "additionalProperties": false,
+  "properties": {
+    "standard": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "description": "The project's registry of rules, by path relative to this file's own directory — the artifact `schemas/standard.json` is the contract for. `null` is a full answer, not an omission: it declares the project authors no standard, so every entry point takes the honestly narrow path without asking again — a different fact from a file that does not exist, which declares nothing."
+    }
+  }
+}
