@@ -206,9 +206,9 @@ STANDARD = {
          "rules": ["PRH-01"]},
     ],
     "commands": [
-        {"step": "install", "command": "true", "role": "install"},
-        {"step": "lint", "command": "true"},
-        {"step": "test", "command": "true", "role": "suite"},
+        {"step": "install", "command": "true", "timeout_seconds": 60, "role": "install"},
+        {"step": "lint", "command": "true", "timeout_seconds": 60},
+        {"step": "test", "command": "true", "timeout_seconds": 60, "role": "suite"},
     ],
 }
 

@@ -763,19 +763,24 @@ commands:
 
   - step: install
     command: npm ci
+    timeout_seconds: 600
     role: install
 
   - step: typecheck
     command: npm run typecheck
+    timeout_seconds: 300
 
   - step: lint
     command: npm run lint
+    timeout_seconds: 180
 
   - step: secret-scan
     command: npm run secret-scan
+    timeout_seconds: 120
 
   - step: test
     command: npm test
+    timeout_seconds: 900
     role: suite
 
 elsewhere:

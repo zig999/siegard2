@@ -362,7 +362,7 @@ def test_a_tool_rule_with_no_command_is_refused(tmp_path, contract):
     declaring commands and not that one has a rule nothing can apply — which the contract's own
     `tool` field already calls worse than a rule nobody wrote."""
     data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
-        {"step": "install", "command": "true", "role": "install"}])), contract)
+        {"step": "install", "command": "true", "timeout_seconds": 60, "role": "install"}])), contract)
     assert data is None
     assert any("declares no such command" in p for p in problems)
 
@@ -378,7 +378,8 @@ def test_a_registry_declaring_no_command_is_held_to_none_of_it(tmp_path, contrac
 
 def test_two_commands_under_one_step(tmp_path, contract):
     data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
-        {"step": "lint", "command": "a"}, {"step": "lint", "command": "b"}])), contract)
+        {"step": "lint", "command": "a", "timeout_seconds": 60},
+        {"step": "lint", "command": "b", "timeout_seconds": 60}])), contract)
     assert data is None
     assert any("cannot both be it" in p for p in problems)
 
@@ -386,9 +387,9 @@ def test_two_commands_under_one_step(tmp_path, contract):
 def test_two_steps_carrying_one_role(tmp_path, contract):
     """Which step installs is not something a caller may pick at the moment of running."""
     data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
-        {"step": "lint", "command": "a"},
-        {"step": "one", "command": "b", "role": "install"},
-        {"step": "two", "command": "c", "role": "install"}])), contract)
+        {"step": "lint", "command": "a", "timeout_seconds": 60},
+        {"step": "one", "command": "b", "timeout_seconds": 60, "role": "install"},
+        {"step": "two", "command": "c", "timeout_seconds": 60, "role": "install"}])), contract)
     assert data is None
     assert any("all carry the role `install`" in p for p in problems)
 
@@ -413,7 +414,7 @@ def test_a_registry_may_authorize_packages_and_own_no_install(tmp_path, contract
     others own the steps their own rules are decided by. `backend-typescript` is exactly this, and
     refusing it would have made a legitimate split unrepresentable."""
     data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
-        {"step": "lint", "command": "npm run lint"}])), contract)
+        {"step": "lint", "command": "npm run lint", "timeout_seconds": 60}])), contract)
     assert problems == [], problems
     assert data is not None
 

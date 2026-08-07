@@ -1091,7 +1091,8 @@ def test_what_each_kind_owes_differs_by_when_it_is_written(delivery, work, root,
     from conftest import STANDARD
     suite_only = {k: v for k, v in STANDARD.items() if k != "dependencies"}
     suite_only["rules"] = [r for r in STANDARD["rules"] if r["decided_by"] == "reading"]
-    suite_only["commands"] = [{"step": "test", "command": "true", "role": "suite"}]
+    suite_only["commands"] = [{"step": "test", "command": "true", "timeout_seconds": 60,
+                                "role": "suite"}]
     ref = write_standard(suite_only, name="suite-only.yaml")
 
     front = json_front(delivery, "implementation/checkout/record-order")

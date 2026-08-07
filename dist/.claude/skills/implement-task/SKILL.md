@@ -1,6 +1,6 @@
 ---
 name: implement-task
-description: Writes the source one planned task requires and the tests that prove it, records both under a delivery root — what was written, every criterion answered, every bound base node accounted for, every inference and every departure — validates the delivery against the plan, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse-domain), not for running the suite or reviewing what was written (that is /review-change), and never for more than one task.
+description: Writes the source one planned task requires and the tests that prove it, installs what the project's own standard authorizes, runs the steps that standard declares until the project builds and its suite passes, records both nodes under a delivery root — what was written, every criterion answered, every bound base node accounted for, every inference, every departure, every run captured — validates the delivery against the plan, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse-domain), not for reviewing or judging what was written (that is /review-change), and never for more than one task.
 effort: medium
 ---
 
@@ -80,19 +80,35 @@ the plugin root is the directory that holds `schemas/` and `bin/` side by side �
 install, the `.claude/` directory this skill's tree sits under. Every path below resolves the
 same way.
 
-## This invocation runs nothing
+## This invocation runs, and every run it makes is captured
 
-No build, no suite, no command of the target project's. Running is a script's work —
-`${CLAUDE_PLUGIN_ROOT}/bin/run.py` — and it is invoked from `/review-change`, over a change
-somebody else wrote. Whoever writes the source must not also be the one who witnesses whether
-it passed: a session that could run the suite it just wrote would iterate quietly until the
-suite went green, and what failed on the way would exist nowhere. What this invocation produces
-is source, tests, and the record of both. What they are worth is decided elsewhere.
+What it hands over is a project that installs and builds, not source alone. Source nobody executed
+is source whose every rule a tool decides went unanswered, and a rule a project's own registry
+names Zod for cannot be followed by a session that never saw Zod's types.
+
+**Nothing here is run by narration.** Every execution goes through
+`${CLAUDE_PLUGIN_ROOT}/bin/run.py`, with the commands the project's registry declares, into a
+directory under the delivery root's `run/`. A command run any other way did not happen: what it
+printed exists in a conversation, which is not state, and the record would rest on it.
+
+That capture is what replaced the older rule that this invocation ran nothing at all. The rule
+existed because a session that could run the suite it just wrote would iterate quietly until the
+suite went green, and what failed on the way would exist nowhere. The second half is what has
+changed, and only the second half: `run.py` refuses to write a run under a name that already
+exists, so a session that tried four times leaves four directories with four verbatim logs, and
+the record points at the one that passed while the three that did not keep their names. Iterating
+is not forbidden here. It is recorded, and recorded is stronger — the old rule could only stop the
+producer from looking, and this one makes everything the producer saw readable by somebody else.
+
+**The skill runs; the agents do not.** No agent this framework ships holds a shell, and none gains
+one here. Writing source stays the `task-implementer`'s even when a run comes back red: a failure
+goes back to the agent with what the run printed, and the source is written again. A skill that
+patched a file to make a build pass would be the writer that nobody separated from the witness.
 
 ## The order
 
 ```
-situate → implement → prove → validate → report → stop
+situate → set up → implement → build → prove → suite → validate → report → stop
 ```
 
 Two of these steps are another judge's. Writing the source and writing what proves it are
@@ -105,6 +121,11 @@ construction, including where both are wrong. Only where the session cannot spaw
 read the agent's file under the plugin root's `agents/` directory and apply its discipline in
 place — the file stays the single home of that judgment — and the report must say which steps
 ran inline.
+
+The three steps that execute — set up, build, suite — run only where the standard names commands.
+Where none was named, or the registry declares none, they do not run, the report says so, and what
+this invocation hands over is source alone, which is the older and narrower answer rather than a
+clean one.
 
 ### 1. Situate
 
@@ -212,7 +233,28 @@ root; pass on the ones whose `area` reaches where this task lands, and leave the
 inventory surveyed for another territory carries conventions this task has no business following.
 Read the epic only for what it covers. Read no other task: this invocation delivers one.
 
-### 2. Implement
+### 2. Set up
+
+Where the standard declares a command whose role is `install`, run it before anything is written,
+so the implementer reads the types of what this project already declares instead of guessing at
+them — which is the whole difference between following a rule that names a library and writing
+what a rule that names a library sounds like:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> --timeout-seconds <the step's own> --step <its step>="<its command>"
+```
+
+Three cases skip it, and each is said in the report rather than worked around. The task
+`produces` the manifest: nothing is declared yet, and this project's first install is the build
+below. The registry declares no install: a project may hold several registries, and the one whose
+rules govern this task need not be the one that owns the manifest. No standard was named at all:
+then nothing here runs, and what this invocation hands over is source alone.
+
+A red setup is a stop, before a line is written. The run holds what the installer printed, and
+what it names — a registry nobody can reach, a lockfile that does not resolve against the manifest
+— is not this invocation's to guess at or to route around.
+
+### 3. Implement
 
 Spawn a `task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
@@ -220,15 +262,43 @@ the knowledge root, the target source root, the paths of the plan's inventory no
 delivery-node contract's path — plus, where one was named, the path of **the copy** of the standard,
 so what it read is exactly what the record pins. Where the task declares `produces`, pass those
 paths too: they are artifacts this delivery has to create rather than conventions it has to follow,
-and the record is refused if `files` does not list every one of them. It reads the task and the nodes it binds, writes the source, and
+and the record is refused if `files` does not list every one of them. Where the standard authorizes
+dependencies, pass that list too, by name: it is what the agent may add to the manifest and the
+whole of it — a package outside it is the agent's refusal, not its judgment call, because the list
+is where a human's approval of a package survives the session it was given in. It reads the task and the nodes it binds, writes the source, and
 returns the record: every path it created or modified and what each now does, every criterion of
-the task answered, every bound node accounted for, and what it inferred, departed from,
-preserved and deferred.
+the task answered, every bound node accounted for, which authorized dependencies it added, and
+what it inferred, departed from, preserved and deferred.
+
+### 4. Build
+
+Everything the registry declares except the step whose role is `suite`, in the order it declares
+them, with the install first so that whatever the implementer added to the manifest is real before
+anything reads it:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> --timeout-seconds <the largest of those steps'> --step <name>="<command>" [--step ...]
+```
+
+`run.py` stops at the first step that does not pass, so a tree that did not install is never
+type-checked and the log says which one it was.
+
+**A red build is not the end of the invocation and it is not a stop.** Send what the run printed
+back to the `task-implementer` — the source is its to write, and a skill that patched a file to
+turn a build green would be the writer nobody separated from the witness — and run again under
+`<epic>-<slug>-build-2`, then `-3`. Every attempt keeps its directory and its log, because the
+runner refuses a name that already exists. That refusal is the whole reason this invocation is
+allowed to iterate at all: what failed on the way is readable afterwards by somebody who was not
+here.
+
+Giving up is the stop. Report every run by path, what the last one printed, and write no record:
+a record over a red run is refused by the validator anyway, and the point of stopping here is that
+it was never composed.
 
 Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
 the path is the identity and nothing else names which task a record answers — from what the agent
-returned plus the pin stamped on `task`, and — where a standard was named — where its copy sits and
-the pin of its text. The body is exactly two headings, in order:
+returned plus the pin stamped on `task`, and — where a standard was named — where its copy sits,
+the pin of its text, the build run that passed, and every dependency the agent added. The body is exactly two headings, in order:
 `## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
 literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
 as in its field — the diff is the review, and what only the conversation held the reviewer never
@@ -246,7 +316,7 @@ silent on a fact the work needs — that is a successful stop and not a failure 
 report what it said and write no record. Where it wrote files and then stopped, the run failed:
 say which files exist, and leave them for a person to look at rather than tidying them away.
 
-### 3. Prove
+### 5. Prove
 
 Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
@@ -261,9 +331,43 @@ difference.
 
 It writes the tests and returns what each proves, what would make each fail, which edge cases it
 dismissed and why, what stays unproven, where it disagrees with the implementation, and every rule
-of the standard its tests depart from. Write `proof/<epic>/<slug>.md`, same epic and slug again,
-and check it the same way. Where a standard was named, stamp where its copy sits and the pin of its
-text on this record too, exactly as the implementation carries them — the rules about how a project
+of the standard its tests depart from.
+
+### 6. Suite
+
+Every step the registry declares, in order, ending with the one whose role is `suite`:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> --timeout-seconds <the largest of them> --step <name>="<command>" [--step ...]
+```
+
+The checks run again here rather than only at the build, and the repetition is deliberate: a rule
+about where a test file sits or how it is named reaches files that did not exist when the build
+ran, so a build-only pass would leave every rule about tests decided by nothing. Each step that
+already passed passes again in seconds; the runner stops at the first that does not.
+
+**A red suite is a stop, and it has exactly two ways out.** Nothing further is written — the
+implementation record stands, because its own run passed, and no proof record is composed, so
+`deliver.py --outstanding` reports the task as implemented with no proof holding it up, which is
+true and is the state a person should meet. Report the run by path and the tests that failed. Then
+either the source is wrong, and the fix goes back to the `task-implementer` and the suite runs
+again under `<epic>-<slug>-suite-2`, with the first run keeping its name; or the two producers
+disagree and that disagreement is what the red is — the proof asserts what the criterion requires
+and the implementation does not satisfy it — and only a person settles that.
+
+**The third way is forbidden and it is the one that is easy.** A test is never weakened, deleted,
+narrowed or rewritten to make the suite green. This invocation holds two producers precisely so
+that one cannot overrule the other, and a test edited until it passes is exactly that overruling,
+performed where nobody would see it. What makes the rule enforceable rather than pious is that the
+runs are on disk: four attempts leave four logs, and a test that changed between them is in the
+diff beside them.
+
+Where the registry declares no command at all, this step does not run, the tests stand unexecuted,
+and the report says so — the narrow answer rather than a clean one.
+
+Write `proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way. Where a
+standard was named, stamp where its copy sits, the pin of its text and the suite run that passed on
+this record too, exactly as the implementation carries its own — the rules about how a project
 writes its tests reach files no implementation ever lists, so a departure from one is the proof's
 to disclose and resolves against the copy the proof itself pins.
 
@@ -277,7 +381,7 @@ A disagreement the author recorded is not settled here. It stays recorded: this 
 two producers precisely so that one cannot overrule the other, and resolving it now would discard
 the signal.
 
-### 4. Validate, and derive the delivery
+### 7. Validate, and derive the delivery
 
 When both records are written, run:
 
@@ -300,7 +404,7 @@ instead of quoted, a missing entry for a bound node — is yours to correct. A c
 does not satisfy is recorded as unmet, not talked into met. A fact the base does not hold is not
 supplied to make a check pass: it is a stop, and it was one before the source was written.
 
-### 5. Report, and stop
+### 8. Report, and stop
 
 Report, in this order:
 
@@ -322,19 +426,24 @@ Report, in this order:
   answer rather than a clean one — and where `--outstanding` named a standard this root's earlier
   records pin, say that too: an invocation naming none over a root that remembers one is writing
   source the review will still read against those rules;
-- that nothing was run, and that `/review-change` is what runs the suite and judges the change,
-  including holding the same source to the same standard. An artifact this delivery produced is
-  text on disk and nothing more: whatever it declares is fetched, compiled or installed by a
-  command somebody names to `/review-change`, and until that has happened the rules that waited on
-  it are answered by nothing;
+- every run this invocation captured, by path and by outcome, including the ones that failed —
+  those are not noise and they are not a draft: they are the only record of what it took, and a
+  report naming only the run that passed describes a delivery that went right the first time
+  whether or not it did;
+- every dependency this delivery installed, and that what those pulled in transitively is nobody's
+  approval — the lockfile is what says what actually arrived, and it is in the diff;
+- what `/review-change` still does that this invocation did not: it runs the same steps again over
+  the whole change rather than one task's, and it judges — whether the tests prove the criteria,
+  whether the source states only what the base holds, whether it follows the same standard, and
+  why anything failed. A green suite here is a green suite over one task, and two tasks that each
+  passed alone are not a change that passes together;
 - the handoff: the `/review-change` invocation ready to paste — this delivery root, this work
   root, this knowledge root and this target source root named by path as just validated; the
-  tasks under review being the one task this invocation delivered, by identifier; and the file
+  tasks under review being the one task this invocation delivered, by identifier; the file
   set being exactly the paths named above, because a review never discovers its own scope and
-  this report is the only place that set exists. Two slots stay the human's: the commands to run,
-  without which the failures pass does not run, and the project's standard where the project
-  authored one. The handoff offers the next step and never takes it: filling the slots and
-  invoking are the human's.
+  this report is the only place that set exists; and the project's standard where one was named,
+  which is also where the review reads its commands from. The handoff offers the next step and
+  never takes it: filling any empty slot and invoking are the human's.
 
 Then stop. `git diff` over the target source root and the delivery root is the review, and it
 belongs to a person.
@@ -353,8 +462,18 @@ belongs to a person.
   prose does not get to hold what the contract refused.
 - Judge whether the work is correct, done well enough, or fit to merge. Nothing here carries a
   ready flag: a producer that certified its own output would be the validator of its own work.
-- Run a build, a suite, a linter or any command of the target project's — see "This invocation
-  runs nothing".
+- Run a command this project's registry does not declare, or compose one. Every step is the
+  registry's string, run through `bin/run.py`; a command invented here is this framework guessing
+  at a stack it ships no knowledge of, and the guess would be wrong in the project that mattered.
+- Install a package the registry does not authorize. The stop names it, and what ends the stop is
+  the registry gaining an entry — a human editing their own file, not an answer given here that
+  the next invocation would not have.
+- Weaken, narrow, delete or rewrite a test to turn a red suite green. Two producers exist so that
+  one cannot overrule the other, and that is the overruling, done where nobody would look.
+- Edit source yourself to make a run pass. Writing is the `task-implementer`'s; a failed run goes
+  back to it with what the run printed.
+- Run anything outside `bin/run.py`, or report an outcome the runner did not capture. A command
+  whose output lives only in this conversation did not happen.
 - Write into the work root or the knowledge root; a plan or a base that is wrong is reported with
   its fix.
 - Write the tests in the context that wrote the source — the inline fallback is for a session that

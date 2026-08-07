@@ -76,8 +76,18 @@ Writing the source and writing what proves it are two judgments, and two shipped
 (`task-implementer`, `test-author`) in separate contexts: an implementation and its tests
 written in one pass agree by construction, including where both are wrong. Reviewing is four
 more (`coverage-auditor`, `base-conformance-reviewer`, `standard-conformance-reviewer`,
-`failure-diagnostician`), and running the suite is none of them — `bin/run.py` executes the
-caller's commands and records what they printed, so nothing that judges a run also performs it.
+`failure-diagnostician`), and running is none of them — **no agent this framework ships holds a
+shell.** `bin/run.py` executes the commands the project's own registry declares and records what
+they printed, so nothing that judges a run also performs it.
+
+The skills do run. `/implement-task` installs what the registry authorizes and runs the steps it
+declares until the project builds and its suite passes, so what it hands over is a project rather
+than source alone — a rule naming a library cannot be followed by a session that never saw that
+library's types. Every execution lands in `run/<slug>/`, and the runner refuses a name that
+already exists: a session that tried four times leaves four logs, the record points at the one
+that passed, and iterating is recorded rather than forbidden. A record over a run that did not
+pass is refused, and a test is never weakened to turn a suite green — two producers exist so that
+one cannot overrule the other.
 
 A record answers every criterion its task states and every base node its task binds, and the
 validator holds both totalities: silence over either is refused the way silence over a gap is
@@ -137,9 +147,10 @@ the sentence above is why nothing has to.
   work root, validates it against the base, derives `plan.json`, and stops the same way. Invoke
   it by name rather than planning ad hoc.
 - **`/implement-task`** — writes the source one planned task requires and the tests that prove
-  it, records both under the delivery root, validates against the plan, derives `delivery.json`,
-  and stops the same way. One invocation, one task. Invoke it by name rather than writing code
-  ad hoc.
+  it, installs what the standard authorizes, runs the steps it declares until the project builds
+  and its suite passes, records both nodes under the delivery root, validates against the plan,
+  derives `delivery.json`, and stops the same way. One invocation, one task. Invoke it by name
+  rather than writing code ad hoc.
 - **`/review-change`** — captures a run of the caller's commands, then reports what four passes
   found over a delivered change — evidence, never a verdict — records it, and stops the same way.
   Invoke it by name rather than reviewing ad hoc.

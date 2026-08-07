@@ -255,13 +255,16 @@ commands:
 
   - step: install
     command: npm ci
+    timeout_seconds: 600
     role: install
 
   - step: typecheck
     command: npm run typecheck
+    timeout_seconds: 300
 
   - step: test
     command: npm test
+    timeout_seconds: 900
     role: suite
 
 elsewhere:

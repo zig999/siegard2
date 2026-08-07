@@ -177,9 +177,14 @@
     },
     "command": {
       "type": "object",
-      "required": ["step", "command"],
+      "required": ["step", "command", "timeout_seconds"],
       "additionalProperties": false,
       "properties": {
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long this step may take before it is terminated. Required, and stated by the project rather than shipped: a bound this framework chose would be one nobody calibrated, and an unbounded run is worse than a wrong bound because nothing ends it. `bin/run.py` takes one timeout for a whole run, so a run holding several steps is given the largest of theirs — a step that finishes in a second is not made to fail because it shares a run with an install that may take five minutes."
+        },
         "step": {
           "type": "string",
           "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
@@ -246,9 +251,9 @@
         { "package": "eslint", "why": "the `lint` step PRH-01 is decided by runs it." }
       ],
       "commands": [
-        { "step": "install", "command": "npm ci", "role": "install" },
-        { "step": "lint", "command": "npm run lint" },
-        { "step": "test", "command": "npm test", "role": "suite" }
+        { "step": "install", "command": "npm ci", "timeout_seconds": 300, "role": "install" },
+        { "step": "lint", "command": "npm run lint", "timeout_seconds": 120 },
+        { "step": "test", "command": "npm test", "timeout_seconds": 600, "role": "suite" }
       ],
       "elsewhere": [
         {
