@@ -139,16 +139,23 @@ that decides what goes in it:
 - **A relationship records power, not plumbing.** It says who owes compatibility to whom. Two
   contexts that do not need each other stay unconnected — going separate ways is a real answer,
   and a map that connects everything says nothing.
+- **A value that points inside a structure is a `locator`.** Where the material describes a
+  position, a cursor, a path — "the position indexes the hypothesis by name" — the attribute's
+  type is `locator` and `into` names the definition its values navigate. How a locator is
+  written — separator, indexing, ordinal base, the vocabulary of its segments — is the node
+  contract's, stated once at `locatorValue`, and never a gap: the questions left for the
+  material are which structure it navigates and which identities it indexes by. That is the
+  notation's boundary — a choice with business meaning never enters it.
 - **A construct that introduces a surface form owes its surface decisions.** Some values are
   written by one party and read by another, and material never states their form spontaneously —
   it gets discovered divergently, one implementer at a time, each satisfying every stated
   criterion differently. Where the material is silent and two readers could write the value
-  two ways, record the owed decisions as dotted-path gaps at authoring: a value that references
-  or positions owes its grammar — separator, indexing, ordinal base — and the vocabulary its
-  segments speak; a digest owes exactly which bytes it covers; a version or counter owes what
-  increments it and how a superseded thing re-enters; a quantity owes its unit; a consumed
-  check owes what its unavailability means and what a partial answer decides. Each is a gap a
-  task's triage can still waive where it does not bear; none is a value to invent.
+  two ways, record the owed decisions as dotted-path gaps at authoring: a digest owes exactly
+  which bytes it covers; a version or counter owes what increments it and how a superseded
+  thing re-enters; a quantity owes its unit; a consumed check owes what its unavailability
+  means and what a partial answer decides. A value that references or positions owes nothing
+  here any more — it is a `locator`, and its notation is the contract's. Each of the rest is a
+  gap a task's triage can still waive where it does not bear; none is a value to invent.
 - **What never enters the base:** persistence, UI, stack, performance — implementation knowledge
   is not domain knowledge. And no fact enters because it is plausible. Plausible is the failure
   mode this framework exists to catch.
