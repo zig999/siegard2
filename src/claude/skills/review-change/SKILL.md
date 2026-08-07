@@ -24,7 +24,10 @@ A missing input is a stop, not a default:
    is read straight out of those tasks' implementation and proof records, which is exactly what
    those records are for; where the change reached further, the human says so. **Never
    discovered**: a review that chose its own scope reports a different set each run, and a clean
-   result would not say what it was clean over.
+   result would not say what it was clean over. Each path is relative to the target source root,
+   exactly as the records spell them: resolve them against that root to open the files, and state
+   every finding with the same spelling — a scope's `under` is stated against the same anchor,
+   and a finding spelled from the repository instead of the target answers to no rule.
 3. **the delivery root** — under git, holding the records and taking this review's own.
 4. **the work root** — the plan the tasks belong to.
 5. **the knowledge root** — the base the plan binds to, required exactly as the plan validator

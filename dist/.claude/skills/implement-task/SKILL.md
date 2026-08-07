@@ -281,6 +281,13 @@ returns the record: every path it created or modified and what each now does, ev
 the task answered, every bound node accounted for, which authorized dependencies it added, and
 what it inferred, departed from, preserved and deferred.
 
+**Every path in the record is relative to the target source root** — the directory the registry's
+commands run from — never to the repository around it. The target root may be the repository root
+and may just as well be `backend/` inside it: `produces` is held to `files` by spelling, and a
+registry scope reaches a file only under the same anchor, so a record that spelled paths from the
+repository while the registry spelled them from the target would answer to no rule and satisfy no
+`produces`. Spell the software's paths from the software's own root, always.
+
 ### 4. Build
 
 Everything the registry declares except the step whose role is `suite`, in the order it declares

@@ -4,14 +4,25 @@
   "title": "Siegard delivery node",
   "description": "One node of a delivery: the frontmatter of one markdown file under the delivery root. The path is the identity — `implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` sit at the path of the task they answer, `review/<slug>.md` names one review — so no node carries an id, a type or a task field to disagree with where the file sits. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A delivery node records what was done and what was found, never how far the work has got: there is no status, no readiness flag and no approval field, because a producer that certified its own output would be the validator of its own work, and a root that recorded progress would be the orchestrator state file this framework refuses to have. What is delivered is what has a record, and the record's presence in git is the whole of that state. A record answers every criterion of its task and every base node the task binds — the validator holds both totalities, so silence over a criterion or over a bound node is refused the way silence over a gap is refused in a plan. The material a run printed lives under `run/`, kept for a review to point at and never validated as a node. The body below the frontmatter carries exactly two headings, `## What it is` and `## Notes`.",
   "type": "object",
-  "required": ["kind", "title", "summary"],
+  "required": [
+    "kind",
+    "title",
+    "summary"
+  ],
   "additionalProperties": false,
   "properties": {
     "kind": {
-      "enum": ["implementation", "proof", "review"],
+      "enum": [
+        "implementation",
+        "proof",
+        "review"
+      ],
       "description": "Supplied by the validator from the file path; never written in frontmatter."
     },
-    "title": { "type": "string", "minLength": 1 },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
     "summary": {
       "type": "string",
       "minLength": 1,
@@ -24,44 +35,59 @@
     "files": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/writtenFile" },
+      "items": {
+        "$ref": "#/$defs/writtenFile"
+      },
       "description": "Every path this delivery created or modified, and what each now does. Paths and effects only: the code is in the repository, and a copy here is the copy that stops being maintained."
     },
     "criteria": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/criterionEntry" },
+      "items": {
+        "$ref": "#/$defs/criterionEntry"
+      },
       "description": "One entry per criterion of the task, quoting the criterion as the task states it. The validator holds the totality in both directions — every criterion answered, nothing answered that the task does not state — because a record listing only the criteria it satisfied cannot be read as complete. An entry saying a criterion is unmet is an ordinary, reviewable answer; it is not a status, and nothing downstream reads it as one."
     },
     "nodes": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/nodeAnswer" },
+      "items": {
+        "$ref": "#/$defs/nodeAnswer"
+      },
       "description": "One entry per base node the task binds, saying how the written source answers to it. Absent only where the task binds nothing at all — a plan may cut such a task, and it must then say why in its own `rationale`, so there is nothing here to answer for. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's binding: a bound node this record passes over in silence is the base going unanswered in code, which is the failure this field exists to expose."
     },
     "inferences": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/inference" },
+      "items": {
+        "$ref": "#/$defs/inference"
+      },
       "description": "What the implementation decided that nothing stated, and what it decided it from. Absent is a claim that nothing was inferred, and a reviewer reads it as one. An inference that would change behavior a caller depends on is not an inference — it is a fact the base does not hold, and the answer is to stop rather than to record it here."
     },
     "divergences": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/divergence" },
+      "items": {
+        "$ref": "#/$defs/divergence"
+      },
       "description": "Where what was written departs from something the task bound, the inventory recorded, or the project's standard declares, with the reason. Absent is a claim, so make it deliberately. It is carried by an implementation and by a proof alike, and a departure sits in a file that record says it wrote — the implementation's `files`, or the proof's `tests`. The proof carries it because the rules about how a project writes its tests reach files no implementation ever lists, so a rule the tests cannot satisfy had nowhere to be said: it went into prose or it went nowhere, and an omission nothing can refuse is one nobody can find. What it settles is still nothing — a disclosed departure is not permission, and the review holds the same files to the same rules without being shown what was disclosed."
     },
     "preserved": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "What had to keep working, written down before the change rather than recalled after it — a list assembled afterwards is shaped by whatever happened to survive. It is what a later reader checks a regression against."
     },
     "deferred": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/deferral" },
+      "items": {
+        "$ref": "#/$defs/deferral"
+      },
       "description": "What this delivery found and did not change, with why it sat outside the task. Recording it is how a task stays one task."
     },
     "implementation": {
@@ -71,58 +97,79 @@
     "tests": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/test" },
+      "items": {
+        "$ref": "#/$defs/test"
+      },
       "description": "Every test written, with what it proves and what would make it fail. A test that cannot be said to fail for a stated reason is a test nobody can evaluate."
     },
     "not_applicable": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/dismissal" },
+      "items": {
+        "$ref": "#/$defs/dismissal"
+      },
       "description": "The edge cases this task's behavior does not raise, each with why. An edge case dismissed in silence is indistinguishable from one nobody thought of."
     },
     "untested": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "Behavior this record leaves unproven, stated plainly. Naming it is the point: an absence the record admits is a finding, and an absence it omits is invisible."
     },
     "contested": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/contest" },
+      "items": {
+        "$ref": "#/$defs/contest"
+      },
       "description": "Where the author of the proof believes the implementation is wrong. The test still states what the criterion requires; the disagreement is recorded rather than resolved, because resolving it here would let one producer overrule the other with nobody watching."
     },
     "reviewed": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
-      "description": "Every path this review was computed over, as the caller listed them. Never discovered by the review itself: a review that chose its own scope reports a different set each run, and a clean result would not say what it was clean over."
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^/]"
+      },
+      "description": "Every path this review was computed over, as the caller listed them. Never discovered by the review itself: a review that chose its own scope reports a different set each run, and a clean result would not say what it was clean over. Each path is relative to the target source root — the root the registry's scopes are stated against — because one anchor is what lets a scope decide whether a rule reaches a reviewed file, and what keeps the set meaningful when the software lives in a subdirectory of the repository rather than at its root."
     },
     "tasks": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/taskRef" },
+      "items": {
+        "$ref": "#/$defs/taskRef"
+      },
       "description": "The tasks this review answers to. Each must already hold an implementation record: a review of a task nothing delivered has no subject. Absent, the review is over a change no task claims, and the coverage pass cannot run — there are no stated criteria to pair tests with. A review carries no pin of its own: it answers to the criteria those tasks state today, and the coverage pass is held to exactly those, so a task that changed since surfaces as a criterion the review did not answer for rather than as a hash nobody can read."
     },
     "passes": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/passEntry" },
+      "items": {
+        "$ref": "#/$defs/passEntry"
+      },
       "description": "One entry per pass this framework defines, whether or not it ran. An entry carrying `missing` names the input that was absent, and its presence is what says the pass did not run. The validator holds the totality, because a review reported as clean over a pass that never ran is the failure this field exists to prevent — and no finding may be attributed to a pass that did not run."
     },
     "coverage": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/coverageEntry" },
+      "items": {
+        "$ref": "#/$defs/coverageEntry"
+      },
       "description": "One entry per criterion of every task this review names — present exactly when the coverage pass ran, and total over those criteria, because an omitted criterion reads as one that passed. There is no figure here, and none may be derived from it as a gate: a number that must rise becomes a target to satisfy, and satisfying it produces tests nobody needed. The states name which criteria are unproven, which is what a count cannot recover."
     },
     "findings": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/finding" },
+      "items": {
+        "$ref": "#/$defs/finding"
+      },
       "description": "What the passes found, each with the evidence it was observed from and the cost it carries. Absent is a claim that nothing was found, over the file set `reviewed` and the passes that ran — no more than that. There is no severity, no action and no verdict: this record is evidence, and what it means for the change is a person's to decide."
     },
     "standard": {
@@ -146,17 +193,48 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "The direct dependencies this delivery added, by the names the project's package manager knows them by. Each must be one the pinned standard authorizes: that list is where a human's approval of a package lives, and a delivery that could install past it would make the approval decorative. Transitive dependencies are not here and could not be — nobody approved them, no package manager offers a closure anybody did, and what actually arrived is the lockfile's record. Absent is a claim that this delivery added none, which the diff of the manifest either bears out or does not."
     }
   },
   "allOf": [
     {
-      "if": { "properties": { "kind": { "const": "implementation" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "implementation"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "then": {
-        "required": ["task", "files", "criteria"],
+        "required": [
+          "task",
+          "files",
+          "criteria"
+        ],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "task", "standard", "run", "installed", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
+          "enum": [
+            "kind",
+            "title",
+            "summary",
+            "task",
+            "standard",
+            "run",
+            "installed",
+            "files",
+            "criteria",
+            "nodes",
+            "inferences",
+            "divergences",
+            "preserved",
+            "deferred"
+          ]
         },
         "examples": [
           {
@@ -164,42 +242,105 @@
             "summary": "The entry point that persists a valid order, written for task/checkout/record-order.",
             "task": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
             "files": [
-              { "path": "src/orders/place.ts", "effect": "accepts a submitted order, refuses a non-positive total, and persists the rest" },
-              { "path": "src/orders/routes.ts", "effect": "routes the submission to place() and returns the order_number it answers with" }
+              {
+                "path": "src/orders/place.ts",
+                "effect": "accepts a submitted order, refuses a non-positive total, and persists the rest"
+              },
+              {
+                "path": "src/orders/routes.ts",
+                "effect": "routes the submission to place() and returns the order_number it answers with"
+              }
             ],
             "criteria": [
-              { "criterion": "Submitting a valid order returns its order_number.", "met": true, "how": "place() returns the persisted order_number, and the handler answers with it unchanged" },
-              { "criterion": "An order with a non-positive total is refused with the stated rule.", "met": true, "how": "place() compares the total against zero before any write and answers with the refusal the rule names" }
+              {
+                "criterion": "Submitting a valid order returns its order_number.",
+                "met": true,
+                "how": "place() returns the persisted order_number, and the handler answers with it unchanged"
+              },
+              {
+                "criterion": "An order with a non-positive total is refused with the stated rule.",
+                "met": true,
+                "how": "place() compares the total against zero before any write and answers with the refusal the rule names"
+              }
             ],
             "nodes": [
-              { "node": "definition/sales/order", "encoded_at": ["src/orders/place.ts"], "how": "the order's identity and attributes are the shape place() persists" },
-              { "node": "rule/sales/order-total-positive", "encoded_at": ["src/orders/place.ts"], "how": "the refusal is the rule's condition, checked before the write" }
+              {
+                "node": "definition/sales/order",
+                "encoded_at": [
+                  "src/orders/place.ts"
+                ],
+                "how": "the order's identity and attributes are the shape place() persists"
+              },
+              {
+                "node": "rule/sales/order-total-positive",
+                "encoded_at": [
+                  "src/orders/place.ts"
+                ],
+                "how": "the refusal is the rule's condition, checked before the write"
+              }
             ],
             "standard": {
               "at": "standards/example-service.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
             "run": "run/checkout-record-order-build",
-            "installed": ["pino"],
+            "installed": [
+              "pino"
+            ],
             "inferences": [
-              { "inferred": "a submission carrying no line items is refused as an invalid order rather than persisted empty.", "from": "the order definition requires at least one line, and no node states what an empty submission answers" }
+              {
+                "inferred": "a submission carrying no line items is refused as an invalid order rather than persisted empty.",
+                "from": "the order definition requires at least one line, and no node states what an empty submission answers"
+              }
             ],
             "divergences": [
-              { "cites": "ARC-02", "file": "src/orders/place.ts", "departure": "place() constructs the store rather than receiving it, because no factory exists for this module yet.", "why": "the task's objective is the entry point, and adding the module's wiring point reaches past it — deferred below, and disclosed here so the review's finding is not read as news" }
+              {
+                "cites": "ARC-02",
+                "file": "src/orders/place.ts",
+                "departure": "place() constructs the store rather than receiving it, because no factory exists for this module yet.",
+                "why": "the task's objective is the entry point, and adding the module's wiring point reaches past it — deferred below, and disclosed here so the review's finding is not read as news"
+              }
             ],
             "deferred": [
-              { "what": "src/invoices holds a second total calculation.", "why": "unifying them reaches outside this task's objective" }
+              {
+                "what": "src/invoices holds a second total calculation.",
+                "why": "unifying them reaches outside this task's objective"
+              }
             ]
           }
         ]
       }
     },
     {
-      "if": { "properties": { "kind": { "const": "proof" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "proof"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "then": {
-        "required": ["implementation", "tests"],
+        "required": [
+          "implementation",
+          "tests"
+        ],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "implementation", "standard", "run", "tests", "not_applicable", "untested", "contested", "divergences"]
+          "enum": [
+            "kind",
+            "title",
+            "summary",
+            "implementation",
+            "standard",
+            "run",
+            "tests",
+            "not_applicable",
+            "untested",
+            "contested",
+            "divergences"
+          ]
         },
         "examples": [
           {
@@ -221,39 +362,88 @@
               }
             ],
             "not_applicable": [
-              { "edge_case": "two submissions of one order at once", "why": "no bound node states concurrent behavior, and a test would assert a guarantee nobody made" }
+              {
+                "edge_case": "two submissions of one order at once",
+                "why": "no bound node states concurrent behavior, and a test would assert a guarantee nobody made"
+              }
             ],
-            "untested": ["the refusal's wire shape, which no bound node describes"],
+            "untested": [
+              "the refusal's wire shape, which no bound node describes"
+            ],
             "standard": {
               "at": "standards/example-service.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
             "run": "run/checkout-record-order-suite",
             "divergences": [
-              { "cites": "TST-04", "file": "tests/orders/place.spec.ts", "departure": "the file sits beside the suite's existing specs rather than mirroring the unit's path under a tests subtree.", "why": "every spec in this tree sits there and the rule's layout has no example in it yet; moving one file would leave the suite split across two layouts, which costs more than the departure" }
+              {
+                "cites": "TST-04",
+                "file": "tests/orders/place.spec.ts",
+                "departure": "the file sits beside the suite's existing specs rather than mirroring the unit's path under a tests subtree.",
+                "why": "every spec in this tree sits there and the rule's layout has no example in it yet; moving one file would leave the suite split across two layouts, which costs more than the departure"
+              }
             ]
           }
         ]
       }
     },
     {
-      "if": { "properties": { "kind": { "const": "review" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "review"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "then": {
-        "required": ["reviewed", "passes"],
+        "required": [
+          "reviewed",
+          "passes"
+        ],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "reviewed", "tasks", "passes", "coverage", "findings", "standard", "failures_counted", "run"]
+          "enum": [
+            "kind",
+            "title",
+            "summary",
+            "reviewed",
+            "tasks",
+            "passes",
+            "coverage",
+            "findings",
+            "standard",
+            "failures_counted",
+            "run"
+          ]
         },
         "examples": [
           {
             "title": "Checkout, first review",
             "summary": "What four passes found over the source and tests recording a placed order.",
-            "reviewed": ["src/orders/order.service.ts", "src/orders/routes.ts", "tests/orders/place.spec.ts"],
-            "tasks": ["task/checkout/record-order"],
+            "reviewed": [
+              "src/orders/order.service.ts",
+              "src/orders/routes.ts",
+              "tests/orders/place.spec.ts"
+            ],
+            "tasks": [
+              "task/checkout/record-order"
+            ],
             "passes": [
-              { "pass": "coverage" },
-              { "pass": "conformance" },
-              { "pass": "standard" },
-              { "pass": "failures", "missing": "no captured run was supplied, so nothing was diagnosed" }
+              {
+                "pass": "coverage"
+              },
+              {
+                "pass": "conformance"
+              },
+              {
+                "pass": "standard"
+              },
+              {
+                "pass": "failures",
+                "missing": "no captured run was supplied, so nothing was diagnosed"
+              }
             ],
             "standard": {
               "at": "standards/example-service.yaml",
@@ -263,7 +453,12 @@
               {
                 "criterion": "Submitting a valid order returns its order_number.",
                 "state": "covered",
-                "tests": [{ "file": "tests/orders/place.spec.ts", "name": "returns the order_number for a valid submission" }]
+                "tests": [
+                  {
+                    "file": "tests/orders/place.spec.ts",
+                    "name": "returns the order_number for a valid submission"
+                  }
+                ]
               },
               {
                 "criterion": "An order with a non-positive total is refused with the stated rule.",
@@ -312,10 +507,18 @@
     },
     "writtenFile": {
       "type": "object",
-      "required": ["path", "effect"],
+      "required": [
+        "path",
+        "effect"
+      ],
       "additionalProperties": false,
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/]",
+          "description": "Relative to the target source root — the directory the registry's commands run from, the root its scopes and `presupposes` are stated against, and the root the task's `produces` names. One anchor for every path, or none of them can be compared: `produces` is held to this list by spelling, and a scope reaches a finding's file only under the same one. Never absolute, and never spelled from the repository around the target."
+        },
         "effect": {
           "type": "string",
           "minLength": 1,
@@ -325,7 +528,11 @@
     },
     "criterionEntry": {
       "type": "object",
-      "required": ["criterion", "met", "how"],
+      "required": [
+        "criterion",
+        "met",
+        "how"
+      ],
       "additionalProperties": false,
       "properties": {
         "criterion": {
@@ -333,7 +540,9 @@
           "minLength": 1,
           "description": "The criterion as the task states it, quoted rather than paraphrased — the validator pairs the two by their text, and a restatement is a pairing nobody can check."
         },
-        "met": { "type": "boolean" },
+        "met": {
+          "type": "boolean"
+        },
         "how": {
           "type": "string",
           "minLength": 1,
@@ -343,15 +552,23 @@
     },
     "nodeAnswer": {
       "type": "object",
-      "required": ["node", "how"],
+      "required": [
+        "node",
+        "how"
+      ],
       "additionalProperties": false,
       "properties": {
-        "node": { "$ref": "#/$defs/baseNodeRef" },
+        "node": {
+          "$ref": "#/$defs/baseNodeRef"
+        },
         "encoded_at": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
           "description": "Where a fact this node holds now lives in the written source. Absent means the node governed the work without a fact of its own reaching the code — a rule the work honors, or a node the delivery did not reach — and `how` says which."
         },
         "how": {
@@ -363,10 +580,16 @@
     },
     "inference": {
       "type": "object",
-      "required": ["inferred", "from"],
+      "required": [
+        "inferred",
+        "from"
+      ],
       "additionalProperties": false,
       "properties": {
-        "inferred": { "type": "string", "minLength": 1 },
+        "inferred": {
+          "type": "string",
+          "minLength": 1
+        },
         "from": {
           "type": "string",
           "minLength": 1,
@@ -376,7 +599,10 @@
     },
     "divergence": {
       "type": "object",
-      "required": ["departure", "why"],
+      "required": [
+        "departure",
+        "why"
+      ],
       "additionalProperties": false,
       "description": "One departure, from exactly one thing: either `from`, naming a bound node or a convention in prose, or `cites` with `file`, naming a rule of the project's standard and the path the departure sits in. Never both and never neither — bin/deliver.py holds that pairing, and holds a cited rule to the standard the record pins. A divergence is a disclosure and never a permission: nothing downstream reads it as leave to depart, the pass that reviews the same rules is not shown it, and a reader who meets a finding can look here to learn whether the departure was known and reasoned. Recording one does not settle it.",
       "properties": {
@@ -394,25 +620,48 @@
           "minLength": 1,
           "description": "The path this departure sits in, as `files` lists it. Present with `cites` and held to that list, so a disclosure names a place a reader can open and the cited rule can be checked against the scope it declares."
         },
-        "departure": { "type": "string", "minLength": 1 },
-        "why": { "type": "string", "minLength": 1 }
+        "departure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "deferral": {
       "type": "object",
-      "required": ["what", "why"],
+      "required": [
+        "what",
+        "why"
+      ],
       "additionalProperties": false,
       "properties": {
-        "what": { "type": "string", "minLength": 1 },
-        "why": { "type": "string", "minLength": 1 }
+        "what": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "test": {
       "type": "object",
-      "required": ["file", "name", "proves", "fails_when"],
+      "required": [
+        "file",
+        "name",
+        "proves",
+        "fails_when"
+      ],
       "additionalProperties": false,
       "properties": {
-        "file": { "type": "string", "minLength": 1 },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
         "name": {
           "type": "string",
           "minLength": 1,
@@ -432,28 +681,50 @@
     },
     "dismissal": {
       "type": "object",
-      "required": ["edge_case", "why"],
+      "required": [
+        "edge_case",
+        "why"
+      ],
       "additionalProperties": false,
       "properties": {
-        "edge_case": { "type": "string", "minLength": 1 },
-        "why": { "type": "string", "minLength": 1 }
+        "edge_case": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "contest": {
       "type": "object",
-      "required": ["what", "why"],
+      "required": [
+        "what",
+        "why"
+      ],
       "additionalProperties": false,
       "properties": {
-        "what": { "type": "string", "minLength": 1 },
-        "why": { "type": "string", "minLength": 1 }
+        "what": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "passEntry": {
       "type": "object",
-      "required": ["pass"],
+      "required": [
+        "pass"
+      ],
       "additionalProperties": false,
       "properties": {
-        "pass": { "$ref": "#/$defs/passName" },
+        "pass": {
+          "$ref": "#/$defs/passName"
+        },
         "missing": {
           "type": "string",
           "minLength": 1,
@@ -462,12 +733,20 @@
       }
     },
     "passName": {
-      "enum": ["coverage", "conformance", "failures", "standard"],
+      "enum": [
+        "coverage",
+        "conformance",
+        "failures",
+        "standard"
+      ],
       "description": "Which judgment the entry is about — whether the tests prove the task's criteria, whether the source states only what the base holds, why a captured run failed, or whether the source follows the rules this project set for itself. The last is the only one whose subject the project authors rather than the framework, and it reaches only the rules of that standard whose application is a reading: a rule a linter or a compiler decides exactly runs as a step of the project's own suite, and its failures arrive through the failures pass instead."
     },
     "standardRef": {
       "type": "object",
-      "required": ["at", "pin"],
+      "required": [
+        "at",
+        "pin"
+      ],
       "additionalProperties": false,
       "properties": {
         "at": {
@@ -489,7 +768,10 @@
     },
     "coverageEntry": {
       "type": "object",
-      "required": ["criterion", "state"],
+      "required": [
+        "criterion",
+        "state"
+      ],
       "additionalProperties": false,
       "properties": {
         "criterion": {
@@ -498,13 +780,20 @@
           "description": "The criterion as the task states it, quoted. Never recovered from the code: a criterion read off an implementation describes what was built, and pairing it with a test proves nothing."
         },
         "state": {
-          "enum": ["covered", "partial", "uncovered", "unauditable"],
+          "enum": [
+            "covered",
+            "partial",
+            "uncovered",
+            "unauditable"
+          ],
           "description": "A test covers a criterion when it would fail if the criterion stopped holding — that is the whole test. It is partial where a stated part of the criterion goes unexercised, uncovered where nothing exercises it, and unauditable where the criterion cannot be read well enough to look for, which is a fact about the criterion rather than about the tests."
         },
         "tests": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/testRef" },
+          "items": {
+            "$ref": "#/$defs/testRef"
+          },
           "description": "Every test bearing on this criterion. One test may bear on several criteria and one criterion on several tests; forcing the mapping to be one to one loses coverage."
         },
         "why": {
@@ -516,27 +805,56 @@
     },
     "testRef": {
       "type": "object",
-      "required": ["file", "name"],
+      "required": [
+        "file",
+        "name"
+      ],
       "additionalProperties": false,
       "properties": {
-        "file": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 }
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "finding": {
       "type": "object",
-      "required": ["pass", "where", "evidence", "cost"],
+      "required": [
+        "pass",
+        "where",
+        "evidence",
+        "cost"
+      ],
       "additionalProperties": false,
       "allOf": [
         {
-          "if": { "properties": { "pass": { "const": "failures" } }, "required": ["pass"] },
+          "if": {
+            "properties": {
+              "pass": {
+                "const": "failures"
+              }
+            },
+            "required": [
+              "pass"
+            ]
+          },
           "then": {},
-          "else": { "required": ["file"] },
+          "else": {
+            "required": [
+              "file"
+            ]
+          },
           "$comment": "A pass that scans the file set always observes a finding in one of its files. The failures pass does not scan: its subject is a captured run, whose failures may land in a file the change never touched, or in no file at all where a step could not execute. So `file` is required of the scanning passes and optional of that one, and bin/deliver.py holds it to `reviewed` on the same terms."
         }
       ],
       "properties": {
-        "pass": { "$ref": "#/$defs/passName" },
+        "pass": {
+          "$ref": "#/$defs/passName"
+        },
         "file": {
           "type": "string",
           "minLength": 1,
@@ -567,7 +885,12 @@
           "description": "The rule of the project's standard this finding is against, on a finding of the standard pass and nowhere else — the validator holds both halves of that, the same way it holds `cause` to the failures pass. Exactly one rule: a departure from two is two findings, because they will be settled separately, and a finding citing no rule at all is taste with a location attached. The validator also holds the cited rule to the standard — it must be declared, it must be one the standard decides by reading rather than one a tool decides, and its scope must reach this finding's file."
         },
         "cause": {
-          "enum": ["code", "test", "setup", "build"],
+          "enum": [
+            "code",
+            "test",
+            "setup",
+            "build"
+          ],
           "description": "Why a captured run failed, on a finding of the failures pass and nowhere else — the validator holds both halves of that. The split that matters is code against test, and the base settles it, never which of the two is easier to change: where nothing in the base settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
         }
       }

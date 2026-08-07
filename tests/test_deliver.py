@@ -1126,3 +1126,33 @@ def test_what_each_kind_owes_differs_by_when_it_is_written(delivery, work, root,
     proof["run"] = "run/suite"
     write_delivery("proof/checkout/record-order", proof)
     assert problems_of(delivery, work, root) == []
+
+
+# ------------------------------------------------- every path has one anchor
+
+
+def test_no_path_field_admits_an_absolute_path():
+    """`produces`, `files[].path` and `reviewed[]` are compared to each other and to the
+    registry's scopes by spelling, so all of them are stated against one anchor — the target
+    source root — and an absolute path is refused at the contract, not discovered as a
+    comparison that never matches."""
+    from jsonschema import Draft202012Validator
+    delivery = json.loads((REPO / "src/claude/schemas/delivery-node.json").read_text())
+    plan_node = json.loads((REPO / "src/claude/schemas/plan-node.json").read_text())
+    cases = {
+        "files[].path": delivery["$defs"]["writtenFile"]["properties"]["path"],
+        "reviewed[]": delivery["properties"]["reviewed"]["items"],
+        "produces[]": plan_node["properties"]["produces"]["items"],
+    }
+    for name, schema in cases.items():
+        judge = Draft202012Validator(schema)
+        assert judge.is_valid("src/routes/case.ts"), f"{name} refuses an ordinary relative path"
+        assert not judge.is_valid("/etc/passwd"), f"{name} admits an absolute path"
+
+
+def test_the_written_file_path_states_its_anchor():
+    """The anchor is load-bearing prose: three fields compare by spelling, and the contract is
+    where the spelling's root is stated once."""
+    delivery = json.loads((REPO / "src/claude/schemas/delivery-node.json").read_text())
+    stated = delivery["$defs"]["writtenFile"]["properties"]["path"]["description"]
+    assert "relative to the target source root" in stated.lower()

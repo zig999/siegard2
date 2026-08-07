@@ -4,14 +4,25 @@
   "title": "Siegard plan node",
   "description": "One node of a development plan: the frontmatter of one markdown file under the work root. The path is the identity — `inventory/<slug>.md`, `epic/<slug>.md`, `task/<epic>/<slug>.md` — so no id, type or epic field exists to disagree with it. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A plan node deliberately carries no status, estimate, priority or order field: execution state lives in git, and order is derived from dependencies by whoever executes — a plan that records progress is an orchestrator's state file, which this framework refuses to have. What the knowledge base leaves open reaches a task as `unresolved` — an open gap of a bound node, cited as `<node-id>#<field>`, or a question no node answers — and the validator requires every open gap on every bound node to be either unresolved or waived: silence over a gap is refused. One example per kind sits in that kind's branch. The body below the frontmatter carries exactly two headings, `## What it is` and `## Notes`.",
   "type": "object",
-  "required": ["kind", "title", "summary"],
+  "required": [
+    "kind",
+    "title",
+    "summary"
+  ],
   "additionalProperties": false,
   "properties": {
     "kind": {
-      "enum": ["inventory", "epic", "task"],
+      "enum": [
+        "inventory",
+        "epic",
+        "task"
+      ],
       "description": "Supplied by the validator from the file path; never written in frontmatter."
     },
-    "title": { "type": "string", "minLength": 1 },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
     "summary": {
       "type": "string",
       "minLength": 1,
@@ -25,51 +36,69 @@
     "sources": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "Where this node was read from — ordinarily files under the work root's `intake/`, which the validator never reads."
     },
     "area": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "The paths the survey walked, as the caller named the target source root — the root itself when the survey walked all of it. Required even when the target is empty: a greenfield area is a full answer, said in `summary`, and this field still records where the survey looked."
     },
     "modules": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/module" },
+      "items": {
+        "$ref": "#/$defs/module"
+      },
       "description": "What already exists where the change lands. Absent when the area holds nothing."
     },
     "conventions": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/convention" },
+      "items": {
+        "$ref": "#/$defs/convention"
+      },
       "description": "How the existing code does things, each with the path it was seen at. A convention without evidence is an opinion, and opinions are not inventory."
     },
     "must_not_duplicate": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/duplication" },
+      "items": {
+        "$ref": "#/$defs/duplication"
+      },
       "description": "What the plan's tasks must reuse rather than rewrite, each with where it sits."
     },
     "risks": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/risk" },
+      "items": {
+        "$ref": "#/$defs/risk"
+      },
       "description": "What the change could break, each with the consumers that would observe it. A risk with no named consumer is a worry, not a risk."
     },
     "covers": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/baseNodeRef" },
+      "items": {
+        "$ref": "#/$defs/baseNodeRef"
+      },
       "description": "The base nodes this epic answers for, in both directions: the validator requires every entry to be bound by one of the epic's tasks or declared in `uncovered` — a covered node reaches a task or a stated why, never neither — and refuses a task binding outside this list, because a binding outside the claim is scope the plan does not declare. Two epics may cover the same base node — overlap is shared scope declared, never an error — and each reconciles its own claim independently."
     },
     "uncovered": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/uncoveredEntry" },
+      "items": {
+        "$ref": "#/$defs/uncoveredEntry"
+      },
       "description": "The deliberate remainder of `covers`: base nodes this epic claims and this plan leaves untouched, each with why. An entry here that a task nevertheless binds is a contradiction the validator refuses."
     },
     "objective": {
@@ -81,21 +110,30 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "The conditions under which the objective counts as met, each falsifiable on its own. \"Works correctly\" is prose; \"a rejected order returns the stated domain error\" is a criterion."
     },
     "depends_on": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/taskRef" },
+      "items": {
+        "$ref": "#/$defs/taskRef"
+      },
       "description": "Tasks whose delivered outcome this one builds on. Dependency, never order: the validator refuses a cycle, and any schedule satisfying these edges is equally valid."
     },
     "produces": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^/]"
+      },
       "description": "The artifacts this task's delivery must create, by path relative to the target source root. It is the checkable half of an objective rather than a second statement of it, and it exists because two things read it. A delivery refuses an implementation record whose `files` does not list what the task said it would produce, so the claim is held to what was written rather than to what was meant. And a task producing anything is one building what the project's own standard presupposes — the manifest, the compiler configuration, the artifact a rule names and no rule can ask for — which is why writing source over an absent presupposition stops for every other task and never for this one: holding the task that builds the substrate to the substrate's presence is circular, and the deadlock has no other exit. Ordinary work declares none.",
       "$comment": "Held against the implementation record's `files` by bin/deliver.py, and read by /implement-task before anything is written."
     },
@@ -103,59 +141,129 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/boundNode" },
+      "items": {
+        "$ref": "#/$defs/boundNode"
+      },
       "description": "The base nodes that govern this task, each with the digest of the node as this binding read it. This is the binding: the executor reads exactly these, and every entry sits inside the epic's `covers` — a task needing more grows the claim or moves. A task that binds nothing is ungoverned by the base and must say why in `rationale`; it carries no digest, because it read nothing."
     },
     "unresolved": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/unresolvedEntry" },
+      "items": {
+        "$ref": "#/$defs/unresolvedEntry"
+      },
       "description": "What this task needs and the base leaves open. A gap entry cites an open gap on a bound node; a question entry records a fact no node answers. Either way the answer is produced in the base, by /analyse-domain — a task never closes a gap."
     },
     "waived": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/waivedEntry" },
+      "items": {
+        "$ref": "#/$defs/waivedEntry"
+      },
       "description": "Open gaps on bound nodes that do not bear on this task, each with why. The waiver is the recorded judgment that makes the validator's totality check honest: every open gap on a bound node is unresolved or waived, never silently ignored."
     }
   },
   "allOf": [
     {
-      "if": { "properties": { "kind": { "const": "inventory" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "inventory"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "then": {
-        "required": ["area"],
+        "required": [
+          "area"
+        ],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "rationale", "sources", "area", "modules", "conventions", "must_not_duplicate", "risks"]
+          "enum": [
+            "kind",
+            "title",
+            "summary",
+            "rationale",
+            "sources",
+            "area",
+            "modules",
+            "conventions",
+            "must_not_duplicate",
+            "risks"
+          ]
         },
         "examples": [
           {
             "title": "Order service",
             "summary": "The area the checkout scope lands in: one layered service under src/.",
-            "area": ["src/"],
+            "area": [
+              "src/"
+            ],
             "modules": [
-              { "name": "orders", "path": "src/orders", "role": "touched" },
-              { "name": "billing-client", "path": "src/clients/billing.ts", "role": "depends-on" }
+              {
+                "name": "orders",
+                "path": "src/orders",
+                "role": "touched"
+              },
+              {
+                "name": "billing-client",
+                "path": "src/clients/billing.ts",
+                "role": "depends-on"
+              }
             ],
             "conventions": [
-              { "statement": "Route handlers stay thin and delegate to a service module.", "seen_at": "src/orders/routes.ts" }
+              {
+                "statement": "Route handlers stay thin and delegate to a service module.",
+                "seen_at": "src/orders/routes.ts"
+              }
             ],
             "must_not_duplicate": [
-              { "what": "Money arithmetic helpers", "at": "src/shared/money.ts" }
+              {
+                "what": "Money arithmetic helpers",
+                "at": "src/shared/money.ts"
+              }
             ],
             "risks": [
-              { "risk": "The billing client is shared; a signature change ripples.", "consumers": ["src/invoices"] }
+              {
+                "risk": "The billing client is shared; a signature change ripples.",
+                "consumers": [
+                  "src/invoices"
+                ]
+              }
             ],
-            "sources": ["intake/scope.md"]
+            "sources": [
+              "intake/scope.md"
+            ]
           }
         ]
       }
     },
     {
-      "if": { "properties": { "kind": { "const": "epic" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "epic"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "then": {
-        "required": ["covers"],
+        "required": [
+          "covers"
+        ],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "rationale", "sources", "covers", "uncovered"]
+          "enum": [
+            "kind",
+            "title",
+            "summary",
+            "rationale",
+            "sources",
+            "covers",
+            "uncovered"
+          ]
         },
         "examples": [
           {
@@ -167,24 +275,64 @@
               "lifecycle/sales/order"
             ],
             "uncovered": [
-              { "node": "lifecycle/sales/order", "why": "State handling ships with the follow-up scope; nothing in this plan transitions an order." }
+              {
+                "node": "lifecycle/sales/order",
+                "why": "State handling ships with the follow-up scope; nothing in this plan transitions an order."
+              }
             ],
-            "sources": ["intake/scope.md"]
+            "sources": [
+              "intake/scope.md"
+            ]
           }
         ]
       }
     },
     {
-      "if": { "properties": { "kind": { "const": "task" } }, "required": ["kind"] },
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "task"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
       "then": {
-        "required": ["objective", "criteria"],
+        "required": [
+          "objective",
+          "criteria"
+        ],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "rationale", "sources", "objective", "criteria", "depends_on", "produces", "nodes", "unresolved", "waived"]
+          "enum": [
+            "kind",
+            "title",
+            "summary",
+            "rationale",
+            "sources",
+            "objective",
+            "criteria",
+            "depends_on",
+            "produces",
+            "nodes",
+            "unresolved",
+            "waived"
+          ]
         },
         "allOf": [
           {
-            "if": { "not": { "required": ["nodes"] } },
-            "then": { "required": ["rationale"] }
+            "if": {
+              "not": {
+                "required": [
+                  "nodes"
+                ]
+              }
+            },
+            "then": {
+              "required": [
+                "rationale"
+              ]
+            }
           }
         ],
         "examples": [
@@ -196,20 +344,40 @@
               "Submitting a valid order returns its order_number.",
               "An order with a non-positive total is refused with the stated rule."
             ],
-            "depends_on": ["task/checkout/order-schema"],
+            "depends_on": [
+              "task/checkout/order-schema"
+            ],
             "nodes": [
-              { "node": "definition/sales/order", "digest": "sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c" },
-              { "node": "rule/sales/order-total-positive", "digest": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef" },
-              { "node": "lifecycle/sales/order", "digest": "sha256:7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730" }
+              {
+                "node": "definition/sales/order",
+                "digest": "sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
+              },
+              {
+                "node": "rule/sales/order-total-positive",
+                "digest": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+              },
+              {
+                "node": "lifecycle/sales/order",
+                "digest": "sha256:7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730"
+              }
             ],
             "unresolved": [
-              { "gap": "definition/sales/order#attributes.currency" },
-              { "question": "The scope does not say whether submission is idempotent per order_number." }
+              {
+                "gap": "definition/sales/order#attributes.currency"
+              },
+              {
+                "question": "The scope does not say whether submission is idempotent per order_number."
+              }
             ],
             "waived": [
-              { "gap": "lifecycle/sales/order#transitions.placed.cancel", "why": "This task only records orders; cancellation is not on its path." }
+              {
+                "gap": "lifecycle/sales/order#transitions.placed.cancel",
+                "why": "This task only records orders; cancellation is not on its path."
+              }
             ],
-            "sources": ["intake/scope.md"]
+            "sources": [
+              "intake/scope.md"
+            ]
           }
         ]
       }
@@ -228,11 +396,16 @@
     },
     "boundNode": {
       "type": "object",
-      "required": ["node", "digest"],
+      "required": [
+        "node",
+        "digest"
+      ],
       "additionalProperties": false,
       "description": "One node of the binding: which base node governs this task, and which version of it the binding read. The pair sits in one entry rather than in two parallel lists, so a node and its digest cannot come apart. A digest the validator finds diverging names this node and no other — that is the point of carrying it per node instead of one value over the whole base, which said only that something somewhere had moved.",
       "properties": {
-        "node": { "$ref": "#/$defs/baseNodeRef" },
+        "node": {
+          "$ref": "#/$defs/baseNodeRef"
+        },
         "digest": {
           "$ref": "#/$defs/pin",
           "description": "The node as this binding read it, taken from the `digest` its entry carries in the base's derived graph.json and computable by hand as `sha256sum <knowledge-root>/<node>.md`. Diverging, it says this node moved after the binding — the task is re-bound, or the digest restated deliberately. Two entries naming one node are refused however their digests differ: a binding says once which version it read."
@@ -256,70 +429,125 @@
     },
     "module": {
       "type": "object",
-      "required": ["name", "path", "role"],
+      "required": [
+        "name",
+        "path",
+        "role"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": { "$ref": "#/$defs/slug" },
-        "path": { "type": "string", "minLength": 1 },
+        "name": {
+          "$ref": "#/$defs/slug"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
         "role": {
-          "enum": ["touched", "depends-on", "adjacent"],
+          "enum": [
+            "touched",
+            "depends-on",
+            "adjacent"
+          ],
           "description": "Whether the change lands in it, leans on it, or merely sits next to it."
         }
       }
     },
     "convention": {
       "type": "object",
-      "required": ["statement", "seen_at"],
+      "required": [
+        "statement",
+        "seen_at"
+      ],
       "additionalProperties": false,
       "properties": {
-        "statement": { "type": "string", "minLength": 1 },
-        "seen_at": { "type": "string", "minLength": 1, "description": "The path the convention was observed at." }
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seen_at": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The path the convention was observed at."
+        }
       }
     },
     "duplication": {
       "type": "object",
-      "required": ["what", "at"],
+      "required": [
+        "what",
+        "at"
+      ],
       "additionalProperties": false,
       "properties": {
-        "what": { "type": "string", "minLength": 1 },
-        "at": { "type": "string", "minLength": 1 }
+        "what": {
+          "type": "string",
+          "minLength": 1
+        },
+        "at": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "risk": {
       "type": "object",
-      "required": ["risk", "consumers"],
+      "required": [
+        "risk",
+        "consumers"
+      ],
       "additionalProperties": false,
       "properties": {
-        "risk": { "type": "string", "minLength": 1 },
+        "risk": {
+          "type": "string",
+          "minLength": 1
+        },
         "consumers": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
     "uncoveredEntry": {
       "type": "object",
-      "required": ["node", "why"],
+      "required": [
+        "node",
+        "why"
+      ],
       "additionalProperties": false,
       "properties": {
-        "node": { "$ref": "#/$defs/baseNodeRef" },
-        "why": { "type": "string", "minLength": 1 }
+        "node": {
+          "$ref": "#/$defs/baseNodeRef"
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "unresolvedEntry": {
       "oneOf": [
         {
           "type": "object",
-          "required": ["gap"],
+          "required": [
+            "gap"
+          ],
           "additionalProperties": false,
           "properties": {
-            "gap": { "$ref": "#/$defs/gapRef" }
+            "gap": {
+              "$ref": "#/$defs/gapRef"
+            }
           }
         },
         {
           "type": "object",
-          "required": ["question"],
+          "required": [
+            "question"
+          ],
           "additionalProperties": false,
           "properties": {
             "question": {
@@ -333,11 +561,19 @@
     },
     "waivedEntry": {
       "type": "object",
-      "required": ["gap", "why"],
+      "required": [
+        "gap",
+        "why"
+      ],
       "additionalProperties": false,
       "properties": {
-        "gap": { "$ref": "#/$defs/gapRef" },
-        "why": { "type": "string", "minLength": 1 }
+        "gap": {
+          "$ref": "#/$defs/gapRef"
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     }
   }
