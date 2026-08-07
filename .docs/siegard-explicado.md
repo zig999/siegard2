@@ -1,8 +1,8 @@
 # Siegard explicado do zero
 
 > **Sobre este manual.** Ele descreve o motor deste repositório a partir do zero, sem supor
-> conhecimento prévio. Cobre a versão **2.0.0** (contratos `siegard/1`, `siegard-plan/2`,
-> `siegard-delivery/1`).
+> conhecimento prévio. Cobre a versão **3.1.0** (contratos `siegard/1`, `siegard-plan/2`,
+> `siegard-delivery/1`, `siegard-standard/1`).
 >
 > **Sobre o idioma.** A seção Language de `/CLAUDE.md` exige que todo artefato do repositório seja
 > em inglês (en-US), e nomeia `docs` entre eles. Este arquivo é a exceção deliberada, decidida pelo
@@ -27,12 +27,13 @@
 9. [O digest: qual versão a vinculação leu](#9-o-digest-qual-versão-a-vinculação-leu)
 10. [As totalidades: nada passa em silêncio](#10-as-totalidades-nada-passa-em-silêncio)
 11. [A entrega](#11-a-entrega)
-12. [Os quatro pontos de entrada](#12-os-quatro-pontos-de-entrada)
-13. [A parada é a funcionalidade](#13-a-parada-é-a-funcionalidade)
-14. [Exemplo completo de ponta a ponta](#14-exemplo-completo-de-ponta-a-ponta)
-15. [Glossário](#15-glossário)
-16. [Erros comuns e o que significam](#16-erros-comuns-e-o-que-significam)
-17. [Migrando de 1.x para 2.0.0](#17-migrando-de-1x-para-200)
+12. [O standard: as regras que o projeto define para si](#12-o-standard-as-regras-que-o-projeto-define-para-si)
+13. [Os quatro pontos de entrada](#13-os-quatro-pontos-de-entrada)
+14. [A parada é a funcionalidade](#14-a-parada-é-a-funcionalidade)
+15. [Exemplo completo de ponta a ponta](#15-exemplo-completo-de-ponta-a-ponta)
+16. [Glossário](#16-glossário)
+17. [Erros comuns e o que significam](#17-erros-comuns-e-o-que-significam)
+18. [Migrando de 1.x para 2.0.0](#18-migrando-de-1x-para-200)
 
 ---
 
@@ -112,7 +113,8 @@ validador que **se recusa** a gerar o índice se as coisas não fecharem.
 │    implementation/checkout/record-order.md   ← o que o código faz           │
 │    proof/checkout/record-order.md            ← o que os testes provam       │
 │    review/first.md                           ← o que a revisão achou        │
-│    run/first/                                ← o que a suite imprimiu       │
+│    run/first/                                ← o que cada execução imprimiu │
+│    standards/backend.yaml                    ← a cópia pinada do registro   │
 │    delivery.json                             ← GERADO.                      │
 │                                                                             │
 │  validador: bin/deliver.py  (valida a entrega CONTRA o plano)               │
@@ -885,24 +887,35 @@ Porque:
 Se o mesmo agente escreve o código e o teste, o teste testa o que o código faz — não o que o
 critério pede. Separar os contextos é o que faz o teste ser uma verificação.
 
-### Por que ninguém que julga também executa
+### Toda execução passa pelo `run.py`, e fica gravada
 
-`bin/run.py` roda os comandos do consumidor e grava o que imprimiram. Ele **não conta testes** —
-parsear formato de reporter é conhecimento de stack, e o motor não tem nenhum.
+Até a 2.x, a garantia era "quem escreve o código não executa". A 3.0.0 trocou-a por uma mais
+forte — porque a antiga proibia também o legítimo: um implementador que não pode rodar `npm ci`
+escreve contra tipos que está chutando.
 
-E `/implement-task` **não roda nada**. A razão: quem escreve o código não pode testemunhar se
-passou, ou itera até ficar verde e o que falhou não existe em lugar nenhum.
+Hoje as skills **instalam, buildam e rodam** — mas nenhuma executa nada diretamente. Cada
+execução é uma chamada a `bin/run.py`, que grava tudo o que os comandos imprimiram sob
+`run/<slug>/` no delivery root, e **recusa um slug que já existe**:
 
 ```
-   ┌──────────────────┐         ┌──────────────────┐        ┌───────────────┐
-   │ /implement-task  │         │    bin/run.py    │        │ /review-change│
-   │                  │         │                  │        │               │
-   │ escreve código   │         │ executa e grava  │        │ julga o que   │
-   │ escreve testes   │         │ o que imprimiu   │        │ está gravado  │
-   │                  │         │                  │        │               │
-   │ NÃO EXECUTA      │         │ NÃO JULGA        │        │ NÃO EXECUTA   │
-   └──────────────────┘         └──────────────────┘        └───────────────┘
+   ┌──────────────────┐         ┌──────────────────────┐        ┌────────────────┐
+   │ as skills pedem  │         │      bin/run.py      │        │  os records    │
+   │ a execução, com  │  ─────► │ executa e grava o    │ ─────► │ apontam para o │
+   │ os comandos DO   │         │ que cada passo       │        │ run gravado    │
+   │ REGISTRO         │         │ imprimiu; um slug    │        │ que os sustenta│
+   │                  │         │ NUNCA é reutilizado  │        │                │
+   └──────────────────┘         └──────────────────────┘        └────────────────┘
 ```
+
+A recusa de slug é o que substitui a proibição antiga: **iterar é permitido porque cada
+tentativa fica legível**. A quinta rodada verde não apaga as quatro vermelhas — elas estão em
+`run/`, com nomes. Uma execução narrada em vez de capturada não aconteceu.
+
+E `run.py` continua sem julgar: ele **não conta testes** — parsear formato de reporter é
+conhecimento de stack, e o motor não tem nenhum. Ele também não compõe comando algum: os comandos
+são do registro do projeto ([seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si)),
+e um runner que chutasse o comando de teste estaria respondendo uma pergunta sobre o projeto do
+consumidor.
 
 ### As quatro passes da review
 
@@ -923,30 +936,230 @@ revisora seria o portão — e foi exatamente disso que este desenho fugiu.
 
 ### O standard do projeto
 
-O framework embarca o **contrato** de um standard (`schemas/standard.json`), o passe e as
-verificações — e **nenhuma regra**. Porque as convenções de uma stack não são de um domínio, e um
-framework que as embarcasse prescreveria TypeScript a um projeto em Go.
-
-Um projeto pode ter **vários** registros — o contrato diz isso no campo `standard`: *"One project
-may hold several — a backend's rules are not a frontend's — and each is named where it is used."* A
-restrição é um registro **por invocação**.
-
-Cada regra do standard se marca com `decided_by`:
-
-- **`reading`** — dizer se vale exige entender o que o código significa. É do passe de standard, e um
-  finding cita a regra pelo id.
-- **`tool`** — um linter ou compilador decide exato e barato. **Não é trabalho de modelo:** roda como
-  passo da suite do projeto, e o que achar chega pelo passe de falhas.
-
-> *"Um modelo aplicando uma regra que o linter tem tem recall estritamente pior que o linter, e custa
-> mais."*
-
-E um projeto que não escreveu standard nenhum recebe uma review **honestamente estreita** — o passe
-registra que não rodou e o que faltava — **nunca uma review limpa**.
+O passe de conformidade com standard merece uma seção própria — é a
+[seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si), logo abaixo. O que importa
+guardar daqui: um projeto que não escreveu standard nenhum recebe uma review **honestamente
+estreita** — o passe registra que não rodou e o que faltava — **nunca uma review limpa**.
 
 ---
 
-## 12. Os quatro pontos de entrada
+## 12. O standard: as regras que o projeto define para si
+
+O conhecimento diz o que o **negócio** decidiu. O standard diz o que o **projeto** decidiu sobre
+si mesmo: como o código se organiza, por onde ele loga, o que o instala e o que o testa. São
+autoridades diferentes, com donos diferentes — e o framework trata a diferença a sério.
+
+### O que o framework embarca, e o que nunca embarca
+
+O framework embarca o **contrato** de um standard (`schemas/standard.json`), o passe de review e
+as verificações — e **nenhuma regra**. Convenções de stack não são de um domínio, e um framework
+que as embarcasse prescreveria TypeScript a um projeto em Go. A frase do teste que guarda os
+exemplos resume: *"Siegard ships the slot and the enforcement, never the content."*
+
+O registro é um YAML **no repositório do consumidor**, escrito e editado por quem é dono do
+projeto. Um projeto pode ter vários — as regras de um backend não são as de um frontend — e cada
+invocação nomeia **um**.
+
+### A anatomia de uma regra
+
+```yaml
+- id: PRH-01
+  statement: Production code logs through the configured logger.
+  because: A console line goes nowhere in production.
+  decided_by: tool
+  tool: lint
+  applies_to:
+    - under: src
+      suffix: .ts
+      nested: true
+```
+
+Cada regra tem um id citável, a afirmação, o porquê, **quem a decide**, e o escopo — declarado em
+partes (`under`, `suffix`, `nested`) em vez de glob, porque a semântica de `*` e `**` varia entre
+bibliotecas e o escopo decide se um finding é recusado. O `under` é relativo à **raiz do source
+alvo** — a mesma âncora de todos os paths do motor (ver o fim desta seção).
+
+### `decided_by`: quem decide cada regra
+
+- **`reading`** — dizer se vale exige entender o que o código significa. É do passe de standard
+  da review, e um finding cita a regra pelo id.
+- **`tool`** — um linter ou compilador decide exato e barato. **Não é trabalho de modelo**: roda
+  como passo declarado no próprio registro, e o que achar chega à review pelo passe de falhas.
+
+> *"Um modelo aplicando uma regra que o linter tem tem recall estritamente pior que o linter, e
+> custa mais."*
+
+### O registro declara como o projeto roda
+
+Esta é a parte que a 3.0.0 acrescentou, e ela nasceu de um fracasso medido: um registro chegou a
+**24 regras decididas por `lint`, `typecheck` e `secret-scan` sem nenhum passo jamais rodar** —
+duas reviews seguidas reportando, honestamente, que o passe de falhas não teve insumo. Deixados
+para um humano redigitar a cada invocação, os comandos não eram digitados nunca.
+
+Então o registro nomeia os próprios comandos:
+
+```yaml
+commands:
+  - {step: install, command: npm ci,            timeout_seconds: 600, role: install}
+  - {step: typecheck, command: npm run typecheck, timeout_seconds: 120}
+  - {step: lint,    command: npm run lint,      timeout_seconds: 120}
+  - {step: test,    command: npm test,          timeout_seconds: 300, role: suite}
+```
+
+Saída real do check de um registro de verdade:
+
+```
+standard checked: standards/backend-node-service.yaml declares 59 rule(s) — 35 decided by
+reading, 24 by a tool
+  the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)),
+  typecheck (2 rule(s)); a review reads only the 35 decided by reading
+  it declares 5 command(s): install = npm ci, typecheck = npm run typecheck, …
+    installs with install, proves with test, and the rest run as checks on both sides of the tests
+```
+
+Dois papéis (`role`) têm significado: `install` roda antes de qualquer escrita, e `suite` é a
+prova. Todo o resto roda como verificação dos dois lados dos testes. E note a honestidade do
+próprio check: *"a step deciding nothing passes exactly like one deciding all of them"* — o motor
+não lê stack nenhuma, então mostrar **o peso** de cada passo (quantas regras descansam nele) é o
+que ele pode fazer, no momento em que alguém está em posição de conferir.
+
+### O registro autoriza pacotes
+
+```yaml
+dependencies:
+  - package: pino
+    why: PRH-01 requires production code to log through it.
+    rules: [PRH-01]
+```
+
+Esta lista é **o inteiro** do que uma entrega pode adicionar ao manifesto. Um pacote de que a
+entrega precisa e a lista omite é uma **parada que o nomeia** — nunca um `npm install` por conta.
+A razão é de governança: a aprovação de um pacote é o registro ganhando uma entrada — **um humano
+editando o próprio arquivo** — nunca uma resposta dada numa sessão, que a próxima invocação não
+tem. O que os pacotes puxam transitivamente não é aprovação de ninguém: é registro do lockfile.
+
+### O scaffolding: `presupposes` e `produces`
+
+Uma regra é uma condição sobre um arquivo que **existe** — nenhuma regra consegue exigir que um
+arquivo passe a existir. Mas as regras de um registro *pressupõem* artefatos: o manifesto onde os
+scripts moram, a configuração do compilador, a configuração de onde o linter lê as próprias
+regras. Sem esses artefatos, o registro não se aplica: os passos não têm o que rodar, e as regras
+lidas são lidas contra arquivos escritos para responder a nada.
+
+O registro declara essas pressuposições:
+
+```yaml
+presupposes:
+  - path: eslint.config.js
+    provides: the flat configuration the `lint` step reads its rules from.
+    rules: [PRH-01]
+```
+
+E o ciclo do scaffolding fecha em quatro atos:
+
+```
+1. o registro DECLARA          presupposes: [package.json, tsconfig.json, eslint.config.js]
+        │
+2. o check RECUSA              deliver.py --standard <registro> --against <alvo>
+   nomeando o custo            → artefato ausente, e as regras que ficam sem decisor
+        │                      → e termina com a invocação /plan-work pronta
+        ▼
+3. o plano CORTA               uma task de substrato, que declara produces: [eslint.config.js]
+        │                      — a exceção do portão existe só para quem declara produces
+        ▼
+4. o validador COBRA           um record cujo `files` não lista o que a task disse
+                               produzir é recusado
+```
+
+Saída real do ato 2, contra uma árvore que não tem o artefato:
+
+```
+1 presupposed artifact(s) absent. Source written now answers to a registry that cannot be
+applied to it: the rules above go unanswered, and the absence is found once per file in a
+review instead of once here. The artifact is built by a task that declares it in `produces`,
+planned through /plan-work — ready below, but for the two roots only the caller knows:
+
+  /plan-work
+
+  Scope: the registry at standard.yaml presupposes eslint.config.js, absent from tree.
+  One cut: the task that produces it, declared in `produces`, covering the rules named above.
+  Work root: <the plan this initiative runs under>
+  Knowledge root: <the base that plan binds to>
+  Target source root: tree
+  Project standard: standard.yaml
+```
+
+A recusa termina com a porta: a invocação seguinte, preenchida com tudo o que o comando já sabe,
+e só os dois roots que ele não pode saber como espaços. E a exceção do ato 3 é estreita de
+propósito — a task que constrói o substrato é a única que a ausência do substrato não pode parar
+(sem exceção, o artefato nunca poderia ser escrito por nada), e ela é cobrada no ato 4 pelo que
+declarou.
+
+### A cópia pinada, e a proteção contra a colagem
+
+Quando `/implement-task` roda com um standard nomeado, ele **copia o registro** para `standards/`
+sob o delivery root e pina o SHA-256 da cópia no record. O registro vive na árvore do projeto e
+vai mudar; a cópia é o que torna a disclosure conferível depois. Uma cópia **nunca é
+sobrescrita**: se o texto mudou desde algum record, a cópia nova ganha outro nome — um segundo
+livro de regras é um segundo nome, como uma segunda execução é.
+
+Essas cópias têm um segundo uso, nascido de um acidente real: um consumidor atualizou o framework
+"por cópia" e a colagem varreu do registro três autorizações de pacote que ele mesmo tinha feito.
+As cópias pinadas são o único lugar onde as autorizações antigas sobrevivem — então o check
+compara:
+
+```
+$ deliver.py --standard standard.yaml --delivery <delivery-root>
+
+  AUTHORIZATIONS LOST vs delivery/standards/standard.yaml: typescript-eslint. That copy is
+  what earlier records were written against. Removing an entry deliberately is the consumer's
+  right and this line is its record — but a registry updated by pasting a newer template over
+  it loses entries exactly like this, and restoring them is an edit to standard.yaml, made by
+  whoever owns it
+```
+
+Reportado, **nunca recusado**: remover uma autorização de propósito é direito do consumidor, e a
+linha é o registro disso.
+
+### O standard dentro do `/implement-task`
+
+Na ordem em que ele o encontra:
+
+1. **Na entrada** — `deliver.py --standard <registro> --against <alvo> --delivery <delivery>`.
+   Registro que não fecha: parada. Artefato pressuposto ausente: parada, com a porta acima.
+2. **Set up** — o passo `role: install` roda **antes de qualquer escrita**, para o implementador
+   ler os tipos do que o projeto já declara em vez de chutá-los. A cópia do registro é pinada.
+3. **Implementação** — o implementador recebe a lista de pacotes autorizados, que é o inteiro do
+   que pode adicionar ao manifesto. O source é escrito para seguir as regras.
+4. **Build** — todos os passos do registro exceto a suite, na ordem declarada, cada um capturado
+   pelo `run.py`.
+5. **Suite** — o passo `role: suite`, capturado. O que falhou fica em `run/`, com nome.
+
+### O standard dentro do `/review-change`
+
+1. **Os comandos são do registro** — o que o passe de falhas executa (sob captura, `run.py`) são
+   os passos que o registro declara; nada aqui compõe um comando de build ou infere um do formato
+   da árvore. As regras `tool` são decididas por esses passos.
+2. **O passe de standard lê só as regras `reading`** — e cada finding cita a regra pelo id.
+   *"A finding citing no rule is taste with a location attached."*
+3. **`AUTHORIZATIONS LOST` viaja para o record inteiro** — não é parada, é evidência.
+4. **Sem standard nomeado, o passe não roda e o record diz isso** — que é uma ausência diferente
+   de um insumo não entregue, e é dita com essas palavras.
+
+### Onde os paths se ancoram
+
+Tudo nesta seção compara paths por grafia: `produces` contra `files`, escopo contra finding,
+`presupposes` contra a árvore. Por isso todos se declaram contra **uma âncora só: a raiz do
+source alvo** — o diretório de onde os comandos do registro rodam. Ela pode ser a raiz do
+repositório e pode ser `backend/` dentro dele: o software inteiro (manifesto, `src/`, testes,
+`node_modules/`) vive nela, e `knowledge/`, `work/`, `delivery/` e o próprio registro vivem fora.
+Um path absoluto é recusado no contrato, e um record que grafasse paths do repositório enquanto o
+registro os grafa do alvo não responderia a regra nenhuma — o contrato diz de quem é a grafia
+exatamente para essa comparação nunca falhar em silêncio.
+
+---
+
+## 13. Os quatro pontos de entrada
 
 ```
   material do cliente
@@ -964,8 +1177,9 @@ registra que não rodou e o que faltava — **nunca uma review limpa**.
              │  handoff: a invocação de /implement-task, com a task como slot
              ▼
   ┌─────────────────────┐
-  │  /implement-task    │  escreve código + testes, grava os dois records
-  └──────────┬──────────┘     UMA invocação, UMA task
+  │  /implement-task    │  instala, escreve código + testes, builda e roda a
+  └──────────┬──────────┘  suite — cada execução capturada — grava os dois records
+             │                UMA invocação, UMA task
              │  handoff: a invocação de /review-change, com o file set já preenchido
              ▼
   ┌─────────────────────┐
@@ -993,12 +1207,22 @@ python3 bin/run.py …             # executa os comandos do consumidor e grava a
 
 ---
 
-## 13. A parada é a funcionalidade
+## 14. A parada é a funcionalidade
 
 Isto costuma ser o que mais estranha quem chega: o motor **recusa muito**. E recusar é o produto,
 não a falha.
 
-Existem 24 condições distintas de parada nas quatro skills. Todas antes de escrever qualquer coisa:
+Duas propriedades tornam as recusas suportáveis, e ambas são desenho:
+
+- **Toda recusa entrega a porta, não só o muro.** A parada nomeia a saída — e onde o comando já
+  sabe o suficiente, ela termina com a invocação seguinte pronta para colar, como a recusa de
+  substrato da [seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si).
+- **O escopo da parada é o risco que ela cobre.** O check de raiz limpa carrega pathspec: uma
+  mudança pendente fora dos roots que a invocação escreve é trabalho de outra pessoa em
+  andamento, não impedimento.
+
+São mais de vinte condições distintas de parada nas quatro skills. Todas antes de escrever
+qualquer coisa:
 
 ```
   ┌────────────────────────────────────────────────────────────────────┐
@@ -1035,7 +1259,7 @@ Todo o resto é **forma**, e forma a própria invocação corrige. A regra que s
 
 ---
 
-## 14. Exemplo completo de ponta a ponta
+## 15. Exemplo completo de ponta a ponta
 
 Um requisito, do começo ao fim.
 
@@ -1100,7 +1324,7 @@ definition/sales/order-already-placed: attributes
 ### Interlúdio: dois erros que o validador pega na porta
 
 Vale mais do que qualquer explicação. A base acima, montada pela primeira vez, foi recusada com
-**dois problemas — os dois exatamente os que a [seção 16](#16-erros-comuns-e-o-que-significam)
+**dois problemas — os dois exatamente os que a [seção 17](#17-erros-comuns-e-o-que-significam)
 cataloga**:
 
 ```
@@ -1221,7 +1445,7 @@ que significam.
 
 ---
 
-## 15. Glossário
+## 16. Glossário
 
 Consultável a qualquer momento com `python3 bin/terms.py`, que lê cada definição do contrato que a
 enuncia — nunca de uma cópia.
@@ -1245,14 +1469,20 @@ enuncia — nunca de uma cópia.
 | **criterion** | uma condição falsificável por si só. |
 | **record** | um nó de entrega: o que foi feito ou achado. |
 | **proof** | o nó que registra o que os testes provam — e o que não provam. |
-| **standard** | as regras que o **projeto** definiu para si. O framework não embarca nenhuma. |
+| **standard / registro** | o YAML em que o **projeto** define as próprias regras, comandos e pacotes autorizados. O framework embarca o contrato e nenhuma regra. |
+| **step / comando** | um passo que o registro declara (`install`, `lint`, `test`…). O que roda é isso — nada é composto nem inferido. |
+| **presupposes** | os artefatos que as regras do registro assumem existir (manifesto, tsconfig, config do linter). Ausente = recusa antes do primeiro arquivo. |
+| **produces** | o que uma task de substrato declara que vai criar. É a exceção do portão de presupposes — e o record é cobrado por ela. |
+| **substrato** | os artefatos de `presupposes`, coletivamente: o chão que o registro precisa para se aplicar. |
+| **captura (run/)** | o diretório onde `run.py` grava o que cada execução imprimiu. Um slug nunca é reutilizado: iterar fica gravado. |
+| **cópia pinada** | o registro copiado para `standards/` sob o delivery root, jamais sobrescrito. É onde as autorizações antigas sobrevivem. |
 | **stale** | o índice derivado não corresponde mais aos nós. Rodar o script de novo. |
 | **intake** | onde o material lido fica preservado. Nunca validado como nó. |
 | **closure** | um `closure.md` na raiz de trabalho marca o plano encerrado. Vira história. |
 
 ---
 
-## 16. Erros comuns e o que significam
+## 17. Erros comuns e o que significam
 
 Todas as mensagens abaixo são reais. O formato é sempre:
 
@@ -1304,9 +1534,28 @@ json** — todo fato nele mora num arquivo de nó.
 
 Um finding do passe de standard sem citar a regra pelo id. Sem regra citada, é opinião com endereço.
 
+### "N presupposed artifact(s) absent … planned through /plan-work"
+
+O alvo não tem um artefato que o registro pressupõe. Nada de source é escrito enquanto isso — e a
+recusa termina com a invocação `/plan-work` pronta, faltando só os dois roots que o comando não
+tem como saber. Ver a [seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si).
+
+### "the task says it produces X, and `files` does not list it"
+
+A task de substrato declarou `produces` e o record não lista o artefato. A exceção do portão é
+cobrada na saída: quem reivindicou a task e não escreveu o artefato deixa a próxima entrega parada
+na mesma ausência que esta foi cortada para encerrar.
+
+### "AUTHORIZATIONS LOST vs delivery/standards/…"
+
+O registro atual autoriza menos pacotes do que uma cópia pinada por records anteriores. Ou a
+remoção foi deliberada (e esta linha é o registro dela), ou uma atualização por cópia colou um
+template por cima do arquivo do consumidor — e restaurar é editar o registro, por quem é dono
+dele. Reportado, nunca recusado.
+
 ---
 
-## 17. Migrando de 1.x para 2.0.0
+## 18. Migrando de 1.x para 2.0.0
 
 A 2.0.0 mudou como uma task pina a base, e a mudança **invalida todo nó de plano escrito na 1.x**.
 
