@@ -158,14 +158,41 @@ records are rewritten whole rather than amended — a record amended across two 
 describes neither, and the proof's pin on the implementation refuses the pair if you rewrite one
 and leave the other. `git diff` over the two is then the history of the delivery.
 
-Where a standard was named, take it in before anything is written. Run:
+Where a standard was named, take it in before anything is written. Which command depends on one
+field of the task file — already open from the note check above — read as a yes or a no:
+**does the task declare `produces`?**
+
+Where it does not, the tree is held to what the registry presupposes on the way in:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
+```
+
+Where it does, drop `--against` and run the registry check alone:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
 ```
 
-Anything but a clean pass is a stop, reported verbatim: source written against a registry that does
-not hold together answers to nothing, and fixing the registry belongs to whoever owns it.
+Either way, anything but a clean pass is a stop, reported verbatim.
+
+The first form carries two refusals. A registry that does not hold together answers to nothing, and
+fixing it belongs to whoever owns it. An artifact the registry presupposes and the tree does not
+hold is the same refusal one step earlier: a rule is a condition over a file that exists and can
+never ask for one, so a registry whose substrate is absent is a registry nothing can be held to —
+its tool-decided rules have no step to run as, and its read-decided rules are read against files
+written to answer a set of rules that was never in force. Written anyway, the absence is found once
+per file in a review, after the files exist, instead of once here, before the first of them. The
+way out is named in the output: a task declaring the artifact in `produces`, planned through
+`/plan-work` and delivered first.
+
+**`produces` is what drops that half of the check, and it drops nothing else.** A task producing an
+artifact is the one building the substrate, and holding it to the substrate's presence is circular:
+with no exemption the artifact could never be written by anything, and the plan would stop on a
+condition only the plan could end. The exemption is one field, read once, and the record is held to
+it afterwards — the validator refuses an implementation whose `files` does not list what the task
+said it would produce, so a task that claimed the artifact and did not write it is a refusal rather
+than a delivery.
 
 Then copy the registry into `standards/` under the delivery root, keeping the name the project gave
 it, and note the SHA-256 of the copy — `sha256sum <delivery-root>/standards/<file>`. The copy is
@@ -191,7 +218,9 @@ Spawn a `task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
 the knowledge root, the target source root, the paths of the plan's inventory nodes, and the
 delivery-node contract's path — plus, where one was named, the path of **the copy** of the standard,
-so what it read is exactly what the record pins. It reads the task and the nodes it binds, writes the source, and
+so what it read is exactly what the record pins. Where the task declares `produces`, pass those
+paths too: they are artifacts this delivery has to create rather than conventions it has to follow,
+and the record is refused if `files` does not list every one of them. It reads the task and the nodes it binds, writes the source, and
 returns the record: every path it created or modified and what each now does, every criterion of
 the task answered, every bound node accounted for, and what it inferred, departed from,
 preserved and deferred.
@@ -231,8 +260,12 @@ without it the tests prove the fix rather than the defect, and afterwards nobody
 difference.
 
 It writes the tests and returns what each proves, what would make each fail, which edge cases it
-dismissed and why, what stays unproven, and where it disagrees with the implementation. Write
-`proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way.
+dismissed and why, what stays unproven, where it disagrees with the implementation, and every rule
+of the standard its tests depart from. Write `proof/<epic>/<slug>.md`, same epic and slug again,
+and check it the same way. Where a standard was named, stamp where its copy sits and the pin of its
+text on this record too, exactly as the implementation carries them — the rules about how a project
+writes its tests reach files no implementation ever lists, so a departure from one is the proof's
+to disclose and resolves against the copy the proof itself pins.
 
 Stamp on it the SHA-256 of the implementation record you just wrote — `sha256sum <that file>`. It
 says which version of that record these tests were written against, and it is what makes a
@@ -282,12 +315,18 @@ Report, in this order:
 - what the implementation deferred, and what it says must keep working;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
-- the standard this invocation followed, by the copy it took and that copy's pin, and every
-  departure disclosed against it — or, where none was named, that the only project convention
-  followed is what the inventory evidenced, which is the honestly narrow answer rather than a clean
-  one;
+- the standard this invocation followed, by the copy it took and that copy's pin, every departure
+  disclosed against it by either record, and what it presupposes — that the tree holds it, or, for a
+  task that produced it, that this delivery is what made it hold. Where none was named, say that
+  the only project convention followed is what the inventory evidenced, which is the honestly narrow
+  answer rather than a clean one — and where `--outstanding` named a standard this root's earlier
+  records pin, say that too: an invocation naming none over a root that remembers one is writing
+  source the review will still read against those rules;
 - that nothing was run, and that `/review-change` is what runs the suite and judges the change,
-  including holding the same source to the same standard;
+  including holding the same source to the same standard. An artifact this delivery produced is
+  text on disk and nothing more: whatever it declares is fetched, compiled or installed by a
+  command somebody names to `/review-change`, and until that has happened the rules that waited on
+  it are answered by nothing;
 - the handoff: the `/review-change` invocation ready to paste — this delivery root, this work
   root, this knowledge root and this target source root named by path as just validated; the
   tasks under review being the one task this invocation delivered, by identifier; and the file

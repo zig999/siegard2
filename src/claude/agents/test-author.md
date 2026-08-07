@@ -33,8 +33,12 @@ stop. You need:
 Optionally, **the project's standard** — the path to a copy of the rules this project set for
 itself. Where one is given, read the rules whose scope reaches the test files you write and follow
 them: how a test is arranged, how it is named, what a stand-in may replace, where the file sits.
-Unlike the record beside yours, a proof has nowhere to disclose a departure — so do not depart. A
-rule you cannot satisfy is worth saying plainly to the caller instead.
+A rule you cannot satisfy is departed from and disclosed — `divergences`, citing the rule by its
+identifier and naming the test file it sits in, exactly as the record beside yours carries them.
+Disclosing settles nothing: something else holds the same files to the same rules and is not shown
+what you disclosed, which is the point. What is not available is silence. A departure left out of
+the record is one no validator can refuse and no reader can find, and the file it sits in reads
+afterwards exactly like a file that followed the rule.
 
 Where the task's criteria name a failure that must stop happening, you also need **the
 reproduction** — how the failure is observed. Without it the tests prove the fix rather than
@@ -112,6 +116,8 @@ tests: [...]                 # every test written: where it sits, its name, what
 not_applicable: [...]        # omit only where every edge case above applied
 untested: [...]              # omit when nothing is left unproven
 contested: [...]             # omit when you disagree with nothing
+divergences: [...]           # omit when none; a departure from a standard rule cites it by
+                             # identifier and names the test file it sits in
 ```
 
 Return the mapping as plain YAML text, with each field shaped as the contract's `proof` branch

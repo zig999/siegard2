@@ -506,6 +506,26 @@ rules:
 # What this standard deliberately does not hold, so a reader does not read an absence as an
 # oversight. Each is owned somewhere else, and stating it twice would create a second home that
 # drifts.
+# What these rules assume already stands, for the same reason the registry beside this one says
+# it: a rule reaches a file, never an absence, so the artifacts every rule here needs could not be
+# asked for by any rule here.
+presupposes:
+
+  - path: package.json
+    provides: >-
+      The `lint`, `typecheck` and `secret-scan` steps this registry's twenty-three tool-decided
+      rules are run as. Without it none of them is decided by anything, and a review reporting only
+      what a reading found reads as a review of the whole registry.
+    rules: [ARC-02, ARC-03, ARC-05, DTO-02, DTO-03, DTO-04, API-01, API-06, COR-01, SEC-02, SEC-03,
+            TYP-01, TYP-02, TYP-03, TYP-04, CON-01, MNT-01, MNT-02, PRH-01, PRH-02, PRH-03, PRH-04,
+            TST-04]
+
+  - path: tsconfig.json
+    provides: >-
+      The strict compiler configuration TYP-01 requires, which is what makes the `any` it forbids
+      an escape hatch rather than the default every unannotated value already has.
+    rules: [TYP-01]
+
 elsewhere:
 
   - what: Which errors exist and what each one names — the duplicate registration, the invalid

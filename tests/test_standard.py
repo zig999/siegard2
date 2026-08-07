@@ -269,3 +269,87 @@ def test_the_example_is_not_distributed():
     """Siegard ships the slot and the enforcement, never the content."""
     assert not (REPO / "dist/.claude/standards").exists()
     assert EXAMPLE.is_file() and "src/claude" not in EXAMPLE.as_posix()
+
+
+# --------------------------------------------------- what a registry presupposes
+
+def presupposing(tmp_path: Path, **entry) -> Path:
+    """A registry that presupposes one artifact, written where a tree can be held against it."""
+    return broken(tmp_path, base(presupposes=[{
+        "path": "package.json",
+        "provides": "the `lint` step PRH-01 is decided by.",
+        "rules": ["PRH-01"], **entry}]))
+
+
+def test_a_presupposition_citing_a_rule_the_registry_does_not_declare(tmp_path, contract):
+    """The same discipline a finding is held to: an absence is stated with what it costs, and a
+    cost naming a rule nobody declares is a cost nobody can weigh."""
+    data, problems = deliver.load_standard(presupposing(tmp_path, rules=["ZZZ-99"]), contract)
+    assert data is None
+    assert any("an absence nobody can weigh" in p for p in problems)
+
+
+def test_a_registry_that_presupposes_nothing_says_so(tmp_path):
+    """A registry declaring none says which of the two silences it is: nothing to check, rather
+    than nothing checked. Every sample under src/standards presupposes something, which is why
+    this one is written here instead of read from there."""
+    done = invoke("--standard", str(broken(tmp_path, base())))
+    assert done.returncode == 0, done.stderr
+    assert "none needs one to exist first" in done.stdout
+
+
+def test_an_absent_artifact_is_refused_and_named_with_what_it_costs(tmp_path):
+    """The refusal this whole field exists for. Exit 1 before a single file is written, naming the
+    artifact and every rule that cannot be applied while it is missing."""
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    done = invoke("--standard", str(presupposing(tmp_path)), "--against", str(tree))
+    assert done.returncode == 1, done.stdout
+    assert "package.json: ABSENT" in done.stdout
+    assert "unanswerable while it is: PRH-01" in done.stdout, \
+        "an absence reported without the rules it takes with it says nothing a reader can weigh"
+    assert "declares it in `produces`" in done.stdout, \
+        "a stop names the way out, and this one's is a task that builds the artifact"
+
+
+def test_an_artifact_that_stands_is_reported_as_standing(tmp_path):
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    (tree / "package.json").write_text("{}", encoding="utf-8")
+    done = invoke("--standard", str(presupposing(tmp_path)), "--against", str(tree))
+    assert done.returncode == 0, done.stdout
+    assert "stands, and PRH-01 can be applied" in done.stdout
+
+
+def test_a_registry_presupposing_nothing_holds_against_any_tree(tmp_path):
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    done = invoke("--standard", str(broken(tmp_path, base())), "--against", str(tree))
+    assert done.returncode == 0, done.stdout
+    assert "holds everything it needs to" in done.stdout
+
+
+def test_against_says_which_tree_and_needs_one(tmp_path):
+    assert invoke("--standard", str(EXAMPLE), "--against").returncode == 2
+    done = invoke("--standard", str(EXAMPLE), "--against", str(tmp_path / "nowhere"))
+    assert done.returncode == 2
+    assert "is not a directory" in done.stderr
+
+
+def test_against_holds_a_standard_and_nothing_else(tmp_path):
+    """Only a standard is held against a tree; --against on a root would read as a check nobody
+    wrote, and a flag that silently does nothing is worse than one that refuses."""
+    done = invoke("--against", str(tmp_path), str(tmp_path), str(tmp_path))
+    assert done.returncode == 2
+    assert "only --standard holds one" in done.stderr
+
+
+def test_every_sample_registry_states_what_it_presupposes():
+    """The samples are the worked examples a consumer copies, and every one of them is a registry
+    for a stack that has to be set up before a single rule applies. One that declared nothing would
+    teach exactly the silence this field was added to end."""
+    for sample in SAMPLES:
+        data = yaml.safe_load(sample.read_text(encoding="utf-8"))
+        assert data.get("presupposes"), \
+            f"{sample.name} presupposes nothing, and every rule in it is a condition over a file " \
+            f"that some manifest or compiler configuration had to exist first for"

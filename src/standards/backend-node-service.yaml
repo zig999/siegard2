@@ -683,6 +683,27 @@ rules:
 # oversight. Each is owned somewhere else, and stating it twice would create a second home that
 # drifts. Two entries that `backend-node-stack` carries are absent here on purpose; the header
 # says which and why.
+# What these rules assume already stands — the two registries' presuppositions, merged the way
+# their rules were. They concatenate cleanly here where the `elsewhere` entries did not: an
+# artifact both halves need is one artifact, and the rules it carries are simply both lists.
+presupposes:
+
+  - path: package.json
+    provides: >-
+      The `"type": "module"` STK-02 depends on, the `test` script STK-10 names its runner through,
+      the `lint`, `typecheck` and `secret-scan` steps every tool-decided rule below is run as, and
+      the declaration of every dependency the stack rules name as the only one of its kind.
+    rules: [STK-01, STK-02, STK-03, STK-04, STK-05, STK-07, STK-08, STK-09, STK-10, STK-11, STK-12,
+            ARC-02, ARC-03, ARC-05, DTO-02, DTO-03, DTO-04, API-01, API-06, COR-01, SEC-02, SEC-03,
+            TYP-01, TYP-02, TYP-03, TYP-04, CON-01, MNT-01, MNT-02, PRH-01, PRH-02, PRH-03, PRH-04,
+            TST-04]
+
+  - path: tsconfig.json
+    provides: >-
+      The strict compiler configuration STK-01 and TYP-01 both require, and the module resolution
+      mode that decides whether an extensionless relative import resolves at all.
+    rules: [STK-01, TYP-01]
+
 elsewhere:
 
   - what: Which errors exist and what each one names — the duplicate registration, the invalid

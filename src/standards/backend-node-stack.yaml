@@ -190,6 +190,26 @@ rules:
         suffix: .ts
         nested: true
 
+# What these rules assume already stands. A rule is a condition over a file that exists and can
+# never ask for one, so without this section the whole registry silently presupposes a project that
+# somebody else set up — and a greenfield tree gets every rule read against files written to answer
+# a set of rules that was never in force.
+presupposes:
+
+  - path: package.json
+    provides: >-
+      The `"type": "module"` STK-02 depends on, the `test` script STK-10 names its runner through,
+      the `typecheck` step STK-01 is decided by, and the declaration of every dependency the rules
+      below name as the only one of its kind — Fastify, the MCP SDK, `pg`, `jose`, Zod, pino and
+      the Anthropic SDK.
+    rules: [STK-01, STK-02, STK-03, STK-04, STK-05, STK-07, STK-08, STK-09, STK-10, STK-11, STK-12]
+
+  - path: tsconfig.json
+    provides: >-
+      The `strict` compiler configuration STK-01 requires every file to type-check under, and the
+      module resolution mode that decides whether an extensionless relative import resolves at all.
+    rules: [STK-01]
+
 elsewhere:
   - what: Which status or error code an outcome answers with, and what a refusal says.
     lives_in: The knowledge base, as a rule or interface node.

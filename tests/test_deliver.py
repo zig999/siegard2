@@ -912,3 +912,98 @@ def json_front(delivery: Path, did: str) -> dict:
     text = (delivery / f"{did}.md").read_text(encoding="utf-8")
     return yaml.safe_load(re.match(r"^---\n(.*?)\n---\n", text, re.S).group(1))
 
+
+
+# ------------------------------------------- what a proof may disclose, and what it produces
+
+def proof_disclosing(delivery: Path, ref: dict, **overrides) -> dict:
+    """The sound proof, plus the standard it read and one disclosed departure from it. The rules
+    about how a project writes its tests reach files no implementation ever lists, so until the
+    proof carried these two fields a rule the tests could not satisfy had nowhere to be said."""
+    front = json_front(delivery, "proof/checkout/record-order")
+    front["standard"] = ref
+    front["divergences"] = [{"cites": "TST-01", "file": "tests/place.spec.ts",
+                             "departure": "the spec constructs the store rather than standing one "
+                                          "in through the interface.",
+                             "why": "no stand-in exists for it yet, and writing one reaches past "
+                                    "what this task proves"}]
+    front.update(overrides)
+    return front
+
+
+def test_a_proof_may_disclose_a_departure_from_a_standard_rule(delivery, work, root,
+                                                               sound_delivery, write_delivery,
+                                                               write_standard):
+    write_delivery("proof/checkout/record-order", proof_disclosing(delivery, write_standard()))
+    assert problems_of(delivery, work, root) == []
+
+
+def test_a_proof_departure_sits_in_a_file_its_tests_list(delivery, work, root, sound_delivery,
+                                                         write_delivery, write_standard):
+    """The implementation's rule, applied to what a proof writes: a departure sits in a file this
+    record says it wrote, and for a proof that is `tests` rather than `files`."""
+    front = proof_disclosing(delivery, write_standard())
+    front["divergences"][0]["file"] = "tests/elsewhere.spec.ts"
+    write_delivery("proof/checkout/record-order", front)
+    said(problems_of(delivery, work, root), "which `tests` does not list")
+
+
+def test_a_proof_citing_a_rule_the_standard_does_not_declare(delivery, work, root, sound_delivery,
+                                                             write_delivery, write_standard):
+    front = proof_disclosing(delivery, write_standard())
+    front["divergences"][0]["cites"] = "ZZZ-99"
+    write_delivery("proof/checkout/record-order", front)
+    said(problems_of(delivery, work, root), "which standards/example-service.yaml does not declare")
+
+
+def test_a_proof_citing_a_rule_with_no_standard_named(delivery, work, root, sound_delivery,
+                                                      write_delivery):
+    front = proof_disclosing(delivery, {"at": "standards/x.yaml", "pin": "sha256:" + "0" * 64})
+    del front["standard"]
+    write_delivery("proof/checkout/record-order", front)
+    said(problems_of(delivery, work, root), "this record names no standard")
+
+
+def produces(work: Path, delivery: Path, write_plan, write_delivery, paths: list[str]) -> None:
+    """The fixture task, plus the artifacts it says its delivery must create — repinned, because
+    a task rewritten under a record that pinned it is exactly what the pin exists to catch."""
+    front = json_front(work, "task/checkout/record-order")
+    front["produces"] = paths
+    write_plan("task/checkout/record-order", front)
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    write_delivery("implementation/checkout/record-order", record)
+    repin_proof(delivery, write_delivery)
+
+
+def test_a_task_that_produces_an_artifact_is_held_to_writing_it(delivery, work, root,
+                                                                sound_delivery, write_plan,
+                                                                write_delivery):
+    """The claim that ends the stop is held to what was written. Without this a substrate task
+    could be delivered having created nothing, and every task after it would stop on an absence
+    this one was cut to end — with a record saying it had been."""
+    produces(work, delivery, write_plan, write_delivery, ["package.json"])
+    said(problems_of(delivery, work, root), "the task says it produces package.json")
+
+
+def test_a_task_that_produces_what_the_record_wrote_holds(delivery, work, root, sound_delivery,
+                                                          write_plan, write_delivery):
+    produces(work, delivery, write_plan, write_delivery, ["src/orders/place.ts"])
+    assert problems_of(delivery, work, root) == []
+
+
+def test_the_outstanding_report_names_the_standard_this_root_remembers(delivery, work, root,
+                                                                       sound_delivery,
+                                                                       write_delivery,
+                                                                       write_standard):
+    """A delivery written against no rules and one written against rules nobody handed over
+    produce the same clean output, and only the root can tell them apart."""
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard()))
+    repin_proof(delivery, write_delivery)
+    validator, allowed = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes)
+    assert "standards/example-service.yaml: pinned by 1 record(s)" in report
+    assert "an invocation naming no standard now writes source" in report

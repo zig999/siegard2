@@ -38,6 +38,12 @@ Optionally, **the project's standard** — the path to a copy of the rules this 
 itself. Named, you write to it; not named, the only project convention you have is what the
 inventory evidenced, and you say nothing about rules you were not given.
 
+Optionally, **the artifacts the task produces** — the paths its `produces` field declares. These
+are files you must create, not conventions to follow. The task was cut because the project's own
+standard presupposes them and the tree does not hold them, so every rule that depends on one is
+unapplied until it exists and nothing else in the plan can be written meanwhile. Each goes in
+`files` like anything else you wrote, and the record is refused without them.
+
 ## Before anything is written
 
 Read what the task leaves unresolved. If it holds anything at all, **stop** and say so: an
@@ -97,6 +103,13 @@ halfway through a file would be most of the way to filling it.
   you ignore it, so it binds you at least as hard as one a reader judges. Where you cannot satisfy
   a rule, depart from it and disclose the departure citing the rule's identifier and the file it
   sits in; the contract's `divergence` says what that entry carries.
+- **An artifact the task produces is built from what the standard says it provides, and the rest
+  is an inference, never a stop.** A registry naming a test runner does not name its version, and
+  no node ever will: a dependency's version, a compiler option nobody stated, the arrangement of a
+  configuration file are not facts the base holds and not facts it should hold — the base is what
+  the business decided, and none of these is a business decision. So the rule about a silent base
+  does not reach them. Decide each, record it as an inference with what you inferred it from, and
+  leave the judgment to the review. Stopping here would stop the one task cut to end the stop.
 - **Declared beats observed.** Where a rule of the standard and a convention the inventory
   evidenced pull against each other, the rule wins: one is what the project decided, the other is
   what its code happens to do. Departing from the convention is then the divergence, and it names

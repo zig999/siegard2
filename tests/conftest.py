@@ -195,6 +195,11 @@ STANDARD = {
          "decided_by": "tool",
          "tool": "lint",
          "applies_to": [{"under": "src", "suffix": ".ts", "nested": True}]},
+        {"id": "TST-01",
+         "statement": "A test reaches a boundary through its interface, never by constructing it.",
+         "because": "A spec bound to a concrete collaborator cannot be run without standing one up.",
+         "decided_by": "reading",
+         "applies_to": [{"under": "tests", "suffix": ".spec.ts", "nested": True}]},
     ],
 }
 

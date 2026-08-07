@@ -91,6 +91,14 @@
       "items": { "$ref": "#/$defs/taskRef" },
       "description": "Tasks whose delivered outcome this one builds on. Dependency, never order: the validator refuses a cycle, and any schedule satisfying these edges is equally valid."
     },
+    "produces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "The artifacts this task's delivery must create, by path relative to the target source root. It is the checkable half of an objective rather than a second statement of it, and it exists because two things read it. A delivery refuses an implementation record whose `files` does not list what the task said it would produce, so the claim is held to what was written rather than to what was meant. And a task producing anything is one building what the project's own standard presupposes — the manifest, the compiler configuration, the artifact a rule names and no rule can ask for — which is why writing source over an absent presupposition stops for every other task and never for this one: holding the task that builds the substrate to the substrate's presence is circular, and the deadlock has no other exit. Ordinary work declares none.",
+      "$comment": "Held against the implementation record's `files` by bin/deliver.py, and read by /implement-task before anything is written."
+    },
     "nodes": {
       "type": "array",
       "minItems": 1,
@@ -171,7 +179,7 @@
       "then": {
         "required": ["objective", "criteria"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "rationale", "sources", "objective", "criteria", "depends_on", "nodes", "unresolved", "waived"]
+          "enum": ["kind", "title", "summary", "rationale", "sources", "objective", "criteria", "depends_on", "produces", "nodes", "unresolved", "waived"]
         },
         "allOf": [
           {

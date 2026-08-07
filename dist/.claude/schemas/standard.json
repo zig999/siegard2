@@ -23,6 +23,12 @@
       "items": { "$ref": "#/$defs/rule" },
       "description": "Every rule this standard declares, each with an identifier a finding can cite. Ids are unique across the registry: two rules under one id cannot be told apart by the finding that cites it."
     },
+    "presupposes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/presupposition" },
+      "description": "The artifacts this registry's rules assume already stand — the manifest whose script a rule names, the compiler configuration whose strictness a rule requires, the dependency declaration a rule forbids a second of. A rule is a condition over a file that exists and never a requirement that one does, and `applies_to` cannot say otherwise: a scope names a directory and an ending, so it reaches no artifact sitting outside a directory and nothing in a rule can ask for one at all. Stating them here is what lets a delivery refuse before it writes. A registry whose substrate is absent is a registry that cannot be applied — its tool-decided rules have no step to run as, and its read-decided rules are held against files that were written to answer nothing — and the absence then surfaces as one finding per file in a review, after the source exists, rather than once, before the first line of it. A project whose substrate already stands declares none, and a registry declaring none is held to nothing extra."
+    },
     "elsewhere": {
       "type": "array",
       "minItems": 1,
@@ -107,6 +113,30 @@
         }
       }
     },
+    "presupposition": {
+      "type": "object",
+      "required": ["path", "provides", "rules"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the artifact sits, relative to the target source root — the directory the project's own commands are run from, which is the root a scope's `under` is stated against. Whether it exists is the whole of what a script decides here. Whether what it holds is right is decided by the project's own suite, through the steps the tool-decided rules name, because a framework that read this file would be reading a stack it ships no knowledge of."
+        },
+        "provides": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the rules below get from it, in one sentence. It is the material a task's criteria are written from when the artifact has to be built, so `the manifest` says nothing worth acting on and `the test script STK-10 names and the module type STK-02 depends on` says what has to be there."
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" },
+          "description": "The rules of this registry that cannot be satisfied while the artifact is absent, by identifier. Required and non-empty: a presupposition no rule needs is not this standard's to state, and naming them is what lets a refusal say what the absence costs instead of merely that something is missing. Each must be a rule this registry declares — an identifier that no longer resolves is a presupposition nobody can weigh, and `bin/deliver.py` says so."
+        }
+      }
+    },
     "exclusion": {
       "type": "object",
       "required": ["what", "lives_in", "why"],
@@ -143,6 +173,13 @@
           "decided_by": "tool",
           "tool": "lint",
           "applies_to": [{ "under": "src", "suffix": ".ts", "nested": true }]
+        }
+      ],
+      "presupposes": [
+        {
+          "path": "package.json",
+          "provides": "the `lint` step PRH-01 is decided by, and the declaration of the configured logger PRH-01 requires production code to reach.",
+          "rules": ["PRH-01"]
         }
       ],
       "elsewhere": [
