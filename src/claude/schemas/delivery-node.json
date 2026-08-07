@@ -139,7 +139,15 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^run/[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "The captured run this review read, as its directory under the delivery root's `run/`. Present exactly when the failures pass ran. The directory holds what the commands printed, verbatim, and the validator keeps it the way it keeps any material: never as a node."
+      "description": "A captured run, as its directory under the delivery root's `run/`. The directory holds what the commands printed, verbatim, and the validator keeps it the way it keeps any material: never as a node. What it means depends on which record points at it, and the two meanings are exact mirrors. On a review it is the run the failures pass read, present exactly when that pass ran, and a run that passed is refused — there was no failure to diagnose. On an implementation or a proof it is what the delivery saw before it wrote, and a run that did not pass is refused: a record over a red run is a delivery claiming what the run denied. A record is never written to explain a failure; it is written because there was none, and the failure lives in the earlier run whose name nothing may reuse.",
+      "$comment": "Held by bin/deliver.py: run_problems for a review, record_run_problems for the two that write."
+    },
+    "installed": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "The direct dependencies this delivery added, by the names the project's package manager knows them by. Each must be one the pinned standard authorizes: that list is where a human's approval of a package lives, and a delivery that could install past it would make the approval decorative. Transitive dependencies are not here and could not be — nobody approved them, no package manager offers a closure anybody did, and what actually arrived is the lockfile's record. Absent is a claim that this delivery added none, which the diff of the manifest either bears out or does not."
     }
   },
   "allOf": [
@@ -148,7 +156,7 @@
       "then": {
         "required": ["task", "files", "criteria"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "task", "standard", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
+          "enum": ["kind", "title", "summary", "task", "standard", "run", "installed", "files", "criteria", "nodes", "inferences", "divergences", "preserved", "deferred"]
         },
         "examples": [
           {
@@ -171,6 +179,8 @@
               "at": "standards/example-service.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
+            "run": "run/checkout-record-order-build",
+            "installed": ["pino"],
             "inferences": [
               { "inferred": "a submission carrying no line items is refused as an invalid order rather than persisted empty.", "from": "the order definition requires at least one line, and no node states what an empty submission answers" }
             ],
@@ -189,7 +199,7 @@
       "then": {
         "required": ["implementation", "tests"],
         "propertyNames": {
-          "enum": ["kind", "title", "summary", "implementation", "standard", "tests", "not_applicable", "untested", "contested", "divergences"]
+          "enum": ["kind", "title", "summary", "implementation", "standard", "run", "tests", "not_applicable", "untested", "contested", "divergences"]
         },
         "examples": [
           {
@@ -218,6 +228,7 @@
               "at": "standards/example-service.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
+            "run": "run/checkout-record-order-suite",
             "divergences": [
               { "cites": "TST-04", "file": "tests/orders/place.spec.ts", "departure": "the file sits beside the suite's existing specs rather than mirroring the unit's path under a tests subtree.", "why": "every spec in this tree sits there and the rule's layout has no example in it yet; moving one file would leave the suite split across two layouts, which costs more than the departure" }
             ]

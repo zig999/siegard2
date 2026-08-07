@@ -496,19 +496,22 @@ def repin_proof(delivery: Path, write_delivery) -> None:
 
 
 def test_a_disclosed_departure_from_a_standard_rule_holds(delivery, work, root, sound_delivery,
-                                                          write_delivery, write_standard):
+                                                          write_delivery, write_standard,
+                                                          run_dir):
+    run_dir("passed", "build")
     write_delivery("implementation/checkout/record-order",
-                   disclosed(delivery, work, write_standard()))
+                   disclosed(delivery, work, write_standard(), run="run/build"))
     repin_proof(delivery, write_delivery)
     assert problems_of(delivery, work, root) == []
 
 
 def test_an_implementation_may_depart_from_a_rule_a_tool_decides(delivery, work, root,
                                                                  sound_delivery, write_delivery,
-                                                                 write_standard):
+                                                                 write_standard, run_dir):
     """The asymmetry that matters: a review may not judge a rule a tool decides, and a record may
     depart from one — it obeys the whole standard, and the run will show the tool's own failure."""
-    front = disclosed(delivery, work, write_standard())
+    run_dir("passed", "build")
+    front = disclosed(delivery, work, write_standard(), run="run/build")
     front["divergences"][0]["cites"] = "PRH-01"
     write_delivery("implementation/checkout/record-order", front)
     repin_proof(delivery, write_delivery)
@@ -890,11 +893,11 @@ def test_a_captured_run_reaches_a_review(delivery, work, root, sound_delivery, w
 def run_dir(delivery: Path):
     """A captured run, as the runner writes one. The validator opens it, so a bare directory is
     not a run."""
-    def put(outcome: str = "failed") -> Path:
-        where = delivery / "run" / "first"
+    def put(outcome: str = "failed", slug: str = "first") -> Path:
+        where = delivery / "run" / slug
         where.mkdir(parents=True, exist_ok=True)
         (where / "run.json").write_text(json.dumps({
-            "contract_version": "siegard-run/1", "run": "run/first", "cwd": "/tmp/project",
+            "contract_version": "siegard-run/1", "run": f"run/{slug}", "cwd": "/tmp/project",
             "timeout_seconds": 20, "outcome": outcome,
             "failed_step": None if outcome == "passed" else "suite",
             "steps": [{"name": "suite", "command": "pytest", "outcome": outcome,
@@ -933,8 +936,10 @@ def proof_disclosing(delivery: Path, ref: dict, **overrides) -> dict:
 
 def test_a_proof_may_disclose_a_departure_from_a_standard_rule(delivery, work, root,
                                                                sound_delivery, write_delivery,
-                                                               write_standard):
-    write_delivery("proof/checkout/record-order", proof_disclosing(delivery, write_standard()))
+                                                               write_standard, run_dir):
+    run_dir("passed", "suite")
+    write_delivery("proof/checkout/record-order",
+                   proof_disclosing(delivery, write_standard(), run="run/suite"))
     assert problems_of(delivery, work, root) == []
 
 
@@ -1007,3 +1012,100 @@ def test_the_outstanding_report_names_the_standard_this_root_remembers(delivery,
     report = deliver.outstanding_report(nodes, plan_nodes)
     assert "standards/example-service.yaml: pinned by 1 record(s)" in report
     assert "an invocation naming no standard now writes source" in report
+
+
+# ------------------------------- what a record captured, and what it was allowed to install
+
+def test_a_record_over_a_run_that_did_not_pass(delivery, work, root, sound_delivery,
+                                               write_delivery, write_standard, run_dir):
+    """The mirror of the review's rule, and the reason both exist. A review's run that passed is
+    refused — there was no failure to diagnose. A delivery's run that failed is refused — the
+    record claims what the run denied. Neither erases anything: the failed run keeps its directory,
+    and the runner refuses to let a later one take its name."""
+    run_dir("failed", "build")
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "run again under a name of its own")
+
+
+def test_a_record_naming_a_run_the_runner_never_wrote(delivery, work, root, sound_delivery,
+                                                      write_delivery, write_standard):
+    (delivery / "run" / "build").mkdir(parents=True)
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "is not a run this framework captured")
+
+
+def test_a_package_the_standard_does_not_authorize(delivery, work, root, sound_delivery,
+                                                   write_delivery, write_standard, run_dir):
+    """The allowlist is where a human's approval of a package lives — the only place it survives
+    the session it was given in. A delivery that could install past it would make it decorative."""
+    run_dir("passed", "build")
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build",
+                             installed=["left-pad"]))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "which standards/example-service.yaml does not "
+                                            "authorize")
+
+
+def test_a_package_the_standard_authorizes(delivery, work, root, sound_delivery, write_delivery,
+                                           write_standard, run_dir):
+    run_dir("passed", "build")
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build",
+                             installed=["pino"]))
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, root) == []
+
+
+def test_packages_installed_against_no_standard_at_all(delivery, work, root, sound_delivery,
+                                                       write_delivery):
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["installed"] = ["pino"]
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "the names resolve against nothing")
+
+
+def test_a_standard_that_declares_commands_is_owed_a_run(delivery, work, root, sound_delivery,
+                                                         write_delivery, write_standard):
+    """Source handed over having never been executed is the state this arrangement exists to end.
+    A registry saying how the project is installed and checked is one whose delivery could be run,
+    and a delivery that could be and was not is refused rather than reported."""
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["standard"] = write_standard()
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, root), "captured no run")
+
+
+def test_what_each_kind_owes_differs_by_when_it_is_written(delivery, work, root, sound_delivery,
+                                                           write_delivery, write_standard,
+                                                           run_dir):
+    """An implementation is written before any test exists, so it owes the checks that do not need
+    one; a proof is written after, so it owes them all. A registry whose only command is the suite
+    therefore owes the implementation nothing and the proof a run."""
+    from conftest import STANDARD
+    suite_only = {k: v for k, v in STANDARD.items() if k != "dependencies"}
+    suite_only["rules"] = [r for r in STANDARD["rules"] if r["decided_by"] == "reading"]
+    suite_only["commands"] = [{"step": "test", "command": "true", "role": "suite"}]
+    ref = write_standard(suite_only, name="suite-only.yaml")
+
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["standard"] = ref
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, root) == [], "the implementation owes no run here"
+
+    proof = json_front(delivery, "proof/checkout/record-order")
+    proof["standard"] = ref
+    write_delivery("proof/checkout/record-order", proof)
+    said(problems_of(delivery, work, root), "proof/checkout/record-order")
+
+    run_dir("passed", "suite")
+    proof["run"] = "run/suite"
+    write_delivery("proof/checkout/record-order", proof)
+    assert problems_of(delivery, work, root) == []

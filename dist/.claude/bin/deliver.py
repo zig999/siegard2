@@ -397,16 +397,48 @@ def rules_of(data: dict) -> dict[str, dict]:
             if isinstance(r, dict) and isinstance(r.get("id"), str)}
 
 
+def record_run_problems(nid: str, front: dict, root: Path) -> list[str]:
+    """One record that wrote something, against the run it points at. A record and its run are one
+    act: the run is what the delivery saw before it wrote, so a record over a run that did not pass
+    claims what the run denied. It is the exact mirror of `run_problems`, which refuses a review's
+    run that passed — there, a green run is a diagnosis nobody should have asked for; here, a red
+    one is a delivery that should not exist. The failure is not erased by either: the run that
+    failed keeps its directory, and `bin/run.py` refuses to let any later run take its name."""
+    where = front.get("run")
+    if not isinstance(where, str):
+        return []
+    record = root / where / "run.json"
+    if not record.is_file():
+        return [f"{nid}: run names {where}, which holds no run.json; the runner writes one for "
+                f"every run, so a directory without it is not a run this framework captured"]
+    try:
+        captured = json.loads(record.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        return [f"{nid}: {where}/run.json cannot be read: {broken}"]
+    if not isinstance(captured, dict):
+        return [f"{nid}: {where}/run.json is not a mapping"]
+    if captured.get("outcome") != "passed":
+        failed = captured.get("failed_step")
+        return [f"{nid}: {where} ended `{captured.get('outcome')}` at the step `{failed}`, and "
+                f"this record was written anyway; what a record says was delivered is what the "
+                f"run it points at showed, and this one showed the opposite — fix what failed and "
+                f"run again under a name of its own, or leave the record unwritten"]
+    return []
+
+
 def record_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
     """Every rule a record that wrote something says it departed from — an implementation or a
-    proof alike — resolved against the standard it pins. Unlike a review's citation this may name a
-    rule a tool decides: a record obeys the whole standard, and departing from a rule the compiler
-    owns is a real departure that the run will show. The validator holds the citation and says
-    nothing about whether departing was right, which is a reader's to judge."""
+    proof alike — resolved against the standard it pins, plus every package it says it installed
+    and whether the run its kind owes was captured at all. Unlike a review's citation a departure
+    may name a rule a tool decides: a record obeys the whole standard, and departing from a rule
+    the compiler owns is a real departure that the run will show. The validator holds the citation
+    and says nothing about whether departing was right, which is a reader's to judge."""
     data, at, problems = standard_of(nid, front, root, validator)
     if data is None:
         return problems
     rules = rules_of(data)
+    problems += installed_problems(nid, front, data, at)
+    problems += owed_run_problems(nid, front, data, at)
 
     for index, entry in enumerate(listed(front, "divergences")):
         if not isinstance(entry, dict) or not isinstance(entry.get("cites"), str):
@@ -420,6 +452,41 @@ def record_standard_problems(nid: str, front: dict, root: Path, validator) -> li
             problems.append(f"{nid}: divergences[{index}] cites {cited} against {where}, which "
                             f"that rule's scope does not reach")
     return problems
+
+
+def installed_problems(nid: str, front: dict, data: dict, at: str) -> list[str]:
+    """Every package a record says it installed, against the list its standard authorizes. The
+    list is where a human's approval of a package lives — the only place it survives the session it
+    was given in — so a delivery that could install past it would make the approval decorative.
+    The check is over names and never over a manifest: reading one would be reading a stack this
+    framework ships no knowledge of."""
+    authorized = {d["package"] for d in listed(data, "dependencies")
+                  if isinstance(d, dict) and isinstance(d.get("package"), str)}
+    return [f"{nid}: installed names {package}, which {at} does not authorize; a package this "
+            f"registry has not admitted is one nobody approved, and the approval that admits it is "
+            f"the registry gaining an entry — not an answer given while it was being installed"
+            for package in listed(front, "installed")
+            if isinstance(package, str) and package not in authorized]
+
+
+def owed_run_problems(nid: str, front: dict, data: dict, at: str) -> list[str]:
+    """Whether a record captured the run its kind owes. A registry declaring how the project is
+    installed and checked is a registry whose delivery could be run, and a delivery that could be
+    run and was not is the state this whole arrangement exists to end: source handed over having
+    never been executed, with every rule a tool decides unanswered by anything. What each kind owes
+    differs because of when it is written — an implementation is written before any test exists, so
+    it owes the checks that do not need one; a proof is written after, so it owes them all."""
+    if "run" in front or "standard" not in front:
+        return []
+    commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
+    kind = "proof" if "tests" in front else "implementation"
+    owed = commands if kind == "proof" else [c for c in commands if c.get("role") != "suite"]
+    if not owed:
+        return []
+    named = ", ".join(str(c.get("step")) for c in owed)
+    return [f"{nid}: {at} declares the step(s) {named} and this record captured no run; a delivery "
+            f"whose project could be installed and checked and was not is source nobody executed, "
+            f"which is exactly what a record pointing at a green run says did not happen"]
 
 
 def review_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
@@ -525,6 +592,10 @@ def node_problems(front, kind: str, validator, allowed, names: list[str]) -> lis
         problems.extend(review_problems(front, names))
     if kind in PAIRED:
         problems.extend(divergence_problems(front))
+        if "installed" in front and "standard" not in front:
+            problems.append("`installed` names packages and this record names no standard; what "
+                            "authorizes a package is a registry's own list, and without one the "
+                            "names resolve against nothing")
     return problems
 
 
@@ -720,6 +791,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                 continue
             problems.extend(record_standard_problems(
                 nid, front, root, standard or standard_contract()))
+            problems.extend(record_run_problems(nid, front, root))
             if node["kind"] == "implementation":
                 problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
                                                         delivered))
