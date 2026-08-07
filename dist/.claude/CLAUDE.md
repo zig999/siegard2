@@ -46,9 +46,12 @@ checks keep the plan honest, and both are the validator's: every open gap on a b
 `unresolved` on the task or waived with a why — never silently ignored — and coverage reconciles
 in both
 directions: every base node an epic covers is bound by one of its tasks or declared uncovered,
-and a task binding outside its epic's covers is refused. A plan node carries no status,
-estimate, priority or order field: execution state lives in git, and order is derived from
-dependencies by whoever executes.
+and a task binding outside its epic's covers is refused. A task may also declare what its delivery
+must create — `produces` — which is how the artifacts a project's own standard presupposes get
+built: they answer to no base node, because none of them is what the business decided, and a plan
+that leaves them unplanned is a plan whose every task stops before it is written. A plan node
+carries no status, estimate, priority or order field: execution state lives in git, and order is
+derived from dependencies by whoever executes.
 
 A work root serves one initiative. A `closure.md` at its root marks the plan closed: closed,
 it is history — validated without the base, every structural check still held, each digest
@@ -103,6 +106,14 @@ review's to read**: a standard marks each rule by whether its application is a r
 exact decision, the latter run as steps of the project's own suite through `bin/run.py`, their
 findings arriving through the failures pass with the tool's own message as evidence. A model
 applying a forbidden-construct rule has strictly worse recall than the compiler that owns it.
+
+A rule is a condition over a file that exists, and it can never ask for one: a scope names a
+directory and an ending, so nothing in a rule reaches the manifest whose script it names or the
+compiler configuration whose strictness it requires. **A registry therefore states what it
+presupposes** — each artifact, what its rules get from it, and which rules cannot be applied while
+it is absent. `deliver.py --standard <file> --against <tree>` answers whether the tree holds them,
+and both the plan and the delivery refuse over an absence: work nobody planned is work nothing will
+do, and source written meanwhile answers to a registry that cannot be applied to it.
 
 A project that has authored no standard gets an honestly narrow review — the pass records that it
 did not run, and what was absent — never a clean one.

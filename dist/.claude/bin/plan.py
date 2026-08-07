@@ -49,6 +49,11 @@ Usage:  plan.py <work-root> [<knowledge-root>]          validate everything, the
         plan.py --node <file> <work-root> [<knowledge-root>]
                                                         validate one file (cross-node checks and
                                                         base checks do not run)
+        plan.py --standard <file> --against DIR <work-root> [<knowledge-root>]
+                                                        also reconcile what the project's own
+                                                        standard presupposes against DIR and the
+                                                        tasks' `produces`; the two flags travel
+                                                        together
         The knowledge root is required while the plan is live, and ignored once closure.md
         marks it closed.
 Exit:   0 sound (and, with --check, current)
@@ -384,6 +389,49 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
     return problems
 
 
+def substrate_problems(nodes: dict[str, dict], named: str, tree: Path) -> list[str]:
+    """Every artifact the project's own standard presupposes, held against this plan and the tree
+    it plans over. A rule of a standard is a condition over a file that exists and can never ask
+    for one, so an artifact a registry needs and a tree does not hold is work no rule can demand
+    and no epic covers — the base holds no node for a manifest, and it should not. What makes it
+    the plan's business anyway is what happens downstream: a delivery refuses to write source over
+    the absence, so a plan that leaves it unplanned is a plan whose every task stops on a condition
+    only the plan can end.
+
+    The reconciliation runs one way only, deliberately. A task may produce an artifact no standard
+    presupposes — creating a file is ordinary work — and refusing that would make the plan
+    relitigate what a registry never asked about. The other direction is the one that costs
+    something, so it is the one that is checked.
+
+    `deliver` is imported here rather than at the top because it imports this module. How a
+    standard is read has one home, and reaching it from inside the function is what lets both
+    scripts use that home without a cycle at import time.
+    """
+    import deliver
+    data, found = deliver.load_standard(Path(named), deliver.standard_contract())
+    if data is None:
+        return [f"{named}: {problem}" for problem in found] + [
+            f"the plan is not reconciled against {named}: a registry that does not hold together "
+            f"presupposes nothing anybody can check"]
+
+    produced = {path for node in nodes.values() if node["kind"] == "task"
+                for path in listed(node["front"], "produces") if isinstance(path, str)}
+    problems: list[str] = []
+    for entry in listed(data, "presupposes"):
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            continue  # the registry's own contract already reported the shape
+        where = entry["path"]
+        if (tree / where).exists() or where in produced:
+            continue
+        rules = ", ".join(r for r in listed(entry, "rules") if isinstance(r, str))
+        problems.append(
+            f"{named} presupposes {where}, which {tree} does not hold and no task produces; "
+            f"{rules} cannot be applied to anything this plan delivers, and /implement-task "
+            f"refuses to write source while it is absent — so every task here stops until one of "
+            f"them declares {where} in `produces`")
+    return problems
+
+
 def cross_problems(nodes: dict[str, dict], base_nodes: dict[str, dict] | None) -> list[str]:
     """The rules that need to see more than one node at once — or the base. With
     base_nodes=None the plan is closed: every internal rule still runs, and every rule that
@@ -569,8 +617,32 @@ def main() -> int:
     if report and (verify or single is not None):
         print("cannot run: --unresolved stands alone", file=sys.stderr)
         return CANNOT_RUN
+    named = against = None
+    for flag in ("--standard", "--against"):
+        if flag in args:
+            at = args.index(flag)
+            if at + 1 >= len(args):
+                print(f"cannot run: {flag} takes "
+                      f"{'a file' if flag == '--standard' else 'a directory'}", file=sys.stderr)
+                return CANNOT_RUN
+            value = args[at + 1]
+            del args[at:at + 2]
+            if flag == "--standard":
+                named = value
+            else:
+                against = value
+    if (named is None) != (against is None):
+        print("cannot run: --standard and --against travel together; a registry is reconciled "
+              "against the tree this plan plans over, and neither half decides anything alone",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if named is not None and single is not None:
+        print("cannot run: --node validates one file, and what a standard presupposes is a fact "
+              "about the whole plan", file=sys.stderr)
+        return CANNOT_RUN
     if len(args) not in (1, 2) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --unresolved | --node <file>] "
+              "[--standard <file> --against <target-source-root>] "
               "<work-root> [<knowledge-root>]", file=sys.stderr)
         return CANNOT_RUN
     work = Path(args[0])
@@ -578,6 +650,12 @@ def main() -> int:
         print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
         return CANNOT_RUN
     closed = (work / CLOSURE_FILE).is_file()
+    if closed and named is not None:
+        print(f"cannot run: {work} is closed, and what a standard presupposes is a question about "
+              f"work still to be cut. A closed plan answers to the tree it planned over, not to "
+              f"today's; reopening it on an artifact nobody built then would make history refuse "
+              f"to validate for a reason history cannot act on", file=sys.stderr)
+        return CANNOT_RUN
     knowledge = Path(args[1]) if len(args) == 2 else None
     if not closed:
         if knowledge is None:
@@ -612,6 +690,12 @@ def main() -> int:
 
     nodes, problems = collect(work, validator, allowed)
     problems += cross_problems(nodes, base_nodes)
+    if named is not None:
+        tree = Path(against)
+        if not tree.is_dir():
+            print(f"cannot run: target source root {tree} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+        problems += substrate_problems(nodes, named, tree)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)

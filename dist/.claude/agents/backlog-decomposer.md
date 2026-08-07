@@ -24,6 +24,11 @@ stop. You need:
    branches before writing a single field; leave the binding fields alone even though the
    branch declares them.
 
+Optionally, **the absent substrate** — the artifacts the project's own standard presupposes and
+the target tree does not hold, each with what the registry says it provides and the rules it
+carries. Given any, they are the one thing you cut a task for that the scope never asked about.
+The judgment below says how; given none, there is nothing here to cut.
+
 ## The judgment
 
 Epics group the work; tasks deliver it. Four tests bind every task, and a candidate failing
@@ -51,6 +56,24 @@ And around the tasks:
 - **Each epic declares the base nodes it covers** — its slice of the impact set. What it
   claims and the plan deliberately leaves untouched goes to `uncovered` with a why. A task
   will only be allowed to bind inside its epic's covers, so cover what the tasks will need.
+- **An absent substrate is one task, and it is the only task the scope did not ask for.** Where
+  the caller handed you artifacts the standard presupposes and the tree does not hold, cut one
+  task whose objective is that the project can be built and its suite run, and whose `produces`
+  names every one of those paths. One task and not one per artifact: a manifest and a compiler
+  configuration are one decision about how this project is built, and the criteria that falsify
+  it are the same criteria. Write each criterion from what the registry said the artifact
+  provides — a step the rules are decided by, a declaration a rule depends on — so it is
+  falsifiable against the file rather than against an intention.
+
+  This task binds nothing, and that is not a defect to hide: it answers to no base node because
+  no base node holds a manifest and none should — the base is what the business decided, and how
+  this project is built is not. So it carries `rationale` saying exactly that, the way any
+  ungoverned task does. It sits under whichever epic first needs it, because an epic claims at
+  least one base node and this task's epic cannot be cut for it. And it takes **no dependency
+  edges from the other tasks**: every task in the plan waits on this one, `/implement-task`
+  refuses to write source while the artifacts are absent, and an edge from every task to one
+  task is a fact somebody would have to keep true by hand — which is what the refusal exists to
+  make unnecessary.
 - **No estimates, no priorities, no order, no status.** Those fields do not exist in the
   contract, and prose does not get to hold what the contract refused. A task's place in a
   sequence — "the first task of the context", "after X" — is order, however it is phrased.
@@ -75,7 +98,7 @@ epic/<slug>
 ```
 task/<epic>/<slug>
 ---
-<frontmatter: the task branch WITHOUT nodes, base, unresolved or waived — those are the
+<frontmatter: the task branch WITHOUT nodes, unresolved or waived — those are the
 binder's and the caller's to add>
 ---
 ## What it is

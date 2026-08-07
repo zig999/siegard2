@@ -112,13 +112,22 @@ nothing else in either root. The base node files belong to the passes, each read
 Then, where the caller named a standard, take it in and read it here — before anything is run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
 ```
 
-Anything but a clean pass is a stop, reported verbatim: a review against a registry that does not
-hold together reports a conformance nobody has, and fixing the registry belongs to whoever owns it.
-The command prints the split — how many rules a reading decides, how many a tool does, and the
-names of the steps those expect — which is exactly what the next step needs.
+A registry that does not hold together is a stop, reported verbatim: a review against one reports a
+conformance nobody has, and fixing it belongs to whoever owns it. The command prints the split —
+how many rules a reading decides, how many a tool does, and the names of the steps those expect —
+which is exactly what the next step needs.
+
+An artifact the registry presupposes and the tree does not hold is **not** a stop here. A review
+reviews what exists, and refusing to read a change because its project was never set up would
+withhold the one report that says so. It changes what the review reports: the steps those rules
+would be decided by cannot exist, so the failures pass has nothing to run and every rule the
+absence names goes unanswered by anything — while the rules a reading decides are still applied,
+against files written to answer a registry that was never in force. Keep what the command printed
+and carry it into the report; it is the difference between a review that came back thin and a
+review that says why.
 
 Then copy the registry into `standards/` under the delivery root, keeping the name the project gave
 it, and note the SHA-256 of the copy — `sha256sum <delivery-root>/standards/<file>`. The copy is
@@ -290,7 +299,10 @@ Report, in this order:
 - the standard: which of its rules were in scope over this file set, and which it leaves to a tool
   — naming, for those, whether the step that decides each one ran. A rule left to a tool that never
   ran is unanswered, and saying so is what keeps the split between reading and tool honest instead
-  of convenient;
+  of convenient. Name too every artifact the registry presupposes and the tree does not hold, with
+  the rules each one takes with it: a review that reports two findings over a standard whose
+  substrate is missing has reviewed a fraction of it, and the fraction is the number this line
+  gives. The way out is a task declaring the artifact in `produces`, planned through `/plan-work`;
 - the run: what was executed, how it ended, how many failures were counted, and where the output
   sits;
 - what this framework does not review at all, so four passes are never mistaken for every pass;

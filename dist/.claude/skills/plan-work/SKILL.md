@@ -25,6 +25,15 @@ A missing input is a stop, not a default:
 4. **the target source root** — where the code lives or will live. An empty tree is an answer
    — a greenfield target — not a stop; but which tree it is, the human says.
 
+One optional input: **the project's standard** — the path to the registry of rules the project set
+for itself. It plays one part here and no other. A registry states the artifacts its rules
+presuppose — a manifest, a compiler configuration, whatever a rule names and no rule can ask for —
+and where the target tree does not hold one, building it is work this plan holds or nothing does:
+the base has no node for a manifest and should not, no epic covers one, and `/implement-task`
+refuses to write source while the absence stands. The rules themselves are not a plan's business.
+A plan writes no source, and judging how source is arranged belongs to the two entry points that
+do.
+
 Naming can go by reference when the reference carries the path: "the base we just validated
 at `knowledge/`" names `knowledge/`, and the handoff an `/analyse-domain` report ends with
 names roots the same way. A reference without a path resolves only through the conversation's
@@ -116,6 +125,18 @@ Two indexes, one rule: read the index, never the whole tree.
   in both directions, and bindings that reach the base's impact set. Read those files alone.
   Outside the set, standing decisions stand: a task this change does not touch is not
   reworded, however improvable it looks.
+- **The project's standard, when one was named.** Run
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the registry> --against <target-source-root>
+  ```
+
+  A registry that does not hold together is a stop, reported verbatim: fixing it belongs to
+  whoever owns it. An artifact it presupposes and the tree does not hold is **not** a stop — it is
+  this bullet's whole product. Keep what the command printed for each: the path, what the registry
+  says that artifact provides, and the rules it named as unanswerable while the artifact is
+  absent. That set goes to the decomposition, and it is gathered here, before any node is written,
+  because it decides whether this plan holds one more task than the scope asked for.
 
 ### 2. Inventory
 
@@ -145,7 +166,10 @@ path its identifier computes to, verbatim.
 Spawn a `backlog-decomposer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md` — passing four things: the scope's path, the impact set as you read it from the base's index —
 identifiers, titles, summaries, and each node's open gap fields — the surveyor's inventory,
-and the plan-node contract's path. Its file holds the boundary tests that shape every task;
+and the plan-node contract's path — plus, where a standard was named and the situate step found
+any, the artifacts it presupposes that the tree does not hold, each with what the registry says it
+provides and the rules it carries. Those are the one thing the decomposition may cut a task for
+that the scope never asked about, and the agent's file says how. Its file holds the boundary tests that shape every task;
 what comes back is epics, complete, and task skeletons — objective, criteria, dependencies —
 deliberately without the binding fields, which belong to the next step's judge.
 
@@ -219,10 +243,21 @@ When every node is written, run:
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py <work-root> <knowledge-root>
 ```
 
+Where a standard was named, name it here too — the two flags travel together, and neither half
+decides anything alone:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --standard <the registry> --against <target-source-root> <work-root> <knowledge-root>
+```
+
 This validates every plan node against the contract, runs the checks that need the whole plan
 and the base — dependencies resolve without cycles, bindings resolve, every open gap on a
 bound node is triaged, every covered node reaches a task or a stated why, every bound node's
-digest matches that node as it stands — and derives `plan.json`.
+digest matches that node as it stands — plus, with a standard named, that every artifact it
+presupposes either stands in the tree or is declared in some task's `produces`, and derives
+`plan.json`. That last check is why the decomposition was handed the absent set rather than
+trusted to remember it: a task nobody cut is invisible in the plan that lacks it, and this is
+the one place the lack is a refusal.
 **Never write or edit `plan.json` yourself.**
 Report the command's output verbatim. If it exits non-zero, the run failed — fix and rerun,
 and never describe the plan as valid while it is not.
@@ -251,6 +286,11 @@ Report, in this order:
   underdetermined one carrying the implementation it names, a remainder one carrying where
   it belongs;
 - every node carrying `rationale`, by identifier;
+- where a standard was named, what it presupposes and where each of those stands: held by the
+  tree already, or produced by a task this plan now holds, named by identifier and by path. Where
+  none was named, say so — a plan cut without one is a plan that cannot know whether the tree it
+  plans over can run anything it delivers, and that is the honestly narrow answer rather than
+  silence;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
 - the handoff: the `/implement-task` invocation ready to paste — this work root and this

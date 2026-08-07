@@ -666,3 +666,110 @@ def test_single_node_mode_still_refuses_bad_form(work, root, sound_plan, write_p
     done = run("--node", path, work, root)
     assert done.returncode == 1
     assert "not-a-pin" in done.stdout
+
+
+# ------------------------------------ what the project's own standard presupposes
+
+def registry(tmp_path: Path, *paths: str) -> Path:
+    """A registry presupposing one artifact per path given, written where a plan can be held
+    against it."""
+    import yaml
+    from conftest import STANDARD
+    path = tmp_path / "registry.yaml"
+    path.write_text(yaml.safe_dump({**STANDARD, "presupposes": [
+        {"path": p, "provides": "the `lint` step PRH-01 is decided by.", "rules": ["PRH-01"]}
+        for p in paths]}, sort_keys=False), encoding="utf-8")
+    return path
+
+
+def test_an_absent_artifact_no_task_produces_is_refused(work, root, sound_plan, tmp_path):
+    """The plan-side half of the refusal. A delivery already stops before writing source over the
+    absence, so a plan that leaves it unplanned is a plan whose every task stops — and this is
+    where that is visible while it can still be cut."""
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    found = plan.substrate_problems(
+        plan.collect(work, *plan.contract())[0], str(registry(tmp_path, "package.json")), tree)
+    assert len(found) == 1
+    assert "which " + str(tree) + " does not hold and no task produces" in found[0]
+    assert "PRH-01 cannot be applied" in found[0]
+    assert "declares package.json in `produces`" in found[0]
+
+
+def test_an_artifact_the_tree_already_holds_is_not_the_plan_s_business(work, root, sound_plan,
+                                                                      tmp_path):
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    (tree / "package.json").write_text("{}", encoding="utf-8")
+    assert plan.substrate_problems(
+        plan.collect(work, *plan.contract())[0],
+        str(registry(tmp_path, "package.json")), tree) == []
+
+
+def test_a_task_that_produces_the_artifact_answers_for_it(work, root, sound_plan, write_plan,
+                                                          tmp_path):
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    import re
+
+    import yaml
+    text = (work / "task/checkout/record-order.md").read_text(encoding="utf-8")
+    front = yaml.safe_load(re.match(r"^---\n(.*?)\n---\n", text, re.S).group(1))
+    front["produces"] = ["package.json"]
+    write_plan("task/checkout/record-order", front)
+    assert plan.substrate_problems(
+        plan.collect(work, *plan.contract())[0],
+        str(registry(tmp_path, "package.json")), tree) == []
+    assert problems_in(work, root) == [], "producing an artifact breaks no other check"
+
+
+def test_a_registry_that_does_not_hold_reconciles_nothing(work, root, sound_plan, tmp_path):
+    """A broken registry presupposes nothing anybody can check, and saying so beats reporting a
+    plan as sound against rules that never parsed."""
+    import yaml
+    from conftest import STANDARD
+    path = tmp_path / "broken.yaml"
+    one = STANDARD["rules"][0]
+    path.write_text(yaml.safe_dump({**STANDARD, "rules": [one, dict(one)]}), encoding="utf-8")
+    found = plan.substrate_problems(plan.collect(work, *plan.contract())[0], str(path),
+                                    tmp_path)
+    assert any("the plan is not reconciled against" in p for p in found)
+
+
+def test_the_two_flags_travel_together(work, root, sound_plan, tmp_path):
+    done = run("--standard", registry(tmp_path, "package.json"), work, root)
+    assert done.returncode == 2
+    assert "travel together" in done.stderr
+    done = run("--against", tmp_path, work, root)
+    assert done.returncode == 2
+    assert "travel together" in done.stderr
+
+
+def test_the_reconciliation_refuses_the_run_and_derives_nothing(work, root, sound_plan, tmp_path):
+    """It is a problem like any other: plan.json is not derived over a plan that does not hold
+    together, and a substrate nothing will build is exactly that."""
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    done = run("--standard", registry(tmp_path, "package.json"), "--against", tree, work, root)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "no task produces" in done.stdout
+    assert not (work / "plan.json").exists()
+
+
+def test_a_node_check_is_not_where_a_plan_wide_fact_is_decided(work, root, sound_plan, tmp_path):
+    done = run("--node", work / "task/checkout/record-order.md",
+               "--standard", registry(tmp_path, "package.json"), "--against", tmp_path, work, root)
+    assert done.returncode == 2
+    assert "a fact about the whole plan" in done.stderr
+
+
+def test_a_closed_plan_is_not_reconciled_against_a_standard(work, root, sound_plan, tmp_path):
+    """History answers to the tree it planned over, not today's. A closed plan refused because
+    somebody never built an artifact would be history that cannot validate for a reason nobody
+    can act on — the initiative is over, and there is no task left to cut."""
+    (work / "closure.md").write_text("# Closed\nThe initiative shipped.\n", encoding="utf-8")
+    done = run("--standard", registry(tmp_path, "package.json"), "--against", tmp_path, work, root)
+    assert done.returncode == 2
+    assert "is closed, and what a standard presupposes" in done.stderr
+    assert run("--check", work).returncode in (0, 1), \
+        "history still validates without the flags; only the reconciliation is refused"
