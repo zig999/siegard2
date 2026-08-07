@@ -51,7 +51,7 @@ same way.
 ## The order
 
 ```
-situate → analyse → write → validate → report → stop
+situate → analyse → write → validate → reconcile → report → stop
 ```
 
 ### 1. Situate
@@ -215,7 +215,25 @@ nobody stated, an unnamed upstream contract, a consistency nobody decided — is
 never a value you supply. If the validator names a missing field and the material does not answer
 it, the correction is a gap naming that field, not an answer.
 
-### 5. Report, and stop
+### 5. Reconcile: obligations that share a subject
+
+Mechanical validation cannot see a contradiction the schema admits, and an implementer is the
+most expensive place to discover one. After the base validates, take the pairs the impact set
+joins — two rules constraining the same definition, a rule and the lifecycle of its subject,
+two linked nodes whose obligations reach the same case — and ask of each pair one question: is
+there a case both speak to that the two decide differently?
+
+A pair with such a case is the material stating two things that cannot both hold, and which
+one wins is a fact the material does not state — which is a gap. Record it on each node of the
+pair, dotted under the clashing field (`statement.<label>` on a rule), the `why` naming the
+other node by identifier and the case both decide differently. From there the standing
+mechanics carry it: the agenda prints it, a binding triages it, and the answer is produced by
+material like any other fact. A tension without a concrete case both nodes decide differently
+is a finding for the report, never a gap.
+
+Recording any means frontmatter moved: rerun the validation of step 4 before reporting.
+
+### 6. Report, and stop
 
 Report, in this order:
 
@@ -230,6 +248,8 @@ Report, in this order:
 - every gap carrying a proposal, by node and field with the proposal's value — these are
   claims a reviewer ratifies or rejects, and the ratification that closes one arrives as
   material like any other;
+- every contradiction the reconcile step recorded, by node pair with the case that exposes
+  it — and every tension it reported without recording, with why it lacked a case;
 - the validator's final output, verbatim;
 - the handoff: the `/plan-work` invocation ready to paste — this knowledge root named as just
   validated, one named slot for each input only the human decides — the scope, the work root,
@@ -247,6 +267,9 @@ Then stop. `git diff` over the knowledge root is the review, and it belongs to a
   proposal — ratification is the human's, and it arrives as material under `intake/` like any
   other.
 - Answer an open question the material refused to answer.
+- Record a contradiction gap without the concrete case the two nodes decide differently, or
+  settle one by picking a side — a tension without a case is a finding for the report, and
+  which node wins is the material's to say.
 - Record a status, a maturity level or an approval state — an absent fact is a gap, and nothing
   else says how "done" a node is.
 - Restate the contract's vocabularies from memory instead of reading the schema.
