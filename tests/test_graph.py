@@ -217,6 +217,45 @@ def test_a_gap_on_a_field_the_kind_never_declares_is_refused(root, sound_base):
     assert any("not a field a definition declares" in p for p in problems_in(root))
 
 
+def test_a_gap_may_carry_a_proposal_and_stays_exactly_as_open(root, sound_base):
+    sound_base("definition/sales/invoice", {
+        "title": "Invoice", "summary": "The bill.", "ddd": "value-object",
+        "gaps": [{"field": "attributes", "why": "the material lists no fields",
+                  "proposal": {"value": "number, total, issued_at",
+                               "why": "every invoice the intake shows carries these three"}}]})
+    assert problems_in(root) == []
+    # still a gap: the field stays excused, and nothing else is — a proposal decides nothing
+    sound_base("definition/sales/receipt", {
+        "title": "Receipt", "summary": "Proof.",
+        "gaps": [{"field": "attributes", "why": "unstated",
+                  "proposal": {"value": "number", "why": "the intake shows one"}}]})
+    assert any("'ddd' is a required property" in p for p in problems_in(root))
+
+
+def test_a_proposal_without_its_why_is_refused(root, sound_base):
+    sound_base("definition/sales/invoice", {
+        "title": "Invoice", "summary": "The bill.", "ddd": "value-object",
+        "gaps": [{"field": "attributes", "why": "the material lists no fields",
+                  "proposal": {"value": "number, total"}}]})
+    assert any("'why' is a required property" in p for p in problems_in(root))
+
+
+def test_the_gap_report_prints_each_proposal_under_its_node(root, sound_base):
+    sound_base("definition/sales/invoice", {
+        "title": "Invoice", "summary": "The bill.", "ddd": "value-object",
+        "gaps": [{"field": "attributes", "why": "the material lists no fields",
+                  "proposal": {"value": "number, total, issued_at",
+                               "why": "every invoice the intake shows carries these three"}},
+                 {"field": "aggregate", "why": "nobody said where it sits"}]})
+    done = run("--gaps", root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "definition/sales/invoice: aggregate, attributes" in done.stdout
+    assert "  proposal on attributes: number, total, issued_at" in done.stdout
+    # the gap without a proposal adds no line, and the why stays in the node file
+    assert "aggregate:" not in done.stdout
+    assert "every invoice the intake shows" not in done.stdout
+
+
 def test_a_dotted_gap_needs_its_container_present(root, sound_base):
     sound_base("definition/sales/invoice", {
         "title": "Invoice", "summary": "The bill.", "ddd": "value-object",

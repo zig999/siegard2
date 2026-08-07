@@ -75,12 +75,17 @@ decision set, and this invocation is a change to it — located, not re-derived:
 ### 2. Analyse
 
 Decide the contexts, the aggregates inside each, the definitions with their typed attributes, the
-rules, the lifecycles, the interfaces between contexts, and the processes that cross them. Two
+rules, the lifecycles, the interfaces between contexts, and the processes that cross them. Three
 rules bind the analysis:
 
 - **A fact the material does not state is not invented.** It is recorded as a `gaps` entry naming
   the absent field, with `why` saying what was missing. An invented value reads exactly like one
-  the business stated, and that is the failure this framework exists to prevent.
+  the business stated, and that is the failure this framework exists to prevent. Where the
+  analysis holds a candidate answer, the gap may carry it as `proposal` — value and why together,
+  as the contract shapes it. A proposal decides nothing: no consumer treats it as the fact, and a
+  gap carrying one is exactly as open as one without. It exists to make the human's decision
+  cheap — ratifying it is material like any other, and closing the gap still takes that material,
+  cited from intake, never the proposal itself.
 - **A fact the analysis decided — rather than read — carries `rationale`.** That is what lets a
   reviewer accept what the material stated and argue with what you concluded. The line between
   the two is what the material gives you to read: `rationale` covers a reading of stated
@@ -212,6 +217,9 @@ Report, in this order:
   reject, and a claim without an identifier cannot be rejected in place;
 - every gap closed, with the material that closed it, and every question the material left
   open with the gap that records it;
+- every gap carrying a proposal, by node and field with the proposal's value — these are
+  claims a reviewer ratifies or rejects, and the ratification that closes one arrives as
+  material like any other;
 - the validator's final output, verbatim;
 - the handoff: the `/plan-work` invocation ready to paste — this knowledge root named as just
   validated, one named slot for each input only the human decides — the scope, the work root,
@@ -225,6 +233,9 @@ Then stop. `git diff` over the knowledge root is the review, and it belongs to a
 
 - Write or edit `graph.json` by hand.
 - Invent a value to make validation pass, or close a gap with a guess.
+- Treat a standing proposal as the fact it proposes, or close a gap by citing its own
+  proposal — ratification is the human's, and it arrives as material under `intake/` like any
+  other.
 - Answer an open question the material refused to answer.
 - Record a status, a maturity level or an approval state — an absent fact is a gap, and nothing
   else says how "done" a node is.

@@ -501,12 +501,19 @@ def check_single(root: Path, named: str, validator, allowed, obligations) -> int
 def gaps_report(nodes: dict[str, dict]) -> str:
     """One line per node with gaps — `<id>: <field>, <field>` — derived from the nodes the
     same way graph.json is, so the two can never disagree. The `why` behind each field stays
-    in the node file the line names."""
+    in the node file the line names. A gap carrying a proposal adds an indented line under the
+    node's own — `proposal on <field>: <value>` — because this report is the agenda where
+    ratification happens, and a proposal the agenda does not show is one nobody answers."""
     lines = []
     for nid in sorted(nodes):
         gaps = nodes[nid]["front"].get("gaps") or []
-        if gaps:
-            lines.append(f"{nid}: {', '.join(sorted(g['field'] for g in gaps))}")
+        if not gaps:
+            continue
+        lines.append(f"{nid}: {', '.join(sorted(g['field'] for g in gaps))}")
+        for gap in sorted(gaps, key=lambda g: g["field"]):
+            proposal = gap.get("proposal")
+            if isinstance(proposal, dict) and isinstance(proposal.get("value"), str):
+                lines.append(f"  proposal on {gap['field']}: {proposal['value']}")
     return "\n".join(lines) if lines else "no gaps declared"
 
 

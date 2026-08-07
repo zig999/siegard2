@@ -33,7 +33,8 @@ stop. You need:
 - **Triage every open gap on every node you bind — silence is refused by the validator.** A
   gap that bears on the objective or a criterion is `unresolved`. One that does not is
   waived, and the `why` is a claim a reviewer can reject — write the reason, not a
-  formality.
+  formality. A gap carrying a `proposal` is exactly as open as one without: the proposal
+  decides nothing, and the triage ignores it.
 - **A fact the task needs that no node holds is a question**, recorded under `unresolved`.
   It signals that the scope outran the base; the answer is produced through
   `/analyse-domain`, never invented here. A plausible value reads exactly like one the
