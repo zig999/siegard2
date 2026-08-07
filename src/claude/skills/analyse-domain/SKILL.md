@@ -139,6 +139,16 @@ that decides what goes in it:
 - **A relationship records power, not plumbing.** It says who owes compatibility to whom. Two
   contexts that do not need each other stay unconnected — going separate ways is a real answer,
   and a map that connects everything says nothing.
+- **A construct that introduces a surface form owes its surface decisions.** Some values are
+  written by one party and read by another, and material never states their form spontaneously —
+  it gets discovered divergently, one implementer at a time, each satisfying every stated
+  criterion differently. Where the material is silent and two readers could write the value
+  two ways, record the owed decisions as dotted-path gaps at authoring: a value that references
+  or positions owes its grammar — separator, indexing, ordinal base — and the vocabulary its
+  segments speak; a digest owes exactly which bytes it covers; a version or counter owes what
+  increments it and how a superseded thing re-enters; a quantity owes its unit; a consumed
+  check owes what its unavailability means and what a partial answer decides. Each is a gap a
+  task's triage can still waive where it does not bear; none is a value to invent.
 - **What never enters the base:** persistence, UI, stack, performance — implementation knowledge
   is not domain knowledge. And no fact enters because it is plausible. Plausible is the failure
   mode this framework exists to catch.
