@@ -466,3 +466,86 @@ def test_every_sample_registry_declares_how_it_is_run():
         data = yaml.safe_load(sample.read_text(encoding="utf-8"))
         assert data.get("commands"), f"{sample.name} declares no command"
         assert data.get("dependencies"), f"{sample.name} authorizes no package"
+
+
+# --------------------------------------------- the update-by-copy regression
+
+
+def pinned_under(tmp_path: Path, data: dict, name: str = "current.yaml") -> Path:
+    """A delivery root whose `standards/` holds one pinned copy, the way an earlier
+    implementation left it."""
+    delivery = tmp_path / "delivery"
+    (delivery / "standards").mkdir(parents=True, exist_ok=True)
+    (delivery / "standards" / name).write_text(
+        yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    return delivery
+
+
+def test_an_authorization_a_pinned_copy_holds_and_the_registry_lost_is_named(tmp_path):
+    """The regression this flag exists for: a registry updated by pasting a newer template over
+    it loses the entries its human added, and the pinned copies are the one place they survive."""
+    richer = base(dependencies=base()["dependencies"] + [
+        {"package": "typescript-eslint", "why": "the lint step parses TypeScript through it.",
+         "rules": ["PRH-01"]}])
+    delivery = pinned_under(tmp_path, richer)
+    done = invoke("--standard", str(broken(tmp_path, base())), "--delivery", str(delivery))
+    assert done.returncode == 0, done.stderr
+    assert "AUTHORIZATIONS LOST" in done.stdout
+    assert "typescript-eslint" in done.stdout
+    assert "whoever owns it" in done.stdout, \
+        "the notice says whose edit restores the entry, or it is a wall without a door"
+
+
+def test_a_registry_that_lost_nothing_says_so(tmp_path):
+    delivery = pinned_under(tmp_path, base())
+    done = invoke("--standard", str(broken(tmp_path, base())), "--delivery", str(delivery))
+    assert done.returncode == 0, done.stderr
+    assert "AUTHORIZATIONS LOST" not in done.stdout
+    assert "has lost" in done.stdout, "silence and nothing-to-report must be told apart"
+
+
+def test_a_pinned_copy_of_another_standard_is_not_compared(tmp_path):
+    """Two registries can share a delivery root; each answers only for its own name."""
+    other = base(standard="another-service")
+    delivery = pinned_under(tmp_path, other)
+    done = invoke("--standard", str(broken(tmp_path, base())), "--delivery", str(delivery))
+    assert done.returncode == 0, done.stderr
+    assert "AUTHORIZATIONS LOST" not in done.stdout
+
+
+def test_the_notice_never_refuses(tmp_path):
+    """Removing an authorization deliberately is the consumer's right; the notice is a record,
+    not a gate, so the exit code belongs to the other checks entirely."""
+    richer = base(dependencies=base()["dependencies"] + [
+        {"package": "extra", "why": "an entry the consumer later removed on purpose."}])
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    delivery = pinned_under(tmp_path, richer)
+    done = invoke("--standard", str(broken(tmp_path, base())),
+                  "--against", str(tree), "--delivery", str(delivery))
+    assert done.returncode == 0, done.stdout
+    assert "AUTHORIZATIONS LOST" in done.stdout
+
+
+def test_delivery_accompanies_standard_only(tmp_path):
+    delivery = pinned_under(tmp_path, base())
+    done = invoke("--delivery", str(delivery), str(tmp_path), str(tmp_path))
+    assert done.returncode == 2
+    assert "only --standard compares them" in done.stderr
+
+
+def test_the_refusal_hands_over_the_invocation(tmp_path):
+    """A stop is a door, not a wall: the refusal over an absent presupposed artifact ends with
+    the /plan-work invocation filled with everything this command already knows, leaving only
+    the two roots the caller alone can name."""
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    registry = presupposing(tmp_path)
+    done = invoke("--standard", str(registry), "--against", str(tree))
+    assert done.returncode == 1, done.stdout
+    assert "/plan-work" in done.stdout
+    assert "package.json" in done.stdout
+    assert f"Target source root: {tree}" in done.stdout
+    assert f"Project standard: {registry}" in done.stdout
+    assert "Work root: <" in done.stdout, \
+        "what this command cannot know stays a named slot, never a guess"

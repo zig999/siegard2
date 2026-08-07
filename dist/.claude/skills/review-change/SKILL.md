@@ -81,8 +81,10 @@ A review carries no pin. It answers to the criteria its tasks state today, and t
 held to exactly those — so a task that changed since is a criterion the review did not answer for,
 which reads better than a hash nobody can compare by eye.
 
-Before any write, `git status --porcelain` must print nothing over the delivery root: the review's
-own diff is its own review. A dirty root is reported, and what to do with it is the human's call.
+Before any write, `git status --porcelain -- <delivery-root>` must print nothing: the review's
+own diff is its own review, and the pathspec is the point — a pending change elsewhere in the
+repository is somebody else's work in progress, not a reason this review cannot leave a record.
+A dirty delivery root is reported, and what to do with it is the human's call.
 The target source root is not held to this — it holds the change under review, and a change is
 what a diff looks like.
 
@@ -125,13 +127,15 @@ nothing else in either root. The base node files belong to the passes, each read
 Then, where the caller named a standard, take it in and read it here — before anything is run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --delivery <delivery-root>
 ```
 
 A registry that does not hold together is a stop, reported verbatim: a review against one reports a
 conformance nobody has, and fixing it belongs to whoever owns it. The command prints the split —
 how many rules a reading decides, how many a tool does, and the names of the steps those expect —
-which is exactly what the next step needs.
+which is exactly what the next step needs. A line opening `AUTHORIZATIONS LOST` is not a stop but
+travels into the record whole: a pinned copy authorizes packages the registry no longer does, and
+whether the removal was deliberate is the consumer's to say in their own file.
 
 An artifact the registry presupposes and the tree does not hold is **not** a stop here. A review
 reviews what exists, and refusing to read a change because its project was never set up would

@@ -62,8 +62,10 @@ pins is the implementation record itself, and step 3 says why.
 ## Before anything: the tree
 
 The review is `git diff`, and a diff only says what this invocation did when the tree starts
-clean. Before any write, `git status --porcelain` must print nothing over the delivery root and
-nothing over the target source root. Output is a stop: report what is pending and go no further
+clean. Before any write, `git status --porcelain -- <delivery-root> <target-source-root>` must
+print nothing — the pathspec is the point: the stop's scope is the roots this invocation writes,
+and a pending change elsewhere in the repository is somebody else's work in progress, not a reason
+this delivery cannot be reviewed. Output is a stop: report what is pending and go no further
 — committing, discarding or overriding is the human's decision, never this skill's. A root not
 under git control is the same stop: without git there is no review, and source is the one thing
 here nobody can review any other way.
@@ -152,6 +154,11 @@ Two of its lines are refusals, and each is settled before anything is written:
 - **A task this one builds on has no record.** Stop, and name it. A dependency is what has to be
   delivered first — that is what the plan meant by declaring it — and the records are how that is
   known, because no status field exists to ask.
+- **The named task is not in the plan.** Stop — and hand over the door, not just the wall: the
+  report ends with a `/plan-work` invocation filled with everything this invocation already knows
+  (the work root, the knowledge root, the target source root, the standard where one was named),
+  leaving only the scope for the human to state. A task the plan does not hold is planned into
+  it, never improvised past.
 
 A third refusal is not in that report, because the plan's index is not what holds it — the task file
 does. So open the task file here, before the copying below writes anything, and read its `## Notes`:
@@ -186,16 +193,20 @@ field of the task file — already open from the note check above — read as a 
 Where it does not, the tree is held to what the registry presupposes on the way in:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --delivery <delivery-root>
 ```
 
-Where it does, drop `--against` and run the registry check alone:
+Where it does, drop `--against` and run the registry check alone, keeping `--delivery`:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --delivery <delivery-root>
 ```
 
-Either way, anything but a clean pass is a stop, reported verbatim.
+Either way, anything but a clean pass is a stop, reported verbatim. A line opening
+`AUTHORIZATIONS LOST` is not a stop but travels into the report whole: it says a pinned copy under
+the delivery root authorizes packages the registry no longer does, which is what a registry
+updated by pasting a template over it looks like — and whether that was deliberate is the
+consumer's to say, in their own file, before a delivery needs the missing entry.
 
 The first form carries two refusals. A registry that does not hold together answers to nothing, and
 fixing it belongs to whoever owns it. An artifact the registry presupposes and the tree does not

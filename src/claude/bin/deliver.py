@@ -60,11 +60,17 @@ Usage:  deliver.py <delivery-root> <work-root> [<knowledge-root>]
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
                                                         run)
-        deliver.py --standard <file> [--against DIR]    validate one project standard on its own;
+        deliver.py --standard <file> [--against DIR] [--delivery <delivery-root>]
+                                                        validate one project standard on its own;
                                                         stands alone, needs no root. With a tree
                                                         named, also say whether it holds what the
                                                         registry presupposes — exit 1 while any
-                                                        of it is absent
+                                                        of it is absent. With a delivery root
+                                                        named, also report every package
+                                                        authorization a pinned copy under it
+                                                        carries and the registry no longer does —
+                                                        the update-by-copy regression, reported
+                                                        and never refused
         The knowledge root is required while the plan is live, and ignored once closure.md
         marks it closed — the same rule plan.py applies, because the plan is read through it.
 Exit:   0 sound (and, with --check, current)
@@ -1113,7 +1119,39 @@ def substrate_report(data: dict, tree: Path) -> tuple[list[str], int]:
     return lines, absent
 
 
-def check_standard(named: str, against: str | None = None) -> int:
+def authorizations_lost(data: dict, path: Path, delivery: Path) -> list[str]:
+    """Package authorizations some pinned copy under the delivery root carries and this registry
+    no longer does. The registry is the consumer's file, and the regression this catches is the
+    update-by-copy: a framework upgrade pasted over it sweeps away entries a human added, and
+    nothing else compares the two — the pinned copies exist so records stay checkable, which makes
+    them the one place the earlier authorizations survive. Reported, never refused: removing an
+    authorization deliberately is the consumer's right, and this line is how the removal stays
+    visible instead of silent."""
+    current = {d.get("package") for d in listed(data, "dependencies") if isinstance(d, dict)}
+    lines: list[str] = []
+    pinned_dir = delivery / "standards"
+    if not pinned_dir.is_dir():
+        return lines
+    for copy in sorted(p for p in pinned_dir.iterdir() if p.is_file()):
+        try:
+            held = yaml.safe_load(copy.read_text(encoding="utf-8"))
+        except yaml.YAMLError:
+            continue  # an unreadable copy is the delivery validator's finding, not this one's
+        if not isinstance(held, dict) or held.get("standard") != data.get("standard"):
+            continue
+        lost = sorted({d.get("package") for d in listed(held, "dependencies")
+                       if isinstance(d, dict) and isinstance(d.get("package"), str)} - current)
+        if lost:
+            lines.append(
+                f"  AUTHORIZATIONS LOST vs {copy}: {', '.join(lost)}. That copy is what earlier "
+                f"records were written against. Removing an entry deliberately is the consumer's "
+                f"right and this line is its record — but a registry updated by pasting a newer "
+                f"template over it loses entries exactly like this, and restoring them is an "
+                f"edit to {path}, made by whoever owns it")
+    return lines
+
+
+def check_standard(named: str, against: str | None = None, delivery: str | None = None) -> int:
     """Validate one project standard on its own, so a consumer can hold a registry to its contract
     before any review reads it. Every root this framework validates has a validator; a standard is
     not a root, and this is the closest thing it gets. With a tree named, it also answers whether
@@ -1171,6 +1209,16 @@ def check_standard(named: str, against: str | None = None) -> int:
              "; a package a delivery needs and this list omits is a stop that names it")
           + ". What they pull in transitively is nobody's approval and the lockfile's record")
 
+    if delivery is not None:
+        pinned_root = Path(delivery)
+        if not pinned_root.is_dir():
+            print(f"cannot run: {pinned_root} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+        lost = authorizations_lost(data, path, pinned_root)
+        print("\n".join(lost) if lost else
+              f"  no pinned copy under {pinned_root / 'standards'} authorizes anything this "
+              f"registry has lost")
+
     presupposed = listed(data, "presupposes")
     if against is None:
         print(f"  it presupposes {len(presupposed)} artifact(s)"
@@ -1189,10 +1237,22 @@ def check_standard(named: str, against: str | None = None) -> int:
     print(f"  against {tree}:")
     print("\n".join(lines))
     if absent:
+        gone = ", ".join(e["path"] for e in presupposed
+                         if isinstance(e, dict) and isinstance(e.get("path"), str)
+                         and not (tree / e["path"]).exists())
         print(f"\n{absent} presupposed artifact(s) absent. Source written now answers to a "
               f"registry that cannot be applied to it: the rules above go unanswered, and the "
               f"absence is found once per file in a review instead of once here. The artifact is "
-              f"built by a task that declares it in `produces`, planned through /plan-work.")
+              f"built by a task that declares it in `produces`, planned through /plan-work — "
+              f"ready below, but for the two roots only the caller knows:")
+        print(f"\n  /plan-work\n"
+              f"\n  Scope: the registry at {path} presupposes {gone}, absent from {tree}."
+              f"\n  One cut: the task that produces {'them' if absent > 1 else 'it'}, declared in "
+              f"`produces`, covering the rules named above."
+              f"\n  Work root: <the plan this initiative runs under>"
+              f"\n  Knowledge root: <the base that plan binds to>"
+              f"\n  Target source root: {tree}"
+              f"\n  Project standard: {path}")
     return 1 if absent else 0
 
 
@@ -1218,6 +1278,14 @@ def main() -> int:
             return CANNOT_RUN
         against = args[at + 1]
         del args[at:at + 2]
+    delivery = None
+    if "--delivery" in args:
+        at = args.index("--delivery")
+        if at + 1 >= len(args):
+            print("cannot run: --delivery takes a directory", file=sys.stderr)
+            return CANNOT_RUN
+        delivery = args[at + 1]
+        del args[at:at + 2]
     if "--standard" in args:
         at = args.index("--standard")
         if at + 1 >= len(args):
@@ -1226,13 +1294,18 @@ def main() -> int:
         named = args[at + 1]
         del args[at:at + 2]
         if verify or report or single is not None or args:
-            print("cannot run: --standard stands alone, with --against at most",
+            print("cannot run: --standard stands alone, with --against and --delivery at most",
                   file=sys.stderr)
             return CANNOT_RUN
-        return check_standard(named, against)
+        return check_standard(named, against, delivery)
     if against is not None:
         print("cannot run: --against says which tree a standard is held against, and only "
               "--standard holds one", file=sys.stderr)
+        return CANNOT_RUN
+    if delivery is not None:
+        print("cannot run: --delivery says whose pinned copies a standard is compared with, and "
+              "only --standard compares them; the delivery root is positional everywhere else",
+              file=sys.stderr)
         return CANNOT_RUN
     if report and (verify or single is not None):
         print("cannot run: --outstanding stands alone", file=sys.stderr)
