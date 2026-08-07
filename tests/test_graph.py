@@ -93,6 +93,49 @@ def test_check_after_an_edit_is_stale(root, sound_base):
     done = run("--check", root)
     assert done.returncode == 1
     assert "STALE" in done.stdout
+    assert "1 node(s) the root holds and the index does not: definition/sales/customer" \
+        in done.stdout, done.stdout
+
+
+def test_a_node_that_changed_is_told_from_an_index_whose_shape_moved(root, sound_base):
+    """Both rederive, and only one of them means anything about the base. A node somebody edited
+    leaves the index behind their work; an index whose every entry differs only in a field this
+    version derives and the stored one never carried is this framework having moved under a root
+    nobody touched — which is the state a contract migration leaves in every consumer, found at
+    whatever invocation runs next. Saying STALE and nothing else left the reader to run a diff to
+    learn which."""
+    import json
+
+    assert run(root).returncode == 0
+    target = root / "graph.json"
+    stored = json.loads(target.read_text(encoding="utf-8"))
+
+    # The index as a version that did not derive `digest` would have written it.
+    for entry in stored["nodes"]:
+        entry.pop("digest", None)
+    target.write_text(json.dumps(stored, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    moved = run("--check", root)
+    assert moved.returncode == 1
+    assert f"{len(stored['nodes'])} node(s) differing only in digest" in moved.stdout, moved.stdout
+    assert "the index's own shape moved and those nodes did not" in moved.stdout
+    assert "whose derived facts changed" not in moved.stdout, \
+        "no node was touched, and reporting one would send the reader to the wrong file"
+
+    # And a node somebody edited is the other answer, named by identifier.
+    assert run(root).returncode == 0
+    sound_base("context/sales", {"title": "Sales", "summary": "Ordering, restated.",
+                                 "strategic": "core"})
+    edited = run("--check", root)
+    assert edited.returncode == 1
+    assert "1 node(s) whose derived facts changed: context/sales" in edited.stdout, edited.stdout
+
+
+def test_a_stale_index_that_will_not_parse_says_so_rather_than_guessing(root, sound_base):
+    assert run(root).returncode == 0
+    (root / "graph.json").write_text("{ not json", encoding="utf-8")
+    done = run("--check", root)
+    assert done.returncode == 1
+    assert "does not parse as JSON" in done.stdout
 
 
 # ---------------------------------------------------------------- refusals

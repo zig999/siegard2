@@ -379,6 +379,56 @@ def collect(root: Path, validator, allowed, obligations) -> tuple[dict[str, dict
     return nodes, problems
 
 
+def staleness(target: Path, graph: dict) -> list[str]:
+    """What differs between the index on disk and the index the nodes derive to.
+
+    `--check` compared whole texts and said STALE, which is true and leaves the reader to run a
+    diff to learn which of two very different things happened. A node that changed is somebody's
+    edit, and the index is behind their work. An index whose every entry differs only in a field
+    this version derives and the stored one never carried is this framework having moved under a
+    root nobody touched — the state a contract migration leaves in every consumer, discovered at
+    whatever invocation runs next. Both are fixed by rederiving; only one of them means anything
+    about the base, and telling them apart is the reader's first question."""
+    try:
+        stored = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["it does not parse as JSON, so nothing in it can be compared entry by entry"]
+    if not isinstance(stored, dict):
+        return ["it is not a mapping, so nothing in it can be compared entry by entry"]
+
+    entries = stored.get("nodes")
+    was = {n["id"]: n for n in (entries if isinstance(entries, list) else [])
+           if isinstance(n, dict) and isinstance(n.get("id"), str)}
+    now = {n["id"]: n for n in graph["nodes"]}
+    lines: list[str] = []
+    if gone := sorted(set(was) - set(now)):
+        lines.append(f"{len(gone)} node(s) the index holds and the root does not: "
+                     f"{', '.join(gone)}")
+    if new := sorted(set(now) - set(was)):
+        lines.append(f"{len(new)} node(s) the root holds and the index does not: "
+                     f"{', '.join(new)}")
+
+    # An entry whose difference is confined to fields one side has no key for did not change: the
+    # shape around it did. Comparing only the keys both carry is what separates the two, and it is
+    # what keeps a stored index written before a field existed from reporting every node as moved.
+    differing = [nid for nid in sorted(set(was) & set(now)) if was[nid] != now[nid]]
+    shape = [nid for nid in differing
+             if {k: v for k, v in was[nid].items() if k in now[nid]}
+             == {k: v for k, v in now[nid].items() if k in was[nid]}]
+    if changed := [nid for nid in differing if nid not in shape]:
+        lines.append(f"{len(changed)} node(s) whose derived facts changed: {', '.join(changed)}")
+    if shape:
+        fields = sorted({k for nid in shape for k in set(now[nid]) ^ set(was[nid])})
+        lines.append(f"{len(shape)} node(s) differing only in {', '.join(fields)}, which one side "
+                     f"carries no key for; the index's own shape moved and those nodes did not")
+    if stored.get("edges") != graph["edges"]:
+        lines.append("the edge set differs, which follows the references the nodes declare")
+    if not lines:
+        lines.append("no node was added, removed or changed; the difference is outside the "
+                     "entries, and rederiving rewrites the index alone")
+    return lines
+
+
 def derive(nodes: dict[str, dict]) -> dict:
     """The graph a sound base derives to. Sorted throughout, so identical input is
     byte-identical output."""
@@ -526,6 +576,8 @@ def main() -> int:
         if target.read_text(encoding="utf-8") != text:
             print(f"STALE: {target} is not what the nodes derive to. Run without --check to "
                   f"rewrite it; do not edit it, because every fact in it lives in a node file")
+            for line in staleness(target, graph):
+                print(f"  {line}")
             return 1
         print(f"graph checked: {target} matches {len(graph['nodes'])} node(s)")
         return 0

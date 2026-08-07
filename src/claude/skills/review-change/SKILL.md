@@ -313,9 +313,15 @@ Report, in this order:
   what separates a clean review from a narrow one;
 - every criterion the coverage pass did not find covered, and what is unexercised in each;
 - the standard: which of its rules were in scope over this file set, and which it leaves to a tool
-  — naming, for those, whether the step that decides each one ran. A rule left to a tool that never
-  ran is unanswered, and saying so is what keeps the split between reading and tool honest instead
-  of convenient. Name too every artifact the registry presupposes and the tree does not hold, with
+  — naming, for those, whether the step that decides each one ran, and how many rules rest on each
+  step that did. A rule left to a tool that never ran is unanswered, and saying so is what keeps the
+  split between reading and tool honest instead of convenient. Say too what a step that ran and
+  passed does and does not settle: it settles that the command exited 0. Whether that command was
+  configured to decide the rules resting on it is the registry's to know and never this framework's
+  — a step naming a linter with no rule loaded for the files it read exits 0 over every one of them,
+  and a scanner with no ruleset does the same — so a review reporting those rules as answered would
+  have reported the exit code and called it the fact. The number is what a reader can act on: one
+  step carrying twenty rules is worth their look, and this line is where they get it. Name too every artifact the registry presupposes and the tree does not hold, with
   the rules each one takes with it: a review that reports two findings over a standard whose
   substrate is missing has reviewed a fraction of it, and the fraction is the number this line
   gives. The way out is a task declaring the artifact in `produces`, planned through `/plan-work`;

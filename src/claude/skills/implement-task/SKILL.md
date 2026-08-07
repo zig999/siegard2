@@ -283,6 +283,26 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-
 `run.py` stops at the first step that does not pass, so a tree that did not install is never
 type-checked and the log says which one it was.
 
+**One task runs less than that, and it is the same task and the same field as at the situate step:
+one declaring `produces`.** It runs the step whose role is `install`, and no other. What every other
+step decides is a rule over a file; a delivery that wrote the substrate wrote no such file, so a
+check run here decides nothing — and whether it says so by failing or by exiting 0 is the stack's
+accident rather than this delivery's evidence. That is the sharper half: a green step over an empty
+tree would be recorded as a project that builds, and nothing here could tell it from one that does.
+The install is not an accident. It says the manifest is well formed and the dependencies it names
+resolve, which is the whole of what can be decided about a substrate before there is source. Where
+the registry declares no install, nothing runs here at all.
+
+Either way the report names the steps that did not run and why, and `## Notes` on the record carries
+the same sentence: a reader meeting a substrate record must not read it as a project that builds,
+and what holds the substrate up is the first delivery that writes source over it, whose build is
+full.
+
+The claim is held afterwards, exactly as `produces` is held against `files`: the validator refuses a
+record whose run covered fewer steps than its registry declares, and the one exemption is a task
+that declares `produces` and wrote nothing any rule's scope reaches. A task that declared `produces`
+and also wrote source owes every step, and the refusal says so.
+
 **A red build is not the end of the invocation and it is not a stop.** Send what the run printed
 back to the `task-implementer` — the source is its to write, and a skill that patched a file to
 turn a build green would be the writer nobody separated from the witness — and run again under
@@ -317,6 +337,14 @@ report what it said and write no record. Where it wrote files and then stopped, 
 say which files exist, and leave them for a person to look at rather than tidying them away.
 
 ### 5. Prove
+
+**A task that produced the substrate has nothing to prove, and no proof record is written.** There
+is no source for a test to reach, and a proof requires at least one test precisely because a test
+that cannot be said to fail for a stated reason is one nobody can evaluate — over an empty tree
+every entry would be that. So this step and the next do not run, and `deliver.py --outstanding`
+reports the task as implemented with no proof holding it up, which is exactly true. Say so in the
+report and go to step 7. Composing a proof anyway would be the one thing worse than the absence: a
+record asserting that tests hold up a task, written where no test could exist.
 
 Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
@@ -363,7 +391,8 @@ runs are on disk: four attempts leave four logs, and a test that changed between
 diff beside them.
 
 Where the registry declares no command at all, this step does not run, the tests stand unexecuted,
-and the report says so — the narrow answer rather than a clean one.
+and the report says so — the narrow answer rather than a clean one. A task that produced the
+substrate reaches neither this step nor the one before it, for the reason step 5 gives.
 
 Write `proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way. Where a
 standard was named, stamp where its copy sits, the pin of its text and the suite run that passed on
@@ -429,7 +458,9 @@ Report, in this order:
 - every run this invocation captured, by path and by outcome, including the ones that failed —
   those are not noise and they are not a draft: they are the only record of what it took, and a
   report naming only the run that passed describes a delivery that went right the first time
-  whether or not it did;
+  whether or not it did — and every step of the registry that did not run, with why. Where this
+  delivery built the substrate, that is most of them, and saying which rules they own is what keeps
+  a substrate record from reading as a project that builds;
 - every dependency this delivery installed, and that what those pulled in transitively is nobody's
   approval — the lockfile is what says what actually arrived, and it is in the diff;
 - what `/review-change` still does that this invocation did not: it runs the same steps again over
@@ -474,6 +505,9 @@ belongs to a person.
   back to it with what the run printed.
 - Run anything outside `bin/run.py`, or report an outcome the runner did not capture. A command
   whose output lives only in this conversation did not happen.
+- Read `produces` as leave to skip a check over source. It exempts the delivery that wrote the
+  substrate and nothing else; a task that declared it and also wrote source owes every step the
+  registry declares, and the validator refuses the record whose run did not cover them.
 - Write into the work root or the knowledge root; a plan or a base that is wrong is reported with
   its fix.
 - Write the tests in the context that wrote the source — the inline fallback is for a session that

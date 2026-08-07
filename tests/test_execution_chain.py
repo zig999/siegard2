@@ -190,3 +190,117 @@ def test_a_step_never_runs_against_a_tree_that_did_not_install(tree, delivery):
     captured = json.loads((delivery / "run/build/run.json").read_text(encoding="utf-8"))
     assert captured["failed_step"] == "install"
     assert [s["outcome"] for s in captured["steps"]] == ["failed", "not_run", "not_run"]
+
+
+SUBSTRATE = [{"path": "package.json", "provides": "the lint step and the logger.",
+              "rules": ["PRH-01"]}]
+CHECK_WITH_NOTHING_TO_CHECK = [
+    {"step": "install", "command": "true", "timeout_seconds": 60, "role": "install"},
+    {"step": "lint", "command": "ls src", "timeout_seconds": 60},
+    {"step": "test", "command": "true", "timeout_seconds": 60, "role": "suite"},
+]
+
+
+def test_a_check_with_nothing_to_check_is_not_what_the_substrate_owes(
+        tree, delivery, work, root, sound_plan, write_plan, sound_delivery, write_delivery,
+        registry):
+    """The case every other test here could not express. `true` passes whether it checked
+    everything or nothing, so a fixture built from it proves the chain and says nothing about what
+    the steps decide — and what goes wrong in a real tree is exactly a step with nothing to decide.
+    `ls src` is the smallest command that fails for that reason and holds no knowledge of any
+    stack: it exits non-zero precisely while the directory a rule's scope names is not there.
+
+    Run in full, the substrate's build is red and can never be anything else — the check needs
+    source, no task may invent source, and the task that would write it waits on this one. That is
+    the circularity `produces` breaks at the plan gate, reappearing one gate later. What the
+    substrate owes is the install, which decides the one thing decidable here: the manifest is well
+    formed and what it names resolves.
+
+    What this discriminates, said plainly: not the skill's old rule, which no test can execute, but
+    the pairing. Remove the exemption while the coverage check stands and this fails — which is the
+    deadlock moved from the skill into the validator, where there is no recovering from it. The two
+    halves ship together or neither does, and this is what says so."""
+    path, ref = registry(presupposes=SUBSTRATE, commands=CHECK_WITH_NOTHING_TO_CHECK)
+    write_plan("task/checkout/record-order",
+               {**front_of(work, "task/checkout/record-order"), "produces": ["package.json"]})
+    (tree / "package.json").write_text(json.dumps({"name": "x"}), encoding="utf-8")
+    assert invoke(DELIVER_PY, "--standard", path).returncode == 0
+
+    full = capture(delivery, tree, "checkout-record-order-build",
+                   ("install", "true"), ("lint", "ls src"))
+    assert full.returncode == 1, "a check over a tree with no source is red, and stays red"
+    assert json.loads((delivery / "run/checkout-record-order-build/run.json")
+                      .read_text(encoding="utf-8"))["failed_step"] == "lint"
+
+    ran = capture(delivery, tree, "checkout-record-order-build-2", ("install", "true"))
+    assert ran.returncode == 0, ran.stdout + ran.stderr
+
+    record = front_of(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    record["standard"] = ref
+    record["run"] = "run/checkout-record-order-build-2"
+    record["files"] = [{"path": "package.json",
+                        "effect": "declares the lint step and the logger dependency"}]
+    record["nodes"] = [{"node": "definition/sales/order",
+                        "how": "the substrate encodes no fact of it; what it holds is what every "
+                               "rule needs before any of them can be applied"}]
+    write_delivery("implementation/checkout/record-order", record)
+    # No proof, and that is the state rather than an omission: there is no source for a test to
+    # reach, and a proof requires at least one test that can be said to fail.
+    (delivery / "proof/checkout/record-order.md").unlink()
+
+    assert problems_of(delivery, work, root) == []
+    outstanding = invoke(DELIVER_PY, "--outstanding", delivery, work, root)
+    assert "implemented, and no proof record holds it up" in outstanding.stdout, outstanding.stdout
+
+
+def test_a_record_pointing_at_a_fraction_of_the_steps_is_refused(
+        tree, delivery, work, root, sound_plan, sound_delivery, write_delivery, registry):
+    """Presence was never the whole question, and until this it was the whole check. The registry
+    declares an install and a check, this delivery ran the install alone, and a record pointing at
+    it was read as a delivery whose project had been checked. Nothing decided the rules the check
+    owns, which is the state the owed run exists to end."""
+    _, ref = registry()
+    part = capture(delivery, tree, "build", ("install", "true"))
+    assert part.returncode == 0
+
+    record = front_of(delivery, "implementation/checkout/record-order")
+    record["standard"] = ref
+    record["run"] = "run/build"
+    write_delivery("implementation/checkout/record-order", record)
+    proof = front_of(delivery, "proof/checkout/record-order")
+    proof["implementation"] = deliver.pin_of(delivery / "implementation/checkout/record-order.md")
+    write_delivery("proof/checkout/record-order", proof)
+
+    problems = problems_of(delivery, work, root)
+    assert any("passed only install" in p and "nothing decided the rules lint own" in p
+               for p in problems), problems
+    assert not any("declares `produces`" in p for p in problems), \
+        "this task produces nothing, so the exemption is not what the refusal is about"
+
+
+def test_a_task_that_produces_and_also_writes_source_owes_every_step(
+        tree, delivery, work, root, sound_plan, write_plan, sound_delivery, write_delivery,
+        registry):
+    """The exemption is not a licence. `produces` alone would let any task run the install and call
+    every check answered; what bounds it is that nothing the record wrote sits in the scope of a
+    rule. This one wrote `src/orders/place.ts`, which PRH-01 reaches, so the source it wrote beside
+    the substrate owes the steps that decide the rules reaching it."""
+    _, ref = registry(presupposes=SUBSTRATE)
+    write_plan("task/checkout/record-order",
+               {**front_of(work, "task/checkout/record-order"), "produces": ["package.json"]})
+    part = capture(delivery, tree, "build", ("install", "true"))
+    assert part.returncode == 0
+
+    record = front_of(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    record["standard"] = ref
+    record["run"] = "run/build"
+    record["files"] = record["files"] + [
+        {"path": "package.json", "effect": "declares the lint step and the logger dependency"}]
+    write_delivery("implementation/checkout/record-order", record)
+    (delivery / "proof/checkout/record-order.md").unlink()
+
+    problems = problems_of(delivery, work, root)
+    assert any("wrote a file a rule of standards/example-service.yaml reaches" in p
+               for p in problems), problems

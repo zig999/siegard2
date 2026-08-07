@@ -893,15 +893,31 @@ def test_a_captured_run_reaches_a_review(delivery, work, root, sound_delivery, w
 def run_dir(delivery: Path):
     """A captured run, as the runner writes one. The validator opens it, so a bare directory is
     not a run."""
-    def put(outcome: str = "failed", slug: str = "first") -> Path:
+    def put(outcome: str = "failed", slug: str = "first",
+            steps: tuple[str, ...] = ("install", "lint", "test")) -> Path:
+        # The step names are the registry's, because that is the join the whole split hangs on: a
+        # rule names the step that decides it, the runner records the outcome under that name, and
+        # a record is held to having covered it. A fixture inventing a name of its own would be a
+        # run nothing could be checked against, which is what it was until this took the registry's.
+        recorded, stopped = [], False
+        for name in steps:
+            if stopped:
+                said = "not_run"
+            elif name == steps[-1]:
+                said = outcome
+            else:
+                said = "passed"
+            recorded.append({"name": name, "command": f"run-{name}", "outcome": said,
+                             "exit_code": 0 if said == "passed" else 1,
+                             "output": None if said == "not_run" else f"{name}.log"})
+            stopped = stopped or said not in ("passed",)
         where = delivery / "run" / slug
         where.mkdir(parents=True, exist_ok=True)
         (where / "run.json").write_text(json.dumps({
             "contract_version": "siegard-run/1", "run": f"run/{slug}", "cwd": "/tmp/project",
             "timeout_seconds": 20, "outcome": outcome,
-            "failed_step": None if outcome == "passed" else "suite",
-            "steps": [{"name": "suite", "command": "pytest", "outcome": outcome,
-                       "exit_code": 0 if outcome == "passed" else 1, "output": "suite.log"}],
+            "failed_step": None if outcome == "passed" else steps[-1],
+            "steps": recorded,
             "combined_output": "run.log"}, indent=2), encoding="utf-8")
         return where
     return put

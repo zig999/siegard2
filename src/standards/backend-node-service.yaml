@@ -691,8 +691,11 @@ presupposes:
   - path: package.json
     provides: >-
       The `"type": "module"` STK-02 depends on, the `test` script STK-10 names its runner through,
-      the `lint`, `typecheck` and `secret-scan` steps every tool-decided rule below is run as, and
-      the declaration of every dependency the stack rules name as the only one of its kind.
+      the `lint`, `typecheck` and `secret-scan` steps every tool-decided rule below is run as, the
+      declaration of every dependency the stack rules name as the only one of its kind, and the
+      `secretlint` field the `secret-scan` step reads its rule set from — secretlint's config
+      loader takes that field from this file, so the configuration SEC-02 and SEC-03 are decided
+      by needs no artifact of its own and this one carries it.
     rules: [STK-01, STK-02, STK-03, STK-04, STK-05, STK-07, STK-08, STK-09, STK-10, STK-11, STK-12,
             ARC-02, ARC-03, ARC-05, DTO-02, DTO-03, DTO-04, API-01, API-06, COR-01, SEC-02, SEC-03,
             TYP-01, TYP-02, TYP-03, TYP-04, CON-01, MNT-01, MNT-02, PRH-01, PRH-02, PRH-03, PRH-04,
@@ -703,6 +706,17 @@ presupposes:
       The strict compiler configuration STK-01 and TYP-01 both require, and the module resolution
       mode that decides whether an extensionless relative import resolves at all.
     rules: [STK-01, TYP-01]
+
+  - path: eslint.config.js
+    provides: >-
+      The flat configuration the `lint` step reads its parser and its rule set from. Absent, eslint
+      has not been told how to parse the TypeScript every scope below names, and the step fails on
+      the first type annotation it meets; present but naming no rule, it exits 0 having decided
+      none of the twenty below. A `lint` script in the manifest is a step that runs — this is what
+      makes it a step that decides.
+    rules: [ARC-02, ARC-03, ARC-05, DTO-02, DTO-03, DTO-04, API-01, API-06, COR-01,
+            TYP-02, TYP-03, TYP-04, CON-01, MNT-01, MNT-02, PRH-01, PRH-02, PRH-03,
+            PRH-04, TST-04]
 
 # What a delivery may install, and how this project is installed and checked — the two registries'
 # lists merged the way their rules were. The merge is clean here, and the reason is worth reading

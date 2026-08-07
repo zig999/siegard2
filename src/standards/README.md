@@ -85,20 +85,35 @@ Real output over the samples:
 
 ```
 standard checked: src/standards/backend-node-stack.yaml declares 12 rule(s) — 11 decided by reading, 1 by a tool
-  pin sha256:a3c26d11…1be85c5f
-  the rules a tool decides run as step(s) named typecheck; a review reads only the 11 decided by reading
+  pin sha256:37d23cae…431880e4
+  the rules a tool decides run as step(s) typecheck (1 rule(s)); a review reads only the 11 decided by reading
+  what a step exits 0 over is the command exiting 0. […]
 
 standard checked: src/standards/backend-typescript.yaml declares 47 rule(s) — 24 decided by reading, 23 by a tool
-  pin sha256:08c8746b…20a13f69
-  the rules a tool decides run as step(s) named lint, secret-scan, typecheck; a review reads only the 24 decided by reading
+  pin sha256:f27431c6…c1ae8e26
+  the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (1 rule(s)); a review reads only the 24 decided by reading
+  what a step exits 0 over is the command exiting 0. […]
 
 standard checked: src/standards/backend-node-service.yaml declares 59 rule(s) — 35 decided by reading, 24 by a tool
-  pin sha256:b6d3f7b8…9d6e2937
-  the rules a tool decides run as step(s) named lint, secret-scan, typecheck; a review reads only the 35 decided by reading
+  pin sha256:cf31b196…7c179f83
+  the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (2 rule(s)); a review reads only the 35 decided by reading
+  what a step exits 0 over is the command exiting 0. […]
 ```
+
+That fourth line follows every registry declaring a rule a tool decides, and it is cut here at the
+`[…]` rather than repeated whole three times. In full it reads: *whether it is configured to decide
+the rule(s) resting on it is this registry's to know: nothing here reads a stack, and a step
+deciding nothing passes exactly like one deciding all of them.*
 
 The third line of counts is the merge checked by arithmetic: 11 + 24 readings and 1 + 23 tools, with
 nothing gained and nothing lost.
+
+Read the counts beside each step, because they are what the framework can say and the most it can.
+It cannot tell a step that decided every rule resting on it from one that decided none — both exit
+0, and telling them apart means reading a stack this repository ships no knowledge of. Twenty rules
+resting on one step is a number worth an author's look, and looking is what produced the
+`eslint.config.js` presupposition both TypeScript registries now carry: a `lint` script in the
+manifest is a step that runs, and the configuration is what makes it a step that decides.
 
 Read the last line of each. A rule marked `decided_by: tool` is **not** a review's to read: it runs
 as a step of the project's own suite through `bin/run.py`, and what it finds arrives through the

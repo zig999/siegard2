@@ -232,6 +232,34 @@ def test_the_subcommand_checks_a_registry_and_reports_the_split():
         "the pin is printed so a reviewer can put it in the record by hand"
 
 
+def test_the_subcommand_says_how_many_rules_rest_on_each_step():
+    """The one thing this framework can do about a step that decides nothing. It cannot read a
+    stack, so it cannot tell a linter with no rule loaded for the files it read from one deciding
+    every rule resting on it — both exit 0. What it can do is show the weight at the moment
+    somebody is in a position to check it: a number beside each step, and a sentence saying that
+    exit 0 is the whole of what a green step settles."""
+    done = invoke("--standard", str(EXAMPLE))
+    assert done.returncode == 0, done.stderr
+    data = yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))
+    tools = [r["tool"] for r in data["rules"] if r.get("tool")]
+    for step in sorted(set(tools)):
+        assert f"{step} ({tools.count(step)} rule(s))" in done.stdout, done.stdout
+    assert "a step deciding nothing passes exactly like one deciding all of them" in done.stdout
+
+
+def test_a_registry_with_no_tool_rule_claims_nothing_about_a_green_step(tmp_path):
+    """The sentence is printed where it is true and nowhere else: a registry every rule of which is
+    decided by reading has no step carrying anything, so there is no weight to show."""
+    one = {**base()["rules"][0], "decided_by": "reading"}
+    one.pop("tool", None)
+    reading_only = base(rules=[one],
+                        dependencies=[{"package": "pino", "why": "the project logs through it."}])
+    done = invoke("--standard", str(broken(tmp_path, reading_only)))
+    assert done.returncode == 0, done.stderr
+    assert "named nothing" in done.stdout
+    assert "passes exactly like one deciding all of them" not in done.stdout
+
+
 def test_the_subcommand_refuses_a_registry_that_does_not_hold(tmp_path):
     one = base()["rules"][0]
     done = invoke("--standard", str(broken(tmp_path, base(rules=[one, dict(one)]))))

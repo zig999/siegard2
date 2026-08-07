@@ -159,6 +159,13 @@ def main(argv: list[str]) -> int:
     verb = "would migrate" if dry else "migrated"
     print(f"\n{verb} {len(touched)} task(s); {len(skipped)} already migrated. "
           f"Validate with plan.py, and read the diff.")
+    if touched:
+        # Said here because here is where it becomes true, and because the invocation that finds
+        # it otherwise is the next /implement-task — which refuses to add to a delivery root that
+        # does not hold together, over records this rewrite staled and nothing warned about.
+        print(f"\nEvery implementation and proof record answering one of these tasks "
+              f"{'would be' if dry else 'is now'} stale: a record pins its task's own text, and "
+              f"this rewrote it. Run deliver.py over the delivery root before delivering again.")
     return 0
 
 

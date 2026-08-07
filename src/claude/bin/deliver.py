@@ -426,7 +426,8 @@ def record_run_problems(nid: str, front: dict, root: Path) -> list[str]:
     return []
 
 
-def record_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
+def record_standard_problems(nid: str, front: dict, root: Path, validator,
+                             tfront: dict) -> list[str]:
     """Every rule a record that wrote something says it departed from — an implementation or a
     proof alike — resolved against the standard it pins, plus every package it says it installed
     and whether the run its kind owes was captured at all. Unlike a review's citation a departure
@@ -438,7 +439,7 @@ def record_standard_problems(nid: str, front: dict, root: Path, validator) -> li
         return problems
     rules = rules_of(data)
     problems += installed_problems(nid, front, data, at)
-    problems += owed_run_problems(nid, front, data, at)
+    problems += owed_run_problems(nid, front, data, at, root, tfront)
 
     for index, entry in enumerate(listed(front, "divergences")):
         if not isinstance(entry, dict) or not isinstance(entry.get("cites"), str):
@@ -469,24 +470,92 @@ def installed_problems(nid: str, front: dict, data: dict, at: str) -> list[str]:
             if isinstance(package, str) and package not in authorized]
 
 
-def owed_run_problems(nid: str, front: dict, data: dict, at: str) -> list[str]:
-    """Whether a record captured the run its kind owes. A registry declaring how the project is
-    installed and checked is a registry whose delivery could be run, and a delivery that could be
-    run and was not is the state this whole arrangement exists to end: source handed over having
-    never been executed, with every rule a tool decides unanswered by anything. What each kind owes
-    differs because of when it is written — an implementation is written before any test exists, so
-    it owes the checks that do not need one; a proof is written after, so it owes them all."""
-    if "run" in front or "standard" not in front:
-        return []
+def steps_that_passed(root: Path, where: str) -> set[str] | None:
+    """The steps one captured run recorded as passed, or `None` where the run cannot be read at
+    all. The `None` matters: `record_run_problems` already refuses a record whose run holds no
+    run.json or will not parse, and a second refusal here would name one missing file twice."""
+    try:
+        captured = json.loads((root / where / "run.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(captured, dict):
+        return None
+    return {step["name"] for step in listed(captured, "steps")
+            if isinstance(step, dict) and isinstance(step.get("name"), str)
+            and step.get("outcome") == "passed"}
+
+
+def substrate_only(front: dict, tfront: dict, data: dict) -> bool:
+    """Whether this record delivered the substrate and nothing any rule can reach.
+
+    Two conditions, and neither alone is enough. The task declares `produces` — the same field,
+    read the same way, that exempts it from the substrate check at the plan gate and at the situate
+    step: the task building the artifacts every rule needs is the one task their absence cannot
+    stop, and with no exemption nothing could ever build them. And nothing this record wrote sits in
+    the scope of any rule the registry declares, which is what makes the other steps vacuous rather
+    than merely inconvenient — a step decides a rule over a file, and there is no such file yet.
+
+    The second condition is what keeps the first from being a licence. A task may declare `produces`
+    and also write source, and source is not exempt from the steps that decide the rules reaching
+    it. For a genuine substrate the condition holds by construction: `presupposes` exists for the
+    artifacts no rule can ask for, a scope names a directory and an ending, and a path at the root
+    of the tree has no separator to match one. So this refuses nothing anybody meant to write."""
+    if not listed(tfront, "produces"):
+        return False
+    written, _ = wrote(front)
+    return not any(in_scope(rule, sorted(written))
+                   for rule in listed(data, "rules") if isinstance(rule, dict))
+
+
+def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
+                      tfront: dict) -> list[str]:
+    """Whether a record captured the run its kind owes, and whether that run covered it. A registry
+    declaring how the project is installed and checked is a registry whose delivery could be run,
+    and a delivery that could be run and was not is the state this whole arrangement exists to end:
+    source handed over having never been executed, with every rule a tool decides unanswered by
+    anything. What each kind owes differs because of when it is written — an implementation is
+    written before any test exists, so it owes the checks that do not need one; a proof is written
+    after, so it owes them all.
+
+    Presence was never the whole question, and until the coverage below existed it was the whole
+    check: a record pointing at a run of one step out of four is the same source nobody executed,
+    declared executed, and the docstring above claimed a guarantee the code did not hold.
+
+    One exemption, and it is `substrate_only`'s. It is an implementation's alone: a proof exists
+    because tests exist, and a suite held back is the one thing a proof is for."""
     commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
     kind = "proof" if "tests" in front else "implementation"
     owed = commands if kind == "proof" else [c for c in commands if c.get("role") != "suite"]
+    if kind == "implementation" and substrate_only(front, tfront, data):
+        owed = [c for c in owed if c.get("role") == "install"]
     if not owed:
         return []
+
     named = ", ".join(str(c.get("step")) for c in owed)
-    return [f"{nid}: {at} declares the step(s) {named} and this record captured no run; a delivery "
-            f"whose project could be installed and checked and was not is source nobody executed, "
-            f"which is exactly what a record pointing at a green run says did not happen"]
+    where = front.get("run")
+    if not isinstance(where, str):
+        return [f"{nid}: {at} declares the step(s) {named} and this record captured no run; a "
+                f"delivery whose project could be installed and checked and was not is source "
+                f"nobody executed, which is exactly what a record pointing at a green run says "
+                f"did not happen"]
+
+    passed = steps_that_passed(root, where)
+    if passed is None:
+        return []  # record_run_problems names the run that cannot be read
+    missing = [str(c.get("step")) for c in owed if c.get("step") not in passed]
+    if not missing:
+        return []
+
+    covered = f"passed only {', '.join(sorted(passed))}" if passed else "passed no step of it"
+    said = (f"{nid}: {at} declares the step(s) {named} and {where} {covered}; nothing decided the "
+            f"rules {', '.join(missing)} own. A delivery that ran a fraction of the checks its own "
+            f"registry declares is the same source nobody executed — run them and point at that "
+            f"run")
+    if listed(tfront, "produces"):
+        said += (f". This task declares `produces` and would owe the install alone, but it wrote a "
+                 f"file a rule of {at} reaches: what builds the substrate is exempt, and the "
+                 f"source written beside it is not")
+    return [said]
 
 
 def review_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
@@ -692,8 +761,16 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
     declared, actual = front.get("task"), task_pin(work, task_of(nid))
     if isinstance(declared, str) and actual is not None and declared != actual:
         problems.append(f"{nid}: task pin {declared} is not {task_of(nid)} as it stands ({actual}); "
-                        f"the record answers a task that has since changed — deliver it again "
-                        f"against the task as it now stands, or restate the pin deliberately")
+                        f"the record answers a task that has since changed. Three ways out, and "
+                        f"which one is right turns on what this record describes, not on the pin: "
+                        f"deliver it again against the task as it now stands; restate the pin "
+                        f"deliberately, where the change left what this record says untouched; or, "
+                        f"where the source it describes no longer exists, delete the record, "
+                        f"because a record of a delivery nothing holds has no subject, the way a "
+                        f"review of a task nothing delivered has none. Only the source settles the "
+                        f"third, and no root named here holds it. It is never the way past a pin "
+                        f"that merely moved: a record deleted to clear a refusal is a test "
+                        f"weakened to clear a suite, performed one root over")
     return problems
 
 
@@ -790,7 +867,8 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                                 f"task; the path is the identity and this one names nothing")
                 continue
             problems.extend(record_standard_problems(
-                nid, front, root, standard or standard_contract()))
+                nid, front, root, standard or standard_contract(),
+                plan_nodes[task]["front"]))
             problems.extend(record_run_problems(nid, front, root))
             if node["kind"] == "implementation":
                 problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
@@ -1057,12 +1135,23 @@ def check_standard(named: str, against: str | None = None) -> int:
         return 1
     rules = [r for r in listed(data, "rules") if isinstance(r, dict)]
     reading = sum(1 for r in rules if r.get("decided_by") == "reading")
-    steps = sorted({r["tool"] for r in rules if isinstance(r.get("tool"), str)})
+    tools = [r["tool"] for r in rules if isinstance(r.get("tool"), str)]
+    load = sorted({step: tools.count(step) for step in tools}.items())
     print(f"standard checked: {path} declares {len(rules)} rule(s) — {reading} decided by "
           f"reading, {len(rules) - reading} by a tool")
     print(f"  pin {pin_of(path)}")
-    print(f"  the rules a tool decides run as step(s) named {', '.join(steps) or 'nothing'}; "
-          f"a review reads only the {reading} decided by reading")
+    print(f"  the rules a tool decides run as step(s) "
+          + (", ".join(f"{step} ({count} rule(s))" for step, count in load) or "named nothing")
+          + f"; a review reads only the {reading} decided by reading")
+    if load:
+        # The counts are printed rather than the names because the number is what makes an author
+        # look. A step exits 0 when it decided every rule resting on it and when it decided none —
+        # a linter with no rule loaded for the files it read exits 0 over every one of them — and
+        # nothing here can tell those apart without reading a stack it ships no knowledge of. What
+        # it can do is show the weight, at the one moment somebody is in a position to check it.
+        print("  what a step exits 0 over is the command exiting 0. Whether it is configured to "
+              "decide the rule(s) resting on it is this registry's to know: nothing here reads a "
+              "stack, and a step deciding nothing passes exactly like one deciding all of them")
 
     commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
     if commands:
