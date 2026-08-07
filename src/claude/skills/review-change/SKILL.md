@@ -1,6 +1,6 @@
 ---
 name: review-change
-description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the knowledge base holds, whether it follows the standard the project set for itself, and why a captured run failed — captures the run itself when given the commands, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
+description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the knowledge base holds, whether it follows the standard the project set for itself, and why a captured run failed — runs the steps that standard declares over the whole change and captures what they printed, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
 effort: medium
 ---
 
@@ -35,11 +35,7 @@ A missing input is a stop, not a default:
 Absent inputs stop once, together: one stop naming everything missing, so the human answers once —
 never a question at a time.
 
-Two optional inputs, and each decides whether one pass runs.
-
-**The commands to run** — each a name and a command, as `${CLAUDE_PLUGIN_ROOT}/bin/run.py` takes
-them — or **a run already captured**, by its directory under the delivery root's `run/`. With
-neither, the failures pass does not run.
+Two optional inputs, and between them they decide whether two of the four passes run.
 
 **The project's standard** — the path to the registry of rules the project set for itself, in the
 project's own tree. Its contract is `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json`, and a consumer
@@ -48,7 +44,24 @@ is a stop, reported verbatim, and fixing it belongs to whoever owns it. With no 
 standard pass does not run and the record says the project has authored none — which is a different
 absence from an input this invocation was not given, and is said in those words.
 
-An absent optional input never becomes a default: a review reported as clean over a pass that never
+It decides a second thing now: **the commands are the registry's.** A registry declares how the
+project is installed, checked and run, and those steps are what the capture below executes. This
+is not a convenience. Left to a human to retype at each invocation the commands were not typed at
+all, and one consumer's registry reached twenty-four rules decided by `lint`, `typecheck` and
+`secret-scan` with no step ever run to decide any of them, across two reviews that both reported
+honestly that the failures pass had no input. The registry naming its own commands is what ends
+that, and it keeps every string the project's: nothing here composes a build or a test command or
+infers one from what a tree looks like.
+
+**Steps of the caller's own, or a run already captured** — each step a name and a command, as
+`${CLAUDE_PLUGIN_ROOT}/bin/run.py` takes them, or a directory under the delivery root's `run/`.
+Steps given here run after the registry's, under the same capture; a name the registry already
+declares is a stop rather than an override, because two commands under one step name cannot both
+be the one whose outcome a rule is read against. A run named instead of commands is used as it
+stands and nothing is executed.
+
+The failures pass runs where any of the three produced a run, and does not where none did. An
+absent optional input never becomes a default: a review reported as clean over a pass that never
 ran is the failure that rule exists to prevent.
 
 ## Before anything: the plan, the delivery, the tree
@@ -143,40 +156,43 @@ second run is. Where a copy of that name is already there and its text matches, 
 to point at — an implementation may have taken it first, and nothing is written twice.
 
 The standard is read here rather than at its own pass for two reasons, and both are about order.
-The rules it leaves to a tool decide which steps the next step should run, so a review that met the
-registry later would have already chosen its commands. And the pass that reads it is handed the
-copy's path, which has to exist before the pass is spawned.
+The next step runs the commands this registry declares, so a review that met the registry later
+would already have run without them. And the pass that reads it is handed the copy's path, which
+has to exist before the pass is spawned.
 
 ### 2. Capture
 
-Where the caller named commands, run them, once, into a run named for this review:
+Run every step the standard declares, in the order it declares them, followed by any the caller
+added, once, into a run named for this review:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <slug> --cwd <target-source-root> --timeout-seconds <n> --step <name>="<command>" [--step ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <slug> --cwd <target-source-root> --timeout-seconds <the largest of the steps'> --step <name>="<command>" [--step ...]
 ```
 
-The working directory is the target source root, and it is stated rather than defaulted: the
-commands are the project's build and test commands, they only mean anything where the project sits,
-and a run from anywhere else reports failures about a tree nobody built. The timeout is the
-caller's for the same reason — a bound this framework shipped would be one nobody calibrated. The
-commands are the caller's too: nothing here composes a build or a test command, or infers one from
-what the tree looks like.
+The working directory is the target source root, and it is stated rather than defaulted: these are
+the project's own build and test commands, they only mean anything where the project sits, and a
+run from anywhere else reports failures about a tree nobody built. Every string is the project's —
+the registry's commands and its per-step bounds. Nothing here composes a command, infers one from
+what a tree looks like, or supplies a number: a runner that guessed would be answering a question
+about the consumer's project, and the guess would be wrong in the project that mattered.
 
-Where a standard was named, the rules it leaves to a tool belong in these steps — the previous step
-printed which steps they expect, and a project whose standard names `lint` and `typecheck` expects
-those steps here. You do not compose them either: where the caller named a standard but not the
-commands a rule expects, the step that would have decided it did not run, and the report names that
-rule as unanswered. This is the whole reason the standard is split in two.
+Where the registry declares no command for a step one of its rules names, that rule is decided by
+nothing and the report says so by name. This is the whole reason the standard is split in two, and
+the split is honest only while the unanswered half is counted out loud.
 
-Running belongs here rather than in `/implement-task` for one reason: whoever wrote the source
-must not be the one who witnesses whether it passed, or the writing quietly iterates until the
-suite goes green and what failed on the way exists nowhere. Running it here is safe in a way it is
-not there — this invocation has no work to protect — and the run lands on disk before any judgment
-is made of it, so the same evidence can be handed to a second reviewer who reads it differently.
-The pass that judges it still never executes anything: it reads the files this step wrote.
+**This runs even where `/implement-task` already ran the same steps green, and the redundancy is
+the point.** That invocation ran them over one task; this one runs them over the whole change,
+which is several tasks and every file they touched. Two deliveries that each passed alone are not a
+change that passes together, and the run that finds it is this one. What has changed since the rule
+that put running here in the first place is only who else may run: writing no longer has to be
+blind to its own build, because every run either invocation makes is captured under a name nothing
+may reuse. What has not changed is that the run lands on disk before any judgment is made of it, so
+the same evidence can be handed to a second reviewer who reads it differently, and the pass that
+judges it still executes nothing — it reads the files this step wrote.
 
-Where the caller named a run already captured, use it and run nothing. Where they named neither,
-the failures pass does not run and the record says so.
+Where the caller named a run already captured, use it and run nothing. Where the registry declares
+no command and the caller named neither steps nor a run, the failures pass does not run and the
+record says so.
 
 A captured run whose outcome says nothing executed — a command not found, a step terminated — is
 still diagnosed. Nothing was proved about the code, and that is precisely what the diagnosis
@@ -303,8 +319,10 @@ Report, in this order:
   the rules each one takes with it: a review that reports two findings over a standard whose
   substrate is missing has reviewed a fraction of it, and the fraction is the number this line
   gives. The way out is a task declaring the artifact in `produces`, planned through `/plan-work`;
-- the run: what was executed, how it ended, how many failures were counted, and where the output
-  sits;
+- the run: which steps were executed and where each came from — the registry, or the caller —
+  how it ended, how many failures were counted, and where the output sits. Name any step a rule
+  expects and the registry declares no command for: that rule was decided by nothing, and a review
+  silent about it reads as a review that covered the whole registry;
 - what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;
@@ -336,6 +354,12 @@ to a person.
   clean over files nobody read.
 - Run anything but the runner this framework ships, and never rerun it to get a different result:
   a second run is a second name, and the first one's evidence stays on disk.
+- Compose a command, or supply a step this project did not declare. Every command and every bound
+  is the registry's or the caller's; one invented here is this framework guessing at a stack it
+  ships no knowledge of, and a run that guessed reports about a tree nobody built.
+- Silently replace a step the registry declares with one the caller named under the same name. Two
+  commands under one step name cannot both be the one whose outcome a rule is read against, so a
+  collision is a stop that names it.
 - Record a pass as having run when its input was absent, or attribute a finding to a pass that did
   not run.
 - Record a finding against a rule a standard says a tool decides, or against a rule whose scope does
