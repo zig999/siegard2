@@ -418,6 +418,32 @@ def test_a_directional_relationship_carries_a_role_and_a_symmetric_one_refuses_i
     assert any("context/billing" in p for p in problems)
 
 
+def test_a_locator_attribute_names_the_structure_it_navigates(root, sound_base):
+    sound_base("definition/sales/refusal", {
+        "title": "Refusal", "summary": "Why a case was refused, and where.", "ddd": "value-object",
+        "attributes": [{"name": "position", "type": "locator", "into": "definition/sales/order"}]})
+    assert problems_in(root) == []
+    assert run(root).returncode == 0
+    derived = json.loads((root / "graph.json").read_text())
+    assert {"from": "definition/sales/refusal", "to": "definition/sales/order",
+            "kind": "attribute.into", "at": "attributes[position].into"} in derived["edges"]
+
+
+def test_a_locator_without_into_is_refused(root, sound_base):
+    sound_base("definition/sales/refusal", {
+        "title": "Refusal", "summary": "Why a case was refused, and where.", "ddd": "value-object",
+        "attributes": [{"name": "position", "type": "locator"}]})
+    assert any("'into' is a required property" in p for p in problems_in(root))
+
+
+def test_a_locator_into_must_resolve(root, sound_base):
+    sound_base("definition/sales/refusal", {
+        "title": "Refusal", "summary": "Why a case was refused, and where.", "ddd": "value-object",
+        "attributes": [{"name": "position", "type": "locator", "into": "definition/sales/ghost"}]})
+    assert any("attributes[position].into names definition/sales/ghost, "
+               "which the base does not hold" in p for p in problems_in(root))
+
+
 def test_an_enum_attribute_takes_values_or_a_lifecycle_never_both(root, sound_base):
     sound_base("definition/sales/invoice", {
         "title": "Invoice", "summary": "The bill.", "ddd": "value-object",

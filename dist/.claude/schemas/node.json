@@ -358,6 +358,11 @@
       "type": "string",
       "pattern": "^lifecycle/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$"
     },
+    "locatorValue": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(\\[[^\\]]+\\])?(\\.[a-z0-9_]+(\\[[^\\]]+\\])?)*$",
+      "description": "How a locator is written — the notation this framework owns, so two producers write the same path and no analysis asks the business for a separator. Steps are separated by `.`. Each step names an attribute — by its `name`, exactly as the base declares it — of the definition the previous step landed in, starting at the attribute's `into`. A step over a `list` attribute appends an index: `[<identity>]` where the list's `of` definition declares an identity, carrying the value of its identity attribute; `[<n>]` counting from 0 where it declares none. A step over a `ref` attribute crosses into its `target` by identity. A scalar attribute is terminal. No node carries a locator value — values live in the consumer's data — but code that writes or reads one is held to this notation, and a standard's rule may cite it. What has business meaning never enters it: which structure a locator navigates is `into`, read from the material, and which identities it indexes by are the base's own."
+    },
     "gap": {
       "type": "object",
       "required": ["field", "why"],
@@ -424,7 +429,7 @@
       "properties": {
         "name": { "$ref": "#/$defs/attributeName" },
         "type": {
-          "enum": ["string", "integer", "decimal", "boolean", "date", "datetime", "enum", "ref", "list"]
+          "enum": ["string", "integer", "decimal", "boolean", "date", "datetime", "enum", "ref", "list", "locator"]
         },
         "required": { "type": "boolean" },
         "max_length": { "type": "integer", "minimum": 1 },
@@ -440,6 +445,10 @@
         "lifecycle": { "$ref": "#/$defs/lifecycleRef" },
         "target": { "$ref": "#/$defs/definitionRef" },
         "of": { "$ref": "#/$defs/definitionRef" },
+        "into": {
+          "$ref": "#/$defs/definitionRef",
+          "description": "The definition whose structure a value of this locator attribute navigates. This is the one business fact a locator asks of the material; how a locator is written is this contract's, stated once at `locatorValue`, and never a gap."
+        },
         "binding": { "enum": ["embedded", "by-identity"] },
         "min_items": { "type": "integer", "minimum": 0 },
         "max_items": { "type": "integer", "minimum": 1 }
@@ -461,6 +470,10 @@
         {
           "if": { "properties": { "type": { "const": "list" } }, "required": ["type"] },
           "then": { "required": ["of"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "locator" } }, "required": ["type"] },
+          "then": { "required": ["into"] }
         }
       ]
     },

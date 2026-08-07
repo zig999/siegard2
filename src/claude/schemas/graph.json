@@ -64,7 +64,7 @@
           "kind": {
             "enum": [
               "aggregate", "relationship",
-              "attribute.ref", "attribute.of", "attribute.lifecycle",
+              "attribute.ref", "attribute.of", "attribute.into", "attribute.lifecycle",
               "constrains", "subject", "emits", "rejection.error",
               "payload", "upstream", "step", "compensation"
             ]

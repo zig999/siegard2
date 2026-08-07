@@ -176,6 +176,7 @@ def references(front: dict, kind: str, context: str) -> list[tuple[str, str, str
             name = attribute.get("name", "?")
             add(attribute.get("target"), "attribute.ref", f"attributes[{name}].target")
             add(attribute.get("of"), "attribute.of", f"attributes[{name}].of")
+            add(attribute.get("into"), "attribute.into", f"attributes[{name}].into")
             add(attribute.get("lifecycle"), "attribute.lifecycle", f"attributes[{name}].lifecycle")
     if kind == "rule":
         for index, target in enumerate(front.get("constrains") or []):
