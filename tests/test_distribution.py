@@ -5,6 +5,13 @@ nothing checked that the copy had happened. Every other test in this suite reads
 a dist that had lost a file, kept a deleted one, or drifted a line would have passed the whole
 suite and shipped anyway. This is the cheapest test here and the one that would have caught the
 most embarrassing defect.
+
+`dist/` is the shape of a consumer repository, not a directory of parts: `.claude/` lands as the
+plugin, and `CLAUDE.md` beside it lands at the consumer's root. The rules file is authored at
+`src/consumer/CLAUDE.md` and deliberately not under `src/claude/` — it governs work in the
+repository that installs the framework rather than being installed by it, a CLAUDE.md inside the
+plugin directory is loaded by nothing, and the copy that update-by-rsync kept planting there was
+dead weight every consumer had to notice and delete.
 """
 from __future__ import annotations
 
@@ -74,6 +81,25 @@ def test_the_version_is_set_and_is_one_value():
     assert src["version"] == dist["version"], \
         "the two manifests name different versions; a plugin without one version has none"
     assert src["name"] == dist["name"] == "siegard"
+
+
+def test_the_plugin_ships_no_claude_md():
+    """The consumer's rules load from their repository root; a copy inside `.claude/` is read by
+    nothing — measured, not assumed — and every update-by-copy used to replant it."""
+    assert not (SRC / "CLAUDE.md").exists(), \
+        "src/claude/CLAUDE.md is back; the consumer rules are authored at src/consumer/CLAUDE.md"
+    assert not (DIST / "CLAUDE.md").exists(), \
+        "dist/.claude/CLAUDE.md is back; nothing loads a CLAUDE.md inside the plugin directory"
+
+
+def test_the_consumer_rules_are_distributed_beside_the_plugin():
+    authored = REPO / "src/consumer/CLAUDE.md"
+    distributed = REPO / "dist/CLAUDE.md"
+    assert authored.is_file(), "the consumer rules file is not authored"
+    assert distributed.is_file(), \
+        "dist/CLAUDE.md is missing; the consumer has no rules file to place at their root"
+    assert authored.read_bytes() == distributed.read_bytes(), \
+        "dist/CLAUDE.md drifted from src/consumer/CLAUDE.md; the assembly is a copy"
 
 
 def test_every_skill_and_agent_the_suite_holds_is_distributed(trees):
