@@ -76,3 +76,24 @@ When unclear, treat the change as ordinary and say so.
 - Decide mechanically decidable checks in hooks or scripts. Use agents for work that genuinely requires
   model judgment.
 - Record the inputs, outputs, evidence, and contract version needed to reproduce a decision.
+
+## Execution authority
+
+The framework executes. A skill installs what a consumer's own registry authorizes and runs the
+steps it declares, so a delivery hands over a project that installs and builds rather than source
+alone. It was granted deliberately; widening or withdrawing it is the maintainer's.
+
+Three bounds hold it, and giving up any of them is a proposal, never a change:
+
+- **No agent holds a shell.** The skills run; the shipped agents do not, and
+  `tests/test_agent_contract.py` is what enforces it. An agent that gained one would run outside
+  the capture, where what it saw exists only in a context nobody else can open.
+- **Every execution goes through `bin/run.py`,** which refuses a run under a name that already
+  exists. That refusal is what replaced the older rule that a producer must not witness its own
+  work: iterating is permitted because every attempt stays readable. A run narrated instead of
+  captured did not happen.
+- **This repository composes no command and authorizes no package.** Every command, bound and
+  package name is the consumer registry's; a default shipped from here would be a stack this
+  framework says it does not know. Approval of a package is that registry gaining an entry — a
+  human editing their own file — never an answer given in a session, which the next invocation
+  does not have.
