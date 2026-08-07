@@ -147,10 +147,13 @@ Two of its lines are refusals, and each is settled before anything is written:
 - **The task carries unresolved entries.** Stop. An unresolved entry is a fact the base does not
   hold that bears on the objective or a criterion, and there is no honest way to write source
   over one — what gets written reads exactly like a decision the business made, in the one place
-  nobody will look for a decision. Report the entries; the answer is produced in the base,
-  through `/analyse-domain`, and the task is re-bound through `/plan-work` afterwards. The
-  validator refuses such a record too, but by then the source exists; the point of stopping here
-  is that it does not.
+  nobody will look for a decision. Report the entries quoted whole, and hand over the door, not
+  just the wall: the report ends with the `/analyse-domain` invocation ready to paste — this
+  knowledge root named by path, the entries listed as the asks the material must answer, and,
+  where a cited gap carries a proposal, the ask being to ratify or reject it. The answer is
+  produced in the base, never here, and the task is re-bound through `/plan-work` afterwards.
+  The validator refuses such a record too, but by then the source exists; the point of stopping
+  here is that it does not.
 - **A task this one builds on has no record.** Stop, and name it. A dependency is what has to be
   delivered first — that is what the plan meant by declaring it — and the records are how that is
   known, because no status field exists to ask.
@@ -168,7 +171,11 @@ as written without contradicting or exceeding the base, and a task that arrives 
 one is the scope-origin kind — the other kind is re-cut and re-bound before the task is ever
 written. What the plan said of it, in as many words, is that only the human settles it: through the
 scope, re-planned in `/plan-work`, or through `/analyse-domain` producing the fact the base lacks,
-after which the task re-binds and the note is gone. Writing source in the meantime encodes the
+after which the task re-binds and the note is gone. Both doors leave here ready to open: the
+report ends with the `/plan-work` invocation and the `/analyse-domain` invocation, each filled
+with everything this invocation already knows — the roots by path, the note quoted as the
+conflict the scope must settle or as the ask the material must answer — leaving to the human
+only the choice of door and what only the human holds. Writing source in the meantime encodes the
 contradiction as though the business had decided it — the same failure an unresolved entry names,
 and the worse half of it, because here the base is not silent but overruled. The class is the
 binder's judgment and not yours to overrule: a note you disagree with is still a stop, and the

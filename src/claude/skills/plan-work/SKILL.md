@@ -279,7 +279,10 @@ Report, in this order:
 - every unresolved entry, by task identifier — the gaps that block and the questions that
   outran the base; after them, their handoff: the `/analyse-domain` invocation ready to
   paste — this knowledge root named, the open questions listed as the asks the material
-  must answer — because a fact is produced in the base, never in a task;
+  must answer, and questions from separate bindings that name the same missing fact grouped
+  into one ask naming every task that hit it — seven bindings stopped by one undecided
+  grammar are one question, not seven — because a fact is produced in the base, never in a
+  task;
 - every waiver, by task identifier — these are the claims a reviewer can reject;
 - every note a binder returned, by task identifier — the same divergences written into each
   task's `## Notes`, repeated here so the reviewer meets them before the diff — an
