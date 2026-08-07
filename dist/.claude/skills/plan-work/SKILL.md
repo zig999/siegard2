@@ -34,6 +34,18 @@ refuses to write source while the absence stands. The rules themselves are not a
 A plan writes no source, and judging how source is arranged belongs to the two entry points that
 do.
 
+The standard resolves in one order, and the report says which step answered. A naming in the
+invocation wins. Where the invocation names none, run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <target-source-root>` — the project file,
+`siegard.json` at the target's git toplevel, is where a project declares its standard once, and
+`null` there declares deliberately that it has none: the narrow path, chosen rather than
+forgotten, taken without asking again. This is not a default — the file is the consumer's own
+declaration, read from disk, and the framework still ships no rule. Where neither answers — no
+naming, no file — the standard joins the single stop of absent inputs: name it, or declare it
+once, and the stop's report carries the `siegard.json` ready to paste, in both forms. A file
+that does not hold together is a stop reported verbatim; a naming that overrode a differing
+file is reported with both. Below, a standard "named" means resolved by either step.
+
 Naming can go by reference when the reference carries the path: "the base we just validated
 at `knowledge/`" names `knowledge/`, and the handoff an `/analyse-domain` report ends with
 names roots the same way. A reference without a path resolves only through the conversation's
@@ -289,17 +301,18 @@ Report, in this order:
   underdetermined one carrying the implementation it names, a remainder one carrying where
   it belongs;
 - every node carrying `rationale`, by identifier;
-- where a standard was named, what it presupposes and where each of those stands: held by the
-  tree already, or produced by a task this plan now holds, named by identifier and by path. Where
-  none was named, say so — a plan cut without one is a plan that cannot know whether the tree it
-  plans over can run anything it delivers, and that is the honestly narrow answer rather than
-  silence;
+- where a standard was named, where it resolved from — the invocation, or the project file by
+  path — then what it presupposes and where each of those stands: held by the tree already, or
+  produced by a task this plan now holds, named by identifier and by path. Where none resolved,
+  say which absence it was — a declared none in the project file, or nothing anywhere — because
+  a plan cut without one is a plan that cannot know whether the tree it plans over can run
+  anything it delivers, and that is the honestly narrow answer rather than silence;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
 - the handoff: the `/implement-task` invocation ready to paste — this work root and this
   knowledge root named by path as just validated, one named slot for each input only the human
-  decides (the target source root, the delivery root, and the project's standard where there
-  is one), and the task, which is a slot as well and the one that matters: one invocation
+  decides (the target source root, the delivery root, and the project's standard where the
+  project file does not already answer it), and the task, which is a slot as well and the one that matters: one invocation
   carries one task, and choosing it is choosing what gets built. What the handoff offers in
   its place is where the deliverable set is read from, as a command rather than as a list —
   `deliver.py --outstanding <delivery-root> <work-root> <knowledge-root>` names, per task,

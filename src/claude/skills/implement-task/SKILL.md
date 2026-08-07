@@ -39,6 +39,18 @@ only convention this invocation follows is what the inventory evidenced, and the
 The framework ships no rule and never owns the registry: `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json`
 is the contract a project's own file answers to.
 
+The standard resolves in one order, and the report says which step answered. A naming in the
+invocation wins. Where the invocation names none, run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <target-source-root>` — the project file,
+`siegard.json` at the target's git toplevel, is where a project declares its standard once, and
+`null` there declares deliberately that it has none: the narrow path, chosen rather than
+forgotten, taken without asking again. This is not a default — the file is the consumer's own
+declaration, read from disk. Where neither answers — no naming, no file — the standard joins the
+single stop of absent inputs: name it, or declare it once, and the stop's report carries the
+`siegard.json` ready to paste, in both forms. A file that does not hold together is a stop
+reported verbatim; a naming that overrode a differing file is reported with both. Below, a
+standard "named" means resolved by either step.
+
 ## Before anything: the plan
 
 Nothing is written over a plan that does not hold together. Run:
@@ -473,7 +485,8 @@ Report, in this order:
 - what the implementation deferred, and what it says must keep working;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
-- the standard this invocation followed, by the copy it took and that copy's pin, every departure
+- the standard this invocation followed — where it resolved from, the invocation or the project
+  file by path — by the copy it took and that copy's pin, every departure
   disclosed against it by either record, and what it presupposes — that the tree holds it, or, for a
   task that produced it, that this delivery is what made it hold. Where none was named, say that
   the only project convention followed is what the inventory evidenced, which is the honestly narrow
@@ -497,8 +510,9 @@ Report, in this order:
   root, this knowledge root and this target source root named by path as just validated; the
   tasks under review being the one task this invocation delivered, by identifier; the file
   set being exactly the paths named above, because a review never discovers its own scope and
-  this report is the only place that set exists; and the project's standard where one was named,
-  which is also where the review reads its commands from. The handoff offers the next step and
+  this report is the only place that set exists; and the project's standard as it resolved,
+  which is also where the review reads its commands from — a slot only where neither the
+  invocation nor the project file answered it. The handoff offers the next step and
   never takes it: filling any empty slot and invoking are the human's.
 
 Then stop. `git diff` over the target source root and the delivery root is the review, and it

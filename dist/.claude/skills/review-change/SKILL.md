@@ -43,9 +43,20 @@ Two optional inputs, and between them they decide whether two of the four passes
 **The project's standard** — the path to the registry of rules the project set for itself, in the
 project's own tree. Its contract is `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json`, and a consumer
 holds a registry to it with `deliver.py --standard <file>`; a standard that does not hold together
-is a stop, reported verbatim, and fixing it belongs to whoever owns it. With no standard named, the
-standard pass does not run and the record says the project has authored none — which is a different
-absence from an input this invocation was not given, and is said in those words.
+is a stop, reported verbatim, and fixing it belongs to whoever owns it.
+
+The standard resolves in one order, and the report says which step answered. A naming in the
+invocation wins. Where the invocation names none, run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <target-source-root>` — the project file,
+`siegard.json` at the target's git toplevel, is where a project declares its standard once. This
+does not breach the rule below that an absent optional input never becomes a default: the file is
+the consumer's own declaration read from disk, not this framework choosing — and `null` there is
+the declaration that the project authored none, on which the standard pass does not run and the
+record says so in those words, a different absence from an input this invocation was not given.
+Where neither answers — no naming, no file — the standard joins the single stop of absent inputs:
+name it, or declare it once, and the stop's report carries the `siegard.json` ready to paste, in
+both forms. A naming that overrode a differing file is reported with both. Below, a standard
+"named" means resolved by either step.
 
 It decides a second thing now: **the commands are the registry's.** A registry declares how the
 project is installed, checked and run, and those steps are what the capture below executes. This

@@ -107,6 +107,12 @@ contract a project's registry of rules answers to, `bin/deliver.py --standard <f
 registry to it, and the standard pass reports departures — each finding citing exactly one rule by
 its identifier, because a finding citing no rule is taste with a location attached.
 
+A project declares its registry once rather than naming it per invocation: `siegard.json` at the
+repository root — `{"standard": "<path>"}`, or `null` to say deliberately that none exists, which
+is a full answer and not an omission. `bin/project.py` is the one reader, holding the file to
+`schemas/project.json`; a standard named in an invocation wins over the file, with both reported,
+and the entry points that take one stop when neither answers.
+
 Two lines bound it, and both are the whole of its scope. **No rule of a standard states what the
 system answers or who may see what** — a status, an error code, a refusal, an authorization
 outcome. Those are what the business decided, they belong to the base, and a standard stating one
@@ -157,6 +163,9 @@ the sentence above is why nothing has to.
 - **`bin/terms.py`** — prints what a term means, read out of the contract that defines it. Not an
   entry point and not a skill: a reader's command, for the words a validator's refusal uses. A term
   it names as holding no definition is a term no contract states, said so rather than left out.
+- **`bin/project.py`** — prints which standard the project file declares, held to its contract.
+  Not an entry point and not a skill: the one reader of `siegard.json`, run by the skills so a
+  declaration is read from disk rather than remembered by a session.
 
 ## How this file reaches a session
 
