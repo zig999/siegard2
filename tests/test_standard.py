@@ -286,7 +286,7 @@ def test_a_presupposition_citing_a_rule_the_registry_does_not_declare(tmp_path, 
     cost naming a rule nobody declares is a cost nobody can weigh."""
     data, problems = deliver.load_standard(presupposing(tmp_path, rules=["ZZZ-99"]), contract)
     assert data is None
-    assert any("an absence nobody can weigh" in p for p in problems)
+    assert any("a cost nobody can weigh" in p for p in problems)
 
 
 def test_a_registry_that_presupposes_nothing_says_so(tmp_path):
@@ -353,3 +353,87 @@ def test_every_sample_registry_states_what_it_presupposes():
         assert data.get("presupposes"), \
             f"{sample.name} presupposes nothing, and every rule in it is a condition over a file " \
             f"that some manifest or compiler configuration had to exist first for"
+
+
+# ------------------------------------ what a registry authorizes, and how it is run
+
+def test_a_tool_rule_with_no_command_is_refused(tmp_path, contract):
+    """The join the whole reading/tool split rests on. PRH-01 says `lint` decides it; a registry
+    declaring commands and not that one has a rule nothing can apply — which the contract's own
+    `tool` field already calls worse than a rule nobody wrote."""
+    data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
+        {"step": "install", "command": "true", "role": "install"}])), contract)
+    assert data is None
+    assert any("declares no such command" in p for p in problems)
+
+
+def test_a_registry_declaring_no_command_is_held_to_none_of_it(tmp_path, contract):
+    """The condition that keeps this additive: a registry from before the field still holds, and
+    PRH-01's `lint` goes unanswered the way it always did rather than becoming a refusal."""
+    without = {k: v for k, v in base().items() if k not in ("commands", "dependencies")}
+    data, problems = deliver.load_standard(broken(tmp_path, without), contract)
+    assert problems == [], problems
+    assert data is not None
+
+
+def test_two_commands_under_one_step(tmp_path, contract):
+    data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
+        {"step": "lint", "command": "a"}, {"step": "lint", "command": "b"}])), contract)
+    assert data is None
+    assert any("cannot both be it" in p for p in problems)
+
+
+def test_two_steps_carrying_one_role(tmp_path, contract):
+    """Which step installs is not something a caller may pick at the moment of running."""
+    data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
+        {"step": "lint", "command": "a"},
+        {"step": "one", "command": "b", "role": "install"},
+        {"step": "two", "command": "c", "role": "install"}])), contract)
+    assert data is None
+    assert any("all carry the role `install`" in p for p in problems)
+
+
+def test_a_package_authorized_twice(tmp_path, contract):
+    data, problems = deliver.load_standard(broken(tmp_path, base(dependencies=[
+        {"package": "pino", "why": "one reason."},
+        {"package": "pino", "why": "another."}])), contract)
+    assert data is None
+    assert any("cannot both be the reason it was admitted" in p for p in problems)
+
+
+def test_a_package_citing_a_rule_the_registry_does_not_declare(tmp_path, contract):
+    data, problems = deliver.load_standard(broken(tmp_path, base(dependencies=[
+        {"package": "pino", "why": "because.", "rules": ["ZZZ-99"]}])), contract)
+    assert data is None
+    assert any("dependencies[0] names ZZZ-99" in p for p in problems)
+
+
+def test_a_registry_may_authorize_packages_and_own_no_install(tmp_path, contract):
+    """The split working: where a project holds several registries, one owns the manifest and the
+    others own the steps their own rules are decided by. `backend-typescript` is exactly this, and
+    refusing it would have made a legitimate split unrepresentable."""
+    data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
+        {"step": "lint", "command": "npm run lint"}])), contract)
+    assert problems == [], problems
+    assert data is not None
+
+
+def test_the_subcommand_prints_the_commands_and_the_packages():
+    done = invoke("--standard", str(EXAMPLE))
+    assert done.returncode == 0, done.stderr
+    assert "it declares 4 command(s)" in done.stdout
+    assert "installs with nothing" in done.stdout, \
+        "backend-typescript owns no install, and saying so is how a caller learns it needs the " \
+        "registry beside it"
+    assert "it authorizes 3 direct dependency(ies)" in done.stdout
+    assert "transitively is nobody's approval" in done.stdout, \
+        "the limit is stated where a reader meets it rather than left out"
+
+
+def test_every_sample_registry_declares_how_it_is_run():
+    """Every sample is a registry for a stack that has to be installed and checked. One declaring
+    no command would teach the silence that left twenty-four tool-decided rules unanswered."""
+    for sample in SAMPLES:
+        data = yaml.safe_load(sample.read_text(encoding="utf-8"))
+        assert data.get("commands"), f"{sample.name} declares no command"
+        assert data.get("dependencies"), f"{sample.name} authorizes no package"

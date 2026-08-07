@@ -704,6 +704,80 @@ presupposes:
       mode that decides whether an extensionless relative import resolves at all.
     rules: [STK-01, TYP-01]
 
+# What a delivery may install, and how this project is installed and checked — the two registries'
+# lists merged the way their rules were. The merge is clean here, and the reason is worth reading
+# beside the `elsewhere` entries that did not survive it: `backend-typescript` declared no install
+# because its sibling owned the manifest, and once both are one file that reason is gone, so the
+# install below is the stack half's and serves the whole document.
+dependencies:
+
+  - package: fastify
+    why: STK-03 serves HTTP through it and forbids a second framework beside it.
+    rules: [STK-03]
+
+  - package: "@modelcontextprotocol/sdk"
+    why: STK-04 mounts every MCP endpoint through it rather than through a hand-written handler.
+    rules: [STK-04]
+
+  - package: pg
+    why: STK-05 reaches the database through this driver and forbids an ORM or query builder.
+    rules: [STK-05]
+
+  - package: jose
+    why: STK-07 verifies JWTs with it against the JWKS endpoint named in the environment.
+    rules: [STK-07]
+
+  - package: zod
+    why: STK-08 parses every boundary input with a schema of its, and forbids a second validator.
+    rules: [STK-08]
+
+  - package: pino
+    why: STK-09 sends every log line through it, which is what makes `console` a departure.
+    rules: [STK-09]
+
+  - package: "@anthropic-ai/sdk"
+    why: STK-11 calls the model through it and forbids a hand-built HTTP client for the API.
+    rules: [STK-11]
+
+  - package: vitest
+    why: >-
+      STK-10 runs the suite under it through the project's test script, and forbids a second
+      runner.
+    rules: [STK-10]
+
+  - package: typescript
+    why: >-
+      The `typecheck` step is its compiler, and STK-01 and TYP-01 through TYP-04 are decided by
+      it.
+    rules: [STK-01, TYP-01, TYP-02, TYP-03, TYP-04]
+
+  - package: eslint
+    why: the `lint` step is it, and twenty of the rules above are decided by that step.
+    rules: [CON-01, MNT-01, MNT-02, PRH-01, PRH-02, PRH-03, PRH-04, TST-04]
+
+  - package: secretlint
+    why: the `secret-scan` step is it, and it decides the two rules about credentials in source.
+    rules: [SEC-02, SEC-03]
+
+commands:
+
+  - step: install
+    command: npm ci
+    role: install
+
+  - step: typecheck
+    command: npm run typecheck
+
+  - step: lint
+    command: npm run lint
+
+  - step: secret-scan
+    command: npm run secret-scan
+
+  - step: test
+    command: npm test
+    role: suite
+
 elsewhere:
 
   - what: Which errors exist and what each one names — the duplicate registration, the invalid

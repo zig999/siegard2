@@ -201,6 +201,15 @@ STANDARD = {
          "decided_by": "reading",
          "applies_to": [{"under": "tests", "suffix": ".spec.ts", "nested": True}]},
     ],
+    "dependencies": [
+        {"package": "pino", "why": "PRH-01 requires production code to log through it.",
+         "rules": ["PRH-01"]},
+    ],
+    "commands": [
+        {"step": "install", "command": "true", "role": "install"},
+        {"step": "lint", "command": "true"},
+        {"step": "test", "command": "true", "role": "suite"},
+    ],
 }
 
 

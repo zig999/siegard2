@@ -210,6 +210,60 @@ presupposes:
       module resolution mode that decides whether an extensionless relative import resolves at all.
     rules: [STK-01]
 
+# What a delivery may install, and how this project is installed and checked. The rules above name
+# eight packages in prose and could never authorize one: a rule is a condition over a file, and
+# "no second HTTP framework" says nothing about which first one may be fetched. This registry owns
+# the manifest, so it owns the install; `backend-typescript` beside it owns the steps its own rules
+# are decided by and declares no install of its own.
+dependencies:
+
+  - package: fastify
+    why: STK-03 serves HTTP through it and forbids a second framework beside it.
+    rules: [STK-03]
+
+  - package: "@modelcontextprotocol/sdk"
+    why: STK-04 mounts every MCP endpoint through it rather than through a hand-written handler.
+    rules: [STK-04]
+
+  - package: pg
+    why: STK-05 reaches the database through this driver and forbids an ORM or query builder.
+    rules: [STK-05]
+
+  - package: jose
+    why: STK-07 verifies JWTs with it against the JWKS endpoint named in the environment.
+    rules: [STK-07]
+
+  - package: zod
+    why: STK-08 parses every boundary input with a schema of its, and forbids a second validator.
+    rules: [STK-08]
+
+  - package: pino
+    why: STK-09 sends every log line through it, which is what makes `console` a departure.
+    rules: [STK-09]
+
+  - package: "@anthropic-ai/sdk"
+    why: STK-11 calls the model through it and forbids a hand-built HTTP client for the API.
+    rules: [STK-11]
+
+  - package: vitest
+    why: >-
+      STK-10 runs the suite under it through the project's test script, and forbids a second
+      runner.
+    rules: [STK-10]
+
+commands:
+
+  - step: install
+    command: npm ci
+    role: install
+
+  - step: typecheck
+    command: npm run typecheck
+
+  - step: test
+    command: npm test
+    role: suite
+
 elsewhere:
   - what: Which status or error code an outcome answers with, and what a refusal says.
     lives_in: The knowledge base, as a rule or interface node.

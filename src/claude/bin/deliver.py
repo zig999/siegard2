@@ -282,16 +282,66 @@ def load_standard(path: Path, validator) -> tuple[dict | None, list[str]]:
             problems.append(f"{rule.get('id')} is decided by reading and names the tool "
                             f"`{rule['tool']}`; a rule is one or the other, and a rule a tool "
                             f"decides is not a review's to read")
-    for index, entry in enumerate(listed(data, "presupposes")):
-        if not isinstance(entry, dict):
-            continue
-        for cited in listed(entry, "rules"):
-            if isinstance(cited, str) and cited not in ids:
-                problems.append(f"presupposes[{index}] names {cited}, which this registry does "
-                                f"not declare; a presupposition says which rules an absence "
-                                f"costs, and one citing nothing that resolves is an absence "
-                                f"nobody can weigh")
+    for field in ("presupposes", "dependencies"):
+        for index, entry in enumerate(listed(data, field)):
+            if not isinstance(entry, dict):
+                continue
+            for cited in listed(entry, "rules"):
+                if isinstance(cited, str) and cited not in ids:
+                    problems.append(f"{field}[{index}] names {cited}, which this registry does "
+                                    f"not declare; naming a rule is how an entry says what it "
+                                    f"costs, and one citing nothing that resolves is a cost "
+                                    f"nobody can weigh")
+    problems += command_problems(data) + package_problems(data)
     return (None if problems else data), problems
+
+
+def command_problems(data: dict) -> list[str]:
+    """One registry's commands, against itself and against the rules that expect them. The join is
+    the step name: a rule says a tool decides it, a command says how that tool is run, and
+    `bin/run.py` records the outcome under the same name. A registry that declares no command at
+    all is held to none of this — it behaves the way every registry did before the field, with
+    nothing running on its own and a review saying which rules went unanswered."""
+    problems: list[str] = []
+    entries = [c for c in listed(data, "commands") if isinstance(c, dict)]
+    if not entries:
+        return problems
+
+    names = [c["step"] for c in entries if isinstance(c.get("step"), str)]
+    for value in sorted({n for n in names if names.count(n) > 1}):
+        problems.append(f"declares the step `{value}` {names.count(value)} times; a run records "
+                        f"one outcome per step, and two commands under one name cannot both be it")
+
+    for role in ("install", "suite"):
+        carrying = [c["step"] for c in entries if c.get("role") == role
+                    and isinstance(c.get("step"), str)]
+        if len(carrying) > 1:
+            problems.append(f"{', '.join(sorted(carrying))} all carry the role `{role}`; a "
+                            f"delivery runs one of them at a named moment, and which one is not "
+                            f"something a caller may pick")
+
+    declared = set(names)
+    for rule in listed(data, "rules"):
+        if not isinstance(rule, dict) or not isinstance(rule.get("tool"), str):
+            continue
+        if rule["tool"] not in declared:
+            problems.append(f"{rule.get('id')} says the step `{rule['tool']}` decides it, and this "
+                            f"registry declares no such command; a rule declared mechanical with "
+                            f"nothing named to decide it is a rule nobody applies, which is worse "
+                            f"than one nobody wrote")
+
+    return problems
+
+
+def package_problems(data: dict) -> list[str]:
+    """One registry's authorized packages, against themselves. Checked whether or not the registry
+    declares a command, because the list is an allowlist first and an install second: a name
+    written twice is a record that resolves against one of two entries with no way to say which."""
+    packages = [d["package"] for d in listed(data, "dependencies")
+                if isinstance(d, dict) and isinstance(d.get("package"), str)]
+    return [f"authorizes `{value}` {packages.count(value)} times; a record naming it resolves "
+            f"against one entry, and two cannot both be the reason it was admitted"
+            for value in sorted({p for p in packages if packages.count(p) > 1})]
 
 
 def pin_of(path: Path) -> str:
@@ -941,6 +991,24 @@ def check_standard(named: str, against: str | None = None) -> int:
     print(f"  pin {pin_of(path)}")
     print(f"  the rules a tool decides run as step(s) named {', '.join(steps) or 'nothing'}; "
           f"a review reads only the {reading} decided by reading")
+
+    commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
+    if commands:
+        roles = {c.get("role"): c.get("step") for c in commands if c.get("role")}
+        print(f"  it declares {len(commands)} command(s): "
+              + ", ".join(f"{c.get('step')} = {c.get('command')}" for c in commands))
+        print(f"    installs with {roles.get('install') or 'nothing'}, "
+              f"proves with {roles.get('suite') or 'nothing'}, "
+              f"and the rest run as checks on both sides of the tests")
+    else:
+        print("  it declares no command: nothing runs on its own, and a review says which rules "
+              "went unanswered")
+
+    packages = [d for d in listed(data, "dependencies") if isinstance(d, dict)]
+    print(f"  it authorizes {len(packages)} direct dependency(ies)"
+          + (": " + ", ".join(str(d.get("package")) for d in packages) if packages else
+             "; a package a delivery needs and this list omits is a stop that names it")
+          + ". What they pull in transitively is nobody's approval and the lockfile's record")
 
     presupposed = listed(data, "presupposes")
     if against is None:

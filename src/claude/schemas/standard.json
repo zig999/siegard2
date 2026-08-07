@@ -29,6 +29,20 @@
       "items": { "$ref": "#/$defs/presupposition" },
       "description": "The artifacts this registry's rules assume already stand — the manifest whose script a rule names, the compiler configuration whose strictness a rule requires, the dependency declaration a rule forbids a second of. A rule is a condition over a file that exists and never a requirement that one does, and `applies_to` cannot say otherwise: a scope names a directory and an ending, so it reaches no artifact sitting outside a directory and nothing in a rule can ask for one at all. Stating them here is what lets a delivery refuse before it writes. A registry whose substrate is absent is a registry that cannot be applied — its tool-decided rules have no step to run as, and its read-decided rules are held against files that were written to answer nothing — and the absence then surfaces as one finding per file in a review, after the source exists, rather than once, before the first line of it. A project whose substrate already stands declares none, and a registry declaring none is held to nothing extra."
     },
+    "dependencies": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/dependency" },
+      "description": "The direct dependencies this registry authorizes a delivery to install. It is an allowlist, and it exists because installing is not writing: a package brings code nobody here read and runs some of that code at install time. Named here, it goes in without anybody being asked; absent, a delivery that needs it stops and names it, and the approval that ends the stop is this list gaining the package — never an answer inside a session, which the next invocation does not have. Transitive dependencies are outside it and always will be: no package manager offers a closure anybody approved, and what actually arrived is made reproducible by the lockfile the project commits, not by this list.",
+      "$comment": "Held against an implementation record's `installed` by bin/deliver.py."
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command" },
+      "description": "How this project is installed, checked and run, as steps a caller names to `bin/run.py`. The framework composes none of them and infers none from what it finds in a tree: a runner that guessed a test command would be answering a question about the consumer's project, and the guess would be wrong in the project that mattered. What declaring them changes is who names them. Left to a human to retype at every invocation, they were not named at all — which is how one registry reached twenty-four rules decided by a tool with no step ever run to decide any of them. A registry that declares none behaves the way every registry did before this field: nothing runs on its own, and a review says which rules went unanswered.",
+      "$comment": "Read by /implement-task and /review-change, and passed to bin/run.py as --step NAME=COMMAND."
+    },
     "elsewhere": {
       "type": "array",
       "minItems": 1,
@@ -137,6 +151,51 @@
         }
       }
     },
+    "dependency": {
+      "type": "object",
+      "required": ["package", "why"],
+      "additionalProperties": false,
+      "properties": {
+        "package": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The dependency's name, exactly as this project's package manager names it. It is the string a delivery records having installed and the string this list is checked against, so a name spelled two ways is two packages. No version is stated: a version fixed here would be a second home for what the project's lockfile already holds, and the two would disagree the first time either moved."
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this project admitted it. Where a rule needs the package, that rule's need in a sentence; where a human approved it on its own, this is the approval — the field exists because an approval that lived in a conversation is one the next invocation does not have, and a package admitted with no stated reason is one nobody can later reconsider."
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" },
+          "description": "The rules of this registry that need this package, by identifier. Optional, because a package may be admitted for a reason no rule states — that is what `why` carries — but where a rule does need it, naming the rule is what lets a reader see what removing the package would break. Each must be a rule this registry declares."
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "required": ["step", "command"],
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "What this step is called, and it is the join that holds the whole split together: a rule's `tool` names it, `bin/run.py` records its outcome under it, and a review reads that outcome by it. The shape is the one the runner already requires of a step name — a name it would refuse is a step nothing can run."
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The command, exactly as it is run. `bin/run.py` splits it into an argument vector and executes it directly with no shell, so nothing here expands `&&`, a pipe, a redirect, a variable or a glob; a step that needs any of those is written into a file, and that file is the command."
+        },
+        "role": {
+          "enum": ["install", "suite"],
+          "description": "What this step is to a delivery, where it is more than a check. `install` is what makes the packages this registry authorizes real, and it runs before anything is written against them. `suite` is what proves the work, and it is held back until the tests exist — every other step runs on both sides of that line, which is how a rule about how tests are written gets decided at all. At most one step carries each. A step carrying neither is an ordinary check that runs with the rest. A registry may authorize packages and declare no `install`: where a project holds several registries, one of them owns the manifest and the others own the steps their own rules are decided by. What that costs is said where it is felt — an invocation handed such a registry alone has nothing to install with, and says so."
+        }
+      }
+    },
     "exclusion": {
       "type": "object",
       "required": ["what", "lives_in", "why"],
@@ -181,6 +240,15 @@
           "provides": "the `lint` step PRH-01 is decided by, and the declaration of the configured logger PRH-01 requires production code to reach.",
           "rules": ["PRH-01"]
         }
+      ],
+      "dependencies": [
+        { "package": "pino", "why": "PRH-01 requires production code to log through the configured logger, and this is it.", "rules": ["PRH-01"] },
+        { "package": "eslint", "why": "the `lint` step PRH-01 is decided by runs it." }
+      ],
+      "commands": [
+        { "step": "install", "command": "npm ci", "role": "install" },
+        { "step": "lint", "command": "npm run lint" },
+        { "step": "test", "command": "npm test", "role": "suite" }
       ],
       "elsewhere": [
         {

@@ -526,6 +526,42 @@ presupposes:
       an escape hatch rather than the default every unannotated value already has.
     rules: [TYP-01]
 
+# How the rules above are decided, and what decides them. Twenty-three of them are a tool's, and
+# until this block existed the steps they name were something a human retyped at every review — so
+# they were not named at all, and the rules went unanswered by anything.
+#
+# This registry declares no `install`, and the omission is the split working. `backend-node-stack`
+# beside it owns the manifest and therefore the install; this file owns the steps its own rules are
+# decided by. An invocation handed this registry alone has nothing to install with and says so.
+dependencies:
+
+  - package: typescript
+    why: the `typecheck` step is its compiler, and TYP-01 through TYP-04 are decided by it.
+    rules: [TYP-01, TYP-02, TYP-03, TYP-04]
+
+  - package: eslint
+    why: the `lint` step is it, and twenty of the rules above are decided by that step.
+    rules: [CON-01, MNT-01, MNT-02, PRH-01, PRH-02, PRH-03, PRH-04, TST-04]
+
+  - package: secretlint
+    why: the `secret-scan` step is it, and it decides the two rules about credentials in source.
+    rules: [SEC-02, SEC-03]
+
+commands:
+
+  - step: typecheck
+    command: npm run typecheck
+
+  - step: lint
+    command: npm run lint
+
+  - step: secret-scan
+    command: npm run secret-scan
+
+  - step: test
+    command: npm test
+    role: suite
+
 elsewhere:
 
   - what: Which errors exist and what each one names — the duplicate registration, the invalid
