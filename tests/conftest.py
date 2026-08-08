@@ -141,6 +141,13 @@ def delivery(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def target(tmp_path: Path) -> Path:
+    base = tmp_path / "target"
+    base.mkdir()
+    return base
+
+
+@pytest.fixture
 def write_delivery(delivery: Path):
     """Write one delivery node file at the path its identifier computes to."""
     def put(did: str, front: dict, body: str = PLAN_BODY) -> Path:
@@ -192,16 +199,15 @@ STANDARD = {
 
 
 @pytest.fixture
-def write_standard(delivery: Path):
-    """Copy a standard into the delivery root the way a review does, and return its reference."""
-    def put(data: dict = None, name: str = "example-service.yaml") -> dict:
+def write_standard(target: Path):
+    """Write a standard into the target source root, at its own path, and return its reference —
+    nothing is copied into the delivery root."""
+    def put(data: dict = None, name: str = "standard.yaml") -> dict:
         import hashlib
-        where = delivery / "standards"
-        where.mkdir(exist_ok=True)
-        path = where / name
+        path = target / name
         path.write_text(yaml.safe_dump(data or STANDARD, sort_keys=False), encoding="utf-8")
         pin = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        return {"at": f"standards/{name}", "pin": pin}
+        return {"at": name, "pin": pin}
     return put
 
 

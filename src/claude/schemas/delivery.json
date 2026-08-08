@@ -7,7 +7,7 @@
   "required": ["contract_version", "nodes", "edges"],
   "additionalProperties": false,
   "properties": {
-    "contract_version": { "const": "siegard-delivery/1" },
+    "contract_version": { "const": "siegard-delivery/2" },
     "nodes": {
       "type": "array",
       "items": {

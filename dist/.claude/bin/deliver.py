@@ -30,13 +30,14 @@ carries a field for it. `--outstanding` answers the question a status field woul
 from the tasks that have no record and the dependencies they declare, so the answer is derived
 from the files every time and can never be stale or wrong.
 
-**A project's own standard is the project's, and it is read from inside the delivery root.** Where
-a review answers for the standard pass, it points at a copy of the registry under `standards/` and
-pins its text — kept the way `run/` is kept, because a record that pointed at a file no root holds
-could not be checked once the project's copy moved on. So no invocation of this script needs an
-extra argument to validate a review: the correct command line stays a function of the roots and
-never of what a node happens to say. `--standard <file>` validates a registry on its own, which is
-what a consumer runs before any review reads it.
+**A project's own standard is the project's, and it stays in the project's own tree.** A record
+names it by its own path relative to the target source root — exactly as `siegard.json` names it —
+and pins the SHA-256 of its text as read when the record was written. Nothing is copied: this is
+the same discipline `files[].path` already holds code to. The pin is a citation, not a standing
+guarantee — like a task's `implements`, it is read once and never mechanically reverified against
+the file as it stands today, so an old record stays held to the text it actually read even after
+the project's registry moves on. `--standard <file>` validates a registry on its own, which is what
+a consumer runs before any review reads it.
 
 **delivery.json is derived, never edited.** It is refused entirely while the delivery has
 problems: an index over a broken delivery reports a shape nobody decided. `--check` compares and
@@ -47,32 +48,29 @@ decides reaches the index, so the derivation stays a function of the delivery ro
 
 Declared dependencies: PyYAML, jsonschema.
 
-Usage:  deliver.py <delivery-root> <work-root> [<specification-root>]
+Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specification-root>]
                                                         validate everything, then write
                                                         delivery.json
-        deliver.py --check <delivery-root> <work-root> [<specification-root>]
+        deliver.py --check <delivery-root> <work-root> <target-source-root> [<specification-root>]
                                                         validate and compare; write nothing
-        deliver.py --outstanding <delivery-root> <work-root> [<specification-root>]
+        deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>]
                                                         validate, then print every task with no
                                                         record and what it waits on; write
                                                         nothing
         deliver.py --node <file> <delivery-root> <work-root> [<specification-root>]
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
-                                                        run)
-        deliver.py --standard <file> [--against DIR] [--delivery <delivery-root>]
+                                                        run; the target source root is not needed)
+        deliver.py --standard <file> [--against DIR]
                                                         validate one project standard on its own;
                                                         stands alone, needs no root. With a tree
                                                         named, also say whether it holds what the
                                                         registry presupposes — exit 1 while any
-                                                        of it is absent. With a delivery root
-                                                        named, also report every package
-                                                        authorization a pinned copy under it
-                                                        carries and the registry no longer does —
-                                                        the update-by-copy regression, reported
-                                                        and never refused
-        The specification root is required while the plan is live, and ignored once closure.md
-        marks it closed — the same rule plan.py applies, because the plan is read through it.
+                                                        of it is absent
+        The target source root resolves every record's `standard` reference; a delivery whose
+        records name none never reads it. The specification root is required while the plan is
+        live, and ignored once closure.md marks it closed — the same rule plan.py applies,
+        because the plan is read through it.
 Exit:   0 sound (and, with --check, current)
         1 problems, or --check and delivery.json is stale
         2 cannot run (including a plan that does not hold together)
@@ -104,7 +102,6 @@ DELIVERY_GRAPH_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery.json"
 STANDARD_CONTRACT = PLUGIN_ROOT / "schemas" / "standard.json"
 DELIVERY_FILE = "delivery.json"
 RUN_DIR = "run"
-STANDARDS_DIR = "standards"
 
 KINDS = ("implementation", "proof", "review")
 PAIRED = ("implementation", "proof")
@@ -376,25 +373,23 @@ def in_scope(rule: dict, paths: list[str]) -> bool:
                for scope in listed(rule, "applies_to") for path in paths)
 
 
-def standard_of(nid: str, front: dict, root: Path,
+def standard_of(nid: str, front: dict, target: Path,
                 validator) -> tuple[dict | None, str | None, list[str]]:
-    """The standard a record read, loaded from the copy this root holds and held to its pin. The
-    copy is why a citation can be resolved at all: the project's registry lives in the project's
-    tree and moves on, and a record pointing outside every root could not be checked afterwards."""
+    """The standard a record read, from the project's own path in the target source root. The pin
+    is a citation of what was read when the record was written — not a standing guarantee this
+    resolves: like a task's `implements`, it is never mechanically reverified against the file as
+    it stands today, so a project free to evolve its own registry cannot retroactively invalidate
+    every record written against an earlier version of it. A citation that no longer resolves is
+    reported on its own terms — the registry moved on, in a way this script does not diagnose
+    further."""
     declared = front.get("standard")
     if not isinstance(declared, dict) or not isinstance(declared.get("at"), str):
         return None, None, []  # the schema already reported the shape
 
     at = declared["at"]
-    path = root / at
+    path = target / at
     data, found = load_standard(path, validator)
     problems = [f"{nid}: {at}: {p}" for p in found]
-    if data is None:
-        return None, at, problems
-
-    if declared.get("pin") != pin_of(path):
-        problems.append(f"{nid}: the standard's pin is not the text at {at} ({pin_of(path)}); the "
-                        f"copy this record points at is not the one it was written against")
     return data, at, problems
 
 
@@ -432,15 +427,15 @@ def record_run_problems(nid: str, front: dict, root: Path) -> list[str]:
     return []
 
 
-def record_standard_problems(nid: str, front: dict, root: Path, validator,
+def record_standard_problems(nid: str, front: dict, root: Path, target: Path, validator,
                              tfront: dict) -> list[str]:
     """Every rule a record that wrote something says it departed from — an implementation or a
-    proof alike — resolved against the standard it pins, plus every package it says it installed
+    proof alike — resolved against the standard it names, plus every package it says it installed
     and whether the run its kind owes was captured at all. Unlike a review's citation a departure
     may name a rule a tool decides: a record obeys the whole standard, and departing from a rule
     the compiler owns is a real departure that the run will show. The validator holds the citation
     and says nothing about whether departing was right, which is a reader's to judge."""
-    data, at, problems = standard_of(nid, front, root, validator)
+    data, at, problems = standard_of(nid, front, target, validator)
     if data is None:
         return problems
     rules = rules_of(data)
@@ -564,13 +559,13 @@ def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
     return [said]
 
 
-def review_standard_problems(nid: str, front: dict, root: Path, validator) -> list[str]:
-    """Every citation a review makes, resolved against the standard it pins. A review may only cite
+def review_standard_problems(nid: str, front: dict, target: Path, validator) -> list[str]:
+    """Every citation a review makes, resolved against the standard it names. A review may only cite
     a rule the standard leaves to a reading — judging one a tool decides exactly would re-decide it
     in a model at worse recall, and would make the tool's own findings look like opinions. Which
-    rules were in scope is not read from the record: it is a function of the copy and `reviewed`,
-    and both sit in this root."""
-    data, at, problems = standard_of(nid, front, root, validator)
+    rules were in scope is not read from the record: it is a function of this reference and
+    `reviewed`, and both sit in this root."""
+    data, at, problems = standard_of(nid, front, target, validator)
     if data is None:
         return problems
     rules = rules_of(data)
@@ -637,8 +632,8 @@ def divergence_problems(front: dict) -> list[str]:
                             f"departure sits in a file this record says it wrote")
         if cites and "standard" not in front:
             problems.append(f"divergences[{index}] cites {entry['cites']} and this record names no "
-                            f"standard; a citation resolves against the copy the record pins, and "
-                            f"without one it names nothing")
+                            f"standard; a citation resolves against the standard the record names, "
+                            f"and without one it names nothing")
     return problems
 
 
@@ -846,10 +841,10 @@ def run_problems(nid: str, front: dict, root: Path) -> list[str]:
 
 
 def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Path,
-                   names: list[str], root: Path,
+                   names: list[str], root: Path, target: Path,
                    standard: Draft202012Validator | None = None) -> list[str]:
-    """The rules that need to see more than one node at once — or the plan, or the copy of a
-    standard the delivery root holds."""
+    """The rules that need to see more than one node at once — or the plan, or the project's own
+    standard, read fresh from the target source root."""
     problems: list[str] = []
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
@@ -863,7 +858,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                                 f"task; the path is the identity and this one names nothing")
                 continue
             problems.extend(record_standard_problems(
-                nid, front, root, standard or standard_contract(),
+                nid, front, root, target, standard or standard_contract(),
                 plan_nodes[task]["front"]))
             problems.extend(record_run_problems(nid, front, root))
             if node["kind"] == "implementation":
@@ -886,7 +881,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
         if node["kind"] == "review":
             problems.extend(review_plan_problems(nid, front, plan_nodes, delivered,
                                                  names, root))
-            problems.extend(review_standard_problems(nid, front, root,
+            problems.extend(review_standard_problems(nid, front, target,
                                                      standard or standard_contract()))
     return problems
 
@@ -898,15 +893,14 @@ def collect(root: Path, validator, allowed, names: list[str]) -> tuple[dict[str,
     problems: list[str] = []
     for path in sorted(root.rglob("*.md")):
         relative = path.relative_to(root)
-        if relative.parts[0] in (RUN_DIR, STANDARDS_DIR):
-            continue  # what a run printed, and the standard a review read: material, never a node
+        if relative.parts[0] == RUN_DIR:
+            continue  # what a run printed: material, never a node
         nid = id_of(relative)
         if nid is None:
             problems.append(f"{relative.as_posix()}: not implementation/<epic>/<slug>.md, "
                             f"proof/<epic>/<slug>.md or review/<slug>.md; the path is the "
                             f"identity and this one computes to none. Material a judgment was "
-                            f"read from belongs under run/ or standards/, which are never "
-                            f"validated as nodes")
+                            f"read from belongs under run/, which is never validated as a node")
             continue
         text = path.read_text(encoding="utf-8")
         match = FENCE.match(text)
@@ -994,7 +988,7 @@ def derive(nodes: dict[str, dict], names: list[str]) -> dict:
         for target, edge_kind, at in references(nid, front, node["kind"]):
             out_edges.append({"from": nid, "to": target, "kind": edge_kind, "at": at})
     out_edges.sort(key=lambda e: (e["from"], e["kind"], e["at"], e["to"]))
-    return {"contract_version": "siegard-delivery/1", "nodes": out_nodes, "edges": out_edges}
+    return {"contract_version": "siegard-delivery/2", "nodes": out_nodes, "edges": out_edges}
 
 
 def check_single(root: Path, named: str, validator, allowed, names: list[str]) -> int:
@@ -1006,11 +1000,9 @@ def check_single(root: Path, named: str, validator, allowed, names: list[str]) -
     except ValueError:
         print(f"cannot run: {named} is not under {root}", file=sys.stderr)
         return CANNOT_RUN
-    if relative.parts[0] in (RUN_DIR, STANDARDS_DIR):
-        held = ("what the commands printed" if relative.parts[0] == RUN_DIR
-                else "the standard a review read")
-        print(f"{relative.as_posix()}: sits under {relative.parts[0]}/, which holds {held} "
-              f"and is never validated as a node")
+    if relative.parts[0] == RUN_DIR:
+        print(f"{relative.as_posix()}: sits under {RUN_DIR}/, which holds what the commands "
+              f"printed and is never validated as a node")
         return 0
     nid = id_of(relative)
     if nid is None:
@@ -1045,8 +1037,8 @@ def standards_held(nodes: dict[str, dict]) -> list[str]:
     because the one thing that silences the whole standard half of this framework is nobody naming
     a registry, and that is invisible from inside an invocation: a delivery written against no
     rules and one written against rules nobody handed over produce the same clean output. The root
-    is what remembers. A copy under `standards/` that earlier records pin, beside an invocation
-    naming none, is the regression this line exists to make visible."""
+    is what remembers. A path earlier records name, beside an invocation naming none, is the
+    regression this line exists to make visible."""
     pinned: dict[str, int] = {}
     for node in nodes.values():
         declared = node["front"].get("standard")
@@ -1106,39 +1098,7 @@ def substrate_report(data: dict, tree: Path) -> tuple[list[str], int]:
     return lines, absent
 
 
-def authorizations_lost(data: dict, path: Path, delivery: Path) -> list[str]:
-    """Package authorizations some pinned copy under the delivery root carries and this registry
-    no longer does. The registry is the consumer's file, and the regression this catches is the
-    update-by-copy: a framework upgrade pasted over it sweeps away entries a human added, and
-    nothing else compares the two — the pinned copies exist so records stay checkable, which makes
-    them the one place the earlier authorizations survive. Reported, never refused: removing an
-    authorization deliberately is the consumer's right, and this line is how the removal stays
-    visible instead of silent."""
-    current = {d.get("package") for d in listed(data, "dependencies") if isinstance(d, dict)}
-    lines: list[str] = []
-    pinned_dir = delivery / "standards"
-    if not pinned_dir.is_dir():
-        return lines
-    for copy in sorted(p for p in pinned_dir.iterdir() if p.is_file()):
-        try:
-            held = yaml.safe_load(copy.read_text(encoding="utf-8"))
-        except yaml.YAMLError:
-            continue  # an unreadable copy is the delivery validator's finding, not this one's
-        if not isinstance(held, dict) or held.get("standard") != data.get("standard"):
-            continue
-        lost = sorted({d.get("package") for d in listed(held, "dependencies")
-                       if isinstance(d, dict) and isinstance(d.get("package"), str)} - current)
-        if lost:
-            lines.append(
-                f"  AUTHORIZATIONS LOST vs {copy}: {', '.join(lost)}. That copy is what earlier "
-                f"records were written against. Removing an entry deliberately is the consumer's "
-                f"right and this line is its record — but a registry updated by pasting a newer "
-                f"template over it loses entries exactly like this, and restoring them is an "
-                f"edit to {path}, made by whoever owns it")
-    return lines
-
-
-def check_standard(named: str, against: str | None = None, delivery: str | None = None) -> int:
+def check_standard(named: str, against: str | None = None) -> int:
     """Validate one project standard on its own, so a consumer can hold a registry to its contract
     before any review reads it. Every root this framework validates has a validator; a standard is
     not a root, and this is the closest thing it gets. With a tree named, it also answers whether
@@ -1196,16 +1156,6 @@ def check_standard(named: str, against: str | None = None, delivery: str | None 
              "; a package a delivery needs and this list omits is a stop that names it")
           + ". What they pull in transitively is nobody's approval and the lockfile's record")
 
-    if delivery is not None:
-        pinned_root = Path(delivery)
-        if not pinned_root.is_dir():
-            print(f"cannot run: {pinned_root} is not a directory", file=sys.stderr)
-            return CANNOT_RUN
-        lost = authorizations_lost(data, path, pinned_root)
-        print("\n".join(lost) if lost else
-              f"  no pinned copy under {pinned_root / 'standards'} authorizes anything this "
-              f"registry has lost")
-
     presupposed = listed(data, "presupposes")
     if against is None:
         print(f"  it presupposes {len(presupposed)} artifact(s)"
@@ -1237,7 +1187,7 @@ def check_standard(named: str, against: str | None = None, delivery: str | None 
               f"\n  One cut: the task that produces {'them' if absent > 1 else 'it'}, declared in "
               f"`produces`, covering the rules named above."
               f"\n  Work root: <the plan this initiative runs under>"
-              f"\n  Knowledge root: <the base that plan binds to>"
+              f"\n  Specification root: <the specification that plan implements against>"
               f"\n  Target source root: {tree}"
               f"\n  Project standard: {path}")
     return 1 if absent else 0
@@ -1265,14 +1215,6 @@ def main() -> int:
             return CANNOT_RUN
         against = args[at + 1]
         del args[at:at + 2]
-    delivery = None
-    if "--delivery" in args:
-        at = args.index("--delivery")
-        if at + 1 >= len(args):
-            print("cannot run: --delivery takes a directory", file=sys.stderr)
-            return CANNOT_RUN
-        delivery = args[at + 1]
-        del args[at:at + 2]
     if "--standard" in args:
         at = args.index("--standard")
         if at + 1 >= len(args):
@@ -1281,25 +1223,26 @@ def main() -> int:
         named = args[at + 1]
         del args[at:at + 2]
         if verify or report or single is not None or args:
-            print("cannot run: --standard stands alone, with --against and --delivery at most",
+            print("cannot run: --standard stands alone, with --against at most",
                   file=sys.stderr)
             return CANNOT_RUN
-        return check_standard(named, against, delivery)
+        return check_standard(named, against)
     if against is not None:
         print("cannot run: --against says which tree a standard is held against, and only "
               "--standard holds one", file=sys.stderr)
         return CANNOT_RUN
-    if delivery is not None:
-        print("cannot run: --delivery says whose pinned copies a standard is compared with, and "
-              "only --standard compares them; the delivery root is positional everywhere else",
-              file=sys.stderr)
-        return CANNOT_RUN
     if report and (verify or single is not None):
         print("cannot run: --outstanding stands alone", file=sys.stderr)
         return CANNOT_RUN
-    if len(args) not in (2, 3) or any(a.startswith("--") for a in args):
-        print("cannot run: expected [--check | --outstanding | --node <file>] "
-              "<delivery-root> <work-root> [<specification-root>], "
+
+    if single is not None:
+        if len(args) not in (2, 3) or any(a.startswith("--") for a in args):
+            print("cannot run: expected --node <file> <delivery-root> <work-root> "
+                  "[<specification-root>]", file=sys.stderr)
+            return CANNOT_RUN
+    elif len(args) not in (3, 4) or any(a.startswith("--") for a in args):
+        print("cannot run: expected [--check | --outstanding] "
+              "<delivery-root> <work-root> <target-source-root> [<specification-root>], "
               "or --standard <file> on its own", file=sys.stderr)
         return CANNOT_RUN
 
@@ -1311,17 +1254,6 @@ def main() -> int:
     if not work.is_dir():
         print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
         return CANNOT_RUN
-    closed = (work / plan.CLOSURE_FILE).is_file()
-    specification = Path(args[2]) if len(args) == 3 else None
-    if not closed:
-        if specification is None:
-            print("cannot run: a live plan validates against its specification, and this "
-                  "validates against the plan; name the specification root", file=sys.stderr)
-            return CANNOT_RUN
-        if not specification.is_dir():
-            print(f"cannot run: specification root {specification} is not a directory",
-                  file=sys.stderr)
-            return CANNOT_RUN
 
     try:
         validator, allowed = contract()
@@ -1332,7 +1264,34 @@ def main() -> int:
         return CANNOT_RUN
 
     if single is not None:
+        closed = (work / plan.CLOSURE_FILE).is_file()
+        specification = Path(args[2]) if len(args) == 3 else None
+        if not closed:
+            if specification is None:
+                print("cannot run: a live plan validates against its specification, and this "
+                      "validates against the plan; name the specification root", file=sys.stderr)
+                return CANNOT_RUN
+            if not specification.is_dir():
+                print(f"cannot run: specification root {specification} is not a directory",
+                      file=sys.stderr)
+                return CANNOT_RUN
         return check_single(root, single, validator, allowed, names)
+
+    target = Path(args[2])
+    if not target.is_dir():
+        print(f"cannot run: target source root {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    closed = (work / plan.CLOSURE_FILE).is_file()
+    specification = Path(args[3]) if len(args) == 4 else None
+    if not closed:
+        if specification is None:
+            print("cannot run: a live plan validates against its specification, and this "
+                  "validates against the plan; name the specification root", file=sys.stderr)
+            return CANNOT_RUN
+        if not specification.is_dir():
+            print(f"cannot run: specification root {specification} is not a directory",
+                  file=sys.stderr)
+            return CANNOT_RUN
 
     plan_nodes, plan_problems = load_plan(work, specification)
     if plan_problems:
@@ -1343,7 +1302,7 @@ def main() -> int:
               f"delivering against it", file=sys.stderr)
         return CANNOT_RUN
     nodes, problems = collect(root, validator, allowed, names)
-    problems += cross_problems(nodes, plan_nodes, work, names, root, standard)
+    problems += cross_problems(nodes, plan_nodes, work, names, root, target, standard)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)

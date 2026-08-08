@@ -308,11 +308,11 @@ Report, in this order:
   one that matters: one invocation carries one task, and choosing it is choosing what gets
   built. What the handoff offers in its place is where the deliverable set is read from, as a
   command rather than as a list — with a delivery root, `deliver.py --outstanding
-  <delivery-root> <work-root> <specification-root>` names, per task, what has no record and
-  what it waits on; without one, every task whose `## Notes` carries no standing `BLOCKING,
-  from the specification —` line is deliverable. A set restated here instead is a set that was
-  true when it was printed. The handoff offers the next step and never takes it: filling the
-  slots and invoking are the human's.
+  <delivery-root> <work-root> <target-source-root> <specification-root>` names, per task, what
+  has no record and what it waits on; without one, every task whose `## Notes` carries no
+  standing `BLOCKING, from the specification —` line is deliverable. A set restated here instead
+  is a set that was true when it was printed. The handoff offers the next step and never takes
+  it: filling the slots and invoking are the human's.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 

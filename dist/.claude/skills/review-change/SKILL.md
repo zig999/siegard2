@@ -84,7 +84,7 @@ Run both checks, and report either output verbatim as a stop:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --check <delivery-root> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --check <delivery-root> <work-root> <target-source-root> <specification-root>
 ```
 
 A review over a plan or a delivery that does not hold together reports a soundness nobody has.
@@ -141,15 +141,13 @@ nothing else in either root. The specification node files belong to the passes, 
 Then, where the caller named a standard, take it in and read it here — before anything is run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --delivery <delivery-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
 ```
 
 A registry that does not hold together is a stop, reported verbatim: a review against one reports a
 conformance nobody has, and fixing it belongs to whoever owns it. The command prints the split —
 how many rules a reading decides, how many a tool does, and the names of the steps those expect —
-which is exactly what the next step needs. A line opening `AUTHORIZATIONS LOST` is not a stop but
-travels into the record whole: a pinned copy authorizes packages the registry no longer does, and
-whether the removal was deliberate is the consumer's to say in their own file.
+which is exactly what the next step needs.
 
 An artifact the registry presupposes and the tree does not hold is **not** a stop here. A review
 reviews what exists, and refusing to read a change because its project was never set up would
@@ -160,23 +158,16 @@ against files written to answer a registry that was never in force. Keep what th
 and carry it into the report; it is the difference between a review that came back thin and a
 review that says why.
 
-Then copy the registry into `standards/` under the delivery root, keeping the name the project gave
-it, and note the SHA-256 of the copy — `sha256sum <delivery-root>/standards/<file>`. The copy is
-the point: the registry lives in the project's tree and will move on, and a record pointing at a
-file no root holds is a record nobody can check later. It is kept the way `run/` is kept — material
-a judgment was read from, never validated as a node.
-
-**A copy is never overwritten.** Where `standards/` already holds a file of that name whose text
-differs from the registry as it stands, the rulebook changed since some earlier record was written:
-name this copy differently. Overwriting would leave that record pinning text it never read, and the
-validator would refuse a record that was honest. A second rulebook is a second name, the way a
-second run is. Where a copy of that name is already there and its text matches, that copy is the one
-to point at — an implementation may have taken it first, and nothing is written twice.
+Then note the registry's own path, relative to the target source root, and the SHA-256 of its text
+as read now — `sha256sum <target-source-root>/<path>`. Nothing is copied: the record points at the
+project's own file, the same way `files[].path` already points at code. That pin is a citation of
+what this review read when it was written, not a standing guarantee — the project's registry is
+free to keep evolving, and this record stays held to the text it actually read.
 
 The standard is read here rather than at its own pass for two reasons, and both are about order.
 The next step runs the commands this registry declares, so a review that met the registry later
-would already have run without them. And the pass that reads it is handed the copy's path, which
-has to exist before the pass is spawned.
+would already have run without them. And the pass that reads it is handed the registry's own path,
+which has to exist before the pass is spawned.
 
 ### 2. Capture
 
@@ -233,8 +224,8 @@ runs next.
   second home for one.
 - **standard** — where the caller named a project standard, spawn a
   `standard-conformance-reviewer` subagent, its judgment at
-  `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing the standard's path
-  under the delivery root, the file set, the target source root, and the contract's path. It
+  `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing the standard's own
+  path, the file set, the target source root, and the contract's path. It
   returns the rules that were in scope and, for each departure, a finding citing exactly one of
   them. Where the caller named no standard, the pass does not run and the record says the project
   has authored none.
@@ -275,14 +266,15 @@ so a reader never mistakes four passes for every pass.
 ### 4. Compose
 
 Write `review/<slug>.md` under the delivery root — the slug names this review, and the path is its
-identity. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's copy and the pin of its text where
+identity. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
 that one ran, how many failures were counted where that one did, the run's directory where there was
 one, and every finding.
 
-The record holds no list of the rules that were in scope. The copy and its pin already determine
-that set, both sit in this root, and the validator derives it — so a stored list would be a second
-answer to a question the root answers, and the one nobody could check, because the reviewer would
-be the one writing it. Which rules were in scope belongs in the report, for the person.
+The record holds no list of the rules that were in scope. That reference and its pin already
+determine that set, both sit in this root, and the validator derives it — so a stored list would be
+a second answer to a question the root answers, and the one nobody could check, because the
+reviewer would be the one writing it. Which rules were in scope belongs in the report, for the
+person.
 
 Stamp each finding's pass yourself: the agents return findings without one, so a finding cannot
 claim a pass that did not run. An entry for a pass that did not run names what was missing — that
@@ -304,16 +296,17 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <w
 ### 5. Validate, and derive the delivery
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <target-source-root> <specification-root>
 ```
 
 This validates the review against the contract, runs the checks that need the plan — every task
 named is a delivered task of this plan, the coverage pass answers for every criterion of them and
 for nothing else, the failures counted match the findings recorded, the run it points at exists,
-every finding of a pass that scans the file set sits in a file that set lists — and, where the standard pass ran, the checks that need the copied registry:
-it holds together, its pin is the text the findings were written against, and every citation names a
-rule that copy declares, leaves to a reading rather than to a tool, and whose scope reaches the file
-the finding names. Then it derives `delivery.json`. **Never write or edit `delivery.json` yourself.**
+every finding of a pass that scans the file set sits in a file that set lists — and, where the
+standard pass ran, the checks that need the registry, read fresh from its own path: it holds
+together, and every citation names a rule it declares, leaves to a reading rather than to a tool,
+and whose scope reaches the file the finding names. Then it derives `delivery.json`. **Never write
+or edit `delivery.json` yourself.**
 Report the output verbatim, and never describe the review as sound while the command exits non-zero.
 
 **Fixing means form, never judgment.** A criterion paraphrased instead of quoted, a finding
@@ -394,8 +387,6 @@ to a person.
 - Show the standard pass what an implementation record disclosed. A record may name the very rules
   this pass reads, and a pass told which departures were already admitted is a pass the producer
   shaped. It reads the source; a person reads both records and learns something neither says alone.
-- Overwrite a copy under `standards/` whose text differs from the registry as it stands, or edit a
-  copy after a record has pinned it.
 - Add to, edit or reinterpret the project's standard. It is the project's; a rule that seems wrong is
   reported as a departure exactly as written, and changed by whoever owns it.
 - Write into the work root, the specification root, or the target source root.

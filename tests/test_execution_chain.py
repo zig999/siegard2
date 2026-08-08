@@ -53,26 +53,24 @@ def tree(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def registry(delivery: Path):
-    """The project's registry, copied into the delivery root the way every skill copies it, and
+def registry(tree: Path):
+    """The project's registry, at its own path in the target source root — nothing copies it —
     returned as the reference a record pins."""
     def put(**overrides) -> tuple[Path, dict]:
         data = {**STANDARD, **overrides}
-        where = delivery / "standards"
-        where.mkdir(exist_ok=True)
-        path = where / "example-service.yaml"
+        path = tree / "example-service.yaml"
         path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-        return path, {"at": "standards/example-service.yaml", "pin": deliver.pin_of(path)}
+        return path, {"at": "example-service.yaml", "pin": deliver.pin_of(path)}
     return put
 
 
-def problems_of(delivery: Path, work: Path, root: Path) -> list[str]:
+def problems_of(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
     validator, allowed = deliver.contract()
     names = deliver.pass_names()
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], plan_problems
     nodes, found = deliver.collect(delivery, validator, allowed, names)
-    return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery)
+    return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, target)
 
 
 def test_the_chain_holds_from_an_empty_tree_to_a_delivery_that_ran(
@@ -120,7 +118,7 @@ def test_the_chain_holds_from_an_empty_tree_to_a_delivery_that_ran(
     # delivery does not hold together.
     proof["standard"] = ref
     write_delivery("proof/checkout/record-order", proof)
-    assert any("captured no run" in p for p in problems_of(delivery, work, root))
+    assert any("captured no run" in p for p in problems_of(delivery, work, tree, root))
 
     # 5. The suite goes red. The runner stops at the failing step, and nothing further is written.
     red = capture(delivery, tree, "checkout-record-order-suite",
@@ -132,7 +130,7 @@ def test_the_chain_holds_from_an_empty_tree_to_a_delivery_that_ran(
 
     proof["run"] = "run/checkout-record-order-suite"
     write_delivery("proof/checkout/record-order", proof)
-    assert any("run again under a name of its own" in p for p in problems_of(delivery, work, root)), \
+    assert any("run again under a name of its own" in p for p in problems_of(delivery, work, tree, root)), \
         "a proof over a red suite is refused; the delivery is not talked into holding together"
 
     # 6. The source is fixed and the suite runs again. The first run keeps its name, so what it
@@ -147,7 +145,7 @@ def test_the_chain_holds_from_an_empty_tree_to_a_delivery_that_ran(
     assert green.returncode == 0, green.stdout + green.stderr
     proof["run"] = "run/checkout-record-order-suite-2"
     write_delivery("proof/checkout/record-order", proof)
-    assert problems_of(delivery, work, root) == []
+    assert problems_of(delivery, work, tree, root) == []
 
     # Both attempts are on disk, which is the whole of what replaced "this invocation runs nothing".
     assert (delivery / "run/checkout-record-order-suite/run.json").is_file()
@@ -175,8 +173,8 @@ def test_a_package_the_registry_never_admitted_does_not_reach_a_record(
     proof["implementation"] = deliver.pin_of(delivery / "implementation/checkout/record-order.md")
     write_delivery("proof/checkout/record-order", proof)
 
-    problems = problems_of(delivery, work, root)
-    assert any("left-pad, which standards/example-service.yaml does not authorize" in p
+    problems = problems_of(delivery, work, tree, root)
+    assert any("left-pad, which example-service.yaml does not authorize" in p
                for p in problems), problems
     assert not any("pino" in p for p in problems), "the admitted package is not the finding"
 
@@ -249,8 +247,8 @@ def test_a_check_with_nothing_to_check_is_not_what_the_substrate_owes(
     # reach, and a proof requires at least one test that can be said to fail.
     (delivery / "proof/checkout/record-order.md").unlink()
 
-    assert problems_of(delivery, work, root) == []
-    outstanding = invoke(DELIVER_PY, "--outstanding", delivery, work, root)
+    assert problems_of(delivery, work, tree, root) == []
+    outstanding = invoke(DELIVER_PY, "--outstanding", delivery, work, tree, root)
     assert "implemented, and no proof record holds it up" in outstanding.stdout, outstanding.stdout
 
 
@@ -272,7 +270,7 @@ def test_a_record_pointing_at_a_fraction_of_the_steps_is_refused(
     proof["implementation"] = deliver.pin_of(delivery / "implementation/checkout/record-order.md")
     write_delivery("proof/checkout/record-order", proof)
 
-    problems = problems_of(delivery, work, root)
+    problems = problems_of(delivery, work, tree, root)
     assert any("passed only install" in p and "nothing decided the rules lint own" in p
                for p in problems), problems
     assert not any("declares `produces`" in p for p in problems), \
@@ -301,6 +299,6 @@ def test_a_task_that_produces_and_also_writes_source_owes_every_step(
     write_delivery("implementation/checkout/record-order", record)
     (delivery / "proof/checkout/record-order.md").unlink()
 
-    problems = problems_of(delivery, work, root)
-    assert any("wrote a file a rule of standards/example-service.yaml reaches" in p
+    problems = problems_of(delivery, work, tree, root)
+    assert any("wrote a file a rule of example-service.yaml reaches" in p
                for p in problems), problems

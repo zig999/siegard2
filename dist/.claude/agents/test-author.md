@@ -30,8 +30,8 @@ stop. You need:
 4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `proof` branch
    before writing a single field.
 
-Optionally, **the project's standard** — the path to a copy of the rules this project set for
-itself. Where one is given, read the rules whose scope reaches the test files you write and follow
+Optionally, **the project's standard** — the path to the rules this project set for itself. Where
+one is given, read the rules whose scope reaches the test files you write and follow
 them: how a test is arranged, how it is named, what a stand-in may replace, where the file sits.
 A rule you cannot satisfy is departed from and disclosed — `divergences`, citing the rule by its
 identifier and naming the test file it sits in, exactly as the record beside yours carries them.

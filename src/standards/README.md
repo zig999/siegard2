@@ -37,8 +37,8 @@ The contract says so on the field that names one:
 
 So several registries is the intended shape, not a workaround. The constraint sits one level down:
 **one registry per invocation**, because the field carrying it on a delivery node is a single
-reference and the copy under `standards/` is one file per name. A project holds as many as its
-concerns need; each invocation names the one that governs the work in hand.
+reference, by the registry's own path. A project holds as many as its concerns need; each
+invocation names the one that governs the work in hand.
 
 ## The three samples
 
@@ -120,10 +120,11 @@ as a step of the project's own suite through `bin/run.py`, and what it finds arr
 failures pass with the tool's own message as evidence. A model applying a rule the compiler owns has
 strictly worse recall than the compiler and costs more.
 
-Then name the path at invocation. `/implement-task` takes it so the source is written to follow it,
-copies it into the delivery root's `standards/` and pins that copy; `/review-change` takes it so the
-same source is held to the same rules. **One registry per invocation** — the field carrying it is a
-single reference, and the copy under `standards/` is one file per name.
+Then name the path at invocation. `/implement-task` takes it so the source is written to follow
+it, reads it fresh, and pins the SHA-256 of what it read; `/review-change` takes it so the same
+source is held to the same rules. Nothing is copied: a record points at the registry's own path,
+relative to the target source root, the same way it already points at code. **One registry per
+invocation** — the field carrying it is a single reference.
 
 A project that has authored no standard gets an honestly narrow review: the pass records that it did
 not run, and what was absent. Never a clean one.

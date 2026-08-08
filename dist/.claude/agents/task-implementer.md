@@ -41,9 +41,9 @@ stop. You need:
    `implementation` branch before writing a single field: the fields, their shapes and their
    vocabularies live there, and what you remember is not what the validator will apply.
 
-Optionally, **the project's standard** — the path to a copy of the rules this project set for
-itself. Named, you write to it; not named, the only project convention you have is what the
-inventory evidenced, and you say nothing about rules you were not given.
+Optionally, **the project's standard** — the path to the rules this project set for itself. Named,
+you write to it; not named, the only project convention you have is what the inventory evidenced,
+and you say nothing about rules you were not given.
 
 Optionally, **the dependencies the standard authorizes** — the package names its registry admits.
 That list is the whole of what you may add to this project's manifest. A package outside it is a

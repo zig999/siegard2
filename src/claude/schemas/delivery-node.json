@@ -174,7 +174,7 @@
     },
     "standard": {
       "$ref": "#/$defs/standardRef",
-      "description": "The project's standard this record read. On a review it is present exactly when the standard pass ran, and a project that has authored none records the pass as not run and says so — the honest narrow result rather than a clean one. On an implementation it says what the source was written against; on a proof, what the tests were. On either it is required once any divergence cites a rule, because a citation resolves against the copy this record pins and without one it names nothing. Absent on a record that wrote something is a claim that no standard was supplied, which nothing can verify and a reader reads as one — the skill's report and the diff are what carry it."
+      "description": "The project's standard this record read. On a review it is present exactly when the standard pass ran, and a project that has authored none records the pass as not run and says so — the honest narrow result rather than a clean one. On an implementation it says what the source was written against; on a proof, what the tests were. On either it is required once any divergence cites a rule, because a citation resolves against the pin this record carries and without one it names nothing. Absent on a record that wrote something is a claim that no standard was supplied, which nothing can verify and a reader reads as one — the skill's report and the diff are what carry it."
     },
     "failures_counted": {
       "type": "integer",
@@ -280,7 +280,7 @@
               }
             ],
             "standard": {
-              "at": "standards/example-service.yaml",
+              "at": "standard.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
             "run": "run/checkout-record-order-build",
@@ -371,7 +371,7 @@
               "the refusal's wire shape, which no bound node describes"
             ],
             "standard": {
-              "at": "standards/example-service.yaml",
+              "at": "standard.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
             "run": "run/checkout-record-order-suite",
@@ -446,7 +446,7 @@
               }
             ],
             "standard": {
-              "at": "standards/example-service.yaml",
+              "at": "standard.yaml",
               "pin": "sha256:aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
             },
             "coverage": [
@@ -752,12 +752,12 @@
         "at": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^standards/[^/]+\\.(yaml|yml|json)$",
-          "description": "The standard this review read, as its file under the delivery root's `standards/`, keeping the name the project gave it. The registry is the project's and lives in the project's own tree; a copy is taken here at review time, the way `run/` holds what a suite printed — so the record is readable, and checkable, long after the project's copy has moved on. A path outside the delivery root would make this record depend on a file no root holds."
+          "pattern": "^[^/]",
+          "description": "The project's registry, by its own path relative to the target source root — exactly as `siegard.json` names it, or as the invocation named it. Nothing is copied: this record points at the same file the project keeps, the way `files[].path` already does for code. Never absolute, and never spelled from the repository around the target."
         },
         "pin": {
           "$ref": "#/$defs/pin",
-          "description": "The SHA-256 of the standard's text as this review read it, computable by hand as `sha256sum <delivery-root>/<at>`. A pin the validator finds diverging says the copy taken here is not the text the findings were written against. These two fields are the whole of what a review records about a standard, and together they are what says what the pass was clean over: which rules were in scope is a function of this copy and `reviewed`, both of which this root holds, so the validator derives it rather than reading a list somebody maintained. A stored list would have been a second answer to a question the root already answers — and, being the reviewer's to write, the one nobody could check."
+          "description": "The SHA-256 of the standard's text as this record read it, computable by hand as `sha256sum <target-source-root>/<at>` at the time this record was written. It is a citation, not a standing guarantee: like a task's `implements` and a delivered file's own path, it is read once and never mechanically reverified against the file as it stands today — a project's registry is free to evolve, and an old record is held to the text it was actually written against, not to whatever the file says now. These two fields are the whole of what a review records about a standard, and together they are what says what the pass was clean over: which rules were in scope is a function of this reference and `reviewed`, both of which this root holds, so the validator derives it rather than reading a list somebody maintained. A stored list would have been a second answer to a question the root already answers — and, being the reviewer's to write, the one nobody could check."
         }
       }
     },

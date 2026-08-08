@@ -146,7 +146,7 @@ clean one.
 One command answers where the task stands, and it validates the delivery on the way:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <target-source-root> <specification-root>
 ```
 
 On an empty delivery root it reports every task without a record; on a populated one it also
@@ -165,7 +165,7 @@ One of its lines is a refusal, and it is settled before anything is written:
   it, never improvised past.
 
 A second refusal is not in that report, because the plan's index is not what holds it — the task
-file does. So open the task file here, before the copying below writes anything, and read its
+file does. So open the task file here, before anything below is written, and read its
 `## Notes`: **an entry opening `BLOCKING, from the specification —` is a stop.** Quote the
 entries whole. That class is the binding's finding that the objective, or a criterion, cannot be
 demonstrated as written without contradicting or exceeding the specification, including a fact
@@ -202,20 +202,16 @@ field of the task file — already open from the note check above — read as a 
 Where it does not, the tree is held to what the registry presupposes on the way in:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --delivery <delivery-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
 ```
 
-Where it does, drop `--against` and run the registry check alone, keeping `--delivery`:
+Where it does, drop `--against` and run the registry check alone:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --delivery <delivery-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
 ```
 
-Either way, anything but a clean pass is a stop, reported verbatim. A line opening
-`AUTHORIZATIONS LOST` is not a stop but travels into the report whole: it says a pinned copy under
-the delivery root authorizes packages the registry no longer does, which is what a registry
-updated by pasting a template over it looks like — and whether that was deliberate is the
-consumer's to say, in their own file, before a delivery needs the missing entry.
+Either way, anything but a clean pass is a stop, reported verbatim.
 
 The first form carries two refusals. A registry that does not hold together answers to nothing, and
 fixing it belongs to whoever owns it. An artifact the registry presupposes and the tree does not
@@ -235,17 +231,12 @@ it afterwards — the validator refuses an implementation whose `files` does not
 said it would produce, so a task that claimed the artifact and did not write it is a refusal rather
 than a delivery.
 
-Then copy the registry into `standards/` under the delivery root, keeping the name the project gave
-it, and note the SHA-256 of the copy — `sha256sum <delivery-root>/standards/<file>`. The copy is
-what makes a disclosure checkable afterwards: the registry lives in the project's tree and will move
-on, and a record pointing at a file no root holds is a record nobody can check later. It is kept the
-way `run/` is kept — material a judgment was read from, never validated as a node.
-
-**A copy is never overwritten.** Where `standards/` already holds a file of that name whose text
-differs from the registry as it stands, the rulebook changed since some earlier record was written:
-name this copy differently. Overwriting would leave that record pinning text it never read, and the
-validator would refuse a record that was honest. A second rulebook is a second name, the way a
-second run is.
+Then note the registry's own path, relative to the target source root, and the SHA-256 of its text
+as read now — `sha256sum <target-source-root>/<path>`. Nothing is copied: the record points at the
+project's own file, the same way `files[].path` already points at code without a second copy of
+it. That pin is a citation of what this record read when it was written, not a standing guarantee
+— the project's registry is free to keep evolving, and this record stays held to the text it
+actually read rather than to whatever the file says later.
 
 Then read the rest of the task file — the notes were read above — and the plan's inventory nodes. `plan.json` lists every node the
 plan holds with its kind and its file, so the inventory is found there rather than by walking the
@@ -279,8 +270,8 @@ what it names — a registry nobody can reach, a lockfile that does not resolve 
 Spawn a `task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
 the specification root, the target source root, the paths of the plan's inventory nodes, and the
-delivery-node contract's path — plus, where one was named, the path of **the copy** of the standard,
-so what it read is exactly what the record pins. Where the task declares `produces`, pass those
+delivery-node contract's path — plus, where one was named, **the standard's own path**, so what it
+reads is exactly what the record pins. Where the task declares `produces`, pass those
 paths too: they are artifacts this delivery has to create rather than conventions it has to follow,
 and the record is refused if `files` does not list every one of them. Where the standard authorizes
 dependencies, pass that list too, by name: it is what the agent may add to the manifest and the
@@ -344,8 +335,8 @@ it was never composed.
 
 Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
 the path is the identity and nothing else names which task a record answers — from what the agent
-returned plus the pin stamped on `task`, and — where a standard was named — where its copy sits,
-the pin of its text, the build run that passed, and every dependency the agent added. The body is exactly two headings, in order:
+returned plus the pin stamped on `task`, and — where a standard was named — its own path, the pin
+of its text as read now, the build run that passed, and every dependency the agent added. The body is exactly two headings, in order:
 `## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
 literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
 as in its field — the diff is the review, and what only the conversation held the reviewer never
@@ -377,7 +368,7 @@ record asserting that tests hold up a task, written where no test could exist.
 Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
 implementation record's path, the target source root, and the delivery-node contract's path — plus
-the copy of the standard where one was named, because a project's rules about how its tests are
+the standard's own path where one was named, because a project's rules about how its tests are
 written are the test author's to follow, and plus every `UNDERDETERMINED, from the specification —`
 entry of the task's `## Notes`, quoted whole: each names an implementation that satisfies every
 criterion as written and that the specification refuses, and excluding it is the test author's work.
@@ -423,10 +414,10 @@ and the report says so — the narrow answer rather than a clean one. A task tha
 substrate reaches neither this step nor the one before it, for the reason step 5 gives.
 
 Write `proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way. Where a
-standard was named, stamp where its copy sits, the pin of its text and the suite run that passed on
-this record too, exactly as the implementation carries its own — the rules about how a project
-writes its tests reach files no implementation ever lists, so a departure from one is the proof's
-to disclose and resolves against the copy the proof itself pins.
+standard was named, stamp its own path, the pin of its text as read now, and the suite run that
+passed on this record too, exactly as the implementation carries its own — the rules about how a
+project writes its tests reach files no implementation ever lists, so a departure from one is the
+proof's to disclose and resolves against the pin the proof itself carries.
 
 Stamp on it the SHA-256 of the implementation record you just wrote — `sha256sum <that file>`. It
 says which version of that record these tests were written against, and it is what makes a
@@ -443,7 +434,7 @@ the signal.
 When both records are written, run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <target-source-root> <specification-root>
 ```
 
 This validates every delivery node against the contract, runs the checks that need the plan — the
@@ -509,7 +500,7 @@ Report, in this order:
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
 - the standard this invocation followed — where it resolved from, the invocation or the project
-  file by path — by the copy it took and that copy's pin, every departure
+  file by path — by its own path and the pin taken of it, every departure
   disclosed against it by either record, and what it presupposes — that the tree holds it, or, for a
   task that produced it, that this delivery is what made it hold. Where none was named, say that
   the only project convention followed is what the inventory evidenced, which is the honestly narrow
@@ -575,12 +566,10 @@ belongs to a person.
 - Settle a disagreement the proof recorded, or delete an inference to make a record read cleanly.
 - Commit, stash, branch, or otherwise change the consumer's git state — a dirty tree is reported,
   and what to do with it is the human's call.
-- Record which rules of the standard were in scope. That set derives from the copy and the files
+- Record which rules of the standard were in scope. That set derives from the pin and the files
   written, both of which this root holds, so a stored list would be a second answer to a question
   the root already answers — and the one nobody could check, because the producer would be writing
   it.
-- Overwrite a copy under `standards/` whose text differs from the registry as it stands, or edit a
-  copy after a record has pinned it.
 - Treat a disclosed departure as leave to depart. It says the departure was known and reasoned, and
   it settles nothing: the review holds the same source to the same rules and is not shown what was
   disclosed.
