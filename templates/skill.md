@@ -1,7 +1,6 @@
 ---
 name: {{name}}
 description: {{description}}
-disable-model-invocation: true
 ---
 
 {{purpose}}

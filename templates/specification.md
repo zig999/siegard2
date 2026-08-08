@@ -19,8 +19,7 @@ It decides {{decides}}.
 
 ## Definitions
 
-This specification uses these terms as the concept bundle defines them:
-[{{concept_title}}](../docs/concepts/{{concept_slug}}.md).
+- **{{term}}** — {{definition}}.
 
 ## Requirements
 
