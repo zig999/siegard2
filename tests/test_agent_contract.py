@@ -36,7 +36,7 @@ WRITES = READS | {"Write", "Edit"}
 # here, not a preference: the tools are the enforcement, and the prose is only the explanation.
 GRANTS = {
     "backlog-decomposer": READS,
-    "base-conformance-reviewer": READS,
+    "specification-conformance-reviewer": READS,
     "codebase-surveyor": READS,
     "coverage-auditor": READS,
     "execution-contract-binder": READS,

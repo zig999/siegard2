@@ -38,7 +38,7 @@ SKILLS = {
     "implement-task": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
                        "delegates": ["task-implementer", "test-author"]},
     "review-change": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
-                      "delegates": ["coverage-auditor", "base-conformance-reviewer",
+                      "delegates": ["coverage-auditor", "specification-conformance-reviewer",
                                     "standard-conformance-reviewer", "failure-diagnostician"]},
 }
 
@@ -156,10 +156,7 @@ def skill_text(name: str) -> str:
 FORWARD_SEAMS = (
     ("analyse", "plan-work"),
     ("plan-work", "implement-task"),
-    pytest.param("implement-task", "review-change",
-                 marks=pytest.mark.xfail(strict=True,
-                     reason="review-change still numbers 'the knowledge root' among its "
-                             "inputs, a term implement-task's new handoff no longer names")),
+    ("implement-task", "review-change"),
 )
 
 
@@ -198,4 +195,4 @@ def test_the_review_hands_nothing_forward_as_an_invocation():
     text = skill_text("review-change")
     assert handoff_blocks(text, "/implement-task") == []
     assert handoff_blocks(text, "/plan-work") == []
-    assert handoff_blocks(text, "/analyse-domain") == []
+    assert handoff_blocks(text, "/analyse") == []

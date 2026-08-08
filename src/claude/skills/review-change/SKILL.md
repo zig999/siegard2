@@ -1,6 +1,6 @@
 ---
 name: review-change
-description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the knowledge base holds, whether it follows the standard the project set for itself, and why a captured run failed — runs the steps that standard declares over the whole change and captures what they printed, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
+description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the specification holds, whether it follows the standard the project set for itself, and why a captured run failed — runs the steps that standard declares over the whole change and captures what they printed, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
 effort: medium
 ---
 
@@ -30,9 +30,9 @@ A missing input is a stop, not a default:
    and a finding spelled from the repository instead of the target answers to no rule.
 3. **the delivery root** — under git, holding the records and taking this review's own.
 4. **the work root** — the plan the tasks belong to.
-5. **the knowledge root** — the base the plan binds to, required exactly as the plan validator
-   requires it: while the plan is live, and ignored once it is closed. The conformance pass reads
-   it; without the base there is nothing to hold the source to.
+5. **the specification root** — the specification the plan implements against, required exactly
+   as the plan validator requires it: while the plan is live, and ignored once it is closed. The
+   conformance pass reads it; without the specification there is nothing to hold the source to.
 6. **the target source root** — where the code and the tests sit.
 
 Absent inputs stop once, together: one stop naming everything missing, so the human answers once —
@@ -83,8 +83,8 @@ ran is the failure that rule exists to prevent.
 Run both checks, and report either output verbatim as a stop:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <knowledge-root>
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --check <delivery-root> <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --check <delivery-root> <work-root> <specification-root>
 ```
 
 A review over a plan or a delivery that does not hold together reports a soundness nobody has.
@@ -131,12 +131,12 @@ directory and apply its discipline in place, and the report must say which passe
 
 Read the indexes, not the trees. `plan.json` and `delivery.json` are both current, because the
 checks above passed. From the plan, take each task under review: its criteria, quoted exactly as
-the task file states them, and the base nodes it binds. From the delivery, take each task's
+the task file states them, and the specification nodes it implements. From the delivery, take each task's
 implementation and proof records: the file set, what the implementation inferred and departed
 from, and what the proof left unproven or contested.
 
 Read the task files themselves for the criteria — `plan.json` does not carry them — and read
-nothing else in either root. The base node files belong to the passes, each reading its own.
+nothing else in either root. The specification node files belong to the passes, each reading its own.
 
 Then, where the caller named a standard, take it in and read it here — before anything is run:
 
@@ -226,11 +226,11 @@ runs next.
   `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, passing the criteria as the task files state
   them, the test file set out of the proof records, the target source root, and the contract's
   path. It returns one entry per criterion.
-- **conformance** — spawn a `base-conformance-reviewer` subagent, its judgment at
-  `${CLAUDE_PLUGIN_ROOT}/agents/base-conformance-reviewer.md`, passing the file set, the bound
-  node identifiers, the knowledge root, and the contract's path. It returns where the source
-  states a domain fact the base does not hold, contradicts one it does, or became a second home
-  for one.
+- **conformance** — spawn a `specification-conformance-reviewer` subagent, its judgment at
+  `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`, passing the file set, the
+  node identities, the specification root, and the contract's path. It returns where the source
+  states a domain fact the specification does not hold, contradicts one it does, or became a
+  second home for one.
 - **standard** — where the caller named a project standard, spawn a
   `standard-conformance-reviewer` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing the standard's path
@@ -240,23 +240,23 @@ runs next.
   has authored none.
 - **failures** — spawn a `failure-diagnostician` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md`, passing the run's directory, the target
-  source root, the bound nodes with the knowledge root, the file set, and the contract's path. It
+  source root, the specification nodes with the specification root, the file set, and the contract's path. It
   returns how many failures it counted and one finding for each.
 
 The division is deliberate and it is not arbitrary: whether the tests prove the criteria has one
-home, whether the source answers to the base has another, whether it follows the rules the project
+home, whether the source answers to the specification has another, whether it follows the rules the project
 set for itself has a third, and why a run failed has a fourth. One judgment per pass is what keeps
 two passes from disagreeing about one line, and it is what makes a clean result from any one of
 them mean something specific.
 
-The two conformance passes divide by authority and must not be confused. The base holds what the
-business decided — what the system answers, which refusal, which code, who may see what — and a
-fact of that kind written in source and in no bound node is the base pass's finding. A standard
-holds how the project is arranged — its layers, its wiring, its naming — and a rule of that kind is
-the standard pass's. A standard that stated what the system answers would put the two in
-contradiction over one line, one requiring in code exactly what the other reports; that is why the
-standard's contract excludes it, and why a rule you find doing it is a defect in the standard rather
-than a finding to record.
+The two conformance passes divide by authority and must not be confused. The specification holds
+what the business decided — what the system answers, which refusal, which code, who may see what
+— and a fact of that kind written in source and in no node is the specification pass's finding. A
+standard holds how the project is arranged — its layers, its wiring, its naming — and a rule of
+that kind is the standard pass's. A standard that stated what the system answers would put the two
+in contradiction over one line, one requiring in code exactly what the other reports; that is why
+the standard's contract excludes it, and why a rule you find doing it is a defect in the standard
+rather than a finding to record.
 
 The line all four passes stop at is not a subject line — it is the line between a rule whose
 application is a reading and a rule a tool decides. A model hunting an interpolated query competes
@@ -264,7 +264,7 @@ with a scanner built for it and loses; hunting a forbidden construct it competes
 and loses. So this framework runs the consumer's own tools rather than imitating them: a standard
 marks those rules as a tool's, they become steps of the captured run above, and what they print
 reaches the failures pass carrying the tool's own message as its evidence. What is left — a
-responsibility spanning two layers, an interface a caller cannot satisfy, a fact the base does not
+responsibility spanning two layers, an interface a caller cannot satisfy, a fact the specification does not
 hold — is what a reading is for.
 
 What this framework never supplies is the content of any of it: no rule, no threshold, no security
@@ -298,13 +298,13 @@ and a limit only the conversation held the next reader never sees.
 Check the file on its own as soon as it is composed:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <specification-root>
 ```
 
 ### 5. Validate, and derive the delivery
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <specification-root>
 ```
 
 This validates the review against the contract, runs the checks that need the plan — every task
@@ -353,7 +353,7 @@ Report, in this order:
 - the validator's final output, verbatim;
 - where the repairs live, as routes and not as a reading of the findings: source, or a criterion
   recorded unmet, is answered by `/implement-task` over the same task; a fact stated in source that
-  no bound node holds is produced in the base by `/analyse-domain` and reaches the task through
+  no node holds is produced by extending the specification through `/analyse` and reaches the task through
   `/plan-work`; a rule of the standard that seems wrong is changed by whoever owns the registry.
   This skill hands nothing forward as an invocation, and the reason is the one stated above: which
   route any finding deserves — or whether it deserves one at all — is the decision this pass does
@@ -398,6 +398,6 @@ to a person.
   copy after a record has pinned it.
 - Add to, edit or reinterpret the project's standard. It is the project's; a rule that seems wrong is
   reported as a departure exactly as written, and changed by whoever owns it.
-- Write into the work root, the knowledge root, or the target source root.
+- Write into the work root, the specification root, or the target source root.
 - Commit, stash, or otherwise change the consumer's git state.
 - Restate the contract's vocabularies from memory instead of reading the schema.
