@@ -523,7 +523,15 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
             if isinstance(front.get("upstream"), str):
                 upstream = landing(front["upstream"], "upstream", identity, "upstream")
                 if upstream is not None:
-                    if upstream["front"].get("direction") != "published":
+                    # A capability declares no `direction` field at all (contract.json's
+                    # capability branch admits only `type` and `display`) because it is always
+                    # published — SPEC-003 states this outright. Demanding the field here would
+                    # make a third-party integration impossible to model as SKILL.md's own prose
+                    # requires ("a third-party system is an upstream capability"), so its absence
+                    # on a capability target counts as published, not as unset.
+                    is_published = upstream["front"].get("type") == "capability" \
+                        or upstream["front"].get("direction") == "published"
+                    if not is_published:
                         problems.append(f"{identity}: upstream names {front['upstream']}, "
                                         f"whose direction is not published; the chain ends "
                                         f"at the context that owes compatibility")

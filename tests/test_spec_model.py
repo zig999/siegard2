@@ -229,6 +229,16 @@ def test_an_upstream_that_is_not_published_is_refused(spec_root):
     assert hits(problems_of(spec_root), "whose direction is not published")
 
 
+def test_a_capability_is_a_valid_upstream_despite_declaring_no_direction(spec_root):
+    """A capability's schema branch admits only `type` and `display` — it is always published
+    by SPEC-003's own description, never by an explicit field. Before this held, a consumed
+    contract could never name a capability upstream (SKILL.md's own "a third-party system is an
+    upstream capability" was unreachable), because the missing field read as "not published"."""
+    rewrite(spec_root, "contracts/troubleshooting/alert-raised.md",
+            lambda f: f.update(upstream="contracts/system/troubleshoot-customer-problem"))
+    assert hits(problems_of(spec_root), "whose direction is not published") == []
+
+
 # ------------------------------------------------------------------ projections
 
 
