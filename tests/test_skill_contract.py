@@ -145,9 +145,16 @@ def skill_text(name: str) -> str:
     return (REPO / "src/claude/skills" / name / "SKILL.md").read_text(encoding="utf-8")
 
 
-FORWARD_SEAMS = (("analyse-domain", "plan-work"),
-                 ("plan-work", "implement-task"),
-                 ("implement-task", "review-change"))
+# analyse-domain -> plan-work stays absent for good: analyse-domain is retired, not renamed,
+# and it authors the pre-redesign knowledge base plan-work no longer accepts. Its replacement
+# is named here once it exists; nothing stands in for it in the meantime, because there is
+# nothing plan-work still hands off to on that side of the seam.
+FORWARD_SEAMS = (
+    pytest.param("plan-work", "implement-task",
+                 marks=pytest.mark.xfail(strict=True,
+                     reason="implement-task still reads the base plan-work no longer writes")),
+    ("implement-task", "review-change"),
+)
 
 
 @pytest.mark.parametrize("handing,receiving", FORWARD_SEAMS)
@@ -168,18 +175,14 @@ def test_the_seam_hands_off_every_input_the_other_skill_requires(handing, receiv
             f"the {handing} handoff never names '{term}'; the stop it exists to spare returns"
 
 
-def test_the_plan_hands_open_questions_back_to_the_analysis():
-    """The plan report and the closure each hand what outran the base back as an invocation, because
-    a fact is produced in the base and never in a task."""
-    analyse_inputs = INPUT_TERM.findall(skill_text("analyse-domain"))
-    assert analyse_inputs, "analyse-domain numbers no required inputs; the seam guard lost its subject"
-    returning = handoff_blocks(skill_text("plan-work"), "/analyse-domain")
-    assert len(returning) == 2, \
-        "the plan report and the closure each hand the open questions back as an invocation"
-    for block in returning:
-        for term in analyse_inputs:
-            assert term in block, \
-                f"a questions handoff never names '{term}'; the stop it exists to spare returns"
+# test_the_plan_hands_open_questions_back_to_the_analysis retired with it: it held plan-work to
+# a fixed two-block /analyse-domain handoff carrying gaps and questions, and neither exists any
+# more — the specification never carries an open fact under decide-and-disclose, so there is
+# nothing left to hand back in that shape. What replaces it is a blocking note, reported by
+# plan-work and implement-task alike but pointed at no fixed invocation — a route named in prose
+# ("through /analyse extending the specification"), never a filled slot the way a real handoff
+# is. A seam test for it would be checking a sentence, not a contract, and stays unwritten for
+# that reason rather than for want of a name.
 
 
 def test_the_review_hands_nothing_forward_as_an_invocation():

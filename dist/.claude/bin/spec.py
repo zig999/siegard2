@@ -33,11 +33,19 @@ so something outside this script, living beside generated code rather than insid
 specification, can pin which version of a node it was written against and later ask whether that
 node moved. Refused entirely while the specification has problems, the same as `--project`.
 
+**A file can be checked on its own while it is being written.** `--node <file>` applies the
+one schema its class demands and nothing else: no reference resolution, no reachability, no
+decision-log check — those need the whole specification, and a file mid-authoring has not
+earned them yet. It is refused the same as any file the whole run would refuse; it just does
+not also fail for references a later file in the same session has not been written yet either.
+
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  spec.py <spec-root>              validate everything
         spec.py --project <spec-root>    validate, then write projections/
         spec.py --digest <spec-root>     validate, then print every node's content digest
+        spec.py --node <file> <spec-root>
+                                          validate one file (cross-node checks do not run)
 Exit:   0 sound
         1 problems
         2 cannot run
@@ -194,6 +202,71 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
         nodes[identity] = {"cls": cls, "context": context, "slug": slug, "front": front,
                            "digest": digest_of(path)}
     return nodes, problems
+
+
+def check_single(root: Path, named: str, validators) -> int:
+    """One file against its own schema, nothing more — the per-file half of `collect`, without
+    the walk and without anything that needs to see a second file."""
+    path = Path(named)
+    if not path.is_absolute():
+        path = (root / named) if (root / named).is_file() else Path.cwd() / named
+    try:
+        relative = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        print(f"cannot run: {named} is not under {root}", file=sys.stderr)
+        return CANNOT_RUN
+    if relative.parts and relative.parts[0] == PROJECTIONS:
+        print(f"{relative.as_posix()}: sits under {PROJECTIONS}/, which is derived and "
+              f"never validated as source")
+        return 0
+    placed = classify(relative)
+    if placed is None:
+        print(f"{relative.as_posix()}: the path computes to no identity; "
+              f"see the layout in SPEC-003")
+        return 1
+    cls, _, slug = placed
+    identity = "/".join(relative.with_suffix("").parts)
+    if not path.is_file():
+        print(f"cannot run: {path} does not exist", file=sys.stderr)
+        return CANNOT_RUN
+    text = path.read_text(encoding="utf-8")
+    match = FENCE.match(text)
+    if not match:
+        print(f"{identity}: carries no frontmatter fence")
+        return 1
+    try:
+        front = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as broken:
+        print(f"{identity}: frontmatter does not parse: {broken}")
+        return 1
+    if not isinstance(front, dict) or any(not isinstance(k, str) for k in front):
+        print(f"{identity}: frontmatter is not a mapping of string keys")
+        return 1
+
+    problems: list[str] = []
+    for field in META_FIELDS:
+        if field in front:
+            problems.append(
+                f"carries `{field}`, a provenance meta-field; a fact the material does not "
+                f"state is decided and disclosed in the decision log, never marked in an "
+                f"artifact (SPEC-001 R8)")
+    checked = {k: v for k, v in front.items() if k not in META_FIELDS}
+    for error in validators[cls].iter_errors(checked):
+        where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
+        problems.append(f"{where}: {error.message}")
+    problems += body_problems(cls, text[match.end():])
+    display = checked.get("display")
+    if isinstance(display, str) and reduce_display(display) != slug:
+        problems.append(f"display `{display}` reduces to `{reduce_display(display)}`, "
+                        f"not to the slug `{slug}`")
+
+    for problem in problems:
+        print(f"{identity}: {problem}")
+    if problems:
+        return 1
+    print(f"{identity}: sound on its own. Cross-node checks did not run; "
+          f"they run on the whole specification.")
+    return 0
 
 
 def resolve(ref: str, context: str | None) -> str:
@@ -677,11 +750,24 @@ def main() -> int:
     write = "--project" in args
     show_digests = "--digest" in args
     args = [a for a in args if a not in ("--project", "--digest")]
+    single = None
+    if "--node" in args:
+        at = args.index("--node")
+        if at + 1 >= len(args):
+            print("cannot run: --node takes a file", file=sys.stderr)
+            return CANNOT_RUN
+        single = args[at + 1]
+        del args[at:at + 2]
+    if (write or show_digests) and single is not None:
+        print("cannot run: --node validates one file, and --project/--digest are facts about "
+              "the whole specification", file=sys.stderr)
+        return CANNOT_RUN
     if write and show_digests:
         print("cannot run: --project and --digest are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected [--project | --digest] <spec-root>", file=sys.stderr)
+        print("cannot run: expected [--project | --digest | --node <file>] <spec-root>",
+              file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
     if not root.is_dir():
@@ -692,6 +778,9 @@ def main() -> int:
     except (FileNotFoundError, json.JSONDecodeError) as broken:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
+
+    if single is not None:
+        return check_single(root, single, validators)
 
     nodes, problems = collect(root, validators)
     problems += cross_problems(nodes, root)

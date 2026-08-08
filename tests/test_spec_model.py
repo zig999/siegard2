@@ -351,6 +351,55 @@ def test_the_cli_validates_and_projects(spec_root):
     assert "decision-log.md is missing" in run.stdout
 
 
+# --------------------------------------------------------------------- --node
+
+
+def run_node(*args) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"), *args],
+                          capture_output=True, text=True)
+
+
+def test_node_mode_passes_a_sound_file_on_its_own(spec_root):
+    done = run_node("--node", "domain/troubleshooting/case.md", str(spec_root))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "sound on its own" in done.stdout
+    assert "Cross-node checks did not run" in done.stdout
+
+
+def test_node_mode_still_refuses_a_malformed_file(spec_root):
+    path = spec_root / "domain/troubleshooting/case.md"
+    path.write_text(path.read_text(encoding="utf-8").replace("type: aggregate-root", "type: bogus"),
+                    encoding="utf-8")
+    done = run_node("--node", "domain/troubleshooting/case.md", str(spec_root))
+    assert done.returncode == 1
+    assert "bogus" in done.stdout
+
+
+def test_node_mode_ignores_a_dangling_reference(spec_root):
+    """A reference that only cross-node checks resolve does not fail a file checked alone —
+    the same discipline graph.py, plan.py and deliver.py already hold their --node modes to."""
+    path = spec_root / "domain/troubleshooting/case.md"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(text.replace("attributes:", "attributes:\n  - name: nothing\n"
+                                 "    type: does-not-exist\n", 1), encoding="utf-8")
+    done = run_node("--node", "domain/troubleshooting/case.md", str(spec_root))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_node_mode_reports_no_identity_for_a_path_outside_the_layout(spec_root):
+    (spec_root / "stray.md").write_text("---\ntype: value-object\n---\n\n## Description\n\nX.\n",
+                                        encoding="utf-8")
+    done = run_node("--node", "stray.md", str(spec_root))
+    assert done.returncode == 1
+    assert "the path computes to no identity" in done.stdout
+
+
+def test_node_mode_and_project_are_mutually_exclusive(spec_root):
+    done = run_node("--node", "domain/troubleshooting/case.md", "--project", str(spec_root))
+    assert done.returncode == spec.CANNOT_RUN
+    assert "facts about the whole specification" in done.stderr
+
+
 # ------------------------------------------------------- the schemas' own examples
 
 
