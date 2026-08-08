@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/trace.json",
+  "title": "Siegard trace file",
+  "description": "What ties a delivered file back to the specification node it was written to satisfy, after the plan that wrote it is gone: `siegard-trace.json`, beside `siegard.json` at the git toplevel of the target source root. Planning and delivery are disposable by design — a task exists to get code written, and nothing requires it to survive that — so this is the one fact this framework keeps once the plan is deleted: for a node it has bound, the digest it read and the file(s) it produced, each pinned the same way. A later run recomputes both digests from what is on disk now and compares: a node whose digest no longer matches moved in the specification since this entry was written; a file whose digest no longer matches moved in the code without a matching rebind. Either is drift, and this file is what makes it checkable without any plan's history to consult. Nobody hand-authors an entry — `bin/trace.py` is the one writer, computing both digests itself at bind time, and the one reader that recomputes them to report drift.",
+  "type": "object",
+  "required": ["specification", "bindings"],
+  "additionalProperties": false,
+  "properties": {
+    "specification": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The specification root every node below is an identity into (SPEC-003 R1), by path relative to this file's own directory. Every binding in this file traces against the one specification named here; tracing against a second one is a second trace file, never a second entry."
+    },
+    "bindings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/binding" },
+      "description": "One entry per specification node this project has bound to code, at most one each — a node bound twice is one binding with a stale copy sitting beside it, and bin/trace.py refuses that rather than pick a side."
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "required": ["node", "digest", "files"],
+      "additionalProperties": false,
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The specification node's identity (SPEC-003 R1): its path under `specification`, without `.md`."
+        },
+        "digest": {
+          "$ref": "#/$defs/pin",
+          "description": "The node's content digest as `bin/trace.py --bind` read it, the same value `spec.py --digest` computes for it. Diverging from what the node computes to now says the specification moved since this binding was written — the files below may no longer be what the node asks for."
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/tracedFile" },
+          "description": "Every file this node's binding produced or governs, each pinned at the digest it held when this entry was last written."
+        }
+      }
+    },
+    "tracedFile": {
+      "type": "object",
+      "required": ["path", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^[^/]",
+          "description": "Relative to this file's own directory, the same anchor `specification` uses — never absolute, and never relative to whatever directory a tool happened to run from."
+        },
+        "digest": {
+          "$ref": "#/$defs/pin",
+          "description": "The file's content digest as `bin/trace.py --bind` read it. Diverging from what the file computes to now says the code changed without a rebind — an edit this trace does not yet know about, not necessarily a wrong one."
+        }
+      }
+    },
+    "pin": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Content identity: the SHA-256 of the bytes of whatever this field's owner names, written `sha256:<hexdigest>` and computable by hand with `sha256sum`."
+    }
+  }
+}
