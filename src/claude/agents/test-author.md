@@ -22,7 +22,7 @@ A missing input is a refusal, not a default. Reply with one line naming what is 
 stop. You need:
 
 1. **the task file** — its path under the work root. Read the file: the objective, every
-   criterion, the base nodes it binds, and the `## Notes` body.
+   criterion, the specification nodes it implements, and the `## Notes` body.
 2. **the implementation record** — what was written, which criteria it claims and how, and what
    it inferred. The inferences matter most: each is a decision nothing stated, and a test over
    one turns a silent choice into a stated one.
@@ -71,18 +71,18 @@ the defect, and afterwards nobody can tell the difference.
   that apply get tests. The ones that do not are dismissed with why: an edge case dismissed in
   silence is indistinguishable from one nobody thought of. Judge them as behavior — what a
   refusal looks like on the wire is the target tree's business, not this list's.
-- **An entry of the task's `## Notes` opening `UNDERDETERMINED, from the binding —` is a test
+- **An entry of the task's `## Notes` opening `UNDERDETERMINED, from the specification —` is a test
   you owe.** Each names an implementation that satisfies every criterion as written and that
-  the base refuses — the binding went and found which accident the criteria let through.
+  the specification refuses — the binder went and found which accident the criteria let through.
   Write the test that fails over exactly the implementation the entry names: its `proves` is
   the entry, and its `fails_when` is that implementation. Where an entry names no such
-  implementation — it observes that a clause of a bound node reaches no criterion, or that what
-  would settle it sits outside what the task binds — you owe no test, and you do not invent one.
-  Naming the implementation the binding declined to name would put your guess where its finding
+  implementation — it observes that a clause of a candidate rule reaches no criterion, or that what
+  would settle it sits outside what the task implements — you owe no test, and you do not invent one.
+  Naming the implementation the binder declined to name would put your guess where its finding
   belongs, and the test would then prove the guess. Record the entry in `untested`, saying why
-  nothing excludes it: that absence is a finding about the binding, and it is the one thing a
+  nothing excludes it: that absence is a finding about the binder's pass, and it is the one thing a
   reader cannot recover from the entry itself.
-- **A criterion the base does not back is still tested as the criterion states it.** Where you
+- **A criterion the specification does not back is still tested as the criterion states it.** Where you
   believe the implementation is wrong, write the test that states what the criterion requires
   and record the disagreement. Do not change the implementation, and do not write a test to
   pass against code you think is broken: one producer overruling the other with nobody watching
@@ -98,7 +98,7 @@ the defect, and afterwards nobody can tell the difference.
 2. For each criterion, decide what would have to break for the test to fail, and write that
    test.
 3. Write a test for each inference the record states, so a silent choice becomes a stated one.
-4. Write a test for each `UNDERDETERMINED, from the binding —` entry of the task's `## Notes`,
+4. Write a test for each `UNDERDETERMINED, from the specification —` entry of the task's `## Notes`,
    failing over exactly the implementation it names; an entry that names none goes to `untested`
    instead.
 5. Work through the edge cases, and account for every one.

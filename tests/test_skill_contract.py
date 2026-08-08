@@ -155,10 +155,11 @@ def skill_text(name: str) -> str:
 # is named below instead of appended beside it.
 FORWARD_SEAMS = (
     ("analyse", "plan-work"),
-    pytest.param("plan-work", "implement-task",
+    ("plan-work", "implement-task"),
+    pytest.param("implement-task", "review-change",
                  marks=pytest.mark.xfail(strict=True,
-                     reason="implement-task still reads the base plan-work no longer writes")),
-    ("implement-task", "review-change"),
+                     reason="review-change still numbers 'the knowledge root' among its "
+                             "inputs, a term implement-task's new handoff no longer names")),
 )
 
 

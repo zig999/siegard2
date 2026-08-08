@@ -1,6 +1,6 @@
 ---
 name: implement-task
-description: Writes the source one planned task requires and the tests that prove it, installs what the project's own standard authorizes, runs the steps that standard declares until the project builds and its suite passes, records both nodes under a delivery root — what was written, every criterion answered, every bound base node accounted for, every inference, every departure, every run captured — validates the delivery against the plan, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse-domain), not for reviewing or judging what was written (that is /review-change), and never for more than one task.
+description: Writes the source one planned task requires and the tests that prove it, installs what the project's own standard authorizes, runs the steps that standard declares until the project builds and its suite passes, records both nodes under a delivery root — what was written, every criterion answered, every specification node the task implements accounted for, every inference, every departure, every run captured — validates the delivery against the plan, binds every node it encoded into the target's trace, and derives delivery.json. Use when a request asks to implement, build, code or deliver a task the plan already holds. Not for planning or decomposing work (that is /plan-work), not for analysing domain material (that is /analyse), not for reviewing or judging what was written (that is /review-change), and never for more than one task.
 effort: medium
 ---
 
@@ -17,11 +17,11 @@ A missing input is a stop, not a default:
    ask which. Choosing for the human is choosing what gets built.
 2. **the work root** — the plan holding the task. Named by the human; inferred rather than
    named, its absence is a stop.
-3. **the knowledge root** — the base the plan binds to, required exactly as the plan validator
-   requires it: while the plan is live, and ignored once it is closed. A work root holding
-   `closure.md` is a different matter: the plan is history, its initiative is over, and writing new
-   source against it is a stop. Reviewing what it already delivered is not — that is
-   `/review-change`'s, and it stays possible for as long as the records do.
+3. **the specification root** — the specification the plan implements against, required exactly
+   as the plan validator requires it: while the plan is live, and ignored once it is closed. A
+   work root holding `closure.md` is a different matter: the plan is history, its initiative is
+   over, and writing new source against it is a stop. Reviewing what it already delivered is
+   not — that is `/review-change`'s, and it stays possible for as long as the records do.
 4. **the target source root** — where the code lives or will live. An empty tree is an answer;
    which tree it is, the human says.
 5. **the delivery root** — the directory the records are written into, under git, beside neither
@@ -56,13 +56,13 @@ standard "named" means resolved by either step.
 Nothing is written over a plan that does not hold together. Run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>
 ```
 
 Anything but a clean pass is a stop: report the output verbatim and go no further. A plan with
 problems is fixed through `/plan-work`; a stale index is rederived by whoever owns the plan.
 Neither repair is this invocation's to make — delivering never writes into the work root, and
-never into the knowledge root either.
+never into the specification root either.
 
 The pin the implementation record carries is the SHA-256 of the task's own file:
 `sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`. It pins the task
@@ -122,7 +122,7 @@ patched a file to make a build pass would be the writer that nobody separated fr
 ## The order
 
 ```
-situate → set up → implement → build → prove → suite → validate → report → stop
+situate → set up → implement → build → prove → suite → validate → bind → report → stop
 ```
 
 Two of these steps are another judge's. Writing the source and writing what proves it are
@@ -146,60 +146,50 @@ clean one.
 One command answers where the task stands, and it validates the delivery on the way:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <specification-root>
 ```
 
 On an empty delivery root it reports every task without a record; on a populated one it also
-reports, per task, what the base leaves unresolved and which dependencies have no record yet.
-Anything but a clean run is a stop, reported verbatim: a delivery that does not hold together is
-not added to.
+reports, per task, which dependencies have no record yet. Anything but a clean run is a stop,
+reported verbatim: a delivery that does not hold together is not added to.
 
-Two of its lines are refusals, and each is settled before anything is written:
+One of its lines is a refusal, and it is settled before anything is written:
 
-- **The task carries unresolved entries.** Stop. An unresolved entry is a fact the base does not
-  hold that bears on the objective or a criterion, and there is no honest way to write source
-  over one — what gets written reads exactly like a decision the business made, in the one place
-  nobody will look for a decision. Report the entries quoted whole, and hand over the door, not
-  just the wall: the report ends with the `/analyse-domain` invocation ready to paste — this
-  knowledge root named by path, the entries listed as the asks the material must answer, and,
-  where a cited gap carries a proposal, the ask being to ratify or reject it. The answer is
-  produced in the base, never here, and the task is re-bound through `/plan-work` afterwards.
-  The validator refuses such a record too, but by then the source exists; the point of stopping
-  here is that it does not.
 - **A task this one builds on has no record.** Stop, and name it. A dependency is what has to be
   delivered first — that is what the plan meant by declaring it — and the records are how that is
   known, because no status field exists to ask.
 - **The named task is not in the plan.** Stop — and hand over the door, not just the wall: the
   report ends with a `/plan-work` invocation filled with everything this invocation already knows
-  (the work root, the knowledge root, the target source root, the standard where one was named),
+  (the work root, the specification root, the target source root, the standard where one was named),
   leaving only the scope for the human to state. A task the plan does not hold is planned into
   it, never improvised past.
 
-A third refusal is not in that report, because the plan's index is not what holds it — the task file
-does. So open the task file here, before the copying below writes anything, and read its `## Notes`:
-**an entry opening `BLOCKING, from the binding —` is a stop.** Quote the entries whole. That class is
-the binder's finding that the objective, or a criterion, cannot be demonstrated
-as written without contradicting or exceeding the base, and a task that arrives here still carrying
-one is the scope-origin kind — the other kind is re-cut and re-bound before the task is ever
-written. What the plan said of it, in as many words, is that only the human settles it: through the
-scope, re-planned in `/plan-work`, or through `/analyse-domain` producing the fact the base lacks,
-after which the task re-binds and the note is gone. Both doors leave here ready to open: the
-report ends with the `/plan-work` invocation and the `/analyse-domain` invocation, each filled
-with everything this invocation already knows — the roots by path, the note quoted as the
-conflict the scope must settle or as the ask the material must answer — leaving to the human
-only the choice of door and what only the human holds. Writing source in the meantime encodes the
-contradiction as though the business had decided it — the same failure an unresolved entry names,
-and the worse half of it, because here the base is not silent but overruled. The class is the
-binder's judgment and not yours to overrule: a note you disagree with is still a stop, and the
-disagreement goes in what you report.
+A second refusal is not in that report, because the plan's index is not what holds it — the task
+file does. So open the task file here, before the copying below writes anything, and read its
+`## Notes`: **an entry opening `BLOCKING, from the specification —` is a stop.** Quote the
+entries whole. That class is the binding's finding that the objective, or a criterion, cannot be
+demonstrated as written without contradicting or exceeding the specification, including a fact
+the specification does not state at all, and a task that arrives here still carrying one is the
+scope-origin kind — the other kind is re-cut and re-implemented against before the task is ever
+written. What the plan said of it, in as many words, is that only the human settles it: through
+the scope, re-planned in `/plan-work`, or through `/analyse` extending the specification, after
+which the task is re-run through the implement-against step and the note is gone. Both doors
+leave here ready to open: the report ends with the `/plan-work` invocation and the `/analyse`
+invocation, each filled with everything this invocation already knows — the roots by path, the
+note quoted as the conflict the scope must settle or as the fact the material must answer —
+leaving to the human only the choice of door and what only the human holds. Writing source in
+the meantime encodes the contradiction as though the business had decided it, and here the
+specification is not silent but overruled — the worse of the two failures this whole discipline
+exists to prevent. The class is the binder's judgment and not yours to overrule: a note you
+disagree with is still a stop, and the disagreement goes in what you report.
 
-This stop is the skill's and not the validator's. `deliver.py` refuses a record over an unresolved
-entry and says nothing about notes, deliberately: a blocking note is cleared by amending the scope
-or the base, and by the time either lands the task has re-bound and the note is gone — so a second
-gate in the validator would only ever fire on a state this stop already refuses. What the plan
-records, the code cannot embody; those are different acts and they get different answers.
+This stop is the skill's and not the validator's. `deliver.py` says nothing about notes,
+deliberately: a blocking note is cleared by amending the scope or the specification, and by the
+time either lands the task has re-run through implement-against and the note is gone — so a
+second gate in the validator would only ever fire on a state this stop already refuses. What the
+plan records, the code cannot embody; those are different acts and they get different answers.
 
-A fourth fact the report does not carry, because you can see it directly: **a record already at the
+A third fact the report does not carry, because you can see it directly: **a record already at the
 path this task computes to.** That is a re-delivery, not a stop, and the report says so. Both
 records are rewritten whole rather than amended — a record amended across two acts of writing
 describes neither, and the proof's pin on the implementation refuses the pair if you rewrite one
@@ -288,16 +278,16 @@ what it names — a registry nobody can reach, a lockfile that does not resolve 
 
 Spawn a `task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
-the knowledge root, the target source root, the paths of the plan's inventory nodes, and the
+the specification root, the target source root, the paths of the plan's inventory nodes, and the
 delivery-node contract's path — plus, where one was named, the path of **the copy** of the standard,
 so what it read is exactly what the record pins. Where the task declares `produces`, pass those
 paths too: they are artifacts this delivery has to create rather than conventions it has to follow,
 and the record is refused if `files` does not list every one of them. Where the standard authorizes
 dependencies, pass that list too, by name: it is what the agent may add to the manifest and the
 whole of it — a package outside it is the agent's refusal, not its judgment call, because the list
-is where a human's approval of a package survives the session it was given in. It reads the task and the nodes it binds, writes the source, and
+is where a human's approval of a package survives the session it was given in. It reads the task and the nodes it implements, writes the source, and
 returns the record: every path it created or modified and what each now does, every criterion of
-the task answered, every bound node accounted for, which authorized dependencies it added, and
+the task answered, every node it implements accounted for, which authorized dependencies it added, and
 what it inferred, departed from, preserved and deferred.
 
 **Every path in the record is relative to the target source root** — the directory the registry's
@@ -365,13 +355,14 @@ Check the file on its own as soon as it is composed, so a composition error is c
 that made it:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <specification-root>
 ```
 
-Where the agent stopped instead of writing — an input absent, a bound node missing, the base
-silent on a fact the work needs — that is a successful stop and not a failure of this invocation:
-report what it said and write no record. Where it wrote files and then stopped, the run failed:
-say which files exist, and leave them for a person to look at rather than tidying them away.
+Where the agent stopped instead of writing — an input absent, a node it implements missing, the
+specification silent on a fact the work needs — that is a successful stop and not a failure of
+this invocation: report what it said and write no record. Where it wrote files and then stopped,
+the run failed: say which files exist, and leave them for a person to look at rather than
+tidying them away.
 
 ### 5. Prove
 
@@ -380,16 +371,16 @@ is no source for a test to reach, and a proof requires at least one test precise
 that cannot be said to fail for a stated reason is one nobody can evaluate — over an empty tree
 every entry would be that. So this step and the next do not run, and `deliver.py --outstanding`
 reports the task as implemented with no proof holding it up, which is exactly true. Say so in the
-report and go to step 7. Composing a proof anyway would be the one thing worse than the absence: a
+report and go to step 8. Composing a proof anyway would be the one thing worse than the absence: a
 record asserting that tests hold up a task, written where no test could exist.
 
 Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
 implementation record's path, the target source root, and the delivery-node contract's path — plus
 the copy of the standard where one was named, because a project's rules about how its tests are
-written are the test author's to follow, and plus every `UNDERDETERMINED, from the binding —`
+written are the test author's to follow, and plus every `UNDERDETERMINED, from the specification —`
 entry of the task's `## Notes`, quoted whole: each names an implementation that satisfies every
-criterion as written and that the base refuses, and excluding it is the test author's work.
+criterion as written and that the specification refuses, and excluding it is the test author's work.
 Where the task's criteria name a failure that must stop happening, pass the reproduction too;
 without it the tests prove the fix rather than the defect, and afterwards nobody can tell the
 difference.
@@ -452,13 +443,13 @@ the signal.
 When both records are written, run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <knowledge-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <specification-root>
 ```
 
 This validates every delivery node against the contract, runs the checks that need the plan — the
 task exists, a proof sits beside an implementation, every criterion of the task is answered
-exactly once and nothing else is, every base node the task binds is accounted for, no task the
-base leaves unresolved is delivered, no task is delivered before what it builds on, every record's
+exactly once and nothing else is, every specification node the task implements is accounted for,
+no task is delivered before what it builds on, every record's
 pin matches its own task as it stands, each proof's pin matches the implementation beside it, and
 every departure disclosed against a standard rule cites one that standard declares and sits in a
 file this record says it wrote — and derives `delivery.json`. **Never write or edit
@@ -466,11 +457,40 @@ file this record says it wrote — and derives `delivery.json`. **Never write or
 failed — fix and rerun, and never describe the delivery as sound while it is not.
 
 **Fixing means form, never knowledge.** A wrong shape — a malformed pin, a criterion paraphrased
-instead of quoted, a missing entry for a bound node — is yours to correct. A criterion the source
-does not satisfy is recorded as unmet, not talked into met. A fact the base does not hold is not
+instead of quoted, a missing entry for a node the task implements — is yours to correct. A criterion the source
+does not satisfy is recorded as unmet, not talked into met. A fact the specification does not hold is not
 supplied to make a check pass: it is a stop, and it was one before the source was written.
 
-### 8. Report, and stop
+### 8. Bind the trace
+
+The delivery's own records are disposable — the plan and the delivery root exist to get this code
+written, and nothing requires either to survive the code landing. What has to survive is the link
+between the specification and the files that now encode it, so a later `/plan-work` or `/analyse`
+invocation can ask, without either root, whether this code and the specification it followed have
+since moved apart.
+
+For every entry of the implementation record's `nodes` that carries `encoded_at`, run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind <target-source-root> <specification-root> <node> <file> [<file> ...]
+```
+
+naming the node and exactly the paths its `encoded_at` lists — the same paths `files` already
+carries, so nothing here is read from anywhere but the record just written. A node the record
+answers only by `how` — constrained but encoded nowhere — is not bound: there is no file to name,
+and `trace.py` refuses a bind with none. Where a proof exists, its criteria stay with the
+implementation record; the trace binds what the source encodes, not what the tests prove.
+
+This is the one place in the whole invocation that touches a file outside the delivery root, the
+work root and the target source root — `siegard-trace.json`, beside `siegard.json` at the
+target's git toplevel — and it is not this skill's to design around: `trace.py` is the one writer,
+and what it refuses (a node the specification no longer holds, a trace already bound to a
+different specification root) is reported here, plainly, rather than worked around. A refusal at
+this step does not unwrite the delivery: the records already validated stand on their own, and
+what is missing is exactly the fact that this delivery's files and the specification it followed
+are not yet linked for anyone who looks later.
+
+### 9. Report, and stop
 
 Report, in this order:
 
@@ -483,6 +503,9 @@ Report, in this order:
 - everything the proof left unproven, every edge case it dismissed, and every disagreement it
   recorded;
 - what the implementation deferred, and what it says must keep working;
+- every node bound into the target's trace, and any binding `trace.py` refused — the trace is
+  what lets a future invocation ask whether this code and the specification have since moved
+  apart, and a refused binding left unreported is a delivery that looks synced when it is not;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
 - the standard this invocation followed — where it resolved from, the invocation or the project
@@ -503,11 +526,11 @@ Report, in this order:
   approval — the lockfile is what says what actually arrived, and it is in the diff;
 - what `/review-change` still does that this invocation did not: it runs the same steps again over
   the whole change rather than one task's, and it judges — whether the tests prove the criteria,
-  whether the source states only what the base holds, whether it follows the same standard, and
+  whether the source states only what the specification holds, whether it follows the same standard, and
   why anything failed. A green suite here is a green suite over one task, and two tasks that each
   passed alone are not a change that passes together;
 - the handoff: the `/review-change` invocation ready to paste — this delivery root, this work
-  root, this knowledge root and this target source root named by path as just validated; the
+  root, this specification root and this target source root named by path as just validated; the
   tasks under review being the one task this invocation delivered, by identifier; the file
   set being exactly the paths named above, because a review never discovers its own scope and
   this report is the only place that set exists; and the project's standard as it resolved,
@@ -523,11 +546,9 @@ belongs to a person.
 - Write or edit `delivery.json` by hand.
 - Take a second task, or widen the one you were given — code that should change and that this
   task does not reach is deferred in the record, never changed.
-- Write source over a task the base leaves unresolved, or supply the fact yourself. A fact is
-  produced in the base, through `/analyse-domain`, never in code, a comment, a test or a record.
-- Write source over a task whose `## Notes` still carries a `BLOCKING, from the binding —` entry,
-  or settle the conflict it names. The class is the binder's, the settlement is the human's, and
-  both ways out of it run through another entry point.
+- Write source over a task whose `## Notes` still carries a `BLOCKING, from the specification —`
+  entry, or settle the conflict it names. The class is the binder's, the settlement is the
+  human's, and both ways out of it run through another entry point.
 - Record a status, a readiness, an approval or a progress figure — those fields do not exist, and
   prose does not get to hold what the contract refused.
 - Judge whether the work is correct, done well enough, or fit to merge. Nothing here carries a
@@ -547,8 +568,8 @@ belongs to a person.
 - Read `produces` as leave to skip a check over source. It exempts the delivery that wrote the
   substrate and nothing else; a task that declared it and also wrote source owes every step the
   registry declares, and the validator refuses the record whose run did not cover them.
-- Write into the work root or the knowledge root; a plan or a base that is wrong is reported with
-  its fix.
+- Write into the work root or the specification root; a plan or a specification that is wrong is
+  reported with its fix.
 - Write the tests in the context that wrote the source — the inline fallback is for a session that
   cannot spawn subagents, is declared in the report, and still applies each agent's file.
 - Settle a disagreement the proof recorded, or delete an inference to make a record read cleanly.
@@ -563,4 +584,7 @@ belongs to a person.
 - Treat a disclosed departure as leave to depart. It says the departure was known and reasoned, and
   it settles nothing: the review holds the same source to the same rules and is not shown what was
   disclosed.
+- Bind a node into the trace that the implementation record does not name with `encoded_at`, or
+  skip one that it does — the trace states exactly what the record already says, never a second
+  judgment about it.
 - Restate the contract's vocabularies from memory instead of reading the schema.
