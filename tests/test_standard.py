@@ -94,8 +94,8 @@ def test_the_example_registry_parses_as_yaml():
 
 def test_the_example_registry_states_no_domain_fact(contract):
     """The contract's first exclusion, checked the only way prose can be: a status code or an
-    error code written into a rule's statement is a fact the base owns, and a standard holding one
-    would put two review passes in contradiction over the same line."""
+    error code written into a rule's statement is a fact the specification owns, and a standard
+    holding one would put two review passes in contradiction over the same line."""
     data, _ = deliver.load_standard(EXAMPLE, contract)
     import re
     status = re.compile(r"\b(200|201|204|400|401|403|404|409|422|429|500)\b")
@@ -103,7 +103,7 @@ def test_the_example_registry_states_no_domain_fact(contract):
     offenders = [r["id"] for r in data["rules"]
                  if status.search(r["statement"]) or code.search(r["statement"])]
     assert offenders == [], \
-        f"{offenders} state what the system answers; that belongs to the knowledge base, and the " \
+        f"{offenders} state what the system answers; that belongs to the specification, and the " \
         f"registry's own `elsewhere` section says so"
 
 

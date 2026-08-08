@@ -5,7 +5,6 @@ import root for a consumer, so the suite imports each script the way a consumer 
 """
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -26,11 +25,6 @@ PLAN_BODY = "## What it is\nProse for a reader.\n\n## Notes\nNone.\n"
 @pytest.fixture(scope="session")
 def repo() -> Path:
     return REPO
-
-
-@pytest.fixture(scope="session")
-def schema() -> dict:
-    return json.loads((REPO / "src/claude/schemas/node.json").read_text(encoding="utf-8"))
 
 
 @pytest.fixture

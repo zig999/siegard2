@@ -99,11 +99,12 @@ def test_the_full_listing_holds_every_term(loaded):
 # ------------------------------------------------- the drift these tests were written after
 
 
-SLUG_HOLDERS = ("node.json", "plan-node.json", "standard.json")
+SLUG_HOLDERS = ("plan-node.json", "standard.json")
 
 
 def test_every_slug_definition_is_the_same_sentence(loaded):
-    """Four schemas state what a slug is, and one of them had quietly dropped the clause that
+    """These schemas state what a slug is with the identical full sentence — node.json once made
+    a third before it retired, and one of the two remaining had quietly dropped the clause that
     decides a name which will not reduce. Copies of one definition are kept honest mechanically or
     not at all."""
     stated = {name: loaded[name]["$defs"]["slug"]["description"] for name in SLUG_HOLDERS}

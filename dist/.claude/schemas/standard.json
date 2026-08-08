@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/standard.json",
   "title": "Siegard project standard",
-  "description": "A project's own rules about how its source is arranged, authored by the project and never by this framework. Siegard ships this contract, the pass that holds code to a registry, and the checks that keep a finding answerable to one rule — it ships no rule. A stack's conventions are not a domain's, and a framework that shipped them would prescribe TypeScript to a Go project; the predecessor this comes from did exactly that and its own weakness list said so. It is a registry rather than prose because every finding a review records must cite exactly one rule by its id, and prose cannot be cited: a finding citing no rule is taste with a location attached. Two exclusions are the whole of its scope. First, **no rule here states what the system answers or who may see what** — a status, an error code, a refusal, an authorization outcome. Those are what the business decided, they live in the knowledge base as nodes, and a rule here stating one would put the standard pass and the base-conformance pass in contradiction over the same line: one requiring in code what the other reports as a fact the base does not hold. Second, **no rule carries a severity and nothing here derives a verdict** — the registry's ancestor graded every finding and fed the grade to an approval gate, which made the reviewer the gate. A finding states what it costs; a person decides what that means.",
+  "description": "A project's own rules about how its source is arranged, authored by the project and never by this framework. Siegard ships this contract, the pass that holds code to a registry, and the checks that keep a finding answerable to one rule — it ships no rule. A stack's conventions are not a domain's, and a framework that shipped them would prescribe TypeScript to a Go project; the predecessor this comes from did exactly that and its own weakness list said so. It is a registry rather than prose because every finding a review records must cite exactly one rule by its id, and prose cannot be cited: a finding citing no rule is taste with a location attached. Two exclusions are the whole of its scope. First, **no rule here states what the system answers or who may see what** — a status, an error code, a refusal, an authorization outcome. Those are what the business decided, they live in the specification as nodes, and a rule here stating one would put the standard pass and the conformance pass in contradiction over the same line: one requiring in code what the other reports as a fact the specification does not hold. Second, **no rule carries a severity and nothing here derives a verdict** — the registry's ancestor graded every finding and fed the grade to an approval gate, which made the reviewer the gate. A finding states what it costs; a person decides what that means.",
   "type": "object",
   "required": ["contract_version", "standard", "summary", "rules"],
   "additionalProperties": false,
@@ -210,7 +210,7 @@
         "lives_in": {
           "type": "string",
           "minLength": 1,
-          "description": "Where this actually lives — the knowledge base, a named agent of the framework, a tool, or nowhere on purpose."
+          "description": "Where this actually lives — the specification, a named agent of the framework, a tool, or nowhere on purpose."
         },
         "why": { "type": "string", "minLength": 1 }
       }
@@ -258,7 +258,7 @@
       "elsewhere": [
         {
           "what": "Which status a refusal answers with.",
-          "lives_in": "The knowledge base, as a rule or interface node.",
+          "lives_in": "The specification, as a rule or contract node.",
           "why": "It is what the business decided, and stating it here would make two review passes disagree over one line."
         }
       ]

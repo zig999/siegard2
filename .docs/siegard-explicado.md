@@ -1,16 +1,18 @@
 # Siegard explicado do zero
 
 > **Sobre este manual.** Ele descreve o motor deste repositório a partir do zero, sem supor
-> conhecimento prévio. Cobre a versão **3.1.0** (contratos `siegard/1`, `siegard-plan/2`,
-> `siegard-delivery/1`, `siegard-standard/1`).
+> conhecimento prévio. Cobre a versão **3.5.0** — o redesign que fecha a especificação em cinco
+> classes normativas (Domain Model, Rule, Scenario, Contract, Architecture Constraint), substitui
+> gaps-como-ignorância por decide-and-disclose, e introduz o trace como o vínculo que sobrevive ao
+> plano. Substitui a edição da versão 3.1.0, que descrevia o modelo anterior — sete tipos de nó,
+> gaps abertos, binding por digest — inteiramente retirado deste repositório.
 >
 > **Sobre o idioma.** A seção Language de `/CLAUDE.md` exige que todo artefato do repositório seja
 > em inglês (en-US), e nomeia `docs` entre eles. Este arquivo é a exceção deliberada, decidida pelo
 > mantenedor com a regra sobre a mesa, e é o único artefato do repositório fora dela.
 >
-> **Sobre os exemplos.** Todos os nós vieram dos campos `examples` dos próprios schemas, então são
-> formas que o contrato admite por construção. Toda saída de validador citada é real, capturada
-> rodando o motor sobre bases construídas para este manual.
+> **Sobre os exemplos.** Todo nó citado vem do fixture `tests/fixtures/spec-model/`, e toda saída
+> de validador citada é real, capturada rodando `spec.py` sobre ele.
 
 ---
 
@@ -20,11 +22,11 @@
 2. [A ideia central em uma página](#2-a-ideia-central-em-uma-página)
 3. [O nó: a unidade de tudo](#3-o-nó-a-unidade-de-tudo)
 4. [O caminho é a identidade](#4-o-caminho-é-a-identidade)
-5. [O índice derivado](#5-o-índice-derivado)
-6. [O gap: o que o material não disse](#6-o-gap-o-que-o-material-não-disse)
-7. [Os sete tipos de nó, com exemplos reais](#7-os-sete-tipos-de-nó-com-exemplos-reais)
-8. [Do conhecimento ao plano: a vinculação](#8-do-conhecimento-ao-plano-a-vinculação)
-9. [O digest: qual versão a vinculação leu](#9-o-digest-qual-versão-a-vinculação-leu)
+5. [Por que não há índice derivado](#5-por-que-não-há-índice-derivado)
+6. [Decide-and-disclose: o log de decisões](#6-decide-and-disclose-o-log-de-decisões)
+7. [As cinco classes, com exemplos reais](#7-as-cinco-classes-com-exemplos-reais)
+8. [Do domínio ao plano: implementar contra](#8-do-domínio-ao-plano-implementar-contra)
+9. [O trace: o vínculo que sobrevive ao plano](#9-o-trace-o-vínculo-que-sobrevive-ao-plano)
 10. [As totalidades: nada passa em silêncio](#10-as-totalidades-nada-passa-em-silêncio)
 11. [A entrega](#11-a-entrega)
 12. [O standard: as regras que o projeto define para si](#12-o-standard-as-regras-que-o-projeto-define-para-si)
@@ -33,1599 +35,565 @@
 15. [Exemplo completo de ponta a ponta](#15-exemplo-completo-de-ponta-a-ponta)
 16. [Glossário](#16-glossário)
 17. [Erros comuns e o que significam](#17-erros-comuns-e-o-que-significam)
-18. [Migrando de 1.x para 2.0.0](#18-migrando-de-1x-para-200)
+18. [De onde isto veio](#18-de-onde-isto-veio)
 
 ---
 
 ## 1. Que problema isso resolve
 
-Considere um projeto de software comum. Alguém do negócio explica uma regra numa reunião. Um
-desenvolvedor entende e escreve o código. Seis meses depois:
-
-- A regra está no código, misturada a detalhes técnicos.
-- Está também num Jira fechado, com a redação de quem abriu o ticket.
-- Está num comentário `// pedido não pode ter total zero`, que ninguém atualizou.
-- Está na cabeça de duas pessoas, uma das quais saiu.
-
-E quando alguém pergunta *"por que o sistema recusa esse pedido?"*, a resposta honesta é "vamos ler
-o código e descobrir". O código passou a ser a fonte da verdade sobre o que o **negócio decidiu** —
-e isso é uma inversão. O código deveria ser consequência da decisão, não o lugar onde ela mora.
-
-Pior: quando o código é a única fonte, **não existe diferença visível entre uma decisão do negócio e
-um chute de quem programou**. As duas coisas parecem exatamente iguais no arquivo. Um
-`if total <= 0: reject()` pode ser uma regra que o cliente ditou ou uma suposição de terça-feira à
-tarde.
-
 ### O que o Siegard faz
 
-Separa isso em três camadas e obriga cada uma a apontar para a anterior:
+Um projeto de software carrega dois tipos de conhecimento: o que o negócio decidiu (um pedido
+tem um total, um caso muda de estado ao ser investigado, uma cobrança é recusada sem uma
+investigação concluída) e como o código está organizado (camadas, injeção de dependência, onde um
+teste mora). O primeiro é domínio; o segundo é arquitetura. Historicamente os dois se misturam no
+código-fonte, em comentários, e na cabeça de quem escreveu — e divergem silenciosamente do que o
+negócio realmente decidiu, porque nada os mantém amarrados um ao outro.
 
-```
-   O que o negócio decidiu   →   O que vamos construir   →   O que foi construído
-        (conhecimento)                  (plano)                    (entrega)
-```
+O Siegard separa os dois numa **especificação** — arquivos markdown com frontmatter estruturado,
+válidos ou não contra um contrato explícito — e mantém um **vínculo de conteúdo** entre essa
+especificação e o código que a implementa. Quando os dois divergem, é possível saber: um nó da
+especificação mudou depois que o código foi escrito, ou o código mudou sem que ninguém atualizasse
+o vínculo. Nenhuma das duas coisas é descoberta por acidente meses depois.
 
-E acrescenta uma regra que muda tudo:
-
-> **Um fato que ninguém disse não é inventado. É declarado como ausente.**
-
-É essa regra que torna visível a diferença entre decisão e chute. Se o material nunca disse qual é o
-total mínimo de um pedido, o nó **não escreve zero**. Ele escreve: *este fato está em falta, e só
-quem conhece o domínio pode preenchê-lo.*
-
----
+O motor não decide nada sozinho. Toda decisão de negócio — o que uma entidade é, o que uma regra
+exige, o que uma tarefa implementa — é de um agente ou de uma pessoa. O motor garante que a
+decisão, uma vez tomada, fique registrada num lugar verificável, e recusa o que contradiz o que já
+foi registrado.
 
 ## 2. A ideia central em uma página
 
-Três diretórios. Cada um cheio de arquivos markdown. Cada um com um índice gerado por script e um
-validador que **se recusa** a gerar o índice se as coisas não fecharem.
+Tudo que este motor valida é um **nó**: um arquivo markdown cujo *caminho* é sua identidade e cujo
+frontmatter é validado contra um schema JSON. Não existe um campo `id`, `type` ou `class` dentro
+do arquivo — o caminho já diz tudo isso, então nada no conteúdo pode discordar de onde o arquivo
+está.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  RAIZ DE CONHECIMENTO          "o que o negócio decidiu"                    │
-│  knowledge/                                                                 │
-│    context/sales.md                    ← um arquivo = um fato do domínio    │
-│    definition/sales/order.md                                                │
-│    rule/sales/total-positive.md                                             │
-│    graph.json                          ← GERADO. nunca editado à mão.       │
-│                                                                             │
-│  validador: bin/graph.py                                                    │
-└──────────────────────────────┬──────────────────────────────────────────────┘
-                               │  cada task "vincula" os nós que a governam
-                               │  e guarda o digest de cada um que leu
-                               ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  RAIZ DE TRABALHO              "o que vamos construir"                      │
-│  work/                                                                      │
-│    inventory/order-service.md          ← o que já existe no código          │
-│    epic/checkout.md                    ← uma fatia de escopo                │
-│    task/checkout/record-order.md       ← uma unidade de trabalho            │
-│    plan.json                           ← GERADO.                            │
-│                                                                             │
-│  validador: bin/plan.py   (valida o plano CONTRA a base)                    │
-└──────────────────────────────┬──────────────────────────────────────────────┘
-                               │  cada record responde a uma task
-                               │  e pina a versão da task que respondeu
-                               ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  RAIZ DE ENTREGA               "o que foi construído"                       │
-│  delivery/                                                                  │
-│    implementation/checkout/record-order.md   ← o que o código faz           │
-│    proof/checkout/record-order.md            ← o que os testes provam       │
-│    review/first.md                           ← o que a revisão achou        │
-│    run/first/                                ← o que cada execução imprimiu │
-│    standards/backend.yaml                    ← a cópia pinada do registro   │
-│    delivery.json                             ← GERADO.                      │
-│                                                                             │
-│  validador: bin/deliver.py  (valida a entrega CONTRA o plano)               │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+A especificação de um sistema tem exatamente **cinco classes** de nó, fechadas por design:
 
-**Três coisas para guardar desde já:**
+| classe | responde | verificada por |
+|---|---|---|
+| Domain Model | o que existe e como se estrutura | resolução de referência, alcançabilidade |
+| Rule | o que sempre deve valer (universal) | uma condição falsificável |
+| Scenario | o que acontece num caso concreto (exemplo) | executável como um teste de aceitação |
+| Contract | o que é prometido através de uma fronteira | compatibilidade ao longo do tempo |
+| Architecture Constraint | o que limita o espaço de solução | uma função de fitness sobre a implementação |
 
-1. **Tudo é markdown.** Nada de banco de dados, nada de estado escondido. Basta abrir no editor e
-   ler.
-2. **Nenhum nó tem status.** Não existe campo "em andamento", "pronto", "aprovado". O estado da
-   execução mora no git. Um plano que registrasse progresso seria um arquivo de estado de
-   orquestrador, e o framework recusa ter um.
-3. **Os `.json` são derivados.** Nunca se edita um. Muda-se o markdown e roda-se o script. Um json
-   editado à mão é acusado pelo próximo `--check`.
+Um fato que o material não declara **é decidido agora, pela análise, e a decisão vai para um log
+append-only** — nunca fica marcado como pendência dentro do nó. Essa é a reversão central deste
+redesign: a versão anterior tratava um fato não declarado como um "gap" a ser preenchido depois,
+por alguém que soubesse o domínio; esta versão trata a análise como quem decide, imediatamente,
+disclosing a decisão para que um humano possa revisar e discordar depois — nunca como um bloqueio
+antes da entrega.
 
----
+Desenvolvimento é planejado (`/plan-work`), implementado (`/implement-task`) e revisado
+(`/review-change`) contra essa especificação — sem nunca precisar reabri-la enquanto o plano está
+vivo, porque a convenção é que a especificação não muda durante a execução de um plano. O único
+vínculo que precisa sobreviver ao plano depois que o código está escrito é o **trace**: qual nó da
+especificação um arquivo de código implementa, e com qual conteúdo cada lado tinha no momento do
+vínculo.
 
 ## 3. O nó: a unidade de tudo
 
-Um **nó** é um arquivo markdown com duas partes: um cabeçalho de dados (o *frontmatter*, entre
-`---`) e um corpo de prosa.
+Um nó carrega frontmatter (a parte estruturada, o que um validador lê) e um corpo (a parte em
+prosa, o que um leitor lê). Nenhum campo aparece nos dois — a mesma afirmação nunca vive em dois
+lugares ao mesmo tempo.
 
-```markdown
----
-title: Order
-summary: A customer's order.
-ddd: aggregate-root
-aggregate: orders
-identity:
-  - order_number
-attributes:
-  - name: order_number
-    type: string
-    max_length: 20
----
-## What it is
-What the customer placed, from the moment it is submitted.
+O corpo tem um conjunto fechado de headings, que varia por classe:
 
-## Rules
-None.
 ```
+## Description
+
+Um contexto ou um elemento de Domain Model.
+
+## Responsibility
+
+Por que este conceito existe.
+```
+
+Uma Rule, uma Scenario, um Contract ou uma Architecture Constraint carregam só `## Description` —
+não têm uma "responsabilidade" própria além do que já declaram estruturadamente. Um heading sem
+nada a dizer carrega a linha literal `None.`, nunca é omitido: a ausência de conteúdo é ela mesma
+uma informação (nada a acrescentar), diferente da ausência do heading (o arquivo está incompleto).
 
 ### As duas metades, e por que são separadas
 
-| metade | o que carrega | quem lê |
-|---|---|---|
-| **frontmatter** (YAML) | os fatos, em campos com nome e forma fixos | o validador, mecanicamente |
-| **corpo** (markdown) | prosa para um humano entender | uma pessoa |
-
-O validador **só valida o frontmatter**. O corpo é para o leitor. Mas mesmo o corpo tem forma
-obrigatória: exatamente dois cabeçalhos, na ordem. Num nó de conhecimento são `## What it is` e
-`## Rules`. Numa task ou num record são `## What it is` e `## Notes`. Uma seção sem nada a dizer
-carrega literalmente a linha `None.` — porque uma seção ausente e uma seção vazia contam histórias
-diferentes, e o framework quer a diferença explícita.
-
-> **Por que isso importa:** um fato que more só na prosa é um fato que duas pessoas leem de dois
-> jeitos. Se é fato, vai no frontmatter, onde tem nome e o validador o alcança.
-
----
+O frontmatter é o que um validador pode segurar mecanicamente — um tipo fora do vocabulário
+fechado, uma referência que não resolve, um campo obrigatório ausente. O corpo é prosa que
+explica, nunca uma segunda casa para uma obrigação: uma frase que restringe o domínio e vive só no
+corpo é uma frase que nenhum validador jamais vai poder segurar (SPEC-001 R7). Se você se pegar
+escrevendo "o sistema deve..." dentro de `## Description`, isso é o sinal de que falta um campo,
+uma Rule, ou uma Scenario — nunca uma desculpa para deixar a frase lá.
 
 ## 4. O caminho é a identidade
 
-Esta é **a ideia mais importante do motor inteiro**. Quem entender só uma coisa deste manual, que
-entenda esta.
+```text
+<especificação>/
+├── domain/<contexto>/_context.md          — o descritor do contexto
+├── domain/<contexto>/<slug>.md            — um elemento de Domain Model
+├── rules/<contexto>/<slug>.md             — uma Rule
+├── scenarios/<contexto>/<slug>.md         — uma Scenario
+├── contracts/system/<slug>.md             — uma capability (a promessa do sistema)
+├── contracts/<contexto>/<slug>.md         — os demais Contracts
+├── constraints/<slug>.md                  — uma Architecture Constraint
+└── decision-log.md                        — o log, obrigatório, não-normativo
+```
 
-Num sistema comum, um registro tem um `id`:
+A identidade de um nó é seu caminho a partir da raiz da especificação, sem `.md` —
+`domain/troubleshooting/case`, `rules/troubleshooting/case-transitions`. Não existe id, name ou
+class dentro do arquivo: reclassificar um elemento (de `entity` para `aggregate-root`) muda uma
+linha de frontmatter e não quebra referência nenhuma, porque nada referencia pelo tipo.
+
+### Referência: nua ou completa, e por quê
+
+Uma referência é um slug nu dentro do mesmo diretório, e a identidade completa em todo o resto
+(SPEC-003 R2). Na prática: um atributo ou relacionamento de um elemento pode nomear outro elemento
+nu quando ambos estão no mesmo contexto, porque os dois vivem sob `domain/<contexto>/`. Uma Rule,
+uma Scenario ou um Contract nunca ficam dentro de `domain/` — então o que eles referenciam ali é
+sempre a identidade completa, `domain/<contexto>/<slug>`, sem forma nua.
+
+### O slug
+
+Kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`) do termo da linguagem ubíqua. O nome de exibição é
+derivado, nunca guardado: `case-status` → `CaseStatus` (PascalCase). A única exceção é uma sigla
+que a derivação erraria — `display: ISBNCode` — e mesmo essa precisa reduzir de volta ao slug.
+
+## 5. Por que não há índice derivado
+
+O modelo anterior mantinha um `graph.json` derivado — um índice barato de identificadores, títulos
+e resumos, para não abrir cada arquivo em toda leitura. Esta especificação não tem título nem
+resumo por nó: só `type`, os campos que a classe declara, e o corpo sob `## Description`. Um
+índice desse formato não teria o que resumir.
+
+`bin/spec.py` valida direto dos arquivos, toda vez — não há nada persistido entre execuções que
+possa ficar desatualizado. O que existe em troca:
+
+```
+$ python3 -B bin/spec.py --digest specs/
+specification sound: 10 element(s), 3 rule(s), 2 scenario(s), 4 contract(s), 1 constraint(s)
+across 2 context(s); 2 decision(s) disclosed
+constraints/asynchronous-events  sha256:4ee34debeb63243b8f0dc060d155eb539c429b1e2dd86a180b3282b66b5bc693
+contracts/monitoring/alert-raised  sha256:51a98821777a193d03d0100de96eee74fc686e74c19c7414cd1e59f45c295573
+...
+```
+
+Um manifesto de identidades — barato — sem nada sobre o que cada nó diz. Para localizar nós que um
+material fala sobre, quem analisa faz *grep* pelo vocabulário do material na especificação inteira
+em vez de ler um resumo pré-computado. Mais pesado que o índice antigo nos casos grandes, mais
+honesto sobre o que este modelo realmente oferece.
+
+`--project` deriva diagramas (nunca editados à mão); `--digest` computa a identidade de conteúdo
+de cada nó, usada pelo trace (seção 9), nunca pela especificação em si.
+
+## 6. Decide-and-disclose: o log de decisões
+
+Um fato que o material não declara **é decidido pela análise, agora, e a decisão vai para
+`decision-log.md`** — nunca fica marcado dentro do nó como um `gap`, um `unknown` ou um
+placeholder. Um campo obrigatório deixado sem decisão não é uma ausência honesta: é uma violação
+do piso (SPEC-001 R4), porque fechá-lo é exatamente o trabalho deste passo.
 
 ```yaml
-id: order-definition-001     # ← um campo
-type: definition             # ← outro campo
-context: sales               # ← outro campo
+# decision-log.md
+entries:
+  - location: domain/troubleshooting/evidence.md
+    field: attributes.value.type
+    unstated: The material does not say what shape an evidence value takes.
+    decided: string
+    why: Every evidence sample in the material is shown as free text.
+  - location: rules/troubleshooting/case-transitions.md
+    field: rejections
+    unstated: The material never says what resolving an open case does.
+    decided: The trigger is rejected in the open state.
+    why: Resolution without an investigation contradicts the stated flow.
 ```
 
-Três campos que podem **discordar** do lugar onde o arquivo está. Basta mover o arquivo e esquecer
-de atualizar o `context`: agora existem duas respostas para "a que contexto isso pertence", e
-nenhuma é autoridade.
+Cada entrada nomeia onde a decisão caiu (arquivo e campo, ambos resolvíveis — o validador recusa
+uma entrada cujo local não existe), o que o material deixou por dizer, o que foi decidido, e por
+quê. O log é **disclosure, nunca um portão**: a análise decide e segue adiante, e nenhuma entrada
+bloqueia entrega nenhuma. Uma pessoa revisa o log depois, e discordar é uma mudança comum ao
+artefato — nunca um protocolo de ratificação.
 
-No Siegard, o caminho **é** o identificador:
-
-```
-knowledge/definition/sales/order.md
-          └────┬───┘ └─┬─┘ └─┬─┘
-              tipo  contexto  nome
-```
-
-E por isso **não existe campo `id`, nem `type`, nem `context`**. Não podem discordar do caminho
-porque não existem. O validador extrai o tipo e o contexto do caminho e pronto.
+O validador segura a metade mecanicamente decidível: os campos obrigatórios do piso, a
+alcançabilidade, a ausência de campos de proveniência (`gaps`, `sources`, `rationale`,
+`proposal` — todos recusados por nome, sempre), e que toda entrada do log resolve para um arquivo
+e campo reais:
 
 ```
- ┌──────────────────────────────────────────────────────────────┐
- │  O identificador de um nó é seu caminho sem o `.md`:         │
- │                                                              │
- │  knowledge/definition/sales/order.md                         │
- │            └──────────────────────┘                          │
- │                       ↓                                      │
- │            "definition/sales/order"                          │
- │                                                              │
- │  É assim que outros nós se referem a ele.                    │
- └──────────────────────────────────────────────────────────────┘
+$ python3 -B bin/spec.py specs/     # (com decision-log.md apagado)
+decision-log.md is missing; the log is mandatory and non-normative (SPEC-003 R5)
+
+1 problem(s) over 22 file(s); the specification is not sound while these stand.
 ```
 
-### As formas de caminho, por raiz
+O que fica com o julgamento de quem analisa — nunca do validador — é se um termo recorrente virou
+mesmo um elemento, se uma classe condicional se justifica, e se um artefato responde a alguma
+pergunta de compreensão real.
 
-```
-CONHECIMENTO
-  context/<nome>.md                    ← contexto: só um nível
-  <tipo>/<contexto>/<nome>.md          ← todo o resto: dentro de um contexto
+## 7. As cinco classes, com exemplos reais
 
-  exemplos reais:
-    context/sales.md                   → "context/sales"
-    definition/sales/order.md          → "definition/sales/order"
-    rule/sales/total-positive.md       → "rule/sales/total-positive"
+### Domain Model — o que existe e como se estrutura
 
-PLANO
-  inventory/<nome>.md                  → "inventory/order-service"
-  epic/<nome>.md                       → "epic/checkout"
-  task/<epico>/<nome>.md               → "task/checkout/record-order"
-                └─ o épico está NO CAMINHO. a task não tem campo "epic".
+Cinco subtipos: `aggregate-root`, `entity`, `value-object`, `domain-service`, `enumeration`.
 
-ENTREGA
-  implementation/<epico>/<nome>.md     → mesmo épico e nome da task que responde
-  proof/<epico>/<nome>.md              → idem
-  review/<nome>.md
-```
-
-A entrega merece atenção. Um record de implementação fica **no mesmo caminho da task que responde**.
-Logo, `implementation/checkout/record-order.md` responde a `task/checkout/record-order` — e **nenhum
-campo diz isso**. Não pode haver desacordo.
-
-### O `<nome>` (o "slug")
-
-É só o nome do arquivo, reduzido a minúsculas com hífens: `record-order`, `total-positive`. A regra
-do contrato:
-
-> *"A name reduced to kebab-case. A name that will not reduce is a refusal, not a transliteration."*
-
-Ou seja: `Pedido Não Confirmado` vira `pedido-nao-confirmado`? **Não.** O contrato diz que um nome
-que não reduz é uma **recusa**, não uma transliteração — o motor não chuta como transformar acentos.
-Nomes vão para inglês em kebab-case.
-
+```yaml
+# domain/troubleshooting/case.md
+---
+type: aggregate-root
+attributes:
+  - name: id
+    type: case-id
+    required: true
+  - name: status
+    type: case-status
+    required: true
+  - name: opened_at
+    type: datetime
+    required: true
+  - name: resolved_at
+    type: datetime
+relationships:
+  - target: investigation
+    type: composition
+    cardinality: "1"
+  - target: resolution
+    type: composition
+    cardinality: "0..1"
+operations:
+  - open
+  - start-investigation
+  - resolve
+  - cancel
 ---
 
-## 5. O índice derivado
+## Description
 
-Cada raiz tem um `.json` ao lado dos markdown. Ele **nunca é editado**. É gerado:
+A customer problem submitted to the troubleshooting process.
 
-```bash
-python3 bin/graph.py knowledge/
+## Responsibility
+
+Control the investigation from opening to resolution or cancellation.
 ```
 
-Saída real:
+Um link para um primitivo, um value object ou uma enumeration é um **atributo**; um link para uma
+entity ou um aggregate root é um **relacionamento** — nunca os dois para o mesmo fato (SPEC-002
+R8). `composition` nunca cruza um agregado; `reference` é como um elemento aponta para outro
+agregado, sempre por identidade.
 
-```
-derived knowledge/graph.json: 6 node(s), 5 edge(s), contract siegard/1
-  1 context, 1 aggregate, 2 definition, 1 rule, 1 lifecycle; 2 gap(s); 0 node(s) with rationale
-```
+Cada contexto carrega seu descritor, fora do espaço de slugs dos elementos pelo underscore:
 
-### Por que existir um índice, se os arquivos já estão ali?
+```yaml
+# domain/troubleshooting/_context.md
+---
+strategic: core
+---
 
-Porque ler 200 arquivos para responder "quem depende de quem" é caro. O índice tem os **nós** (os
-arquivos) e as **arestas** (as referências que os frontmatters declaram), então uma pergunta sobre
-estrutura se responde num arquivo só.
+## Description
 
-```
-   knowledge/                                    graph.json
-   ┌───────────────────────┐                  ┌──────────────────────────┐
-   │ context/sales.md      │                  │ nodes:                   │
-   │ definition/sales/     │    graph.py      │   context/sales           │
-   │   order.md            │  ──────────────► │   definition/sales/order  │
-   │ rule/sales/           │   (deriva E      │ edges:                   │
-   │   total-positive.md   │    valida)       │   rule → constrains →     │
-   └───────────────────────┘                  │     definition/.../order │
-                                              └──────────────────────────┘
+Diagnosing customer problems from submission to resolution.
+
+## Responsibility
+
+Own the language of cases, investigations and evidence.
 ```
 
-Uma entrada real do índice:
+### Rule — o que sempre deve valer
+
+Três subtipos: `invariant` (dentro de um agregado, vale imediatamente), `policy` (pode cruzar
+agregado ou contexto, e então `consistency: eventual` é obrigatório — exigir `immediate` através
+de uma fronteira é a fronteira redesenhada, não uma regra), `state-machine`:
+
+```yaml
+# rules/troubleshooting/case-transitions.md
+---
+type: state-machine
+statement: A case moves only along the declared transitions.
+subject: domain/troubleshooting/case
+status: domain/troubleshooting/case-status
+initial: open
+terminal: [resolved, cancelled]
+transitions:
+  - {from: open, trigger: start-investigation, to: investigating}
+  - {from: investigating, trigger: resolve, to: resolved}
+  - {from: open, trigger: cancel, to: cancelled}
+  - {from: investigating, trigger: cancel, to: cancelled}
+rejections:
+  - {from: open, trigger: resolve}
+  - {from: investigating, trigger: start-investigation}
+---
+
+## Description
+
+The lifecycle of a case, total over its states and triggers.
+```
+
+O validador checa a totalidade: todo par (estado não-terminal, gatilho mencionado) precisa ser uma
+transição ou uma rejeição — nunca deixado em silêncio. O diagrama de estado deriva direto disso:
+
+```
+$ python3 -B bin/spec.py --project specs/
+$ cat specs/projections/state-troubleshooting-case.mmd
+stateDiagram-v2
+    [*] --> open
+    open --> investigating : startInvestigation
+    investigating --> resolved : resolve
+    open --> cancelled : cancel
+    investigating --> cancelled : cancel
+    resolved --> [*]
+    cancelled --> [*]
+    %% rejected: resolve in open
+    %% rejected: startInvestigation in investigating
+```
+
+### Scenario — um caso concreto
+
+Sem subtipos — o sujeito já distingue um exemplo de invariante de um caso de aceitação ponta a
+ponta. Âncora em exatamente um elemento de Domain Model, uma Rule ou um Contract:
+
+```yaml
+# scenarios/troubleshooting/refuse-resolution-without-evidence.md
+---
+subject: rules/troubleshooting/hypothesis-requires-evidence
+given:
+  - a case under investigation holds one hypothesis with no evidence
+when:
+  - the operator resolves the case
+then:
+  - the resolution is refused
+  - the case stays investigating
+---
+
+## Description
+
+The invariant refusing an unsupported resolution.
+```
+
+### Contract — o que atravessa uma fronteira
+
+Quatro subtipos: `domain-event` (nomeado no passado), `command` (pode ser recusado — `refusal`
+nomeia o value object que a recusa devolve), `api`, `capability` (a promessa do próprio sistema,
+só existe sob `contracts/system/`). `direction` (`published` | `consumed`) é obrigatório nos três
+primeiros; um contrato consumido nomeia o publicado do qual depende:
+
+```yaml
+# contracts/troubleshooting/alert-raised.md
+---
+type: domain-event
+direction: consumed
+upstream: contracts/monitoring/alert-raised
+payload: domain/monitoring/alert
+---
+
+## Description
+
+Troubleshooting depends on monitoring's published alert event.
+```
+
+Um sistema de terceiros é um contrato upstream nomeado pela capability que ele fornece — nunca o
+nome do fornecedor, que é conhecimento de implementação e não entra na especificação.
+
+### Architecture Constraint — o que limita a solução
+
+Sem subtipos. Uma estratégia de integração, uma escolha de armazenamento, um anti-corruption
+layer: `scope` (`system` ou um contexto) e, onde existe, `fitness` — a checagem mecânica que
+verifica.
+
+## 8. Do domínio ao plano: implementar contra
+
+Uma tarefa de desenvolvimento nomeia os nós da especificação que implementa, por identidade — sem
+nenhum pin:
+
+```yaml
+# task/checkout/record-order.md (frontmatter)
+implements:
+  - domain/sales/order
+  - rules/sales/order-total-positive
+```
+
+Nada aqui compara um valor computado contra um valor guardado. A garantia é procedimental: **a
+especificação não muda enquanto um plano está vivo**, por convenção, não por um digest que o
+validador confere a cada execução. Isso substitui inteiramente o mecanismo anterior — cada nó
+vinculado carregando o digest que a vinculação leu, e o plano recusado quando o nó se movia. Uma
+tarefa hoje não carrega mais nada disso: nem um campo `nodes`, nem um `digest`, nem `unresolved`,
+nem `waived`.
+
+Quem decide o que uma tarefa implementa é um agente isolado (`execution-contract-binder`), num
+contexto que nunca viu como a tarefa foi cortada — a especificação é lida pelo que ela diz hoje,
+nunca para caber na tarefa. Ele ainda classifica cada divergência entre a tarefa e a especificação
+em quatro classes, exatamente como antes:
+
+- **`blocking`** — nenhum construto que a especificação admite demonstra o objetivo ou um
+  critério como escrito, **incluindo um fato que a especificação simplesmente não declara**. É a
+  única classe que impede a tarefa de ser escrita.
+- **`underdetermined`** — existe uma implementação que satisfaz todo critério como escrito e que a
+  especificação recusa; o binder a nomeia.
+- **`remainder`** — uma cláusula de uma Rule vinculada não alcança nenhum critério desta tarefa
+  porque pertence a outra tarefa ou a outro ato.
+- **`advisory`** — o resto: uma costura, um vizinho não implementado, uma condição.
+
+Uma nota `blocking` que vem do próprio escopo é o único caso que só uma pessoa resolve — através
+do escopo, ou através da análise que estende a especificação. Não existe mais uma "pergunta que a
+base não responde" como um retorno separado: isso agora é exatamente um caso de `blocking`.
+
+## 9. O trace: o vínculo que sobrevive ao plano
+
+Planejamento e entrega são descartáveis por design. Um plano e sua raiz de entrega existem para
+fazer código ser escrito; uma vez que uma tarefa valida, nada exige que nenhum dos dois
+sobreviva — um plano fechado pode ser apagado junto com sua entrega, e nenhuma outra raiz depende
+dele continuar ali.
+
+O que precisa sobreviver é o vínculo entre um nó da especificação e o arquivo que o implementa.
+`siegard-trace.json`, ao lado de `siegard.json` no toplevel git da raiz de código-alvo, é esse
+vínculo:
 
 ```json
 {
- "id": "definition/sales/order",
- "kind": "definition",
- "file": "definition/sales/order.md",
- "context": "sales",
- "title": "Order",
- "summary": "A customer's order.",
- "digest": "sha256:ea0d00a2b7e35cb1926eb5b81a699e2917318f4a4a867d3c986500bf23bcab02",
- "aggregate": "orders",
- "ddd": "aggregate-root",
- "gaps": ["attributes.[]"]
+  "specification": "specs",
+  "bindings": [
+    {
+      "node": "domain/sales/order",
+      "digest": "sha256:9e85d9145db8f5f67feee52781d20091759321ef039946f126559aa29d5e93ad",
+      "files": [
+        {"path": "backend/src/orders/place.ts",
+         "digest": "sha256:f72cfadc058508a0eee4c51b041c39cc3150616fc1219afe14eb0955e4eb47c4"}
+      ]
+    }
+  ]
 }
 ```
 
-Repare no **`digest`**: é o SHA-256 do arquivo `definition/sales/order.md`, e é o valor que uma task
-carrega quando vincula esse nó. A [seção 9](#9-o-digest-qual-versão-a-vinculação-leu) explica para
-quê.
-
-**Ponto crítico:** o mesmo script é o validador. Ele **se recusa** a gerar o índice sobre uma base
-que não fecha. Não existe estado "índice gerado, mas com problemas".
-
-### Os três códigos de saída
-
-Todos os scripts do motor usam os mesmos três:
-
-| código | significa |
-|---|---|
-| `0` | está tudo de pé |
-| `1` | há problemas, ou o índice está desatualizado (*stale*) |
-| `2` | não deu para rodar (falta argumento, dependência, arquivo ilegível) |
-
-E a aresta só existe se o **frontmatter** declarar. Uma relação escrita só na prosa não é aresta —
-porque duas leituras de um parágrafo produzem dois grafos.
-
----
-
-## 6. O gap: o que o material não disse
-
-Este é o conceito que mais diferencia o Siegard de qualquer outra coisa.
-
-Suponha a análise de um documento do cliente sobre pedidos. Ele diz o que é um pedido, diz que tem
-número e total. **Não diz** quais são todos os campos. O que fazer?
-
-**Errado** (o que qualquer um faria):
-
-```yaml
-attributes:
-  - name: order_number
-    type: string
-  - name: total
-    type: decimal
-  - name: created_at      # ← ninguém disse isso. pareceu razoável.
-    type: datetime
-```
-
-Esse `created_at` agora é indistinguível de um campo que o cliente ditou. Daqui a um ano ninguém
-sabe qual dos três o negócio decidiu.
-
-**Certo** — e aqui há uma sutileza que o validador cobra:
-
-```yaml
-# CASO A: o material não deu nenhum campo. O nó não declara `attributes`.
-#         Nome nu, porque o campo inteiro está ausente.
-gaps:
-  - field: attributes
-    why: The material describes the order and lists no fields at all.
-```
-
-```yaml
-# CASO B: o material deu ALGUNS campos. O nó declara `attributes` com o que sabe,
-#         e o gap aponta para DENTRO do campo, com caminho pontilhado.
-attributes:
-  - name: order_number
-    type: string
-    max_length: 20
-  - name: total
-    type: decimal
-    precision: 12
-    scale: 2
-gaps:
-  - field: attributes.[]           # ← "faltam entradas cujos nomes ninguém deu"
-    why: The material names the number and the total, and no complete list.
-```
-
-Usar o nome nu no caso B é recusado, e a mensagem ensina o conserto:
+`bin/trace.py` é o único escritor — `/implement-task` chama `--bind` uma vez que uma entrega
+valida, para cada nó que o registro de implementação nomeia com `encoded_at` — e o único leitor:
 
 ```
-definition/sales/order: gaps[0]: `attributes` is declared by the node; a gap names
-an absent fact. An absence inside `attributes` takes a dotted path
-(`attributes.<what-is-missing>`)
+$ python3 -B bin/trace.py --check backend/
+no drift: 1 binding(s) match the specification and the code as both stand now
 ```
 
-Existem duas caudas canônicas, e elas mantêm gaps comparáveis entre análises:
-
-| forma | significa |
-|---|---|
-| `<campo>` | o campo inteiro está ausente (e o nó não o declara) |
-| `<campo>.[]` | faltam **entradas** cujos nomes o material não dá |
-| `<campo>.<rótulo>` | falta **aquela** coisa nomeada |
-
-Um **gap** é uma declaração formal de ausência. Ele diz: *"este campo está faltando, e a razão é
-esta"*. E — aqui está o truque — **o validador aceita um gap no lugar de qualquer campo
-obrigatório**. O nó vale, e a falta fica registrada.
+`--check` recomputa os dois digests a partir do que está em disco agora e reporta o que
+divergiu — um nó que se moveu na especificação desde o vínculo, ou um arquivo que se moveu no
+código sem um novo vínculo:
 
 ```
-      ┌──────────────────────────────────────────────────────────┐
-      │  material disse?                                         │
-      │                                                          │
-      │       SIM  ───────────►  escreve o valor no campo        │
-      │                                                          │
-      │       NÃO  ───────────►  declara um gap nomeando o campo │
-      │                                                          │
-      │       "é o que dá para ler do que foi dito"              │
-      │            ───────────►  escreve o valor + `rationale`   │
-      └──────────────────────────────────────────────────────────┘
+$ python3 -B bin/trace.py --check backend/
+domain/sales/order: bound at sha256:9e85..., now sha256:e233...; the specification moved since
+this bind
 ```
 
-Esse terceiro caso é sutil e importante. `rationale` cobre uma **leitura** do material declarado —
-onde cai uma fronteira, que tipo de coisa é algo que foi dito. **Nunca** cobre um valor sobre o qual
-o material é silencioso. Um valor plausível é um gap.
-
-### Como ver os gaps abertos
-
-```bash
-python3 bin/graph.py --gaps knowledge/
-```
-
-Saída real:
-
-```
-definition/sales/order: attributes.[]
-definition/sales/order-already-placed: attributes
-```
-
-Imprime `<identificador>: <campos>` direto dos nós — nunca lendo o `graph.json`. Essa é uma regra de
-projeto: relatórios pontuais se pedem ao script, contexto em massa se lê do índice, e os dois
-derivam do mesmo pipeline, então não podem discordar.
-
-### A regra de ouro dos gaps
-
-> **Nunca feche um gap com um chute.** Um gap nomeia um fato que só quem conhece o domínio pode
-> resolver, e um valor inventado se lê exatamente como um que o negócio ditou.
-
----
-
-## 7. Os sete tipos de nó, com exemplos reais
-
-Todos os exemplos abaixo saíram dos `examples` do próprio `schemas/node.json` — são formas válidas
-por construção.
-
-### 1. `context` — uma fronteira do negócio
-
-```yaml
-title: Sales
-summary: Ordering, from placement to invoicing.
-strategic: core
-relationships:
-  - with: shipping
-    pattern: customer-supplier
-    role: upstream
-```
-*Caminho: `context/sales.md`. É o único tipo com um nível só.*
-
-### 2. `aggregate` — uma fronteira de consistência
-
-```yaml
-title: Orders
-summary: An order and its lines change together or not at all.
-rationale: The material treats order lines as editable rows; making them part of one
-  consistency boundary is the analysis's reading.
-```
-*Caminho: `aggregate/sales/orders.md`. Note o `rationale`: essa fronteira foi uma leitura da
-analista, não algo que o material disse com essas palavras. Marcado, e portanto contestável por um
-revisor.*
-
-### 3. `definition` — uma coisa do domínio
-
-```yaml
-title: Order
-summary: A customer's order, from placement to invoicing.
-ddd: aggregate-root
-aggregate: orders
-identity:
-  - order_number
-aliases:
-  - purchase-order
-attributes:
-  - name: order_number
-    type: string
-    max_length: 20
-    required: true
-  - name: total
-    type: decimal
-    precision: 12
-    scale: 2
-  - name: customer
-    type: ref
-    target: definition/sales/customer     # ← isto gera uma aresta no grafo
-    binding: by-identity
-  - name: state
-    type: enum
-    lifecycle: lifecycle/sales/order      # ← e isto também
-```
-
-### 4. `rule` — uma invariante
-
-```yaml
-title: Order total is positive
-summary: No order may be placed with a non-positive total.
-ddd: invariant
-aggregate: orders
-statement: An order total MUST be greater than zero.
-expression: order.total > 0
-constrains:
-  - definition/sales/order
-```
-*`statement` é a regra em prosa normativa. `expression` é a mesma coisa checável. `constrains` diz o
-que ela governa — e é uma aresta.*
-
-### 5. `lifecycle` — os estados de algo
-
-```yaml
-title: Order lifecycle
-summary: The states an order passes through, from draft to closure.
-subject: definition/sales/order
-states: [draft, placed, cancelled]
-initial: draft
-terminal: [cancelled]
-transitions:
-  - from: draft
-    trigger: place
-    to: placed
-    emits: [interface/sales/order-placed]
-  - from: draft
-    trigger: cancel
-    to: cancelled
-  - from: placed
-    trigger: cancel
-    to: cancelled
-rejections:
-  - from: placed
-    trigger: place
-    error: definition/sales/order-already-placed
-```
-
-Desenhando:
-
-```
-         place                cancel
-  draft ────────► placed ──────────────► cancelled  (terminal)
-    │                │
-    │ cancel         │ place  ✗ REJEITA
-    └────────────────┴──► definition/sales/order-already-placed
-                 ▼
-             cancelled
-```
-
-**Aqui entra uma verificação bonita do motor: a totalidade.** Para cada par (estado × gatilho), o nó
-tem de dizer *alguma coisa* — uma transição, uma rejeição, ou um gap. Se `placed` × `place` não
-estivesse coberto, o validador recusa:
-
-```
-definition/sales/order: state `placed` has no transition, no rejection and no gap
-for trigger `place`; an uncovered pairing is where behaviour gets invented later
-```
-
-Vale reler a última parte: *"um par não coberto é onde comportamento é inventado depois"*. É
-exatamente o que acontece na vida real — o desenvolvedor chega nesse caso, não acha resposta, e
-decide sozinho.
-
-### 6. `interface` — uma mensagem que cruza a fronteira
-
-```yaml
-title: Shipment requested
-summary: The message this context sends to have an order shipped.
-ddd: command
-ownership: consumed
-payload: definition/sales/shipment-request
-gaps:
-  - field: upstream
-    why: The material does not say which published contract of the shipping context
-      this consumes.
-```
-*Um gap da vida real: sabe-se que consome algo de fora, não se sabe qual contrato. Registrado, não
-inventado.*
-
-### 7. `process` — uma sequência que atravessa coisas
-
-```yaml
-title: Checkout
-summary: Place the order, charge the customer, compensate on failure.
-ddd: saga
-steps:
-  - node: interface/sales/order-placed
-  - node: process/payment/charge
-    compensated_by: process/payment/refund
-```
-
----
-
-## 8. Do conhecimento ao plano: a vinculação
-
-Agora a segunda camada. Algo vai ser construído. O plano tem três tipos de nó:
-
-| tipo | o que é |
-|---|---|
-| `inventory` | o que **já existe** no código: módulos, convenções observadas, pontos de reuso, riscos |
-| `epic` | uma fatia de escopo, que **declara quais nós da base ela responde** |
-| `task` | uma unidade de trabalho: um objetivo, critérios, e a **vinculação** |
-
-### O que é "vincular" (bind)
-
-Uma task **vincula** os nós da base que a governam. Cada entrada carrega o identificador do nó e o
-digest daquele nó como a vinculação o leu:
-
-```yaml
-title: Record order
-summary: Persist a placed order.
-objective: A valid order is persisted and retrievable by its order_number.
-criteria:
-  - Submitting a valid order returns its order_number.
-  - An order with a total of zero or less is refused.
-nodes:                                              # ← ESTA é a vinculação
-  - node: definition/sales/order
-    digest: sha256:ea0d00a2b7e35cb1926eb5b81a699e2917318f4a4a867d3c986500bf23bcab02
-  - node: rule/sales/total-positive
-    digest: sha256:24a0256bf0e8f1df690bbed925f57801ff4a58209c0797a952cd09329a9b9565
-  - node: lifecycle/sales/order
-    digest: sha256:fc9f08af5d0bdd1f5476238d43f454f61169398a7ab2f73e3fbaf831958db00c
-unresolved:
-  - gap: definition/sales/order#attributes.[]
-```
-
-A definição no contrato:
-
-> *"The base nodes that govern this task, each with the digest of the node as this binding read it.
-> **This is the binding**: the executor reads exactly these."*
-
-Repare em "**exatamente estes**". Quem for implementar a task lê esses nós e mais nenhum. Isso é o
-que faz a task ser autocontida: não é "leia a base e se vire", é "estes três fatos governam este
-trabalho".
-
-```
-  BASE                                    PLANO
-  ┌────────────────────────┐              ┌──────────────────────────┐
-  │ definition/sales/order │◄─── binds ───│ task/checkout/           │
-  │ rule/sales/total-pos.  │◄─── binds ───│   record-order           │
-  │ lifecycle/sales/order  │◄─── binds ───│                          │
-  │ definition/sales/coupon│              │ (não vincula o cupom —   │
-  └────────────────────────┘              │  não governa este work)  │
-                                          └──────────────────────────┘
-```
-
-O par (nó, digest) fica numa entrada só, e não em duas listas paralelas, pelo mesmo motivo de não
-existir campo `id` num nó: duas listas podem se separar, uma entrada não.
-
-### `objective` e `criteria`
-
-O contrato é exigente aqui:
-
-- **`objective`**: *"The one falsifiable outcome this task delivers. Two outcomes are two tasks."*
-- **`criteria`**: *"each falsifiable on its own. 'Works correctly' is prose; 'a rejected order
-  returns the stated domain error' is a criterion."*
-
-"Falsificável" quer dizer: dá para escrever um teste que **falharia** se aquilo parasse de valer.
-"Funciona bem" não é critério porque nenhum teste pode falhar por causa disso.
-
-### Nenhum status, nenhuma estimativa, nenhuma ordem
-
-Uma task **não tem** campo de status, prioridade, estimativa ou ordem de execução. Esses campos não
-existem no contrato. A ordem se deriva das dependências (`depends_on`), e o estado da execução mora
-no git.
-
----
-
-## 9. O digest: qual versão a vinculação leu
-
-### O problema que ele resolve
-
-A task acima vinculou `definition/sales/order`. Quem implementar vai ler esse nó e escrever código
-conforme ele. Ótimo.
-
-Mas… **quando** a task foi vinculada? Esse nó mudou desde então? Se alguém acrescentou um atributo
-obrigatório ao pedido depois que a task foi escrita, a task está desatualizada — e nada no arquivo
-diria isso, porque o nome do nó (`definition/sales/order`) continua idêntico.
-
-### A solução: identidade por conteúdo
-
-Um **digest** é o SHA-256 dos **bytes** de um arquivo:
-
-```bash
-$ sha256sum knowledge/definition/sales/order.md
-ea0d00a2b7e35cb1926eb5b81a699e2917318f4a4a867d3c986500bf23bcab02
-```
-
-Escrito no nó como `sha256:ea0d00a2…`. A definição no contrato:
-
-> *"Content identity: the SHA-256 of the bytes of whatever artifact the field carrying it names. A
-> pin records **which version** of that artifact a judgment read, so an artifact that moved
-> afterwards is visible to the validator rather than assumed unchanged."*
-
-### A divisão que é a chave
-
-```
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                                                  │
-  │    O CAMINHO diz    ────►   QUAL coisa é                         │
-  │                                                                  │
-  │    O DIGEST diz     ────►   QUAL VERSÃO dela                     │
-  │                                                                  │
-  └──────────────────────────────────────────────────────────────────┘
-```
-
-O digest é sempre **do arquivo inteiro** — frontmatter e corpo. Isso é escolha: um digest só do
-frontmatter perderia o que a seção `## Rules` aponta, e não seria recomputável com um comando só. E
-um valor que só a ferramenta sabe verificar é uma alegação; o ponto de um digest é ser uma
-verificação.
-
-### Vendo funcionar
-
-Base montada, índice derivado, task escrita com os digests que o índice lista, plano validado:
-
-```bash
-$ python3 bin/plan.py work/ knowledge/
-derived work/plan.json: 3 node(s), 6 edge(s), contract siegard-plan/2
-  1 inventory, 1 epic, 1 task; 1 unresolved gap citation(s) (1 unique); ...
-```
-
-**Primeiro teste — a base cresce com um nó que a task não vincula.** Acrescentando
-`definition/sales/coupon`, um cupom de desconto sem relação nenhuma com como um pedido é gravado:
-
-```bash
-$ python3 bin/graph.py knowledge/
-derived knowledge/graph.json: 7 node(s), 5 edge(s), contract siegard/1
-
-$ python3 bin/plan.py work/ knowledge/
-derived work/plan.json: 3 node(s), 6 edge(s), contract siegard-plan/2      ← segue válido
-```
-
-Nada aconteceu, e está certo: nada que governa a task mudou.
-
-**Segundo teste — muda o nó que a task VINCULA.** Alterando `max_length` de 20 para 8 em
-`definition/sales/order`:
-
-```
-task/checkout/record-order: definition/sales/order is pinned at sha256:ea0d00a2… and
-stands at sha256:2ab1b82b…; the binding read this node before it moved — re-bind the
-task against the node as it now reads, or restate the digest deliberately once the
-change is known not to bear on it
-```
-
-Três coisas nessa mensagem, e cada uma é deliberada. Ela **nomeia o nó** que se moveu, não só a
-task. Ela dá **os dois digests**, então dá para conferir à mão. E ela oferece **as duas saídas**,
-porque a escolha entre elas é de julgamento.
-
-### As duas saídas
-
-| saída | quando | o que fazer |
-|---|---|---|
-| **re-vincular** | a mudança afeta esta task | refaz a vinculação contra o nó como ele lê hoje |
-| **reafirmar o digest** | a mudança não afeta esta task | escreve o digest novo à mão |
-
-A palavra "deliberately" na mensagem está lá porque a diferença entre as duas é **alguém ter olhado
-ou não**.
-
-### Os quatro pins do motor
-
-```
-  ┌─────────────┐  nodes[].digest:  um por nó vinculado
-  │ task        │ ──────────────────────────────────► knowledge/<nó>.md
-  └─────────────┘
-
-  ┌─────────────┐  task:  pina o ARQUIVO da task
-  │implementation│ ─────────────────────────────────► work/task/<ep>/<n>.md
-  └─────────────┘
-
-  ┌─────────────┐  implementation:  pina o record de implementação
-  │ proof       │ ──────────────────────────────────► delivery/implementation/…
-  └─────────────┘     (pega o caso: o código foi reescrito e os testes não)
-
-  ┌─────────────┐  standardRef.pin:  pina a cópia do standard que leu
-  │ review      │ ──────────────────────────────────► delivery/standards/<f>
-  └─────────────┘
-      └─ uma review NÃO pina a task: a totalidade de cobertura já a
-         prende aos critérios como eles estão.
-```
-
-Nenhum nó da base carrega pin: a base é o topo da cadeia e não aponta para nada anterior.
-
-### Por que hash, e não data nem número de versão
-
-| mecanismo | por que não |
-|---|---|
-| timestamp | diz *quando* alguém leu, não *o quê*. Dois arquivos diferentes têm a mesma data; o mesmo arquivo pode ser tocado sem mudar. |
-| número de versão | exige que alguém incremente. A hora em que esquecem é a hora em que importava. |
-| **hash** | não precisa de ninguém. Recomputável por qualquer um, num comando. **Não pode concordar com um arquivo que mudou.** |
-
----
+Isso é o que permite que uma invocação futura de `/plan-work` ou `/analyse`, sem abrir nenhum
+histórico de plano, pergunte se código e especificação ainda concordam.
 
 ## 10. As totalidades: nada passa em silêncio
 
-O motor tem várias verificações do tipo "isto tem de estar completo". Elas são o coração da coisa,
-porque **o modo normal de errar é o silêncio**: não escrever nada sobre algo.
+Um resumo por totalidade que o validador segura:
 
-### Totalidade 1 — cobertura do épico
-
-Um épico declara `covers`: os nós da base pelos quais ele responde. Então, para cada nó em `covers`,
-**uma das duas** tem de valer:
-
-```
-   ┌────────────────────────────────────────────────────────────┐
-   │  nó em covers                                              │
-   │        │                                                   │
-   │        ├──► uma task do épico o vincula          ✔        │
-   │        │                                                   │
-   │        └──► está em `uncovered`, com um porquê   ✔        │
-   │                                                            │
-   │        nenhuma das duas  ────────────────────►   ✗ RECUSA │
-   └────────────────────────────────────────────────────────────┘
-```
-
-Recusa real:
-
-```
-epic/checkout: covers names definition/sales/order, which no task under it binds
-and uncovered does not declare; a covered node reaches a task or a stated why,
-never neither — bind it in a task under this epic, or declare it in `uncovered`
-with a why
-```
-
-E vale nos dois sentidos: uma task que vincula algo **fora** do `covers` do seu épico também é
-recusada — porque vinculação fora da declaração é escopo que o plano não declarou.
-
-### Totalidade 2 — triagem de gaps
-
-Se uma task vincula um nó que tem um **gap aberto**, a task tem de dizer algo sobre ele:
-
-```
-   ┌─────────────────────────────────────────────────────────────────┐
-   │  gap aberto num nó vinculado                                    │
-   │        │                                                        │
-   │        ├──► `unresolved`  → "preciso disto, e a base não tem"   │
-   │        │                     (bloqueia a entrega!)              │
-   │        │                                                        │
-   │        └──► `waived`      → "não afeta esta task, porque X"     │
-   │                                                                 │
-   │        silêncio  ─────────────────────────────────►   ✗ RECUSA │
-   └─────────────────────────────────────────────────────────────────┘
-```
-
-A diferença entre os dois é enorme:
-
-- **`unresolved`** = a task **não pode ser entregue**. O fato tem de ser produzido na base primeiro,
-  via `/analyse-domain`, e a task re-vinculada. Escrever código por cima de um `unresolved` faz o
-  que se escrever se ler exatamente como uma decisão do negócio, no único lugar onde ninguém vai
-  procurar por uma decisão.
-- **`waived`** = julgamento registrado de que aquele gap não importa aqui. É uma alegação que um
-  revisor pode **rejeitar** — e é por isso que exige um porquê.
-
-### Totalidade 3 — o record responde a tudo
-
-Um record de implementação tem de responder a **cada critério** da task e a **cada nó vinculado**.
-Silêncio sobre qualquer um é recusado:
-
-```
-implementation/checkout/record-order: the task binds definition/sales/order, and
-this record does not say how the source answers to it; a bound node passed over in
-silence is the base going unanswered in code — answer it in `nodes`, or re-bind the
-task through /plan-work if it does not govern this work
-```
-
----
+| totalidade | onde | o que ela impede |
+|---|---|---|
+| toda referência resolve | `spec.py` | um slug apontando para o vazio |
+| todo value object e enumeration é alcançável | `spec.py` | um elemento que nenhuma pergunta de compreensão alcança |
+| toda entrada do decision-log resolve | `spec.py` | uma decisão apontando para um arquivo ou campo que não existe |
+| todo par (estado, gatilho) é decidido | `spec.py` | uma transição silenciosamente esquecida |
+| todo nó coberto por um epic é implementado ou declarado `uncovered` | `plan.py` | um pedaço da especificação que o plano ignorou sem dizer |
+| todo critério é respondido, e só uma vez | `deliver.py` | uma entrega que responde só o que é fácil |
+| todo nó que a tarefa implementa é respondido | `deliver.py` | uma implementação que ignora parte do que assumiu governar |
 
 ## 11. A entrega
 
-Três tipos de nó, e uma separação que é o ponto todo:
+Três tipos de nó sob uma raiz de entrega — `implementation`, `proof`, `review` — mesmo esquema de
+antes. O que muda: um registro responde por todo nó que a tarefa implementa (não mais "todo nó
+vinculado"), e não existe mais `unresolved` — se algo faltava, a tarefa nunca teria sido escrita
+com uma nota `BLOCKING` ainda de pé.
 
-| tipo | o que registra | quem escreve |
-|---|---|---|
-| `implementation` | o que o código faz, critério por critério, nó por nó | um agente |
-| `proof` | o que os testes provam, e o que **não** provam | **outro** agente, em contexto separado |
-| `review` | o que quatro passes acharam | mais quatro agentes |
-
-### Por que implementação e prova são agentes separados
-
-Porque:
-
-> *"uma implementação e seus testes escritos numa passada concordam por construção, **inclusive onde
-> os dois estão errados**."*
-
-Se o mesmo agente escreve o código e o teste, o teste testa o que o código faz — não o que o
-critério pede. Separar os contextos é o que faz o teste ser uma verificação.
-
-### Toda execução passa pelo `run.py`, e fica gravada
-
-Até a 2.x, a garantia era "quem escreve o código não executa". A 3.0.0 trocou-a por uma mais
-forte — porque a antiga proibia também o legítimo: um implementador que não pode rodar `npm ci`
-escreve contra tipos que está chutando.
-
-Hoje as skills **instalam, buildam e rodam** — mas nenhuma executa nada diretamente. Cada
-execução é uma chamada a `bin/run.py`, que grava tudo o que os comandos imprimiram sob
-`run/<slug>/` no delivery root, e **recusa um slug que já existe**:
-
-```
-   ┌──────────────────┐         ┌──────────────────────┐        ┌────────────────┐
-   │ as skills pedem  │         │      bin/run.py      │        │  os records    │
-   │ a execução, com  │  ─────► │ executa e grava o    │ ─────► │ apontam para o │
-   │ os comandos DO   │         │ que cada passo       │        │ run gravado    │
-   │ REGISTRO         │         │ imprimiu; um slug    │        │ que os sustenta│
-   │                  │         │ NUNCA é reutilizado  │        │                │
-   └──────────────────┘         └──────────────────────┘        └────────────────┘
-```
-
-A recusa de slug é o que substitui a proibição antiga: **iterar é permitido porque cada
-tentativa fica legível**. A quinta rodada verde não apaga as quatro vermelhas — elas estão em
-`run/`, com nomes. Uma execução narrada em vez de capturada não aconteceu.
-
-E `run.py` continua sem julgar: ele **não conta testes** — parsear formato de reporter é
-conhecimento de stack, e o motor não tem nenhum. Ele também não compõe comando algum: os comandos
-são do registro do projeto ([seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si)),
-e um runner que chutasse o comando de teste estaria respondendo uma pergunta sobre o projeto do
-consumidor.
-
-### As quatro passes da review
-
-| passe | pergunta |
-|---|---|
-| **coverage** | os testes realmente provam os critérios da task? |
-| **base conformance** | o código afirma só o que a base sustenta? |
-| **standard conformance** | segue o standard que o **projeto** definiu para si? |
-| **failures** | por que a suite falhou? |
-
-E a review produz **evidência, nunca veredito**:
-
-> *"Um finding com o qual ninguém pode discordar é uma decisão vestida de finding. Quem decide é uma
-> pessoa, lendo o que você escreveu."*
-
-Não há severidade, nem nota, nem ranking, nem "isto bloqueia". Se a review calculasse veredito, a
-revisora seria o portão — e foi exatamente disso que este desenho fugiu.
-
-### O standard do projeto
-
-O passe de conformidade com standard merece uma seção própria — é a
-[seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si), logo abaixo. O que importa
-guardar daqui: um projeto que não escreveu standard nenhum recebe uma review **honestamente
-estreita** — o passe registra que não rodou e o que faltava — **nunca uma review limpa**.
-
----
+Depois que a entrega valida, `/implement-task` faz o bind (seção 9) — o único passo que toca um
+arquivo fora das três raízes (entrega, trabalho, código-alvo): `siegard-trace.json`, no toplevel
+do código.
 
 ## 12. O standard: as regras que o projeto define para si
 
-O conhecimento diz o que o **negócio** decidiu. O standard diz o que o **projeto** decidiu sobre
-si mesmo: como o código se organiza, por onde ele loga, o que o instala e o que o testa. São
-autoridades diferentes, com donos diferentes — e o framework trata a diferença a sério.
-
-### O que o framework embarca, e o que nunca embarca
-
-O framework embarca o **contrato** de um standard (`schemas/standard.json`), o passe de review e
-as verificações — e **nenhuma regra**. Convenções de stack não são de um domínio, e um framework
-que as embarcasse prescreveria TypeScript a um projeto em Go. A frase do teste que guarda os
-exemplos resume: *"Siegard ships the slot and the enforcement, never the content."*
-
-O registro é um YAML **no repositório do consumidor**, escrito e editado por quem é dono do
-projeto. Um projeto pode ter vários — as regras de um backend não são as de um frontend — e cada
-invocação nomeia **um**.
-
-### A anatomia de uma regra
-
-```yaml
-- id: PRH-01
-  statement: Production code logs through the configured logger.
-  because: A console line goes nowhere in production.
-  decided_by: tool
-  tool: lint
-  applies_to:
-    - under: src
-      suffix: .ts
-      nested: true
-```
-
-Cada regra tem um id citável, a afirmação, o porquê, **quem a decide**, e o escopo — declarado em
-partes (`under`, `suffix`, `nested`) em vez de glob, porque a semântica de `*` e `**` varia entre
-bibliotecas e o escopo decide se um finding é recusado. O `under` é relativo à **raiz do source
-alvo** — a mesma âncora de todos os paths do motor (ver o fim desta seção).
-
-### `decided_by`: quem decide cada regra
-
-- **`reading`** — dizer se vale exige entender o que o código significa. É do passe de standard
-  da review, e um finding cita a regra pelo id.
-- **`tool`** — um linter ou compilador decide exato e barato. **Não é trabalho de modelo**: roda
-  como passo declarado no próprio registro, e o que achar chega à review pelo passe de falhas.
-
-> *"Um modelo aplicando uma regra que o linter tem tem recall estritamente pior que o linter, e
-> custa mais."*
-
-### O registro declara como o projeto roda
-
-Esta é a parte que a 3.0.0 acrescentou, e ela nasceu de um fracasso medido: um registro chegou a
-**24 regras decididas por `lint`, `typecheck` e `secret-scan` sem nenhum passo jamais rodar** —
-duas reviews seguidas reportando, honestamente, que o passe de falhas não teve insumo. Deixados
-para um humano redigitar a cada invocação, os comandos não eram digitados nunca.
-
-Então o registro nomeia os próprios comandos:
-
-```yaml
-commands:
-  - {step: install, command: npm ci,            timeout_seconds: 600, role: install}
-  - {step: typecheck, command: npm run typecheck, timeout_seconds: 120}
-  - {step: lint,    command: npm run lint,      timeout_seconds: 120}
-  - {step: test,    command: npm test,          timeout_seconds: 300, role: suite}
-```
-
-Saída real do check de um registro de verdade:
-
-```
-standard checked: standards/backend-node-service.yaml declares 59 rule(s) — 35 decided by
-reading, 24 by a tool
-  the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)),
-  typecheck (2 rule(s)); a review reads only the 35 decided by reading
-  it declares 5 command(s): install = npm ci, typecheck = npm run typecheck, …
-    installs with install, proves with test, and the rest run as checks on both sides of the tests
-```
-
-Dois papéis (`role`) têm significado: `install` roda antes de qualquer escrita, e `suite` é a
-prova. Todo o resto roda como verificação dos dois lados dos testes. E note a honestidade do
-próprio check: *"a step deciding nothing passes exactly like one deciding all of them"* — o motor
-não lê stack nenhuma, então mostrar **o peso** de cada passo (quantas regras descansam nele) é o
-que ele pode fazer, no momento em que alguém está em posição de conferir.
-
-### O registro autoriza pacotes
-
-```yaml
-dependencies:
-  - package: pino
-    why: PRH-01 requires production code to log through it.
-    rules: [PRH-01]
-```
-
-Esta lista é **o inteiro** do que uma entrega pode adicionar ao manifesto. Um pacote de que a
-entrega precisa e a lista omite é uma **parada que o nomeia** — nunca um `npm install` por conta.
-A razão é de governança: a aprovação de um pacote é o registro ganhando uma entrada — **um humano
-editando o próprio arquivo** — nunca uma resposta dada numa sessão, que a próxima invocação não
-tem. O que os pacotes puxam transitivamente não é aprovação de ninguém: é registro do lockfile.
-
-### O scaffolding: `presupposes` e `produces`
-
-Uma regra é uma condição sobre um arquivo que **existe** — nenhuma regra consegue exigir que um
-arquivo passe a existir. Mas as regras de um registro *pressupõem* artefatos: o manifesto onde os
-scripts moram, a configuração do compilador, a configuração de onde o linter lê as próprias
-regras. Sem esses artefatos, o registro não se aplica: os passos não têm o que rodar, e as regras
-lidas são lidas contra arquivos escritos para responder a nada.
-
-O registro declara essas pressuposições:
-
-```yaml
-presupposes:
-  - path: eslint.config.js
-    provides: the flat configuration the `lint` step reads its rules from.
-    rules: [PRH-01]
-```
-
-E o ciclo do scaffolding fecha em quatro atos:
-
-```
-1. o registro DECLARA          presupposes: [package.json, tsconfig.json, eslint.config.js]
-        │
-2. o check RECUSA              deliver.py --standard <registro> --against <alvo>
-   nomeando o custo            → artefato ausente, e as regras que ficam sem decisor
-        │                      → e termina com a invocação /plan-work pronta
-        ▼
-3. o plano CORTA               uma task de substrato, que declara produces: [eslint.config.js]
-        │                      — a exceção do portão existe só para quem declara produces
-        ▼
-4. o validador COBRA           um record cujo `files` não lista o que a task disse
-                               produzir é recusado
-```
-
-Saída real do ato 2, contra uma árvore que não tem o artefato:
-
-```
-1 presupposed artifact(s) absent. Source written now answers to a registry that cannot be
-applied to it: the rules above go unanswered, and the absence is found once per file in a
-review instead of once here. The artifact is built by a task that declares it in `produces`,
-planned through /plan-work — ready below, but for the two roots only the caller knows:
-
-  /plan-work
-
-  Scope: the registry at standard.yaml presupposes eslint.config.js, absent from tree.
-  One cut: the task that produces it, declared in `produces`, covering the rules named above.
-  Work root: <the plan this initiative runs under>
-  Knowledge root: <the base that plan binds to>
-  Target source root: tree
-  Project standard: standard.yaml
-```
-
-A recusa termina com a porta: a invocação seguinte, preenchida com tudo o que o comando já sabe,
-e só os dois roots que ele não pode saber como espaços. E a exceção do ato 3 é estreita de
-propósito — a task que constrói o substrato é a única que a ausência do substrato não pode parar
-(sem exceção, o artefato nunca poderia ser escrito por nada), e ela é cobrada no ato 4 pelo que
-declarou.
-
-### A cópia pinada, e a proteção contra a colagem
-
-Quando `/implement-task` roda com um standard nomeado, ele **copia o registro** para `standards/`
-sob o delivery root e pina o SHA-256 da cópia no record. O registro vive na árvore do projeto e
-vai mudar; a cópia é o que torna a disclosure conferível depois. Uma cópia **nunca é
-sobrescrita**: se o texto mudou desde algum record, a cópia nova ganha outro nome — um segundo
-livro de regras é um segundo nome, como uma segunda execução é.
-
-Essas cópias têm um segundo uso, nascido de um acidente real: um consumidor atualizou o framework
-"por cópia" e a colagem varreu do registro três autorizações de pacote que ele mesmo tinha feito.
-As cópias pinadas são o único lugar onde as autorizações antigas sobrevivem — então o check
-compara:
-
-```
-$ deliver.py --standard standard.yaml --delivery <delivery-root>
-
-  AUTHORIZATIONS LOST vs delivery/standards/standard.yaml: typescript-eslint. That copy is
-  what earlier records were written against. Removing an entry deliberately is the consumer's
-  right and this line is its record — but a registry updated by pasting a newer template over
-  it loses entries exactly like this, and restoring them is an edit to standard.yaml, made by
-  whoever owns it
-```
-
-Reportado, **nunca recusado**: remover uma autorização de propósito é direito do consumidor, e a
-linha é o registro disso.
-
-### O standard dentro do `/implement-task`
-
-Na ordem em que ele o encontra:
-
-1. **Na entrada** — `deliver.py --standard <registro> --against <alvo> --delivery <delivery>`.
-   Registro que não fecha: parada. Artefato pressuposto ausente: parada, com a porta acima.
-2. **Set up** — o passo `role: install` roda **antes de qualquer escrita**, para o implementador
-   ler os tipos do que o projeto já declara em vez de chutá-los. A cópia do registro é pinada.
-3. **Implementação** — o implementador recebe a lista de pacotes autorizados, que é o inteiro do
-   que pode adicionar ao manifesto. O source é escrito para seguir as regras.
-4. **Build** — todos os passos do registro exceto a suite, na ordem declarada, cada um capturado
-   pelo `run.py`.
-5. **Suite** — o passo `role: suite`, capturado. O que falhou fica em `run/`, com nome.
-
-### O standard dentro do `/review-change`
-
-1. **Os comandos são do registro** — o que o passe de falhas executa (sob captura, `run.py`) são
-   os passos que o registro declara; nada aqui compõe um comando de build ou infere um do formato
-   da árvore. As regras `tool` são decididas por esses passos.
-2. **O passe de standard lê só as regras `reading`** — e cada finding cita a regra pelo id.
-   *"A finding citing no rule is taste with a location attached."*
-3. **`AUTHORIZATIONS LOST` viaja para o record inteiro** — não é parada, é evidência.
-4. **Sem standard nomeado, o passe não roda e o record diz isso** — que é uma ausência diferente
-   de um insumo não entregue, e é dita com essas palavras.
-
-### Onde os paths se ancoram
-
-Tudo nesta seção compara paths por grafia: `produces` contra `files`, escopo contra finding,
-`presupposes` contra a árvore. Por isso todos se declaram contra **uma âncora só: a raiz do
-source alvo** — o diretório de onde os comandos do registro rodam. Ela pode ser a raiz do
-repositório e pode ser `backend/` dentro dele: o software inteiro (manifesto, `src/`, testes,
-`node_modules/`) vive nela, e `knowledge/`, `work/`, `delivery/` e o próprio registro vivem fora.
-Um path absoluto é recusado no contrato, e um record que grafasse paths do repositório enquanto o
-registro os grafa do alvo não responderia a regra nenhuma — o contrato diz de quem é a grafia
-exatamente para essa comparação nunca falhar em silêncio.
-
----
+Inalterado mecanicamente. `siegard.json` declara o registro uma vez; `schemas/standard.json` é o
+contrato; `bin/deliver.py --standard <arquivo>` valida. Duas linhas seguem limitando o escopo:
+nenhuma regra diz o que o sistema responde (isso é da especificação), e uma regra que uma
+ferramenta decide não é de uma leitura reler.
 
 ## 13. Os quatro pontos de entrada
 
-```
-  material do cliente
-  (documento, reunião, prosa)
-         │
-         ▼
-  ┌─────────────────────┐
-  │  /analyse-domain    │  vira nós de conhecimento, valida, deriva graph.json
-  └──────────┬──────────┘
-             │  handoff: a invocação de /plan-work pronta para colar
-             ▼
-  ┌─────────────────────┐
-  │  /plan-work         │  vira inventário + épicos + tasks, valida CONTRA a base
-  └──────────┬──────────┘
-             │  handoff: a invocação de /implement-task, com a task como slot
-             ▼
-  ┌─────────────────────┐
-  │  /implement-task    │  instala, escreve código + testes, builda e roda a
-  └──────────┬──────────┘  suite — cada execução capturada — grava os dois records
-             │                UMA invocação, UMA task
-             │  handoff: a invocação de /review-change, com o file set já preenchido
-             ▼
-  ┌─────────────────────┐
-  │  /review-change     │  captura a execução, roda quatro passes, grava findings
-  └──────────┬──────────┘
-             │
-             ▼
-       uma PESSOA lê
-```
-
-**Cada um para e devolve o controle.** Nenhum chama o próximo. O relatório termina com a invocação
-seguinte pronta para colar e os espaços em branco — preencher e rodar é do humano.
-
-E cada um termina do mesmo jeito:
-
-> *"Then stop. `git diff` sobre a raiz é a revisão, e ela pertence a uma pessoa."*
-
-Existem dois comandos auxiliares, que não são pontos de entrada:
-
-```bash
-python3 bin/terms.py             # todos os termos, lidos do contrato que os define
-python3 bin/terms.py pin         # só um
-python3 bin/run.py …             # executa os comandos do consumidor e grava a saída
-```
-
----
+- **`/analyse`** — transforma material em nós da especificação, valida, deriva projeções, e para.
+- **`/plan-work`** — transforma um escopo mais a especificação validada num plano de
+  desenvolvimento.
+- **`/implement-task`** — escreve o código de uma tarefa planejada e os testes que o provam,
+  instala e roda o que o standard declara, faz o bind no trace, e para.
+- **`/review-change`** — revisa uma mudança entregue por quatro ângulos independentes — cobertura,
+  conformidade com a especificação, conformidade com o standard, e por que uma suíte falhou —
+  produz evidência, nunca um veredito.
 
 ## 14. A parada é a funcionalidade
 
-Isto costuma ser o que mais estranha quem chega: o motor **recusa muito**. E recusar é o produto,
-não a falha.
-
-Duas propriedades tornam as recusas suportáveis, e ambas são desenho:
-
-- **Toda recusa entrega a porta, não só o muro.** A parada nomeia a saída — e onde o comando já
-  sabe o suficiente, ela termina com a invocação seguinte pronta para colar, como a recusa de
-  substrato da [seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si).
-- **O escopo da parada é o risco que ela cobre.** O check de raiz limpa carrega pathspec: uma
-  mudança pendente fora dos roots que a invocação escreve é trabalho de outra pessoa em
-  andamento, não impedimento.
-
-São mais de vinte condições distintas de parada nas quatro skills. Todas antes de escrever
-qualquer coisa:
-
-```
-  ┌────────────────────────────────────────────────────────────────────┐
-  │  ANTES de escrever qualquer arquivo, verifica:                      │
-  │                                                                     │
-  │  ✗ a raiz tem mudanças não commitadas?      → PARA                 │
-  │      (porque `git diff` é a revisão, e ela só diz o que ESTA        │
-  │       invocação fez se a raiz começar limpa)                        │
-  │                                                                     │
-  │  ✗ a base/plano não fecha?                  → PARA                 │
-  │  ✗ falta um input que ninguém nomeou?       → PARA                 │
-  │  ✗ a task tem entradas `unresolved`?        → PARA                 │
-  │  ✗ a task tem nota `BLOCKING`?              → PARA                 │
-  └────────────────────────────────────────────────────────────────────┘
-```
-
-E a parada é **uma só, junta**:
-
-> *"Absent inputs stop once, together: one stop naming everything missing, so the human answers once
-> — never a question at a time."*
-
-### Três paradas que só uma pessoa resolve
-
-| parada | por que é do humano |
-|---|---|
-| um **gap** | nomeia um fato que só quem conhece o domínio afirma, e um valor inventado se lê igual a um afirmado |
-| **raiz suja** | é decisão de git — commitar, descartar, ignorar — e nenhuma das três é de uma skill |
-| nota **`BLOCKING`** | é o escopo e a base se contradizendo, e as duas saídas passam por um ponto de entrada que alguém invoca |
-
-Todo o resto é **forma**, e forma a própria invocação corrige. A regra que separa as duas:
-
-> **"Fixing means form, never knowledge."** Um valor fora de vocabulário, uma lista onde cabia um
-> mapa, um digest malformado — é da invocação corrigir. Um fato ausente é um gap.
-
----
+Uma parada é este framework funcionando, não falhando. Toda entrada recusa antes de escrever, em
+vez de escrever o que um revisor teria de pegar depois. Só duas coisas exigem mesmo uma pessoa:
+uma mudança não commitada (decisão de git) e uma nota `BLOCKING` (o escopo e a especificação se
+contradizendo). O resto é forma, e forma é da própria invocação corrigir.
 
 ## 15. Exemplo completo de ponta a ponta
 
-Um requisito, do começo ao fim.
-
-### O material
-
-> *"Cliente monta um pedido com número e valor total. Não pode fechar pedido com total zerado ou
-> negativo. Depois de fechado, não pode fechar de novo."*
-
-### Passo 1 — `/analyse-domain` produz nós
+O fixture `tests/fixtures/spec-model/` é uma especificação sã inteira — dois contextos
+(`monitoring`, `troubleshooting`), 10 elementos, 3 rules, 2 scenarios, 4 contracts, 1 constraint,
+2 decisões disclosed. Rodando a validação completa:
 
 ```
-knowledge/
-├── context/sales.md
-├── aggregate/sales/orders.md
-│
-├── definition/sales/order.md
-│      ddd: aggregate-root
-│      identity: [order_number]
-│      attributes: [order_number, total]
-│      gaps:
-│        - field: attributes.[]
-│          why: The material names the number and the total, and no complete list.
-│                            ↑ o material NÃO listou todos os campos.
-│                              declarado, não inventado. Caminho pontilhado,
-│                              porque o campo ESTÁ declarado.
-│
-├── definition/sales/order-already-placed.md
-│      ddd: domain-error
-│      gaps:
-│        - field: attributes
-│          why: The material states the refusal and carries no payload for it.
-│                            ↑ o erro que a rejeição do ciclo de vida nomeia.
-│                              Tem de existir como nó: uma rejeição não pode
-│                              apontar para um erro que a base não sustenta.
-│
-├── rule/sales/total-positive.md
-│      statement: An order total MUST be greater than zero.
-│      constrains: [definition/sales/order]
-│
-├── lifecycle/sales/order.md
-│      states: [draft, placed]
-│      transitions: draft --place--> placed
-│      rejections: placed --place--> definition/sales/order-already-placed
-│                            ↑ "não pode fechar de novo" — uma REJEIÇÃO,
-│                              não uma transição
-│
-└── graph.json      ← gerado por graph.py
+$ python3 -B bin/spec.py tests/fixtures/spec-model/
+specification sound: 10 element(s), 3 rule(s), 2 scenario(s), 4 contract(s), 1 constraint(s)
+across 2 context(s); 2 decision(s) disclosed
 ```
 
-Saída real, desta base exata:
-
-```bash
-$ python3 bin/graph.py knowledge/
-derived knowledge/graph.json: 6 node(s), 5 edge(s), contract siegard/1
-  1 context, 1 aggregate, 2 definition, 1 rule, 1 lifecycle; 2 gap(s); 0 node(s) with rationale
-
-$ python3 bin/graph.py --gaps knowledge/
-definition/sales/order: attributes.[]
-definition/sales/order-already-placed: attributes
-```
-
-### Interlúdio: dois erros que o validador pega na porta
-
-Vale mais do que qualquer explicação. A base acima, montada pela primeira vez, foi recusada com
-**dois problemas — os dois exatamente os que a [seção 17](#17-erros-comuns-e-o-que-significam)
-cataloga**:
+O mapa de contexto que deriva disso mostra exatamente uma aresta — o único par de contextos com um
+contrato entre si:
 
 ```
-definition/sales/order-already-placed: frontmatter: 'attributes' is a required property
-definition/sales/order: gaps[0]: `attributes` is declared by the node; a gap names an
-absent fact. An absence inside `attributes` takes a dotted path
+$ cat tests/fixtures/spec-model/projections/context-map.mmd
+flowchart LR
+    monitoring["Monitoring (supporting)"]
+    troubleshooting["Troubleshooting (core)"]
+    monitoring -->|alert-raised| troubleshooting
 ```
 
-O primeiro: o nó do erro de domínio foi escrito sem `attributes`, e um `definition` exige o campo.
-Não bastava omitir — a ausência tem de ser **declarada**, com um gap. O segundo: `attributes` foi
-declarado com dois campos **e** gapeado com o nome nu. O validador não deixa as duas coisas
-coexistirem, e a mensagem já traz o conserto (`attributes.[]`).
-
-Nenhum dos dois erros é bobo, e nenhum dos dois seria pego por revisão humana com confiabilidade. É
-isto que o motor compra: os erros de forma param na porta, e o que sobra para uma pessoa revisar é
-**julgamento** — se o gap é legítimo, se a regra foi bem lida.
-
-### Passo 2 — `/plan-work` produz o plano
-
-```
-work/
-├── intake/scope.md                       ← o material, preservado como foi dado
-├── inventory/order-service.md
-├── epic/checkout.md
-│      covers: [definition/sales/order, rule/sales/total-positive,
-│               lifecycle/sales/order]
-│
-├── task/checkout/record-order.md
-│      objective: A valid order is persisted and retrievable by its order_number.
-│      criteria:
-│        - Submitting a valid order returns its order_number.
-│        - An order with a total of zero or less is refused.
-│      nodes:
-│        - node: definition/sales/order
-│          digest: sha256:ea0d00a2…
-│        - node: rule/sales/total-positive
-│          digest: sha256:24a0256b…
-│        - node: lifecycle/sales/order
-│          digest: sha256:fc9f08af…
-│      unresolved:
-│        - gap: definition/sales/order#attributes.[]
-│                    ↑ o gap da base bloqueia: a task PRECISA da lista de campos.
-│                      A citação é <identificador-do-nó>#<campo-do-gap>.
-│
-└── plan.json
-```
-
-Saída real:
-
-```bash
-$ python3 bin/plan.py work/ knowledge/
-derived work/plan.json: 3 node(s), 6 edge(s), contract siegard-plan/2
-  1 inventory, 1 epic, 1 task; 1 unresolved gap citation(s) (1 unique); 0 open question(s); 0 waived
-
-$ python3 bin/plan.py --unresolved work/ knowledge/
-task/checkout/record-order:
-  gap definition/sales/order#attributes.[]
-```
-
-Note que o plano **valida** com um `unresolved` aberto. Um plano com pendência é um plano legítimo —
-o que ele não é, é entregável. É a próxima etapa que para.
-
-### Passo 3 — `/implement-task` **PARA**
-
-A skill começa perguntando ao próprio motor o que é entregável. Saída real:
-
-```bash
-$ python3 bin/deliver.py --outstanding delivery/ work/ knowledge/
-task/checkout/record-order: no record; 1 unresolved entry(ies), which /analyse-domain settles
-```
-
-Duas coisas ali. "no record" — nada foi entregue ainda. E "1 unresolved entry(ies), **which
-/analyse-domain settles**" — o próprio motor diz para onde ir. A skill então para:
-
-```
-PARADA: The task carries unresolved entries.
-  definition/sales/order#attributes.[] — the material names the number and the
-  total, and no complete list.
-
-O fato é produzido na base, via /analyse-domain, e a task re-vinculada depois.
-```
-
-**É aqui que o motor ganha o salário.** Sem ele, o desenvolvedor teria inventado os campos que
-faltavam, e a invenção teria virado "o que o sistema faz" para sempre.
-
-### Passo 4 — o ciclo fecha
-
-O cliente responde: *"tem também data de criação e o cliente que pediu"*. Roda-se `/analyse-domain`
-de novo, o gap fecha com fatos **afirmados**, o digest daquele nó muda, a task é re-vinculada, o
-`unresolved` sai — e só então `/implement-task` escreve código.
-
-```
-implementation/checkout/record-order.md
-     criteria:
-       - criterion: Submitting a valid order returns its order_number.
-         met: true
-         how: place() returns the persisted order_number unchanged
-     nodes:
-       - node: definition/sales/order
-         encoded_at: [src/orders/place.ts]
-         how: the order's identity and attributes are the shape place() persists
-     task: sha256:…                      ← pina a redação da task
-
-proof/checkout/record-order.md
-     implementation: sha256:…            ← pina o record acima
-     tests:
-       - file: tests/place.spec.ts
-         proves: Submitting a valid order returns its order_number.
-         fails_when: place() answers with anything but the stored order_number
-                        ↑ isto é o que faz o teste ser prova:
-                          o que teria de quebrar para ele falhar
-```
-
-### Passo 5 — `/review-change`
-
-Captura a execução, roda as quatro passes, grava findings com evidência. Uma pessoa lê e decide o
-que significam.
-
----
+Um contrato removido vira "separate ways" no mapa, não uma aresta que desaparece em silêncio —
+`test_every_projected_fact_traces_to_a_file` em `tests/test_spec_model.py` prova exatamente isso.
 
 ## 16. Glossário
 
-Consultável a qualquer momento com `python3 bin/terms.py`, que lê cada definição do contrato que a
-enuncia — nunca de uma cópia.
+Não reproduzido aqui: `bin/terms.py` imprime cada termo direto do contrato que o define, e
+reproduzir o texto aqui seria a segunda cópia que ele existe para evitar.
 
-| termo | em português simples |
-|---|---|
-| **nó** (node) | um arquivo markdown com frontmatter. A unidade de tudo. |
-| **raiz** (root) | um dos três diretórios: conhecimento, trabalho, entrega. |
-| **base** | a raiz de conhecimento e seus nós. Nomeia só isso. |
-| **slug** | o nome do arquivo em kebab-case. |
-| **gap** | uma ausência declarada: um fato que o material não disse. |
-| **rationale** | marca um valor que a análise **decidiu** lendo o material, em vez de ler literalmente. Contestável. |
-| **vincular** (bind) | uma task listar os nós da base que a governam, com o digest de cada um. |
-| **vinculado** (bound) | dito de um nó que uma task listou. |
-| **digest** | o SHA-256 dos bytes de um arquivo: qual versão dele um julgamento leu. |
-| **pin** | o mesmo mecanismo, do lado da entrega: o digest do artefato que um record responde. |
-| **covers** | os nós da base pelos quais um épico responde. |
-| **uncovered** | os nós que o épico reivindicou e este plano deixa de fora, cada um com porquê. |
-| **unresolved** | o que a task precisa e a base não tem. **Bloqueia a entrega.** |
-| **waived** | um gap que não afeta esta task, com o porquê. Um revisor pode rejeitar. |
-| **criterion** | uma condição falsificável por si só. |
-| **record** | um nó de entrega: o que foi feito ou achado. |
-| **proof** | o nó que registra o que os testes provam — e o que não provam. |
-| **standard / registro** | o YAML em que o **projeto** define as próprias regras, comandos e pacotes autorizados. O framework embarca o contrato e nenhuma regra. |
-| **step / comando** | um passo que o registro declara (`install`, `lint`, `test`…). O que roda é isso — nada é composto nem inferido. |
-| **presupposes** | os artefatos que as regras do registro assumem existir (manifesto, tsconfig, config do linter). Ausente = recusa antes do primeiro arquivo. |
-| **produces** | o que uma task de substrato declara que vai criar. É a exceção do portão de presupposes — e o record é cobrado por ela. |
-| **substrato** | os artefatos de `presupposes`, coletivamente: o chão que o registro precisa para se aplicar. |
-| **captura (run/)** | o diretório onde `run.py` grava o que cada execução imprimiu. Um slug nunca é reutilizado: iterar fica gravado. |
-| **cópia pinada** | o registro copiado para `standards/` sob o delivery root, jamais sobrescrito. É onde as autorizações antigas sobrevivem. |
-| **stale** | o índice derivado não corresponde mais aos nós. Rodar o script de novo. |
-| **intake** | onde o material lido fica preservado. Nunca validado como nó. |
-| **closure** | um `closure.md` na raiz de trabalho marca o plano encerrado. Vira história. |
-
----
+```
+$ python3 -B bin/terms.py implements
+implements  [plan-node.json/properties/implements/description]
+    The specification nodes this task implements, by identity: the executor reads exactly
+    these, current, from the specification itself — the specification does not change during
+    a plan's execution, by convention, so there is nothing to pin. ...
+```
 
 ## 17. Erros comuns e o que significam
 
-Todas as mensagens abaixo são reais. O formato é sempre:
+| Mensagem | O que aconteceu |
+|---|---|
+| `the path computes to no identity; see the layout in SPEC-003` | Um arquivo `.md` sob a raiz não bate com nenhum dos seis formatos de caminho — provavelmente uma pasta a mais, ou um arquivo fora de `domain/`, `rules/`, `scenarios/`, `contracts/`, `constraints/` ou a raiz. |
+| `carries a provenance meta-field` | O arquivo tem `gaps`, `sources`, `rationale` ou `proposal` — nenhum existe mais neste modelo; a decisão vai para `decision-log.md`. |
+| `answering no comprehension question does not exist` | Um value object ou enumeration que nada referencia. Um aggregate-root e um domain-service se justificam sozinhos; os outros três precisam de alguém que os alcance. |
+| `an invariant constrains inside one aggregate` | Uma invariant cujo `constrains` atravessa um agregado — precisa virar uma policy com `consistency`. |
+| `a boundary redrawn, not a rule` | Uma policy pedindo `consistency: immediate` através de uma fronteira — a fronteira é que está errada, não a regra. |
+| `an undecided pairing is a decision to make and log, never silence` | Uma state-machine com um par (estado, gatilho) sem transição nem rejeição. |
+| `the specification moved since this bind` | `trace.py --check` achou um nó cujo digest hoje difere do que o trace registrou. |
 
-```
-<onde>: <o que está errado>; <por que importa — e o que fazer>
-```
+## 18. De onde isto veio
 
-### "the path is the identity and this one computes to none"
+Este redesign substitui o modelo em sete tipos de nó (`context`, `aggregate`, `definition`,
+`rule`, `lifecycle`, `interface`, `process`), a disciplina de gaps (um fato ausente marcado como
+pendência, com rodadas de ratificação para fechá-lo), e o binding por digest (uma tarefa fixando a
+versão exata de cada nó que lia). Os três existiam por uma razão real — nenhum deles foi trocado
+por capricho — mas o redesign encontrou uma forma menor de entregar a mesma garantia: cinco
+classes fecham o vocabulário do domínio sem precisar de sete; decidir e revelar entrega a mesma
+honestidade que gaps entregava, sem o protocolo de ratificação por cima; e o trace entrega uma
+garantia de sincronia mais forte que o binding por digest — sobrevivendo ao próprio plano, em vez
+de expirar com ele.
 
-Um arquivo num caminho que não vira identificador nenhum. Ex.: `notas.md` na raiz de conhecimento.
-Material de leitura vai em `intake/` ou `run/`, que nunca são validados como nós.
-
-### "gaps[0]: `attributes` is declared by the node; a gap names an absent fact"
-
-O campo foi declarado **e** dito faltante. Escolha um. Se parte do campo falta, o gap usa caminho
-pontilhado: `attributes.[]` ou `attributes.customer`.
-
-### "…is pinned at … and stands at …"
-
-O nó vinculado mudou depois da vinculação. Ou re-vincular a task, ou reafirmar o digest de propósito.
-A mensagem nomeia o nó. Ver a [seção 9](#9-o-digest-qual-versão-a-vinculação-leu).
-
-### "a covered node reaches a task or a stated why, never neither"
-
-Um épico reivindicou um nó e nenhuma task dele o vincula, nem `uncovered` o declara. Ou criar a task,
-ou declarar em `uncovered` com o porquê.
-
-### "a bound node passed over in silence is the base going unanswered in code"
-
-O record não disse como o código responde a um nó que a task vinculou. Ou responder em `nodes`, ou
-re-vincular a task se aquele nó não governa este trabalho.
-
-### "an unnamed refusal is a gap, never an invented domain error"
-
-O nó diz que algo é rejeitado e não nomeia o erro. Se o material não disse qual erro, isso é um gap —
-não um código de erro inventado.
-
-### "an uncovered pairing is where behaviour gets invented later"
-
-Um par (estado × gatilho) do ciclo de vida sem transição, sem rejeição e sem gap. Dizer alguma coisa
-sobre ele, mesmo que seja "ninguém disse".
-
-### "STALE: … is not what the nodes derive to"
-
-O `.json` não corresponde aos markdown. Rodar o script sem `--check` para reescrever. **Não editar o
-json** — todo fato nele mora num arquivo de nó.
-
-### "a finding citing no rule is taste with a location attached"
-
-Um finding do passe de standard sem citar a regra pelo id. Sem regra citada, é opinião com endereço.
-
-### "N presupposed artifact(s) absent … planned through /plan-work"
-
-O alvo não tem um artefato que o registro pressupõe. Nada de source é escrito enquanto isso — e a
-recusa termina com a invocação `/plan-work` pronta, faltando só os dois roots que o comando não
-tem como saber. Ver a [seção 12](#12-o-standard-as-regras-que-o-projeto-define-para-si).
-
-### "the task says it produces X, and `files` does not list it"
-
-A task de substrato declarou `produces` e o record não lista o artefato. A exceção do portão é
-cobrada na saída: quem reivindicou a task e não escreveu o artefato deixa a próxima entrega parada
-na mesma ausência que esta foi cortada para encerrar.
-
-### "AUTHORIZATIONS LOST vs delivery/standards/…"
-
-O registro atual autoriza menos pacotes do que uma cópia pinada por records anteriores. Ou a
-remoção foi deliberada (e esta linha é o registro dela), ou uma atualização por cópia colou um
-template por cima do arquivo do consumidor — e restaurar é editar o registro, por quem é dono
-dele. Reportado, nunca recusado.
-
----
-
-## 18. Migrando de 1.x para 2.0.0
-
-A 2.0.0 mudou como uma task pina a base, e a mudança **invalida todo nó de plano escrito na 1.x**.
-
-**O que era:** uma task carregava um campo `base` — um SHA-256 único, do `graph.json` inteiro — e
-`nodes` era uma lista de identificadores nus.
-
-**Por que mudou:** o índice não carrega o conteúdo dos nós. Então reescrever os `attributes` de um
-nó vinculado não movia o pin, e a task continuava válida sobre um fato que mudou debaixo dela; ao
-mesmo tempo, mudar o `title` de qualquer nó movia o pin e staleava **todas** as tasks do plano,
-inclusive as que vinculam outros nós. Calado no caso que importa, barulhento no que não importa.
-
-**O que é agora:** cada entrada de `nodes` carrega `node` e `digest`, e o campo `base` não existe. A
-task stalea quando um nó **que ela vincula** se move, e a recusa nomeia esse nó.
-
-### O que um plano existente precisa
-
-Um script de uso único faz a conversão. Ele **não é distribuído** — mora em `tools/`, fora de
-`src/claude/`:
-
-```bash
-$ python3 tools/migrate_plan_pins.py <work-root> <knowledge-root> --dry-run
-$ python3 tools/migrate_plan_pins.py <work-root> <knowledge-root>
-```
-
-Ele lê a vinculação que a task já tem, estampa em cada entrada o digest que o índice já lista, remove
-o `base`, e não toca em mais nada. A reescrita é textual, e não um round-trip de YAML, para que o
-`git diff` continue legível — que é justamente a revisão que a migração existe para passar.
-
-Antes e depois, saída real:
-
-```yaml
-# antes
-nodes:
-  - definition/sales/order
-  - definition/sales/coupon
-base: sha256:2a879742…
-```
-
-```yaml
-# depois
-nodes:
-  - node: definition/sales/order
-    digest: sha256:602d0d27…
-  - node: definition/sales/coupon
-    digest: sha256:279fb43a…
-```
-
-```
-task/checkout/record: 2 digest(s) stamped, base removed
-
-migrated 1 task(s); 0 already migrated. Validate with plan.py, and read the diff.
-```
-
-Três propriedades que valem conhecer: ele é **idempotente** (rodar duas vezes reporta "already
-migrated"); ele **recusa** uma vinculação que nomeia um nó que a base não tem, em vez de inventar um
-digest que nenhum `sha256sum` reproduz; e quando qualquer task está no caminho, **não escreve nada** —
-nem as que estavam boas.
-
-Depois de migrar, validar e ler o diff:
-
-```bash
-$ python3 bin/plan.py <work-root> <knowledge-root>
-```
-
----
-
-## Em uma frase
-
-> O Siegard força cada fato de domínio que o código codifica a apontar para um nó que o negócio
-> decidiu; cada mudança a apontar para uma task; e cada task a apontar para a versão exata de cada
-> nó que leu — e recusa, em vez de adivinhar, sempre que um desses elos não fecha.
-
-O resto do motor é a mecânica que torna essa frase verificável em vez de aspiracional.
+Não existe migração automática. Uma especificação no modelo antigo é material para uma nova
+invocação de `/analyse` — o material é lido de novo, e a nova especificação é escrita do zero
+contra o formato atual.

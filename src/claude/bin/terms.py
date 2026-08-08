@@ -11,7 +11,7 @@ schema nobody reading that line has open.
 **This script holds pointers, never text.** A term maps to a file and a JSON pointer, and what gets
 printed is read out of the schema at that pointer. Nothing here paraphrases a definition, and there is
 no copy to drift: a schema whose wording changes changes this output in the same commit, because the
-output was never anywhere else. That is the same rule `graph.py --gaps` follows — report from the
+output was never anywhere else. That is the same rule `spec.py --digest` follows — report from the
 source, never maintain a second answer beside it.
 
 **A pointer that stops resolving is a refusal, not a stale entry.** Move a definition and this exits
@@ -25,9 +25,9 @@ absence a reader discovers. Closing an entry means writing the definition into a
 the term into the table above it; it does not mean writing a definition here.
 
 **One term, one entry, even where the word has two senses.** Where a word means two different things
-in two places — `covers` over base nodes and `covers` over a criterion, `digest` on the index and
-`digest` on a binding — each sense is its own row, named apart. A single row for a word with two
-meanings is the collision left in place with a definition on top of it.
+in two places — `covers` over specification nodes and `covers` over a criterion — each sense is
+its own row, named apart. A single row for a word with two meanings is the collision left in
+place with a definition on top of it.
 
 Declared dependencies: none beyond the standard library.
 
@@ -52,29 +52,25 @@ SCHEMAS = Path(__file__).resolve().parent.parent / "schemas"
 # Never a definition. Add a term by pointing at where a contract already states it; where no
 # contract states it, the term belongs in OPEN below until one does.
 TERMS: dict[str, tuple[str, str]] = {
-    "base node": ("node.json", ""),
     "cause": ("delivery-node.json", "/$defs/finding/properties/cause"),
     "covers (an epic over specification nodes)": ("plan-node.json", "/properties/covers"),
     "covers (a test over a criterion)":
         ("delivery-node.json", "/$defs/coverageEntry/properties/state"),
     "criteria": ("plan-node.json", "/properties/criteria"),
-    "ddd": ("node.json", "/properties/ddd"),
     "decided_by": ("standard.json", "/$defs/rule/properties/decided_by"),
     "delivery node": ("delivery-node.json", ""),
-    "digest (on the index)": ("graph.json", "/properties/nodes/items/properties/digest"),
+    "digest (on a trace binding)": ("trace.json", "/$defs/binding/properties/digest"),
     "delivery.json": ("delivery.json", ""),
-    "gap": ("node.json", "/properties/gaps"),
-    "gap.field": ("node.json", "/$defs/gap/properties/field"),
-    "graph.json": ("graph.json", ""),
     "implements": ("plan-node.json", "/properties/implements"),
     "objective": ("plan-node.json", "/properties/objective"),
     "pin": ("delivery-node.json", "/$defs/pin"),
     "plan node": ("plan-node.json", ""),
     "plan.json": ("plan.json", ""),
     "run.json": ("run.json", ""),
-    "slug": ("node.json", "/$defs/slug"),
+    "slug": ("plan-node.json", "/$defs/slug"),
     "specification node": ("plan-node.json", "/$defs/specNodeRef"),
     "standard": ("standard.json", ""),
+    "trace.json": ("trace.json", ""),
     "uncovered": ("plan-node.json", "/properties/uncovered"),
 }
 
@@ -82,29 +78,33 @@ TERMS: dict[str, tuple[str, str]] = {
 # used and what it collides with — never what it means, because a meaning stated here would be the
 # second home this script exists to avoid.
 OPEN: dict[str, str] = {
-    "base (the knowledge root)": "the root the analysis writes into and every plan binds to, defined "
-                                 "as an input in each skill's required inputs and in CLAUDE.md's "
-                                 "`What the base is`, and by no contract. It no longer collides with "
-                                 "a field: the task-level `base` pin was replaced by a digest per "
-                                 "bound node, so the word now names one thing.",
-    "bound": "used of a base node a task's `nodes` names, in the validators' refusals and in every "
-             "skill; inferable only from `binding`, and never stated.",
-    "construct": "four unrelated senses, none defined: the DDD construct (`ddd`), an implementation "
-                 "shape the base admits (which decides a `blocking` note in "
-                 "agents/execution-contract-binder.md), a syntactic thing at a location in a file "
-                 "(a finding's `where`, a standard's forbidden construct), and the idiom `by "
-                 "construction`. The load-bearing one is the second: no contract states it, and a "
-                 "note's class turns on it.",
-    "impact set": "defined twice and differently — mechanically in skills/analyse-domain/SKILL.md "
-                  "and loosely in agents/backlog-decomposer.md — and no contract holds either.",
+    "specification (the specification root)": "the root the analysis writes into and every plan "
+                                 "implements against, defined as an input in each skill's required "
+                                 "inputs and in CLAUDE.md's `What the specification is`, and by no "
+                                 "contract. It collides with nothing: a task names a node it "
+                                 "implements by identity alone, with no pin of any kind.",
+    "bound": "used of the judgment execution-contract-binder returns, in the validators' refusals "
+             "and in every skill; inferable only from the agent's own name, and never stated by a "
+             "contract.",
+    "construct": "four unrelated senses, none defined: the type of a Domain Model element (`type` "
+                 "in schemas/spec/element.json), an implementation shape the specification admits "
+                 "(which decides a `blocking` note in agents/execution-contract-binder.md), a "
+                 "syntactic thing at a location in a file (a finding's `where`, a standard's "
+                 "forbidden construct), and the idiom `by construction`. The load-bearing one is "
+                 "the second: no contract states it, and a note's class turns on it.",
+    "impact set": "defined three times and differently — in skills/analyse/SKILL.md, in "
+                  "skills/plan-work/SKILL.md, and loosely in agents/backlog-decomposer.md — and no "
+                  "contract holds any of them.",
     "proof": "one of the three delivery kinds, with a path and a required-field branch; what a "
              "proof node is is stated nowhere.",
     "record": "the most-used term in the framework after `node` and `root`; no contract defines it, "
               "and run.py uses the same word for a run's outcome, which is explicitly not a record.",
-    "root (the DDD aggregate root)": "a value of the `ddd` vocabulary and the subject of a "
-                                     "cross-node refusal in graph.py; the enum lists it and nothing "
-                                     "says what it is. Distinct from a knowledge, work or delivery "
-                                     "root, which are inputs the skills define.",
+    "root (the aggregate root)": "a value of `type` on a Domain Model element "
+                                 "(schemas/spec/element.json) and the subject of a cross-node "
+                                 "refusal in spec.py (\"an aggregate root has one state machine\"); "
+                                 "the enum lists it and nothing says what it is. Distinct from a "
+                                 "specification, work or delivery root, which are inputs the "
+                                 "skills define.",
 }
 
 WIDTH = 96

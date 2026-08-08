@@ -133,10 +133,10 @@ not run, and what was absent. Never a clean one.
 Both are in `schemas/standard.json`, and both are the whole of its scope.
 
 **No rule states what the system answers or who may see what** — a status, an error code, a refusal,
-an authorization outcome. Those are what the business decided, they live in the knowledge base as
+an authorization outcome. Those are what the business decided, they live in the specification as
 nodes, and a rule stating one would put two review passes in contradiction over the same line: one
-requiring in code exactly what the other reports as a fact the base does not hold. What a rule may
-state is *where the mapping lives*.
+requiring in code exactly what the other reports as a fact the specification does not hold. What a
+rule may state is *where the mapping lives*.
 
 **No rule carries a severity, and nothing derives a verdict.** A finding states what it costs; a
 person decides what that means.
