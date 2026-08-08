@@ -75,11 +75,23 @@ enforces mechanically.
   R6's reachability, R8's absent fields, and R9's resolvable locations. R3, R5 and R7 are the
   analysis's judgment; the report is where a reviewer checks them.
 
+### Language
+
+- **R12** — Every specification is written in English (en-US), whatever language the material
+  is in: every identifier, slug, statement, scenario line, payload name, and decision-log entry.
+  Material in another language is translated to its ubiquitous-language term's closest English
+  equivalent before that term names anything. The material's own word may still appear in a
+  `## Description`, where it helps a reader map a name back to the source — that is prose, not
+  an identity, and SPEC-002 R2 governs how a Domain Model slug in particular carries this.
+  Analysis judgment decides the translation, the same as R3, R5 and R7; nothing here is
+  mechanically checkable, so the report is where a reviewer checks it.
+
 ## Validation required before acceptance
 
 1. The validator rejects a specification with a context holding no definition, an unreachable
    element, any provenance meta-field, or a decision-log entry whose location does not resolve
    — a fixture proves each.
-2. The analyse skill states the floor, the ceiling, and the decide-and-disclose discipline, and
-   its output on a benchmark material yields artifacts with zero open markers and a log whose
-   entries all resolve.
+2. The analyse skill states the floor, the ceiling, the decide-and-disclose discipline, and the
+   English-language requirement, and its output on a benchmark material — including material
+   written in another language — yields artifacts with zero open markers, every identifier and
+   statement in English, and a log whose entries all resolve.

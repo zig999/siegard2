@@ -43,11 +43,13 @@ domain/
 - **R1** — One element, one file, flat: `domain/<context-slug>/<element-slug>.md`. No
   subdirectories below the context. Beside the elements sits the context descriptor
   `_context.md` (SPEC-003) — the underscore keeps it outside the element slug space.
-- **R2** — Slugs are kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`) of the ubiquitous-language term.
-  The filename is the identity; there is no `name` field. Display and code forms are derived,
-  never stored: `case-status` → `CaseStatus` (PascalCase). The one exception is an acronym the
-  derivation miscases: an optional `display` field may state the form (`display: ISBNCode`),
-  and it must reduce back to the slug.
+- **R2** — Slugs are kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`) of the ubiquitous-language term,
+  in English (SPEC-001 R12): a term the material states in another language is translated to
+  its closest English equivalent before the slug is derived from it. The filename is the
+  identity; there is no `name` field. Display and code forms are derived, never stored:
+  `case-status` → `CaseStatus` (PascalCase). The one exception is an acronym the derivation
+  miscases: an optional `display` field may state the form (`display: ISBNCode`), and it must
+  reduce back to the slug.
 - **R3** — The element type never enters the filename. Reclassifying an element (entity →
   aggregate-root) changes one frontmatter line and breaks no reference.
 - **R4** — A reference is the target's slug: bare (`investigation`) inside the same context,

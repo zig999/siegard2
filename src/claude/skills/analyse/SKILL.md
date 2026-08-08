@@ -124,7 +124,12 @@ that decides what goes in it:
   There is no alias mechanism in this model — where the material uses two words for one thing,
   the analysis picks the one that best carries the term as the element's name, and the other
   does not surface as a second entry. `display` exists only to correct a slug's derived
-  PascalCase where it would miscase an acronym, never to record a synonym.
+  PascalCase where it would miscase an acronym, never to record a synonym. Every name this
+  analysis writes is English (SPEC-001 R12), whatever language the material is in — an
+  identifier, a rule's `statement`, a scenario's `given`/`when`/`then`, a decision-log entry —
+  translate the term to its closest English equivalent before it becomes one of these. The
+  material's own word may still appear in a `## Description`, where it helps a reader map the
+  name back to the source; it is prose there, never the identity.
 - **A context is a linguistic boundary.** Not a team, not a deployment unit, not a module. Draw
   one where the language changes or where somebody else's model gets translated at the edge.
   In a first pass, fewer and larger contexts beat many thin ones.
