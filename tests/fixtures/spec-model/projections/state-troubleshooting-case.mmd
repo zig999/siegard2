@@ -1,0 +1,10 @@
+stateDiagram-v2
+    [*] --> open
+    open --> investigating : startInvestigation
+    investigating --> resolved : resolve
+    open --> cancelled : cancel
+    investigating --> cancelled : cancel
+    resolved --> [*]
+    cancelled --> [*]
+    %% rejected: resolve in open
+    %% rejected: startInvestigation in investigating

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/spec/rule.json",
+  "title": "Rule",
+  "description": "The frontmatter of rules/<context-slug>/<rule-slug>.md (SPEC-003). Three subtypes, each changing validation: an invariant constrains inside one aggregate and holds immediately; a policy may cross aggregates or contexts and then declares consistency — immediate across an aggregate boundary is a validation error; a state-machine anchors to one aggregate root and its status enumeration, and the validator checks totality over its transition set. A rule carries no examples: a concrete case is a Scenario anchored to the rule. The body carries `## Description`.",
+  "type": "object",
+  "required": ["type", "statement"],
+  "additionalProperties": false,
+  "properties": {
+    "type": { "enum": ["invariant", "policy", "state-machine"] },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One falsifiable condition."
+    },
+    "expression": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule stated so a consumer can evaluate it."
+    },
+    "constrains": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/domainRef" },
+      "description": "The Domain Model elements this rule binds, by full identity."
+    },
+    "consistency": {
+      "enum": ["immediate", "eventual"],
+      "description": "How a policy holds. Required where constrains crosses an aggregate or context boundary, and it must be eventual there: an immediate demand across a boundary is a boundary redrawn, not a rule."
+    },
+    "subject": {
+      "$ref": "#/$defs/domainRef",
+      "description": "State-machine only: the aggregate root whose states this governs. At most one state-machine per subject."
+    },
+    "status": {
+      "$ref": "#/$defs/domainRef",
+      "description": "State-machine only: the enumeration whose values are the states."
+    },
+    "initial": { "$ref": "#/$defs/slug" },
+    "terminal": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/slug" },
+      "description": "States that accept no further trigger; exempt from the totality check because declared."
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/transition" }
+    },
+    "rejections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rejection" },
+      "description": "Decided non-transitions. Every pairing of a non-terminal state with a mentioned trigger is a transition or a rejection; an undecided pairing is a decision to make and log, never silence."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "invariant" } }, "required": ["type"] },
+      "then": {
+        "required": ["constrains"],
+        "propertyNames": { "enum": ["type", "statement", "expression", "constrains"] },
+        "examples": [
+          {
+            "type": "invariant",
+            "statement": "A hypothesis MUST hold at least one piece of evidence before its case resolves.",
+            "constrains": ["domain/troubleshooting/hypothesis"]
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "policy" } }, "required": ["type"] },
+      "then": {
+        "required": ["constrains"],
+        "propertyNames": { "enum": ["type", "statement", "expression", "constrains", "consistency"] },
+        "examples": [
+          {
+            "type": "policy",
+            "statement": "An alert unresolved for 24 hours MUST open a case.",
+            "constrains": ["domain/monitoring/alert", "domain/troubleshooting/case"],
+            "consistency": "eventual"
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "state-machine" } }, "required": ["type"] },
+      "then": {
+        "required": ["subject", "status", "initial", "transitions"],
+        "propertyNames": { "enum": ["type", "statement", "subject", "status", "initial", "terminal", "transitions", "rejections"] },
+        "examples": [
+          {
+            "type": "state-machine",
+            "statement": "A case moves only along the declared transitions.",
+            "subject": "domain/troubleshooting/case",
+            "status": "domain/troubleshooting/case-status",
+            "initial": "open",
+            "terminal": ["resolved", "cancelled"],
+            "transitions": [
+              { "from": "open", "trigger": "start-investigation", "to": "investigating" },
+              { "from": "investigating", "trigger": "resolve", "to": "resolved" },
+              { "from": "open", "trigger": "cancel", "to": "cancelled" },
+              { "from": "investigating", "trigger": "cancel", "to": "cancelled" }
+            ],
+            "rejections": [
+              { "from": "open", "trigger": "resolve" },
+              { "from": "investigating", "trigger": "start-investigation" }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "domainRef": {
+      "type": "string",
+      "pattern": "^domain/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A Domain Model element, by full identity — rules sit in their own directory, so no reference is bare."
+    },
+    "transition": {
+      "type": "object",
+      "required": ["from", "trigger", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "$ref": "#/$defs/slug" },
+        "trigger": { "$ref": "#/$defs/slug" },
+        "to": { "$ref": "#/$defs/slug" }
+      }
+    },
+    "rejection": {
+      "type": "object",
+      "required": ["from", "trigger"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "$ref": "#/$defs/slug" },
+        "trigger": { "$ref": "#/$defs/slug" }
+      }
+    }
+  }
+}

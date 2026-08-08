@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/spec/element.json",
+  "title": "Domain Model element",
+  "description": "The frontmatter of one element file, domain/<context-slug>/<element-slug>.md (SPEC-002). The filename is the identity: no name field exists, and the display form is derived from the slug — `display` is declared only where the derivation would miscase an acronym, and it must reduce back to the slug. No provenance meta-fields exist (SPEC-001 R8): a fact the material does not state is decided and disclosed in the decision log. The body carries exactly two headings, `## Description` and `## Responsibility`.",
+  "type": "object",
+  "required": ["type"],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "enum": ["aggregate-root", "entity", "value-object", "domain-service", "enumeration"],
+      "description": "The DDD construct this element records. Which fields it may declare follows from it (SPEC-002 R6)."
+    },
+    "display": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The display form, only where PascalCase(slug) would miscase an acronym. Must reduce back to the slug."
+    },
+    "aggregate": {
+      "$ref": "#/$defs/slug",
+      "description": "Entity only: the aggregate root that owns this entity, by slug, in the same context. A value object never declares one — values are shareable and belong to no consistency boundary."
+    },
+    "attributes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/attribute" }
+    },
+    "relationships": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/slug" },
+      "description": "Domain behavior by name only — kebab-case verbs. Parameters, returns and refusals live in the behavioral layers."
+    },
+    "values": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/slug" },
+      "description": "Enumeration only. kebab-case; code forms are derived."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "aggregate-root" } }, "required": ["type"] },
+      "then": {
+        "required": ["attributes"],
+        "propertyNames": { "enum": ["type", "display", "attributes", "relationships", "operations"] },
+        "examples": [
+          {
+            "type": "aggregate-root",
+            "attributes": [
+              { "name": "id", "type": "case-id", "required": true },
+              { "name": "status", "type": "case-status", "required": true },
+              { "name": "opened_at", "type": "datetime", "required": true }
+            ],
+            "relationships": [
+              { "target": "investigation", "type": "composition", "cardinality": "1" }
+            ],
+            "operations": ["open", "resolve", "cancel"]
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "entity" } }, "required": ["type"] },
+      "then": {
+        "required": ["aggregate", "attributes"],
+        "propertyNames": { "enum": ["type", "display", "aggregate", "attributes", "relationships", "operations"] },
+        "examples": [
+          {
+            "type": "entity",
+            "aggregate": "case",
+            "attributes": [
+              { "name": "statement", "type": "string", "required": true },
+              { "name": "evidence", "type": "evidence", "many": true }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "value-object" } }, "required": ["type"] },
+      "then": {
+        "required": ["attributes"],
+        "propertyNames": { "enum": ["type", "display", "attributes", "relationships"] },
+        "examples": [
+          {
+            "type": "value-object",
+            "attributes": [
+              { "name": "value", "type": "string", "required": true }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "domain-service" } }, "required": ["type"] },
+      "then": {
+        "required": ["operations"],
+        "propertyNames": { "enum": ["type", "display", "operations"] },
+        "examples": [
+          {
+            "type": "domain-service",
+            "operations": ["correlate-evidence"]
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "enumeration" } }, "required": ["type"] },
+      "then": {
+        "required": ["values"],
+        "propertyNames": { "enum": ["type", "display", "values"] },
+        "examples": [
+          {
+            "type": "enumeration",
+            "values": ["open", "investigating", "resolved", "cancelled"]
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A name reduced to kebab-case."
+    },
+    "attributeName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+      "description": "snake_case; the camelCase code form is derived."
+    },
+    "attributeType": {
+      "type": "string",
+      "pattern": "^([a-z0-9]+(-[a-z0-9]+)*|domain/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$",
+      "description": "A primitive (string, integer, decimal, boolean, date, datetime) or the slug of a value-object or enumeration element — bare inside the same context, full identity across contexts (SPEC-003 R2). A link to an entity or aggregate root is a relationship, never an attribute (SPEC-002 R8). `unknown` does not exist: an undetermined type is a decision to make and log."
+    },
+    "attribute": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/attributeName" },
+        "type": { "$ref": "#/$defs/attributeType" },
+        "required": { "type": "boolean" },
+        "many": {
+          "type": "boolean",
+          "description": "The attribute's value repeats (SPEC-002 R9). Absent means one value."
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "required": ["target", "type", "cardinality"],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "pattern": "^([a-z0-9]+(-[a-z0-9]+)*|domain/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$",
+          "description": "An entity or aggregate root — bare slug inside the same context, full identity across."
+        },
+        "type": {
+          "enum": ["composition", "reference", "association"],
+          "description": "composition never crosses an aggregate boundary; reference points at another aggregate's root, by identity (SPEC-002 R11)."
+        },
+        "cardinality": {
+          "enum": ["1", "0..1", "0..*", "1..*"],
+          "description": "The target end. The source end is 1 for composition and 0..* otherwise, unless source-cardinality overrides (SPEC-002 R10)."
+        },
+        "source-cardinality": { "enum": ["1", "0..1", "0..*", "1..*"] },
+        "role": {
+          "$ref": "#/$defs/slug",
+          "description": "Labels the edge; required when two relationships share the same target."
+        }
+      }
+    }
+  }
+}

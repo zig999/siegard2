@@ -1,0 +1,58 @@
+classDiagram
+    namespace CaseAggregate {
+        class Case {
+            <<AggregateRoot>>
+            +CaseId id
+            +CaseStatus status
+            +datetime openedAt
+            +datetime resolvedAt
+            +open()
+            +startInvestigation()
+            +resolve()
+            +cancel()
+        }
+        class Hypothesis {
+            <<Entity>>
+            +string statement
+            +Evidence[] evidence
+        }
+        class Investigation {
+            <<Entity>>
+            +datetime startedAt
+        }
+        class Resolution {
+            <<Entity>>
+            +string summary
+            +datetime resolvedAt
+        }
+    }
+    class CaseId {
+        <<ValueObject>>
+        +string value
+    }
+    class CaseStatus {
+        <<Enumeration>>
+        OPEN
+        INVESTIGATING
+        RESOLVED
+        CANCELLED
+    }
+    class Diagnostics {
+        <<Service>>
+        +correlateEvidence()
+    }
+    class Evidence {
+        <<ValueObject>>
+        +EvidenceType kind
+        +string value
+        +datetime collectedAt
+    }
+    class EvidenceType {
+        <<Enumeration>>
+        LOG
+        METRIC
+        REPORT
+    }
+    Case "1" *-- "1" Investigation
+    Case "1" *-- "0..1" Resolution
+    Investigation "1" *-- "0..*" Hypothesis

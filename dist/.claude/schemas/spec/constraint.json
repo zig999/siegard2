@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/spec/constraint.json",
+  "title": "Architecture Constraint",
+  "description": "The frontmatter of constraints/<constraint-slug>.md (SPEC-003). No subtypes. A constraint limits the solution space, never the domain: integration strategies, technology bounds, quality demands. What it cannot be is a domain rule wearing an architecture name — that is a Rule. The body carries `## Description`.",
+  "type": "object",
+  "required": ["statement", "scope"],
+  "additionalProperties": false,
+  "properties": {
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One falsifiable condition over the implementation."
+    },
+    "scope": {
+      "type": "string",
+      "pattern": "^(system|[a-z0-9]+(-[a-z0-9]+)*)$",
+      "description": "`system`, or the context slug the constraint is confined to."
+    },
+    "fitness": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The mechanical check that verifies the constraint, where one exists."
+    }
+  },
+  "examples": [
+    {
+      "statement": "Events between contexts travel asynchronously; no context calls another synchronously to publish a fact.",
+      "scope": "system"
+    }
+  ]
+}

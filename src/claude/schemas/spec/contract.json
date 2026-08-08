@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/spec/contract.json",
+  "title": "Contract",
+  "description": "The frontmatter of contracts/<context-slug>/<contract-slug>.md (SPEC-003). A domain event is named in the past tense and carries what happened; a command requests what may still be refused; an api publishes operations; a capability is the system's promise to its users and lives only in the reserved `system` namespace. Direction is required on event, command and api; consumed requires upstream. The context map is a projection of these declarations: a context pair with no contract between them has gone separate ways. The body carries `## Description`.",
+  "type": "object",
+  "required": ["type"],
+  "additionalProperties": false,
+  "properties": {
+    "type": { "enum": ["domain-event", "command", "api", "capability"] },
+    "display": { "type": "string", "minLength": 1 },
+    "direction": {
+      "enum": ["published", "consumed"],
+      "description": "Whether the owning context exposes this contract or depends on someone else's. A capability is always published and declares no direction."
+    },
+    "payload": {
+      "$ref": "#/$defs/domainRef",
+      "description": "The Domain Model element that gives this contract its shape."
+    },
+    "refusal": {
+      "$ref": "#/$defs/domainRef",
+      "description": "Command only: the value object a refusal surfaces."
+    },
+    "upstream": {
+      "$ref": "#/$defs/contractRef",
+      "description": "The published contract this consumed one depends on."
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/slug" },
+      "description": "Api only: what it exposes, by name."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "domain-event" } }, "required": ["type"] },
+      "then": {
+        "required": ["direction", "payload"],
+        "propertyNames": { "enum": ["type", "display", "direction", "payload", "upstream"] },
+        "examples": [
+          {
+            "type": "domain-event",
+            "direction": "published",
+            "payload": "domain/troubleshooting/case"
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "command" } }, "required": ["type"] },
+      "then": {
+        "required": ["direction", "payload"],
+        "propertyNames": { "enum": ["type", "display", "direction", "payload", "refusal", "upstream"] },
+        "examples": [
+          {
+            "type": "command",
+            "direction": "published",
+            "payload": "domain/troubleshooting/case"
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "api" } }, "required": ["type"] },
+      "then": {
+        "required": ["direction", "operations"],
+        "propertyNames": { "enum": ["type", "display", "direction", "operations", "upstream"] },
+        "examples": [
+          {
+            "type": "api",
+            "direction": "published",
+            "operations": ["open-case", "read-case"]
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "capability" } }, "required": ["type"] },
+      "then": {
+        "propertyNames": { "enum": ["type", "display"] },
+        "examples": [
+          { "type": "capability" }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "direction": { "const": "consumed" } }, "required": ["direction"] },
+      "then": { "required": ["upstream"] }
+    }
+  ],
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "domainRef": {
+      "type": "string",
+      "pattern": "^domain/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "contractRef": {
+      "type": "string",
+      "pattern": "^contracts/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$"
+    }
+  }
+}

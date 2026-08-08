@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/spec/decision-log.json",
+  "title": "Decision log",
+  "description": "The frontmatter of decision-log.md at the specification root (SPEC-001 R9–R10, SPEC-003 R5). Mandatory and non-normative: it constrains nothing; it discloses. One append-only list — each entry records a fact the analysis decided rather than read, locating the file and field it filled so a human can evaluate the decision after the fact. The log is the only place where agent-decided and material-stated are told apart. An empty list is a specification whose material answered everything, and that claim must be true.",
+  "type": "object",
+  "required": ["entries"],
+  "additionalProperties": false,
+  "properties": {
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "examples": [
+    {
+      "entries": [
+        {
+          "location": "domain/troubleshooting/evidence.md",
+          "field": "attributes.value.type",
+          "unstated": "The material does not say what shape an evidence value takes.",
+          "decided": "string",
+          "why": "Every evidence sample in the material is shown as free text."
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["location", "field", "unstated", "decided", "why"],
+      "additionalProperties": false,
+      "properties": {
+        "location": {
+          "type": "string",
+          "pattern": "^[a-z0-9_./-]+\\.md$",
+          "description": "The file the decision filled, relative to the specification root. Must resolve."
+        },
+        "field": {
+          "type": "string",
+          "pattern": "^[a-z_]+(\\.[a-z0-9_.\\[\\]-]+)*$",
+          "description": "The field the decision filled, dotted from the frontmatter root. Its head must exist in the located file."
+        },
+        "unstated": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the material left unsaid."
+        },
+        "decided": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The value the analysis chose."
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why that value — the claim a reviewer can reject."
+        }
+      }
+    }
+  }
+}
