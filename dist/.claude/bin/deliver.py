@@ -12,10 +12,10 @@ one file can hold: a finding attributed to a pass that did not run, a `cause` on
 not the failures pass or missing from one that is, and a coverage or run reference that
 disagrees with whether its pass ran. On top of that run the checks no per-file schema can
 express: the task exists, a proof sits beside an implementation, every criterion of the task is
-answered exactly once and nothing else is, every base node the task binds is answered, the
-plan pin matches the plan as it stands, a task the plan leaves unresolved has no record at all,
-and no task is delivered before the tasks it declares it builds on. `run/` under the delivery
-root holds what the commands printed: kept for a review to point at, never validated as a node.
+answered exactly once and nothing else is, every specification node the task implements is
+answered, the plan pin matches the plan as it stands, and no task is delivered before the tasks
+it declares it builds on. `run/` under the delivery root holds what the commands printed: kept
+for a review to point at, never validated as a node.
 
 **The plan is read through plan.py's own pipeline, never through its plan.json** — an index this
 script did not just derive could be stale, and a delivery validated against a stale index reports
@@ -47,16 +47,16 @@ decides reaches the index, so the derivation stays a function of the delivery ro
 
 Declared dependencies: PyYAML, jsonschema.
 
-Usage:  deliver.py <delivery-root> <work-root> [<knowledge-root>]
+Usage:  deliver.py <delivery-root> <work-root> [<specification-root>]
                                                         validate everything, then write
                                                         delivery.json
-        deliver.py --check <delivery-root> <work-root> [<knowledge-root>]
+        deliver.py --check <delivery-root> <work-root> [<specification-root>]
                                                         validate and compare; write nothing
-        deliver.py --outstanding <delivery-root> <work-root> [<knowledge-root>]
+        deliver.py --outstanding <delivery-root> <work-root> [<specification-root>]
                                                         validate, then print every task with no
                                                         record and what it waits on; write
                                                         nothing
-        deliver.py --node <file> <delivery-root> <work-root> [<knowledge-root>]
+        deliver.py --node <file> <delivery-root> <work-root> [<specification-root>]
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
                                                         run)
@@ -71,7 +71,7 @@ Usage:  deliver.py <delivery-root> <work-root> [<knowledge-root>]
                                                         carries and the registry no longer does —
                                                         the update-by-copy regression, reported
                                                         and never refused
-        The knowledge root is required while the plan is live, and ignored once closure.md
+        The specification root is required while the plan is live, and ignored once closure.md
         marks it closed — the same rule plan.py applies, because the plan is read through it.
 Exit:   0 sound (and, with --check, current)
         1 problems, or --check and delivery.json is stale
@@ -705,21 +705,11 @@ def references(nid: str, front: dict, kind: str) -> list[tuple[str, str, str]]:
 
 def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             delivered: set[str]) -> list[str]:
-    """One implementation against the task it answers: the plan's own triage decides whether the
-    task could be implemented at all, the criteria and the binding are each answered in full,
-    the dependencies it declares are delivered first, and the pin matches the plan as it
-    stands."""
+    """One implementation against the task it answers: the criteria and the specification
+    references are each answered in full, the dependencies it declares are delivered first, and
+    the pin matches the plan as it stands."""
     problems: list[str] = []
     tfront = task["front"]
-
-    open_entries = listed(tfront, "unresolved")
-    if open_entries:
-        problems.append(
-            f"{nid}: {task_of(nid)} carries {len(open_entries)} unresolved entry(ies), and this "
-            f"record delivers it anyway; an unresolved entry is a fact the base does not hold "
-            f"that bears on the objective or a criterion, so implementing over it writes an "
-            f"invention where nobody will look for a decision — settle it through "
-            f"/analyse-domain and re-plan the task")
 
     stated = [c for c in listed(tfront, "criteria") if isinstance(c, str)]
     answered = texts(listed(front, "criteria"), "criterion")
@@ -743,20 +733,20 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             f"claiming the task and not the artifact leaves the next delivery "
                             f"stopped on an absence this one was cut to end")
 
-    bound = sorted(plan.bound_of(tfront))
+    implements = sorted(plan.implements_of(tfront))
     accounted = texts(listed(front, "nodes"), "node")
-    for node_ref in bound:
+    for node_ref in implements:
         if node_ref not in accounted:
-            problems.append(f"{nid}: the task binds {node_ref}, and this record does not say "
-                            f"how the source answers to it; a bound node passed over in "
-                            f"silence is the base going unanswered in code — answer it in "
-                            f"`nodes`, or re-bind the task through /plan-work if it does not "
-                            f"govern this work")
+            problems.append(f"{nid}: the task implements {node_ref}, and this record does not "
+                            f"say how the source answers to it; a node the task implements "
+                            f"passed over in silence is the specification going unanswered in "
+                            f"code — answer it in `nodes`, or update the task's `implements` "
+                            f"through /plan-work if it does not govern this work")
     for node_ref in accounted:
-        if node_ref not in bound:
+        if node_ref not in implements:
             problems.append(f"{nid}: nodes answers for {node_ref}, which the task does not "
-                            f"bind; a record reaches exactly what the plan bound, and more is "
-                            f"work the plan does not declare")
+                            f"implement; a record reaches exactly what the task implements, and "
+                            f"more is work the plan does not declare")
 
     for index, target in enumerate(listed(tfront, "depends_on")):
         if isinstance(target, str) and target not in delivered:
@@ -937,18 +927,19 @@ def collect(root: Path, validator, allowed, names: list[str]) -> tuple[dict[str,
     return nodes, problems
 
 
-def load_plan(work: Path, knowledge: Path | None) -> tuple[dict[str, dict], list[str]]:
+def load_plan(work: Path, specification: Path | None) -> tuple[dict[str, dict], list[str]]:
     """The plan, read through plan.py's own pipeline — never through a plan.json that could be
-    stale. A closed plan is read the way plan.py reads it: without opening today's base."""
+    stale. A closed plan is read the way plan.py reads it: without opening today's
+    specification."""
     validator, allowed = plan.contract()
     if (work / plan.CLOSURE_FILE).is_file():
-        base_nodes = None
+        spec_nodes = None
     else:
-        base_nodes, base_problems = plan.load_base(knowledge)
-        if base_problems:
-            return {}, base_problems
+        spec_nodes, spec_problems = plan.load_base(specification)
+        if spec_problems:
+            return {}, spec_problems
     nodes, problems = plan.collect(work, validator, allowed)
-    problems += plan.cross_problems(nodes, base_nodes)
+    problems += plan.cross_problems(nodes, spec_nodes)
     return nodes, sorted(set(problems))
 
 
@@ -1068,9 +1059,8 @@ def standards_held(nodes: dict[str, dict]) -> list[str]:
 
 def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict]) -> str:
     """What the plan still holds and the delivery does not — derived from the records every
-    time, which is why no field records it. A task waits on the dependencies it declares and
-    on the entries the base leaves unresolved; both are facts of the plan, read here rather
-    than tracked."""
+    time, which is why no field records it. A task waits on the dependencies it declares; that
+    is a fact of the plan, read here rather than tracked."""
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
     proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"}
@@ -1085,10 +1075,7 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict]) -> s
             continue
         waits = [t for t in listed(front, "depends_on")
                  if isinstance(t, str) and t not in delivered]
-        open_entries = len(listed(front, "unresolved"))
         said = [f"no record"]
-        if open_entries:
-            said.append(f"{open_entries} unresolved entry(ies), which /analyse-domain settles")
         if waits:
             said.append(f"waits on {', '.join(sorted(waits))}")
         lines.append(f"{tid}: {'; '.join(said)}")
@@ -1312,7 +1299,7 @@ def main() -> int:
         return CANNOT_RUN
     if len(args) not in (2, 3) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --outstanding | --node <file>] "
-              "<delivery-root> <work-root> [<knowledge-root>], "
+              "<delivery-root> <work-root> [<specification-root>], "
               "or --standard <file> on its own", file=sys.stderr)
         return CANNOT_RUN
 
@@ -1325,14 +1312,15 @@ def main() -> int:
         print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
         return CANNOT_RUN
     closed = (work / plan.CLOSURE_FILE).is_file()
-    knowledge = Path(args[2]) if len(args) == 3 else None
+    specification = Path(args[2]) if len(args) == 3 else None
     if not closed:
-        if knowledge is None:
-            print("cannot run: a live plan validates against its base, and this validates "
-                  "against the plan; name the knowledge root", file=sys.stderr)
+        if specification is None:
+            print("cannot run: a live plan validates against its specification, and this "
+                  "validates against the plan; name the specification root", file=sys.stderr)
             return CANNOT_RUN
-        if not knowledge.is_dir():
-            print(f"cannot run: knowledge root {knowledge} is not a directory", file=sys.stderr)
+        if not specification.is_dir():
+            print(f"cannot run: specification root {specification} is not a directory",
+                  file=sys.stderr)
             return CANNOT_RUN
 
     try:
@@ -1346,7 +1334,7 @@ def main() -> int:
     if single is not None:
         return check_single(root, single, validator, allowed, names)
 
-    plan_nodes, plan_problems = load_plan(work, knowledge)
+    plan_nodes, plan_problems = load_plan(work, specification)
     if plan_problems:
         for problem in plan_problems:
             print(problem, file=sys.stderr)

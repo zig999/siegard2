@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/plan.json",
   "title": "Siegard plan graph",
-  "description": "The derived index of a work root. Never authored and never edited: `bin/plan.py` derives it from the markdown plan nodes, and `--check` holds a committed copy to them. Nodes are the files; edges are the references their frontmatter declares. `binds` and `covers` edges point outside the plan, at knowledge-base nodes — the plan's whole reason to exist — so a consumer resolving them opens the knowledge root, not this file.",
+  "description": "The derived index of a work root. Never authored and never edited: `bin/plan.py` derives it from the markdown plan nodes, and `--check` holds a committed copy to them. Nodes are the files; edges are the references their frontmatter declares. `implements` and `covers` edges point outside the plan, at specification nodes — the plan's whole reason to exist — so a consumer resolving them opens the specification root, not this file.",
   "type": "object",
   "required": ["contract_version", "nodes", "edges"],
   "additionalProperties": false,
   "properties": {
-    "contract_version": { "const": "siegard-plan/2" },
+    "contract_version": { "const": "siegard-plan/3" },
     "nodes": {
       "type": "array",
       "items": {
@@ -33,21 +33,7 @@
             "description": "The epic a task sits under, read from its path. Tasks only."
           },
           "title": { "type": "string" },
-          "summary": { "type": "string" },
-          "unresolved": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "string",
-              "pattern": "^(context/[a-z0-9]+(-[a-z0-9]+)*|(aggregate|definition|rule|lifecycle|interface|process)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)#[a-z_]+(\\.[a-z0-9_.\\[\\]-]+)*$"
-            },
-            "description": "The open gap references this task carries, sorted. Omitted when none. The judgment behind each stays in the task file."
-          },
-          "questions": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "How many unresolved questions the task carries — facts no base node holds. Omitted when none; the questions themselves stay in the task file."
-          }
+          "summary": { "type": "string" }
         }
       }
     },
@@ -61,10 +47,10 @@
           "from": { "type": "string" },
           "to": {
             "type": "string",
-            "description": "A task of this plan for `depends_on`; a knowledge-base node for `binds` and `covers`."
+            "description": "A task of this plan for `depends_on`; a specification node for `implements` and `covers`."
           },
           "kind": {
-            "enum": ["depends_on", "binds", "covers"]
+            "enum": ["depends_on", "implements", "covers"]
           },
           "at": {
             "type": "string",

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/delivery.json",
   "title": "Siegard delivery graph",
-  "description": "The derived index of a delivery root. Never authored and never edited: `bin/deliver.py` derives it from the markdown delivery nodes, and `--check` holds a committed copy to them. Nodes are the files; edges are the references their frontmatter and their paths declare. `implements` and `reviews` edges point outside the delivery, at tasks of the work root, and `encodes` edges point past that again, at knowledge-base nodes — so a consumer resolving them opens the plan and the base, not this file. What is delivered is what has a node here; nothing records how far the work has got, and `--outstanding` answers that question from the tasks with no record rather than from a field anybody maintains.",
+  "description": "The derived index of a delivery root. Never authored and never edited: `bin/deliver.py` derives it from the markdown delivery nodes, and `--check` holds a committed copy to them. Nodes are the files; edges are the references their frontmatter and their paths declare. `implements` and `reviews` edges point outside the delivery, at tasks of the work root, and `encodes` edges point past that again, at specification nodes — so a consumer resolving them opens the plan and the specification, not this file. What is delivered is what has a node here; nothing records how far the work has got, and `--outstanding` answers that question from the tasks with no record rather than from a field anybody maintains.",
   "type": "object",
   "required": ["contract_version", "nodes", "edges"],
   "additionalProperties": false,
@@ -70,7 +70,7 @@
           "from": { "type": "string" },
           "to": {
             "type": "string",
-            "description": "A task of the work root for `implements` and `reviews`; an implementation of this delivery for `proves`; a knowledge-base node for `encodes`."
+            "description": "A task of the work root for `implements` and `reviews`; an implementation of this delivery for `proves`; a specification node for `encodes`."
           },
           "kind": {
             "enum": ["implements", "proves", "reviews", "encodes"]

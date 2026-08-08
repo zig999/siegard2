@@ -241,7 +241,7 @@ def test_a_check_with_nothing_to_check_is_not_what_the_substrate_owes(
     record["run"] = "run/checkout-record-order-build-2"
     record["files"] = [{"path": "package.json",
                         "effect": "declares the lint step and the logger dependency"}]
-    record["nodes"] = [{"node": "definition/sales/order",
+    record["nodes"] = [{"node": "domain/sales/order",
                         "how": "the substrate encodes no fact of it; what it holds is what every "
                                "rule needs before any of them can be applied"}]
     write_delivery("implementation/checkout/record-order", record)

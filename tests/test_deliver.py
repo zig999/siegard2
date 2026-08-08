@@ -2,10 +2,10 @@
 
 Every test here is a rule somebody could otherwise satisfy by leaving something out. The
 totality checks are the heart of it — a record answers every criterion its task states and every
-base node its task binds — because an omission is invisible in the record that omits it and
-reads as work that went fine. The rest holds the seams: a record answers a task that exists, a
-proof stands beside an implementation, no task the base leaves unresolved is delivered at all,
-nothing is delivered before what it builds on, and no pin outlives the plan it read.
+specification node its task implements — because an omission is invisible in the record that
+omits it and reads as work that went fine. The rest holds the seams: a record answers a task
+that exists, a proof stands beside an implementation, nothing is delivered before what it builds
+on, and no pin outlives the plan it read.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 import deliver
-from conftest import bind, task_pin_of
+from conftest import task_pin_of
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -54,7 +54,7 @@ def test_it_derives_the_index_it_promises(delivery, work, root, sound_delivery):
     assert ("implementation/checkout/record-order", "implements",
             "task/checkout/record-order") in kinds, "the path is what names the task answered"
     assert ("implementation/checkout/record-order", "encodes",
-            "definition/sales/order") in kinds, "a fact in the source traces to the base node"
+            "domain/sales/order") in kinds, "a fact in the source traces to the specification node"
     assert ("proof/checkout/record-order", "proves",
             "implementation/checkout/record-order") in kinds
 
@@ -119,7 +119,7 @@ def test_a_record_for_a_task_the_plan_does_not_hold(delivery, work, root, sound_
         "title": "Ship", "summary": "Ship it.", "task": "sha256:" + "0" * 64,
         "files": [{"path": "src/ship.ts", "effect": "ships"}],
         "criteria": [{"criterion": "c", "met": True, "how": "h"}],
-        "nodes": [{"node": "definition/sales/order", "how": "read only"}],
+        "nodes": [{"node": "domain/sales/order", "how": "read only"}],
     })
     said(problems_of(delivery, work, root), "which the plan does not hold as a task")
 
@@ -142,68 +142,42 @@ def test_a_criterion_the_task_does_not_state(delivery, work, root, sound_deliver
     said(problems_of(delivery, work, root), "which the task does not state")
 
 
-def test_a_bound_node_the_record_passes_over(delivery, work, root, sound_delivery,
-                                             write_delivery):
+def test_an_implemented_node_the_record_passes_over(delivery, work, root, sound_delivery,
+                                                     write_delivery):
     front = json_front(delivery, "implementation/checkout/record-order")
     front["nodes"] = []
     write_delivery("implementation/checkout/record-order", front)
     problems = problems_of(delivery, work, root)
-    said(problems, "the base going unanswered in code")
+    said(problems, "the specification going unanswered in code")
     # The corrective act, not only the cost: two repairs are legitimate here and they live in
     # different roots, so a message naming neither leaves the reader to guess which.
-    said(problems, "answer it in `nodes`, or re-bind the task through /plan-work")
+    said(problems, "answer it in `nodes`, or update the task's `implements` through /plan-work")
 
 
-def test_a_node_the_task_never_bound(delivery, work, root, sound_delivery, write_delivery):
+def test_a_node_the_task_never_implemented(delivery, work, root, sound_delivery, write_delivery):
     front = json_front(delivery, "implementation/checkout/record-order")
-    front["nodes"].append({"node": "definition/sales/invoice", "how": "read only"})
+    front["nodes"].append({"node": "domain/sales/invoice", "how": "read only"})
     write_delivery("implementation/checkout/record-order", front)
-    said(problems_of(delivery, work, root), "which the task does not bind")
-
-
-def test_an_unresolved_task_is_not_delivered(delivery, work, root, sound_delivery,
-                                             write_delivery):
-    """The gate that matters most: the plan's own triage decides whether a task can be written
-    at all, and it is decided mechanically rather than by anybody's judgment at delivery time."""
-    write_delivery("implementation/checkout/bill-order", {
-        "title": "Bill", "summary": "Raise the bill.",
-        "task": task_pin_of(work, "task/checkout/bill-order"),
-        "files": [{"path": "src/bill.ts", "effect": "bills"}],
-        "criteria": [{"criterion": "Recording an order twice produces one invoice.",
-                      "met": True, "how": "idempotent on order_number"}],
-        "nodes": [{"node": "definition/sales/invoice", "how": "the invoice shape"}],
-    })
-    said(problems_of(delivery, work, root),
-         "unresolved entry(ies), and this record delivers it anyway")
+    said(problems_of(delivery, work, root), "which the task does not implement")
 
 
 def test_nothing_is_delivered_before_what_it_builds_on(delivery, work, root, sound_delivery,
-                                                       write_delivery, write_plan):
+                                                       write_delivery):
     """bill-order builds on record-order. Remove record-order's record and the dependency is
     what has to be delivered first — with no status field to ask, the records are how that is
     known."""
     (delivery / "implementation/checkout/record-order.md").unlink()
     (delivery / "proof/checkout/record-order.md").unlink()
-    task = work / "task/checkout/bill-order.md"
-    before = task.read_text(encoding="utf-8")
-    after = before.replace(
-        "unresolved:\n- gap: definition/sales/invoice#attributes\n",
-        "waived:\n- gap: definition/sales/invoice#attributes\n  why: not on this path\n")
-    assert after != before, "the fixture's triage was not rewritten; the test would then prove " \
-                            "the unresolved gate rather than the dependency one"
-    task.write_text(after, encoding="utf-8")
     write_delivery("implementation/checkout/bill-order", {
         "title": "Bill", "summary": "Raise the bill.",
         "task": task_pin_of(work, "task/checkout/bill-order"),
         "files": [{"path": "src/bill.ts", "effect": "bills"}],
         "criteria": [{"criterion": "Recording an order twice produces one invoice.",
                       "met": True, "how": "idempotent on order_number"}],
-        "nodes": [{"node": "definition/sales/invoice", "how": "the invoice shape"}],
+        "nodes": [{"node": "domain/sales/invoice", "how": "the invoice shape"}],
     })
     found = problems_of(delivery, work, root)
     said(found, "the dependency is what has to be delivered first")
-    assert not any("delivers it anyway" in p for p in found), \
-        "the waived triage means the unresolved gate must not fire; only the dependency one does"
 
 
 def test_a_pin_that_outlived_its_task(delivery, work, root, sound_delivery, write_plan):
@@ -220,12 +194,12 @@ def test_another_task_moving_leaves_a_record_alone(delivery, work, root, sound_d
     """Pinning the plan's index made every record in the root stale the moment any unrelated task
     was added, and no entry point owns re-pinning records it was forbidden to read."""
     write_plan("epic/shipping", {"title": "Shipping", "summary": "Later.",
-                                 "covers": ["definition/sales/order"]})
+                                 "covers": ["domain/sales/order"]})
     write_plan("task/shipping/ship-order", {
         "title": "Ship order", "summary": "Ship it.",
         "objective": "A recorded order ships once.",
         "criteria": ["A recorded order ships once."],
-        "nodes": bind(root, "definition/sales/order"),
+        "implements": ["domain/sales/order"],
     })
     assert problems_of(delivery, work, root) == []
 
@@ -779,8 +753,6 @@ def test_the_outstanding_report_derives_what_no_field_records(delivery, work, ro
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes)
     assert "task/checkout/bill-order: no record" in report
-    assert "1 unresolved entry(ies)" in report, \
-        "what a task waits on is a fact of the plan, read here rather than tracked"
     assert "task/checkout/record-order" not in report, \
         "a task with a record and a proof is not outstanding"
 
@@ -850,13 +822,14 @@ def test_the_cli_refuses_a_plan_that_does_not_hold(delivery, work, root, sound_d
     assert "fix it with plan.py before" in done.stderr
 
 
-def test_the_cli_needs_the_base_while_the_plan_is_live(delivery, work, root, sound_delivery):
+def test_the_cli_needs_the_specification_while_the_plan_is_live(delivery, work, root,
+                                                                 sound_delivery):
     import subprocess
     import sys
     done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
                            str(delivery), str(work)], capture_output=True, text=True)
     assert done.returncode == 2
-    assert "name the knowledge root" in done.stderr
+    assert "name the specification root" in done.stderr
 
 
 def test_a_captured_run_reaches_a_review(delivery, work, root, sound_delivery, write_delivery):

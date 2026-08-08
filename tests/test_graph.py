@@ -1,5 +1,11 @@
 """`graph.py` — one walk, two modes: the gate a node passes, the checks that need the whole
-base, and the derived graph held to the files."""
+base, and the derived graph held to the files.
+
+`root`, `write` and `sound_base` are defined here rather than taken from conftest.py: this
+module is the last consumer of the knowledge-root shape those names now mean something else
+for — the base has moved on to `specs/`, and plan.py's fixtures moved with it. graph.py itself
+is unmoved and slated for removal in its own round, not this one, so it keeps the shape it has
+always validated against, local to this module rather than shared."""
 from __future__ import annotations
 
 import json
@@ -8,10 +14,49 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 import graph
 
 GRAPH_PY = Path(graph.__file__)
+
+BODY = "## What it is\nProse for a reader.\n\n## Rules\nNone.\n"
+
+
+@pytest.fixture
+def root(tmp_path: Path) -> Path:
+    base = tmp_path / "knowledge"
+    base.mkdir()
+    return base
+
+
+@pytest.fixture
+def write(root: Path):
+    """Write one node file at the path its identifier computes to."""
+    def put(nid: str, front: dict, body: str = BODY) -> Path:
+        path = root / f"{nid}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text = yaml.safe_dump(front, sort_keys=False, allow_unicode=True)
+        path.write_text(f"---\n{text}---\n{body}", encoding="utf-8")
+        return path
+    return put
+
+
+@pytest.fixture
+def sound_base(write):
+    """The smallest base every cross-node check passes: a context, an aggregate, and its root."""
+    write("context/sales", {"title": "Sales", "summary": "Ordering.", "strategic": "core"})
+    write("aggregate/sales/orders", {"title": "Orders", "summary": "Order and lines together."})
+    write("definition/sales/order", {
+        "title": "Order", "summary": "A customer's order.",
+        "ddd": "aggregate-root", "aggregate": "orders",
+        "identity": ["order_number"],
+        "attributes": [
+            {"name": "order_number", "type": "string", "max_length": 20},
+            {"name": "total", "type": "decimal", "precision": 12, "scale": 2},
+        ],
+    })
+    return write
 
 
 def run(*args) -> subprocess.CompletedProcess:

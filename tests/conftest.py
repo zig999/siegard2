@@ -1,7 +1,7 @@
 """Shared fixtures.
 
 `src/claude/bin` goes on the path the way it sits once installed — its own directory is the
-import root for a consumer, so the suite imports `graph` the way a consumer runs it.
+import root for a consumer, so the suite imports each script the way a consumer runs it.
 """
 from __future__ import annotations
 
@@ -18,7 +18,8 @@ BIN = REPO / "src" / "claude" / "bin"
 if str(BIN) not in sys.path:
     sys.path.insert(0, str(BIN))
 
-BODY = "## What it is\nProse for a reader.\n\n## Rules\nNone.\n"
+ELEMENT_BODY = "## Description\nProse for a reader.\n\n## Responsibility\nNone.\n"
+ONE_HEADING_BODY = "## Description\nProse for a reader.\n"
 PLAN_BODY = "## What it is\nProse for a reader.\n\n## Notes\nNone.\n"
 
 
@@ -34,15 +35,15 @@ def schema() -> dict:
 
 @pytest.fixture
 def root(tmp_path: Path) -> Path:
-    base = tmp_path / "knowledge"
+    base = tmp_path / "specification"
     base.mkdir()
     return base
 
 
 @pytest.fixture
 def write(root: Path):
-    """Write one node file at the path its identifier computes to."""
-    def put(nid: str, front: dict, body: str = BODY) -> Path:
+    """Write one specification file at the path its identity computes to (SPEC-003 R1)."""
+    def put(nid: str, front: dict, body: str = ELEMENT_BODY) -> Path:
         path = root / f"{nid}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         text = yaml.safe_dump(front, sort_keys=False, allow_unicode=True)
@@ -53,36 +54,31 @@ def write(root: Path):
 
 @pytest.fixture
 def sound_base(write):
-    """The smallest base every cross-node check passes: a context, an aggregate, and its root."""
-    write("context/sales", {"title": "Sales", "summary": "Ordering.", "strategic": "core"})
-    write("aggregate/sales/orders", {"title": "Orders", "summary": "Order and lines together."})
-    write("definition/sales/order", {
-        "title": "Order", "summary": "A customer's order.",
-        "ddd": "aggregate-root", "aggregate": "orders",
-        "identity": ["order_number"],
+    """The smallest specification every cross-node check passes: a context, an aggregate root,
+    and a value object a rule makes reachable (SPEC-001 R6 exempts an aggregate root, never a
+    value object)."""
+    write("decision-log", {"entries": []}, body="")
+    write("domain/sales/_context", {"strategic": "core"})
+    write("domain/sales/order", {
+        "type": "aggregate-root",
         "attributes": [
-            {"name": "order_number", "type": "string", "max_length": 20},
-            {"name": "total", "type": "decimal", "precision": 12, "scale": 2},
+            {"name": "order_number", "type": "string", "required": True},
+            {"name": "total", "type": "decimal", "required": True},
         ],
     })
+    write("domain/sales/invoice", {
+        "type": "value-object",
+        "attributes": [{"name": "amount", "type": "decimal", "required": True}],
+    })
+    write("rules/sales/invoice-immutable", {
+        "type": "invariant",
+        "statement": "An invoice, once raised, is never modified.",
+        "constrains": ["domain/sales/invoice"],
+    }, body=ONE_HEADING_BODY)
     return write
 
 
 # ---------------------------------------------------------------- the plan side
-
-
-def digest_of(root: Path, nid: str) -> str:
-    """The digest one base node computes to right now — the value its entry carries in the index,
-    taken from the node's own file the way the derivation takes it."""
-    import graph
-    return graph.digest_of(root / f"{nid}.md")
-
-
-def bind(root: Path, *nids: str) -> list[dict]:
-    """A task's binding: each base node with the digest of it as it now stands. Fixtures compute
-    this rather than carrying literals, so a fixture base that changes shape does not silently
-    leave every task in the suite pinned to a node nobody has."""
-    return [{"node": nid, "digest": digest_of(root, nid)} for nid in nids]
 
 
 @pytest.fixture
@@ -104,16 +100,6 @@ def write_plan(work: Path):
     return put
 
 
-@pytest.fixture
-def gapped_base(sound_base):
-    """The sound base plus one definition carrying an open gap — the triage checks' subject."""
-    sound_base("definition/sales/invoice", {
-        "title": "Invoice", "summary": "The bill.", "ddd": "value-object",
-        "gaps": [{"field": "attributes", "why": "The material lists no fields."}],
-    })
-    return sound_base
-
-
 def task_pin_of(work: Path, tid: str) -> str:
     """The pin one task computes to right now: the SHA-256 of its own file."""
     import deliver
@@ -121,10 +107,9 @@ def task_pin_of(work: Path, tid: str) -> str:
 
 
 @pytest.fixture
-def sound_plan(root, gapped_base, write_plan):
-    """The smallest plan every cross-node check passes, bound to the gapped fixture base:
-    an inventory, one epic covering two base nodes, and a task for each — one of them
-    triaging the seeded gap."""
+def sound_plan(root, sound_base, write_plan):
+    """The smallest plan every cross-node check passes, against the sound fixture specification:
+    an inventory, one epic covering two specification nodes, and a task for each."""
     write_plan("inventory/order-service", {
         "title": "Order service", "summary": "One layered service under src/.",
         "area": ["src/"],
@@ -133,21 +118,20 @@ def sound_plan(root, gapped_base, write_plan):
     })
     write_plan("epic/checkout", {
         "title": "Checkout", "summary": "Everything order placement needs.",
-        "covers": ["definition/sales/order", "definition/sales/invoice"],
+        "covers": ["domain/sales/order", "domain/sales/invoice"],
     })
     write_plan("task/checkout/record-order", {
         "title": "Record order", "summary": "Persist a placed order.",
         "objective": "A valid order is persisted and retrievable by its order_number.",
         "criteria": ["Submitting a valid order returns its order_number."],
-        "nodes": bind(root, "definition/sales/order"),
+        "implements": ["domain/sales/order"],
     })
     write_plan("task/checkout/bill-order", {
         "title": "Bill order", "summary": "Raise the bill for a recorded order.",
         "objective": "A recorded order produces exactly one invoice.",
         "criteria": ["Recording an order twice produces one invoice."],
-        "nodes": bind(root, "definition/sales/invoice"),
+        "implements": ["domain/sales/invoice"],
         "depends_on": ["task/checkout/record-order"],
-        "unresolved": [{"gap": "definition/sales/invoice#attributes"}],
     })
     return write_plan
 
@@ -230,8 +214,7 @@ def write_standard(delivery: Path):
 @pytest.fixture
 def sound_delivery(root, work, sound_plan, write_delivery, delivery):
     """The smallest delivery every check passes: one task of the fixture plan implemented and
-    proven. The plan's other task stays undelivered on purpose — the base leaves it unresolved,
-    so delivering it is exactly what the gate refuses."""
+    proven. The plan's other task stays undelivered on purpose."""
     pin = task_pin_of(work, "task/checkout/record-order")
     delivery_root = delivery
     write_delivery("implementation/checkout/record-order", {
@@ -243,7 +226,7 @@ def sound_delivery(root, work, sound_plan, write_delivery, delivery):
         "criteria": [{"criterion": "Submitting a valid order returns its order_number.",
                       "met": True,
                       "how": "place() returns the persisted order_number unchanged"}],
-        "nodes": [{"node": "definition/sales/order",
+        "nodes": [{"node": "domain/sales/order",
                    "encoded_at": ["src/orders/place.ts"],
                    "how": "the order's identity and attributes are the shape place() persists"}],
     })

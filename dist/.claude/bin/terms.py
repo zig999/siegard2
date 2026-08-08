@@ -53,31 +53,29 @@ SCHEMAS = Path(__file__).resolve().parent.parent / "schemas"
 # contract states it, the term belongs in OPEN below until one does.
 TERMS: dict[str, tuple[str, str]] = {
     "base node": ("node.json", ""),
-    "binding": ("plan-node.json", "/properties/nodes"),
     "cause": ("delivery-node.json", "/$defs/finding/properties/cause"),
-    "covers (an epic over base nodes)": ("plan-node.json", "/properties/covers"),
+    "covers (an epic over specification nodes)": ("plan-node.json", "/properties/covers"),
     "covers (a test over a criterion)":
         ("delivery-node.json", "/$defs/coverageEntry/properties/state"),
     "criteria": ("plan-node.json", "/properties/criteria"),
     "ddd": ("node.json", "/properties/ddd"),
     "decided_by": ("standard.json", "/$defs/rule/properties/decided_by"),
     "delivery node": ("delivery-node.json", ""),
-    "digest (on a binding)": ("plan-node.json", "/$defs/boundNode/properties/digest"),
     "digest (on the index)": ("graph.json", "/properties/nodes/items/properties/digest"),
     "delivery.json": ("delivery.json", ""),
     "gap": ("node.json", "/properties/gaps"),
     "gap.field": ("node.json", "/$defs/gap/properties/field"),
     "graph.json": ("graph.json", ""),
+    "implements": ("plan-node.json", "/properties/implements"),
     "objective": ("plan-node.json", "/properties/objective"),
-    "pin": ("plan-node.json", "/$defs/pin"),
+    "pin": ("delivery-node.json", "/$defs/pin"),
     "plan node": ("plan-node.json", ""),
     "plan.json": ("plan.json", ""),
     "run.json": ("run.json", ""),
     "slug": ("node.json", "/$defs/slug"),
+    "specification node": ("plan-node.json", "/$defs/specNodeRef"),
     "standard": ("standard.json", ""),
     "uncovered": ("plan-node.json", "/properties/uncovered"),
-    "unresolved": ("plan-node.json", "/properties/unresolved"),
-    "waived": ("plan-node.json", "/properties/waived"),
 }
 
 # Words this framework uses normatively and no contract defines. The note says where the word is

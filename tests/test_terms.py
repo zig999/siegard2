@@ -111,10 +111,11 @@ def test_every_slug_definition_is_the_same_sentence(loaded):
         f"the slug definition differs across the schemas that state it: {stated}"
 
 
-@pytest.mark.parametrize("relative", ("plan-node.json", "delivery-node.json"))
+@pytest.mark.parametrize("relative", ("delivery-node.json", "trace.json"))
 def test_the_shared_pin_definition_says_what_a_pin_is(relative, loaded):
-    """Both schemas referenced `$defs/pin` while it carried a pattern and nothing else, so the one
-    definition every pin field pointed at said nothing at all."""
+    """These schemas reference `$defs/pin` while it carried a pattern and nothing else, so the one
+    definition every pin field pointed at said nothing at all. plan-node.json dropped the concept
+    entirely: a task names what it implements by identity, and nothing there is pinned any more."""
     shared = loaded[relative]["$defs"]["pin"]
     assert isinstance(shared.get("description"), str) and shared["description"], \
         f"{relative} $defs/pin carries no description; every field referencing it defines nothing"

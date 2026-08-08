@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/delivery-node.json",
   "title": "Siegard delivery node",
-  "description": "One node of a delivery: the frontmatter of one markdown file under the delivery root. The path is the identity — `implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` sit at the path of the task they answer, `review/<slug>.md` names one review — so no node carries an id, a type or a task field to disagree with where the file sits. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A delivery node records what was done and what was found, never how far the work has got: there is no status, no readiness flag and no approval field, because a producer that certified its own output would be the validator of its own work, and a root that recorded progress would be the orchestrator state file this framework refuses to have. What is delivered is what has a record, and the record's presence in git is the whole of that state. A record answers every criterion of its task and every base node the task binds — the validator holds both totalities, so silence over a criterion or over a bound node is refused the way silence over a gap is refused in a plan. The material a run printed lives under `run/`, kept for a review to point at and never validated as a node. The body below the frontmatter carries exactly two headings, `## What it is` and `## Notes`.",
+  "description": "One node of a delivery: the frontmatter of one markdown file under the delivery root. The path is the identity — `implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` sit at the path of the task they answer, `review/<slug>.md` names one review — so no node carries an id, a type or a task field to disagree with where the file sits. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A delivery node records what was done and what was found, never how far the work has got: there is no status, no readiness flag and no approval field, because a producer that certified its own output would be the validator of its own work, and a root that recorded progress would be the orchestrator state file this framework refuses to have. What is delivered is what has a record, and the record's presence in git is the whole of that state. A record answers every criterion of its task and every specification node the task implements — the validator holds both totalities, so silence over either is refused. The material a run printed lives under `run/`, kept for a review to point at and never validated as a node. The body below the frontmatter carries exactly two headings, `## What it is` and `## Notes`.",
   "type": "object",
   "required": [
     "kind",
@@ -54,7 +54,7 @@
       "items": {
         "$ref": "#/$defs/nodeAnswer"
       },
-      "description": "One entry per base node the task binds, saying how the written source answers to it. Absent only where the task binds nothing at all — a plan may cut such a task, and it must then say why in its own `rationale`, so there is nothing here to answer for. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's binding: a bound node this record passes over in silence is the base going unanswered in code, which is the failure this field exists to expose."
+      "description": "One entry per specification node the task implements, saying how the written source answers to it. Absent only where the task implements nothing at all — a plan may cut such a task, and it must then say why in its own `rationale`, so there is nothing here to answer for. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's `implements`: a node this record passes over in silence is the specification going unanswered in code, which is the failure this field exists to expose."
     },
     "inferences": {
       "type": "array",
@@ -265,14 +265,14 @@
             ],
             "nodes": [
               {
-                "node": "definition/sales/order",
+                "node": "domain/sales/order",
                 "encoded_at": [
                   "src/orders/place.ts"
                 ],
                 "how": "the order's identity and attributes are the shape place() persists"
               },
               {
-                "node": "rule/sales/order-total-positive",
+                "node": "rules/sales/order-total-positive",
                 "encoded_at": [
                   "src/orders/place.ts"
                 ],
@@ -500,10 +500,10 @@
       "pattern": "^task/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$",
       "description": "A task of the plan, by identifier."
     },
-    "baseNodeRef": {
+    "specNodeRef": {
       "type": "string",
-      "pattern": "^(context/[a-z0-9]+(-[a-z0-9]+)*|(aggregate|definition|rule|lifecycle|interface|process)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$",
-      "description": "A knowledge-base node, by identifier — the node's file path under the knowledge root, without `.md`."
+      "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*)$",
+      "description": "A specification node, by identity (SPEC-003 R1) — its path from the specification root, without `.md`."
     },
     "writtenFile": {
       "type": "object",
@@ -559,7 +559,7 @@
       "additionalProperties": false,
       "properties": {
         "node": {
-          "$ref": "#/$defs/baseNodeRef"
+          "$ref": "#/$defs/specNodeRef"
         },
         "encoded_at": {
           "type": "array",
@@ -764,7 +764,7 @@
     "ruleRef": {
       "type": "string",
       "pattern": "^[A-Z]{2,4}-[0-9]{2}$",
-      "description": "One rule of the project's standard, by the identifier the standard gives it. Deliberately unlike a base node reference, which is a path: a rule of a standard and a `rule` node of the knowledge base are different authorities, and the two must not be readable as one another."
+      "description": "One rule of the project's standard, by the identifier the standard gives it. Deliberately unlike a specification node reference, which is a path: a rule of a standard and a `rule` node of the specification are different authorities, and the two must not be readable as one another."
     },
     "coverageEntry": {
       "type": "object",

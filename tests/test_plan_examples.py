@@ -1,9 +1,7 @@
 """The plan contract's own examples pass the gate that will judge real files.
 
 Validated through `plan.node_problems` — the real gate — rather than the raw schema, so the
-examples are held to exactly what a plan file is held to. The last test pins the triage
-mechanic: unresolved and waived are the record that keeps a plan honest about what the base
-leaves open, and a contract that never demonstrates them teaches silence.
+examples are held to exactly what a plan file is held to.
 """
 from __future__ import annotations
 
@@ -48,14 +46,8 @@ def test_examples_are_yaml_writable_frontmatter(plan_schema):
             assert yaml.safe_load(yaml.safe_dump(example)) == example
 
 
-def test_the_triage_mechanic_is_demonstrated_somewhere(plan_schema):
+def test_the_implements_mechanic_is_demonstrated_somewhere(plan_schema):
     examples = [example for _, then in branches(plan_schema) for example in then["examples"]]
-    assert any("unresolved" in example for example in examples), \
-        "no example demonstrates unresolved, and unresolved is how a plan carries what the " \
-        "base leaves open"
-    assert any("waived" in example for example in examples), \
-        "no example demonstrates a waiver, and the waiver is what keeps the totality " \
-        "check honest"
-    assert any(isinstance(entry, dict) and "question" in entry
-               for example in examples for entry in example.get("unresolved", [])), \
-        "no example demonstrates a question — the fact no base node holds"
+    assert any("implements" in example for example in examples), \
+        "no example demonstrates implements, and implements is how a task names what it " \
+        "governs against"
