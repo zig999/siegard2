@@ -1,11 +1,12 @@
 # Siegard explicado do zero
 
 > **Sobre este manual.** Ele descreve o motor deste repositório a partir do zero, sem supor
-> conhecimento prévio. Cobre a versão **3.5.0** — o redesign que fecha a especificação em cinco
+> conhecimento prévio. Cobre a versão **3.6.0** — o redesign que fecha a especificação em cinco
 > classes normativas (Domain Model, Rule, Scenario, Contract, Architecture Constraint), substitui
-> gaps-como-ignorância por decide-and-disclose, e introduz o trace como o vínculo que sobrevive ao
-> plano. Substitui a edição da versão 3.1.0, que descrevia o modelo anterior — sete tipos de nó,
-> gaps abertos, binding por digest — inteiramente retirado deste repositório.
+> gaps-como-ignorância por decide-and-disclose, introduz o trace como o vínculo que sobrevive ao
+> plano, e o `siegard.json` como o lugar único onde um projeto declara suas raízes e seu standard.
+> Substitui a edição da versão 3.1.0, que descrevia o modelo anterior — sete tipos de nó, gaps
+> abertos, binding por digest — inteiramente retirado deste repositório.
 >
 > **Sobre o idioma.** A seção Language de `/CLAUDE.md` exige que todo artefato do repositório seja
 > em inglês (en-US), e nomeia `docs` entre eles. Este arquivo é a exceção deliberada, decidida pelo
@@ -29,13 +30,14 @@
 9. [O trace: o vínculo que sobrevive ao plano](#9-o-trace-o-vínculo-que-sobrevive-ao-plano)
 10. [As totalidades: nada passa em silêncio](#10-as-totalidades-nada-passa-em-silêncio)
 11. [A entrega](#11-a-entrega)
-12. [O standard: as regras que o projeto define para si](#12-o-standard-as-regras-que-o-projeto-define-para-si)
-13. [Os quatro pontos de entrada](#13-os-quatro-pontos-de-entrada)
-14. [A parada é a funcionalidade](#14-a-parada-é-a-funcionalidade)
-15. [Exemplo completo de ponta a ponta](#15-exemplo-completo-de-ponta-a-ponta)
-16. [Glossário](#16-glossário)
-17. [Erros comuns e o que significam](#17-erros-comuns-e-o-que-significam)
-18. [De onde isto veio](#18-de-onde-isto-veio)
+12. [O arquivo do projeto: `siegard.json`](#12-o-arquivo-do-projeto-siegardjson)
+13. [O standard: as regras que o projeto define para si](#13-o-standard-as-regras-que-o-projeto-define-para-si)
+14. [Os cinco pontos de entrada](#14-os-cinco-pontos-de-entrada)
+15. [A parada é a funcionalidade](#15-a-parada-é-a-funcionalidade)
+16. [Exemplo completo de ponta a ponta](#16-exemplo-completo-de-ponta-a-ponta)
+17. [Glossário](#17-glossário)
+18. [Erros comuns e o que significam](#18-erros-comuns-e-o-que-significam)
+19. [De onde isto veio](#19-de-onde-isto-veio)
 
 ---
 
@@ -506,15 +508,63 @@ Depois que a entrega valida, `/implement-task` faz o bind (seção 9) — o úni
 arquivo fora das três raízes (entrega, trabalho, código-alvo): `siegard-trace.json`, no toplevel
 do código.
 
-## 12. O standard: as regras que o projeto define para si
+## 12. O arquivo do projeto: `siegard.json`
 
-Inalterado mecanicamente. `siegard.json` declara o registro uma vez; `schemas/standard.json` é o
-contrato; `bin/deliver.py --standard <arquivo>` valida. Duas linhas seguem limitando o escopo:
-nenhuma regra diz o que o sistema responde (isso é da especificação), e uma regra que uma
-ferramenta decide não é de uma leitura reler.
+Um projeto declara, uma vez, o que seria digitado por extenso em toda invocação: `specification_root`,
+`targets` (um caminho por nome que o próprio projeto escolhe — não é o framework que decide se
+existe "backend" ou "frontend"), `work_root`, `delivery_root`, e `standard`. `bin/project.py` é o
+único leitor; `/siegard-config` é o único escritor. Exemplo real, `siegard.json` na raiz de um
+projeto:
 
-## 13. Os quatro pontos de entrada
+```json
+{
+  "specification_root": "specs",
+  "targets": {"backend": "backend", "frontend": "frontend"},
+  "work_root": "work",
+  "delivery_root": "delivery",
+  "standard": null
+}
+```
 
+`python3 -B bin/project.py /tmp/exemplo-projeto` imprime, de verdade:
+
+```
+standard: declared none
+specification_root: /tmp/exemplo-projeto/specs
+target backend: /tmp/exemplo-projeto/backend
+target frontend: /tmp/exemplo-projeto/frontend
+work_root: /tmp/exemplo-projeto/work
+delivery_root: /tmp/exemplo-projeto/delivery
+```
+
+Os cinco campos não resolvem do mesmo jeito, de propósito. **`specification_root`, `targets`,
+`work_root` e `delivery_root` respondem só a partir do arquivo** — nomear um deles na invocação não
+tem efeito nenhum, e a ausência de um deles no arquivo é parada, não pergunta a contornar: uma raiz
+estrutural não é algo que vale a pena adivinhar duas vezes. O que a invocação ainda nomeia é
+exatamente o que é por natureza pontual: **qual target** (a chave em `targets`) e **qual iniciativa**
+(uma sigla que vira `work_root/<sigla>` e `delivery_root/<sigla>`) — o container é do arquivo, qual
+dentro dele é de quem chama, inclusive uma iniciativa já fechada e ainda sendo revisada.
+**`standard` continua podendo ser sobreposto por uma invocação** — testar contra um registro
+diferente às vezes vale a pena; testar contra uma raiz estrutural diferente, nunca.
+
+`null` em `standard` é uma resposta completa: o projeto decidiu não ter nenhum. Um campo ausente do
+arquivo — os cinco, não só esse — diz o oposto: o projeto ainda não declarou aquilo, não decidiu
+contra. Para os quatro campos estruturais, essa ausência é exatamente o que trava um ponto de
+entrada até `/siegard-config` fechar o campo que falta.
+
+## 13. O standard: as regras que o projeto define para si
+
+Inalterado mecanicamente. `schemas/standard.json` é o contrato; `bin/deliver.py --standard
+<arquivo>` valida. Duas linhas seguem limitando o escopo: nenhuma regra diz o que o sistema
+responde (isso é da especificação), e uma regra que uma ferramenta decide não é de uma leitura
+reler.
+
+## 14. Os cinco pontos de entrada
+
+- **`/siegard-config`** — escreve ou atualiza `siegard.json` a partir do que o humano disser. Todo
+  outro ponto de entrada abaixo trava até os campos que ele precisa estarem declarados aqui.
+  Roda uma vez por projeto, e de novo sempre que uma iniciativa nova troca o que `work_root`/
+  `delivery_root` significam.
 - **`/analyse`** — transforma material em nós da especificação, valida, deriva projeções, e para.
 - **`/plan-work`** — transforma um escopo mais a especificação validada num plano de
   desenvolvimento.
@@ -524,14 +574,14 @@ ferramenta decide não é de uma leitura reler.
   conformidade com a especificação, conformidade com o standard, e por que uma suíte falhou —
   produz evidência, nunca um veredito.
 
-## 14. A parada é a funcionalidade
+## 15. A parada é a funcionalidade
 
 Uma parada é este framework funcionando, não falhando. Toda entrada recusa antes de escrever, em
 vez de escrever o que um revisor teria de pegar depois. Só duas coisas exigem mesmo uma pessoa:
 uma mudança não commitada (decisão de git) e uma nota `BLOCKING` (o escopo e a especificação se
 contradizendo). O resto é forma, e forma é da própria invocação corrigir.
 
-## 15. Exemplo completo de ponta a ponta
+## 16. Exemplo completo de ponta a ponta
 
 O fixture `tests/fixtures/spec-model/` é uma especificação sã inteira — dois contextos
 (`monitoring`, `troubleshooting`), 10 elementos, 3 rules, 2 scenarios, 4 contracts, 1 constraint,
@@ -557,7 +607,7 @@ flowchart LR
 Um contrato removido vira "separate ways" no mapa, não uma aresta que desaparece em silêncio —
 `test_every_projected_fact_traces_to_a_file` em `tests/test_spec_model.py` prova exatamente isso.
 
-## 16. Glossário
+## 17. Glossário
 
 Não reproduzido aqui: `bin/terms.py` imprime cada termo direto do contrato que o define, e
 reproduzir o texto aqui seria a segunda cópia que ele existe para evitar.
@@ -570,7 +620,7 @@ implements  [plan-node.json/properties/implements/description]
     a plan's execution, by convention, so there is nothing to pin. ...
 ```
 
-## 17. Erros comuns e o que significam
+## 18. Erros comuns e o que significam
 
 | Mensagem | O que aconteceu |
 |---|---|
@@ -582,7 +632,7 @@ implements  [plan-node.json/properties/implements/description]
 | `an undecided pairing is a decision to make and log, never silence` | Uma state-machine com um par (estado, gatilho) sem transição nem rejeição. |
 | `the specification moved since this bind` | `trace.py --check` achou um nó cujo digest hoje difere do que o trace registrou. |
 
-## 18. De onde isto veio
+## 19. De onde isto veio
 
 Este redesign substitui o modelo em sete tipos de nó (`context`, `aggregate`, `definition`,
 `rule`, `lifecycle`, `interface`, `process`), a disciplina de gaps (um fato ausente marcado como

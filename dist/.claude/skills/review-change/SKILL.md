@@ -28,12 +28,24 @@ A missing input is a stop, not a default:
    exactly as the records spell them: resolve them against that root to open the files, and state
    every finding with the same spelling — a scope's `under` is stated against the same anchor,
    and a finding spelled from the repository instead of the target answers to no rule.
-3. **the delivery root** — under git, holding the records and taking this review's own.
-4. **the work root** — the plan the tasks belong to.
-5. **the specification root** — the specification the plan implements against, required exactly
-   as the plan validator requires it: while the plan is live, and ignored once it is closed. The
-   conformance pass reads it; without the specification there is nothing to hold the source to.
-6. **the target source root** — where the code and the tests sit.
+3. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
+   named, its absence is a stop.
+4. **the target** — which of the project's target source roots this change reaches, by the key
+   `siegard.json`'s `targets` names it.
+5. **the initiative's slug** — the plan the tasks belong to, and the delivery root taking this
+   review's own record: both are `<slug>` under the project's `work_root` and `delivery_root`
+   respectively.
+
+Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
+`specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: naming
+one of these in the invocation instead has no effect, and where the file does not declare one,
+that is a stop, not a question to work around — the report carries the `/siegard-config`
+invocation ready to paste, naming the project root and every field missing. From here on, "the
+delivery root" means `delivery_root/<the initiative's slug>`; "the work root" means
+`work_root/<the initiative's slug>`; "the target source root" means `targets[<the target>]`; "the
+specification root" means `specification_root` as resolved, required exactly as the plan
+validator requires it — while the plan is live, and ignored once it is closed. The conformance
+pass reads it; without the specification there is nothing to hold the source to.
 
 Absent inputs stop once, together: one stop naming everything missing, so the human answers once —
 never a question at a time.
@@ -45,18 +57,16 @@ project's own tree. Its contract is `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json
 holds a registry to it with `deliver.py --standard <file>`; a standard that does not hold together
 is a stop, reported verbatim, and fixing it belongs to whoever owns it.
 
-The standard resolves in one order, and the report says which step answered. A naming in the
-invocation wins. Where the invocation names none, run
-`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <target-source-root>` — the project file,
-`siegard.json` at the target's git toplevel, is where a project declares its standard once. This
-does not breach the rule below that an absent optional input never becomes a default: the file is
-the consumer's own declaration read from disk, not this framework choosing — and `null` there is
+The standard resolves in one order, from the same `project.py` run above, and the report says
+which step answered. Unlike the roots, **a naming in the invocation wins here**. This does not
+breach the rule below that an absent optional input never becomes a default: the file is the
+consumer's own declaration read from disk, not this framework choosing — and `null` there is
 the declaration that the project authored none, on which the standard pass does not run and the
 record says so in those words, a different absence from an input this invocation was not given.
-Where neither answers — no naming, no file — the standard joins the single stop of absent inputs:
-name it, or declare it once, and the stop's report carries the `siegard.json` ready to paste, in
-both forms. A naming that overrode a differing file is reported with both. Below, a standard
-"named" means resolved by either step.
+Where neither answers — no naming, no file, or the file simply does not declare the field — the
+standard joins the single stop of absent inputs: name it, or declare it through `/siegard-config`,
+and the stop's report carries that invocation ready to paste. A naming that overrode a differing
+file is reported with both. Below, a standard "named" means resolved by either step.
 
 It decides a second thing now: **the commands are the registry's.** A registry declares how the
 project is installed, checked and run, and those steps are what the capture below executes. This

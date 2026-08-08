@@ -64,11 +64,13 @@ def test_an_unknown_key_is_refused_rather_than_silenced(repo):
     assert "standrd" in done.stdout
 
 
-def test_a_file_declaring_nothing_is_refused(repo):
+def test_a_file_declaring_nothing_prints_nothing(repo):
+    """No field is required — a project mid-setup may have declared none of them yet, and that
+    is a different fact from having decided against one: only `standard: null` says the latter."""
     declare(repo, {})
     done = run(repo / "backend")
-    assert done.returncode == 1
-    assert "'standard' is a required property" in done.stdout
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.strip() == ""
 
 
 def test_a_declaration_that_outlived_its_registry_is_refused(repo):
@@ -98,3 +100,61 @@ def test_a_missing_directory_cannot_run(tmp_path):
     done = run(tmp_path / "absent")
     assert done.returncode == 2
     assert "is not a directory" in done.stderr
+
+
+# ------------------------------------------------------- the roots beyond standard
+
+
+def test_a_declared_specification_root_resolves_at_the_toplevel(repo):
+    declare(repo, {"standard": None, "specification_root": "specs"})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"specification_root: {repo / 'specs'}" in done.stdout
+
+
+def test_declared_targets_resolve_sorted_by_name(repo):
+    declare(repo, {"standard": None,
+                   "targets": {"frontend": "frontend", "backend": "backend"}})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert f"target backend: {repo / 'backend'}" in lines
+    assert f"target frontend: {repo / 'frontend'}" in lines
+    assert lines.index(f"target backend: {repo / 'backend'}") < \
+        lines.index(f"target frontend: {repo / 'frontend'}")
+
+
+def test_declared_work_and_delivery_roots_resolve(repo):
+    declare(repo, {"standard": None, "work_root": "work", "delivery_root": "delivery"})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"work_root: {repo / 'work'}" in done.stdout
+    assert f"delivery_root: {repo / 'delivery'}" in done.stdout
+
+
+def test_a_field_not_declared_prints_no_line_for_it(repo):
+    """Absence is the calling skill's stop to raise, never this script's to guess around — so a
+    field this file does not declare must not appear at all, not even as an empty answer."""
+    declare(repo, {"standard": None})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    for absent in ("specification_root:", "target ", "work_root:", "delivery_root:"):
+        assert absent not in done.stdout
+
+
+def test_a_target_name_that_will_not_reduce_is_refused(repo):
+    declare(repo, {"standard": None, "targets": {"Backend Service": "backend"}})
+    done = run(repo / "backend")
+    assert done.returncode == 1
+    assert "targets" in done.stdout
+
+
+def test_every_root_declared_resolves_together(repo):
+    declare(repo, {"standard": None, "specification_root": "specs",
+                   "targets": {"backend": "backend"}, "work_root": "work",
+                   "delivery_root": "delivery"})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    for expected in (f"specification_root: {repo / 'specs'}", f"target backend: {repo / 'backend'}",
+                     f"work_root: {repo / 'work'}", f"delivery_root: {repo / 'delivery'}"):
+        assert expected in done.stdout

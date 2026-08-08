@@ -14,16 +14,19 @@ order, same discipline.
 A missing input is a stop, not a default:
 
 1. **the material** — what the human supplied, in prose, plus any files it references.
-2. **the specification root** — the directory the nodes are written into. Empty is the ordinary
-   first run; populated, the invocation is a change to the specification it holds. Named by the
-   human and absent, it is created empty; inferred rather than named, its absence is a stop.
+2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
+   named, its absence is a stop.
 
-Naming can go by reference when the reference carries the path: "the specification we just
-validated at `specs/`" names `specs/`, and the handoff a `/plan-work` report ends with names
-roots the same way. A reference without a path resolves only through the conversation's memory,
-which is not state — it is an absent input, and a stop. However named, the root is taken as
-disk holds it — the checks below are that verification — never as the conversation remembers
-it.
+Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` — this is the specification
+root's only source. `specification_root` answers only from here: naming a specification root in
+the invocation instead has no effect, and where this file does not declare one, that is a stop —
+not a question to work around, because a structural root is not something worth guessing at
+twice. The stop's report carries the `/siegard-config` invocation ready to paste, naming the
+project root and the one field missing.
+
+The specification root, once resolved, is taken as disk holds it — the checks below are that
+verification — never as the conversation remembers it. Empty is the ordinary first run;
+populated, the invocation is a change to the specification it holds.
 
 Absent inputs stop once, together: one stop naming everything missing, so the human answers
 once — never a question at a time.
@@ -267,10 +270,10 @@ Report, in this order:
   nothing else in the artifacts marks a decided fact apart from a stated one;
 - every tension the reconcile step found without a case to decide, named as a watch item;
 - the validator's final output, verbatim, and what `--project` wrote;
-- the handoff: the `/plan-work` invocation ready to paste — this specification root named as
-  just validated, one named slot for each input only the human decides: the scope, the work
-  root, the target source root. The handoff offers the next step, never takes it: filling the
-  slots and invoking are the human's.
+- the handoff: the `/plan-work` invocation ready to paste — this project root filled in, since
+  the specification it holds was just validated, and one named slot for each input only the
+  human decides: the scope, which target, and the initiative's slug. The handoff offers the
+  next step, never takes it: filling the slots and invoking are the human's.
 
 Then stop. `git diff` over the specification root is the review, and it belongs to a person.
 

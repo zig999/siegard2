@@ -115,6 +115,32 @@ future `/plan-work` or `/analyse` invocation can tell, without opening any plan'
 whether a node moved in the specification since the code was written, or the code moved without
 a matching rebind.
 
+## The project file
+
+A project declares what would otherwise be retyped at every invocation once, in `siegard.json` at
+the project's own root: `specification_root`, `targets` (one target source root per name the
+project chooses — `backend`, `frontend`, whatever it calls them), `work_root`, `delivery_root`,
+and `standard`. `bin/project.py` is the one reader, holding the file to `schemas/project.json` and
+printing every field it declares; a skill never parses the file itself. `/siegard-config` is the
+one writer — the framework holds the contract and the reader, and writes neither on its own.
+
+The five fields do not resolve the same way, and the difference is deliberate. **`specification_root`,
+`targets`, `work_root` and `delivery_root` answer only from the file.** Naming one of these in an
+invocation instead has no effect, and where the file does not declare one, every entry point that
+needs it stops — a structural root is not something worth guessing at twice, the way a rule's own
+registry sometimes is. An invocation still names what is inherently per-use: which target, by its
+key into `targets`; and which initiative, by a slug that is `<work_root>/<slug>` and
+`<delivery_root>/<slug>` — the container is the file's to hold, which one is the invocation's to
+say, including a closed initiative still being reviewed. **`standard` alone may still be
+overridden by an invocation naming a different one**, and the report says both existed and which
+won — trying a different registry against the same source is sometimes worth doing; trying a
+different specification root never is.
+
+`null` for `standard` says deliberately that the project has none, a full answer and not an
+omission. A field's plain absence from the file, for any of the five, says the opposite: the
+project has not declared it yet, not decided against it — and for the four structural fields,
+that absence is exactly what stops an entry point until `/siegard-config` closes it.
+
 ## The project's own standard
 
 The specification says what the business decided; a project also decides how its own source is
@@ -124,12 +150,6 @@ written in another. So the framework ships the slot and the enforcement: `schema
 is the contract a project's registry of rules answers to, `bin/deliver.py --standard <file>`
 holds a registry to it, and the standard pass reports departures — each finding citing exactly
 one rule by its identifier, because a finding citing no rule is taste with a location attached.
-
-A project declares its registry once rather than naming it per invocation: `siegard.json` at the
-repository root — `{"standard": "<path>"}`, or `null` to say deliberately that none exists, which
-is a full answer and not an omission. `bin/project.py` is the one reader, holding the file to
-`schemas/project.json`; a standard named in an invocation wins over the file, with both reported,
-and the entry points that take one stop when neither answers.
 
 Two lines bound it, and both are the whole of its scope. **No rule of a standard states what the
 system answers or who may see what** — a status, an error code, a refusal, an authorization
@@ -166,6 +186,10 @@ the sentence above is why nothing has to.
 
 ## Entry points
 
+- **`/siegard-config`** — writes or updates `siegard.json` from what a human tells it: any of
+  `specification_root`, `targets`, `work_root`, `delivery_root`, `standard`. Every other entry
+  point below stops until the fields it needs are declared here. Invoke it once per project, and
+  again whenever a new initiative changes what `work_root`/`delivery_root` mean.
 - **`/analyse`** — turns material into specification nodes, validates them, derives its
   projections, and stops so `git diff` is the review. Invoke it by name rather than doing the
   work ad hoc.
@@ -183,9 +207,10 @@ the sentence above is why nothing has to.
 - **`bin/terms.py`** — prints what a term means, read out of the contract that defines it. Not an
   entry point and not a skill: a reader's command, for the words a validator's refusal uses. A term
   it names as holding no definition is a term no contract states, said so rather than left out.
-- **`bin/project.py`** — prints which standard the project file declares, held to its contract.
-  Not an entry point and not a skill: the one reader of `siegard.json`, run by the skills so a
-  declaration is read from disk rather than remembered by a session.
+- **`bin/project.py`** — prints every field the project file declares, held to its contract. Not
+  an entry point and not a skill: the one reader of `siegard.json`, run by the skills so a
+  declaration is read from disk rather than remembered by a session; `/siegard-config` is the
+  one writer.
 - **`bin/trace.py`** — binds a specification node to the file(s) that encode it, and reports
   drift between what a target's trace remembers and what is on disk now. Not an entry point and
   not a skill: `--bind` is run by `/implement-task` once a delivery validates; `--check` and
@@ -220,10 +245,11 @@ slots empty: filling them and running it are yours.
 
 ## Rules that bind every session
 
-- **Do not write or edit `plan.json`, `delivery.json` or `siegard-trace.json` by hand.** Change
-  the nodes and run the deriving script — `bin/plan.py <work-root> <specification-root>`,
-  `bin/deliver.py <delivery-root> <work-root> <specification-root>` — again; the trace is written
-  only by `bin/trace.py --bind`.
+- **Do not write or edit `plan.json`, `delivery.json`, `siegard-trace.json` or `siegard.json` by
+  hand.** Change the nodes and run the deriving script — `bin/plan.py <work-root>
+  <specification-root>`, `bin/deliver.py <delivery-root> <work-root> <specification-root>` —
+  again; the trace is written only by `bin/trace.py --bind`, and the project file only by
+  `/siegard-config`.
 - **Do not state a domain fact the specification does not hold** — in code, a comment, a test, or
   a prompt. Where the specification is silent on what a task needs, that is a `BLOCKING` note;
   report it, do not fill it.

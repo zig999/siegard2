@@ -2,15 +2,43 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/project.json",
   "title": "Siegard project file",
-  "description": "What a project declares once instead of naming per invocation: `siegard.json`, at the git toplevel of the target source root, beside the tree it speaks for. It is the consumer's own file — the framework ships this contract and `bin/project.py` to hold the file to it, and writes neither. Resolution order is stated here and nowhere else: a standard named in the invocation wins over this file, and the report says both existed and which won; where the invocation names nothing, this file answers; where neither answers, the entry points that take a standard stop — once, together with every other absent input — because an absence nobody declared is indistinguishable from an input somebody forgot. An answer given in a session persists only by this file gaining it.",
+  "description": "What a project declares once instead of naming per invocation: `siegard.json`, at the project's own root, holding every root a consumer would otherwise retype at every invocation. It is the consumer's own file — the framework ships this contract and `bin/project.py` to hold the file to it, and writes neither; `/siegard-config` is the one skill that writes it, from what a human tells it. Two resolution rules, and they differ on purpose. `standard` alone may be overridden by an invocation naming a different one, and the report says both existed and which won — a rule's own registry is sometimes worth trying a different one against. `specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: an invocation naming one of these paths instead has no effect, and their absence from this file is a stop, not a question the invocation can answer around it — a structural root is not something worth guessing at twice. Either way, an answer given in a session persists only by this file gaining it.",
   "type": "object",
-  "required": ["standard"],
   "additionalProperties": false,
   "properties": {
     "standard": {
       "type": ["string", "null"],
       "minLength": 1,
-      "description": "The project's registry of rules, by path relative to this file's own directory — the artifact `schemas/standard.json` is the contract for. `null` is a full answer, not an omission: it declares the project authors no standard, so every entry point takes the honestly narrow path without asking again — a different fact from a file that does not exist, which declares nothing."
+      "description": "The project's registry of rules, by path relative to this file's own directory — the artifact `schemas/standard.json` is the contract for. `null` is a full answer, not an omission: it declares the project authors no standard, so every entry point takes the honestly narrow path without asking again. That is a different fact from this field being absent, which — like every field's absence here — declares nothing: the project has not gotten to it yet, not decided against it."
+    },
+    "specification_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The specification this project's plans implement against, by path relative to this file's own directory. Read exclusively from here (see this schema's own description): a specification root named in an invocation instead of declared here has no effect, so a plan naming one this file does not declare is a plan naming nothing. Its absence here is not a defect to guess around — declaring it is `/siegard-config`'s to do, once."
+    },
+    "targets": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": { "type": "string", "minLength": 1 },
+      "description": "Every target source root this project delivers into, named by the project — `backend`, `frontend`, or whatever it calls them; the framework prescribes none and admits as many as the project holds. Each value is a path relative to this file's own directory. An invocation names a target by its key from here, never by retyping its path, and a key this map does not hold is a target nobody declared."
+    },
+    "work_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where this project's development initiatives live, by path relative to this file's own directory. One initiative is one subdirectory under it, named per invocation as a slug rather than a path — which initiative is a fact of the moment, including a closed one still being reviewed, and the container holding all of them is not. `/plan-work` creates the subdirectory; this file only has to name the container once."
+    },
+    "delivery_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where this project's delivery records live, by path relative to this file's own directory, one subdirectory per initiative — the same slug that names its work root, since one initiative is one plan and one delivery."
+    }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A name reduced to kebab-case. A name that will not reduce is a refusal, not a transliteration."
     }
   }
 }

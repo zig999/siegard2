@@ -15,20 +15,27 @@ A missing input is a stop, not a default:
 1. **the task** — which one, by identifier. Named by the human, or named in a request that
    names exactly one; a request that names none, or several, is a stop, and the answer is to
    ask which. Choosing for the human is choosing what gets built.
-2. **the work root** — the plan holding the task. Named by the human; inferred rather than
+2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
-3. **the specification root** — the specification the plan implements against, required exactly
-   as the plan validator requires it: while the plan is live, and ignored once it is closed. A
-   work root holding `closure.md` is a different matter: the plan is history, its initiative is
-   over, and writing new source against it is a stop. Reviewing what it already delivered is
-   not — that is `/review-change`'s, and it stays possible for as long as the records do.
-4. **the target source root** — where the code lives or will live. An empty tree is an answer;
-   which tree it is, the human says.
-5. **the delivery root** — the directory the records are written into, under git, beside neither
-   of the other two roots. Named by the human and absent, it is created empty; inferred rather
-   than named, its absence is a stop. Records are not written into the work root: a plan that
-   held what was delivered would be recording progress, and that is the orchestrator's state
-   file this framework refuses to have.
+3. **the target** — which of the project's target source roots this task delivers into, by the
+   key `siegard.json`'s `targets` names it.
+4. **the initiative's slug** — the plan holding the task, and the delivery root its records are
+   written into: both are `<slug>` under the project's `work_root` and `delivery_root`
+   respectively. Absent, it is created empty for the delivery side; the work side must already
+   hold the task. A work root holding `closure.md` is a different matter: the plan is history,
+   its initiative is over, and writing new source against it is a stop. Reviewing what it
+   already delivered is not — that is `/review-change`'s, and it stays possible for as long as
+   the records do.
+
+Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
+`specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: naming
+one of these in the invocation instead has no effect, and where the file does not declare one,
+that is a stop, not a question to work around — the report carries the `/siegard-config`
+invocation ready to paste, naming the project root and every field missing. From here on, "the
+work root" means `work_root/<the initiative's slug>`; "the delivery root" means
+`delivery_root/<the initiative's slug>`; "the target source root" means `targets[<the target>]`;
+"the specification root" means `specification_root` as resolved, required exactly as the plan
+validator requires it — while the plan is live, and ignored once it is closed.
 
 Absent inputs stop once, together: one stop naming everything missing — the task among them, where
 the request named none — so the human answers once, never a question at a time.
@@ -39,16 +46,14 @@ only convention this invocation follows is what the inventory evidenced, and the
 The framework ships no rule and never owns the registry: `${CLAUDE_PLUGIN_ROOT}/schemas/standard.json`
 is the contract a project's own file answers to.
 
-The standard resolves in one order, and the report says which step answered. A naming in the
-invocation wins. Where the invocation names none, run
-`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <target-source-root>` — the project file,
-`siegard.json` at the target's git toplevel, is where a project declares its standard once, and
-`null` there declares deliberately that it has none: the narrow path, chosen rather than
-forgotten, taken without asking again. This is not a default — the file is the consumer's own
-declaration, read from disk. Where neither answers — no naming, no file — the standard joins the
-single stop of absent inputs: name it, or declare it once, and the stop's report carries the
-`siegard.json` ready to paste, in both forms. A file that does not hold together is a stop
-reported verbatim; a naming that overrode a differing file is reported with both. Below, a
+The standard resolves in one order, from the same `project.py` run above, and the report says
+which step answered. Unlike the roots, **a naming in the invocation wins here**. Where the
+invocation names none, the file's `standard` answers: `null` declares deliberately that it has
+none — the narrow path, chosen rather than forgotten, taken without asking again. Where neither
+answers — no naming, no file, or the file simply does not declare the field — the standard joins
+the single stop of absent inputs: name it, or declare it through `/siegard-config`, and the
+stop's report carries that invocation ready to paste. A file that does not hold together is a
+stop reported verbatim; a naming that overrode a differing file is reported with both. Below, a
 standard "named" means resolved by either step.
 
 ## Before anything: the plan
@@ -520,8 +525,8 @@ Report, in this order:
   whether the source states only what the specification holds, whether it follows the same standard, and
   why anything failed. A green suite here is a green suite over one task, and two tasks that each
   passed alone are not a change that passes together;
-- the handoff: the `/review-change` invocation ready to paste — this delivery root, this work
-  root, this specification root and this target source root named by path as just validated; the
+- the handoff: the `/review-change` invocation ready to paste — the project root, the target and
+  the initiative's slug filled in, since every root they resolve to was just validated above; the
   tasks under review being the one task this invocation delivered, by identifier; the file
   set being exactly the paths named above, because a review never discovers its own scope and
   this report is the only place that set exists; and the project's standard as it resolved,

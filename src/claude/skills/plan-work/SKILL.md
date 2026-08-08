@@ -13,17 +13,24 @@ order, same discipline.
 A missing input is a stop, not a default:
 
 1. **the scope** — what the human wants developed, in prose, plus any files it references.
-2. **the specification root** — the specification the plan implements against. Named by the
-   human; inferred rather than named, its absence is a stop. A plan naming a specification
-   nobody named answers a question nobody asked.
-3. **the work root** — the directory the plan nodes are written into. Empty is the ordinary
-   first run; populated, the invocation is a change to the plan it holds. Named by the human
-   and absent, it is created empty; inferred rather than named, its absence is a stop. A root
-   serves one initiative: holding `closure.md`, it is history — planning over it is a stop,
-   and a new initiative names a new root, where the delivered work returns as inventory
+2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
+   named, its absence is a stop.
+3. **the target** — which of the project's target source roots this plan reaches, by the key
+   `siegard.json`'s `targets` names it. A key the file does not hold is a target nobody
+   declared.
+4. **the initiative's slug** — this plan's own subdirectory under the project's work root.
+   Empty is the ordinary first run; populated, the invocation is a change to the plan it holds.
+   A slug naming a directory that holds `closure.md` is a different matter: planning over it is
+   a stop, and a new initiative names a new slug, where the delivered work returns as inventory
    through the survey, never as a reference into the old plan.
-4. **the target source root** — where the code lives or will live. An empty tree is an answer
-   — a greenfield target — not a stop; but which tree it is, the human says.
+
+Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
+`specification_root`, `targets` and `work_root` answer only from here: naming one of these in the
+invocation instead has no effect, and where the file does not declare one, that is a stop, not a
+question to work around — the report carries the `/siegard-config` invocation ready to paste,
+naming the project root and every field missing. From here on, "the specification root" means
+`specification_root` as resolved; "the target source root" means `targets[<the target>]`; "the
+work root" means `work_root/<the initiative's slug>`.
 
 One optional input: **the project's standard** — the path to the registry of rules the project set
 for itself. It plays one part here and no other. A registry states the artifacts its rules
@@ -34,31 +41,23 @@ the specification has no node for a manifest and should not, no epic covers one,
 a plan's business. A plan writes no source, and judging how source is arranged belongs to the two
 entry points that do.
 
-The standard resolves in one order, and the report says which step answered. A naming in the
-invocation wins. Where the invocation names none, run
-`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <target-source-root>` — the project file,
-`siegard.json` at the target's git toplevel, is where a project declares its standard once, and
-`null` there declares deliberately that it has none: the narrow path, chosen rather than
-forgotten, taken without asking again. This is not a default — the file is the consumer's own
-declaration, read from disk, and the framework still ships no rule. Where neither answers — no
-naming, no file — the standard joins the single stop of absent inputs: name it, or declare it
-once, and the stop's report carries the `siegard.json` ready to paste, in both forms. A file
-that does not hold together is a stop reported verbatim; a naming that overrode a differing
-file is reported with both. Below, a standard "named" means resolved by either step.
-
-Naming can go by reference when the reference carries the path: "the specification we just
-validated at `specs/`" names `specs/`, and the handoff an analysis session ends with names
-roots the same way. A reference without a path resolves only through the conversation's
-memory, which is not state — it is an absent input, and a stop. However named, every root is
-taken as disk holds it — the checks below are that verification — and the report states each
-path as it resolved.
+The standard resolves in one order, from the same `project.py` run above, and the report says
+which step answered. Unlike the roots, **a naming in the invocation wins here** — a registry is
+worth trying a different one against, sometimes; a root is not. Where the invocation names none,
+the file's `standard` answers: `null` declares deliberately that the project has none — the
+narrow path, chosen rather than forgotten, taken without asking again. Where neither answers — no
+naming, no file, or the file simply does not declare the field — the standard joins the single
+stop of absent inputs: name it, or declare it through `/siegard-config`, and the stop's report
+carries that invocation ready to paste. A file that does not hold together is a stop reported
+verbatim; a naming that overrode a differing file is reported with both. Below, a standard
+"named" means resolved by either step.
 
 Absent inputs stop once, together: one stop naming everything missing, so the human answers
 once — never a question at a time.
 
-A closing invocation — the human declaring the initiative over — needs two of these: the ask
-with its why, and the work root. The specification root and the target source root play no
-part in closing (see "Closing the plan").
+A closing invocation — the human declaring the initiative over — needs three of these: the ask
+with its why, the project root, and the initiative's slug. The specification root and the
+target source root play no part in closing (see "Closing the plan").
 
 ## Before anything: the specification
 
@@ -301,18 +300,18 @@ Report, in this order:
   anything it delivers, and that is the honestly narrow answer rather than silence;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
-- the handoff: the `/implement-task` invocation ready to paste — this work root and this
-  specification root named by path as just validated, one named slot for each input only the
-  human decides (the target source root, the delivery root, and the project's standard where
-  the project file does not already answer it), and the task, which is a slot as well and the
-  one that matters: one invocation carries one task, and choosing it is choosing what gets
-  built. What the handoff offers in its place is where the deliverable set is read from, as a
-  command rather than as a list — with a delivery root, `deliver.py --outstanding
-  <delivery-root> <work-root> <target-source-root> <specification-root>` names, per task, what
-  has no record and what it waits on; without one, every task whose `## Notes` carries no
-  standing `BLOCKING, from the specification —` line is deliverable. A set restated here instead
-  is a set that was true when it was printed. The handoff offers the next step and never takes
-  it: filling the slots and invoking are the human's.
+- the handoff: the `/implement-task` invocation ready to paste — the project root, the target
+  and the initiative's slug filled in, since every root they resolve to was just validated
+  above, and the project's standard where the project file does not already answer it. One
+  slot is left open and it is the one that matters: **the task** — one invocation carries one
+  task, and choosing it is choosing what gets built. What the handoff offers in its place is
+  where the deliverable set is read from, as a command rather than as a list: `deliver.py
+  --outstanding <delivery-root> <work-root> <target-source-root> <specification-root>`, every
+  root already resolved above, names per task what has no record and what it waits on; without
+  running it, every task whose `## Notes` carries no standing `BLOCKING, from the
+  specification —` line is deliverable. A set restated here instead is a set that was true when
+  it was printed. The handoff offers the next step and never takes it: filling the one open
+  slot and invoking are the human's.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 
@@ -322,6 +321,8 @@ A work root serves one initiative, and the human says when it is over — the as
 why, is the input, and either missing is a stop. Closing spawns no judge and touches neither
 the specification root nor the target source root.
 
+- Resolve `work_root/<the initiative's slug>` the same way as above — `project.py` still
+  answers only from the file, even here.
 - The root must be under git and clean, exactly as before any write — the closure diff is
   its own review. A root already holding `closure.md` is already closed: stop.
 - Persist the ask under `intake/`, like any scope.
@@ -334,7 +335,7 @@ the specification root nor the target source root.
   written is no obstacle — each task's `implements` now stands as the historical record of
   which nodes the work addressed.
 - Report the closure and offer the `/plan-work` invocation that opens the successor
-  initiative's new work root, naming the same specification root — the delivered work returns
+  initiative's new slug under the same work root and project root — the delivered work returns
   as inventory through the survey there, never as a reference into this closed plan. Then stop.
 
 ## What you never do

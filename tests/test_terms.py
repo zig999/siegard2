@@ -99,7 +99,7 @@ def test_the_full_listing_holds_every_term(loaded):
 # ------------------------------------------------- the drift these tests were written after
 
 
-SLUG_HOLDERS = ("plan-node.json", "standard.json")
+SLUG_HOLDERS = ("plan-node.json", "standard.json", "project.json")
 
 
 def test_every_slug_definition_is_the_same_sentence(loaded):

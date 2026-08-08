@@ -30,6 +30,8 @@ NODE_CONTRACTS = ("schemas/plan-node.json", "schemas/delivery-node.json",
 SKILLS = {
     "analyse": {"contract": "schemas/spec/element.json", "validator": "bin/spec.py",
                "delegates": []},
+    "siegard-config": {"contract": "schemas/project.json", "validator": "bin/project.py",
+                       "delegates": []},
     "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
                                 "execution-contract-binder"]},

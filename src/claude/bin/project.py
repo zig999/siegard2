@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
-"""Resolve the project file: which standard a consumer declared, read from disk.
+"""Resolve the project file: every root and the standard a consumer declared, read from disk.
 
-Three skills take the project's standard as an optional input, and a value retyped per
-invocation is a value a session can forget or mistype — one consumer's registry sat unnamed
-across invocations that its own delivery root remembered. `siegard.json` is where a project
-declares it once: at the git toplevel of the target source root, beside the tree it speaks
-for, in the consumer's own hands. This script is the one reader — it finds the file, holds it
-to `schemas/project.json`, and prints what was declared. A skill never parses the file itself,
-and an answer given in a session persists only by the file gaining it.
+A value retyped per invocation is a value a session can forget or mistype — one consumer's
+registry sat unnamed across invocations that its own delivery root remembered, and a specification
+root is no easier to retype correctly than a registry's path. `siegard.json` is where a project
+declares each once: at the project's own root, in the consumer's own hands, written only by
+`/siegard-config`. This script is the one reader — it finds the file, holds it to
+`schemas/project.json`, and prints every field it declares, one per line. A skill never parses the
+file itself, and an answer given in a session persists only by the file gaining it.
 
-What the resolution means is the contract's business, stated once in the schema: a standard
-named in the invocation wins over the file, `null` declares the narrow path deliberately, and
-an absent file declares nothing — the skill's stop, never this script's, which is why absence
-exits 0: it is a fact to report, not a defect to refuse.
+What the resolution means is the contract's business, stated once in the schema, and it is not one
+rule: `standard` alone may be overridden by an invocation naming a different one — the report says
+both existed and which won. `specification_root`, `targets`, `work_root` and `delivery_root`
+answer only from here; an invocation naming one of these instead has no effect, and where this
+file does not declare one, that is the calling skill's stop to raise, never this script's to guess
+around. This script prints only what stands; deciding that an absence is a stop belongs to
+whichever skill needed the field.
 
 Declared dependencies: jsonschema.
 
-Usage:  project.py <directory>     resolve siegard.json for the tree holding <directory> —
-                                   the file sits at the directory's git toplevel, or at the
-                                   directory itself where git does not hold it
-Exit:   0 resolved: a declared standard, a declared none, or no file, each said in one line
+Usage:  project.py <project-root>    resolve siegard.json for the tree holding <project-root> —
+                                     the file sits at that directory's git toplevel, or at the
+                                     directory itself where git does not hold it
+Exit:   0 resolved: every field siegard.json declares, or no file at all, each said in one line
         1 the file does not hold together, or names a standard that does not exist
         2 cannot run
 """
@@ -58,7 +61,7 @@ def toplevel_of(directory: Path) -> Path:
 def main() -> int:
     args = sys.argv[1:]
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected <directory>", file=sys.stderr)
+        print("cannot run: expected <project-root>", file=sys.stderr)
         return CANNOT_RUN
     directory = Path(args[0])
     if not directory.is_dir():
@@ -72,8 +75,8 @@ def main() -> int:
     home = toplevel_of(directory)
     target = home / PROJECT_FILE
     if not target.is_file():
-        print(f"no project file: {target} does not exist; a standard is named per invocation, "
-              f"or declared once by creating the file")
+        print(f"no project file: {target} does not exist; every root and the standard are named "
+              f"per invocation, or declared once through /siegard-config")
         return 0
 
     try:
@@ -90,16 +93,26 @@ def main() -> int:
             print(f"{target}: {where}: {error.message}")
         return 1
 
-    standard = declared["standard"]
-    if standard is None:
-        print("standard: declared none")
-        return 0
-    resolved = home / standard
-    if not resolved.is_file():
-        print(f"{target}: names {resolved}, which does not exist; a declaration that outlived "
-              f"its registry is corrected in the file, never guessed around")
-        return 1
-    print(f"standard: {resolved}")
+    if "standard" in declared:
+        standard = declared["standard"]
+        if standard is None:
+            print("standard: declared none")
+        else:
+            resolved = home / standard
+            if not resolved.is_file():
+                print(f"{target}: names {resolved}, which does not exist; a declaration that "
+                      f"outlived its registry is corrected in the file, never guessed around")
+                return 1
+            print(f"standard: {resolved}")
+
+    if "specification_root" in declared:
+        print(f"specification_root: {home / declared['specification_root']}")
+    for name, path in sorted(declared.get("targets", {}).items()):
+        print(f"target {name}: {home / path}")
+    if "work_root" in declared:
+        print(f"work_root: {home / declared['work_root']}")
+    if "delivery_root" in declared:
+        print(f"delivery_root: {home / declared['delivery_root']}")
     return 0
 
 
