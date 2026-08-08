@@ -277,6 +277,63 @@ def test_the_capability_map_derives_from_scenarios(spec_root):
 # ------------------------------------------------------------ the CLI contract
 
 
+def test_every_node_carries_a_digest_matching_its_bytes(spec_root):
+    import hashlib
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    for identity, node in nodes.items():
+        path = spec_root / f"{identity}.md"
+        expected = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+        assert node["digest"] == expected, identity
+
+
+def test_a_changed_node_changes_only_its_own_digest(spec_root):
+    nodes_before, _ = spec.collect(spec_root, spec.contracts())
+    (spec_root / "domain/troubleshooting/case.md").write_text(
+        (spec_root / "domain/troubleshooting/case.md").read_text(encoding="utf-8") + "\n",
+        encoding="utf-8")
+    nodes_after, _ = spec.collect(spec_root, spec.contracts())
+    for identity in nodes_before:
+        if identity == "domain/troubleshooting/case":
+            assert nodes_after[identity]["digest"] != nodes_before[identity]["digest"]
+        else:
+            assert nodes_after[identity]["digest"] == nodes_before[identity]["digest"]
+
+
+def test_the_cli_prints_digests_sorted_by_identity(spec_root):
+    run = subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
+         "--digest", str(spec_root)],
+        capture_output=True, text=True)
+    assert run.returncode == 0, run.stdout + run.stderr
+    lines = [line for line in run.stdout.splitlines() if "  sha256:" in line]
+    identities = [line.split("  ")[0] for line in lines]
+    assert identities == sorted(identities)
+    assert "domain/troubleshooting/case  sha256:" in run.stdout
+    for line in lines:
+        identity, digest = line.split("  ")
+        assert digest.startswith("sha256:") and len(digest) == len("sha256:") + 64
+
+
+def test_digests_are_refused_over_an_unsound_specification(spec_root):
+    (spec_root / "decision-log.md").unlink()
+    run = subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
+         "--digest", str(spec_root)],
+        capture_output=True, text=True)
+    assert run.returncode == 1
+    assert "digests are not sound" in run.stdout
+    assert "sha256:" not in run.stdout
+
+
+def test_project_and_digest_are_mutually_exclusive(spec_root):
+    run = subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
+         "--project", "--digest", str(spec_root)],
+        capture_output=True, text=True)
+    assert run.returncode == spec.CANNOT_RUN
+    assert "mutually exclusive" in run.stderr
+
+
 def test_the_cli_validates_and_projects(spec_root):
     run = subprocess.run(
         [sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),

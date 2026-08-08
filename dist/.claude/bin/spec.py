@@ -26,10 +26,18 @@ ways, and the map says so), state diagrams, the capability map and the overview 
 throughout, so identical input is byte-identical output. They are refused entirely while the
 specification has problems.
 
+**Every node's digest is content identity.** `--digest` prints `<identity>  sha256:<hexdigest>`
+for every node, one line each, sorted by identity — the hash of the exact bytes of its file, the
+same value `sha256sum <path>` computes by hand. This script keeps no second copy of it: it exists
+so something outside this script, living beside generated code rather than inside the
+specification, can pin which version of a node it was written against and later ask whether that
+node moved. Refused entirely while the specification has problems, the same as `--project`.
+
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  spec.py <spec-root>              validate everything
         spec.py --project <spec-root>    validate, then write projections/
+        spec.py --digest <spec-root>     validate, then print every node's content digest
 Exit:   0 sound
         1 problems
         2 cannot run
@@ -37,6 +45,7 @@ Exit:   0 sound
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -94,6 +103,11 @@ def classify(relative: Path) -> tuple[str, str | None, str] | None:
     if len(parts) == 2 and parts[0] == "constraints" and SLUG.match(parts[1]):
         return ("constraint", None, parts[1])
     return None
+
+
+def digest_of(path: Path) -> str:
+    """Content identity: sha256 of the file's exact bytes, computable by hand as `sha256sum`."""
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def reduce_display(display: str) -> str:
@@ -177,7 +191,8 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
         if isinstance(display, str) and reduce_display(display) != slug:
             problems.append(f"{identity}: display `{display}` reduces to "
                             f"`{reduce_display(display)}`, not to the slug `{slug}`")
-        nodes[identity] = {"cls": cls, "context": context, "slug": slug, "front": front}
+        nodes[identity] = {"cls": cls, "context": context, "slug": slug, "front": front,
+                           "digest": digest_of(path)}
     return nodes, problems
 
 
@@ -660,9 +675,13 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
 def main() -> int:
     args = sys.argv[1:]
     write = "--project" in args
-    args = [a for a in args if a != "--project"]
+    show_digests = "--digest" in args
+    args = [a for a in args if a not in ("--project", "--digest")]
+    if write and show_digests:
+        print("cannot run: --project and --digest are mutually exclusive", file=sys.stderr)
+        return CANNOT_RUN
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected [--project] <spec-root>", file=sys.stderr)
+        print("cannot run: expected [--project | --digest] <spec-root>", file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
     if not root.is_dir():
@@ -679,7 +698,8 @@ def main() -> int:
     if problems:
         for problem in sorted(set(problems)):
             print(problem)
-        refused = "projections are" if write else "the specification is"
+        refused = "projections are" if write else "digests are" if show_digests \
+            else "the specification is"
         print(f"\n{len(set(problems))} problem(s) over {len(nodes)} file(s); "
               f"{refused} not sound while these stand.")
         return 1
@@ -703,6 +723,10 @@ def main() -> int:
             (target / name).write_text(content, encoding="utf-8")
         print(f"projected {len(derived)} file(s) into {target}: "
               f"{', '.join(sorted(derived))}")
+
+    if show_digests:
+        for identity in sorted(nodes):
+            print(f"{identity}  {nodes[identity]['digest']}")
     return 0
 
 
