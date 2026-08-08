@@ -22,11 +22,16 @@ CITATION = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([\w./-]+)")
 FENCE = re.compile(r"^---\n(.*?)\n---\n", re.S)
 
 NODE_CONTRACTS = ("schemas/node.json", "schemas/plan-node.json", "schemas/delivery-node.json",
-                  "schemas/standard.json")
+                  "schemas/standard.json", "schemas/spec/context.json",
+                  "schemas/spec/element.json", "schemas/spec/rule.json",
+                  "schemas/spec/scenario.json", "schemas/spec/contract.json",
+                  "schemas/spec/constraint.json", "schemas/spec/decision-log.json")
 
 SKILLS = {
     "analyse-domain": {"contract": "schemas/node.json", "validator": "bin/graph.py",
                        "delegates": []},
+    "analyse": {"contract": "schemas/spec/element.json", "validator": "bin/spec.py",
+               "delegates": []},
     "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
                                 "execution-contract-binder"]},
@@ -147,9 +152,9 @@ def skill_text(name: str) -> str:
 
 # analyse-domain -> plan-work stays absent for good: analyse-domain is retired, not renamed,
 # and it authors the pre-redesign knowledge base plan-work no longer accepts. Its replacement
-# is named here once it exists; nothing stands in for it in the meantime, because there is
-# nothing plan-work still hands off to on that side of the seam.
+# is named below instead of appended beside it.
 FORWARD_SEAMS = (
+    ("analyse", "plan-work"),
     pytest.param("plan-work", "implement-task",
                  marks=pytest.mark.xfail(strict=True,
                      reason="implement-task still reads the base plan-work no longer writes")),
