@@ -47,8 +47,8 @@ leaving a contract implicit is the worse form.
 ## Where authority lives
 
 A specification states what the framework must do. Where nothing states it, the specification is what
-gains the statement — there is no second authority to decide it elsewhere. A concept fixes what a term
-means. A schema encodes the structure a contract requires. Code and tests implement them, and
+gains the statement — there is no second authority to decide it elsewhere. A schema encodes the
+structure a contract requires and fixes what a term means. Code and tests implement them, and
 documentation explains them. When two disagree, the earlier one in that list wins, and the change that
 resolves it updates both — never one alone.
 
