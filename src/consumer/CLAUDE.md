@@ -108,12 +108,55 @@ there.
 What has to survive is the link between a specification node and the file it produced.
 `siegard-trace.json`, beside `siegard.json` at the target source root's git toplevel, is that
 link: for a node an implementation encoded, the digest it read and the file(s) it produced, each
-pinned the same way. `bin/trace.py` is the one writer — `implement-task` calls `--bind` once a
-delivery validates, for every node its implementation record names with `encoded_at` — and the
-one reader: `--check` recomputes both digests from what is on disk now and reports drift, so a
-future `/plan-work` or `/analyse` invocation can tell, without opening any plan's history,
-whether a node moved in the specification since the code was written, or the code moved without
-a matching rebind.
+pinned the same way. `bin/trace.py` is the one writer — `implement-task` calls `--bind-record`
+once a delivery validates, naming the implementation record, and every node that record names
+with `encoded_at` is bound as one act — and the one reader: `--check` recomputes both digests
+from what is on disk now and reports drift, so a future `/plan-work` or `/analyse` invocation
+can tell, without opening any plan's history, whether a node moved in the specification since
+the code was written, or the code moved without a matching rebind.
+
+## Delivering a frontier in parallel
+
+`deliver.py --outstanding` ends its report with the set deliverable now — no record, nothing
+waited on, no standing blocking note. Where that set holds more than one task, the tasks may be
+delivered concurrently, one git worktree each, and the framework ships no orchestrator for this:
+it is the consumer's procedure, and every guarantee holds per worktree because each delivery is
+the ordinary `/implement-task` path, unvaried. Three preconditions: the plan is committed (a
+worktree sees commits, never trees); the tasks come from that deliverable set, so nothing in the
+batch depends on anything else in it; and a task expected to install a package stays out and is
+delivered alone — the manifest is everybody's file, and two deliveries editing it concurrently
+is the one conflict no disjointness can prevent.
+
+```
+git worktree add -b batch/<task> ../wt-<task> <base>      one per task
+per worktree:  /implement-task <task>                     the ordinary invocation
+per worktree:  commit the delivery                        the orchestrator's act, never the skill's
+merge the branches, sequentially
+resolve the two expected conflicts (below), conclude the merge
+reconcile:  deliver.py <roots>                            rederives delivery.json
+            trace.py --bind-record ... <each record>      recomposes the trace's union
+/review-change over the union of the file sets            the integration gate
+git worktree remove; the branches are disposable
+```
+
+Exactly two files conflict, and both are derived: `delivery.json` and `siegard-trace.json`.
+Derived extends to conflict resolution — take either side, because the content is disposable,
+and the completion of the resolution is the rederivation. Never merge either by hand: a
+hand-merged index is an index somebody authored, and `--check` on both is what says the
+reconciliation is done. `tests/test_worktree_batch.py` holds this surface: source and record
+files merge clean because the path is the identity and nothing in a record is minted from a
+clock, and a change that widens the surface fails there before it breaks a consumer's merge.
+
+A conflict in **source** is a different finding: the two tasks were not independent. Abort that
+branch's merge and re-deliver its task alone on the integrated tree — a file hand-merged between
+two deliveries is a file neither record describes. A worktree that failed is simply discarded:
+its task stays recordless, `--outstanding` reports it, and nothing in the base repository has to
+be undone.
+
+Two limits, said where the reader meets them. The union is only exercised at the review — two
+tasks that each passed alone are not a change that passes together, and the run that finds it is
+`/review-change`'s, at the end. And the route buys wall-clock and isolation, not model cost:
+each invocation still pays its own full reading.
 
 ## The project file
 
