@@ -155,8 +155,10 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <w
 ```
 
 On an empty delivery root it reports every task without a record; on a populated one it also
-reports, per task, which dependencies have no record yet. Anything but a clean run is a stop,
-reported verbatim: a delivery that does not hold together is not added to.
+reports, per task, what each one waits on — the dependencies with no record yet, an artifact a task
+of this plan produces and the tree does not hold, and a standing blocking note — and then the set
+deliverable now. Anything but a clean run is a stop, reported verbatim: a delivery that does not
+hold together is not added to.
 
 One of its lines is a refusal, and it is settled before anything is written:
 
@@ -169,10 +171,10 @@ One of its lines is a refusal, and it is settled before anything is written:
   leaving only the scope for the human to state. A task the plan does not hold is planned into
   it, never improvised past.
 
-A second refusal is not in that report, because the plan's index is not what holds it — the task
-file does. So open the task file here, before anything below is written, and read its
-`## Notes`: **an entry opening `BLOCKING, from the specification —` is a stop.** Quote the
-entries whole. That class is the binding's finding that the objective, or a criterion, cannot be
+A second refusal the report names and does not make. Open the task file here, before anything below
+is written, and read its `## Notes`: **an entry opening `BLOCKING, from the specification —` is a
+stop.** Quote the entries whole — from the file, which is what holds them, rather than from the
+report, which read the same file. That class is the binding's finding that the objective, or a criterion, cannot be
 demonstrated as written without contradicting or exceeding the specification, including a fact
 the specification does not state at all, and a task that arrives here still carrying one is the
 scope-origin kind — the other kind is re-cut and re-implemented against before the task is ever
@@ -188,11 +190,15 @@ specification is not silent but overruled — the worse of the two failures this
 exists to prevent. The class is the binder's judgment and not yours to overrule: a note you
 disagree with is still a stop, and the disagreement goes in what you report.
 
-This stop is the skill's and not the validator's. `deliver.py` says nothing about notes,
-deliberately: a blocking note is cleared by amending the scope or the specification, and by the
-time either lands the task has re-run through implement-against and the note is gone — so a
-second gate in the validator would only ever fire on a state this stop already refuses. What the
-plan records, the code cannot embody; those are different acts and they get different answers.
+**This stop is the skill's and not the validator's, and the report naming it changes nothing about
+that.** `deliver.py` says which tasks carry one and quotes it, because a caller choosing which task
+to deliver had no other way to learn it than opening every task file — and it exits 0 over every one
+of them. It does not refuse, deliberately: a blocking note is cleared by amending the scope or the
+specification, and by the time either lands the task has re-run through implement-against and the
+note is gone, so a gate in the validator would only ever fire on a state this stop already refuses.
+And the stop belongs here because only here are both doors open — the two invocations that settle
+it leave from this report, and a validator has nowhere to hand them over. What the plan records, the
+code cannot embody; those are different acts and they get different answers.
 
 A third fact the report does not carry, because you can see it directly: **a record already at the
 path this task computes to.** That is a re-delivery, not a stop, and the report says so. Both
@@ -257,6 +263,12 @@ project's own file, the same way `files[].path` already points at code without a
 it. That pin is a citation of what this record read when it was written, not a standing guarantee
 — the project's registry is free to keep evolving, and this record stays held to the text it
 actually read rather than to whatever the file says later.
+
+What the command printed is also everything this invocation reads *from* the registry: each step
+with its command and its bound, which step installs and which proves, and the packages it
+authorizes, by name. Do not open the registry's text here — the rules it declares are its two
+producers' to read, each is handed the path below, and a registry read twice is the same registry
+at twice the cost.
 
 Then read the rest of the task file — the notes were read above — and the plan's inventory nodes. `plan.json` lists every node the
 plan holds with its kind and its file, so the inventory is found there rather than by walking the
@@ -397,6 +409,9 @@ the standard's own path where one was named, because a project's rules about how
 written are the test author's to follow, and plus every `UNDERDETERMINED, from the specification —`
 entry of the task's `## Notes`, quoted whole: each names an implementation that satisfies every
 criterion as written and that the specification refuses, and excluding it is the test author's work.
+That set was already read for you: the situate report quotes these entries per task, by their
+opening, so what you hand over is what a script found — an entry the report carries and your
+collection lacks is your collection wrong, never the report's.
 Where the task's criteria name a failure that must stop happening, pass the reproduction too;
 without it the tests prove the fix rather than the defect, and afterwards nobody can tell the
 difference.
@@ -496,17 +511,23 @@ between the specification and the files that now encode it, so a later `/plan-wo
 invocation can ask, without either root, whether this code and the specification it followed have
 since moved apart.
 
-For every entry of the implementation record's `nodes` that carries `encoded_at`, run:
+Name the record you just wrote, once:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind <target-source-root> <specification-root> <node> <file> [<file> ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> <the implementation record>
 ```
 
-naming the node and exactly the paths its `encoded_at` lists — the same paths `files` already
-carries, so nothing here is read from anywhere but the record just written. A node the record
-answers only by `how` — constrained but encoded nowhere — is not bound: there is no file to name,
-and `trace.py` refuses a bind with none. Where a proof exists, its criteria stay with the
-implementation record; the trace binds what the source encodes, not what the tests prove.
+It reads that record's `nodes` and binds every entry carrying `encoded_at`, at exactly the paths
+that entry lists — so nothing here is retyped, and the rule that the trace states what the record
+already says rather than a second judgment about it is held by the reading rather than by you. A
+node the record answers only by `how` — constrained but encoded nowhere — is not bound: there is no
+file to name, and a bind with none is refused; a record naming no such node binds nothing and that
+is not a failure. Where a proof exists, its criteria stay with the implementation record; the trace
+binds what the source encodes, not what the tests prove.
+
+The whole record is one act: a node or a file it names that does not resolve refuses all of it and
+writes nothing, because a trace holding half a delivery's bindings reads exactly like one holding
+all of them.
 
 This is the one place in the whole invocation that touches a file outside the delivery root, the
 work root and the target source root — `siegard-trace.json`, beside `siegard.json` at the

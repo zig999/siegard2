@@ -80,6 +80,8 @@ CLOSURE_FILE = "closure.md"
 KINDS = ("inventory", "epic", "task")
 HEADINGS = ["## What it is", "## Notes"]
 DECISION_OPENING = "Decision, beyond the covers — "
+BLOCKING_OPENING = "BLOCKING, from the specification —"
+UNDERDETERMINED_OPENING = "UNDERDETERMINED, from the specification —"
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
@@ -157,6 +159,39 @@ def notes_of(body: str) -> str:
         if line.rstrip() == "## Notes":
             return "\n".join(lines[at + 1:])
     return ""
+
+
+def notes_opening(notes: str, opening: str) -> list[str]:
+    """Every entry of one task's `## Notes` standing under one classified opening, verbatim.
+
+    The opening is the whole of what marks a note's class. The plan writes each one literally so
+    that something other than a reader can find it, and this is where those literals live — beside
+    the decision opening a validator already knows, rather than in the prose of whichever prompt
+    happens to mention them.
+
+    Nothing here refuses a task that carries one. A blocking note's stop belongs to whoever is
+    about to write source over it, and a second gate would only ever fire on a state that stop
+    already refuses; an underdetermined note travels to whoever writes the tests, and refuses
+    nothing anywhere. What reading them mechanically ends is the same for both: a set the skills
+    describe in words — which tasks would stop, which entries the test author is handed — was
+    assembled by eye from files a script could read.
+    """
+    return [line for line in (raw.strip() for raw in notes.splitlines())
+            if line.startswith(opening)]
+
+
+def blocking_notes_of(notes: str) -> list[str]:
+    """The standing `BLOCKING, from the specification —` entries: the ones only a person settles,
+    and the one class that stops a delivery before it writes."""
+    return notes_opening(notes, BLOCKING_OPENING)
+
+
+def underdetermined_notes_of(notes: str) -> list[str]:
+    """The standing `UNDERDETERMINED, from the specification —` entries: each names an
+    implementation that satisfies every criterion as written and that the specification refuses,
+    and excluding it is the test author's work — so the set is handed over whole, by a reading
+    rather than by eye."""
+    return notes_opening(notes, UNDERDETERMINED_OPENING)
 
 
 def named_in(line: str, spec_ids: set[str]) -> set[str]:

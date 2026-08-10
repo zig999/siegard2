@@ -445,6 +445,18 @@ def test_the_subcommand_prints_the_commands_and_the_packages():
         "the limit is stated where a reader meets it rather than left out"
 
 
+def test_each_printed_command_carries_its_own_bound():
+    """The timeout beside each command, because it was the one fact a caller composing a run still
+    had to open the registry for — the steps, the roles and the packages were all printed, and one
+    missing number sent every invocation back to the whole file."""
+    done = invoke("--standard", str(EXAMPLE))
+    assert done.returncode == 0, done.stderr
+    data = yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))
+    for command in data["commands"]:
+        assert f"{command['step']} = {command['command']} ({command['timeout_seconds']}s)" \
+            in done.stdout, f"the step {command['step']} prints without its bound"
+
+
 def test_every_sample_registry_declares_how_it_is_run():
     """Every sample is a registry for a stack that has to be installed and checked. One declaring
     no command would teach the silence that left twenty-four tool-decided rules unanswered."""

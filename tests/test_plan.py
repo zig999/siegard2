@@ -591,3 +591,25 @@ def test_a_closed_plan_is_not_reconciled_against_a_standard(work, root, sound_pl
     assert "is closed, and what a standard presupposes" in done.stderr
     assert run("--check", work).returncode in (0, 1), \
         "history still validates without the flags; only the reconciliation is refused"
+
+
+# ------------------------------------------------ the classified note openings, read by script
+
+
+def test_the_classified_openings_are_read_by_script_not_by_eye():
+    """The two note classes something downstream collects — the stop /implement-task quotes and
+    the entries the test author is handed — read by the literal opening the plan writes, and by
+    nothing else: a paraphrase is invisible on purpose, because the opening is the contract."""
+    notes = (
+        "BLOCKING, from the specification — nothing states what a partial refund answers.\n"
+        "  UNDERDETERMINED, from the specification — an empty bill satisfies every criterion.\n"
+        "Decision, beyond the covers — stand: the epic keeps its claim.\n"
+        "A blocking note mentioned in passing is not one.\n"
+        "\n"
+        "UNDERDETERMINED, from the specification — a duplicate submission is silently merged.\n")
+    assert plan.blocking_notes_of(notes) == [
+        "BLOCKING, from the specification — nothing states what a partial refund answers."]
+    assert plan.underdetermined_notes_of(notes) == [
+        "UNDERDETERMINED, from the specification — an empty bill satisfies every criterion.",
+        "UNDERDETERMINED, from the specification — a duplicate submission is silently merged."]
+    assert plan.blocking_notes_of("") == [] and plan.underdetermined_notes_of("") == []

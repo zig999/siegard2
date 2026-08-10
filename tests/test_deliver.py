@@ -764,25 +764,90 @@ def test_a_review_records_which_passes_ran_in_the_index(delivery, work, root, so
 # ----------------------------------------------------------------- what remains open
 
 
-def test_the_outstanding_report_derives_what_no_field_records(delivery, work, root,
+def test_the_outstanding_report_derives_what_no_field_records(delivery, work, root, target,
                                                               sound_delivery):
     validator, allowed = deliver.contract()
     names = deliver.pass_names()
     nodes, _ = deliver.collect(delivery, validator, allowed, names)
     plan_nodes, _ = deliver.load_plan(work, root)
-    report = deliver.outstanding_report(nodes, plan_nodes)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "task/checkout/bill-order: no record" in report
-    assert "task/checkout/record-order" not in report, \
+    assert "task/checkout/record-order:" not in report, \
         "a task with a record and a proof is not outstanding"
 
 
-def test_an_implementation_without_its_proof_is_reported(delivery, work, root, sound_delivery):
+def test_the_outstanding_report_names_the_set_a_caller_may_take_now(delivery, work, root, target,
+                                                                   sound_delivery):
+    """The subtraction the handoff used to describe in words. One task is delivered, the other
+    declares it builds on it, so nothing is deliverable — and saying so is the answer, not a gap."""
+    validator, allowed = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "deliverable now: task/checkout/bill-order" in report, report
+
+    (delivery / "implementation/checkout/record-order.md").unlink()
+    (delivery / "proof/checkout/record-order.md").unlink()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "deliverable now: task/checkout/record-order — no record, nothing they wait on" \
+        in report, report
+    assert "task/checkout/bill-order" not in report.splitlines()[-2], \
+        "a task waiting on one with no record is not deliverable now"
+
+
+def test_an_implementation_without_its_proof_is_reported(delivery, work, root, target,
+                                                         sound_delivery):
     (delivery / "proof/checkout/record-order.md").unlink()
     validator, allowed = deliver.contract()
     names = deliver.pass_names()
     nodes, _ = deliver.collect(delivery, validator, allowed, names)
     plan_nodes, _ = deliver.load_plan(work, root)
-    assert "no proof record holds it up" in deliver.outstanding_report(nodes, plan_nodes)
+    assert "no proof record holds it up" in deliver.outstanding_report(nodes, plan_nodes, target)
+
+
+def test_a_standing_blocking_note_is_named_where_a_caller_chooses(delivery, work, root, target,
+                                                                 sound_delivery, write_plan):
+    """The one refusal the plan's index cannot hold, said where a caller picks a task rather than
+    two commands later. It is named, never refused: this exits 0, and the stop stays the skill's."""
+    write_plan("task/checkout/bill-order", {
+        "title": "Bill order", "summary": "Raise the bill for a recorded order.",
+        "objective": "A recorded order produces exactly one invoice.",
+        "criteria": ["Recording an order twice produces one invoice."],
+        "implements": ["domain/sales/invoice"],
+    }, body="## What it is\nProse for a reader.\n\n## Notes\n"
+            "BLOCKING, from the specification — nothing states what a partial refund answers.\n")
+    validator, allowed = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "1 standing BLOCKING note(s), which only a person settles" in report, report
+    assert "nothing states what a partial refund answers" in report, \
+        "the entry is quoted, so a caller learns what it concedes without opening the file"
+    assert "deliverable now: none" in report, report
+
+
+def test_an_underdetermined_note_is_quoted_and_bars_nothing(delivery, work, root, target,
+                                                            sound_delivery, write_plan):
+    """The entries /implement-task hands to the test author, read by a script instead of collected
+    by eye — and they are not a stop: the task stays deliverable, because the note is the tests'
+    to exclude, not a person's to settle."""
+    write_plan("task/checkout/bill-order", {
+        "title": "Bill order", "summary": "Raise the bill for a recorded order.",
+        "objective": "A recorded order produces exactly one invoice.",
+        "criteria": ["Recording an order twice produces one invoice."],
+        "implements": ["domain/sales/invoice"],
+    }, body="## What it is\nProse for a reader.\n\n## Notes\n"
+            "UNDERDETERMINED, from the specification — a bill of zero lines satisfies every "
+            "criterion and the invoice definition refuses it.\n")
+    validator, allowed = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "1 UNDERDETERMINED note(s) the proof must exclude" in report, report
+    assert "a bill of zero lines satisfies every criterion" in report, report
+    assert "deliverable now: task/checkout/bill-order" in report, \
+        "an underdetermined note travels with the task and stops nothing"
 
 
 # --------------------------------------------------------------- a closed plan, and the CLI
@@ -1006,8 +1071,60 @@ def test_a_task_that_produces_what_the_record_wrote_holds(delivery, work, root, 
     assert problems_of(delivery, work, target, root) == []
 
 
+def test_the_substrate_barrier_is_named_because_no_edge_can_carry_it(delivery, work, root, target,
+                                                                    sound_delivery, write_plan):
+    """The one thing `waits on` cannot say. The task producing what every rule needs takes no
+    dependency edge — an edge from every other task to it would be a fact somebody kept true by
+    hand — so nothing in the graph shows that every other delivery stops before it writes."""
+    front = json_front(work, "task/checkout/record-order")
+    front["produces"] = ["package.json", "tsconfig.json"]
+    write_plan("task/checkout/record-order", front)
+    write_plan("task/checkout/tidy-logs", {
+        "title": "Tidy logs", "summary": "Scaffolding the specification does not govern.",
+        "objective": "The service logs through one configured logger.",
+        "criteria": ["Every module logs through the configured logger."],
+        "rationale": "The scope asked for it and no node holds it.",
+    })
+    (delivery / "implementation/checkout/record-order.md").unlink()
+    (delivery / "proof/checkout/record-order.md").unlink()
+    (target / "tsconfig.json").write_text("{}\n", encoding="utf-8")
+
+    validator, allowed = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "produces the substrate every other delivery waits on" in report, report
+    assert "  package.json: ABSENT" in report, report
+    assert "  tsconfig.json: stands" in report, \
+        "existence is the whole of the question, and the half that stands is said too"
+    assert "deliverable now: task/checkout/record-order —" in report, report
+    assert "the task(s) building what the tree does not hold" in report, report
+    assert "task/checkout/tidy-logs: no record" in report, \
+        "the task is still outstanding and the report still says so"
+    assert "deliverable now: task/checkout/record-order, task/checkout/tidy-logs" not in report, \
+        "a task that waits on nothing still stops on an absent substrate, and the set says so"
+
+
+def test_a_substrate_the_tree_already_holds_bars_nothing(delivery, work, root, target,
+                                                         sound_delivery, write_plan):
+    """`produces` is not a standing barrier: once the artifacts stand, the task is one task."""
+    front = json_front(work, "task/checkout/record-order")
+    front["produces"] = ["package.json"]
+    write_plan("task/checkout/record-order", front)
+    (delivery / "implementation/checkout/record-order.md").unlink()
+    (delivery / "proof/checkout/record-order.md").unlink()
+    (target / "package.json").write_text("{}\n", encoding="utf-8")
+
+    validator, allowed = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "produces the substrate" not in report, report
+    assert "no record, nothing they wait on" in report, report
+
+
 def test_the_outstanding_report_names_the_standard_this_root_remembers(delivery, work, root,
-                                                                       sound_delivery,
+                                                                       target, sound_delivery,
                                                                        write_delivery,
                                                                        write_standard):
     """A delivery written against no rules and one written against rules nobody handed over
@@ -1018,7 +1135,7 @@ def test_the_outstanding_report_names_the_standard_this_root_remembers(delivery,
     validator, allowed = deliver.contract()
     nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
-    report = deliver.outstanding_report(nodes, plan_nodes)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "standard.yaml: pinned by 1 record(s)" in report
     assert "an invocation naming no standard now writes source" in report
 

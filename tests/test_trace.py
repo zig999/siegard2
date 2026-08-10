@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 import trace
 
@@ -233,5 +234,146 @@ def test_check_over_a_specification_gone_unsound_names_that_instead(repo):
 
 def test_check_and_bind_are_mutually_exclusive(repo):
     done = run("--check", "--bind", repo / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "mutually exclusive" in done.stderr
+
+
+# ------------------------------------------------- every binding one record states, as one act
+
+
+SECOND = "domain/troubleshooting/evidence"
+OTHER_FILE = "src/orders/evidence.ts"
+
+
+def record_at(repo: Path, entries: list[dict], name: str = "record.md") -> Path:
+    """An implementation record shaped as one is: frontmatter, then the two headings. Only `nodes`
+    matters here — bin/deliver.py validated the rest before a bind is ever run."""
+    path = repo / "delivery" / "implementation" / "checkout"
+    path.mkdir(parents=True, exist_ok=True)
+    front = yaml.safe_dump({
+        "title": "Record a placed order",
+        "summary": "What this delivery wrote.",
+        "task": "sha256:" + "0" * 64,
+        "files": [{"path": FILE, "effect": "persists the order"}],
+        "criteria": [{"criterion": "It works.", "met": True, "how": "it does"}],
+        "nodes": entries,
+    }, sort_keys=False, allow_unicode=True)
+    written = path / name
+    written.write_text(f"---\n{front}---\n## What it is\nProse.\n\n## Notes\nNone.\n",
+                       encoding="utf-8")
+    return written
+
+
+def bind_record(repo: Path, record: Path, replace: bool = False) -> subprocess.CompletedProcess:
+    args = ["--bind-record", repo / "backend", repo / "specs", record]
+    if replace:
+        args.append("--replace")
+    return run(*args)
+
+
+def test_a_record_binds_every_node_it_encodes_in_one_write(repo):
+    (repo / "backend/src/orders/evidence.ts").write_text("export {}\n", encoding="utf-8")
+    record = record_at(repo, [
+        {"node": NODE, "encoded_at": [FILE], "how": "the case is what place() persists"},
+        {"node": SECOND, "encoded_at": [FILE, OTHER_FILE], "how": "evidence is carried on it"},
+    ])
+    done = bind_record(repo, record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [NODE, SECOND]
+    assert [f["path"] for f in declared["bindings"][1]["files"]] == \
+        ["backend/src/orders/evidence.ts", "backend/src/orders/place.ts"]
+    assert "2 binding(s) written" in done.stdout
+
+
+def test_a_node_the_record_answers_only_by_how_is_not_bound(repo):
+    """There is no file to name, and a bind with none is refused — so an entry carrying `how`
+    alone is passed over rather than turned into an empty binding."""
+    record = record_at(repo, [
+        {"node": NODE, "encoded_at": [FILE], "how": "encoded here"},
+        {"node": SECOND, "how": "the work honors it and encodes nothing of it"},
+    ])
+    done = bind_record(repo, record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [NODE]
+
+
+def test_a_record_encoding_nothing_binds_nothing_and_is_not_a_defect(repo):
+    done = bind_record(repo, record_at(repo, [{"node": NODE, "how": "constrained, encoded nowhere"}]))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing to bind" in done.stdout
+    assert not (repo / "siegard-trace.json").exists(), \
+        "a trace file created for nothing would say a delivery was linked"
+
+
+def test_a_record_naming_a_node_the_specification_does_not_hold_binds_none_of_it(repo):
+    record = record_at(repo, [
+        {"node": NODE, "encoded_at": [FILE], "how": "encoded here"},
+        {"node": "domain/troubleshooting/nowhere", "encoded_at": [FILE], "how": "encoded here"},
+    ])
+    done = bind_record(repo, record)
+    assert done.returncode == 1, done.stdout
+    assert "holds no node domain/troubleshooting/nowhere" in done.stdout
+    assert not (repo / "siegard-trace.json").exists(), \
+        "a record's bindings are one act; half of them written would read like all of them"
+
+
+def test_a_record_naming_a_file_the_tree_does_not_hold_binds_none_of_it(repo):
+    record = record_at(repo, [
+        {"node": NODE, "encoded_at": [FILE], "how": "encoded here"},
+        {"node": SECOND, "encoded_at": ["src/orders/gone.ts"], "how": "encoded here"},
+    ])
+    done = bind_record(repo, record)
+    assert done.returncode == 1, done.stdout
+    assert "gone.ts does not exist" in done.stdout
+    assert not (repo / "siegard-trace.json").exists()
+
+
+def test_a_record_bind_extends_what_an_earlier_bind_held(repo):
+    """The same merge the per-node form has, for the same reason: two tasks landing one node in two
+    files is not one of them undoing the other's work."""
+    bind(repo)
+    (repo / "backend/src/orders/other.ts").write_text("export {}\n", encoding="utf-8")
+    done = bind_record(repo, record_at(repo, [
+        {"node": NODE, "encoded_at": ["src/orders/other.ts"], "how": "and here too"}]))
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [f["path"] for f in declared["bindings"][0]["files"]] == \
+        ["backend/src/orders/other.ts", "backend/src/orders/place.ts"]
+
+    done = bind_record(repo, record_at(repo, [
+        {"node": NODE, "encoded_at": ["src/orders/other.ts"], "how": "only here now"}]),
+        replace=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [f["path"] for f in declared["bindings"][0]["files"]] == \
+        ["backend/src/orders/other.ts"]
+
+
+def test_a_record_that_cannot_be_read_is_a_refusal_to_run(repo):
+    done = bind_record(repo, repo / "delivery/nowhere.md")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "does not exist" in done.stderr
+
+    stray = repo / "delivery" / "stray.md"
+    stray.parent.mkdir(parents=True, exist_ok=True)
+    stray.write_text("no fence here\n", encoding="utf-8")
+    done = bind_record(repo, stray)
+    assert done.returncode == trace.CANNOT_RUN
+    assert "carries no frontmatter fence" in done.stderr
+
+
+def test_a_record_bind_over_an_unsound_specification_writes_nothing(repo):
+    (repo / "specs" / f"{NODE}.md").unlink()
+    done = bind_record(repo, record_at(repo, [
+        {"node": SECOND, "encoded_at": [FILE], "how": "encoded here"}]))
+    assert done.returncode == 1, done.stdout
+    assert "is not sound; nothing was bound." in done.stdout
+    assert not (repo / "siegard-trace.json").exists()
+
+
+def test_bind_and_bind_record_are_mutually_exclusive(repo):
+    done = run("--bind", "--bind-record", repo / "backend")
     assert done.returncode == trace.CANNOT_RUN
     assert "mutually exclusive" in done.stderr

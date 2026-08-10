@@ -199,6 +199,15 @@ validator refuses — and the plan-node contract's path. The binder rereads the 
 fresh and returns the task's `implements`; a divergence between the task and the specification
 — including a fact the specification does not state at all — comes back as a classified note.
 
+**Spawn them together, not one after another.** No binder reads another's return, none decides
+what the next one is given, and each arrives with no memory of how the tasks were cut — that
+isolation is the point of the whole arrangement, and it is exactly what makes the set independent.
+This is the same independence `/review-change` states of its four passes, and it is the most
+expensive judgment in this skill: a plan of ten tasks spawns ten of these, and running them in
+sequence spends ten times the waiting for nothing. What they are not independent of is the epic's
+claim: where a note below sends a skeleton back to be re-cut, or grows the claim it was judged
+against, that skeleton runs through this step again.
+
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
 returned it — bare identities, no pin. A binder's notes are appended to the task body's
 `## Notes`, one sentence per line — the diff is the review, and a divergence only the
@@ -307,11 +316,11 @@ Report, in this order:
   task, and choosing it is choosing what gets built. What the handoff offers in its place is
   where the deliverable set is read from, as a command rather than as a list: `deliver.py
   --outstanding <delivery-root> <work-root> <target-source-root> <specification-root>`, every
-  root already resolved above, names per task what has no record and what it waits on; without
-  running it, every task whose `## Notes` carries no standing `BLOCKING, from the
-  specification —` line is deliverable. A set restated here instead is a set that was true when
-  it was printed. The handoff offers the next step and never takes it: filling the one open
-  slot and invoking are the human's.
+  root already resolved above, names per task what has no record and everything it waits on —
+  a dependency with no record, an artifact a task produces and the tree does not hold, a standing
+  `BLOCKING, from the specification —` note — and then the set itself. A set restated here
+  instead is a set that was true when it was printed. The handoff offers the next step and never
+  takes it: filling the one open slot and invoking are the human's.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 

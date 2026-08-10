@@ -27,8 +27,13 @@ one task, and that is what it is held to.
 **There is no status here.** What is delivered is what has a record, and the record's presence
 in git is the whole of that state — this script stores nothing about progress and no node
 carries a field for it. `--outstanding` answers the question a status field would have answered,
-from the tasks that have no record and the dependencies they declare, so the answer is derived
-from the files every time and can never be stale or wrong.
+from the tasks that have no record and the three things a delivery stops on — the dependencies
+they declare, the substrate a task of this plan produces and the tree does not hold, and a
+standing `BLOCKING, from the specification —` note only a person settles — so the answer is
+derived from the files every time and can never be stale or wrong. It names the deliverable set
+rather than leaving it to be subtracted by eye, and it refuses nothing: the stop over a blocking
+note stays with whoever is about to write source, which is the only place it can quote the entry
+and hand over both ways out of it.
 
 **A project's own standard is the project's, and it stays in the project's own tree.** A record
 names it by its own path relative to the target source root — exactly as `siegard.json` names it —
@@ -55,8 +60,8 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         validate and compare; write nothing
         deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>]
                                                         validate, then print every task with no
-                                                        record and what it waits on; write
-                                                        nothing
+                                                        record, what each waits on, and the set
+                                                        deliverable now; write nothing
         deliver.py --node <file> <delivery-root> <work-root> [<specification-root>]
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
@@ -1049,17 +1054,61 @@ def standards_held(nodes: dict[str, dict]) -> list[str]:
             for at, count in sorted(pinned.items())]
 
 
-def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict]) -> str:
+def substrate_absences(plan_nodes: dict[str, dict], delivered: set[str],
+                       target: Path) -> dict[str, tuple[list[str], list[str]]]:
+    """Every outstanding task that builds the substrate, with what it declared and what of it the
+    tree does not hold yet.
+
+    It is here because this barrier is real and invisible. The task that produces what every rule
+    needs takes no dependency edge and never will: an edge from every other task to it would be a
+    fact somebody had to keep true by hand, so the plan states the artifacts instead and each
+    delivery refuses on their absence. The consequence is that `waits on` — the only thing this
+    report used to name — is silent about the one task whose absence stops all the others, and a
+    caller reading it picks a task that will stop before it writes.
+
+    Existence is the whole of the question, exactly as it is for what a registry presupposes:
+    whether a manifest declares the right script is decided by running it, and a framework that
+    read one would be reading a stack it ships no knowledge of."""
+    absences: dict[str, tuple[list[str], list[str]]] = {}
+    for tid in sorted(plan_nodes):
+        node = plan_nodes[tid]
+        if node["kind"] != "task" or tid in delivered:
+            continue
+        produces = [p for p in listed(node["front"], "produces") if isinstance(p, str)]
+        absent = [p for p in produces if not (target / p).exists()]
+        if absent:
+            absences[tid] = (produces, absent)
+    return absences
+
+
+def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
+                       target: Path) -> str:
     """What the plan still holds and the delivery does not — derived from the records every
-    time, which is why no field records it. A task waits on the dependencies it declares; that
-    is a fact of the plan, read here rather than tracked."""
+    time, which is why no field records it.
+
+    It answers one question, and it answers it in the three terms a delivery actually stops on. A
+    task waits on the dependencies it declares: a fact of the plan, read here rather than tracked.
+    It waits on the substrate, where a task of this plan produces what the tree does not hold. And
+    it waits on a person, where its `## Notes` still carries a standing `BLOCKING, from the
+    specification —` entry. The first was the only one this report named, and the other two were
+    left to whoever read the files — which is how a caller chose a task that stopped two commands
+    later, and how the deliverable set the handoff describes in words stayed something nobody
+    computed. Beside those it quotes the underdetermined entries, which stop nothing: they are
+    what a task's tests must exclude, `/implement-task` hands them to the test author quoted
+    whole, and a set a script read is a set no eye had to collect.
+
+    None of the three is a refusal here. This writes nothing and exits 0 over every state it can
+    describe; the stop over a blocking note stays the skill's, where it can quote the entry and
+    hand over both doors."""
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
     proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"}
-    lines = []
-    for tid in sorted(plan_nodes):
-        if plan_nodes[tid]["kind"] != "task":
-            continue
+    tasks = [tid for tid in sorted(plan_nodes) if plan_nodes[tid]["kind"] == "task"]
+    absences = substrate_absences(plan_nodes, delivered, target)
+
+    lines: list[str] = []
+    ready: list[str] = []
+    for tid in tasks:
         front = plan_nodes[tid]["front"]
         if tid in delivered:
             if tid not in proven:
@@ -1067,13 +1116,53 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict]) -> s
             continue
         waits = [t for t in listed(front, "depends_on")
                  if isinstance(t, str) and t not in delivered]
-        said = [f"no record"]
+        notes = plan_nodes[tid].get("notes") or ""
+        blocking = plan.blocking_notes_of(notes)
+        # Underdetermined entries bar nothing — they travel with the task to whoever writes the
+        # tests — and they are quoted here so that set reaches /implement-task from a reading
+        # rather than assembled by eye out of the task file.
+        underdetermined = plan.underdetermined_notes_of(notes)
+        said = ["no record"]
         if waits:
             said.append(f"waits on {', '.join(sorted(waits))}")
+        if tid in absences:
+            said.append("produces the substrate every other delivery waits on")
+        if blocking:
+            said.append(f"{len(blocking)} standing BLOCKING note(s), which only a person settles")
+        if underdetermined:
+            said.append(f"{len(underdetermined)} UNDERDETERMINED note(s) the proof must exclude")
         lines.append(f"{tid}: {'; '.join(said)}")
+        if tid in absences:
+            produces, absent = absences[tid]
+            lines += [f"  {path}: {'ABSENT' if path in absent else 'stands'}"
+                      for path in produces]
+        lines += [f"  {entry}" for entry in blocking + underdetermined]
+        if not waits and not blocking:
+            ready.append(tid)
+
+    if any(tid not in delivered for tid in tasks):
+        if absences:
+            ready = [tid for tid in ready if tid in absences]
+        lines.append(deliverable_line(ready, bool(absences)))
     if not lines:
         lines = ["every task has a record, and every record its proof"]
     return "\n".join(lines + standards_held(nodes))
+
+
+def deliverable_line(ready: list[str], barred: bool) -> str:
+    """The set a caller may deliver now, stated once from the same pass that printed the reasons —
+    so it can disagree with none of them. It is not a schedule and it is not an order: the plan
+    refuses to hold either, and any of these may be taken next."""
+    if not ready:
+        return ("deliverable now: none — every task without a record waits on something named "
+                "above")
+    named = ", ".join(ready)
+    if barred:
+        return (f"deliverable now: {named} — the task(s) building what the tree does not hold. "
+                f"Every other delivery stops before it writes while an artifact above is ABSENT, "
+                f"so this is the whole of the set until one of these holds a record")
+    return (f"deliverable now: {named} — no record, nothing they wait on, no standing BLOCKING "
+            f"note. Which one is the caller's to choose; nothing here orders them")
 
 
 def substrate_report(data: dict, tree: Path) -> tuple[list[str], int]:
@@ -1141,8 +1230,12 @@ def check_standard(named: str, against: str | None = None) -> int:
     commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
     if commands:
         roles = {c.get("role"): c.get("step") for c in commands if c.get("role")}
+        # The timeout is printed beside each command because it is the one fact a caller composing
+        # a run still had to open the registry for: the steps, the roles and the dependencies were
+        # all here, and one missing number sent every invocation back to the whole file.
         print(f"  it declares {len(commands)} command(s): "
-              + ", ".join(f"{c.get('step')} = {c.get('command')}" for c in commands))
+              + ", ".join(f"{c.get('step')} = {c.get('command')} "
+                          f"({c.get('timeout_seconds')}s)" for c in commands))
         print(f"    installs with {roles.get('install') or 'nothing'}, "
               f"proves with {roles.get('suite') or 'nothing'}, "
               f"and the rest run as checks on both sides of the tests")
@@ -1312,7 +1405,7 @@ def main() -> int:
         return 1
 
     if report:
-        print(outstanding_report(nodes, plan_nodes))
+        print(outstanding_report(nodes, plan_nodes, target))
         return 0
 
     delivery = derive(nodes, names)
