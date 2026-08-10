@@ -204,7 +204,7 @@ rules:
       - { under: src, suffix: .ts, nested: true }
 
   - id: COR-02
-    statement: A failure raises a typed error class carrying a name, a message, its status and a
+    statement: A failure raises a typed error class carrying a name, a message and a
       context field, never a generic error with a sentence in it.
     because: A generic error cannot be mapped to a response or handled by a caller, so every layer
       above has to match on its message.
