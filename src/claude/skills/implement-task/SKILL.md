@@ -200,6 +200,21 @@ records are rewritten whole rather than amended — a record amended across two 
 describes neither, and the proof's pin on the implementation refuses the pair if you rewrite one
 and leave the other. `git diff` over the two is then the history of the delivery.
 
+One narrower re-delivery exists, and only the human names it — stated in the invocation, never
+inferred from the tree: **the implementation stands, and only the proof must answer a tree that
+moved.** The plain case is a sibling task's legitimate delivery falsifying an assertion that
+claimed more than this task's criteria establish — totality over ground the two tasks share.
+Steps 3 and 4 do not run: the implementation record is not touched, and the proof is rewritten
+whole — never amended — by a fresh test author reading the tree as it stands now, with the suite
+running and captured as ever. The pin the proof restamps is valid precisely because the
+implementation record did not move; what the validator refuses is the opposite direction, an
+implementation rewritten under a proof left behind. Two things hold the mode honest. Before
+anything is written, run `trace.py --check` over the target: the implementation's files are bound
+with digests, and one that moved since the bind is exactly what makes "the implementation stands"
+false — that drift is a stop, and the answer is a full re-delivery. And the reason the proof had
+to move goes in the record's `## Notes`, naming the task whose delivery falsified it, so the diff
+carries what only the conversation would otherwise hold.
+
 Where a standard was named, take it in before anything is written. Which command depends on one
 field of the task file — already open from the note check above — read as a yes or a no:
 **does the task declare `produces`?**
@@ -403,21 +418,32 @@ about where a test file sits or how it is named reaches files that did not exist
 ran, so a build-only pass would leave every rule about tests decided by nothing. Each step that
 already passed passes again in seconds; the runner stops at the first that does not.
 
-**A red suite is a stop, and it has exactly two ways out.** Nothing further is written — the
+**A red suite is a stop, and it has exactly three ways out.** Nothing further is written — the
 implementation record stands, because its own run passed, and no proof record is composed, so
 `deliver.py --outstanding` reports the task as implemented with no proof holding it up, which is
 true and is the state a person should meet. Report the run by path and the tests that failed. Then
 either the source is wrong, and the fix goes back to the `task-implementer` and the suite runs
 again under `<epic>-<slug>-suite-2`, with the first run keeping its name; or the two producers
 disagree and that disagreement is what the red is — the proof asserts what the criterion requires
-and the implementation does not satisfy it — and only a person settles that.
+and the implementation does not satisfy it — and only a person settles that; or the failing test
+belongs to an earlier task, and what broke it is not a regression but this delivery's own
+legitimate files — the old assertion claimed more than its task's criteria establish, totality
+over ground the two tasks share, and this delivery falsified the excess. That test is not edited
+from here, whatever the temptation: the way out is the proof-only re-delivery the re-delivery
+paragraph names, over the task that owns the test, and it is the human's to invoke. The report
+hands that invocation ready to paste — the owning task by identifier, the assertion the run
+named, the file this delivery added — and says plainly that it runs only after the human commits
+this delivery's pending state, because that invocation's own clean-tree stop refuses a tree still
+carrying it.
 
-**The third way is forbidden and it is the one that is easy.** A test is never weakened, deleted,
+**A fourth way is forbidden and it is the one that is easy.** A test is never weakened, deleted,
 narrowed or rewritten to make the suite green. This invocation holds two producers precisely so
 that one cannot overrule the other, and a test edited until it passes is exactly that overruling,
-performed where nobody would see it. What makes the rule enforceable rather than pious is that the
-runs are on disk: four attempts leave four logs, and a test that changed between them is in the
-diff beside them.
+performed where nobody would see it. The third way above exists precisely so this one never looks
+necessary: an over-broad assertion is re-judged whole, by the producer class that owns proofs, in
+its own invocation — never trimmed here to unblock this one. What makes the rule enforceable
+rather than pious is that the runs are on disk: four attempts leave four logs, and a test that
+changed between them is in the diff beside them.
 
 Where the registry declares no command at all, this step does not run, the tests stand unexecuted,
 and the report says so — the narrow answer rather than a clean one. A task that produced the

@@ -602,6 +602,28 @@ def test_a_proof_left_behind_by_a_rewritten_implementation(delivery, work, root,
     said(problems_of(delivery, work, target, root), "the proof has not")
 
 
+def test_a_proof_rewritten_alone_over_a_standing_implementation_validates(delivery, work, root,
+                                                                          target, sound_delivery,
+                                                                          write_delivery):
+    """The pin's asymmetry is one-way by design, and proof-only re-delivery stands on it: a proof
+    rewritten whole while the implementation record did not move restamps the same pin and
+    validates — the sanctioned route when a sibling task's legitimate delivery falsifies an
+    assertion that claimed more than this task's criteria establish."""
+    import hashlib
+    written = delivery / "implementation/checkout/record-order.md"
+    write_delivery("proof/checkout/record-order", {
+        "title": "Proof for recording a placed order, re-proven",
+        "summary": "The proof rewritten whole against the tree as it now stands.",
+        "implementation": "sha256:" + hashlib.sha256(written.read_bytes()).hexdigest(),
+        "tests": [{"file": "tests/place.spec.ts",
+                   "name": "returns the order_number for a valid submission",
+                   "proves": "Submitting a valid order returns its order_number.",
+                   "fails_when": "the adapter this task ships stops implementing the store "
+                                 "interface — scoped by interface, no longer by directory count"}],
+    })
+    assert problems_of(delivery, work, target, root) == []
+
+
 
 
 # ------------------------------------------------------- the project's own standard

@@ -42,6 +42,11 @@ stop. You need:
   load-bearing.
 - **A criterion naming a refusal is not covered by a test of the path that succeeds**, however
   thorough. The criterion stated both, and they are different behaviors.
+- **A test asserting more than its criterion establishes is a finding, not extra coverage.** The
+  plain shape is totality claimed over shared ground — "exactly one file in this directory" where
+  the criterion only names an interface — which holds today and breaks the day a sibling task
+  legitimately delivers beside it. Name the test and the excess in `why`: the criterion may still
+  be covered, and the over-assertion is a fact a reader routes, not one you settle.
 - **A criterion you cannot read well enough to look for is a fact about the criterion, not about
   the tests.** Record it as such, say what is ambiguous, and do not settle the ambiguity: an
   audit that resolved it silently reports coverage of a criterion nobody wrote.
