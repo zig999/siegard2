@@ -297,6 +297,11 @@ line; a section with nothing to say carries the literal line `None.` What the pa
 and what this framework does not review at all, belongs in `## Notes` — the diff is the review,
 and a limit only the conversation held the next reader never sees.
 
+A finding's own prose meets a colon often enough that a plain scalar breaks the moment one
+appears in it. Emit the frontmatter with `python3 -c` calling `yaml.safe_dump` rather than typing
+it by hand, so a sentence's own colon is never read as a second mapping key; PyYAML is already a
+declared dependency of this framework's own tooling.
+
 Check the file on its own as soon as it is composed:
 
 ```

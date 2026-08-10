@@ -41,8 +41,11 @@ def repo(tmp_path: Path) -> Path:
 
 
 def bind(repo: Path, node: str = NODE, file: str = FILE,
-         spec_dir: str = "specs") -> subprocess.CompletedProcess:
-    return run("--bind", repo / "backend", repo / spec_dir, node, file)
+         spec_dir: str = "specs", replace: bool = False) -> subprocess.CompletedProcess:
+    args = ["--bind", repo / "backend", repo / spec_dir, node, file]
+    if replace:
+        args.append("--replace")
+    return run(*args)
 
 
 # --------------------------------------------------------------------- no file yet
@@ -70,15 +73,48 @@ def test_binding_creates_the_file_beside_where_siegard_json_would_sit(repo):
                                "digest": entry["files"][0]["digest"]}]
 
 
-def test_a_rebind_replaces_the_files_list(repo):
+def test_a_rebind_extends_the_files_list_by_default(repo):
+    """Two tasks landing the same node in two different files — the common case a plan produces
+    when it shares a directory across tasks — must not have the second erase the first."""
     bind(repo)
     (repo / "backend/src/orders/other.ts").write_text("export {}\n", encoding="utf-8")
     done = bind(repo, file="src/orders/other.ts")
     assert done.returncode == 0, done.stdout + done.stderr
     declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
     assert len(declared["bindings"]) == 1
+    paths = sorted(f["path"] for f in declared["bindings"][0]["files"])
+    assert paths == sorted(["backend/src/orders/place.ts", "backend/src/orders/other.ts"])
+
+
+def test_a_rebind_of_the_same_file_updates_its_digest_in_place(repo):
+    bind(repo)
+    before = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    original_digest = before["bindings"][0]["files"][0]["digest"]
+    path = repo / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    done = bind(repo)
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    files = declared["bindings"][0]["files"]
+    assert len(files) == 1
+    assert files[0]["path"] == "backend/src/orders/place.ts"
+    assert files[0]["digest"] != original_digest
+
+
+def test_replace_drops_a_file_the_call_does_not_name(repo):
+    bind(repo)
+    (repo / "backend/src/orders/other.ts").write_text("export {}\n", encoding="utf-8")
+    done = bind(repo, file="src/orders/other.ts", replace=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
     paths = [f["path"] for f in declared["bindings"][0]["files"]]
     assert paths == ["backend/src/orders/other.ts"]
+
+
+def test_replace_without_bind_is_refused(repo):
+    done = run("--replace", repo / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "--replace only applies to --bind" in done.stderr
 
 
 def test_binding_a_second_node_adds_an_entry_sorted_by_identity(repo):

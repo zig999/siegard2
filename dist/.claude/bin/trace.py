@@ -14,13 +14,20 @@ Three things this script does, and nobody else does any of them:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root>                                the same, then report drift
-    trace.py --bind <target-root> <spec-root> <node> <file> ...    write or replace one binding
+    trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
+    trace.py --bind ... --replace                                 write it in full instead
 
 `--bind` validates <spec-root> the way spec.py does, refuses a node it does not hold, reads that
-node's digest and each file's digest fresh, and writes the entry — replacing whatever that node
-held before, in full: a file left out of the list is a file this bind no longer claims. The first
-bind for a target root creates the trace file; every later one is held to the same specification,
-named once, and a --bind naming a different one is refused rather than silently repointed.
+node's digest and each file's digest fresh, and writes the entry. By default it extends whatever
+that node already held: a file this call does not name but an earlier bind of the same node did
+stays bound, at the digest that earlier bind recorded, because two tasks landing the same rule in
+two different files is not one of them undoing the other's work. A file this call does name is
+written at the digest read just now, whether or not an earlier bind already held that path.
+`--replace` writes the entry in full instead, exactly as every bind used to: a file left off the
+list is a file this bind no longer claims — for the case where a fact genuinely moved out of a
+file rather than into an additional one. The first bind for a target root creates the trace file;
+every later one is held to the same specification, named once, and a --bind naming a different one
+is refused rather than silently repointed.
 
 Every path this file holds — `specification`, and every binding's `files[].path` — is relative to
 this file's own directory, exactly the way `siegard.json`'s `standard` is. `<target-root>` and
@@ -33,7 +40,7 @@ under bin/).
 
 Usage:  trace.py <target-root>
         trace.py --check <target-root>
-        trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...]
+        trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
 Exit:   0 sound / drift-free / bound
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file
@@ -128,7 +135,7 @@ def drift_of(declared: dict, home: Path) -> list[str]:
     return problems
 
 
-def bind(target: Path, spec_root: Path, node_id: str, files: list[str]) -> int:
+def bind(target: Path, spec_root: Path, node_id: str, files: list[str], replace: bool = False) -> int:
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -168,8 +175,18 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str]) -> int:
               f"specification")
         return 1
 
+    existing = next((entry for entry in declared["bindings"] if entry.get("node") == node_id), None)
+    if replace or existing is None:
+        merged_files = traced_files
+    else:
+        given = {file_entry["path"] for file_entry in traced_files}
+        carried = [file_entry for file_entry in existing.get("files") or []
+                   if file_entry["path"] not in given]
+        merged_files = carried + traced_files
+    merged_files = sorted(merged_files, key=lambda file_entry: file_entry["path"])
+
     bindings = [entry for entry in declared["bindings"] if entry.get("node") != node_id]
-    bindings.append({"node": node_id, "digest": nodes[node_id]["digest"], "files": traced_files})
+    bindings.append({"node": node_id, "digest": nodes[node_id]["digest"], "files": merged_files})
     declared["bindings"] = sorted(bindings, key=lambda entry: entry["node"])
 
     problems = problems_of(declared)
@@ -180,7 +197,7 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str]) -> int:
 
     path = trace_path(target)
     path.write_text(json.dumps(declared, indent=2) + "\n", encoding="utf-8")
-    print(f"bound {node_id} to {len(traced_files)} file(s) at {path}")
+    print(f"bound {node_id} to {len(merged_files)} file(s) at {path}")
     return 0
 
 
@@ -188,9 +205,13 @@ def main() -> int:
     args = sys.argv[1:]
     check = "--check" in args
     do_bind = "--bind" in args
-    args = [a for a in args if a not in ("--check", "--bind")]
+    replace = "--replace" in args
+    args = [a for a in args if a not in ("--check", "--bind", "--replace")]
     if check and do_bind:
         print("cannot run: --check and --bind are mutually exclusive", file=sys.stderr)
+        return CANNOT_RUN
+    if replace and not do_bind:
+        print("cannot run: --replace only applies to --bind", file=sys.stderr)
         return CANNOT_RUN
     if not TRACE_CONTRACT.is_file():
         print(f"cannot run: {TRACE_CONTRACT} is missing; nothing can be validated without it",
@@ -200,10 +221,10 @@ def main() -> int:
     if do_bind:
         if len(args) < 4:
             print("cannot run: expected --bind <target-root> <spec-root> <node> "
-                  "<file> [<file> ...]", file=sys.stderr)
+                  "<file> [<file> ...] [--replace]", file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, node_id, *files = args
-        return bind(Path(target), Path(spec_root), node_id, files)
+        return bind(Path(target), Path(spec_root), node_id, files, replace)
 
     if len(args) != 1 or args[0].startswith("--"):
         print("cannot run: expected [--check] <target-root>", file=sys.stderr)
