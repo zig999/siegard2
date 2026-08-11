@@ -377,3 +377,111 @@ def test_bind_and_bind_record_are_mutually_exclusive(repo):
     done = run("--bind", "--bind-record", repo / "backend")
     assert done.returncode == trace.CANNOT_RUN
     assert "mutually exclusive" in done.stderr
+
+
+# -------------------------------------------------------------------------- --prune
+
+ORPHAN = "constraints/asynchronous-events"
+
+
+def orphan(repo: Path) -> None:
+    """Bind a node, then take it out of the specification. A constraint is not held to
+    reachability, so its removal leaves the base sound — the one way a node can vanish without
+    everything around it going unsound, and therefore the only way to reach this class at all."""
+    bind(repo, node=ORPHAN, file=FILE)
+    (repo / f"specs/{ORPHAN}.md").unlink()
+
+
+def test_prune_drops_a_binding_to_a_node_the_specification_no_longer_holds(repo):
+    """The class that had no exit. `--bind` refuses a node the specification does not hold and
+    this script is the trace's one writer, so before `--prune` the entry could not be repaired by
+    anything and its finding repeated on every run forever."""
+    orphan(repo)
+    done = run("--prune", repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"dropped {ORPHAN}" in done.stdout
+    assert "1 binding(s) pruned" in done.stdout
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert declared["bindings"] == []
+    assert run("--check", repo / "backend").returncode == 0
+
+
+def test_prune_leaves_a_file_that_moved_exactly_where_it_was(repo):
+    """The refusal is the point. A file that drifted is drift with an owner and a remedy — the
+    node is still in the base, still answered by code somewhere — and dropping the binding would
+    destroy the one record of which node that code answers to while reporting the tree clean."""
+    bind(repo)
+    path = repo / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    done = run("--prune", repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing to prune" in done.stdout
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [NODE]
+    assert run("--check", repo / "backend").returncode == 1
+
+
+def test_prune_clears_the_stale_class_and_keeps_the_drift_underneath_it(repo):
+    """What the pile costs: the real finding is still there afterwards, and now it is readable."""
+    bind(repo)
+    orphan(repo)
+    path = repo / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    done = run("--prune", repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [NODE]
+
+    after = run("--check", repo / "backend")
+    assert after.returncode == 1
+    assert "the file changed without a rebind" in after.stdout
+    assert "the binding is stale" not in after.stdout
+
+
+def test_prune_over_a_specification_gone_unsound_deletes_nothing(repo):
+    """Every node of a base nobody could read looks stale. Pruning on the strength of not having
+    been able to see them would delete bindings for nodes that exist."""
+    bind(repo)
+    (repo / "specs" / f"{NODE}.md").unlink()
+    done = run("--prune", repo / "backend")
+    assert done.returncode == 1, done.stdout
+    assert "nothing was pruned" in done.stdout
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [NODE]
+
+
+def test_prune_with_nothing_stale_writes_nothing_and_says_so(repo):
+    bind(repo)
+    done = run("--prune", repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing to prune" in done.stdout
+
+
+def test_prune_before_any_bind_is_not_a_defect(repo):
+    done = run("--prune", repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing to prune" in done.stdout
+
+
+def test_check_tallies_drift_by_class(repo):
+    """The tally is what a reader acts on, and the orphaned count is what says how much of the
+    report no rebind will ever shorten."""
+    bind(repo)
+    orphan(repo)
+    path = repo / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    done = run("--check", repo / "backend")
+    assert done.returncode == 1
+    assert "1 orphaned:" in done.stdout
+    assert "0 moved:" in done.stdout
+    assert "2 code:" in done.stdout, done.stdout
+    assert "`--prune` is the only thing that clears them" in done.stdout
+
+
+def test_prune_and_check_are_mutually_exclusive(repo):
+    done = run("--prune", "--check", repo / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "mutually exclusive" in done.stderr

@@ -10,13 +10,28 @@ digests from what is on disk now and compares — a node whose digest no longer 
 the specification since the bind; a file whose digest no longer matches moved in the code without
 a rebind. Either is drift, and this script is what says so without any plan's history to consult.
 
-Four things this script does, and nobody else does any of them:
+Five things this script does, and nobody else does any of them:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root>                                the same, then report drift
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind ... --replace                                 write it in full instead
+    trace.py --prune <target-root>                                drop the bindings nothing can fix
+
+Drift is reported in three classes, because a caller can act on each differently and could act on
+none of them while all three arrived as one list. A node the specification no longer holds is
+`orphaned`: the fact it named is gone, and no operation here can repair the entry — `--bind`
+refuses a node the specification does not hold, and this script is the trace's one writer, so the
+finding repeats on every run forever. A node whose text moved is `moved`, and a file that changed
+or vanished is `code`; both are true statements about real drift, and the answer to each is a
+rebind by whoever owns the change. Only the first is `--prune`'s, and `--prune` touches only it:
+dropping a binding whose file moved would discard the one record of which node that code answers
+to, which is the whole of what this file keeps.
+
+Left unpruned, the orphaned class is what makes the other two unreadable. A tree carrying eighty
+stale entries reports eighty-three findings the day three files drift, and nobody reads the three:
+the report a caller stops reading is a report that says nothing, however true every line of it is.
 
 `--bind-record` is the form a delivery uses, and it exists because the older one made its caller
 retype what a record already says. An implementation record names every node the source encodes and
@@ -55,7 +70,8 @@ Usage:  trace.py <target-root>
         trace.py --check <target-root>
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
-Exit:   0 sound / drift-free / bound
+        trace.py --prune <target-root>
+Exit:   0 sound / drift-free / bound / pruned
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file
         2 cannot run
@@ -84,6 +100,14 @@ import spec
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TRACE_CONTRACT = PLUGIN_ROOT / "schemas" / "trace.json"
 TRACE_FILE = "siegard-trace.json"
+
+ORPHANED, MOVED, CODE = "orphaned", "moved", "code"
+CLASSES = {
+    ORPHANED: "bound to a node the specification no longer holds — no bind can repair these, "
+              "and `--prune` is the only thing that clears them",
+    MOVED: "bound to a node whose text moved since the bind — rebind whoever owns the change",
+    CODE: "bound to a file that changed or is gone — rebind whoever owns the change",
+}
 
 
 def home_of(target: Path) -> Path:
@@ -118,37 +142,56 @@ def problems_of(declared: dict) -> list[str]:
     return problems
 
 
-def drift_of(declared: dict, home: Path) -> list[str]:
-    """Every binding whose node or file no longer computes to the digest recorded for it."""
+def drift_of(declared: dict, home: Path) -> tuple[list[tuple[str, str, str]], list[str]]:
+    """Every binding that no longer computes to what was recorded for it, each under the class its
+    remedy belongs to — and, separately, whatever stopped the reading before any of that.
+
+    The classes are not three flavours of one fact, and a caller who cannot tell them apart cannot
+    act on any of them. `orphaned` is the one nothing here could fix until `--prune` existed: the
+    node left the specification, `--bind` refuses a node the specification does not hold, and this
+    script is the trace's one writer — so the entry stays, its finding repeats on every run, and a
+    file drift that arrived today reads as one more line in a list nobody finishes. `moved` and
+    `code` are the drift this file exists to report, and neither is a deletion's business: a rebind
+    by whoever owns the change is the answer, and dropping the entry instead would throw away the
+    one record of which node that code answers to.
+
+    Refusals come back apart from findings because they are not findings. A specification that does
+    not resolve or does not hold together says nothing about any binding — reporting `orphaned` for
+    every node of a base nobody could read would be this script inventing drift out of its own
+    blindness."""
     spec_root = home / declared["specification"]
     if not spec_root.is_dir():
-        return [f"specification: {spec_root} is not a directory; "
-                f"{declared['specification']} no longer resolves"]
+        return [], [f"specification: {spec_root} is not a directory; "
+                    f"{declared['specification']} no longer resolves"]
     nodes, node_problems = spec.collect(spec_root, spec.contracts())
     node_problems += spec.cross_problems(nodes, spec_root)
     if node_problems:
-        return [f"specification: {spec_root} is not sound; run spec.py against it directly"]
+        return [], [f"specification: {spec_root} is not sound; run spec.py against it directly"]
 
-    problems = []
+    findings: list[tuple[str, str, str]] = []
     for entry in declared.get("bindings") or []:
         node_id, digest = entry["node"], entry["digest"]
         current = nodes.get(node_id)
         if current is None:
-            problems.append(f"{node_id}: no longer in the specification; the binding is stale")
+            findings.append((ORPHANED, node_id,
+                             f"{node_id}: no longer in the specification; the binding is stale"))
         elif current["digest"] != digest:
-            problems.append(f"{node_id}: bound at {digest}, now {current['digest']}; "
-                            f"the specification moved since this bind")
+            findings.append((MOVED, node_id,
+                             f"{node_id}: bound at {digest}, now {current['digest']}; "
+                             f"the specification moved since this bind"))
         for file_entry in entry.get("files") or []:
             path = home / file_entry["path"]
             if not path.is_file():
-                problems.append(f"{node_id}: {file_entry['path']} no longer exists")
+                findings.append((CODE, node_id,
+                                 f"{node_id}: {file_entry['path']} no longer exists"))
                 continue
             now = spec.digest_of(path)
             if now != file_entry["digest"]:
-                problems.append(f"{node_id}: {file_entry['path']} bound at "
-                                f"{file_entry['digest']}, now {now}; the file changed without "
-                                f"a rebind")
-    return problems
+                findings.append((CODE, node_id,
+                                 f"{node_id}: {file_entry['path']} bound at "
+                                 f"{file_entry['digest']}, now {now}; the file changed without "
+                                 f"a rebind"))
+    return findings, []
 
 
 def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[dict], list[str]]:
@@ -218,11 +261,11 @@ def sound_specification(spec_root: Path) -> tuple[dict[str, dict] | None, int]:
     return nodes, 0
 
 
-def write_trace(target: Path, declared: dict) -> int:
+def write_trace(target: Path, declared: dict, act: str = "bind") -> int:
     problems = problems_of(declared)
     if problems:
         for problem in problems:
-            print(f"cannot bind: {problem}")
+            print(f"cannot {act}: {problem}")
         return 1
     trace_path(target).write_text(json.dumps(declared, indent=2) + "\n", encoding="utf-8")
     return 0
@@ -364,15 +407,81 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     return 0
 
 
+def prune(target: Path) -> int:
+    """Drop every binding to a node the specification no longer holds, and nothing else.
+
+    This is the only thing here that deletes, and it exists because one class of drift had no exit
+    at all. A node the specification dropped cannot be rebound — `--bind` refuses a node that is
+    not there — and a trace is hand-edited by nobody, this script being its one writer. So the
+    entry stayed, its finding repeated on every `--check`, and the pile of them is what a real
+    drift arriving later disappears into.
+
+    It refuses the two classes it is not for, and the refusal is the point rather than a
+    conservatism. A file that moved or vanished is drift with an owner and a remedy: the node is
+    still in the base, still answered by code somewhere, and deleting the binding would destroy the
+    one record of which node that code answers to while reporting the tree as clean. The narrow
+    class is safe for the opposite reason — the node is gone, so the entry links code to nothing,
+    and nothing downstream can ask a question of it that an absence does not already answer.
+
+    It reads the specification through the same pipeline `--check` does, and refuses over one that
+    does not hold together. Pruning against a base nobody could read would delete bindings for
+    nodes that exist, on the strength of not having been able to see them."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+
+    path = trace_path(target)
+    declared = load(target)
+    if declared is None:
+        print(f"no trace file: {path} does not exist; there is nothing to prune")
+        return 0
+
+    problems = problems_of(declared)
+    if problems:
+        for problem in problems:
+            print(f"{path}: {problem}")
+        return 1
+
+    findings, refusals = drift_of(declared, home_of(target))
+    if refusals:
+        for refusal in refusals:
+            print(refusal)
+        print(f"\nnothing was pruned: a specification this cannot read says nothing about which "
+              f"bindings it still holds")
+        return 1
+
+    stale = sorted({node for cls, node, _ in findings if cls == ORPHANED})
+    if not stale:
+        held = len(declared.get("bindings") or [])
+        print(f"nothing to prune: every one of {held} binding(s) names a node the specification "
+              f"still holds")
+        return 0
+
+    declared["bindings"] = [entry for entry in declared["bindings"]
+                            if entry.get("node") not in set(stale)]
+    if write_trace(target, declared, act="prune") != 0:
+        return 1
+    for node_id in stale:
+        print(f"dropped {node_id}: the specification no longer holds it")
+    remaining = len(declared["bindings"])
+    print(f"\n{len(stale)} binding(s) pruned at {path}; {remaining} remain. What was dropped was "
+          f"a link to a node that is gone — every drift with a node still in the base is still "
+          f"here, and still owed a rebind.")
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     check = "--check" in args
     do_bind = "--bind" in args
     do_record = "--bind-record" in args
+    do_prune = "--prune" in args
     replace = "--replace" in args
-    args = [a for a in args if a not in ("--check", "--bind", "--bind-record", "--replace")]
+    args = [a for a in args
+            if a not in ("--check", "--bind", "--bind-record", "--replace", "--prune")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
-                                      ("--bind-record", do_record)) if given]
+                                      ("--bind-record", do_record),
+                                      ("--prune", do_prune)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
@@ -392,6 +501,12 @@ def main() -> int:
         target, spec_root, record = args
         return bind_record(Path(target), Path(spec_root), Path(record), replace)
 
+    if do_prune:
+        if len(args) != 1 or args[0].startswith("--"):
+            print("cannot run: expected --prune <target-root>", file=sys.stderr)
+            return CANNOT_RUN
+        return prune(Path(args[0]))
+
     if do_bind:
         if len(args) < 4:
             print("cannot run: expected --bind <target-root> <spec-root> <node> "
@@ -403,6 +518,7 @@ def main() -> int:
     if len(args) != 1 or args[0].startswith("--"):
         print("cannot run: expected [--check] <target-root>", file=sys.stderr)
         return CANNOT_RUN
+
     target = Path(args[0])
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
@@ -425,11 +541,20 @@ def main() -> int:
         print(f"trace sound: {count} binding(s), traced against {declared['specification']}")
         return 0
 
-    drift = drift_of(declared, home_of(target))
-    if drift:
-        for problem in drift:
-            print(problem)
-        print(f"\n{len(drift)} drift finding(s) over {count} binding(s).")
+    findings, refusals = drift_of(declared, home_of(target))
+    if refusals:
+        for refusal in refusals:
+            print(refusal)
+        return 1
+    if findings:
+        # Class by class rather than one flat list: the tally is what a reader acts on, and the
+        # orphaned count is what says how much of this report no rebind will ever shorten.
+        for cls in (ORPHANED, MOVED, CODE):
+            for _, _, said in [f for f in findings if f[0] == cls]:
+                print(said)
+        print(f"\n{len(findings)} drift finding(s) over {count} binding(s):")
+        for cls in (ORPHANED, MOVED, CODE):
+            print(f"  {sum(1 for f in findings if f[0] == cls)} {cls}: {CLASSES[cls]}")
         return 1
     print(f"no drift: {count} binding(s) match the specification and the code as both stand now")
     return 0

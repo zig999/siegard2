@@ -47,9 +47,22 @@ covers is named by one of its tasks or declared uncovered, and a task naming a n
 epic's covers is refused. A task may also declare what its delivery must create — `produces` —
 which is how the artifacts a project's own standard presupposes get built: they answer to no
 specification node, because none of them is what the business decided, and a plan that leaves
-them unplanned is a plan whose every task stops before it is written. A plan node carries no
-status, estimate, priority or order field: execution state lives in git, and order is derived
-from dependencies by whoever executes.
+them unplanned is a plan whose every task stops before it is written. Ordinary work declares
+none, and the reconciliation runs both ways: a task producing what the registry presupposes
+nowhere is refused, because the declaration is not a description of output — it takes three
+exemptions (the offer order of `--outstanding`, the dropped substrate check at delivery, and
+owing the install instead of the build and the suite) that ordinary work has no use for. A plan
+node carries no status, estimate, priority or order field: execution state lives in git, and
+order is derived from dependencies by whoever executes.
+
+**A bug found by running the delivered system comes back through `/plan-work`.** It answers to no
+task's criteria — the task that wrote the file was delivered and reviewed before anybody saw the
+behavior — so the plan is where it becomes work: one corrective task, stated by the human, cut
+without the survey or the decomposition but bound and validated like any other, and delivered by
+`/implement-task` like any other. The alternative is the one to recognize and refuse: a fix typed
+straight into the file has one hand writing the implementation and its test, which agree by
+construction including where both are wrong, and leaves the trace asserting a digest that is no
+longer there.
 
 Where the objective or a criterion of a task cannot be demonstrated without contradicting or
 exceeding the specification — including a fact the specification does not state at all — that is
@@ -114,6 +127,16 @@ with `encoded_at` is bound as one act — and the one reader: `--check` recomput
 from what is on disk now and reports drift, so a future `/plan-work` or `/analyse` invocation
 can tell, without opening any plan's history, whether a node moved in the specification since
 the code was written, or the code moved without a matching rebind.
+
+`--check` reports drift in three classes, and each takes a different route. `moved` and `code`
+are drift with an owner — the specification moved under a binding, or the file did — and both are
+answered by a rebind through the delivery that owns the change, never by deleting the entry, which
+would throw away the one record of which node that code answers to. `orphaned` is a binding to a
+node the specification no longer holds: a bind refuses a node that is not there and this file is
+hand-edited by nobody, so nothing could clear these, and they accumulate until a real drift
+arriving later is one more line in a report nobody finishes. `trace.py --prune` drops exactly that
+class and nothing else. Run it after an `/analyse` that removed nodes; a tree whose report is
+mostly stale entries is a tree whose trace has quietly stopped being read.
 
 ## Delivering a frontier in parallel
 
@@ -256,8 +279,9 @@ the sentence above is why nothing has to.
   one writer.
 - **`bin/trace.py`** — binds a specification node to the file(s) that encode it, and reports
   drift between what a target's trace remembers and what is on disk now. Not an entry point and
-  not a skill: `--bind` is run by `/implement-task` once a delivery validates; `--check` and
-  plain validation are for a person or a future invocation to run directly.
+  not a skill: `--bind` is run by `/implement-task` once a delivery validates; `--check`, plain
+  validation, and `--prune` — which drops the bindings to nodes the specification no longer holds,
+  and only those — are for a person or a future invocation to run directly.
 
 ## How this file reaches a session
 
@@ -291,8 +315,8 @@ slots empty: filling them and running it are yours.
 - **Do not write or edit `plan.json`, `delivery.json`, `siegard-trace.json` or `siegard.json` by
   hand.** Change the nodes and run the deriving script — `bin/plan.py <work-root>
   <specification-root>`, `bin/deliver.py <delivery-root> <work-root> <specification-root>` —
-  again; the trace is written only by `bin/trace.py --bind`, and the project file only by
-  `/siegard-config`.
+  again; the trace is written only by `bin/trace.py` — `--bind`/`--bind-record` to state a link,
+  `--prune` to drop the ones whose node is gone — and the project file only by `/siegard-config`.
 - **Do not state a domain fact the specification does not hold** — in code, a comment, a test, or
   a prompt. Where the specification is silent on what a task needs, that is a `BLOCKING` note;
   report it, do not fill it.

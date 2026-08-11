@@ -1,6 +1,6 @@
 ---
 name: plan-work
-description: Turns a stated development scope plus a validated specification into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task naming the specification nodes it implements — validates the plan against the specification, and derives plan.json. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the specification already holds, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
+description: Turns a stated development scope plus a validated specification into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task naming the specification nodes it implements — validates the plan against the specification, and derives plan.json. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task on the same route, without the survey or the decomposition. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the specification already holds, to route a bug found by running the delivered system, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
 effort: medium
 ---
 
@@ -115,6 +115,63 @@ no memory of how the tasks were cut, so the specification is read for what it sa
 to fit a task. Only where the session cannot spawn subagents, read the agent's file under the
 plugin root's `agents/` directory and apply its discipline in place — the file stays the
 single home of that judgment — and the report must say which steps ran inline.
+
+## The corrective increment
+
+One wrong behavior, observed in code this project already delivered, answering to no criterion any
+task holds — because the task that wrote the file was delivered and reviewed before anybody saw
+the behavior. Running the system for real is where these arrive, and they arrive after every
+ceremony this framework has has already finished.
+
+**The human names this in the invocation. It is never inferred from the tree**, exactly as the
+narrow re-delivery in `/implement-task` is never inferred: a mode that decides for itself when to
+run fewer steps is a mode that runs fewer steps.
+
+It exists because of what happens without it. The whole path — survey, decomposition, a binder per
+task — is sized for a scope, and a one-behavior correction is not a scope; so the correction gets
+made by hand instead, and the hand that makes it writes the implementation and the test in one
+context. That is precisely the guarantee the two producers exist to give, given up for a fix small
+enough to feel like it did not need one — and an implementation and its tests written in one pass
+agree by construction, including where both are wrong. The trace goes quiet the same way: nothing
+outside `/implement-task` binds, so the file changes and `siegard-trace.json` keeps asserting a
+digest that is no longer there. Neither of those is the correction being urgent. Both are the
+correct route costing more than the incorrect one.
+
+So the route is the ordinary one, at the size of the work:
+
+```
+situate → intake → the task, written here → implement-against → validate → report → stop
+```
+
+**The survey and the decomposition do not run.** There is no tree to discover — the human is
+holding the file — and there is nothing to decompose: the increment is one task, and where it is
+genuinely more than one, this is a scope and the ordinary path is what it gets.
+
+**The binder runs, per task, exactly as it always does.** It is the step whose absence would make
+this a second delivery machine instead of a smaller entrance to the one that exists: it is what
+decides which specification nodes the correction answers to, and it is what returns a classified
+note when the fix contradicts something the specification states or states nothing about — which
+is the common shape here, because a behavior nobody specified is how the bug survived review. It
+is also the cheapest of the three delegations, so the ceremony this path drops is the ceremony
+that was buying nothing.
+
+You write the task yourself, and it is held to every test a decomposer's task is held to. The
+criteria are falsifiable, one condition each, and they are written from the observed behavior and
+the node that governs it — never "the bug is fixed", which no test can fail. The task carries
+`rationale` where it implements nothing, and `sources` pointing at the scope under `intake/`, the
+same as any node here. It declares **no** `produces`: what a task produces is what the project's
+own standard presupposes, and a correction to delivered source is not that.
+
+Where it lands follows the rule the slug already states. A live work root takes the task as any
+other increment does. A work root holding `closure.md` is closed and takes nothing — the
+correction names a new slug, and the delivered code returns as what the specification says about
+it, not as a reference into a plan that is history.
+
+What this path does not do is end anywhere different. The task goes to `/implement-task` like
+every other task: two producers, the standard applied, the run captured, and the trace bound at
+step 8 — which is the whole reason the correction comes back through here rather than being typed
+into the file. Say in the report that this was a corrective increment and which steps did not run,
+so a reader never mistakes a plan of one task for a scope that decomposed to one.
 
 ### 1. Situate
 

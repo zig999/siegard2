@@ -181,6 +181,29 @@ The next step runs the commands this registry declares, so a review that met the
 would already have run without them. And the pass that reads it is handed the registry's own path,
 which has to exist before the pass is spawned.
 
+Last, read what the trace says about this tree:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>
+```
+
+**This is neither a stop nor a finding.** Drift is not a rule of the standard and not a statement
+about whether the change conforms to anything — a file edited since its bind may be perfectly
+right. It is one fact, and no pass here produces it: whether the link this framework keeps after a
+plan is deleted still describes the code as it stands. Report the counts by class, and the route
+each class takes. `orphaned` is a binding to a specification node that no longer exists; no rebind
+can repair it, because a bind refuses a node the base does not hold, and `trace.py --prune` is what
+clears it. `moved` and `code` are real drift with an owner: the delivery that changed the file or
+the `/analyse` that moved the node, answered by a rebind through `/implement-task`, never by a
+deletion.
+
+It is read here because this is the last place a delivered tree gets read whole with a report
+attached, and because the drift that matters most is the drift nothing else can see. Every path
+this framework runs binds at the end of it; a file that reached the tree another way — a
+correction typed in by hand, a conflict resolved during a merge — leaves the trace asserting a
+digest that is not there any more, and asserting it silently. A review that says nothing about it
+is how a tree accumulates a trace nobody can trust while every command still exits 0.
+
 ### 2. Capture
 
 Run every step the standard declares, in the order it declares them, followed by any the caller
@@ -357,6 +380,10 @@ Report, in this order:
   how it ended, how many failures were counted, and where the output sits. Name any step a rule
   expects and the registry declares no command for: that rule was decided by nothing, and a review
   silent about it reads as a review that covered the whole registry;
+- the trace: the drift counts by class over this target, and the route each class takes — `--prune`
+  for the bindings no rebind can repair, a rebind through the delivery that owns the change for the
+  rest. Say plainly that this is not a finding and settles nothing about the change: it says whether
+  the link back to the specification still describes this tree, which no pass above asks;
 - what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;

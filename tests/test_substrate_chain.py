@@ -146,3 +146,40 @@ def test_a_split_substrate_stops_neither_half(tmp_path, tree, work, root, sound_
     # one without --against — and each passes while the other's artifact is still absent.
     for _ in range(2):
         assert invoke(DELIVER_PY, "--standard", registry).returncode == 0
+
+
+def test_a_task_producing_what_no_registry_presupposes_is_refused(
+        tmp_path, tree, registry, work, root, sound_plan, write_plan):
+    """The reconciliation's other direction, which went unchecked on the reading that producing an
+    unpresupposed artifact is ordinary work. `produces` is not a description of output: it is the
+    declaration that takes three exemptions — the offer order of `--outstanding`, the dropped
+    substrate check at `/implement-task`, and owing the install instead of the build and the suite
+    — and a plan handing them to ordinary work has disarmed them without deciding to. A consumer's
+    plan arrived with six of nine tasks declaring it, none of them building substrate, against a
+    schema that had said `Ordinary work declares none` the whole time."""
+    task = front_of(work, "task/checkout/record-order")
+    write_plan("task/checkout/record-order",
+               {**task, "produces": ["package.json", "src/orders/place.ts"]})
+
+    done = invoke(PLAN_PY, "--standard", registry, "--against", tree, work, root)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "produces src/orders/place.ts, which" in done.stdout
+    assert "presupposes nowhere" in done.stdout
+    # The corrective act, both halves of it: this is not a refusal a reader has to interpret.
+    assert "drop src/orders/place.ts from `produces`" in done.stdout
+    assert "`presupposes`" in done.stdout
+    # And the genuine half of the same declaration is untouched — the two sets coincide by
+    # construction, so a real substrate task is refused by nothing here.
+    assert "produces package.json, which" not in done.stdout
+    assert not (work / "plan.json").is_file(), \
+        "a refused plan derives nothing"
+
+
+def test_the_check_runs_only_where_a_standard_is_named(
+        tmp_path, tree, work, root, sound_plan, write_plan):
+    """What a registry presupposes is the only thing that says what substrate is, so a plan
+    validated without one is not held to a question nothing in front of it can answer."""
+    task = front_of(work, "task/checkout/record-order")
+    write_plan("task/checkout/record-order", {**task, "produces": ["src/orders/place.ts"]})
+    done = invoke(PLAN_PY, work, root)
+    assert done.returncode == 0, done.stdout + done.stderr

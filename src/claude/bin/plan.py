@@ -339,10 +339,25 @@ def substrate_problems(nodes: dict[str, dict], named: str, tree: Path) -> list[s
     source over the absence, so a plan that leaves it unplanned is a plan whose every task stops
     on a condition only the plan can end.
 
-    The reconciliation runs one way only, deliberately. A task may produce an artifact no standard
-    presupposes — creating a file is ordinary work — and refusing that would make the plan
-    relitigate what a registry never asked about. The other direction is the one that costs
-    something, so it is the one that is checked.
+    The reconciliation runs both ways, and it did not always. The other direction was left
+    unchecked on the reading that a task may produce an artifact no standard presupposes — creating
+    a file is ordinary work, and refusing it would make the plan relitigate what a registry never
+    asked about. That reading was wrong about what the field does. `produces` is not a description
+    of output: it is the declaration that buys three exemptions, and a plan that hands them to
+    ordinary work has disarmed them without deciding to. `deliver.py --outstanding` treats the
+    declaring task as substrate and offers it ahead of every task that is not; `/implement-task`
+    reads the same field as a yes-or-no and drops the check that the tree holds what the registry
+    presupposes; and a record whose files no rule reaches owes the install alone rather than the
+    build and the suite. A consumer's plan arrived with six of its nine tasks declaring it, none of
+    them building substrate, and the schema had said `Ordinary work declares none` the whole time —
+    which is how much prose is worth against a field whose misuse nothing refuses.
+
+    So the check is here rather than sharper wording somewhere: what a registry presupposes and
+    what a task declares are both data this function already holds, and their disagreement is
+    decidable. It refuses nothing a genuine substrate task does — substrate is exactly what a
+    registry presupposes, so the two sets coincide by construction — and it costs a plan nothing
+    it was not already paying, running only where `--standard --against` runs and never over a plan
+    already closed.
 
     `deliver` is imported here rather than at the top because it imports this module. How a
     standard is read has one home, and reaching it from inside the function is what lets both
@@ -357,7 +372,24 @@ def substrate_problems(nodes: dict[str, dict], named: str, tree: Path) -> list[s
 
     produced = {path for node in nodes.values() if node["kind"] == "task"
                 for path in listed(node["front"], "produces") if isinstance(path, str)}
+    presupposed = {entry["path"] for entry in listed(data, "presupposes")
+                   if isinstance(entry, dict) and isinstance(entry.get("path"), str)}
     problems: list[str] = []
+    for tid in sorted(nodes):
+        if nodes[tid]["kind"] != "task":
+            continue
+        for path in listed(nodes[tid]["front"], "produces"):
+            if not isinstance(path, str) or path in presupposed:
+                continue
+            problems.append(
+                f"{tid}: produces {path}, which {named} presupposes nowhere. `produces` names the "
+                f"substrate a registry needs and no rule can ask for, and declaring it takes three "
+                f"exemptions this task has no use for: deliver.py --outstanding offers it ahead of "
+                f"every task that is not building substrate, /implement-task drops the check that "
+                f"the tree holds what the registry presupposes, and a record whose files no rule "
+                f"reaches owes the install alone instead of the build and the suite. Ordinary work "
+                f"declares none — drop {path} from `produces`, or name it in {named}'s "
+                f"`presupposes` if that is what it really is")
     for entry in listed(data, "presupposes"):
         if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
             continue  # the registry's own contract already reported the shape
