@@ -284,6 +284,63 @@ def test_the_capability_map_derives_from_scenarios(spec_root):
     assert "troubleshoot_customer_problem --> troubleshooting" in diagram
 
 
+def test_an_unmapped_capability_is_said_rather_than_silent(spec_root):
+    """Three floating nodes read as a finished map; what they mean is that nobody wrote the
+    scenario and nothing consumes the capability — the same absence the context map already
+    declares as separate ways instead of leaving blank."""
+    (spec_root / "scenarios/system/troubleshoot-from-alert.md").unlink()
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    files = spec.project(nodes)
+    assert ("%% unmapped: no scenario names troubleshoot-customer-problem and no contract "
+            "consumes it") in files["capability-map.mmd"]
+    assert "unmapped: no scenario names it and no contract consumes it" in files["overview.md"]
+
+
+def test_a_consumed_capability_maps_without_a_scenario(spec_root):
+    """The second derivation source: a consumed contract naming the capability upstream is
+    consumption the files already declare, and the map draws it dashed — apart from the solid
+    edge a scenario's orchestration earns — with no scenario needed."""
+    rewrite(spec_root, "contracts/troubleshooting/alert-raised.md",
+            lambda f: f.update(upstream="contracts/system/troubleshoot-customer-problem"))
+    (spec_root / "scenarios/system/troubleshoot-from-alert.md").unlink()
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    files = spec.project(nodes)
+    assert "troubleshoot_customer_problem -.-> troubleshooting" in files["capability-map.mmd"]
+    assert "unmapped" not in files["capability-map.mmd"]
+    assert "consumed by troubleshooting" in files["overview.md"]
+
+
+def test_a_foreign_class_is_marked_with_its_home_context(spec_root):
+    """A class referenced across contexts used to reach the diagram only through an edge or an
+    attribute's type, which Mermaid autocreates as a bare box — a reader of one diagram could
+    not tell the foreign name from a local one. The declared block says whose it is, and stays
+    empty because the attributes live in the owning context's diagram."""
+    rewrite(spec_root, "domain/troubleshooting/case.md",
+            lambda f: f.update(relationships=(f.get("relationships") or []) + [
+                {"target": "domain/monitoring/alert", "type": "association",
+                 "cardinality": "1", "role": "opened-by"}]))
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    diagram = spec.project(nodes)["class-diagram-troubleshooting.mmd"]
+    # The exact match is the whole point: opening line, stereotype, closing brace and nothing
+    # between — a foreign block restates no attribute, because they live in the owning diagram.
+    assert "class Alert {\n        <<external: monitoring>>\n    }" in diagram
+    home = spec.project(nodes)["class-diagram-monitoring.mmd"]
+    assert "<<external" not in home, "the owning context's diagram declares it in full"
+
+
+def test_an_offered_contract_reaches_the_context_map(spec_root):
+    """A published contract nothing inside consumes is the system's own surface, and the map
+    used to be silent about every such door. Dashed, so the outward offer never reads as the
+    internal consumption the solid edges state."""
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    diagram = spec.project(nodes)["context-map.mmd"]
+    assert 'troubleshooting -.->|case-resolved| outside' in diagram
+    assert "monitoring -.->" not in diagram, \
+        "a published contract someone consumes is an edge between contexts, never an offer"
+    assert "troubleshoot-customer-problem| outside" not in diagram, \
+        "a capability lives in the system context and the capability map is its home"
+
+
 # ------------------------------------------------------------ the CLI contract
 
 

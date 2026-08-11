@@ -610,6 +610,24 @@ def class_diagram(context: str, nodes: dict[str, dict]) -> str:
         lines.append("    }")
         return lines
 
+    def foreign(members: dict[str, dict]) -> dict[str, dict]:
+        """Every element another context owns that this diagram names — through an attribute's
+        type or a relationship's target. Without a declared block Mermaid autocreates each as a
+        bare box, and a reader of one diagram cannot tell the foreign name from a local one; the
+        stereotype says whose it is and which diagram states it. The block stays empty on
+        purpose: the attributes live in the owning context's diagram, and restating them here
+        would be the second home the documentation floor exists to refuse."""
+        named: dict[str, dict] = {}
+        for node in members.values():
+            declared = [a["type"] for a in node["front"].get("attributes") or []
+                        if a["type"] not in PRIMITIVES]
+            declared += [r["target"] for r in node["front"].get("relationships") or []]
+            for ref in declared:
+                target = nodes.get(resolve(ref, context))
+                if target is not None and target["context"] != context:
+                    named[resolve(ref, context)] = target
+        return named
+
     lines = ["classDiagram"]
     boundaries: dict[tuple, list[str]] = {}
     for identity in sorted(members):
@@ -625,6 +643,12 @@ def class_diagram(context: str, nodes: dict[str, dict]) -> str:
     for identity in sorted(members):
         if aggregate_of(members[identity]) is None:
             lines += block(members[identity])
+    named_foreign = foreign(members)
+    for identity in sorted(named_foreign):
+        target = named_foreign[identity]
+        lines += [f"    class {pascal(target)} {{",
+                  f"        <<external: {target['context']}>>",
+                  "    }"]
     for identity in sorted(members):
         node = members[identity]
         for entry in node["front"].get("relationships") or []:
@@ -649,14 +673,29 @@ def context_map(nodes: dict[str, dict]) -> str:
         lines.append(f"    {context.replace('-', '_')}"
                      f"[\"{pascal(descriptor)} ({descriptor['front']['strategic']})\"]")
     edges = set()
+    consumed = set()
     for identity, node in nodes.items():
         if node["cls"] == "contract" and isinstance(node["front"].get("upstream"), str):
+            consumed.add(node["front"]["upstream"])
             upstream = nodes.get(node["front"]["upstream"])
             if upstream is not None:
                 edges.add((upstream["context"], node["context"], upstream["slug"]))
     for source, target, label in sorted(edges):
         lines.append(f"    {source.replace('-', '_')} -->|{label}| "
                      f"{target.replace('-', '_')}")
+    # A published contract nothing inside consumes is a door for the outside — the system's own
+    # surface. Until these edges existed the map drew only internal consumption, so the one
+    # diagram a reader opens first was silent about every entry point the system offers; the
+    # dashed edge keeps the two kinds of fact apart. Capabilities are not repeated here: they
+    # live in the system context and the capability map is theirs.
+    offered = sorted((node["context"], node["slug"]) for identity, node in nodes.items()
+                     if node["cls"] == "contract" and node["context"] != SYSTEM
+                     and node["front"].get("direction") == "published"
+                     and identity not in consumed)
+    if offered:
+        lines.append("    outside([\"outside\"])")
+        for context, label in offered:
+            lines.append(f"    {context.replace('-', '_')} -.->|{label}| outside")
     connected = {(s, t) for s, t, _ in edges} | {(t, s) for s, t, _ in edges}
     for index, one in enumerate(contexts):
         for other in contexts[index + 1:]:
@@ -690,6 +729,18 @@ def capability_contexts(identity: str, nodes: dict[str, dict]) -> list[str]:
     return sorted(touched)
 
 
+def capability_consumers(identity: str, nodes: dict[str, dict]) -> list[str]:
+    """The contexts whose own consumed contracts name this capability upstream — consumption the
+    files already declare, reaching the map without a scenario. It is the second of the two
+    sources an edge can derive from, and the two say different things: a scenario says the
+    capability's flow orchestrates the context, an upstream says the context consumes the
+    capability, and the map draws them apart."""
+    return sorted({node["context"] for node in nodes.values()
+                   if node["cls"] == "contract"
+                   and node["front"].get("upstream") == identity
+                   and node["context"] != SYSTEM})
+
+
 def capability_map(nodes: dict[str, dict]) -> str:
     lines = ["flowchart TD"]
     for identity in sorted(nodes):
@@ -698,8 +749,18 @@ def capability_map(nodes: dict[str, dict]) -> str:
             continue
         anchor = node["slug"].replace("-", "_")
         lines.append(f"    {anchor}[\"{pascal(node)}\"]")
-        for context in capability_contexts(identity, nodes):
+        touched = capability_contexts(identity, nodes)
+        consumers = [c for c in capability_consumers(identity, nodes) if c not in touched]
+        for context in touched:
             lines.append(f"    {anchor} --> {context.replace('-', '_')}")
+        for context in consumers:
+            lines.append(f"    {anchor} -.-> {context.replace('-', '_')}")
+        if not touched and not consumers:
+            # A node with no edge reads as a finished map; what it means is that nobody wrote
+            # the scenario and nothing consumes the capability, and the absence has to say so —
+            # the same reason the context map declares separate ways instead of staying silent.
+            lines.append(f"    %% unmapped: no scenario names {node['slug']} and no contract "
+                         f"consumes it; which contexts realize it is undeclared")
     return "\n".join(lines) + "\n"
 
 
@@ -722,7 +783,14 @@ def overview(nodes: dict[str, dict]) -> str:
                     if n["cls"] == "contract" and n["front"].get("type") == "capability"]
     for identity in capabilities:
         touched = capability_contexts(identity, nodes)
-        suffix = f" — orchestrates {', '.join(touched)}" if touched else ""
+        consumers = [c for c in capability_consumers(identity, nodes) if c not in touched]
+        said = []
+        if touched:
+            said.append(f"orchestrates {', '.join(touched)}")
+        if consumers:
+            said.append(f"consumed by {', '.join(consumers)}")
+        suffix = f" — {'; '.join(said)}" if said else \
+            " — unmapped: no scenario names it and no contract consumes it"
         lines.append(f"- {nodes[identity]['slug']}{suffix}")
     if not capabilities:
         lines.append("None.")
