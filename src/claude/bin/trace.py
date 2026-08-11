@@ -10,7 +10,7 @@ digests from what is on disk now and compares — a node whose digest no longer 
 the specification since the bind; a file whose digest no longer matches moved in the code without
 a rebind. Either is drift, and this script is what says so without any plan's history to consult.
 
-Five things this script does, and nobody else does any of them:
+Six things this script does, and nobody else does any of them:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root>                                the same, then report drift
@@ -18,6 +18,8 @@ Five things this script does, and nobody else does any of them:
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind ... --replace                                 write it in full instead
     trace.py --prune <target-root>                                drop the bindings nothing can fix
+    trace.py --reconciliation <record>                            hold a reconciliation to its
+                                                                  contract before it is bound
 
 Drift is reported in three classes, because a caller can act on each differently and could act on
 none of them while all three arrived as one list. A node the specification no longer holds is
@@ -43,6 +45,19 @@ The whole of it is refused before anything is written, because a delivery half b
 link nobody made while reading exactly like a complete one. A record naming no node with
 `encoded_at` is not a failure: the nodes it answers only by `how` reached no file, a bind with none
 is refused, and there is simply nothing to write.
+
+`--reconciliation` is the one form here that writes nothing. It holds a reconciliation record —
+source that changed outside any task, at `siegard-reconcile/<slug>.md` beside this file — to
+`schemas/reconciliation.json`, so that `--bind-record` can then read it exactly as it reads an
+implementation record. That split is deliberate and it is the same one the delivery route already
+has: `bin/deliver.py` validates an implementation record and this script binds what it says, never
+holding a second opinion about a contract it does not own. What is different is that nobody else
+owns this one. A reconciliation record has no life outside the trace — it exists to justify a bind
+and nothing reads it for any other purpose — so the validation lands here rather than in a script
+invented to hold it. The check that matters is the accounting: every path a node claims is a path
+the record's own file set names, and every file it names is claimed by a node or declared unbound.
+A record that binds a file nobody declared would widen the reconciliation past what a human
+scoped, silently, and the trace would carry the result forever.
 
 `--bind` validates <spec-root> the way spec.py does, refuses a node it does not hold, reads that
 node's digest and each file's digest fresh, and writes the entry. By default it extends whatever
@@ -76,9 +91,10 @@ Usage:  trace.py <target-root>
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
         trace.py --prune <target-root>
-Exit:   0 sound / drift-free / bound / pruned
+        trace.py --reconciliation <reconciliation-record>
+Exit:   0 sound / drift-free / bound / pruned / the record holds
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
-          or file
+          or file, a record its contract refuses
         2 cannot run
 """
 
@@ -104,7 +120,9 @@ import spec
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TRACE_CONTRACT = PLUGIN_ROOT / "schemas" / "trace.json"
+RECONCILE_CONTRACT = PLUGIN_ROOT / "schemas" / "reconciliation.json"
 TRACE_FILE = "siegard-trace.json"
+RECONCILE_DIR = "siegard-reconcile"
 
 ORPHANED, MOVED, CODE = "orphaned", "moved", "code"
 CLASSES = {
@@ -202,13 +220,20 @@ def drift_of(declared: dict, home: Path) -> tuple[list[tuple[str, str, str]], li
 def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[dict], list[str]]:
     """Each named file as the trace stores it: the path re-anchored on this file's own directory,
     and the digest read now. A file that does not exist is a problem rather than an omission —
-    binding a node to a path nothing holds would record a link to nowhere."""
+    binding a node to a path nothing holds would record a link to nowhere.
+
+    The refusal names the anchor, because the anchor is what is usually wrong. Every path this
+    script prints back — a drift finding, an entry of the trace — is spelled from the target's git
+    toplevel, and every path it reads is spelled from the target source root. A caller who copies
+    one into the other gets a path that is neither, and `<target>/<target>/...` is a stranger thing
+    to be handed than the reason it happened."""
     offset = Path(os.path.relpath(target.resolve(), home.resolve()))
     entries, problems = [], []
     for given in files:
         source = target / given
         if not source.is_file():
-            problems.append(f"{source} does not exist")
+            problems.append(f"{source} does not exist; a path is read relative to {target}, the "
+                            f"target source root, never from the repository around it")
             continue
         stored = given if str(offset) == "." else (offset / given).as_posix()
         entries.append({"path": stored, "digest": spec.digest_of(source)})
@@ -341,6 +366,114 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
     return 0
 
 
+def frontmatter_of(record: Path) -> tuple[dict | None, str | None]:
+    """One record's frontmatter as a mapping, or nothing and the reason it could not be read.
+
+    Every way a file fails to be a record at all is the same failure to both callers here, and
+    saying it twice is how the two drift into disagreeing about what a record even is."""
+    if not record.is_file():
+        return None, f"{record} does not exist"
+    text = record.read_text(encoding="utf-8")
+    match = spec.FENCE.match(text)
+    if not match:
+        return None, f"{record} carries no frontmatter fence; it is not a record this can read"
+    try:
+        front = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as broken:
+        return None, f"{record}: frontmatter does not parse: {broken}"
+    if not isinstance(front, dict):
+        return None, f"{record}: frontmatter is not a mapping"
+    return front, None
+
+
+def accounted(front: dict) -> list[str]:
+    """Every way a reconciliation's own paths fail to add up, once the contract has held.
+
+    The schema says what a field may hold; this says whether the fields agree with each other, and
+    it is the half that carries the risk. `--bind-record` binds every path a node's `encoded_at`
+    names, so a path that reached the record without reaching its file set is ground the human
+    never scoped, asserted in the one file this framework keeps after every plan is gone. The
+    accounting runs both ways for the same reason a bind and a drift check do: a named file no node
+    accounts for is a file somebody meant to reconcile and nothing did, and it would leave the
+    record reading complete."""
+    named = [entry["path"] for entry in front["files"]]
+    problems = [f"files: {path} is named {named.count(path)} times; one entry per file"
+                for path in sorted(set(named)) if named.count(path) > 1]
+
+    seen: dict[str, list[str]] = {}
+    claimed: set[str] = set()
+    for entry in front["nodes"]:
+        node_id = entry["node"]
+        seen.setdefault(node_id, []).append(node_id)
+        where = "encoded_at" if entry["conforms"] else "observed_at"
+        for path in entry[where]:
+            claimed.add(path)
+            if path not in named:
+                problems.append(f"{node_id}: {where} names {path}, which this record's file set "
+                                f"does not; a reconciliation reaches only what the human scoped")
+    problems += [f"nodes: {node_id} appears {len(hits)} times; one entry per node"
+                 for node_id, hits in sorted(seen.items()) if len(hits) > 1]
+
+    unbound = front.get("unbound") or []
+    for path in unbound:
+        if path not in named:
+            problems.append(f"unbound: {path} is not in this record's file set")
+        if path in claimed:
+            problems.append(f"unbound: {path} is also accounted for by a node; a file is one or "
+                            f"the other, and the trace either holds a binding to it or does not")
+
+    for path in sorted(set(named) - claimed - set(unbound)):
+        problems.append(f"files: {path} is named and no node accounts for it; a file the trace "
+                        f"binds nothing to belongs under `unbound`, said rather than left out")
+    return problems
+
+
+def reconciliation(record: Path) -> int:
+    """Hold one reconciliation record to its contract, and write nothing.
+
+    It is validated here and bound by `--bind-record`, the same split the delivery route already
+    has between `bin/deliver.py` and this script. The difference is that no other script owns this
+    contract: a reconciliation record exists to justify a bind and is read for nothing else, so
+    inventing a script to hold it would be a fourth validator for one file class."""
+    if not RECONCILE_CONTRACT.is_file():
+        print(f"cannot run: {RECONCILE_CONTRACT} is missing; nothing can be validated without it",
+              file=sys.stderr)
+        return CANNOT_RUN
+
+    front, refusal = frontmatter_of(record)
+    if front is None:
+        print(f"cannot run: {refusal}", file=sys.stderr)
+        return CANNOT_RUN
+
+    if record.parent.name != RECONCILE_DIR:
+        print(f"cannot run: {record} does not sit under {RECONCILE_DIR}/; a record that justifies "
+              f"a bind lives where the trace it justifies lives, and one filed anywhere else is a "
+              f"judgment the next reader has no way to find", file=sys.stderr)
+        return CANNOT_RUN
+
+    schema = json.loads(RECONCILE_CONTRACT.read_text(encoding="utf-8"))
+    problems = [f"{'/'.join(str(part) for part in error.path) or 'record'}: {error.message}"
+                for error in Draft202012Validator(schema).iter_errors(front)]
+    if not problems:
+        problems = accounted(front)
+    if problems:
+        for problem in sorted(set(problems)):
+            print(f"{record.name}: {problem}")
+        print(f"\n{len(set(problems))} problem(s); this record binds nothing until they are gone.")
+        return 1
+
+    binds = [entry for entry in front["nodes"] if entry["conforms"]]
+    held = [entry for entry in front["nodes"] if not entry["conforms"]]
+    print(f"{record.name} holds: {len(front['files'])} file(s), {len(binds)} node(s) the judgment "
+          f"cleared, {len(held)} it did not, {len(front.get('unbound') or [])} file(s) the trace "
+          f"binds nothing to.")
+    if held:
+        print(f"--bind-record will write {len(binds)} binding(s) from this record and none for "
+              f"{', '.join(entry['node'] for entry in held)}: a node without `encoded_at` is a "
+              f"node this form cannot bind.")
+    return 0
+
+
 def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
     """Every node one implementation record says the source encodes, with the files it names.
 
@@ -355,19 +488,12 @@ def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
 
     Nothing here validates the record as a delivery node. `bin/deliver.py` did that before this
     runs, and a second opinion about a contract this script does not own would be a second home for
-    it. What this reads is two field names, defensively."""
-    if not record.is_file():
-        return [], [f"{record} does not exist"]
-    text = record.read_text(encoding="utf-8")
-    match = spec.FENCE.match(text)
-    if not match:
-        return [], [f"{record} carries no frontmatter fence; it is not a record this can read"]
-    try:
-        front = yaml.safe_load(match.group(1)) or {}
-    except yaml.YAMLError as broken:
-        return [], [f"{record}: frontmatter does not parse: {broken}"]
-    if not isinstance(front, dict):
-        return [], [f"{record}: frontmatter is not a mapping"]
+    it. What this reads is two field names, defensively — which is also why a reconciliation record
+    is read by this same form: it declares the same two, and `--reconciliation` is what held it to
+    its own contract first."""
+    front, refusal = frontmatter_of(record)
+    if front is None:
+        return [], [refusal]
 
     pairs = []
     for entry in front.get("nodes") or []:
@@ -518,18 +644,27 @@ def main() -> int:
     do_bind = "--bind" in args
     do_record = "--bind-record" in args
     do_prune = "--prune" in args
+    do_reconciliation = "--reconciliation" in args
     replace = "--replace" in args
     args = [a for a in args
-            if a not in ("--check", "--bind", "--bind-record", "--replace", "--prune")]
+            if a not in ("--check", "--bind", "--bind-record", "--replace", "--prune",
+                         "--reconciliation")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
-                                      ("--prune", do_prune)) if given]
+                                      ("--prune", do_prune),
+                                      ("--reconciliation", do_reconciliation)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
     if replace and not (do_bind or do_record):
         print("cannot run: --replace only applies to --bind and --bind-record", file=sys.stderr)
         return CANNOT_RUN
+
+    if do_reconciliation:
+        if len(args) != 1 or args[0].startswith("--"):
+            print("cannot run: expected --reconciliation <reconciliation-record>", file=sys.stderr)
+            return CANNOT_RUN
+        return reconciliation(Path(args[0]))
     if not TRACE_CONTRACT.is_file():
         print(f"cannot run: {TRACE_CONTRACT} is missing; nothing can be validated without it",
               file=sys.stderr)

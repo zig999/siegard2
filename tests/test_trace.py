@@ -330,6 +330,19 @@ def test_a_record_naming_a_file_the_tree_does_not_hold_binds_none_of_it(repo):
     assert not (repo / "siegard-trace.json").exists()
 
 
+def test_the_refusal_names_the_anchor_a_missing_path_was_read_against(repo):
+    """The two anchors are the likeliest reason a path is missing, and `backend/backend/src/...`
+    is a stranger thing to be handed than the reason for it: findings and trace entries are spelled
+    from the git toplevel, and everything read here is spelled from the target source root."""
+    record = record_at(repo, [
+        {"node": NODE, "encoded_at": [f"backend/{FILE}"], "how": "encoded here"},
+    ])
+    done = bind_record(repo, record)
+    assert done.returncode == 1, done.stdout
+    assert "target source root" in done.stdout
+    assert str(repo / "backend") in done.stdout
+
+
 def test_a_record_bind_extends_what_an_earlier_bind_held(repo):
     """The same merge the per-node form has, for the same reason: two tasks landing one node in two
     files is not one of them undoing the other's work."""

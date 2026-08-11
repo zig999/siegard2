@@ -138,6 +138,22 @@ arriving later is one more line in a report nobody finishes. `trace.py --prune` 
 class and nothing else. Run it after an `/analyse` that removed nodes; a tree whose report is
 mostly stale entries is a tree whose trace has quietly stopped being read.
 
+`code` drift has one route that does not go through a delivery, and it exists because the drift
+does. Every path this framework runs binds at the end of it, so a file that reached the tree another
+way — a correction typed in during an incident, a conflict resolved by hand during a merge — leaves
+the trace asserting a digest that is not there, silently. **`/reconcile` is that route.** It takes
+the file set a human names, reads which nodes the trace binds to it, holds the source to those nodes
+through the same conformance judgment `/review-change` runs, writes what the judgment answered to
+`siegard-reconcile/<slug>.md` beside this trace, and rebinds only the nodes it cleared. Where the
+judgment found the source stating a fact no node holds, nothing is bound and the two readings come
+back unchosen: the specification is behind the code, and `/analyse` extends it — or the node is
+right and the behavior is not, and the corrective increment of `/plan-work` routes it to a task.
+The record is the point as much as the bind is. Every other binding in this file is backed by an
+implementation record that says which node the source encodes and why; without one, a rebind
+performed on a hand edit rests on a judgment nobody can reopen, and the trace would carry it
+forever. A node the judgment refused carries no `encoded_at` in that record, which is what makes
+`--bind-record` unable to reach it — the rule is the shape of the file, not a sentence in a prompt.
+
 A bind extends what a node already held, because two deliveries landing one node in two files is
 not one of them undoing the other's work. `--replace` writes the entry in full instead, for a fact
 that genuinely moved out of a file — and **it substitutes the whole entry, not the files the call
@@ -279,6 +295,11 @@ the sentence above is why nothing has to.
 - **`/review-change`** — captures a run of the caller's commands, then reports what four passes
   found over a delivered change — evidence, never a verdict — records it, and stops the same way.
   Invoke it by name rather than reviewing ad hoc.
+- **`/reconcile`** — takes source that changed outside any task, reads the trace for the nodes it
+  is bound to, holds it to them through the conformance judgment, records the answer under
+  `siegard-reconcile/`, and rebinds only what the judgment cleared. It asks for no work root, no
+  delivery root and no task, because a hand edit has none. Invoke it by name rather than rebinding
+  ad hoc — and where the source itself is what needs to change, that is not this entry point.
 - **`bin/terms.py`** — prints what a term means, read out of the contract that defines it. Not an
   entry point and not a skill: a reader's command, for the words a validator's refusal uses. A term
   it names as holding no definition is a term no contract states, said so rather than left out.
@@ -288,20 +309,61 @@ the sentence above is why nothing has to.
   one writer.
 - **`bin/trace.py`** — binds a specification node to the file(s) that encode it, and reports
   drift between what a target's trace remembers and what is on disk now. Not an entry point and
-  not a skill: `--bind` is run by `/implement-task` once a delivery validates; `--check`, plain
-  validation, and `--prune` — which drops the bindings to nodes the specification no longer holds,
-  and only those — are for a person or a future invocation to run directly.
+  not a skill: `--bind` is run by `/implement-task` once a delivery validates and by `/reconcile`
+  once a reconciliation record validates; `--reconciliation` holds that record to its contract and
+  writes nothing; `--check`, plain validation, and `--prune` — which drops the bindings to nodes the
+  specification no longer holds, and only those — are for a person or a future invocation to run
+  directly.
+
+### Which entry points the model may reach for on its own
+
+`/siegard-config` is the one skill a session may not load by itself — its frontmatter says so, and
+that is the whole of the policy. The criterion is not how much a skill writes: `/implement-task`
+writes source, installs packages and runs commands, and it is reachable. It is **who has the right
+to state the input**. `siegard.json` declares the structural roots every other entry point reads,
+and a session that inferred them would be answering a question the file exists so that a human
+answers once. Everything else that needs it hands its invocation over ready to paste, so nothing is
+lost by the closure.
+
+The rest are reachable on purpose. `/analyse` and `/reconcile` both take a premise only a person
+holds — what the material says, and that a hand edit is correct — and both were closed for that
+reason until it was weighed against what closing them costs. The protections that matter are inside
+those skills, not in the frontmatter: an input nobody named is a stop, a root with pending changes
+is a stop, a judgment about conformance is delegated rather than taken, and everything written lands
+in a diff over a root that started clean. Closing them added nothing to that, and gave up the one
+thing a description does — a session that cannot load `/analyse` for "update the specification with
+this" does the work by hand instead, where none of those protections exist and nothing is left for
+`git diff` to show.
+
+The rule stated above — invoke the entry point rather than doing its work ad hoc — reaches every
+session, and it is still the weaker half of the pair. It asks; a description routes. A skill's
+description is also the only thing here that a session reads before deciding what to do, where a
+rule is read and then has to be acted on, and this framework prefers the mechanism to the request
+for the same reason it prefers a validator to a sentence asking for care. Where a skill is closed,
+the rule is what is left; where it is open, the rule is what the routing already did.
 
 ## How this file reaches a session
 
-Vendored, it loads: Claude Code reads `./CLAUDE.md` and `./.claude/CLAUDE.md` both, concatenated, so
-a project that copies `dist/.claude/` into itself gets these rules beside its own and loses neither.
-**Installed as a plugin, this file loads nowhere.** A plugin contributes skills, agents and hooks,
-and its root `CLAUDE.md` is never read as project context — verified both ways against Claude Code
-2.1.223, where a marker placed here never arrived and a marker emitted by a plugin-shipped
-`SessionStart` hook did. Until this framework ships that hook, the plugin install is the install
-where every rule below holds only where a skill repeats it, and the vendored install is the one
-these rules actually bind.
+**However this framework is installed, these rules are placed at the consumer repository's root as
+`CLAUDE.md`.** That is a step of the install and not an option in it, and it is what lets every rule
+below be written as one rule: there is no install where they hold only partly, and nothing here has
+to be justified by a skill happening to repeat it.
+
+The convention has the shape it does because of what was measured. Claude Code reads `./CLAUDE.md`
+and `./.claude/CLAUDE.md` both, concatenated, so a vendored install that copies `dist/.claude/` into
+itself gets these rules beside the project's own and loses neither. A plugin's own root `CLAUDE.md`
+is a different matter: it is never read as project context — verified both ways against Claude Code
+2.1.223, where a marker placed there never arrived and a marker emitted by a plugin-shipped
+`SessionStart` hook did. That is why this file is shipped as `dist/CLAUDE.md`, beside the plugin
+rather than inside it, and why placing it is what the install does with it in either form.
+
+An install that skipped that step is an install of half this framework, and the half it kept is the
+half that cannot say so: the skills still run and still refuse what they refuse, while every rule
+that binds the session around them — what a stop is, which files are derived and written by a
+script alone, that a fact the specification does not hold is never supplied downstream — is simply
+absent. Nothing here can report that absence, and the circularity is worth stating rather than
+papering over: a file cannot instruct a session about its own missing. What catches it is the
+install, or nothing does.
 
 ## What a stop is
 

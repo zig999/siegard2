@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/reconciliation.json",
+  "title": "Siegard reconciliation record",
+  "description": "One record of a reconciliation: source that changed outside any task, the specification nodes the trace says that source encodes, and the judgment's answer per node. It lives at `siegard-reconcile/<slug>.md` beside `siegard.json` and `siegard-trace.json`, in the target source root's git toplevel, because what it justifies is a bind and a bind outlives every plan and delivery root. It exists for one reason: every other bind this framework writes is backed by an implementation record that says which node the source encodes and why, and a bind performed on a hand edit would otherwise rest on a judgment held nowhere — a decision nobody can reopen, which is exactly what the determinism rules forbid. `bin/trace.py --reconciliation` validates it; `bin/trace.py --bind-record` then writes exactly the bindings it states. The two halves are joined mechanically rather than by prose: a node the judgment did not clear carries no `encoded_at`, and `--bind-record` reads only nodes that do — so a record of a reconciliation that stopped binds nothing without any second rule saying it must not. Nothing here is pinned. The bind pins both sides at the moment it is written, and a second copy of those digests here would be a second home that goes stale the day either side moves.",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "title",
+    "summary",
+    "target",
+    "files",
+    "nodes"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "targetPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]",
+      "description": "Relative to the target source root, exactly as `siegard-trace.json` and every delivery record spell a path. One anchor or none of them can be compared: the file set the human named, the paths a node's binding holds, and the paths this record accounts for are matched against each other by spelling. Never absolute, and never spelled from the repository around the target."
+    },
+    "specNodeRef": {
+      "type": "string",
+      "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*)$",
+      "description": "A specification node, by identity (SPEC-003 R1) — its path from the specification root, without `.md`."
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "siegard-reconcile/1",
+      "description": "Which contract this record was written against. A record is read by a validator that may have moved since; the version is what says whether it may be."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What was reconciled, in a line."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What changed in the source and why the human states it is correct. This is the premise the whole record rests on and it is a human's assertion, never the judgment's: the pass below decides whether the specification still holds, not whether the code is right."
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Which of the project's target source roots this reconciliation reaches, by the key `siegard.json`'s `targets` names it. A record is read long after the invocation that wrote it, and a path anchor whose root nobody named anchors nothing."
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The file set the human named, and nothing else. Never discovered: a reconciliation that chose its own scope reconciles a different set each run, and the bindings it writes would claim ground nobody declared. Every path a node below accounts for must appear here, and every path here must be accounted for by a node or by `unbound`.",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "change"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "$ref": "#/$defs/targetPath"
+          },
+          "change": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What the file now does differently, not what was typed into it. A diff says what changed; this says what changed about the behavior, which is the only form the judgment below can be held to."
+          }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Every specification node the trace binds to a named file, with the judgment's answer for it. Empty only where the trace binds none of them — which is a real outcome, not an omission, and `unbound` is where it is recorded. The set is read from `trace.py --check`, never chosen: which nodes a file answers to is what the trace holds, and picking a subset of them would reconcile a file against the part of the specification that happened to agree with it.",
+      "items": {
+        "type": "object",
+        "required": [
+          "node",
+          "conforms",
+          "how"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "conforms": {
+                  "const": true
+                }
+              },
+              "required": [
+                "conforms"
+              ]
+            },
+            "then": {
+              "required": [
+                "encoded_at"
+              ],
+              "not": {
+                "required": [
+                  "observed_at"
+                ]
+              }
+            },
+            "else": {
+              "required": [
+                "observed_at"
+              ],
+              "not": {
+                "required": [
+                  "encoded_at"
+                ]
+              }
+            },
+            "$comment": "The two field names are what makes the rule structural instead of pious. `bin/trace.py --bind-record` binds every node carrying `encoded_at` and reads nothing else, so a node the judgment did not clear cannot be bound from this record however the caller invokes it. One field name, split by the answer, in place of a sentence asking a skill not to bind."
+          }
+        ],
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/specNodeRef"
+          },
+          "conforms": {
+            "type": "boolean",
+            "description": "Whether the source, as it now stands, still states only what this node holds. It is the conformance judgment's answer, delegated and read — never the caller's own reading of the file, and never inferred from the edit having been small."
+          },
+          "how": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why the answer above is the answer, with what was read quoted rather than restated. Where it conforms, this says which part of the file carries the node's fact now. Where it does not, this says what the source states that the node does not hold, or states differently — quoted, because a judgment whose evidence cannot be quoted is a judgment nobody made. Findings as a contract live in `delivery-node.json`, owned by the review that produces them; this field states the same observation in prose rather than opening a second home for the shape."
+          },
+          "encoded_at": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The file(s) of the set above that encode this node, on a node the judgment cleared and nowhere else. This is the list `--bind-record` binds, so it is the whole of what this record claims: a path here is a path the trace will assert answers to this node. Every entry must be in `files`.",
+            "items": {
+              "$ref": "#/$defs/targetPath"
+            }
+          },
+          "observed_at": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The file(s) of the set above the judgment read for this node, on a node it did not clear and nowhere else. It records what was looked at without claiming anything about it, which is why the accounting below can still reach every named file while nothing is bound. Every entry must be in `files`."
+          }
+        }
+      }
+    },
+    "unbound": {
+      "type": "array",
+      "description": "Named files the trace holds no binding for. They are reported and never guessed at: deciding which node an untraced file answers to is a delivery's judgment or an analysis's, and inventing one here would write the framework's most durable claim out of the least evidence. Every entry must be in `files`, and none may also appear under a node.",
+      "items": {
+        "$ref": "#/$defs/targetPath"
+      }
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Anything a later reader needs that the fields above have no home for — a node the trace reported as bound to a specification node that no longer exists, a merge this edit came out of, a second file the fact may have moved to. Prose, and never a decision."
+    }
+  },
+  "examples": [
+    {
+      "contract_version": "siegard-reconcile/1",
+      "title": "Hand correction to order placement",
+      "summary": "place() was returning the stored row rather than the order_number; corrected by hand during an incident and confirmed correct against the running system.",
+      "target": "backend",
+      "files": [
+        {
+          "path": "src/orders/place.ts",
+          "change": "answers with the persisted order_number instead of the row it was written from"
+        }
+      ],
+      "nodes": [
+        {
+          "node": "domain/sales/order",
+          "conforms": true,
+          "how": "the node's identity is `order_number`, and `return persisted.order_number` is now what the entry point answers with; nothing in the file states a fact the node does not hold",
+          "encoded_at": [
+            "src/orders/place.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "contract_version": "siegard-reconcile/1",
+      "title": "Hand correction to invoicing",
+      "summary": "The nightly run raised two invoices for one order; the guard was added by hand and the behavior is correct.",
+      "target": "backend",
+      "files": [
+        {
+          "path": "src/billing/raise.ts",
+          "change": "refuses a second invoice for an order that already has one"
+        }
+      ],
+      "nodes": [
+        {
+          "node": "rules/sales/invoice-immutable",
+          "conforms": false,
+          "how": "the source now states `if (order.invoices.length >= 1) return existing`, and no node holds that an order carries at most one invoice — the rule the file cites governs modification of a raised invoice, not how many may be raised",
+          "observed_at": [
+            "src/billing/raise.ts"
+          ]
+        }
+      ],
+      "notes": "The behavior is right and the specification is behind it; the fact belongs in a node before anything is bound."
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
   "name": "siegard",
   "description": "A specification of five classes \u2014 Domain Model, Rule, Scenario, Contract, Architecture Constraint \u2014 the plans it governs and the source they deliver, recorded as markdown nodes and validated by a script that refuses what does not hold together. A task names the nodes it implements by identity; a project declares its roots and standard once, in siegard.json. No node carries a status.",
-  "version": "3.11.0"
+  "version": "3.12.0"
 }

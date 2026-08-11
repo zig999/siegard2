@@ -40,6 +40,8 @@ SKILLS = {
     "review-change": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
                       "delegates": ["coverage-auditor", "specification-conformance-reviewer",
                                     "standard-conformance-reviewer", "failure-diagnostician"]},
+    "reconcile": {"contract": "schemas/reconciliation.json", "validator": "bin/trace.py",
+                  "delegates": ["specification-conformance-reviewer"]},
 }
 
 
@@ -71,6 +73,37 @@ def skill_schema():
     from jsonschema import Draft202012Validator
     return Draft202012Validator(
         json.loads((REPO / "schemas/skill.json").read_text(encoding="utf-8")))
+
+
+MODEL_MAY_REACH = {
+    "analyse": True,
+    "plan-work": True,
+    "implement-task": True,
+    "review-change": True,
+    "reconcile": True,
+    "siegard-config": False,
+}
+
+
+def test_only_the_declared_skills_are_closed_to_the_model(case):
+    """Which entry points a session may load by itself is a policy, and until this test existed it
+    lived in three YAML values that no commit message, rule or schema ever explained — which is how
+    a skill authored beside another inherited the flag by copying the file next to it.
+
+    The criterion is who has the right to state the input, and never how much the skill writes:
+    `/implement-task` writes source, installs packages and runs commands, and is reachable, while
+    `/siegard-config` writes one JSON file every other entry point reads, and is not. The reachable
+    ones are held by what is inside them — an input nobody named is a stop, a pending root is a
+    stop, a judgment is delegated — and by the fact that a skill's description is the only
+    instruction that reaches a plugin install at all. A new skill has to appear here to ship, which
+    is the point: the decision gets made rather than inherited."""
+    import yaml
+    assert sorted(MODEL_MAY_REACH) == sorted(SKILLS), \
+        "a skill was added or removed without deciding whether a session may reach for it"
+    front = yaml.safe_load(FENCE.match(case["text"]).group(1))
+    closed = front.get("disable-model-invocation", False)
+    assert closed is not MODEL_MAY_REACH[case["name"]], \
+        f"{case['name']}: the frontmatter and the policy disagree about who may invoke it"
 
 
 def test_frontmatter_satisfies_the_skill_contract(case, skill_schema):
@@ -157,6 +190,8 @@ FORWARD_SEAMS = (
     ("analyse", "plan-work"),
     ("plan-work", "implement-task"),
     ("implement-task", "review-change"),
+    ("reconcile", "analyse"),
+    ("reconcile", "plan-work"),
 )
 
 
