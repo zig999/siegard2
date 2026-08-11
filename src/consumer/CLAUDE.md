@@ -138,6 +138,15 @@ arriving later is one more line in a report nobody finishes. `trace.py --prune` 
 class and nothing else. Run it after an `/analyse` that removed nodes; a tree whose report is
 mostly stale entries is a tree whose trace has quietly stopped being read.
 
+A bind extends what a node already held, because two deliveries landing one node in two files is
+not one of them undoing the other's work. `--replace` writes the entry in full instead, for a fact
+that genuinely moved out of a file — and **it substitutes the whole entry, not the files the call
+names**, so replacing from one record drops what another record had bound to that node. No skill
+passes it: it is a hand operation, for reconciling a trace that has fallen behind. It is never
+silent — every path a `--replace` stops claiming is printed once the write succeeds, and that
+receipt is the only signal there is, because the trace it leaves is internally consistent and
+`--check` comes back clean over the loss.
+
 ## Delivering a frontier in parallel
 
 `deliver.py --outstanding` ends its report with the set deliverable now — no record, nothing
@@ -316,7 +325,8 @@ slots empty: filling them and running it are yours.
   hand.** Change the nodes and run the deriving script — `bin/plan.py <work-root>
   <specification-root>`, `bin/deliver.py <delivery-root> <work-root> <specification-root>` —
   again; the trace is written only by `bin/trace.py` — `--bind`/`--bind-record` to state a link,
-  `--prune` to drop the ones whose node is gone — and the project file only by `/siegard-config`.
+  `--replace` to write one in full where a fact moved out of a file, `--prune` to drop the ones
+  whose node is gone — and the project file only by `/siegard-config`.
 - **Do not state a domain fact the specification does not hold** — in code, a comment, a test, or
   a prompt. Where the specification is silent on what a task needs, that is a `BLOCKING` note;
   report it, do not fill it.

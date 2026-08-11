@@ -256,12 +256,14 @@ def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
 def released(node_id: str, dropped: list[str]) -> str:
     """The receipt for what a `--replace` stopped claiming. A statement, never a warning: the
     ordinary use of `--replace` is a file that genuinely left, and an alarm on the correct path is
-    an alarm nobody reads by the third time. It ends where recovery is, because the trace before
-    this write is in git and nowhere else."""
+    an alarm nobody reads by the third time. It ends by pointing at where the entry before this
+    write survives if it survives anywhere, which is git — stated as a direction rather than a
+    guarantee, because a trace that was never committed has no earlier state to return to."""
     return (f"  --replace released {len(dropped)} path(s) this call did not name; "
             f"{node_id} no longer claims {', '.join(dropped)}. Where the fact moved out of those "
             f"files, that is what --replace is for; where another delivery had bound one of them, "
-            f"its binding is gone and the trace as last committed is what still holds it")
+            f"that binding is gone from here, and the last committed trace is where it survives "
+            f"if anywhere")
 
 
 def opened(target: Path, spec_root: Path,
