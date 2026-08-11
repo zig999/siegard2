@@ -10,9 +10,11 @@ on, and no pin outlives the plan it read.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 import deliver
 from conftest import task_pin_of
@@ -1266,3 +1268,22 @@ def test_the_written_file_path_states_its_anchor():
     delivery = json.loads((REPO / "src/claude/schemas/delivery-node.json").read_text())
     stated = delivery["$defs"]["writtenFile"]["properties"]["path"]["description"]
     assert "relative to the target source root" in stated.lower()
+
+
+def test_a_record_answering_one_node_twice_is_refused(delivery, work, root, target,
+                                                      sound_delivery, write_delivery):
+    """The guard was here and nothing exercised it. It matters beyond the contradiction it names:
+    `trace.py --bind-record --replace` folds a record's answers in order, so a record answering one
+    node twice would have the second fold drop the first's files inside a single invocation. What
+    keeps that from reaching the trace is this refusal, one script earlier."""
+    front = yaml.safe_load(
+        re.match(r"^---\n(.*?)\n---\n",
+                 (delivery / "implementation/checkout/record-order.md").read_text(
+                     encoding="utf-8"), re.S).group(1))
+    front["nodes"] = front["nodes"] + [{
+        "node": "domain/sales/order",
+        "encoded_at": ["src/orders/place.ts"],
+        "how": "said a second time, with a different reason"}]
+    write_delivery("implementation/checkout/record-order", front)
+    said(problems_of(delivery, work, target, root),
+         "nodes answers for `domain/sales/order` 2 times")

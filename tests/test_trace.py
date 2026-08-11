@@ -485,3 +485,73 @@ def test_prune_and_check_are_mutually_exclusive(repo):
     done = run("--prune", "--check", repo / "backend")
     assert done.returncode == trace.CANNOT_RUN
     assert "mutually exclusive" in done.stderr
+
+
+# ------------------------------------------------- what a --replace stops claiming
+
+def second_file(repo: Path) -> None:
+    (repo / "backend" / OTHER_FILE).write_text("export {}\n", encoding="utf-8")
+
+
+def test_replace_names_every_path_it_stops_claiming(repo):
+    """The last silent loss in this writer. `--replace` substitutes the whole entry, so a path an
+    earlier bind put there and this call leaves off is gone — and gone invisibly, because the
+    trace it writes is internally consistent and `--check` comes back clean over it."""
+    second_file(repo)
+    bind(repo)
+    done = bind(repo, file=OTHER_FILE, replace=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "--replace released 1 path(s)" in done.stdout
+    assert "backend/src/orders/place.ts" in done.stdout
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [f["path"] for f in declared["bindings"][0]["files"]] == \
+        ["backend/src/orders/evidence.ts"]
+
+
+def test_the_receipt_is_a_receipt_and_not_a_refusal(repo):
+    """Dropping a file is what `--replace` is for, and the ordinary use — omitting a path that no
+    longer exists, which `traced_files_of` refuses to name — is the correct one. An alarm on the
+    correct path is an alarm nobody reads by the third time."""
+    second_file(repo)
+    bind(repo)
+    (repo / "backend" / FILE).unlink()
+    done = bind(repo, file=OTHER_FILE, replace=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "cannot" not in done.stdout
+    assert "backend/src/orders/place.ts" in done.stdout, \
+        "the receipt confirms exactly the vanished path the caller meant to let go"
+    assert run("--check", repo / "backend").returncode == 0
+
+
+def test_a_replace_that_drops_nothing_prints_no_receipt(repo):
+    bind(repo)
+    done = bind(repo, replace=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "released" not in done.stdout
+
+
+def test_the_union_default_never_prints_a_receipt(repo):
+    """Nothing is dropped without --replace, so a receipt there would name a loss that did not
+    happen — which is worse than the silence it replaces."""
+    second_file(repo)
+    bind(repo)
+    done = bind(repo, file=OTHER_FILE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "released" not in done.stdout
+    declared = json.loads((repo / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert len(declared["bindings"][0]["files"]) == 2
+
+
+def test_a_record_replace_reports_what_a_sibling_record_had_bound(repo):
+    """The trap as the consumer met it: two records answering one node, replaced from the second.
+    The receipt names paths and never the record that put them there — which delivery bound a file
+    is not something this file stores."""
+    second_file(repo)
+    first = record_at(repo, [{"node": NODE, "encoded_at": [FILE], "how": "here"}], name="a.md")
+    later = record_at(repo, [{"node": NODE, "encoded_at": [OTHER_FILE], "how": "moved"}],
+                      name="b.md")
+    assert bind_record(repo, first).returncode == 0
+    done = bind_record(repo, later, replace=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "backend/src/orders/place.ts" in done.stdout
+    assert "1 path(s) released across 1 node(s)" in done.stdout

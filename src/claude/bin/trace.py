@@ -52,7 +52,12 @@ two different files is not one of them undoing the other's work. A file this cal
 written at the digest read just now, whether or not an earlier bind already held that path.
 `--replace` writes the entry in full instead, exactly as every bind used to: a file left off the
 list is a file this bind no longer claims — for the case where a fact genuinely moved out of a
-file rather than into an additional one. The first bind for a target root creates the trace file;
+file rather than into an additional one. **It substitutes the whole entry, not the files this call
+names**, so where two records answer one node, replacing from the second drops what the first
+bound. That is legitimate and often intended, and it is never silent: every path a `--replace`
+stops claiming is printed as a receipt once the write succeeds, because the trace it leaves is
+internally consistent and `--check` would come back clean over the loss. The first bind for a
+target root creates the trace file;
 every later one is held to the same specification, named once, and a bind naming a different one
 is refused rather than silently repointed.
 
@@ -211,26 +216,52 @@ def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[di
 
 
 def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
-         replace: bool) -> int:
-    """Fold one binding into the trace in place, and say how many files that node now holds.
+         replace: bool) -> tuple[int, list[str]]:
+    """Fold one binding into the trace in place; say how many files that node now holds, and which
+    ones this call stopped claiming.
 
     Extending what the node already held is the default: two tasks landing one node in two
     different files is not one of them undoing the other's work. `--replace` writes the entry in
     full instead, for the case where a fact genuinely moved out of a file rather than into an
-    additional one."""
+    additional one.
+
+    The second return value is why this reports at all. `--replace` substitutes the whole entry,
+    not the files this call names, so a path an earlier bind put there and this one leaves off is
+    gone — and gone invisibly, because the trace it writes is internally consistent and `--check`
+    comes back clean over it. That is the same silent loss the union default was introduced to end,
+    surviving behind a flag. Nothing here refuses it: dropping a file is exactly what `--replace`
+    is for, and the caller who omitted a vanished path meant to. What was missing is the receipt —
+    the two sides are both in hand at this moment and one of them was being discarded unread.
+
+    Paths, never records. Which delivery put a file here is not something this file stores, so the
+    receipt names what stopped being claimed and says nothing about who claimed it."""
     existing = next((entry for entry in declared["bindings"]
                      if entry.get("node") == node_id), None)
+    given = {entry["path"] for entry in traced_files}
+    dropped = (sorted(entry["path"] for entry in existing.get("files") or []
+                      if entry["path"] not in given)
+               if replace and existing is not None else [])
     if replace or existing is None:
         files = traced_files
     else:
-        given = {entry["path"] for entry in traced_files}
         files = [entry for entry in existing.get("files") or []
                  if entry["path"] not in given] + traced_files
     files = sorted(files, key=lambda entry: entry["path"])
     bindings = [entry for entry in declared["bindings"] if entry.get("node") != node_id]
     bindings.append({"node": node_id, "digest": digest, "files": files})
     declared["bindings"] = sorted(bindings, key=lambda entry: entry["node"])
-    return len(files)
+    return len(files), dropped
+
+
+def released(node_id: str, dropped: list[str]) -> str:
+    """The receipt for what a `--replace` stopped claiming. A statement, never a warning: the
+    ordinary use of `--replace` is a file that genuinely left, and an alarm on the correct path is
+    an alarm nobody reads by the third time. It ends where recovery is, because the trace before
+    this write is in git and nowhere else."""
+    return (f"  --replace released {len(dropped)} path(s) this call did not name; "
+            f"{node_id} no longer claims {', '.join(dropped)}. Where the fact moved out of those "
+            f"files, that is what --replace is for; where another delivery had bound one of them, "
+            f"its binding is gone and the trace as last committed is what still holds it")
 
 
 def opened(target: Path, spec_root: Path,
@@ -299,10 +330,12 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
         print(f"cannot bind: {refusal}")
         return 1
 
-    held = fold(declared, node_id, nodes[node_id]["digest"], traced, replace)
+    held, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace)
     if write_trace(target, declared) != 0:
         return 1
     print(f"bound {node_id} to {held} file(s) at {trace_path(target)}")
+    if dropped:
+        print(released(node_id, dropped))
     return 0
 
 
@@ -397,13 +430,20 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
               f"so a trace holding some of them would say this delivery is linked when it is not.")
         return 1
 
-    held = [(node_id, fold(declared, node_id, nodes[node_id]["digest"], traced, replace))
+    held = [(node_id, *fold(declared, node_id, nodes[node_id]["digest"], traced, replace))
             for node_id, traced in folded]
     if write_trace(target, declared) != 0:
         return 1
-    for node_id, count in held:
+    for node_id, count, dropped in held:
         print(f"bound {node_id} to {count} file(s)")
+        if dropped:
+            print(released(node_id, dropped))
     print(f"{len(held)} binding(s) written at {trace_path(target)}, read from {record.name}")
+    let_go = sum(len(dropped) for _, _, dropped in held)
+    if let_go:
+        print(f"{let_go} path(s) released across {sum(1 for _, _, d in held if d)} node(s); a "
+              f"total is here because one node's receipt is easy to read past in a record that "
+              f"bound twenty")
     return 0
 
 
