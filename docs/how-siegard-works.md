@@ -61,210 +61,750 @@ of `inventory`/`epic`/`task`/`intake`, and every single file — including corre
 is reported as unclassifiable. Seeing every file in a plan fail the same way, all at once, is the
 signature of this mistake.
 
-1. **`project.py`** — reads `siegard.json` and prints what it says. Every skill runs this first.
+Every example below runs against one small, real, internally consistent project fixture, so every
+command line and every line of output on this page is a genuine capture, not a reconstruction: a
+`checkout-service` consumer project with a `sales` context in its specification (an `order`
+aggregate root, an `invoice` value object, and one invariant rule), one initiative called
+`checkout` in its plan (one epic, two tasks — `record-order` and `bill-order`, the second depending
+on the first), one of those two tasks delivered (`record-order`, with its implementation and
+proof), and a `target` source tree the delivery's records point at. Paths are shown relative to the
+project root, `/home/dev/checkout-service`, which is also where `siegard.json` and
+`siegard-trace.json` sit.
 
-   ```
-   project.py <project-root>
-   ```
+### 1. `project.py`
 
-   - `<project-root>` — any directory inside the consumer project. The script does not require this
-     to already be the git toplevel: it walks up to find one (or falls back to `<project-root>`
-     itself where git does not hold the tree) and reads `siegard.json` there.
+**General.** The one entry point onto `siegard.json`. Every skill runs this first, and no other
+script in this framework ever parses `siegard.json` itself — this is the sole reader, held to
+`schemas/project.json`. Dependency: `jsonschema`.
 
-   There is exactly one form — no flags. It prints one line per field `siegard.json` declares
-   (`standard`, `specification_root`, each entry under `targets`, `work_root`, `delivery_root`),
-   each resolved to an absolute path. If the file is missing or a field is absent, this script does
-   not guess a default: it just says so (exit 0 either way — a missing file is a fact, not a
-   failure), and it is the calling skill's job to decide whether that absence is a stop. Run this
-   first, always: every root named on every other command below is exactly what this script just
-   printed, never retyped from memory. `standard` is the one field an invocation elsewhere may
-   override; this script's report is what says whether the file's own value or an override won.
+- **Reads:** `siegard.json`. **Writes:** nothing — it is read-only over its input.
 
-2. **`spec.py`** — validates the specification against the five-class metamodel and derives its
-   projections.
+#### `project.py <project-root>`
 
-   ```
-   spec.py <spec-root>
-   spec.py --project <spec-root>
-   spec.py --digest <spec-root>
-   spec.py --node <file> <spec-root>
-   ```
+- **Function:** resolves the file and prints every field it declares, each turned into an absolute
+  path.
+- **When to use it:** first, always, in any session that is about to call any other script here —
+  every root named on the command lines below is exactly what this prints, never retyped from
+  memory or guessed from a convention.
+- **Read or write:** read-only. Exit 0 whether or not `siegard.json` exists — a missing file is a
+  fact this prints, not a failure. `<project-root>` need not already be the git toplevel: the
+  script walks up to find one, or falls back to `<project-root>` itself where git does not hold the
+  tree.
 
-   - `<spec-root>` — the specification root (`siegard.json`'s `specification_root`).
-   - `--project` — after validating, (re)writes `projections/` under `<spec-root>`: class diagrams,
-     the context map, state diagrams, the capability map, the overview. Refused entirely while the
-     specification has problems — a projection over a broken specification would report a shape
-     nobody decided. Never edit `projections/` by hand; this is its only writer, and it clears
-     stale files the next input no longer derives.
-   - `--digest` — after validating, prints one line per node, sorted by identity:
-     `<identity>  sha256:<hexdigest>` — the same digest `sha256sum <path>` computes by hand. Used
-     elsewhere (a trace bind, a task's pin) to detect when a node's text has moved since something
-     else was written against it. `--project` and `--digest` are mutually exclusive.
-   - `--node <file>` — validates one file in isolation, against its own class's schema only: no
-     reference resolution, no reachability, no decision-log check — those need the whole tree, and
-     a file mid-authoring has not earned them yet. Cannot combine with `--project` or `--digest`.
+Example — `<project-root>` is any directory inside the project, here the project root itself:
 
-   Checks the plain form runs that no per-file schema can express: every cross-reference resolves
-   and lands on the class the field demands, an attribute never points at an identity-bearing
-   element, composition stays inside its aggregate, a state machine is total, every element is
-   reachable, and — importantly — a `gaps`, `sources`, `rationale` or `proposal` field is refused
-   outright: an unstated fact must be decided and logged in the decision log, never marked as an
-   open question inside the specification itself. Use the plain form for an ordinary validation
-   pass (after `/analyse` writes or edits nodes); `--project` whenever a projection needs to be
-   current; `--digest` when something else needs to pin a node's text at this moment; `--node`
-   only while a single file is still being authored.
+```
+$ python3 bin/project.py .
+standard: /home/dev/checkout-service/target/standard.yaml
+specification_root: /home/dev/checkout-service/specification
+target backend: /home/dev/checkout-service/target
+work_root: /home/dev/checkout-service/work
+delivery_root: /home/dev/checkout-service/delivery
+```
 
-3. **`plan.py`** — derives the plan graph from the markdown plan nodes, and refuses what breaks it.
+There is no artifact besides this screen output — `project.py` derives nothing to disk.
 
-   ```
-   plan.py <work-root> [<specification-root>]
-   plan.py --check <work-root> [<specification-root>]
-   plan.py --node <file> <work-root> [<specification-root>]
-   plan.py --standard <file> --against <target-source-root> <work-root> [<specification-root>]
-   ```
+### 2. `spec.py`
 
-   - `<work-root>` — **one initiative's** plan directory (see the caution above).
-   - `<specification-root>` — required while the plan is live; optional and ignored once a
-     `closure.md` at `<work-root>` marks the plan closed, because closed history answers to the
-     specification it was built against, never to today's.
-   - `--check` — validates, then compares against the `plan.json` already on disk; writes nothing.
-     Exits 1 if that file is stale relative to what a plain run would derive right now.
-   - `--node <file>` — validates one plan node against `schemas/plan-node.json` only; skips
-     cross-node checks (dependency cycles, epic coverage) and the specification checks entirely.
-     Cannot combine with `--standard`.
-   - `--standard <file> --against <target-source-root>` — the two flags always travel together (one
-     without the other is refused): reconciles what the project's own registry (`<file>`)
-     presupposes against what actually exists at `<target-source-root>`, and against every task's
-     `produces`. Cannot combine with `--node` — a standard's presuppositions are a fact about the
-     whole plan, not about one file.
+**General.** Validates a specification against the five-class metamodel (Domain Model element,
+Rule, Scenario, Contract, Architecture Constraint) and derives its projections. The path is the
+identity: `domain/<context>/<slug>.md` is an element, `rules/`, `scenarios/` and `contracts/`
+follow the same shape, `constraints/<slug>.md` is system-wide, and `decision-log.md` at the root is
+the one mandatory non-normative file. No file carries an id or a type field, so none can disagree
+with where it sits. Dependencies: PyYAML, jsonschema.
 
-   It imports `spec.py` directly and reads the specification through it, never through a cached
-   index, so the plan can never be checked against a stale view of the spec — a specification that
-   does not hold together is itself a refusal to run `plan.py` at all (fix it with `spec.py`
-   first). The plain form (no flags beyond the roots) is the only writer of `plan.json`.
+- **Reads:** every `.md` file under `<spec-root>`. **Writes:** `projections/` under `<spec-root>`,
+  and only with `--project`.
 
-4. **`deliver.py`** — derives the delivery graph from the markdown delivery nodes. The largest
-   script, because it is where the most cross-file rules live.
+#### `spec.py <spec-root>`
 
-   ```
-   deliver.py <delivery-root> <work-root> <target-source-root> [<specification-root>]
-   deliver.py --check <delivery-root> <work-root> <target-source-root> [<specification-root>]
-   deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>]
-   deliver.py --node <file> <delivery-root> <work-root> [<specification-root>]
-   deliver.py --standard <file> [--against <target-source-root>]
-   ```
+- **Function:** validates the whole specification: every per-file schema, plus every cross-file
+  rule no per-file schema can express — every reference resolves to the class it names, an
+  attribute never points at an identity-bearing element, composition stays inside its aggregate, a
+  state machine is total, every element is reachable, and a `gaps`, `sources`, `rationale` or
+  `proposal` field is refused outright (an unstated fact is decided and logged in the decision log,
+  never marked open in the specification itself).
+- **When to use it:** an ordinary validation pass, typically right after `/analyse` writes or edits
+  nodes.
+- **Read or write:** read-only.
 
-   - `<delivery-root>` and `<work-root>` — again, one initiative's directories each:
-     `<delivery_root>/<slug>` and `<work_root>/<slug>` (see the caution above — the same
-     misclassification happens here if either is given as the shared container instead).
-   - `<target-source-root>` — resolves every delivery record's `standard` reference (e.g.
-     `siegard.json`'s `targets.backend`). Required by the plain, `--check` and `--outstanding`
-     forms even if no record in this delivery happens to name a standard; `--node` is the one form
-     that drops the requirement, since it never reads a standard reference at all.
-   - `<specification-root>` — same rule as `plan.py`: required while the plan behind this delivery
-     is live, ignored once it is closed (this script reads the plan through `plan.py`'s own
-     pipeline, so the same closure rule applies transitively).
-   - `--check` — compares against `delivery.json` already on disk; writes nothing.
-   - `--outstanding` — never writes. Prints every task with no delivery record yet, what each one
-     is waiting on (an undelivered dependency, substrate a task of this plan produces but the tree
-     does not yet hold, a standing `BLOCKING` note only a person can settle), and the set that
-     could be delivered right now. This is the command that answers "what is left?" — call it
-     fresh every time; nothing about its answer is ever stored.
-   - `--node <file>` — validates one delivery node's own schema and internal consistency only:
-     skips cross-node checks, the plan checks and the standard checks — and, because of that, does
-     not need `<target-source-root>` either.
-   - `--standard <file> [--against <target-source-root>]` — stands entirely alone: validates one
-     project registry file, needing no delivery, work, or specification root at all. Add
-     `--against <target-source-root>` to also check whether that tree already holds what the
-     registry presupposes (exit 1 while any of it is still absent).
+```
+$ python3 bin/spec.py ./specification
+specification sound: 2 element(s), 1 rule(s) across 1 context(s); 0 decision(s) disclosed
+```
 
-   The plain form (no flags beyond the four roots) is the only writer of `delivery.json`.
+#### `spec.py --project <spec-root>`
 
-5. **`run.py`** — executes the consumer project's own build/test commands (never invented here)
-   and records exactly what they printed.
+- **Function:** the plain validation, then (re)writes `projections/`: class diagrams per context,
+  the context map, state diagrams, the capability map, and an overview — sorted throughout, so
+  identical input is byte-identical output.
+- **When to use it:** whenever a projection needs to be current — after any change to the
+  specification that a human or another tool is about to read a diagram or the context map from.
+  Never edit `projections/` by hand; this is its only writer, and it deletes any stale file the
+  current input no longer derives.
+- **Read or write:** writes `projections/`. Refused entirely — nothing is written — while the
+  specification has problems, the same as the plain form.
 
-   ```
-   run.py <delivery-root> --run <slug> --cwd <dir> --timeout-seconds <n> \
-          --step <name>="<command>" [--step <name>="<command>" ...]
-   ```
+```
+$ python3 bin/spec.py --project ./specification
+specification sound: 2 element(s), 1 rule(s) across 1 context(s); 0 decision(s) disclosed
+projected 4 file(s) into specification/projections: capability-map.mmd, class-diagram-sales.mmd,
+context-map.mmd, overview.md
+```
 
-   - `<delivery-root>` — positional, the same per-initiative root `deliver.py` takes; the run's
-     output lands at `<delivery-root>/run/<slug>/`.
-   - `--run <slug>` — names this run. A slug that already exists on disk is refused outright —
-     nothing here is ever overwritten; a rerun always gets a new name, so every attempt stays a
-     separately readable record.
-   - `--cwd <dir>` — required, the directory every step's command runs from. Never guessed or
-     defaulted, because a directory chosen in silence would run against a tree nobody named.
-   - `--timeout-seconds <n>` — required, one ceiling applied to every step. There is no built-in
-     default: a number this framework shipped would be a number nobody calibrated for the actual
-     suite.
-   - `--step <name>="<command>"` — repeatable, one per build/test step, executed in the order
-     given. `<name>` is lowercase words joined by hyphens. Each `<command>` is split with
-     `shlex.split` and run directly, with no shell: no `&&`, `|`, `>`, `$VAR` expansion, no
-     globbing. A step that fails or times out stops the run; every step after it is recorded as
-     not run, never executed against a tree the previous step left broken.
+Artifact generated:
 
-   There is no `--check`/plain distinction here — every invocation both runs the commands and
-   writes the record, so there is nothing separate to compare against. `run.py` holds no notion of
-   what a "test" or a "build" is for any technology: the steps and their commands are always the
-   caller's.
+```
+specification/projections/capability-map.mmd
+specification/projections/class-diagram-sales.mmd
+specification/projections/context-map.mmd
+specification/projections/overview.md
+```
 
-6. **`trace.py`** — resolves and maintains `siegard-trace.json`, the one fact that outlives both
-   the plan and the delivery: which specification node produced which file.
+#### `spec.py --digest <spec-root>`
 
-   ```
-   trace.py <target-root>
-   trace.py --check <target-root>
-   trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
-   trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
-   trace.py --prune <target-root>
-   trace.py --reconciliation <reconciliation-record>
-   ```
+- **Function:** the plain validation, then prints one line per node, sorted by identity:
+  `<identity>  sha256:<hexdigest>` — the exact digest `sha256sum <path>` computes by hand over that
+  file's bytes.
+- **When to use it:** whenever something outside the specification needs to pin a node's text at
+  this moment, so it can later ask whether that node moved — a trace bind or a task's `implements`
+  do this indirectly, through `trace.py`. Mutually exclusive with `--project`.
+- **Read or write:** read-only.
 
-   - `<target-root>` — the target source root (e.g. `siegard.json`'s `targets.backend`), where
-     `siegard-trace.json` sits beside `siegard.json` at that tree's git toplevel. Every `<file>` on
-     the command line, and every path a bound record names, is read relative to this root.
-   - `<spec-root>` — the specification root, read through the same pipeline `spec.py` uses.
-   - `--check` — recomputes both digests (the node's and every bound file's) and reports drift in
-     three classes, writing nothing: `orphaned` (the node the file was bound to no longer exists in
-     the specification — a human must decide; `--prune` is the only way to clear it), `moved` (the
-     node's text changed since the bind), `code` (the bound file changed since the bind).
-   - `--bind <node> <file> [<file> ...]` — writes or extends one binding by hand: reads `<node>`'s
-     current digest and each `<file>`'s current digest, and writes the entry. By default this
-     extends whatever that node already held — a file an earlier bind of the same node named but
-     this call does not is left bound at the digest that earlier bind recorded.
-   - `--replace` — a modifier on `--bind` or `--bind-record`, not a form of its own: writes the
-     entry in full instead of extending it, so a file left off the list is a file no longer
-     claimed. Every path a `--replace` stops claiming is printed as a receipt once the write
-     succeeds — never a silent drop.
-   - `--bind-record <implementation-record>` — reads one whole implementation record and binds
-     every node/file pair it states, atomically, refusing the whole write if any part of the record
-     would be refused. This is the form `/implement-task` uses, instead of one `--bind` per node.
-   - `--prune` — drops only the `orphaned` bindings. `moved` and `code` drift are never dropped this
-     way, only rebound by whoever owns the change — pruning either would discard the one record of
-     which node that code answers to.
-   - `--reconciliation <reconciliation-record>` — the one form that writes nothing: validates a
-     reconciliation record (written by `/reconcile`, at `siegard-reconcile/<slug>.md`) against
-     `schemas/reconciliation.json`, so `--bind-record` can read it afterward exactly as it reads an
-     implementation record.
+```
+$ python3 bin/spec.py --digest ./specification
+specification sound: 2 element(s), 1 rule(s) across 1 context(s); 0 decision(s) disclosed
+decision-log  sha256:19a18d53bec3cfd6dae94e727daf04dacaf4d5671c7dced2c2d7844467dfbb7a
+domain/sales/_context  sha256:8323cf76415517a6d737932d145864d5ed3e5be190dfe05f97ba16713fb25c96
+domain/sales/invoice  sha256:8296445581e78ffa5248951fc1b41fa5513c7c301f84403210d62ae47bb45ece
+domain/sales/order  sha256:944984f5b60539ff5ce46d11d812072a7a4c27c1ca8cf8a0f9bb32f1541e1fdb
+rules/sales/invoice-immutable  sha256:8bcfb4772d03b51941327678ae962fc64b3ab7049e20f9a03911983cf5fae5e5
+```
 
-7. **`terms.py`** — a glossary that holds no text of its own.
+#### `spec.py --node <file> <spec-root>`
 
-   ```
-   terms.py
-   terms.py <term> [<term> ...]
-   ```
+- **Function:** validates one file in isolation, against its own class's schema only — no
+  reference resolution, no reachability, no decision-log check, because those need the whole tree
+  and a file mid-authoring has not earned them yet.
+- **When to use it:** while a single node is still being written, before the rest of the tree is
+  ready to check it against.
+- **Read or write:** read-only. Cannot combine with `--project` or `--digest`.
 
-   - No arguments — prints every defined term, alphabetically.
-   - One or more `<term>` — prints only those terms; exits 1 if any named term is not in the table,
-     rather than silently dropping it from the output.
+```
+$ python3 bin/spec.py --node ./specification/domain/sales/order.md ./specification
+domain/sales/order: sound on its own. Cross-node checks did not run; they run on the whole
+specification.
+```
 
-   Every term maps to a schema file and a JSON pointer; what gets printed is read live from the
-   `description` at that pointer — nothing here paraphrases a definition, so there is no copy to
-   drift out of sync. A pointer that stops resolving (a field renamed elsewhere) is a refusal,
-   naming the term and the broken pointer, never a silently stale entry. A word the framework uses
-   normatively but no contract defines is still listed, under "no definition holds these" — a
-   disclosed gap, never an omission.
+### 3. `plan.py`
+
+**General.** Derives the plan graph from the markdown plan nodes and refuses what breaks it. The
+path is the identity: `inventory/<slug>.md` and `epic/<slug>.md` are two-part nodes,
+`task/<epic>/<slug>.md` sits under the epic its path names. It imports `spec.py` directly and reads
+the specification through it, never through a cached index, so a plan can never be checked against
+a stale view of the spec. Dependencies: PyYAML, jsonschema.
+
+- **Reads:** every `.md` file under `<work-root>` (one initiative's directory — see the caution
+  above), plus the specification. **Writes:** `plan.json` at `<work-root>`, only with the plain
+  form.
+
+#### `plan.py <work-root> [<specification-root>]`
+
+- **Function:** validates every plan node's own schema, then the cross-node rules no per-file
+  schema can express — a task's epic exists, dependencies form no cycle, every node an epic claims
+  to `covers` is implemented by one of its tasks or declared `uncovered` (never silently neither) —
+  then derives and writes `plan.json`.
+- **When to use it:** after `/plan-work` writes or edits plan nodes, or any time the derived graph
+  needs to be current.
+- **Read or write:** writes `plan.json`. `<specification-root>` is required while the plan is live
+  (no `closure.md` at `<work-root>`); once the plan is closed, it is optional and ignored, because
+  closed history answers to the specification it was built against, never to today's.
+
+```
+$ python3 bin/plan.py ./work/checkout ./specification
+derived work/checkout/plan.json: 4 node(s), 5 edge(s), contract siegard-plan/3
+  1 inventory, 1 epic, 2 task; 2 specification node reference(s) implemented (2 unique)
+```
+
+Artifact generated (`work/checkout/plan.json`, excerpt):
+
+```json
+{
+  "contract_version": "siegard-plan/3",
+  "nodes": [
+    { "id": "epic/checkout", "kind": "epic", "file": "epic/checkout.md",
+      "title": "Checkout", "summary": "Everything order placement needs." },
+    { "id": "inventory/order-service", "kind": "inventory", "file": "inventory/order-service.md",
+      "title": "Order service", "summary": "One layered service under src/." },
+    { "id": "task/checkout/bill-order", "kind": "task", "file": "task/checkout/bill-order.md",
+      "title": "Bill order", "summary": "Raise the bill for a recorded order.",
+      "epic": "checkout" },
+    { "id": "task/checkout/record-order", "kind": "task",
+      "file": "task/checkout/record-order.md", "title": "Record order",
+      "summary": "Persist a placed order.", "epic": "checkout" }
+  ],
+  "edges": [
+    { "from": "epic/checkout", "to": "domain/sales/order", "kind": "covers", "at": "covers[0]" },
+    { "from": "epic/checkout", "to": "domain/sales/invoice", "kind": "covers", "at": "covers[1]" },
+    { "from": "task/checkout/bill-order", "to": "task/checkout/record-order",
+      "kind": "depends_on", "at": "depends_on[0]" }
+  ]
+}
+```
+
+#### `plan.py --check <work-root> [<specification-root>]`
+
+- **Function:** the same validation, then compares the result against `plan.json` already on disk.
+- **When to use it:** to confirm the derived index is current without touching it — the form every
+  other script's own pipeline uses internally before trusting a plan.
+- **Read or write:** read-only; exits 1 if `plan.json` is stale relative to what a plain run would
+  derive right now.
+
+```
+$ python3 bin/plan.py --check ./work/checkout ./specification
+plan checked: work/checkout/plan.json matches 4 node(s)
+```
+
+#### `plan.py --node <file> <work-root> [<specification-root>]`
+
+- **Function:** validates one plan node against `schemas/plan-node.json` only, skipping cross-node
+  checks (cycles, coverage) and the specification checks entirely.
+- **When to use it:** while a single task or epic is still being drafted.
+- **Read or write:** read-only. Cannot combine with `--standard`.
+
+```
+$ python3 bin/plan.py --node ./work/checkout/task/checkout/record-order.md ./work/checkout ./specification
+task/checkout/record-order: sound on its own. Cross-node checks and specification checks did not
+run; they run on the whole plan.
+```
+
+#### `plan.py --standard <file> --against <target-source-root> <work-root> [<specification-root>]`
+
+- **Function:** the plain validation and write, plus a reconciliation between what the project's
+  own registry (`<file>`) presupposes and what the tree at `<target-source-root>` actually holds,
+  and what the plan's own tasks declare in `produces`. The two flags always travel together; naming
+  one without the other is refused.
+- **When to use it:** before a plan is trusted to hand tasks to `/implement-task` — it is what
+  catches a rule the registry needs (e.g. a rule a tool decides, which needs a manifest to run
+  against) that nothing in this plan is set up to provide yet.
+- **Read or write:** writes `plan.json` on success, the same as the plain form. Cannot combine with
+  `--node`.
+
+Satisfied — `target/package.json` exists, so `PRH-01`'s presupposition holds:
+
+```
+$ python3 bin/plan.py --standard ./target/standard.yaml --against ./target ./work/checkout ./specification
+derived work/checkout/plan.json: 4 node(s), 5 edge(s), contract siegard-plan/3
+  1 inventory, 1 epic, 2 task; 2 specification node reference(s) implemented (2 unique)
+```
+
+Refused — `target/package.json` is temporarily removed, so the same registry cannot be applied to
+this plan, and nothing is derived:
+
+```
+$ rm target/package.json
+$ python3 bin/plan.py --standard ./target/standard.yaml --against ./target ./work/checkout ./specification
+./target/standard.yaml presupposes package.json, which target does not hold and no task produces;
+PRH-01 cannot be applied to anything this plan delivers, and /implement-task drops the check that
+the tree holds what the registry presupposes, and a record whose files no rule reaches owes the
+install alone instead of the build and the suite. Ordinary work declares none — drop package.json
+from `produces`, or name it in target/standard.yaml's `presupposes` if that is what it really is
+
+1 problem(s) over 4 node(s). plan.json is not derived over a plan that does not hold together.
+```
+
+### 4. `deliver.py`
+
+**General.** Derives the delivery graph from the markdown delivery nodes and refuses what breaks
+it — the largest of the seven scripts, because it is where the most cross-file rules live:
+`implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` answer the task at
+`task/<epic>/<slug>`, and `review/<slug>.md` names one review. It reads the plan through `plan.py`'s
+own pipeline, never through `plan.json` directly, and the pin each record carries is the SHA-256 of
+its own task's file. Dependencies: PyYAML, jsonschema.
+
+- **Reads:** every `.md` file under `<delivery-root>` (one initiative's directory), the plan, and,
+  where named, a project standard. **Writes:** `delivery.json` at `<delivery-root>`, only with the
+  plain form.
+
+#### `deliver.py <delivery-root> <work-root> <target-source-root> [<specification-root>]`
+
+- **Function:** validates every delivery node's own schema and internal consistency, then the
+  cross-file rules — the task it answers exists, a proof sits beside its implementation, every
+  criterion of the task is answered exactly once, every specification node the task implements is
+  accounted for, no task is delivered before the tasks it depends on — then derives and writes
+  `delivery.json`.
+- **When to use it:** after `/implement-task` writes an implementation and a proof record for a
+  task, or any time the derived graph needs to be current.
+- **Read or write:** writes `delivery.json`. `<target-source-root>` resolves every record's
+  `standard` reference and is required even where no record happens to name one.
+  `<specification-root>` follows the same closed/live rule as `plan.py`, inherited transitively.
+
+```
+$ python3 bin/deliver.py ./delivery/checkout ./work/checkout ./target ./specification
+derived delivery/checkout/delivery.json: 2 node(s), 3 edge(s), contract siegard-delivery/2
+  1 implementation, 1 proof; 1 of 2 task(s) hold a record; 0 criterion(s) recorded unmet; 0
+  recorded unproven; 0 finding(s)
+```
+
+Artifact generated (`delivery/checkout/delivery.json`, excerpt):
+
+```json
+{
+  "contract_version": "siegard-delivery/2",
+  "nodes": [
+    { "id": "implementation/checkout/record-order", "kind": "implementation",
+      "file": "implementation/checkout/record-order.md",
+      "title": "Record a placed order", "task": "task/checkout/record-order" },
+    { "id": "proof/checkout/record-order", "kind": "proof",
+      "file": "proof/checkout/record-order.md",
+      "title": "Proof for recording a placed order", "task": "task/checkout/record-order" }
+  ],
+  "edges": [
+    { "from": "implementation/checkout/record-order", "to": "domain/sales/order",
+      "kind": "encodes", "at": "nodes[0]" },
+    { "from": "implementation/checkout/record-order", "to": "task/checkout/record-order",
+      "kind": "implements", "at": "task" }
+  ]
+}
+```
+
+#### `deliver.py --check <delivery-root> <work-root> <target-source-root> [<specification-root>]`
+
+- **Function:** the same validation, then compares against `delivery.json` already on disk.
+- **When to use it:** to confirm the derived index is current without touching it.
+- **Read or write:** read-only; exits 1 if `delivery.json` is stale.
+
+```
+$ python3 bin/deliver.py --check ./delivery/checkout ./work/checkout ./target ./specification
+delivery checked: delivery/checkout/delivery.json matches 2 node(s)
+```
+
+#### `deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>]`
+
+- **Function:** the same validation, then prints every task with no delivery record yet, what each
+  one is waiting on (an undelivered dependency, substrate a task of this plan produces but the tree
+  does not yet hold, a standing `BLOCKING` note only a person can settle), and the set that could be
+  delivered right now.
+- **When to use it:** any time the answer to "what is left?" is needed — this is the one place that
+  answer is computed; nothing about it is ever stored, so it is always current.
+- **Read or write:** read-only; never writes `delivery.json`, even when the underlying data would
+  otherwise cause one to be derived.
+
+```
+$ python3 bin/deliver.py --outstanding ./delivery/checkout ./work/checkout ./target ./specification
+task/checkout/bill-order: no record
+deliverable now: task/checkout/bill-order — no record, nothing they wait on, no standing BLOCKING
+note. Which one is the caller's to choose; nothing here orders them
+```
+
+#### `deliver.py --node <file> <delivery-root> <work-root> [<specification-root>]`
+
+- **Function:** validates one delivery node's own schema and internal consistency only, skipping
+  cross-node checks, the plan checks and the standard checks.
+- **When to use it:** while a single implementation or proof record is still being written.
+- **Read or write:** read-only. `<target-source-root>` is not needed by this form, since it never
+  reads a standard reference.
+
+```
+$ python3 bin/deliver.py --node ./delivery/checkout/implementation/checkout/record-order.md ./delivery/checkout ./work/checkout ./specification
+implementation/checkout/record-order: sound on its own. Cross-node checks and plan checks did not
+run; they run on the whole delivery.
+```
+
+#### `deliver.py --standard <file> [--against <target-source-root>]`
+
+- **Function:** validates one project registry file on its own against `schemas/standard.json`,
+  needing no delivery, work or specification root at all. With `--against <target-source-root>`
+  also named, additionally checks whether that tree already holds what the registry presupposes.
+- **When to use it:** before any review reads the registry (a consumer's own pre-flight), and
+  whenever `/plan-work` needs to know whether a presupposition is already met or still owed to a
+  task's `produces`.
+- **Read or write:** read-only in both forms.
+
+Alone:
+
+```
+$ python3 bin/deliver.py --standard ./target/standard.yaml
+standard checked: target/standard.yaml declares 2 rule(s) — 1 decided by reading, 1 by a tool
+  pin sha256:e1fd2fa6a97b42be5d43790c5d3606f9e9bb5a841e122a3fc289c0f0f8eaf204
+  the rules a tool decides run as step(s) lint (1 rule(s)); a review reads only the 1 decided by
+  reading
+  it declares 3 command(s): install = true (60s), lint = true (60s), test = true (60s)
+    installs with install, proves with test, and the rest run as checks on both sides of the tests
+  it authorizes 1 direct dependency(ies): pino. What they pull in transitively is nobody's
+  approval and the lockfile's record
+  it presupposes 1 artifact(s); --against <target-source-root> says whether they stand
+```
+
+With `--against`, presupposition satisfied:
+
+```
+$ python3 bin/deliver.py --standard ./target/standard.yaml --against ./target
+standard checked: target/standard.yaml declares 2 rule(s) — 1 decided by reading, 1 by a tool
+  ...
+  against target:
+  package.json: stands, and PRH-01 can be applied
+```
+
+With `--against`, presupposition absent (`target/package.json` temporarily removed) — exit 1, and
+the message hands over a ready `/plan-work` invocation instead of just naming the gap:
+
+```
+$ rm target/package.json
+$ python3 bin/deliver.py --standard ./target/standard.yaml --against ./target
+standard checked: target/standard.yaml declares 2 rule(s) — 1 decided by reading, 1 by a tool
+  ...
+  against target:
+  package.json: ABSENT — the script the test step below runs
+      unanswerable while it is: PRH-01
+
+1 presupposed artifact(s) absent. Source written now answers to a registry that cannot be applied
+to it: the rules above go unanswered, and the absence is found once per file in a review instead of
+once here. The artifact is built by a task that declares it in `produces`, planned through
+/plan-work — ready below, but for the two roots only the caller knows:
+
+  /plan-work
+
+  Scope: the registry at target/standard.yaml presupposes package.json, absent from target.
+  One cut: the task that produces it, declared in `produces`, covering the rules named above.
+  Work root: <the plan this initiative runs under>
+  Specification root: <the specification that plan implements against>
+  Target source root: target
+  Project standard: target/standard.yaml
+```
+
+### 5. `run.py`
+
+**General.** Executes the consumer project's own build/test commands — never invented here, never
+guessed from the repository — with no shell (`shlex.split`, no `&&`, `|`, `>`, `$VAR`, no
+globbing), and writes exactly what they printed. No dependency beyond the standard library.
+
+- **Reads:** nothing but its own arguments. **Writes:** `<delivery-root>/run/<slug>/`, always — this
+  script has no read-only form, because there is nothing to compare a run against.
+
+#### `run.py <delivery-root> --run <slug> --cwd <dir> --timeout-seconds <n> --step <name>="<command>" [--step <name>="<command>" ...]`
+
+- **Function:** runs each `--step` in order, in `<dir>`, each bounded by the same
+  `--timeout-seconds`; a step that fails or times out stops the run, and every step after it is
+  recorded `not_run` rather than executed.
+- **When to use it:** whenever a task's implementation needs to be built and tested, or a review
+  needs a fresh, independently reproducible record of the suite. `--run <slug>` must be new every
+  time — a slug that already exists on disk is refused, so a second attempt is always a second,
+  separately readable record.
+- **Read or write:** writes. `--cwd` and `--timeout-seconds` are required with no default, on
+  purpose — a directory or a bound chosen in silence would produce a run against a tree, or for a
+  duration, nobody named.
+
+All steps pass:
+
+```
+$ python3 bin/run.py ./delivery/checkout --run checkout-suite --cwd ./target --timeout-seconds 60 \
+      --step install="true" --step test="true"
+{
+  "contract_version": "siegard-run/1",
+  "run": "run/checkout-suite",
+  "cwd": "/home/dev/checkout-service/target",
+  "timeout_seconds": 60,
+  "outcome": "passed",
+  "failed_step": null,
+  "steps": [
+    { "name": "install", "command": "true", "outcome": "passed", "exit_code": 0,
+      "output": "install.log" },
+    { "name": "test", "command": "true", "outcome": "passed", "exit_code": 0,
+      "output": "test.log" }
+  ],
+  "combined_output": "run.log"
+}
+```
+
+Artifact generated:
+
+```
+delivery/checkout/run/checkout-suite/run.json
+delivery/checkout/run/checkout-suite/install.log
+delivery/checkout/run/checkout-suite/test.log
+delivery/checkout/run/checkout-suite/run.log
+```
+
+Rerunning under the same slug is refused outright, before anything executes:
+
+```
+$ python3 bin/run.py ./delivery/checkout --run checkout-suite --cwd ./target --timeout-seconds 60 \
+      --step install="true" --step test="true"
+cannot run: delivery/checkout/run/checkout-suite already exists; a second run under one name would
+overwrite the evidence of the first — name this one differently
+```
+
+A middle step fails; the last step is recorded, never executed:
+
+```
+$ python3 bin/run.py ./delivery/checkout --run checkout-suite-3 --cwd ./target --timeout-seconds 60 \
+      --step install="true" --step lint="false" --step test="true"
+{
+  "contract_version": "siegard-run/1",
+  "run": "run/checkout-suite-3",
+  "cwd": "/home/dev/checkout-service/target",
+  "timeout_seconds": 60,
+  "outcome": "failed",
+  "failed_step": "lint",
+  "steps": [
+    { "name": "install", "command": "true", "outcome": "passed", "exit_code": 0,
+      "output": "install.log" },
+    { "name": "lint", "command": "false", "outcome": "failed", "exit_code": 1,
+      "output": "lint.log" },
+    { "name": "test", "command": "true", "outcome": "not_run", "exit_code": null,
+      "output": null }
+  ],
+  "combined_output": "run.log"
+}
+```
+
+### 6. `trace.py`
+
+**General.** Resolves and maintains `siegard-trace.json`: which specification node produced which
+file, the one fact that outlives both the plan and the delivery. It sits beside `siegard.json`, at
+the git toplevel of `<target-root>`. Every `<file>` on the command line, and every path a bound
+record names, is read relative to `<target-root>`, then converted to be relative to that toplevel
+inside the file itself. Dependencies: PyYAML, jsonschema (imports `spec.py` and `project.py`).
+
+- **Reads:** `<target-root>`'s files, and the specification through `spec.py`'s own pipeline.
+  **Writes:** `siegard-trace.json`, with every form except `--check` and `--reconciliation`, which
+  are read-only.
+
+#### `trace.py <target-root>`
+
+- **Function:** reads and validates the trace file against its schema; reports the count.
+- **When to use it:** a quick sanity check — is there a trace at all, and does it hold together.
+- **Read or write:** read-only.
+
+Before anything has ever been bound:
+
+```
+$ python3 bin/trace.py ./target
+no trace file: /home/dev/checkout-service/siegard-trace.json does not exist; nothing has been
+bound yet
+```
+
+After one binding exists (see `--bind` below):
+
+```
+$ python3 bin/trace.py ./target
+trace sound: 1 binding(s), traced against specification
+```
+
+#### `trace.py --check <target-root>`
+
+- **Function:** recomputes every digest — the node's and every bound file's — and reports drift in
+  three classes: `orphaned` (the node the file was bound to no longer exists in the specification —
+  only `--prune` clears these), `moved` (the node's text changed since the bind), `code` (the bound
+  file changed since the bind).
+- **When to use it:** periodically, or before trusting that delivered code still says what the
+  specification says — `/reconcile` and a review both start here.
+- **Read or write:** read-only.
+
+No drift:
+
+```
+$ python3 bin/trace.py --check ./target
+no drift: 1 binding(s) match the specification and the code as both stand now
+```
+
+`moved` — the bound node's text changed since the bind:
+
+```
+$ python3 bin/trace.py --check ./target
+domain/sales/order: bound at sha256:944984f5b60539ff5ce46d11d812072a7a4c27c1ca8cf8a0f9bb32f1541e1fdb,
+now sha256:2a36464f38b8b95fe9a5062fd288ee5aa63fbdca44c8e6a2e4b3eefc44215b69; the specification
+moved since this bind
+
+1 drift finding(s) over 1 binding(s):
+  0 orphaned: bound to a node the specification no longer holds — no bind can repair these, and
+    `--prune` is the only thing that clears them
+  1 moved: bound to a node whose text moved since the bind — rebind whoever owns the change
+  0 code: bound to a file that changed or is gone — rebind whoever owns the change
+```
+
+`code` — the bound file changed without a rebind:
+
+```
+$ python3 bin/trace.py --check ./target
+domain/sales/order: target/src/orders/place.ts bound at sha256:2489745f...818a, now
+sha256:bd5a03aa...4151; the file changed without a rebind
+
+1 drift finding(s) over 1 binding(s):
+  0 orphaned: ...
+  0 moved: ...
+  1 code: bound to a file that changed or is gone — rebind whoever owns the change
+```
+
+`orphaned` — the node left the specification entirely:
+
+```
+$ python3 bin/trace.py --check ./target
+domain/sales/order: no longer in the specification; the binding is stale
+
+1 drift finding(s) over 1 binding(s):
+  1 orphaned: bound to a node the specification no longer holds — no bind can repair these, and
+    `--prune` is the only thing that clears them
+  0 moved: ...
+  0 code: ...
+```
+
+#### `trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]`
+
+- **Function:** reads `<node>`'s current digest and each `<file>`'s current digest, and writes the
+  binding. By default this **extends** whatever that node already held: a file an earlier bind of
+  the same node named, but this call does not, stays bound at the digest that earlier bind recorded
+  — two tasks landing the same rule in two files is not one undoing the other. With `--replace`, it
+  writes the entry **in full** instead: a file left off the new list is a file no longer claimed,
+  and every path a `--replace` stops claiming is printed as a receipt.
+- **When to use it:** by hand, for a single node/file pair — the general form behind what
+  `/implement-task` normally does through `--bind-record` instead.
+- **Read or write:** writes `siegard-trace.json` (creates it, if this is the first bind for this
+  target root).
+
+Default (extends) — a second file added to a node already bound to one:
+
+```
+$ python3 bin/trace.py --bind ./target ./specification domain/sales/order \
+      src/orders/place-helpers.ts
+bound domain/sales/order to 2 file(s) at /home/dev/checkout-service/siegard-trace.json
+```
+
+`--replace` — restating the node with only one file drops the other, and says so:
+
+```
+$ python3 bin/trace.py --bind ./target ./specification domain/sales/order \
+      src/orders/place.ts --replace
+bound domain/sales/order to 1 file(s) at /home/dev/checkout-service/siegard-trace.json
+  --replace released 1 path(s) this call did not name; domain/sales/order no longer claims
+  target/src/orders/place-helpers.ts. Where the fact moved out of those files, that is what
+  --replace is for; where another delivery had bound one of them, that binding is gone from here,
+  and the last committed trace is where it survives if anywhere
+```
+
+Artifact generated (`siegard-trace.json`, after the plain `--bind` above):
+
+```json
+{
+  "specification": "specification",
+  "bindings": [
+    {
+      "node": "domain/sales/order",
+      "digest": "sha256:944984f5b60539ff5ce46d11d812072a7a4c27c1ca8cf8a0f9bb32f1541e1fdb",
+      "files": [
+        { "path": "target/src/orders/place.ts",
+          "digest": "sha256:2489745f00e2d8a71c0a3417b7787c33a642f4ac02afb8dc051c01787a6d818a" }
+      ]
+    }
+  ]
+}
+```
+
+#### `trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]`
+
+- **Function:** reads one whole implementation record and binds every node/file pair it states, in
+  one atomic write — refusing the entire operation if any part of the record would be refused.
+- **When to use it:** this is the form `/implement-task` uses at the end of a task, instead of one
+  `--bind` per node the task encoded.
+- **Read or write:** writes `siegard-trace.json`.
+
+```
+$ python3 bin/trace.py --bind-record ./target ./specification \
+      ./delivery/checkout/implementation/checkout/record-order.md
+bound domain/sales/order to 1 file(s)
+1 binding(s) written at /home/dev/checkout-service/siegard-trace.json, read from
+record-order.md
+```
+
+#### `trace.py --prune <target-root>`
+
+- **Function:** drops only the `orphaned` bindings. `moved` and `code` drift are never touched —
+  only a rebind by whoever owns the change resolves those, because dropping either would discard
+  the one record of which node that code answers to.
+- **When to use it:** after confirming (via `--check`) that a node genuinely left the specification
+  on purpose, to stop that finding from repeating on every future check.
+- **Read or write:** writes `siegard-trace.json`.
+
+```
+$ python3 bin/trace.py --prune ./target
+dropped domain/sales/order: the specification no longer holds it
+
+1 binding(s) pruned at /home/dev/checkout-service/siegard-trace.json; 0 remain. What was dropped
+was a link to a node that is gone — every drift with a node still in the base is still here, and
+still owed a rebind.
+```
+
+#### `trace.py --reconciliation <reconciliation-record>`
+
+- **Function:** the one form that writes nothing — holds a reconciliation record (written by
+  `/reconcile`, at `siegard-reconcile/<slug>.md`) to `schemas/reconciliation.json`, so
+  `--bind-record` can read it afterward exactly as it reads an implementation record.
+- **When to use it:** as the first step of reconciling source that changed outside any task — a
+  hand-typed incident fix, a merge conflict resolved by hand.
+- **Read or write:** read-only.
+
+```
+$ python3 bin/trace.py --reconciliation ./siegard-reconcile/place-whitespace-fix.md
+place-whitespace-fix.md holds: 1 file(s), 1 node(s) the judgment cleared, 0 it did not, 0 file(s)
+the trace binds nothing to.
+```
+
+### 7. `terms.py`
+
+**General.** A glossary that holds no text of its own: every term maps to a schema file and a JSON
+pointer, and what gets printed is read live from the `description` at that pointer — nothing here
+paraphrases a definition, so there is no copy to drift out of sync. No dependency beyond the
+standard library.
+
+- **Reads:** the schemas under `schemas/`. **Writes:** nothing — always read-only.
+
+#### `terms.py`
+
+- **Function:** prints every defined term, alphabetically, each with the schema file and JSON
+  pointer it was read from.
+- **When to use it:** to see the whole vocabulary at once — 211 lines, one short paragraph per
+  term, sorted.
+- **Read or write:** read-only.
+
+```
+$ python3 bin/terms.py
+cause  [delivery-node.json/$defs/finding/properties/cause/description]
+    Why a captured run failed, on a finding of the failures pass and nowhere else — the
+    validator holds both halves of that. ...
+
+covers (a test over a criterion)  [delivery-node.json/$defs/coverageEntry/properties/state/description]
+    A test covers a criterion when it would fail if the criterion stopped holding — that is the
+    whole test. ...
+...
+```
+
+#### `terms.py <term> [<term> ...]`
+
+- **Function:** prints only the named terms, in the order given.
+- **When to use it:** looking up one or two words a validator's refusal used, without scrolling the
+  whole glossary.
+- **Read or write:** read-only. Exits 1 — printing nothing for that term rather than silently
+  dropping it — if any named term is not in the table.
+
+```
+$ python3 bin/terms.py implements pin
+implements  [plan-node.json/properties/implements/description]
+    The specification nodes this task implements, by identity: the executor reads exactly these,
+    current, from the specification itself — the specification does not change during a plan's
+    execution, by convention, so there is nothing to pin. ...
+
+pin  [delivery-node.json/$defs/pin/description]
+    Content identity: the SHA-256 of the bytes of whatever artifact the field carrying it names,
+    written `sha256:<hexdigest>` and computable by hand with `sha256sum`. ...
+```
+
+An unknown term:
+
+```
+$ python3 bin/terms.py gizmo
+no contract defines gizmo
+```
 
 ```
 project.py   — reads siegard.json
