@@ -44,6 +44,7 @@ GRANTS = {
     "standard-conformance-reviewer": READS,
     "task-implementer": WRITES,
     "test-author": WRITES,
+    "unstated-fact-decider": READS,
 }
 AGENTS = tuple(sorted(GRANTS))
 

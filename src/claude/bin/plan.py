@@ -11,9 +11,12 @@ specification.** Per-node validation is `schemas/plan-node.json` applied as writ
 the checks no per-file schema can express: a task's epic exists, dependencies resolve and close
 no cycle, every node a task implements or an epic covers exists in the specification, an epic's
 covered nodes are each implemented by a task under it or declared uncovered (never neither, never
-both), and a task's `## Notes` naming a specification node outside its epic's covers carries the
-caller's decision line beside it (never silence). `intake/` under the work root holds the material
-the planning read: kept for `sources` to point at, never validated.
+both), a task's `## Notes` naming a specification node outside its epic's covers carries the
+caller's decision line beside it (never silence), and no task persists an `UNSTATED, from the
+specification —` entry — that class is transient: the fact is decided into the specification and
+disclosed in its decision log during planning, so a task still carrying one is a plan that
+skipped the route. `intake/` under the work root holds the material the planning read: kept for
+`sources` to point at, never validated.
 
 **The specification is read through spec.py's own pipeline, and does not move underfoot.** A plan
 carries no pin against it: the specification does not change during a plan's execution, by
@@ -82,6 +85,7 @@ HEADINGS = ["## What it is", "## Notes"]
 DECISION_OPENING = "Decision, beyond the covers — "
 BLOCKING_OPENING = "BLOCKING, from the specification —"
 UNDERDETERMINED_OPENING = "UNDERDETERMINED, from the specification —"
+UNSTATED_OPENING = "UNSTATED, from the specification —"
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
@@ -192,6 +196,18 @@ def underdetermined_notes_of(notes: str) -> list[str]:
     and excluding it is the test author's work — so the set is handed over whole, by a reading
     rather than by eye."""
     return notes_opening(notes, UNDERDETERMINED_OPENING)
+
+
+def unstated_notes_problems(nid: str, notes: str) -> list[str]:
+    """A persisted `UNSTATED, from the specification —` entry is refused outright. The class is
+    transient by contract: an unstated fact is settled during planning — decided into the
+    specification and disclosed in its decision log, or reclassified — and a task file still
+    carrying one is a plan that skipped the route, which would otherwise read exactly like one
+    that ran it."""
+    return [f"{nid}: ## Notes carries `{entry}`; the unstated class never persists — the fact "
+            f"is decided into the specification and disclosed in its decision log during "
+            f"planning, and the task is re-implemented against the extended base"
+            for entry in notes_opening(notes, UNSTATED_OPENING)]
 
 
 def named_in(line: str, spec_ids: set[str]) -> set[str]:
@@ -424,6 +440,7 @@ def cross_problems(nodes: dict[str, dict], spec_nodes: dict[str, dict] | None) -
                 problems.append(f"{nid}: {at} names {target}, "
                                 f"which the specification does not hold")
         if node["kind"] == "task":
+            problems.extend(unstated_notes_problems(nid, node.get("notes", "")))
             epic_node = nodes.get(f"epic/{node['epic']}")
             if spec_ids is not None and epic_node is not None:
                 covers = {t for t in listed(epic_node["front"], "covers")

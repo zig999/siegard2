@@ -13,16 +13,20 @@ review apart.
 A missing input is a stop, not a default:
 
 1. **the task** — which one, by identifier. Named by the human, or named in a request that
-   names exactly one; a request that names none, or several, is a stop, and the answer is to
-   ask which. Choosing for the human is choosing what gets built.
+   names exactly one; a request that names several is a stop, and the answer is to ask which.
+   Choosing for the human is choosing what gets built — but a set of one holds no choice: a
+   request that names none is a stop unless the deliverable set the situate step computes holds
+   exactly one task, which is then decided and disclosed in the report, never asked.
 2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 3. **the target** — which of the project's target source roots this task delivers into, by the
-   key `siegard.json`'s `targets` names it.
+   key `siegard.json`'s `targets` names it. Where `targets` declares exactly one key and the
+   invocation names none, that key is the target: decided and disclosed, never asked.
 4. **the initiative's slug** — the plan holding the task, and the delivery root its records are
    written into: both are `<slug>` under the project's `work_root` and `delivery_root`
    respectively. Absent, it is created empty for the delivery side; the work side must already
-   hold the task. A work root holding `closure.md` is a different matter: the plan is history,
+   hold the task. Where the invocation names none and the project's `work_root` holds exactly
+   one initiative without `closure.md`, that is the slug: decided and disclosed, never asked. A work root holding `closure.md` is a different matter: the plan is history,
    its initiative is over, and writing new source against it is a stop. Reviewing what it
    already delivered is not — that is `/review-change`'s, and it stays possible for as long as
    the records do.
@@ -38,7 +42,9 @@ work root" means `work_root/<the initiative's slug>`; "the delivery root" means
 validator requires it — while the plan is live, and ignored once it is closed.
 
 Absent inputs stop once, together: one stop naming everything missing — the task among them, where
-the request named none — so the human answers once, never a question at a time.
+the request named none and the situate step's deliverable set holds more than one — so the human
+answers once, never a question at a time. An input a singleton decided is not missing; the report
+disclosing it is what replaces the question.
 
 One optional input: **the project's standard** — the path to the registry of rules the project set
 for itself, in the project's own tree. Named, the source is written to follow it; not named, the
@@ -158,7 +164,9 @@ On an empty delivery root it reports every task without a record; on a populated
 reports, per task, what each one waits on — the dependencies with no record yet, an artifact a task
 of this plan produces and the tree does not hold, and a standing blocking note — and then the set
 deliverable now. Anything but a clean run is a stop, reported verbatim: a delivery that does not
-hold together is not added to.
+hold together is not added to. Where the invocation named no task and the deliverable set holds
+exactly one, that one is the task — decided here and disclosed in the report; a set of more than
+one is the stop that asks which.
 
 One of its lines is a refusal, and it is settled before anything is written:
 
@@ -174,20 +182,21 @@ One of its lines is a refusal, and it is settled before anything is written:
 A second refusal the report names and does not make. Open the task file here, before anything below
 is written, and read its `## Notes`: **an entry opening `BLOCKING, from the specification —` is a
 stop.** Quote the entries whole — from the file, which is what holds them, rather than from the
-report, which read the same file. That class is the binding's finding that the objective, or a criterion, cannot be
-demonstrated as written without contradicting or exceeding the specification, including a fact
-the specification does not state at all, and a task that arrives here still carrying one is the
-scope-origin kind — the other kind is re-cut and re-implemented against before the task is ever
-written. What the plan said of it, in as many words, is that only the human settles it: through
-the scope, re-planned in `/plan-work`, or through `/analyse` extending the specification, after
-which the task is re-run through the implement-against step and the note is gone. Both doors
-leave here ready to open: the report ends with the `/plan-work` invocation and the `/analyse`
-invocation, each filled with everything this invocation already knows — the roots by path, the
-note quoted as the conflict the scope must settle or as the fact the material must answer —
-leaving to the human only the choice of door and what only the human holds. Writing source in
-the meantime encodes the contradiction as though the business had decided it, and here the
-specification is not silent but overruled — the worse of the two failures this whole discipline
-exists to prevent. The class is the binder's judgment and not yours to overrule: a note you
+report, which read the same file. That class is the binding's finding that a node states
+something the objective, or a criterion, contradicts or exceeds as written — a silence is not
+this class: a fact the specification did not state was decided into it during planning, by the
+plan's own route, and never reaches a task file. A task that arrives here still carrying one is
+the scope-origin kind — the cut-origin kind is re-cut and re-implemented against before the
+task is ever written. What the plan said of it, in as many words, is that only the human
+settles it: through the scope, re-planned in `/plan-work`, or through `/analyse` amending the
+specification, after which the task is re-run through the implement-against step and the note
+is gone. Both doors leave here ready to open: the report ends with the `/plan-work` invocation
+and the `/analyse` invocation, each filled with everything this invocation already knows — the
+roots by path, the note quoted as the conflict the scope must settle or as the statement the
+specification must amend — leaving to the human only the choice of door and what only the human
+holds. Writing source in the meantime encodes the contradiction as though the business had
+decided it: here the specification is not silent but overruled — the failure this whole
+discipline exists to prevent. The class is the binder's judgment and not yours to overrule: a note you
 disagree with is still a stop, and the disagreement goes in what you report.
 
 **This stop is the skill's and not the validator's, and the report naming it changes nothing about

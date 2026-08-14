@@ -31,10 +31,13 @@ A missing input is a stop, not a default:
 3. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 4. **the target** — which of the project's target source roots this change reaches, by the key
-   `siegard.json`'s `targets` names it.
+   `siegard.json`'s `targets` names it. Where `targets` declares exactly one key and the
+   invocation names none, that key is the target: a set of one holds no choice, so it is
+   decided and disclosed in the report, never asked.
 5. **the initiative's slug** — the plan the tasks belong to, and the delivery root taking this
    review's own record: both are `<slug>` under the project's `work_root` and `delivery_root`
-   respectively.
+   respectively. Where the invocation names none and the project's `work_root` holds exactly
+   one initiative, that is the slug: decided and disclosed, never asked.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: naming

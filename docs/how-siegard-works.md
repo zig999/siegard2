@@ -1,7 +1,7 @@
 # How Siegard works, for dummies
 
-This document explains, from zero, what the six scripts under `src/claude/bin/` do, what files
-they read and write, how the six skills and nine agents under `src/claude/` use them, and how all
+This document explains, from zero, what the seven scripts under `src/claude/bin/` do, what files
+they read and write, how the six skills and ten agents under `src/claude/` use them, and how all
 of it adds up to one complete development process — from a human's idea to source code someone
 else can trust.
 
@@ -30,7 +30,7 @@ These are the nouns. Each is a set of files on disk, never a database, never a c
 | Artifact | Where it lives | Written by | What it is |
 |---|---|---|---|
 | **`siegard.json`** | at the consumer project's git root | a human, through `/siegard-config` | The project's own settings: where its specification, plan, delivery and trace live, and which file is its "standard" (its own house rules). Every other skill reads this once instead of asking the human to retype paths every time. |
-| **The specification** | a tree of markdown files under a "specification root" | a human's material, turned into nodes by `/analyse` | What the system must do, in five kinds of node: Domain Model, Rule, Scenario, Contract, Architecture Constraint. This is the one authority — if code and a specification node disagree, the node is right and the code is the bug. |
+| **The specification** | a tree of markdown files under a "specification root" | a human's material, turned into nodes by `/analyse`; extended by `/plan-work`'s decided-fact route where planning finds a fact no node states | What the system must do, in five kinds of node: Domain Model, Rule, Scenario, Contract, Architecture Constraint. This is the one authority — if code and a specification node disagree, the node is right and the code is the bug. Every fact it carries that no material stated is disclosed in `decision-log.md`, whichever entry point decided it. |
 | **The plan** | a tree of markdown files under a "work root" | a human's scope, turned into nodes by `/plan-work` | The development plan: an inventory of the existing codebase, epics, and tasks. Every task names exactly which specification nodes it implements. |
 | **The delivery** | a tree of markdown files under a "delivery root" | `/implement-task` (writes) and `/review-change` (adds findings) | The record of what was actually built: one implementation record and one proof (tests) record per task, plus reviews. This is evidence, not a verdict — nothing here decides whether the project is "done." |
 | **The trace** | `siegard-trace.json`, beside `siegard.json` | `/implement-task` and `/reconcile` | The one fact that outlives the plan and the delivery: which specification node produced which file. The plan and the delivery can both be deleted or closed as history; the trace is what still tells you, a year later, why a given file exists. |
@@ -832,7 +832,7 @@ its own.
 |---|---|---|---|---|
 | **`/siegard-config`** | a human's stated settings | `siegard.json` | `project.py` | none |
 | **`/analyse`** | material a human supplies (prose, files) | specification nodes + `projections/` | `spec.py` | none |
-| **`/plan-work`** | a stated scope + the specification | plan nodes (`inventory/`, `epic/`, `task/`) + `plan.json` | `spec.py`, `plan.py`, `deliver.py --standard` | `codebase-surveyor`, `backlog-decomposer`, `execution-contract-binder` |
+| **`/plan-work`** | a stated scope + the specification | plan nodes (`inventory/`, `epic/`, `task/`) + `plan.json`; specification extensions + decision-log entries where a fact was unstated | `spec.py`, `plan.py`, `deliver.py --standard` | `codebase-surveyor`, `backlog-decomposer`, `execution-contract-binder`, `unstated-fact-decider` |
 | **`/implement-task`** | one planned task | source + tests + a delivery record + `delivery.json` + a trace bind | `plan.py --check`, `run.py`, `deliver.py`, `trace.py --bind-record` | `task-implementer`, `test-author` |
 | **`/review-change`** | one delivered task | findings recorded under the delivery root + `delivery.json` | `plan.py --check`, `deliver.py`, `run.py`, `trace.py --check` | `coverage-auditor`, `specification-conformance-reviewer`, `standard-conformance-reviewer`, `failure-diagnostician` |
 | **`/reconcile`** | source someone hand-edited outside any task | a reconciliation record + a trace bind | `spec.py`, `trace.py` | none |
@@ -842,7 +842,7 @@ No skill runs a shell command directly except by calling `run.py` — this is en
 tool. Everything a project builds or tests is run exactly once, by `run.py`, and captured; nothing
 downstream re-executes it to double-check.
 
-## The nine agents
+## The ten agents
 
 Agents exist for exactly the parts a script cannot decide mechanically — reading prose,
 judging whether a sentence in source states a fact the specification does not, deciding what a
@@ -858,8 +858,15 @@ of them has a shell.
   a different agent, in a context that never saw this one's reasoning, so the specification isn't
   quietly bent to fit the tasks that were already written.
 - **`execution-contract-binder`** — for each task, rereads the specification fresh and decides
-  which nodes it actually implements, flagging every divergence (including a fact the
-  specification simply doesn't state).
+  which nodes it actually implements, flagging every divergence: a contradiction stops the task
+  (only a person settles it), and a fact the specification simply doesn't state is named for the
+  next agent to decide.
+- **`unstated-fact-decider`** — handed one fact the specification does not state — the fact
+  alone, never the task that surfaced it, so the specification is never bent to fit a plan —
+  it decides the fact the way `/analyse` would: reads the material first (a fact already stated
+  there is found, not decided), returns the node edits that make the specification state it and
+  the decision-log entry that discloses it, or reports that the specification contradicts the
+  fact, which sends it back to the human. Read-only; `/plan-work` writes what it returns.
 
 **Used by `/implement-task`** (building the code):
 - **`task-implementer`** — writes the source for one task. Can write and edit files, but only
@@ -879,9 +886,13 @@ other and running in any order:
 - **`failure-diagnostician`** — reads a captured run's output and explains why each failure
   failed. It never re-runs anything; the run it reads is `run.py`'s record, not its own.
 
-None of these nine agents produces a verdict, a score, or a pass/fail. They all return **findings
-for a human to read**. Deciding what a finding means is deliberately kept outside every agent:
-"a finding nobody can disagree with is a decision wearing a finding's clothes."
+None of these ten agents produces a verdict, a score, or a pass/fail. Nine return **findings for
+a human to read** — deciding what a finding means is deliberately kept outside every agent: "a
+finding nobody can disagree with is a decision wearing a finding's clothes." The one exception
+decides on purpose: the `unstated-fact-decider` settles a domain fact nobody stated, and its
+decision is disclosed in the decision log precisely so a human can reject it afterwards — the
+review moved after the decision instead of gating it, which is the same discipline `/analyse`
+already follows for every fact the material leaves unstated.
 
 ## A complete process, start to finish
 
@@ -892,7 +903,9 @@ happens in.
  1. /siegard-config   → human declares roots + standard  ────────────► siegard.json
  2. /analyse           → human's material → spec nodes    ────────────► specification/, projections/
  3. /plan-work          → scope + spec → epics & tasks     ────────────► plan/, plan.json
-      (survey → decompose → decide "implements", one task at a time)
+      (survey → decompose → decide "implements", one task at a time;
+       a fact the spec doesn't state is decided by a blind judge,     ────► specification/,
+       written into the specification, disclosed in decision-log.md)        decision-log.md
  4. /implement-task     → one task, repeated per task:
       write source → write tests → build → run suite       ────────────► delivery/, delivery.json,
                                                                            siegard-trace.json

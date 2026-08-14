@@ -88,8 +88,8 @@ OPEN: dict[str, str] = {
              "contract.",
     "construct": "four unrelated senses, none defined: the type of a Domain Model element (`type` "
                  "in schemas/spec/element.json), an implementation shape the specification admits "
-                 "(which decides a `blocking` note in agents/execution-contract-binder.md), a "
-                 "syntactic thing at a location in a file (a finding's `where`, a standard's "
+                 "(which decides an `underdetermined` note in agents/execution-contract-binder.md), "
+                 "a syntactic thing at a location in a file (a finding's `where`, a standard's "
                  "forbidden construct), and the idiom `by construction`. The load-bearing one is "
                  "the second: no contract states it, and a note's class turns on it.",
     "impact set": "defined three times and differently — in skills/analyse/SKILL.md, in "

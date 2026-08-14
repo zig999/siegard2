@@ -30,7 +30,9 @@ A missing input is a stop, not a default:
 2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 3. **the target** — which of the project's target source roots these files sit under, by the key
-   `siegard.json`'s `targets` names it.
+   `siegard.json`'s `targets` names it. Where `targets` declares exactly one key and the
+   invocation names none, that key is the target: a set of one holds no choice, so it is
+   decided and disclosed in the report, never asked.
 4. **the slug** — this reconciliation's own name, under `siegard-reconcile/` at the target's git
    toplevel. A slug already taken is a stop and not a suffix: the record it would overwrite is the
    justification for a binding that is still in the trace.

@@ -818,13 +818,14 @@ def test_a_standing_blocking_note_is_named_where_a_caller_chooses(delivery, work
         "criteria": ["Recording an order twice produces one invoice."],
         "implements": ["domain/sales/invoice"],
     }, body="## What it is\nProse for a reader.\n\n## Notes\n"
-            "BLOCKING, from the specification — nothing states what a partial refund answers.\n")
+            "BLOCKING, from the specification — the criterion asserts a refund exceeding the "
+            "cap rules/sales/refund-cap states.\n")
     validator, allowed = deliver.contract()
     nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "1 standing BLOCKING note(s), which only a person settles" in report, report
-    assert "nothing states what a partial refund answers" in report, \
+    assert "the criterion asserts a refund exceeding the cap" in report, \
         "the entry is quoted, so a caller learns what it concedes without opening the file"
     assert "deliverable now: none" in report, report
 

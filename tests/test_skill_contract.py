@@ -34,7 +34,7 @@ SKILLS = {
                        "delegates": []},
     "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
-                                "execution-contract-binder"]},
+                                "execution-contract-binder", "unstated-fact-decider"]},
     "implement-task": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
                        "delegates": ["task-implementer", "test-author"]},
     "review-change": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",

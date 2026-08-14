@@ -1,6 +1,6 @@
 ---
 name: plan-work
-description: Turns a stated development scope plus a validated specification into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task naming the specification nodes it implements — validates the plan against the specification, and derives plan.json. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task on the same route, without the survey or the decomposition. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the specification already holds, to route a bug found by running the delivered system, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
+description: Turns a stated development scope plus a validated specification into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task naming the specification nodes it implements — validates the plan against the specification, and derives plan.json. A fact the specification does not state is decided on the way, blind to the task cut, and disclosed in the decision log. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task on the same route, without the survey or the decomposition. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the specification already holds, to route a bug found by running the delivered system, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
 effort: medium
 ---
 
@@ -17,7 +17,9 @@ A missing input is a stop, not a default:
    named, its absence is a stop.
 3. **the target** — which of the project's target source roots this plan reaches, by the key
    `siegard.json`'s `targets` names it. A key the file does not hold is a target nobody
-   declared.
+   declared. Where `targets` declares exactly one key and the invocation names none, that key
+   is the target: a set of one holds no choice, so it is decided and disclosed in the report,
+   never asked.
 4. **the initiative's slug** — this plan's own subdirectory under the project's work root.
    Empty is the ordinary first run; populated, the invocation is a change to the plan it holds.
    A slug naming a directory that holds `closure.md` is a different matter: planning over it is
@@ -68,10 +70,11 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py <specification-root>
 ```
 
 Anything but a clean pass is a stop: report the output verbatim and go no further. A
-specification with problems is fixed through the analysis that authors it; planning never
-writes into the specification root. There is no derived index of the specification to go
-stale — `spec.py` validates the files themselves, every time — so there is nothing here to
-recheck the way a plan's own `plan.json` must be.
+specification with problems is fixed through the analysis that authors it; planning writes
+into the specification root only through step 4's decided-fact route, and repairs nothing
+there. There is no derived index of the specification to go stale — `spec.py` validates the
+files themselves, every time — so there is nothing here to recheck the way a plan's own
+`plan.json` must be.
 
 A task names the specification nodes that govern it by identity, and carries no pin: the
 specification does not change during a plan's execution, by convention. A task written today
@@ -81,10 +84,11 @@ live, never by a value this skill computes and compares.
 
 ## Before anything: the tree
 
-The review is `git diff` over the work root, and a diff only says what this invocation did
-when the root starts clean. Before any write, `git status --porcelain -- <work-root>` must
+The review is `git diff` over the work root — and over the specification root, which step 4's
+decided-fact route may write. A diff only says what this invocation did when the roots start
+clean. Before any write, `git status --porcelain -- <work-root> <specification-root>` must
 print nothing. Output is a stop: report what is pending and go no further — committing,
-discarding, or overriding is the human's decision, never the plan's. A work root not under git
+discarding, or overriding is the human's decision, never the plan's. A root not under git
 control is the same stop: without git there is no review.
 
 ## Read the contract
@@ -105,10 +109,12 @@ same way.
 situate → inventory → decompose → implement-against → validate → report → stop
 ```
 
-Three of these steps are another judge's. The survey, the decomposition, and each task's
-specification references are delegated to the subagents this framework ships, each in a clean
-context, and the judgment of each step lives in the agent's file — not here, and not in your
-memory of it. Delegating means spawning the named subagent — in a plugin install the name may
+Three of these steps are another judge's, and a fourth judge sits inside one of them. The
+survey, the decomposition, and each task's specification references are delegated to the
+subagents this framework ships, each in a clean context — and inside the implement-against
+step, each fact the specification turns out not to state is delegated to its own judge, blind
+to the cut that surfaced it. The judgment of each lives in the agent's file — not here, and
+not in your memory of it. Delegating means spawning the named subagent — in a plugin install the name may
 be plugin-scoped — and reading the agent's file yourself is the fallback, never the
 delegation. The binder's isolation is the point of the whole arrangement: it arrives with
 no memory of how the tasks were cut, so the specification is read for what it says today, never
@@ -151,8 +157,10 @@ genuinely more than one, this is a scope and the ordinary path is what it gets.
 this a second delivery machine instead of a smaller entrance to the one that exists: it is what
 decides which specification nodes the correction answers to, and it is what returns a classified
 note when the fix contradicts something the specification states or states nothing about — which
-is the common shape here, because a behavior nobody specified is how the bug survived review. It
-is also the cheapest of the three delegations, so the ceremony this path drops is the ceremony
+is the common shape here, because a behavior nobody specified is how the bug survived review. The
+decided-fact route of step 4 runs here too, and settles that silence the same way, so the
+correction stands still only on a genuine contradiction. The binder is also the cheapest of the
+survey, decomposition and binding delegations, so the ceremony this path drops is the ceremony
 that was buying nothing.
 
 You write the task yourself, and it is held to every test a decomposer's task is held to. The
@@ -265,6 +273,33 @@ sequence spends ten times the waiting for nothing. What they are not independent
 claim: where a note below sends a skeleton back to be re-cut, or grows the claim it was judged
 against, that skeleton runs through this step again.
 
+A note classed `unstated` is settled here, before any task it touches is written, and it never
+reaches a task file. First hold it to the cut: grep the specification root for the fact's
+terms — a fact some node outside the candidates already states is a cut problem, not a
+silence, and it takes the out-of-candidates answer below: grow the epic's `covers` or move the
+task, and re-run this step. What survives is a genuine silence. Deduplicate the survivors by
+fact — two skeletons resting on one fact are one decision, never two — then spawn one
+`unstated-fact-decider` subagent per fact — its judgment lives at
+`${CLAUDE_PLUGIN_ROOT}/agents/unstated-fact-decider.md` — passing four things: the fact
+exactly as the note's `fact` carries it, the impact-set file paths under the specification
+root plus the decision log's path, the scope's paths under `intake/`, and the specification
+schema paths — the files under the plugin root's `schemas/spec/` directory, one per class, the
+same seven `/analyse` reads. Never the skeleton, never the note's
+own text, never a binder's reasoning: the decider is blind to the cut, and the blindness is
+what keeps the specification from being bent to fit tasks already written.
+
+What comes back is written, not judged. On `stated` or `decided`, write the edits verbatim at
+the paths they name, append the returned log entry to the decision log where the outcome is
+`decided`, then revalidate — `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py
+<specification-root>`, and once it passes, `--project`, because the projections moved with the
+nodes — and re-run this step's binder for every skeleton whose candidates include a touched
+node: the note is gone, or what remains comes back reclassified. On `contradicted`, the note
+was `blocking` wearing the wrong class: it takes the blocking route below, and the report says
+the decider refused it and why. A `noticed` line in the return is a watch item for the report,
+never a second decision made in passing. Every decided fact is a claim a reviewer can reject —
+the log entry is what lets them, the diff over the specification root is where it sits, and
+the report repeats it.
+
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
 returned it — bare identities, no pin. A binder's notes are appended to the task body's
 `## Notes`, one sentence per line — the diff is the review, and a divergence only the
@@ -280,10 +315,9 @@ ungoverned work is a claim someone reviews. Where a note says the task needs wha
 candidates do not hold, the cut is wrong: grow the epic's `covers` or move the task, and
 re-implement against it — never widen the reference by hand.
 
-A note the binder classed `blocking` — the objective or a criterion cannot be demonstrated as
-written without contradicting or exceeding the specification, including a fact the
-specification does not state at all — is settled before the task is written, and the
-skeleton's `rationale` says by whom. Where the blocked statement was the decomposer's decision
+A note the binder classed `blocking` — a node states something the objective or a criterion
+contradicts or exceeds as written, so the specification here is not silent but overruled — is
+settled before the task is written, and the skeleton's `rationale` says by whom. Where the blocked statement was the decomposer's decision
 — the skeleton carries `rationale` over that cut — the skeleton goes back to the decomposer
 with the note, is re-cut, and re-run through this step. Where it came from the scope, the task
 is written with the note, and the report names it as a conflict only the human settles —
@@ -340,7 +374,9 @@ and never describe the plan as valid while it is not.
 **Fixing means form, never knowledge.** A wrong shape — a malformed reference, a forbidden
 field — is yours to correct. A coverage hole is settled by a task or by `uncovered` with a why
 — whichever the scope actually decided, not whichever passes. A blocking note is settled by
-judgment, never by inventing the fact the specification does not state.
+judgment, never here. An unstated fact is settled only through step 4's route — decided by the
+context that never saw the cut and disclosed in the decision log — never filled in passing to
+make a check go green.
 
 ### 6. Report, and stop
 
@@ -350,6 +386,10 @@ Report, in this order:
   listed apart;
 - the impact set that was read — in the specification and, on evolution, in the plan — so the
   reviewer can judge what the planning looked at, not only what it touched;
+- every fact the decided-fact route wrote into the specification: each `decided` outcome by its
+  log entry — location, what was unstated, the value, the why — and each `stated` outcome with
+  where the material already held it. These are the claims a reviewer can reject, the diff over
+  the specification root is where they sit, and every `noticed` watch item follows them;
 - every blocking note, by task identifier, with what it concedes — these are the tasks not yet
   written, or written with a standing conflict, and each needs either the scope answered
   differently or the specification extended through the analysis that authors it;
@@ -411,15 +451,20 @@ the specification root nor the target source root.
 
 - Write or edit `plan.json` by hand.
 - Answer a question with a value the specification does not hold — a fact absent from the
-  specification is produced by the analysis that extends it, never by a task.
+  specification is produced by the specification gaining the statement, through step 4's
+  decided-fact route or the analysis that authors it, never by a task and never by prose.
+- Decide an unstated fact in this context, or hand the decider the skeleton, the note's text or
+  a binder's reasoning — the blindness is the route, and a decision made where the cut is
+  visible is the specification bent to fit it.
 - Record a status, an estimate, a priority or an execution order — those fields do not exist,
   and prose does not get to hold what the contract refused.
 - Run the implement-against step in the context that decomposed — the inline fallback is for a
   session that cannot spawn subagents, is declared in the report, and still applies the
   agent's file.
 - Write source code or tests, or change the target tree — the plan is nodes, nothing else.
-- Write into the specification root — a broken specification is reported with its fix, never
-  repaired from here.
+- Write into the specification root beyond what step 4's decided-fact route returned — the
+  route writes a decider's edits and its log entry, then revalidates; a specification that is
+  otherwise wrong or broken is reported with its fix, never repaired from here.
 - Restate the contract's vocabularies from memory instead of reading the schema.
 - Reopen a standing plan decision outside the impact set, or re-cut an epic as a side effect
   of a change.

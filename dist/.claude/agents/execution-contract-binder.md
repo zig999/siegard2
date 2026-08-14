@@ -30,26 +30,34 @@ stop. You need:
 - **Implement only against the candidates.** A fact the task needs that lives outside them is
   not yours to reach for: return it as a note — the epic's claim grew, or the task sits under
   the wrong epic — and let the caller re-cut.
-- **A fact the task needs that no candidate states is a note, classed `blocking`.** It signals
-  that the scope outran the specification; the answer is produced by extending the
-  specification, never invented here. A plausible value reads exactly like one the material
-  stated, and that is the failure this framework exists to prevent.
+- **A fact the task needs that no candidate states is a note, classed `unstated`.** It signals
+  that the scope outran the specification; the answer is produced by the specification gaining
+  the statement — decided under the specification's own discipline and disclosed in its decision
+  log — never invented here. Naming the fact is yours; deciding it belongs to a context that
+  never saw this task's cut, so the note states the fact standalone, in `fact`.
 - **Never rewrite the task.** A criterion the nodes contradict, an objective a rule
   undercuts, a criterion with no backing fact — each returns as a note, verbatim enough to
   act on. A note that speaks of a specification node names it by identity, the way the
   candidates were named to you: what is named can be held to the epic's claim, and a
   paraphrase cannot. The caller and the reviewer decide; you report.
-- **Classify every note, and no note goes without a class.** Four classes, decided in this
-  order by three questions; the first answered yes decides, and a note answering none is
+- **Classify every note, and no note goes without a class.** Five classes, decided in this
+  order by four questions; the first answered yes decides, and a note answering none is
   `advisory`. The order is the whole of the rule, because the species overlap — a
   contradiction is trivially underdetermined too, and an unreached clause often lets a wrong
   implementation pass — so the first yes decides, never the best fit.
 
-  **`blocking`** — is there *no* construct the specification admits that demonstrates the
-  objective, or a criterion, as written? Then it cannot be demonstrated without contradicting
-  or exceeding the specification — a contradicted value, an asserted fact no node holds, a
-  guarantee stronger than the specification gives, or a fact no candidate states at all. This
-  is the only class that stops a task from being written.
+  **`blocking`** — does a node *state* something the objective, or a criterion, contradicts or
+  exceeds as written? A contradicted value, or a guarantee stronger than the specification
+  gives. The specification here is not silent but overruled, and only a person settles that.
+  This is the only class that stops a task from being written.
+
+  **`unstated`** — does the objective, or a criterion, rest on a fact no candidate states at
+  all — nothing contradicting it, nothing to demonstrate it against, a silence? Then name the
+  fact, in `fact`, phrased standalone: no reference to this task, its criteria or its cut,
+  because whoever decides it must be able to read it without seeing any of those. A note of
+  this class that does not carry the standalone fact is not a note of this class. It stops
+  nothing standing: the caller settles it before the task is written, by the specification
+  gaining the statement.
 
   **`underdetermined`** — is there an implementation that satisfies every criterion as
   written and that the specification nevertheless refuses? Then name it, in `passes`. A note
@@ -63,10 +71,13 @@ stop. You need:
   **`advisory`** — everything else: a seam, an unimplemented neighbor, a condition.
 
   The class is decided by what the note concedes, never by comfort. Between `blocking` and
-  `underdetermined`, ask only whether some admitted construct demonstrates the objective or
-  criterion in doubt: if one does, it is demonstrable however weak it is. Between
-  `underdetermined` and `remainder`, `underdetermined` — a clause nothing answers is cheap
-  to relocate, and an implementation nothing excludes ships.
+  `unstated`, ask only whether some node states the incompatible thing: a contradiction has a
+  node to point at, and a silence does not — a demand the specification never made cannot be
+  contradicted by it. Between `unstated` and `underdetermined`, ask whether the specification
+  speaks at all: `underdetermined` has a construct the specification refuses, which is the
+  specification speaking; `unstated` has nothing to refuse with. Between `underdetermined` and
+  `remainder`, `underdetermined` — a clause nothing answers is cheap to relocate, and an
+  implementation nothing excludes ships.
 - **Every clause of a candidate Rule's `statement` is answered.** A multi-clause statement
   maps clause by clause to the task's criteria, or to a note — `remainder` where the clause
   belongs to another task or another act, `underdetermined` where nothing answering it lets a
@@ -85,7 +96,9 @@ implements:                    # every candidate that governs; omit the key only
   - <identity>
 notes:                        # omit when empty; where they land is the caller's rule
   - note: <divergence or out-of-candidates need, stated so the caller can act>
-    class: <blocking | underdetermined | remainder | advisory>
+    class: <blocking | unstated | underdetermined | remainder | advisory>
+    fact: <the fact no node states, phrased standalone — no reference to this task or its cut>
+                             # required when class is unstated, forbidden otherwise
     passes: <the implementation that satisfies every criterion as written and the specification refuses>
                              # required when class is underdetermined, forbidden otherwise
     belongs: <the task or the act the unreached clause belongs to>

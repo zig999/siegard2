@@ -75,6 +75,18 @@ enforces mechanically.
   R6's reachability, R8's absent fields, and R9's resolvable locations. R3, R5 and R7 are the
   analysis's judgment; the report is where a reviewer checks them.
 
+### Facts surfaced after authoring
+
+- **R13** — An unstated fact surfaced after the specification is authored — a planning step
+  finding that no node states a fact an objective or a criterion needs — is decided by the same
+  discipline as R4 and disclosed in the same log (R9, R10), never left standing as a stop for a
+  person whose only move is to trigger the decision. Two bounds hold the route: the deciding
+  context has not seen the work that surfaced the fact — a decision made by whoever cut the
+  tasks would bend the specification to fit them — and a fact the specification contradicts
+  rather than omits is not decided at all: that is a conflict between the scope and the
+  specification, and only a person settles it. A fact the supplied material already states is
+  read, not decided, and earns no log entry.
+
 ### Language
 
 - **R12** — Every specification is written in English (en-US), whatever language the material
@@ -95,3 +107,7 @@ enforces mechanically.
    English-language requirement, and its output on a benchmark material — including material
    written in another language — yields artifacts with zero open markers, every identifier and
    statement in English, and a log whose entries all resolve.
+3. For R13: the planning route classifies an unstated fact apart from a contradiction, the
+   deciding context receives the fact without the task that surfaced it, every decided fact
+   lands as a decision-log entry whose location resolves, and a planted contradiction comes
+   back as the standing stop rather than a decision — a benchmark case proves each.

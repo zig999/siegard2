@@ -601,15 +601,52 @@ def test_the_classified_openings_are_read_by_script_not_by_eye():
     the entries the test author is handed — read by the literal opening the plan writes, and by
     nothing else: a paraphrase is invisible on purpose, because the opening is the contract."""
     notes = (
-        "BLOCKING, from the specification — nothing states what a partial refund answers.\n"
+        "BLOCKING, from the specification — the criterion asserts a refund exceeding the cap "
+        "rules/billing/refund-cap states.\n"
         "  UNDERDETERMINED, from the specification — an empty bill satisfies every criterion.\n"
         "Decision, beyond the covers — stand: the epic keeps its claim.\n"
         "A blocking note mentioned in passing is not one.\n"
         "\n"
         "UNDERDETERMINED, from the specification — a duplicate submission is silently merged.\n")
     assert plan.blocking_notes_of(notes) == [
-        "BLOCKING, from the specification — nothing states what a partial refund answers."]
+        "BLOCKING, from the specification — the criterion asserts a refund exceeding the cap "
+        "rules/billing/refund-cap states."]
     assert plan.underdetermined_notes_of(notes) == [
         "UNDERDETERMINED, from the specification — an empty bill satisfies every criterion.",
         "UNDERDETERMINED, from the specification — a duplicate submission is silently merged."]
     assert plan.blocking_notes_of("") == [] and plan.underdetermined_notes_of("") == []
+
+
+def test_a_persisted_unstated_entry_is_refused():
+    """The unstated class is transient by contract: the fact is decided into the specification
+    and disclosed in its decision log during planning, so a task file still carrying the opening
+    is a plan that skipped the route — and without this refusal it would read exactly like one
+    that ran it."""
+    notes = ("UNSTATED, from the specification — no node states where a requester "
+             "identity originates.\n")
+    problems = plan.unstated_notes_problems("task/billing/refund", notes)
+    assert len(problems) == 1
+    assert "never persists" in problems[0]
+    assert "task/billing/refund" in problems[0]
+    assert plan.unstated_notes_problems("task/billing/refund", "") == []
+    assert plan.unstated_notes_problems(
+        "task/billing/refund",
+        "An unstated fact mentioned in passing is not an entry.\n") == []
+
+
+def test_a_plan_holding_a_persisted_unstated_entry_derives_nothing(work, root, sound_plan,
+                                                                   write_plan):
+    """The whole pipeline refuses, not just the helper: a task file carrying the opening fails
+    the run and plan.json is not derived — the refusal a consumer actually meets."""
+    write_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted and retrievable by its order_number.",
+        "criteria": ["Submitting a valid order returns its order_number."],
+        "implements": ["domain/sales/order"],
+    }, body=("## What it is\nOne sentence.\n\n## Notes\n"
+             "UNSTATED, from the specification — no node states where a requester "
+             "identity originates.\n"))
+    done = run(work, root)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "never persists" in done.stdout
+    assert not (work / "plan.json").is_file()
