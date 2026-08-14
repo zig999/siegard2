@@ -44,6 +44,8 @@ SKILLS = {
                   "delegates": ["specification-conformance-reviewer"]},
     "siegard-status": {"contract": "schemas/project.json", "validator": "bin/project.py",
                        "delegates": []},
+    "siegard-archive": {"contract": "schemas/plan.json", "validator": "bin/plan.py",
+                        "delegates": []},
 }
 
 
@@ -88,6 +90,10 @@ MODEL_MAY_REACH = {
     # so a session may reach for it when asked how the work stands — that reachability is the
     # skill's point.
     "siegard-status": True,
+    # Removal is the one act whose want only the human can state — the same criterion that
+    # closes /siegard-config: a session that "tidied up" on its own would be deciding an input
+    # that was never its to assert.
+    "siegard-archive": False,
 }
 
 
