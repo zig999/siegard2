@@ -1,6 +1,6 @@
 ---
 name: siegard-status
-description: Derives the current status of a Siegard project from disk — which initiatives are live, what is delivered and what is outstanding, what each remaining task waits on, standing BLOCKING notes, trace drift by class, decisions recently disclosed on the human's behalf, and what the working tree holds uncommitted — by running the framework's own read-only commands and citing a source for every claim. Use when a request asks how the work stands, what is left, what is blocked, what changed lately, or what to do next. It writes nothing and decides nothing; a status is recomputed every time, never remembered.
+description: Derives the current status of a Siegard project from disk — which initiatives are live, what is delivered and what is outstanding, what each remaining task waits on, standing BLOCKING notes, trace drift by class, decisions recently disclosed on the human's behalf, and what the working tree holds uncommitted — by running the framework's own read-only commands and citing a source for every claim. The report speaks the session's language, in a friendly voice a non-expert can follow; command output stays quoted verbatim. Use when a request asks how the work stands, what is left, what is blocked, what changed lately, or what to do next. It writes nothing and decides nothing; a status is recomputed every time, never remembered.
 effort: low
 ---
 
@@ -57,6 +57,28 @@ this invocation — it is the status, reported verbatim.
 5. **The session.** Last, and clearly fenced apart: what this conversation has done or is in
    the middle of that has not reached disk yet. This is the one section whose source is not a
    command, and it says so.
+
+## The voice
+
+This is the one skill in the framework whose product is written for a person, not for another
+agent, and the report is voiced accordingly:
+
+- **The session's language.** Write the report in the language the conversation is happening
+  in, whatever it is. The framework's artifacts stay English; this report is not an artifact —
+  it is an answer to someone, and it speaks their language.
+- **Friendly, and plain enough for a non-expert.** Assume the reader has never opened a SKILL.md
+  or a schema. Say "3 of 5 pieces of work are done; the two left are waiting on a question only
+  you can answer" before saying `deliver.py --outstanding`. Every framework term the report
+  cannot avoid — a BLOCKING note, drift, a binding — gets one plain-words clause the first time
+  it appears ("drift: the code changed after the record that links it to the specification was
+  written, so the link needs re-checking").
+- **Evidence stays verbatim.** A command's output, a quoted BLOCKING entry, a decision-log
+  entry — these are quoted exactly as printed, untranslated, inside the friendly prose that
+  explains them. The explanation is the reader's; the evidence is the disk's, and paraphrasing
+  it would make this report the thing the reader has to double-check.
+- **Friendly is not vague.** The tone softens nothing the commands said: a red validator, a
+  standing stop, a pile of drift are stated plainly, with their route — warmth is in the
+  telling, never in the facts.
 
 ## The report
 
