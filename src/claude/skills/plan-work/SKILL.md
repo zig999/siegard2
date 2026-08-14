@@ -197,7 +197,12 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   the specification root for each candidate's identity to find what references it back —
   there is no derived edge index to read this from instead. Read the impact-set files and
   nothing else: the plan implements against what governs the scope, not everything the
-  specification holds.
+  specification holds. Keep the trail this closure produced — which candidate's own fields
+  were read for a reference outward, and the grep run for each to find a reference back — the
+  report in step 6 carries it verbatim. A missing node found only after a binder relit it in
+  step 4 is this closure skipped, discovered at the most expensive point to discover it: a
+  binder that already ran once pays to run again over the grown set, per task the growth
+  touches. The trail is what lets a reviewer tell the closure ran from one that was assumed.
 - **The plan, when the work root is populated.** Trust its index only after checking it: run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>`, and
   a stale `plan.json` is rederived by a full validation run before anything relies on it.
@@ -384,8 +389,11 @@ Report, in this order:
 
 - every node written, by identifier — on a populated root, created, changed and removed
   listed apart;
-- the impact set that was read — in the specification and, on evolution, in the plan — so the
-  reviewer can judge what the planning looked at, not only what it touched;
+- the impact set that was read — in the specification and, on evolution, in the plan — plus
+  step 1's closure trail: which candidate's own fields were followed outward and the grep run
+  for each to find a reference back, so the reviewer can judge not only what the planning
+  looked at, but whether the set was closed before the decomposition ran rather than assumed
+  closed;
 - every fact the decided-fact route wrote into the specification: each `decided` outcome by its
   log entry — location, what was unstated, the value, the why — and each `stated` outcome with
   where the material already held it. These are the claims a reviewer can reject, the diff over

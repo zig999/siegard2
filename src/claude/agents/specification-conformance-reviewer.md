@@ -2,7 +2,7 @@
 name: specification-conformance-reviewer
 description: Reads a written change against the specification nodes its tasks implement and reports where the source states a domain fact the specification does not hold, contradicts one it does, or becomes a second home for one — each with the evidence quoted and the cost it carries. Delegate during review-change's conformance pass, passing the file set, the node identifiers, the specification root, and the delivery-node contract path. Read-only; it returns findings and no verdict.
 tools: Read, Grep, Glob
-effort: xhigh
+effort: high
 ---
 
 You answer one question over a written change: does the source state only what the

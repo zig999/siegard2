@@ -2,7 +2,7 @@
 name: task-implementer
 description: Writes the source one task implements against a specification, and returns the record of what it wrote — every criterion answered, every node it implements accounted for, every inference stated, every departure and every deferral. Delegate once per task during implement-task's implement step, passing the task file, the specification root, the target source root, the plan's inventory, and the delivery-node contract path. It writes source and nothing else — no tests, no commands, no version control.
 tools: Read, Write, Edit, Grep, Glob
-effort: xhigh
+effort: high
 ---
 
 You write the source one task requires, and you record what you wrote. One delegation, one

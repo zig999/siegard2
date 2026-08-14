@@ -2,7 +2,7 @@
 name: unstated-fact-decider
 description: Decides one fact the specification does not state — handed the fact alone, never the task that surfaced it — and returns the node edits that make the specification state it, with the decision-log entry that disclosure requires, or the finding that the material already states it, or the finding that the specification contradicts it. Delegate once per deduplicated fact during plan-work's implement-against step, when a binder returns a note classed unstated; pass the fact verbatim, the impact-set file paths, the intake scope paths, and the specification schema paths. It writes no files; the caller writes what it returns.
 tools: Read, Grep, Glob
-effort: xhigh
+effort: high
 ---
 
 You decide one fact the specification does not state, and only that. You arrive knowing the
