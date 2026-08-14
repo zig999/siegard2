@@ -1,7 +1,7 @@
 # How Siegard works, for dummies
 
 This document explains, from zero, what the seven scripts under `src/claude/bin/` do, what files
-they read and write, how the six skills and ten agents under `src/claude/` use them, and how all
+they read and write, how the seven skills and ten agents under `src/claude/` use them, and how all
 of it adds up to one complete development process — from a human's idea to source code someone
 else can trust.
 
@@ -824,7 +824,7 @@ deliver.py   — reads the plan through plan.py's own pipeline; validates the de
      └── trace.py  — imports project.py + spec.py; outlives both plan and delivery
 ```
 
-## The six skills
+## The seven skills
 
 Skills are what a human actually types (`/analyse`, `/plan-work`, ...). Each one is "one
 invocation, one increment" — it does its job and stops; it never chains into the next skill on
@@ -838,6 +838,7 @@ its own.
 | **`/implement-task`** | one planned task | source + tests + a delivery record + `delivery.json` + a trace bind | `plan.py --check`, `run.py`, `deliver.py`, `trace.py --bind-record` | `task-implementer`, `test-author` |
 | **`/review-change`** | one delivered task | findings recorded under the delivery root + `delivery.json` | `plan.py --check`, `deliver.py`, `run.py`, `trace.py --check` | `coverage-auditor`, `specification-conformance-reviewer`, `standard-conformance-reviewer`, `failure-diagnostician` |
 | **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `spec.py`, `trace.py` | none |
+| **`/siegard-status`** | the question "where does this stand?" | a report derived from disk, writing nothing — deliveries, waits, BLOCKING notes, drift, recent decisions, ready next invocation | `project.py`, `spec.py`, `plan.py --check`, `deliver.py --outstanding`, `trace.py --check` | none |
 
 No skill runs a shell command directly except by calling `run.py` — this is enforced by
 `tests/test_agent_contract.py`, which fails the suite if any shipped agent is ever given a shell

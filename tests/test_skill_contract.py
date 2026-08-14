@@ -42,6 +42,8 @@ SKILLS = {
                                     "standard-conformance-reviewer", "failure-diagnostician"]},
     "reconcile": {"contract": "schemas/reconciliation.json", "validator": "bin/trace.py",
                   "delegates": ["specification-conformance-reviewer"]},
+    "siegard-status": {"contract": "schemas/project.json", "validator": "bin/project.py",
+                       "delegates": []},
 }
 
 
@@ -82,6 +84,10 @@ MODEL_MAY_REACH = {
     "review-change": True,
     "reconcile": True,
     "siegard-config": False,
+    # Read-only and input-free beyond the project root: nothing here is the human's to assert,
+    # so a session may reach for it when asked how the work stands — that reachability is the
+    # skill's point.
+    "siegard-status": True,
 }
 
 
