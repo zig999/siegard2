@@ -62,13 +62,13 @@ unapplied until it exists and nothing else in the plan can be written meanwhile.
 ## Before anything is written
 
 Read the task's `## Notes`, and **stop** on any entry opening `BLOCKING, from the specification —`.
-That class is the binding's finding that the objective, or a criterion, cannot be demonstrated as
-written without contradicting or exceeding the specification — including a fact the specification
-does not state at all. Writing anyway would put an invention or an overruling in the code, where
-it reads exactly like a decision the business made and where nobody will look for a decision at
-all. Name the entries, leave the tree as you found it, and return no record. The settlement is
-the human's, through the scope or through the specification, and the task is re-run through
-implement-against before anything is written against it.
+That class is the binding's finding that a node states something the objective, or a criterion,
+contradicts or exceeds as written — a silence is not this class: a fact the specification did not
+state was decided into it during planning, and never reaches a task file. Writing anyway would put
+an overruling in the code, where it reads exactly like a decision the business made and where
+nobody will look for a decision at all. Name the entries, leave the tree as you found it, and
+return no record. The settlement is the human's, through the scope or through the specification,
+and the task is re-run through implement-against before anything is written against it.
 
 This check is why writing source is separated from planning. An implementer that met the
 contradiction halfway through a file would be most of the way to writing past it.

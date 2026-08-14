@@ -127,6 +127,45 @@ def test_binding_a_second_node_adds_an_entry_sorted_by_identity(repo):
     assert [entry["node"] for entry in declared["bindings"]] == sorted([NODE, second])
 
 
+def test_a_bind_over_a_foreign_binding_prints_the_stale_receipt(repo):
+    """A bind restamps only the nodes it was handed. Restamping a file another node's binding
+    still claims leaves that binding stale — knowable right now, silent afterwards — so the bind
+    says so at the one moment the maker of the change is still holding it."""
+    bind(repo)
+    (repo / "backend" / FILE).write_text("export function place(x) {}\n", encoding="utf-8")
+    done = bind(repo, node="domain/troubleshooting/case-id")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "leaves 1 binding(s) stale" in done.stdout
+    assert f"{NODE}: backend/{FILE} — this act restamped the file under another node" \
+        in done.stdout
+    assert "a reconciliation over these paths is the route" in done.stdout
+
+
+def test_a_bind_carrying_forward_a_changed_file_prints_the_stale_receipt(repo):
+    """The extend default carries earlier files at their old digests. One that changed on its own
+    is stale the moment this bind writes, and this bind is where both sides are in hand."""
+    bind(repo)
+    (repo / "backend" / FILE).write_text("export function place(x) {}\n", encoding="utf-8")
+    (repo / "backend" / "src/orders/helpers.ts").write_text("export const h = 1;\n",
+                                                            encoding="utf-8")
+    done = bind(repo, file="src/orders/helpers.ts")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "leaves 1 binding(s) stale" in done.stdout
+    assert (f"{NODE}: backend/{FILE} — carried forward from an earlier bind, and the file has "
+            f"since changed") in done.stdout
+
+
+def test_a_clean_bind_prints_no_stale_receipt(repo):
+    """The receipt reads only this act's neighborhood; a bind that leaves nothing stale says
+    nothing, so the line means something the day it appears."""
+    bind(repo)
+    (repo / "backend" / "src/orders/helpers.ts").write_text("export const h = 1;\n",
+                                                            encoding="utf-8")
+    done = bind(repo, node="domain/troubleshooting/case-id", file="src/orders/helpers.ts")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "stale" not in done.stdout
+
+
 def test_binding_an_unknown_node_is_refused(repo):
     done = bind(repo, node="domain/troubleshooting/ghost")
     assert done.returncode == 1

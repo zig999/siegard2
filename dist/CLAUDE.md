@@ -131,8 +131,8 @@ same way. `bin/trace.py` is its one writer and one reader.
 
 | drift class | what it means | route |
 |---|---|---|
-| `moved` | the specification moved under a binding | rebind through the delivery that owns the change |
-| `code` | the file changed or is gone | rebind through the delivery that owns the change — or `/reconcile`, below |
+| `moved` | the specification moved under a binding | healed when the node's task is next delivered — the bind restamps at the node as it stands |
+| `code` | the file changed without a rebind, whatever wrote it | `/reconcile`, below — a delivery cannot answer it for another task's nodes, because a bind restamps only its own |
 | `orphaned` | bound to a node the specification no longer holds | `trace.py --prune`, which drops exactly this class and nothing else |
 
 **Never answer drift by deleting an entry** — that throws away the one record of which node that code
@@ -141,11 +141,14 @@ file is hand-edited by nobody, so nothing else could ever clear it; left alone t
 until a real drift arriving later is one more line in a report nobody finishes. Run `--prune` after an
 `/analyse` that removed nodes.
 
-### `/reconcile` — code drift that never went through a delivery
+### `/reconcile` — code drift no rebind answered
 
-Every path this framework runs binds at the end of it, so a file that reached the tree another way — a
-correction typed in during an incident, a conflict resolved by hand during a merge — leaves the trace
-asserting a digest that is not there, silently. `/reconcile` is that route. It takes the file set a
+Every path this framework runs binds at the end of it — but a bind restamps only the delivering
+task's own nodes, so a delivery that rewrites a file other nodes' bindings claim leaves those
+bindings stale the same way a hand edit does. An incident fix typed in directly, a conflict resolved
+by hand during a merge, a shared file a delivery rewrote under another node's claim — each leaves the
+trace asserting a digest that is not there, silently. `/reconcile` is that route, whatever wrote the
+change. It takes the file set a
 human names, reads which nodes the trace binds to it, holds that source to those nodes through the
 same conformance judgment `/review-change` runs, records the answer at `siegard-reconcile/<slug>.md`
 beside the trace, and rebinds only the nodes the judgment cleared.

@@ -291,6 +291,49 @@ def released(node_id: str, dropped: list[str]) -> str:
             f"if anywhere")
 
 
+def stale_after(declared: dict, home: Path, acted: dict[str, str],
+                bound: set[str]) -> list[tuple[str, str, str]]:
+    """The bindings this act left stale, found at the one moment both sides are in hand.
+
+    A bind restamps only the nodes it was handed. That leaves two kinds of binding asserting a
+    digest the tree no longer holds, both knowable right now and both silent afterwards until
+    somebody runs `--check`: another node's binding over a path this act just restamped — the
+    fresh digest is already in memory and differs — and a path a bound node carried forward from
+    an earlier bind whose file changed on its own. Only this act's neighborhood is read — the
+    bound nodes' own entries and the paths this act wrote, never the whole trace: a receipt that
+    restated every standing drift would bury the ones this act just made or met."""
+    stale = []
+    for entry in declared["bindings"]:
+        node = entry["node"]
+        for held in entry.get("files") or []:
+            path, stored = held["path"], held["digest"]
+            if node not in bound:
+                if path in acted and stored != acted[path]:
+                    stale.append((node, path, "this act restamped the file under another node"))
+            elif path not in acted:
+                source = home / path
+                if not source.is_file():
+                    stale.append((node, path,
+                                  "carried forward from an earlier bind, and the file is gone"))
+                elif spec.digest_of(source) != stored:
+                    stale.append((node, path, "carried forward from an earlier bind, and the "
+                                              "file has since changed"))
+    return sorted(stale)
+
+
+def left_stale(stale: list[tuple[str, str, str]]) -> str:
+    """The receipt for the bindings a bind left stale. A statement, never a warning, the same as
+    `released()`: nothing here is wrong yet — a bind restamps exactly the nodes it was handed,
+    and that is the contract — but each line below is a `code` drift finding on the next
+    `--check`, and this is the one moment the maker of the change is still holding it."""
+    lines = [f"  this act leaves {len(stale)} binding(s) stale — a bind restamps only the nodes "
+             f"it was handed:"]
+    lines += [f"    {node}: {path} — {why}" for node, path, why in stale]
+    lines.append("    each is a `code` drift finding on the next --check; a reconciliation over "
+                 "these paths is the route, whatever wrote the change")
+    return "\n".join(lines)
+
+
 def opened(target: Path, spec_root: Path,
            home: Path) -> tuple[dict | None, str | None]:
     """The trace as it stands, ready to be folded into, or nothing and the reason. The first bind
@@ -363,6 +406,9 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
     print(f"bound {node_id} to {held} file(s) at {trace_path(target)}")
     if dropped:
         print(released(node_id, dropped))
+    stale = stale_after(declared, home, {e["path"]: e["digest"] for e in traced}, {node_id})
+    if stale:
+        print(left_stale(stale))
     return 0
 
 
@@ -572,6 +618,11 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
         print(f"{let_go} path(s) released across {sum(1 for _, _, d in held if d)} node(s); a "
               f"total is here because one node's receipt is easy to read past in a record that "
               f"bound twenty")
+    acted = {entry["path"]: entry["digest"]
+             for _, traced in folded for entry in traced}
+    stale = stale_after(declared, home, acted, {node_id for node_id, _ in folded})
+    if stale:
+        print(left_stale(stale))
     return 0
 
 

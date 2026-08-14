@@ -1,18 +1,20 @@
 ---
 name: reconcile
-description: Reconciles source that changed outside any task with the specification the trace says it encodes — reads the trace for which specification nodes a named file set is bound to, holds that source to those nodes through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when a human edited source by hand, resolved a file during a merge, or otherwise changed code no delivery wrote, and wants the trace to describe the tree as it now stands. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
+description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads the trace for which specification nodes a named file set is bound to, holds that source to those nodes through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when a human edited source by hand, resolved a file during a merge, or a delivery modified a file that other nodes' bindings still claim (a bind restamps only the delivering task's own nodes), and the trace should describe the tree as it now stands. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
 effort: medium
 ---
 
-You reconcile source that no task wrote with the specification it is bound to, and you stop. One
-invocation, one file set.
+You reconcile source that changed without a rebind — whatever wrote it — with the specification
+it is bound to, and you stop. One invocation, one file set.
 
 Every other bind this framework writes comes out of a delivery: an implementation record says which
 nodes the source encodes and where, and the bind states exactly that and never a second judgment
-about it. This entry point exists because source reaches a tree other ways — a correction typed in
-during an incident, a file resolved by hand during a merge — and nothing outside a delivery binds.
-The file changes, the trace keeps asserting a digest that is not there any more, and it asserts it
-silently: `--check` is the only thing that ever says so, and nothing was going to run it.
+about it. This entry point exists because a binding goes stale other ways — a correction typed in
+during an incident, a file resolved by hand during a merge, a delivery rewriting a file that other
+nodes' bindings still claim, since a bind restamps only the delivering task's own nodes. The file
+changes without a rebind, the trace keeps asserting a digest that is not there any more, and it
+asserts it silently: `--check` is the only thing that ever says so, and nothing was going to run
+it.
 
 What you produce is a rebind and the record that justifies it. **You never write source, and you
 never write a specification node.** Where the reconciliation cannot be made — where the source now

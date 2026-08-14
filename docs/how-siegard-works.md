@@ -39,7 +39,8 @@ Two smaller files worth knowing:
 - **`closure.md`** at the work root — a human marks a plan closed; the plan becomes read-only
   history that still validates, but the specification is no longer consulted for it.
 - **`siegard-reconcile/<slug>.md`** — a record written by `/reconcile` to justify a bind for
-  source that changed *outside* any task (a hand edit, a merge resolution).
+  source that changed without a rebind, whatever wrote it (a hand edit, a merge resolution, a
+  delivery rewriting a file another node's binding claims).
 
 ## The seven scripts
 
@@ -740,8 +741,9 @@ still owed a rebind.
 - **Function:** the one form that writes nothing — holds a reconciliation record (written by
   `/reconcile`, at `siegard-reconcile/<slug>.md`) to `schemas/reconciliation.json`, so
   `--bind-record` can read it afterward exactly as it reads an implementation record.
-- **When to use it:** as the first step of reconciling source that changed outside any task — a
-  hand-typed incident fix, a merge conflict resolved by hand.
+- **When to use it:** as the first step of reconciling source that changed without a rebind — a
+  hand-typed incident fix, a merge conflict resolved by hand, a file a delivery rewrote under
+  another node's claim.
 - **Read or write:** read-only.
 
 ```
@@ -835,7 +837,7 @@ its own.
 | **`/plan-work`** | a stated scope + the specification | plan nodes (`inventory/`, `epic/`, `task/`) + `plan.json`; specification extensions + decision-log entries where a fact was unstated | `spec.py`, `plan.py`, `deliver.py --standard` | `codebase-surveyor`, `backlog-decomposer`, `execution-contract-binder`, `unstated-fact-decider` |
 | **`/implement-task`** | one planned task | source + tests + a delivery record + `delivery.json` + a trace bind | `plan.py --check`, `run.py`, `deliver.py`, `trace.py --bind-record` | `task-implementer`, `test-author` |
 | **`/review-change`** | one delivered task | findings recorded under the delivery root + `delivery.json` | `plan.py --check`, `deliver.py`, `run.py`, `trace.py --check` | `coverage-auditor`, `specification-conformance-reviewer`, `standard-conformance-reviewer`, `failure-diagnostician` |
-| **`/reconcile`** | source someone hand-edited outside any task | a reconciliation record + a trace bind | `spec.py`, `trace.py` | none |
+| **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `spec.py`, `trace.py` | none |
 
 No skill runs a shell command directly except by calling `run.py` — this is enforced by
 `tests/test_agent_contract.py`, which fails the suite if any shipped agent is ever given a shell
@@ -923,10 +925,12 @@ moving:
   — not something a task's criteria cover — `/plan-work` can route it in directly as a single
   task, skipping the survey and decomposition, because there is nothing to survey: the code
   already exists.
-- **The side door for hand edits.** Source changes outside of any task — an incident fix typed in
-  directly, a merge conflict resolved by hand — never go through `/implement-task`. `/reconcile`
-  is the only place that binds them: it reads what the trace already claims about that file,
-  judges whether the new text still matches, and rebinds only what the judgment clears.
+- **The side door for stale bindings.** Source that changed without a rebind — an incident fix
+  typed in directly, a merge conflict resolved by hand, a shared file a delivery rewrote under
+  another node's claim (a bind restamps only the delivering task's own nodes) — never goes back
+  through `/implement-task`. `/reconcile` is the only place that binds it: it reads what the
+  trace already claims about that file, judges whether the new text still matches, and rebinds
+  only what the judgment clears.
 
 At every step, the report is derived from the files on disk at the moment you ask — never from
 memory of an earlier run, never from a status field. Ask `deliver.py --outstanding` a year into

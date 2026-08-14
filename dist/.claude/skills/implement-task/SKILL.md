@@ -397,9 +397,16 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <w
 
 Where the agent stopped instead of writing — an input absent, a node it implements missing, the
 specification silent on a fact the work needs — that is a successful stop and not a failure of
-this invocation: report what it said and write no record. Where it wrote files and then stopped,
-the run failed: say which files exist, and leave them for a person to look at rather than
-tidying them away.
+this invocation: report what it said and write no record. A stop over a silence does not end with
+a bare report: the fact the agent named is an implementation-level silence the planning route
+never saw, and the report ends with the `/analyse` invocation filled with everything this
+invocation already knows — the project root, and the missing fact quoted whole as the question
+the material must answer — leaving to the human only the invoking. After the specification gains
+the statement, the task re-runs through the implement-against step, exactly as a settled blocking
+note does: the decided value can newly contradict a criterion as written, classing that is the
+binder's, and the re-bind is also what repairs the case where the fact lands in a node this
+task's `implements` does not yet name. Where it wrote files and then stopped, the run failed: say
+which files exist, and leave them for a person to look at rather than tidying them away.
 
 ### 5. Prove
 
@@ -547,6 +554,13 @@ this step does not unwrite the delivery: the records already validated stand on 
 what is missing is exactly the fact that this delivery's files and the specification it followed
 are not yet linked for anyone who looks later.
 
+One more thing the bind may print, and it is a receipt, never a refusal: **the bindings this act
+left stale** — another node's binding over a file this delivery rewrote (a bind restamps only this
+task's own nodes), or a file this task's nodes carried forward from an earlier bind that has since
+changed. Keep the receipt whole for the report: it is the one moment those bindings are in the
+hands of whoever changed the files, and dropped here it survives only as a `--check` finding
+nobody was going to run.
+
 ### 9. Report, and stop
 
 Report, in this order:
@@ -563,6 +577,14 @@ Report, in this order:
 - every node bound into the target's trace, and any binding `trace.py` refused — the trace is
   what lets a future invocation ask whether this code and the specification have since moved
   apart, and a refused binding left unreported is a delivery that looks synced when it is not;
+- where the bind printed a stale-bindings receipt, the receipt verbatim, and after it one
+  `/reconcile` invocation ready to paste — the project root and the target filled in, the file
+  set being every path the receipt names, converted to the target source root's own anchor (the
+  receipt spells paths from the git toplevel, and `/reconcile` reads them relative to the target
+  source root) — with the one sentence that makes the door real rather than decorative: it runs
+  only after the human commits this delivery's pending state, because `/reconcile` refuses a
+  named file the tree holds uncommitted. Never a stop, and never per file: one invocation, one
+  file set, and taking it is the human's;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
 - the standard this invocation followed — where it resolved from, the invocation or the project
