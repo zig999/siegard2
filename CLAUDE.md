@@ -97,3 +97,22 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   framework says it does not know. Approval of a package is that registry gaining an entry — a
   human editing their own file — never an answer given in a session, which the next invocation
   does not have.
+
+## Decision authority
+
+The framework decides. Where planning finds a fact no specification node states, the
+specification gains the statement with a decided value rather than stopping for a person
+whose only move is to trigger the decision — SPEC-001 R13 is the rule, and it was granted
+deliberately, after measurement showed the stop guarded a species that never occurred.
+
+Three bounds hold it, and giving up any of them is a proposal, never a change:
+
+- **The decision is made blind.** The context that decides never sees the task cut that
+  surfaced the fact — a decision made where the cut is visible is the specification bent
+  to fit it.
+- **Every decision is disclosed, and disclosure is never a gate.** The decided value lands
+  in the specification and its entry in the decision log; a human reviews after the fact,
+  and disagreement is an ordinary change. A decided fact with no log entry is invention.
+- **A contradiction is never decided.** A node stating the opposite turns the route back
+  into the standing stop — the scope and the specification disagreeing is the one thing
+  only a person settles, and the only thing left that stops a task.
