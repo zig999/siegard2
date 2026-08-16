@@ -46,6 +46,8 @@ SKILLS = {
                        "delegates": []},
     "siegard-archive": {"contract": "schemas/plan.json", "validator": "bin/plan.py",
                         "delegates": []},
+    "siegard-standard": {"contract": "schemas/standard.json", "validator": "bin/deliver.py",
+                         "delegates": []},
 }
 
 
@@ -94,6 +96,10 @@ MODEL_MAY_REACH = {
     # closes /siegard-config: a session that "tidied up" on its own would be deciding an input
     # that was never its to assert.
     "siegard-archive": False,
+    # It shapes what every later review holds the project to, the same standing /siegard-config
+    # already holds over the project's structural roots — a session drafting its own future
+    # judge, unasked, is deciding an input that was never its to assert either.
+    "siegard-standard": False,
 }
 
 

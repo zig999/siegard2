@@ -24,7 +24,7 @@ from jsonschema import Draft202012Validator
 import deliver
 
 REPO = Path(__file__).resolve().parent.parent
-EXAMPLE = REPO / "src/standards/backend-typescript.yaml"
+EXAMPLE = REPO / "src/standards/backend-node-service.yaml"
 
 
 @pytest.fixture(scope="module")
@@ -69,21 +69,6 @@ def test_every_sample_registry_holds_to_the_contract(sample, contract):
     data, problems = deliver.load_standard(sample, contract)
     assert problems == [], f"{sample.name}: {problems}"
     assert data is not None
-
-
-def test_the_merged_sample_is_exactly_its_parts(contract):
-    """`backend-node-service` is the two split registries in one file, and the only way that stays
-    true is mechanically: a rule edited in one place and not the other would leave the merged sample
-    teaching something neither of its sources says. Only the rules are held — the merged file's
-    `elsewhere` deliberately drops two entries that stop being true once the boundary they describe
-    is internal, and its own header says which."""
-    merged = yaml.safe_load((REPO / "src/standards/backend-node-service.yaml").read_text("utf-8"))
-    parts = [yaml.safe_load((REPO / f"src/standards/{name}.yaml").read_text("utf-8"))
-             for name in ("backend-node-stack", "backend-typescript")]
-    assert merged["rules"] == parts[0]["rules"] + parts[1]["rules"], \
-        "the merged sample is no longer the concatenation of the two it was built from"
-    ids = [r["id"] for r in merged["rules"]]
-    assert len(set(ids)) == len(ids), "the merge collided two rules under one id"
 
 
 def test_the_example_registry_parses_as_yaml():
@@ -425,8 +410,10 @@ def test_a_package_citing_a_rule_the_registry_does_not_declare(tmp_path, contrac
 
 def test_a_registry_may_authorize_packages_and_own_no_install(tmp_path, contract):
     """The split working: where a project holds several registries, one owns the manifest and the
-    others own the steps their own rules are decided by. `backend-typescript` is exactly this, and
-    refusing it would have made a legitimate split unrepresentable."""
+    others own the steps their own rules are decided by. A registry naming only the steps it
+    decides rules by, and no install role at all, is a legitimate shape a consumer may still
+    reach for even though no sample under src/standards/ is written that way today — refusing
+    it would make that split unrepresentable."""
     data, problems = deliver.load_standard(broken(tmp_path, base(commands=[
         {"step": "lint", "command": "npm run lint", "timeout_seconds": 60}])), contract)
     assert problems == [], problems
@@ -436,11 +423,11 @@ def test_a_registry_may_authorize_packages_and_own_no_install(tmp_path, contract
 def test_the_subcommand_prints_the_commands_and_the_packages():
     done = invoke("--standard", str(EXAMPLE))
     assert done.returncode == 0, done.stderr
-    assert "it declares 4 command(s)" in done.stdout
-    assert "installs with nothing" in done.stdout, \
-        "backend-typescript owns no install, and saying so is how a caller learns it needs the " \
-        "registry beside it"
-    assert "it authorizes 3 direct dependency(ies)" in done.stdout
+    assert "it declares 5 command(s)" in done.stdout
+    assert "installs with install" in done.stdout, \
+        "backend-node-service owns the manifest for its own stack, and saying which step " \
+        "installs is how a caller learns it does not need a registry beside it for that"
+    assert "it authorizes 11 direct dependency(ies)" in done.stdout
     assert "transitively is nobody's approval" in done.stdout, \
         "the limit is stated where a reader meets it rather than left out"
 

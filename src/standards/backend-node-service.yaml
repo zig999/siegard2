@@ -1,38 +1,23 @@
-# A third example project standard: the two registries beside this one, merged into one file.
+# An example project standard: everything one Node/TypeScript service's source answers to, in one
+# registry — what it is built on and how it is arranged, together.
 #
-# Like both of them, this is NOT part of the distribution. It sits under src/standards/ rather than
-# src/claude/, so no assembly ships it: Siegard ships the slot a standard fits into, never its
-# content. A consumer project owns its own registry.
+# This is NOT part of the distribution. It sits under src/standards/ rather than src/claude/, so no
+# assembly ships it: Siegard ships the slot a standard fits into, never its content. A consumer
+# project owns its own registry.
 #
 # It exists because one registry per project is a legitimate shape and a consumer will want to see
 # it. What it is NOT is a recommendation. The contract's own `standard` field says "One project may
-# hold several — a backend's rules are not a frontend's — and each is named where it is used", and
-# the two files beside this one are that split: `backend-node-stack` holds what the service is built
-# on, `backend-typescript` holds how it is arranged. They are separate because they change for
-# different reasons and at different rates, and merging them, as here, gives that up: a dependency
-# reconsidered now puts every layering rule in the same file up for reading.
+# hold several — a backend's rules are not a frontend's — and each is named where it is used"; a
+# project whose backend and frontend genuinely differ still wants two files, one per concern, for
+# the reason stated there. What this file demonstrates is the other legitimate shape: one project,
+# one stack, one registry answering for all of it — what it runs on and how its own source is laid
+# out, together, because here they change at a pace close enough that a second file would only be
+# a second place to look.
 #
-# The merge is not a concatenation, and the difference is the thing worth learning from this file.
-# The rules concatenate cleanly — 12 plus 47, and the id prefixes never collide. Two `elsewhere`
-# entries of `backend-node-stack` do not survive, because each described a boundary that merging
-# erases:
-#
-#   - "How modules are layered, named and wired to each other → the project's arrangement standard,
-#     `backend-typescript`, named beside this one". That is now inside this file, so the entry would
-#     point a reader out of the document that answers it.
-#   - "Rules a linter would decide → Nowhere. This service configures no linter; its suite is
-#     `typecheck` and `test`". This file carries 23 rules decided by a tool, naming `lint` and
-#     `secret-scan`, so the entry would deny what the rules beside it declare.
-#
-# A merged registry whose `elsewhere` had been copied along with its rules would therefore have
-# stated two falsehoods about itself, and nothing in the contract would have caught either: the
-# validator holds ids, scopes and the reading/tool split, and it does not read prose for whether a
-# boundary still stands. That is the cost of the merge, stated where a reader meets it.
-#
-# One entry of `backend-node-stack` does survive and is kept below — the embeddings non-goal, which
-# is owned by the specification and unaffected by which file the rules live in. The other, on which
-# status an outcome answers with, is dropped as a duplicate: `backend-typescript` states the same
-# boundary in two more precise entries, which are kept.
+# Its `elsewhere` states two boundaries this registry does not hold, each with where it actually
+# lives: an error's identity, which is the specification's; and which transport status an error
+# maps to, which is this file's own COR-04, stating where the mapping lives without stating the
+# mapping itself. Read them there rather than assumed from a lineage this file does not carry.
 
 contract_version: siegard-standard/1
 standard: backend-node-service

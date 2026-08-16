@@ -40,48 +40,33 @@ So several registries is the intended shape, not a workaround. The constraint si
 reference, by the registry's own path. A project holds as many as its concerns need; each
 invocation names the one that governs the work in hand.
 
-## The four samples
+## The two samples
 
-Three are the backend side — two of them are the split, the third is what merging them costs. The
-fourth is a different stack entirely, proving the same contract stretches to it without a line of
-schema changing.
+Each is one project, one stack, one registry answering for all of it — proof the same contract
+holds two different stacks without a line of schema changing between them.
 
-- **`backend-node-stack.yaml`** — *what the service is built on*, and what is not introduced beside
-  it. Twelve rules: the runtime, the HTTP framework, the driver, the JWT library, the logger, the
-  test runner, the one datastore.
-- **`backend-typescript.yaml`** — *how the source is laid out*. Forty-seven rules across
-  arrangement, DTOs, API shape, errors, edge cases, security, types, naming, maintenance and tests.
-- **`backend-node-service.yaml`** — the two above, merged into one registry. Fifty-nine rules, and a
-  header saying what the merge gave up.
+- **`backend-node-service.yaml`** — a Node/TypeScript service. Fifty-nine rules across what it is
+  built on (the runtime, the HTTP framework, the driver, the JWT library, the logger, the test
+  runner, the datastore) and how its source is arranged: DTOs, API shape, errors, edge cases,
+  security, types, naming, maintenance and tests.
 - **`frontend-typescript.yaml`** — a React + TypeScript frontend, not a service. Fifty-one rules
   across component composition, state management, consuming a backend's contract, asynchronous and
   failure edge cases, accessibility, security, types, naming, maintenance, prohibitions, performance
-  and tests. Its `elsewhere` draws the same line a backend registry draws for a transport status: what
-  a screen tells the user is the specification's, how the screen is wired to say it is this file's.
-  Its one presupposition without a backend counterpart is a design-token file — because unlike
-  `package.json` or `tsconfig.json`, nothing about its shape is already universally known, so a worked
-  example, `frontend-design-tokens.example.css`, sits beside it rather than leaving `presupposes` to
-  name a shape nobody had shown.
+  and tests. Its `elsewhere` draws the same line the backend registry draws for a transport status:
+  what a screen tells the user is the specification's, how the screen is wired to say it is this
+  file's. Its one presupposition without a backend counterpart is a design-token file — because
+  unlike `package.json` or `tsconfig.json`, nothing about its shape is already universally known, so
+  a worked example, `frontend-design-tokens.example.css`, sits beside it rather than leaving
+  `presupposes` to name a shape nobody had shown.
 
-The first two separate by **concern**, not by path, and this is worth stating because it is the
-mistake that is easy to make: 11 of the stack registry's 12 rules and 15 of the arrangement
-registry's 47 target the same `src/**.ts`. `applies_to` narrows a rule to a part of the tree; it
-cannot express "this rule is about the stack and that one is about the layering". Nothing in the
-contract carries that distinction — only the separate files do.
-
-### What the merge taught
-
-The rules concatenate cleanly: 12 plus 47, ids never colliding, and the merged file's counts are the
-sum of its parts. What does not survive is prose. Two `elsewhere` entries of the stack registry each
-described a boundary that merging erases — one pointing the reader at the arrangement standard for
-layering, which is now in the same file, and one declaring that no linter is configured, which 23
-tool-decided rules beside it contradict. Copied along with the rules, they would have stated two
-falsehoods about their own document.
-
-**Nothing in the contract would have caught either.** The validator holds ids, scopes, the
-reading/tool split and the duplicate-id refusal; it does not read prose for whether a boundary still
-stands. That is the cost of merging two registries, and `backend-node-service.yaml` states it in its
-own header rather than leaving a reader to find it.
+Nothing requires one registry per project. The contract's own `standard` field says a project may
+hold several — a backend's rules are not a frontend's, and where a project's own stack and its own
+arrangement change at genuinely different rates, splitting them into separate files by *concern*,
+not by path, is the shape to reach for instead. Each sample here answers for one project's whole
+stack in a single file because, in each, that split was not worth the second file: what a service
+runs on and how its source is arranged change together often enough that a second file would only
+be a second place to look. Splitting is a choice a project makes about its own registry, not a
+shape this directory has to teach by holding both at once.
 
 ## Using one
 
@@ -95,16 +80,6 @@ python3 src/claude/bin/deliver.py --standard <the-project>/standard.yaml
 Real output over the samples:
 
 ```
-standard checked: src/standards/backend-node-stack.yaml declares 12 rule(s) — 11 decided by reading, 1 by a tool
-  pin sha256:37d23cae…431880e4
-  the rules a tool decides run as step(s) typecheck (1 rule(s)); a review reads only the 11 decided by reading
-  what a step exits 0 over is the command exiting 0. […]
-
-standard checked: src/standards/backend-typescript.yaml declares 47 rule(s) — 24 decided by reading, 23 by a tool
-  pin sha256:f27431c6…c1ae8e26
-  the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (1 rule(s)); a review reads only the 24 decided by reading
-  what a step exits 0 over is the command exiting 0. […]
-
 standard checked: src/standards/backend-node-service.yaml declares 59 rule(s) — 35 decided by reading, 24 by a tool
   pin sha256:cf31b196…7c179f83
   the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (2 rule(s)); a review reads only the 35 decided by reading
@@ -116,20 +91,18 @@ standard checked: src/standards/frontend-typescript.yaml declares 51 rule(s) —
   what a step exits 0 over is the command exiting 0. […]
 ```
 
-Read the split in that last one against the backend pair: thirty-three of fifty-one rules are `reading`
-here, against roughly half in the TypeScript backend registry. Not a stricter registry — a stack
-where more of what matters (a state placed in the wrong layer, a screen's accessibility, a token used
-correctly) is a judgment no configured tool actually renders a verdict on, and two rules say so in
-their own text rather than claim a tool decides what nothing here runs (`ACC-09`'s contrast ratio and
-`ACC-10`'s touch-target size both depend on a computed, rendered value `applies_to` cannot presuppose).
+Read the split in the second against the first: thirty-three of fifty-one rules are `reading` in the
+frontend registry, against thirty-five of fifty-nine — roughly the same proportion, slightly higher
+here. Not a stricter registry — a stack where more of what matters (a state placed in the wrong
+layer, a screen's accessibility, a token used correctly) is a judgment no configured tool actually
+renders a verdict on, and two rules say so in their own text rather than claim a tool decides what
+nothing here runs (`ACC-09`'s contrast ratio and `ACC-10`'s touch-target size both depend on a
+computed, rendered value `applies_to` cannot presuppose).
 
 That fourth line follows every registry declaring a rule a tool decides, and it is cut here at the
-`[…]` rather than repeated whole four times. In full it reads: *whether it is configured to decide
+`[…]` rather than repeated whole twice. In full it reads: *whether it is configured to decide
 the rule(s) resting on it is this registry's to know: nothing here reads a stack, and a step
 deciding nothing passes exactly like one deciding all of them.*
-
-The third line of counts is the merge checked by arithmetic: 11 + 24 readings and 1 + 23 tools, with
-nothing gained and nothing lost.
 
 Read the counts beside each step, because they are what the framework can say and the most it can.
 It cannot tell a step that decided every rule resting on it from one that decided none — both exit
@@ -169,18 +142,13 @@ person decides what that means.
 
 `tests/test_standard.py` holds **every** registry in this directory to the contract, parametrized
 over the glob, so a sample that stopped holding fails the suite rather than teaching the wrong shape
-to whoever copies it. Until the third sample was added, only `backend-typescript.yaml` was read at
-all, and the other went unchecked whenever the contract moved.
+to whoever copies it. Before that parametrization existed, only one sample was read at all, and the
+rest went unchecked whenever the contract moved.
 
-Two guards are worth knowing about because they exist for failure modes that pass in silence:
+One guard is worth knowing about because it exists for a failure mode that passes in silence: the
+glob is asserted non-empty. A parametrized test over a glob that matches nothing reports success, so
+if these files ever move, one test says so instead of the whole set quietly passing.
 
-- The glob is asserted non-empty. A parametrized test over a glob that matches nothing reports
-  success, so if these files ever move, one test says so instead of the whole set quietly passing.
-- `backend-node-service.yaml` is held to being exactly the concatenation of the two it was built
-  from. A rule edited in one place and not the other would leave the merged sample teaching
-  something neither source says. Only the rules are held: its `elsewhere` deliberately drops the two
-  entries that stop being true once the boundary they describe is internal.
-
-`backend-typescript.yaml` additionally carries the scope-matcher tests, which are the ones worth
+`backend-node-service.yaml` additionally carries the scope-matcher tests, which are the ones worth
 running hardest — neither `PurePath.match` nor `fnmatch` gives what a reader expects, and either
 would decide whether a finding is refused.
