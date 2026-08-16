@@ -40,9 +40,11 @@ So several registries is the intended shape, not a workaround. The constraint si
 reference, by the registry's own path. A project holds as many as its concerns need; each
 invocation names the one that governs the work in hand.
 
-## The three samples
+## The four samples
 
-Two of them are the split. The third is what merging them costs.
+Three are the backend side — two of them are the split, the third is what merging them costs. The
+fourth is a different stack entirely, proving the same contract stretches to it without a line of
+schema changing.
 
 - **`backend-node-stack.yaml`** — *what the service is built on*, and what is not introduced beside
   it. Twelve rules: the runtime, the HTTP framework, the driver, the JWT library, the logger, the
@@ -51,6 +53,15 @@ Two of them are the split. The third is what merging them costs.
   arrangement, DTOs, API shape, errors, edge cases, security, types, naming, maintenance and tests.
 - **`backend-node-service.yaml`** — the two above, merged into one registry. Fifty-nine rules, and a
   header saying what the merge gave up.
+- **`frontend-typescript.yaml`** — a React + TypeScript frontend, not a service. Fifty-one rules
+  across component composition, state management, consuming a backend's contract, asynchronous and
+  failure edge cases, accessibility, security, types, naming, maintenance, prohibitions, performance
+  and tests. Its `elsewhere` draws the same line a backend registry draws for a transport status: what
+  a screen tells the user is the specification's, how the screen is wired to say it is this file's.
+  Its one presupposition without a backend counterpart is a design-token file — because unlike
+  `package.json` or `tsconfig.json`, nothing about its shape is already universally known, so a worked
+  example, `frontend-design-tokens.example.css`, sits beside it rather than leaving `presupposes` to
+  name a shape nobody had shown.
 
 The first two separate by **concern**, not by path, and this is worth stating because it is the
 mistake that is easy to make: 11 of the stack registry's 12 rules and 15 of the arrangement
@@ -98,10 +109,22 @@ standard checked: src/standards/backend-node-service.yaml declares 59 rule(s) �
   pin sha256:cf31b196…7c179f83
   the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (2 rule(s)); a review reads only the 35 decided by reading
   what a step exits 0 over is the command exiting 0. […]
+
+standard checked: src/standards/frontend-typescript.yaml declares 51 rule(s) — 33 decided by reading, 18 by a tool
+  pin sha256:0b9631b2…5e445c71
+  the rules a tool decides run as step(s) lint (15 rule(s)), secret-scan (1 rule(s)), style (1 rule(s)), typecheck (1 rule(s)); a review reads only the 33 decided by reading
+  what a step exits 0 over is the command exiting 0. […]
 ```
 
+Read the split in that last one against the backend pair: thirty-three of fifty-one rules are `reading`
+here, against roughly half in the TypeScript backend registry. Not a stricter registry — a stack
+where more of what matters (a state placed in the wrong layer, a screen's accessibility, a token used
+correctly) is a judgment no configured tool actually renders a verdict on, and two rules say so in
+their own text rather than claim a tool decides what nothing here runs (`ACC-09`'s contrast ratio and
+`ACC-10`'s touch-target size both depend on a computed, rendered value `applies_to` cannot presuppose).
+
 That fourth line follows every registry declaring a rule a tool decides, and it is cut here at the
-`[…]` rather than repeated whole three times. In full it reads: *whether it is configured to decide
+`[…]` rather than repeated whole four times. In full it reads: *whether it is configured to decide
 the rule(s) resting on it is this registry's to know: nothing here reads a stack, and a step
 deciding nothing passes exactly like one deciding all of them.*
 
@@ -112,7 +135,7 @@ Read the counts beside each step, because they are what the framework can say an
 It cannot tell a step that decided every rule resting on it from one that decided none — both exit
 0, and telling them apart means reading a stack this repository ships no knowledge of. Twenty rules
 resting on one step is a number worth an author's look, and looking is what produced the
-`eslint.config.js` presupposition both TypeScript registries now carry: a `lint` script in the
+`eslint.config.js` presupposition every TypeScript registry here now carries: a `lint` script in the
 manifest is a step that runs, and the configuration is what makes it a step that decides.
 
 Read the last line of each. A rule marked `decided_by: tool` is **not** a review's to read: it runs

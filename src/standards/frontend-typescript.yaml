@@ -1,0 +1,727 @@
+# An example project standard, for a React + TypeScript frontend.
+#
+# This file is NOT part of the distribution. It sits under src/standards/ rather than
+# src/claude/, so no assembly ships it: Siegard ships the slot a standard fits into and the
+# enforcement that holds code to it, never the content. A consumer project owns its own
+# registry, in its own repository, and names it when invoking the review.
+#
+# Two lines run through it, and both are the point.
+#
+# `decided_by` splits the registry in half. A rule a linter, a compiler, a style checker or a
+# secret scanner decides exactly is a step of the project's own suite -- it runs through
+# bin/run.py, its failures arrive as a captured run, and the failures pass reads what the tool
+# printed. Only a rule whose application is a reading reaches the standard pass. A model
+# applying `no-explicit-any` to a five-hundred-line file has strictly worse recall than tsc and
+# costs more. Where an automated check would need a rendered, computed value this registry has
+# no way to presuppose -- a contrast ratio, a touch target's actual size on screen -- the rule
+# stays `reading` rather than claiming a tool decides what nothing here runs.
+#
+# `elsewhere` says what this registry does not hold, and where each of those lives instead.
+# What a screen tells the user for a given outcome is what the business decided, so it belongs
+# to the specification; how the screen is wired to reach that outcome is this project's own
+# arrangement, and belongs here.
+#
+# A companion file, frontend-design-tokens.example.css, sits beside this one. It gives concrete
+# shape to the token declarations MNT-02 requires source to reference -- without it,
+# `presupposes` would name a file whose form nobody had shown.
+
+contract_version: siegard-standard/1
+standard: frontend-typescript
+summary: How this project's React + TypeScript frontend is composed, wired, styled and named.
+
+rules:
+
+  # ---------------------------------------------------------------- component composition and layering
+
+  - id: ARC-01
+    statement: A component composes an existing primitive from the shared UI layer under
+      src/components/ui/ rather than reimplementing its markup by hand.
+    because: A hand-rolled equivalent of a cataloged primitive is a second implementation that
+      drifts from the first the day either one is fixed, and a reader has no way to know which
+      one is canonical.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+    seen_at: src/features/checkout/components/checkout-summary.tsx
+
+  - id: ARC-02
+    statement: A page or route component composes feature components and reads state; it does
+      not itself issue a data fetch or hold business logic.
+    because: Business logic reachable only through a route component is business logic no
+      other entry point -- a modal, a widget, a test -- can exercise without standing up the
+      whole route.
+    decided_by: reading
+    applies_to:
+      - { under: src/pages, suffix: .tsx, nested: true }
+
+  - id: ARC-03
+    statement: A component's business logic -- a computation, a decision, a transformation of
+      fetched data -- lives in a hook or a service module, never inline in JSX render logic.
+    because: Logic embedded in a render function is logic a test can only reach by rendering
+      the whole component, and a second component needing the same rule copies it instead of
+      calling it.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ARC-04
+    statement: A component built to serve one feature sits under that feature's own directory;
+      promoting it to the shared primitive layer under src/components/ui/ is a deliberate
+      catalog change, never an ad hoc placement.
+    because: A shared layer that gains entries silently is a layer nobody can trust to be
+      exactly what every other feature already depends on.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- state management
+
+  - id: STA-01
+    statement: Data read from the API is read directly from the server-state layer's cache; it
+      is never copied into a separate UI store.
+    because: A copy of fetched data kept beside its own cache is a second source of truth, and
+      the two disagree the first time either one refetches or mutates.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+    seen_at: src/hooks/use-cart.ts
+
+  - id: STA-02
+    statement: State meaningful only to the UI -- a toggle, a selected tab, an open dialog --
+      lives in local component state or a dedicated UI store, never in the server-state cache.
+    because: A server-state cache invalidates and refetches on its own schedule; UI state kept
+      there is state that resets or vanishes for reasons the screen never triggered.
+    decided_by: reading
+    applies_to:
+      - { under: src/store, suffix: .ts, nested: true }
+
+  - id: STA-03
+    statement: A value derived from other state or props is computed inline or memoized from
+      them; it is never mirrored into its own state variable kept in sync by an effect.
+    because: Two variables holding the same fact are two variables that can disagree, and the
+      effect meant to keep them equal is one more place the sync can be missed.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- consuming the backend's contract
+
+  - id: API-01
+    statement: A prop a shared component receives that does not map directly -- same name, same
+      type -- from what the service layer returns is produced by a named adapter function,
+      never assembled inline in JSX.
+    because: A transform inlined at the call site is a transform a second caller cannot find,
+      so it gets reinvented slightly differently the next time the same data feeds the same
+      kind of component.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: API-02
+    statement: Every distinct failure response the UI can receive maps to a user-facing state
+      through one named mapping; a handler does not choose the displayed message inline at the
+      call site.
+    because: A message chosen where it is caught is a message chosen differently at the next
+      call site, and the one nobody remembers to update is the one a user actually reads.
+    decided_by: reading
+    applies_to:
+      - { under: src/services, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+    seen_at: src/errors/api-error-map.ts
+
+  - id: API-03
+    statement: A network or service call is wrapped in a typed error before it reaches a
+      component; no raw or unknown error crosses that boundary.
+    because: A component that receives an untyped failure has to inspect it to know what
+      happened, and every screen that consumes the same call ends up guessing the same shape
+      differently.
+    decided_by: reading
+    applies_to:
+      - { under: src/services, suffix: .ts, nested: true }
+    seen_at: src/services/orders.service.ts
+
+  - id: API-04
+    statement: A list or collection view renders an explicit empty state for a response with no
+      items; an empty response is never treated as loading or absent.
+    because: A screen that cannot tell "nothing to show" from "still fetching" leaves the user
+      waiting on data that already arrived.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- asynchronous and failure edge cases
+
+  - id: EDG-01
+    statement: Every view that awaits a network response renders an explicit loading state
+      before data arrives.
+    because: A screen with nothing to show while it waits reads as broken rather than busy.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: EDG-02
+    statement: A view that fails to load degrades to a typed error state offering a retry,
+      rather than an indefinite loading state or a blank screen.
+    because: A loading state with no failure exit is a screen the user cannot tell apart from
+      one that is simply slow, forever.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: EDG-03
+    statement: A form field's validation error is shown at the field it belongs to and linked to
+      it through aria-describedby, never only as a page-level message.
+    because: A generic banner cannot tell the user which of several fields is wrong, and a
+      screen reader user has no way to associate the message with the input at all.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: EDG-04
+    statement: An action that destroys or irreversibly changes data requires an explicit
+      confirmation step before it executes.
+    because: A destructive action one click away from an adjacent, harmless one is a mistake
+      waiting for a slightly-off click.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- accessibility
+
+  - id: ACC-01
+    statement: Every interactive element is operable by keyboard alone -- Tab to reach it,
+      Enter or Space to activate it, Escape to dismiss what it opened.
+    because: A control reachable only by pointer excludes every user, and every automated agent,
+      that does not have one.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-02
+    statement: An image that conveys information carries descriptive alt text; a purely
+      decorative image carries an empty alt.
+    because: An image with no alt text is announced by its filename, and an image with the
+      wrong alt text is announced as something it is not.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-03
+    statement: Every form input has a label reachable by assistive technology -- a label
+      element, an aria-label, or an aria-labelledby.
+    because: An input with no reachable label is announced only as its type, and a screen
+      reader user cannot tell what it asks for.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-04
+    statement: An input in an invalid state carries aria-invalid and links its error message
+      through aria-describedby.
+    because: A visual error style with no matching ARIA state is invisible to a screen reader,
+      so only a sighted user learns the field failed.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-05
+    statement: A focus indicator is visible on every focusable element and is never suppressed
+      without a replacement style.
+    because: A user navigating by keyboard with no visible focus has no way to know where they
+      are on the page.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+      - { under: src, suffix: .css, nested: true }
+
+  - id: ACC-06
+    statement: An overlay, sticky header, or newly added content never fully obscures the
+      element that currently holds focus.
+    because: A focused element hidden behind a fixed header is a focus a keyboard user has lost
+      track of, with no visual sign anything moved.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-07
+    statement: Content that updates without a page navigation is announced to assistive
+      technology through aria-live or explicit focus management.
+    because: A screen reader user who is not looking at the screen has no way to notice a
+      silent update, however visible it is to a sighted user.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-08
+    statement: A state conveyed by color alone -- an error, a warning, a selection -- is paired
+      with an icon, text, or pattern.
+    because: Color alone excludes a user who cannot distinguish the colors chosen, and conveys
+      nothing at all read aloud.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ACC-09
+    statement: Text contrast against its background meets 4.5:1 for normal text and 3:1 for
+      large text and interactive components.
+    because: Text below the ratio a reader can resolve is text some users cannot read at all,
+      whatever the font size.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .css, nested: true }
+
+  - id: ACC-10
+    statement: An interactive target measures at least 44 by 44 CSS pixels on a touch viewport.
+    because: A target smaller than a fingertip is a target some users cannot reliably hit, and
+      the nearest miss activates a neighbor instead.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- security
+
+  - id: SEC-01
+    statement: Raw HTML is never rendered from data this project did not author without passing
+      it through the project's sanitizer first.
+    because: Unsanitized HTML rendered from anything a user or an upstream system supplied is a
+      script the attacker wrote, running as the page.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: SEC-02
+    statement: User-controlled input is never interpolated directly into a URL, an
+      event-handler string, or a value evaluated as code.
+    because: An address or handler built by concatenating unchecked input is a place a crafted
+      value redirects, executes, or exfiltrates.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: SEC-03
+    statement: No credential, API key, or session token is written in source or passed to a
+      logging call, even in a development build.
+    because: A secret in source is a secret in every clone and every log line it ever reaches,
+      long after the reason it was there is forgotten.
+    decided_by: tool
+    tool: secret-scan
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: SEC-04
+    statement: An authentication token is not persisted in storage reachable by arbitrary
+      script unless the project's own decision records why.
+    because: A token any script on the page can read is a token any successful injection
+      anywhere on the page can steal.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- types
+
+  - id: TYP-01
+    statement: The compiler runs strict, and the escape-hatch any type is never used; prefer
+      unknown narrowed by a guard, a generic, or an explicit type.
+    because: One escape hatch propagates through every call it touches, and the errors it
+      hides surface at runtime in a caller that never mentioned it.
+    decided_by: tool
+    tool: typecheck
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: TYP-02
+    statement: A type assertion is never used to silence the compiler without an accompanying
+      guard that narrows it.
+    because: An assertion is a claim the compiler stops checking, so the first wrong one is
+      found by a user rather than a build.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: TYP-03
+    statement: A component's public props are declared through an explicit, exported type.
+    because: Props inferred only from usage change meaning when a caller changes, so a consumer
+      breaks from an edit nobody flagged as a contract change.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: TYP-04
+    statement: A value with a fixed, known set of shapes is modeled as a discriminated union,
+      never as a bag of optional fields.
+    because: A bag of optional fields lets a caller construct a combination nothing renders
+      correctly, and the compiler cannot refuse it.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+
+  # ---------------------------------------------------------------- naming
+
+  - id: CON-01
+    statement: Files are kebab-case, components and types are PascalCase, hooks and functions
+      are camelCase (a hook prefixed use), constants are SCREAMING_SNAKE, and a test carries
+      its unit's name plus .spec.
+    because: A name that does not say what kind of thing it names costs a reader an extra file
+      open, every time.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- maintainability
+
+  - id: MNT-01
+    statement: A component file stays within three hundred lines; past that, a subcomponent is
+      extracted.
+    because: A component nobody can hold in their head gains a fourth conditional branch
+      instead of a second component.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: MNT-02
+    statement: A visual value with meaning -- a color, a spacing unit, a duration -- is
+      referenced through a design token, never spelled out as a literal inside a component or
+      stylesheet.
+    because: The same literal copied into three places is three places to change and two that
+      get forgotten.
+    decided_by: tool
+    tool: style
+    applies_to:
+      - { under: src, suffix: .css, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+    seen_at: src/design-system/tokens.css
+
+  - id: MNT-03
+    statement: Markup or logic already cataloged as a shared primitive is composed, never
+      duplicated by hand inside a feature.
+    because: A hand-copied duplicate of a shared primitive is a second implementation the day
+      either one changes.
+    decided_by: reading
+    applies_to:
+      - { under: src/features, suffix: .tsx, nested: true }
+
+  - id: MNT-04
+    statement: A list rendered from dynamic, reorderable, or deletable data is keyed by a
+      stable identifier from the data, never by its array index.
+    because: An index shifts on reorder, insert or delete, and React reassigns state and DOM
+      nodes to the wrong item without raising an error.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: MNT-05
+    statement: Commented-out code is deleted rather than kept, and an import no longer used is
+      removed.
+    because: Code kept in a comment is trusted as intent long after it stopped compiling, and
+      nobody maintains it.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- prohibitions
+
+  - id: PRH-01
+    statement: Production code emits through the project's configured logger; a direct console
+      call is not used.
+    because: A console line reaches nobody in production -- no level, no correlation, no
+      retention.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: PRH-02
+    statement: A deferred-work marker carries a reference to the work that will settle it.
+    because: An unreferenced marker is a decision deferred to nobody, and it survives every
+      review by looking temporary.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: PRH-03
+    statement: A lint rule is suppressed only with a comment stating why.
+    because: A silent suppression removes the rule for everyone who reads the line afterwards.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: PRH-04
+    statement: An inline style prop is not used for visual styling; styling flows through the
+      project's stylesheet mechanism.
+    because: A style set inline bypasses every token and every cascade rule the rest of the
+      project follows, and no reviewer sees it as a styling change.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- performance
+
+  - id: PRF-01
+    statement: A route's page component is loaded lazily; it is not imported eagerly at the
+      router root.
+    because: Every page imported eagerly is weight every visitor downloads before they reach
+      any one of them.
+    decided_by: reading
+    applies_to:
+      - { under: src/pages, suffix: .tsx, nested: true }
+
+  - id: PRF-02
+    statement: A memoization hook wraps a computation only where a measured cost justifies it;
+      it is not applied by default to a trivial derivation.
+    because: A memoization hook applied everywhere adds a comparison cost to every render for
+      derivations cheaper than the comparison itself.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: PRF-03
+    statement: A large third-party module is imported by named export for tree-shaking, never
+      as a whole-namespace import.
+    because: A namespace import pulls in code no page uses, and the bundler cannot tell which
+      part was actually needed.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: PRF-04
+    statement: A view composed of independently loadable sections fetches each section's own
+      data separately; a single request does not hydrate the whole view.
+    because: One request feeding every section means one slow or failing section blocks every
+      other section that had nothing to do with it.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .tsx, nested: true }
+
+  # ---------------------------------------------------------------- how tests are written here
+
+  - id: TST-01
+    statement: A test asserts what a user would observe -- rendered text, an emitted event, a
+      focus change -- never a component's internal state or a private method.
+    because: A test bound to internal state fails the moment the internal shape changes,
+      whether or not the observable behavior did.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.tsx, nested: true }
+      - { under: src, suffix: .spec.ts, nested: true }
+
+  - id: TST-02
+    statement: A test is named for the behavior it establishes, as a sentence, not for the
+      function or component it calls.
+    because: A failing run's output is a list of test names, and a name that repeats the
+      function's own name tells the reader nothing a stack trace didn't.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.tsx, nested: true }
+      - { under: src, suffix: .spec.ts, nested: true }
+
+  - id: TST-03
+    statement: A stand-in replaces a boundary the component does not own -- the network,
+      storage, the clock -- and never the component's own rendering logic.
+    because: A rule replaced by a stand-in is a rule the suite asserts about itself, and it
+      keeps passing after the real rule is deleted.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .spec.tsx, nested: true }
+      - { under: src, suffix: .spec.ts, nested: true }
+
+  - id: TST-04
+    statement: A test file sits beside the unit it covers, named for it plus .spec.
+    because: A test nobody can find from the file it covers is a test written twice and
+      deleted once.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .spec.tsx, nested: true }
+      - { under: src, suffix: .spec.ts, nested: true }
+
+# What this standard's tool-decided rules assume already stands, for the same reason the
+# registry beside this one states it: a rule reaches a file, never an absence, so the
+# artifacts every rule here needs could not be asked for by any rule here.
+presupposes:
+
+  - path: package.json
+    provides: >-
+      The typecheck, lint, style and secret-scan steps this registry's eighteen tool-decided
+      rules are run as. Without it none of them is decided by anything, and a review reporting
+      only what a reading found reads as a review of the whole registry.
+    rules: [ACC-02, ACC-03, CON-01, MNT-01, MNT-02, MNT-04, MNT-05, PRF-03, PRH-01, PRH-02,
+            PRH-03, PRH-04, SEC-01, SEC-03, TST-04, TYP-01, TYP-02, TYP-03]
+
+  - path: tsconfig.json
+    provides: >-
+      The strict compiler configuration TYP-01 requires, which is what makes the any it
+      forbids an escape hatch rather than the default every unannotated value already has.
+    rules: [TYP-01]
+
+  - path: eslint.config.js
+    provides: >-
+      The flat configuration the lint step reads its parser, its accessibility plugin and its
+      rule set from. Absent, eslint has not been told how to parse the TypeScript and JSX every
+      scope below names, and the step fails on the first annotation or element it meets;
+      present but naming no rule, it exits 0 having decided none of the fifteen rules below.
+    rules: [ACC-02, ACC-03, CON-01, MNT-01, MNT-04, MNT-05, PRF-03, PRH-01, PRH-02, PRH-03,
+            PRH-04, SEC-01, TST-04, TYP-02, TYP-03]
+
+  - path: stylelint.config.js
+    provides: >-
+      The ruleset the style step decides MNT-02 by -- a custom rule forbidding a literal color,
+      spacing or duration value outside a token declaration.
+    rules: [MNT-02]
+
+  - path: src/design-system/tokens.css
+    provides: >-
+      The token declarations MNT-02 requires source to reference instead of a literal value. A
+      worked shape of this file -- the custom-property declarations a project's own design
+      system would hold -- sits beside this standard at frontend-design-tokens.example.css.
+    rules: [MNT-02]
+
+# How the tool-decided rules above are decided, and what decides them. This registry declares
+# no install: it owns the steps its own rules are decided by, and a consumer project's own
+# stack registry -- the manifest, the framework, the bundler -- is a separate concern from how
+# its source is laid out, the same split backend-node-stack.yaml and backend-typescript.yaml
+# already draw.
+dependencies:
+
+  - package: typescript
+    why: the typecheck step is its compiler, and TYP-01 is decided by it.
+    rules: [TYP-01]
+
+  - package: eslint
+    why: the lint step is it, and ten of the rules above are decided by that step.
+    rules: [CON-01, MNT-01, MNT-05, PRF-03, PRH-01, PRH-02, PRH-03, TST-04, TYP-02, TYP-03]
+
+  - package: eslint-plugin-jsx-a11y
+    why: the accessibility rules ACC-02 and ACC-03 the lint step decides are its.
+    rules: [ACC-02, ACC-03]
+
+  - package: eslint-plugin-react
+    why: MNT-04 (stable list keys), SEC-01 (no raw HTML without review) and PRH-04 (no inline
+      style) are its rules.
+    rules: [MNT-04, SEC-01, PRH-04]
+
+  - package: stylelint
+    why: the style step is it, and MNT-02 is decided by that step.
+    rules: [MNT-02]
+
+  - package: secretlint
+    why: the secret-scan step is it, and it decides SEC-03.
+    rules: [SEC-03]
+
+  - package: dompurify
+    why: SEC-01 permits raw HTML only once it is sanitized through this package; it is the
+      sanitizer the rule requires, not a rule the tool applies.
+    rules: [SEC-01]
+
+commands:
+
+  - step: install
+    command: npm ci
+    timeout_seconds: 300
+    role: install
+
+  - step: typecheck
+    command: npm run typecheck
+    timeout_seconds: 300
+
+  - step: lint
+    command: npm run lint
+    timeout_seconds: 180
+
+  - step: style
+    command: npm run lint:css
+    timeout_seconds: 120
+
+  - step: secret-scan
+    command: npm run secret-scan
+    timeout_seconds: 120
+
+  - step: test
+    command: npm test
+    timeout_seconds: 900
+    role: suite
+
+elsewhere:
+
+  - what: What a screen tells the user for a given outcome -- the wording of a validation
+      failure, a permission refusal, a success confirmation.
+    lives_in: The specification, as a rule or scenario node -- or the project's own copy source
+      if the specification leaves the exact wording open.
+    why: What the user is told is what the business decided to tell them. A rule here stating
+      it would put this registry and the specification in contradiction over the same line.
+
+  - what: Which UI state a screen enters for a given API response, and how that state is
+      composed and rendered.
+    lives_in: This file, in EDG-01, EDG-02, API-02 and API-04 -- the wiring is this project's
+      own arrangement.
+    why: How the screen is built to react is an arrangement decision, not a domain fact. API-02
+      requires the mapping to live in one place without stating any mapping itself, the same
+      way a backend registry's error-to-status rule requires a map without naming one.
+
+  - what: Whether a change looks correct pixel by pixel against an approved baseline.
+    lives_in: A dedicated visual-regression tool, named as this registry's own commands step,
+      if the project adopts one.
+    why: Correctness here is a comparison against a screenshot nobody has approved in this
+      registry -- applies_to reaches a file by path and suffix, never a rendered baseline, so a
+      rule claiming to decide this would claim a check nothing here runs.
+
+  - what: A severity for any of these rules, and any verdict derived from the findings.
+    lives_in: Nowhere -- deliberately.
+    why: A finding states what it costs; a person decides what that means.
+
+  - what: Which tests must exist for a task, by the kind of work it is -- a new behavior, a
+      change, a rearrangement, a defect.
+    lives_in: The framework, in agents/test-author.md.
+    why: It is the same question in every language and every layer, so it is not this
+      project's to answer.
+
+  - what: That a test asserts observable behavior rather than an internal call, fails for one
+      reason, cannot pass vacuously, and tears down what it sets up.
+    lives_in: The framework, in agents/test-author.md and agents/coverage-auditor.md.
+    why: Universal, and already enforced by the passes that read the tests. The TST rules above
+      add only what is this project's own taste -- how a test is named, what a stand-in may
+      replace, where the file sits.
+
+  - what: Which edge cases a task must account for, and the requirement to say why a
+      dismissed one does not apply.
+    lives_in: The framework, in agents/test-author.md.
+    why: The checklist is behavior-shaped and universal; the EDG and ACC rules above add only
+      where each one is handled in this stack.
+
+  - what: Whether every acceptance criterion has a test that would fail if it stopped holding.
+    lives_in: The framework, in agents/coverage-auditor.md.
+    why: It is judged against the task's criteria, which live in the plan, not against a rule
+      here.
+
+  - what: Whether two modules import each other in a cycle.
+    lives_in: Nowhere yet -- a declared gap.
+    why: It is decidable by walking the import graph, so it belongs to a script rather than a
+      reading. No such script ships, and stating the rule here would hand a mechanical question
+      to a reading.
+
+  - what: The shape of a commit message, and which branch work happens on.
+    lives_in: The project's own git conventions, outside this framework.
+    why: Siegard never touches the consumer's git state, and a rule here could not be checked
+      by reading the files a review is given.
