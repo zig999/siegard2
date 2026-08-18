@@ -231,6 +231,13 @@ under `intake/` in the work root. Point every `sources` entry at a file under it
 persists the same way — a new file under `intake/`, never an edit to what intake already
 holds.
 
+**A layout the human supplied goes under `intake/layout/`, apart from the scope.** A mockup, a
+rendering, a palette — anything that shows what a screen should look like rather than telling what
+the system should do. The separation is a directory rather than a promise because of what reads
+each: everything under `intake/` is material this skill's judges read, and only what a task names
+in `reference` is read by the one thing that writes source. Two files in one directory, one of
+them safe to hand an executor and one of them not, is a distinction nobody can keep by memory.
+
 Every plan node this skill writes — this one and every one after it — carries a body of
 exactly two headings, in order: `## What it is`, then `## Notes`. One sentence per line; a
 section with nothing to say carries the literal line `None.`
@@ -256,6 +263,16 @@ deliberately without `implements`, which belongs to the next step's judge.
 
 Write the epics at the paths their identifiers compute to. Hold the task skeletons: a
 skeleton is not yet a valid node, and it only touches disk once it names what it implements.
+
+**Where a layout stands under `intake/layout/`, name it in the `reference` of each task that
+builds what it shows** — yours to write, on the skeleton, before the next step. It is not the
+decomposer's: what a screen should look like shapes no boundary between tasks, and a judge cut to
+find those boundaries has no business deciding which mockup a task answers. Name only what the
+task actually builds — a reference on every task of the epic is the executor reading a whole
+design to write one component — and never point it at the scope. What the contract says of the
+field is what makes the split matter: a reference decides form and never fact, so a screen's
+statuses, its wording and its refusals still come from the specification, and the binder below is
+still what discovers a fact nobody stated.
 
 ### 4. Implement against
 

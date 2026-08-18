@@ -137,6 +137,18 @@
       "description": "The artifacts this task's delivery must create, by path relative to the target source root. It is the checkable half of an objective rather than a second statement of it, and it exists because two things read it. A delivery refuses an implementation record whose `files` does not list what the task said it would produce, so the claim is held to what was written rather than to what was meant. And a task producing anything is one building what the project's own standard presupposes — the manifest, the compiler configuration, the artifact a rule names and no rule can ask for — which is why writing source over an absent presupposition stops for every other task and never for this one: holding the task that builds the substrate to the substrate's presence is circular, and the deadlock has no other exit. Ordinary work declares none.",
       "$comment": "Held against the implementation record's `files` by bin/deliver.py, and read by /implement-task before anything is written."
     },
+    "reference": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^/]"
+      },
+      "description": "Artifacts the delivery must read to write this task, by path relative to the work root — ordinarily a layout under `intake/layout/`: a mockup, a rendering, a palette. It exists because a screen has a form somebody decided, and a criterion cannot carry it: a criterion is falsifiable on its own, and \"matches the mockup\" is not, so before this field the layout reached the survey, the decomposition and the binding, and then stopped at the one step that writes the code. **A reference decides form, never fact.** It may decide that the status column sits on the right; it may not decide which statuses exist, what each one tells the user, or when each appears — those are what the business decided, they are the specification's, and a fact a reference shows that no node holds leaves the executor exactly where a silent specification already leaves it, which is stopped. Where a reference and a node disagree the node wins and the departure is recorded: intake is written once and never edited, so a layout is a photograph of what was decided when the plan was cut, and the specification is what has moved since. The validator does not open these files — the same as `sources`, and for the same reason: what a task was written from is not a claim anything here can check. An absent path is the executor's stop, where the reading actually happens.",
+      "$comment": "Read by /implement-task and passed to task-implementer; never read by bin/plan.py."
+    },
     "implements": {
       "type": "array",
       "minItems": 1,
@@ -298,6 +310,7 @@
             "criteria",
             "depends_on",
             "produces",
+            "reference",
             "implements"
           ]
         },

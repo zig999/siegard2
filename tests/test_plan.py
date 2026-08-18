@@ -650,3 +650,60 @@ def test_a_plan_holding_a_persisted_unstated_entry_derives_nothing(work, root, s
     assert done.returncode == 1, done.stdout + done.stderr
     assert "never persists" in done.stdout
     assert not (work / "plan.json").is_file()
+
+
+# --------------------------------------------------- what a task is written to look like
+
+
+def test_a_task_may_name_the_references_it_is_written_against(work, root, sound_plan, write_plan):
+    """The field carries what a criterion cannot. A criterion is falsifiable on its own, and
+    "matches the mockup" is not, so before this the layout reached the survey, the decomposition
+    and the binding and then stopped at the step that writes the code."""
+    write_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted and retrievable by its order_number.",
+        "criteria": ["Submitting a valid order returns its order_number."],
+        "implements": ["domain/sales/order"],
+        "reference": ["intake/layout/order-form.html"],
+    })
+    assert problems_in(work, root) == []
+
+
+def test_the_validator_never_opens_a_reference(work, root, sound_plan, write_plan):
+    """The same as `sources`, and for the same reason: what a task was written from is not a claim
+    anything here can check. An absent path is the executor's stop, where the reading happens."""
+    write_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted and retrievable by its order_number.",
+        "criteria": ["Submitting a valid order returns its order_number."],
+        "implements": ["domain/sales/order"],
+        "reference": ["intake/layout/nothing-was-ever-written-here.html"],
+    })
+    assert problems_in(work, root) == []
+
+
+def test_a_reference_is_never_an_edge_of_the_plan(work, root, sound_plan, write_plan):
+    """A reference points outside every root the graph describes — not at a task, not at a
+    specification node. Deriving an edge for it would put a fourth kind in an index every
+    committed plan.json is held to, and stale every one of them."""
+    write_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted and retrievable by its order_number.",
+        "criteria": ["Submitting a valid order returns its order_number."],
+        "implements": ["domain/sales/order"],
+        "reference": ["intake/layout/order-form.html"],
+    })
+    assert run(work, root).returncode == 0
+    graph = json.loads((work / "plan.json").read_text(encoding="utf-8"))
+    assert {edge["kind"] for edge in graph["edges"]} <= {"depends_on", "implements", "covers"}
+    assert not any("layout" in edge["to"] for edge in graph["edges"])
+
+
+def test_an_epic_cannot_name_a_reference(work, root, sound_plan, write_plan):
+    """An epic is a claim over the specification, not an input to writing anything."""
+    write_plan("epic/checkout", {
+        "title": "Checkout", "summary": "Everything order placement needs.",
+        "covers": ["domain/sales/order", "domain/sales/invoice"],
+        "reference": ["intake/layout/order-form.html"],
+    })
+    assert any("reference" in problem for problem in problems_in(work, root))

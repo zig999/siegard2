@@ -321,7 +321,18 @@ paths too: they are artifacts this delivery has to create rather than convention
 and the record is refused if `files` does not list every one of them. Where the standard authorizes
 dependencies, pass that list too, by name: it is what the agent may add to the manifest and the
 whole of it — a package outside it is the agent's refusal, not its judgment call, because the list
-is where a human's approval of a package survives the session it was given in. It reads the task and the nodes it implements, writes the source, and
+is where a human's approval of a package survives the session it was given in.
+
+**Where the task declares `reference`, resolve each path against the work root and pass them
+too** — and pass nothing the task did not name. These are artifacts the delivery reads to learn
+what the work should look like, ordinarily a layout under `intake/layout/`, and the task naming
+them is the whole of what makes them readable: an executor that went looking through `intake/` for
+something helpful would be reading the scope, which is the one document this whole route exists to
+keep out of the writing. A path that resolves to nothing is a stop, named — a task pointing at a
+layout nobody persisted is a task nobody can deliver as written, and guessing which file was meant
+is exactly the guess this field exists to remove.
+
+It reads the task and the nodes it implements, writes the source, and
 returns the record: every path it created or modified and what each now does, every criterion of
 the task answered, every node it implements accounted for, which authorized dependencies it added, and
 what it inferred, departed from, preserved and deferred.
