@@ -37,13 +37,24 @@
 # to the specification; how the screen is wired to reach that outcome is this project's own
 # arrangement, and belongs here.
 #
+# This sample names its stack -- React and TypeScript, built by Vite, tested by Vitest -- and
+# that is a change from a registry that named only roles. It is not decoration. Two of the rules
+# below could not be written at all until the bundler was known: ENV-01 exists because Vite's
+# browser bundle has no process.env in it, and ENV-02 because Vite inlines every VITE_-prefixed
+# variable into a file every visitor downloads. Naming a stack is what lets a registry hold the
+# failures that belong to that stack and to no other. What it must not do is turn into a rule --
+# "use Vite" is not a statement about how this project's source is arranged, and no rule below
+# says it. The tool appears where a tool belongs: in `dependencies`, in `commands`, and in the
+# `presupposes` entry for the configuration those steps read.
+#
 # A companion file, frontend-design-tokens.example.css, sits beside this one. It gives concrete
 # shape to the token declarations MNT-02 requires source to reference -- without it,
 # `presupposes` would name a file whose form nobody had shown.
 
 contract_version: siegard-standard/1
 standard: frontend-typescript
-summary: How this project's React + TypeScript frontend is composed, wired, styled and named.
+summary: How this project's React and TypeScript frontend, built by Vite and tested by
+  Vitest, is composed, wired, styled and named.
 
 rules:
 
@@ -311,6 +322,33 @@ rules:
     applies_to:
       - { under: src, suffix: .tsx, nested: true }
 
+  # ---------------------------------------------------------------- build-time configuration
+
+  - id: ENV-01
+    statement: Client source reads configuration through import.meta.env, never through
+      process.env.
+    because: >-
+      process.env does not exist in the browser bundle Vite produces, so a value read from it is
+      undefined at runtime rather than wrong at build time -- and the screen that depended on it
+      fails in production having passed every check here.
+    decided_by: tool
+    tool: lint
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ENV-02
+    statement: A value that must not reach a browser is never exposed through a VITE_-prefixed
+      variable, whatever the environment it is defined in.
+    because: >-
+      Vite inlines every VITE_-prefixed variable into the client bundle at build time, so the
+      value ships to every visitor as a literal in a downloaded file. It is not hidden by the
+      server never sending it, and no runtime check can take it back.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
   # ---------------------------------------------------------------- security
 
   - id: SEC-01
@@ -523,7 +561,8 @@ rules:
     statement: A route's page component is loaded lazily; it is not imported eagerly at the
       router root.
     because: Every page imported eagerly is weight every visitor downloads before they reach
-      any one of them.
+      any one of them -- a dynamic import is what Vite splits a chunk at, and a static one is
+      what folds the page into the entry bundle.
     decided_by: tool
     tool: lint
     applies_to:
@@ -608,12 +647,12 @@ presupposes:
 
   - path: package.json
     provides: >-
-      The typecheck, lint, style, a11y and secret-scan steps this registry's twenty-six
-      tool-decided rules are run as. Without it none of them is decided by anything, and a review
+      The typecheck, lint, style, build, a11y and secret-scan steps this registry's
+      twenty-seven tool-decided rules are run as. Without it none of them is decided by anything, and a review
       reporting only what a reading found reads as a review of the whole registry.
-    rules: [ACC-01, ACC-02, ACC-03, ACC-05, ACC-09, ACC-10, CON-01, MNT-01, MNT-02, MNT-04,
-            MNT-05, PRF-01, PRF-03, PRH-01, PRH-02, PRH-03, PRH-04, SEC-01, SEC-02, SEC-03,
-            SEC-04, TST-01, TST-04, TYP-01, TYP-02, TYP-03]
+    rules: [ACC-01, ACC-02, ACC-03, ACC-05, ACC-09, ACC-10, CON-01, ENV-01, MNT-01, MNT-02,
+            MNT-04, MNT-05, PRF-01, PRF-03, PRH-01, PRH-02, PRH-03, PRH-04, SEC-01, SEC-02,
+            SEC-03, SEC-04, TST-01, TST-04, TYP-01, TYP-02, TYP-03]
 
   - path: tsconfig.json
     provides: >-
@@ -627,9 +666,18 @@ presupposes:
       testing-library plugin and its rule set from. Absent, eslint has not been told how to parse
       the TypeScript and JSX every scope below names, and the step fails on the first annotation
       or element it meets; present but naming no rule, it exits 0 having decided none of the
-      twenty rules below.
-    rules: [ACC-01, ACC-02, ACC-03, CON-01, MNT-01, MNT-04, MNT-05, PRF-01, PRF-03, PRH-01,
-            PRH-02, PRH-03, PRH-04, SEC-01, SEC-02, SEC-04, TST-01, TST-04, TYP-02, TYP-03]
+      twenty-one rules below.
+    rules: [ACC-01, ACC-02, ACC-03, CON-01, ENV-01, MNT-01, MNT-04, MNT-05, PRF-01, PRF-03,
+            PRH-01, PRH-02, PRH-03, PRH-04, SEC-01, SEC-02, SEC-04, TST-01, TST-04, TYP-02,
+            TYP-03]
+
+  - path: vite.config.ts
+    provides: >-
+      The build the `build` step runs and the test environment the `test` step reads -- Vitest
+      takes its configuration from this file, so the globs TST-04 is answerable against and the
+      DOM environment every .spec.tsx needs are both here. It also holds the React plugin that
+      compiles the JSX every scope in this registry names.
+    rules: [ENV-01, ENV-02, PRF-01, TST-04]
 
   - path: playwright.config.ts
     provides: >-
@@ -685,6 +733,29 @@ dependencies:
     why: the secret-scan step is it, and it decides SEC-03.
     rules: [SEC-03]
 
+  - package: vite
+    why: >-
+      The build step runs it, and it is what ENV-01 is a rule about -- the bundle it produces has
+      no process.env in it, and PRF-01's lazy route is a chunk it splits.
+    rules: [ENV-01, ENV-02, PRF-01]
+
+  - package: "@vitejs/plugin-react"
+    why: What compiles the JSX every scope in this registry names. Without it the build reads a
+      .tsx file and stops at the first element.
+
+  - package: vitest
+    why: >-
+      The suite step runs it. TST-04 is a rule about where a test file sits, which is only
+      answerable against the globs a runner is configured with.
+    rules: [TST-04]
+
+  - package: "@testing-library/react"
+    why: >-
+      TST-01 requires a test to assert what a user would observe, and this is what queries a
+      rendered component that way; the lint plugin above decides the rule by refusing the
+      alternatives it offers.
+    rules: [TST-01]
+
   - package: eslint-plugin-testing-library
     why: >-
       The lint step decides TST-01 by it -- reaching into the DOM or the container instead of
@@ -725,6 +796,10 @@ commands:
   - step: style
     command: npm run lint:css
     timeout_seconds: 120
+
+  - step: build
+    command: npm run build
+    timeout_seconds: 300
 
   - step: a11y
     command: npm run test:a11y
