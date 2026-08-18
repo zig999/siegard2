@@ -1,16 +1,18 @@
 # An example project standard, for a React + TypeScript frontend.
 #
-# This file is NOT part of the distribution. It sits under src/standards/ rather than
-# src/claude/, so no assembly ships it: Siegard ships the slot a standard fits into and the
-# enforcement that holds code to it, never the content. A consumer project owns its own
-# registry, in its own repository, and names it when invoking the review.
+# This file is a sample and is not distributed with the framework: Siegard ships the slot a
+# standard fits into and the enforcement that holds code to it, never the content. A consumer
+# project owns its own registry, in its own repository, and names it when invoking the review.
+# Nothing below cites a path outside the tree it governs -- a registry copied into a project
+# must resolve entirely within that project, and one pointing at framework internals goes stale
+# the day they move, silently, because nothing validates a destination.
 #
 # Two lines run through it, and both are the point.
 #
 # `decided_by` splits the registry in half. A rule a linter, a compiler, a style checker or a
-# secret scanner decides exactly is a step of the project's own suite -- it runs through
-# bin/run.py, its failures arrive as a captured run, and the failures pass reads what the tool
-# printed. Only a rule whose application is a reading reaches the standard pass. A model
+# secret scanner decides exactly is a step of the project's own suite -- it runs through the
+# framework's runner, its failures arrive as a captured run, and the failures pass reads what
+# the tool printed. Only a rule whose application is a reading reaches the standard pass. A model
 # applying `no-explicit-any` to a five-hundred-line file has strictly worse recall than tsc and
 # costs more.
 #
@@ -57,9 +59,11 @@
 # and no `applies_to` reaches. They are in `elsewhere` as a declared gap rather than written as
 # rules a step would exit 0 over having never looked.
 #
-# A companion file, frontend-design-tokens.example.css, sits beside this one. It gives concrete
-# shape to the token declarations MNT-02 requires source to reference -- without it,
-# `presupposes` would name a file whose form nobody had shown.
+# MNT-02 requires source to reference a token rather than a literal, and the token file it
+# presupposes is the project's own: a set of custom-property declarations, one per named color,
+# spacing step and duration the design uses. The registry states that the file must stand and
+# what its rules get from it; what any one token should be worth is a decision with a human
+# owner, and `elsewhere` says so.
 
 contract_version: siegard-standard/1
 standard: frontend-typescript
@@ -781,16 +785,17 @@ presupposes:
 
   - path: src/design-system/tokens.css
     provides: >-
-      The token declarations MNT-02 requires source to reference instead of a literal value. A
-      worked shape of this file -- the custom-property declarations a project's own design
-      system would hold -- sits beside this standard at frontend-design-tokens.example.css.
+      The token declarations MNT-02 requires source to reference instead of a literal value --
+      one custom property per named color, spacing step and duration this project's design uses.
+      Whether the file exists is what a script decides here; what any token is worth is not this
+      registry's to hold.
     rules: [MNT-02]
 
 # How the tool-decided rules above are decided, and what decides them. This registry declares
 # no install: it owns the steps its own rules are decided by, and a consumer project's own
 # stack registry -- the manifest, the framework, the bundler -- is a separate concern from how
-# its source is laid out, the same split backend-node-stack.yaml and backend-typescript.yaml
-# already draw.
+# its source is laid out. A project holding both keeps them as two registries, each naming the
+# steps its own rules rest on.
 dependencies:
 
   - package: typescript
@@ -959,25 +964,26 @@ elsewhere:
 
   - what: Which tests must exist for a task, by the kind of work it is -- a new behavior, a
       change, a rearrangement, a defect.
-    lives_in: The framework, in agents/test-author.md.
+    lives_in: The framework, in the judgment that authors a task's tests.
     why: It is the same question in every language and every layer, so it is not this
       project's to answer.
 
   - what: That a test asserts observable behavior rather than an internal call, fails for one
       reason, cannot pass vacuously, and tears down what it sets up.
-    lives_in: The framework, in agents/test-author.md and agents/coverage-auditor.md.
+    lives_in: The framework, in the judgments that author a task's tests and audit their
+      coverage.
     why: Universal, and already enforced by the passes that read the tests. The TST rules above
       add only what is this project's own taste -- how a test is named, what a stand-in may
       replace, where the file sits.
 
   - what: Which edge cases a task must account for, and the requirement to say why a
       dismissed one does not apply.
-    lives_in: The framework, in agents/test-author.md.
+    lives_in: The framework, in the judgment that authors a task's tests.
     why: The checklist is behavior-shaped and universal; the EDG and ACC rules above add only
       where each one is handled in this stack.
 
   - what: Whether every acceptance criterion has a test that would fail if it stopped holding.
-    lives_in: The framework, in agents/coverage-auditor.md.
+    lives_in: The framework, in the judgment that audits a task's coverage.
     why: It is judged against the task's criteria, which live in the plan, not against a rule
       here.
 
