@@ -1,4 +1,8 @@
-"""The parallel-frontier procedure the consumer rules describe, held by CI instead of by prose.
+"""The parallel-frontier procedure `bin/deliver.py`'s docstring describes, held by CI not by prose.
+
+This file is the surface guard the procedure names. It used to be cited by name in the consumer's
+own rules, which was a leak: that file is distributed and this one is not, so it pointed every
+consumer at a path their tree does not hold. The citation lives here now, pointing the other way.
 
 A consumer delivers several frontier tasks concurrently by giving each one its own git worktree,
 running a plain `/implement-task` in each, and integrating by merge. The framework ships no

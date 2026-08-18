@@ -35,6 +35,39 @@ rather than leaving it to be subtracted by eye, and it refuses nothing: the stop
 note stays with whoever is about to write source, which is the only place it can quote the entry
 and hand over both ways out of it.
 
+**A deliverable set holding more than one task may be delivered in parallel, one git worktree
+each — and this script is where that is said, because reading this report is where somebody
+learns the set holds more than one.** No orchestrator ships for it: every guarantee holds per
+worktree because each delivery is the ordinary `/implement-task` path, unvaried, and the parts
+that are not a skill's are a person's. Three preconditions: the plan is committed, since a
+worktree sees commits and never trees; the tasks come from this set, so nothing in the batch
+depends on anything else in it; and a task expected to install a package is delivered alone,
+because the manifest is everybody's file and two deliveries editing it concurrently is the one
+conflict no disjointness prevents.
+
+    git worktree add -b batch/<task> ../wt-<task> <base>   one per task
+    per worktree:  /implement-task <task>                  the ordinary invocation
+    per worktree:  commit the delivery                     the orchestrator's act, never the skill's
+    merge the branches, sequentially, resolving as below
+    deliver.py <roots>                                     rederives delivery.json
+    trace.py --bind-record ... <each record>               recomposes the trace's union
+    /review-change over the union of the file sets         the integration gate
+    git worktree remove; the branches are disposable
+
+Exactly two files conflict and both are derived — `delivery.json` and `siegard-trace.json`. Take
+either side; the content is disposable and the rederivation above is what completes the
+resolution. **Never merge either by hand**: a hand-merged index is an index somebody authored, and
+`--check` on both is what says the reconciliation is done. A conflict in *source* is a different
+finding — the two tasks were not independent, so abort that branch's merge and re-deliver its task
+alone on the integrated tree, because a file hand-merged between two deliveries is a file neither
+record describes. A worktree that failed is discarded: its task stays recordless, `--outstanding`
+reports it again, and nothing in the base repository has to be undone.
+
+Two limits, both real. The union is only exercised at the review — two tasks that each passed
+alone are not a change that passes together, and the run that finds it is `/review-change`'s, at
+the end. And the route buys wall-clock and isolation, never model cost: each invocation still pays
+its own full reading.
+
 **A project's own standard is the project's, and it stays in the project's own tree.** A record
 names it by its own path relative to the target source root — exactly as `siegard.json` names it —
 and pins the SHA-256 of its text as read when the record was written. Nothing is copied: this is
@@ -1273,8 +1306,12 @@ def deliverable_line(ready: list[str], barred: bool) -> str:
         return (f"deliverable now: {named} — the task(s) building what the tree does not hold. "
                 f"Every other delivery stops before it writes while an artifact above is ABSENT, "
                 f"so this is the whole of the set until one of these holds a record")
+    parallel = ("" if len(ready) < 2 else
+                " Any of them may also be delivered concurrently, one git worktree each — the"
+                " preconditions and the two conflicts to expect are in this script's own"
+                " docstring, and nothing here orchestrates it.")
     return (f"deliverable now: {named} — no record, nothing they wait on, no standing BLOCKING "
-            f"note. Which one is the caller's to choose; nothing here orders them")
+            f"note. Which one is the caller's to choose; nothing here orders them.{parallel}")
 
 
 def substrate_report(data: dict, tree: Path) -> tuple[list[str], int]:
