@@ -23,6 +23,31 @@ Everything below is either **a file that holds a fact** (an artifact) or **a scr
 those facts and refuses when they disagree** (a validator). Skills orchestrate scripts and, for
 the parts that need judgment instead of a rule, delegate to agents.
 
+## Four routes, four prices
+
+The second idea, and the one that decides how much any change costs. Not every change decides
+something, and a framework that priced them all alike would price the smallest one worst. **A
+person states which route a change takes; nothing infers it.**
+
+| what changed | route | roughly costs |
+|---|---|---|
+| a fact of the business — a status, a refusal, what a screen tells someone | `/analyse` → `/plan-work` → `/implement-task` → `/review-change` | the full ceremony |
+| a screen, a state, an interaction the specification already covers | `/plan-work` → `/implement-task` → `/review-change` | the same, minus the analysis |
+| one wrong behaviour in code already delivered | `/plan-work`'s corrective increment → `/implement-task` | one task, no survey, no decomposition |
+| **the surface alone** — a label, a colour, spacing, a column's order | edit the file | nothing |
+
+The last one is new, it is opt-in per target (`edits_freely` in `siegard.json`), and the criterion
+that separates it from the other three is one sentence: **if the change alters what a person using
+the system can learn or do, it is not surface.** Renaming a button that keeps doing the same thing
+is surface. Rewording a refusal is not — what someone is told at an outcome is what the business
+decided, and it belongs in a node.
+
+What the fourth route costs is not hidden: nothing schedules a reading over a direct edit. The
+project's own test suite still decides every rule a tool decides, `/check-source` reads the rest
+when somebody asks it to, and the next review that reaches those files reads them too — but no
+reading starts on its own. A project taking this route is accepting that, and `trace.py --check`
+keeps a running count of how much it has accepted.
+
 ## The five artifacts
 
 These are the nouns. Each is a set of files on disk, never a database, never a cache.
@@ -41,6 +66,9 @@ Two smaller files worth knowing:
 - **`siegard-reconcile/<slug>.md`** — a record written by `/reconcile` to justify a bind for
   source that changed without a rebind, whatever wrote it (a hand edit, a merge resolution, a
   delivery rewriting a file another node's binding claims).
+- **`siegard-check/<slug>.md`** — a record written by `/check-source`: the project's own house
+  rules read over a set of files nobody delivered through a task. It is what the fourth route
+  above has instead of a review.
 
 ## The seven scripts
 
@@ -593,7 +621,7 @@ $ python3 bin/trace.py ./target
 trace sound: 1 binding(s), traced against specification
 ```
 
-#### `trace.py --check <target-root>`
+#### `trace.py --check <target-root> [--all]`
 
 - **Function:** recomputes every digest — the node's and every bound file's — and reports drift in
   three classes: `orphaned` (the node the file was bound to no longer exists in the specification —
@@ -602,6 +630,11 @@ trace sound: 1 binding(s), traced against specification
 - **When to use it:** periodically, or before trusting that delivered code still says what the
   specification says — `/reconcile` and a review both start here.
 - **Read or write:** read-only.
+- **`--all`:** where the project declares a target `edits_freely`, the `code` class is counted
+  rather than listed for files under it, and `--all` prints them anyway. Two callers want that
+  list: `/check-source`, which reads exactly those files against the house rules, and
+  `/implement-task`'s narrow re-delivery, whose whole premise is that the implementation's files
+  have not moved.
 
 No drift:
 
@@ -636,6 +669,16 @@ sha256:bd5a03aa...4151; the file changed without a rebind
   0 orphaned: ...
   0 moved: ...
   1 code: bound to a file that changed or is gone — rebind whoever owns the change
+```
+
+A target declared `edits_freely` — the same drift, counted instead of listed:
+
+```
+$ python3 bin/trace.py --check ./target
+0 drift finding(s) over 1 binding(s) ... (nothing to act on)
+  suppressed 1 `code` finding(s) over 1 file(s) under frontend — declared freely edited in
+  siegard.json. `--all` lists them, and that list is what /check-source reads to hold those files
+  to the rules a reading decides
 ```
 
 `orphaned` — the node left the specification entirely:
@@ -837,7 +880,9 @@ its own.
 | **`/plan-work`** | a stated scope + the specification | plan nodes (`inventory/`, `epic/`, `task/`) + `plan.json`; specification extensions + decision-log entries where a fact was unstated | `spec.py`, `plan.py`, `deliver.py --standard` | `codebase-surveyor`, `backlog-decomposer`, `execution-contract-binder`, `unstated-fact-decider` |
 | **`/implement-task`** | one planned task | source + tests + a delivery record + `delivery.json` + a trace bind | `plan.py --check`, `run.py`, `deliver.py`, `trace.py --bind-record` | `task-implementer`, `test-author` |
 | **`/review-change`** | one delivered task | findings recorded under the delivery root + `delivery.json` | `plan.py --check`, `deliver.py`, `run.py`, `trace.py --check` | `coverage-auditor`, `specification-conformance-reviewer`, `standard-conformance-reviewer`, `failure-diagnostician` |
-| **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `spec.py`, `trace.py` | none |
+| **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `spec.py`, `trace.py` | `specification-conformance-reviewer` |
+| **`/check-source`** | a file set a human names, delivered by no task | a check record at `siegard-check/<slug>.md` | `project.py`, `deliver.py --standard`, `deliver.py --check-record` | `standard-conformance-reviewer` |
+| **`/siegard-standard`** | what a project's own tooling already enforces, plus a human's words | the project's standard registry | `project.py`, `deliver.py --standard` | none |
 | **`/siegard-status`** | the question "where does this stand?" | a report derived from disk, writing nothing — deliveries, waits, BLOCKING notes, drift, recent decisions, ready next invocation | `project.py`, `spec.py`, `plan.py --check`, `deliver.py --outstanding`, `trace.py --check` | none |
 | **`/siegard-archive`** | the human's ask to prune closed history from the tree | closed work+delivery pairs removed whole (history survives in git); the tag and commit handed ready, never run | `project.py`, `plan.py --check`, `deliver.py --check`, `spec.py`, `trace.py --check` | none |
 
