@@ -1,0 +1,9 @@
+{
+  "specification_root": "specification",
+  "targets": {
+    "backend": "backend"
+  },
+  "work_root": "work",
+  "delivery_root": "delivery",
+  "standard": "backend/standard.yaml"
+}

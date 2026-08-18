@@ -1,0 +1,35 @@
+{
+  "specification": "specification",
+  "bindings": [
+    {
+      "node": "domain/troubleshooting/case",
+      "digest": "sha256:9e85d9145db8f5f67feee52781d20091759321ef039946f126559aa29d5e93ad",
+      "files": [
+        {
+          "path": "backend/src/troubleshooting/case.ts",
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "node": "domain/troubleshooting/evidence",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "files": [
+        {
+          "path": "backend/tests/case.spec.ts",
+          "digest": "sha256:5b9c340d6f940d47045bc7e35638c33a8da09878445301542136f5454796227f"
+        }
+      ]
+    },
+    {
+      "node": "domain/troubleshooting/gone-from-the-base",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "files": [
+        {
+          "path": "backend/src/troubleshooting/case.ts",
+          "digest": "sha256:dce326b59c7d19420d78f44cb902fe595efdcd3bc0bb3e083878231f93e3087a"
+        }
+      ]
+    }
+  ]
+}

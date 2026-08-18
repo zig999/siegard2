@@ -1,0 +1,47 @@
+{
+  "contract_version": "siegard-plan/3",
+  "nodes": [
+    {
+      "id": "epic/troubleshooting",
+      "kind": "epic",
+      "file": "epic/troubleshooting.md",
+      "title": "Troubleshooting",
+      "summary": "Everything a case needs, from opening to resolution."
+    },
+    {
+      "id": "inventory/case-service",
+      "kind": "inventory",
+      "file": "inventory/case-service.md",
+      "title": "Case service",
+      "summary": "The area the troubleshooting scope lands in: one layered service under src/."
+    },
+    {
+      "id": "task/troubleshooting/record-case",
+      "kind": "task",
+      "file": "task/troubleshooting/record-case.md",
+      "title": "Record an opened case",
+      "summary": "The entry point that persists an opened case.",
+      "epic": "troubleshooting"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic/troubleshooting",
+      "to": "domain/troubleshooting/case",
+      "kind": "covers",
+      "at": "covers[0]"
+    },
+    {
+      "from": "epic/troubleshooting",
+      "to": "rules/troubleshooting/case-transitions",
+      "kind": "covers",
+      "at": "covers[1]"
+    },
+    {
+      "from": "task/troubleshooting/record-case",
+      "to": "domain/troubleshooting/case",
+      "kind": "implements",
+      "at": "implements[0]"
+    }
+  ]
+}

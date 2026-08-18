@@ -1,0 +1,29 @@
+contract_version: siegard-standard/1
+standard: backend-baseline
+summary: How this service layers its modules and wires them together.
+rules:
+- id: ARC-01
+  statement: A constructor receives interfaces, never concrete implementations.
+  because: A class bound to a concrete collaborator cannot be exercised without it.
+  decided_by: reading
+  applies_to:
+  - under: src
+    suffix: .ts
+    nested: true
+- id: PRH-01
+  statement: Production code logs through the configured logger.
+  because: A console line goes nowhere in production.
+  decided_by: tool
+  tool: lint
+  applies_to:
+  - under: src
+    suffix: .ts
+    nested: true
+commands:
+- step: lint
+  command: 'true'
+  timeout_seconds: 60
+- step: test
+  command: 'true'
+  timeout_seconds: 60
+  role: suite

@@ -1,0 +1,58 @@
+{
+  "contract_version": "siegard-delivery/2",
+  "nodes": [
+    {
+      "id": "implementation/troubleshooting/record-case",
+      "kind": "implementation",
+      "file": "implementation/troubleshooting/record-case.md",
+      "title": "Record an opened case",
+      "summary": "The entry point that persists an opened case.",
+      "task": "task/troubleshooting/record-case"
+    },
+    {
+      "id": "proof/troubleshooting/record-case",
+      "kind": "proof",
+      "file": "proof/troubleshooting/record-case.md",
+      "title": "Proof for the recorded case",
+      "summary": "What proves the recorded case.",
+      "task": "task/troubleshooting/record-case"
+    },
+    {
+      "id": "review/first",
+      "kind": "review",
+      "file": "review/first.md",
+      "title": "Troubleshooting, first review",
+      "summary": "What the four passes found.",
+      "ran": [
+        "coverage",
+        "conformance"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "implementation/troubleshooting/record-case",
+      "to": "domain/troubleshooting/case",
+      "kind": "encodes",
+      "at": "nodes[0]"
+    },
+    {
+      "from": "implementation/troubleshooting/record-case",
+      "to": "task/troubleshooting/record-case",
+      "kind": "implements",
+      "at": "the path"
+    },
+    {
+      "from": "proof/troubleshooting/record-case",
+      "to": "implementation/troubleshooting/record-case",
+      "kind": "proves",
+      "at": "the path"
+    },
+    {
+      "from": "review/first",
+      "to": "task/troubleshooting/record-case",
+      "kind": "reviews",
+      "at": "tasks[0]"
+    }
+  ]
+}
