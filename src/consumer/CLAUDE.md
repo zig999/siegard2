@@ -58,6 +58,15 @@ Rules that hold for all three:
   is refused. Ordinary work declares none: the declaration is not a description of output, it takes
   three exemptions ordinary work has no use for — the offer order of `--outstanding`, the dropped
   substrate check at delivery, and owing the install instead of the build and the suite.
+- **`reference`** names what a task is written to look like — ordinarily a layout under
+  `intake/layout/`, read by the delivery and by nothing else. It carries what a criterion cannot: a
+  criterion is falsifiable on its own and "matches the mockup" is not, so without it a layout
+  reaches the survey, the decomposition and the binding, and then stops at the one step that writes
+  the code. **A reference decides form, never fact** — which statuses a screen shows, what each
+  tells someone, and when each appears stay the specification's, and a fact only a reference holds
+  is a silent specification, which stops the writing exactly as it always did. Where the two
+  disagree the node wins: intake is written once and never edited, so a layout is a photograph of
+  what was decided when the plan was cut. The validator never opens one, the same as `sources`.
 - **A bug found by running the delivered system comes back through `/plan-work`.** It answers to no
   task's criteria — the task that wrote the file was delivered and reviewed before anybody saw the
   behavior — so one corrective task is cut, stated by the human, without the survey or the
@@ -138,6 +147,13 @@ same way. `bin/trace.py` is its one writer and one reader.
 | `moved` | the specification moved under a binding | healed when the node's task is next delivered — the bind restamps at the node as it stands |
 | `code` | the file changed without a rebind, whatever wrote it | `/reconcile`, below — a delivery cannot answer it for another task's nodes, because a bind restamps only its own |
 | `orphaned` | bound to a node the specification no longer holds | `trace.py --prune`, which drops exactly this class and nothing else |
+
+**A target the project declares `edits_freely` reports two of the three.** The `code` row is
+counted rather than listed there — on a surface where a label or a colour moves weekly it names
+every one of them and buries the rows above it — and the receipt says how many. `trace.py --check
+--all` prints them, and that list is what `/check-source` reads: the standard's rules a reading
+decides, held to files no task delivered, recorded at `siegard-check/<slug>.md` beside this file.
+Binding is untouched, and `moved` and `orphaned` still say exactly what they say.
 
 **Never answer drift by deleting an entry** — that throws away the one record of which node that code
 answers to. `orphaned` is the exception only because a bind refuses a node that is not there and this
@@ -333,8 +349,9 @@ Three commands are neither entry points nor skills:
 - **`bin/project.py`** — the one reader of `siegard.json`, run by the skills so a declaration is read
   from disk rather than remembered by a session.
 - **`bin/trace.py`** — `--bind`/`--bind-record` are run by `/implement-task` and `/reconcile`;
-  `--reconciliation` holds a reconciliation record to its contract and writes nothing; `--check`,
-  plain validation and `--prune` are for a person or a later invocation to run directly.
+  `--reconciliation` holds a reconciliation record to its contract and writes nothing; `--check`
+  (with `--all` where a declared target held findings back), plain validation and `--prune` are for
+  a person or a later invocation to run directly.
 
 ### Which entry points a session may reach for on its own
 
