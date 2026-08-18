@@ -1,9 +1,11 @@
 # An example project standard: everything one Node/TypeScript service's source answers to, in one
 # registry — what it is built on and how it is arranged, together.
 #
-# This is NOT part of the distribution. It sits under src/standards/ rather than src/claude/, so no
-# assembly ships it: Siegard ships the slot a standard fits into, never its content. A consumer
-# project owns its own registry.
+# This is a sample and is not distributed with the framework: Siegard ships the slot a standard
+# fits into, never its content. A consumer project owns its own registry. Nothing below cites a
+# path outside the tree it governs — a registry copied into a project must resolve entirely
+# within that project, and one pointing at framework internals goes stale the day they move,
+# silently, because nothing validates a destination.
 #
 # It exists because one registry per project is a legitimate shape and a consumer will want to see
 # it. What it is NOT is a recommendation. The contract's own `standard` field says "One project may
@@ -823,25 +825,26 @@ elsewhere:
 
   - what: Which tests must exist for a task, by the kind of work it is — a new behavior, a change,
       a rearrangement, a defect.
-    lives_in: The framework, in agents/test-author.md.
+    lives_in: The framework, in the judgment that authors a task's tests.
     why: It is the same question in every language, so it is not this project's to answer.
 
   - what: That a test asserts observable behavior rather than an internal call, fails for one
       reason, cannot pass vacuously, tears down what it sets up, and treats an error path as a
       behavior.
-    lives_in: The framework, in agents/test-author.md and agents/coverage-auditor.md.
+    lives_in: The framework, in the judgments that author a task's tests and audit their
+      coverage.
     why: Universal, and already enforced by the passes that read the tests. The TST rules above add
       only what is this project's taste — the order inside a test, how it is named, what a stand-in
       may replace.
 
   - what: Which edge cases a task must account for, and the requirement to say why a dismissed one
       does not apply.
-    lives_in: The framework, in agents/test-author.md.
+    lives_in: The framework, in the judgment that authors a task's tests.
     why: The checklist is behavior-shaped and universal. What this registry adds is where each one
       is handled here — the EDG rules above.
 
   - what: Whether every acceptance criterion has a test that would fail if it stopped holding.
-    lives_in: The framework, in agents/coverage-auditor.md.
+    lives_in: The framework, in the judgment that audits a task's coverage.
     why: It is judged against the task's criteria, which live in the plan, not against a rule here.
 
   - what: A severity for any of these rules, and any verdict derived from the findings.
