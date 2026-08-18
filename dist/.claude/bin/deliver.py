@@ -72,6 +72,12 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         named, also say whether it holds what the
                                                         registry presupposes — exit 1 while any
                                                         of it is absent
+        deliver.py --check-record <record> <target-source-root>
+                                                        validate one source check record — the
+                                                        reading /check-source leaves beside the
+                                                        trace over files no task delivered — and
+                                                        every citation it makes, against the
+                                                        registry it pins
         The target source root resolves every record's `standard` reference; a delivery whose
         records name none never reads it. The specification root is required while the plan is
         live, and ignored once closure.md marks it closed — the same rule plan.py applies,
@@ -1037,6 +1043,112 @@ def check_single(root: Path, named: str, validator, allowed, names: list[str]) -
     return 0
 
 
+def check_contract() -> Draft202012Validator:
+    """The validator for a source check record. Held here rather than in a script of its own for
+    the reason the reconciliation record is held in trace.py: a record has its validation where the
+    thing it is about lives, and what this one is about is a standard, whose every other check is
+    already here."""
+    contract = PLUGIN_ROOT / "schemas" / "check.json"
+    if not contract.is_file():
+        raise FileNotFoundError(f"{contract} is missing; nothing can be validated without it")
+    return Draft202012Validator(json.loads(contract.read_text(encoding="utf-8")))
+
+
+def check_record(named: str, target_root: str) -> int:
+    """Validate one source check record: its own contract, then every citation against the registry
+    it pins, read fresh from the project's own path.
+
+    The citation checks are the same three a review's are held to, and being the same is the point
+    rather than a saving. A rule cited here and a rule cited in a review are answerable to one
+    registry, and a reading that could cite a rule a tool decides — or hang one on a file that
+    rule's scope does not reach — would produce findings a reader cannot tell from a review's while
+    being held to less than a review's are."""
+    try:
+        validator = check_contract()
+        standard_validator = standard_contract()
+    except (FileNotFoundError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+
+    path, target = Path(named), Path(target_root)
+    if not path.is_file():
+        print(f"cannot run: {path} does not exist", file=sys.stderr)
+        return CANNOT_RUN
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    if path.parent.name != "siegard-check":
+        print(f"cannot run: {path} does not sit under siegard-check/; a record of source held to "
+              f"a standard lives beside the trace, and one filed anywhere else is a reading the "
+              f"next reader has no way to find", file=sys.stderr)
+        return CANNOT_RUN
+
+    text = path.read_text(encoding="utf-8")
+    match = FENCE.match(text)
+    if not match:
+        print(f"{path.name}: carries no frontmatter fence")
+        return 1
+    try:
+        front = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as broken:
+        print(f"{path.name}: frontmatter does not parse: {broken}")
+        return 1
+
+    problems = [f"{'.'.join(str(p) for p in e.absolute_path) or 'top level'}: {e.message}"
+                for e in sorted(validator.iter_errors(front), key=str)]
+    problems += body_problems(text[match.end():])
+    if not problems:
+        problems += check_citation_problems(front, target, standard_validator)
+
+    for problem in problems:
+        print(f"{path.name}: {problem}")
+    if problems:
+        print(f"\n{len(problems)} problem(s).")
+        return 1
+
+    findings = listed(front, "findings")
+    reviewed = listed(front, "reviewed")
+    print(f"check record sound: {path.name} holds {len(findings)} finding(s) over "
+          f"{len(reviewed)} file(s) of target {front.get('target')}")
+    print("  the rules a tool decides were not read here and are not answered by this record; "
+          "they are the project's own suite's, over its whole tree")
+    return 0
+
+
+def check_citation_problems(front: dict, target: Path, validator) -> list[str]:
+    """Every citation a check record makes, resolved against the standard it pins — declared, left
+    to a reading, and in scope for the file. Held to the file set too: a finding outside it is a
+    finding over something nobody said was under check."""
+    data, at, problems = standard_of("this record", front, target, validator)
+    if data is None:
+        return [p.replace("this record: ", "") for p in problems]
+    rules = rules_of(data)
+    reviewed = [p for p in listed(front, "reviewed") if isinstance(p, str)]
+
+    for index, finding in enumerate(listed(front, "findings")):
+        if not isinstance(finding, dict):
+            continue
+        cited, where = finding.get("cites"), finding.get("file")
+        if isinstance(where, str) and where not in reviewed:
+            problems.append(f"findings[{index}] is in {where}, which `reviewed` does not list; a "
+                            f"finding outside the file set is a finding over something nobody "
+                            f"said was under check")
+        if not isinstance(cited, str):
+            continue
+        rule = rules.get(cited)
+        if rule is None:
+            problems.append(f"findings[{index}] cites {cited}, which {at} does not declare")
+        elif rule.get("decided_by") != "reading":
+            problems.append(f"findings[{index}] cites {cited}, which {at} says a tool decides; a "
+                            f"rule a linter or a compiler decides exactly is answered by the "
+                            f"project's own suite, and re-deciding it in a model has strictly "
+                            f"worse recall at more cost")
+        elif isinstance(where, str) and not in_scope(rule, [where]):
+            problems.append(f"findings[{index}] cites {cited} against {where}, which that rule's "
+                            f"scope does not reach")
+    return problems
+
+
 def standards_held(nodes: dict[str, dict]) -> list[str]:
     """The standards this root's records were written against, and how many pin each. It is here
     because the one thing that silences the whole standard half of this framework is nobody naming
@@ -1308,6 +1420,18 @@ def main() -> int:
             return CANNOT_RUN
         against = args[at + 1]
         del args[at:at + 2]
+    if "--check-record" in args:
+        at = args.index("--check-record")
+        if at + 1 >= len(args):
+            print("cannot run: --check-record takes a file", file=sys.stderr)
+            return CANNOT_RUN
+        named = args[at + 1]
+        del args[at:at + 2]
+        if verify or report or single is not None or against is not None or len(args) != 1:
+            print("cannot run: expected --check-record <record> <target-source-root>",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return check_record(named, args[0])
     if "--standard" in args:
         at = args.index("--standard")
         if at + 1 >= len(args):

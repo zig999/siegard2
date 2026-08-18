@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/check.json",
+  "title": "Siegard source check record",
+  "description": "One record of source held to the rules the project set for itself, over a file set nobody delivered. It lives at `siegard-check/<slug>.md` beside `siegard.json` and `siegard-trace.json`, in the target source root's git toplevel, because what it is about is source rather than any plan — the file set it reads answers to no task, which is the whole reason this record exists at all. Every other reading of a standard this framework performs happens inside a review, and a review's file set is read out of implementation and proof records: a change made without a task appears in no record, so it appears in no file set, so no reading ever reaches it. On a target a project declares freely edited that is the ordinary case rather than the exception. This record is the answer, and it is deliberately less than a review. **It reads, and it runs nothing.** The rules a tool decides are decided by the project's own suite — in its own pipeline, over its whole tree, on every commit — and a second runner here would duplicate that at a cost nobody asked for while needing a home for captured output that no initiative provides. So the split the standard already draws is the split this record keeps: what a reading decides is answered here, what a tool decides is answered by the project, and the record says which of the two it did. It carries no verdict, no severity and no coverage figure, for the reason every other reading in this framework carries none: a finding states what it costs, and a person decides what that means.",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "title",
+    "summary",
+    "target",
+    "reviewed",
+    "standard"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "targetPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]",
+      "description": "Relative to the target source root, exactly as a standard's scopes, a delivery record's files and the trace all spell a path. One anchor or none of them can be compared: a rule's scope reaches a file only under the same anchor, so a path spelled from the repository around the target answers to no rule."
+    },
+    "pin": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Content identity: the SHA-256 of the bytes of whatever this field's owner names, written `sha256:<hexdigest>` and computable by hand with `sha256sum`."
+    },
+    "ruleRef": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-[0-9]{2}$",
+      "description": "One rule of the project's standard, by the identifier the standard gives it. The same shape a review's citation uses, and deliberately unlike a specification node reference, which is a path: a rule of a standard and a `rule` node of the specification are different authorities and must not be readable as one another."
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "siegard-check/1",
+      "description": "Which contract this record was written against. A record is read by a validator that may have moved since; the version is what says whether it may be."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What was checked, in a line."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why this file set was checked, in one sentence — the receipt a drift report printed, a batch of edits somebody wants read, a target nobody has looked at in a month. It is the human's reason and never a judgment about the source."
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Which of the project's target source roots this check reaches, by the key `siegard.json`'s `targets` names it. A record is read long after the invocation that wrote it, and a path anchor whose root nobody named anchors nothing."
+    },
+    "reviewed": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/targetPath" },
+      "description": "The file set the human named, and nothing else. Never discovered: a check that chose its own scope reads a different set each run, and a clean result would not say what it was clean over — the same rule a review's file set is held to, for the same reason. Every finding sits in a file this list holds."
+    },
+    "standard": {
+      "type": "object",
+      "required": ["at", "pin"],
+      "additionalProperties": false,
+      "description": "The registry this check read, and the text of it as it was read. Nothing is copied: this record points at the project's own file, the way a review's does and the way a delivered file's own path does for code.",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/targetPath",
+          "description": "The project's registry, by its own path relative to the target source root — exactly as `siegard.json` names it, or as the invocation named it."
+        },
+        "pin": {
+          "$ref": "#/$defs/pin",
+          "description": "The SHA-256 of the standard's text as this record read it, computable by hand as `sha256sum <target-source-root>/<at>`. A citation, not a standing guarantee: a project's registry is free to keep evolving, and an old record is held to the text it was actually written against. Which rules were in scope is a function of this reference and `reviewed`, both of which this record holds, so a validator derives it rather than reading a list somebody maintained."
+        }
+      }
+    },
+    "unread": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/targetPath" },
+      "description": "Files of `reviewed` this check could not read, each named. Absent where every file was read. A path that cannot be opened is reported rather than skipped: a check silently narrowed to whatever happened to be readable reports clean over files nobody read, which is the failure the file set is stated explicitly to prevent."
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["file", "where", "cites", "evidence", "cost"],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "$ref": "#/$defs/targetPath",
+            "description": "The path this was observed in, exactly as `reviewed` lists it. A finding outside the file set is a finding over something nobody said was under check."
+          },
+          "where": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where in that file — the line, or the construct — so a reader opens the place rather than searching for it."
+          },
+          "cites": {
+            "$ref": "#/$defs/ruleRef",
+            "description": "The rule of the project's standard this departs from. Exactly one: a departure from two is two findings, because they will be settled separately, and a finding citing no rule at all is taste with a location attached. The validator holds the cited rule to the standard — it must be declared, it must be one the standard decides by reading rather than one a tool decides, and its scope must reach this file."
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What was observed, quoted from the source. Not a restatement of it: a finding whose evidence cannot be quoted is a finding nobody observed. A quote that joins passages the file does not hold together says where the join is, and what is cut never qualifies what is kept."
+          },
+          "cost": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What this costs, as a consequence rather than as the rule restated. \"Violates ARC-01\" names a rule; \"the component cannot be rendered in a test without standing up the router\" names a cost."
+          },
+          "correction": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What would have to change for this to stop being true, in the terms the evidence gives. Optional, and not a decision about the change — whether to act on it, and when, is a person's, and nothing downstream reads it as one."
+          }
+        }
+      },
+      "description": "Every departure this reading found, each citing exactly one rule the standard leaves to a reading. Absent where it found none — which says the reading came back clean over these files and these rules, and says nothing at all about the rules a tool decides."
+    }
+  },
+  "examples": [
+    {
+      "contract_version": "siegard-check/1",
+      "title": "The week's direct edits to the case list",
+      "summary": "The eleven files the trace receipt counted as suppressed under the frontend target, read once against the rules a reading decides.",
+      "target": "frontend",
+      "reviewed": ["src/features/cases/case-list.tsx", "src/features/cases/case-row.tsx"],
+      "standard": {
+        "at": "standards/frontend.yaml",
+        "pin": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "findings": [
+        {
+          "file": "src/features/cases/case-list.tsx",
+          "where": "the useEffect at line 40",
+          "cites": "ARC-03",
+          "evidence": "const visible = rows.filter(r => r.status !== 'archived' && r.owner === me.id)",
+          "cost": "the decision about who sees which row is reachable only by rendering the whole list, so nothing can exercise it on its own",
+          "correction": "the filter moves into a hook the component calls, where a test can reach it without a render"
+        }
+      ]
+    }
+  ]
+}

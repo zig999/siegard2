@@ -48,6 +48,8 @@ SKILLS = {
                         "delegates": []},
     "siegard-standard": {"contract": "schemas/standard.json", "validator": "bin/deliver.py",
                          "delegates": []},
+    "check-source": {"contract": "schemas/check.json", "validator": "bin/deliver.py",
+                     "delegates": ["standard-conformance-reviewer"]},
 }
 
 
@@ -100,6 +102,9 @@ MODEL_MAY_REACH = {
     # already holds over the project's structural roots — a session drafting its own future
     # judge, unasked, is deciding an input that was never its to assert either.
     "siegard-standard": False,
+    # The file set is the human's to assert and the reading writes no source — the same shape
+    # that leaves /reconcile reachable. A session asked to check some files may reach for it.
+    "check-source": True,
 }
 
 
