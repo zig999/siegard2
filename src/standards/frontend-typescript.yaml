@@ -770,7 +770,7 @@ presupposes:
 
   - path: stylelint.config.js
     provides: >-
-      The ruleset the style step decides nine rules by, most of them through custom rules over
+      The ruleset the style step decides eight rules by, most of them through custom rules over
       declared values: a literal color, spacing or duration outside a token declaration (MNT-02);
       an outline suppressed with nothing in its place (ACC-05); an animation outside a
       reduced-motion query (ACC-12); a transition naming `all` or a layout property (VIS-01); a
