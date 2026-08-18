@@ -65,6 +65,10 @@ Rules that hold for all three:
   The alternative to recognize and refuse: a fix typed straight into the file has one hand writing
   the implementation and its test, which agree by construction including where both are wrong, and
   leaves the trace asserting a digest that is no longer there.
+  **This is about behavior**, and the two costs above are what make it so: a change to the surface
+  alone pays neither — a label has no criterion for a test to be co-written against, and a target
+  declared `edits_freely` is one whose trace stopped asserting that digest deliberately. That
+  change takes the fourth route below.
 - **`BLOCKING` note** — a specification node states something an objective or criterion contradicts
   or exceeds. The task is not written while it stands, and only a person settles it: through the
   scope, or through the analysis that amends the specification. A silence is not this: a fact the
@@ -221,6 +225,7 @@ the file itself**. `/siegard-config` is the one writer.
 | `work_root` | the container all initiatives' work roots live under | no |
 | `delivery_root` | the container all initiatives' delivery roots live under | no |
 | `standard` | the project's own registry of rules | **yes** — the report says both existed and which won |
+| `edits_freely` | the targets whose source a person changes without a task | no |
 
 - **The four structural fields answer only from the file.** Naming one in an invocation has no
   effect, and where the file does not declare one, every entry point needing it stops — a structural
@@ -233,6 +238,12 @@ the file itself**. `/siegard-config` is the one writer.
 - `standard: null` says deliberately that the project has none: a full answer, not an omission. A
   field's plain absence says the opposite — not declared yet, not decided against — and for the four
   structural fields that absence is what stops an entry point until `/siegard-config` closes it.
+- **`edits_freely` stops no entry point, ever.** It is the one field nothing demands: absent, every
+  target is held to all three drift classes, which is what every project was held to before it
+  existed. What it changes is one line of one report — `trace.py --check` counts the `code` class
+  under those targets instead of listing it, because on a surface where a label or a colour moves
+  weekly that class names every one of them and buries the two classes that no amount of editing
+  explains away. Never silence: a receipt says how many, and `--all` lists them.
 
 ## The project's own standard
 
@@ -264,10 +275,42 @@ pass reports departures.
 - A project that has authored no standard gets an **honestly narrow** review — the pass records that
   it did not run, and what was absent — never a clean one.
 
+## Which route a change takes
+
+Not every change decides something, and pricing them all alike prices the smallest one worst. Four
+routes; which one a change takes is stated by a person and never inferred.
+
+| what changed | route |
+|---|---|
+| a fact of the business — a status, a refusal, what the system tells someone, who may see what | `/analyse` → `/plan-work` → `/implement-task` → `/review-change` |
+| a capability's surface — a screen, a state, an interaction the specification already holds | `/plan-work` → `/implement-task` → `/review-change` |
+| one wrong behavior in code already delivered | `/plan-work`'s corrective increment → `/implement-task` |
+| **the surface alone** — a control's label, a colour, spacing, a column's order, an icon | the source, changed directly, on a target declaring `edits_freely` |
+
+**The criterion is one sentence: if the change alters what a person using the system can learn or
+do, it is not surface.** A button that keeps doing the same thing under a different label is
+surface. The wording of a refusal is not — what someone is told at an outcome is what the business
+decided, and it lives in a node. A column showing data the screen did not show is not: something
+new can be learned. A screen that starts refusing an action is not: something can no longer be done.
+
+Three things hold the fourth route, and the last is the one to read twice.
+
+- **It is declared, per target, in the project's own file.** Declaring none leaves three routes,
+  which is where every project stood before the fourth existed.
+- **No rule about domain facts is relaxed.** Source is still never the home of a fact no node
+  holds — surface is by definition what states none, so a change that stated one took the wrong
+  route, and the conformance pass reports it when a review next reaches that file.
+- **Nothing schedules a reading over it.** A direct edit is answered by the project's own suite for
+  the rules a tool decides, by `/check-source` when somebody invokes it, and by whatever review next
+  reaches those files — never by a reading this framework begins on its own. That gap is what the
+  route costs, and taking it means accepting it rather than not knowing about it. `trace.py --check`
+  counts what it stopped listing and `--all` prints the list `/check-source` reads.
+
 ## Entry points
 
 **Invoke the entry point by name rather than doing its work ad hoc.** This holds for every skill
-below.
+below — and for the routes above, the entry point *is* the route: the fourth one names none, which
+is what makes it the only change this framework asks nothing of.
 
 | skill | what it does | one invocation is |
 |---|---|---|
@@ -277,6 +320,7 @@ below.
 | `/implement-task` | writes the source one task requires and the tests that prove it, installs and runs what the standard declares, records both nodes, validates against the plan, binds into the trace, derives `delivery.json` | **one task** |
 | `/review-change` | captures a run of the caller's commands, reports what four passes found — evidence, never a verdict — records it | one review |
 | `/reconcile` | reads the trace for the nodes a named file set is bound to, holds that source to them through the conformance judgment, records the answer, rebinds only what cleared | one file set |
+| `/check-source` | holds a named file set to the rules a reading decides in the project's own standard, and records every departure | one file set |
 
 Every one of them stops rather than continuing, and `git diff` is the review. `/siegard-config` must
 run first: every other entry point stops until the fields it needs are declared.
@@ -297,10 +341,11 @@ Three commands are neither entry points nor skills:
 **Three are closed to model invocation — `/siegard-config`, `/siegard-standard` and
 `/siegard-archive`; every other skill is reachable.** The criterion is *who has the right to state
 the input*, never how much the skill writes — `/implement-task` writes source, installs packages
-and runs commands, and is reachable. What the three have in common is an input no session may
-assert on its own: `siegard.json` declares the structural roots, a standard shapes what every later
-review holds the project to, and removal is a want only a person has. Nothing is lost by those
-closures: every skill needing one hands its invocation over ready to paste.
+and runs commands, and is reachable; `/check-source` reads a file set a person names, and is
+reachable too. What the three have in common is an input no session may assert on its own:
+`siegard.json` declares the structural roots, a standard shapes what every later review holds the
+project to, and removal is a want only a person has. Nothing is lost by those closures: every skill
+needing one hands its invocation over ready to paste.
 
 The others stay reachable because their protections are inside them — an unnamed input is a stop, a
 pending root is a stop, a conformance judgment is delegated rather than taken, everything written
