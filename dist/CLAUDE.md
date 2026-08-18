@@ -294,11 +294,13 @@ Three commands are neither entry points nor skills:
 
 ### Which entry points a session may reach for on its own
 
-**`/siegard-config` alone is closed to model invocation; every other skill is reachable.** The
-criterion is *who has the right to state the input*, never how much the skill writes —
-`/implement-task` writes source, installs packages and runs commands, and is reachable, while
-`siegard.json` declares the structural roots a session must never infer. Nothing is lost by that one
-closure: every skill needing it hands its invocation over ready to paste.
+**Three are closed to model invocation — `/siegard-config`, `/siegard-standard` and
+`/siegard-archive`; every other skill is reachable.** The criterion is *who has the right to state
+the input*, never how much the skill writes — `/implement-task` writes source, installs packages
+and runs commands, and is reachable. What the three have in common is an input no session may
+assert on its own: `siegard.json` declares the structural roots, a standard shapes what every later
+review holds the project to, and removal is a want only a person has. Nothing is lost by those
+closures: every skill needing one hands its invocation over ready to paste.
 
 The others stay reachable because their protections are inside them — an unnamed input is a stop, a
 pending root is a stop, a conformance judgment is delegated rather than taken, everything written
