@@ -111,3 +111,40 @@ def test_every_skill_and_agent_the_suite_holds_is_distributed(trees):
         assert f"skills/{name}/SKILL.md" in dist, f"{name} is tested and not distributed"
     for name in AGENTS:
         assert f"agents/{name}.md" in dist, f"{name} is tested and not distributed"
+
+
+# ------------------------------------------------ what the rules file has to have heard of
+
+CONSUMER_RULES = REPO / "src/consumer/CLAUDE.md"
+
+
+def test_the_rules_a_consumer_loads_name_every_skill_that_ships():
+    """The one file in this framework that cannot report its own gaps.
+
+    Every other artifact is held to something: a schema, a validator, a suite. These rules are
+    held to nothing, and a session reading them has nothing to compare them against — so a skill
+    that shipped without reaching this file is a skill no consumer has any reason to know exists,
+    and nothing anywhere says so. That is not hypothetical: `/siegard-status`, `/siegard-archive`
+    and `/siegard-standard` each shipped and each went unnamed here for releases, and `reference`
+    shipped with its contract, its skill and its agent all acting on it while this file said
+    nothing at all.
+
+    Naming is the whole of what is checked. What each one does, and how much this file says about
+    it, stays an author's judgment — mechanising that would only produce a file written to pass."""
+    rules = CONSUMER_RULES.read_text(encoding="utf-8")
+    shipped = sorted(p.name for p in (REPO / "src/claude/skills").iterdir() if p.is_dir())
+    absent = [name for name in shipped if f"/{name}`" not in rules]
+    assert absent == [], \
+        f"{absent} ship as skills and the consumer's own rules never name them; a consumer " \
+        f"reading these rules has no reason to know they exist"
+
+
+def test_the_rules_a_consumer_loads_name_every_agent_that_ships():
+    """The same guard one layer down. These rules tell a consumer which judgments are delegated
+    and to whom — that is how a reader knows the binder never sees the cut it judges — so an agent
+    named nowhere here is a guarantee nobody was told about."""
+    rules = CONSUMER_RULES.read_text(encoding="utf-8")
+    shipped = sorted(p.stem for p in (REPO / "src/claude/agents").glob("*.md"))
+    absent = [name for name in shipped if f"`{name}`" not in rules]
+    assert absent == [], \
+        f"{absent} ship as agents and the consumer's own rules never name them"

@@ -45,7 +45,10 @@ Rules that hold for all three:
 
 - Three producing judgments belong to shipped subagents in clean contexts: `codebase-surveyor`,
   `backlog-decomposer`, `execution-contract-binder`. The binder never sees the cut it judges — so
-  the specification is read for what it says today, never to fit a task.
+  the specification is read for what it says today, never to fit a task. A fourth, the
+  `unstated-fact-decider`, is spawned per fact the binder found the specification does not state;
+  it is blind to the cut for the same reason and by a stronger construction — it is never shown
+  the task at all.
 - A task names the specification nodes it implements by identity, **with no pin**: the specification
   does not change while a plan is live, by procedural convention rather than a value the validator
   compares.
@@ -337,6 +340,9 @@ is what makes it the only change this framework asks nothing of.
 | `/review-change` | captures a run of the caller's commands, reports what four passes found — evidence, never a verdict — records it | one review |
 | `/reconcile` | reads the trace for the nodes a named file set is bound to, holds that source to them through the conformance judgment, records the answer, rebinds only what cleared | one file set |
 | `/check-source` | holds a named file set to the rules a reading decides in the project's own standard, and records every departure | one file set |
+| `/siegard-standard` | transcribes what a project's own tooling and team already enforce into its standard registry | one registry |
+| `/siegard-status` | reads every root and reports where the work stands, writing nothing | one reading |
+| `/siegard-archive` | removes closed work and delivery pairs from the tree, leaving them in git | one pruning |
 
 Every one of them stops rather than continuing, and `git diff` is the review. `/siegard-config` must
 run first: every other entry point stops until the fields it needs are declared.
