@@ -158,3 +158,26 @@ def test_every_root_declared_resolves_together(repo):
     for expected in (f"specification_root: {repo / 'specs'}", f"target backend: {repo / 'backend'}",
                      f"work_root: {repo / 'work'}", f"delivery_root: {repo / 'delivery'}"):
         assert expected in done.stdout
+
+
+def test_targets_a_person_edits_by_hand_are_reported(repo):
+    """`edits_freely` is read by `trace.py` from this same file, so what this script owes is the
+    same thing it owes every other field: saying what stands, once, where a reader can see it."""
+    declare(repo, {"targets": {"backend": "backend", "web": "web"}, "edits_freely": ["web"]})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "edits_freely: web" in done.stdout
+
+
+def test_a_project_declaring_no_freely_edited_target_says_nothing_about_it(repo):
+    """Absence declares nothing here, exactly as it does for every other field: a project that
+    has not got to this question is not a project that answered it."""
+    declare(repo, {"targets": {"backend": "backend"}})
+    done = run(repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "edits_freely" not in done.stdout
+
+
+def test_a_freely_edited_key_the_contract_refuses(repo):
+    declare(repo, {"targets": {"backend": "backend"}, "edits_freely": ["Not A Slug"]})
+    assert run(repo / "backend").returncode == 1

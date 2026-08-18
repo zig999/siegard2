@@ -224,11 +224,15 @@ whole — never amended — by a fresh test author reading the tree as it stands
 running and captured as ever. The pin the proof restamps is valid precisely because the
 implementation record did not move; what the validator refuses is the opposite direction, an
 implementation rewritten under a proof left behind. Two things hold the mode honest. Before
-anything is written, run `trace.py --check` over the target: the implementation's files are bound
-with digests, and one that moved since the bind is exactly what makes "the implementation stands"
-false — that drift is a stop, and the answer is a full re-delivery. And the reason the proof had
-to move goes in the record's `## Notes`, naming the task whose delivery falsified it, so the diff
-carries what only the conversation would otherwise hold.
+anything is written, run `trace.py --check --all` over the target: the implementation's files are
+bound with digests, and one that moved since the bind is exactly what makes "the implementation
+stands" false — that drift is a stop, and the answer is a full re-delivery. **`--all` is what
+makes this mode's premise checkable at all**, and it is the one place in this framework that
+needs it: a project may declare a target freely edited, and an ordinary check then holds that
+class back as noise a reader cannot act on — but here it is the whole question, so this call asks
+for the findings rather than the report. And the reason the proof had to move goes in the record's
+`## Notes`, naming the task whose delivery falsified it, so the diff carries what only the
+conversation would otherwise hold.
 
 Where a standard was named, take it in before anything is written. Which command depends on one
 field of the task file — already open from the note check above — read as a yes or a no:

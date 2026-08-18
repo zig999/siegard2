@@ -210,6 +210,19 @@ file rewritten under another node's claim — leaves the trace asserting a diges
 any more, and asserting it silently. A review that says nothing about it is how a tree accumulates
 a trace nobody can trust while every command still exits 0.
 
+**Where the output carries a suppression receipt, one line of the report is owed to it, and it is
+not a finding either.** A project may declare a target whose source a person changes without a
+task; the `code` class is then counted rather than listed, because on such a target it names every
+label and every colour anybody moved. Two things follow, and both go in the report rather than in
+this invocation's hands. Those files were changed by nobody this framework can name, so **the
+rules that a reading decides went unread over them** — nothing here scheduled that reading, and the
+project's own suite only ever answered the rules a tool decides. And the file set of this review is
+the human's to widen: where the receipt's count is worth acting on, `trace.py --check --all` lists
+the paths, and **offer them** — as paths the human may add to the file set of this review, so the
+standard pass reaches them, or as the argument for a `/check-source` invocation over the same list.
+Offer, never widen: a review that pulled files in on its own would be choosing its own scope, which
+is the one thing the file set exists to prevent.
+
 ### 2. Capture
 
 Run every step the standard declares, in the order it declares them, followed by any the caller
@@ -389,7 +402,10 @@ Report, in this order:
 - the trace: the drift counts by class over this target, and the route each class takes — `--prune`
   for the bindings no rebind can repair, a rebind through the delivery that owns the change for the
   rest. Say plainly that this is not a finding and settles nothing about the change: it says whether
-  the link back to the specification still describes this tree, which no pass above asks;
+  the link back to the specification still describes this tree, which no pass above asks. Where a
+  suppression receipt came back, say how many were held back and under which target, that the rules
+  a reading decides went unread over those files, and offer the paths `--all` lists — for this
+  review's file set, or for a `/check-source` over the same list;
 - what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;

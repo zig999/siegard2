@@ -13,7 +13,7 @@ a rebind. Either is drift, and this script is what says so without any plan's hi
 Six things this script does, and nobody else does any of them:
 
     trace.py <target-root>                                        read and validate the file
-    trace.py --check <target-root>                                the same, then report drift
+    trace.py --check <target-root> [--all]                        the same, then report drift
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind ... --replace                                 write it in full instead
@@ -34,6 +34,18 @@ to, which is the whole of what this file keeps.
 Left unpruned, the orphaned class is what makes the other two unreadable. A tree carrying eighty
 stale entries reports eighty-three findings the day three files drift, and nobody reads the three:
 the report a caller stops reading is a report that says nothing, however true every line of it is.
+
+The same arithmetic is what `edits_freely` answers, one class over. A target whose surface changes
+for reasons no node governs — a label, a colour, a column's order — produces a `code` finding per
+edit, weekly, and buries `moved` and `orphaned` under a list nobody finishes. So a project may name
+those targets in `siegard.json`, and `--check` stops listing that class for files sitting under
+them. Three things this deliberately is not. It is not per-invocation: the declaration is read from
+the project file beside this one, so a check run from anywhere reports the same tree the same way,
+and a check over a traced target never loses a finding because a sibling target is exempt. It is
+not a change to what is bound — `--bind-record` still writes the link, `moved` still says the
+specification shifted under those files, `orphaned` still says the node is gone. And it is not
+silence: a receipt says how many findings were held back and `--all` lists them, which is what
+keeps a declaration a consumer can measure from becoming one it forgets it made.
 
 `--bind-record` is the form a delivery uses, and it exists because the older one made its caller
 retype what a record already says. An implementation record names every node the source encodes and
@@ -87,7 +99,7 @@ Declared dependencies: PyYAML, jsonschema (this script also imports spec.py and 
 siblings under bin/).
 
 Usage:  trace.py <target-root>
-        trace.py --check <target-root>
+        trace.py --check <target-root> [--all]
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
         trace.py --prune <target-root>
@@ -103,7 +115,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 CANNOT_RUN = 2
 
@@ -138,6 +150,52 @@ def home_of(target: Path) -> Path:
     return project.toplevel_of(target)
 
 
+def freely_edited(home: Path) -> list[str]:
+    """The path prefixes whose `code` findings this tree asked not to be listed, read from the
+    project file sitting beside the trace.
+
+    Read here rather than taken as a flag, because which targets those are is the consumer's
+    standing declaration and not a thing an invocation gets to answer differently each time. Read
+    defensively: a project file that does not parse, or does not declare the field, suppresses
+    nothing — `project.py` is what holds that file to its contract and says so properly, and a
+    drift report is the wrong place to learn the project file is broken.
+
+    The prefixes come back spelled from this file's own directory, which is the anchor every path
+    in the trace already uses, so the comparison below is a prefix test and never a pattern."""
+    declared_at = home / project.PROJECT_FILE
+    if not declared_at.is_file():
+        return []
+    try:
+        declared = json.loads(declared_at.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(declared, dict):
+        return []
+    named = declared.get("edits_freely") or []
+    targets = declared.get("targets") or {}
+    if not isinstance(named, list) or not isinstance(targets, dict):
+        return []
+    prefixes = []
+    for key in named:
+        where = targets.get(key) if isinstance(key, str) else None
+        if isinstance(where, str) and where:
+            prefixes.append(PurePosixPath(where).as_posix().rstrip("/"))
+    return sorted(set(prefixes))
+
+
+def under(path: str, prefixes: list[str]) -> bool:
+    """Whether one path of the trace sits under any of those prefixes. A prefix of `.` — a target
+    that is the toplevel itself — reaches everything, which is what a project declaring its whole
+    tree freely edited asked for."""
+    parts = PurePosixPath(path).parts
+    for prefix in prefixes:
+        if prefix in (".", ""):
+            return True
+        if parts[:len(PurePosixPath(prefix).parts)] == PurePosixPath(prefix).parts:
+            return True
+    return False
+
+
 def trace_path(target: Path) -> Path:
     return home_of(target) / TRACE_FILE
 
@@ -165,9 +223,14 @@ def problems_of(declared: dict) -> list[str]:
     return problems
 
 
-def drift_of(declared: dict, home: Path) -> tuple[list[tuple[str, str, str]], list[str]]:
+def drift_of(declared: dict,
+             home: Path) -> tuple[list[tuple[str, str, str | None, str]], list[str]]:
     """Every binding that no longer computes to what was recorded for it, each under the class its
     remedy belongs to — and, separately, whatever stopped the reading before any of that.
+
+    A finding carries the path it is about where it has one, so that a caller filtering by where
+    the file sits reads the path rather than the sentence. The classes about a node carry none:
+    a node moved or gone is not a fact about any one file.
 
     The classes are not three flavours of one fact, and a caller who cannot tell them apart cannot
     act on any of them. `orphaned` is the one nothing here could fix until `--prune` existed: the
@@ -191,27 +254,28 @@ def drift_of(declared: dict, home: Path) -> tuple[list[tuple[str, str, str]], li
     if node_problems:
         return [], [f"specification: {spec_root} is not sound; run spec.py against it directly"]
 
-    findings: list[tuple[str, str, str]] = []
+    findings: list[tuple[str, str, str | None, str]] = []
     for entry in declared.get("bindings") or []:
         node_id, digest = entry["node"], entry["digest"]
         current = nodes.get(node_id)
         if current is None:
-            findings.append((ORPHANED, node_id,
+            findings.append((ORPHANED, node_id, None,
                              f"{node_id}: no longer in the specification; the binding is stale"))
         elif current["digest"] != digest:
-            findings.append((MOVED, node_id,
+            findings.append((MOVED, node_id, None,
                              f"{node_id}: bound at {digest}, now {current['digest']}; "
                              f"the specification moved since this bind"))
         for file_entry in entry.get("files") or []:
-            path = home / file_entry["path"]
+            where = file_entry["path"]
+            path = home / where
             if not path.is_file():
-                findings.append((CODE, node_id,
-                                 f"{node_id}: {file_entry['path']} no longer exists"))
+                findings.append((CODE, node_id, where,
+                                 f"{node_id}: {where} no longer exists"))
                 continue
             now = spec.digest_of(path)
             if now != file_entry["digest"]:
-                findings.append((CODE, node_id,
-                                 f"{node_id}: {file_entry['path']} bound at "
+                findings.append((CODE, node_id, where,
+                                 f"{node_id}: {where} bound at "
                                  f"{file_entry['digest']}, now {now}; the file changed without "
                                  f"a rebind"))
     return findings, []
@@ -319,6 +383,23 @@ def stale_after(declared: dict, home: Path, acted: dict[str, str],
                     stale.append((node, path, "carried forward from an earlier bind, and the "
                                               "file has since changed"))
     return sorted(stale)
+
+
+def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]) -> str:
+    """The receipt for the `code` findings a declared target held back. A count, never silence,
+    and it follows the same discipline `released()` already sets for the trace's other loss: what
+    a report stops saying it says once, in a line, so the reader can tell a clean tree from a tree
+    whose findings were filed elsewhere. Without it the declaration would be the one thing in this
+    framework a consumer could turn on and never measure again.
+
+    The number is the point rather than the list, which is why the paths are behind `--all`: a
+    surface that moves weekly produces this count by the hundred, and reprinting them here would
+    rebuild exactly the unreadable report the declaration exists to prevent."""
+    files = sorted({finding[2] for finding in held})
+    return (f"  suppressed {len(held)} `code` finding(s) over {len(files)} file(s) under "
+            f"{', '.join(prefixes)} — declared freely edited in {project.PROJECT_FILE}. "
+            f"`--all` lists them, and that list is what /check-source reads to hold those files "
+            f"to the rules a reading decides")
 
 
 def left_stale(stale: list[tuple[str, str, str]]) -> str:
@@ -669,7 +750,7 @@ def prune(target: Path) -> int:
               f"bindings it still holds")
         return 1
 
-    stale = sorted({node for cls, node, _ in findings if cls == ORPHANED})
+    stale = sorted({finding[1] for finding in findings if finding[0] == ORPHANED})
     if not stale:
         held = len(declared.get("bindings") or [])
         print(f"nothing to prune: every one of {held} binding(s) names a node the specification "
@@ -692,13 +773,14 @@ def prune(target: Path) -> int:
 def main() -> int:
     args = sys.argv[1:]
     check = "--check" in args
+    show_all = "--all" in args
     do_bind = "--bind" in args
     do_record = "--bind-record" in args
     do_prune = "--prune" in args
     do_reconciliation = "--reconciliation" in args
     replace = "--replace" in args
     args = [a for a in args
-            if a not in ("--check", "--bind", "--bind-record", "--replace", "--prune",
+            if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--reconciliation")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
@@ -709,6 +791,10 @@ def main() -> int:
         return CANNOT_RUN
     if replace and not (do_bind or do_record):
         print("cannot run: --replace only applies to --bind and --bind-record", file=sys.stderr)
+        return CANNOT_RUN
+    if show_all and not check:
+        print("cannot run: --all only applies to --check; it is what lists the findings a "
+              "declared target holds back", file=sys.stderr)
         return CANNOT_RUN
 
     if do_reconciliation:
@@ -744,7 +830,7 @@ def main() -> int:
         return bind(Path(target), Path(spec_root), node_id, files, replace)
 
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected [--check] <target-root>", file=sys.stderr)
+        print("cannot run: expected [--check [--all]] <target-root>", file=sys.stderr)
         return CANNOT_RUN
 
     target = Path(args[0])
@@ -769,23 +855,41 @@ def main() -> int:
         print(f"trace sound: {count} binding(s), traced against {declared['specification']}")
         return 0
 
-    findings, refusals = drift_of(declared, home_of(target))
+    home = home_of(target)
+    findings, refusals = drift_of(declared, home)
     if refusals:
         for refusal in refusals:
             print(refusal)
         return 1
-    if findings:
+
+    # What a target declared freely edited is held back from the listing, never from the reading:
+    # the finding was computed either way, and `--all` prints it. Suppression is a report's
+    # decision about what a reader can act on, so nothing above it knows this happened.
+    prefixes = [] if show_all else freely_edited(home)
+    held = [f for f in findings if f[0] == CODE and f[2] and under(f[2], prefixes)]
+    listed = [f for f in findings if f not in held]
+
+    if listed:
         # Class by class rather than one flat list: the tally is what a reader acts on, and the
         # orphaned count is what says how much of this report no rebind will ever shorten.
         for cls in (ORPHANED, MOVED, CODE):
-            for _, _, said in [f for f in findings if f[0] == cls]:
-                print(said)
-        print(f"\n{len(findings)} drift finding(s) over {count} binding(s):")
+            for finding in [f for f in listed if f[0] == cls]:
+                print(finding[3])
+        print(f"\n{len(listed)} drift finding(s) over {count} binding(s):")
         for cls in (ORPHANED, MOVED, CODE):
-            print(f"  {sum(1 for f in findings if f[0] == cls)} {cls}: {CLASSES[cls]}")
-        return 1
-    print(f"no drift: {count} binding(s) match the specification and the code as both stand now")
-    return 0
+            # The suppressed count rides its own class's line rather than sitting under the tally:
+            # `0 code` printed above a receipt saying one was held back is a line a reader can
+            # finish and walk away from.
+            also = f" ({len(held)} suppressed)" if cls == CODE and held else ""
+            print(f"  {sum(1 for f in listed if f[0] == cls)} {cls}{also}: {CLASSES[cls]}")
+    else:
+        print(f"no drift: {count} binding(s) match the specification and the code as both stand "
+              f"now" if not held else
+              f"no drift to act on: {count} binding(s), and every difference found sits under a "
+              f"target this project declares freely edited")
+    if held:
+        print(suppressed(held, prefixes))
+    return 1 if listed else 0
 
 
 if __name__ == "__main__":

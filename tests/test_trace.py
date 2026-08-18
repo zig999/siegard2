@@ -607,3 +607,112 @@ def test_a_record_replace_reports_what_a_sibling_record_had_bound(repo):
     assert done.returncode == 0, done.stdout + done.stderr
     assert "backend/src/orders/place.ts" in done.stdout
     assert "1 path(s) released across 1 node(s)" in done.stdout
+
+
+# ------------------------------------------------ a target whose surface is edited by hand
+
+
+def declare_freely(repo: Path, *keys: str, targets: dict | None = None) -> None:
+    """The consumer's own project file, declaring which targets a person edits without a task.
+    Written here rather than by a fixture because what these tests vary is exactly this file."""
+    (repo / "siegard.json").write_text(json.dumps({
+        "specification_root": "specs",
+        "targets": targets or {"backend": "backend"},
+        "work_root": "work",
+        "delivery_root": "delivery",
+        "edits_freely": list(keys),
+    }, indent=2) + "\n", encoding="utf-8")
+
+
+def drifted(repo: Path, file: str = FILE) -> None:
+    path = repo / "backend" / file
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+
+def test_a_project_declaring_nothing_is_held_to_every_class(repo):
+    """The state every project was in before the field existed, and the one a backend stays in."""
+    bind(repo)
+    drifted(repo)
+    done = run("--check", repo / "backend")
+    assert done.returncode == 1
+    assert "the file changed without a rebind" in done.stdout
+    assert "suppressed" not in done.stdout
+
+
+def test_a_declared_target_stops_listing_the_code_class(repo):
+    bind(repo)
+    drifted(repo)
+    declare_freely(repo, "backend")
+    done = run("--check", repo / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "the file changed without a rebind" not in done.stdout
+    assert "suppressed 1 `code` finding(s) over 1 file(s) under backend" in done.stdout
+
+
+def test_the_receipt_is_what_keeps_the_declaration_measurable(repo):
+    """A suppression a consumer cannot count is one they forget they turned on. The count rides
+    the class's own tally line too, so `0 code` is never the last thing a reader sees."""
+    bind(repo)
+    drifted(repo)
+    orphan(repo)
+    declare_freely(repo, "backend")
+    done = run("--check", repo / "backend")
+    assert done.returncode == 1
+    assert "0 code (1 suppressed)" in done.stdout
+    assert "suppressed 1 `code` finding(s)" in done.stdout
+
+
+def test_all_lists_what_the_declaration_held_back(repo):
+    bind(repo)
+    drifted(repo)
+    declare_freely(repo, "backend")
+    done = run("--check", "--all", repo / "backend")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "the file changed without a rebind" in done.stdout
+    assert "suppressed" not in done.stdout
+
+
+def test_the_other_two_classes_are_untouched_by_the_declaration(repo):
+    """`moved` says the specification shifted under these files and `orphaned` says the node is
+    gone; neither depends on how often the files themselves move, so neither is held back."""
+    bind(repo)
+    orphan(repo)
+    (repo / "specs" / f"{NODE}.md").write_text(
+        (repo / "specs" / f"{NODE}.md").read_text(encoding="utf-8") + "\nA later sentence.\n",
+        encoding="utf-8")
+    declare_freely(repo, "backend")
+    done = run("--check", repo / "backend")
+    assert done.returncode == 1
+    assert "the binding is stale" in done.stdout
+    assert "the specification moved since this bind" in done.stdout
+
+
+def test_a_sibling_target_keeps_every_finding(repo):
+    """The monorepo case, and the reason the filter is a path prefix rather than the invocation:
+    one trace serves every target under a toplevel, so a declared frontend must not cost the
+    backend a finding — whichever target the check was pointed at."""
+    (repo / "web").mkdir()
+    (repo / "web" / "app.tsx").write_text("export const App = () => null;\n", encoding="utf-8")
+    bind(repo)
+    drifted(repo)
+    declare_freely(repo, "web", targets={"backend": "backend", "web": "web"})
+    done = run("--check", repo / "backend")
+    assert done.returncode == 1
+    assert "the file changed without a rebind" in done.stdout
+    assert "suppressed" not in done.stdout
+
+
+def test_a_target_named_in_the_declaration_and_absent_from_targets_suppresses_nothing(repo):
+    """A key that resolves to no path reaches no file. Said by doing nothing rather than by
+    refusing: project.py is what holds that file to its contract, and a drift report is the wrong
+    place to learn the project file is wrong."""
+    bind(repo)
+    drifted(repo)
+    declare_freely(repo, "frontend")
+    assert run("--check", repo / "backend").returncode == 1
+
+
+def test_all_without_check_is_refused(repo):
+    done = run("--all", repo / "backend")
+    assert done.returncode == 2
+    assert "--all only applies to --check" in done.stderr

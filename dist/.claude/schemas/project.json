@@ -32,6 +32,13 @@
       "type": "string",
       "minLength": 1,
       "description": "Where this project's delivery records live, by path relative to this file's own directory, one subdirectory per initiative — the same slug that names its work root, since one initiative is one plan and one delivery."
+    },
+    "edits_freely": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/slug" },
+      "description": "The targets whose source a person may change without a task, by their keys in `targets`. It is a declaration about how a surface behaves, not a permission this framework grants: what it changes is one line of one report. `bin/trace.py --check` stops listing the `code` class — a file that changed without a rebind — for files sitting under these targets, counts what it suppressed in a receipt, and lists them under `--all`. The other two classes are untouched, and that split is the whole of the reasoning: `moved` says the specification changed under a screen and `orphaned` says the node is gone, and both stay worth reading no matter how often the files move. `code` is the one whose usefulness depends on the files being rare to change by hand — on a surface where a label, a colour or a column order moves weekly it names every one of them, and a report nobody finishes is a report that hides the two findings that mattered. A project declaring none is held to all three classes on every target, which is what every project was held to before this field existed. Declaring one is not free and the trade is stated where it is felt: an edit made this way is answered by the project's own suite for the rules a tool decides, by `/check-source` when somebody asks, and by the next review that reaches those files — never by a reading this framework schedules on its own."
     }
   },
   "$defs": {

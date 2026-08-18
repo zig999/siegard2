@@ -1,6 +1,6 @@
 ---
 name: siegard-config
-description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, and its standard — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
+description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its standard, and which targets a person edits without a task — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
 disable-model-invocation: true
 effort: low
 ---
@@ -16,9 +16,10 @@ A missing input is a stop, not a default:
 1. **the project root** — where `siegard.json` lives, or will. Named by the human; inferred
    rather than named, its absence is a stop.
 2. **at least one field to declare** — any of `specification_root`, one or more `targets`
-   entries (a name and a path each), `work_root`, `delivery_root`, or `standard` (a path, or
-   `null` to declare deliberately that the project authors none). An invocation naming none has
-   nothing to write, and is a stop.
+   entries (a name and a path each), `work_root`, `delivery_root`, `standard` (a path, or
+   `null` to declare deliberately that the project authors none), or `edits_freely` (the targets
+   whose source a person changes without a task, by their keys in `targets`). An invocation
+   naming none has nothing to write, and is a stop.
 
 ## Before anything: the tree
 
@@ -62,6 +63,16 @@ A `targets` entry the human names is added under its own key, or overwrites the 
 at that key; a key the human does not name is left standing. There is no way to remove a key, or
 any other field, through this step — a deliberate removal is a fresh declaration of the whole
 file, named as such in the report, never a silent side effect of naming other fields.
+
+`edits_freely` is written as the human states it, whole: it is a list, and a list overlaid entry
+by entry could never lose one, so naming it replaces it. Two things belong in the report when it
+is written, because they are what the human is choosing and neither is visible in the diff. Every
+key must be one `targets` holds — a key naming no target reaches no file, and this is where that
+is caught rather than in a drift report that quietly suppresses nothing. And say what the
+declaration costs: over those targets `trace.py --check` stops listing files that changed without
+a rebind, counting them in a receipt instead, so an edit made without a task is answered by the
+project's own suite for the rules a tool decides and by `/check-source` or a later review for the
+rules a reading decides — never by a reading this framework schedules on its own.
 
 ### 3. Write
 

@@ -113,6 +113,8 @@ def main() -> int:
         print(f"work_root: {home / declared['work_root']}")
     if "delivery_root" in declared:
         print(f"delivery_root: {home / declared['delivery_root']}")
+    if declared.get("edits_freely"):
+        print(f"edits_freely: {', '.join(sorted(declared['edits_freely']))}")
     return 0
 
 
