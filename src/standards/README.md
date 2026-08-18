@@ -138,6 +138,41 @@ rule may state is *where the mapping lives*.
 **No rule carries a severity, and nothing derives a verdict.** A finding states what it costs; a
 person decides what that means.
 
+## If the project declares a target freely edited
+
+`siegard.json`'s `edits_freely` says a person changes that target's source without a task. What it
+costs is not a mystery, and this is the place to plan around it rather than to discover it: an edit
+made that way is read by **only** the rules a tool decides — through the project's own suite, over
+its whole tree, on every commit — plus whatever `/check-source` is later invoked over, and whatever
+a future review happens to reach when a task finally touches those files. Nothing schedules a
+reading on its own.
+
+So on such a target, `decided_by` stops being a note about who is better at deciding a rule and
+becomes a note about **whether a rule is applied at all** between one task and the next. That makes
+one question worth asking of every rule an ordinary surface edit could break: is it really a
+reading, or is it a reading because nobody wired the tool?
+
+`frontend-typescript.yaml` is the worked example of the problem. Its most exposed rules are exactly
+the ones a cosmetic change reaches, and every one of them is `reading`:
+
+| rule | broken by | decidable by |
+|---|---|---|
+| ACC-09, text contrast | changing a colour | axe-core, pa11y, a Playwright step |
+| ACC-10, touch target size | changing spacing | the same, against a rendered page |
+| ACC-05, visible focus indicator | a CSS tidy-up | the same |
+| ACC-08, state not conveyed by colour alone | a palette swap | partly the same, partly a reading |
+
+The sample leaves them as readings and says why in its own header comment — it presumes no rendering
+step, and a rule claiming a tool decides it when nothing runs is worse than one that admits a reader
+must. That reasoning is right for a sample and wrong for a project that declared the target freely
+edited: there, the same rules are the ones going unread most often, and the project has a strong
+reason to adopt the browser step the sample would not presume. Declare it in `commands`, name it as
+the rule's `tool`, and the rule moves from a reading nobody schedules to a step every commit runs.
+
+What does not move is the rest: whether a component composes a catalogued primitive, whether a page
+holds business logic, whether a prop is adapted at the boundary. Those are judgment, they stay
+`reading`, and `/check-source` is what reaches them.
+
 ## What the suite reads
 
 `tests/test_standard.py` holds **every** registry in this directory to the contract, parametrized
