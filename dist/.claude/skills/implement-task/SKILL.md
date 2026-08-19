@@ -472,25 +472,46 @@ about where a test file sits or how it is named reaches files that did not exist
 ran, so a build-only pass would leave every rule about tests decided by nothing. Each step that
 already passed passes again in seconds; the runner stops at the first that does not.
 
-**A red suite is a stop, and it has exactly three ways out.** Nothing further is written — the
-implementation record stands, because its own run passed, and no proof record is composed, so
-`deliver.py --outstanding` reports the task as implemented with no proof holding it up, which is
-true and is the state a person should meet. Report the run by path and the tests that failed. Then
-either the source is wrong, and the fix goes back to the `task-implementer` and the suite runs
-again under `<epic>-<slug>-suite-2`, with the first run keeping its name; or the two producers
-disagree and that disagreement is what the red is — the proof asserts what the criterion requires
-and the implementation does not satisfy it — and only a person settles that; or the failing test
-belongs to an earlier task, and what broke it is not a regression but this delivery's own
-legitimate files — the old assertion claimed more than its task's criteria establish, totality
-over ground the two tasks share, and this delivery falsified the excess. That test is not edited
-from here, whatever the temptation: the way out is the proof-only re-delivery the re-delivery
-paragraph names, over the task that owns the test, and it is the human's to invoke. The report
-hands that invocation ready to paste — the owning task by identifier, the assertion the run
-named, the file this delivery added — and says plainly that it runs only after the human commits
-this delivery's pending state, because that invocation's own clean-tree stop refuses a tree still
-carrying it.
+**A red suite is a stop, and which way out applies is diagnosed, never guessed.** Nothing further
+is written — the implementation record stands, because its own run passed, and no proof record is
+composed, so `deliver.py --outstanding` reports the task as implemented with no proof holding it
+up, which is true and is the state a person should meet. Report the run by path and the tests
+that failed.
 
-**A fourth way is forbidden and it is the one that is easy.** A test is never weakened, deleted,
+Where the step that failed is the one whose role is `suite`, spawn a `failure-diagnostician`
+subagent — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md` —
+passing the run's directory, the target source root, the task's specification nodes with the
+specification root, the delivery-node contract's path, and the file set: every path the
+implementation record's `files` and the tests just written name. Always, on every red of that
+step, and never your own reading of the log in its place: a session probing flakiness with
+commands of its own is composing commands the registry never declared, which this skill forbids
+below, and the diagnosis is the licit form of the same question. Where an earlier step of this
+run failed instead — a typecheck or a lint reaching the files just written — no diagnosis is
+owed: the log names the file, and that red goes back to the producer whose file it is, exactly
+as a red build does.
+
+**Four ways out, and the diagnosis's `cause` is what says which.** `code` — the source is wrong:
+the fix goes back to the `task-implementer` with the findings, and the suite runs again under
+`<epic>-<slug>-suite-2`, with the first run keeping its name. `test`, on a test this delivery
+wrote — the two producers disagree and that disagreement is what the red is: the proof asserts
+what the criterion requires and the implementation does not satisfy it, and only a person
+settles that. `test`, on a test an earlier task owns — what broke it is not a regression but
+this delivery's own legitimate files: the old assertion claimed more than its task's criteria
+establish, totality over ground the two tasks share, and this delivery falsified the excess.
+That test is not edited from here, whatever the temptation: the way out is the proof-only
+re-delivery the re-delivery paragraph names, over the task that owns the test, and it is the
+human's to invoke. The report hands that invocation ready to paste — the owning task by
+identifier, the assertion the run named, the file this delivery added — and says plainly that it
+runs only after the human commits this delivery's pending state, because that invocation's own
+clean-tree stop refuses a tree still carrying it. And `setup` — neither the code nor the test
+was reached, because the harness or the environment it needs did not stand up: that is not this
+delivery's defect and not its to fix, so nothing is sent to any producer. Run the suite again,
+once, under the next name. A second consecutive red the diagnosis reads the same way is a stop:
+infrastructure failing twice is a fact for a person, and the report quotes both diagnoses and
+hands the rerun invocation ready. The fourth way licenses exactly one thing — the same suite,
+again — and the run is what decides; a fix routed through it would be a fix nobody diagnosed.
+
+**A fifth way is forbidden and it is the one that is easy.** A test is never weakened, deleted,
 narrowed or rewritten to make the suite green. This invocation holds two producers precisely so
 that one cannot overrule the other, and a test edited until it passes is exactly that overruling,
 performed where nobody would see it. The third way above exists precisely so this one never looks
@@ -518,6 +539,11 @@ satisfies some other way.
 A disagreement the author recorded is not settled here. It stays recorded: this invocation holds
 two producers precisely so that one cannot overrule the other, and resolving it now would discard
 the signal.
+
+Where earlier suite attempts failed before this one passed, `## Notes` names each red run by path
+with the cause its diagnosis returned, one sentence per run. The diagnosis otherwise lives only in
+the conversation, and a reader meeting three run directories beside one proof deserves the
+sentence that says why.
 
 ### 7. Validate, and derive the delivery
 
@@ -621,7 +647,8 @@ Report, in this order:
 - every run this invocation captured, by path and by outcome, including the ones that failed —
   those are not noise and they are not a draft: they are the only record of what it took, and a
   report naming only the run that passed describes a delivery that went right the first time
-  whether or not it did — and every step of the registry that did not run, with why. Where this
+  whether or not it did — with, for each red suite that was diagnosed, the `cause` the diagnosis
+  returned — and every step of the registry that did not run, with why. Where this
   delivery built the substrate, that is most of them, and saying which rules they own is what keeps
   a substrate record from reading as a project that builds;
 - every dependency this delivery installed, and that what those pulled in transitively is nobody's

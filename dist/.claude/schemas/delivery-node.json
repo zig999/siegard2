@@ -891,7 +891,7 @@
             "setup",
             "build"
           ],
-          "description": "Why a captured run failed, on a finding of the failures pass and nowhere else — the validator holds both halves of that. The split that matters is code against test, and the base settles it, never which of the two is easier to change: where nothing in the base settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
+          "description": "Why a captured run failed, on a finding of the failures pass and nowhere else — the validator holds both halves of that. The split that matters is code against test, and the base settles it, never which of the two is easier to change: where nothing in the base settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached — including where the harness or the environment a test needs did not stand up, a connection timing out in a hook, a service that did not answer — so the failure says nothing about the change; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
         }
       }
     }

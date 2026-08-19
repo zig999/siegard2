@@ -145,27 +145,40 @@ and the bind restamps both.
 
 ### 3. Judge
 
-Spawn a `specification-conformance-reviewer` subagent, its judgment at
-`${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`, passing the file set, the node
-identifiers located above, the specification root, and the path to
-`${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`, which is where the shape of what it returns
-lives. One delegation, one pass.
+Spawn one `specification-conformance-reviewer` subagent per named file, together rather than one
+after another — its judgment lives at
+`${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
+a file set of exactly its one file; as the node set, the nodes the trace binds to that file,
+located above; the identifiers of every node the locate step named across the whole file set, as
+candidates it may open where its file states a fact its own nodes do not settle — a fact one
+file states can be governed by a node another file carries, and a judge who cannot open that
+node reports an absence where the true finding is a misattribution; the specification root; and
+the path to `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`, which is where the shape of what
+it returns lives.
 
-The agent is unchanged and it is unchanged on purpose. Its file already says that what belongs in
-the node set is the caller's rule and never its own; in a review that rule is the plan, and here it
-is the trace. That one substitution is the whole of the difference, and duplicating the judgment
-into a second agent that reads it differently is how two passes end up disagreeing about what
-conformance means.
+One judge per file rather than one over the set, because the whole-set judgment saturates: a
+single context holding every node and every file at once answers hundreds of node-file pairs in
+one reading, and what that bought in invocations it paid back in findings surfacing pass after
+pass over text that never changed — each earlier pass having claimed clean over it. A judge
+holding one file and its own nodes reads less and misses less. No delegation reads another's
+return, and the pass is the union of what they return: a finding keeps the file its judge read,
+and a node is cleared exactly where no delegation that read one of its files found against it.
+
+The agent is unchanged and it is unchanged on purpose. Its file already says that what belongs
+in the file set and the node set is the caller's rule and never its own; in a review that rule
+is the plan and the change, and here it is the trace, one file at a time. That substitution is
+the whole of the difference, and duplicating the judgment into a second agent that reads it
+differently is how two passes end up disagreeing about what conformance means.
 
 **Do not read the files yourself and decide.** The premise the human handed you is that the source
 is correct; the question this step answers is a different one — whether the specification still
 states what the source now says — and answering it from the same context that accepted the premise
 is answering it from the premise.
 
-Delegating means spawning the named subagent; in a plugin install the name may be plugin-scoped.
+Delegating means spawning the named subagents; in a plugin install the name may be plugin-scoped.
 Only where the session cannot spawn subagents, read the agent's file under the plugin root's
-`agents/` directory and apply its discipline in place — the file stays the single home of that
-judgment — and the report must say the pass ran inline.
+`agents/` directory and apply its discipline in place, file by file in the same shape — the file
+stays the single home of that judgment — and the report must say the pass ran inline.
 
 ### 4. Record
 
@@ -182,8 +195,16 @@ the same divergence from scratch and calls it new.
   was read in.** The two field names are what makes the next step safe: the binding form reads only
   the first, so a node with a finding against it cannot be bound from this record however anyone
   invokes it. That is why the split is in the contract and not in a sentence here asking you not to.
+- A node the trace binds to more than one named file was read by more than one judge, and its
+  entry folds their answers into one: it conforms only where every delegation that read one of
+  its files cleared it, and its `how` quotes each file's reading. A finding one judge returned
+  against a node its file does not carry — the misattribution case above — lands on the node it
+  names, wherever that node's own judge stood.
 - Every named file is accounted for — by a node, or under `unbound`. A file left out reads exactly
   like a file nobody had a question about.
+- `notes` states the shape this judgment ran in — one delegation per file, and how many — so a
+  later reader knows what a clean answer here was a claim over: the union of per-file readings,
+  never one reading of the set.
 
 Then hold it to its contract:
 
@@ -219,7 +240,8 @@ and reads exactly like a trace that holds all of it.
 ### 6. Report
 
 Say, in this order and in prose: the file set as given; what the trace held for each file, by class;
-what the judgment answered per node, with its evidence; where the record was written; what was bound
+the shape the judgment ran in — how many delegations, one per file; what the judgment answered per
+node, with its evidence; where the record was written; what was bound
 and what was not; and the next invocation where there is one.
 
 Where the judgment cleared everything, there is no next invocation. The trace now describes the tree
