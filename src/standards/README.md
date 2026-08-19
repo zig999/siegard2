@@ -85,19 +85,32 @@ standard checked: src/standards/backend-node-service.yaml declares 59 rule(s) �
   the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (2 rule(s)); a review reads only the 35 decided by reading
   what a step exits 0 over is the command exiting 0. […]
 
-standard checked: src/standards/frontend-typescript.yaml declares 51 rule(s) — 33 decided by reading, 18 by a tool
-  pin sha256:0b9631b2…5e445c71
-  the rules a tool decides run as step(s) lint (15 rule(s)), secret-scan (1 rule(s)), style (1 rule(s)), typecheck (1 rule(s)); a review reads only the 33 decided by reading
+standard checked: src/standards/frontend-typescript.yaml declares 63 rule(s) — 30 decided by reading, 33 by a tool
+  pin sha256:d0e0a8f0…43b2f332
+  the rules a tool decides run as step(s) a11y (2 rule(s)), lint (21 rule(s)), secret-scan (1 rule(s)), style (8 rule(s)), typecheck (1 rule(s)); a review reads only the 30 decided by reading
   what a step exits 0 over is the command exiting 0. […]
 ```
 
-Read the split in the second against the first: thirty-three of fifty-one rules are `reading` in the
-frontend registry, against thirty-five of fifty-nine — roughly the same proportion, slightly higher
-here. Not a stricter registry — a stack where more of what matters (a state placed in the wrong
-layer, a screen's accessibility, a token used correctly) is a judgment no configured tool actually
-renders a verdict on, and two rules say so in their own text rather than claim a tool decides what
-nothing here runs (`ACC-09`'s contrast ratio and `ACC-10`'s touch-target size both depend on a
-computed, rendered value `applies_to` cannot presuppose).
+Read the split in the second against the first, and read it as a result rather than as a property
+of the stacks. Thirty of sixty-three rules are `reading` in the frontend registry against
+thirty-five of fifty-nine in the backend — proportionally *fewer* judgments on the frontend, which
+is the opposite of where it started. The frontend registry began at thirty-three readings out of
+fifty-one, and the difference is not that anybody relaxed a rule. Rules moved, and one step was
+bought.
+
+What moved them was a question asked of every reading in turn: is this a judgment, or is it a
+judgment because nobody wired the tool? Contrast ratio and touch-target size were readings on the
+honest grounds that deciding them needs a rendered page and this registry presupposed no renderer
+— so the registry presupposes one now, and axe decides both under an `a11y` step. Line-height,
+font-size, easing, transition targets, `background-clip` and the reduced-motion query are all
+declared values a stylesheet carries, so a ruleset decides them and the `style` step went from one
+rule to eight.
+
+What stayed a reading stayed for a reason each rule can state. A component composing a catalogued
+primitive rather than reimplementing it (`ARC-01`), importing downward only (`ARC-05`), rendering
+from its props alone (`ARC-06`), a value that must not reach a browser (`ENV-02`) — none of those
+is a pattern a linter matches, and marking one `tool` would buy a step that exits 0 over a rule it
+never looked at. That is worse than a reading, because a reading at least admits it needs a reader.
 
 That fourth line follows every registry declaring a rule a tool decides, and it is cut here at the
 `[…]` rather than repeated whole twice. In full it reads: *whether it is configured to decide

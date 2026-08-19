@@ -115,6 +115,34 @@ rules:
     applies_to:
       - { under: src, suffix: .tsx, nested: true }
 
+  - id: ARC-05
+    statement: A component imports downward only -- a shared primitive, a hook, a service -- and
+      never from the page or the feature that renders it, nor from a sibling feature.
+    because: >-
+      A component that reaches back to whoever renders it can only be rendered there. The second
+      screen that wants it either copies it or drags its parent along, and both leave a component
+      that still looks reusable and is not. The direction is the whole of what keeps composition
+      composable -- a parent chooses its children, and a child that chose its parent has taken
+      that choice away from every other one.
+    decided_by: reading
+    applies_to:
+      - { under: src, suffix: .ts, nested: true }
+      - { under: src, suffix: .tsx, nested: true }
+
+  - id: ARC-06
+    statement: A component in the shared UI layer under src/components/ui/ renders from its props
+      alone -- it reads no context, store or module-level constant that only one feature provides.
+    because: >-
+      A primitive that needs a provider one screen happens to set up renders empty or throws on
+      every other screen, and the failure surfaces at the second use rather than at the first --
+      by which time it is catalogued as shared and several features have been told to use it.
+      Props are the declaration of what a component needs; anything it reaches for instead is a
+      requirement nobody can see from the call site.
+    decided_by: reading
+    applies_to:
+      - { under: src/components/ui, suffix: .tsx, nested: true }
+    seen_at: src/components/ui/badge.tsx
+
   # ---------------------------------------------------------------- state management
 
   - id: STA-01
