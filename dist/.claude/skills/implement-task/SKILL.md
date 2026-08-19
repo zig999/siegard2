@@ -250,7 +250,11 @@ Where it does, drop `--against` and run the registry check alone:
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
 ```
 
-Either way, anything but a clean pass is a stop, reported verbatim.
+Either way, anything but a clean pass is a stop, reported verbatim. A clean pass prints each
+delivery phase — setup, build, suite — composed for `bin/run.py`, timeout included: **keep those
+three lines; they are the step lists the runs below paste in**, and the validator holds each
+captured run to exactly that selection, so a phase retyped from prose is a transcription error
+waiting for the refusal.
 
 The first form carries two refusals. A registry that does not hold together answers to nothing, and
 fixing it belongs to whoever owns it. An artifact the registry presupposes and the tree does not
@@ -297,7 +301,7 @@ them — which is the whole difference between following a rule that names a lib
 what a rule that names a library sounds like:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> --timeout-seconds <the step's own> --step <its step>="<its command>"
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> <the setup phase the situate step's registry check printed>
 ```
 
 Three cases skip it, and each is said in the report rather than worked around. The task
@@ -351,9 +355,11 @@ them, with the install first so that whatever the implementer added to the manif
 anything reads it:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> --timeout-seconds <the largest of those steps'> --step <name>="<command>" [--step ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> <the build phase the situate step's registry check printed>
 ```
 
+The timeout and the step list are the registry check's `build:` line, verbatim — composed by the
+same function that will hold the captured run to them, never re-derived from this paragraph.
 `run.py` stops at the first step that does not pass, so a tree that did not install is never
 type-checked and the log says which one it was.
 
@@ -456,9 +462,11 @@ of the standard its tests depart from.
 Every step the registry declares, in order, ending with the one whose role is `suite`:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> --timeout-seconds <the largest of them> --step <name>="<command>" [--step ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> <the suite phase the situate step's registry check printed>
 ```
 
+The timeout and the step list are the registry check's `suite:` line, verbatim, for the same
+reason the build's are.
 The checks run again here rather than only at the build, and the repetition is deliberate: a rule
 about where a test file sits or how it is named reaches files that did not exist when the build
 ran, so a build-only pass would leave every rule about tests decided by nothing. Each step that

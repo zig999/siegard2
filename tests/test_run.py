@@ -57,6 +57,11 @@ def test_a_run_where_everything_passes(delivery, run_contract):
     assert record["failed_step"] is None
     assert [s["outcome"] for s in record["steps"]] == ["passed", "passed"]
     assert record["timeout_seconds"] == 20, "the bound is recorded with the run it bounded"
+    for step in record["steps"]:
+        assert step["started_at"] <= step["ended_at"], \
+            "an attempted step says when it ran; the difference is its duration"
+    assert record["steps"][0]["ended_at"] <= record["steps"][1]["started_at"], \
+        "steps run in order, and their clocks say so"
 
 
 def test_a_failed_step_stops_the_run(delivery, run_contract):
@@ -72,6 +77,8 @@ def test_a_failed_step_stops_the_run(delivery, run_contract):
     assert record["steps"][1]["outcome"] == "not_run", \
         "a suite run over a tree that did not build reports failures about a binary nobody built"
     assert record["steps"][1]["output"] is None
+    assert record["steps"][1]["started_at"] is None and record["steps"][1]["ended_at"] is None, \
+        "a step never attempted carries no clock reading; one would claim something happened"
 
 
 def test_what_a_command_printed_lands_verbatim(delivery):

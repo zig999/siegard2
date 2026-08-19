@@ -444,6 +444,43 @@ def test_each_printed_command_carries_its_own_bound():
             in done.stdout, f"the step {command['step']} prints without its bound"
 
 
+def test_the_subcommand_composes_each_phase_for_the_runner():
+    """The prose rule — everything except the suite, install first — was interpreted anew at
+    every delivery, and one omitted install cost a full build to learn what a printed line says
+    for free. The phases print composed for bin/run.py, by the same selection the validator
+    holds the captured run to, so composed and owed cannot drift apart."""
+    import shlex
+    done = invoke("--standard", str(EXAMPLE))
+    assert done.returncode == 0, done.stderr
+    commands = yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))["commands"]
+    install = [c for c in commands if c.get("role") == "install"]
+    middle = [c for c in commands if c.get("role") not in ("install", "suite")]
+    suite = [c for c in commands if c.get("role") == "suite"]
+
+    def line(phase: str, steps: list[dict]) -> str:
+        largest = max(c["timeout_seconds"] for c in steps)
+        return f"{phase}: --timeout-seconds {largest} " + " ".join(
+            "--step " + shlex.quote(f"{c['step']}={c['command']}") for c in steps)
+
+    for phase, steps in (("setup", install), ("build", install + middle),
+                         ("suite", install + middle + suite)):
+        assert line(phase, steps) in done.stdout, \
+            f"the {phase} phase does not print composed in the order it runs"
+    assert "a task declaring `produces` runs the setup line" in done.stdout, \
+        "the substrate exemption is stated beside the lines it bends"
+
+
+def test_a_registry_with_no_install_role_composes_an_empty_setup(tmp_path):
+    """A phase whose role no step carries says nothing runs, rather than going unmentioned —
+    a missing line reads as a line the caller should derive, which is the habit this replaces."""
+    registry = broken(tmp_path, base(commands=[
+        {"step": "lint", "command": "npm run lint", "timeout_seconds": 60}]))
+    done = invoke("--standard", str(registry))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "setup: nothing runs — no step carries the role this phase needs" in done.stdout
+    assert "build: --timeout-seconds 60 --step 'lint=npm run lint'" in done.stdout
+
+
 def test_every_sample_registry_declares_how_it_is_run():
     """Every sample is a registry for a stack that has to be installed and checked. One declaring
     no command would teach the silence that left twenty-four tool-decided rules unanswered."""

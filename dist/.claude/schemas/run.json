@@ -2,12 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/run.json",
   "title": "Siegard captured run",
-  "description": "What one run of the caller's commands did: written by `bin/run.py` at `run/<slug>/run.json` under the delivery root, beside the logs the commands printed. It is material, not a node — the delivery validator keeps it and never validates it, the way a work root keeps `intake/` — and a review points at the directory rather than restating what is in it. There is no timestamp, no duration and no record of the environment: two runs of the same commands over the same tree produce records that differ only where the commands did, and a record that changes on its own could not be compared with another. There is no count of tests either, passing or failing: counting them means parsing a reporter's format, which is knowledge of a stack that neither this contract nor the script that writes it holds. Whoever diagnoses the failures counts them from the output, and says how many they counted.",
+  "description": "What one run of the caller's commands did: written by `bin/run.py` at `run/<slug>/run.json` under the delivery root, beside the logs the commands printed. It is material, not a node — the delivery validator keeps it and never validates it, the way a work root keeps `intake/` — and a review points at the directory rather than restating what is in it. There is no record of the environment, and two records of one command are compared by their steps' names, commands and outcomes — never byte for byte. Each attempted step carries when it started and when it ended: until siegard-run/2 the contract stated the opposite — no timestamp and no duration, so that records differed only where the commands did — and reversing that is deliberate, because the byte-comparability it bought was used by nothing, while what it cost was that nobody could say what any step of any run took, in a framework whose runs are the whole of its execution evidence. When a run happened is the one fact that cannot be reconstructed after it. There is no count of tests either, passing or failing: counting them means parsing a reporter's format, which is knowledge of a stack that neither this contract nor the script that writes it holds. Whoever diagnoses the failures counts them from the output, and says how many they counted.",
   "type": "object",
-  "required": ["contract_version", "run", "cwd", "timeout_seconds", "outcome", "failed_step", "steps", "combined_output"],
+  "required": [
+    "contract_version",
+    "run",
+    "cwd",
+    "timeout_seconds",
+    "outcome",
+    "failed_step",
+    "steps",
+    "combined_output"
+  ],
   "additionalProperties": false,
   "properties": {
-    "contract_version": { "const": "siegard-run/1" },
+    "contract_version": {
+      "const": "siegard-run/2",
+      "description": "Which contract this record was written against. siegard-run/1 carried no step timestamps; a /1 record is still a run that happened, read by tolerant readers, and never rewritten to match — evidence is not migrated."
+    },
     "run": {
       "type": "string",
       "pattern": "^run/[a-z0-9]+(-[a-z0-9]+)*$",
@@ -24,11 +36,19 @@
       "description": "The bound the caller set, recorded with the run it bounded. No value is shipped: a number this framework supplied would be one nobody calibrated, and a step recorded as timed out is only readable against the bound it exceeded."
     },
     "outcome": {
-      "enum": ["passed", "failed", "timed_out", "not_found"],
+      "enum": [
+        "passed",
+        "failed",
+        "timed_out",
+        "not_found"
+      ],
       "description": "How the run ended: the outcome of the first step that did not pass, or `passed` when every step did. Never absent and never `not_run` — a record exists because a run happened."
     },
     "failed_step": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "The name of the first step that did not pass, or null. Null with an outcome other than `passed` is a contradiction; the two are written together and read together."
     },
     "steps": {
@@ -36,7 +56,15 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name", "command", "outcome", "exit_code", "output"],
+        "required": [
+          "name",
+          "command",
+          "outcome",
+          "exit_code",
+          "output",
+          "started_at",
+          "ended_at"
+        ],
         "additionalProperties": false,
         "properties": {
           "name": {
@@ -50,16 +78,44 @@
             "description": "The argument vector that was executed, joined for a reader. No shell saw it, so nothing in it expanded."
           },
           "outcome": {
-            "enum": ["passed", "failed", "timed_out", "not_found", "not_run"],
+            "enum": [
+              "passed",
+              "failed",
+              "timed_out",
+              "not_found",
+              "not_run"
+            ],
             "description": "`not_run` means a step before this one did not pass and this one was never attempted — never that it was skipped for any other reason. A suite run against a tree that did not compile would report failures about a binary nobody built, so a failed step stops the run."
           },
           "exit_code": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "What the command exited with, or null where it never exited — timed out, was not found, or was never attempted."
           },
           "output": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "The log holding everything this step printed, relative to the run's own directory; null where the step was never attempted. Byte-exact: what a diagnosis reads is what the command wrote."
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\+00:00$",
+            "description": "When this step's command was invoked, UTC to the millisecond; null exactly where the step was never attempted — nothing happened, and a clock reading would claim something did."
+          },
+          "ended_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\+00:00$",
+            "description": "When the command returned, timed out or was found missing, UTC to the millisecond; null exactly where `started_at` is. The difference is the step's duration, derived and never stored twice."
           }
         }
       }

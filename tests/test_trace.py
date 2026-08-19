@@ -155,6 +155,26 @@ def test_a_bind_carrying_forward_a_changed_file_prints_the_stale_receipt(repo):
             f"since changed") in done.stdout
 
 
+def test_a_raw_bind_prints_the_no_record_receipt(repo):
+    """`--bind` is the one bind no record backs — the skills all go through `--bind-record` —
+    and the entry it writes reads afterwards exactly like one a record justified, so the
+    receipt is the only trace of the difference."""
+    done = bind(repo)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "rests on no record" in done.stdout
+
+
+def test_a_record_bind_prints_no_such_receipt(repo):
+    """The receipt says a judgment lives nowhere; a bind read out of a record is exactly the
+    case where it does, and printing the line there would teach every reader to skip it."""
+    record = record_at(repo, [
+        {"node": NODE, "encoded_at": [FILE], "how": "the case is what place() persists"},
+    ])
+    done = bind_record(repo, record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "rests on no record" not in done.stdout
+
+
 def test_a_clean_bind_prints_no_stale_receipt(repo):
     """The receipt reads only this act's neighborhood; a bind that leaves nothing stale says
     nothing, so the line means something the day it appears."""

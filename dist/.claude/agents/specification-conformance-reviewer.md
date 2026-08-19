@@ -49,6 +49,14 @@ stop. You need:
   never corrects the specification, and the day they disagree nobody knows which was decided.
 - **Read the node files, not a summary of them.** Open every node under the specification root.
   A finding against a node you did not open is a finding against what you remembered.
+- **A historical claim is settled by the decision log, never by which node reads closest.**
+  `decision-log.md` at the specification root records which file and field every decided fact
+  filled. Where the source claims succession — a comment citing one rule as what replaced or
+  absorbed another, a citation naming which node a behavior now answers to — read the log's
+  entries locating the nodes in your set before settling which node owns the fact: two nodes can
+  both speak of one outcome and only one of them hold it, and closeness of wording is exactly
+  the evidence that misleads there. The log decides nothing — it says which node to open, and
+  the finding quotes that node as it stands.
 - **Evidence is quoted, never restated.** A finding whose evidence you cannot quote from the
   source is a finding you did not observe, and it does not go in the result. Where the finding
   is an absence, quote the construct that should have held the fact.

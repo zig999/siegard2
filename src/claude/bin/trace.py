@@ -72,7 +72,11 @@ A record that binds a file nobody declared would widen the reconciliation past w
 scoped, silently, and the trace would carry the result forever.
 
 `--bind` validates <spec-root> the way spec.py does, refuses a node it does not hold, reads that
-node's digest and each file's digest fresh, and writes the entry. By default it extends whatever
+node's digest and each file's digest fresh, and writes the entry. It is the one bind no record
+backs — every skill binds through `--bind-record`, where an implementation or reconciliation
+record holds the judgment — so every `--bind` prints a receipt saying the judgment behind this
+entry lives nowhere, because the trace it writes reads afterwards exactly like one a record
+justified. By default it extends whatever
 that node already held: a file this call does not name but an earlier bind of the same node did
 stays bound, at the digest that earlier bind recorded, because two tasks landing the same rule in
 two different files is not one of them undoing the other's work. A file this call does name is
@@ -355,6 +359,21 @@ def released(node_id: str, dropped: list[str]) -> str:
             f"if anywhere")
 
 
+def unrecorded(node_id: str) -> str:
+    """The receipt for a bind no record backs. A statement, never a refusal: `--bind` is the
+    general form and stays open — it is the one door a tree with untraced code has — but every
+    other bind this framework writes rests on a record that says which node the source encodes
+    and why, and this one rests on the caller's say-so alone. The receipt is the only trace of
+    that difference, because the entry this bind writes reads afterwards exactly like one a
+    record justified — and how often this line shows up in reports is what will say whether the
+    raw form costs more than it serves."""
+    return (f"  this binding rests on no record: --bind wrote what the caller stated, and the "
+            f"judgment behind it lives nowhere a reader can reopen. A delivery's record or a "
+            f"reconciliation is the recorded route — for a hand edit over bound source, "
+            f"/reconcile writes the same binding with the judgment kept. The trace carries no "
+            f"mark of the difference on {node_id}; this line is the only one")
+
+
 def stale_after(declared: dict, home: Path, acted: dict[str, str],
                 bound: set[str]) -> list[tuple[str, str, str]]:
     """The bindings this act left stale, found at the one moment both sides are in hand.
@@ -485,6 +504,7 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
     if write_trace(target, declared) != 0:
         return 1
     print(f"bound {node_id} to {held} file(s) at {trace_path(target)}")
+    print(unrecorded(node_id))
     if dropped:
         print(released(node_id, dropped))
     stale = stale_after(declared, home, {e["path"]: e["digest"] for e in traced}, {node_id})

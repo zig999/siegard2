@@ -460,6 +460,13 @@ standard checked: target/standard.yaml declares 2 rule(s) — 1 decided by readi
   reading
   it declares 3 command(s): install = true (60s), lint = true (60s), test = true (60s)
     installs with install, proves with test, and the rest run as checks on both sides of the tests
+  each delivery phase, composed for bin/run.py — the delivery root, --run <slug> and --cwd stay
+  the caller's, and the captured run is held to exactly these steps:
+    setup: --timeout-seconds 60 --step 'install=true'
+    build: --timeout-seconds 60 --step 'install=true' --step 'lint=true'
+    suite: --timeout-seconds 60 --step 'install=true' --step 'lint=true' --step 'test=true'
+    a task declaring `produces` runs the setup line where build is named and nothing at the
+    suite — the substrate exemption, stated once here
   it authorizes 1 direct dependency(ies): pino. What they pull in transitively is nobody's
   approval and the lockfile's record
   it presupposes 1 artifact(s); --against <target-source-root> says whether they stand
@@ -530,7 +537,7 @@ All steps pass:
 $ python3 bin/run.py ./delivery/checkout --run checkout-suite --cwd ./target --timeout-seconds 60 \
       --step install="true" --step test="true"
 {
-  "contract_version": "siegard-run/1",
+  "contract_version": "siegard-run/2",
   "run": "run/checkout-suite",
   "cwd": "/home/dev/checkout-service/target",
   "timeout_seconds": 60,
@@ -538,9 +545,13 @@ $ python3 bin/run.py ./delivery/checkout --run checkout-suite --cwd ./target --t
   "failed_step": null,
   "steps": [
     { "name": "install", "command": "true", "outcome": "passed", "exit_code": 0,
-      "output": "install.log" },
+      "output": "install.log",
+      "started_at": "2026-08-19T14:03:07.412+00:00",
+      "ended_at": "2026-08-19T14:03:09.128+00:00" },
     { "name": "test", "command": "true", "outcome": "passed", "exit_code": 0,
-      "output": "test.log" }
+      "output": "test.log",
+      "started_at": "2026-08-19T14:03:09.130+00:00",
+      "ended_at": "2026-08-19T14:03:11.507+00:00" }
   ],
   "combined_output": "run.log"
 }
@@ -570,7 +581,7 @@ A middle step fails; the last step is recorded, never executed:
 $ python3 bin/run.py ./delivery/checkout --run checkout-suite-3 --cwd ./target --timeout-seconds 60 \
       --step install="true" --step lint="false" --step test="true"
 {
-  "contract_version": "siegard-run/1",
+  "contract_version": "siegard-run/2",
   "run": "run/checkout-suite-3",
   "cwd": "/home/dev/checkout-service/target",
   "timeout_seconds": 60,
@@ -578,11 +589,15 @@ $ python3 bin/run.py ./delivery/checkout --run checkout-suite-3 --cwd ./target -
   "failed_step": "lint",
   "steps": [
     { "name": "install", "command": "true", "outcome": "passed", "exit_code": 0,
-      "output": "install.log" },
+      "output": "install.log",
+      "started_at": "2026-08-19T14:12:40.005+00:00",
+      "ended_at": "2026-08-19T14:12:41.213+00:00" },
     { "name": "lint", "command": "false", "outcome": "failed", "exit_code": 1,
-      "output": "lint.log" },
+      "output": "lint.log",
+      "started_at": "2026-08-19T14:12:41.215+00:00",
+      "ended_at": "2026-08-19T14:12:41.980+00:00" },
     { "name": "test", "command": "true", "outcome": "not_run", "exit_code": null,
-      "output": null }
+      "output": null, "started_at": null, "ended_at": null }
   ],
   "combined_output": "run.log"
 }
@@ -703,7 +718,11 @@ domain/sales/order: no longer in the specification; the binding is stale
   writes the entry **in full** instead: a file left off the new list is a file no longer claimed,
   and every path a `--replace` stops claiming is printed as a receipt.
 - **When to use it:** by hand, for a single node/file pair — the general form behind what
-  `/implement-task` normally does through `--bind-record` instead.
+  `/implement-task` normally does through `--bind-record` instead. It is the one bind no record
+  backs, and it says so: every `--bind` prints a receipt stating that the judgment behind the
+  entry lives nowhere a reader can reopen, because no skill takes this form — a delivery's record
+  or a `/reconcile` is the recorded route, and the trace itself carries no mark of the
+  difference.
 - **Read or write:** writes `siegard-trace.json` (creates it, if this is the first bind for this
   target root).
 
@@ -713,6 +732,11 @@ Default (extends) — a second file added to a node already bound to one:
 $ python3 bin/trace.py --bind ./target ./specification domain/sales/order \
       src/orders/place-helpers.ts
 bound domain/sales/order to 2 file(s) at /home/dev/checkout-service/siegard-trace.json
+  this binding rests on no record: --bind wrote what the caller stated, and the judgment behind
+  it lives nowhere a reader can reopen. A delivery's record or a reconciliation is the recorded
+  route — for a hand edit over bound source, /reconcile writes the same binding with the
+  judgment kept. The trace carries no mark of the difference on domain/sales/order; this line
+  is the only one
 ```
 
 `--replace` — restating the node with only one file drops the other, and says so:
@@ -721,6 +745,8 @@ bound domain/sales/order to 2 file(s) at /home/dev/checkout-service/siegard-trac
 $ python3 bin/trace.py --bind ./target ./specification domain/sales/order \
       src/orders/place.ts --replace
 bound domain/sales/order to 1 file(s) at /home/dev/checkout-service/siegard-trace.json
+  this binding rests on no record: --bind wrote what the caller stated, and the judgment behind
+  it lives nowhere a reader can reopen. [...]
   --replace released 1 path(s) this call did not name; domain/sales/order no longer claims
   target/src/orders/place-helpers.ts. Where the fact moved out of those files, that is what
   --replace is for; where another delivery had bound one of them, that binding is gone from here,

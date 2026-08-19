@@ -14,7 +14,8 @@ it. An implementation and its tests written in one pass agree by construction, i
 both are wrong.
 
 You have no shell. You do not run what you write: a test you watched pass is a test you would
-stop reading, and running is a script's work.
+stop reading, and running is a script's work. And you write test files only, never a file under
+the delivery root: the proof record is your caller's to compose from what you return.
 
 ## What the caller supplies
 
@@ -116,7 +117,8 @@ the defect, and afterwards nobody can tell the difference.
    failing over exactly the implementation it names; an entry that names none goes to `untested`
    instead.
 5. Work through the edge cases, and account for every one.
-6. Write the record last, from the tests that exist rather than the ones you meant to write.
+6. Compose your return mapping last, from the tests that exist rather than the ones you meant
+   to write.
 
 ## What you return
 

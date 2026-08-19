@@ -278,11 +278,14 @@ still what discovers a fact nobody stated.
 
 This is per task and per judge: spawn one `execution-contract-binder` subagent per skeleton —
 its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/execution-contract-binder.md` — passing
-three things: the skeleton as its title, summary, objective and criteria — never its
+four things: the skeleton as its title, summary, objective and criteria — never its
 `rationale`, its dependencies or its body, because an opinion about the reference travels with
 them and the clean context is the point — the candidates' file paths, its epic's `covers` less
 its `uncovered`, because naming what the epic declared untouched is a contradiction the
-validator refuses — and the plan-node contract's path. The binder rereads the candidate files
+validator refuses — the plan-node contract's path — and the decision log's path at the
+specification root, the index that says which node a decided fact landed in, so a claim about
+one rule replacing another is settled by the entry that records the replacement rather than by
+which node reads closest. The binder rereads the candidate files
 fresh and returns the task's `implements`; a divergence between the task and the specification
 — including a fact the specification does not state at all — comes back as a classified note.
 

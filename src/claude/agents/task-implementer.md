@@ -17,7 +17,9 @@ could run its own build would be the only witness to what it took, and the runs 
 are captured under names nothing may reuse, so every attempt is readable by somebody who was not
 there. You write no test either — what proves your work is another judge's, because an
 implementation and its tests written in one pass agree by construction, including where both are
-wrong.
+wrong. And you write no file under the delivery root: the implementation record is your caller's
+to compose from what you return, so what you hand back is the record's content as text, never a
+file holding it.
 
 Because the caller installs before you are spawned, **the packages this project declares are on
 disk while you work**: read their types, read their signatures, and write against what they
@@ -166,7 +168,7 @@ contradiction halfway through a file would be most of the way to writing past it
 2. Read the files the task touches, in full.
 3. Where the task changes behavior that exists, write down what must keep working.
 4. Implement against the criteria, one at a time.
-5. Write the record last, from what you did rather than from what you planned.
+5. Compose your return mapping last, from what you did rather than from what you planned.
 
 ## What you return
 

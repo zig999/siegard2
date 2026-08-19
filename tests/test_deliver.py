@@ -968,14 +968,17 @@ def run_dir(delivery: Path):
                 said = outcome
             else:
                 said = "passed"
+            attempted = said != "not_run"
             recorded.append({"name": name, "command": f"run-{name}", "outcome": said,
                              "exit_code": 0 if said == "passed" else 1,
-                             "output": None if said == "not_run" else f"{name}.log"})
+                             "output": f"{name}.log" if attempted else None,
+                             "started_at": "2026-01-01T00:00:00.000+00:00" if attempted else None,
+                             "ended_at": "2026-01-01T00:00:01.000+00:00" if attempted else None})
             stopped = stopped or said not in ("passed",)
         where = delivery / "run" / slug
         where.mkdir(parents=True, exist_ok=True)
         (where / "run.json").write_text(json.dumps({
-            "contract_version": "siegard-run/1", "run": f"run/{slug}", "cwd": "/tmp/project",
+            "contract_version": "siegard-run/2", "run": f"run/{slug}", "cwd": "/tmp/project",
             "timeout_seconds": 20, "outcome": outcome,
             "failed_step": None if outcome == "passed" else steps[-1],
             "steps": recorded,

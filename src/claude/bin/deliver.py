@@ -125,6 +125,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
 
@@ -552,6 +553,25 @@ def substrate_only(front: dict, tfront: dict, data: dict) -> bool:
                    for rule in listed(data, "rules") if isinstance(rule, dict))
 
 
+def phase_steps(commands: list[dict], phase: str) -> list[dict]:
+    """The commands one phase of a delivery runs, in the order it runs them: the install first,
+    because nothing reads a package before the install made it real, and the suite last and only
+    in the suite phase, because it is held back until the tests exist. `setup` is the install
+    alone — the whole of what runs before an implementer is spawned, and the whole of what a task
+    declaring `produces` ever runs. One selection with two readers, on purpose: `check_standard`
+    prints each phase composed for `bin/run.py`, and `owed_run_problems` holds the captured run
+    to the same list — what a caller was handed to run and what the validator says was owed
+    cannot drift apart while both are this function."""
+    install = [c for c in commands if c.get("role") == "install"]
+    middle = [c for c in commands if c.get("role") not in ("install", "suite")]
+    suite = [c for c in commands if c.get("role") == "suite"]
+    if phase == "setup":
+        return install
+    if phase == "build":
+        return install + middle
+    return install + middle + suite
+
+
 def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
                       tfront: dict) -> list[str]:
     """Whether a record captured the run its kind owes, and whether that run covered it. A registry
@@ -570,9 +590,9 @@ def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
     because tests exist, and a suite held back is the one thing a proof is for."""
     commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
     kind = "proof" if "tests" in front else "implementation"
-    owed = commands if kind == "proof" else [c for c in commands if c.get("role") != "suite"]
+    owed = phase_steps(commands, "suite" if kind == "proof" else "build")
     if kind == "implementation" and substrate_only(front, tfront, data):
-        owed = [c for c in owed if c.get("role") == "install"]
+        owed = phase_steps(commands, "setup")
     if not owed:
         return []
 
@@ -1388,6 +1408,25 @@ def check_standard(named: str, against: str | None = None) -> int:
         print(f"    installs with {roles.get('install') or 'nothing'}, "
               f"proves with {roles.get('suite') or 'nothing'}, "
               f"and the rest run as checks on both sides of the tests")
+        # Each phase composed and ready, because the prose rule ("everything except the suite,
+        # install first") was interpreted at every delivery — and one omitted install cost a
+        # full build to learn what this line says for free. What is printed is what
+        # `owed_run_problems` holds the captured run to: the same function selects both.
+        print("  each delivery phase, composed for bin/run.py — the delivery root, "
+              "--run <slug> and --cwd stay the caller's, and the captured run is held to "
+              "exactly these steps:")
+        for phase in ("setup", "build", "suite"):
+            steps = phase_steps(commands, phase)
+            if not steps:
+                print(f"    {phase}: nothing runs — no step carries the role this phase needs")
+                continue
+            largest = max(c.get("timeout_seconds") for c in steps
+                          if isinstance(c.get("timeout_seconds"), int))
+            args = " ".join("--step " + shlex.quote(f"{c.get('step')}={c.get('command')}")
+                            for c in steps)
+            print(f"    {phase}: --timeout-seconds {largest} {args}")
+        print("    a task declaring `produces` runs the setup line where build is named and "
+              "nothing at the suite — the substrate exemption, stated once here")
     else:
         print("  it declares no command: nothing runs on its own, and a review says which rules "
               "went unanswered")

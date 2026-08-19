@@ -45,6 +45,14 @@ commands that do not print secrets.
 how many tests failed and why is read out of that output by whoever diagnoses it. Parsing a
 reporter's format is knowledge of a stack, and this holds none.
 
+**Each attempted step records when it started and when it ended.** Until siegard-run/2 the
+record carried no clock on purpose, so two records of one command differed only where the
+command did — and what that byte-comparability cost was that nobody, inside a session or after
+it, could say what any step of any run took. When a run happened and how long each step held
+the wall is the one fact that cannot be reconstructed once the run is over, so the record is
+where it lives. A step never attempted carries null for both: nothing happened, and a clock
+reading would claim something did.
+
 Declared dependencies: none beyond the standard library.
 
 Usage:  run.py <delivery-root> --run <slug> --cwd DIR --timeout-seconds N
@@ -62,10 +70,11 @@ import re
 import shlex
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-run/1"
+CONTRACT = "siegard-run/2"
 RUN_DIR = "run"
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
@@ -75,6 +84,13 @@ def cannot_run(message: str) -> None:
     default."""
     print(f"cannot run: {message}", file=sys.stderr)
     raise SystemExit(CANNOT_RUN)
+
+
+def now() -> str:
+    """The wall clock, UTC, to the millisecond — the resolution a step's duration is read at.
+    UTC because a record is read on machines the run never saw, and an offset that moved with
+    the runner's locale would make two steps of one run appear to overlap."""
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
 
 
 def parse_steps(raw: list[str]) -> list[tuple[str, list[str]]]:
@@ -159,12 +175,15 @@ def main() -> int:
     for name, argv in steps:
         if stopped:
             recorded.append({"name": name, "command": shlex.join(argv), "outcome": "not_run",
-                             "exit_code": None, "output": None})
+                             "exit_code": None, "output": None,
+                             "started_at": None, "ended_at": None})
             continue
         log = run_dir / f"{name}.log"
+        started = now()
         outcome, code = run_step(argv, cwd, args.timeout_seconds, log)
         recorded.append({"name": name, "command": shlex.join(argv), "outcome": outcome,
-                         "exit_code": code, "output": f"{name}.log"})
+                         "exit_code": code, "output": f"{name}.log",
+                         "started_at": started, "ended_at": now()})
         if outcome != "passed":
             stopped = True
 
