@@ -17,9 +17,11 @@ asserts it silently: `--check` is the only thing that ever says so, and nothing 
 it.
 
 What you produce is a rebind and the record that justifies it. **You never write source, and you
-never write a specification node.** Where the reconciliation cannot be made — where the source now
-states something no node holds — you bind nothing and hand back the two invocations that could
-resolve it, without choosing between them.
+never write a specification node.** Where the reconciliation cannot be made for a node — where the
+source now states something that node does not hold — you bind that node nothing and hand back the
+two invocations that could resolve it, without choosing between them. The nodes the judgment did
+clear are bound in the same act: the judgment is per node, so the bind is too, and a reading that
+succeeded is not discarded because a sibling reading did not.
 
 ## Required inputs
 
@@ -258,25 +260,39 @@ this invocation owns.
 
 ### 5. Bind
 
-**Where the judgment cleared every node, and only then:**
+**Whatever the judgment cleared, and never anything else:**
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> <the record>
 ```
 
 The record is read the same way an implementation record is, and the whole of it is refused before
-anything is written. What lands is the union: a file an earlier bind put on a node and this record
-does not name stays bound, because two things landing one node in two files is not one of them
-undoing the other's work.
+anything is written — refused over form, meaning a node this specification does not hold or a file
+that is not there, which is defect in what you wrote and never the judgment's answer. What lands is
+the union: a file an earlier bind put on a node and this record does not name stays bound, because
+two things landing one node in two files is not one of them undoing the other's work.
 
 **This skill never passes `--replace`.** Where the human says a fact moved out of a file rather than
 into an additional one, the report hands that invocation ready to paste and stops: `--replace`
 substitutes the whole entry, its receipt of what stopped being claimed is the only signal there is,
 and a receipt nobody was there to read is the silent loss the union default exists to end.
 
-**Where any node carries a finding, nothing is bound at all** — not even the nodes that cleared.
-The file set is one act: a trace holding half of it says this source is reconciled when it is not,
-and reads exactly like a trace that holds all of it.
+**Where a node carries a finding, that node is not bound, and the nodes that cleared still are.**
+The join is already structural and needs nothing from you: a node the judgment refused carries no
+`encoded_at`, and this form reads only nodes that do — so the invocation above writes exactly the
+cleared set however anyone runs it. Run it whether the judgment cleared everything or not, and run
+it once.
+
+What that is not is a claim that the set is reconciled. A cleared node's binding rests on the
+judgment that cleared it and on nothing else in the record; a node with a finding against it stays
+exactly as it stood, so the drift that surfaced it is still drift, `--check` still reports it, and
+the count it reports is what says how much is still owed. Holding the cleared bindings back would
+not have made that clearer — it would have left forty findings looking equally unexamined instead of
+two — and it would have thrown away every reading that succeeded, so the next invocation re-judges
+files whose text nobody touched.
+
+**Read the bind's receipt and carry it into the report.** It names the nodes it did not write,
+which is the one place the partial shape of the act is stated at the moment it happens.
 
 ### 6. Report
 
@@ -288,6 +304,21 @@ and what was not; and the next invocation where there is one.
 Where the judgment cleared everything, there is no next invocation. The trace now describes the tree
 as it stands, and `trace.py --check` over the target is what a reader confirms that with.
 
+Where it cleared part of the set, say both halves and keep them apart: the nodes now bound, and the
+nodes still owed exactly as the bind's receipt names them. `trace.py --check` over the target is
+still the confirmation, and what it reports now is the remainder — a reader who sees two findings
+where the drift report opened with forty is reading the progress, not a clean tree.
+
+**Then say what the next invocation's file set is, and make it the remainder.** It is the files
+whose nodes are still owed — never the whole set again. The nodes that cleared are bound, their
+files are committed and nothing here rewrites source, so re-judging them buys a second reading of
+text that did not move and pays one delegation per file for it. Two things go in with the remainder,
+and both come from `--check` rather than from your memory of this run: any file the run about to
+follow leaves reporting `moved`, because an `/analyse` that shifts a node re-opens every file bound
+to it including one that cleared here, and any file whose nodes the remainder shares — the binding
+form refuses a record that names a file and answers for only some of the nodes bound to it. Name
+them; the file set is still the human's to state.
+
 Where it did not, there are two readings and **you choose neither.** The source may be right and the
 specification behind it, or the node may be right and the source wrong — that is a person's to
 settle, and a reviewer that settles it is a decision wearing a finding's clothes. Hand both, and say
@@ -296,8 +327,8 @@ which finding each one answers.
 The first, where the fact the source now states belongs in the specification — the `/analyse`
 invocation ready to paste, naming the material (the finding's evidence, the file it was read in, and
 the nodes located above) and the project root. After it runs, this skill is invoked again over the
-same file set under a new slug: the node has moved, the judgment reads it as it now stands, and the
-bind stamps both sides.
+remainder under a new slug: the node has moved, the judgment reads it as it now stands, and the bind
+stamps both sides.
 
 The second, where the node is right and the behavior is not — the `/plan-work` invocation ready to
 paste for a corrective increment, naming the scope (the one wrong behavior, as the finding states
@@ -310,7 +341,9 @@ binds on its own and leaves this reconciliation with nothing to do.
   reconciliation that repaired what it found would be a third one nobody validated.
 - **It never decides that a file is correct.** The human asserts that; this skill records the
   assertion as theirs and asks a different question.
-- **It never binds a node the judgment did not clear**, and it never binds part of a file set.
+- **It never binds a node the judgment did not clear.** It does bind the nodes that cleared while
+  others carry findings, and says which it did not — the act is per node because the judgment is,
+  and a cleared binding no more asserts the rest of the set than a delivery's does.
 - **It never prunes, and it never drops a binding.** A file that moved or vanished is drift with an
   owner; dropping its entry would destroy the one record of which node that code answers to while
   reporting the tree clean.

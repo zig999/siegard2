@@ -58,6 +58,15 @@ link nobody made while reading exactly like a complete one. A record naming no n
 `encoded_at` is not a failure: the nodes it answers only by `how` reached no file, a bind with none
 is refused, and there is simply nothing to write.
 
+That refusal is over form — a node this specification does not hold, a file that is not there — and
+it is not the reconciliation route's per-node judgment. A reconciliation record answers node by
+node, and a node the judgment did not clear carries no `encoded_at`; the nodes that cleared are
+written and that one is not. Refusing the record over it would make a judgment that resolved
+thirty-eight of forty nodes worth exactly as much as one that resolved none, and buy nothing for
+it: the two nodes it could not write stay precisely as drifted as they were, which is what the
+next `--check` says. What the bind owes instead is a receipt naming them, so a partial bind never
+reads like a complete one.
+
 `--reconciliation` is the one form here that writes nothing. It holds a reconciliation record —
 source that changed outside any task, at `siegard-reconcile/<slug>.md` beside this file — to
 `schemas/reconciliation.json`, so that `--bind-record` can then read it exactly as it reads an
@@ -700,6 +709,62 @@ def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
     return pairs, []
 
 
+def as_reconciliation(record: Path) -> dict | None:
+    """The record read as a reconciliation, or nothing where it is not one.
+
+    Two readers here need the same three-part guard — it sits under `siegard-reconcile/`, its
+    frontmatter parses, and it declares this contract — and a delivery record must fall through
+    every one of them, since `--bind-record` serves both forms. A record whose frontmatter is
+    unreadable falls through silently on purpose: `encoded_in` already refused it, and one refusal
+    per defect is enough."""
+    if record.parent.name != RECONCILE_DIR:
+        return None
+    front, _ = frontmatter_of(record)
+    if not isinstance(front, dict):
+        return None
+    version = front.get("contract_version")
+    if not isinstance(version, str) or not version.startswith("siegard-reconcile/"):
+        return None
+    return front
+
+
+def withheld(record: Path) -> list[str]:
+    """Every node a reconciliation record answered for and did not clear. Empty for a delivery
+    record, which has no such class.
+
+    A reconciliation is bound node by node — a node without `encoded_at` is one this form cannot
+    reach, which is the whole of the join between the judgment and the trace — so a record
+    carrying a finding writes the bindings that cleared and stops there. That is the right act:
+    every line it writes is one a judgment stands behind, and the node it could not write stays
+    exactly as drifted as it was, which is what the next `--check` reports.
+
+    What was missing was saying so here. `--reconciliation` names the held nodes before anything
+    is written, but the bind's own output listed what it bound and nothing else, so a partial bind
+    read exactly like a complete one at the only moment the person who ran it was still looking.
+    A bind that quietly reconciles thirty-eight of forty is the report this framework spends its
+    receipts preventing."""
+    front = as_reconciliation(record)
+    if front is None:
+        return []
+    return sorted({entry["node"] for entry in front.get("nodes") or []
+                   if isinstance(entry, dict) and isinstance(entry.get("node"), str)
+                   and entry.get("conforms") is False})
+
+
+def left_owed(held: list[str], record: Path) -> str:
+    """The receipt for the nodes a reconciliation did not clear, printed by the bind that wrote
+    the rest. The same discipline `left_stale()` sets one class over: nothing here is wrong — the
+    bind stated exactly what the judgment cleared — but each node below is still owed, and this is
+    the one moment the person who ran it is still holding the whole set."""
+    lines = [f"  {len(held)} node(s) of {record.name} the judgment did not clear, and this bind "
+             f"wrote none of them:"]
+    lines += [f"    {node}" for node in held]
+    lines.append("    each stays as it stood — its drift, where the file was bound before, is "
+                 "still a finding on the next --check, and the record says what was found "
+                 "against it")
+    return "\n".join(lines)
+
+
 def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
                 offset: Path) -> list[str]:
     """Every node the trace binds to a file this reconciliation names and the record says nothing
@@ -721,13 +786,8 @@ def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
     This is the one place this script reads a record as a reconciliation rather than as two field
     names. It is not a second opinion about somebody else's contract: `schemas/reconciliation.json`
     is trace.py's own, and `--reconciliation` is where it is enforced."""
-    if record.parent.name != RECONCILE_DIR:
-        return []
-    front, _ = frontmatter_of(record)
-    if not isinstance(front, dict):
-        return []  # encoded_in already refused it, and one refusal per defect is enough
-    version = front.get("contract_version")
-    if not isinstance(version, str) or not version.startswith("siegard-reconcile/"):
+    front = as_reconciliation(record)
+    if front is None:
         return []
 
     named = {entry["path"] for entry in front.get("files") or []
@@ -761,7 +821,11 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     Per node, the older form paid a full specification validation and a full read-and-rewrite of
     the trace. Here they are paid once, and the whole of it is refused before anything is written:
     a delivery half bound describes a link nobody made, and the file it would leave behind reads
-    exactly like a complete one."""
+    exactly like a complete one.
+
+    Refused means over form. What a reconciliation's judgment held back is a different thing and
+    is not refused here: those nodes carry no `encoded_at`, the rest are written, and `left_owed()`
+    is what keeps the partial act legible."""
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -827,6 +891,9 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     stale = stale_after(declared, home, acted, {node_id for node_id, _ in folded})
     if stale:
         print(left_stale(stale))
+    owed = withheld(record)
+    if owed:
+        print(left_owed(owed, record))
     return 0
 
 

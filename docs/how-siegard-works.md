@@ -793,8 +793,12 @@ Artifact generated (`siegard-trace.json`, after the plain `--bind` above):
 
 - **Function:** reads one whole implementation record and binds every node/file pair it states, in
   one atomic write — refusing the entire operation if any part of the record would be refused.
+  Refusal is over form: a node the specification does not hold, a file that is not there. It also
+  reads a reconciliation record, where a node the judgment did not clear carries no `encoded_at`
+  and so cannot be reached by this form; the nodes that cleared are written and a receipt names the
+  ones that were not, so a partial reconciliation never reads like a complete one.
 - **When to use it:** this is the form `/implement-task` uses at the end of a task, instead of one
-  `--bind` per node the task encoded.
+  `--bind` per node the task encoded, and the form `/reconcile` uses after `--reconciliation`.
 - **Read or write:** writes `siegard-trace.json`.
 
 ```
@@ -803,6 +807,19 @@ $ python3 bin/trace.py --bind-record ./target ./specification \
 bound domain/sales/order to 1 file(s)
 1 binding(s) written at /home/dev/checkout-service/siegard-trace.json, read from
 record-order.md
+```
+
+```
+$ python3 bin/trace.py --bind-record ./target ./specification \
+      ./siegard-reconcile/incident-order-number.md
+bound domain/sales/order to 1 file(s)
+1 binding(s) written at /home/dev/checkout-service/siegard-trace.json, read from
+incident-order-number.md
+  1 node(s) of incident-order-number.md the judgment did not clear, and this bind wrote none of
+  them:
+    domain/billing/invoice
+    each stays as it stood — its drift, where the file was bound before, is still a finding on the
+    next --check, and the record says what was found against it
 ```
 
 #### `trace.py --prune <target-root>`

@@ -6,6 +6,10 @@ schema cannot state because it is a relation between three lists. The rest holds
 `--bind-record`: a node the judgment refused carries no `encoded_at`, so the binding form cannot
 reach it however anyone invokes it. That is the whole guarantee this file class exists to give, and
 it is structural rather than written down in a prompt — which is exactly why it is testable.
+
+The other half of that join is the receipt. Binding is per node because the judgment is, so a record
+carrying a finding writes the rest and stops; what the bind owes then is to say which nodes it did
+not write, or a partial reconciliation prints the same shape as a complete one.
 """
 from __future__ import annotations
 
@@ -196,6 +200,80 @@ def test_the_cleared_nodes_of_a_record_are_what_lands_in_the_trace(consumer, wri
     # `--bind-record` would have rejected anyway, which is the way this test could pass vacuously.
     direct = run("--bind", consumer / "backend", consumer / "specs", OTHER, SECOND)
     assert direct.returncode == 0, direct.stdout + direct.stderr
+
+
+def test_a_partial_bind_says_which_nodes_it_did_not_write(consumer, write_record):
+    """The bind writes what cleared, and its own output is where the rest of the set is stated.
+
+    Without this the partial act was legible only from `--reconciliation`, one invocation earlier:
+    the bind listed what it bound and stopped, so thirty-eight bindings out of forty printed the
+    same shape as forty out of forty at the one moment the person who ran it was still looking."""
+    record = write_record(record_of(
+        [CLEARED, {"node": OTHER, "conforms": False,
+                   "how": "the second file states a threshold no node holds",
+                   "observed_at": [SECOND]}],
+        files=[{"path": FILE, "change": "answers with the persisted order_number"},
+               {"path": SECOND, "change": "refuses a second bill"}]))
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert "1 node(s) of order-fix.md the judgment did not clear" in bound.stdout
+    assert OTHER in bound.stdout.split("did not clear", 1)[1]
+    assert "still a finding on the next --check" in bound.stdout
+
+
+def test_a_bind_that_cleared_everything_says_nothing_about_nodes_it_held_back(consumer,
+                                                                             write_record):
+    """The receipt is a statement about a partial act, and a complete one must not carry it —
+    a line that prints on every bind is a line nobody reads on the bind that needed it."""
+    record = write_record(record_of([CLEARED]))
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert "did not clear" not in bound.stdout
+
+
+def test_a_delivery_record_carries_no_such_class(consumer, write_record):
+    """`--bind-record` serves both forms, and only one of them has a node the judgment refused.
+    A delivery record is read for two field names and must fall through every part of the guard."""
+    record = write_record(record_of([CLEARED]), where="delivery/orders/implementation")
+    assert trace.withheld(record) == []
+
+
+def test_the_drift_a_partial_bind_leaves_is_exactly_what_it_did_not_clear(consumer, write_record):
+    """The measurement the older rule rested on being false.
+
+    That rule held the cleared bindings back because a trace holding half the set was said to read
+    exactly like a trace holding all of it. It does not: the nodes that cleared are restamped and
+    stop reporting, the node that did not is untouched and still reports, and the count `--check`
+    prints is the remainder. So the two states are distinguishable by the same signal that
+    surfaced the drift, and holding thirty-eight bindings back only made forty findings look
+    equally unexamined while paying to judge the thirty-eight again."""
+    target = consumer / "backend"
+    assert run("--bind", target, consumer / "specs", NODE, FILE).returncode == 0
+    assert run("--bind", target, consumer / "specs", OTHER, SECOND).returncode == 0
+    assert run("--check", target).returncode == 0
+
+    (target / FILE).write_text("export function place() { return persisted.order_number }\n",
+                               encoding="utf-8")
+    (target / SECOND).write_text("export function bill() { if (n >= 1) {} }\n", encoding="utf-8")
+    drifted = run("--check", target)
+    assert drifted.returncode == 1
+    assert "2 drift finding(s)" in drifted.stdout
+
+    record = write_record(record_of(
+        [CLEARED, {"node": OTHER, "conforms": False,
+                   "how": "the source states `if (n >= 1)`, which no node holds",
+                   "observed_at": [SECOND]}],
+        files=[{"path": FILE, "change": "answers with the persisted order_number"},
+               {"path": SECOND, "change": "refuses a second bill"}]))
+    assert run("--reconciliation", record).returncode == 0
+    bound = run("--bind-record", target, consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+
+    after = run("--check", target)
+    assert after.returncode == 1
+    assert "1 drift finding(s)" in after.stdout
+    assert OTHER in after.stdout
+    assert NODE not in after.stdout
 
 
 # ---------------------------------------------------------------------- the accounting
