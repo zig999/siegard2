@@ -91,15 +91,16 @@ One YAML mapping, nothing else — no commentary before or after:
 
 ```yaml
 failures_counted: <how many failures the output reported>
-findings:                    # one per counted failure; omit the key only when the count is zero
+findings:                    # one per counted failure; a count of zero returns no mapping at all
   - file: <the path the run's own output named; omit only where it named none>
     where: <the test's name or the line within that file — or, with no file, the step of the run>
     evidence: <the runner's own message, quoted>
     cause: <the contract's vocabulary; read it there>
     cost: <what this failure costs, in the terms a reader can weigh>
     correction: <what would have to change>
-notes: <one sentence on what you diagnosed without — the file set, a node you could not read;
-       omit when nothing was missing>
+notes: <one sentence on what you diagnosed without — the file set, a node you could not read —
+       and, where a compilation error short-circuited the run, that the count is the compiler's
+       errors rather than the test lines below them; omit when there is neither>
 ```
 
 The `file` you record is the path the output named, and it is often not one the change touched — a

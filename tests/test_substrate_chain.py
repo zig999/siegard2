@@ -101,9 +101,9 @@ def test_the_chain_holds_from_an_absent_manifest_to_a_delivered_one(
     proof["implementation"] = deliver.pin_of(
         delivery / "implementation/checkout/record-order.md")
     write_delivery("proof/checkout/record-order", proof)
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, found = deliver.collect(delivery, validator, allowed, names)
+    nodes, found = deliver.collect(delivery, validator, names)
     plan_nodes, _ = deliver.load_plan(work, root)
     empty_handed = deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree)
     assert any("the task says it produces package.json" in p for p in empty_handed), empty_handed
@@ -115,7 +115,7 @@ def test_the_chain_holds_from_an_absent_manifest_to_a_delivered_one(
     proof["implementation"] = deliver.pin_of(
         delivery / "implementation/checkout/record-order.md")
     write_delivery("proof/checkout/record-order", proof)
-    nodes, found = deliver.collect(delivery, validator, allowed, names)
+    nodes, found = deliver.collect(delivery, validator, names)
     assert found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree) == []
 
     # 7. And once the artifact stands, the gate opens for every task, including the ones that

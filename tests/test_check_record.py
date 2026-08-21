@@ -178,6 +178,10 @@ def test_a_record_naming_a_registry_that_is_not_there(tree):
                record(tree, standard={"at": "gone.yaml", "pin": pin_of(tree)}),
                tree / "frontend")
     assert done.returncode == 1
+    # The record also carries a pin matching nothing, so the exit code alone cannot say which of
+    # the two was reported. Every sibling test here pairs the code with a fragment for that reason.
+    said(done, "gone.yaml")
+    said(done, "does not exist")
 
 
 def test_a_record_missing_the_file_set(tree):

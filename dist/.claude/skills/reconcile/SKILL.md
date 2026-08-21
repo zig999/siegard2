@@ -109,9 +109,15 @@ situate → locate → judge → record → bind → report → stop
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>
 ```
 
-This is the reverse lookup, and it is the only one there is: the trace is keyed by node, and what
-makes a file findable in it is that the file drifted. Read the findings, and keep the ones whose
-path is in the file set.
+This is the reverse lookup for what drifted, and drift is all it reports: the trace is keyed by
+node, and what makes a file findable in this output is that the file changed. Read the findings,
+and keep the ones whose path is in the file set.
+
+Then open `siegard-trace.json` itself, beside `siegard.json` at the target's git toplevel, and read
+its `bindings` for every named file the findings did not name. That second reading is what
+separates the two states the findings cannot tell apart — a file the trace binds nothing to looks
+exactly like a file whose binding is intact, because both are absent from a drift report — and it
+is the only place an intact file's nodes are written down. Read it; never infer it.
 
 **Two anchors meet here, and only one of them belongs in what you write.** Findings are spelled from
 the target's git toplevel, because that is where the trace file sits; everything you author — the
@@ -139,6 +145,17 @@ Four states, and they do not all continue:
   `trace.py --prune` followed by whatever put the fact somewhere else. Do not bind around it, and
   do not prune it from here — this invocation's writes are its own record and its own bindings.
 
+**A node written since the bind is in none of that.** The trace is what this step reads, and a node
+no delivery ever encoded has no entry in it — which is the ordinary state of every node `/analyse`
+wrote after the source it governs was written, and that alternation is the rhythm this framework
+expects rather than an exception to it. Such a node cannot be cleared here and cannot be bound here:
+it was never delivered, and binding it is a delivery's act. What it can be is a **candidate**. Where
+the human names nodes written since this source was last bound — `/analyse` ends by listing exactly
+those identities — they join the candidate tier the judgment is passed, so a fact one of them now
+holds is attributed to it instead of reported as held by nothing. Named, never discovered, and by
+the same person who named the file set: a reconciliation that went looking for its own candidates
+chose part of its own scope after all.
+
 Where a node also drifted on the specification side, the judgment below reads it as it now stands,
 and the record says so in `notes`. Both sides having moved is not a special case; it is two facts,
 and the bind restamps both.
@@ -149,7 +166,8 @@ Spawn one `specification-conformance-reviewer` subagent per named file, together
 after another — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
 a file set of exactly its one file; as the node set, the nodes the trace binds to that file,
-located above; the identifiers of every node the locate step named across the whole file set, as
+located above; the identifiers of every node the locate step named across the whole file set — together
+with any the human named as written since the bind — as
 candidates it may open where its file states a fact its own nodes do not settle — a fact one
 file states can be governed by a node another file carries, and a judge who cannot open that
 node reports an absence where the true finding is a misattribution; the specification root; and
@@ -164,11 +182,25 @@ holding one file and its own nodes reads less and misses less. No delegation rea
 return, and the pass is the union of what they return: a finding keeps the file its judge read,
 and a node is cleared exactly where no delegation that read one of its files found against it.
 
-The agent is unchanged and it is unchanged on purpose. Its file already says that what belongs
-in the file set and the node set is the caller's rule and never its own; in a review that rule
-is the plan and the change, and here it is the trace, one file at a time. That substitution is
-the whole of the difference, and duplicating the judgment into a second agent that reads it
-differently is how two passes end up disagreeing about what conformance means.
+**A delegation answers once.** Where a return is unusable — a field missing, a node it never
+accounted for — the prompt was wrong, and the correction is a fresh delegation with the prompt
+fixed, never a follow-up question to the one that already answered. A resumed judge holds its first
+reading and the new question at once, and what comes back is neither its first answer nor an
+independent second one: observed, it contradicted itself over nodes whose text had not moved, and
+denied having returned findings it had returned. So two divergent answers from one delegation are
+not a union to fold — union is what holds *between* delegations, each of which read something the
+others did not. They void each other, the file is judged again from a clean context, and `notes`
+says that happened. A score folded out of a judge that answered twice is a floor, not a measurement,
+and a record cannot say which it is.
+
+One agent serves both routes, deliberately: what belongs in the file set and the node set is the
+caller's rule and never its own — in a review that rule is the plan and the change, here it is the
+trace, one file at a time. Duplicating the judgment into a second agent that reads it differently
+is how two passes end up disagreeing about what conformance means. Two things this route needs are
+in the agent's own contract rather than in this sentence: the candidate tier it may open to
+attribute a fact, and the per-node `read` it returns — `held_at` and its quoted evidence — which
+is what a cleared node's `how` is written from. Never write a `how` from your own reading of the
+file; that is the judgment this step delegated.
 
 **Do not read the files yourself and decide.** The premise the human handed you is that the source
 is correct; the question this step answers is a different one — whether the specification still
@@ -179,6 +211,14 @@ Delegating means spawning the named subagents; in a plugin install the name may 
 Only where the session cannot spawn subagents, read the agent's file under the plugin root's
 `agents/` directory and apply its discipline in place, file by file in the same shape — the file
 stays the single home of that judgment — and the report must say the pass ran inline.
+
+**And not even then, where this session wrote any node the judgment will read** — its own set or
+its candidates. A context that authored a node and then reads the source against it is grading its
+own writing, which is the whole of what delegating this judgment prevents; run inline, it produces a
+record saying `conforms` in the voice of a judgment nobody independent made, and that record is what
+a bind rests on for as long as the code lives. The stop is to report and wait. Say why the spawn
+failed, too: a spend limit or a rate limit passes, and what the human does then is run it again
+rather than accept less.
 
 ### 4. Record
 
@@ -197,9 +237,10 @@ the same divergence from scratch and calls it new.
   invokes it. That is why the split is in the contract and not in a sentence here asking you not to.
 - A node the trace binds to more than one named file was read by more than one judge, and its
   entry folds their answers into one: it conforms only where every delegation that read one of
-  its files cleared it, and its `how` quotes each file's reading. A finding one judge returned
-  against a node its file does not carry — the misattribution case above — lands on the node it
-  names, wherever that node's own judge stood.
+  its files cleared it, and its `how` quotes each file's `read` entry for that node. A finding
+  one judge returned against a node its file does not carry — the misattribution case above —
+  lands on the node its own `node` field names, wherever that node's own judge stood; a finding
+  naming no node lands on every node of the file its judge read.
 - Every named file is accounted for — by a node, or under `unbound`. A file left out reads exactly
   like a file nobody had a question about.
 - `notes` states the shape this judgment ran in — one delegation per file, and how many — so a

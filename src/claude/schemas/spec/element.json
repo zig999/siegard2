@@ -148,7 +148,10 @@
       "properties": {
         "name": { "$ref": "#/$defs/attributeName" },
         "type": { "$ref": "#/$defs/attributeType" },
-        "required": { "type": "boolean" },
+        "required": {
+          "type": "boolean",
+          "description": "The material states the attribute is always present (SPEC-002 R9). Absent means the material did not say, which is a weaker claim than declaring it optional."
+        },
         "many": {
           "type": "boolean",
           "description": "The attribute's value repeats (SPEC-002 R9). Absent means one value."

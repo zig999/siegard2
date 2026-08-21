@@ -85,7 +85,7 @@
               "not_found",
               "not_run"
             ],
-            "description": "`not_run` means a step before this one did not pass and this one was never attempted — never that it was skipped for any other reason. A suite run against a tree that did not compile would report failures about a binary nobody built, so a failed step stops the run."
+            "description": "`not_run` means a step before this one did not pass and this one was never attempted — never that it was skipped for any other reason. A suite run against a tree that did not compile would report failures about a binary nobody built, so a failed step stops the run. `not_found` means the command never started: absent from PATH, not executable, a directory, or a binary this kernel could not load. Which of those it was is in the step's log, because a run that ended in a traceback over an uninvocable command would burn its own name and record nothing."
           },
           "exit_code": {
             "type": [
@@ -99,7 +99,7 @@
               "string",
               "null"
             ],
-            "description": "The log holding everything this step printed, relative to the run's own directory; null where the step was never attempted. Byte-exact: what a diagnosis reads is what the command wrote."
+            "description": "The log holding everything this step printed, relative to the run's own directory; null where the step was never attempted. Byte-exact for a step that ran: what a diagnosis reads is what the command wrote. Two outcomes carry the runner's own words instead — a timed-out log ends with its termination note, and a `not_found` log holds only the line saying the command never started."
           },
           "started_at": {
             "type": [
@@ -117,7 +117,50 @@
             "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\+00:00$",
             "description": "When the command returned, timed out or was found missing, UTC to the millisecond; null exactly where `started_at` is. The difference is the step's duration, derived and never stored twice."
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "outcome": {
+                  "const": "not_run"
+                }
+              },
+              "required": [
+                "outcome"
+              ]
+            },
+            "then": {
+              "properties": {
+                "exit_code": {
+                  "const": null
+                },
+                "output": {
+                  "const": null
+                },
+                "started_at": {
+                  "const": null
+                },
+                "ended_at": {
+                  "const": null
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "output": {
+                  "type": "string"
+                },
+                "started_at": {
+                  "type": "string"
+                },
+                "ended_at": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "combined_output": {
@@ -125,5 +168,33 @@
       "minLength": 1,
       "description": "The log holding every step's output in order, each under a header naming the step, its command and its outcome — relative to the run's own directory. It is the file a diagnosis reads in full; the per-step logs stay byte-exact beside it."
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "failed_step": {
+            "const": null
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "failed_step": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
 }

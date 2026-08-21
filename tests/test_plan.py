@@ -20,8 +20,8 @@ def run(*args) -> subprocess.CompletedProcess:
 
 
 def problems_in(work, root) -> list[str]:
-    validator, allowed = plan.contract()
-    nodes, problems = plan.collect(work, validator, allowed)
+    validator = plan.contract()
+    nodes, problems = plan.collect(work, validator)
     spec_nodes, spec_problems = plan.load_base(root)
     assert spec_problems == [], f"the fixture specification does not hold together: {spec_problems}"
     return sorted(set(problems + plan.cross_problems(nodes, spec_nodes)))
@@ -507,7 +507,7 @@ def test_an_absent_artifact_no_task_produces_is_refused(work, root, sound_plan, 
     tree = tmp_path / "tree"
     tree.mkdir()
     found = plan.substrate_problems(
-        plan.collect(work, *plan.contract())[0], str(registry(tmp_path, "package.json")), tree)
+        plan.collect(work, plan.contract())[0], str(registry(tmp_path, "package.json")), tree)
     assert len(found) == 1
     assert "which " + str(tree) + " does not hold and no task produces" in found[0]
     assert "PRH-01 cannot be applied" in found[0]
@@ -520,7 +520,7 @@ def test_an_artifact_the_tree_already_holds_is_not_the_plan_s_business(work, roo
     tree.mkdir()
     (tree / "package.json").write_text("{}", encoding="utf-8")
     assert plan.substrate_problems(
-        plan.collect(work, *plan.contract())[0],
+        plan.collect(work, plan.contract())[0],
         str(registry(tmp_path, "package.json")), tree) == []
 
 
@@ -536,7 +536,7 @@ def test_a_task_that_produces_the_artifact_answers_for_it(work, root, sound_plan
     front["produces"] = ["package.json"]
     write_plan("task/checkout/record-order", front)
     assert plan.substrate_problems(
-        plan.collect(work, *plan.contract())[0],
+        plan.collect(work, plan.contract())[0],
         str(registry(tmp_path, "package.json")), tree) == []
     assert problems_in(work, root) == [], "producing an artifact breaks no other check"
 
@@ -549,7 +549,7 @@ def test_a_registry_that_does_not_hold_reconciles_nothing(work, root, sound_plan
     path = tmp_path / "broken.yaml"
     one = STANDARD["rules"][0]
     path.write_text(yaml.safe_dump({**STANDARD, "rules": [one, dict(one)]}), encoding="utf-8")
-    found = plan.substrate_problems(plan.collect(work, *plan.contract())[0], str(path),
+    found = plan.substrate_problems(plan.collect(work, plan.contract())[0], str(path),
                                     tmp_path)
     assert any("the plan is not reconciled against" in p for p in found)
 

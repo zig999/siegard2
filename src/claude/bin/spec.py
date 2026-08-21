@@ -46,6 +46,7 @@ Usage:  spec.py <spec-root>              validate everything
         spec.py --digest <spec-root>     validate, then print every node's content digest
         spec.py --node <file> <spec-root>
                                           validate one file (cross-node checks do not run)
+        spec.py --help                   print this text and stop
 Exit:   0 sound
         1 problems
         2 cannot run
@@ -101,14 +102,14 @@ def classify(relative: Path) -> tuple[str, str | None, str] | None:
     if parts == ("decision-log",):
         return ("log", None, "decision-log")
     if len(parts) == 3 and parts[0] == "domain" and parts[2] == "_context":
-        return ("context", parts[1], parts[1]) if SLUG.match(parts[1]) else None
+        return ("context", parts[1], parts[1]) if SLUG.fullmatch(parts[1]) else None
     if len(parts) == 3 and parts[0] in ("domain", "rules", "scenarios", "contracts"):
         cls = {"domain": "element", "rules": "rule",
                "scenarios": "scenario", "contracts": "contract"}[parts[0]]
-        if SLUG.match(parts[1]) and SLUG.match(parts[2]):
+        if SLUG.fullmatch(parts[1]) and SLUG.fullmatch(parts[2]):
             return (cls, parts[1], parts[2])
         return None
-    if len(parts) == 2 and parts[0] == "constraints" and SLUG.match(parts[1]):
+    if len(parts) == 2 and parts[0] == "constraints" and SLUG.fullmatch(parts[1]):
         return ("constraint", None, parts[1])
     return None
 
@@ -116,6 +117,51 @@ def classify(relative: Path) -> tuple[str, str | None, str] | None:
 def digest_of(path: Path) -> str:
     """Content identity: sha256 of the file's exact bytes, computable by hand as `sha256sum`."""
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def listed(front: dict, field: str) -> list:
+    """A list field read defensively: anything but a list reads as empty, because the schema
+    already reported the shape and iterating a string would report its characters."""
+    value = front.get(field)
+    return value if isinstance(value, list) else []
+
+
+def read_node(path: Path) -> tuple[str | None, str | None]:
+    """A node file's text, or the problem that says why it could not be read — never a traceback.
+    Exactly one of the two is set.
+
+    A file that is not UTF-8 is a problem naming the file, not a `UnicodeDecodeError` that names
+    the byte offset and nothing else. A byte-order mark is consumed rather than refused: it is
+    invisible to whoever wrote the file, and leaving it in makes the fence miss, which reports a
+    file whose fence is visibly there as carrying none. Digests are unaffected — `digest_of`
+    hashes the bytes on disk and is what `sha256sum` computes by hand."""
+    try:
+        return path.read_text(encoding="utf-8-sig"), None
+    except UnicodeDecodeError as broken:
+        return None, f"is not UTF-8: {broken}"
+    except OSError as broken:
+        return None, f"cannot be read: {broken}"
+
+
+def parse_node(path: Path) -> tuple[dict | None, str, str | None]:
+    """One node file split into its frontmatter and its body, or the problem that says why it
+    could not be. Exactly one of the mapping and the problem is set.
+
+    The three steps are the same wherever a node file is opened — read the bytes, match the
+    fence, parse the YAML — and every caller differs only in what it does with the answer. Held
+    together here so a guard added at one of those steps reaches all of them; they drifted once
+    already, and the drift was a traceback in one script and a clean refusal in its sibling."""
+    text, unreadable = read_node(path)
+    if text is None:
+        return None, "", unreadable
+    match = FENCE.match(text)
+    if not match:
+        return None, "", "carries no frontmatter fence"
+    try:
+        front = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as broken:
+        return None, "", f"frontmatter does not parse: {broken}"
+    return front, text[match.end():], None
 
 
 def reduce_display(display: str) -> str:
@@ -135,11 +181,25 @@ def camel(slug: str) -> str:
     return parts[0] + "".join(part.capitalize() for part in parts[1:])
 
 
+def headings_of(body: str) -> list[str]:
+    """The `## ` headings a body carries, ignoring anything inside a fenced code block. A note
+    quoting markdown — a README's own `## Install`, a snippet from a task's criteria — was counted
+    as a heading of the node itself, and the file was refused for a structure it does not have."""
+    headings, fenced = [], False
+    for line in body.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced and line.startswith("## "):
+            headings.append(line.rstrip())
+    return headings
+
+
 def body_problems(cls: str, body: str) -> list[str]:
     expected = HEADINGS[cls]
     if expected is None:
         return []
-    headings = [line.rstrip() for line in body.splitlines() if line.startswith("## ")]
+    headings = headings_of(body)
     if headings != expected:
         return [f"body headings are {headings if headings else 'absent'}; "
                 f"this class carries exactly {expected}"]
@@ -171,15 +231,9 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
             continue
         cls, context, slug = placed
         identity = "/".join(relative.with_suffix("").parts)
-        text = path.read_text(encoding="utf-8")
-        match = FENCE.match(text)
-        if not match:
-            problems.append(f"{identity}: carries no frontmatter fence")
-            continue
-        try:
-            front = yaml.safe_load(match.group(1)) or {}
-        except yaml.YAMLError as broken:
-            problems.append(f"{identity}: frontmatter does not parse: {broken}")
+        front, body, unreadable = parse_node(path)
+        if front is None:
+            problems.append(f"{identity}: {unreadable}")
             continue
         if not isinstance(front, dict) or any(not isinstance(k, str) for k in front):
             problems.append(f"{identity}: frontmatter is not a mapping of string keys")
@@ -194,7 +248,7 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
         for error in validators[cls].iter_errors(front):
             where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
             problems.append(f"{identity}: {where}: {error.message}")
-        problems += [f"{identity}: {p}" for p in body_problems(cls, text[match.end():])]
+        problems += [f"{identity}: {p}" for p in body_problems(cls, body)]
         display = front.get("display")
         if isinstance(display, str) and reduce_display(display) != slug:
             problems.append(f"{identity}: display `{display}` reduces to "
@@ -229,15 +283,9 @@ def check_single(root: Path, named: str, validators) -> int:
     if not path.is_file():
         print(f"cannot run: {path} does not exist", file=sys.stderr)
         return CANNOT_RUN
-    text = path.read_text(encoding="utf-8")
-    match = FENCE.match(text)
-    if not match:
-        print(f"{identity}: carries no frontmatter fence")
-        return 1
-    try:
-        front = yaml.safe_load(match.group(1)) or {}
-    except yaml.YAMLError as broken:
-        print(f"{identity}: frontmatter does not parse: {broken}")
+    front, body, unreadable = parse_node(path)
+    if front is None:
+        print(f"{identity}: {unreadable}")
         return 1
     if not isinstance(front, dict) or any(not isinstance(k, str) for k in front):
         print(f"{identity}: frontmatter is not a mapping of string keys")
@@ -254,7 +302,7 @@ def check_single(root: Path, named: str, validators) -> int:
     for error in validators[cls].iter_errors(checked):
         where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
         problems.append(f"{where}: {error.message}")
-    problems += body_problems(cls, text[match.end():])
+    problems += body_problems(cls, body)
     display = checked.get("display")
     if isinstance(display, str) and reduce_display(display) != slug:
         problems.append(f"display `{display}` reduces to `{reduce_display(display)}`, "
@@ -289,14 +337,14 @@ def element_refs(node: dict) -> list[tuple[str, str, str]]:
     """Every reference one element declares: (target identity, expectation, locator)."""
     refs: list[tuple[str, str, str]] = []
     front, context = node["front"], node["context"]
-    for attribute in front.get("attributes") or []:
+    for attribute in listed(front, "attributes"):
         if not isinstance(attribute, dict):
             continue
         declared = attribute.get("type")
         if isinstance(declared, str) and declared not in PRIMITIVES:
             refs.append((resolve(declared, context), "value",
                          f"attributes[{attribute.get('name', '?')}].type"))
-    for index, entry in enumerate(front.get("relationships") or []):
+    for index, entry in enumerate(listed(front, "relationships")):
         if isinstance(entry, dict) and isinstance(entry.get("target"), str):
             refs.append((resolve(entry["target"], context), "identity-bearing",
                          f"relationships[{index}].target"))
@@ -315,16 +363,16 @@ def state_machine_problems(identity: str, node: dict, nodes: dict[str, dict]) ->
             or status["front"].get("type") != "enumeration":
         problems.append(f"{identity}: status must name an enumeration; the states are its values")
     else:
-        states = [v for v in status["front"].get("values") or [] if isinstance(v, str)]
+        states = [v for v in listed(status["front"], "values") if isinstance(v, str)]
     subject = nodes.get(front.get("subject", ""))
     if subject is None or subject["cls"] != "element" \
             or subject["front"].get("type") != "aggregate-root":
         problems.append(f"{identity}: subject must name an aggregate root")
 
     declared = set(states)
-    terminal = {s for s in front.get("terminal") or [] if isinstance(s, str)}
-    transitions = [t for t in front.get("transitions") or [] if isinstance(t, dict)]
-    rejections = [r for r in front.get("rejections") or [] if isinstance(r, dict)]
+    terminal = {s for s in listed(front, "terminal") if isinstance(s, str)}
+    transitions = [t for t in listed(front, "transitions") if isinstance(t, dict)]
+    rejections = [r for r in listed(front, "rejections") if isinstance(r, dict)]
 
     def held(state, at: str) -> None:
         if isinstance(state, str) and declared and state not in declared:
@@ -339,6 +387,20 @@ def state_machine_problems(identity: str, node: dict, nodes: dict[str, dict]) ->
         held(transition.get("to"), f"transitions[{index}].to")
     for index, rejection in enumerate(rejections):
         held(rejection.get("from"), f"rejections[{index}].from")
+
+    # A terminal state "accepts no further trigger" — its own contract's words, and the whole of
+    # what exempts it from the totality check below. A transition leaving one contradicts the
+    # declaration that exempted it, and the projected diagram drew both `S --> [*]` and `S --> T`.
+    for index, transition in enumerate(transitions):
+        if transition.get("from") in terminal:
+            problems.append(f"{identity}: transitions[{index}].from names `"
+                            f"{transition.get('from')}`, which `terminal` declares accepts no "
+                            f"further trigger; a state is terminal or it transitions, never both")
+    for index, rejection in enumerate(rejections):
+        if rejection.get("from") in terminal:
+            problems.append(f"{identity}: rejections[{index}].from names `"
+                            f"{rejection.get('from')}`, which `terminal` declares accepts no "
+                            f"further trigger; a terminal state decides no pairing")
 
     covered: dict[tuple, int] = {}
     for entry in transitions + rejections:
@@ -422,7 +484,7 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
                 problems.append(f"{identity}: {at} names {target_id}, a {kind}; an entity "
                                 f"belongs to an aggregate root")
         by_target: dict[str, list[dict]] = {}
-        for index, entry in enumerate(front.get("relationships") or []):
+        for index, entry in enumerate(listed(front, "relationships")):
             if not isinstance(entry, dict) or not isinstance(entry.get("target"), str):
                 continue
             target_id = resolve(entry["target"], node["context"])
@@ -463,7 +525,7 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
         front = node["front"]
         boundaries: set[tuple[str, str]] = set()
         spanned: set[str] = set()
-        for index, target_id in enumerate(front.get("constrains") or []):
+        for index, target_id in enumerate(listed(front, "constrains")):
             target = landing(target_id, "element", identity, f"constrains[{index}]")
             if target is None or target["cls"] != "element":
                 continue
@@ -502,7 +564,7 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
         if node["cls"] == "scenario":
             if isinstance(front.get("subject"), str):
                 landing(front["subject"], "subject", identity, "subject")
-            for index, touched in enumerate(front.get("involves") or []):
+            for index, touched in enumerate(listed(front, "involves")):
                 if isinstance(touched, str):
                     landing(touched, "involved", identity, f"involves[{index}]")
         if node["cls"] == "contract":
@@ -561,7 +623,7 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
         problems.append("decision-log.md is missing; the log is mandatory and non-normative "
                         "(SPEC-003 R5)")
     else:
-        for index, entry in enumerate(log["front"].get("entries") or []):
+        for index, entry in enumerate(listed(log["front"], "entries")):
             if not isinstance(entry, dict) or not isinstance(entry.get("location"), str):
                 continue  # the schema already reported the shape
             location = entry["location"]
@@ -601,11 +663,11 @@ def class_diagram(context: str, nodes: dict[str, dict]) -> str:
     def block(node: dict) -> list[str]:
         lines = [f"    class {pascal(node)} {{",
                  f"        <<{STEREOTYPES[node['front']['type']]}>>"]
-        for attribute in node["front"].get("attributes") or []:
+        for attribute in listed(node["front"], "attributes"):
             lines.append(attribute_line(attribute, nodes, context))
-        for value in node["front"].get("values") or []:
+        for value in listed(node["front"], "values"):
             lines.append(f"        {value.replace('-', '_').upper()}")
-        for operation in node["front"].get("operations") or []:
+        for operation in listed(node["front"], "operations"):
             lines.append(f"        +{camel(operation)}()")
         lines.append("    }")
         return lines
@@ -619,9 +681,9 @@ def class_diagram(context: str, nodes: dict[str, dict]) -> str:
         would be the second home the documentation floor exists to refuse."""
         named: dict[str, dict] = {}
         for node in members.values():
-            declared = [a["type"] for a in node["front"].get("attributes") or []
+            declared = [a["type"] for a in listed(node["front"], "attributes")
                         if a["type"] not in PRIMITIVES]
-            declared += [r["target"] for r in node["front"].get("relationships") or []]
+            declared += [r["target"] for r in listed(node["front"], "relationships")]
             for ref in declared:
                 target = nodes.get(resolve(ref, context))
                 if target is not None and target["context"] != context:
@@ -644,14 +706,26 @@ def class_diagram(context: str, nodes: dict[str, dict]) -> str:
         if aggregate_of(members[identity]) is None:
             lines += block(members[identity])
     named_foreign = foreign(members)
+    drawn: dict[str, str] = {}
     for identity in sorted(named_foreign):
         target = named_foreign[identity]
-        lines += [f"    class {pascal(target)} {{",
+        name = pascal(target)
+        # Two foreign elements of different contexts sharing a slug emit one class name, and
+        # Mermaid merges two declarations of one name into a single box carrying whichever
+        # stereotype came last. Renaming them would change every existing diagram's labels, so
+        # the collision is refused instead of drawn wrong.
+        if name in drawn and drawn[name] != identity:
+            raise Collision(f"the {context} class diagram names {name} for both "
+                            f"{drawn[name]} and {identity}; two foreign elements of one name "
+                            f"merge into one box, and the diagram would state a boundary "
+                            f"neither of them has")
+        drawn[name] = identity
+        lines += [f"    class {name} {{",
                   f"        <<external: {target['context']}>>",
                   "    }"]
     for identity in sorted(members):
         node = members[identity]
-        for entry in node["front"].get("relationships") or []:
+        for entry in listed(node["front"], "relationships"):
             target = nodes.get(resolve(entry["target"], context))
             if target is None:
                 continue
@@ -707,12 +781,12 @@ def context_map(nodes: dict[str, dict]) -> str:
 def state_diagram(node: dict, nodes: dict[str, dict]) -> str:
     front = node["front"]
     lines = ["stateDiagram-v2", f"    [*] --> {front['initial']}"]
-    for transition in front.get("transitions") or []:
+    for transition in listed(front, "transitions"):
         lines.append(f"    {transition['from']} --> {transition['to']} : "
                      f"{camel(transition['trigger'])}")
-    for state in front.get("terminal") or []:
+    for state in listed(front, "terminal"):
         lines.append(f"    {state} --> [*]")
-    for rejection in front.get("rejections") or []:
+    for rejection in listed(front, "rejections"):
         lines.append(f"    %% rejected: {camel(rejection['trigger'])} in {rejection['from']}")
     return "\n".join(lines) + "\n"
 
@@ -722,7 +796,7 @@ def capability_contexts(identity: str, nodes: dict[str, dict]) -> list[str]:
     for node in nodes.values():
         if node["cls"] != "scenario" or node["front"].get("subject") != identity:
             continue
-        for ref in [node["front"]["subject"]] + list(node["front"].get("involves") or []):
+        for ref in [node["front"]["subject"]] + list(listed(node["front"], "involves")):
             context = ref.split("/")[1]
             if context != SYSTEM:
                 touched.add(context)
@@ -747,7 +821,10 @@ def capability_map(nodes: dict[str, dict]) -> str:
         node = nodes[identity]
         if node["cls"] != "contract" or node["front"].get("type") != "capability":
             continue
-        anchor = node["slug"].replace("-", "_")
+        # Namespaced: a capability whose slug equals a context's would share that context's
+        # node id, and Mermaid merges two declarations of one id into one box — a capability
+        # silently drawn as the context it points at.
+        anchor = "cap_" + node["slug"].replace("-", "_")
         lines.append(f"    {anchor}[\"{pascal(node)}\"]")
         touched = capability_contexts(identity, nodes)
         consumers = [c for c in capability_consumers(identity, nodes) if c not in touched]
@@ -805,17 +882,35 @@ def overview(nodes: dict[str, dict]) -> str:
     return "\n".join(lines)
 
 
+class Collision(Exception):
+    """Two nodes computing to one projection filename. Raised rather than returned because it is
+    a defect in this script's naming, not a problem with the specification it read."""
+
+
 def project(nodes: dict[str, dict]) -> dict[str, str]:
     """Every projection the specification derives to, by filename."""
     files: dict[str, str] = {}
     for context in sorted(n["context"] for n in nodes.values() if n["cls"] == "context"):
         files[f"class-diagram-{context}.mmd"] = class_diagram(context, nodes)
     files["context-map.mmd"] = context_map(nodes)
+    # A state diagram is named for the machine's subject, not for the rule's own context: two
+    # rules in one context over subjects of the same name in different contexts computed to one
+    # filename, and the second silently replaced the first in a specification with no problems.
+    projected_by: dict[str, str] = {}
     for identity in sorted(nodes):
         node = nodes[identity]
         if node["cls"] == "rule" and node["front"].get("type") == "state-machine":
-            subject = node["front"]["subject"].split("/")[-1]
-            files[f"state-{node['context']}-{subject}.mmd"] = state_diagram(node, nodes)
+            subject = node["front"]["subject"]
+            anchor = nodes.get(subject)
+            context = anchor["context"] if anchor else node["context"]
+            name = f"state-{context}-{subject.split('/')[-1]}.mmd"
+            if name in projected_by:
+                raise Collision(f"{name} is projected by two state machines, "
+                                f"{projected_by[name]} and {identity}; writing the second would "
+                                f"drop the first, and a projection that loses a diagram is worse "
+                                f"than no projection")
+            projected_by[name] = identity
+            files[name] = state_diagram(node, nodes)
     files["capability-map.mmd"] = capability_map(nodes)
     files["overview.md"] = overview(nodes)
     return files
@@ -823,6 +918,11 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
 
 def main() -> int:
     args = sys.argv[1:]
+    if "--help" in args:
+        # The docstring is this script's one home of what it does and how it is called,
+        # so `--help` prints that rather than a second copy of it that could drift.
+        print(__doc__.strip())
+        return 0
     write = "--project" in args
     show_digests = "--digest" in args
     args = [a for a in args if a not in ("--project", "--digest")]
@@ -880,7 +980,11 @@ def main() -> int:
     if write:
         target = root / PROJECTIONS
         target.mkdir(exist_ok=True)
-        derived = project(nodes)
+        try:
+            derived = project(nodes)
+        except Collision as broken:
+            print(f"cannot run: {broken}", file=sys.stderr)
+            return CANNOT_RUN
         for stale in sorted(target.iterdir()):
             if stale.is_file() and stale.name not in derived:
                 stale.unlink()

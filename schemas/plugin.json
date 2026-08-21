@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://siegard.dev/schemas/plugin.json",
+  "$id": "https://siegard.dev/schemas/generator/plugin.json",
   "title": "Claude Code plugin manifest",
-  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in the decision to distribute as a Claude Code plugin: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. foundation/0008 R11 fixes what this record owns and what it does not: identity, description, version, and nothing the distribution manifest already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and foundation/0008 relies on no behaviour absent from the documentation on the date above.",
+  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in the decision to distribute as a Claude Code plugin: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. What this record owns is fixed here: identity, description, version, and nothing the distribution already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and nothing here relies on behaviour absent from the documentation on the date above.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,18 +16,18 @@
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
       "minLength": 1,
       "maxLength": 64,
-      "description": "The plugin identity, and the namespace the harness prepends to every skill it ships: a skill named `ingest-domain` is invoked as `/<name>:ingest-domain`. Kebab-case because it appears verbatim in that invocation. foundation/0008 R20 forbids a reserved prefix on a skill for this reason — the namespace is applied here, once."
+      "description": "The plugin identity, and the namespace the harness prepends to every skill it ships: a skill named `ingest-domain` is invoked as `/<name>:ingest-domain`. Kebab-case because it appears verbatim in that invocation. A skill therefore never carries the namespace in its own name: it is applied here, once, and a skill that repeated it would be invoked under it twice."
     },
     "description": {
       "type": "string",
       "minLength": 1,
       "maxLength": 400,
-      "description": "What the plugin is, for a consumer deciding whether to enable it. Not a changelog and not a capability list: foundation/0008 R12 puts the installed inventory in the distribution manifest, and R11 forbids the two records from duplicating a field."
+      "description": "What the plugin is, for a consumer deciding whether to enable it. Not a changelog and not a capability list: what the install holds is read from the distribution itself, and a field restated in two records is a field that can disagree with itself."
     },
     "version": {
       "type": "string",
       "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$",
-      "description": "The framework version, set explicitly. foundation/0008 R2: a plugin without one falls back to its commit SHA, which makes every commit a release and takes the framework's version out of the framework's hands. Semantic versioning, because .claude/rules/compatibility.md decides what a breaking change is and a consumer needs the major to mean it."
+      "description": "The framework version, set explicitly. A plugin without one falls back to its commit SHA, which makes every commit a release and takes the framework's version out of the framework's hands. Semantic versioning: a consumer reads the major to mean that a contract it depends on changed shape, which is what the contract_version constants in schemas/ record per artifact. It moves whenever what ships moves, and that is the whole of the rule: this value is the only name a consumer's installed copy has, so two different trees of src/claude/ carrying one version make every report sent back — every measurement, every defect, every cost — name a framework nobody can resolve to what actually ran. It has happened: three distinct shipped trees went out under one version, and the telemetry that came back from the third could not say it was the third. Nothing validates this; the value is set by whoever ships, and setting it is part of shipping rather than a step after it."
     }
   }
 }

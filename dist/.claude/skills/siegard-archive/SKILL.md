@@ -79,7 +79,8 @@ archivable it looks.
   1. `git tag -a archive/<date> -m "last tree holding: <slugs>"` — the tree was clean, so
      HEAD is the pre-removal state, and the tag is what makes recovery one command;
   2. `git add -A && git commit` — the removal itself, reviewed as a diff like any other;
-- the recovery line: `git checkout archive/<date> -- <delivery-root>/<slug>` brings any of it
+- the recovery line, both halves of the pair the removal kept whole:
+  `git checkout archive/<date> -- <work-root>/<slug> <delivery-root>/<slug>` brings any of it
   back;
 - one honesty line: a clean tree proves the history is committed, not that it is pushed — in a
   repository with no remote, git is the only copy;

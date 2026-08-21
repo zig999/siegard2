@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "src/claude"
 DIST = REPO / "dist/.claude"
 MANIFEST = ".claude-plugin/plugin.json"
+CONSUMER_ROOT = REPO / "src/consumer"
 
 
 def shipped(tree: Path) -> dict[str, str]:
@@ -92,14 +94,42 @@ def test_the_plugin_ships_no_claude_md():
         "dist/.claude/CLAUDE.md is back; nothing loads a CLAUDE.md inside the plugin directory"
 
 
-def test_the_consumer_rules_are_distributed_beside_the_plugin():
-    authored = REPO / "src/consumer/CLAUDE.md"
-    distributed = REPO / "dist/CLAUDE.md"
-    assert authored.is_file(), "the consumer rules file is not authored"
-    assert distributed.is_file(), \
-        "dist/CLAUDE.md is missing; the consumer has no rules file to place at their root"
-    assert authored.read_bytes() == distributed.read_bytes(), \
-        "dist/CLAUDE.md drifted from src/consumer/CLAUDE.md; the assembly is a copy"
+def beside_the_plugin() -> tuple[dict[str, bytes], dict[str, bytes]]:
+    """What is authored for the consumer's own root, and what the distribution puts there.
+
+    Written as a set rather than as one named file: the rules file was the only thing that landed
+    beside the plugin for as long as it was the only thing authored, and a second one added later
+    would have shipped nowhere with nothing saying so. `.claude/` is excluded because it is the
+    plugin, held to its own tests above."""
+    dist = REPO / "dist"
+    authored = {p.relative_to(CONSUMER_ROOT).as_posix(): p.read_bytes()
+                for p in sorted(CONSUMER_ROOT.rglob("*")) if p.is_file()}
+    distributed = {p.relative_to(dist).as_posix(): p.read_bytes()
+                   for p in sorted(dist.rglob("*"))
+                   if p.is_file() and p.relative_to(dist).parts[0] != ".claude"}
+    return authored, distributed
+
+
+def test_everything_authored_for_the_consumer_root_is_distributed_there():
+    authored, distributed = beside_the_plugin()
+    assert "CLAUDE.md" in authored, "the consumer rules file is not authored"
+    assert sorted(authored) == sorted(distributed), \
+        f"authored {sorted(authored)} and distributed {sorted(distributed)} beside the plugin; a " \
+        f"file authored for the consumer's root and not shipped reaches nobody, and one shipped " \
+        f"and not authored is a file nothing here validates"
+    drifted = sorted(name for name in authored if authored[name] != distributed[name])
+    assert drifted == [], \
+        f"{drifted} drifted from src/consumer/; the assembly is a copy"
+
+
+def test_a_consumer_root_script_is_distributed_runnable():
+    """A script a person is told to run, shipped without its executable bit, is a script whose
+    first answer is `Permission denied` and whose second is a chmod nothing documents."""
+    for name in sorted(beside_the_plugin()[0]):
+        if not name.endswith(".sh"):
+            continue
+        for tree in (CONSUMER_ROOT, REPO / "dist"):
+            assert os.access(tree / name, os.X_OK), f"{tree / name} is not executable"
 
 
 def test_every_skill_and_agent_the_suite_holds_is_distributed(trees):

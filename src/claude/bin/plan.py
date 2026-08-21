@@ -50,6 +50,8 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         together
         The specification root is required while the plan is live, and ignored once closure.md
         marks it closed.
+        plan.py --help
+                                                        print this text and stop
 Exit:   0 sound (and, with --check, current)
         1 problems, or --check and plan.json is stale
         2 cannot run (including a specification that does not hold together)
@@ -88,7 +90,6 @@ UNDERDETERMINED_OPENING = "UNDERDETERMINED, from the specification —"
 UNSTATED_OPENING = "UNSTATED, from the specification —"
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
 
 
 def id_of(relative: Path) -> str | None:
@@ -102,29 +103,22 @@ def id_of(relative: Path) -> str | None:
         pass
     else:
         return None
-    if not all(SLUG.match(p) for p in parts[1:]):
+    if not all(SLUG.fullmatch(p) for p in parts[1:]):
         return None
     return "/".join(parts)
 
 
-def contract() -> tuple[Draft202012Validator, dict[str, set[str]]]:
-    """The plan-node validator, and the per-kind field table read out of the contract rather
-    than restated here."""
+def contract() -> Draft202012Validator:
+    """The plan-node validator. The per-kind field table the contract carries needs no second
+    reading here: `propertyNames` fires through the validator itself."""
     if not PLAN_CONTRACT.is_file():
         raise FileNotFoundError(f"{PLAN_CONTRACT} is missing; nothing can be validated without it")
-    schema = json.loads(PLAN_CONTRACT.read_text(encoding="utf-8"))
-    allowed: dict[str, set[str]] = {}
-    for branch in schema.get("allOf", []):
-        kind = branch["if"]["properties"]["kind"]["const"]
-        allowed[kind] = set(branch["then"]["propertyNames"]["enum"])
-    return Draft202012Validator(schema), allowed
+    return Draft202012Validator(json.loads(PLAN_CONTRACT.read_text(encoding="utf-8")))
 
 
-def listed(front: dict, field: str) -> list:
-    """A list field read defensively: anything but a list reads as empty, because the schema
-    already reported the shape and iterating a string would report its characters."""
-    value = front.get(field)
-    return value if isinstance(value, list) else []
+# The shape guard has one home, in spec.py: a list field read defensively, so that a string
+# where a list belongs reports once from the schema instead of once per character.
+listed = spec.listed
 
 
 def implements_of(front: dict) -> set[str]:
@@ -132,12 +126,16 @@ def implements_of(front: dict) -> set[str]:
     return {ref for ref in listed(front, "implements") if isinstance(ref, str)}
 
 
-def node_problems(front, kind: str, validator, allowed) -> list[str]:
+def node_problems(front, kind: str, validator) -> list[str]:
     """Everything wrong with one plan node on its own: the schema, applied as written."""
     if not isinstance(front, dict):
         return [f"frontmatter is a {type(front).__name__}, not a mapping"]
     if any(not isinstance(key, str) for key in front):
         return ["frontmatter carries a non-string key"]
+
+    if "kind" in front:
+        return ["carries `kind`, which the validator supplies from the path; a node that stated "
+                "its own kind could disagree with where it sits, and the path is the identity"]
 
     problems: list[str] = []
     data = {**front, "kind": kind}
@@ -148,7 +146,7 @@ def node_problems(front, kind: str, validator, allowed) -> list[str]:
 
 
 def body_problems(body: str) -> list[str]:
-    headings = [line.rstrip() for line in body.splitlines() if line.startswith("## ")]
+    headings = spec.headings_of(body)
     if headings != HEADINGS:
         return [f"body headings are {headings if headings else 'absent'}; "
                 f"every plan node carries exactly {HEADINGS}"]
@@ -325,6 +323,11 @@ def epic_problems(nid: str, front: dict, nodes: dict[str, dict],
         if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
             continue  # the schema already reported the shape
         node_ref = entry["node"]
+        if node_ref in declared_uncovered:
+            # Every sibling reference array carries `uniqueItems`; this one cannot, because its
+            # entries are objects and two `why`s make two distinct objects over one node.
+            problems.append(f"{nid}: uncovered[{index}].node names {node_ref}, which an earlier "
+                            f"entry already declares; one node is left uncovered for one reason")
         declared_uncovered.add(node_ref)
         if spec_ids is not None and node_ref not in spec_ids:
             problems.append(f"{nid}: uncovered[{index}].node names {node_ref}, "
@@ -453,7 +456,7 @@ def cross_problems(nodes: dict[str, dict], spec_nodes: dict[str, dict] | None) -
     return problems
 
 
-def collect(root: Path, validator, allowed) -> tuple[dict[str, dict], list[str]]:
+def collect(root: Path, validator) -> tuple[dict[str, dict], list[str]]:
     """Every node in the plan, and everything wrong with the files as files."""
     nodes: dict[str, dict] = {}
     problems: list[str] = []
@@ -469,24 +472,18 @@ def collect(root: Path, validator, allowed) -> tuple[dict[str, dict], list[str]]
                             f"or task/<epic>/<slug>.md; the path is the identity and this one "
                             f"computes to none")
             continue
-        text = path.read_text(encoding="utf-8")
-        match = FENCE.match(text)
-        if not match:
-            problems.append(f"{nid}: carries no frontmatter fence")
-            continue
-        try:
-            front = yaml.safe_load(match.group(1)) or {}
-        except yaml.YAMLError as broken:
-            problems.append(f"{nid}: frontmatter does not parse: {broken}")
+        front, body, unreadable = spec.parse_node(path)
+        if front is None:
+            problems.append(f"{nid}: {unreadable}")
             continue
         kind = relative.parts[0]
         epic = relative.with_suffix("").parts[1] if kind == "task" else None
-        problems += [f"{nid}: {p}" for p in node_problems(front, kind, validator, allowed)]
-        problems += [f"{nid}: {p}" for p in body_problems(text[match.end():])]
+        problems += [f"{nid}: {p}" for p in node_problems(front, kind, validator)]
+        problems += [f"{nid}: {p}" for p in body_problems(body)]
         if isinstance(front, dict):
             nodes[nid] = {"front": front, "kind": kind, "epic": epic}
             if kind == "task":
-                nodes[nid]["notes"] = notes_of(text[match.end():])
+                nodes[nid]["notes"] = notes_of(body)
     return nodes, problems
 
 
@@ -520,7 +517,7 @@ def derive(nodes: dict[str, dict]) -> dict:
     return {"contract_version": "siegard-plan/3", "nodes": out_nodes, "edges": out_edges}
 
 
-def check_single(root: Path, named: str, validator, allowed) -> int:
+def check_single(root: Path, named: str, validator) -> int:
     path = Path(named)
     if not path.is_absolute():
         path = (root / named) if (root / named).is_file() else Path.cwd() / named
@@ -529,7 +526,7 @@ def check_single(root: Path, named: str, validator, allowed) -> int:
     except ValueError:
         print(f"cannot run: {named} is not under {root}", file=sys.stderr)
         return CANNOT_RUN
-    if relative.parts[0] == "intake":
+    if relative.parts and relative.parts[0] == "intake":
         print(f"{relative.as_posix()}: sits under intake/, which holds the material the "
               f"planning read and is never validated")
         return 0
@@ -543,18 +540,12 @@ def check_single(root: Path, named: str, validator, allowed) -> int:
     if not path.is_file():
         print(f"cannot run: {path} does not exist", file=sys.stderr)
         return CANNOT_RUN
-    text = path.read_text(encoding="utf-8")
-    match = FENCE.match(text)
-    if not match:
-        print(f"{nid}: carries no frontmatter fence")
+    front, body, unreadable = spec.parse_node(path)
+    if front is None:
+        print(f"{nid}: {unreadable}")
         return 1
-    try:
-        front = yaml.safe_load(match.group(1)) or {}
-    except yaml.YAMLError as broken:
-        print(f"{nid}: frontmatter does not parse: {broken}")
-        return 1
-    problems = node_problems(front, relative.parts[0], validator, allowed)
-    problems += body_problems(text[match.end():])
+    problems = node_problems(front, relative.parts[0], validator)
+    problems += body_problems(body)
     for problem in problems:
         print(f"{nid}: {problem}")
     if problems:
@@ -566,6 +557,11 @@ def check_single(root: Path, named: str, validator, allowed) -> int:
 
 def main() -> int:
     args = sys.argv[1:]
+    if "--help" in args:
+        # The docstring is this script's one home of what it does and how it is called,
+        # so `--help` prints that rather than a second copy of it that could drift.
+        print(__doc__.strip())
+        return 0
     verify = "--check" in args
     args = [a for a in args if a != "--check"]
     single = None
@@ -627,13 +623,13 @@ def main() -> int:
             return CANNOT_RUN
 
     try:
-        validator, allowed = contract()
+        validator = contract()
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
 
     if single is not None:
-        return check_single(work, single, validator, allowed)
+        return check_single(work, single, validator)
 
     if closed:
         spec_nodes = None  # a closed plan never opens today's specification
@@ -647,7 +643,7 @@ def main() -> int:
                   f"planning over it", file=sys.stderr)
             return CANNOT_RUN
 
-    nodes, problems = collect(work, validator, allowed)
+    nodes, problems = collect(work, validator)
     problems += cross_problems(nodes, spec_nodes)
     if named is not None:
         tree = Path(against)
@@ -663,7 +659,11 @@ def main() -> int:
         return 1
 
     plan = derive(nodes)
-    plan_contract = json.loads(PLAN_GRAPH_CONTRACT.read_text(encoding="utf-8"))
+    try:
+        plan_contract = json.loads(PLAN_GRAPH_CONTRACT.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {PLAN_GRAPH_CONTRACT} does not parse: {broken}", file=sys.stderr)
+        return CANNOT_RUN
     broken = sorted(Draft202012Validator(plan_contract).iter_errors(plan), key=str)
     if broken:  # a derivation this script produced and cannot ship is a defect in this script
         print(f"cannot run: the derived plan does not satisfy {PLAN_GRAPH_CONTRACT.name}: "

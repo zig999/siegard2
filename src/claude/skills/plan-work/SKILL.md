@@ -192,8 +192,9 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   passed. That is the full manifest; it names nothing about what a node says. Grep the
   specification root for the scope's vocabulary — its nouns and the terms the material uses —
   to find candidate files, then open exactly those. Close the impact set in both directions:
-  read what a candidate references in its own frontmatter (`attributes`, `relationships`,
-  `constrains`, `subject`, `status`, `upstream`, `payload`, `refusal`, `involves`), and grep
+  read what a candidate references in its own frontmatter — every reference-bearing field the
+  class schemas declare, read from the plugin root's `schemas/spec/` directory rather than from a
+  list here, so a field a schema gains is a field this closure reaches — and grep
   the specification root for each candidate's identity to find what references it back —
   there is no derived edge index to read this from instead. Read the impact-set files and
   nothing else: the plan implements against what governs the scope, not everything the
@@ -325,24 +326,32 @@ never a second decision made in passing. Every decided fact is a claim a reviewe
 the log entry is what lets them, the diff over the specification root is where it sits, and
 the report repeats it.
 
+Each fact is decided once, and the loop is bounded by that: a fact already settled in this
+invocation is never sent to a second decider, and a re-bind that returns an `unstated` note over
+a fact this step already decided is a stop, not another round — the specification now states it,
+so a binder still calling it silent is a disagreement a person settles. Two rounds that decide
+nothing new end the step.
+
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
 returned it — bare identities, no pin. A binder's notes are appended to the task body's
 `## Notes`, one sentence per line — the diff is the review, and a divergence only the
 conversation holds is a divergence the reviewer never sees — and the report repeats them by
 task. A note classed `blocking`, `underdetermined` or `remainder` opens with its class,
 literally — `BLOCKING, from the specification —`, `UNDERDETERMINED, from the specification —`,
-`REMAINDER, from the specification —` — the exact text and not a style, because
-`/implement-task` collects underdetermined entries by that opening and nothing else marks
-them; an underdetermined note carries the implementation the binder named in `passes`, and a
+`REMAINDER, from the specification —` — the exact text and not a style. Two of the three are
+read by something: `bin/plan.py` refuses a task persisting an `UNSTATED` opening and holds the
+blocking and underdetermined openings as constants, and `/implement-task` collects
+underdetermined entries by that opening and nothing else marks them. `REMAINDER` is read by no
+validator today and is still written exactly, because the three classes are one vocabulary and a
+note whose class a reader cannot see by its first words is a note nobody sorts; an underdetermined note carries the implementation the binder named in `passes`, and a
 remainder note the destination it named in `belongs`. Where the binder found nothing to
 implement against, the task carries `rationale` saying why — scaffolding is real work, but
 ungoverned work is a claim someone reviews. Where a note says the task needs what the
 candidates do not hold, the cut is wrong: grow the epic's `covers` or move the task, and
 re-implement against it — never widen the reference by hand.
 
-A note the binder classed `blocking` — a node states something the objective or a criterion
-contradicts or exceeds as written, so the specification here is not silent but overruled — is
-settled before the task is written, and the skeleton's `rationale` says by whom. Where the blocked statement was the decomposer's decision
+A note the binder classed `blocking` — the class its own file defines, and the one where the
+specification is not silent but overruled — is settled before the task is written, and the skeleton's `rationale` says by whom. Where the blocked statement was the decomposer's decision
 — the skeleton carries `rationale` over that cut — the skeleton goes back to the decomposer
 with the note, is re-cut, and re-run through this step. Where it came from the scope, the task
 is written with the note, and the report names it as a conflict only the human settles —
@@ -415,9 +424,9 @@ Report, in this order:
   looked at, but whether the set was closed before the decomposition ran rather than assumed
   closed;
 - every fact the decided-fact route wrote into the specification: each `decided` outcome by its
-  log entry — location, what was unstated, the value, the why — and each `stated` outcome with
-  where the material already held it. These are the claims a reviewer can reject, the diff over
-  the specification root is where they sit, and every `noticed` watch item follows them;
+  log entry — the file and the field it filled, what was unstated, the value, the why — and
+  each `stated` outcome with where the material already held it. These are the claims a reviewer
+  can reject, the diff over the specification root is where they sit, and every `noticed` watch item follows them;
 - every blocking note, by task identifier, with what it concedes — these are the tasks not yet
   written, or written with a standing conflict, and each needs either the scope answered
   differently or the specification extended through the analysis that authors it;

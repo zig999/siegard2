@@ -31,11 +31,11 @@ def test_every_kind_carries_exactly_one_example(plan_schema):
 
 
 def test_examples_pass_the_gate(plan_schema):
-    validator, allowed = plan.contract()
+    validator = plan.contract()
     for kind, then in branches(plan_schema):
         for example in then["examples"]:
             assert "kind" not in example, f"{kind}: examples omit kind, exactly as a file does"
-            problems = plan.node_problems(example, kind, validator, allowed)
+            problems = plan.node_problems(example, kind, validator)
             assert problems == [], f"{kind} example: {problems}"
 
 

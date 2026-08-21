@@ -36,7 +36,8 @@ SKILLS = {
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
                                 "execution-contract-binder", "unstated-fact-decider"]},
     "implement-task": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
-                       "delegates": ["task-implementer", "test-author"]},
+                       "delegates": ["task-implementer", "test-author",
+                                     "failure-diagnostician"]},
     "review-change": {"contract": "schemas/delivery-node.json", "validator": "bin/deliver.py",
                       "delegates": ["coverage-auditor", "specification-conformance-reviewer",
                                     "standard-conformance-reviewer", "failure-diagnostician"]},
@@ -196,10 +197,21 @@ INPUT_TERM = re.compile(r"^\d+\. \*\*the ([a-z ]+)\*\*", re.M)
 
 
 def handoff_blocks(text: str, invocation: str) -> list[str]:
-    """Paragraph-shaped chunks holding a handoff, whitespace collapsed so prose may wrap."""
+    """Chunks holding a handoff, whitespace collapsed so prose may wrap.
+
+    A handoff written as one bullet of a long report list is judged on its own bullet. Splitting
+    only on blank lines made the whole list the chunk, and an unrelated bullet naming `target` or
+    `slug` then satisfied the guard for a handoff that named neither — which is exactly how the
+    implement-task → reconcile handoff came to omit the slug with a green suite."""
     marker = f"`{invocation}` invocation ready to paste"
-    chunks = (re.sub(r"\s+", " ", chunk) for chunk in text.split("\n\n"))
-    return [chunk for chunk in chunks if marker in chunk]
+    chunks: list[str] = []
+    for paragraph in text.split("\n\n"):
+        if marker not in re.sub(r"\s+", " ", paragraph):
+            continue
+        bullets = re.split(r"\n(?=- )", paragraph)
+        chunks.extend(re.sub(r"\s+", " ", b) for b in bullets
+                      if marker in re.sub(r"\s+", " ", b))
+    return chunks
 
 
 def skill_text(name: str) -> str:
@@ -213,6 +225,7 @@ FORWARD_SEAMS = (
     ("analyse", "plan-work"),
     ("plan-work", "implement-task"),
     ("implement-task", "review-change"),
+    ("implement-task", "reconcile"),
     ("reconcile", "analyse"),
     ("reconcile", "plan-work"),
 )
@@ -254,3 +267,49 @@ def test_the_review_hands_nothing_forward_as_an_invocation():
     assert handoff_blocks(text, "/implement-task") == []
     assert handoff_blocks(text, "/plan-work") == []
     assert handoff_blocks(text, "/analyse") == []
+
+
+# ------------------------------------------------- the note-opening vocabulary
+
+
+OPENING_CONSTANTS = ("BLOCKING_OPENING", "UNDERDETERMINED_OPENING", "UNSTATED_OPENING")
+
+
+def opening_literals() -> dict[str, str]:
+    """The note-class openings as bin/plan.py defines them — the constants a validator matches on,
+    read from the script rather than restated here."""
+    source = (REPO / "src/claude/bin/plan.py").read_text(encoding="utf-8")
+    found = {}
+    for name in OPENING_CONSTANTS:
+        line = next(l for l in source.splitlines() if l.startswith(f"{name} = "))
+        found[name] = line.split('"', 1)[1].rsplit('"', 1)[0]
+    return found
+
+
+def test_every_skill_spelling_of_a_note_opening_is_the_validators_own(case):
+    """`plan.py` refuses a task persisting an UNSTATED opening and `/implement-task` collects
+    underdetermined entries by their opening and nothing else. The literals are restated across
+    plan-work, implement-task and siegard-status, and the existing vocabulary guard covers only
+    hyphenated schema enums — so a reworded constant would orphan every prose copy in silence,
+    leaving skills sorting notes by an opening no validator writes any more.
+
+    This holds the direction that matters: a skill may name an opening or not, but where it names
+    one it must be the script's, character for character."""
+    literals = opening_literals()
+    assert literals, "bin/plan.py declares no note openings; the guard lost its subject"
+    for name, literal in sorted(literals.items()):
+        # The trigger is the opening's own shape — the class word followed by its comma — not a
+        # mention of the class by name, which is prose about the vocabulary rather than a use of
+        # it. A skill may write "an `UNSTATED` opening"; what it may not write is a second
+        # spelling of the opening itself.
+        head = literal.split(",")[0] + ","
+        text = case["text"]
+        at = text.find(head)
+        while at != -1:
+            # Every occurrence, not merely one: a file carrying the literal correctly in three
+            # places and reworded in a fourth would satisfy a membership test while shipping the
+            # spelling no validator writes.
+            assert text[at:at + len(literal)] == literal, \
+                f"{case['name']} opens a note with {text[at:at + len(literal)]!r}, which is not " \
+                f"how bin/plan.py spells it ({literal!r})"
+            at = text.find(head, at + 1)

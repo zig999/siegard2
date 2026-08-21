@@ -73,7 +73,7 @@ same way.
 ## The order
 
 ```
-situate → analyse → write → validate → reconcile → report → stop
+situate → analyse → write → validate → cross-check → report → stop
 ```
 
 ### 1. Situate
@@ -93,8 +93,9 @@ decision set, and this invocation is a change to it — located, not re-derived.
   surface there, grep the specification root for its terms — a body's `## Description` costs
   nothing to grep and everything to open blind.
 - **Close the impact set over the references, in both directions**: what the entry nodes
-  reference in their own frontmatter (`attributes`, `relationships`, `constrains`, `subject`,
-  `status`, `upstream`, `payload`, `refusal`, `involves`), and what references them back —
+  reference in their own frontmatter — every reference-bearing field the class schemas declare,
+  read from the plugin root's `schemas/spec/` directory rather than from a list here, so a field
+  a schema gains is a field this closure reaches — and what references them back —
   grep the specification root for each entry node's identity, because no derived edge index
   exists to read this from instead.
 - **Read the impact set and nothing else.** Outside it, standing decisions stand: this
@@ -115,6 +116,18 @@ limit the solution. Two rules bind the analysis:
   reversal from what came before it: inventing a plausible value used to be the failure to
   prevent; leaving a field undecided is now. An undecided required field is not an honest gap —
   it is a floor violation, and closing it is this step's job, disclosed rather than silent.
+  **And it is decided here, in this context** — which is the one place this route reads
+  differently from planning's, where the same class of fact goes to the `unstated-fact-decider`
+  and is never shown the task that surfaced it. The blindness there is blindness to *the cut*: a
+  fact decided by whoever drew the task boundaries is a specification bent to fit them. This step
+  has no cut. What it has is the material, and the material is the authority — a judge kept from
+  it would decide worse rather than more honestly, and there is nothing here for it to be blind
+  to. The exposure the arrangement accepts runs the other way, and it is worth naming: where the
+  material is itself derived from source already written — a reconciliation's findings, a survey
+  of a running system — the code is a cut of a kind, and this step can bend the specification to
+  fit what someone already built. What answers that is disclosure, not a second context: every
+  decided value lands in the log, the diff over the specification root is the review, and
+  disagreeing with one is an ordinary change.
 - **An operative claim is recorded where something can hold the specification to it.** A
   sentence that constrains the domain — a MUST, a never, an exactly-one, an at-least — is a
   Rule's `statement`, a declared attribute or relationship, a Scenario's `given`/`when`/`then`,
@@ -179,6 +192,20 @@ that decides what goes in it:
   knowledge is not domain knowledge, whichever class would otherwise hold it. Nor a technical
   artifact — a DTO, a repository, a table, a topic: it emerges from implementation, and no
   class admits it.
+- **The line is who chose the artifact, and there is one place it falls the other way.** The rule
+  above holds because an artifact this system's own implementation picked is a decision the
+  implementation is free to unpick, so a node stating it would freeze a choice the business never
+  made. An artifact an **upstream** system imposes is not that: the object a consumed api is read
+  from, the column a value is carried in, the coded values that column holds, the topic a
+  subscribed event arrives on. Nothing downstream chose those and nothing downstream can change
+  them — they are what the outside world is, and they are as much a fact about it as the payload
+  of an event. So a Contract whose `direction` is `consumed` may name them, and only such a
+  contract may: it is the class whose whole subject is a boundary this system does not own.
+  Leaving them out does not keep them out of the system — it sends them into the code as facts no
+  node holds, which is the finding a conformance pass reports as the most expensive one there is,
+  and which is then discovered file by file forever. A published surface is the opposite case and
+  keeps the rule: this system chose its own route, its own column, its own table, and those stay
+  out.
 
 ### 3. Write
 
@@ -251,7 +278,7 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --project <specification-root>
 diagram, the capability map and the overview are all derived, and an edit to one is a fact with
 no node behind it. Report what was written.
 
-### 5. Reconcile: obligations that share a subject
+### 5. Cross-check: obligations that share a subject
 
 Mechanical validation cannot see a contradiction the schema admits, and an implementer is the
 most expensive place to discover one. After the specification validates, take the pairs the
@@ -282,7 +309,17 @@ Report, in this order:
 - every decision logged in this invocation, by location and field, with what was decided and
   why — these are the claims a reviewer can reject, and the log is the whole of what lets them:
   nothing else in the artifacts marks a decided fact apart from a stated one;
-- every tension the reconcile step found without a case to decide, named as a watch item;
+- every tension the cross-check step found without a case to decide, named as a watch item;
+- **what this increment may have put the delivered code in breach of, said plainly.** This step
+  never reads the target, deliberately — so a node written here can state an obligation the code
+  already violates, and nothing in this invocation could have noticed. Say so: the decisions of
+  this increment may contradict source already delivered, and the reconciliation is what discovers
+  it, if somebody runs one. Nothing schedules that.
+- **the identities of the nodes this increment wrote, again, as the candidate list a reconciliation
+  needs.** A node written here is bound to nothing — it was never delivered — so the trace cannot
+  name it, and a judgment located from the trace would report a fact it now holds as held by
+  nothing. `/reconcile` takes these as candidates and can then attribute rather than misreport.
+  Naming them costs a line and is the only place they are written down together;
 - the validator's final output, verbatim, and what `--project` wrote;
 - the handoff: the `/plan-work` invocation ready to paste — this project root filled in, since
   the specification it holds was just validated, and one named slot for each input only the

@@ -33,6 +33,7 @@ Declared dependencies: none beyond the standard library.
 
 Usage:  terms.py                 every term, alphabetically
         terms.py <term> [...]    only the terms named
+        terms.py --help          print this text and stop
 Exit:   0 printed
         1 a term was named that no contract defines
         2 cannot run
@@ -44,6 +45,7 @@ import json
 import sys
 import textwrap
 from pathlib import Path
+from typing import NoReturn
 
 SCHEMAS = Path(__file__).resolve().parent.parent / "schemas"
 
@@ -112,6 +114,11 @@ WIDTH = 96
 
 def resolve(pointer: str, document: object, term: str, relative: str) -> object:
     """The object a JSON pointer names, or a refusal naming the term whose pointer broke."""
+    if pointer and not pointer.startswith("/"):
+        # A pointer is rooted or it is empty (RFC 6901). Splitting an unrooted one drops its
+        # first token, which resolves the wrong place and says nothing about it.
+        die(f"{term}: {relative}{pointer} is not a JSON pointer; a pointer names its path from "
+            f"the root and begins with '/'")
     current = document
     for raw in pointer.split("/")[1:]:
         key = raw.replace("~1", "/").replace("~0", "~")
@@ -122,7 +129,7 @@ def resolve(pointer: str, document: object, term: str, relative: str) -> object:
     return current
 
 
-def die(message: str) -> None:
+def die(message: str) -> NoReturn:
     print(f"cannot run: {message}", file=sys.stderr)
     raise SystemExit(2)
 
@@ -157,6 +164,11 @@ def emit(term: str) -> None:
 
 
 def main(argv: list[str]) -> int:
+    if "--help" in argv:
+        # The docstring is this script's one home of what it does and how it is called,
+        # so `--help` prints that rather than a second copy of it that could drift.
+        print(__doc__.strip())
+        return 0
     if argv:
         unknown = [t for t in argv if t not in TERMS]
         if unknown:

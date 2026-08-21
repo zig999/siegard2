@@ -65,11 +65,11 @@ def registry(tree: Path):
 
 
 def problems_of(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], plan_problems
-    nodes, found = deliver.collect(delivery, validator, allowed, names)
+    nodes, found = deliver.collect(delivery, validator, names)
     return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, target)
 
 

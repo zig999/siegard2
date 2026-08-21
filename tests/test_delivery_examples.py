@@ -39,12 +39,12 @@ def test_every_kind_carries_exactly_one_example(delivery_schema):
 
 
 def test_examples_pass_the_gate(delivery_schema):
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
     for kind, then in branches(delivery_schema):
         for example in then["examples"]:
             assert "kind" not in example, f"{kind}: examples omit kind, exactly as a file does"
-            problems = deliver.node_problems(example, kind, validator, allowed, names)
+            problems = deliver.node_problems(example, kind, validator, names)
             assert problems == [], f"{kind} example: {problems}"
 
 

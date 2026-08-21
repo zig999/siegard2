@@ -117,6 +117,7 @@ R9–R10).
 ├── domain/<context-slug>/_context.md, <element-slug>.md     (SPEC-002)
 ├── rules/<context-slug>/<rule-slug>.md
 ├── scenarios/<context-slug>/<scenario-slug>.md
+├── scenarios/system/<scenario-slug>.md          (a capability's scenario, owned by no context)
 ├── contracts/system/<capability-slug>.md
 ├── contracts/<context-slug>/<contract-slug>.md
 ├── constraints/<constraint-slug>.md

@@ -70,8 +70,10 @@ And around the tasks:
   specification node because no specification node holds a manifest and none should — the
   specification is what the business decided, and how this project is built is not. So it
   carries `rationale` saying exactly that, the way any ungoverned task does. It sits under
-  whichever epic first needs it, because an epic claims at least one specification node and
-  this task's epic cannot be cut for it. And it takes **no dependency edges from the other
+  the epic whose `covers` lists the impact set's first node — a tiebreak read off the plan rather
+  than off a sequence, because an epic claims at least one specification node, this task's epic
+  cannot be cut for it, and "first needs it" would be the ordering this same file forbids you to
+  state. And it takes **no dependency edges from the other
   tasks**: every task in the plan waits on this one, `/implement-task` refuses to write source
   while the artifacts are absent, and an edge from every task to one task is a fact somebody
   would have to keep true by hand — which is what the refusal exists to make unnecessary.

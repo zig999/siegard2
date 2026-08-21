@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://siegard.dev/schemas/skill.json",
+  "$id": "https://siegard.dev/schemas/generator/skill.json",
   "title": "Siegard skill frontmatter",
   "description": "Frontmatter contract for a distributable skill at src/claude/skills/<name>/SKILL.md. Every constraint is either taken from Anthropic documentation, cited per field, or a named Siegard addition. Sources, both retrieved 2026-07-29: https://code.claude.com/docs/en/skills (field inventory and semantics; every field is optional there) and https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices (hard limits on name and description). Custom slash commands were merged into skills, so Siegard has no separate command class. Decision and divergence list: the harness's own documentation. additionalProperties is false because Claude Code silently ignores unknown frontmatter fields — a typo like 'descripton' would otherwise ship as a silent no-op.",
   "type": "object",

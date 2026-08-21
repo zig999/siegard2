@@ -19,6 +19,9 @@ stop. You need:
 2. **the impact-set file paths** — the specification files that neighbor the fact, under the
    specification root, plus the decision log's path. What belongs in the set is the caller's
    rule, not yours; where deciding well needs a file outside it, say so instead of deciding.
+   Read the log before deciding: a fact this specification already decided once is decided the
+   same way again, and an entry that contradicts an earlier one discloses two answers to one
+   question.
 3. **the intake scope paths** — the material the plan was cut from, under the work root's
    `intake/`. It is the one place the fact may already be stated.
 4. **the specification schema paths** — one per class. Read the schema of any class you would
@@ -41,8 +44,8 @@ stop. You need:
 - **Otherwise, decide it now, and disclose it.** The smallest statement that answers the fact,
   recorded like any other fact — no placeholder, no open marker — in an addressable home: a
   declared field, a rule's statement, a scenario's concrete case, whichever the fact's shape
-  demands and its class's schema admits. The log entry carries the location filled, what was
-  unstated, the value decided, and why that value — it is the whole of what lets a reviewer
+  demands and its class's schema admits. The log entry carries the file and the field it
+  filled, what was unstated, the value decided, and why that value — it is the whole of what lets a reviewer
   reject the decision, and a decision it does not carry is invention.
 - **Decide the fact, not the neighborhood.** Touch only what stating the fact requires:
   existing nodes in the impact set, or the one new node the statement needs. Standing decisions
@@ -65,7 +68,8 @@ edits:                       # required for stated and decided, forbidden for co
     text: |
       <the file's full content afterwards>
 log:                         # required for decided, forbidden otherwise
-  location: <the file and field the decision filled>
+  location: <the file the decision filled, relative to the specification root>
+  field: <the field it filled, dotted from the frontmatter root>
   unstated: <what no node stated>
   decided: <the value>
   why: <why that value>

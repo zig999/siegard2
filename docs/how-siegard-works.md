@@ -1,7 +1,7 @@
 # How Siegard works, for dummies
 
 This document explains, from zero, what the seven scripts under `src/claude/bin/` do, what files
-they read and write, how the eight skills and ten agents under `src/claude/` use them, and how all
+they read and write, how the ten skills and ten agents under `src/claude/` use them, and how all
 of it adds up to one complete development process — from a human's idea to source code someone
 else can trust.
 
@@ -73,7 +73,8 @@ Two smaller files worth knowing:
 ## The seven scripts
 
 These are the verbs. Every one of them is read-only over its inputs except for the one file it is
-explicitly allowed to derive (a `--check`/plain distinction runs through all of them: the plain
+explicitly allowed to derive (a `--check`/plain distinction runs through the three that write —
+`plan.py`, `deliver.py` and `trace.py`: the plain
 form writes the derived index, `--check` only compares and never writes). None of them has any
 notion of what a "test" or a "build" is for any particular technology — that knowledge belongs
 entirely to the consumer project.
@@ -440,6 +441,23 @@ implementation/checkout/record-order: sound on its own. Cross-node checks and pl
 run; they run on the whole delivery.
 ```
 
+#### `deliver.py --check-record <record> <target-source-root>`
+
+- **Function:** validates one check record — the artifact `/check-source` writes at
+  `siegard-check/<slug>.md` — against `schemas/check.json` and against the standard the record
+  pins: every finding cites a declared rule, that rule is one a reading decides rather than a
+  tool, its scope reaches the file the finding sits in, and no finding comes out of a file the
+  record itself lists as unread.
+- **When to use it:** after `/check-source` writes a record, and before anybody acts on what it
+  says. A reading of source nobody delivered has no delivery to be validated with, which is why
+  it has a form of its own.
+- **Read or write:** read-only.
+
+```
+$ python3 bin/deliver.py --check-record ./siegard-check/pricing-sweep.md ./frontend
+pricing-sweep: sound. 3 finding(s) over 7 file(s), against standards/frontend.yaml.
+```
+
 #### `deliver.py --standard <file> [--against <target-source-root>]`
 
 - **Function:** validates one project registry file on its own against `schemas/standard.json`,
@@ -612,8 +630,8 @@ record names, is read relative to `<target-root>`, then converted to be relative
 inside the file itself. Dependencies: PyYAML, jsonschema (imports `spec.py` and `project.py`).
 
 - **Reads:** `<target-root>`'s files, and the specification through `spec.py`'s own pipeline.
-  **Writes:** `siegard-trace.json`, with every form except `--check` and `--reconciliation`, which
-  are read-only.
+  **Writes:** `siegard-trace.json`, with every form except the plain one, `--check` and
+  `--reconciliation`, which are read-only.
 
 #### `trace.py <target-root>`
 
@@ -807,7 +825,7 @@ still owed a rebind.
 
 #### `trace.py --reconciliation <reconciliation-record>`
 
-- **Function:** the one form that writes nothing — holds a reconciliation record (written by
+- **Function:** validation only, writing nothing — it holds a reconciliation record (written by
   `/reconcile`, at `siegard-reconcile/<slug>.md`) to `schemas/reconciliation.json`, so
   `--bind-record` can read it afterward exactly as it reads an implementation record.
 - **When to use it:** as the first step of reconciling source that changed without a rebind — a
@@ -834,7 +852,7 @@ standard library.
 
 - **Function:** prints every defined term, alphabetically, each with the schema file and JSON
   pointer it was read from.
-- **When to use it:** to see the whole vocabulary at once — 211 lines, one short paragraph per
+- **When to use it:** to see the whole vocabulary at once — one short paragraph per
   term, sorted.
 - **Read or write:** read-only.
 
@@ -893,7 +911,7 @@ deliver.py   — reads the plan through plan.py's own pipeline; validates the de
      └── trace.py  — imports project.py + spec.py; outlives both plan and delivery
 ```
 
-## The eight skills
+## The ten skills
 
 Skills are what a human actually types (`/analyse`, `/plan-work`, ...). Each one is "one
 invocation, one increment" — it does its job and stops; it never chains into the next skill on
@@ -902,19 +920,19 @@ its own.
 | Skill | Turns this input… | …into this output | Scripts it calls | Agents it delegates to |
 |---|---|---|---|---|
 | **`/siegard-config`** | a human's stated settings | `siegard.json` | `project.py` | none |
-| **`/analyse`** | material a human supplies (prose, files) | specification nodes + `projections/` | `spec.py` | none |
+| **`/analyse`** | material a human supplies (prose, files) | specification nodes + `projections/` | `project.py`, `spec.py` | none |
 | **`/plan-work`** | a stated scope + the specification | plan nodes (`inventory/`, `epic/`, `task/`) + `plan.json`; specification extensions + decision-log entries where a fact was unstated | `spec.py`, `plan.py`, `deliver.py --standard` | `codebase-surveyor`, `backlog-decomposer`, `execution-contract-binder`, `unstated-fact-decider` |
 | **`/implement-task`** | one planned task | source + tests + a delivery record + `delivery.json` + a trace bind | `plan.py --check`, `run.py`, `deliver.py`, `trace.py --bind-record` | `task-implementer`, `test-author`, `failure-diagnostician` (on a red suite) |
 | **`/review-change`** | one delivered task | findings recorded under the delivery root + `delivery.json` | `plan.py --check`, `deliver.py`, `run.py`, `trace.py --check` | `coverage-auditor`, `specification-conformance-reviewer`, `standard-conformance-reviewer`, `failure-diagnostician` |
-| **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `spec.py`, `trace.py` | `specification-conformance-reviewer` (one per named file, spawned together) |
+| **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `project.py`, `spec.py`, `trace.py` | `specification-conformance-reviewer` (one per named file, spawned together) |
 | **`/check-source`** | a file set a human names, delivered by no task | a check record at `siegard-check/<slug>.md` | `project.py`, `deliver.py --standard`, `deliver.py --check-record` | `standard-conformance-reviewer` |
 | **`/siegard-standard`** | what a project's own tooling already enforces, plus a human's words | the project's standard registry | `project.py`, `deliver.py --standard` | none |
 | **`/siegard-status`** | the question "where does this stand?" | a report derived from disk, writing nothing — deliveries, waits, BLOCKING notes, drift, recent decisions, ready next invocation | `project.py`, `spec.py`, `plan.py --check`, `deliver.py --outstanding`, `trace.py --check` | none |
 | **`/siegard-archive`** | the human's ask to prune closed history from the tree | closed work+delivery pairs removed whole (history survives in git); the tag and commit handed ready, never run | `project.py`, `plan.py --check`, `deliver.py --check`, `spec.py`, `trace.py --check` | none |
 
-No skill runs a shell command directly except by calling `run.py` — this is enforced by
-`tests/test_agent_contract.py`, which fails the suite if any shipped agent is ever given a shell
-tool. Everything a project builds or tests is run exactly once, by `run.py`, and captured; nothing
+No agent holds a shell at all — `tests/test_agent_contract.py` fails the suite if any shipped
+agent is ever given one. A skill does run commands directly, and every one it runs against the
+consumer's project goes through `run.py`, never a shell of its own. Everything a project builds or tests is run exactly once, by `run.py`, and captured; nothing
 downstream re-executes it to double-check.
 
 ## The ten agents
@@ -1018,8 +1036,9 @@ consumer-project/
 ├── siegard-reconcile/
 │   └── fix-typo-in-pricing.md      ← written by /reconcile
 ├── specification/                  ← "specification root", written by /analyse
+│   ├── domain/checkout/_context.md
 │   ├── domain/checkout/cart.md
-│   ├── rules/free-shipping-over-100.md
+│   ├── rules/checkout/free-shipping-over-100.md
 │   ├── decision-log.md
 │   └── projections/                ← derived by spec.py --project, never edited by hand
 ├── plan/                           ← "work root", written by /plan-work

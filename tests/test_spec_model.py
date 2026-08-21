@@ -483,3 +483,27 @@ def test_every_schema_example_satisfies_its_schema():
             problems = [e.message for e in validator.iter_errors(example)]
             assert problems == [], f"{path.name}: {problems}"
             assert yaml.safe_load(yaml.safe_dump(example)) == example
+
+
+def test_a_transition_out_of_a_terminal_state_is_refused(spec_root):
+    """`terminal` is defined as states that accept no further trigger, and that declaration is
+    the whole of what exempts them from the totality check. A transition leaving one contradicted
+    the declaration that exempted it, validated clean, and made the projected diagram draw both
+    `resolved --> [*]` and `resolved --> open`."""
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front["transitions"].insert(
+                0, {"from": "resolved", "trigger": "reopen", "to": "open"}))
+    found = hits(problems_of(spec_root), "accepts no further trigger")
+    assert found, "a transition out of a declared terminal state was accepted"
+
+
+def test_a_rejection_from_a_terminal_state_is_refused(spec_root):
+    """The same rule from the other side: a terminal state decides no pairing, so it declares no
+    rejection either. Without this the transition check above could be satisfied by moving the
+    pairing into `rejections`."""
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.setdefault("rejections", []).insert(
+                0, {"from": "cancelled", "trigger": "reopen", "refusal": "a cancelled case "
+                    "does not reopen"}))
+    found = hits(problems_of(spec_root), "accepts no further trigger")
+    assert found, "a rejection from a declared terminal state was accepted"

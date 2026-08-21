@@ -179,7 +179,7 @@
     "failures_counted": {
       "type": "integer",
       "minimum": 0,
-      "description": "How many failures the captured run reported, counted from what it printed — present exactly when the failures pass ran. The run itself carries no count, deliberately: counting means parsing a reporter's format, which is knowledge of a stack. The validator holds this against the findings the failures pass recorded, and the two disagreeing is how a failure goes unexamined while the record still looks complete. Zero is a real answer, and it says the pass should not have been asked for.",
+      "description": "How many failures the captured run reported, counted from what it printed — present exactly when the failures pass ran. The run itself carries no count, deliberately: counting means parsing a reporter's format, which is knowledge of a stack. The validator holds this against the findings the failures pass recorded, and the two disagreeing is how a failure goes unexamined while the record still looks complete. Zero never reaches a valid record: bin/deliver.py refuses a captured run that passed (the pass should not have been asked for) and refuses a count of none over a run that did not (a run that failed reported something). The bound stays at zero so the refusal a reader gets is that sentence rather than a schema minimum.",
       "$comment": "Held against the failures findings by bin/deliver.py, which no per-file schema can express."
     },
     "run": {
@@ -628,7 +628,30 @@
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "from"
+          ],
+          "not": {
+            "required": [
+              "cites"
+            ]
+          }
+        },
+        {
+          "required": [
+            "cites",
+            "file"
+          ],
+          "not": {
+            "required": [
+              "from"
+            ]
+          }
+        }
+      ]
     },
     "deferral": {
       "type": "object",
@@ -801,7 +824,31 @@
           "minLength": 1,
           "description": "What is unexercised, in the criterion's own terms, or what makes it unauditable. \"No test\" is not an answer. A test that exists but cannot fail is named here, so a reader who finds it in the file does not conclude the audit missed it."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "covered"
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "required": [
+              "tests"
+            ]
+          },
+          "else": {
+            "required": [
+              "why"
+            ]
+          }
+        }
+      ]
     },
     "testRef": {
       "type": "object",

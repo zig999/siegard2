@@ -57,5 +57,6 @@ inventory/<slug>
 
 Return the blocks as plain text — the fence above shows the shape and is not part of the
 return. Point every `sources` entry at the scope file the caller named. One inventory node
-is the ordinary answer; return more only when the scope lands in genuinely separate
-territories.
+is the ordinary answer; return more only where the scope lands in directories that share no
+module with each other — separate territories are ones a change to either cannot reach the
+other through, not ones that merely read as different subjects.

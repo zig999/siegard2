@@ -22,6 +22,7 @@ Declared dependencies: jsonschema.
 Usage:  project.py <project-root>    resolve siegard.json for the tree holding <project-root> —
                                      the file sits at that directory's git toplevel, or at the
                                      directory itself where git does not hold it
+        project.py --help            print this text and stop
 Exit:   0 resolved: every field siegard.json declares, or no file at all, each said in one line
         1 the file does not hold together, or names a standard that does not exist
         2 cannot run
@@ -51,8 +52,13 @@ def toplevel_of(directory: Path) -> Path:
     """Where the project file sits: the directory's git toplevel, or the directory itself
     where git does not hold it — deterministic either way, because the directory is a named
     input and never the session's working directory."""
-    probe = subprocess.run(["git", "-C", str(directory), "rev-parse", "--show-toplevel"],
-                           capture_output=True, text=True)
+    try:
+        probe = subprocess.run(["git", "-C", str(directory), "rev-parse", "--show-toplevel"],
+                               capture_output=True, text=True)
+    except OSError:
+        # No git on this machine is the limit case of git not holding the directory, and the
+        # answer is the same one: the directory itself.
+        return directory
     if probe.returncode == 0 and probe.stdout.strip():
         return Path(probe.stdout.strip())
     return directory
@@ -60,6 +66,11 @@ def toplevel_of(directory: Path) -> Path:
 
 def main() -> int:
     args = sys.argv[1:]
+    if "--help" in args:
+        # The docstring is this script's one home of what it does and how it is called,
+        # so `--help` prints that rather than a second copy of it that could drift.
+        print(__doc__.strip())
+        return 0
     if len(args) != 1 or args[0].startswith("--"):
         print("cannot run: expected <project-root>", file=sys.stderr)
         return CANNOT_RUN
@@ -85,12 +96,43 @@ def main() -> int:
         print(f"{target}: does not parse as JSON: {broken}")
         return 1
 
-    schema = json.loads(PROJECT_CONTRACT.read_text(encoding="utf-8"))
+    try:
+        schema = json.loads(PROJECT_CONTRACT.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {PROJECT_CONTRACT} does not parse: {broken}", file=sys.stderr)
+        return CANNOT_RUN
     problems = sorted(Draft202012Validator(schema).iter_errors(declared), key=str)
     if problems:
         for error in problems:
             where = ".".join(str(part) for part in error.absolute_path) or "top level"
             print(f"{target}: {where}: {error.message}")
+        return 1
+
+    # Every declared path is relative to this file's own directory, which is what the contract
+    # says of each of them. An absolute one silently wins the join (`home / "/etc/x"` is
+    # `/etc/x`) and points every later reader outside the project it declared.
+    escaped = sorted(
+        f"{where}: {value}"
+        for where, value in [("standard", declared.get("standard")),
+                             ("specification_root", declared.get("specification_root")),
+                             ("work_root", declared.get("work_root")),
+                             ("delivery_root", declared.get("delivery_root"))]
+        + [(f"targets.{name}", path)
+           for name, path in sorted(declared.get("targets", {}).items())]
+        if isinstance(value, str) and Path(value).is_absolute())
+    if escaped:
+        for line in escaped:
+            print(f"{target}: {line} is absolute; every declared path is read relative to this "
+                  f"file's own directory")
+        return 1
+
+    # A key naming no target suppresses nothing, and the one surface that would say so is here:
+    # trace.py reads `edits_freely` defensively and drops a key `targets` does not hold.
+    unknown = sorted(set(declared.get("edits_freely") or []) - set(declared.get("targets", {})))
+    if unknown:
+        for name in unknown:
+            print(f"{target}: edits_freely names {name}, which targets does not declare; the "
+                  f"exemption it was written for is silently suppressing nothing")
         return 1
 
     if "standard" in declared:

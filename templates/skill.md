@@ -1,6 +1,7 @@
 ---
 name: {{name}}
 description: {{description}}
+effort: {{low | medium | high}}
 ---
 
 {{purpose}}
@@ -11,10 +12,16 @@ Collect these before running anything. A missing input is a stop, not a default:
 
 1. {{required_input}}
 
-## Procedure
+## The order
 
-1. {{first_step}}
+### 1. {{first_step_name}}
 
-## Result
+{{first_step}}
 
-{{result}}
+## What you never do
+
+- {{prohibition}}
+
+## Report, and stop
+
+- {{reported_fact}}

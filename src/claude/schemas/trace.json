@@ -10,6 +10,7 @@
     "specification": {
       "type": "string",
       "minLength": 1,
+      "pattern": "^[^/]",
       "description": "The specification root every node below is an identity into (SPEC-003 R1), by path relative to this file's own directory. Every binding in this file traces against the one specification named here; tracing against a second one is a second trace file, never a second entry."
     },
     "bindings": {

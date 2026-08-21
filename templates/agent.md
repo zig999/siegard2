@@ -2,6 +2,7 @@
 name: {{name}}
 description: {{description}}
 tools: {{tools}}
+effort: {{low | medium | high}}
 ---
 
 {{purpose}}

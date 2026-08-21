@@ -38,6 +38,11 @@ A missing input is a stop, not a default:
    review's own record: both are `<slug>` under the project's `work_root` and `delivery_root`
    respectively. Where the invocation names none and the project's `work_root` holds exactly
    one initiative, that is the slug: decided and disclosed, never asked.
+6. **this review's own name** — what `review/<review-name>.md` under the delivery root is called, and
+   the name its captured run takes. Named by the human; where the invocation names none, it is
+   the initiative's slug. A name already taken is a stop and not a suffix: `bin/run.py` refuses a
+   run under a name that exists, and the record beside it is a judgment somebody acted on — a
+   second review of one initiative names itself, the same way a second reconciliation does.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: naming
@@ -229,7 +234,7 @@ Run every step the standard declares, in the order it declares them, followed by
 added, once, into a run named for this review:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <slug> --cwd <target-source-root> --timeout-seconds <the largest of the steps'> --step <name>="<command>" [--step ...]
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <review-name> --cwd <target-source-root> --timeout-seconds <the largest of the steps'> --step <name>="<command>" [--step ...]
 ```
 
 The working directory is the target source root, and it is stated rather than defaulted: these are
@@ -319,8 +324,8 @@ so a reader never mistakes four passes for every pass.
 
 ### 4. Compose
 
-Write `review/<slug>.md` under the delivery root — the slug names this review, and the path is its
-identity. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
+Write `review/<review-name>.md` under the delivery root, under the name input 6 fixed — the name is
+this review's identity and the path is where it lives. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
 that one ran, how many failures were counted where that one did, the run's directory where there was
 one, and every finding.
 

@@ -28,6 +28,12 @@ stop. You need:
    read as a file.
 4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `finding`
    definition before writing a single field.
+5. **candidate nodes** — optional, and absent in most calls. Node identities outside your set that
+   you may open where your file states a fact your own nodes do not settle: a fact one file states
+   can be governed by a node another file carries, and reporting it as held by nothing when a
+   candidate holds it is a misattribution rather than a gap. Open them to attribute, never to
+   widen — a candidate is never reviewed, and where none is supplied your node set is the whole
+   universe you may read.
 
 ## The judgment
 
@@ -40,14 +46,17 @@ stop. You need:
   matters most: once written, it is indistinguishable from a decision the business made, and the
   code becomes the place that decision lives — where the next reader will not look for it,
   because they will look in the specification. Quote it, and name the node that should have held
-  it or say that no node does.
+  it. Before writing that no node does, search the specification root for the fact's own terms:
+  the claim is over the whole specification, not over your node set, and a fact a node outside
+  your set holds is a misattribution — name that node instead.
 - **A value or a rule the source states differently from the node that governs it.** The node
   is not the one that is wrong. Quote both.
 - **A fact the specification already holds, restated in the source as its own authority.** A
   vocabulary copied into a constant, a rule re-derived in a second place, a state machine's
   states enumerated where nothing reads them from the specification. Correcting one of these
   never corrects the specification, and the day they disagree nobody knows which was decided.
-- **Read the node files, not a summary of them.** Open every node under the specification root.
+- **Read the node files, not a summary of them.** Open every node of your set, and any candidate
+  or searched-for node you are about to make a claim about.
   A finding against a node you did not open is a finding against what you remembered.
 - **A historical claim is settled by the decision log, never by which node reads closest.**
   `decision-log.md` at the specification root records which file and field every decided fact
@@ -95,6 +104,12 @@ findings:                    # omit the key entirely when you found nothing
     evidence: <quoted from the source>
     cost: <the consequence, in the terms a reader can weigh>
     correction: <what would have to change; omit where you cannot say>
+    node: <the node this is about, where one node owns it — omit where none does, and name a
+          candidate here where the fact is a candidate's rather than your set's>
+read:                        # one entry per node of your set, in the order the set gave them
+  - node: <the identity, as the caller gave it>
+    held_at: <where in the file the node's fact sits now, or the word `nowhere`>
+    evidence: <quoted from the source — what you read to say that>
 looked_past: <one sentence naming what you saw and did not report because it is another
              judgment's — omit when there was nothing>
 ```
@@ -105,7 +120,11 @@ the return. Omit `pass` on every finding: the caller knows which pass it delegat
 it, so a finding cannot claim a pass that did not run.
 
 An absent `findings` key is a real result, and it is a claim: over this file set and these
-nodes, the source states what the specification holds and nothing else.
+nodes, the source states what the specification holds and nothing else. `read` is returned
+either way and is a different statement from `findings`: it says, per node, what you read and
+where the node's fact sits now. A caller that must record a positive reading per node — rather
+than only what was found against — has nowhere else to get it, and a reading reconstructed by
+whoever spawned you is that caller judging what it delegated.
 
 If you cannot review — an input is absent, a node does not exist, or a path in the file
 set cannot be read — say so plainly in one sentence and return no mapping.

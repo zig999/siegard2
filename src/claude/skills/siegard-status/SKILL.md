@@ -40,11 +40,18 @@ this invocation — it is the status, reported verbatim.
    - `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root>/<slug> <specification-root>`
    - `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root>/<slug> <work-root>/<slug> <target-source-root> <specification-root>`
 
+   Where `targets` declares more than one key, run the second command once per target and say
+   which one each answer is over: an initiative delivers into a target the plan does not record,
+   so choosing one in silence would report a partial answer as the whole of what is left.
+
    The second command is the question "what is left?" answered by the framework itself: tasks
    with no record, what each waits on — an undelivered dependency, absent substrate, a standing
    `BLOCKING, from the specification —` note — and the set deliverable now. Quote standing
    BLOCKING entries whole; they are the places only the human moves next.
-3. **The trace.** `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
+3. **The trace, once per declared target.** `targets` may declare more than one, and each keeps
+   its own trace file; a status that read one of them would report a tree nobody asked about as
+   the whole answer. Run this for every key `project.py` printed, and say which target each block
+   answers. `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
    drift counts by class, each with its route: `orphaned` is cleared by `--prune` after a
    deliberate node removal, `moved` heals when the node's task is next delivered, `code` is
    answered by `/reconcile`. Where `code` findings exist, the report carries the `/reconcile`

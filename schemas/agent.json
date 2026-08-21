@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://siegard.dev/schemas/agent.json",
+  "$id": "https://siegard.dev/schemas/generator/agent.json",
   "title": "Siegard subagent frontmatter",
   "description": "Frontmatter contract for a distributable subagent under src/claude/agents/. Every constraint is either taken from Anthropic documentation, cited per field, or a named Siegard addition. Source, retrieved 2026-07-29: https://code.claude.com/docs/en/sub-agents (field inventory, requiredness, and enums). The markdown body becomes the subagent's system prompt. Decision and divergence list: the harness's own documentation. additionalProperties is false because Claude Code silently ignores unknown frontmatter fields — a typo like 'tool:' would otherwise ship an agent that inherits every tool.",
   "type": "object",
@@ -70,7 +70,7 @@
         "plan",
         "manual"
       ],
-      "description": "How the subagent handles permission prompts. SIEGARD DIVERGENCE, deliberate: the harness also documents 'bypassPermissions', and this contract excludes it — a distributed component that skips every permission prompt grants itself what no contract enumerated, in a repository Siegard does not control. A downstream repository that wants it must add it locally, outside the distribution."
+      "description": "**Inert in this framework's only deployment shape.** Siegard is loaded as a plugin — every skill resolves through `${CLAUDE_PLUGIN_ROOT}` — and the harness documents that plugin subagents do not support this field: it is ignored when loading agents from a plugin (https://code.claude.com/docs/en/sub-agents). It stays in this contract because the contract describes what the harness accepts, and an agent copied into a repository's own `.claude/agents/` would get it; a shipped agent declaring it would ship a constraint that reads as live and takes no effect. How the subagent handles permission prompts. SIEGARD DIVERGENCE, deliberate: the harness also documents 'bypassPermissions', and this contract excludes it — a distributed component that skips every permission prompt grants itself what no contract enumerated, in a repository Siegard does not control. That exclusion was written before the field was known to be inert for a plugin subagent, so it protects a downstream copy rather than this distribution; it is kept for the copy."
     },
     "maxTurns": {
       "type": "integer",
@@ -101,11 +101,11 @@
           }
         ]
       },
-      "description": "MCP servers available to this subagent: a string references an already-configured server, an object is an inline definition keyed by server name. Inline entries follow the .mcp.json server schema, which is governed by https://code.claude.com/docs/en/mcp, not by this contract."
+      "description": "**Inert in this framework's only deployment shape.** Siegard is loaded as a plugin — every skill resolves through `${CLAUDE_PLUGIN_ROOT}` — and the harness documents that plugin subagents do not support this field: it is ignored when loading agents from a plugin (https://code.claude.com/docs/en/sub-agents). It stays in this contract because the contract describes what the harness accepts, and an agent copied into a repository's own `.claude/agents/` would get it; a shipped agent declaring it would ship a constraint that reads as live and takes no effect. MCP servers available to this subagent: a string references an already-configured server, an object is an inline definition keyed by server name. Inline entries follow the .mcp.json server schema, which is governed by https://code.claude.com/docs/en/mcp, not by this contract."
     },
     "hooks": {
       "type": "object",
-      "description": "Lifecycle hooks scoped to this subagent, such as a PreToolUse validator. The hook configuration format is governed by https://code.claude.com/docs/en/hooks, not by this contract."
+      "description": "**Inert in this framework's only deployment shape.** Siegard is loaded as a plugin — every skill resolves through `${CLAUDE_PLUGIN_ROOT}` — and the harness documents that plugin subagents do not support this field: it is ignored when loading agents from a plugin (https://code.claude.com/docs/en/sub-agents). It stays in this contract because the contract describes what the harness accepts, and an agent copied into a repository's own `.claude/agents/` would get it; a shipped agent declaring it would ship a constraint that reads as live and takes no effect. A guard the framework actually wants must be declared at the plugin's own hooks entry point, which does fire inside subagents and carries `agent_type`. Lifecycle hooks scoped to this subagent, such as a PreToolUse validator; the configuration format is governed by https://code.claude.com/docs/en/hooks, not by this contract."
     },
     "memory": {
       "enum": [

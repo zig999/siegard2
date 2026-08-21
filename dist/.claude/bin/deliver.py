@@ -115,6 +115,8 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
         records name none never reads it. The specification root is required while the plan is
         live, and ignored once closure.md marks it closed — the same rule plan.py applies,
         because the plan is read through it.
+        deliver.py --help
+                                                        print this text and stop
 Exit:   0 sound (and, with --check, current)
         1 problems, or --check and delivery.json is stale
         2 cannot run (including a plan that does not hold together)
@@ -125,6 +127,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import functools
 import shlex
 import sys
 from pathlib import Path
@@ -140,6 +143,7 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
     raise SystemExit(CANNOT_RUN)
 
 import plan
+import spec
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 DELIVERY_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery-node.json"
@@ -153,7 +157,6 @@ PAIRED = ("implementation", "proof")
 HEADINGS = ["## What it is", "## Notes"]
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
 
 
 def id_of(relative: Path) -> str | None:
@@ -167,7 +170,7 @@ def id_of(relative: Path) -> str | None:
         pass
     else:
         return None
-    if not all(SLUG.match(p) for p in parts[1:]):
+    if not all(SLUG.fullmatch(p) for p in parts[1:]):
         return None
     return "/".join(parts)
 
@@ -178,31 +181,26 @@ def task_of(nid: str) -> str | None:
     return f"task/{parts[1]}/{parts[2]}" if parts[0] in PAIRED else None
 
 
-def contract() -> tuple[Draft202012Validator, dict[str, set[str]]]:
-    """The delivery-node validator, and the per-kind field table read out of the contract rather
-    than restated here."""
+def contract() -> Draft202012Validator:
+    """The delivery-node validator. The per-kind field table the contract carries needs no second
+    reading here: `propertyNames` fires through the validator itself."""
     if not DELIVERY_CONTRACT.is_file():
         raise FileNotFoundError(
             f"{DELIVERY_CONTRACT} is missing; nothing can be validated without it")
+    return Draft202012Validator(json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8")))
+
+
+@functools.lru_cache(maxsize=1)
+def pass_names() -> tuple[str, ...]:
+    """The passes a review answers for, read out of the contract rather than restated here. Read
+    once: the file does not change under one invocation, and every caller wants the same list."""
     schema = json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8"))
-    allowed: dict[str, set[str]] = {}
-    for branch in schema.get("allOf", []):
-        kind = branch["if"]["properties"]["kind"]["const"]
-        allowed[kind] = set(branch["then"]["propertyNames"]["enum"])
-    return Draft202012Validator(schema), allowed
+    return tuple(schema["$defs"]["passName"]["enum"])
 
 
-def pass_names() -> list[str]:
-    """The passes a review answers for, read out of the contract rather than restated here."""
-    schema = json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8"))
-    return list(schema["$defs"]["passName"]["enum"])
-
-
-def listed(front: dict, field: str) -> list:
-    """A list field read defensively: anything but a list reads as empty, because the schema
-    already reported the shape and iterating a string would report its characters."""
-    value = front.get(field)
-    return value if isinstance(value, list) else []
+# The shape guard has one home, in spec.py: a list field read defensively, so that a string
+# where a list belongs reports once from the schema instead of once per character.
+listed = spec.listed
 
 
 def texts(entries: list, field: str) -> list[str]:
@@ -306,7 +304,25 @@ def standard_contract() -> Draft202012Validator:
 
 def load_standard(path: Path, validator) -> tuple[dict | None, list[str]]:
     """One standard, read and held to its contract. Returns nothing usable while it has problems:
-    a review is never checked against a registry that does not hold together."""
+    a review is never checked against a registry that does not hold together.
+
+    Memoised on the resolved path for the length of one invocation: N records pinning one registry
+    were N file reads and N full schema validations of the same bytes, and a file cannot change
+    under a run that already refuses to write over a tree it did not read."""
+    key = str(path.resolve()) if path.exists() else str(path)
+    hit = _STANDARDS.get(key)
+    if hit is not None:
+        return hit
+    found = _read_standard(path, validator)
+    _STANDARDS[key] = found
+    return found
+
+
+_STANDARDS: dict[str, tuple[dict | None, list[str]]] = {}
+
+
+def _read_standard(path: Path, validator) -> tuple[dict | None, list[str]]:
+    """`load_standard` without the memo — the read itself."""
     if not path.is_file():
         return None, [f"{path} does not exist"]
     try:
@@ -407,6 +423,12 @@ def reaches(scope, path: str) -> bool:
     under, suffix = scope.get("under"), scope.get("suffix")
     if not isinstance(under, str) or not isinstance(suffix, str):
         return False
+    # `.` is the target root itself, the same thing it means to trace.py's `under()`, which reads
+    # the other path vocabulary in this framework. Composed as a prefix it would be `./`, which no
+    # stored path starts with, so a rule scoped to the whole target reached nothing at all — a
+    # registry's broadest rule was the one that silently checked no file.
+    if under.strip("/") in ("", "."):
+        return path.endswith(suffix) and (bool(scope.get("nested")) or "/" not in path)
     prefix = f"{under.rstrip('/')}/"
     if not path.startswith(prefix) or not path.endswith(suffix):
         return False
@@ -418,7 +440,7 @@ def in_scope(rule: dict, paths: list[str]) -> bool:
                for scope in listed(rule, "applies_to") for path in paths)
 
 
-def standard_of(nid: str, front: dict, target: Path,
+def standard_of(nid: str | None, front: dict, target: Path,
                 validator) -> tuple[dict | None, str | None, list[str]]:
     """The standard a record read, from the project's own path in the target source root. The pin
     is a citation of what was read when the record was written — not a standing guarantee this
@@ -432,15 +454,34 @@ def standard_of(nid: str, front: dict, target: Path,
         return None, None, []  # the schema already reported the shape
 
     at = declared["at"]
+    if Path(at).is_absolute():
+        # The schema anchors this path inside the target (`^[^/]`); joining an absolute one wins
+        # the join outright, so a record that already failed its contract would send this script
+        # reading a file anywhere on the machine.
+        return None, at, [f"{f'{nid}: ' if nid else ''}{at} is absolute; a standard is read "
+                          f"from inside {target}"]
     path = target / at
     data, found = load_standard(path, validator)
-    problems = [f"{nid}: {at}: {p}" for p in found]
-    return data, at, problems
+    lead = f"{nid}: " if nid else ""
+    return data, at, [f"{lead}{at}: {p}" for p in found]
 
 
 def rules_of(data: dict) -> dict[str, dict]:
     return {r["id"]: r for r in listed(data, "rules")
             if isinstance(r, dict) and isinstance(r.get("id"), str)}
+
+
+def read_run(record: Path, where: str) -> tuple[dict | None, str | None]:
+    """One captured run.json, read and shaped, or the problem that says why it could not be.
+    Exactly one of the two is set — three callers open this file for three different questions,
+    and a guard added to one of them was never reaching the other two."""
+    try:
+        captured = json.loads(record.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        return None, f"{where}/run.json cannot be read: {broken}"
+    if not isinstance(captured, dict):
+        return None, f"{where}/run.json is not a mapping"
+    return captured, None
 
 
 def record_run_problems(nid: str, front: dict, root: Path) -> list[str]:
@@ -453,16 +494,17 @@ def record_run_problems(nid: str, front: dict, root: Path) -> list[str]:
     where = front.get("run")
     if not isinstance(where, str):
         return []
+    if Path(where).is_absolute():
+        # The schema pins this to `run/<slug>`; an absolute value wins the join and would send
+        # the read outside the delivery root the invocation named.
+        return [f"{nid}: run names {where}, which is absolute; a run sits under {root}"]
     record = root / where / "run.json"
     if not record.is_file():
         return [f"{nid}: run names {where}, which holds no run.json; the runner writes one for "
                 f"every run, so a directory without it is not a run this framework captured"]
-    try:
-        captured = json.loads(record.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as broken:
-        return [f"{nid}: {where}/run.json cannot be read: {broken}"]
-    if not isinstance(captured, dict):
-        return [f"{nid}: {where}/run.json is not a mapping"]
+    captured, unreadable = read_run(record, where)
+    if captured is None:
+        return [f"{nid}: {unreadable}"]
     if captured.get("outcome") != "passed":
         failed = captured.get("failed_step")
         return [f"{nid}: {where} ended `{captured.get('outcome')}` at the step `{failed}`, and "
@@ -520,11 +562,8 @@ def steps_that_passed(root: Path, where: str) -> set[str] | None:
     """The steps one captured run recorded as passed, or `None` where the run cannot be read at
     all. The `None` matters: `record_run_problems` already refuses a record whose run holds no
     run.json or will not parse, and a second refusal here would name one missing file twice."""
-    try:
-        captured = json.loads((root / where / "run.json").read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    if not isinstance(captured, dict):
+    captured, _ = read_run(root / where / "run.json", where)
+    if captured is None:
         return None
     return {step["name"] for step in listed(captured, "steps")
             if isinstance(step, dict) and isinstance(step.get("name"), str)
@@ -701,13 +740,17 @@ def divergence_problems(front: dict) -> list[str]:
     return problems
 
 
-def node_problems(front, kind: str, validator, allowed, names: list[str]) -> list[str]:
+def node_problems(front, kind: str, validator, names: list[str]) -> list[str]:
     """Everything wrong with one delivery node on its own: the schema, applied as written, plus
     the contradictions a single file can hold."""
     if not isinstance(front, dict):
         return [f"frontmatter is a {type(front).__name__}, not a mapping"]
     if any(not isinstance(key, str) for key in front):
         return ["frontmatter carries a non-string key"]
+
+    if "kind" in front:
+        return ["carries `kind`, which the validator supplies from the path; a node that stated "
+                "its own kind could disagree with where it sits, and the path is the identity"]
 
     problems: list[str] = []
     data = {**front, "kind": kind}
@@ -734,7 +777,7 @@ def node_problems(front, kind: str, validator, allowed, names: list[str]) -> lis
 
 
 def body_problems(body: str) -> list[str]:
-    headings = [line.rstrip() for line in body.splitlines() if line.startswith("## ")]
+    headings = spec.headings_of(body)
     if headings != HEADINGS:
         return [f"body headings are {headings if headings else 'absent'}; "
                 f"every delivery node carries exactly {HEADINGS}"]
@@ -884,12 +927,9 @@ def run_problems(nid: str, front: dict, root: Path) -> list[str]:
     if not record.is_file():
         return [f"{nid}: {where} holds no run.json; the runner writes one for every run, so a "
                 f"directory without it is not a run this framework captured"]
-    try:
-        captured = json.loads(record.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as broken:
-        return [f"{nid}: {where}/run.json cannot be read: {broken}"]
-    if not isinstance(captured, dict):
-        return [f"{nid}: {where}/run.json is not a mapping"]
+    captured, unreadable = read_run(record, where)
+    if captured is None:
+        return [f"{nid}: {unreadable}"]
 
     outcome = captured.get("outcome")
     if outcome == "passed":
@@ -950,7 +990,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
     return problems
 
 
-def collect(root: Path, validator, allowed, names: list[str]) -> tuple[dict[str, dict],
+def collect(root: Path, validator, names: list[str]) -> tuple[dict[str, dict],
                                                                       list[str]]:
     """Every node in the delivery, and everything wrong with the files as files."""
     nodes: dict[str, dict] = {}
@@ -966,20 +1006,14 @@ def collect(root: Path, validator, allowed, names: list[str]) -> tuple[dict[str,
                             f"identity and this one computes to none. Material a judgment was "
                             f"read from belongs under run/, which is never validated as a node")
             continue
-        text = path.read_text(encoding="utf-8")
-        match = FENCE.match(text)
-        if not match:
-            problems.append(f"{nid}: carries no frontmatter fence")
-            continue
-        try:
-            front = yaml.safe_load(match.group(1)) or {}
-        except yaml.YAMLError as broken:
-            problems.append(f"{nid}: frontmatter does not parse: {broken}")
+        front, body, unreadable = spec.parse_node(path)
+        if front is None:
+            problems.append(f"{nid}: {unreadable}")
             continue
         kind = relative.parts[0]
         problems += [f"{nid}: {p}"
-                     for p in node_problems(front, kind, validator, allowed, names)]
-        problems += [f"{nid}: {p}" for p in body_problems(text[match.end():])]
+                     for p in node_problems(front, kind, validator, names)]
+        problems += [f"{nid}: {p}" for p in body_problems(body)]
         if isinstance(front, dict):
             nodes[nid] = {"front": front, "kind": kind}
     return nodes, problems
@@ -989,14 +1023,14 @@ def load_plan(work: Path, specification: Path | None) -> tuple[dict[str, dict], 
     """The plan, read through plan.py's own pipeline — never through a plan.json that could be
     stale. A closed plan is read the way plan.py reads it: without opening today's
     specification."""
-    validator, allowed = plan.contract()
+    validator = plan.contract()
     if (work / plan.CLOSURE_FILE).is_file():
         spec_nodes = None
     else:
         spec_nodes, spec_problems = plan.load_base(specification)
         if spec_problems:
             return {}, spec_problems
-    nodes, problems = plan.collect(work, validator, allowed)
+    nodes, problems = plan.collect(work, validator)
     problems += plan.cross_problems(nodes, spec_nodes)
     return nodes, sorted(set(problems))
 
@@ -1055,7 +1089,7 @@ def derive(nodes: dict[str, dict], names: list[str]) -> dict:
     return {"contract_version": "siegard-delivery/2", "nodes": out_nodes, "edges": out_edges}
 
 
-def check_single(root: Path, named: str, validator, allowed, names: list[str]) -> int:
+def check_single(root: Path, named: str, validator, names: list[str]) -> int:
     path = Path(named)
     if not path.is_absolute():
         path = (root / named) if (root / named).is_file() else Path.cwd() / named
@@ -1075,18 +1109,12 @@ def check_single(root: Path, named: str, validator, allowed, names: list[str]) -
     if not path.is_file():
         print(f"cannot run: {path} does not exist", file=sys.stderr)
         return CANNOT_RUN
-    text = path.read_text(encoding="utf-8")
-    match = FENCE.match(text)
-    if not match:
-        print(f"{nid}: carries no frontmatter fence")
+    front, body, unreadable = spec.parse_node(path)
+    if front is None:
+        print(f"{nid}: {unreadable}")
         return 1
-    try:
-        front = yaml.safe_load(match.group(1)) or {}
-    except yaml.YAMLError as broken:
-        print(f"{nid}: frontmatter does not parse: {broken}")
-        return 1
-    problems = node_problems(front, relative.parts[0], validator, allowed, names)
-    problems += body_problems(text[match.end():])
+    problems = node_problems(front, relative.parts[0], validator, names)
+    problems += body_problems(body)
     for problem in problems:
         print(f"{nid}: {problem}")
     if problems:
@@ -1136,20 +1164,14 @@ def check_record(named: str, target_root: str) -> int:
               f"next reader has no way to find", file=sys.stderr)
         return CANNOT_RUN
 
-    text = path.read_text(encoding="utf-8")
-    match = FENCE.match(text)
-    if not match:
-        print(f"{path.name}: carries no frontmatter fence")
-        return 1
-    try:
-        front = yaml.safe_load(match.group(1)) or {}
-    except yaml.YAMLError as broken:
-        print(f"{path.name}: frontmatter does not parse: {broken}")
+    front, body, unreadable = spec.parse_node(path)
+    if front is None:
+        print(f"{path.name}: {unreadable}")
         return 1
 
     problems = [f"{'.'.join(str(p) for p in e.absolute_path) or 'top level'}: {e.message}"
                 for e in sorted(validator.iter_errors(front), key=str)]
-    problems += body_problems(text[match.end():])
+    problems += body_problems(body)
     if not problems:
         problems += check_citation_problems(front, target, standard_validator)
 
@@ -1172,11 +1194,21 @@ def check_citation_problems(front: dict, target: Path, validator) -> list[str]:
     """Every citation a check record makes, resolved against the standard it pins — declared, left
     to a reading, and in scope for the file. Held to the file set too: a finding outside it is a
     finding over something nobody said was under check."""
-    data, at, problems = standard_of("this record", front, target, validator)
+    # No node prefix: a check record is one file, and the reader already knows which.
+    data, at, problems = standard_of(None, front, target, validator)
     if data is None:
-        return [p.replace("this record: ", "") for p in problems]
+        return problems
     rules = rules_of(data)
     reviewed = [p for p in listed(front, "reviewed") if isinstance(p, str)]
+
+    # `unread` is the half of the file set this check did not read. Both statements its own
+    # description makes are held here: an unread path is a path the set names, and a finding
+    # cannot come out of a file nobody opened.
+    unread = [p for p in listed(front, "unread") if isinstance(p, str)]
+    for index, where in enumerate(unread):
+        if where not in reviewed:
+            problems.append(f"unread[{index}] names {where}, which `reviewed` does not list; "
+                            f"unread names the files of the set that could not be read")
 
     for index, finding in enumerate(listed(front, "findings")):
         if not isinstance(finding, dict):
@@ -1186,6 +1218,10 @@ def check_citation_problems(front: dict, target: Path, validator) -> list[str]:
             problems.append(f"findings[{index}] is in {where}, which `reviewed` does not list; a "
                             f"finding outside the file set is a finding over something nobody "
                             f"said was under check")
+        elif isinstance(where, str) and where in unread:
+            problems.append(f"findings[{index}] is in {where}, which `unread` says this check "
+                            f"could not read; a finding out of a file nobody opened states more "
+                            f"than the reading has")
         if not isinstance(cited, str):
             continue
         rule = rules.get(cited)
@@ -1476,6 +1512,11 @@ def check_standard(named: str, against: str | None = None) -> int:
 
 def main() -> int:
     args = sys.argv[1:]
+    if "--help" in args:
+        # The docstring is this script's one home of what it does and how it is called,
+        # so `--help` prints that rather than a second copy of it that could drift.
+        print(__doc__.strip())
+        return 0
     verify = "--check" in args
     args = [a for a in args if a != "--check"]
     report = "--outstanding" in args
@@ -1549,7 +1590,7 @@ def main() -> int:
         return CANNOT_RUN
 
     try:
-        validator, allowed = contract()
+        validator = contract()
         names = pass_names()
         standard = standard_contract()
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
@@ -1568,7 +1609,7 @@ def main() -> int:
                 print(f"cannot run: specification root {specification} is not a directory",
                       file=sys.stderr)
                 return CANNOT_RUN
-        return check_single(root, single, validator, allowed, names)
+        return check_single(root, single, validator, names)
 
     target = Path(args[2])
     if not target.is_dir():
@@ -1594,7 +1635,7 @@ def main() -> int:
               f"({len(plan_problems)} problem(s) above); fix it with plan.py before "
               f"delivering against it", file=sys.stderr)
         return CANNOT_RUN
-    nodes, problems = collect(root, validator, allowed, names)
+    nodes, problems = collect(root, validator, names)
     problems += cross_problems(nodes, plan_nodes, work, names, root, target, standard)
     if problems:
         for problem in sorted(set(problems)):
@@ -1616,20 +1657,20 @@ def main() -> int:
               f"{DELIVERY_GRAPH_CONTRACT.name}: {broken[0].message}", file=sys.stderr)
         return CANNOT_RUN
     text = json.dumps(delivery, indent=2, ensure_ascii=False) + "\n"
-    target = root / DELIVERY_FILE
+    index_path = root / DELIVERY_FILE
 
     if verify:
-        if not target.is_file():
-            print(f"STALE: {target} does not exist; the delivery has never been derived")
+        if not index_path.is_file():
+            print(f"STALE: {index_path} does not exist; the delivery has never been derived")
             return 1
-        if target.read_text(encoding="utf-8") != text:
-            print(f"STALE: {target} is not what the nodes derive to. Run without --check to "
+        if index_path.read_text(encoding="utf-8") != text:
+            print(f"STALE: {index_path} is not what the nodes derive to. Run without --check to "
                   f"rewrite it; do not edit it, because every fact in it lives in a node file")
             return 1
-        print(f"delivery checked: {target} matches {len(delivery['nodes'])} node(s)")
+        print(f"delivery checked: {index_path} matches {len(delivery['nodes'])} node(s)")
         return 0
 
-    target.write_text(text, encoding="utf-8")
+    index_path.write_text(text, encoding="utf-8")
     by_kind = [f"{count} {kind}" for kind in KINDS
                if (count := sum(1 for n in nodes.values() if n["kind"] == kind))]
     tasks = sum(1 for n in plan_nodes.values() if n["kind"] == "task")
@@ -1638,7 +1679,7 @@ def main() -> int:
     unmet = sum(len(n.get("unmet", [])) for n in delivery["nodes"])
     unproven = sum(len(n.get("unproven", [])) for n in delivery["nodes"])
     findings = sum(n.get("findings", 0) for n in delivery["nodes"])
-    print(f"derived {target}: {len(delivery['nodes'])} node(s), "
+    print(f"derived {index_path}: {len(delivery['nodes'])} node(s), "
           f"{len(delivery['edges'])} edge(s), contract {delivery['contract_version']}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {done} of {tasks} task(s) hold a record; "
           f"{unmet} criterion(s) recorded unmet; {unproven} recorded unproven; "

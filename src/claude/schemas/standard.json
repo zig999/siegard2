@@ -113,7 +113,7 @@
         "under": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^[^/][^\\\\]*[^/]$|^[^/\\\\]$",
+          "pattern": "^[^/\\\\](?:[^\\\\]*[^/\\\\])?$",
           "description": "The directory this scope starts at, relative to the target source root and without a trailing separator."
         },
         "suffix": {

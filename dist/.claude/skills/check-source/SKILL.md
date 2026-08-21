@@ -112,13 +112,19 @@ Delegating means spawning the named subagent — in a plugin install the name ma
 Only where the session cannot spawn subagents, read the agent's file under the plugin root's
 `agents/` directory and apply its discipline in place, and the report must say so.
 
-A path in the set that cannot be read is named in `unread` and reported — never dropped. A reading
-silently narrowed to whatever happened to open reports clean over files nobody read.
+Tell the agent that a path it cannot read is recorded rather than stopped on: it names each in
+`unread` and reviews the rest. That mode is stated per call and is this skill's alone — the same
+agent stops the pass for `/review-change`, where a delivery under review has no field to record
+the narrowing in. A path in the set that cannot be read is named in `unread` and reported — never
+dropped. A reading silently narrowed to whatever happened to open reports clean over files nobody
+read.
 
 ### 3. Compose
 
 Write `siegard-check/<slug>.md` at the target's git toplevel — beside `siegard.json` and
-`siegard-trace.json` — where the slug names this reading and the path is its identity. It carries
+`siegard-trace.json` — where the slug names this reading and the path is its identity. A slug
+already taken is a stop and not an overwrite: the clean-tree gate above catches an uncommitted
+record, and a committed one is a reading somebody acted on. Name this one differently and say so. It carries
 the file set, the target, the standard's own path and the pin of its text, whatever could not be
 read, and every finding.
 

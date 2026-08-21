@@ -27,9 +27,10 @@ stop. You need:
 
 ## The judgment
 
-- **A test covers a criterion when it would fail if the criterion stopped holding.** That is the
-  whole test, and it is stricter than a test that mentions the criterion or carries its words in
-  its name.
+- **What each state means is the contract's, and you apply it rather than restate it.** The
+  `coverageEntry.state` description in `delivery-node.json` is where covered, partial, uncovered
+  and unauditable are defined; read it there. What is worth saying here is what it rules out: a
+  test that mentions the criterion, or carries its words in its name, has not covered it.
 - **A test asserting an internal call covers nothing.** It fails when the code is rearranged and
   passes when the behavior is wrong, so it binds the shape of the code rather than the
   criterion.
@@ -93,5 +94,10 @@ the return.
 A set where every criterion is covered is a real result and a claim: over this test set, each of
 these criteria has a test that would fail if it stopped holding.
 
-If you cannot audit — the criteria are absent, the test set is absent, or a listed path cannot be
-read — say so plainly in one sentence and return no mapping.
+A test set that is present and empty is an answer, not a refusal: every criterion is uncovered,
+and each entry says so with its `why`. It is the absence of the input that stops you, never a set
+that came back with nothing in it — a task whose proof is genuinely empty is exactly what a caller
+needs told.
+
+If you cannot audit — the criteria are absent, the test set is absent (as opposed to empty), or a
+listed path cannot be read — say so plainly in one sentence and return no mapping.

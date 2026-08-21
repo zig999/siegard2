@@ -284,3 +284,71 @@ def test_replace_does_not_apply_to_it(write_record):
     done = run("--reconciliation", "--replace", write_record(record_of([CLEARED])))
     assert done.returncode == 2
     assert "--replace only applies" in done.stderr
+
+
+# --------------------------------------------- every node a named file answers to
+
+
+def test_a_record_leaving_a_bound_node_unanswered_is_refused(consumer, write_record):
+    """The contract defines the node set as every specification node the trace binds to a named
+    file, and the skill says "never a subset". Until the bind checked it, a record naming a file
+    and answering for one of the two nodes bound to it rebound that one and left the other
+    asserting a link nobody re-read — while reading exactly like a complete reconciliation.
+
+    Both nodes are bound to the same file here, so the record's file set reaches both."""
+    for node in (NODE, OTHER):
+        assert run("--bind", consumer / "backend", consumer / "specs",
+                   node, FILE).returncode == 0
+
+    record = write_record(record_of([CLEARED]))
+    assert run("--reconciliation", record).returncode == 0, "the record is sound on its own terms"
+
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 1, bound.stdout + bound.stderr
+    assert OTHER in bound.stdout, bound.stdout
+    assert "never the subset" in bound.stdout, bound.stdout
+
+
+def test_a_record_answering_for_every_bound_node_binds(consumer, write_record):
+    """The other half, and the one that keeps the test above from passing for the wrong reason: the
+    same two bindings, and a record that answers for both, is written. `conforms: false` is an
+    answer — the check is about accounting for the node, not about clearing it."""
+    for node in (NODE, OTHER):
+        assert run("--bind", consumer / "backend", consumer / "specs",
+                   node, FILE).returncode == 0
+
+    record = write_record(record_of(
+        [CLEARED, {"node": OTHER, "conforms": False,
+                   "how": "the file states a threshold this node does not hold",
+                   "observed_at": [FILE]}]))
+    assert run("--reconciliation", record).returncode == 0
+
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+
+
+ORPHANABLE = "constraints/asynchronous-events"
+
+
+def test_an_orphaned_binding_is_not_a_node_a_record_owes_an_answer_for(consumer, write_record):
+    """A node the specification no longer holds cannot be answered for: no bind repairs it and
+    `--prune` is its route, so demanding an answer would refuse a record over ground the route
+    hands elsewhere.
+
+    A constraint is the node that can leave without the base going unsound around it, which is
+    what makes the case reachable at all — delete a referenced element instead and
+    `sound_specification` refuses first, before any of this is consulted."""
+    assert run("--bind", consumer / "backend", consumer / "specs",
+               ORPHANABLE, FILE).returncode == 0
+    assert run("--bind", consumer / "backend", consumer / "specs", NODE, FILE).returncode == 0
+    record = write_record(record_of([CLEARED]))
+
+    # Not vacuous, and asserted before the removal rather than after: while the node is still in
+    # the specification this exact record is refused for it. So what excuses it below is the
+    # orphaning and nothing else.
+    still_held = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert still_held.returncode == 1 and ORPHANABLE in still_held.stdout, still_held.stdout
+
+    (consumer / "specs" / f"{ORPHANABLE}.md").unlink()
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr

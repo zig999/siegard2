@@ -93,7 +93,10 @@ nothing to say carries the literal line `None.`
 - **R9** — Primitive types are the closed set `string`, `integer`, `decimal`, `boolean`,
   `date`, `datetime`. Every other attribute type must resolve to a `value-object` or
   `enumeration` element in the collection, by slug. An attribute whose value repeats declares
-  `many: true`; absent means one value.
+  `many: true`; absent means one value. An attribute the material states must always be present
+  declares `required: true`; absent means the material did not say, which is a weaker claim than
+  saying it is optional and is the honest default. Both fields were in the schema and the template
+  before this rule stated them.
 - **R10** — A relationship declares `target`, `type`, `cardinality`, and — when two
   relationships share a target pair or the edge needs a label — `role`. Types are the closed
   set `composition`, `reference`, `association`; cardinalities are the closed set `1`, `0..1`,
@@ -125,7 +128,7 @@ nothing to say carries the literal line `None.`
 
 ## Validation required before acceptance
 
-1. A schema (`schemas/domain-element.json` or successor) encodes R5–R13, and a validator
+1. A schema (`src/claude/schemas/spec/element.json`) encodes R5–R13, and a validator
    resolves every reference and every non-primitive attribute type, rejecting a collection with
    a dangling slug, a duplicated fact (R8), or a composition crossing an aggregate (R11).
 2. A fixture collection under `domain/` validates, and a generated Mermaid diagram from it

@@ -71,7 +71,7 @@
     },
     "nodes": {
       "type": "array",
-      "description": "Every specification node the trace binds to a named file, with the judgment's answer for it. Empty only where the trace binds none of them — which is a real outcome, not an omission, and `unbound` is where it is recorded. The set is read from `trace.py --check`, never chosen: which nodes a file answers to is what the trace holds, and picking a subset of them would reconcile a file against the part of the specification that happened to agree with it.",
+      "description": "Every specification node the trace binds to a named file, with the judgment's answer for it. Empty only where the trace binds none of them — which is a real outcome, not an omission, and `unbound` is where it is recorded. The set is read from the trace's own bindings, never chosen: which nodes a file answers to is what the trace holds, and picking a subset of them would reconcile a file against the part of the specification that happened to agree with it. `trace.py --check` names the drifted ones and is where a reconciliation starts, but it is not the whole set — a drift report says nothing about a file whose binding is intact, and those nodes are read from `siegard-trace.json` itself. An orphaned binding is the exception: its node is gone from the specification, no bind repairs it, and `--prune` is its route. `--bind-record` refuses a record that leaves a bound node unanswered.",
       "items": {
         "type": "object",
         "required": [
@@ -131,6 +131,7 @@
           "encoded_at": {
             "type": "array",
             "minItems": 1,
+            "uniqueItems": true,
             "description": "The file(s) of the set above that encode this node, on a node the judgment cleared and nowhere else. This is the list `--bind-record` binds, so it is the whole of what this record claims: a path here is a path the trace will assert answers to this node. Every entry must be in `files`.",
             "items": {
               "$ref": "#/$defs/targetPath"
@@ -139,7 +140,11 @@
           "observed_at": {
             "type": "array",
             "minItems": 1,
-            "description": "The file(s) of the set above the judgment read for this node, on a node it did not clear and nowhere else. It records what was looked at without claiming anything about it, which is why the accounting below can still reach every named file while nothing is bound. Every entry must be in `files`."
+            "uniqueItems": true,
+            "description": "The file(s) of the set above the judgment read for this node, on a node it did not clear and nowhere else. It records what was looked at without claiming anything about it, which is why the accounting below can still reach every named file while nothing is bound. Every entry must be in `files`.",
+            "items": {
+              "$ref": "#/$defs/targetPath"
+            }
           }
         }
       }

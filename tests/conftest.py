@@ -49,8 +49,10 @@ def write(root: Path):
 @pytest.fixture
 def sound_base(write):
     """The smallest specification every cross-node check passes: a context, an aggregate root,
-    and a value object a rule makes reachable (SPEC-001 R6 exempts an aggregate root, never a
-    value object)."""
+    and a value object a rule makes reachable. The exemption an aggregate root enjoys is
+    bin/spec.py's, stated in a code comment and by no specification — SPEC-001 R6 states
+    reachability without exception, and this docstring used to cite it as the exemption's
+    source, which it is not."""
     write("decision-log", {"entries": []}, body="")
     write("domain/sales/_context", {"strategic": "core"})
     write("domain/sales/order", {

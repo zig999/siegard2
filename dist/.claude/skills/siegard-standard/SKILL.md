@@ -97,8 +97,8 @@ invocation would like to see used.
 
 Where a boundary belongs elsewhere — a domain fact, a severity, an integration strategy, a question
 this framework's own agents already answer — do not write it as a rule: name it in `elsewhere`,
-with where it actually lives and why, the same way `backend-node-service.yaml` and
-`frontend-typescript.yaml` already do.
+with where it actually lives and why. An entry names the boundary, where it is decided, and why it
+is not a rule here; `schemas/standard.json` carries the shape and an example of one.
 
 ## 4. Validate, and fix the shape until it is clean
 

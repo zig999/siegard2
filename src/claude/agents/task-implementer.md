@@ -81,9 +81,8 @@ unapplied until it exists and nothing else in the plan can be written meanwhile.
 ## Before anything is written
 
 Read the task's `## Notes`, and **stop** on any entry opening `BLOCKING, from the specification —`.
-That class is the binding's finding that a node states something the objective, or a criterion,
-contradicts or exceeds as written — a silence is not this class: a fact the specification did not
-state was decided into it during planning, and never reaches a task file. Writing anyway would put
+What that class means is the binder's, defined in `agents/execution-contract-binder.md` and never
+re-derived here: you read the opening, not the judgment behind it. Writing anyway would put
 an overruling in the code, where it reads exactly like a decision the business made and where
 nobody will look for a decision at all. Name the entries, leave the tree as you found it, and
 return no record. The settlement is the human's, through the scope or through the specification,

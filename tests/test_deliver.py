@@ -24,11 +24,11 @@ REPO = Path(__file__).resolve().parent.parent
 
 def problems_of(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
     """Everything the validator would report over this delivery, in one list."""
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], f"the fixture plan does not hold together: {plan_problems}"
-    nodes, found = deliver.collect(delivery, validator, allowed, names)
+    nodes, found = deliver.collect(delivery, validator, names)
     return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, target)
 
 
@@ -45,9 +45,9 @@ def test_the_sound_delivery_holds_together(delivery, work, root, target, sound_d
 
 
 def test_it_derives_the_index_it_promises(delivery, work, root, sound_delivery):
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    nodes, _ = deliver.collect(delivery, validator, names)
     graph = deliver.derive(nodes, names)
     assert graph["contract_version"] == "siegard-delivery/2"
     assert [n["id"] for n in graph["nodes"]] == ["implementation/checkout/record-order",
@@ -62,9 +62,9 @@ def test_it_derives_the_index_it_promises(delivery, work, root, sound_delivery):
 
 
 def test_the_derivation_is_byte_stable(delivery, work, root, sound_delivery):
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    nodes, _ = deliver.collect(delivery, validator, names)
     once = json.dumps(deliver.derive(nodes, names), indent=2, ensure_ascii=False)
     twice = json.dumps(deliver.derive(nodes, names), indent=2, ensure_ascii=False)
     assert once == twice, "identical input must be byte-identical output, or --check is noise"
@@ -72,9 +72,9 @@ def test_the_derivation_is_byte_stable(delivery, work, root, sound_delivery):
 
 def test_the_index_satisfies_its_own_contract(repo, delivery, work, root, sound_delivery):
     from jsonschema import Draft202012Validator
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    nodes, _ = deliver.collect(delivery, validator, names)
     schema = json.loads((repo / "src/claude/schemas/delivery.json").read_text(encoding="utf-8"))
     broken = [e.message for e in Draft202012Validator(schema).iter_errors(
         deliver.derive(nodes, names))]
@@ -751,9 +751,9 @@ def test_a_review_records_which_passes_ran_in_the_index(delivery, work, root, so
     """The derivation emits every pass the contract allows. Before a review reached a fixture,
     delivery.json's own enum held three names and this path exited as a defect in the script."""
     write_delivery("review/first", standard_review(work, root, write_standard()))
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    nodes, _ = deliver.collect(delivery, validator, names)
     graph = deliver.derive(nodes, names)
     entry = next(n for n in graph["nodes"] if n["kind"] == "review")
     assert entry["ran"] == ["coverage", "conformance", "standard"], \
@@ -768,9 +768,9 @@ def test_a_review_records_which_passes_ran_in_the_index(delivery, work, root, so
 
 def test_the_outstanding_report_derives_what_no_field_records(delivery, work, root, target,
                                                               sound_delivery):
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    nodes, _ = deliver.collect(delivery, validator, names)
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "task/checkout/bill-order: no record" in report
@@ -782,15 +782,15 @@ def test_the_outstanding_report_names_the_set_a_caller_may_take_now(delivery, wo
                                                                    sound_delivery):
     """The subtraction the handoff used to describe in words. One task is delivered, the other
     declares it builds on it, so nothing is deliverable — and saying so is the answer, not a gap."""
-    validator, allowed = deliver.contract()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "deliverable now: task/checkout/bill-order" in report, report
 
     (delivery / "implementation/checkout/record-order.md").unlink()
     (delivery / "proof/checkout/record-order.md").unlink()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "deliverable now: task/checkout/record-order — no record, nothing they wait on" \
         in report, report
@@ -801,9 +801,9 @@ def test_the_outstanding_report_names_the_set_a_caller_may_take_now(delivery, wo
 def test_an_implementation_without_its_proof_is_reported(delivery, work, root, target,
                                                          sound_delivery):
     (delivery / "proof/checkout/record-order.md").unlink()
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    nodes, _ = deliver.collect(delivery, validator, allowed, names)
+    nodes, _ = deliver.collect(delivery, validator, names)
     plan_nodes, _ = deliver.load_plan(work, root)
     assert "no proof record holds it up" in deliver.outstanding_report(nodes, plan_nodes, target)
 
@@ -820,8 +820,8 @@ def test_a_standing_blocking_note_is_named_where_a_caller_chooses(delivery, work
     }, body="## What it is\nProse for a reader.\n\n## Notes\n"
             "BLOCKING, from the specification — the criterion asserts a refund exceeding the "
             "cap rules/sales/refund-cap states.\n")
-    validator, allowed = deliver.contract()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "1 standing BLOCKING note(s), which only a person settles" in report, report
@@ -843,8 +843,8 @@ def test_an_underdetermined_note_is_quoted_and_bars_nothing(delivery, work, root
     }, body="## What it is\nProse for a reader.\n\n## Notes\n"
             "UNDERDETERMINED, from the specification — a bill of zero lines satisfies every "
             "criterion and the invoice definition refuses it.\n")
-    validator, allowed = deliver.contract()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "1 UNDERDETERMINED note(s) the proof must exclude" in report, report
@@ -865,9 +865,9 @@ def test_a_closed_plan_is_delivered_against_without_the_base(delivery, work, roo
     nodes, problems = deliver.load_plan(work, None)
     assert problems == [], problems
     assert "task/checkout/record-order" in nodes
-    validator, allowed = deliver.contract()
+    validator = deliver.contract()
     names = deliver.pass_names()
-    found, _ = deliver.collect(delivery, validator, allowed, names)
+    found, _ = deliver.collect(delivery, validator, names)
     assert deliver.cross_problems(found, nodes, work, names, delivery, target) == []
 
 
@@ -1095,8 +1095,8 @@ def test_the_substrate_barrier_is_named_because_no_edge_can_carry_it(delivery, w
     (delivery / "proof/checkout/record-order.md").unlink()
     (target / "tsconfig.json").write_text("{}\n", encoding="utf-8")
 
-    validator, allowed = deliver.contract()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "produces the substrate every other delivery waits on" in report, report
@@ -1121,8 +1121,8 @@ def test_a_substrate_the_tree_already_holds_bars_nothing(delivery, work, root, t
     (delivery / "proof/checkout/record-order.md").unlink()
     (target / "package.json").write_text("{}\n", encoding="utf-8")
 
-    validator, allowed = deliver.contract()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "produces the substrate" not in report, report
@@ -1138,8 +1138,8 @@ def test_the_outstanding_report_names_the_standard_this_root_remembers(delivery,
     write_delivery("implementation/checkout/record-order",
                    disclosed(delivery, work, write_standard()))
     repin_proof(delivery, write_delivery)
-    validator, allowed = deliver.contract()
-    nodes, _ = deliver.collect(delivery, validator, allowed, deliver.pass_names())
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
     assert "standard.yaml: pinned by 1 record(s)" in report

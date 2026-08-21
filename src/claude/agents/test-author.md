@@ -138,6 +138,8 @@ divergences: [...]           # omit when none; a departure from a standard rule 
 
 Return the mapping as plain YAML text, with each field shaped as the contract's `proof` branch
 requires — the fence above shows which fields, not their shapes, and is not part of the return.
+Omit the pin on the implementation record: the caller stamps it, and a producer that hashed the
+record it was handed would be pinning its own reading of it.
 
 If you cannot write the tests — an input is absent, the implementation record names files that
 do not exist, or the criteria name a failure and no reproduction came with them — say so plainly

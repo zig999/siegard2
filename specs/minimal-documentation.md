@@ -56,7 +56,13 @@ enforces mechanically.
 - **R5** — Conditional classes exist only where the material states the behavior they record. A
   class the material never speaks to is absent, and its absence needs no marker.
 - **R6** — Every element earns its place by being reachable from a comprehension question; an
-  element nothing reaches is bloat and fails validation.
+  element nothing reaches is bloat and fails validation. Two element types are exempt because
+  they answer a comprehension question by existing: an **aggregate root**, which is a consistency
+  boundary and is the entry point other elements are reached *through* rather than *from*, and a
+  **domain service**, which is a named behavior the material stated. Every other type — entity,
+  value object, enumeration — is held to reachability. This exemption was `bin/spec.py`'s
+  behaviour before it was stated here, carried in a code comment while this rule read as absolute;
+  the statement is the specification catching up to the validator, not a change to what validates.
 - **R7** — No artifact restates another's statement. Prose explains; every operative claim lives
   in exactly one addressable home.
 - **R8** — Artifacts carry no provenance meta-fields: no `gaps`, no `sources`, no `rationale`,

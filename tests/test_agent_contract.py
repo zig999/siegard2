@@ -127,3 +127,34 @@ def test_the_agent_restates_no_node_vocabulary(agent):
     restated = [v for v in distinctive if v in text]
     assert restated == [], \
         f"{agent['stem']} restates {restated}; a vocabulary listed in a prompt is a second home"
+
+
+# Fields the harness ignores when it loads an agent from a plugin, which is the only shape this
+# framework is distributed in. The contract still admits them — an agent copied into a repository's
+# own `.claude/agents/` would get them — so what has to be guarded is that nothing *shipped*
+# declares one.
+INERT_FOR_A_PLUGIN_SUBAGENT = ("hooks", "mcpServers", "permissionMode")
+
+
+@pytest.mark.parametrize("field", INERT_FOR_A_PLUGIN_SUBAGENT)
+def test_no_shipped_agent_declares_a_field_a_plugin_subagent_ignores(field, agent):
+    """A field the harness ignores is worse here than a field that does not exist: it passes this
+    contract, passes this suite, ships to every consumer, and takes no effect — and nothing inside
+    this repository can tell. That is the same species as a check whose command was `true`.
+
+    The cost is not hypothetical. `permissionMode`'s own description carried a deliberate,
+    reasoned exclusion of `bypassPermissions` — a security decision recorded about a field that
+    never took effect in the shape this framework ships."""
+    assert field not in agent["front"], \
+        f"{agent['stem']} declares `{field}`, which the harness ignores for a plugin subagent; " \
+        f"it would read as a live constraint and enforce nothing"
+
+
+@pytest.mark.parametrize("field", INERT_FOR_A_PLUGIN_SUBAGENT)
+def test_the_contract_says_which_fields_a_plugin_subagent_ignores(field):
+    """The guard above refuses the field; this one holds the contract to saying why, so a reader
+    deciding whether to reach for it learns it is inert before writing it rather than after."""
+    schema = json.loads((REPO / "schemas/agent.json").read_text(encoding="utf-8"))
+    described = schema["properties"][field]["description"]
+    assert "Inert" in described and "plugin" in described, \
+        f"the contract admits `{field}` without saying a plugin subagent ignores it"

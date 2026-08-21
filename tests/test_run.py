@@ -138,6 +138,19 @@ def test_no_shell_sees_the_command(delivery):
      "is named twice"),
     (("--run", "green", "--timeout-seconds", "20", "--step", "a="),
      "has an empty command"),
+    # The identity check is what keeps a run inside the delivery root, and until these rows
+    # existed nothing exercised the spellings it exists for.
+    (("--run", "a/b", "--timeout-seconds", "20", "--step", "a=python3 -c 'pass'"),
+     "the path is the identity"),
+    (("--run", "../up", "--timeout-seconds", "20", "--step", "a=python3 -c 'pass'"),
+     "the path is the identity"),
+    (("--run", "", "--timeout-seconds", "20", "--step", "a=python3 -c 'pass'"),
+     "the path is the identity"),
+    (("--run", "green\n", "--timeout-seconds", "20", "--step", "a=python3 -c 'pass'"),
+     "the path is the identity"),
+    # `run.log` is the combined log of every step; a step writing it destroys its own output.
+    (("--run", "green", "--timeout-seconds", "20", "--step", "run=python3 -c 'pass'"),
+     "combined log of every step"),
 ])
 def test_it_refuses_what_it_cannot_run(delivery, args, fragment):
     done = invoke(delivery, *args)
@@ -194,3 +207,16 @@ def test_it_counts_nothing(delivery):
     flat = json.dumps(record)
     for word in ("failures", "passed_count", "failed_count", "total"):
         assert f'"{word}"' not in flat, f"the record offers a {word}; it must offer none"
+
+
+def test_it_refuses_a_slug_whose_directory_is_a_dangling_symlink(delivery, tmp_path):
+    """`exists()` is advisory — it follows the link and answers False for a dangling one. What
+    actually refuses is `mkdir` without `exist_ok`, and its `FileExistsError` carries the same
+    message as the check above it. Without this test the two paths could diverge and only the
+    unreachable one would be covered."""
+    (delivery / "run").mkdir(parents=True, exist_ok=True)
+    (delivery / "run/green").symlink_to(tmp_path / "nowhere")
+    done = invoke(delivery, "--run", "green", "--timeout-seconds", "20",
+                  "--step", "a=python3 -c 'pass'")
+    assert done.returncode == 2, done.stdout
+    assert "already exists" in done.stderr, done.stderr

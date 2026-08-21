@@ -49,7 +49,7 @@ holds two different stacks without a line of schema changing between them.
   built on (the runtime, the HTTP framework, the driver, the JWT library, the logger, the test
   runner, the datastore) and how its source is arranged: DTOs, API shape, errors, edge cases,
   security, types, naming, maintenance and tests.
-- **`frontend-typescript.yaml`** — a React + TypeScript frontend, not a service. Fifty-one rules
+- **`frontend-typescript.yaml`** — a React + TypeScript frontend, not a service. Sixty-three rules
   across component composition, state management, consuming a backend's contract, asynchronous and
   failure edge cases, accessibility, security, types, naming, maintenance, prohibitions, performance
   and tests. Its `elsewhere` draws the same line the backend registry draws for a transport status:

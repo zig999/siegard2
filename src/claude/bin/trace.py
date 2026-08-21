@@ -108,6 +108,8 @@ Usage:  trace.py <target-root>
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
         trace.py --prune <target-root>
         trace.py --reconciliation <reconciliation-record>
+        trace.py --help
+                print this text and stop
 Exit:   0 sound / drift-free / bound / pruned / the record holds
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file, a record its contract refuses
@@ -120,6 +122,7 @@ import json
 import os
 import sys
 from pathlib import Path, PurePosixPath
+from typing import NoReturn
 
 CANNOT_RUN = 2
 
@@ -200,16 +203,36 @@ def under(path: str, prefixes: list[str]) -> bool:
     return False
 
 
+def cannot_run(message: str) -> NoReturn:
+    """Refuse and stop. A trace this script cannot read is never repaired into a default: the
+    file is the record, and a default would bind against a record nobody wrote."""
+    print(f"cannot run: {message}", file=sys.stderr)
+    raise SystemExit(CANNOT_RUN)
+
+
 def trace_path(target: Path) -> Path:
     return home_of(target) / TRACE_FILE
 
 
 def load(target: Path) -> dict | None:
-    """The trace declared at <target-root>, or None where none has been bound yet."""
+    """The trace declared at <target-root>, or None where none has been bound yet.
+
+    A trace that does not parse, or that parses to anything but a mapping, is refused here rather
+    than carried further. This is the one file the framework keeps after a plan is history, and
+    it is one of the two that conflict in a worktree batch — so a trace holding merge markers is
+    a state that happens, and every form of this script would otherwise end in a traceback over
+    it instead of saying which file to fix."""
     path = trace_path(target)
     if not path.is_file():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        declared = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        cannot_run(f"{path} does not parse: {broken}")
+    if not isinstance(declared, dict):
+        cannot_run(f"{path} holds a {type(declared).__name__}, not a trace; a trace is an object "
+                   f"with a specification and its bindings")
+    return declared
 
 
 def problems_of(declared: dict) -> list[str]:
@@ -297,13 +320,29 @@ def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[di
     to be handed than the reason it happened."""
     offset = Path(os.path.relpath(target.resolve(), home.resolve()))
     entries, problems = [], []
+    claimed: set[str] = set()
     for given in files:
         source = target / given
         if not source.is_file():
             problems.append(f"{source} does not exist; a path is read relative to {target}, the "
                             f"target source root, never from the repository around it")
             continue
+        try:
+            source.resolve().relative_to(target.resolve())
+        except ValueError:
+            # The sentence above is the whole rule, and `../` is the one spelling that passes
+            # `is_file()` while breaking it. Stored unnormalised it would also alias: one file
+            # under two spellings is two entries no reader can tell apart.
+            problems.append(f"{given} climbs out of {target}, the target source root; a bound "
+                            f"path is read from inside it, never from the repository around it")
+            continue
         stored = given if str(offset) == "." else (offset / given).as_posix()
+        if stored in claimed:
+            problems.append(f"{stored} is named twice in one bind; a second entry for one path "
+                            f"carries nothing the first does not, and every later reading of the "
+                            f"trace would count the file twice")
+            continue
+        claimed.add(stored)
         entries.append({"path": stored, "digest": spec.digest_of(source)})
     return entries, problems
 
@@ -441,6 +480,10 @@ def opened(target: Path, spec_root: Path,
     naming a different specification is refused rather than silently repointed."""
     spec_relative = Path(os.path.relpath(spec_root.resolve(), home.resolve())).as_posix()
     declared = load(target) or {"specification": spec_relative, "bindings": []}
+    if not isinstance(declared.get("specification"), str) or \
+            not isinstance(declared.get("bindings"), list):
+        return None, (f"{trace_path(target)} carries no specification and bindings; it is not a "
+                      f"trace this can fold into — validate it first")
     if declared["specification"] != spec_relative:
         return None, (f"{trace_path(target)} already traces against "
                       f"{declared['specification']}, not {spec_relative}; a trace names one "
@@ -520,7 +563,9 @@ def frontmatter_of(record: Path) -> tuple[dict | None, str | None]:
     saying it twice is how the two drift into disagreeing about what a record even is."""
     if not record.is_file():
         return None, f"{record} does not exist"
-    text = record.read_text(encoding="utf-8")
+    text, unreadable = spec.read_node(record)
+    if text is None:
+        return None, f"{record}: {unreadable}"
     match = spec.FENCE.match(text)
     if not match:
         return None, f"{record} carries no frontmatter fence; it is not a record this can read"
@@ -547,19 +592,19 @@ def accounted(front: dict) -> list[str]:
     problems = [f"files: {path} is named {named.count(path)} times; one entry per file"
                 for path in sorted(set(named)) if named.count(path) > 1]
 
-    seen: dict[str, list[str]] = {}
+    seen: dict[str, int] = {}
     claimed: set[str] = set()
     for entry in front["nodes"]:
         node_id = entry["node"]
-        seen.setdefault(node_id, []).append(node_id)
+        seen[node_id] = seen.get(node_id, 0) + 1
         where = "encoded_at" if entry["conforms"] else "observed_at"
         for path in entry[where]:
             claimed.add(path)
             if path not in named:
                 problems.append(f"{node_id}: {where} names {path}, which this record's file set "
                                 f"does not; a reconciliation reaches only what the human scoped")
-    problems += [f"nodes: {node_id} appears {len(hits)} times; one entry per node"
-                 for node_id, hits in sorted(seen.items()) if len(hits) > 1]
+    problems += [f"nodes: {node_id} appears {count} times; one entry per node"
+                 for node_id, count in sorted(seen.items()) if count > 1]
 
     unbound = front.get("unbound") or []
     for path in unbound:
@@ -655,6 +700,61 @@ def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
     return pairs, []
 
 
+def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
+                offset: Path) -> list[str]:
+    """Every node the trace binds to a file this reconciliation names and the record says nothing
+    about. Empty for a record that accounts for all of them, and for any record this does not apply
+    to.
+
+    `reconciliation.json` defines the node set as "every specification node the trace binds to a
+    named file", and the skill that writes one says it in as many words — "what you keep is every
+    node those findings name, and never a subset … reconciling a file against the part of the
+    specification that happens to agree with it is the failure this whole route exists to prevent".
+    Until this ran, nothing held a record to it: a record naming a file and answering for one of
+    the two nodes bound to it would rebind that one and leave the other asserting a link nobody
+    re-read, while reading exactly like a complete reconciliation.
+
+    An orphaned binding is excluded. Its node is gone from the specification, no bind can repair it
+    and `--prune` is the only thing that clears it, so demanding an answer for it would refuse a
+    record over ground the route explicitly hands elsewhere.
+
+    This is the one place this script reads a record as a reconciliation rather than as two field
+    names. It is not a second opinion about somebody else's contract: `schemas/reconciliation.json`
+    is trace.py's own, and `--reconciliation` is where it is enforced."""
+    if record.parent.name != RECONCILE_DIR:
+        return []
+    front, _ = frontmatter_of(record)
+    if not isinstance(front, dict):
+        return []  # encoded_in already refused it, and one refusal per defect is enough
+    version = front.get("contract_version")
+    if not isinstance(version, str) or not version.startswith("siegard-reconcile/"):
+        return []
+
+    named = {entry["path"] for entry in front.get("files") or []
+             if isinstance(entry, dict) and isinstance(entry.get("path"), str)}
+    if not named:
+        return []
+    # The record spells its paths from the target source root; the trace spells them from its own
+    # directory. Compare in the trace's spelling, the way a bind writes them.
+    anchored = named if str(offset) == "." else {(offset / p).as_posix() for p in named}
+
+    answered = {entry["node"] for entry in front.get("nodes") or []
+                if isinstance(entry, dict) and isinstance(entry.get("node"), str)}
+    problems = []
+    for entry in declared.get("bindings") or []:
+        node_id = entry.get("node")
+        if not isinstance(node_id, str) or node_id in answered or node_id not in nodes:
+            continue
+        for held in entry.get("files") or []:
+            if isinstance(held, dict) and held.get("path") in anchored:
+                problems.append(
+                    f"{node_id} is bound to {held['path']}, which this record names, and the "
+                    f"record answers for it nowhere; a reconciliation reads every node a named "
+                    f"file answers to, never the subset that happened to agree")
+                break
+    return sorted(problems)
+
+
 def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = False) -> int:
     """Every binding one implementation record states, written as one act.
 
@@ -698,6 +798,9 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     declared, refusal = opened(target, spec_root, home)
     if refusal is not None:
         refusals.append(refusal)
+    if declared is not None:
+        refusals += unaccounted(record, declared, nodes,
+                               Path(os.path.relpath(target.resolve(), home.resolve())))
     if refusals:
         for problem in refusals:
             print(f"cannot bind: {problem}")
@@ -777,8 +880,9 @@ def prune(target: Path) -> int:
               f"still holds")
         return 0
 
+    gone = set(stale)
     declared["bindings"] = [entry for entry in declared["bindings"]
-                            if entry.get("node") not in set(stale)]
+                            if entry.get("node") not in gone]
     if write_trace(target, declared, act="prune") != 0:
         return 1
     for node_id in stale:
@@ -792,6 +896,11 @@ def prune(target: Path) -> int:
 
 def main() -> int:
     args = sys.argv[1:]
+    if "--help" in args:
+        # The docstring is this script's one home of what it does and how it is called,
+        # so `--help` prints that rather than a second copy of it that could drift.
+        print(__doc__.strip())
+        return 0
     check = "--check" in args
     show_all = "--all" in args
     do_bind = "--bind" in args
@@ -886,8 +995,14 @@ def main() -> int:
     # the finding was computed either way, and `--all` prints it. Suppression is a report's
     # decision about what a reader can act on, so nothing above it knows this happened.
     prefixes = [] if show_all else freely_edited(home)
-    held = [f for f in findings if f[0] == CODE and f[2] and under(f[2], prefixes)]
-    listed = [f for f in findings if f not in held]
+
+    def held_back(finding) -> bool:
+        return finding[0] == CODE and bool(finding[2]) and under(finding[2], prefixes)
+
+    # Partitioned by the predicate rather than by membership in `held`: two findings that compare
+    # equal would suppress each other, and the membership test walked `held` once per finding.
+    held = [f for f in findings if held_back(f)]
+    listed = [f for f in findings if not held_back(f)]
 
     if listed:
         # Class by class rather than one flat list: the tally is what a reader acts on, and the
