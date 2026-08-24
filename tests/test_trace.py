@@ -273,6 +273,22 @@ def test_check_reports_a_file_that_moved_without_a_rebind(consumer):
     assert "the file changed without a rebind" in done.stdout
 
 
+def test_check_lists_the_code_class_per_file_not_per_binding(consumer):
+    """One file bound by many nodes that changes once is one act to take, not one line per
+    binding: the remedy is a reconciliation, invoked over a file set, so the listing is keyed
+    by file. The tally still counts bindings — grouping is the listing's business only."""
+    bind(consumer)
+    bind(consumer, node="constraints/asynchronous-events")
+    path = consumer / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1
+    assert done.stdout.count("the file changed without a rebind") == 1
+    assert (f"backend/{FILE}: the file changed without a rebind — 2 binding(s): "
+            f"constraints/asynchronous-events, {NODE}") in done.stdout
+    assert "2 code over 1 file(s):" in done.stdout
+
+
 def test_check_reports_a_node_that_left_the_specification_without_breaking_it(consumer):
     """A constraint is not held to reachability, so removing it leaves everything else sound —
     the one case where a node can vanish without the whole base going unsound around it."""
@@ -549,7 +565,7 @@ def test_check_tallies_drift_by_class(consumer):
     assert done.returncode == 1
     assert "1 orphaned:" in done.stdout
     assert "0 moved:" in done.stdout
-    assert "2 code:" in done.stdout, done.stdout
+    assert "2 code over 1 file(s):" in done.stdout, done.stdout
     assert "`--prune` is the only thing that clears them" in done.stdout
 
 

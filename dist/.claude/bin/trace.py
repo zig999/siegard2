@@ -35,6 +35,14 @@ Left unpruned, the orphaned class is what makes the other two unreadable. A tree
 stale entries reports eighty-three findings the day three files drift, and nobody reads the three:
 the report a caller stops reading is a report that says nothing, however true every line of it is.
 
+The `code` class has the same arithmetic inside itself, and the listing answers it the same way.
+One file bound by sixteen nodes drifts sixteen findings the day it changes once — a live consumer
+tree measured exactly that, one shared service file burying the report on every edit — so the
+listing prints that class per file: one line naming the file, the reason, and every binding the
+change staled. The findings are still counted per binding, because that is what they are; the
+grouping is the listing's, because the remedy for this class is a reconciliation and a
+reconciliation is invoked over a file set — the report is keyed the way the remedy consumes it.
+
 The same arithmetic is what `edits_freely` answers, one class over. A target whose surface changes
 for reasons no node governs — a label, a colour, a column's order — produces a `code` finding per
 edit, weekly, and buries `moved` and `orphaned` under a list nobody finishes. So a project may name
@@ -280,7 +288,12 @@ def drift_of(declared: dict,
     Refusals come back apart from findings because they are not findings. A specification that does
     not resolve or does not hold together says nothing about any binding — reporting `orphaned` for
     every node of a base nobody could read would be this script inventing drift out of its own
-    blindness."""
+    blindness.
+
+    A `code` finding's message carries the reason alone — the node and the path already ride the
+    tuple's own slots, and the report lists this class per file (`code_report`), so a message
+    restating either would be parsed back out of prose to group it. The pinned digests are not in
+    the message either: the trace file holds them, and a reconciliation reads them there."""
     spec_root = home / declared["specification"]
     if not spec_root.is_dir():
         return [], [f"specification: {spec_root} is not a directory; "
@@ -305,15 +318,10 @@ def drift_of(declared: dict,
             where = file_entry["path"]
             path = home / where
             if not path.is_file():
-                findings.append((CODE, node_id, where,
-                                 f"{node_id}: {where} no longer exists"))
+                findings.append((CODE, node_id, where, "the file no longer exists"))
                 continue
-            now = spec.digest_of(path)
-            if now != file_entry["digest"]:
-                findings.append((CODE, node_id, where,
-                                 f"{node_id}: {where} bound at "
-                                 f"{file_entry['digest']}, now {now}; the file changed without "
-                                 f"a rebind"))
+            if spec.digest_of(path) != file_entry["digest"]:
+                findings.append((CODE, node_id, where, "the file changed without a rebind"))
     return findings, []
 
 
@@ -450,6 +458,24 @@ def stale_after(declared: dict, home: Path, acted: dict[str, str],
                     stale.append((node, path, "carried forward from an earlier bind, and the "
                                               "file has since changed"))
     return sorted(stale)
+
+
+def code_report(findings: list[tuple[str, str, str | None, str]]) -> list[str]:
+    """The `code` class, listed per file rather than per binding.
+
+    A file bound by sixteen nodes that changes once is one act to take, not sixteen lines to
+    read — the live consumer runs measured exactly that shape, one shared service file burying
+    the report every time it moved. The remedy for this class is a reconciliation, and a
+    reconciliation is invoked over a file set, so the listing is keyed the way the remedy
+    consumes it: one line per file, naming every binding the change staled. Nothing about the
+    findings themselves changes — the tally still counts bindings, `suppressed()` still counts
+    both, and the trace still holds one entry per node — grouping is the listing's business
+    and stops there."""
+    grouped: dict[tuple[str, str], list[str]] = {}
+    for _, node_id, where, why in findings:
+        grouped.setdefault((where, why), []).append(node_id)
+    return [f"{where}: {why} — {len(nodes)} binding(s): {', '.join(sorted(nodes))}"
+            for (where, why), nodes in sorted(grouped.items())]
 
 
 def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]) -> str:
@@ -1074,16 +1100,26 @@ def main() -> int:
     if listed:
         # Class by class rather than one flat list: the tally is what a reader acts on, and the
         # orphaned count is what says how much of this report no rebind will ever shorten.
-        for cls in (ORPHANED, MOVED, CODE):
+        # `code` alone is listed per file (code_report): its remedy is a reconciliation, which
+        # is invoked over a file set, so its listing is keyed the way the remedy consumes it.
+        for cls in (ORPHANED, MOVED):
             for finding in [f for f in listed if f[0] == cls]:
                 print(finding[3])
+        code_listed = [f for f in listed if f[0] == CODE]
+        for line in code_report(code_listed):
+            print(line)
         print(f"\n{len(listed)} drift finding(s) over {count} binding(s):")
         for cls in (ORPHANED, MOVED, CODE):
             # The suppressed count rides its own class's line rather than sitting under the tally:
             # `0 code` printed above a receipt saying one was held back is a line a reader can
             # finish and walk away from.
             also = f" ({len(held)} suppressed)" if cls == CODE and held else ""
-            print(f"  {sum(1 for f in listed if f[0] == cls)} {cls}{also}: {CLASSES[cls]}")
+            tally = sum(1 for f in listed if f[0] == cls)
+            # The file count rides the code tally because the listing above is keyed by file:
+            # `16 code over 2 file(s)` is what says sixteen findings are two acts, not sixteen.
+            over = (f" over {len({f[2] for f in code_listed})} file(s)"
+                    if cls == CODE and code_listed else "")
+            print(f"  {tally} {cls}{over}{also}: {CLASSES[cls]}")
     else:
         print(f"no drift: {count} binding(s) match the specification and the code as both stand "
               f"now" if not held else

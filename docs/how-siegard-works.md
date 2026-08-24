@@ -695,14 +695,19 @@ moved since this bind
 
 ```
 $ python3 bin/trace.py --check ./target
-domain/sales/order: target/src/orders/place.ts bound at sha256:2489745f...818a, now
-sha256:bd5a03aa...4151; the file changed without a rebind
+target/src/orders/place.ts: the file changed without a rebind — 1 binding(s): domain/sales/order
 
 1 drift finding(s) over 1 binding(s):
   0 orphaned: ...
   0 moved: ...
-  1 code: bound to a file that changed or is gone — rebind whoever owns the change
+  1 code over 1 file(s): bound to a file that changed or is gone — rebind whoever owns the change
 ```
+
+The `code` class is listed per file, not per binding: one shared file bound by sixteen nodes
+drifts sixteen findings the day it changes once, and sixteen lines saying so is the report
+nobody reads. The line names the file, the reason, and every binding the change staled — the
+shape a reconciliation is invoked in — while the tally still counts bindings, so the numbers
+stay comparable across runs.
 
 A target declared `edits_freely` — the same drift, counted instead of listed:
 

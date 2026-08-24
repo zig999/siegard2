@@ -112,8 +112,10 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>
 ```
 
 This is the reverse lookup for what drifted, and drift is all it reports: the trace is keyed by
-node, and what makes a file findable in this output is that the file changed. Read the findings,
-and keep the ones whose path is in the file set.
+node, and what makes a file findable in this output is that the file changed. The `code` class is
+listed per file — one line naming the file, the reason, and every binding the change staled, which
+is this skill's own shape: a reconciliation is invoked over a file set. Read the findings, and
+keep the lines whose path is in the file set.
 
 Then open `siegard-trace.json` itself, beside `siegard.json` at the target's git toplevel, and read
 its `bindings` for every named file the findings did not name. That second reading is what
