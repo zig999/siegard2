@@ -42,10 +42,13 @@ Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, befor
 the same anchor, so a path spelled from the repository answers to no rule.
 
 **The project's standard** resolves as it does everywhere: from `siegard.json`, unless the
-invocation names a different one, and the report says which answered. Here it is required rather
-than optional — a check with no registry has nothing to read the files against, and there is no
-narrower thing for it to do. Where neither answers, that is the stop, and the report carries the
-`/siegard-config` invocation ready to paste.
+invocation names a different one, and the report says which answered. A standard governs one
+target, so the file's answer is the `project.py` line for the target this invocation names — the
+one `standard:` line of a one-target project, or that target's `standard <target>:` line — never
+another target's. Here it is required rather than optional — a check with no registry has nothing
+to read the files against, and there is no narrower thing for it to do; `null` for this target is
+the same stop, said in the file's own words. Where neither answers, that is the stop, and the
+report carries the `/siegard-config` invocation ready to paste, naming this target.
 
 Absent inputs stop once, together: one stop naming everything missing, so the human answers once.
 

@@ -54,7 +54,7 @@ These are the nouns. Each is a set of files on disk, never a database, never a c
 
 | Artifact | Where it lives | Written by | What it is |
 |---|---|---|---|
-| **`siegard.json`** | at the consumer project's git root | a human, through `/siegard-config` | The project's own settings: where its specification, plan, delivery and trace live, and which file is its "standard" (its own house rules). Every other skill reads this once instead of asking the human to retype paths every time. |
+| **`siegard.json`** | at the consumer project's git root | a human, through `/siegard-config` | The project's own settings: where its specification, plan, delivery and trace live, and which file is each target's "standard" (its own house rules — one registry per target, since a backend's rules are the wrong rules for its frontend). Every other skill reads this once instead of asking the human to retype paths every time. |
 | **The specification** | a tree of markdown files under a "specification root" | a human's material, turned into nodes by `/analyse`; extended by `/plan-work`'s decided-fact route where planning finds a fact no node states | What the system must do, in five kinds of node: Domain Model, Rule, Scenario, Contract, Architecture Constraint. This is the one authority — if code and a specification node disagree, the node is right and the code is the bug. Every fact it carries that no material stated is disclosed in `decision-log.md`, whichever entry point decided it. |
 | **The plan** | a tree of markdown files under a "work root" | a human's scope, turned into nodes by `/plan-work` | The development plan: an inventory of the existing codebase, epics, and tasks. Every task names exactly which specification nodes it implements. |
 | **The delivery** | a tree of markdown files under a "delivery root" | `/implement-task` (writes) and `/review-change` (adds findings) | The record of what was actually built: one implementation record and one proof (tests) record per task, plus reviews. This is evidence, not a verdict — nothing here decides whether the project is "done." |
@@ -131,6 +131,26 @@ target backend: /home/dev/checkout-service/target
 work_root: /home/dev/checkout-service/work
 delivery_root: /home/dev/checkout-service/delivery
 ```
+
+A standard governs one target. A project with more than one target declares `standard` as an
+object keyed by the same names `targets` uses, and each entry prints on its own line — the skill
+reads the line for the target it was invoked over, and a target without a line is the same stop
+an undeclared field is:
+
+```
+$ python3 bin/project.py .
+standard backend: /home/dev/shop/standards/backend-node-service.yaml
+standard frontend: /home/dev/shop/standards/frontend-typescript.yaml
+specification_root: /home/dev/shop/specification
+target backend: /home/dev/shop/src
+target frontend: /home/dev/shop/frontend/app
+...
+```
+
+A bare `standard` path over two or more targets is refused (exit 1), with the per-target
+`/siegard-config` declaration printed ready to paste: one registry answering for two stacks is the
+wrong registry for one of them, and that mistake passes every structural check because two npm
+packages hold the same manifest names. `standard: null` stands in either shape.
 
 There is no artifact besides this screen output — `project.py` derives nothing to disk.
 

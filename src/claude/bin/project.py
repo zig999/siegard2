@@ -17,6 +17,13 @@ file does not declare one, that is the calling skill's stop to raise, never this
 around. This script prints only what stands; deciding that an absence is a stop belongs to
 whichever skill needed the field.
 
+A standard governs one target. Declared as an object keyed by target, each entry prints on its
+own line — `standard <target>: <path>` or `standard <target>: declared none` — and the calling
+skill reads the line for the target it was invoked over; a target the object lacks a line for is
+an absence, and the skill's stop. Declared as a bare path, it prints as `standard: <path>` and is
+refused here where `targets` holds more than one key: one registry answering for two stacks is
+the wrong registry for one of them, and that error passes every structural check.
+
 Declared dependencies: jsonschema.
 
 Usage:  project.py <project-root>    resolve siegard.json for the tree holding <project-root> —
@@ -111,12 +118,16 @@ def main() -> int:
     # Every declared path is relative to this file's own directory, which is what the contract
     # says of each of them. An absolute one silently wins the join (`home / "/etc/x"` is
     # `/etc/x`) and points every later reader outside the project it declared.
+    standard = declared.get("standard")
+    standards = (sorted(standard.items()) if isinstance(standard, dict)
+                 else [(None, standard)] if "standard" in declared else [])
     escaped = sorted(
         f"{where}: {value}"
-        for where, value in [("standard", declared.get("standard")),
-                             ("specification_root", declared.get("specification_root")),
+        for where, value in [("specification_root", declared.get("specification_root")),
                              ("work_root", declared.get("work_root")),
                              ("delivery_root", declared.get("delivery_root"))]
+        + [("standard" if name is None else f"standard.{name}", path)
+           for name, path in standards]
         + [(f"targets.{name}", path)
            for name, path in sorted(declared.get("targets", {}).items())]
         if isinstance(value, str) and Path(value).is_absolute())
@@ -135,17 +146,43 @@ def main() -> int:
                   f"exemption it was written for is silently suppressing nothing")
         return 1
 
-    if "standard" in declared:
-        standard = declared["standard"]
-        if standard is None:
-            print("standard: declared none")
-        else:
-            resolved = home / standard
-            if not resolved.is_file():
-                print(f"{target}: names {resolved}, which does not exist; a declaration that "
-                      f"outlived its registry is corrected in the file, never guessed around")
-                return 1
-            print(f"standard: {resolved}")
+    # A standard governs one target. As an object it is keyed by target, and a key `targets`
+    # does not hold governs nothing — the same silent no-op `edits_freely` is refused for above.
+    # As a bare path it governs the one target the project has; over two or more it would answer
+    # for a stack it was never written against, and the wrong registry passes the structural
+    # check (two npm packages hold the same manifest names) and fails only once a rule's content
+    # is applied, so the refusal is here, where it is cheap, rather than in a review, where it is
+    # a finding nobody asked for.
+    targets = declared.get("targets", {})
+    if isinstance(standard, dict):
+        unknown = sorted(set(standard) - set(targets))
+        if unknown:
+            for name in unknown:
+                print(f"{target}: standard names {name}, which targets does not declare; a "
+                      f"registry keyed by a target nobody declared governs nothing")
+            return 1
+    elif isinstance(standard, str) and len(targets) > 1:
+        names = ", ".join(sorted(targets))
+        print(f"{target}: standard names one registry, {standard}, while targets declares "
+              f"{len(targets)} ({names}); a standard governs one target, and one registry "
+              f"answering for every target answers wrongly for all but one. Declare one per "
+              f"target — ready to paste, with the registry each target follows, or null where "
+              f"it follows none:\n\n  /siegard-config\n\n  Project root: {home}\n"
+              + "".join(f"  Standard for {name}: <registry path, or null>\n"
+                        for name in sorted(targets)))
+        return 1
+
+    for name, path in standards:
+        label = "standard" if name is None else f"standard {name}"
+        if path is None:
+            print(f"{label}: declared none")
+            continue
+        resolved = home / path
+        if not resolved.is_file():
+            print(f"{target}: {label} names {resolved}, which does not exist; a declaration "
+                  f"that outlived its registry is corrected in the file, never guessed around")
+            return 1
+        print(f"{label}: {resolved}")
 
     if "specification_root" in declared:
         print(f"specification_root: {home / declared['specification_root']}")

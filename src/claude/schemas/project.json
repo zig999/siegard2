@@ -7,9 +7,17 @@
   "additionalProperties": false,
   "properties": {
     "standard": {
-      "type": ["string", "null"],
-      "minLength": 1,
-      "description": "The project's registry of rules, by path relative to this file's own directory — the artifact `schemas/standard.json` is the contract for. `null` is a full answer, not an omission: it declares the project authors no standard, so every entry point takes the honestly narrow path without asking again. That is a different fact from this field being absent, which — like every field's absence here — declares nothing: the project has not gotten to it yet, not decided against it."
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "#/$defs/slug" },
+          "additionalProperties": { "type": ["string", "null"], "minLength": 1 }
+        }
+      ],
+      "description": "The project's registry of rules — the artifact `schemas/standard.json` is the contract for — in one of two shapes. As an object, one entry per target, keyed exactly as `targets` keys them, each value a path relative to this file's own directory or `null`: an entry point resolves `standard[<the target it was invoked over>]`, and a key `targets` does not hold is a defect `bin/project.py` refuses, never a target nobody declared. A standard governs one target (see `/siegard-standard`), so this is the shape a project with more than one target declares; an entry the object lacks for a target declares nothing for it, and stops an entry point invoked over that target exactly as an absent field would. As a bare path, the shape a project with one target declares: it governs that target, and `bin/project.py` refuses it where `targets` holds more than one key — a single registry silently answering for two stacks is the wrong registry answering for one of them, and the refusal carries the per-target declaration ready to paste. `null`, in either shape, is a full answer, not an omission: it declares the project authors no standard for the target it covers, so every entry point takes the honestly narrow path without asking again. That is a different fact from this field being absent, which — like every field's absence here — declares nothing: the project has not gotten to it yet, not decided against it."
     },
     "specification_root": {
       "type": "string",

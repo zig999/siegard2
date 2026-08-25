@@ -16,10 +16,13 @@ A missing input is a stop, not a default:
 1. **the project root** — where `siegard.json` lives, or will. Named by the human; inferred
    rather than named, its absence is a stop.
 2. **at least one field to declare** — any of `specification_root`, one or more `targets`
-   entries (a name and a path each), `work_root`, `delivery_root`, `standard` (a path, or
-   `null` to declare deliberately that the project authors none), or `edits_freely` (the targets
-   whose source a person changes without a task, by their keys in `targets`). An invocation
-   naming none has nothing to write, and is a stop.
+   entries (a name and a path each), `work_root`, `delivery_root`, one or more `standard`
+   entries (a target's key in `targets` and, for it, a registry's path or `null` to declare
+   deliberately that the project authors none for that target — a standard governs one target,
+   and a path stated with no target is a full answer only in a project whose `targets` holds
+   exactly one key, where that key is decided and disclosed rather than asked), or
+   `edits_freely` (the targets whose source a person changes without a task, by their keys in
+   `targets`). An invocation naming none has nothing to write, and is a stop.
 
 ## Before anything: the tree
 
@@ -63,6 +66,18 @@ A `targets` entry the human names is added under its own key, or overwrites the 
 at that key; a key the human does not name is left standing. There is no way to remove a key, or
 any other field, through this step — a deliberate removal is a fresh declaration of the whole
 file, named as such in the report, never a silent side effect of naming other fields.
+
+`standard` has two shapes the contract admits, and the merge keeps whichever one the result must
+hold. Where the human names a target with the value, the field is written as an object keyed by
+target: the named key is added or overwritten, and a key the human did not name is left standing,
+exactly as `targets` entries are. Where the file held a bare path or `null` and the human now
+names a target, the bare value has no target to be kept under, and the result is a fresh
+declaration of the field holding only the entries this invocation named — say so in the report,
+by name, as the removal of the bare value it is, never as a side effect. The reverse conversion,
+from an object back to a bare value, is the same fresh declaration, said the same way, and it is
+only a valid result where `targets` holds one key: `project.py` refuses one registry declared
+over two or more targets, and that refusal is the validate step's to report, never this step's to
+guess around by picking one.
 
 `edits_freely` is written as the human states it, whole: it is a list, and a list overlaid entry
 by entry could never lose one, so naming it replaces it. Two things belong in the report when it
@@ -117,6 +132,9 @@ Then stop. `git diff` over `siegard.json` is the review, and it belongs to a per
 - Require a `targets` entry, `work_root` or `delivery_root` to already exist on disk — a
   container or a target may legitimately not exist yet; only `standard`, named as a path, must
   resolve to a file that does.
+- Key a `standard` entry by a target `targets` does not hold, or fill a target's `standard`
+  entry the human did not state from another target's — a registry is written against one
+  stack, and the neighbouring one is the wrong answer, not a default.
 - Commit, stash, or otherwise change the consumer's git state — a dirty tree is reported, and
   what to do with it is the human's call.
 - Restate the contract's vocabularies from memory instead of reading the schema.

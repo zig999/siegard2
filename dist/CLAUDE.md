@@ -189,7 +189,7 @@ the file itself**. `/siegard-config` is the one writer.
 | `targets` | one target source root per name the project chooses (`backend`, `frontend`, …) | no |
 | `work_root` | the container all initiatives' work roots live under | no |
 | `delivery_root` | the container all initiatives' delivery roots live under | no |
-| `standard` | the project's own registry of rules | **yes** — the report says both existed and which won |
+| `standard` | the project's registry of rules — one per target, keyed as `targets` keys them; a bare path only where `targets` holds one key | **yes** — the report says both existed and which won |
 | `edits_freely` | the targets whose source a person changes without a task | no |
 
 - **The four structural fields answer only from the file.** Naming one in an invocation has no
@@ -200,9 +200,16 @@ the file itself**. `/siegard-config` is the one writer.
 - An invocation still names what is inherently per-use: **which target**, by its key into `targets`;
   and **which initiative**, by a slug resolving to `<work_root>/<slug>` and `<delivery_root>/<slug>`
   — including a closed initiative still being reviewed.
-- `standard: null` says deliberately that the project has none: a full answer, not an omission. A
-  field's plain absence says the opposite — not declared yet, not decided against — and for the four
-  structural fields that absence is what stops an entry point until `/siegard-config` closes it.
+- **A standard governs one target.** An entry point resolves `standard` for the target it was
+  invoked over — the entry under that target's key, or the bare path in a one-target project — and
+  never a neighbouring target's. A bare path over two or more targets is refused by `project.py`,
+  because a backend's registry passes every structural check against a frontend tree (both are npm
+  packages holding the same manifest names) and answers wrongly only once a rule's content is read.
+- `standard: null` — bare, or under a target's key — says deliberately that the project has none
+  for what it covers: a full answer, not an omission. A field's plain absence says the opposite —
+  not declared yet, not decided against — and for the four structural fields that absence is what
+  stops an entry point until `/siegard-config` closes it. A target the `standard` object holds no
+  entry for is that same absence, for that target.
 - **`edits_freely` stops no entry point, ever.** It is the one field nothing demands: absent, every
   target is held to all three drift classes, which is what every project was held to before it
   existed. What it changes is one line of one report — `trace.py --check` counts the `code` class

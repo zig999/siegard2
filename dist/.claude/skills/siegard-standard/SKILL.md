@@ -141,8 +141,9 @@ Report, in this order:
   or step 2 actually supplied — so a human reviewing this can decide whether to supply what is
   missing and ask again;
 - the `deliver.py --standard` output, verbatim, both plain and `--against`;
-- the path, ready to hand to `/siegard-config --standard <path>` — one slot left open, because
-  naming this the project's standard is the human's decision, never this skill's to make on its own
-  invocation.
+- the path, ready to hand to `/siegard-config` as the standard for the target this invocation
+  governs — both the target's key and the path filled in, since this invocation was given both —
+  and nothing more filled, because naming this the project's standard is the human's decision,
+  never this skill's to make on its own invocation.
 
 Then stop. `git diff` over the standard's own path is the review, and it belongs to a person.

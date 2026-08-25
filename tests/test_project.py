@@ -102,6 +102,112 @@ def test_a_missing_directory_cannot_run(tmp_path):
     assert "is not a directory" in done.stderr
 
 
+# ------------------------------------------------------- a standard per target
+
+
+def registry(consumer: Path, name: str) -> str:
+    (consumer / "standards").mkdir(exist_ok=True)
+    (consumer / f"standards/{name}.yaml").write_text("rules: []\n", encoding="utf-8")
+    return f"standards/{name}.yaml"
+
+
+TWO_TARGETS = {"backend": "backend", "frontend": "frontend"}
+
+
+def test_a_standard_per_target_prints_one_line_per_target(consumer):
+    back, front = registry(consumer, "backend"), registry(consumer, "frontend")
+    declare(consumer, {"targets": TWO_TARGETS, "standard": {"backend": back, "frontend": front}})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert f"standard backend: {consumer / back}" in lines
+    assert f"standard frontend: {consumer / front}" in lines
+    assert "standard:" not in done.stdout
+
+
+def test_null_per_target_is_that_targets_full_answer(consumer):
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": TWO_TARGETS, "standard": {"backend": back, "frontend": None}})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "standard frontend: declared none" in done.stdout
+    assert f"standard backend: {consumer / back}" in done.stdout
+
+
+def test_a_target_the_object_lacks_prints_no_line_for_it(consumer):
+    """An entry the object lacks declares nothing for that target — the calling skill's stop,
+    exactly as an absent field is, and never this script's to fill from the other entry."""
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": TWO_TARGETS, "standard": {"backend": back}})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "standard frontend" not in done.stdout
+
+
+def test_a_standard_keyed_by_a_target_nobody_declared_is_refused(consumer):
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": {"backend": "backend"}, "standard": {"backend": back, "web": back}})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "standard names web, which targets does not declare" in done.stdout
+
+
+def test_one_registry_over_two_targets_is_refused_with_the_declaration_ready(consumer):
+    """The case that motivated the shape: a two-stack project whose bare `standard` named the
+    backend registry, so every frontend invocation had to override it by hand and any that
+    forgot got the wrong registry silently — the structural check passes on it, because two npm
+    packages hold the same manifest names. The refusal is here, with the fix ready to paste."""
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": TWO_TARGETS, "standard": back})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "a standard governs one target" in done.stdout
+    assert "/siegard-config" in done.stdout
+    assert "Standard for backend:" in done.stdout
+    assert "Standard for frontend:" in done.stdout
+
+
+def test_one_registry_over_one_target_still_stands(consumer):
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": {"backend": "backend"}, "standard": back})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"standard: {consumer / back}" in done.stdout
+
+
+def test_null_over_two_targets_still_stands(consumer):
+    """`null` names no registry, so it answers wrongly for nobody: none, for every target."""
+    declare(consumer, {"targets": TWO_TARGETS, "standard": None})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "standard: declared none" in done.stdout
+
+
+def test_a_per_target_registry_that_does_not_exist_is_refused(consumer):
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": TWO_TARGETS,
+                       "standard": {"backend": back, "frontend": "standards/gone.yaml"}})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "standard frontend names" in done.stdout
+    assert "which does not exist" in done.stdout
+
+
+def test_an_absolute_per_target_registry_is_refused(consumer):
+    back = registry(consumer, "backend")
+    declare(consumer, {"targets": TWO_TARGETS,
+                       "standard": {"backend": back, "frontend": str(consumer / back)}})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "standard.frontend" in done.stdout
+    assert "is absolute" in done.stdout
+
+
+def test_an_empty_standard_object_is_refused(consumer):
+    declare(consumer, {"targets": TWO_TARGETS, "standard": {}})
+    assert run(consumer / "backend").returncode == 1
+
+
 # ------------------------------------------------------- the roots beyond standard
 
 

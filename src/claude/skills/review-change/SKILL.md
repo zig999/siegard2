@@ -66,15 +66,20 @@ holds a registry to it with `deliver.py --standard <file>`; a standard that does
 is a stop, reported verbatim, and fixing it belongs to whoever owns it.
 
 The standard resolves in one order, from the same `project.py` run above, and the report says
-which step answered. Unlike the roots, **a naming in the invocation wins here**. This does not
-breach the rule below that an absent optional input never becomes a default: the file is the
-consumer's own declaration read from disk, not this framework choosing — and `null` there is
-the declaration that the project authored none, on which the standard pass does not run and the
-record says so in those words, a different absence from an input this invocation was not given.
-Where neither answers — no naming, no file, or the file simply does not declare the field — the
-standard joins the single stop of absent inputs: name it, or declare it through `/siegard-config`,
-and the stop's report carries that invocation ready to paste. A naming that overrode a differing
-file is reported with both. Below, a standard "named" means resolved by either step.
+which step answered. Unlike the roots, **a naming in the invocation wins here**. Where the
+invocation names none, the file answers **for the target**: a standard governs one target, so
+`project.py` prints either one `standard:` line for a one-target project or one
+`standard <target>:` line per target the file declares one for, and the line for the target this
+review names is the answer — never another target's line. This does not breach the rule below
+that an absent optional input never becomes a default: the file is the consumer's own declaration
+read from disk, not this framework choosing — and `null` there is the declaration that the
+project authored none for this target, on which the standard pass does not run and the record
+says so in those words, a different absence from an input this invocation was not given. Where
+neither answers — no naming, no file, the file not declaring the field, or the field declaring no
+entry for this target — the standard joins the single stop of absent inputs: name it, or declare
+it through `/siegard-config` for this target, and the stop's report carries that invocation ready
+to paste. A naming that overrode a differing file is reported with both. Below, a standard
+"named" means resolved by either step.
 
 It decides a second thing now: **the commands are the registry's.** A registry declares how the
 project is installed, checked and run, and those steps are what the capture below executes. This
