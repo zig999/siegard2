@@ -1,7 +1,7 @@
 # How Siegard works, for dummies
 
 This document explains, from zero, what the seven scripts under `src/claude/bin/` do, what files
-they read and write, how the ten skills and ten agents under `src/claude/` use them, and how all
+they read and write, how the eleven skills and ten agents under `src/claude/` use them, and how all
 of it adds up to one complete development process — from a human's idea to source code someone
 else can trust.
 
@@ -933,7 +933,7 @@ deliver.py   — reads the plan through plan.py's own pipeline; validates the de
      └── trace.py  — imports project.py + spec.py; outlives both plan and delivery
 ```
 
-## The ten skills
+## The eleven skills
 
 Skills are what a human actually types (`/analyse`, `/plan-work`, ...). Each one is "one
 invocation, one increment" — it does its job and stops; it never chains into the next skill on
@@ -950,6 +950,7 @@ its own.
 | **`/check-source`** | a file set a human names, delivered by no task | a check record at `siegard-check/<slug>.md` | `project.py`, `deliver.py --standard`, `deliver.py --check-record` | `standard-conformance-reviewer` |
 | **`/siegard-standard`** | what a project's own tooling already enforces, plus a human's words | the project's standard registry | `project.py`, `deliver.py --standard` | none |
 | **`/siegard-status`** | the question "where does this stand?" | a report derived from disk, writing nothing — deliveries, waits, BLOCKING notes, drift, recent decisions, ready next invocation | `project.py`, `spec.py`, `plan.py --check`, `deliver.py --outstanding`, `trace.py --check` | none |
+| **`/siegard-progress`** | the question "how is this one initiative doing?", asked repeatedly on a timer | a table, one row per task the initiative maps — status and why, writing nothing | `project.py`, `plan.py --check`, `deliver.py --outstanding` | none |
 | **`/siegard-archive`** | the human's ask to prune closed history from the tree | closed work+delivery pairs removed whole (history survives in git); the tag and commit handed ready, never run | `project.py`, `plan.py --check`, `deliver.py --check`, `spec.py`, `trace.py --check` | none |
 
 No agent holds a shell at all — `tests/test_agent_contract.py` fails the suite if any shipped

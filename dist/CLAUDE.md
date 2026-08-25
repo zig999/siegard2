@@ -284,6 +284,7 @@ is what makes it the only change this framework asks nothing of.
 | `/check-source` | holds a named file set to the rules a reading decides in the project's own standard, and records every departure | one file set |
 | `/siegard-standard` | transcribes what a project's own tooling and team already enforce into its standard registry | one registry |
 | `/siegard-status` | reads every root and reports where the work stands, writing nothing | one reading |
+| `/siegard-progress` | reads one live initiative's plan and delivery records and reports every task as a table row — status and why — writing nothing | one reading |
 | `/siegard-archive` | removes closed work and delivery pairs from the tree, leaving them in git | one pruning |
 
 Every one of them stops rather than continuing, and `git diff` is the review. `/siegard-config` must

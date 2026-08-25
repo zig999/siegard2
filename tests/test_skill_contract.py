@@ -45,6 +45,8 @@ SKILLS = {
                   "delegates": ["specification-conformance-reviewer"]},
     "siegard-status": {"contract": "schemas/project.json", "validator": "bin/project.py",
                        "delegates": []},
+    "siegard-progress": {"contract": "schemas/plan.json", "validator": "bin/deliver.py",
+                         "delegates": []},
     "siegard-archive": {"contract": "schemas/plan.json", "validator": "bin/plan.py",
                         "delegates": []},
     "siegard-standard": {"contract": "schemas/standard.json", "validator": "bin/deliver.py",
@@ -95,6 +97,10 @@ MODEL_MAY_REACH = {
     # so a session may reach for it when asked how the work stands — that reachability is the
     # skill's point.
     "siegard-status": True,
+    # The same reachability as /siegard-status, one initiative narrower: read-only, and its one
+    # extra input (the initiative) is inferred exactly as /siegard-status infers the project
+    # root — named when ambiguous, never asserted by the session.
+    "siegard-progress": True,
     # Removal is the one act whose want only the human can state — the same criterion that
     # closes /siegard-config: a session that "tidied up" on its own would be deciding an input
     # that was never its to assert.
