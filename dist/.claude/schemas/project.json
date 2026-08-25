@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/project.json",
   "title": "Siegard project file",
-  "description": "What a project declares once instead of naming per invocation: `siegard.json`, at the project's own root, holding every root a consumer would otherwise retype at every invocation. It is the consumer's own file — the framework ships this contract and `bin/project.py` to hold the file to it, and writes neither; `/siegard-config` is the one skill that writes it, from what a human tells it. Two resolution rules, and they differ on purpose. `standard` alone may be overridden by an invocation naming a different one, and the report says both existed and which won — a rule's own registry is sometimes worth trying a different one against. `specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: an invocation naming one of these paths instead has no effect, and their absence from this file is a stop, not a question the invocation can answer around it — a structural root is not something worth guessing at twice. Either way, an answer given in a session persists only by this file gaining it.",
+  "description": "What a project declares once instead of naming per invocation: `siegard.json`, at the project's own root, holding every root a consumer would otherwise retype at every invocation. It is the consumer's own file — the framework ships this contract and `bin/project.py` to hold the file to it, and writes neither; `/siegard-config` is the one skill that writes it, from what a human tells it. Two resolution rules, and they differ on purpose. `standard` alone may be overridden by an invocation naming a different one, and the report says both existed and which won — a rule's own registry is sometimes worth trying a different one against. `specification_root`, `targets`, `work_root`, `delivery_root` and `telemetry_root` answer only from here: an invocation naming one of these paths instead has no effect, and their absence from this file is a stop for whichever entry point needs them, not a question the invocation can answer around it — a root is not something worth guessing at twice. Either way, an answer given in a session persists only by this file gaining it.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -40,6 +40,11 @@
       "type": "string",
       "minLength": 1,
       "description": "Where this project's delivery records live, by path relative to this file's own directory, one subdirectory per initiative — the same slug that names its work root, since one initiative is one plan and one delivery."
+    },
+    "telemetry_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where this project's telemetry reports land, by path relative to this file's own directory — the one root nothing the framework builds, plans or delivers ever reads. A report is a record of how a stretch of work happened (which agents ran, what they cost, what refused, what stopped), written by `/siegard-telemetry` from disk and the harness's own session transcripts, named by the moment its window closed, and never overwritten: a second report over a window that already has one says so with a second name, the way `run.py` refuses a slug that exists. Read exclusively from here, like the structural roots: an invocation naming one instead has no effect, and its absence stops `/siegard-telemetry` — a report whose location was chosen per session would be a report nobody finds again. Absent, every other entry point runs exactly as before; this field gates one skill and nothing else."
     },
     "edits_freely": {
       "type": "array",

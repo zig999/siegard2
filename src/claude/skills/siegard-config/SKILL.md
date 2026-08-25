@@ -1,6 +1,6 @@
 ---
 name: siegard-config
-description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its standard, and which targets a person edits without a task — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
+description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, and which targets a person edits without a task — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
 disable-model-invocation: true
 effort: low
 ---
@@ -20,7 +20,8 @@ A missing input is a stop, not a default:
    entries (a target's key in `targets` and, for it, a registry's path or `null` to declare
    deliberately that the project authors none for that target — a standard governs one target,
    and a path stated with no target is a full answer only in a project whose `targets` holds
-   exactly one key, where that key is decided and disclosed rather than asked), or
+   exactly one key, where that key is decided and disclosed rather than asked), `telemetry_root`
+   (where `/siegard-telemetry` lands its reports — the one root nothing else reads), or
    `edits_freely` (the targets whose source a person changes without a task, by their keys in
    `targets`). An invocation naming none has nothing to write, and is a stop.
 
@@ -129,7 +130,7 @@ Then stop. `git diff` over `siegard.json` is the review, and it belongs to a per
 - Remove a field the human did not ask to change.
 - Write anything other than `siegard.json` — no specification, no plan, no delivery, no
   standard's content.
-- Require a `targets` entry, `work_root` or `delivery_root` to already exist on disk — a
+- Require a `targets` entry, `work_root`, `delivery_root` or `telemetry_root` to already exist on disk — a
   container or a target may legitimately not exist yet; only `standard`, named as a path, must
   resolve to a file that does.
 - Key a `standard` entry by a target `targets` does not hold, or fill a target's `standard`

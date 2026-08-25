@@ -287,3 +287,20 @@ def test_a_project_declaring_no_freely_edited_target_says_nothing_about_it(consu
 def test_a_freely_edited_key_the_contract_refuses(consumer):
     declare(consumer, {"targets": {"backend": "backend"}, "edits_freely": ["Not A Slug"]})
     assert run(consumer / "backend").returncode == 1
+
+
+def test_telemetry_root_prints_resolved_like_every_other_root(consumer):
+    """The one root nothing the framework builds or delivers ever reads. It prints from here so
+    that `/siegard-telemetry` finds the reports where the project said they live, never where a
+    session chose."""
+    declare(consumer, {"telemetry_root": "telemetry"})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"telemetry_root: {consumer / 'telemetry'}" in done.stdout
+
+
+def test_an_absolute_telemetry_root_is_refused(consumer):
+    declare(consumer, {"telemetry_root": "/var/telemetry"})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "telemetry_root: /var/telemetry is absolute" in done.stdout

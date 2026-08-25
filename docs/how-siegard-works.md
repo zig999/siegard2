@@ -1,7 +1,7 @@
 # How Siegard works, for dummies
 
-This document explains, from zero, what the seven scripts under `src/claude/bin/` do, what files
-they read and write, how the eleven skills and ten agents under `src/claude/` use them, and how all
+This document explains, from zero, what the eight scripts under `src/claude/bin/` do, what files
+they read and write, how the twelve skills and ten agents under `src/claude/` use them, and how all
 of it adds up to one complete development process — from a human's idea to source code someone
 else can trust.
 
@@ -54,7 +54,7 @@ These are the nouns. Each is a set of files on disk, never a database, never a c
 
 | Artifact | Where it lives | Written by | What it is |
 |---|---|---|---|
-| **`siegard.json`** | at the consumer project's git root | a human, through `/siegard-config` | The project's own settings: where its specification, plan, delivery and trace live, and which file is each target's "standard" (its own house rules — one registry per target, since a backend's rules are the wrong rules for its frontend). Every other skill reads this once instead of asking the human to retype paths every time. |
+| **`siegard.json`** | at the consumer project's git root | a human, through `/siegard-config` | The project's own settings: where its specification, plan, delivery, telemetry and trace live, and which file is each target's "standard" (its own house rules — one registry per target, since a backend's rules are the wrong rules for its frontend). Every other skill reads this once instead of asking the human to retype paths every time. |
 | **The specification** | a tree of markdown files under a "specification root" | a human's material, turned into nodes by `/analyse`; extended by `/plan-work`'s decided-fact route where planning finds a fact no node states | What the system must do, in five kinds of node: Domain Model, Rule, Scenario, Contract, Architecture Constraint. This is the one authority — if code and a specification node disagree, the node is right and the code is the bug. Every fact it carries that no material stated is disclosed in `decision-log.md`, whichever entry point decided it. |
 | **The plan** | a tree of markdown files under a "work root" | a human's scope, turned into nodes by `/plan-work` | The development plan: an inventory of the existing codebase, epics, and tasks. Every task names exactly which specification nodes it implements. |
 | **The delivery** | a tree of markdown files under a "delivery root" | `/implement-task` (writes) and `/review-change` (adds findings) | The record of what was actually built: one implementation record and one proof (tests) record per task, plus reviews. This is evidence, not a verdict — nothing here decides whether the project is "done." |
@@ -69,8 +69,13 @@ Two smaller files worth knowing:
 - **`siegard-check/<slug>.md`** — a record written by `/check-source`: the project's own house
   rules read over a set of files nobody delivered through a task. It is what the fourth route
   above has instead of a review.
+- **`<telemetry_root>/<stamp>.json` and `.md`** — a telemetry report written by
+  `/siegard-telemetry`: how one window of work happened (which agents ran and what they cost,
+  which commands refused, what the runs took, what stopped, what was decided), counted from disk
+  and from the harness's own session transcripts. It is the one artifact nothing the framework
+  builds ever reads — it exists to be sent back to the framework's maintainer.
 
-## The seven scripts
+## The eight scripts
 
 These are the verbs. Every one of them is read-only over its inputs except for the one file it is
 explicitly allowed to derive (a `--check`/plain distinction runs through the three that write —
@@ -937,6 +942,73 @@ $ python3 bin/terms.py gizmo
 no contract defines gizmo
 ```
 
+### 8. `telemetry.py`
+
+**General.** Counts how a stretch of work happened — not what it delivered — and writes the counts
+as a record held to `schemas/telemetry.json`. It is the one script that reads outside the project:
+the harness keeps a transcript of every session under `~/.claude/projects/<working directory,
+non-alphanumerics replaced by hyphens>/`, one `.jsonl` per session and a `subagents/` directory
+beside it with one transcript per agent spawned — and that is the only place on disk that records
+which subagent ran, when, how many tokens it spent and how long it took. A session opened in a
+subdirectory of the project lands in a sibling directory under a longer name; those are read too,
+but only where a session there recorded a working directory under the project — a neighbouring
+project whose name merely extends this one's is never read. Everything else comes
+from the framework's own files: `run/<slug>/run.json` under each delivery root, `## Notes` on
+every plan node, `decision-log.md`, and git. Dependencies: PyYAML, jsonschema; imports `spec.py`
+and `plan.py`; runs `project.py` for the roots rather than reading `siegard.json` itself.
+
+- **Reads:** the transcripts, the runs, the plan nodes, the decision log, git history.
+  **Writes:** `<telemetry_root>/<stamp>.json`, and refuses a stamp that already exists.
+
+What never leaves the transcripts is worth stating: agent types, descriptions, token counts,
+timestamps, and the command lines that invoked this framework's scripts — no prompt, reply or
+tool result text. A section whose source could not be read is recorded as unavailable with its
+reason, never filled with a plausible value; the prose report's completeness verdict is computed
+from that list.
+
+#### `telemetry.py --probe <project-root> --since <ISO-8601|last> [--until <ISO-8601>] [--transcripts DIR]`
+
+- **Function:** says what the full form would read and writes nothing — the transcript directory,
+  whether it is readable, which sessions overlap the window, where the report would land.
+- **When to use it:** always, before the full form; `/siegard-telemetry` quotes its output to the
+  human before any transcript is read.
+- **Read or write:** read-only.
+
+```
+$ python3 bin/telemetry.py --probe . --since 2026-08-20T10:00:00Z --until 2026-08-20T12:00:00Z
+window: 2026-08-20T10:00:00.000Z .. 2026-08-20T12:00:00.000Z (since named)
+telemetry_root: /home/dev/checkout-service/telemetry
+transcripts: /home/dev/.claude/projects/-home-dev-checkout-service — readable
+sessions overlapping the window: 1
+  s1: 10 entries, 1 human turns, working directories /home/dev/checkout-service
+what leaves the transcripts: agent types, descriptions, token counts, timestamps, and the command lines that invoked this framework's scripts — no message text
+would write: /home/dev/checkout-service/telemetry/20260820T120000Z.json
+```
+
+#### `telemetry.py <project-root> --since <ISO-8601|last> [--until <ISO-8601>] [--transcripts DIR]`
+
+- **Function:** counts the window and writes the record. `--since last` continues from the
+  `until` of the newest report already in the telemetry root; `--until` defaults to now.
+- **When to use it:** from `/siegard-telemetry`, after the probe has been announced.
+- **Read or write:** writes one file, named by the moment the window closed. Exits 1 where the
+  project declares no `telemetry_root` (printing the `/siegard-config` invocation) or where the
+  stamp already has a report.
+
+```
+$ python3 bin/telemetry.py . --since 2026-08-20T10:00:00Z --until 2026-08-20T12:00:00Z
+window: 2026-08-20T10:00:00.000Z .. 2026-08-20T12:00:00.000Z (since named)
+framework: 3.21.0 at /home/dev/checkout-service/.claude
+transcripts: /home/dev/.claude/projects/-home-dev-checkout-service — readable; 1 session(s) overlap the window
+agents: 2 spawned, 1 with a transcript, 500 output tokens, 268.0s
+commands: 2 invoking this framework's scripts, 1 exiting non-zero
+runs: 1 captured
+commits: 1; uncommitted: 0
+decisions added: 1 (baseline: commit 3a292a65e41d5a622b1c08be1638e0f54e00641e)
+notes standing: 2
+unavailable: nothing
+report: /home/dev/checkout-service/telemetry/20260820T120000Z.json
+```
+
 ```
 project.py   — reads siegard.json
      │
@@ -951,9 +1023,12 @@ deliver.py   — reads the plan through plan.py's own pipeline; validates the de
      │
      ├── run.py    — executes build/test commands the delivery's records point at
      └── trace.py  — imports project.py + spec.py; outlives both plan and delivery
+
+telemetry.py — imports spec.py + plan.py, runs project.py; reads the runs, the notes, the
+               decision log, git, and the harness's transcripts; nothing below reads what it writes
 ```
 
-## The eleven skills
+## The twelve skills
 
 Skills are what a human actually types (`/analyse`, `/plan-work`, ...). Each one is "one
 invocation, one increment" — it does its job and stops; it never chains into the next skill on
@@ -971,6 +1046,7 @@ its own.
 | **`/siegard-standard`** | what a project's own tooling already enforces, plus a human's words | the project's standard registry | `project.py`, `deliver.py --standard` | none |
 | **`/siegard-status`** | the question "where does this stand?" | a report derived from disk, writing nothing — deliveries, waits, BLOCKING notes, drift, recent decisions, ready next invocation | `project.py`, `spec.py`, `plan.py --check`, `deliver.py --outstanding`, `trace.py --check` | none |
 | **`/siegard-progress`** | the question "how is this one initiative doing?", asked repeatedly on a timer | a table, one row per task the initiative maps — status and why, writing nothing | `project.py`, `plan.py --check`, `deliver.py --outstanding` | none |
+| **`/siegard-telemetry`** | a window of time (two instants, or `last`) | `<telemetry_root>/<stamp>.json` — every count a retrospective needs, from disk and the harness's transcripts (probed and announced before they are read) — and the English prose report beside it, every claim tagged with its source | `project.py`, `telemetry.py --probe`, `telemetry.py` | none |
 | **`/siegard-archive`** | the human's ask to prune closed history from the tree | closed work+delivery pairs removed whole (history survives in git); the tag and commit handed ready, never run | `project.py`, `plan.py --check`, `deliver.py --check`, `spec.py`, `trace.py --check` | none |
 
 No agent holds a shell at all — `tests/test_agent_contract.py` fails the suite if any shipped

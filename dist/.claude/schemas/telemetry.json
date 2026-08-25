@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/telemetry.json",
+  "title": "Siegard telemetry report",
+  "description": "How a stretch of work with this framework happened — not what it delivered. Written by `bin/telemetry.py` at `<telemetry_root>/<stamp>.json`, where the stamp is the UTC moment the window closed, and read by `/siegard-telemetry` to write the prose report beside it. Every figure here is counted from something on disk: the delivery roots' captured runs, the plan nodes' notes, the specification's decision log, the repository's history, and the harness's own session transcripts under its projects directory — the one source outside the project, and the only one that records which agents ran and what each cost. Nothing here is estimated, and nothing is recalled: a section whose source could not be read carries its reason in `provenance` and its data absent, never a plausible value. The report exists so the framework's maintainer can rule on a friction report without another conversation — so it names the framework version it measured, the effort every agent and skill was configured at, and the window it covers, and it is refused over a window whose stamp already has a report, the way a run is refused under a name that exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "project_root",
+    "window",
+    "generated_at",
+    "framework",
+    "harness",
+    "agents",
+    "agent_totals",
+    "commands",
+    "runs",
+    "repository",
+    "decisions",
+    "notes",
+    "scope",
+    "provenance"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "siegard-telemetry/1",
+      "description": "Which contract this report was written against. A reader comparing two reports compares two written against one contract, or says which fields moved between them."
+    },
+    "project_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The directory `siegard.json` sits in, resolved — the anchor every relative path in this report is spelled from."
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["since", "until", "since_resolved_from"],
+      "properties": {
+        "since": { "$ref": "#/$defs/timestamp" },
+        "until": { "$ref": "#/$defs/timestamp" },
+        "since_resolved_from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the opening bound came from: `named` when the invocation stated it, or the path of the previous report whose `until` this window continues from. A window is never inferred from memory of when a session began."
+        }
+      },
+      "description": "The stretch of wall-clock time this report covers, both bounds UTC. Everything below is filtered to it: a transcript entry, a run step, a commit or a decision outside it is not in this report."
+    },
+    "generated_at": { "$ref": "#/$defs/timestamp" },
+    "framework": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plugin_root", "version", "contracts", "agents", "skills"],
+      "properties": {
+        "plugin_root": { "type": "string", "minLength": 1 },
+        "version": {
+          "type": ["string", "null"],
+          "description": "The installed framework's version, read from its plugin manifest. Null where the manifest is absent or names none — and a report over a framework that cannot say which version it is measures a framework nobody can resolve to what ran."
+        },
+        "contracts": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Every `contract_version` constant the installed schemas declare, keyed by schema file — so a figure here can be read against the exact contract the artifacts it counts were written under."
+        },
+        "agents": { "type": "array", "items": { "$ref": "#/$defs/configured" } },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/configured" } }
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transcript_root", "transcript_roots", "readable", "reason", "sessions"],
+      "properties": {
+        "transcript_roots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Every transcript directory a session in this report was read from: the project's own first, then any sibling directory — one named for a subdirectory of the project the harness was opened in — that held a session whose recorded working directory sits under the project. A sibling that merely shares the name's prefix, such as a neighbouring project, is never read."
+        },
+        "transcript_root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The directory the harness keeps this project's session transcripts in — its projects directory, one subdirectory per working directory the harness was opened in, named by that directory's path with every character outside [A-Za-z0-9] replaced by a hyphen. Read, never written; an internal format of the harness and not of this framework, which is why every read of it is held to a probe first and every failure to read it is a stated reason rather than an absent number."
+        },
+        "readable": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
+                         "working_directories", "entries_in_window", "human_turns_in_window"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "path": { "type": "string", "minLength": 1 },
+              "first_timestamp": { "type": ["string", "null"] },
+              "last_timestamp": { "type": ["string", "null"] },
+              "harness_versions": { "type": "array", "items": { "type": "string" } },
+              "working_directories": { "type": "array", "items": { "type": "string" } },
+              "entries_in_window": { "type": "integer", "minimum": 0 },
+              "human_turns_in_window": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/timestamp" },
+                "description": "When a person typed, inside the window — the timestamps of every turn that was a human's message rather than a tool's result. What was typed is not here: a telemetry report counts, it does not quote a conversation."
+              }
+            }
+          },
+          "description": "Every session transcript that holds at least one entry inside the window."
+        }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["session", "tool_use_id", "agent_type", "description", "invoked_at", "agent_id",
+                     "model", "transcript", "first_timestamp", "last_timestamp", "duration_seconds",
+                     "messages", "tool_calls", "usage", "repeats_earlier", "unavailable"],
+        "properties": {
+          "session": { "type": "string" },
+          "tool_use_id": { "type": "string" },
+          "agent_type": {
+            "type": "string",
+            "description": "The subagent type the skill spawned, as the harness recorded it — a shipped agent's name where a skill delegated to one, or a harness built-in."
+          },
+          "description": { "type": "string" },
+          "invoked_at": { "$ref": "#/$defs/timestamp" },
+          "agent_id": { "type": ["string", "null"] },
+          "model": { "type": ["string", "null"] },
+          "transcript": { "type": ["string", "null"] },
+          "first_timestamp": { "type": ["string", "null"] },
+          "last_timestamp": { "type": ["string", "null"] },
+          "duration_seconds": { "type": ["number", "null"], "minimum": 0 },
+          "messages": { "type": ["integer", "null"], "minimum": 0 },
+          "tool_calls": { "type": ["integer", "null"], "minimum": 0 },
+          "usage": {
+            "oneOf": [ { "$ref": "#/$defs/usage" }, { "type": "null" } ],
+            "description": "Token usage summed over every assistant message in the agent's own transcript. Null where the transcript was not found — then `unavailable` says so."
+          },
+          "repeats_earlier": {
+            "type": "boolean",
+            "description": "True where an earlier invocation in this window spawned the same agent type under the same description. It is the mechanical half of the rework question: a repeat is a candidate for rework, and whether it was one is the reader's to judge from the two transcripts."
+          },
+          "unavailable": { "type": ["string", "null"] }
+        }
+      },
+      "description": "Every subagent the harness spawned inside the window, in the order it was spawned."
+    },
+    "agent_totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["by_type", "overall"],
+      "properties": {
+        "by_type": { "type": "object", "additionalProperties": { "$ref": "#/$defs/total" } },
+        "overall": { "$ref": "#/$defs/total" }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["session", "tool_use_id", "issued_at", "scripts", "command", "exit_code",
+                     "exit_marker", "problems", "interrupted", "unavailable"],
+        "properties": {
+          "session": { "type": "string" },
+          "tool_use_id": { "type": "string" },
+          "issued_at": { "$ref": "#/$defs/timestamp" },
+          "scripts": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "Which of this framework's scripts the command line invoked, by file name."
+          },
+          "command": { "type": "string" },
+          "exit_code": {
+            "type": ["integer", "null"],
+            "description": "The exit status where the harness recorded one. The harness marks a non-zero exit at the head of the tool's result and marks nothing for zero, so a null here with `exit_marker` false is a command that exited zero or whose result was never recorded — the two are told apart by `unavailable`."
+          },
+          "exit_marker": { "type": "boolean" },
+          "problems": {
+            "type": ["integer", "null"],
+            "description": "The count a validator's `N problem(s)` line reported, where the result carried one."
+          },
+          "interrupted": { "type": "boolean" },
+          "unavailable": { "type": ["string", "null"] }
+        }
+      },
+      "description": "Every shell command inside the window that invoked one of this framework's scripts, with what it exited and what its validator counted."
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["initiative", "run", "path", "outcome", "failed_step", "timeout_seconds",
+                     "started_at", "ended_at", "steps"],
+        "properties": {
+          "initiative": { "type": "string" },
+          "run": { "type": "string" },
+          "path": { "type": "string" },
+          "outcome": { "type": "string" },
+          "failed_step": { "type": ["string", "null"] },
+          "timeout_seconds": { "type": "integer" },
+          "started_at": { "type": ["string", "null"] },
+          "ended_at": { "type": ["string", "null"] },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "command", "outcome", "exit_code", "duration_seconds"],
+              "properties": {
+                "name": { "type": "string" },
+                "command": { "type": "string" },
+                "outcome": { "type": "string" },
+                "exit_code": { "type": ["integer", "null"] },
+                "duration_seconds": { "type": ["number", "null"] }
+              }
+            }
+          }
+        }
+      },
+      "description": "Every captured run under every delivery root whose first step started inside the window, read from the record `run.py` wrote."
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commits", "uncommitted", "unavailable"],
+      "properties": {
+        "commits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hash", "timestamp", "subject", "files_by_root"],
+            "properties": {
+              "hash": { "type": "string" },
+              "timestamp": { "type": "string" },
+              "subject": { "type": "string" },
+              "files_by_root": {
+                "type": "object",
+                "additionalProperties": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "uncommitted": { "type": "array", "items": { "type": "string" } },
+        "unavailable": { "type": ["string", "null"] }
+      }
+    },
+    "decisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["log", "baseline", "total_now", "added"],
+      "properties": {
+        "log": { "type": ["string", "null"] },
+        "baseline": {
+          "type": "string",
+          "description": "What the current log was compared against to find what the window added: the commit that last touched it before `since`, or the reason no such baseline exists — in which case every current entry is listed and the reader knows why."
+        },
+        "total_now": { "type": ["integer", "null"] },
+        "added": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["initiative", "node", "class", "text"],
+        "properties": {
+          "initiative": { "type": "string" },
+          "node": { "type": "string" },
+          "class": { "type": "string" },
+          "text": {
+            "type": ["string", "object"],
+            "description": "The note verbatim — a classified `## Notes` entry as its opening spells it, or an epic's `uncovered` entry whole."
+          }
+        }
+      },
+      "description": "Every classified note standing in a plan under the work root, at the moment of the report — not filtered to the window, because a standing note is the state the window's work ran under."
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initiatives"],
+      "properties": {
+        "initiatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["slug", "live", "tasks", "tasks_with_implementation_record",
+                         "implementation_records_committed_in_window"],
+            "properties": {
+              "slug": { "type": "string" },
+              "live": { "type": "boolean" },
+              "tasks": { "type": ["integer", "null"] },
+              "tasks_with_implementation_record": { "type": ["integer", "null"] },
+              "implementation_records_committed_in_window": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "description": "The denominator. Cost is only readable per unit of work: how many tasks each initiative maps, how many carry an implementation record now, and which records landed in this window."
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["section", "source", "unavailable"],
+        "properties": {
+          "section": { "type": "string" },
+          "source": { "type": ["string", "null"] },
+          "unavailable": { "type": ["string", "null"] }
+        }
+      },
+      "description": "One entry per section above: where it was read from, or why it could not be. A report is complete when no entry carries a reason; the prose report's closing verdict is computed from this list and from nothing else."
+    },
+    "written_to": { "type": "string" }
+  },
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "configured": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "effort", "model"],
+      "properties": {
+        "name": { "type": "string" },
+        "effort": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] }
+      },
+      "description": "How one shipped agent or skill was configured at the moment of the report, read from its frontmatter: the effort it overrides the session to, and the model it pins, or null where it inherits."
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
+                   "output_tokens"],
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_read_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "total": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invocations", "with_transcript", "duration_seconds", "usage"],
+      "properties": {
+        "invocations": { "type": "integer", "minimum": 0 },
+        "with_transcript": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many of the invocations the usage and duration below actually sum over. Where it is below `invocations`, the totals are a floor, and the report says so."
+        },
+        "duration_seconds": { "type": "number", "minimum": 0 },
+        "usage": { "$ref": "#/$defs/usage" }
+      }
+    }
+  }
+}

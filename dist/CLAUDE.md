@@ -189,10 +189,11 @@ the file itself**. `/siegard-config` is the one writer.
 | `targets` | one target source root per name the project chooses (`backend`, `frontend`, …) | no |
 | `work_root` | the container all initiatives' work roots live under | no |
 | `delivery_root` | the container all initiatives' delivery roots live under | no |
+| `telemetry_root` | where `/siegard-telemetry` lands its reports — the one root nothing the framework builds, plans or delivers ever reads | no |
 | `standard` | the project's registry of rules — one per target, keyed as `targets` keys them; a bare path only where `targets` holds one key | **yes** — the report says both existed and which won |
 | `edits_freely` | the targets whose source a person changes without a task | no |
 
-- **The four structural fields answer only from the file.** Naming one in an invocation has no
+- **The four structural fields, and `telemetry_root`, answer only from the file.** Naming one in an invocation has no
   effect, and where the file does not declare one, every entry point needing it stops — a structural
   root is not worth guessing at twice, the way a rule's registry sometimes is. Trying a different
   registry against the same source is sometimes worth doing; trying a different specification root
@@ -208,8 +209,9 @@ the file itself**. `/siegard-config` is the one writer.
 - `standard: null` — bare, or under a target's key — says deliberately that the project has none
   for what it covers: a full answer, not an omission. A field's plain absence says the opposite —
   not declared yet, not decided against — and for the four structural fields that absence is what
-  stops an entry point until `/siegard-config` closes it. A target the `standard` object holds no
-  entry for is that same absence, for that target.
+  stops an entry point until `/siegard-config` closes it, while an absent `telemetry_root` stops
+  `/siegard-telemetry` alone. A target the `standard` object holds no entry for is that same
+  absence, for that target.
 - **`edits_freely` stops no entry point, ever.** It is the one field nothing demands: absent, every
   target is held to all three drift classes, which is what every project was held to before it
   existed. What it changes is one line of one report — `trace.py --check` counts the `code` class
@@ -292,6 +294,7 @@ is what makes it the only change this framework asks nothing of.
 | `/siegard-standard` | transcribes what a project's own tooling and team already enforce into its standard registry | one registry |
 | `/siegard-status` | reads every root and reports where the work stands, writing nothing | one reading |
 | `/siegard-progress` | reads one live initiative's plan and delivery records and reports every task as a table row — status and why — writing nothing | one reading |
+| `/siegard-telemetry` | counts how one window of work happened — agents, cost, refusals, runs, stops, decisions — from disk and the harness's own transcripts (probed and announced first), and writes a JSON record and a Markdown report under `telemetry_root` | one window |
 | `/siegard-archive` | removes closed work and delivery pairs from the tree, leaving them in git | one pruning |
 
 Every one of them stops rather than continuing, and `git diff` is the review. `/siegard-config` must

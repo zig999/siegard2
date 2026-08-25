@@ -1,6 +1,6 @@
 """Every command this framework ships answers `--help`, and answers it with its own docstring.
 
-Six of the seven parsed their arguments by hand and exposed no `--help` at all: the syntax lived
+Six of the first seven parsed their arguments by hand and exposed no `--help` at all: the syntax lived
 in the module docstring, so a person reaching for `trace.py --replace` — an operation this
 framework states is theirs to run directly, never a skill's — got `cannot run: expected [--check
 [--all]] <target-root>` and had to open the source to find the form. That is friction a consumer
@@ -36,7 +36,7 @@ def test_every_shipped_command_is_covered_here():
     # The parametrisation reads the directory, so a script added later is held to this without
     # anyone remembering to list it. This asserts the directory is not empty and not surprising —
     # a glob that silently matched nothing would make every test below vacuously green.
-    assert len(COMMANDS) == 7, COMMANDS
+    assert len(COMMANDS) == 8, COMMANDS
 
 
 @pytest.mark.parametrize("name", COMMANDS)

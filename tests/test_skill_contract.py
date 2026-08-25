@@ -53,6 +53,8 @@ SKILLS = {
                          "delegates": []},
     "check-source": {"contract": "schemas/check.json", "validator": "bin/deliver.py",
                      "delegates": ["standard-conformance-reviewer"]},
+    "siegard-telemetry": {"contract": "schemas/telemetry.json", "validator": "bin/telemetry.py",
+                          "delegates": []},
 }
 
 
@@ -112,6 +114,11 @@ MODEL_MAY_REACH = {
     # The file set is the human's to assert and the reading writes no source — the same shape
     # that leaves /reconcile reachable. A session asked to check some files may reach for it.
     "check-source": True,
+    # The window is anyone's to name and the two files it writes land under a root nothing
+    # else reads — a session asked for a retrospective or a cost breakdown may reach for it.
+    # The one read it makes outside the project is gated inside the skill, by a probe the
+    # human sees before it happens, not by who may invoke it.
+    "siegard-telemetry": True,
 }
 
 

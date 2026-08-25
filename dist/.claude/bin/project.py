@@ -11,8 +11,8 @@ file itself, and an answer given in a session persists only by the file gaining 
 
 What the resolution means is the contract's business, stated once in the schema, and it is not one
 rule: `standard` alone may be overridden by an invocation naming a different one — the report says
-both existed and which won. `specification_root`, `targets`, `work_root` and `delivery_root`
-answer only from here; an invocation naming one of these instead has no effect, and where this
+both existed and which won. `specification_root`, `targets`, `work_root`, `delivery_root` and
+`telemetry_root` answer only from here; an invocation naming one of these instead has no effect, and where this
 file does not declare one, that is the calling skill's stop to raise, never this script's to guess
 around. This script prints only what stands; deciding that an absence is a stop belongs to
 whichever skill needed the field.
@@ -125,7 +125,8 @@ def main() -> int:
         f"{where}: {value}"
         for where, value in [("specification_root", declared.get("specification_root")),
                              ("work_root", declared.get("work_root")),
-                             ("delivery_root", declared.get("delivery_root"))]
+                             ("delivery_root", declared.get("delivery_root")),
+                             ("telemetry_root", declared.get("telemetry_root"))]
         + [("standard" if name is None else f"standard.{name}", path)
            for name, path in standards]
         + [(f"targets.{name}", path)
@@ -192,6 +193,8 @@ def main() -> int:
         print(f"work_root: {home / declared['work_root']}")
     if "delivery_root" in declared:
         print(f"delivery_root: {home / declared['delivery_root']}")
+    if "telemetry_root" in declared:
+        print(f"telemetry_root: {home / declared['telemetry_root']}")
     if declared.get("edits_freely"):
         print(f"edits_freely: {', '.join(sorted(declared['edits_freely']))}")
     return 0
