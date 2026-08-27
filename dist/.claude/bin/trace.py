@@ -341,8 +341,22 @@ def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[di
     for given in files:
         source = target / given
         if not source.is_file():
-            problems.append(f"{source} does not exist; a path is read relative to {target}, the "
-                            f"target source root, never from the repository around it")
+            said = (f"{source} does not exist; a path is read relative to {target}, the "
+                    f"target source root, never from the repository around it")
+            # The commonest wrong spelling is the right path under the toplevel anchor — this
+            # script's own output spells paths that way, so a caller copying one back in makes
+            # exactly this error. Naming the rule alone sent each occurrence into its own
+            # fix-and-rerun cycle; handing the corrected spelling ends the class in one.
+            anchored = home / given
+            if anchored.is_file():
+                try:
+                    corrected = anchored.resolve().relative_to(target.resolve()).as_posix()
+                    said += (f" — the file stands at {anchored}, which is the toplevel's "
+                             f"spelling; from the target it is `{corrected}`")
+                except ValueError:
+                    said += (f" — a file does stand at {anchored}, and it sits outside "
+                             f"{target}, where no binding can name it")
+            problems.append(said)
             continue
         try:
             source.resolve().relative_to(target.resolve())

@@ -507,3 +507,31 @@ def test_a_rejection_from_a_terminal_state_is_refused(spec_root):
                     "does not reopen"}))
     found = hits(problems_of(spec_root), "accepts no further trigger")
     assert found, "a rejection from a declared terminal state was accepted"
+
+
+# ------------------------------------------------------------------ the parse funnel
+
+
+def test_an_unquoted_colon_in_frontmatter_names_its_own_fix(tmp_path):
+    """Every node file in this framework parses through `parse_node`, so the hint lands once and
+    reaches spec.py, plan.py and deliver.py alike. PyYAML's `mapping values are not allowed here`
+    names the grammar and not the fix; three refusals in one consumer window were this error
+    worked out from the grammar each time."""
+    path = tmp_path / "node.md"
+    path.write_text("---\ntitle: Sound\nsummary: One rule: the colon breaks it\n---\n"
+                    "## Description\nProse.\n", encoding="utf-8")
+    front, _, problem = spec.parse_node(path)
+    assert front is None
+    assert "does not parse" in problem
+    assert "quote the whole string" in problem
+    assert "yaml.safe_dump" in problem
+
+
+def test_a_parse_failure_that_is_not_the_colon_carries_no_hint(tmp_path):
+    """The hint is for one error; stapled to every parse failure it would misdiagnose the rest."""
+    path = tmp_path / "node.md"
+    path.write_text("---\ntitle: [unclosed\n---\n## Description\nProse.\n", encoding="utf-8")
+    front, _, problem = spec.parse_node(path)
+    assert front is None
+    assert "does not parse" in problem
+    assert "yaml.safe_dump" not in problem

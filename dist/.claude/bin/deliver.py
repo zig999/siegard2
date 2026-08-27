@@ -39,7 +39,11 @@ and hand over both ways out of it.
 each — and this script is where that is said, because reading this report is where somebody
 learns the set holds more than one.** No orchestrator ships for it: every guarantee holds per
 worktree because each delivery is the ordinary `/implement-task` path, unvaried, and the parts
-that are not a skill's are a person's. Three preconditions: the plan is committed, since a
+that are not a skill's are a person's. The tempting substitute — one general-purpose agent per
+task, handed the whole delivery — is not a variation of this route but its undoing: a subagent
+cannot spawn the two producers, so the implementation and its proof are written in one context
+and agree by construction, and the consumer window that measured it paid the parallel pass and
+then paid every proof again through the ordinary route. Three preconditions: the plan is committed, since a
 worktree sees commits and never trees; the tasks come from this set, so nothing in the batch
 depends on anything else in it; and a task expected to install a package is delivered alone,
 because the manifest is everybody's file and two deliveries editing it concurrently is the one
@@ -126,6 +130,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import functools
 import shlex
@@ -461,8 +466,23 @@ def standard_of(nid: str | None, front: dict, target: Path,
         return None, at, [f"{f'{nid}: ' if nid else ''}{at} is absolute; a standard is read "
                           f"from inside {target}"]
     path = target / at
-    data, found = load_standard(path, validator)
     lead = f"{nid}: " if nid else ""
+    if not path.is_file():
+        # The commonest wrong spelling is the right path under the wrong anchor: a record that
+        # wrote the path from the repository root while the rule reads it from the target source
+        # root. Four records in one consumer window hit it, and the bare "does not exist" sent
+        # each into its own fix-and-rerun cycle — so the refusal hands the corrected spelling,
+        # found by walking the target's ancestors, and ends the class in one cycle.
+        for ancestor in target.resolve().parents:
+            candidate = ancestor / at
+            if candidate.is_file():
+                corrected = Path(os.path.relpath(candidate, target.resolve())).as_posix()
+                return None, at, [
+                    f"{lead}{at}: does not resolve inside {target}; a record spells the "
+                    f"standard's path relative to the target source root, never to the "
+                    f"repository around it. The file stands at {candidate} — from the target "
+                    f"that is spelled `{corrected}`"]
+    data, found = load_standard(path, validator)
     return data, at, [f"{lead}{at}: {p}" for p in found]
 
 
@@ -1365,7 +1385,11 @@ def deliverable_line(ready: list[str], barred: bool) -> str:
     parallel = ("" if len(ready) < 2 else
                 " Any of them may also be delivered concurrently, one git worktree each — the"
                 " preconditions and the two conflicts to expect are in this script's own"
-                " docstring, and nothing here orchestrates it.")
+                " docstring, and nothing here orchestrates it. Each worktree runs the ordinary"
+                " /implement-task; delegating a whole delivery to one general-purpose agent is"
+                " not that route — an agent cannot spawn the two producers, so the"
+                " implementation and its proof land in one context, which is the pair this"
+                " discipline exists to keep apart.")
     return (f"deliverable now: {named} — no record, nothing they wait on, no standing BLOCKING "
             f"note. Which one is the caller's to choose; nothing here orders them.{parallel}")
 

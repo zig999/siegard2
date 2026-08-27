@@ -416,6 +416,22 @@ def test_the_refusal_names_the_anchor_a_missing_path_was_read_against(consumer):
     assert done.returncode == 1, done.stdout
     assert "target source root" in done.stdout
     assert str(consumer / "backend") in done.stdout
+    assert f"from the target it is `{FILE}`" in done.stdout, \
+        "a refusal naming the rule alone sends the caller into a fix-and-rerun cycle; " \
+        "the corrected spelling is what ends the class in one"
+
+
+def test_a_missing_path_that_stands_outside_the_target_is_said_to(consumer):
+    """The other half of the anchor diagnosis: a file that does exist at the toplevel's spelling
+    but sits outside the target source root cannot be bound under any spelling, and saying so is
+    the honest refusal rather than a corrected path that the climb-out check would then refuse."""
+    (consumer / "README.md").write_text("prose\n", encoding="utf-8")
+    record = record_at(consumer, [
+        {"node": NODE, "encoded_at": ["README.md"], "how": "encoded here"},
+    ])
+    done = bind_record(consumer, record)
+    assert done.returncode == 1, done.stdout
+    assert "where no binding can name it" in done.stdout
 
 
 def test_a_record_bind_extends_what_an_earlier_bind_held(consumer):

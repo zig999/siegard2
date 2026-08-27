@@ -247,6 +247,11 @@ Every plan node this skill writes — this one and every one after it — carrie
 exactly two headings, in order: `## What it is`, then `## Notes`. One sentence per line; a
 section with nothing to say carries the literal line `None.`
 
+Free prose — a title, a summary, a criterion — meets a colon often enough that a plain scalar
+breaks the moment one appears in it. Emit every node's frontmatter with `python3 -c` calling
+`yaml.safe_dump` rather than typing it by hand, so a sentence's own colon is never read as a
+second mapping key; PyYAML is already a declared dependency of this framework's own tooling.
+
 Then spawn a `codebase-surveyor` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md` — passing three things: the target source
 root, the scope's path under `intake/`, and the plan-node contract's path. It returns
@@ -337,7 +342,12 @@ so a binder still calling it silent is a disagreement a person settles. Two roun
 nothing new end the step.
 
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
-returned it — bare identities, no pin. A binder's notes are appended to the task body's
+returned it — bare identities, no pin. **Composing is transcription, never correction.** A
+criterion whose wording must change at this point — a blocking note settled by rewording, a
+decomposer's error caught late — changes the skeleton, and a changed skeleton runs through
+this step again before it touches disk: a task composed with a criterion no binder read is a
+plan whose judge saw a different plan, and a correction can make a neighboring criterion
+jointly contradictory in a way only a fresh reading of the whole set finds. A binder's notes are appended to the task body's
 `## Notes`, one sentence per line — the diff is the review, and a divergence only the
 conversation holds is a divergence the reviewer never sees — and the report repeats them by
 task. A note classed `blocking`, `underdetermined` or `remainder` opens with its class,

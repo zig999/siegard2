@@ -667,6 +667,38 @@ def test_the_standard_must_be_there_to_be_checked(delivery, work, root, target, 
     said(problems_of(delivery, work, target, root), "does not exist")
 
 
+def test_a_standard_spelled_from_the_wrong_anchor_is_handed_its_spelling(
+        delivery, work, root, target, sound_delivery, write_delivery, tmp_path):
+    """Four records in one consumer window spelled the standard's path from the repository root,
+    and the bare `does not exist` sent each into its own fix-and-rerun cycle. The refusal walks
+    the target's ancestors and hands the corrected spelling, so the class ends in one cycle."""
+    import hashlib
+    from conftest import STANDARD
+    outside = tmp_path / "standards" / "standard.yaml"
+    outside.parent.mkdir()
+    outside.write_text(yaml.safe_dump(STANDARD, sort_keys=False), encoding="utf-8")
+    ref = {"at": "standards/standard.yaml",
+           "pin": "sha256:" + hashlib.sha256(outside.read_bytes()).hexdigest()}
+    write_delivery("review/first", standard_review(work, root, ref))
+    problems = problems_of(delivery, work, target, root)
+    said(problems, "does not resolve inside")
+    said(problems, "never to the repository around it")
+    said(problems, "`../standards/standard.yaml`")
+
+
+def test_the_deliverable_line_names_the_worktree_route_and_its_counterfeit():
+    """The parallel door is printed at the one moment a caller learns the set holds more than
+    one — and beside it, why the tempting substitute (one general-purpose agent per task) is not
+    that route: an agent cannot spawn the two producers, so implementation and proof land in one
+    context. A consumer window measured exactly that pattern and paid every proof twice."""
+    line = deliver.deliverable_line(["task/a/x", "task/a/y"], False)
+    assert "one git worktree each" in line
+    assert "general-purpose agent" in line
+    assert "cannot spawn the two producers" in line
+    single = deliver.deliverable_line(["task/a/x"], False)
+    assert "worktree" not in single, "a set of one holds no parallel route to offer"
+
+
 def test_a_standard_that_does_not_hold_together(delivery, work, root, target, sound_delivery,
                                                 write_delivery, write_standard):
     from conftest import STANDARD

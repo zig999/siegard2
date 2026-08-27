@@ -60,8 +60,13 @@ stop. You need:
 
   **`blocking`** — does a node *state* something the objective, or a criterion, contradicts or
   exceeds as written? A contradicted value, or a guarantee stronger than the specification
-  gives. The specification here is not silent but overruled, and only a person settles that.
-  This is the only class that stops a task from being written.
+  gives. The criteria are read together as well as one at a time: a set of criteria no
+  implementation can jointly satisfy, given what a node states, contradicts as surely as one
+  criterion contradicting the node's own words — and hides from any reading that takes the
+  criteria one by one. A note of that shape names both criteria and the stated fact that makes
+  them incompatible; naming one alone reports a contradiction nobody can locate. The
+  specification here is not silent but overruled, and only a person settles that. This is the
+  only class that stops a task from being written.
 
   **`unstated`** — does the objective, or a criterion, rest on a fact no candidate states at
   all — nothing contradicting it, nothing to demonstrate it against, a silence? Then name the
