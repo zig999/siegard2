@@ -83,7 +83,7 @@ The framework executes. A skill installs what a consumer's own registry authoriz
 steps it declares, so a delivery hands over a project that installs and builds rather than source
 alone. It was granted deliberately; widening or withdrawing it is the maintainer's.
 
-Three bounds hold it, and giving up any of them is a proposal, never a change:
+Four bounds hold it, and giving up any of them is a proposal, never a change:
 
 - **No agent holds a shell.** The skills run; the shipped agents do not, and
   `tests/test_agent_contract.py` is what enforces it. An agent that gained one would run outside
@@ -97,6 +97,11 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   framework says it does not know. Approval of a package is that registry gaining an entry — a
   human editing their own file — never an answer given in a session, which the next invocation
   does not have.
+- **Only the orchestrating entry point commits, and only under bounds.** `/deliver-scope` is the
+  one component granted a git commit: pathspec-scoped, one per step, under a message naming the
+  run — never a sweep, a branch, a push or a rewrite — and only under an ask the human's own
+  words state end to end. Every other skill's refusal to commit stands; a second committer, or a
+  commit outside these bounds, is a proposal, never a change.
 
 ## Decision authority
 
