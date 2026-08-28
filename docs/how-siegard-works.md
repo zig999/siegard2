@@ -1,7 +1,7 @@
 # How Siegard works, for dummies
 
 This document explains, from zero, what the eight scripts under `src/claude/bin/` do, what files
-they read and write, how the twelve skills and ten agents under `src/claude/` use them, and how all
+they read and write, how the thirteen skills and ten agents under `src/claude/` use them, and how all
 of it adds up to one complete development process — from a human's idea to source code someone
 else can trust.
 
@@ -1028,11 +1028,12 @@ telemetry.py — imports spec.py + plan.py, runs project.py; reads the runs, the
                decision log, git, and the harness's transcripts; nothing below reads what it writes
 ```
 
-## The twelve skills
+## The thirteen skills
 
 Skills are what a human actually types (`/analyse`, `/plan-work`, ...). Each one is "one
-invocation, one increment" — it does its job and stops; it never chains into the next skill on
-its own.
+invocation, one increment" — it does its job and stops; none chains into the next skill on
+its own except `/deliver-scope`, whose whole job is the chaining, and only over a route the
+human's own ask stated whole.
 
 | Skill | Turns this input… | …into this output | Scripts it calls | Agents it delegates to |
 |---|---|---|---|---|
@@ -1041,6 +1042,7 @@ its own.
 | **`/plan-work`** | a stated scope + the specification | plan nodes (`inventory/`, `epic/`, `task/`) + `plan.json`; specification extensions + decision-log entries where a fact was unstated | `spec.py`, `plan.py`, `deliver.py --standard` | `codebase-surveyor`, `backlog-decomposer`, `execution-contract-binder`, `unstated-fact-decider` |
 | **`/implement-task`** | one planned task | source + tests + a delivery record + `delivery.json` + a trace bind | `plan.py --check`, `run.py`, `deliver.py`, `trace.py --bind-record` | `task-implementer`, `test-author`, `failure-diagnostician` (on a red suite) |
 | **`/review-change`** | one delivered task | findings recorded under the delivery root + `delivery.json` | `plan.py --check`, `deliver.py`, `run.py`, `trace.py --check` | `coverage-auditor`, `specification-conformance-reviewer`, `standard-conformance-reviewer`, `failure-diagnostician` |
+| **`/deliver-scope`** | one scope the human's own ask states is wanted end to end | the route run whole — plan, each deliverable task, review — one pathspec commit per step, an `orchestration.md` log at the delivery root | `project.py`, `spec.py`, `deliver.py --outstanding` | none — it invokes the entry points above, whole |
 | **`/reconcile`** | source that changed without a rebind, whatever wrote it | a reconciliation record + a trace bind | `project.py`, `spec.py`, `trace.py` | `specification-conformance-reviewer` (one per named file, spawned together) |
 | **`/check-source`** | a file set a human names, delivered by no task | a check record at `siegard-check/<slug>.md` | `project.py`, `deliver.py --standard`, `deliver.py --check-record` | `standard-conformance-reviewer` |
 | **`/siegard-standard`** | what a project's own tooling already enforces, plus a human's words | the project's standard registry | `project.py`, `deliver.py --standard` | none |

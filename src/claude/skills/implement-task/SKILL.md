@@ -697,7 +697,9 @@ Report, in this order:
   this report is the only place that set exists; and the project's standard as it resolved,
   which is also where the review reads its commands from — a slot only where neither the
   invocation nor the project file answered it. The handoff offers the next step and
-  never takes it: filling any empty slot and invoking are the human's.
+  never takes it: filling any empty slot and invoking are the human's — given per invocation, or
+  given once for a whole route through the orchestrating entry point the consumer rules name,
+  whose own file bounds what it may fill.
 
 Then stop. `git diff` over the target source root and the delivery root is the review, and it
 belongs to a person.

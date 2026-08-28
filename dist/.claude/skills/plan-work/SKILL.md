@@ -471,7 +471,8 @@ Report, in this order:
   worktree per task, integrated by merge — and taking that route is, like everything in this
   handoff, the human's choice. A set restated here instead is a set that was true when it was
   printed. The handoff offers the next step and never takes it: filling the one open slot and
-  invoking are the human's.
+  invoking are the human's — given per invocation, or given once for a whole route through the
+  orchestrating entry point the consumer rules name, whose own file bounds what it may fill.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 

@@ -177,6 +177,35 @@ path, unvaried, and the rest is a person's procedure. `--outstanding` says so wh
 set, and `bin/deliver.py`'s docstring holds the preconditions, the sequence and the two conflicts
 to expect.
 
+## Delivering a scope end to end
+
+`/deliver-scope` carries one stated scope through the route — `/plan-work`, `/implement-task` over
+each deliverable task, `/review-change` — committing between steps and stopping at everything only
+a human settles. It is the one entry point that takes the handoffs the others only offer, and the
+authorization is the ask itself: **the human's own words stating that the whole route is wanted,
+quoted verbatim, never inferred** — the same gate the corrective increment holds. Its own file
+bounds what it may do; four bounds matter to every session:
+
+- **The specification gate stays a person's.** It never invokes `/analyse`: the specification is
+  authored, reviewed by its diff, and committed before the run, and a silence found mid-route ends
+  the run with the `/analyse` invocation handed to the human. The one writer it admits into the
+  specification root is `/plan-work`'s own decided-fact route, unchanged.
+- **It pastes, never composes.** Each next invocation is the previous report's handoff verbatim,
+  only its authorized slots filled; every routing decision is `deliver.py --outstanding`'s answer.
+  The receiving skill's own stops are what hold a mis-pasted slot — conversation is not state.
+- **Its commits are pathspec-scoped**, one per phase and per task, under `deliver-scope <slug>:
+  <step>` — it never sweeps the tree, never branches, never pushes. The commit range is the
+  review, and the report hands it over. Starting the run on a branch cut for it is the human's
+  act, done before the ask.
+- **The run ends when the review record is written** — findings are relayed, never acted on.
+  A run condition for a standing automation is stated against that fact, never against a "clean"
+  review: e.g. `the /deliver-scope run for <scope> ended — its review record written, or a stop
+  only a human settles reported with its doors`.
+
+Each run appends its steps, commits and outcome to `orchestration.md` at the initiative's delivery
+root — a marker, never a node, exactly as `closure.md` is — so the run's own decisions survive the
+session that made them.
+
 ## `siegard.json`
 
 Declared once at the project root, so nothing is retyped per invocation. `bin/project.py` is the one
@@ -289,6 +318,7 @@ is what makes it the only change this framework asks nothing of.
 | `/plan-work` | turns a scope plus the validated specification into a plan, validates it, derives `plan.json` | one plan, one increment, or one corrective task |
 | `/implement-task` | writes the source one task requires and the tests that prove it, installs and runs what the standard declares, records both nodes, validates against the plan, binds into the trace, derives `delivery.json` | **one task** |
 | `/review-change` | captures a run of the caller's commands, reports what four passes found — evidence, never a verdict — records it | one review |
+| `/deliver-scope` | carries one stated scope through `/plan-work`, `/implement-task` per deliverable task and `/review-change`, committing between steps — the ask, in the human's own words, is the authorization | one scope |
 | `/reconcile` | reads the trace for the nodes a named file set is bound to, holds that source to them through the conformance judgment, records the answer, rebinds only what cleared | one file set |
 | `/check-source` | holds a named file set to the rules a reading decides in the project's own standard, and records every departure | one file set |
 | `/siegard-standard` | transcribes what a project's own tooling and team already enforce into its standard registry | one registry |

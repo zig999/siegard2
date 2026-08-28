@@ -32,6 +32,8 @@ SKILLS = {
                "delegates": []},
     "siegard-config": {"contract": "schemas/project.json", "validator": "bin/project.py",
                        "delegates": []},
+    "deliver-scope": {"contract": "schemas/plan.json", "validator": "bin/deliver.py",
+                      "delegates": []},
     "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
                                 "execution-contract-binder", "unstated-fact-decider"]},
@@ -90,6 +92,11 @@ def skill_schema():
 
 MODEL_MAY_REACH = {
     "analyse": True,
+    # Reachable because its gate is inside it, the same way the corrective increment's is: the
+    # ask must be the human's own words stating the whole route, quoted verbatim, and an intent
+    # inferred from anything less is the skill's own stop. Closing it would only stop the
+    # routing — a standing automation the human armed could then never reach the route at all.
+    "deliver-scope": True,
     "plan-work": True,
     "implement-task": True,
     "review-change": True,
