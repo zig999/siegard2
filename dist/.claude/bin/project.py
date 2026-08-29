@@ -17,6 +17,14 @@ file does not declare one, that is the calling skill's stop to raise, never this
 around. This script prints only what stands; deciding that an absence is a stop belongs to
 whichever skill needed the field.
 
+One report precedes the fields: the rules file. The consumer's root `CLAUDE.md` carries the rules
+this framework shipped with, placed there by the install because nothing loads it from anywhere
+else — and nothing in it can report its own absence or its own age, since a session that lost the
+file lost the reporter with it. This script compares the version its marker line names against the
+plugin's own manifest and prints one `rules:` line where the file is absent, unmarked, or from
+another release — a report, never a refusal, because the fields below stand either way and
+replacing a file a project may have added its own rules to is a person's act.
+
 A standard governs one target. Declared as an object keyed by target, each entry prints on its
 own line — `standard <target>: <path>` or `standard <target>: declared none` — and the calling
 skill reads the line for the target it was invoked over; a target the object lacks a line for is
@@ -38,6 +46,7 @@ Exit:   0 resolved: every field siegard.json declares, or no file at all, each s
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -53,6 +62,65 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 PROJECT_CONTRACT = PLUGIN_ROOT / "schemas" / "project.json"
 PROJECT_FILE = "siegard.json"
+MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+
+# The one home of the marker's shape: the rules file carries this line, this script reads it, and
+# the distribution suite imports this pattern to pin the marker to the shipped version.
+RULES_MARKER = re.compile(r"These rules ship with Siegard (\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)")
+
+
+def rules_payload() -> Path | None:
+    """Where the current rules file sits, for the report to name. Inside the plugin in every
+    install — `consumer/CLAUDE.md` is assembled in beside `bin/` precisely so this report can
+    name a path that exists wherever this script runs — and beside `src/claude/` in the
+    repository that authors it, where the payload is the authored file itself."""
+    for candidate in (PLUGIN_ROOT / "consumer" / "CLAUDE.md",
+                      PLUGIN_ROOT.parent / "consumer" / "CLAUDE.md"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def report_rules_drift(home: Path) -> None:
+    """The rules file cannot report its own absence or its own age: a session that lost it lost
+    the reporter with it. This script is the one thing every skill runs first, so the comparison
+    lives here — a report, never a refusal, because the fields below stand either way, and
+    replacing a file a project may have appended its own rules to is a person's act, never this
+    script's."""
+    try:
+        version = json.loads(MANIFEST.read_text(encoding="utf-8")).get("version")
+    except (OSError, json.JSONDecodeError):
+        # Not a shipped tree. The distribution suite guards the manifest where it is authored;
+        # a second reporter here would fire only where that suite cannot run.
+        return
+    if not isinstance(version, str):
+        return
+    payload = rules_payload()
+    source = (f"the current rules are at {payload} — replace the Siegard portion, and keep "
+              f"anything the project added"
+              if payload else
+              f"the distribution carries the current rules at "
+              f"{PLUGIN_ROOT / 'consumer' / 'CLAUDE.md'}, which is missing here — this install "
+              f"is incomplete")
+    rules = home / "CLAUDE.md"
+    if not rules.is_file():
+        act = (f"place them: cp {payload} {rules}" if payload else source)
+        print(f"rules: {rules} does not exist, so no session in this project loads the "
+              f"framework's rules and nothing but this line can say so; {act}")
+        return
+    try:
+        text = rules.read_text(encoding="utf-8")
+    except OSError as broken:
+        print(f"rules: {rules} cannot be read: {broken}")
+        return
+    found = RULES_MARKER.search(text)
+    if found is None:
+        print(f"rules: {rules} carries no Siegard version, so it predates {version} or the "
+              f"marker line was edited away; {source}")
+    elif found.group(1) != version:
+        print(f"rules: {rules} says Siegard {found.group(1)} and this framework is {version}; "
+              f"the rules and the skills are two halves of one release, and these are from two; "
+              f"{source}")
 
 
 def toplevel_of(directory: Path) -> Path:
@@ -91,6 +159,7 @@ def main() -> int:
         return CANNOT_RUN
 
     home = toplevel_of(directory)
+    report_rules_drift(home)
     target = home / PROJECT_FILE
     if not target.is_file():
         print(f"no project file: {target} does not exist; every root and the standard are named "

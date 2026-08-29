@@ -49,8 +49,13 @@ def test_every_shipped_agent_is_named(text):
 
 
 def test_it_names_no_skill_or_agent_that_is_not_shipped(text):
+    """Two namespaces share the slash: the framework's skills, which this repository ships and
+    this test holds the page to, and the harness's own commands, which the install section names
+    because they are how a consumer receives updates. The second set is enumerated, not inferred —
+    a typo'd skill name must keep failing here rather than pass as a presumed harness command."""
+    harness = {"plugin", "reload-plugins"}
     shipped = {p.name for p in (SRC / "skills").iterdir()}
-    for named in set(re.findall(r"`/([a-z][a-z-]+)`", text)):
+    for named in set(re.findall(r"`/([a-z][a-z-]+)`", text)) - harness:
         assert named in shipped, \
             f"the page names /{named}, which src/claude/skills does not hold"
 

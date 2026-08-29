@@ -12,6 +12,7 @@ import pytest
 import project
 
 PROJECT_PY = Path(project.__file__)
+AUTHORED_RULES = PROJECT_PY.resolve().parent.parent.parent / "consumer/CLAUDE.md"
 
 
 def run(*args) -> subprocess.CompletedProcess:
@@ -21,9 +22,13 @@ def run(*args) -> subprocess.CompletedProcess:
 
 @pytest.fixture
 def consumer(tmp_path: Path) -> Path:
-    """A consumer repository: a git toplevel holding a target source root beneath it."""
+    """A consumer repository: a git toplevel holding a target source root beneath it, with the
+    current rules placed at its root the way every install places them — so that everything below
+    exercises its own field in silence, and the drift report is exercised where it is the
+    subject."""
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
     (tmp_path / "backend").mkdir()
+    (tmp_path / "CLAUDE.md").write_bytes(AUTHORED_RULES.read_bytes())
     return tmp_path
 
 
@@ -304,3 +309,65 @@ def test_an_absolute_telemetry_root_is_refused(consumer):
     done = run(consumer / "backend")
     assert done.returncode == 1
     assert "telemetry_root: /var/telemetry is absolute" in done.stdout
+
+
+# ------------------------------------------------------- the rules the root carries
+
+SHIPPED_VERSION = json.loads(
+    (PROJECT_PY.resolve().parent.parent / ".claude-plugin/plugin.json")
+    .read_text(encoding="utf-8"))["version"]
+
+
+def test_current_rules_pass_in_silence(consumer):
+    """The fixture places the rules every install places; a report on the green path would be a
+    line every consumer reads on every invocation and learns to skip."""
+    declare(consumer, {})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "rules:" not in done.stdout
+
+
+def test_absent_rules_are_reported_with_the_placement_ready(consumer):
+    (consumer / "CLAUDE.md").unlink()
+    declare(consumer, {"standard": None})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"rules: {consumer / 'CLAUDE.md'} does not exist" in done.stdout
+    assert f"cp {AUTHORED_RULES} {consumer / 'CLAUDE.md'}" in done.stdout
+    assert "standard: declared none" in done.stdout, "the report displaced a field; it precedes them"
+
+
+def test_unmarked_rules_are_reported_without_a_clobbering_command(consumer):
+    """A root CLAUDE.md a project wrote before adopting the framework, or one whose marker was
+    edited away: the report names the current copy and says to keep what the project added — a
+    ready `cp` here would be an instruction to destroy the consumer's own rules."""
+    (consumer / "CLAUDE.md").write_text("# My project\n\nHouse rules.\n", encoding="utf-8")
+    declare(consumer, {"standard": None})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "carries no Siegard version" in done.stdout
+    assert str(AUTHORED_RULES) in done.stdout
+    assert "keep anything the project added" in done.stdout
+    assert "cp " not in done.stdout
+
+
+def test_rules_from_another_release_report_both_versions(consumer):
+    stale = project.RULES_MARKER.sub("These rules ship with Siegard 0.0.1",
+                                     AUTHORED_RULES.read_text(encoding="utf-8"))
+    (consumer / "CLAUDE.md").write_text(stale, encoding="utf-8")
+    declare(consumer, {"standard": None})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "says Siegard 0.0.1" in done.stdout
+    assert f"this framework is {SHIPPED_VERSION}" in done.stdout
+
+
+def test_the_drift_report_never_refuses(consumer):
+    """Stale rules and a broken declaration at once: the declaration's refusal stands, the drift
+    line still prints, and neither gates the other."""
+    (consumer / "CLAUDE.md").unlink()
+    declare(consumer, {"standrd": "standards/backend.yaml"})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "rules:" in done.stdout
+    assert "standrd" in done.stdout

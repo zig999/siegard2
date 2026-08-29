@@ -55,11 +55,15 @@ def test_the_distribution_holds_every_authored_file(trees):
 
 
 def test_the_distribution_holds_nothing_else(trees):
+    """One exception, by name: `consumer/CLAUDE.md` is the rules payload, assembled into the
+    plugin from `src/consumer/CLAUDE.md` so that `project.py`'s drift report can name a source
+    that exists in every install — a marketplace install never receives what sits beside the
+    plugin. It is held to the authored rules by its own test below."""
     src, dist = trees
     extra = sorted(set(dist) - set(src))
-    assert extra == [], \
-        f"{extra} is distributed and not authored; a file nothing authors is a file nothing " \
-        f"validates, and this suite reads src/claude"
+    assert extra == ["consumer/CLAUDE.md"], \
+        f"{sorted(set(extra) - {'consumer/CLAUDE.md'})} is distributed and not authored; a file " \
+        f"nothing authors is a file nothing validates, and this suite reads src/claude"
 
 
 def test_every_distributed_file_is_the_authored_file(trees):
@@ -86,12 +90,41 @@ def test_the_version_is_set_and_is_one_value():
 
 
 def test_the_plugin_ships_no_claude_md():
-    """The consumer's rules load from their repository root; a copy inside `.claude/` is read by
-    nothing — measured, not assumed — and every update-by-copy used to replant it."""
+    """The consumer's rules load from their repository root; a copy at the plugin's own root is
+    read by nothing — measured, not assumed — and every update-by-copy used to replant it. The
+    payload at `consumer/CLAUDE.md` is not that copy: it is equally loaded by nothing, and that is
+    its point — it is the file the placement step copies out, named by `project.py`'s report,
+    carried inside the plugin because a marketplace install receives nothing beside it."""
     assert not (SRC / "CLAUDE.md").exists(), \
         "src/claude/CLAUDE.md is back; the consumer rules are authored at src/consumer/CLAUDE.md"
     assert not (DIST / "CLAUDE.md").exists(), \
         "dist/.claude/CLAUDE.md is back; nothing loads a CLAUDE.md inside the plugin directory"
+
+
+def test_the_rules_payload_is_the_authored_rules():
+    """The one file the distribution holds that src/claude does not, held to the one file that
+    authors it: three copies ship — beside the plugin, inside it, and none of them is a second
+    author."""
+    payload = DIST / "consumer/CLAUDE.md"
+    assert payload.is_file(), \
+        "the rules payload is not assembled into the plugin; a marketplace install would have " \
+        "no file for project.py's drift report to name"
+    assert payload.read_bytes() == (CONSUMER_ROOT / "CLAUDE.md").read_bytes(), \
+        "dist/.claude/consumer/CLAUDE.md drifted from src/consumer/CLAUDE.md; the assembly is a copy"
+
+
+def test_the_rules_marker_names_the_shipped_version():
+    """The drift report compares the rules file's marker against the plugin manifest, so the two
+    move together or the report fires on every consumer of the release that split them. The
+    pattern has one home, `project.py`, and this test reads it from there."""
+    import project
+    manifest = json.loads((SRC / MANIFEST).read_text(encoding="utf-8"))
+    found = project.RULES_MARKER.search((CONSUMER_ROOT / "CLAUDE.md").read_text(encoding="utf-8"))
+    assert found is not None, \
+        "src/consumer/CLAUDE.md carries no version marker; every install would be reported unmarked"
+    assert found.group(1) == manifest["version"], \
+        f"the rules say Siegard {found.group(1)} and the manifest says {manifest['version']}; " \
+        f"shipping is what sets both, and it set one"
 
 
 def beside_the_plugin() -> tuple[dict[str, bytes], dict[str, bytes]]:
@@ -141,6 +174,44 @@ def test_every_skill_and_agent_the_suite_holds_is_distributed(trees):
         assert f"skills/{name}/SKILL.md" in dist, f"{name} is tested and not distributed"
     for name in AGENTS:
         assert f"agents/{name}.md" in dist, f"{name} is tested and not distributed"
+
+
+# ------------------------------------------------ the storefront the plugin installs from
+
+MARKETPLACE = REPO / ".claude-plugin/marketplace.json"
+
+
+@pytest.fixture(scope="module")
+def marketplace() -> dict:
+    assert MARKETPLACE.is_file(), \
+        f"{MARKETPLACE} does not exist; without a marketplace there is nothing for a consumer " \
+        f"to add once and receive updates from"
+    return json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+
+
+def test_the_marketplace_satisfies_its_contract(marketplace):
+    schema = json.loads((REPO / "schemas/marketplace.json").read_text(encoding="utf-8"))
+    problems = [e.message for e in Draft202012Validator(schema).iter_errors(marketplace)]
+    assert problems == [], f"the marketplace file: {problems}"
+
+
+def test_the_marketplace_entry_is_the_plugin_that_ships(marketplace):
+    """The entry restates two facts the manifest owns — name and description — and the harness
+    reads the version from the manifest alone, so what this test pins is the whole of what could
+    disagree: the restated facts are equal, and the source resolves to the assembled plugin."""
+    manifest = json.loads((SRC / MANIFEST).read_text(encoding="utf-8"))
+    entry = marketplace["plugins"][0]
+    assert entry["name"] == manifest["name"], \
+        f"the marketplace distributes {entry['name']} and the manifest names " \
+        f"{manifest['name']}; an install under one name reports back under the other"
+    assert entry["description"] == manifest["description"], \
+        "the entry's description drifted from the manifest's; one identity, two prose homes"
+    assert (REPO / entry["source"]).resolve() == DIST.resolve(), \
+        f"the entry's source {entry['source']} does not resolve to the assembled plugin at " \
+        f"{DIST}; a consumer would install a tree this suite never validated"
+    assert "version" not in entry, \
+        "the entry restates the version; it has one home, the plugin manifest, and the update " \
+        "check reads it there"
 
 
 # ------------------------------------------------ what the rules file has to have heard of

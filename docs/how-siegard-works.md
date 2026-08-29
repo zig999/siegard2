@@ -157,6 +157,11 @@ A bare `standard` path over two or more targets is refused (exit 1), with the pe
 wrong registry for one of them, and that mistake passes every structural check because two npm
 packages hold the same manifest names. `standard: null` stands in either shape.
 
+One report precedes the fields: if the project root's `CLAUDE.md` is absent, carries no Siegard
+version marker, or names a release other than the installed framework's, a `rules:` line says so
+and names the current copy (see "Installing the framework, and staying current"). It is a report,
+never a refusal — the fields still print, and the exit code is theirs.
+
 There is no artifact besides this screen output — `project.py` derives nothing to disk.
 
 ### 2. `spec.py`
@@ -1147,6 +1152,43 @@ moving:
 At every step, the report is derived from the files on disk at the moment you ask — never from
 memory of an earlier run, never from a status field. Ask `deliver.py --outstanding` a year into
 an initiative and it walks the plan and the delivery fresh, exactly the way it would on day one.
+
+## Installing the framework, and staying current
+
+The distribution is a Claude Code plugin: `dist/.claude/` is the plugin's root, its identity and
+version live in `dist/.claude/.claude-plugin/plugin.json`, and this repository's own
+`.claude-plugin/marketplace.json` is the storefront that offers it. There are two ways to install
+it, and both end with the same second step.
+
+**As a plugin (the way that receives updates).** Once, in the consumer project:
+
+```
+/plugin marketplace add <owner>/<this repository>
+/plugin install siegard@siegard-generator
+```
+
+Updates then arrive by version: every release bumps the version in the plugin's manifest, and
+Claude Code's update check compares the installed copy against the marketplace. Auto-update is
+per-marketplace and off by default for a third-party marketplace — turn it on once under
+`/plugin` → Marketplaces → Enable auto-update — after which Claude Code checks in the background
+shortly after a session starts and says when a new version is ready. Two things stay in the
+consumer's hands, deliberately: a running session keeps the version it started with until
+`/reload-plugins` or the next session, and nothing installs silently — the check finds, the
+person applies. Without auto-update, `/plugin update` asks the same question on demand.
+
+**Vendored (a copy, updated by copying).** Copy `dist/.claude/` into the project as `.claude/`.
+Every skill works identically — the scripts resolve their own root — but no update check exists:
+staying current is re-copying, and noticing that you haven't is the drift report below.
+
+**The second step, in either mode: place the rules.** The plugin carries the consumer's session
+rules at `consumer/CLAUDE.md`, and nothing loads them from inside a plugin — measured, not
+assumed. Copy them to the project root as `CLAUDE.md` (the report below prints the exact `cp`).
+This is the one file a plugin update cannot refresh for you: it may carry rules the project added,
+so replacing it is a person's act. What closes the gap is `project.py`, which every skill runs
+first: the rules file carries the version it shipped with, `project.py` compares that against the
+plugin's own manifest, and a root `CLAUDE.md` that is absent, unmarked, or from another release
+prints one `rules:` line naming the current copy — a report, never a refusal. A project whose
+rules match its framework hears nothing.
 
 ## Where it all sits on disk (a worked example)
 
