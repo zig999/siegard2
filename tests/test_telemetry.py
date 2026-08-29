@@ -381,6 +381,30 @@ def test_the_probe_names_an_unreadable_transcript_root(consumer):
     assert "unavailable:" in done.stdout and "is not a directory" in done.stdout
 
 
+def test_the_probe_announces_a_worktree_sited_outside_the_tree(consumer):
+    """A session opened in a worktree outside the project's own tree — the parallel-frontier
+    route's `../wt-<task>` — transcribes under a harness directory the probe never lists, so the
+    probe announces such worktrees with the `--transcripts` door. A worktree inside the tree is
+    not announced: its sessions record a cwd under the toplevel, which the sibling reading
+    already reaches."""
+    home = consumer["home"]
+    before = run("--probe", home, "--since", SINCE, "--until", UNTIL,
+                 "--transcripts", consumer["transcripts"])
+    assert "worktree outside this tree" not in before.stdout
+    outside = consumer["tmp"] / "wt-record-order"
+    subprocess.run(["git", "-C", str(home), "worktree", "add", str(outside)],
+                   check=True, capture_output=True)
+    inside = home / ".claude" / "worktrees" / "wt-inside"
+    subprocess.run(["git", "-C", str(home), "worktree", "add", str(inside)],
+                   check=True, capture_output=True)
+    done = run("--probe", home, "--since", SINCE, "--until", UNTIL,
+               "--transcripts", consumer["transcripts"])
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"worktree outside this tree: {outside}" in done.stdout
+    assert "point --transcripts at it for that slice" in done.stdout
+    assert str(inside) not in done.stdout
+
+
 # ---------------------------------------------------------------- sibling directories
 
 

@@ -49,6 +49,13 @@ depends on anything else in it; and a task expected to install a package is deli
 because the manifest is everybody's file and two deliveries editing it concurrently is the one
 conflict no disjointness prevents.
 
+One absence to expect rather than diagnose: a worktree carries commits and never gitignored
+files, so an artifact the registry presupposes and git ignores — an `.env`, a credential file —
+is absent in every fresh worktree, and the substrate check refuses each delivery before it
+writes. That refusal is correct; reading this sentence first is cheaper than reading it K times.
+`.worktreeinclude` at the repository root is the harness's own mechanism for carrying such files
+into every new worktree, and writing it is the consumer's act, never this framework's.
+
     git worktree add -b batch/<task> ../wt-<task> <base>   one per task
     per worktree:  /implement-task <task>                  the ordinary invocation
     per worktree:  commit the delivery                     the orchestrator's act, never the skill's
@@ -60,12 +67,20 @@ conflict no disjointness prevents.
 
 Exactly two files conflict and both are derived — `delivery.json` and `siegard-trace.json`. Take
 either side; the content is disposable and the rederivation above is what completes the
-resolution. **Never merge either by hand**: a hand-merged index is an index somebody authored, and
+resolution. Name the files that conflicted in the merge commit's message — the resolution is
+mechanical and leaves the merge looking clean, so that message is the only place the fact of the
+conflict survives, and how often this route conflicts is a number worth being able to read back.
+**Never merge either by hand**: a hand-merged index is an index somebody authored, and
 `--check` on both is what says the reconciliation is done. A conflict in *source* is a different
 finding — the two tasks were not independent, so abort that branch's merge and re-deliver its task
 alone on the integrated tree, because a file hand-merged between two deliveries is a file neither
 record describes. A worktree that failed is discarded: its task stays recordless, `--outstanding`
-reports it again, and nothing in the base repository has to be undone.
+reports it again, and nothing in the base repository has to be undone. Discard the checkout,
+never the evidence: commit what the worktree holds and keep its branch unmerged before removing
+it — an unmerged branch costs nothing until deliberately deleted, and its `run/` directories are
+the captured record of the red attempts. A worktree removed uncommitted takes those captures with
+it, and a run whose capture is gone did not happen. The commit is the orchestrator's act, exactly
+as every commit on this route is.
 
 Two limits, both real. The union is only exercised at the review — two tasks that each passed
 alone are not a change that passes together, and the run that finds it is `/review-change`'s, at

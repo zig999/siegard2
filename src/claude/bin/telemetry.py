@@ -19,7 +19,11 @@ harness's, in an internal format this framework neither owns nor documents, and 
 word of every conversation. Two rules follow. It is read only after `--probe` has said it can be,
 and the read is announced by whoever invokes it. And what leaves it is counts, names, timestamps
 and the command lines that invoked this framework's own scripts — never the text of a prompt, a
-reply or a tool's result.
+reply or a tool's result. One directory the probe cannot promise: a session opened in a git
+worktree sited outside this project's own tree — the parallel-frontier route's `../wt-<task>` —
+transcribes under a harness directory this probe never lists. Where `git worktree list` names
+such worktrees at probe time, the probe says so and `--transcripts DIR` is the door; a worktree
+already removed left nothing to announce, so the receipt is honest only about what still exists.
 
 **The window is named, never remembered.** `--since` is an instant, or `last`, which continues
 from the `until` of the newest report already in the telemetry root; `--until` defaults to now
@@ -908,6 +912,16 @@ def main() -> int:
         print(f"telemetry_root: {telemetry_root if isinstance(telemetry_root, str) else 'not declared'}")
         print(f"transcripts: {transcript_root} — "
               + ("readable" if readable else f"unavailable: {reason}"))
+        worktrees = git(home, "worktree", "list", "--porcelain")
+        if worktrees is not None and worktrees.returncode == 0:
+            for line in worktrees.stdout.splitlines():
+                if not line.startswith("worktree "):
+                    continue
+                path = line[len("worktree "):]
+                if path and not under(home, path):
+                    print(f"worktree outside this tree: {path} — sessions opened there "
+                          f"transcribe under another harness directory this probe does not read; "
+                          f"point --transcripts at it for that slice")
         if readable:
             overlapping = []
             for path, root in session_files(transcript_root, home):
