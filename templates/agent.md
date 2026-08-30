@@ -2,6 +2,7 @@
 name: {{name}}
 description: {{description}}
 tools: {{tools}}
+model: {{opus where no validator can see this agent's error | sonnet where a run or a later reader catches it}}
 effort: {{low | medium | high}}
 ---
 
