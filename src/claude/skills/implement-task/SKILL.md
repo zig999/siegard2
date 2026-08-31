@@ -124,14 +124,13 @@ names Zod for cannot be followed by a session that never saw Zod's types.
 directory under the delivery root's `run/`. A command run any other way did not happen: what it
 printed exists in a conversation, which is not state, and the record would rest on it.
 
-That capture is what replaced the older rule that this invocation ran nothing at all. The rule
-existed because a session that could run the suite it just wrote would iterate quietly until the
-suite went green, and what failed on the way would exist nowhere. The second half is what has
-changed, and only the second half: `run.py` refuses to write a run under a name that already
+That capture is why this invocation may run at all: a session that could run the suite it just
+wrote would otherwise iterate quietly until the suite went green, and what failed on the way would
+exist nowhere. `run.py` refuses to write a run under a name that already
 exists, so a session that tried four times leaves four directories with four verbatim logs, and
 the record points at the one that passed while the three that did not keep their names. Iterating
-is not forbidden here. It is recorded, and recorded is stronger — the old rule could only stop the
-producer from looking, and this one makes everything the producer saw readable by somebody else.
+is not forbidden here. It is recorded, and recorded is stronger than forbidden: everything the
+producer saw is readable by somebody else.
 
 **The skill runs; the agents do not.** No agent this framework ships holds a shell, and none gains
 one here. Writing source stays the `task-implementer`'s even when a run comes back red: a failure
@@ -166,7 +165,7 @@ took to get there.
 
 The three steps that execute — set up, build, suite — run only where the standard names commands.
 Where none was named, or the registry declares none, they do not run, the report says so, and what
-this invocation hands over is source alone, which is the older and narrower answer rather than a
+this invocation hands over is source alone — a narrower answer, and never presented as a
 clean one.
 
 ### 1. Situate

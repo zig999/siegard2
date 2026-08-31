@@ -187,11 +187,10 @@ node reports an absence where the true finding is a misattribution; the specific
 the path to `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`, which is where the shape of what
 it returns lives.
 
-One judge per file rather than one over the set, because the whole-set judgment saturates: a
+One judge per file rather than one over the set, because a judgment over the set saturates: a
 single context holding every node and every file at once answers hundreds of node-file pairs in
-one reading, and what that bought in invocations it paid back in findings surfacing pass after
-pass over text that never changed — each earlier pass having claimed clean over it. A judge
-holding one file and its own nodes reads less and misses less. No delegation reads another's
+one reading and claims clean over pairs it never weighed. A judge holding one file and its own
+nodes reads less and misses less. No delegation reads another's
 return, and the pass is the union of what they return: a finding keeps the file its judge read,
 and a node is cleared exactly where no delegation that read one of its files found against it.
 
@@ -199,8 +198,7 @@ and a node is cleared exactly where no delegation that read one of its files fou
 accounted for — the prompt was wrong, and the correction is a fresh delegation with the prompt
 fixed, never a follow-up question to the one that already answered. A resumed judge holds its first
 reading and the new question at once, and what comes back is neither its first answer nor an
-independent second one: observed, it contradicted itself over nodes whose text had not moved, and
-denied having returned findings it had returned. So two divergent answers from one delegation are
+independent second one. So two divergent answers from one delegation are
 not a union to fold — union is what holds *between* delegations, each of which read something the
 others did not. They void each other, the file is judged again from a clean context, and `notes`
 says that happened. A score folded out of a judge that answered twice is a floor, not a measurement,
@@ -303,11 +301,9 @@ nothing.** Drift is computed from the bindings: where the pair was bound before,
 still reports and the drift report is honest about it; where it was not — a node the judgment
 opened as a candidate, bound to a sibling file and not to this one — there is no digest to
 disagree with, and there never will be. A later bind that stamps the very content the finding was
-read in removes the only digest that did. Measured over one consumer's whole history, seventy
-percent of the findings a reconciliation retained and no later record cleared were in neither
-state a drift report can reach, the oldest for eighteen days. `trace.py --owed <target-source-root>`
-is what reads the records back and says which of the three each finding is in; the count `--check`
-reports is not that number and never was. Holding the cleared bindings back would
+read in removes the only digest that did. `trace.py --owed <target-source-root>`
+is what reads the records back and says which of the three states each finding is in; the count
+`--check` reports is not that number. Holding the cleared bindings back would
 not have made that clearer — it would have left forty findings looking equally unexamined instead of
 two — and it would have thrown away every reading that succeeded, so the next invocation re-judges
 files whose text nobody touched.

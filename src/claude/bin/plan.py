@@ -20,8 +20,8 @@ skipped the route. `intake/` under the work root holds the material the planning
 
 **The specification is read through spec.py's own pipeline, and does not move underfoot.** A plan
 carries no pin against it: the specification does not change during a plan's execution, by
-convention — the discipline that replaced verifying it, once decide-and-disclose closed off the
-one way a specification used to carry an open question a task could outlive. A specification that
+convention — decide-and-disclose leaves a specification no way to carry an open question a task
+could outlive, which is what a pin would watch for. A specification that
 does not hold together is a refusal to run: fix it with spec.py first.
 
 **A `closure.md` at the work root marks the plan closed.** A closed plan is history: every

@@ -162,8 +162,8 @@ def parse_node(path: Path) -> tuple[dict | None, str, str | None]:
     except yaml.YAMLError as broken:
         said = f"frontmatter does not parse: {broken}"
         # PyYAML's own message for the commonest authoring error — a colon inside an unquoted
-        # scalar — names the grammar and not the fix, and three refusals in one consumer window
-        # were this error worked out from the grammar each time. The match is on the library's
+        # scalar — names the grammar and not the fix, and working the fix out from the grammar
+        # is paid once per occurrence. The match is on the library's
         # wording; a version that rewords it loses the hint and nothing else.
         if "mapping values are not allowed" in str(broken):
             said += (" — usually a colon inside an unquoted scalar; quote the whole string, or "

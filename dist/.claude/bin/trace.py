@@ -39,8 +39,8 @@ stale entries reports eighty-three findings the day three files drift, and nobod
 the report a caller stops reading is a report that says nothing, however true every line of it is.
 
 The `code` class has the same arithmetic inside itself, and the listing answers it the same way.
-One file bound by sixteen nodes drifts sixteen findings the day it changes once — a live consumer
-tree measured exactly that, one shared service file burying the report on every edit — so the
+One file bound by sixteen nodes drifts sixteen findings the day it changes once — one shared
+file buries the report on every edit — so the
 listing prints that class per file: one line naming the file, the reason, and every binding the
 change staled. The findings are still counted per binding, because that is what they are; the
 grouping is the listing's, because the remedy for this class is a reconciliation and a
@@ -58,10 +58,10 @@ specification shifted under those files, `orphaned` still says the node is gone.
 silence: a receipt says how many findings were held back and `--all` lists them, which is what
 keeps a declaration a consumer can measure from becoming one it forgets it made.
 
-`--bind-record` is the form a delivery uses, and it exists because the older one made its caller
-retype what a record already says. An implementation record names every node the source encodes and
-every file each one reached; binding them one invocation at a time paid a full specification
-validation and a full read-and-rewrite of the trace per node, and left the rule that a bind states
+`--bind-record` is the form a delivery uses. An implementation record names every node the source
+encodes and
+every file each one reached; binding them one invocation at a time pays a full specification
+validation and a full read-and-rewrite of the trace per node, and leaves the rule that a bind states
 exactly what the record says — never a second judgment about it — resting on prose. This reads the
 record: a node it does not name cannot be bound from this form, and one it does cannot be skipped.
 The whole of it is refused before anything is written, because a delivery half bound describes a
@@ -102,7 +102,7 @@ that node already held: a file this call does not name but an earlier bind of th
 stays bound, at the digest that earlier bind recorded, because two tasks landing the same rule in
 two different files is not one of them undoing the other's work. A file this call does name is
 written at the digest read just now, whether or not an earlier bind already held that path.
-`--replace` writes the entry in full instead, exactly as every bind used to: a file left off the
+`--replace` writes the entry in full instead: a file left off the
 list is a file this bind no longer claims — for the case where a fact genuinely moved out of a
 file rather than into an additional one. **It substitutes the whole entry, not the files this call
 names**, so where two records answer one node, replacing from the second drops what the first
@@ -119,13 +119,11 @@ a judgment that found against a node writes no binding, so there is nothing for 
 to compare. Where the pair was bound before, the old digest still reports it and the report is
 honest. Where it was not — a node the judge opened as a candidate, bound to some sibling file and
 not to this one — or where a later bind stamped the very content the finding was read in, `--check`
-is silent, and silent permanently: nothing about that file has to change again. Measured over one
-consumer's whole history, seventy percent of the findings a reconciliation retained and no later
-record cleared sat in that silence, the oldest for eighteen days. The findings were never lost —
-every one is in a record, and `/siegard-archive` refuses to remove them — but nothing read them
-back, so what a judgment had already paid for was spent again or not at all. This form reads them
-and says which of three states each finding is in; it writes nothing, decides nothing, and every
-line names the record its finding came from.
+is silent, and silent permanently: nothing about that file has to change again. The findings are
+never lost —
+every one is in a record, and `/siegard-archive` refuses to remove them — and this form is what
+reads them back: it says which of three states each finding is in, writes nothing, decides
+nothing, and every line names the record its finding came from.
 
 `--encodes` answers the other question the drift report cannot. `--check` is keyed by drift, so a
 file is in it because it changed: a file whose bindings are intact is absent from it and reads
@@ -453,10 +451,11 @@ def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
     The second return value is why this reports at all. `--replace` substitutes the whole entry,
     not the files this call names, so a path an earlier bind put there and this one leaves off is
     gone — and gone invisibly, because the trace it writes is internally consistent and `--check`
-    comes back clean over it. That is the same silent loss the union default was introduced to end,
+    comes back clean over it. That is the same silent loss the union default exists to end,
     surviving behind a flag. Nothing here refuses it: dropping a file is exactly what `--replace`
-    is for, and the caller who omitted a vanished path meant to. What was missing is the receipt —
-    the two sides are both in hand at this moment and one of them was being discarded unread.
+    is for, and the caller who omitted a vanished path meant to. What this owes is the receipt —
+    the two sides are both in hand at this moment, and one of them would otherwise be discarded
+    unread.
 
     Paths, never records. Which delivery put a file here is not something this file stores, so the
     receipt names what stopped being claimed and says nothing about who claimed it."""
@@ -540,8 +539,8 @@ def code_report(findings: list[tuple[str, str, str | None, str]]) -> list[str]:
     """The `code` class, listed per file rather than per binding.
 
     A file bound by sixteen nodes that changes once is one act to take, not sixteen lines to
-    read — the live consumer runs measured exactly that shape, one shared service file burying
-    the report every time it moved. The remedy for this class is a reconciliation, and a
+    read — one shared file buries
+    the report every time it moves. The remedy for this class is a reconciliation, and a
     reconciliation is invoked over a file set, so the listing is keyed the way the remedy
     consumes it: one line per file, naming every binding the change staled. Nothing about the
     findings themselves changes — the tally still counts bindings, `suppressed()` still counts
@@ -841,9 +840,10 @@ def withheld(record: Path) -> list[str]:
     exactly as it stood — reported by the next `--check` where a binding holds the pair, and by
     `--owed` alone where none does.
 
-    What was missing was saying so here. `--reconciliation` names the held nodes before anything
-    is written, but the bind's own output listed what it bound and nothing else, so a partial bind
-    read exactly like a complete one at the only moment the person who ran it was still looking.
+    The bind owes saying so here. `--reconciliation` names the held nodes before anything
+    is written; without the receipt below, the bind's own output lists what it bound and nothing
+    else, and a partial bind reads exactly like a complete one at the only moment the person who
+    ran it is still looking.
     A bind that quietly reconciles thirty-eight of forty is the report this framework spends its
     receipts preventing."""
     front = as_reconciliation(record)
@@ -936,7 +936,7 @@ def owed(target: Path, show_all: bool = False) -> int:
 
     A finding some record cleared is not listed. A clearance in the corpus is a closure, and
     printing every remediated pair would rebuild the unreadable report this file spends its
-    receipts preventing — one consumer's history holds more than twice as many of those as of
+    receipts preventing — wherever remediation happens at all, the remediated pairs outnumber
     everything else here. The count rides a receipt instead, and `--all` lists them, exactly as
     the same flag already works one form over: two judgments answering one pair both ways is what
     that list shows, and it is worth a reader's attention for a different reason than a finding is."""
@@ -1089,8 +1089,8 @@ def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
     named file", and the skill that writes one says it in as many words — "what you keep is every
     node those findings name, and never a subset … reconciling a file against the part of the
     specification that happens to agree with it is the failure this whole route exists to prevent".
-    Until this ran, nothing held a record to it: a record naming a file and answering for one of
-    the two nodes bound to it would rebind that one and leave the other asserting a link nobody
+    Without this check, nothing holds a record to it: a record naming a file and answering for one
+    of the two nodes bound to it would rebind that one and leave the other asserting a link nobody
     re-read, while reading exactly like a complete reconciliation.
 
     An orphaned binding is excluded. Its node is gone from the specification, no bind can repair it
@@ -1132,8 +1132,9 @@ def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
 def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = False) -> int:
     """Every binding one implementation record states, written as one act.
 
-    Per node, the older form paid a full specification validation and a full read-and-rewrite of
-    the trace. Here they are paid once, and the whole of it is refused before anything is written:
+    Bound one node at a time, a record pays a full specification validation and a full
+    read-and-rewrite of the trace per node. Here they are paid once, and the whole of it is
+    refused before anything is written:
     a delivery half bound describes a link nobody made, and the file it would leave behind reads
     exactly like a complete one.
 

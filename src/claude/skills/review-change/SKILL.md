@@ -83,10 +83,9 @@ to paste. A naming that overrode a differing file is reported with both. Below, 
 
 It decides a second thing now: **the commands are the registry's.** A registry declares how the
 project is installed, checked and run, and those steps are what the capture below executes. This
-is not a convenience. Left to a human to retype at each invocation the commands were not typed at
-all, and one consumer's registry reached twenty-four rules decided by `lint`, `typecheck` and
-`secret-scan` with no step ever run to decide any of them, across two reviews that both reported
-honestly that the failures pass had no input. The registry naming its own commands is what ends
+is not a convenience. Left to a human to retype at each invocation the commands are not typed at
+all, and a registry's tool-decided rules go undecided while every review reports honestly that the
+failures pass had no input. The registry naming its own commands is what closes
 that, and it keeps every string the project's: nothing here composes a build or a test command or
 infers one from what a tree looks like.
 
@@ -256,10 +255,9 @@ the split is honest only while the unanswered half is counted out loud.
 **This runs even where `/implement-task` already ran the same steps green, and the redundancy is
 the point.** That invocation ran them over one task; this one runs them over the whole change,
 which is several tasks and every file they touched. Two deliveries that each passed alone are not a
-change that passes together, and the run that finds it is this one. What has changed since the rule
-that put running here in the first place is only who else may run: writing no longer has to be
-blind to its own build, because every run either invocation makes is captured under a name nothing
-may reuse. What has not changed is that the run lands on disk before any judgment is made of it, so
+change that passes together, and the run that finds it is this one. Writing is not blind to its own
+build: every run either invocation makes is captured under a name nothing
+may reuse, and the run lands on disk before any judgment is made of it, so
 the same evidence can be handed to a second reviewer who reads it differently, and the pass that
 judges it still executes nothing — it reads the files this step wrote.
 

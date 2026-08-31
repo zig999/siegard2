@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Resolve the project file: every root and the standard a consumer declared, read from disk.
 
-A value retyped per invocation is a value a session can forget or mistype — one consumer's
-registry sat unnamed across invocations that its own delivery root remembered, and a specification
+A value retyped per invocation is a value a session can forget or mistype — a registry can sit
+unnamed across invocations that its own delivery root remembers, and a specification
 root is no easier to retype correctly than a registry's path. `siegard.json` is where a project
 declares each once: at the project's own root, in the consumer's own hands, written only by
 `/siegard-config`. This script is the one reader — it finds the file, holds it to

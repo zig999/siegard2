@@ -42,8 +42,8 @@ worktree because each delivery is the ordinary `/implement-task` path, unvaried,
 that are not a skill's are a person's. The tempting substitute — one general-purpose agent per
 task, handed the whole delivery — is not a variation of this route but its undoing: a subagent
 cannot spawn the two producers, so the implementation and its proof are written in one context
-and agree by construction, and the consumer window that measured it paid the parallel pass and
-then paid every proof again through the ordinary route. Three preconditions: the plan is committed, since a
+and agree by construction — a parallel pass paid in full whose every proof is then paid again
+through the ordinary route. Three preconditions: the plan is committed, since a
 worktree sees commits and never trees; the tasks come from this set, so nothing in the batch
 depends on anything else in it; and a task expected to install a package is delivered alone,
 because the manifest is everybody's file and two deliveries editing it concurrently is the one
@@ -485,8 +485,8 @@ def standard_of(nid: str | None, front: dict, target: Path,
     if not path.is_file():
         # The commonest wrong spelling is the right path under the wrong anchor: a record that
         # wrote the path from the repository root while the rule reads it from the target source
-        # root. Four records in one consumer window hit it, and the bare "does not exist" sent
-        # each into its own fix-and-rerun cycle — so the refusal hands the corrected spelling,
+        # root. A bare "does not exist" sends each occurrence into its own fix-and-rerun
+        # cycle — so the refusal hands the corrected spelling,
         # found by walking the target's ancestors, and ends the class in one cycle.
         for ancestor in target.resolve().parents:
             candidate = ancestor / at
@@ -1298,9 +1298,9 @@ def substrate_absences(plan_nodes: dict[str, dict], delivered: set[str],
     It is here because this barrier is real and invisible. The task that produces what every rule
     needs takes no dependency edge and never will: an edge from every other task to it would be a
     fact somebody had to keep true by hand, so the plan states the artifacts instead and each
-    delivery refuses on their absence. The consequence is that `waits on` — the only thing this
-    report used to name — is silent about the one task whose absence stops all the others, and a
-    caller reading it picks a task that will stop before it writes.
+    delivery refuses on their absence. The consequence is that `waits on` alone is silent about
+    the one task whose absence stops all the others, and a
+    caller reading only it picks a task that will stop before it writes.
 
     Existence is the whole of the question, exactly as it is for what a registry presupposes:
     whether a manifest declares the right script is decided by running it, and a framework that

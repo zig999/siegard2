@@ -112,10 +112,9 @@ limit the solution. Two rules bind the analysis:
 - **A fact the material does not state is decided by the analysis, now, and disclosed.** Record
   the decided value like any other fact — no placeholder, no `unknown`, no gap marker — and
   append an entry to `decision-log.md`: the file and field it filled, what the material left
-  unstated, the value decided, and why (SPEC-001 R4, R9). This is the discipline's whole
-  reversal from what came before it: inventing a plausible value used to be the failure to
-  prevent; leaving a field undecided is now. An undecided required field is not an honest gap —
-  it is a floor violation, and closing it is this step's job, disclosed rather than silent.
+  unstated, the value decided, and why (SPEC-001 R4, R9). An undecided required field is not an
+  honest gap — it is a floor violation, and closing it is this step's job, disclosed rather than
+  silent.
   **And it is decided here, in this context** — which is the one place this route reads
   differently from planning's, where the same class of fact goes to the `unstated-fact-decider`
   and is never shown the task that surfaced it. The blindness there is blindness to *the cut*: a

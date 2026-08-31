@@ -3,14 +3,14 @@
 
 A telemetry report is a retrospective's raw material: which agents ran and what each cost, which
 commands refused and how often, what the captured runs took, what stopped and what was decided.
-Until this script existed that report was written from a session's own recall of the work — and
-recall is the one source this framework declares non-authoritative. The token figures it produced
-were plausible, and after the context had been compressed once they were guesses that read as
+A report written from a session's own recall of the work would rest on the one source this
+framework declares non-authoritative: recalled token figures are plausible, and after a context
+compression they are guesses that read as
 counts. Every figure this writes is read from a file, or is absent with the reason beside it.
 
 **Where the numbers live.** The framework itself records the runs (`run/<slug>/run.json` under
 each delivery root, with a clock on every step), the notes (`## Notes` on every plan node), the
-decisions (`decision-log.md`) and the history (git). What it never recorded — which subagent was
+decisions (`decision-log.md`) and the history (git). What it never records — which subagent was
 spawned, when, by which skill, how many tokens it spent and how long it held the wall — the
 harness records on its own, in the session transcripts under its projects directory: one
 subdirectory per working directory, one `.jsonl` per session, and beside it a `subagents/`

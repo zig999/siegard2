@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.27.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.28.0. `bin/project.py` reads this line and reports drift against
 the framework's own version — the rules and the skills are two halves of one release, and only the
 framework's side can say the halves diverged, because a session that lost this file lost the
 reporter with it.
@@ -330,8 +330,7 @@ longer be done.
 
 Three things hold that route, and the last is the one to read twice.
 
-- **It is declared, per target, in the project's own file.** Declaring none leaves four routes,
-  which is where every project stood before the fifth existed.
+- **It is declared, per target, in the project's own file.** Declaring none leaves four routes.
 - **No rule about domain facts is relaxed.** Source is still never the home of a fact no node
   holds — surface is by definition what states none, so a change that stated one took the wrong
   route, and the conformance pass reports it when a review next reaches that file.
@@ -446,9 +445,8 @@ no further — once and together, so the answer is given once rather than a ques
 - **A delegation answers once.** Where a subagent's return is unusable, the prompt was wrong:
   spawn a fresh delegation with it fixed, never send a follow-up question to the one that already
   answered. A resumed agent holds its first reading and the new question at once, and what comes
-  back is neither its first answer nor an independent second one — observed, it contradicted itself
-  over text that had not moved and denied having returned what it had returned. Two divergent
-  answers from one delegation void each other; they are not two readings to reconcile.
+  back is neither its first answer nor an independent second one. Two divergent answers from one
+  delegation void each other; they are not two readings to reconcile.
 - **The agents run on pinned models, whatever model the session runs on.** Six whose error no
   validator can see — `unstated-fact-decider`, `execution-contract-binder`,
   `specification-conformance-reviewer`, `standard-conformance-reviewer`, `coverage-auditor`,
