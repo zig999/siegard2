@@ -359,6 +359,14 @@ paste for a corrective increment, naming the scope (the one wrong behavior, as t
 it), the project root, the target, and the initiative's slug. That route ends in a delivery, which
 binds on its own and leaves this reconciliation with nothing to do.
 
+The third, where the node and the behavior agree and what the finding names is the file's own
+prose — a comment breaking the consumer rules' comment rule. Neither door above fits it: there is
+no fact to decide into the specification and no behavior to correct, and routing it through either
+prices a line of prose like a defect. The consumer rules' comment route is the answer — the human
+removes the prose, never refreshes it, and this skill invoked again over that file under a new slug
+is what re-judges and rebinds. Hand that invocation ready to paste, and say which findings it
+answers.
+
 ## What this never does
 
 - **It never writes source and never writes a specification node.** Both have entry points, and a

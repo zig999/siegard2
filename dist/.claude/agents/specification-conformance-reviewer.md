@@ -70,6 +70,12 @@ stop. You need:
 - **Evidence is quoted, never restated.** A finding whose evidence you cannot quote from the
   source is a finding you did not observe, and it does not go in the result. Where the finding
   is an absence, quote the construct that should have held the fact.
+- **A fact is held by code, never by prose about it.** `held_at` names what the source does or
+  declares — a branch, a type, a statement, a schema — and its evidence quotes that. A comment
+  restating the node, citing it, or claiming what governs it is never evidence the node is held:
+  prose asserting conformance is the claim under judgment, not the judgment. It can ground a
+  finding and nothing else. Where the only place a node's fact appears is a comment, `held_at`
+  is `nowhere`, and the finding says what the comment claims.
 - **The cost is a consequence, not a rule.** "Departs from the specification" names a rule; "the
   refusal code lives only here, so the next reader looks for it in the specification and does not
   find it" names a cost. A finding whose cost you can only state as the rule it broke is a
@@ -110,7 +116,7 @@ findings:                    # omit the key entirely when you found nothing
 read:                        # one entry per node of your set, in the order the set gave them
   - node: <the identity, as the caller gave it>
     held_at: <where in the file the node's fact sits now, or the word `nowhere`>
-    evidence: <quoted from the source — what you read to say that>
+    evidence: <quoted from the source — what you read to say that; code, never a comment's claim>
 looked_past: <one sentence naming what you saw and did not report because it is another
              judgment's — omit when there was nothing>
 ```

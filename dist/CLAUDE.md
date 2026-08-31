@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.26.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.27.0. `bin/project.py` reads this line and reports drift against
 the framework's own version — the rules and the skills are two halves of one release, and only the
 framework's side can say the halves diverged, because a session that lost this file lost the
 reporter with it.
@@ -299,26 +299,24 @@ routes; which one a change takes is stated by a person and never inferred.
 | a fact of the business — a status, a refusal, what the system tells someone, who may see what | `/analyse` → `/plan-work` → `/implement-task` → `/review-change` |
 | a capability's surface — a screen, a state, an interaction the specification already holds | `/plan-work` → `/implement-task` → `/review-change` |
 | one wrong behavior in code already delivered | `/plan-work`'s corrective increment → `/implement-task` |
-| **the citation alone** — a comment naming the wrong node, or a closed plan task, for a fact the specification already holds and the code already implements correctly | the source, changed directly, then `/reconcile` over that file |
+| **the comment alone** — prose in source that breaks the comment rule, with the behavior correct and the fact already held | the source, changed directly (removal, never refresh), then `/reconcile` over that file |
 | **the surface alone** — a control's label, a colour, spacing, a column's order, an icon | the source, changed directly, on a target declaring `edits_freely` |
 
-**The fourth route exists because a conformance judgment reads a comment as a claim.** A comment
-citing a node that does not hold the fact it states, or citing a plan task that closed, is a real
-finding — the fact ends up with a second home, and the judgment says so. What that finding is not
-is a wrong behavior: the code does the right thing and the specification already states why. Routing
-it through a corrective increment prices a one-line citation swap exactly like a defect, which is
-what left this class with no proportionate route until it was named.
+**The fourth route answers a finding against prose, never against behavior.** A judgment that meets
+a comment breaking the comment rule files the finding; this route lands the removal.
 
-Three things hold it, and none of them is optional.
+Four things hold it, and none of them is optional.
 
 - **The fact is already held by a node, and the code already implements it.** If either is untrue
-  the change is not a citation — it is the first route, and a comment is where an unstated fact
+  the change is not a comment fix — it is the first route, and a comment is where an unstated fact
   hides most comfortably. The test is whether anything a person using the system can learn or do
   would differ afterwards; if so, this was the wrong route.
+- **The edit removes; it never refreshes.** Prose corrected to today's truth is written under the
+  comment rule like everything else, and the rule permits none.
 - **`/reconcile` over that file is part of the route, not a follow-up somebody may skip.** The edit
   moves the file's digest, so the binding goes stale and the drift is real. The reconciliation is
   what re-reads the file against the nodes the trace already links to it and rebinds what its
-  judgment clears — which is also what catches a citation swap that turned out to state a fact.
+  judgment clears — which is also what catches a removal that took a stated fact with it.
 - **It needs no declaration and it is not the fifth route by another name.** `edits_freely`
   suppresses a whole class of drift for a whole target; this leaves the drift standing and answers
   it with a record. A target may take this route without declaring anything.
@@ -435,6 +433,12 @@ no further — once and together, so the answer is given once rather than a ques
   silence is closed: decided into the specification and disclosed in the decision log, never filled
   downstream. A fact no node holds reaches code through nothing — a stop before any source is
   written, or a conformance finding once it is.
+- **Source carries no comments.** Two exceptions, and no others: a directive a named tool
+  consumes, and the reason the project's standard requires beside a suppression. What a comment
+  would have said goes to its validated home: the fact in its node, the rationale in the decision
+  log, the file-to-node link in the trace, the reasoning behind an implementation in its record.
+  Prose already in the tree is removed through the comment route when a judgment meets it — never
+  by a sweep.
 - **Never write source over a task whose `## Notes` still carries a `BLOCKING` entry** (above).
 - **Fix form, never knowledge.** A value outside a vocabulary is corrected; a fact the specification
   does not state is decided into the specification — by the plan's own blind judge or by the
