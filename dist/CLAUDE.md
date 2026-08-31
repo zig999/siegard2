@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.25.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.26.0. `bin/project.py` reads this line and reports drift against
 the framework's own version — the rules and the skills are two halves of one release, and only the
 framework's side can say the halves diverged, because a session that lost this file lost the
 reporter with it.
@@ -85,7 +85,7 @@ Rules that hold for all three:
   **This is about behavior**, and the two costs above are what make it so: a change to the surface
   alone pays neither — a label has no criterion for a test to be co-written against, and a target
   declared `edits_freely` is one whose trace stopped asserting that digest deliberately. That
-  change takes the fourth route below.
+  change takes the fifth route below.
 - **`BLOCKING` note** — a specification node states something an objective or criterion contradicts
   or exceeds. The task is not written while it stands, and only a person settles it: through the
   scope, or through the analysis that amends the specification. A silence is not this: a fact the
@@ -149,6 +149,16 @@ directly reads its form rather than opening the source.
 | `moved` | the specification moved under a binding | healed when the node's task is next delivered — the bind restamps at the node as it stands |
 | `code` | the file changed without a rebind, whatever wrote it | `/reconcile`, below — a delivery cannot answer it for another task's nodes, because a bind restamps only its own |
 | `orphaned` | bound to a node the specification no longer holds | `trace.py --prune`, which drops exactly this class and nothing else |
+
+**Drift is not the whole of what is owed, and the drift report cannot say so.** Every class above is
+computed from a binding, so a reconciliation's finding against a node the trace binds nowhere — one
+its judge opened as a candidate, bound to a sibling file and not to this one — has no digest to
+disagree with and appears in no `--check`, ever. A later bind stamping the content that finding was
+read in removes the only digest that did. `trace.py --owed <target-source-root>` reads the
+reconciliation records back and says which of three states each open finding is in; `trace.py
+--encodes <target-source-root> <file> ...` answers the question `--check` is the wrong shape for —
+which nodes a file is bound to right now, whether or not it drifted. **A tree read by `--check`
+alone reads clean while its own records hold conformance questions nobody withdrew.**
 
 **A target the project declares `edits_freely` reports two of the three.** The `code` row is
 counted rather than listed there — on a surface where a label or a colour moves weekly it names
@@ -281,7 +291,7 @@ departures.
 
 ## Which route a change takes
 
-Not every change decides something, and pricing them all alike prices the smallest one worst. Four
+Not every change decides something, and pricing them all alike prices the smallest one worst. Five
 routes; which one a change takes is stated by a person and never inferred.
 
 | what changed | route |
@@ -289,18 +299,41 @@ routes; which one a change takes is stated by a person and never inferred.
 | a fact of the business — a status, a refusal, what the system tells someone, who may see what | `/analyse` → `/plan-work` → `/implement-task` → `/review-change` |
 | a capability's surface — a screen, a state, an interaction the specification already holds | `/plan-work` → `/implement-task` → `/review-change` |
 | one wrong behavior in code already delivered | `/plan-work`'s corrective increment → `/implement-task` |
+| **the citation alone** — a comment naming the wrong node, or a closed plan task, for a fact the specification already holds and the code already implements correctly | the source, changed directly, then `/reconcile` over that file |
 | **the surface alone** — a control's label, a colour, spacing, a column's order, an icon | the source, changed directly, on a target declaring `edits_freely` |
 
-**The criterion is one sentence: if the change alters what a person using the system can learn or
-do, it is not surface.** A button that keeps doing the same thing under a different label is
-surface. The wording of a refusal is not — what someone is told at an outcome is what the business
-decided, and it lives in a node. A column showing data the screen did not show is not: something
-new can be learned. A screen that starts refusing an action is not: something can no longer be done.
+**The fourth route exists because a conformance judgment reads a comment as a claim.** A comment
+citing a node that does not hold the fact it states, or citing a plan task that closed, is a real
+finding — the fact ends up with a second home, and the judgment says so. What that finding is not
+is a wrong behavior: the code does the right thing and the specification already states why. Routing
+it through a corrective increment prices a one-line citation swap exactly like a defect, which is
+what left this class with no proportionate route until it was named.
 
-Three things hold the fourth route, and the last is the one to read twice.
+Three things hold it, and none of them is optional.
 
-- **It is declared, per target, in the project's own file.** Declaring none leaves three routes,
-  which is where every project stood before the fourth existed.
+- **The fact is already held by a node, and the code already implements it.** If either is untrue
+  the change is not a citation — it is the first route, and a comment is where an unstated fact
+  hides most comfortably. The test is whether anything a person using the system can learn or do
+  would differ afterwards; if so, this was the wrong route.
+- **`/reconcile` over that file is part of the route, not a follow-up somebody may skip.** The edit
+  moves the file's digest, so the binding goes stale and the drift is real. The reconciliation is
+  what re-reads the file against the nodes the trace already links to it and rebinds what its
+  judgment clears — which is also what catches a citation swap that turned out to state a fact.
+- **It needs no declaration and it is not the fifth route by another name.** `edits_freely`
+  suppresses a whole class of drift for a whole target; this leaves the drift standing and answers
+  it with a record. A target may take this route without declaring anything.
+
+**The criterion for the fifth is one sentence: if the change alters what a person using the system
+can learn or do, it is not surface.** A button that keeps doing the same thing under a different
+label is surface. The wording of a refusal is not — what someone is told at an outcome is what the
+business decided, and it lives in a node. A column showing data the screen did not show is not:
+something new can be learned. A screen that starts refusing an action is not: something can no
+longer be done.
+
+Three things hold that route, and the last is the one to read twice.
+
+- **It is declared, per target, in the project's own file.** Declaring none leaves four routes,
+  which is where every project stood before the fifth existed.
 - **No rule about domain facts is relaxed.** Source is still never the home of a fact no node
   holds — surface is by definition what states none, so a change that stated one took the wrong
   route, and the conformance pass reports it when a review next reaches that file.

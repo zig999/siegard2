@@ -117,11 +117,20 @@ listed per file — one line naming the file, the reason, and every binding the 
 is this skill's own shape: a reconciliation is invoked over a file set. Read the findings, and
 keep the lines whose path is in the file set.
 
-Then open `siegard-trace.json` itself, beside `siegard.json` at the target's git toplevel, and read
-its `bindings` for every named file the findings did not name. That second reading is what
-separates the two states the findings cannot tell apart — a file the trace binds nothing to looks
-exactly like a file whose binding is intact, because both are absent from a drift report — and it
-is the only place an intact file's nodes are written down. Read it; never infer it.
+Then, for the whole file set:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <each named path>
+```
+
+This is the second reading, and it separates the two states the findings cannot tell apart — a file
+the trace binds nothing to looks exactly like a file whose binding is intact, because both are
+absent from a drift report. It prints every node each named file is bound to and whether that
+binding still computes, which is exactly the node set the judgment below is handed. Run it; never
+infer it, and do not reconstruct it by reading `siegard-trace.json` yourself. A node missed in a
+hand reading is a judge handed an incomplete node set, and the record that comes back reads exactly
+like a complete one — nothing downstream can tell them apart, because `--reconciliation` validates
+the record's own shape and not whether the set it used was whole.
 
 **Two anchors meet here, and only one of them belongs in what you write.** Findings are spelled from
 the target's git toplevel, because that is where the trace file sits; everything you author — the
@@ -287,8 +296,18 @@ it once.
 
 What that is not is a claim that the set is reconciled. A cleared node's binding rests on the
 judgment that cleared it and on nothing else in the record; a node with a finding against it stays
-exactly as it stood, so the drift that surfaced it is still drift, `--check` still reports it, and
-the count it reports is what says how much is still owed. Holding the cleared bindings back would
+exactly as it stood.
+
+**What `--check` says about that node afterwards is a different question, and often the answer is
+nothing.** Drift is computed from the bindings: where the pair was bound before, its old digest
+still reports and the drift report is honest about it; where it was not — a node the judgment
+opened as a candidate, bound to a sibling file and not to this one — there is no digest to
+disagree with, and there never will be. A later bind that stamps the very content the finding was
+read in removes the only digest that did. Measured over one consumer's whole history, seventy
+percent of the findings a reconciliation retained and no later record cleared were in neither
+state a drift report can reach, the oldest for eighteen days. `trace.py --owed <target-source-root>`
+is what reads the records back and says which of the three each finding is in; the count `--check`
+reports is not that number and never was. Holding the cleared bindings back would
 not have made that clearer — it would have left forty findings looking equally unexamined instead of
 two — and it would have thrown away every reading that succeeded, so the next invocation re-judges
 files whose text nobody touched.
@@ -307,9 +326,12 @@ Where the judgment cleared everything, there is no next invocation. The trace no
 as it stands, and `trace.py --check` over the target is what a reader confirms that with.
 
 Where it cleared part of the set, say both halves and keep them apart: the nodes now bound, and the
-nodes still owed exactly as the bind's receipt names them. `trace.py --check` over the target is
-still the confirmation, and what it reports now is the remainder — a reader who sees two findings
-where the drift report opened with forty is reading the progress, not a clean tree.
+nodes still owed exactly as the bind's receipt names them. Two confirmations, and naming only the
+first is what leaves a reader believing a partial reconciliation was a whole one. `trace.py --check`
+over the target reports the drift that remains — a reader who sees two findings where the report
+opened with forty is reading the progress, not a clean tree. `trace.py --owed` over the same target
+reports what this judgment found and no bind could close, which is the half `--check` cannot see:
+a node bound to no file here has no digest to drift, so its finding lives in the record alone.
 
 **Then say what the next invocation's file set is, and make it the remainder.** It is the files
 whose nodes are still owed — never the whole set again. The nodes that cleared are bound, their

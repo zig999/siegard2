@@ -57,6 +57,15 @@ this invocation — it is the status, reported verbatim.
    answered by `/reconcile`. Where `code` findings exist, the report carries the `/reconcile`
    invocation ready to paste — the file set being the drifted paths, converted to the target
    source root's own anchor, since `--check` spells them from the git toplevel.
+   Then, for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --owed
+   <target-source-root>` — what past reconciliations found and no bind could close. This is not a
+   second view of the drift counts and must never be reported as one: a finding against a pair the
+   trace binds nowhere has no digest to disagree with, so `--check` cannot reach it and no future
+   `--check` will. A status built on the drift counts alone reports a tree as clean while its
+   records hold open conformance questions nobody withdrew. Say both numbers, say they measure
+   different things, and where `--owed` lists anything under `unseen` or `covered`, name the
+   records it points at — those are the findings no other command in this framework will mention
+   again.
 4. **The repository.** `git log --oneline -15` over the project root, and `git status
    --porcelain` — what landed recently, and what stands uncommitted. An uncommitted change is
    not judged here: say whose diff it appears to be (paths under which root) and leave the
@@ -96,7 +105,8 @@ In this order, every line naming its source:
 - the specification: sound or not (validator output verbatim), node counts, and the last five
   disclosed decisions — location, what was decided, why;
 - the trace: findings by class with each class's route, and the ready `/reconcile` invocation
-  where `code` drift stands;
+  where `code` drift stands; then, kept apart from those counts, what `--owed` holds — the
+  findings past reconciliations left open, and which of them no drift report can reach;
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;
 - the close: the single next invocation most ready to run, and nothing more.

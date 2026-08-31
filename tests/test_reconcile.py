@@ -430,3 +430,183 @@ def test_an_orphaned_binding_is_not_a_node_a_record_owes_an_answer_for(consumer,
     (consumer / "specs" / f"{ORPHANABLE}.md").unlink()
     bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
     assert bound.returncode == 0, bound.stdout + bound.stderr
+
+
+# ------------------------------------------------------------------ what no bind could close
+
+
+@pytest.fixture
+def declared(consumer: Path) -> Path:
+    """The project file `--owed` reads to anchor each record's paths on its target's source root.
+    A record spells its paths from there; the trace spells them from the toplevel, and the map
+    between the two lives in this file and nowhere else."""
+    (consumer / "siegard.json").write_text(
+        json.dumps({"specification_root": "specs", "targets": {"backend": "backend"}}, indent=2),
+        encoding="utf-8")
+    return consumer
+
+
+def owed(root: Path, *rest) -> subprocess.CompletedProcess:
+    return run("--owed", root / "backend", *rest)
+
+
+def bind(root: Path, node: str, *files: str) -> subprocess.CompletedProcess:
+    return run("--bind", root / "backend", root / "specs", node, *files)
+
+
+def test_a_finding_against_a_pair_nothing_binds_is_owed_and_no_drift_report_can_reach_it(
+        declared, write_record):
+    """The claim the contract used to make the other way round, and the one this form exists for.
+
+    Drift is computed from the bindings. A judgment that found against a node the trace does not
+    bind to the file it was read in — the candidate tier's whole purpose, a fact governed by a node
+    another file carries — leaves no digest to disagree with, so the drift report is clean and stays
+    clean however long the finding stands. Nothing about the file has to change for that to remain
+    true, which is why no later `--check` reaches it either."""
+    bind(declared, OTHER, FILE)
+    write_record(record_of([REFUSED]))
+
+    clean = run("--check", declared / "backend")
+    assert clean.returncode == 0, clean.stdout + clean.stderr
+    assert "no drift" in clean.stdout
+    assert NODE not in clean.stdout
+
+    done = owed(declared)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "unseen" in done.stdout
+    assert NODE in done.stdout
+    assert "order-fix.md" in done.stdout
+
+
+def test_a_bind_over_the_content_a_finding_was_read_in_removes_the_only_symptom(
+        declared, write_record):
+    """The second silence, and the one that reads most like resolution. The pair was reachable —
+    a binding held it — and a bind stamped the very content the finding was read in, so the digest
+    agrees and the drift report has nothing to say while the finding stands underneath it."""
+    bind(declared, NODE, FILE)
+    write_record(record_of([REFUSED]))
+
+    clean = run("--check", declared / "backend")
+    assert clean.returncode == 0, clean.stdout + clean.stderr
+    assert "no drift" in clean.stdout
+
+    done = owed(declared)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "covered" in done.stdout
+    assert NODE in done.stdout
+
+
+def test_a_finding_whose_binding_is_stale_is_the_one_the_drift_report_already_carries(
+        declared, write_record):
+    """The third state is the honest one, and naming it apart is what keeps the other two from
+    reading like it. Here `--check` does report the drift; what this adds is the record that says
+    what was found in the file."""
+    bind(declared, NODE, FILE)
+    (declared / "backend" / FILE).write_text("export function place() { return 1 }\n",
+                                             encoding="utf-8")
+    write_record(record_of([REFUSED]))
+
+    drift = run("--check", declared / "backend")
+    assert drift.returncode == 1, drift.stdout + drift.stderr
+
+    done = owed(declared)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "reported" in done.stdout
+
+
+def test_a_clearance_in_the_corpus_closes_a_finding_and_the_count_is_the_receipt(
+        declared, write_record):
+    """A remediated pair is not owed, and listing every one of them would rebuild the unreadable
+    report this script spends its receipts preventing — one consumer's history holds more than
+    twice as many of those as of everything else. The count rides a line and `--all` prints the
+    list, exactly as the same flag already works over `--check`."""
+    write_record(record_of([REFUSED]), slug="found-against")
+    write_record(record_of([CLEARED]), slug="cleared-later")
+
+    done = owed(declared)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 pair(s) the records answer both ways" in done.stdout
+    assert "`--all` lists them" in done.stdout
+    assert "unseen" not in done.stdout
+
+    listed = owed(declared, "--all")
+    assert listed.returncode == 0, listed.stdout + listed.stderr
+    assert "found-against.md" in listed.stdout and "cleared-later.md" in listed.stdout
+
+
+def test_a_corpus_holding_no_open_finding_says_so(declared, write_record):
+    write_record(record_of([CLEARED]))
+    done = owed(declared)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing owed" in done.stdout
+
+
+def test_a_record_naming_a_target_the_project_file_does_not_declare_is_reported_never_guessed(
+        declared, write_record):
+    """Its paths are spelled from a root nothing here can resolve. Anchoring them on a guess would
+    name files the judgment never read, and this form's whole output is which file a finding is
+    about."""
+    write_record(record_of([REFUSED], target="frontend"))
+    done = owed(declared)
+    assert "frontend" in done.stdout
+    assert "does not declare" in done.stdout
+
+
+def test_a_record_for_another_target_is_not_this_targets_business(consumer, write_record):
+    """Every target's records share one directory, because they share one git toplevel. A status
+    that folded a sibling target's findings into this one would report a tree nobody asked about."""
+    (consumer / "siegard.json").write_text(
+        json.dumps({"specification_root": "specs",
+                    "targets": {"backend": "backend", "frontend": "web"}}, indent=2),
+        encoding="utf-8")
+    (consumer / "web").mkdir()
+    write_record(record_of([{"node": NODE, "conforms": False,
+                             "how": "the screen states a refusal no node holds",
+                             "observed_at": ["app.ts"]}],
+                           files=[{"path": "app.ts", "change": "hand edit"}], target="frontend"))
+    done = run("--owed", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing owed" in done.stdout
+
+
+def test_encodes_tells_an_intact_binding_from_a_file_the_trace_binds_nothing_to(declared):
+    """The two states a drift report cannot separate, because it is keyed by drift and neither of
+    them drifted. Telling them apart is what a reconciliation's locate step needs before it can
+    hand a judge a node set."""
+    bind(declared, NODE, FILE)
+    bind(declared, OTHER, FILE)
+
+    clean = run("--check", declared / "backend")
+    assert clean.returncode == 0 and "no drift" in clean.stdout
+
+    done = run("--encodes", declared / "backend", FILE, SECOND)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "backend/src/orders/place.ts: 2 binding(s)" in done.stdout
+    assert NODE in done.stdout and OTHER in done.stdout
+    assert "backend/src/orders/bill.ts: the trace binds nothing to this file" in done.stdout
+
+
+def test_encodes_says_which_bindings_no_longer_compute_without_calling_it_a_failure(declared):
+    """A query and never a check: every stale binding it prints is a `code` finding `--check`
+    already reports, and giving one drift two exit statuses would make a caller choose which to
+    believe."""
+    bind(declared, NODE, FILE)
+    (declared / "backend" / FILE).write_text("export function place() { return 1 }\n",
+                                             encoding="utf-8")
+    done = run("--encodes", declared / "backend", FILE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "stale: the file changed without a rebind" in done.stdout
+
+
+def test_the_reading_forms_are_exclusive_with_every_other_one(declared):
+    for other in ("--check", "--prune", "--bind", "--bind-record", "--reconciliation"):
+        for form in ("--owed", "--encodes"):
+            done = run(form, declared / "backend", other)
+            assert done.returncode == 2, done.stdout + done.stderr
+            assert "mutually exclusive" in done.stderr
+
+
+def test_all_applies_to_the_form_that_holds_something_back_and_not_to_the_query(declared):
+    done = run("--encodes", declared / "backend", FILE, "--all")
+    assert done.returncode == 2
+    assert "--all only applies to --check and --owed" in done.stderr
