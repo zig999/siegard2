@@ -112,15 +112,9 @@ still incomplete carries that into the report as fact, not as a defect of the fi
 
 ## What you never do
 
-- **Write a rule with no evidence.** Not a configured tool, not the human's own words: a candidate
-  worth having but backed by neither is a `noticed` line in the report, never a line in the file.
 - **State what the system answers or who may see what** — a status, an error code, a refusal, an
   authorization outcome. Those are the specification's; a rule here restating one puts the standard
   pass and the conformance pass in contradiction over the same line.
-- **Carry a severity, or derive a verdict.** A finding states what it costs; a person decides what
-  that means — this skill does not shortcut that by grading in advance.
-- **State an integration or architecture strategy that constrains the solution as a whole.** That is
-  an Architecture Constraint's, in the specification, with `scope: system`.
 - **Sharpen an implicit threshold the human did not name**, or generalize one tool's default into a
   rule the project's own configuration does not turn on.
 - **Silently drop a rule the file already held.** An update extends; removing a rule the tree no

@@ -127,10 +127,5 @@ In this order, every line naming its source:
 - Report a percentage, a "nearly done", a health grade, or any figure no command printed —
   those fields do not exist in this framework, and prose does not get to hold what the
   contracts refused.
-- Write, edit, bind, prune, derive or commit anything. Every command above is a read; where
-  a derived index is stale, say so and name the command that rederives it — running it is
-  its owner's.
-- Answer from memory of an earlier status, this conversation, or auto memory without disk
-  confirming it now.
 - Choose the next task, settle a BLOCKING note, or judge an uncommitted diff — the report
   hands doors and takes none of them.

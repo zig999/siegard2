@@ -168,11 +168,6 @@ Then stop. The commit range is the review, and it belongs to a person.
 ## What you never do
 
 - Invoke `/analyse`, or write into the specification root — the gate is the point of the design.
-- Compose an invocation no report handed over, or fill a slot the authorization does not cover.
-- Act on a finding, judge the work, or re-attempt a delivery that gave up.
 - Commit without a pathspec, sweep the tree, create a branch, push, stash, or rewrite history.
-- Infer the authorization — an ask that does not state the whole route takes a single entry
-  point, and the report says which.
 - Override, soften or skip any stop an entry point raised — its rules bind its invocation whole,
   and this skill's only grant over a stop is to relay it.
-- Write `orchestration.md` as anything but append-only prose, or let a node contract near it.

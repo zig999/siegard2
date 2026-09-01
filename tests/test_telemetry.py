@@ -40,9 +40,13 @@ def line(**entry) -> str:
     return json.dumps(entry) + "\n"
 
 
-def assistant(stamp: str, *blocks: dict, session: str = "s1", **extra) -> str:
+def assistant(stamp: str, *blocks: dict, session: str = "s1", usage: dict | None = None,
+             **extra) -> str:
+    message = {"role": "assistant", "content": list(blocks)}
+    if usage is not None:
+        message["usage"] = usage
     return line(type="assistant", timestamp=stamp, sessionId=session, cwd="/consumer",
-                version="2.1.0", message={"role": "assistant", "content": list(blocks)}, **extra)
+                version="2.1.0", message=message, **extra)
 
 
 def user_result(stamp: str, tool_use_id: str, text: str, raw: dict | None = None) -> str:
@@ -134,7 +138,9 @@ def consumer(tmp_path: Path) -> dict:
         + user_result("2026-08-20T10:06:05.000Z", "tu-plan",
                       "Exit code 1\nwork/checkout: 2 problem(s)\n")
         + assistant("2026-08-20T10:07:00.000Z", {
-            "type": "tool_use", "id": "tu-ls", "name": "Bash", "input": {"command": "ls"}})
+            "type": "tool_use", "id": "tu-ls", "name": "Bash", "input": {"command": "ls"}},
+            usage={"input_tokens": 20, "cache_creation_input_tokens": 0,
+                   "cache_read_input_tokens": 0, "output_tokens": 5})
         + user_result("2026-08-20T10:07:01.000Z", "tu-ls", "a\nb\n")
         + assistant("2026-08-20T10:08:00.000Z", {
             "type": "tool_use", "id": "tu-agent-1", "name": "Agent",
@@ -148,7 +154,9 @@ def consumer(tmp_path: Path) -> dict:
                       "prompt": "again"}})
         + assistant("2026-08-20T10:40:00.000Z", {
             "type": "tool_use", "id": "tu-deliver", "name": "Bash",
-            "input": {"command": "cd x && python3 -B /plugin/bin/deliver.py d w t s"}})
+            "input": {"command": "cd x && python3 -B /plugin/bin/deliver.py d w t s"}},
+            usage={"input_tokens": 30, "cache_creation_input_tokens": 0,
+                   "cache_read_input_tokens": 0, "output_tokens": 8})
         + user_result("2026-08-20T10:40:03.000Z", "tu-deliver", "sound.\n")
         + human("2026-08-20T13:00:00.000Z", "after the window"),
         encoding="utf-8")
@@ -437,3 +445,19 @@ def test_a_session_opened_in_a_subdirectory_is_read_from_its_sibling_directory(c
     assert [s["id"] for s in report["harness"]["sessions"]] == ["s1", "s2"]
     assert report["harness"]["transcript_roots"] == [str(transcripts), str(sibling)]
     assert "1 sibling directory read" in done.stdout
+
+
+def test_session_usage_sums_only_its_own_turns_inside_the_window(consumer):
+    """The tokens the main session's own turns spent, distinct from what its subagents spent —
+    the half `agent_totals` alone never carried."""
+    _, report = report_of(consumer)
+    sessions = report["harness"]["sessions"]
+    assert len(sessions) == 1
+    assert sessions[0]["usage"] == {"input_tokens": 50, "cache_creation_input_tokens": 0,
+                                    "cache_read_input_tokens": 0, "output_tokens": 13}
+
+
+def test_the_receipt_prints_session_tokens_separately_from_agent_tokens(consumer):
+    done, _ = report_of(consumer)
+    assert "sessions: 1 orchestrating, 13 output tokens" in done.stdout
+    assert "500 output tokens" in done.stdout, "the agents line should be unaffected"

@@ -50,6 +50,13 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         together
         The specification root is required while the plan is live, and ignored once closure.md
         marks it closed.
+        plan.py --contract <branch>
+                                                        print one self-contained slice of
+                                                        plan-node.json — a `$defs` entry, or every
+                                                        property one `kind` value admits — with
+                                                        every `$ref` inlined; stands alone, needs
+                                                        no root. What a delegation is handed in
+                                                        place of the whole file
         plan.py --help
                                                         print this text and stop
 Exit:   0 sound (and, with --check, current)
@@ -114,6 +121,76 @@ def contract() -> Draft202012Validator:
     if not PLAN_CONTRACT.is_file():
         raise FileNotFoundError(f"{PLAN_CONTRACT} is missing; nothing can be validated without it")
     return Draft202012Validator(json.loads(PLAN_CONTRACT.read_text(encoding="utf-8")))
+
+
+def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
+    """Every `{"$ref": "#/$defs/X"}` this subtree carries, inlined in place — see deliver.py's
+    twin of this function, which this one is kept identical to on purpose: one contract-slicing
+    rule, applied to two files, is not the same fact restated, it is the same function the
+    import graph does not let this file reach (deliver.py imports plan.py, never the reverse)."""
+    if isinstance(node, dict):
+        if set(node) == {"$ref"} and isinstance(node["$ref"], str) \
+                and node["$ref"].startswith("#/$defs/"):
+            name = node["$ref"][len("#/$defs/"):]
+            if name in seen:
+                return dict(node)
+            target = schema.get("$defs", {}).get(name)
+            if target is None:
+                return dict(node)
+            return resolve_refs(target, schema, seen | {name})
+        return {key: resolve_refs(value, schema, seen) for key, value in node.items()}
+    if isinstance(node, list):
+        return [resolve_refs(item, schema, seen) for item in node]
+    return node
+
+
+def contract_branch(schema: dict, branch: str) -> dict | None:
+    """One self-contained slice of a node contract: a `$defs` entry, or every property one `kind`
+    value admits, both with `$ref` resolved. `None` where `branch` names neither."""
+    defs = schema.get("$defs", {})
+    if branch in defs:
+        return resolve_refs(defs[branch], schema)
+    for clause in schema.get("allOf", []):
+        const = clause.get("if", {}).get("properties", {}).get("kind", {}).get("const")
+        if const != branch:
+            continue
+        then = clause.get("then", {})
+        names = then.get("propertyNames", {}).get("enum", [])
+        sliced: dict = {
+            "kind": branch,
+            "required": then.get("required", []),
+            "properties": {name: schema["properties"][name] for name in names
+                           if name in schema.get("properties", {})},
+        }
+        if "examples" in then:
+            sliced["examples"] = then["examples"]
+        return resolve_refs(sliced, schema)
+    return None
+
+
+def contract_branches(schema: dict) -> list[str]:
+    """Every branch name `--contract` answers for this schema, sorted."""
+    kinds = [clause["if"]["properties"]["kind"]["const"] for clause in schema.get("allOf", [])
+             if "const" in clause.get("if", {}).get("properties", {}).get("kind", {})]
+    return sorted(set(schema.get("$defs", {})) | set(kinds))
+
+
+def print_contract_branch(schema_path: Path, branch: str) -> int:
+    """`--contract`'s own body: read the schema, slice it, print the slice — or refuse, naming
+    every branch that schema does answer for."""
+    if not schema_path.is_file():
+        print(f"cannot run: {schema_path} is missing; nothing can be sliced without it",
+              file=sys.stderr)
+        return CANNOT_RUN
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sliced = contract_branch(schema, branch)
+    if sliced is None:
+        available = ", ".join(contract_branches(schema))
+        print(f"cannot run: {branch} is not a branch of {schema_path.name}; one of {available}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    print(json.dumps(sliced, indent=2, ensure_ascii=False))
+    return 0
 
 
 # The shape guard has one home, in spec.py: a list field read defensively, so that a string
@@ -572,6 +649,17 @@ def main() -> int:
             return CANNOT_RUN
         single = args[at + 1]
         del args[at:at + 2]
+    if "--contract" in args:
+        at = args.index("--contract")
+        if at + 1 >= len(args):
+            print("cannot run: --contract takes a branch name", file=sys.stderr)
+            return CANNOT_RUN
+        branch = args[at + 1]
+        del args[at:at + 2]
+        if verify or single is not None or args:
+            print("cannot run: --contract stands alone", file=sys.stderr)
+            return CANNOT_RUN
+        return print_contract_branch(PLAN_CONTRACT, branch)
     named = against = None
     for flag in ("--standard", "--against"):
         if flag in args:

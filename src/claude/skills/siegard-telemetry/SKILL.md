@@ -152,7 +152,10 @@ What each section holds:
 - **9.** Totals: `agent_totals.overall`; the same per type; the same per skill phase from §2;
   and per unit of work — divide by `scope`'s task counts and by the records landed in the window,
   naming the denominator each time. A total over fewer transcripts than invocations is a floor,
-  said as one.
+  said as one. **Then the orchestrating sessions**, summed from `harness.sessions[].usage` —
+  every session's own turns, never a subagent's — beside `agent_totals.overall`, and their sum:
+  what a report reading `agent_totals` alone leaves out is exactly this half, and a window with
+  several delegations from one session has spent roughly as much here as there.
 - **10.** Judgment, and only here: a step whose cost is out of proportion to what it decided, a
   repeat an earlier check would have spared, a stop that was unnecessary or one that was missing,
   two files disagreeing. Every item carries its evidence beside it — the field, the row, the
@@ -179,18 +182,6 @@ Every claim in §§2–10 carries one tag, and the tag is the claim's source:
 
 ## What you never do
 
-- Write a number the record does not hold — a token total from memory of a tool result, a
-  duration from a sense of how long something took, a count of stops from impression. The
-  phrase for that field is "not recorded", with the tag that says why.
-- Read the transcripts without the probe, or without quoting the probe to the human first.
-- Quote a prompt, a reply, or a tool's result out of a transcript. The record carries none, and
-  the report carries none: what leaves that directory is counts, names, timestamps, and the
-  command lines that invoked this framework's scripts.
-- Overwrite a report. A stamp that exists is a window that was already closed; close this one
-  later.
-- Write the report in the session's language. The framework's artifacts are English, and this
-  one is an artifact that travels.
-- Judge outside §10 and §3's rework column, or judge without a field beside the judgment.
 - Alter, bind, prune, derive, or commit anything in the project. The two files under
   `telemetry_root` are the only writes, and `git diff` over them is the review, which belongs to
   a person.

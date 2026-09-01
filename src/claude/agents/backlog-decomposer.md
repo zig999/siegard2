@@ -22,9 +22,10 @@ stop. You need:
    `type`, its declared fields, and a body under `## Description`.
 3. **the inventory** — what the surveyor found in the target tree, so no task is invented
    for what already exists and no task rewrites what must be reused.
-4. **the plan-node contract** — the path to `plan-node.json`. Read its `epic` and `task`
-   branches before writing a single field; leave `implements` alone even though the task
-   branch declares it.
+4. **the plan-node contract's `epic` and `task` slices** — `plan.py --contract epic` and
+   `plan.py --contract task`'s output, both pasted whole rather than paths to open. Read both
+   before writing a single field; leave `implements` alone even though the task branch
+   declares it.
 
 Optionally, **the absent substrate** — the artifacts the project's own standard presupposes and
 the target tree does not hold, each with what the registry says it provides and the rules it

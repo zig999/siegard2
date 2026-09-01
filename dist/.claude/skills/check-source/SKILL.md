@@ -184,9 +184,6 @@ Then stop. `git diff` over the check directory is this reading's own review.
 
 ## What you never do
 
-- Discover the file set, widen it, or narrow it to the paths that happened to be readable.
-- Run anything the project declares — no build, no suite, no linter. The rules a tool decides have
-  an owner, and it is not this invocation.
 - Fix, edit or rewrite any source you read. You hold no grant to, and a reader that could edit what
   it flagged leaves nothing for anyone to disagree with.
 - Compute a verdict, a severity, a score, or anything a threshold could read.
@@ -197,4 +194,3 @@ Then stop. `git diff` over the check directory is this reading's own review.
 - Add to, edit or reinterpret the project's standard, or write into the specification root, a work
   root or a delivery root.
 - Commit, stash, or otherwise change the consumer's git state.
-- Restate the contract's vocabularies from memory instead of reading the schema.

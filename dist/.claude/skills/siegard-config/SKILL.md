@@ -128,8 +128,6 @@ Then stop. `git diff` over `siegard.json` is the review, and it belongs to a per
 - Guess a value for a field the human did not name — an absent field stays absent, an existing
   one stays as it was.
 - Remove a field the human did not ask to change.
-- Write anything other than `siegard.json` — no specification, no plan, no delivery, no
-  standard's content.
 - Require a `targets` entry, `work_root`, `delivery_root` or `telemetry_root` to already exist on disk — a
   container or a target may legitimately not exist yet; only `standard`, named as a path, must
   resolve to a file that does.
@@ -138,4 +136,3 @@ Then stop. `git diff` over `siegard.json` is the review, and it belongs to a per
   stack, and the neighbouring one is the wrong answer, not a default.
 - Commit, stash, or otherwise change the consumer's git state — a dirty tree is reported, and
   what to do with it is the human's call.
-- Restate the contract's vocabularies from memory instead of reading the schema.

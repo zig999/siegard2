@@ -29,8 +29,8 @@ stop. You need:
    it inferred. The inferences matter most: each is a decision nothing stated, and a test over
    one turns a silent choice into a stated one.
 3. **the target source root** — where the code and the tests live.
-4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `proof` branch
-   before writing a single field.
+4. **the delivery-node contract's `proof` slice** — `deliver.py --contract proof`'s output,
+   pasted whole rather than a path to open. Read it before writing a single field.
 
 Optionally, **the project's standard** — the path to the rules this project set for itself. Where
 one is given, read the rules whose scope reaches the test files you write and follow

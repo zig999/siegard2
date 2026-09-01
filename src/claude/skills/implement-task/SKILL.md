@@ -103,10 +103,20 @@ no review, and source is the one thing here nobody can review any other way.
 
 ## Read the contract
 
-Read `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`. It is the single home of what a
-delivery node may and must declare — the kinds, the fields each kind requires, and one example
-per kind inside that kind's branch. Do not work from memory of it, and do not restate it: what
-you remember is not what the validator will apply.
+`${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node may
+and must declare — the kinds, the fields each kind requires, and one example per kind. It is also
+46 KB, most of which belongs to a kind nobody you spawn this run will write. Run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract implementation
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract proof
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
+```
+
+Each prints one self-contained slice — the fields that kind admits, or that `$defs` entry, with
+every `$ref` already inlined — and that is what step 3, step 5 and the diagnosis below hand to
+their subagent, verbatim, in place of the file's path. Do not work from memory of any of them,
+and do not restate them: what you remember is not what the validator will apply.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
 the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
@@ -346,7 +356,8 @@ what it names — a registry nobody can reach, a lockfile that does not resolve 
 Spawn a `task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
 the specification root, the target source root, the paths of the plan's inventory nodes, and the
-delivery-node contract's path — plus, where one was named, **the standard's own path**, so what it
+`implementation` slice `--contract` printed above, pasted whole — plus, where one was named,
+**the standard's own path**, so what it
 reads is exactly what the record pins. Where the task declares `produces`, pass those
 paths too: they are artifacts this delivery has to create rather than conventions it has to follow,
 and the record is refused if `files` does not list every one of them. Where the standard authorizes
@@ -468,8 +479,9 @@ record asserting that tests hold up a task, written where no test could exist.
 
 Spawn a `test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
-implementation record's path, the target source root, and the delivery-node contract's path — plus
-the standard's own path where one was named, because a project's rules about how its tests are
+implementation record's path, the target source root, and the `proof` slice `--contract`
+printed above, pasted whole — plus the standard's own path where one was named, because a
+project's rules about how its tests are
 written are the test author's to follow, and plus every `UNDERDETERMINED, from the specification —`
 entry of the task's `## Notes`, quoted whole: each names an implementation that satisfies every
 criterion as written and that the specification refuses, and excluding it is the test author's work.
@@ -508,7 +520,8 @@ that failed.
 Where the step that failed is the one whose role is `suite`, spawn a `failure-diagnostician`
 subagent — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md` —
 passing the run's directory, the target source root, the task's specification nodes with the
-specification root, the delivery-node contract's path, and the file set: every path the
+specification root, the `finding` slice `--contract` printed above, pasted whole, and the file
+set: every path the
 implementation record's `files` and the tests just written name. Always, on every red of that
 step, and never your own reading of the log in its place: a session probing flakiness with
 commands of its own is composing commands the registry never declared, which this skill forbids
@@ -706,11 +719,6 @@ belongs to a person.
 ## What you never do
 
 - Write or edit `delivery.json` by hand.
-- Take a second task, or widen the one you were given — code that should change and that this
-  task does not reach is deferred in the record, never changed.
-- Write source over a task whose `## Notes` still carries a `BLOCKING, from the specification —`
-  entry, or settle the conflict it names. The class is the binder's, the settlement is the
-  human's, and both ways out of it run through another entry point.
 - Record a status, a readiness, an approval or a progress figure — those fields do not exist, and
   prose does not get to hold what the contract refused.
 - Judge whether the work is correct, done well enough, or fit to merge. Nothing here carries a
@@ -718,23 +726,8 @@ belongs to a person.
 - Run a command this project's registry does not declare, or compose one. Every step is the
   registry's string, run through `bin/run.py`; a command invented here is this framework guessing
   at a stack it ships no knowledge of, and the guess would be wrong in the project that mattered.
-- Install a package the registry does not authorize. The stop names it, and what ends the stop is
-  the registry gaining an entry — a human editing their own file, not an answer given here that
-  the next invocation would not have.
-- Weaken, narrow, delete or rewrite a test to turn a red suite green. Two producers exist so that
-  one cannot overrule the other, and that is the overruling, done where nobody would look.
-- Edit source yourself to make a run pass. Writing is the `task-implementer`'s; a failed run goes
-  back to it with what the run printed.
-- Run anything outside `bin/run.py`, or report an outcome the runner did not capture. A command
-  whose output lives only in this conversation did not happen.
-- Read `produces` as leave to skip a check over source. It exempts the delivery that wrote the
-  substrate and nothing else; a task that declared it and also wrote source owes every step the
-  registry declares, and the validator refuses the record whose run did not cover them.
-- Write into the work root or the specification root; a plan or a specification that is wrong is
-  reported with its fix.
 - Write the tests in the context that wrote the source — the inline fallback is for a session that
   cannot spawn subagents, is declared in the report, and still applies each agent's file.
-- Settle a disagreement the proof recorded, or delete an inference to make a record read cleanly.
 - Commit, stash, branch, or otherwise change the consumer's git state — a dirty tree is reported,
   and what to do with it is the human's call.
 - Record which rules of the standard were in scope. That set derives from the pin and the files
@@ -744,7 +737,3 @@ belongs to a person.
 - Treat a disclosed departure as leave to depart. It says the departure was known and reasoned, and
   it settles nothing: the review holds the same source to the same rules and is not shown what was
   disclosed.
-- Bind a node into the trace that the implementation record does not name with `encoded_at`, or
-  skip one that it does — the trace states exactly what the record already says, never a second
-  judgment about it.
-- Restate the contract's vocabularies from memory instead of reading the schema.

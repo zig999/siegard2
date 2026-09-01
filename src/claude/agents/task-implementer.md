@@ -40,9 +40,9 @@ stop. You need:
 3. **the target source root** — where the code lives or will live.
 4. **the inventory** — the paths of the plan's inventory nodes, which hold the conventions the
    existing code follows and what this work must reuse rather than rewrite.
-5. **the delivery-node contract** — the path to `delivery-node.json`. Read its
-   `implementation` branch before writing a single field: the fields, their shapes and their
-   vocabularies live there, and what you remember is not what the validator will apply.
+5. **the delivery-node contract's `implementation` slice** — `deliver.py --contract
+   implementation`'s output, pasted whole rather than a path to open: the fields, their shapes
+   and their vocabularies live there, and what you remember is not what the validator will apply.
 
 Optionally, **the project's standard** — the path to the rules this project set for itself. Named,
 you write to it; not named, the only project convention you have is what the inventory evidenced,

@@ -557,6 +557,64 @@ once here. The artifact is built by a task that declares it in `produces`, plann
   Project standard: target/standard.yaml
 ```
 
+#### `deliver.py --standard <file> --reading [--for <path> ...]`
+
+- **Function:** prints, as JSON, only the rules this registry marks `decided_by: reading` —
+  never the ones a tool decides, which a reading judgment must never see — narrowed further,
+  with one or more `--for`, to the rules whose scope reaches at least one named path.
+- **When to use it:** whenever `standard-conformance-reviewer` is about to run. `/review-change`
+  and `/check-source` both run this before spawning it, over the file set under review, and hand
+  it the output in place of the registry's path — the same filter the validator already applies
+  when it refuses a finding citing a tool-decided rule, run before the judgment instead of after.
+- **Read or write:** read-only.
+
+```
+$ python3 bin/deliver.py --standard ./target/standard.yaml --reading --for src/orders/place.ts
+[
+  {
+    "id": "ARC-01",
+    "statement": "A constructor receives interfaces, never concrete implementations.",
+    "because": "A class bound to a concrete collaborator cannot be exercised without it.",
+    "decided_by": "reading",
+    "applies_to": [{"under": "src", "suffix": ".ts", "nested": true}]
+  }
+]
+```
+
+#### `deliver.py --contract <branch>`
+
+- **Function:** prints one self-contained slice of `delivery-node.json` — a `$defs` entry
+  (`finding`, `coverageEntry`, ...) or every property one `kind` value admits (`implementation`,
+  `proof`, `review`) — with every `$ref` inlined, so the slice never sends its reader chasing a
+  pointer through the file it was cut from. `plan.py --contract <branch>` is the same form over
+  `plan-node.json`'s three kinds (`inventory`, `epic`, `task`) and its `$defs`.
+- **When to use it:** wherever a skill used to hand a subagent the whole contract's path and tell
+  it which branch to read — `/implement-task`, `/review-change`, `/plan-work`, `/reconcile` and
+  `/check-source` now run this once per branch they need and paste the output into every
+  delegation that branch serves, instead of each delegation opening a 46 KB file for the 5–12% of
+  it that branch is.
+- **Read or write:** read-only.
+
+```
+$ python3 bin/deliver.py --contract coverageEntry
+{
+  "type": "object",
+  "required": ["criterion", "state"],
+  "additionalProperties": false,
+  "properties": {
+    "criterion": { "type": "string", "minLength": 1, "description": "..." },
+    "state": { "enum": ["covered", "partial", "uncovered", "unauditable"], "description": "..." }
+  }
+}
+```
+
+An unknown branch refuses, naming every branch that schema does answer for:
+
+```
+$ python3 bin/deliver.py --contract bogus
+cannot run: bogus is not a branch of delivery-node.json; one of contest, coverageEntry, ...
+```
+
 ### 5. `run.py`
 
 **General.** Executes the consumer project's own build/test commands — never invented here, never
@@ -1042,6 +1100,7 @@ window: 2026-08-20T10:00:00.000Z .. 2026-08-20T12:00:00.000Z (since named)
 framework: 3.21.0 at /home/dev/checkout-service/.claude
 transcripts: /home/dev/.claude/projects/-home-dev-checkout-service — readable; 1 session(s) overlap the window
 agents: 2 spawned, 1 with a transcript, 500 output tokens, 268.0s
+sessions: 1 orchestrating, 13 output tokens — never a subagent's, which the line above already carries
 commands: 2 invoking this framework's scripts, 1 exiting non-zero
 runs: 1 captured
 commits: 1; uncommitted: 0

@@ -707,3 +707,46 @@ def test_an_epic_cannot_name_a_reference(work, root, sound_plan, write_plan):
         "reference": ["intake/layout/order-form.html"],
     })
     assert any("reference" in problem for problem in problems_in(work, root))
+
+
+# ------------------------------------------------------------- --contract (branch extraction)
+
+def test_a_defs_branch_is_sliced_self_contained():
+    schema = json.loads(
+        (Path(__file__).resolve().parent.parent / "src/claude/schemas/plan-node.json").read_text())
+    sliced = plan.contract_branch(schema, "specNodeRef")
+    assert "type" in sliced
+
+
+def test_a_kind_branch_carries_only_what_that_kind_admits():
+    schema = json.loads(
+        (Path(__file__).resolve().parent.parent / "src/claude/schemas/plan-node.json").read_text())
+    sliced = plan.contract_branch(schema, "task")
+    assert sliced["kind"] == "task"
+    assert "objective" in sliced["properties"] and "criteria" in sliced["properties"]
+    assert "area" not in sliced["properties"], "area belongs to the inventory kind, not task"
+
+
+def test_an_unknown_branch_names_every_branch_that_exists():
+    schema = json.loads(
+        (Path(__file__).resolve().parent.parent / "src/claude/schemas/plan-node.json").read_text())
+    assert plan.contract_branch(schema, "no-such-branch") is None
+    branches = plan.contract_branches(schema)
+    assert "inventory" in branches and "task" in branches
+
+
+def test_contract_cli_prints_a_branch_and_refuses_an_unknown_one():
+    result = run("--contract", "inventory")
+    assert result.returncode == 0, result.stderr
+    printed = json.loads(result.stdout)
+    assert printed["kind"] == "inventory"
+
+    refused = run("--contract", "no-such-branch")
+    assert refused.returncode == 2
+    assert "no-such-branch is not a branch of plan-node.json" in refused.stderr
+
+
+def test_contract_stands_alone():
+    combined = run("--contract", "task", "--check")
+    assert combined.returncode == 2
+    assert "--contract stands alone" in combined.stderr

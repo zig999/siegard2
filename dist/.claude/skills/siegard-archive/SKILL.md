@@ -93,14 +93,6 @@ Then stop. The diff — deletions and all — is the review, and it belongs to a
 
 ## What you never do
 
-- Archive a live initiative, or one whose pair the tree holds uncommitted changes for.
-- Remove, trim or touch `siegard-trace.json`, `siegard.json`, the specification root, the
-  decision log, or `siegard-reconcile/` — the understanding set is not evidence, and no ask
-  makes it eligible.
-- Split a pair: a work root without its delivery, a delivery without its plan, a delivery
-  without its runs.
-- Commit, tag, stage, push, or otherwise change the consumer's git state — the report hands
-  the commands, and running them is the human's.
 - Infer the scope, widen it, or archive anything the ask did not reach because it looked
   finished.
 - Repair what a criterion refused — a stale index, a broken record, a dirty tree are reported,

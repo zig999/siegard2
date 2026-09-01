@@ -342,9 +342,10 @@ def is_human_turn(entry: dict) -> bool:
 
 
 def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, list, list]:
-    """One session transcript: its summary row, the framework commands it issued inside the
-    window, and the agents it spawned inside the window — the latter two still waiting for
-    their results and their subagent transcripts."""
+    """One session transcript: its summary row — including the tokens its own turns spent inside
+    the window, the half of a run's cost `agent_totals` alone never carried — the framework
+    commands it issued inside the window, and the agents it spawned inside the window — the
+    latter two still waiting for their results and their subagent transcripts."""
     session_id = path.stem
     first = last = None
     versions: set[str] = set()
@@ -354,6 +355,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     commands: dict[str, dict] = {}
     agents: dict[str, dict] = {}
     results: dict[str, dict] = {}
+    usage = dict.fromkeys(USAGE_KEYS, 0)
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
@@ -374,6 +376,12 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
             human_turns.append(iso(instant_of(stamp)))
         if entry.get("type") != "assistant":
             continue
+        spent = (entry.get("message") or {}).get("usage")
+        if isinstance(spent, dict):
+            for key in USAGE_KEYS:
+                value = spent.get(key)
+                if isinstance(value, int) and value >= 0:
+                    usage[key] += value
         for block in blocks_of(entry):
             if block.get("type") != "tool_use" or not isinstance(block.get("id"), str):
                 continue
@@ -420,6 +428,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "first_timestamp": first, "last_timestamp": last,
         "harness_versions": sorted(versions), "working_directories": sorted(cwds),
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
+        "usage": usage,
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -848,6 +857,10 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
 
 def receipt(report: dict, destination: Path) -> str:
     totals = report["agent_totals"]["overall"]
+    session_usage = dict.fromkeys(USAGE_KEYS, 0)
+    for session in report["harness"]["sessions"]:
+        for key in USAGE_KEYS:
+            session_usage[key] += session["usage"][key]
     lines = [
         f"window: {report['window']['since']} .. {report['window']['until']} "
         f"(since {report['window']['since_resolved_from']})",
@@ -861,6 +874,9 @@ def receipt(report: dict, destination: Path) -> str:
            if len(report["harness"]["transcript_roots"]) > 1 else ""),
         f"agents: {totals['invocations']} spawned, {totals['with_transcript']} with a transcript, "
         f"{totals['usage']['output_tokens']} output tokens, {totals['duration_seconds']}s",
+        f"sessions: {len(report['harness']['sessions'])} orchestrating, "
+        f"{session_usage['output_tokens']} output tokens — never a subagent's, which the line "
+        f"above already carries",
         f"commands: {len(report['commands'])} invoking this framework's scripts, "
         f"{sum(1 for c in report['commands'] if c['exit_code'])} exiting non-zero",
         f"runs: {len(report['runs'])} captured",

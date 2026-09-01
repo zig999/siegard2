@@ -91,7 +91,8 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
-                         "working_directories", "entries_in_window", "human_turns_in_window"],
+                         "working_directories", "entries_in_window", "human_turns_in_window",
+                         "usage"],
             "properties": {
               "id": { "type": "string", "minLength": 1 },
               "path": { "type": "string", "minLength": 1 },
@@ -104,6 +105,10 @@
                 "type": "array",
                 "items": { "$ref": "#/$defs/timestamp" },
                 "description": "When a person typed, inside the window — the timestamps of every turn that was a human's message rather than a tool's result. What was typed is not here: a telemetry report counts, it does not quote a conversation."
+              },
+              "usage": {
+                "$ref": "#/$defs/usage",
+                "description": "The tokens this session's own turns spent inside the window — never a subagent's, which `agent_totals` already carries. A report reading `agent_totals` alone sees roughly half of what a task with several delegations actually cost: the orchestrating turns between them are the other half, and this is where they are counted."
               }
             }
           },

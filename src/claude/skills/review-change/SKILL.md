@@ -126,10 +126,21 @@ what a diff looks like.
 
 ## Read the contract
 
-Read `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`. It is the single home of what a delivery
-node may and must declare — including which passes a review answers for, what each state and each
-cause means, and what a finding carries. Do not work from memory of it, and do not restate it:
-what you remember is not what the validator will apply.
+`${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node
+may and must declare —
+including which passes a review answers for, what each state and each cause means, and what a
+finding carries. It is also 46 KB, and three of the four passes below need one branch of it.
+Run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract coverageEntry
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
+```
+
+Each prints one self-contained slice, every `$ref` already inlined, and that is what the four
+bullets below hand their subagent, verbatim, in place of the file's path. Do not work from
+memory of either, and do not restate them: what you remember is not what the validator will
+apply.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not, the
 plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
@@ -277,23 +288,29 @@ runs next.
 
 - **coverage** — spawn a `coverage-auditor` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, passing the criteria as the task files state
-  them, the test file set out of the proof records, the target source root, and the contract's
-  path. It returns one entry per criterion.
+  them, the test file set out of the proof records, the target source root, and the
+  `coverageEntry` slice printed above, pasted whole. It returns one entry per criterion.
 - **conformance** — spawn a `specification-conformance-reviewer` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`, passing the file set, the
-  node identities, the specification root, and the contract's path. It returns where the source
+  node identities, the specification root, and the `finding` slice printed above, pasted
+  whole. It returns where the source
   states a domain fact the specification does not hold, contradicts one it does, or became a
   second home for one.
-- **standard** — where the caller named a project standard, spawn a
+- **standard** — where the caller named a project standard, run
+  `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the standard's path> --reading
+  --for <every path of the file set, one --for each>` and keep its output — the rules a tool
+  decides are never this pass's to read, and neither is a rule scoped away from every file under
+  review, so there is no reason either ever reaches it. Spawn a
   `standard-conformance-reviewer` subagent, its judgment at
-  `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing the standard's own
-  path, the file set, the target source root, and the contract's path. It
-  returns the rules that were in scope and, for each departure, a finding citing exactly one of
+  `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing that output in place
+  of the standard's path, the file set, the target source root, and the `finding` slice printed
+  above, pasted whole. It returns the rules that were in scope and, for each departure, a finding citing exactly one of
   them. Where the caller named no standard, the pass does not run and the record says the project
   has authored none.
 - **failures** — spawn a `failure-diagnostician` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md`, passing the run's directory, the target
-  source root, the specification nodes with the specification root, the file set, and the contract's path. It
+  source root, the specification nodes with the specification root, the file set, and the
+  `finding` slice printed above, pasted whole. It
   returns how many failures it counted and one finding for each.
 
 The division is deliberate and it is not arbitrary: whether the tests prove the criteria has one
@@ -434,10 +451,6 @@ to a person.
 
 ## What you never do
 
-- Write or edit `delivery.json` by hand.
-- Compute a verdict, a severity, a score, a coverage figure, or anything a threshold could read.
-  A number that must rise becomes a target to satisfy, and satisfying it produces tests nobody
-  needed.
 - Fix, edit or rewrite any source or test you reviewed — you hold no grant to, and a reviewer that
   could edit what it flagged leaves nothing for anyone to disagree with.
 - Discover the file set, widen it, or narrow it to the paths that happened to be readable. A path
@@ -445,24 +458,8 @@ to a person.
   clean over files nobody read.
 - Run anything but the runner this framework ships, and never rerun it to get a different result:
   a second run is a second name, and the first one's evidence stays on disk.
-- Compose a command, or supply a step this project did not declare. Every command and every bound
-  is the registry's or the caller's; one invented here is this framework guessing at a stack it
-  ships no knowledge of, and a run that guessed reports about a tree nobody built.
-- Silently replace a step the registry declares with one the caller named under the same name. Two
-  commands under one step name cannot both be the one whose outcome a rule is read against, so a
-  collision is a stop that names it.
-- Record a pass as having run when its input was absent, or attribute a finding to a pass that did
-  not run.
-- Record a finding against a rule a standard says a tool decides, or against a rule whose scope does
-  not reach the file — the first re-decides in a model what a tool decides exactly, and the second
-  hangs a departure on a sentence that does not govern the file.
-- Lower a failure count, or drop a failure, to make the record validate. The two disagreeing is the
-  signal, not the obstacle.
 - Show the standard pass what an implementation record disclosed. A record may name the very rules
   this pass reads, and a pass told which departures were already admitted is a pass the producer
   shaped. It reads the source; a person reads both records and learns something neither says alone.
-- Add to, edit or reinterpret the project's standard. It is the project's; a rule that seems wrong is
-  reported as a departure exactly as written, and changed by whoever owns it.
 - Write into the work root, the specification root, or the target source root.
 - Commit, stash, or otherwise change the consumer's git state.
-- Restate the contract's vocabularies from memory instead of reading the schema.

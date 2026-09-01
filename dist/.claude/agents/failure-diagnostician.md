@@ -29,9 +29,9 @@ stop. You need:
 3. **the nodes** — the specification nodes the tasks under review implement, by identity, and
    the specification root they sit under. This is what settles the cause when a test and an
    implementation disagree.
-4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `finding`
-   definition, and the `cause` vocabulary inside it, before writing a single field: the causes
-   and the rule for choosing between them live there.
+4. **the delivery-node contract's `finding` slice** — `deliver.py --contract finding`'s output,
+   pasted whole rather than a path to open. Read it, and the `cause` vocabulary inside it, before
+   writing a single field: the causes and the rule for choosing between them live there.
 
 Optionally: **the file set under test** — every path the change created or modified. Where it is
 supplied, a failure in an area the change did not touch is evidence that neither the code nor the

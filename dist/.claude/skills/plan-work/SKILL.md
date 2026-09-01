@@ -97,10 +97,22 @@ control is the same stop: without git there is no review.
 
 ## Read the contract
 
-Read `${CLAUDE_PLUGIN_ROOT}/schemas/plan-node.json`. It is the single home of what a plan node
-may and must declare — the kinds, the fields each kind requires, and one example per kind
-inside that kind's branch. Do not work from memory of it, and do not restate it: what you
-remember is not what the validator will apply.
+`${CLAUDE_PLUGIN_ROOT}/schemas/plan-node.json` is the single home of what a plan node may and
+must declare — the
+kinds, the fields each kind requires, and one example per kind. Every subagent below needs one
+or two of its three kinds, never the whole file. Run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract inventory
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract epic
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract task
+```
+
+Each prints one self-contained slice, every `$ref` already inlined, and that is what steps 2
+through 4 hand their subagent, verbatim, in place of the file's path — the `task` slice once,
+reused across every `execution-contract-binder` spawned in step 4, since one skeleton and the
+next read the identical branch. Do not work from memory of any of them, and do not restate
+them: what you remember is not what the validator will apply.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
 the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
@@ -254,7 +266,8 @@ second mapping key; PyYAML is already a declared dependency of this framework's 
 
 Then spawn a `codebase-surveyor` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md` — passing three things: the target source
-root, the scope's path under `intake/`, and the plan-node contract's path. It returns
+root, the scope's path under `intake/`, and the `inventory` slice printed above, pasted whole.
+It returns
 inventory nodes — modules, evidenced conventions, reuse points, consumer-named risks, and
 the empty tree as a full answer where that is what it found. Write each returned node at the
 path its identifier computes to, verbatim.
@@ -264,7 +277,7 @@ path its identifier computes to, verbatim.
 Spawn a `backlog-decomposer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md` — passing four things: the scope's path,
 the impact set's file paths under the specification root, the surveyor's inventory, and the
-plan-node contract's path — plus, where a standard was named and the situate step found any,
+`epic` and `task` slices printed above, both pasted whole — plus, where a standard was named and the situate step found any,
 the artifacts it presupposes that the tree does not hold, each with what the registry says it
 provides and the rules it carries. Those are the one thing the decomposition may cut a task for
 that the scope never asked about. Its file holds the boundary tests that shape every task; what
@@ -292,7 +305,8 @@ four things: the skeleton as its title, summary, objective and criteria — neve
 `rationale`, its dependencies or its body, because an opinion about the reference travels with
 them and the clean context is the point — the candidates' file paths, its epic's `covers` less
 its `uncovered`, because naming what the epic declared untouched is a contradiction the
-validator refuses — the plan-node contract's path — and the decision log's path at the
+validator refuses — the `task` slice printed above, pasted whole — and the decision
+log's path at the
 specification root, the index that says which node a decided fact landed in, so a claim about
 one rule replacing another is settled by the entry that records the replacement rather than by
 which node reads closest. The binder rereads the candidate files
@@ -501,25 +515,11 @@ the specification root nor the target source root.
 
 ## What you never do
 
-- Write or edit `plan.json` by hand.
 - Answer a question with a value the specification does not hold — a fact absent from the
   specification is produced by the specification gaining the statement, through step 4's
   decided-fact route or the analysis that authors it, never by a task and never by prose.
-- Decide an unstated fact in this context, or hand the decider the skeleton, the note's text or
-  a binder's reasoning — the blindness is the route, and a decision made where the cut is
-  visible is the specification bent to fit it.
 - Record a status, an estimate, a priority or an execution order — those fields do not exist,
   and prose does not get to hold what the contract refused.
-- Run the implement-against step in the context that decomposed — the inline fallback is for a
-  session that cannot spawn subagents, is declared in the report, and still applies the
-  agent's file.
-- Write source code or tests, or change the target tree — the plan is nodes, nothing else.
-- Write into the specification root beyond what step 4's decided-fact route returned — the
-  route writes a decider's edits and its log entry, then revalidates; a specification that is
-  otherwise wrong or broken is reported with its fix, never repaired from here.
-- Restate the contract's vocabularies from memory instead of reading the schema.
-- Reopen a standing plan decision outside the impact set, or re-cut an epic as a side effect
-  of a change.
 - Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
   what to do with it is the human's call.
 - Write into a work root that holds `closure.md`, or remove a closure — a closed plan is

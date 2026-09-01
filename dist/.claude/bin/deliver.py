@@ -124,12 +124,26 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         named, also say whether it holds what the
                                                         registry presupposes — exit 1 while any
                                                         of it is absent
+        deliver.py --standard <file> --reading [--for <path> ...]
+                                                        print only the rules this registry marks
+                                                        `decided_by: reading`, as JSON — narrowed,
+                                                        with one or more --for, to the ones whose
+                                                        scope reaches at least one named path.
+                                                        What a reading judgment is handed in place
+                                                        of the whole registry
         deliver.py --check-record <record> <target-source-root>
                                                         validate one source check record — the
                                                         reading /check-source leaves beside the
                                                         trace over files no task delivered — and
                                                         every citation it makes, against the
                                                         registry it pins
+        deliver.py --contract <branch>
+                                                        print one self-contained slice of
+                                                        delivery-node.json — a `$defs` entry, or
+                                                        every property one `kind` value admits —
+                                                        with every `$ref` inlined; stands alone,
+                                                        needs no root. What a delegation is handed
+                                                        in place of the whole file
         The target source root resolves every record's `standard` reference; a delivery whose
         records name none never reads it. The specification root is required while the plan is
         live, and ignored once closure.md marks it closed — the same rule plan.py applies,
@@ -208,6 +222,82 @@ def contract() -> Draft202012Validator:
         raise FileNotFoundError(
             f"{DELIVERY_CONTRACT} is missing; nothing can be validated without it")
     return Draft202012Validator(json.loads(DELIVERY_CONTRACT.read_text(encoding="utf-8")))
+
+
+def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
+    """Every `{"$ref": "#/$defs/X"}` this subtree carries, inlined in place. A branch printed by
+    `--contract` has to stand on its own — a reader handed a slice and a dangling pointer into a
+    file they were not given has the same problem `--contract` exists to remove. A name already
+    on the path back to itself is left as the pointer instead of expanded again, since a cycle
+    inlined without end is not a slice, it is the whole file with extra steps."""
+    if isinstance(node, dict):
+        if set(node) == {"$ref"} and isinstance(node["$ref"], str) \
+                and node["$ref"].startswith("#/$defs/"):
+            name = node["$ref"][len("#/$defs/"):]
+            if name in seen:
+                return dict(node)
+            target = schema.get("$defs", {}).get(name)
+            if target is None:
+                return dict(node)
+            return resolve_refs(target, schema, seen | {name})
+        return {key: resolve_refs(value, schema, seen) for key, value in node.items()}
+    if isinstance(node, list):
+        return [resolve_refs(item, schema, seen) for item in node]
+    return node
+
+
+def contract_branch(schema: dict, branch: str) -> dict | None:
+    """One self-contained slice of a node contract: a `$defs` entry, or every property one `kind`
+    value admits, both with `$ref` resolved so nothing the slice names sends its reader chasing a
+    pointer through the file it was handed instead of. `None` where `branch` names neither —
+    the caller decides what a refusal over that looks like, since the two callers here (a script
+    printing to a terminal, a skill writing a file an agent reads) refuse differently."""
+    defs = schema.get("$defs", {})
+    if branch in defs:
+        return resolve_refs(defs[branch], schema)
+    for clause in schema.get("allOf", []):
+        const = clause.get("if", {}).get("properties", {}).get("kind", {}).get("const")
+        if const != branch:
+            continue
+        then = clause.get("then", {})
+        names = then.get("propertyNames", {}).get("enum", [])
+        sliced: dict = {
+            "kind": branch,
+            "required": then.get("required", []),
+            "properties": {name: schema["properties"][name] for name in names
+                           if name in schema.get("properties", {})},
+        }
+        if "examples" in then:
+            sliced["examples"] = then["examples"]
+        return resolve_refs(sliced, schema)
+    return None
+
+
+def contract_branches(schema: dict) -> list[str]:
+    """Every branch name `--contract` answers for this schema, sorted — what a refusal over an
+    unknown branch offers instead of leaving the caller to guess."""
+    kinds = [clause["if"]["properties"]["kind"]["const"] for clause in schema.get("allOf", [])
+             if "const" in clause.get("if", {}).get("properties", {}).get("kind", {})]
+    return sorted(set(schema.get("$defs", {})) | set(kinds))
+
+
+def print_contract_branch(schema_path: Path, branch: str) -> int:
+    """`--contract`'s own body: read the schema, slice it, print the slice — or refuse, naming
+    every branch that schema does answer for, because a refusal that only says "no" over a typo
+    costs the same lookup twice."""
+    if not schema_path.is_file():
+        print(f"cannot run: {schema_path} is missing; nothing can be sliced without it",
+              file=sys.stderr)
+        return CANNOT_RUN
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    sliced = contract_branch(schema, branch)
+    if sliced is None:
+        available = ", ".join(contract_branches(schema))
+        print(f"cannot run: {branch} is not a branch of {schema_path.name}; one of {available}",
+              file=sys.stderr)
+        return CANNOT_RUN
+    print(json.dumps(sliced, indent=2, ensure_ascii=False))
+    return 0
 
 
 @functools.lru_cache(maxsize=1)
@@ -1549,6 +1639,35 @@ def check_standard(named: str, against: str | None = None) -> int:
     return 1 if absent else 0
 
 
+def print_reading_rules(named: str, for_paths: list[str]) -> int:
+    """The rules a reading judgment needs, and only those: every rule this registry marks
+    `decided_by: reading`, narrowed to the ones `--for`'s paths reach where any were named. A
+    rule a tool decides is not the reading pass's to see — `standard-conformance-reviewer.md`
+    already says so, after the whole registry handed it that rule anyway — and a rule scoped away
+    from every file this reading touches is the same absence for a different reason. This is the
+    filter `in_scope` already computes for `cross_problems`, run here before a judgment starts
+    instead of after one names a finding the registry never meant for it."""
+    try:
+        validator = standard_contract()
+    except (FileNotFoundError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    path = Path(named)
+    data, problems = load_standard(path, validator)
+    for problem in problems:
+        print(f"{path.name}: {problem}")
+    if data is None:
+        print(f"\n{len(problems)} problem(s). A review is never checked against a standard that "
+              f"does not hold together.")
+        return 1
+    rules = [r for r in listed(data, "rules") if isinstance(r, dict)]
+    reading = [r for r in rules if r.get("decided_by") == "reading"]
+    if for_paths:
+        reading = [r for r in reading if in_scope(r, for_paths)]
+    print(json.dumps(reading, indent=2, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -1588,6 +1707,17 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return check_record(named, args[0])
+    if "--contract" in args:
+        at = args.index("--contract")
+        if at + 1 >= len(args):
+            print("cannot run: --contract takes a branch name", file=sys.stderr)
+            return CANNOT_RUN
+        branch = args[at + 1]
+        del args[at:at + 2]
+        if verify or report or single is not None or against is not None or args:
+            print("cannot run: --contract stands alone", file=sys.stderr)
+            return CANNOT_RUN
+        return print_contract_branch(DELIVERY_CONTRACT, branch)
     if "--standard" in args:
         at = args.index("--standard")
         if at + 1 >= len(args):
@@ -1595,6 +1725,26 @@ def main() -> int:
             return CANNOT_RUN
         named = args[at + 1]
         del args[at:at + 2]
+        reading = "--reading" in args
+        args = [a for a in args if a != "--reading"]
+        for_paths: list[str] = []
+        while "--for" in args:
+            at = args.index("--for")
+            if at + 1 >= len(args):
+                print("cannot run: --for takes a file", file=sys.stderr)
+                return CANNOT_RUN
+            for_paths.append(args[at + 1])
+            del args[at:at + 2]
+        if for_paths and not reading:
+            print("cannot run: --for narrows --reading; it has no effect without it",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        if reading:
+            if verify or report or single is not None or against is not None or args:
+                print("cannot run: --reading stands with --standard and --for at most",
+                      file=sys.stderr)
+                return CANNOT_RUN
+            return print_reading_rules(named, for_paths)
         if verify or report or single is not None or args:
             print("cannot run: --standard stands alone, with --against at most",
                   file=sys.stderr)
@@ -1616,7 +1766,7 @@ def main() -> int:
     elif len(args) not in (3, 4) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --outstanding] "
               "<delivery-root> <work-root> <target-source-root> [<specification-root>], "
-              "or --standard <file> on its own", file=sys.stderr)
+              "or --standard <file>, or --contract <branch>, on its own", file=sys.stderr)
         return CANNOT_RUN
 
     root = Path(args[0])

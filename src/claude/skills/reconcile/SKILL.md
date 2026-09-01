@@ -199,6 +199,16 @@ and the bind restamps both.
 
 ### 3. Judge
 
+Before spawning anyone, run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
+```
+
+One self-contained slice, every `$ref` inlined — every delegation below is handed this same
+text, once extracted, rather than each opening the 46 KB file it was cut from. A batch of forty
+files pays for that extraction once, not forty times.
+
 Spawn one `specification-conformance-reviewer` subagent per file the manifest holds nodes for,
 together rather than one after another — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
@@ -208,7 +218,7 @@ the workspace's candidate index — together with the identities of any node the
 written since the bind — which it may consult where its file states a fact its own nodes do not
 settle: a fact one file states can be governed by a node another file carries, and a judge who
 cannot open that node reports an absence where the true finding is a misattribution; the
-specification root; the path to `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`, where a
+specification root; the `finding` slice printed above, pasted whole, where a
 finding's own shape lives; and the path to
 `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
 to by the fold below.
@@ -414,12 +424,6 @@ answers.
   reconciliation that repaired what it found would be a third one nobody validated.
 - **It never decides that a file is correct.** The human asserts that; this skill records the
   assertion as theirs and asks a different question.
-- **It never binds a node the judgment did not clear.** It does bind the nodes that cleared while
-  others carry findings, and says which it did not — the act is per node because the judgment is,
-  and a cleared binding no more asserts the rest of the set than a delivery's does.
-- **It never prunes, and it never drops a binding.** A file that moved or vanished is drift with an
-  owner; dropping its entry would destroy the one record of which node that code answers to while
-  reporting the tree clean.
 - **It is not a review.** It reads one file set against the nodes the trace already links to it. It
   says nothing about coverage, about the project's standard, or about whether anything was proven —
   those are `/review-change`'s, over a delivery, and a reconciliation that reported them would be

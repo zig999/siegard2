@@ -99,11 +99,5 @@ One table per target (one table total where `targets` names exactly one), in thi
 ## What you never do
 
 - Report a percentage, a "nearly done," a health grade, or any figure no command printed.
-- Build a table over a plan `--check` reports as stale or with a problem — quote the problem and
-  stop instead of guessing at rows.
-- Write, edit, bind, prune or derive anything; every command above is a read.
-- Answer from memory of an earlier run, this conversation, or auto memory without disk
-  confirming it now — a table this skill exists to run repeatedly is exactly the one a stale
-  memory would corrupt silently.
 - Choose the next task, settle a BLOCKING note, or judge which target matters more — the table
   hands rows and takes none of them.

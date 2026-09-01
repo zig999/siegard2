@@ -19,8 +19,8 @@ stop. You need:
 1. **the task skeleton** — title, summary, objective and criteria, exactly as decomposed.
 2. **the candidate nodes** — file paths under the specification root, the only ones this task
    may name in `implements`. What belongs in the set is the caller's rule, not yours.
-3. **the plan-node contract** — the path to `plan-node.json`. Read its `task` branch before
-   writing a single field.
+3. **the plan-node contract's `task` slice** — `plan.py --contract task`'s output, pasted whole
+   rather than a path to open. Read it before writing a single field.
 4. **the decision log** — the path to `decision-log.md` at the specification root. It is the
    specification's index of provenance: each entry names the file and field a decided fact
    filled. It decides nothing here — the node is what you cite — but it is what says which node

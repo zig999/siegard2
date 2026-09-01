@@ -31,8 +31,8 @@ stop. You need:
    open that source, never trust a copy over it.
 3. **the specification root** — the directory holding the specification, so every node can be
    read as a file.
-4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `finding`
-   definition before writing a single field.
+4. **the delivery-node contract's `finding` slice** — `deliver.py --contract finding`'s output,
+   pasted whole rather than a path to open. Read it before writing a single field.
 5. **candidate nodes** — optional, and absent in most calls. Node identities outside your set that
    you may open where your file states a fact your own nodes do not settle: a fact one file states
    can be governed by a node another file carries, and reporting it as held by nothing when a

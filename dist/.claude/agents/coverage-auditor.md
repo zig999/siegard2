@@ -23,8 +23,9 @@ stop. You need:
 2. **the test file set** — every path holding tests that may bear on them, listed explicitly.
 3. **the target source root** — so every path you record resolves for a reader who was not
    present.
-4. **the delivery-node contract** — the path to `delivery-node.json`. Read its `coverageEntry`
-   definition before writing a single field: the states and what each means live there.
+4. **the delivery-node contract's `coverageEntry` slice** — `deliver.py --contract
+   coverageEntry`'s output, pasted whole rather than a path to open: the states and what each
+   means live there.
 
 ## The judgment
 

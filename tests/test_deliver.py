@@ -1323,3 +1323,136 @@ def test_a_record_answering_one_node_twice_is_refused(delivery, work, root, targ
     write_delivery("implementation/checkout/record-order", front)
     said(problems_of(delivery, work, target, root),
          "nodes answers for `domain/sales/order` 2 times")
+
+
+# ------------------------------------------------------------- --contract (branch extraction)
+
+def test_a_defs_branch_is_sliced_self_contained():
+    """A `$defs` entry comes back as its own object, with an internal `$ref` inlined rather than
+    left dangling — a slice that still pointed into the file it was sliced from would not be a
+    slice."""
+    schema = json.loads((REPO / "src/claude/schemas/delivery-node.json").read_text())
+    sliced = deliver.contract_branch(schema, "finding")
+    assert sliced["required"] == ["pass", "where", "evidence", "cost"]
+    assert "$ref" not in json.dumps(sliced["properties"]["pass"])
+    assert sliced["properties"]["pass"]["enum"] == ["coverage", "conformance", "failures",
+                                                    "standard"]
+
+
+def test_a_kind_branch_carries_only_what_that_kind_admits():
+    """An `implementation` slice names the fields that kind's `propertyNames` enum allows, and no
+    others — a reviewer handed this instead of the whole file cannot mistake a `proof`-only field
+    for one of its own."""
+    schema = json.loads((REPO / "src/claude/schemas/delivery-node.json").read_text())
+    sliced = deliver.contract_branch(schema, "implementation")
+    assert sliced["kind"] == "implementation"
+    assert "task" in sliced["properties"] and "files" in sliced["properties"]
+    assert "reviewed" not in sliced["properties"], \
+        "reviewed belongs to the review kind, not implementation"
+
+
+def test_an_unknown_branch_names_every_branch_that_exists():
+    schema = json.loads((REPO / "src/claude/schemas/delivery-node.json").read_text())
+    assert deliver.contract_branch(schema, "no-such-branch") is None
+    branches = deliver.contract_branches(schema)
+    assert "finding" in branches and "implementation" in branches
+
+
+def test_contract_cli_prints_a_branch_and_refuses_an_unknown_one():
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    result = subprocess.run([sys.executable, "-B", str(script), "--contract", "coverageEntry"],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    printed = json.loads(result.stdout)
+    assert printed["properties"]["state"]["enum"] == \
+        ["covered", "partial", "uncovered", "unauditable"]
+
+    refused = subprocess.run([sys.executable, "-B", str(script), "--contract", "no-such-branch"],
+                             capture_output=True, text=True)
+    assert refused.returncode == 2
+    assert "no-such-branch is not a branch of delivery-node.json" in refused.stderr
+
+
+def test_contract_stands_alone():
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    combined = subprocess.run(
+        [sys.executable, "-B", str(script), "--contract", "finding", "--check"],
+        capture_output=True, text=True)
+    assert combined.returncode == 2
+    assert "--contract stands alone" in combined.stderr
+
+
+# ------------------------------------------------------------- --standard --reading (item 2)
+
+def test_reading_excludes_every_tool_decided_rule(target, write_standard):
+    ref = write_standard()
+    path = target / ref["at"]
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    result = subprocess.run(
+        [sys.executable, "-B", str(script), "--standard", str(path), "--reading"],
+        capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    printed = json.loads(result.stdout)
+    ids = {r["id"] for r in printed}
+    assert ids == {"ARC-01", "ARC-02", "TST-01"}, ids
+    assert "PRH-01" not in ids, "a tool-decided rule reached a reading judgment"
+
+
+def test_for_narrows_to_rules_whose_scope_the_named_paths_reach(target, write_standard):
+    ref = write_standard()
+    path = target / ref["at"]
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    result = subprocess.run(
+        [sys.executable, "-B", str(script), "--standard", str(path), "--reading",
+         "--for", "src/orders/place.ts"],
+        capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    ids = {r["id"] for r in json.loads(result.stdout)}
+    assert ids == {"ARC-01"}, \
+        f"src/orders/place.ts is not under src/routes, so ARC-02 should not reach it: {ids}"
+
+
+def test_for_over_several_paths_unions_what_each_reaches(target, write_standard):
+    ref = write_standard()
+    path = target / ref["at"]
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    result = subprocess.run(
+        [sys.executable, "-B", str(script), "--standard", str(path), "--reading",
+         "--for", "src/orders/place.ts", "--for", "src/routes/order.ts"],
+        capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    ids = {r["id"] for r in json.loads(result.stdout)}
+    assert ids == {"ARC-01", "ARC-02"}, ids
+
+
+def test_for_without_reading_has_no_effect_and_is_refused():
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    result = subprocess.run(
+        [sys.executable, "-B", str(script), "--standard", "whatever.yaml", "--for", "a.ts"],
+        capture_output=True, text=True)
+    assert result.returncode == 2
+    assert "--for narrows --reading" in result.stderr
+
+
+def test_reading_refuses_alongside_against():
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    result = subprocess.run(
+        [sys.executable, "-B", str(script), "--standard", "whatever.yaml", "--reading",
+         "--against", "."],
+        capture_output=True, text=True)
+    assert result.returncode == 2
+    assert "--reading stands with --standard and --for at most" in result.stderr

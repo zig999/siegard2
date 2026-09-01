@@ -333,18 +333,7 @@ Then stop. `git diff` over the specification root is the review, and it belongs 
 
 ## What you never do
 
-- Write or edit a projection by hand.
-- Leave a required field undecided, or fill it with a placeholder, `unknown`, or a gap marker
-  — decide it and log it.
-- Decide a fact and skip the decision log — every decided fact is logged, without exception, or
-  the disclosure this whole discipline rests on is a claim nobody can check.
 - Record a status, a maturity level or an approval state — no class admits one, and nothing
   else says how "done" a node is.
-- Restate the contract's vocabularies from memory instead of reading the schema.
-- Reopen a decision outside the impact set, or redraw a context boundary as a side effect of a
-  change — a boundary the material invalidates is reported, and the decision belongs to a
-  person.
-- Record a technical artifact — a DTO, a repository, a table, a topic, an adapter: it emerges
-  from implementation, and no class admits it.
 - Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
   what to do with it is the human's call.

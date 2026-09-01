@@ -18,9 +18,9 @@ stop. You need:
    an ordinary answer, not a problem to fix.
 2. **the scope** — the path to the persisted scope file, so the survey looks where the change
    will land instead of everywhere.
-3. **the plan-node contract** — the path to `plan-node.json`. Read its `inventory` branch
-   before writing a single field: the fields, their shapes, and their vocabularies live
-   there, and what you remember is not what the validator will apply.
+3. **the plan-node contract's `inventory` slice** — `plan.py --contract inventory`'s output,
+   pasted whole rather than a path to open: the fields, their shapes, and their vocabularies
+   live there, and what you remember is not what the validator will apply.
 
 ## The judgment
 
