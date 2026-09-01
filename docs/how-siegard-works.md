@@ -891,6 +891,32 @@ place-whitespace-fix.md holds: 1 file(s), 1 node(s) the judgment cleared, 0 it d
 the trace binds nothing to.
 ```
 
+#### `trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> ...`
+
+- **Function:** prepares everything a reconciliation's judgments need, mechanically: the node set
+  per named file, one node pack per file (the full text of every node that file's judge reads,
+  each entry naming its source and digest), the batch's candidate index, and the list of pairs
+  whose binding computes at the content on disk with nothing owed against them — pairs a
+  re-judgment would read again for no new answer. It also reserves the slug: the record path and
+  `siegard-reconcile/<slug>.returns/`, created empty, where each delegation's answer is saved
+  verbatim.
+- **When to use it:** the locate step of every `/reconcile`, in place of reading
+  `siegard-trace.json` by hand.
+- **Read or write:** writes the workspace (a temporary directory nothing commits) and the empty
+  returns directory; never `siegard-trace.json`.
+
+#### `trace.py --fold <target-root> <workspace-dir> <premise-file> <record>`
+
+- **Function:** writes the reconciliation record from the saved returns, applying the fold rules —
+  which answer a node folds to when several judges read it, where a named finding lands, what an
+  unattributed one holds, which blocked nodes are `collateral` — the same way every time. The
+  caller authors only the premise (`title`, `summary`, `target`, one `change` line per file). A
+  return that fails `schemas/conformance-return.json` or answers for the wrong node set refuses
+  the fold naming the delegation to run again.
+- **When to use it:** after every `/reconcile` judgment pass, in place of composing the record by
+  hand.
+- **Read or write:** writes `siegard-reconcile/<slug>.md`; never `siegard-trace.json`.
+
 ### 7. `terms.py`
 
 **General.** A glossary that holds no text of its own: every term maps to a schema file and a JSON

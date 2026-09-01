@@ -48,10 +48,14 @@ this invocation — it is the status, reported verbatim.
    with no record, what each waits on — an undelivered dependency, absent substrate, a standing
    `BLOCKING, from the specification —` note — and the set deliverable now. Quote standing
    BLOCKING entries whole; they are the places only the human moves next.
-3. **The trace, once per declared target.** `targets` may declare more than one, and each keeps
-   its own trace file; a status that read one of them would report a tree nobody asked about as
-   the whole answer. Run this for every key `project.py` printed, and say which target each block
-   answers. `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
+3. **The trace, once per trace file.** The trace lives at the git toplevel of its target source
+   root — where `siegard.json` sits — so targets sharing one repository share one trace file, and
+   targets in separate repositories each keep their own. Run
+   `--check` once per distinct toplevel among the keys `project.py` printed, and say which
+   target(s) each block answers: a second reading of the same file is the same content paid for
+   twice, and a status that read only one toplevel of several would report a tree nobody asked
+   about as the whole answer.
+   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
    drift counts by class, each with its route: `orphaned` is cleared by `--prune` after a
    deliberate node removal, `moved` heals when the node's task is next delivered, `code` is
    answered by `/reconcile`. Where `code` findings exist, the report carries the `/reconcile`

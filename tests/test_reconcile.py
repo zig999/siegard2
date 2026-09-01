@@ -57,7 +57,7 @@ def consumer(tmp_path: Path) -> Path:
 
 def record_of(nodes: list[dict], files: list[dict] | None = None, **rest) -> dict:
     front = {
-        "contract_version": "siegard-reconcile/1",
+        "contract_version": "siegard-reconcile/2",
         "title": "Hand correction to order placement",
         "summary": "place() answered with the row; corrected by hand and confirmed correct.",
         "target": "backend",
@@ -130,7 +130,7 @@ def test_a_record_filed_anywhere_else_cannot_run(write_record):
 
 def test_a_record_of_another_contract_version_is_refused(write_record):
     front = record_of([CLEARED])
-    front["contract_version"] = "siegard-reconcile/2"
+    front["contract_version"] = "siegard-reconcile/1"
     done = run("--reconciliation", write_record(front))
     assert done.returncode == 1
     assert "contract_version" in done.stdout

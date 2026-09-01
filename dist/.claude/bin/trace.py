@@ -10,7 +10,7 @@ digests from what is on disk now and compares — a node whose digest no longer 
 the specification since the bind; a file whose digest no longer matches moved in the code without
 a rebind. Either is drift, and this script is what says so without any plan's history to consult.
 
-Eight things this script does, and nobody else does any of them:
+Ten things this script does, and nobody else does any of them:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root> [--all]                        the same, then report drift
@@ -23,6 +23,12 @@ Eight things this script does, and nobody else does any of them:
     trace.py --owed <target-root> [--all]                         what the reconciliations found
                                                                   and no bind could close
     trace.py --encodes <target-root> <file> ...                   which nodes each file is bound to
+    trace.py --stage <target-root> <spec-root> <slug> <workspace> <file> ...
+                                                                  prepare a reconciliation's
+                                                                  workspace: node sets, packs,
+                                                                  candidates, omittable pairs
+    trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
+                                                                  into the reconciliation record
 
 Drift is reported in three classes, because a caller can act on each differently and could act on
 none of them while all three arrived as one list. A node the specification no longer holds is
@@ -132,6 +138,40 @@ locate step needs before it can hand a judge a node set, and the only way to get
 trace and read the bindings by hand — which is unvalidated, and where a binding is missed the judge
 is handed an incomplete node set and the record that results reads exactly like a complete one.
 
+`--stage` is `--encodes` carried to where the locate step actually spends: it computes each named
+file's node set once, writes it where every consumer of it reads the same copy, and prepares what
+each judgment needs before any judgment runs. Into a caller-named workspace it writes a manifest —
+the node set per file, the candidate index for the whole batch, and every pair it found omittable —
+and one node pack per file: the full text of every node that file's judge must read, each under a
+header naming its source path and the digest the bind will stamp. A pack is a reading copy and
+never a home — it is derived from the specification at the moment of staging, lives in a workspace
+nothing commits, and a judge who doubts a line in it opens the source path its header names. It
+exists because a judge's node set is known mechanically before the judge is spawned, and a context
+that opens fifteen files one call at a time pays its own accumulated history fifteen times for
+content one staged read carries whole. A pair is omittable only where the judgment it would buy
+already exists: the binding computes at the file's content as it stands — the pair was judged over
+these exact bytes and stamped by that judgment's bind — and no record in `siegard-reconcile/` holds
+an open finding against it. Re-judging such a pair buys a second reading of text that did not move,
+and what a second reading of unchanged input adds is not confidence. Both halves of that rule are
+recomputed by `--bind-record` at bind time; the manifest's list is a preparation, never an
+authority. `--stage` also reserves the reconciliation's own ground: it refuses a slug whose record
+or returns directory already exists, and creates `siegard-reconcile/<slug>.returns/` empty — the
+returns saved there are the evidence the record is folded from, and they outlive the workspace.
+
+`--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
+it applies is a fold over structured answers — a node conforms exactly where every delegation that
+read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
+stood; a finding naming none holds every node of the file that produced it; a node whose fact no
+named file holds any more binds nothing — and none of those rules asks for judgment, so none of
+them is applied by a context that could misremember one. The caller supplies the one part that is
+not mechanical: a premise file carrying the human's `title`, `summary`, `target` and per-file
+`change` lines. A return that does not satisfy `schemas/conformance-return.json`, answers for a
+node set other than the manifest's, or is missing for a staged file refuses the fold naming the
+delegation to run again — the correction for an unusable return is a fresh delegation, never a
+repair applied to its answer here. The record it writes is validated against
+`schemas/reconciliation.json` and its own accounting before it lands, and is then read by
+`--reconciliation` and `--bind-record` exactly like one written any other way.
+
 Every path this file holds — `specification`, and every binding's `files[].path` — is relative to
 this file's own directory, exactly the way `siegard.json`'s `standard` is. `<target-root>` and
 `<file>` on the command line are relative to the target source root instead, the anchor every other
@@ -150,11 +190,15 @@ Usage:  trace.py <target-root>
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all]
         trace.py --encodes <target-root> <file> [<file> ...]
+        trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
+        trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
         trace.py --help
                 print this text and stop
-Exit:   0 sound / drift-free / bound / pruned / the record holds / nothing is owed
+Exit:   0 sound / drift-free / bound / pruned / the record holds / nothing is owed / staged /
+          folded
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
-          or file, a record its contract refuses, a finding no bind closed
+          or file, a record its contract refuses, a finding no bind closed, a return a
+          delegation owes again
         2 cannot run
 """
 
@@ -182,8 +226,11 @@ import spec
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TRACE_CONTRACT = PLUGIN_ROOT / "schemas" / "trace.json"
 RECONCILE_CONTRACT = PLUGIN_ROOT / "schemas" / "reconciliation.json"
+RETURN_CONTRACT = PLUGIN_ROOT / "schemas" / "conformance-return.json"
 TRACE_FILE = "siegard-trace.json"
 RECONCILE_DIR = "siegard-reconcile"
+MANIFEST_FILE = "manifest.json"
+NOWHERE = "nowhere"
 
 UNSEEN, COVERED, REPORTED = "unseen", "covered", "reported"
 OWED_CLASSES = {
@@ -724,7 +771,21 @@ def accounted(front: dict) -> list[str]:
             problems.append(f"unbound: {path} is also accounted for by a node; a file is one or "
                             f"the other, and the trace either holds a binding to it or does not")
 
-    for path in sorted(set(named) - claimed - set(unbound)):
+    answered_pairs = {(entry["node"], path) for entry in front["nodes"]
+                      for path in entry["encoded_at" if entry["conforms"] else "observed_at"]}
+    omitted_files: set[str] = set()
+    for entry in front.get("pairs_omitted") or []:
+        omitted_files.add(entry["file"])
+        if entry["file"] not in named:
+            problems.append(f"pairs_omitted: {entry['file']} is not in this record's file set")
+        if (entry["node"], entry["file"]) in answered_pairs:
+            problems.append(f"pairs_omitted: {entry['node']} over {entry['file']} is also "
+                            f"answered by a node entry; a pair was judged or omitted, never both")
+        if entry["file"] in unbound:
+            problems.append(f"pairs_omitted: {entry['file']} is also under `unbound`; a pair "
+                            f"can only be omitted where a binding holds it")
+
+    for path in sorted(set(named) - claimed - set(unbound) - omitted_files):
         problems.append(f"files: {path} is named and no node accounts for it; a file the trace "
                         f"binds nothing to belongs under `unbound`, said rather than left out")
     return problems
@@ -1079,6 +1140,433 @@ def encodes(target: Path, files: list[str]) -> int:
     return 0
 
 
+def return_name(given: str) -> str:
+    """The filename one delegation's return is saved under, computed from the path it judged.
+    Flat on purpose: the returns directory is read as a set keyed by file, and a nested copy of
+    the source tree would make a stray return — one no staged file explains — hard to even see."""
+    return given.replace("/", "__") + ".yaml"
+
+
+def open_owed(home: Path) -> set[tuple[str, str]]:
+    """Every node/file pair the reconciliation corpus holds an open finding against — found by
+    some record and cleared by none. A pair answered both ways is not here: a clearance in the
+    corpus closes a finding, which is the same reading `--owed` already reports by."""
+    found, cleared, _ = judged(home)
+    return {pair for pair in found if pair not in cleared}
+
+
+def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
+          files: list[str]) -> int:
+    """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
+    batch's candidate index, and every pair whose re-judgment would buy a second reading of text
+    that did not move. Everything here is computed from the trace, the specification and the
+    corpus — nothing is chosen, so nothing here is a judgment.
+
+    The workspace is a reading copy and never a home. The packs restate node text so a judge
+    reads its whole set in one act instead of one call per node, and they are trustworthy for
+    exactly as long as nothing moves — which is the reconciliation's own precondition, since the
+    named files must be committed and the bind stamps what is on disk. Each pack entry names its
+    source path and the digest staging read, so a doubted line has one authority to open.
+
+    The returns directory is the one thing staged outside the workspace, because it outlives it:
+    the returns are the evidence the record is folded from, and a record whose raw answers
+    survive nowhere is a judgment nobody can reopen. It is created empty beside the record's own
+    reserved path, and a slug either of them already holds is the same stop a taken record slug
+    has always been."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    if not spec_root.is_dir():
+        print(f"cannot run: {spec_root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    declared = load(target)
+    if declared is None:
+        print(f"no trace file: {trace_path(target)} does not exist; nothing has been bound in "
+              f"this target, so there is no binding to reconcile and what the caller wants is a "
+              f"delivery", file=sys.stderr)
+        return CANNOT_RUN
+    problems = problems_of(declared)
+    if problems:
+        for problem in problems:
+            print(f"{trace_path(target)}: {problem}")
+        return 1
+    nodes, status = sound_specification(spec_root)
+    if nodes is None:
+        return status
+
+    home = home_of(target)
+    record_path = home / RECONCILE_DIR / f"{slug}.md"
+    returns_dir = home / RECONCILE_DIR / f"{slug}.returns"
+    for taken in (record_path, returns_dir):
+        if taken.exists():
+            print(f"cannot run: {taken} already exists; a slug is one reconciliation's name, and "
+                  f"what stands there is the justification for bindings still in the trace",
+                  file=sys.stderr)
+            return CANNOT_RUN
+
+    traced, path_problems = traced_files_of(target, home, files)
+    for problem in path_problems:
+        print(f"cannot run: {problem}", file=sys.stderr)
+    if path_problems:
+        return CANNOT_RUN
+    current = {entry["path"]: entry["digest"] for entry in traced}
+
+    offset = Path(os.path.relpath(target.resolve(), home.resolve())).as_posix()
+    stored_of = {given: (given if offset == "." else f"{offset}/{given}") for given in files}
+
+    index: dict[str, list[tuple[str, str]]] = {}
+    for entry in declared.get("bindings") or []:
+        for held in entry.get("files") or []:
+            if isinstance(held, dict) and isinstance(held.get("path"), str):
+                index.setdefault(held["path"], []).append((entry["node"], held["digest"]))
+
+    owed_pairs = open_owed(home)
+    judged_files: dict[str, list[str]] = {}
+    all_current: list[str] = []
+    unbound: list[str] = []
+    omitted: list[dict] = []
+    orphaned: list[dict] = []
+    for given in files:
+        stored = stored_of[given]
+        rows = sorted(index.get(stored) or [])
+        if not rows:
+            unbound.append(given)
+            continue
+        assigned = []
+        for node_id, pinned in rows:
+            if node_id not in nodes:
+                orphaned.append({"node": node_id, "file": given})
+                continue
+            if pinned == current[stored] and (node_id, stored) not in owed_pairs:
+                omitted.append({"node": node_id, "file": given,
+                                "reason": "the binding computes at the file's content as it "
+                                          "stands, and no record holds an open finding against "
+                                          "the pair"})
+                continue
+            assigned.append(node_id)
+        if assigned:
+            judged_files[given] = assigned
+        else:
+            all_current.append(given)
+
+    candidates: dict[str, list[str]] = {}
+    for given, assigned in judged_files.items():
+        for node_id in assigned:
+            candidates.setdefault(node_id, []).append(given)
+
+    packs_dir = workspace / "packs"
+    packs_dir.mkdir(parents=True, exist_ok=True)
+    manifest_files: dict[str, dict] = {}
+    for given, assigned in sorted(judged_files.items()):
+        pack = packs_dir / (given.replace("/", "__") + ".md")
+        lines = [f"# Node pack for {given} — derived by trace.py --stage from the specification; "
+                 f"a reading copy, never a home. Doubt a line, open the source it names."]
+        for node_id in assigned:
+            source = spec_root / f"{node_id}.md"
+            lines += [f"\n=== {node_id}",
+                      f"source: {source}",
+                      f"digest: {nodes[node_id]['digest']}",
+                      "---",
+                      source.read_text(encoding="utf-8").rstrip("\n")]
+        pack.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        manifest_files[given] = {"nodes": assigned,
+                                 "pack": str(pack)}
+
+    lines = [f"# Candidate index — every node this batch's judgments answer for, with the "
+             f"file(s) the trace binds it to. Grep for a fact's own terms; open the node under "
+             f"the specification root before claiming anything about it."]
+    for node_id in sorted(candidates):
+        lines.append(f"{node_id} — bound in this batch to: "
+                     f"{', '.join(sorted(candidates[node_id]))}")
+    (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    manifest = {"slug": slug,
+                "specification_root": str(spec_root),
+                "files": manifest_files,
+                "all_current": sorted(all_current),
+                "unbound": sorted(unbound),
+                "omitted": sorted(omitted, key=lambda e: (e["file"], e["node"])),
+                "orphaned": sorted(orphaned, key=lambda e: (e["file"], e["node"])),
+                "candidates": {n: sorted(fs) for n, fs in sorted(candidates.items())}}
+    (workspace / MANIFEST_FILE).write_text(json.dumps(manifest, indent=2) + "\n",
+                                           encoding="utf-8")
+    returns_dir.mkdir(parents=True)
+
+    to_judge = sum(len(a) for a in judged_files.values())
+    print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
+          f"{len(omitted)} pair(s) omittable — the binding is current and nothing is owed on "
+          f"them; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} file(s) "
+          f"the trace binds nothing to")
+    print(f"  manifest and packs at {workspace}; candidate index at "
+          f"{workspace / 'candidates.txt'}")
+    print(f"  save each delegation's return verbatim at "
+          f"{returns_dir}/<file path with '/' as '__'>.yaml")
+    if orphaned:
+        print(f"  {len(orphaned)} binding(s) name a node the specification no longer holds — "
+              f"no judge is handed those, no bind repairs them, and --prune is their route:")
+        for entry in orphaned:
+            print(f"    {entry['node']} — bound to {entry['file']}")
+    return 0
+
+
+def return_problems(front, assigned: list[str], given: str) -> list[str]:
+    """Every way one delegation's saved return fails its contract or its assignment. The schema
+    holds the shape; this holds the relation the schema cannot see — that `read` answers for
+    exactly the node set the delegation was handed, since a return short one node reads exactly
+    like a complete one and the fold would clear the missing node by silence."""
+    if not isinstance(front, dict):
+        return ["the return is not a mapping"]
+    schema = json.loads(RETURN_CONTRACT.read_text(encoding="utf-8"))
+    problems = [f"{'/'.join(str(part) for part in error.path) or 'return'}: {error.message}"
+                for error in Draft202012Validator(schema).iter_errors(front)]
+    if problems:
+        return problems
+    answered = [entry["node"] for entry in front["read"]]
+    problems += [f"read: {node} appears {answered.count(node)} times; a delegation answers once, "
+                 f"and two answers for one node void each other"
+                 for node in sorted(set(answered)) if answered.count(node) > 1]
+    missing = sorted(set(assigned) - set(answered))
+    extra = sorted(set(answered) - set(assigned))
+    if missing:
+        problems.append(f"read: no entry for {', '.join(missing)}; the return answers for the "
+                        f"node set the delegation was handed, whole")
+    if extra:
+        problems.append(f"read: {', '.join(extra)} is not in this delegation's node set; a "
+                        f"candidate is opened to attribute a finding, never answered for in "
+                        f"`read`")
+    for finding in front.get("findings") or []:
+        named = finding.get("file")
+        if named is not None and named != given:
+            problems.append(f"findings: a finding names {named}, and this delegation read "
+                            f"{given}; one file per delegation is the shape of this pass")
+    return problems
+
+
+def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: Path) -> int:
+    """Write the reconciliation record from the delegations' saved returns, mechanically.
+
+    Every rule here is a fold over structured answers, applied the same way every time: a node
+    conforms exactly where every delegation that read one of its files cleared it; a finding
+    naming a node lands on that node wherever its own judge stood; a finding naming none holds
+    every node of the file that produced it, marked `collateral` on the nodes nothing contested
+    directly; a node whose fact no named file holds any more binds nothing, because a binding
+    asserts the file answers for the node and the judge just read that it does not. None of that
+    asks for judgment, which is why none of it is applied by a context that could misremember a
+    rule between node forty and node eighty.
+
+    What the caller owes is the premise — title, summary, target, one `change` line per named
+    file — because that half is the human's assertion and no fold can write it. What the fold
+    owes back is refusal by name: a return that does not hold, or one missing for a staged file,
+    is a delegation to run again with its prompt fixed, never an answer to repair here."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    manifest_path = workspace / MANIFEST_FILE
+    if not manifest_path.is_file():
+        print(f"cannot run: {manifest_path} does not exist; --stage is what writes it",
+              file=sys.stderr)
+        return CANNOT_RUN
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not premise_path.is_file():
+        print(f"cannot run: {premise_path} does not exist", file=sys.stderr)
+        return CANNOT_RUN
+    try:
+        premise = yaml.safe_load(premise_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as broken:
+        print(f"cannot run: {premise_path} does not parse: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    if not isinstance(premise, dict):
+        print(f"cannot run: {premise_path} is not a mapping", file=sys.stderr)
+        return CANNOT_RUN
+
+    problems = [f"premise: `{field}` is missing" for field in
+                ("title", "summary", "target", "files") if field not in premise]
+    named = {}
+    if isinstance(premise.get("files"), list):
+        for entry in premise["files"]:
+            if isinstance(entry, dict) and isinstance(entry.get("path"), str) \
+                    and isinstance(entry.get("change"), str):
+                named[entry["path"]] = entry["change"]
+            else:
+                problems.append("premise: every `files` entry carries `path` and `change`")
+    every_named = (set(manifest["files"]) | set(manifest["all_current"])
+                   | set(manifest["unbound"]))
+    if not problems:
+        absent = sorted(every_named - set(named))
+        stray = sorted(set(named) - every_named)
+        if absent:
+            problems.append(f"premise: no `change` line for {', '.join(absent)}; the premise "
+                            f"accounts for every staged file")
+        if stray:
+            problems.append(f"premise: {', '.join(stray)} was never staged; the file set is the "
+                            f"staged one, and widening it here reconciles ground nobody scoped")
+    if problems:
+        for problem in problems:
+            print(f"cannot fold: {problem}")
+        return 1
+
+    home = home_of(target)
+    returns_dir = home / RECONCILE_DIR / f"{manifest['slug']}.returns"
+    if not returns_dir.is_dir():
+        print(f"cannot fold: {returns_dir} does not exist; --stage is what creates it, and the "
+              f"returns are saved into it verbatim as each delegation answers", file=sys.stderr)
+        return CANNOT_RUN
+
+    expected = {return_name(given): given for given in manifest["files"]}
+    stray = sorted(p.name for p in returns_dir.iterdir() if p.name not in expected)
+    if stray:
+        print(f"cannot fold: {returns_dir} holds {', '.join(stray)}, which no staged file "
+              f"explains; a return nobody staged is an answer to a question nobody asked")
+        return 1
+
+    returns: dict[str, dict] = {}
+    rerun: list[str] = []
+    for name, given in sorted(expected.items()):
+        path = returns_dir / name
+        if not path.is_file():
+            rerun.append(f"{given}: no return at {path}")
+            continue
+        try:
+            front = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as broken:
+            rerun.append(f"{given}: the return does not parse: {broken}")
+            continue
+        held = return_problems(front, manifest["files"][given]["nodes"], given)
+        if held:
+            rerun += [f"{given}: {problem}" for problem in held]
+            continue
+        returns[given] = front
+    if rerun:
+        for problem in rerun:
+            print(f"cannot fold: {problem}")
+        print(f"\n{len(rerun)} problem(s); each names a delegation to run again with its prompt "
+              f"fixed — an unusable return is never repaired here, and a follow-up question to "
+              f"the delegation that already answered is not a fresh judgment.")
+        return 1
+
+    batch_nodes = {node for entry in manifest["files"].values() for node in entry["nodes"]}
+    against: dict[str, list[tuple[str, dict]]] = {}
+    out_of_scope: list[tuple[str, dict]] = []
+    tainted: dict[str, list[dict]] = {}
+    for given, front in returns.items():
+        for finding in front.get("findings") or []:
+            node = finding.get("node")
+            if node is None:
+                tainted.setdefault(given, []).append(finding)
+            elif node in batch_nodes:
+                against.setdefault(node, []).append((given, finding))
+            else:
+                out_of_scope.append((given, finding))
+
+    read_of = {(given, entry["node"]): entry
+               for given, front in returns.items() for entry in front["read"]}
+
+    entries = []
+    for node in sorted(batch_nodes):
+        bound_in = sorted(given for given, meta in manifest["files"].items()
+                          if node in meta["nodes"])
+        holders = [given for given in bound_in
+                   if read_of[(given, node)]["held_at"].strip().lower() != NOWHERE]
+        found = against.get(node) or []
+        taint = [given for given in bound_in if given in tainted]
+        if not found and not taint and holders == bound_in:
+            how = "\n".join(f"{given}: held at {read_of[(given, node)]['held_at']} — "
+                            f"{read_of[(given, node)]['evidence']}" for given in holders)
+            entries.append({"node": node, "conforms": True, "how": how,
+                            "encoded_at": holders})
+            continue
+        parts = []
+        collateral = False
+        if found:
+            parts += [f"{given}, {finding['where']}: {finding['evidence']} — {finding['cost']}"
+                      for given, finding in found]
+        left = [given for given in bound_in if given not in holders]
+        if left and not found:
+            said = "; ".join(f"{given} read `{read_of[(given, node)]['held_at']}` — "
+                             f"{read_of[(given, node)]['evidence']}" for given in left)
+            if holders:
+                parts.append(f"the fact left part of its ground: still held in "
+                             f"{', '.join(holders)}, and {said} — a binding asserts the file "
+                             f"answers for the node, so the pair that stopped holding it is "
+                             f"released by `--bind ... --replace`, never restamped here")
+            else:
+                parts.append(f"no named file holds this fact now: {said}")
+        if taint:
+            parts += [f"{given} returned a finding naming no node ({finding['where']}: "
+                      f"{finding['evidence']} — {finding['cost']}), and an unattributed finding "
+                      f"holds every node of the file its judge read"
+                      for given in taint for finding in tainted[given]]
+            collateral = not found and holders == bound_in
+        entry = {"node": node, "conforms": False, "how": "\n".join(parts),
+                 "observed_at": bound_in}
+        if collateral:
+            entry["collateral"] = True
+        entries.append(entry)
+
+    notes = [f"Judged by {len(returns)} delegation(s), one per file; folded mechanically by "
+             f"trace.py --fold from the returns under {RECONCILE_DIR}/{manifest['slug']}.returns/."]
+    if isinstance(premise.get("notes"), str) and premise["notes"].strip():
+        notes.insert(0, premise["notes"].strip())
+    for given, finding in out_of_scope:
+        notes.append(f"A finding in {given} names {finding['node']}, which no file of this set "
+                     f"is bound to: {finding['where']}: {finding['evidence']} — "
+                     f"{finding['cost']}. It blocks nothing here; it is owed a route of its own.")
+    for entry in manifest["orphaned"]:
+        notes.append(f"{entry['node']} is bound to {entry['file']} and the specification no "
+                     f"longer holds it; no judge was handed it, and --prune is its route.")
+    opened_count = sum(len(front.get("candidates_opened") or []) for front in returns.values())
+    with_any = sum(1 for front in returns.values() if front.get("candidates_opened"))
+    notes.append(f"Candidates: {opened_count} opened across {with_any} of {len(returns)} "
+                 f"delegation(s); each return lists its own under `candidates_opened`.")
+
+    front = {"contract_version": "siegard-reconcile/2",
+             "title": premise["title"],
+             "summary": premise["summary"],
+             "target": premise["target"],
+             "files": [{"path": path, "change": named[path]} for path in sorted(every_named)],
+             "nodes": entries}
+    if manifest["unbound"]:
+        front["unbound"] = manifest["unbound"]
+    if manifest["omitted"]:
+        front["pairs_omitted"] = manifest["omitted"]
+    front["notes"] = "\n".join(notes)
+
+    schema = json.loads(RECONCILE_CONTRACT.read_text(encoding="utf-8"))
+    held = [f"{'/'.join(str(part) for part in error.path) or 'record'}: {error.message}"
+            for error in Draft202012Validator(schema).iter_errors(front)]
+    if not held:
+        held = accounted(front)
+    if held:
+        for problem in sorted(set(held)):
+            print(f"cannot fold: {problem}")
+        print(f"\n{len(set(held))} problem(s) in what the fold composed; this is a defect in the "
+              f"staging or the premise, and nothing was written.")
+        return 1
+
+    if record_out.parent.name != RECONCILE_DIR:
+        print(f"cannot run: {record_out} does not sit under {RECONCILE_DIR}/; the record lives "
+              f"where the trace it justifies lives", file=sys.stderr)
+        return CANNOT_RUN
+    if record_out.exists():
+        print(f"cannot run: {record_out} already exists; a slug is one reconciliation's name",
+              file=sys.stderr)
+        return CANNOT_RUN
+    text = yaml.safe_dump(front, sort_keys=False, allow_unicode=True, width=100)
+    record_out.write_text(
+        f"---\n{text}---\n\n## Folded\nThis record was folded by `trace.py --fold` from the "
+        f"delegation returns under `{RECONCILE_DIR}/{manifest['slug']}.returns/`, which are the "
+        f"evidence behind every entry above.\n", encoding="utf-8")
+
+    cleared = sum(1 for entry in entries if entry["conforms"])
+    blocked = [entry for entry in entries if not entry["conforms"]]
+    marks = sum(1 for entry in blocked if entry.get("collateral"))
+    print(f"folded {record_out.name}: {cleared} node(s) cleared, {len(blocked)} not — "
+          f"{marks} of those collateral, blocked only by an unattributed sibling finding — "
+          f"{len(manifest['omitted'])} pair(s) omitted as current and unowed")
+    print(f"  next: trace.py --reconciliation {record_out}")
+    return 0
+
+
 def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
                 offset: Path) -> list[str]:
     """Every node the trace binds to a file this reconciliation names and the record says nothing
@@ -1112,20 +1600,84 @@ def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
     # directory. Compare in the trace's spelling, the way a bind writes them.
     anchored = named if str(offset) == "." else {(offset / p).as_posix() for p in named}
 
-    answered = {entry["node"] for entry in front.get("nodes") or []
-                if isinstance(entry, dict) and isinstance(entry.get("node"), str)}
+    # A pair the record declares omitted is not unanswered — it points at the judgment an earlier
+    # bind already stamped over these exact bytes. The declaration is form; whether each pair
+    # really is current and unowed is `omitted_problems`, checked live at bind time.
+    omitted = {(entry["node"], entry["file"]) for entry in front.get("pairs_omitted") or []
+               if isinstance(entry, dict)
+               and isinstance(entry.get("node"), str) and isinstance(entry.get("file"), str)}
+    # Pair by pair, not node by node: a record answering one node over one of its two named
+    # files, silent on the other, reads exactly like a complete one at node granularity — and
+    # `--bind-record` writes by union, so the silent pair's stale claim would simply stand.
+    answered_pairs = {(entry["node"], path) for entry in front.get("nodes") or []
+                      if isinstance(entry, dict) and isinstance(entry.get("node"), str)
+                      for path in (entry.get("encoded_at") or entry.get("observed_at") or [])
+                      if isinstance(path, str)}
+    given_of = {(p if str(offset) == "." else (offset / p).as_posix()): p for p in named}
     problems = []
     for entry in declared.get("bindings") or []:
         node_id = entry.get("node")
-        if not isinstance(node_id, str) or node_id in answered or node_id not in nodes:
+        if not isinstance(node_id, str) or node_id not in nodes:
             continue
         for held in entry.get("files") or []:
-            if isinstance(held, dict) and held.get("path") in anchored:
-                problems.append(
-                    f"{node_id} is bound to {held['path']}, which this record names, and the "
-                    f"record answers for it nowhere; a reconciliation reads every node a named "
-                    f"file answers to, never the subset that happened to agree")
-                break
+            if not isinstance(held, dict) or held.get("path") not in anchored:
+                continue
+            given = given_of[held["path"]]
+            if (node_id, given) in answered_pairs or (node_id, given) in omitted:
+                continue
+            problems.append(
+                f"{node_id} is bound to {held['path']}, which this record names, and the "
+                f"record answers for the pair nowhere; a reconciliation reads every node a named "
+                f"file answers to, never the subset that happened to agree — a pair whose "
+                f"binding is current and unowed may be omitted, said under `pairs_omitted`")
+    return sorted(problems)
+
+
+def omitted_problems(record: Path, declared: dict, home: Path,
+                     offset: Path) -> list[str]:
+    """Every `pairs_omitted` entry whose claim does not hold at this moment. The record's list is
+    a declaration; this is the authority, recomputed at bind time, because an omission is a
+    judgment borrowed from an earlier bind and the borrowing only stands while both halves do:
+    the binding still computes at the file's content — the pair was judged over these exact
+    bytes — and no reconciliation record holds an open finding against it. A pair that fails
+    either half was owed a judge, and binding around it would stamp a claim nobody re-read."""
+    front = as_reconciliation(record)
+    if front is None:
+        return []
+    listed = front.get("pairs_omitted") or []
+    if not listed:
+        return []
+
+    bound: dict[tuple[str, str], str] = {}
+    for entry in declared.get("bindings") or []:
+        for held in entry.get("files") or []:
+            if isinstance(held, dict) and isinstance(held.get("path"), str):
+                bound[(entry.get("node"), held["path"])] = held.get("digest")
+
+    owed_pairs = open_owed(home)
+    problems = []
+    for entry in listed:
+        if not isinstance(entry, dict):
+            continue
+        node_id, given = entry.get("node"), entry.get("file")
+        if not isinstance(node_id, str) or not isinstance(given, str):
+            continue
+        stored = given if str(offset) == "." else (offset / given).as_posix()
+        pinned = bound.get((node_id, stored))
+        if pinned is None:
+            problems.append(f"pairs_omitted: nothing binds {node_id} to {stored}; a pair can "
+                            f"only be omitted where a binding holds the judgment being pointed at")
+            continue
+        source = home / stored
+        if not source.is_file() or spec.digest_of(source) != pinned:
+            problems.append(f"pairs_omitted: {node_id} over {stored} is stale — the file moved "
+                            f"since the binding was stamped, so the judgment the omission points "
+                            f"at was over different bytes; the pair was owed a judge")
+            continue
+        if (node_id, stored) in owed_pairs:
+            problems.append(f"pairs_omitted: {node_id} over {stored} carries an open finding in "
+                            f"the reconciliation corpus; a bind already covered its only symptom "
+                            f"once, and omitting it here would do it again")
     return sorted(problems)
 
 
@@ -1178,8 +1730,9 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     if refusal is not None:
         refusals.append(refusal)
     if declared is not None:
-        refusals += unaccounted(record, declared, nodes,
-                               Path(os.path.relpath(target.resolve(), home.resolve())))
+        offset = Path(os.path.relpath(target.resolve(), home.resolve()))
+        refusals += unaccounted(record, declared, nodes, offset)
+        refusals += omitted_problems(record, declared, home, offset)
     if refusals:
         for problem in refusals:
             print(f"cannot bind: {problem}")
@@ -1291,16 +1844,20 @@ def main() -> int:
     do_reconciliation = "--reconciliation" in args
     do_owed = "--owed" in args
     do_encodes = "--encodes" in args
+    do_stage = "--stage" in args
+    do_fold = "--fold" in args
     replace = "--replace" in args
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
-                         "--reconciliation", "--owed", "--encodes")]
+                         "--reconciliation", "--owed", "--encodes", "--stage", "--fold")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
                                       ("--reconciliation", do_reconciliation),
                                       ("--owed", do_owed),
-                                      ("--encodes", do_encodes)) if given]
+                                      ("--encodes", do_encodes),
+                                      ("--stage", do_stage),
+                                      ("--fold", do_fold)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
@@ -1348,6 +1905,23 @@ def main() -> int:
                   "spelled from the target source root", file=sys.stderr)
             return CANNOT_RUN
         return encodes(Path(args[0]), args[1:])
+
+    if do_stage:
+        if len(args) < 5 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --stage <target-root> <spec-root> <slug> "
+                  "<workspace-dir> <file> [<file> ...], every file spelled from the target "
+                  "source root", file=sys.stderr)
+            return CANNOT_RUN
+        target, spec_root, slug, workspace, *files = args
+        return stage(Path(target), Path(spec_root), slug, Path(workspace), files)
+
+    if do_fold:
+        if len(args) != 4 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --fold <target-root> <workspace-dir> <premise-file> "
+                  "<record>", file=sys.stderr)
+            return CANNOT_RUN
+        target, workspace, premise, record = args
+        return fold_returns(Path(target), Path(workspace), Path(premise), Path(record))
 
     if do_bind:
         if len(args) < 4:

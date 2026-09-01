@@ -28,8 +28,8 @@
   },
   "properties": {
     "contract_version": {
-      "const": "siegard-reconcile/1",
-      "description": "Which contract this record was written against. A record is read by a validator that may have moved since; the version is what says whether it may be."
+      "const": "siegard-reconcile/2",
+      "description": "Which contract this record was written against. A record is read by a validator that may have moved since; the version is what says whether it may be. Records written under siegard-reconcile/1 stay in the corpus and are read there — `--owed` and `--bind-record` read any siegard-reconcile/* record — but a new record is held to this version: /2 is /1 plus `pairs_omitted` and `collateral`, and a /1 record answers for every bound node with no way to say a pair was omitted."
     },
     "title": {
       "type": "string",
@@ -113,6 +113,21 @@
               }
             },
             "$comment": "The two field names are what makes the rule structural instead of pious. `bin/trace.py --bind-record` binds every node carrying `encoded_at` and reads nothing else, so a node the judgment did not clear cannot be bound from this record however the caller invokes it. One field name, split by the answer, in place of a sentence asking a skill not to bind."
+          },
+          {
+            "if": {
+              "required": [
+                "collateral"
+              ]
+            },
+            "then": {
+              "properties": {
+                "conforms": {
+                  "const": false
+                }
+              }
+            },
+            "$comment": "A cleared node cannot be collateral: the mark exists to tell a blocked-only-by-a-sibling-finding node from a contested one, and both readings presuppose the node stands unbound."
           }
         ],
         "properties": {
@@ -122,6 +137,10 @@
           "conforms": {
             "type": "boolean",
             "description": "Whether the source, as it now stands, still states only what this node holds. It is the conformance judgment's answer, delegated and read — never the caller's own reading of the file, and never inferred from the edit having been small."
+          },
+          "collateral": {
+            "const": true,
+            "description": "Present only on a node the judgment did not clear, and only where nothing was found against the node's own substance: its file carried a finding that named no node, and the conservative default — an unattributed finding lands on every node of the file its judge read — is the whole of why this node stands unbound. A reader routing the open findings reads this as 'route the unattributed finding, then re-judge; nothing here contests the node itself'. Never present on a node any finding names directly."
           },
           "how": {
             "type": "string",
@@ -156,6 +175,33 @@
         "$ref": "#/$defs/targetPath"
       }
     },
+    "pairs_omitted": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Bound node-file pairs this reconciliation did not re-judge, each with the reason. A pair may be omitted only where the judgment it would buy already exists: the binding computes at the file's content as it stands now — the pair was judged over these exact bytes and stamped — and no reconciliation record holds an open finding against it. Both halves are recomputed by `--bind-record` at the moment of binding, never taken from this list: a pair listed here that turns out stale or owed refuses the whole record. Re-judging a pair that satisfies both is buying a second reading of text that did not move, and what a second reading of unchanged input adds is not confidence. A file whose every pair is omitted is accounted for by this list the way a judged file is accounted for by its nodes.",
+      "items": {
+        "type": "object",
+        "required": [
+          "node",
+          "file",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/specNodeRef"
+          },
+          "file": {
+            "$ref": "#/$defs/targetPath"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why the pair was omittable, as a standing fact — the binding current, no finding owed."
+          }
+        }
+      }
+    },
     "notes": {
       "type": "string",
       "minLength": 1,
@@ -164,7 +210,7 @@
   },
   "examples": [
     {
-      "contract_version": "siegard-reconcile/1",
+      "contract_version": "siegard-reconcile/2",
       "title": "Hand correction to order placement",
       "summary": "place() was returning the stored row rather than the order_number; corrected by hand during an incident and confirmed correct against the running system.",
       "target": "backend",
@@ -186,7 +232,7 @@
       ]
     },
     {
-      "contract_version": "siegard-reconcile/1",
+      "contract_version": "siegard-reconcile/2",
       "title": "Hand correction to invoicing",
       "summary": "The nightly run raised two invoices for one order; the guard was added by hand and the behavior is correct.",
       "target": "backend",

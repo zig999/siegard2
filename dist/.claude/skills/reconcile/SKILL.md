@@ -18,8 +18,8 @@ it.
 
 What you produce is a rebind and the record that justifies it. **You never write source, and you
 never write a specification node.** Where the reconciliation cannot be made for a node — where the
-source now states something that node does not hold — you bind that node nothing and hand back the
-two invocations that could resolve it, without choosing between them. The nodes the judgment did
+source now states something that node does not hold — you bind that node nothing and hand back
+the invocations that could resolve it, without choosing between them. The nodes the judgment did
 clear are bound in the same act: the judgment is per node, so the bind is too, and a reading that
 succeeded is not discarded because a sibling reading did not.
 
@@ -77,8 +77,10 @@ The rest of the repository is not this skill's business. The pathspec is the sco
 
 Read `${CLAUDE_PLUGIN_ROOT}/schemas/reconciliation.json`. It is the single home of what a
 reconciliation record may and must declare — the fields, which of them a cleared node carries and
-which a node the judgment refused carries instead, and one example per outcome. Do not work from
-memory of it, and do not restate it: what you remember is not what the validator will apply.
+which a node the judgment refused carries instead, and one example per outcome. The fold below is
+what writes the record against it; what you author is the premise it folds in, and the contract's
+`summary` and `files[].change` descriptions are the standard those lines are held to. Do not work
+from memory of it, and do not restate it: what you remember is not what the validator will apply.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not, the
 plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored install,
@@ -87,7 +89,7 @@ the `.claude/` directory this skill's tree sits under. Every path below resolves
 ## The order
 
 ```
-situate → locate → judge → record → bind → report → stop
+situate → stage → judge → fold → bind → report → stop
 ```
 
 ### 1. Situate
@@ -105,7 +107,7 @@ situate → locate → judge → record → bind → report → stop
   prints, which is where `siegard.json` and `siegard-trace.json` already sit. A path that exists is
   the stop input 4 describes.
 
-### 2. Locate
+### 2. Stage
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>
@@ -117,46 +119,54 @@ listed per file — one line naming the file, the reason, and every binding the 
 is this skill's own shape: a reconciliation is invoked over a file set. Read the findings, and
 keep the lines whose path is in the file set.
 
-Then, for the whole file set:
+Then, for the whole file set, into a fresh workspace directory nothing commits (`mktemp -d` is the
+ordinary choice — the workspace is a reading copy, and a committed copy of node text would be a
+second home for it):
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <each named path>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
+    <slug> <workspace> <each named path>
 ```
 
-This is the second reading, and it separates the two states the findings cannot tell apart — a file
-the trace binds nothing to looks exactly like a file whose binding is intact, because both are
-absent from a drift report. It prints every node each named file is bound to and whether that
-binding still computes, which is exactly the node set the judgment below is handed. Run it; never
-infer it, and do not reconstruct it by reading `siegard-trace.json` yourself. A node missed in a
-hand reading is a judge handed an incomplete node set, and the record that comes back reads exactly
-like a complete one — nothing downstream can tell them apart, because `--reconciliation` validates
-the record's own shape and not whether the set it used was whole.
+This is the locate step, run by the one reader that cannot miss a binding. It computes every node
+each named file is bound to, writes the node set per file into the workspace's manifest, writes
+one **node pack** per file — the full text of every node that file's judge must read, each entry
+naming its source path and digest — writes the **candidate index** for the whole batch, separates
+out every pair whose re-judgment would buy nothing (see the fold step for what lands where), and
+creates `siegard-reconcile/<slug>.returns/` empty, beside the record's own reserved path. Run it;
+never infer any of it, and never reconstruct a node set by reading `siegard-trace.json` yourself.
+A node missed in a hand reading is a judge handed an incomplete node set, and the record that
+comes back reads exactly like a complete one.
 
 **Two anchors meet here, and only one of them belongs in what you write.** Findings are spelled from
 the target's git toplevel, because that is where the trace file sits; everything you author — the
-file set the human gave you, every path in the record — is spelled from the target source root, the
-same anchor every other record in this framework uses. Copy a finding's path across unconverted and
-the bind refuses it, which is the cheap failure; the expensive one is converting the human's paths
-the other way to match the output you just read. **What you keep is every node those findings name, and never a subset** —
+file set the human gave you, every path in the premise — is spelled from the target source root,
+the same anchor every other record in this framework uses. `--stage` takes the human's own
+spelling and refuses the other one naming the correction, which is the cheap failure; the
+expensive one is converting the human's paths the other way to match the drift report you just
+read. **What is judged is every node the trace binds to the set, and never a chosen subset** —
 which nodes a file answers to is what the trace holds, and reconciling a file against the part of
 the specification that happens to agree with it is the failure this whole route exists to prevent.
+The one subtraction is `--stage`'s own, mechanical and rechecked at bind time: a pair whose
+binding computes at the file's content as it stands, with no open finding against it in the
+corpus, was judged over these exact bytes already, and re-judging it buys a second reading of
+text that did not move.
 
-Four states, and they do not all continue:
+Four states the staging separates, and they do not all continue:
 
-- **A named file a finding of the code class names.** This is the subject. Its nodes go to the
-  judgment.
-- **A named file the trace binds nothing to.** Reported, never guessed. Deciding which node an
-  untraced file answers to is a delivery's judgment or an analysis's, and inventing one here would
-  write this framework's most durable claim out of its thinnest evidence. It goes into the record's
-  `unbound` and no further.
-- **A named file whose binding is intact.** It did not change, or it changed back. It stays in the
-  file set and its nodes still go to the judgment — a file that did not move can be exactly where
-  the fact another file's edit displaced has come to live twice, and dropping it here is dropping
-  the reading that would find that.
+- **A file with nodes in the manifest.** This is the subject. Its judge is spawned below.
+- **A file the trace binds nothing to.** Reported, never guessed. Deciding which node an untraced
+  file answers to is a delivery's judgment or an analysis's, and inventing one here would write
+  this framework's most durable claim out of its thinnest evidence. The manifest holds it under
+  `unbound`, the fold carries it into the record, and it goes no further.
+- **A file whose every pair the staging omitted.** Nothing left to judge: each of its bindings
+  was stamped over the content on disk now and nothing is owed against any of them. It stays in
+  the file set and in the premise, and the record accounts for it under `pairs_omitted`.
 - **A node reported under the orphaned class.** Stop for that node, and say so plainly: the
   specification no longer holds it, no bind can repair the entry, and the route is
-  `trace.py --prune` followed by whatever put the fact somewhere else. Do not bind around it, and
-  do not prune it from here — this invocation's writes are its own record and its own bindings.
+  `trace.py --prune` followed by whatever put the fact somewhere else. `--stage` hands no judge
+  such a node and names each one; do not bind around it, and do not prune it from here — this
+  invocation's writes are its own record and its own bindings.
 
 **A node written since the bind is in none of that.** The trace is what this step reads, and a node
 no delivery ever encoded has no entry in it — which is the ordinary state of every node `/analyse`
@@ -175,17 +185,25 @@ and the bind restamps both.
 
 ### 3. Judge
 
-Spawn one `specification-conformance-reviewer` subagent per named file, together rather than one
-after another — its judgment lives at
+Spawn one `specification-conformance-reviewer` subagent per file the manifest holds nodes for,
+together rather than one after another — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
-a file set of exactly its one file; as the node set, the nodes the trace binds to that file,
-located above; the identifiers of every node the locate step named across the whole file set — together
-with any the human named as written since the bind — as
-candidates it may open where its file states a fact its own nodes do not settle — a fact one
-file states can be governed by a node another file carries, and a judge who cannot open that
-node reports an absence where the true finding is a misattribution; the specification root; and
-the path to `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`, which is where the shape of what
-it returns lives.
+a file set of exactly its one file; as the node set, its node pack's path from the manifest —
+the pack is the set, whole, each node's text with its source named; as candidates, the path to
+the workspace's candidate index — together with the identities of any node the human named as
+written since the bind — which it may consult where its file states a fact its own nodes do not
+settle: a fact one file states can be governed by a node another file carries, and a judge who
+cannot open that node reports an absence where the true finding is a misattribution; the
+specification root; the path to `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json`, where a
+finding's own shape lives; and the path to
+`${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
+to by the fold below.
+
+**Save each return verbatim the moment it arrives**, at
+`siegard-reconcile/<slug>.returns/<the file's path with every '/' as '__'>.yaml` — a copy and
+nothing else. Never reshape one, never trim one, never repair one: the returns are the evidence
+the record is folded from and they outlive this session, and a return adjusted by the hand that
+saved it carries a judgment the delegation never made.
 
 One judge per file rather than one over the set, because a judgment over the set saturates: a
 single context holding every node and every file at once answers hundreds of node-file pairs in
@@ -231,41 +249,40 @@ a bind rests on for as long as the code lives. The stop is to report and wait. S
 failed, too: a spend limit or a rate limit passes, and what the human does then is run it again
 rather than accept less.
 
-### 4. Record
+### 4. Fold
 
-Write `siegard-reconcile/<slug>.md`, against the contract you read, and write it whatever the
-judgment returned. A reconciliation that stopped is the record worth keeping most: it says the
-judgment ran, over which files, and what it found, and without it the next invocation rediscovers
-the same divergence from scratch and calls it new.
+Write the premise — the one part of the record that is the human's and no fold can compose. A
+small YAML file in the workspace, carrying `title`, `summary` (what changed and why the human
+states it is correct, as theirs — never restated as a finding of yours), `target`, and one
+`files` entry per named file with its `change` line: what the file now does differently, not what
+was typed into it. Then:
 
-- `summary` carries the human's premise — what changed and why they state it is correct — as
-  theirs. Never restate it as a finding of yours.
-- One entry per node, carrying the judgment's answer and why, with what was read quoted rather than
-  summarised.
-- **A node the judgment cleared carries the files it encodes; a node it did not carries the files it
-  was read in.** The two field names are what makes the next step safe: the binding form reads only
-  the first, so a node with a finding against it cannot be bound from this record however anyone
-  invokes it. That is why the split is in the contract and not in a sentence here asking you not to.
-- A node the trace binds to more than one named file was read by more than one judge, and its
-  entry folds their answers into one: it conforms only where every delegation that read one of
-  its files cleared it, and its `how` quotes each file's `read` entry for that node. A finding
-  one judge returned against a node its file does not carry — the misattribution case above —
-  lands on the node its own `node` field names, wherever that node's own judge stood; a finding
-  naming no node lands on every node of the file its judge read.
-- Every named file is accounted for — by a node, or under `unbound`. A file left out reads exactly
-  like a file nobody had a question about.
-- `notes` states the shape this judgment ran in — one delegation per file, and how many — so a
-  later reader knows what a clean answer here was a claim over: the union of per-file readings,
-  never one reading of the set.
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <workspace> \
+    <the premise> siegard-reconcile/<slug>.md
+```
 
-Then hold it to its contract:
+The fold writes the record, whatever the judgment returned — a reconciliation that stopped is the
+record worth keeping most, because without it the next invocation rediscovers the same divergence
+from scratch and calls it new. Every rule it applies is mechanical and lives in the fold and its
+tests, not here: which answer a node folds to when more than one judge read it, where a finding
+naming a node lands, what a finding naming none holds, which nodes are marked `collateral`, and
+how every named file is accounted for. **Never apply those rules by hand, and never edit what the
+fold wrote** — a record adjusted after the fold carries a judgment the returns behind it do not,
+and the returns are what a later reader checks it against.
+
+Where the fold refuses, read the refusal as two kinds. A refusal naming a delegation — a return
+missing, a node unanswered, a shape the contract does not hold — is a fresh delegation with the
+prompt fixed, run again from the judge step, never a follow-up question to the one that already
+answered and never a hand-edit of what it returned. A refusal about the premise is yours to fix
+here. Then hold the record to its contract:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --reconciliation <the record>
 ```
 
-Anything but a clean pass is a stop, reported verbatim and fixed here: everything it refuses is form
-this invocation owns.
+Anything but a clean pass is a stop, reported verbatim: the fold validates what it writes, so a
+record this refuses is a defect in the staging or the premise, not in any judgment.
 
 ### 5. Bind
 
@@ -292,6 +309,12 @@ The join is already structural and needs nothing from you: a node the judgment r
 cleared set however anyone runs it. Run it whether the judgment cleared everything or not, and run
 it once.
 
+The bind also recomputes every `pairs_omitted` claim at this moment, both halves — the binding
+still computes at the file's content, and the corpus holds nothing open against the pair — and a
+claim that stopped holding refuses the record whole: a file that moved between staging and
+binding broke the committed-tree premise this whole invocation rests on, and the route is a fresh
+invocation under a new slug, never a bind around the pair.
+
 What that is not is a claim that the set is reconciled. A cleared node's binding rests on the
 judgment that cleared it and on nothing else in the record; a node with a finding against it stays
 exactly as it stood.
@@ -313,10 +336,18 @@ which is the one place the partial shape of the act is stated at the moment it h
 
 ### 6. Report
 
-Say, in this order and in prose: the file set as given; what the trace held for each file, by class;
-the shape the judgment ran in — how many delegations, one per file; what the judgment answered per
-node, with its evidence; where the record was written; what was bound
-and what was not; and the next invocation where there is one.
+Say, in this order and in prose: the file set as given; what the staging held for each file, by
+state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
+unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
+answered per node, with its evidence; where the record and the returns were written; what was
+bound and what was not; and the next invocation where there is one.
+
+Where a node the judgment did not clear carries `collateral`, say so apart from the contested
+ones: nothing was found against that node's own substance — it shares a file with a finding that
+named no node, and the conservative default holds every node of that file. Its route rides the
+finding's own: route the finding, and the re-invocation that follows re-judges the file and
+re-clears the node with it. A reader who cannot tell collateral from contested reads four open
+questions where there is one.
 
 Where the judgment cleared everything, there is no next invocation. The trace now describes the tree
 as it stands, and `trace.py --check` over the target is what a reader confirms that with.

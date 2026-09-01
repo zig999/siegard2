@@ -262,7 +262,7 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
             problems.append(f"{identity}: display `{display}` reduces to "
                             f"`{reduce_display(display)}`, not to the slug `{slug}`")
         nodes[identity] = {"cls": cls, "context": context, "slug": slug, "front": front,
-                           "digest": digest_of(path)}
+                           "digest": digest_of(path), "path": path}
     return nodes, problems
 
 
@@ -890,6 +890,53 @@ def overview(nodes: dict[str, dict]) -> str:
     return "\n".join(lines)
 
 
+def full_text(nodes: dict[str, dict]) -> str:
+    """Every specification file's text, verbatim, under a header naming its identity. One grep
+    target instead of a walk: a reader hunting where a fact lives greps this once, then opens the
+    node the match names — the projection locates and never states, and a claim about a node is
+    made from the node's own file. Verbatim because anything less is a summary, and a summary is
+    exactly what a search over it would find instead of the specification."""
+    lines = ["# Full text",
+             "",
+             "Derived by spec.py from the specification files; never edited. Grep here to locate;",
+             "open the node file a match names before claiming anything about it.",
+             ""]
+    for identity in sorted(nodes):
+        lines += [f"=== {identity}",
+                  nodes[identity]["path"].read_text(encoding="utf-8").rstrip("\n"),
+                  ""]
+    return "\n".join(lines)
+
+
+def decisions_by_node(nodes: dict[str, dict]) -> str:
+    """The decision log's entries, grouped by the file each one located. The log itself is
+    append-only and ordered by when — the right shape for disclosure, the wrong one for the
+    question a conformance reading asks, which is `what was decided about this node`: answering
+    that from the log reads every entry ever written, and the read grows with the project's whole
+    history. The log stays the authority; this locates its entries and restates nothing beyond
+    what each one says."""
+    lines = ["# Decisions by node",
+             "",
+             "Derived by spec.py from decision-log.md; never edited. The log is the authority —",
+             "this groups its entries by the file each one located.",
+             ""]
+    entries = nodes.get("decision-log", {"front": {}})["front"].get("entries") or []
+    grouped: dict[str, list[dict]] = {}
+    for entry in entries:
+        if isinstance(entry, dict) and isinstance(entry.get("location"), str):
+            grouped.setdefault(entry["location"], []).append(entry)
+    for location in sorted(grouped):
+        lines.append(f"## {location}")
+        for entry in grouped[location]:
+            lines += [f"- {entry.get('field', '?')} — decided: {entry.get('decided', '?')}",
+                      f"  unstated: {entry.get('unstated', '?')}",
+                      f"  why: {entry.get('why', '?')}"]
+        lines.append("")
+    if not grouped:
+        lines.append("No decisions disclosed yet.")
+    return "\n".join(lines).rstrip("\n") + "\n"
+
+
 class Collision(Exception):
     """Two nodes computing to one projection filename. Raised rather than returned because it is
     a defect in this script's naming, not a problem with the specification it read."""
@@ -921,6 +968,8 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
             files[name] = state_diagram(node, nodes)
     files["capability-map.mmd"] = capability_map(nodes)
     files["overview.md"] = overview(nodes)
+    files["full-text.md"] = full_text(nodes)
+    files["decisions-by-node.md"] = decisions_by_node(nodes)
     return files
 
 
