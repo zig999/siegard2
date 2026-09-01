@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.29.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.30.0. `bin/project.py` reads this line and reports drift against
 the framework's own version.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -354,7 +354,9 @@ named. What comes back names everything missing and goes no further — once and
   consumes, and the reason the project's standard requires beside a suppression. What a comment
   would have said goes to its validated home: the fact in its node, the rationale in the decision
   log, the file-to-node link in the trace, the reasoning behind an implementation in its record.
-  Prose already in the tree is removed through the comment route when a judgment meets it — never
+  Prose already in the tree leaves two ways, and no other: a session that writes a source file
+  delivers it whole under this rule — the comments it finds go with the edit; and a judgment that
+  meets prose in a file nobody is editing files the finding, which the comment route lands. Never
   by a sweep.
 - **Never write source over a task whose `## Notes` still carries a `BLOCKING` entry.**
 - **Fix form, never knowledge.** A value outside a vocabulary is corrected; a fact the

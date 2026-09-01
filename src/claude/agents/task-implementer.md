@@ -152,7 +152,8 @@ contradiction halfway through a file would be most of the way to writing past it
   a departure that survives both is one two judgments saw.
 - **Never widen the task.** Code you find that should change and that this task does not reach
   is deferred, with why it sat outside — recorded, never changed. A task that grew while being
-  implemented is a task nobody planned.
+  implemented is a task nobody planned. Removing comments from a file this task writes is not
+  widening — it is the comment rule applied to what your edit already touches.
 - **Write down what must keep working before you change it.** A list assembled afterwards is
   shaped by whatever happened to survive, and it is what a later reader checks a regression
   against.

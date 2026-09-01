@@ -96,15 +96,17 @@ def report_rules_drift(home: Path) -> None:
     if not isinstance(version, str):
         return
     payload = rules_payload()
-    source = (f"the current rules are at {payload} — replace the Siegard portion, and keep "
-              f"anything the project added"
+    source = (f"the current rules are at {payload} — replace the Siegard portion, keep "
+              f"anything the project added, and restart any running session: a session keeps "
+              f"the rules it loaded, and no report reaches it after the file matches"
               if payload else
               f"the distribution carries the current rules at "
               f"{PLUGIN_ROOT / 'consumer' / 'CLAUDE.md'}, which is missing here — this install "
               f"is incomplete")
     rules = home / "CLAUDE.md"
     if not rules.is_file():
-        act = (f"place them: cp {payload} {rules}" if payload else source)
+        act = (f"place them: cp {payload} {rules} — and restart any running session, which "
+               f"loaded nothing and keeps that" if payload else source)
         print(f"rules: {rules} does not exist, so no session in this project loads the "
               f"framework's rules and nothing but this line can say so; {act}")
         return
