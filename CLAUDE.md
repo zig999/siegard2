@@ -61,6 +61,26 @@ When two sources genuinely conflict and neither wins, say so in the change: name
 incompatible statements, then proceed under the reading that constrains more. Silently merging them, or
 picking one without saying so, is the failure to avoid.
 
+## What ships is timeless
+
+Everything under `src/` states what the framework is — never what it was, what it replaced, or
+what incident produced it. No shipped artifact — a rule, a skill, an agent, a script's docstring,
+a schema's description — carries a measurement from a named consumer, an observed anecdote, an
+"until this existed", or the form a rule superseded. The reason a rule holds is stated as a
+standing fact where it calibrates the agent executing it; the evidence that produced the rule
+lives in this repository's commits, session records and proposals, which the distribution does
+not carry.
+
+Justification has one placement per artifact class. `src/consumer/CLAUDE.md` states rules
+directively — the prohibition and the operative instruction, no why. Skills, agents, scripts and
+schemas may carry the timeless why, never the history. A change grounded in a measurement cites
+it in the commit message.
+
+Operational time is not history. A consumer project's own lifecycle — an earlier bind, a node the
+specification no longer holds, a plan evolving toward closure — is what these artifacts exist to
+describe, and stays. And this boundary binds `src/` alone: this file, the repository's own
+schemas and its tests are the maintainer's memory, and may say what happened.
+
 ## Change size
 
 A change is **minor** when it alters no specification, no schema, no contract version, and no generated
@@ -76,6 +96,8 @@ When unclear, treat the change as ordinary and say so.
 - Decide mechanically decidable checks in hooks or scripts. Use agents for work that genuinely requires
   model judgment.
 - Record the inputs, outputs, evidence, and contract version needed to reproduce a decision.
+- A proposal declined is recorded with its reason and the criterion that would reverse it; a
+  decline nobody can reopen is a decision nobody can reproduce.
 
 ## Execution authority
 
