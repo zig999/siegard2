@@ -2057,6 +2057,11 @@ def main() -> int:
         return 0
 
     home = home_of(target)
+    # The report names the file it read, the way the absent case already does. A drift report is
+    # a claim about a tree, and the trace is its source; naming it also makes the one redundant
+    # invocation visible — a trace is one file per git toplevel, so a second target under the
+    # same toplevel re-reads this exact file and prints this exact report.
+    print(f"trace: {path} — one file per git toplevel; every target under it reads this same one")
     findings, refusals = drift_of(declared, home)
     if refusals:
         for refusal in refusals:

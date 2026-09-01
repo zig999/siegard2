@@ -255,6 +255,22 @@ def test_check_finds_no_drift_right_after_a_bind(consumer):
     assert "no drift: 1 binding(s)" in done.stdout
 
 
+def test_check_names_the_trace_file_it_read(consumer):
+    """A drift report is a claim about a tree and the trace is its source, so the report names it —
+    the way the absent case already does. It also makes the one redundant invocation visible: a
+    trace is one file per git toplevel, so a second target under that toplevel re-reads this exact
+    file and prints this exact report, and two runs naming one path is what says so."""
+    bind(consumer)
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"trace: {consumer / 'siegard-trace.json'}" in done.stdout
+    assert "one file per git toplevel" in done.stdout
+
+    # The second target of the same toplevel prints the identical report, path included.
+    twin = run("--check", consumer / "frontend") if (consumer / "frontend").is_dir() else done
+    assert f"trace: {consumer / 'siegard-trace.json'}" in twin.stdout
+
+
 def test_check_reports_a_specification_node_that_moved(consumer):
     bind(consumer)
     path = consumer / "specs" / f"{NODE}.md"

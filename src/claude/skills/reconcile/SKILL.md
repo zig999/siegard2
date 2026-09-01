@@ -223,11 +223,37 @@ finding's own shape lives; and the path to
 `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
 to by the fold below.
 
+**Two rules about the paths in those prompts, and both are about what a prompt costs.**
+
+- **The candidate index goes as its path and never as its contents.** One index serves the whole
+  batch — every node the staging assigned, with the files each is bound to — and a judge opens it
+  on demand, in its own context, where the reading is paid once by whoever needs it. Writing that
+  list into a prompt instead pays for it again per delegation, in this context, where nothing
+  reuses it: a batch's index is the same text every time, so N prompts carrying it inline is that
+  text written N times to say what one path already says. The same holds for the node pack: its
+  path, never its text.
+- **Every path a delegation receives is absolute and already resolved.** Never a path relative to
+  a root the delegation is told to prepend, and never a root plus an instruction to compose the
+  rest — a target source root whose own internal layout is not obvious (a nested `src/`, a
+  monorepo alias, a generated directory) turns that composition into the delegation's guess, and a
+  guess that misses returns a refusal instead of a judgment. The refusal costs the whole
+  delegation and buys nothing: it is the one failure that a resolved path makes impossible.
+
 **Save each return verbatim the moment it arrives**, at
 `siegard-reconcile/<slug>.returns/<the file's path with every '/' as '__'>.yaml` — a copy and
 nothing else. Never reshape one, never trim one, never repair one: the returns are the evidence
 the record is folded from and they outlive this session, and a return adjusted by the hand that
 saved it carries a judgment the delegation never made.
+
+**Verbatim is literal, and the fold enforces it against four keys.** `conformance-return.json`
+admits `findings`, `read`, `looked_past` and `candidates_opened`, and nothing else at any depth.
+A fifth key — a `notes` holding a delegation's closing paragraph, a summary line written for a
+human, anything the four do not have a home for — refuses that return at `--fold`, and the fold
+refuses whole: every saved return is re-read and re-written before it runs at all, which is the
+whole batch's transcription paid twice for one field nobody needed. What a delegation says outside
+those keys belongs in your report to the human, never in the file the fold reads. Where a return
+arrives shaped for a reader rather than for the contract, the fix is still a copy: save what came
+back, and say the rest in the report.
 
 One judge per file rather than one over the set, because a judgment over the set saturates: a
 single context holding every node and every file at once answers hundreds of node-file pairs in

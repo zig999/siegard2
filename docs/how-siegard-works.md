@@ -761,6 +761,7 @@ No drift:
 
 ```
 $ python3 bin/trace.py --check ./target
+trace: /home/dev/checkout-service/siegard-trace.json — one file per git toplevel; every target under it reads this same one
 no drift: 1 binding(s) match the specification and the code as both stand now
 ```
 
@@ -768,6 +769,7 @@ no drift: 1 binding(s) match the specification and the code as both stand now
 
 ```
 $ python3 bin/trace.py --check ./target
+trace: /home/dev/checkout-service/siegard-trace.json — one file per git toplevel; every target under it reads this same one
 domain/sales/order: bound at sha256:944984f5b60539ff5ce46d11d812072a7a4c27c1ca8cf8a0f9bb32f1541e1fdb,
 now sha256:2a36464f38b8b95fe9a5062fd288ee5aa63fbdca44c8e6a2e4b3eefc44215b69; the specification
 moved since this bind
@@ -783,6 +785,7 @@ moved since this bind
 
 ```
 $ python3 bin/trace.py --check ./target
+trace: /home/dev/checkout-service/siegard-trace.json — one file per git toplevel; every target under it reads this same one
 target/src/orders/place.ts: the file changed without a rebind — 1 binding(s): domain/sales/order
 
 1 drift finding(s) over 1 binding(s):
@@ -801,6 +804,7 @@ A target declared `edits_freely` — the same drift, counted instead of listed:
 
 ```
 $ python3 bin/trace.py --check ./target
+trace: /home/dev/checkout-service/siegard-trace.json — one file per git toplevel; every target under it reads this same one
 0 drift finding(s) over 1 binding(s) ... (nothing to act on)
   suppressed 1 `code` finding(s) over 1 file(s) under frontend — declared freely edited in
   siegard.json. `--all` lists them, and that list is what /check-source reads to hold those files
@@ -811,6 +815,7 @@ $ python3 bin/trace.py --check ./target
 
 ```
 $ python3 bin/trace.py --check ./target
+trace: /home/dev/checkout-service/siegard-trace.json — one file per git toplevel; every target under it reads this same one
 domain/sales/order: no longer in the specification; the binding is stale
 
 1 drift finding(s) over 1 binding(s):
