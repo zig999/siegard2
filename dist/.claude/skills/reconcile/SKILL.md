@@ -1,6 +1,6 @@
 ---
 name: reconcile
-description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads the trace for which specification nodes a named file set is bound to, holds that source to those nodes through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when a human edited source by hand, resolved a file during a merge, or a delivery modified a file that other nodes' bindings still claim (a bind restamps only the delivering task's own nodes), and the trace should describe the tree as it now stands. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
+description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads the trace for which specification nodes a named file set is bound to, holds that source to those nodes through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when a human edited source by hand, resolved a file during a merge, or a delivery modified a file that other nodes' bindings still claim (a bind restamps only the delivering task's own nodes), and the trace should describe the tree as it now stands — or, invoked as an audit over a set the human names, to re-examine standing bindings that never drifted and say which files still carry the facts they claim. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
 effort: medium
 ---
 
@@ -125,7 +125,7 @@ second home for it):
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
-    <slug> <workspace> <each named path>
+    <slug> <workspace> <each named path> [--audit]
 ```
 
 This is the locate step, run by the one reader that cannot miss a binding. It computes every node
@@ -151,6 +151,20 @@ The one subtraction is `--stage`'s own, mechanical and rechecked at bind time: a
 binding computes at the file's content as it stands, with no open finding against it in the
 corpus, was judged over these exact bytes already, and re-judging it buys a second reading of
 text that did not move.
+
+**Where the human's ask is an audit, pass `--audit` and omit nothing.** An audit is this same
+invocation over a set whose bindings did not drift: a binding over-broad from the day it was
+written never drifts, so nothing keyed by change ever re-examines it, and the human's ask to
+re-examine standing claims is the one trigger there is. The staging then hands every pair to a
+judge, the premise's `summary` says the source did not change and the claims are what is being
+re-read, and everything downstream runs unmodified — a claim confirmed is restamped with the
+record justifying it, a fact held nowhere blocks its node and the report hands the
+`--bind ... --replace` release ready to paste, and a finding nobody acts on stays in the corpus
+where `--owed` repeats it. `trace.py --encodes --rank <target-source-root>` is where an audit's
+candidate set comes from — the two accretion counts, as facts; the file set is still the human's
+to name. An audit is never chosen by this skill: invoked without the word, a reconciliation
+omits what the guard allows, and that is the default for a reason — re-judging unchanged pairs
+is bought deliberately or not at all.
 
 Four states the staging separates, and they do not all continue:
 

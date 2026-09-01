@@ -27,8 +27,13 @@ Ten things this script does, and nobody else does any of them:
                                                                   prepare a reconciliation's
                                                                   workspace: node sets, packs,
                                                                   candidates, omittable pairs
+    trace.py --stage ... --audit                                  the same, omitting no pair:
+                                                                  every standing claim is judged
     trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
                                                                   into the reconciliation record
+    trace.py --encodes --rank <target-root> [--all]               the accretion axes: files by
+                                                                  bindings held, nodes by files
+                                                                  bound
 
 Drift is reported in three classes, because a caller can act on each differently and could act on
 none of them while all three arrived as one list. A node the specification no longer holds is
@@ -158,6 +163,17 @@ authority. `--stage` also reserves the reconciliation's own ground: it refuses a
 or returns directory already exists, and creates `siegard-reconcile/<slug>.returns/` empty — the
 returns saved there are the evidence the record is folded from, and they outlive the workspace.
 
+`--audit` inverts that one omission, deliberately. Every report keyed by change has a blind spot:
+a binding over-broad from the day it was written never drifts, so nothing that watches for drift
+ever re-examines it, and the claim stands for as long as the file does. An audit is the
+re-judgment of exactly those pairs — the human names a file set whose bindings did not move, and
+the staging hands every standing claim to a judge, omitting nothing. Everything downstream is the
+ordinary pipeline: a claim the judge confirms is restamped with a record justifying it, a fact
+held nowhere blocks its node and hands the `--bind --replace` release ready to run, and a finding
+nobody acts on stays in the corpus where `--owed` repeats it. `--rank` is where an audit's file
+set comes from: the two accretion counts, files by bindings held and nodes by files bound, stated
+as facts — which of them is worth a judge is a person's reading.
+
 `--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every delegation that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
@@ -190,8 +206,9 @@ Usage:  trace.py <target-root>
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all]
         trace.py --encodes <target-root> <file> [<file> ...]
-        trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
+        trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...] [--audit]
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
+        trace.py --encodes --rank <target-root> [--all]
         trace.py --help
                 print this text and stop
 Exit:   0 sound / drift-free / bound / pruned / the record holds / nothing is owed / staged /
@@ -1140,6 +1157,63 @@ def encodes(target: Path, files: list[str]) -> int:
     return 0
 
 
+RANK_HELD_BACK = 15
+
+
+def rank(target: Path, show_all: bool = False) -> int:
+    """The trace's two accretion axes, as counts: files by how many bindings claim them, and
+    nodes by how many of this target's files they are bound to. Facts and never verdicts — a
+    count high on either axis is where an audit pays for itself, and which counts those are is a
+    person's reading, not this script's.
+
+    This is the question drift cannot ask. Every other report here is keyed by change: a binding
+    over-broad from the day it was written never drifts, so nothing keyed by change ever
+    re-examines it, and the only symptom it has is a count that keeps growing. Filtered to the
+    named target the way `--owed` filters, because that is the scope an audit's file set is
+    named in. The listing holds back the tail the way `--check` holds back a suppressed class:
+    the top of a ranking is what a reader acts on, and `--all` lists every row."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    declared = load(target)
+    if declared is None:
+        print(f"no trace file: {trace_path(target)} does not exist; nothing has been bound in "
+              f"this target, so there is nothing to rank")
+        return 0
+    problems = problems_of(declared)
+    if problems:
+        for problem in problems:
+            print(f"{trace_path(target)}: {problem}")
+        return 1
+
+    home = home_of(target)
+    offset = Path(os.path.relpath(target.resolve(), home.resolve())).as_posix()
+    per_file: dict[str, int] = {}
+    per_node: dict[str, int] = {}
+    for entry in declared.get("bindings") or []:
+        held = [f["path"] for f in entry.get("files") or []
+                if isinstance(f, dict) and isinstance(f.get("path"), str)
+                and under(f["path"], [offset])]
+        if held:
+            per_node[entry["node"]] = len(held)
+        for path in held:
+            per_file[path] = per_file.get(path, 0) + 1
+
+    pairs = sum(per_file.values())
+    print(f"{pairs} binding pair(s) over {len(per_file)} file(s) and {len(per_node)} node(s) "
+          f"under {offset}")
+    for title, counted in (("files by bindings held", per_file),
+                           ("nodes by files bound", per_node)):
+        rows = sorted(counted.items(), key=lambda row: (-row[1], row[0]))
+        shown = rows if show_all else rows[:RANK_HELD_BACK]
+        print(f"\n{title}:")
+        for name, count in shown:
+            print(f"  {count:3d}  {name}")
+        if len(rows) > len(shown):
+            print(f"  ({len(rows) - len(shown)} more; --all lists every one)")
+    return 0
+
+
 def return_name(given: str) -> str:
     """The filename one delegation's return is saved under, computed from the path it judged.
     Flat on purpose: the returns directory is read as a set keyed by file, and a nested copy of
@@ -1156,7 +1230,7 @@ def open_owed(home: Path) -> set[tuple[str, str]]:
 
 
 def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
-          files: list[str]) -> int:
+          files: list[str], audit: bool = False) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -1237,7 +1311,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             if node_id not in nodes:
                 orphaned.append({"node": node_id, "file": given})
                 continue
-            if pinned == current[stored] and (node_id, stored) not in owed_pairs:
+            # An audit is the deliberate re-judgment of exactly the pairs this omission
+            # skips: a binding that never drifts is a claim nothing else ever re-examines.
+            if not audit and pinned == current[stored] \
+                    and (node_id, stored) not in owed_pairs:
                 omitted.append({"node": node_id, "file": given,
                                 "reason": "the binding computes at the file's content as it "
                                           "stands, and no record holds an open finding against "
@@ -1281,6 +1358,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     manifest = {"slug": slug,
+                "audit": audit,
                 "specification_root": str(spec_root),
                 "files": manifest_files,
                 "all_current": sorted(all_current),
@@ -1293,10 +1371,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     returns_dir.mkdir(parents=True)
 
     to_judge = sum(len(a) for a in judged_files.values())
+    shape = ("staged as an audit — no pair omitted, every standing claim goes to a judge"
+             if audit else
+             f"{len(omitted)} pair(s) omittable — the binding is current and nothing is owed "
+             f"on them")
     print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
-          f"{len(omitted)} pair(s) omittable — the binding is current and nothing is owed on "
-          f"them; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} file(s) "
-          f"the trace binds nothing to")
+          f"{shape}; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} "
+          f"file(s) the trace binds nothing to")
     print(f"  manifest and packs at {workspace}; candidate index at "
           f"{workspace / 'candidates.txt'}")
     print(f"  save each delegation's return verbatim at "
@@ -1505,6 +1586,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
 
     notes = [f"Judged by {len(returns)} delegation(s), one per file; folded mechanically by "
              f"trace.py --fold from the returns under {RECONCILE_DIR}/{manifest['slug']}.returns/."]
+    if manifest.get("audit"):
+        notes.append("Staged as an audit: the source did not drift — every pair the trace held "
+                     "for these files was re-judged deliberately, standing claims included.")
     if isinstance(premise.get("notes"), str) and premise["notes"].strip():
         notes.insert(0, premise["notes"].strip())
     for given, finding in out_of_scope:
@@ -1847,9 +1931,12 @@ def main() -> int:
     do_stage = "--stage" in args
     do_fold = "--fold" in args
     replace = "--replace" in args
+    do_rank = "--rank" in args
+    do_audit = "--audit" in args
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
-                         "--reconciliation", "--owed", "--encodes", "--stage", "--fold")]
+                         "--reconciliation", "--owed", "--encodes", "--stage", "--fold",
+                         "--rank", "--audit")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -1864,9 +1951,15 @@ def main() -> int:
     if replace and not (do_bind or do_record):
         print("cannot run: --replace only applies to --bind and --bind-record", file=sys.stderr)
         return CANNOT_RUN
-    if show_all and not (check or do_owed):
-        print("cannot run: --all only applies to --check and --owed; in both it is what lists "
-              "the findings the report holds back", file=sys.stderr)
+    if show_all and not (check or do_owed or do_rank):
+        print("cannot run: --all only applies to --check, --owed and --rank; in each it is what "
+              "lists the rows the report holds back", file=sys.stderr)
+        return CANNOT_RUN
+    if do_rank and not do_encodes:
+        print("cannot run: --rank is a mode of --encodes", file=sys.stderr)
+        return CANNOT_RUN
+    if do_audit and not do_stage:
+        print("cannot run: --audit is a mode of --stage", file=sys.stderr)
         return CANNOT_RUN
 
     if do_reconciliation:
@@ -1900,6 +1993,12 @@ def main() -> int:
         return owed(Path(args[0]), show_all)
 
     if do_encodes:
+        if do_rank:
+            if len(args) != 1 or args[0].startswith("--"):
+                print("cannot run: expected --encodes --rank <target-root> [--all]",
+                      file=sys.stderr)
+                return CANNOT_RUN
+            return rank(Path(args[0]), show_all)
         if len(args) < 2 or any(a.startswith("--") for a in args):
             print("cannot run: expected --encodes <target-root> <file> [<file> ...], every file "
                   "spelled from the target source root", file=sys.stderr)
@@ -1909,11 +2008,11 @@ def main() -> int:
     if do_stage:
         if len(args) < 5 or any(a.startswith("--") for a in args):
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
-                  "<workspace-dir> <file> [<file> ...], every file spelled from the target "
-                  "source root", file=sys.stderr)
+                  "<workspace-dir> <file> [<file> ...] [--audit], every file spelled from the "
+                  "target source root", file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
-        return stage(Path(target), Path(spec_root), slug, Path(workspace), files)
+        return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit)
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):

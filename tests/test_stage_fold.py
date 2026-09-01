@@ -184,6 +184,84 @@ def test_a_current_pair_with_an_open_owed_finding_is_never_omitted(consumer, tmp
     assert manifest["files"][SECOND]["nodes"] == [NODE]
 
 
+def test_an_audit_stages_every_standing_claim_and_omits_nothing(consumer):
+    workspace = consumer / "ws-audit"
+    done = run("--stage", consumer / "backend", consumer / "specs", "audit", workspace,
+               FILE, SECOND, "--audit")
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["audit"] is True
+    assert manifest["omitted"] == [], \
+        "an audit is the deliberate re-judgment of exactly the pairs the omission guard skips"
+    assert manifest["files"][SECOND]["nodes"] == [NODE], \
+        "the current, unowed pair is the one an audit exists to hand a judge"
+    assert "staged as an audit" in done.stdout
+
+
+def test_an_audits_record_says_it_was_one(consumer):
+    workspace = consumer / "ws-audit"
+    run("--stage", consumer / "backend", consumer / "specs", "audit", workspace,
+        FILE, SECOND, "--audit")
+    save_return(consumer, "audit", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "audit", SECOND, clean_return([NODE]))
+    record = consumer / "siegard-reconcile" / "audit.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert "Staged as an audit" in front["notes"], \
+        "a later reader must know a clean answer here re-read standing claims on purpose"
+    assert "pairs_omitted" not in front
+
+
+def test_audit_is_a_mode_of_stage_alone(consumer):
+    done = run("--check", consumer / "backend", "--audit")
+    assert done.returncode == 2
+    assert "--audit is a mode of --stage" in done.stderr
+
+
+# ---------------------------------------------------------------- --rank
+
+
+def test_rank_states_both_accretion_axes_as_counts(consumer):
+    done = run("--encodes", "--rank", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "files by bindings held" in done.stdout
+    assert "nodes by files bound" in done.stdout
+    assert f"2  backend/{FILE}" in done.stdout, "place.ts holds two bindings"
+    assert f"2  {NODE}" in done.stdout, "the case node is bound to both files"
+    assert "3 binding pair(s) over 2 file(s) and 2 node(s)" in done.stdout
+
+
+def test_rank_holds_the_tail_back_and_all_lists_every_row(consumer):
+    spec_root, target = consumer / "specs", consumer / "backend"
+    for n in range(20):
+        path = f"src/orders/extra{n:02d}.ts"
+        (target / path).write_text(f"export const x{n} = {n};\n", encoding="utf-8")
+        assert run("--bind", target, spec_root, OTHER, path).returncode == 0
+    held = run("--encodes", "--rank", target)
+    assert "more; --all lists every one" in held.stdout
+    everything = run("--encodes", "--rank", target, "--all")
+    assert "more; --all lists every one" not in everything.stdout
+    assert "extra19.ts" in everything.stdout
+
+
+def test_rank_is_a_mode_of_encodes_alone(consumer):
+    done = run("--check", consumer / "backend", "--rank")
+    assert done.returncode == 2
+    assert "--rank is a mode of --encodes" in done.stderr
+
+
+def test_rank_counts_only_the_named_targets_files(consumer, tmp_path):
+    sibling = consumer / "elsewhere"
+    (sibling / "src").mkdir(parents=True)
+    (sibling / "src/other.ts").write_text("export {}\n", encoding="utf-8")
+    assert run("--bind", consumer / "backend", consumer / "specs", OTHER,
+               "../elsewhere/src/other.ts").returncode != 0, \
+        "a path outside the target cannot be bound, so the fixture stays two-file"
+    done = run("--encodes", "--rank", consumer / "backend")
+    assert "elsewhere" not in done.stdout
+
+
 # ---------------------------------------------------------------- --fold
 
 

@@ -70,6 +70,12 @@ this invocation — it is the status, reported verbatim.
    different things, and where `--owed` lists anything under `unseen` or `covered`, name the
    records it points at — those are the findings no other command in this framework will mention
    again.
+   Last for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes --rank
+   <target-source-root>` — the trace's two accretion counts: files by bindings held, nodes by
+   files bound. Quote the top rows verbatim, as facts and never as a grade: a binding over-broad
+   from the day it was written never drifts, so no drift report re-examines it, and these counts
+   are its one symptom. Which count deserves re-examining is the reader's call; the route, when
+   they make it, is `/reconcile` invoked as an audit over a file set they name.
 4. **The repository.** `git log --oneline -15` over the project root, and `git status
    --porcelain` — what landed recently, and what stands uncommitted. An uncommitted change is
    not judged here: say whose diff it appears to be (paths under which root) and leave the
@@ -110,7 +116,8 @@ In this order, every line naming its source:
   disclosed decisions — location, what was decided, why;
 - the trace: findings by class with each class's route, and the ready `/reconcile` invocation
   where `code` drift stands; then, kept apart from those counts, what `--owed` holds — the
-  findings past reconciliations left open, and which of them no drift report can reach;
+  findings past reconciliations left open, and which of them no drift report can reach — and the
+  `--rank` accretion counts, top rows verbatim, with the audit route named and never chosen;
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;
 - the close: the single next invocation most ready to run, and nothing more.

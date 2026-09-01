@@ -901,7 +901,9 @@ the trace binds nothing to.
   `siegard-reconcile/<slug>.returns/`, created empty, where each delegation's answer is saved
   verbatim.
 - **When to use it:** the locate step of every `/reconcile`, in place of reading
-  `siegard-trace.json` by hand.
+  `siegard-trace.json` by hand. With `--audit`, it omits nothing — every standing claim of the
+  named files goes to a judge, which is the one route that re-examines a binding whose content
+  never drifted.
 - **Read or write:** writes the workspace (a temporary directory nothing commits) and the empty
   returns directory; never `siegard-trace.json`.
 
@@ -916,6 +918,15 @@ the trace binds nothing to.
 - **When to use it:** after every `/reconcile` judgment pass, in place of composing the record by
   hand.
 - **Read or write:** writes `siegard-reconcile/<slug>.md`; never `siegard-trace.json`.
+
+#### `trace.py --encodes --rank <target-root> [--all]`
+
+- **Function:** the trace's two accretion counts, as facts: files by how many bindings claim
+  them, and nodes by how many of the target's files they are bound to. A binding over-broad from
+  the day it was written never drifts, so no drift report re-examines it — these counts are its
+  one symptom. The listing shows the top rows; `--all` lists every one.
+- **When to use it:** to choose an audit's candidate file set, and in every `/siegard-status`.
+- **Read or write:** read-only.
 
 ### 7. `terms.py`
 
