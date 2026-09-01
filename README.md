@@ -5,9 +5,10 @@ This repository authors the Siegard framework under `src/claude/` and assembles 
 marketplace: `.claude-plugin/marketplace.json` at this root is what a consumer adds once to
 install the framework and receive its versions.
 
-What the framework does, and how each script and skill works, is in
-[`docs/how-siegard-works.md`](docs/how-siegard-works.md). This page is the operational part
-only: how a consumer project installs Siegard as a plugin and stays current.
+What the framework does, and how each script and skill works, is stated where it is enforced:
+each script's own module docstring, printed by `--help`, and each skill's own `SKILL.md` under
+`src/claude/skills/`. This page is the operational part only: how a consumer project installs
+Siegard as a plugin and stays current.
 
 ## Installing Siegard in a consumer project
 
