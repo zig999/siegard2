@@ -24,8 +24,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/1",
-      "description": "Which contract this report was written against. A reader comparing two reports compares two written against one contract, or says which fields moved between them."
+      "const": "siegard-telemetry/2",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. A /1 report is still the count it was when it was written, read by tolerant readers, and never rewritten to match."
     },
     "project_root": {
       "type": "string",

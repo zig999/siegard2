@@ -82,7 +82,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/1"
+CONTRACT = "siegard-telemetry/2"
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TELEMETRY_CONTRACT = PLUGIN_ROOT / "schemas" / "telemetry.json"
 PROJECT_PY = PLUGIN_ROOT / "bin" / "project.py"
