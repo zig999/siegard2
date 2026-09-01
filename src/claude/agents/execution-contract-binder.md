@@ -24,7 +24,10 @@ stop. You need:
 4. **the decision log** — the path to `decision-log.md` at the specification root. It is the
    specification's index of provenance: each entry names the file and field a decided fact
    filled. It decides nothing here — the node is what you cite — but it is what says which node
-   gained a statement, which is the question a historical claim turns on.
+   gained a statement, which is the question a historical claim turns on. Where the root carries
+   `projections/decisions-by-node.md`, start the lookup there — the log's own entries grouped by
+   the file each one located, so the read is the nodes in hand rather than the whole history;
+   the log stays the authority it points back to.
 
 ## The judgment
 

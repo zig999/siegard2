@@ -22,7 +22,10 @@ stop. You need:
    rule, not yours; where deciding well needs a file outside it, say so instead of deciding.
    Read the log before deciding: a fact this specification already decided once is decided the
    same way again, and an entry that contradicts an earlier one discloses two answers to one
-   question.
+   question. Where the specification root carries `projections/decisions-by-node.md`, search
+   there first — the log's own entries grouped by the file each one located, greppable by the
+   fact's terms without reading the whole history; the log stays the authority it points back
+   to.
 3. **the intake scope paths** — the material the plan was cut from, under the work root's
    `intake/`. It is the one place the fact may already be stated.
 4. **the specification schema paths** — one per class. Read the schema of any class you would

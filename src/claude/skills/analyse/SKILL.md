@@ -109,8 +109,12 @@ Decide the contexts, the elements inside each, the rules that govern them, the s
 ground them, the contracts that cross their boundaries, and the architecture constraints that
 limit the solution. Two rules bind the analysis:
 
-- **A fact the material does not state is decided by the analysis, now, and disclosed.** Record
-  the decided value like any other fact — no placeholder, no `unknown`, no gap marker — and
+- **A fact the material does not state is decided by the analysis, now, and disclosed.** Before
+  deciding, look up whether this specification already decided it — a fact decided once is
+  decided the same way again, and `projections/decisions-by-node.md`, where it exists, is the
+  log's entries grouped by located file, greppable by the fact's terms without reading the whole
+  history. Record the decided value like any other fact — no placeholder, no `unknown`, no gap
+  marker — and
   append an entry to `decision-log.md`: the file and field it filled, what the material left
   unstated, the value decided, and why (SPEC-001 R4, R9). An undecided required field is not an
   honest gap — it is a floor violation, and closing it is this step's job, disclosed rather than
