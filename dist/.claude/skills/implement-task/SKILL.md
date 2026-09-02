@@ -173,6 +173,21 @@ attempt read the tree rather than inherit the old context. Nothing here is lost 
 record this step writes is judged against the tree at the end, never against how many attempts it
 took to get there.
 
+**A delegation that returned is the opposite case, and a red run is where it comes up.** It holds
+the task, the contract slice, the standard and every file it read, all of it consistent with the
+tree it just wrote — the state a stalled context is doubted for holding is exactly the state this
+one has. So what the run printed goes back to that delegation where the session can reach one
+that has returned, rather than to a fresh spawn of the same agent: a fresh spawn is handed the
+same block again and reads its way back to where the first one already stood. **What it returns
+is the whole mapping, revised — never the part that changed.** Both records are rewritten whole,
+so a delta would leave a record assembled out of two answers, which is what an amended record is
+refused for.
+
+Where the session cannot reach a delegation that has returned, spawn again, and hand the same
+filled block as the first time plus what the run printed and what remains. Either way the runs
+keep their own names on disk and the record is judged against the tree at the end, so which of
+the two happened changes nothing about the delivery — only what it cost.
+
 The three steps that execute — set up, build, suite — run only where the standard names commands.
 Where none was named, or the registry declares none, they do not run, the report says so, and what
 this invocation hands over is source alone — a narrower answer, and never presented as a
@@ -427,9 +442,9 @@ that declares `produces` and wrote nothing any rule's scope reaches. A task that
 and also wrote source owes every step, and the refusal says so.
 
 **A red build is not the end of the invocation and it is not a stop.** Send what the run printed
-back to the `task-implementer` — the source is its to write, and a skill that patched a file to
-turn a build green would be the writer nobody separated from the witness — and run again under
-`<epic>-<slug>-build-2`, then `-3`. Every attempt keeps its directory and its log, because the
+back to the `task-implementer`, re-entered as *The order* says — the source is its to write, and
+a skill that patched a file to turn a build green would be the writer nobody separated from the
+witness — and run again under `<epic>-<slug>-build-2`, then `-3`. Every attempt keeps its directory and its log, because the
 runner refuses a name that already exists. That refusal is the whole reason this invocation is
 allowed to iterate at all: what failed on the way is readable afterwards by somebody who was not
 here.
@@ -555,15 +570,16 @@ the file the run named without being told what this delivery wrote. This invocat
 the tests step 5 just wrote are in the proof it is about to compose, and everything else is
 somebody else's. A file in that set takes the first `test` exit; any other file takes the second.
 
-`code` — the source is wrong: the fix goes back to the `task-implementer` with the findings, and
-the suite runs again under `<epic>-<slug>-suite-2`, with the first run keeping its name. `build`
-— nothing ran, because a compile the suite step performed itself failed, and every failure the
-output lists after it describes a binary nobody built. No registry owes a step that compiles
+`code` — the source is wrong: the fix goes back to the `task-implementer` with the findings, that
+delegation re-entered rather than respawned, and the suite runs again under
+`<epic>-<slug>-suite-2`, with the first run keeping its name. `build` — nothing ran, because a
+compile the suite step performed itself failed, and every failure the output lists after it
+describes a binary nobody built. No registry owes a step that compiles
 before the suite, so this is the same red as a typecheck step's, arriving one step later instead
-of never: it goes back to the producer whose file the compiler named, the `task-implementer` for
-source and the `test-author` for a test, and the suite runs again under the next name. Nothing
-here waits on a person. `test`, on a test this
-delivery wrote — the two producers disagree and that disagreement is what the red is: the proof asserts
+of never: it goes back to the producer whose file the compiler named — the `task-implementer` for
+source and the `test-author` for a test, that delegation re-entered too — and the suite runs
+again under the next name. Nothing here waits on a person. `test`, on a test this delivery
+wrote — the two producers disagree and that disagreement is what the red is: the proof asserts
 what the criterion requires and the implementation does not satisfy it, and only a person
 settles that. The report quotes the diagnosis's evidence and correction in full, whole findings
 and not a summary of them — a diagnosis obvious enough to look mechanical is still a person's

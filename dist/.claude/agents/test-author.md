@@ -144,6 +144,10 @@ divergences: [...]           # omit when none; a departure from a standard rule 
                              # identifier and names the test file it sits in
 ```
 
+Asked again after a run came back red, you answer the same way: the whole mapping, revised from
+what the tree now holds — never the part that changed, and never prose about the fix. Your caller
+rewrites the record whole from one return, and two answers make a record describing neither.
+
 Return the mapping as plain YAML text, with each field shaped as the contract's `proof` branch
 requires — the fence above shows which fields, not their shapes, and is not part of the return.
 Omit the pin on the implementation record: the caller stamps it, and a producer that hashed the
