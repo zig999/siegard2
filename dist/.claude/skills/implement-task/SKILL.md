@@ -134,6 +134,15 @@ names Zod for cannot be followed by a session that never saw Zod's types.
 directory under the delivery root's `run/`. A command run any other way did not happen: what it
 printed exists in a conversation, which is not state, and the record would rest on it.
 
+`--excerpt 40` on each of those runs is what a red one hands you: the last forty lines of the
+step that failed, printed before the record and bounded by the runner rather than by you. Take
+that and go — never a command of your own over the log. A whole failing log is unbounded, and
+cutting one down by a pattern that looks like a failure is this framework guessing at a
+reporter's format, which it refuses everywhere else and which the runner's own `--help` declines
+by name. The excerpt is what goes back to a producer and what the report quotes. It is never a
+diagnosis's input: the `failure-diagnostician` is handed the run's directory and reads the whole
+of what it holds, which is why the record names the log rather than carrying it.
+
 That capture is why this invocation may run at all: a session that could run the suite it just
 wrote would otherwise iterate quietly until the suite went green, and what failed on the way would
 exist nowhere. `run.py` refuses to write a run under a name that already
@@ -353,7 +362,7 @@ them — which is the whole difference between following a rule that names a lib
 what a rule that names a library sounds like:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> <the setup phase the situate step's registry check printed>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-setup --cwd <target-source-root> --excerpt 40 <the setup phase the situate step's registry check printed>
 ```
 
 Three cases skip it, and each is said in the report rather than worked around. The task
@@ -413,7 +422,7 @@ them, with the install first so that whatever the implementer added to the manif
 anything reads it:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> <the build phase the situate step's registry check printed>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-build --cwd <target-source-root> --excerpt 40 <the build phase the situate step's registry check printed>
 ```
 
 The timeout and the step list are the registry check's `build:` line, verbatim — composed by the
@@ -526,7 +535,7 @@ from the task file all the same, which is what holds them.
 Every step the registry declares, in order, ending with the one whose role is `suite`:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> <the suite phase the situate step's registry check printed>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-suite --cwd <target-source-root> --excerpt 40 <the suite phase the situate step's registry check printed>
 ```
 
 The timeout and the step list are the registry check's `suite:` line, verbatim, for the same

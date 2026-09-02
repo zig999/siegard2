@@ -53,10 +53,23 @@ the wall is the one fact that cannot be reconstructed once the run is over, so t
 where it lives. A step never attempted carries null for both: nothing happened, and a clock
 reading would claim something did.
 
+**`--excerpt N` prints the tail of the step that failed, and to stdout alone.** What lands on
+disk is unchanged by it: a run holds what the commands printed, verbatim, and the record's shape
+is the contract above. The excerpt is for whoever has to send a failure back to whoever must fix
+it. Without one a caller reaches for the log itself and has two ways to go wrong: read all of it,
+since a failing step's output is unbounded, or invent a pattern that cuts it down, which is a
+guess about a reporter's format that this script refuses to make anywhere else. The excerpt
+guesses nothing. It is the end of what the command printed, bounded twice — to N lines, and to
+500 characters of each of them, because a line count alone bounds nothing when one line can
+hold a minified trace. It prints before the record, so a caller piping this output through `tail`
+keeps the record and loses only the convenience. And it is never a diagnosis's input: whoever
+says why a run failed reads the whole log from the run directory, which is why the record names
+it.
+
 Declared dependencies: none beyond the standard library.
 
 Usage:  run.py <delivery-root> --run <slug> --cwd DIR --timeout-seconds N
-               --step NAME="COMMAND" [--step NAME="COMMAND" ...]
+               --step NAME="COMMAND" [--step NAME="COMMAND" ...] [--excerpt N]
         run.py --help    print this text and stop
 Exit:   0 every step passed
         1 a step failed, timed out, or could not be found
@@ -79,6 +92,7 @@ CANNOT_RUN = 2
 CONTRACT = "siegard-run/2"
 RUN_DIR = "run"
 COMBINED_LOG = "run.log"
+EXCERPT_LINE = 500
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
@@ -147,6 +161,23 @@ def run_step(argv: list[str], cwd: Path, timeout: int, log: Path) -> tuple[str, 
     return ("passed" if completed.returncode == 0 else "failed"), completed.returncode
 
 
+def excerpt(log: Path, lines: int) -> str:
+    """The end of what one step printed, bounded to `lines` lines and to EXCERPT_LINE characters
+    of each. A line cut says how many characters went with it, so a reader can tell a message
+    that ended from one this bound ended. An unreadable log returns nothing: the record already
+    names it, and a run is not made worse by a convenience that could not be had."""
+    try:
+        text = log.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    kept = []
+    for line in text.splitlines()[-lines:]:
+        if len(line) > EXCERPT_LINE:
+            line = f"{line[:EXCERPT_LINE]} [+{len(line) - EXCERPT_LINE} characters]"
+        kept.append(line)
+    return "\n".join(kept)
+
+
 def main() -> int:
     # add_help was always here; the description is what makes `--help` answer with this
     # script's own docstring, the same text its six siblings print, rather than a bare
@@ -159,6 +190,7 @@ def main() -> int:
     parser.add_argument("--timeout-seconds", required=True, type=int)
     parser.add_argument("--step", action="append", required=True, metavar="NAME=COMMAND")
     parser.add_argument("--cwd", required=True)
+    parser.add_argument("--excerpt", type=int, metavar="N")
     args = parser.parse_args()
 
     root = Path(args.delivery_root)
@@ -169,6 +201,9 @@ def main() -> int:
                    f"the path is the identity and this one computes to none")
     if args.timeout_seconds <= 0:
         cannot_run("--timeout-seconds must be a positive whole number of seconds")
+    if args.excerpt is not None and args.excerpt <= 0:
+        cannot_run("--excerpt must be a positive whole number of lines; a bound of none is the "
+                   "flag left off")
     cwd = Path(args.cwd).resolve()
     if not cwd.is_dir():
         cannot_run(f"working directory {cwd} does not exist")
@@ -236,6 +271,13 @@ def main() -> int:
     }
     (run_dir / "run.json").write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
                                       encoding="utf-8")
+    if args.excerpt is not None and failed is not None and failed["output"]:
+        tail = excerpt(run_dir / str(failed["output"]), args.excerpt)
+        if tail:
+            print(f"===== {failed['name']} :: last {args.excerpt} line(s) of "
+                  f"{failed['output']} :: {failed['outcome']} :: the whole of it is at "
+                  f"{where}/{failed['output']} =====")
+            print(tail)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     return 0 if failed is None else 1
 

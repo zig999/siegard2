@@ -121,6 +121,62 @@ def test_no_shell_sees_the_command(delivery):
     assert "'&&'" in (delivery / "run/literal/echo.log").read_text(encoding="utf-8")
 
 
+# --------------------------------------------------------------- what it excerpts
+
+
+def test_no_excerpt_unless_it_is_asked_for(delivery):
+    done = invoke(delivery, "--run", "quiet", "--timeout-seconds", "20",
+                  "--step", "build=python3 -c 'print(\"boom\"); raise SystemExit(1)'")
+    assert done.returncode == 1
+    assert json.loads(done.stdout)["failed_step"] == "build", \
+        "without the flag stdout is the record alone, and parses as one"
+
+
+def test_the_excerpt_is_the_tail_of_the_step_that_failed(delivery):
+    lines = "; ".join(f'print({n})' for n in range(1, 31))
+    done = invoke(delivery, "--run", "loud", "--timeout-seconds", "20", "--excerpt", "3",
+                  "--step", f"build=python3 -c '{lines}; raise SystemExit(1)'")
+    assert done.returncode == 1
+    head, _, record = done.stdout.partition("{")
+    assert "===== build :: last 3 line(s) of build.log" in head
+    assert "run/loud/build.log" in head, "the excerpt says where the whole of it is"
+    assert head.rstrip().endswith("28\n29\n30"), head
+    assert "27" not in head, "the bound is the bound"
+    assert json.loads("{" + record)["failed_step"] == "build", \
+        "the record prints last, so a caller piping through tail keeps it"
+
+
+def test_the_excerpt_bounds_a_single_enormous_line(delivery):
+    done = invoke(delivery, "--run", "wide", "--timeout-seconds", "20", "--excerpt", "5",
+                  "--step", "build=python3 -c 'print(\"x\" * 4000); raise SystemExit(1)'")
+    assert done.returncode == 1
+    head = done.stdout.partition("{")[0]
+    assert "[+3500 characters]" in head, \
+        "a line count alone bounds nothing when one line holds a whole trace"
+    assert len(head) < 1200, head[:200]
+
+
+def test_a_run_that_passed_carries_no_excerpt(delivery):
+    done = invoke(delivery, "--run", "green", "--timeout-seconds", "20", "--excerpt", "40",
+                  "--step", "build=python3 -c 'print(\"fine\")'")
+    assert done.returncode == 0
+    assert json.loads(done.stdout)["outcome"] == "passed", \
+        "there is no failure to excerpt, so stdout is the record alone"
+
+
+def test_the_excerpt_never_reaches_the_record_on_disk(delivery, run_contract):
+    done = invoke(delivery, "--run", "red", "--timeout-seconds", "20", "--excerpt", "40",
+                  "--step", "build=python3 -c 'print(chr(66) * 3); raise SystemExit(1)'")
+    assert "BBB" in done.stdout.partition("{")[0], "the excerpt carried what the step printed"
+    record = record_of(delivery, "red")
+    assert [e.message for e in run_contract.iter_errors(record)] == [], \
+        "the excerpt is a convenience for the caller and never evidence; siegard-run/2 is unmoved"
+    assert "BBB" not in json.dumps(record), \
+        "what the command printed lives in the log the record names, in one place"
+    assert "excerpt" not in json.dumps(record) and "last 40" not in json.dumps(record), \
+        "no trace of the flag reaches the evidence, so two runs of one command still compare"
+
+
 # ------------------------------------------------------------------ what it refuses
 
 
@@ -151,6 +207,9 @@ def test_no_shell_sees_the_command(delivery):
     # `run.log` is the combined log of every step; a step writing it destroys its own output.
     (("--run", "green", "--timeout-seconds", "20", "--step", "run=python3 -c 'pass'"),
      "combined log of every step"),
+    (("--run", "green", "--timeout-seconds", "20", "--step", "a=python3 -c 'pass'",
+      "--excerpt", "0"),
+     "a bound of none is the flag left off"),
 ])
 def test_it_refuses_what_it_cannot_run(delivery, args, fragment):
     done = invoke(delivery, *args)
