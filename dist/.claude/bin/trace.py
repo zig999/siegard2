@@ -416,7 +416,7 @@ def drift_of(declared: dict,
 
     Refusals come back apart from findings because they are not findings. A specification that does
     not resolve or does not hold together says nothing about any binding — reporting `orphaned` for
-    every node of a base nobody could read would be this script inventing drift out of its own
+    every node of a specification nobody could read would be this script inventing drift out of its own
     blindness.
 
     A `code` finding's message carries the reason alone — the node and the path already ride the
@@ -1980,13 +1980,13 @@ def prune(target: Path) -> int:
 
     It refuses the two classes it is not for, and the refusal is the point rather than a
     conservatism. A file that moved or vanished is drift with an owner and a remedy: the node is
-    still in the base, still answered by code somewhere, and deleting the binding would destroy the
+    still in the specification, still answered by code, and deleting the binding would destroy the
     one record of which node that code answers to while reporting the tree as clean. The narrow
     class is safe for the opposite reason — the node is gone, so the entry links code to nothing,
     and nothing downstream can ask a question of it that an absence does not already answer.
 
     It reads the specification through the same pipeline `--check` does, and refuses over one that
-    does not hold together. Pruning against a base nobody could read would delete bindings for
+    does not hold together. Pruning against a specification nobody could read would delete bindings for
     nodes that exist, on the strength of not having been able to see them."""
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
@@ -2028,7 +2028,7 @@ def prune(target: Path) -> int:
         print(f"dropped {node_id}: the specification no longer holds it")
     remaining = len(declared["bindings"])
     print(f"\n{len(stale)} binding(s) pruned at {path}; {remaining} remain. What was dropped was "
-          f"a link to a node that is gone — every drift with a node still in the base is still "
+          f"a link to a node that is gone — every drift with a node still in the specification is still "
           f"here, and still owed a rebind.")
     return 0
 

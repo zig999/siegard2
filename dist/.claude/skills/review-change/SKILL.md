@@ -224,7 +224,7 @@ about whether the change conforms to anything — a file edited since its bind m
 right. It is one fact, and no pass here produces it: whether the link this framework keeps after a
 plan is deleted still describes the code as it stands. Report the counts by class, and the route
 each class takes. `orphaned` is a binding to a specification node that no longer exists; no rebind
-can repair it, because a bind refuses a node the base does not hold, and `trace.py --prune` is what
+can repair it, because a bind refuses a node the specification does not hold, and `trace.py --prune` is what
 clears it. `moved` is the specification moving under a binding, healed when the node's task is next
 delivered — the bind restamps at the node as it stands. `code` is a file changed without a rebind,
 whatever wrote it. Over the files of this review, the conformance pass below is what answers it:

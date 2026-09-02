@@ -992,7 +992,7 @@ def body_problems(body: str) -> list[str]:
 def references(nid: str, front: dict, kind: str) -> list[tuple[str, str, str]]:
     """Every reference this node declares: (target, edge kind, locator). `implements` and
     `reviews` point at tasks of the plan, `proves` at the implementation this proof sits beside,
-    and `encodes` at the base nodes the source now holds a fact of. Read defensively, because
+    and `encodes` at the specification nodes the source now holds a fact of. Read defensively, because
     this also runs over nodes the schema has already reported."""
     refs: list[tuple[str, str, str]] = []
     if kind == "implementation":

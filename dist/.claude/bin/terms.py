@@ -20,7 +20,7 @@ longer find would be worse than no glossary: it would read as complete.
 
 **What has no definition is named, not omitted.** A word this framework uses normatively and defines
 nowhere is listed under `no definition holds these`, with what it collides with. That list is a gap in
-the sense the base uses the word — an absence declared where a reader will look for it, rather than an
+the sense the specification uses the word — an absence declared where a reader will look for it, rather than an
 absence a reader discovers. Closing an entry means writing the definition into a contract and moving
 the term into the table above it; it does not mean writing a definition here.
 

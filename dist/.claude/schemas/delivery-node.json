@@ -62,7 +62,7 @@
       "items": {
         "$ref": "#/$defs/inference"
       },
-      "description": "What the implementation decided that nothing stated, and what it decided it from. Absent is a claim that nothing was inferred, and a reviewer reads it as one. An inference that would change behavior a caller depends on is not an inference — it is a fact the base does not hold, and the answer is to stop rather than to record it here."
+      "description": "What the implementation decided that nothing stated, and what it decided it from. Absent is a claim that nothing was inferred, and a reviewer reads it as one. An inference that would change behavior a caller depends on is not an inference — it is a fact the specification does not hold, and the answer is to stop rather than to record it here."
     },
     "divergences": {
       "type": "array",
@@ -479,7 +479,7 @@
                 "file": "src/orders/order.service.ts",
                 "where": "line 34, the refusal branch",
                 "evidence": "if (order.total <= 0) return refuse('ORDER_TOTAL_INVALID')",
-                "cost": "the refusal code is stated in code and in no bound node, so the code became the place that decision lives and a reader looking for it in the base will not find it"
+                "cost": "the refusal code is stated in code and in no bound node, so the code became the place that decision lives and a reader looking for it in the specification will not find it"
               },
               {
                 "pass": "standard",
@@ -770,7 +770,7 @@
         "failures",
         "standard"
       ],
-      "description": "Which judgment the entry is about — whether the tests prove the task's criteria, whether the source states only what the base holds, why a captured run failed, or whether the source follows the rules this project set for itself. The last is the only one whose subject the project authors rather than the framework, and it reaches only the rules of that standard whose application is a reading: a rule a linter or a compiler decides exactly runs as a step of the project's own suite, and its failures arrive through the failures pass instead."
+      "description": "Which judgment the entry is about — whether the tests prove the task's criteria, whether the source states only what the specification holds, why a captured run failed, or whether the source follows the rules this project set for itself. The last is the only one whose subject the project authors rather than the framework, and it reaches only the rules of that standard whose application is a reading: a rule a linter or a compiler decides exactly runs as a step of the project's own suite, and its failures arrive through the failures pass instead."
     },
     "standardRef": {
       "type": "object",
@@ -928,12 +928,12 @@
         "cost": {
           "type": "string",
           "minLength": 1,
-          "description": "What this costs, as a consequence rather than as a rule. \"Violates the base\" names a rule; \"the refusal code lives only in code, so the next reader looks for it in the base and does not find it\" names a cost."
+          "description": "What this costs, as a consequence rather than as a rule. \"Violates the specification\" names a rule; \"the refusal code lives only in code, so the next reader looks for it in the specification and does not find it\" names a cost."
         },
         "correction": {
           "type": "string",
           "minLength": 1,
-          "description": "What would have to change for this to stop being true, in the terms the evidence gives. \"Fix the assertion\" says nothing; \"the refusal code belongs in the base as a fact, and the code reads it from there\" says what to do. It is not a decision about the change — whether to act on it, and when, is a person's — and nothing downstream reads it as one."
+          "description": "What would have to change for this to stop being true, in the terms the evidence gives. \"Fix the assertion\" says nothing; \"the refusal code belongs in the specification as a fact, and the code reads it from there\" says what to do. It is not a decision about the change — whether to act on it, and when, is a person's — and nothing downstream reads it as one."
         },
         "cites": {
           "$ref": "#/$defs/ruleRef",
@@ -946,7 +946,7 @@
             "setup",
             "build"
           ],
-          "description": "Why a captured run failed, on a finding of the failures pass and nowhere else — the validator holds both halves of that. The split that matters is code against test, and the base settles it, never which of the two is easier to change: where nothing in the base settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached — including where the harness or the environment a test needs did not stand up, a connection timing out in a hook, a service that did not answer — so the failure says nothing about the change; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
+          "description": "Why a captured run failed, on a finding of the failures pass and nowhere else — the validator holds both halves of that. The split that matters is code against test, and the specification settles it, never which of the two is easier to change: where nothing in the specification settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached — including where the harness or the environment a test needs did not stand up, a connection timing out in a hook, a service that did not answer — so the failure says nothing about the change; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
         }
       }
     }

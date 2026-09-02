@@ -104,8 +104,8 @@ no review, and source is the one thing here nobody can review any other way.
 ## Read the contract
 
 `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node may
-and must declare — the kinds, the fields each kind requires, and one example per kind. It is also
-46 KB, most of which belongs to a kind nobody you spawn this run will write. Run:
+and must declare — the kinds, the fields each kind requires, and one example per kind. Most of it
+belongs to kinds nobody you spawn this run will write, so none of them is handed the file. Run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract implementation

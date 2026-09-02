@@ -92,7 +92,8 @@ the defect, and afterwards nobody can tell the difference.
   belongs, and the test would then prove the guess. Record the entry in `untested`, saying why
   nothing excludes it: that absence is a finding about the binder's pass, and it is the one thing a
   reader cannot recover from the entry itself.
-- **A criterion the specification does not back is still tested as the criterion states it.** Where you
+- **A criterion is tested as it states itself.** You are not given the specification and you are
+  not judging one: the criterion in front of you is the claim your test makes. Where you
   believe the implementation is wrong, write the test that states what the criterion requires
   and record the disagreement. Do not change the implementation, and do not write a test to
   pass against code you think is broken: one producer overruling the other with nobody watching

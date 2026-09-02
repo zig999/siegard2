@@ -87,7 +87,7 @@ decision set, and this invocation is a change to it — located, not re-derived.
   one left broken, it locates work inside one that already holds together.
 - **Read the manifest, not the files.** Run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --digest <specification-root>` — every node's
-  identity, sorted, at a fraction of the cost of opening the base. A node carries no title or
+  identity, sorted, at a fraction of the cost of opening the specification. A node carries no title or
   summary of its own, so the manifest names what exists and nothing about what it says; locate
   the nodes the material speaks to by identity, and where the material's vocabulary does not
   surface there, grep the specification root for its terms — a body's `## Description` costs
