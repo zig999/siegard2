@@ -48,6 +48,16 @@ this invocation — it is the status, reported verbatim.
    with no record, what each waits on — an undelivered dependency, absent substrate, a standing
    `BLOCKING, from the specification —` note — and the set deliverable now. Quote standing
    BLOCKING entries whole; they are the places only the human moves next.
+
+   It answers that question in the plan's terms, which are implementation and proof, and a
+   review is neither: `review/<name>.md` under the delivery root is the record `/review-change`
+   writes, and no command reports whether one exists. So list `<delivery-root>/<slug>/review/`
+   and say what it holds. **As a fact and never as an obligation** — nothing in this framework
+   makes a review owed, so "no review record" is not a task outstanding and not a step skipped.
+   It is reported because without it an initiative every task has delivered reads as finished,
+   and the reading a review would have made — the tests against the task's criteria, the source
+   against the specification and against the project's standard — is the one thing that never
+   ran over it. Name the door, take it never.
 3. **The trace, once per trace file.** The trace lives at the git toplevel of its target source
    root — where `siegard.json` sits — so targets sharing one repository share one trace file, and
    targets in separate repositories each keep their own. Run
@@ -59,8 +69,33 @@ this invocation — it is the status, reported verbatim.
    drift counts by class, each with its route: `orphaned` is cleared by `--prune` after a
    deliberate node removal, `moved` heals when the node's task is next delivered, `code` is
    answered by `/reconcile`. Where `code` findings exist, the report carries the `/reconcile`
-   invocation ready to paste — the file set being the drifted paths, converted to the target
-   source root's own anchor, since `--check` spells them from the git toplevel.
+   invocation ready to paste — the project root filled in, the target named by its `targets` key
+   wherever the project declares more than one, the file set being the drifted paths converted to
+   the target source root's own anchor since `--check` spells them from the git toplevel, and a
+   slug slot left for the human to name, since `/reconcile` requires one and refuses a slug
+   already taken. With it, the two sentences that make the door real rather than decorative: it
+   runs only over a committed tree, because `/reconcile` refuses a named file the tree holds
+   uncommitted, and one invocation covers one file set — never one per file. A ready invocation
+   that stops on a missing input was never ready.
+
+   That invocation is composed from a report rather than named by the reader, so the report says
+   what it will and will not answer, and says it in the same breath as the paste. Two statements
+   are owed wherever they hold, and both leave the choice where it was:
+
+   - **Where a live initiative holds no review record**, `/review-change` over it reads every
+     node the trace binds to the files that initiative wrote — not the delivering task's nodes
+     alone — and rebinds what its judgment clears. That is the same reading `/reconcile` makes,
+     by the same judge, over the same bytes. Neither route is the wrong one; running the
+     reconciliation first over files a review is going to reach pays that reading twice. Say so,
+     say which initiatives have no record, and let the reader order them.
+   - **Where `--owed` below puts a pair of a drifted file under `reported`**, a past
+     reconciliation already judged that pair and no bind closed it. Reconciling it again without
+     the source having changed re-reads what the record already says. Where such a finding is a
+     divergence nobody resolved, the door is `/plan-work` — the behavior, not the binding, is
+     what is outstanding. Name the pairs and the record; subtract nothing, because the class is
+     per pair and the invocation is per file, and a file carrying one recorded pair beside two
+     unrecorded ones is a file the reconciliation is still owed.
+
    Then, for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --owed
    <target-source-root>` — what past reconciliations found and no bind could close. This is not a
    second view of the drift counts and must never be reported as one: a finding against a pair the
@@ -111,16 +146,24 @@ agent, and the report is voiced accordingly:
 In this order, every line naming its source:
 
 - per live initiative: delivered X of Y tasks; deliverable now; what each remaining task waits
-  on; standing BLOCKING notes, quoted whole. Closed initiatives by name only;
+  on; standing BLOCKING notes, quoted whole; and what `review/` under its delivery root holds.
+  Closed initiatives by name only;
 - the specification: sound or not (validator output verbatim), node counts, and the last five
   disclosed decisions — location, what was decided, why;
 - the trace: findings by class with each class's route, and the ready `/reconcile` invocation
-  where `code` drift stands; then, kept apart from those counts, what `--owed` holds — the
+  where `code` drift stands, with what that set does not answer alone — the files a review
+  yet to run would reach, and the pairs a record already judged; then, kept apart from those
+  counts, what `--owed` holds — the
   findings past reconciliations left open, and which of them no drift report can reach — and the
   `--rank` accretion counts, top rows verbatim, with the audit route named and never chosen;
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;
-- the close: the single next invocation most ready to run, and nothing more.
+- the close: the single next invocation most ready to run, and nothing more. Ready is a
+  statement about the tree, never about worth: it is the invocation whose inputs this report
+  already holds and whose preconditions the tree already meets. Where the report named more
+  than one door over the same files, the close names the reading that is owed once over the
+  reading that would be paid twice, and says which fact of this report decides it — a close a
+  reader has to ask the reason for was a preference wearing a derivation's clothes.
 
 ## What you never do
 
