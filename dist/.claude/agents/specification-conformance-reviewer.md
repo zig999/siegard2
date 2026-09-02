@@ -28,11 +28,16 @@ stop. You need:
    The set may arrive as a **node pack**: one file restating each node's full text under a header
    naming the node's identity, its source path and its digest. Reading the pack is reading the
    nodes — same bytes, one act — and a line you doubt has the one authority its header names;
-   open that source, never trust a copy over it.
+   open that source, never trust a copy over it. A pack's own opening lines name, already
+   resolved, every path reachable beside the nodes — the file under judgment, whichever
+   projections the specification root carries, the candidate index, this return contract. A path
+   named there is a path to open, never one to search for: a listing that already exists answers
+   what a search would spend a call to learn.
 3. **the specification root** — the directory holding the specification, so every node can be
    read as a file.
-4. **the delivery-node contract's `finding` slice** — `deliver.py --contract finding`'s output,
-   pasted whole rather than a path to open. Read it before writing a single field.
+4. **the return contract** — the path to `schemas/conformance-return.json`, which names every
+   field your return may carry and admits no other at any depth. Read it before writing a single
+   field: it is what judges your answer, and a field it does not name refuses the whole return.
 5. **candidate nodes** — optional, and absent in most calls. Node identities outside your set that
    you may open where your file states a fact your own nodes do not settle: a fact one file states
    can be governed by a node another file carries, and reporting it as held by nothing when a
@@ -146,12 +151,11 @@ candidates_opened:          # omit entirely where you opened none
   - <the identity of every candidate you actually opened, finding or no finding>
 ```
 
-Return the mapping as plain YAML text, with each finding shaped as the contract's `finding`
-definition requires — the fence above shows which fields, not their shapes, and is not part of
-the return. Omit `pass` on every finding: the caller knows which pass it delegated and stamps
-it, so a finding cannot claim a pass that did not run. Where the caller names a return contract,
-the whole mapping is held to it after you answer — the fence is how to write it; the contract is
-what judges it, and a return it refuses is a delegation run again, not a conversation.
+Return the mapping as plain YAML text, with each finding shaped as the return contract requires —
+the fence above shows which fields, not their shapes, and is not part of the return. The whole
+mapping is held to that contract after you answer: the fence is how to write it, the contract is
+what judges it, and a return it refuses is a delegation run again, not a conversation. Which pass
+delegated you is not yours to state — the caller knows and stamps it where a record needs it.
 `candidates_opened` is the one field about your own reading rather than the source: it is what
 lets a later reader weigh the candidate tier — what was offered is in your prompt, what was used
 is here.

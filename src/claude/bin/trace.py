@@ -1400,13 +1400,36 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         for node_id in assigned:
             candidates.setdefault(node_id, []).append(given)
 
+    # Every path a judge needs beside the nodes, resolved here rather than composed there. A
+    # specification root's own layout is not obvious from its root — a projection may or may not
+    # exist, and a judge that hunts for one spends a search per delegation to learn what one
+    # listing already knows. Only what is on disk is named: a path offered and absent is the same
+    # hunt with an extra step.
+    projections = [(label, spec_root / relative) for label, relative in
+                   (("every node restated verbatim, for one search over the whole root",
+                     "projections/full-text.md"),
+                    ("the decision log grouped by the node each entry located",
+                     "projections/decisions-by-node.md"),
+                    ("the decision log itself, the authority those entries point back to",
+                     "decision-log.md"))]
+    beside = [f"{path} — {label}" for label, path in projections if path.is_file()]
+    if not audit:
+        beside.append(f"{workspace / 'candidates.txt'} — the candidate index: every node this "
+                      f"batch answers for, with the file(s) it is bound to. It locates and never "
+                      f"states; open the node under {spec_root} before claiming anything of it.")
+    beside.append(f"{RETURN_CONTRACT} — the contract this whole return is held to.")
+
     packs_dir = workspace / "packs"
     packs_dir.mkdir(parents=True, exist_ok=True)
     manifest_files: dict[str, dict] = {}
     for given, assigned in sorted(judged_files.items()):
         pack = packs_dir / (given.replace("/", "__") + ".md")
         lines = [f"# Node pack for {given} — derived by trace.py --stage from the specification; "
-                 f"a reading copy, never a home. Doubt a line, open the source it names."]
+                 f"a reading copy, never a home. Doubt a line, open the source it names.",
+                 f"# The file this pack is about: {(target / given).resolve()}",
+                 "#",
+                 "# Reachable beside these nodes, each already resolved:"]
+        lines += [f"#   {entry}" for entry in beside]
         read_also = [node_id for node_id in also if node_id not in assigned]
         for node_id in assigned + read_also:
             source = spec_root / f"{node_id}.md"

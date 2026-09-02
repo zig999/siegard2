@@ -199,16 +199,6 @@ and the bind restamps both.
 
 ### 3. Judge
 
-Before spawning anyone, run:
-
-```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
-```
-
-One self-contained slice, every `$ref` inlined — every delegation below is handed this same
-text, once extracted, rather than each opening the 46 KB file it was cut from. A batch of forty
-files pays for that extraction once, not forty times.
-
 Spawn one `specification-conformance-reviewer` subagent per file the manifest holds nodes for,
 together rather than one after another — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
@@ -218,10 +208,10 @@ the workspace's candidate index — together with the identities of any node the
 written since the bind — which it may consult where its file states a fact its own nodes do not
 settle: a fact one file states can be governed by a node another file carries, and a judge who
 cannot open that node reports an absence where the true finding is a misattribution; the
-specification root; the `finding` slice printed above, pasted whole, where a
-finding's own shape lives; and the path to
-`${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
-to by the fold below.
+specification root; and the path to
+`${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, which is both where a finding's own
+shape lives and the contract the whole return is held to by the fold below. One contract, handed
+once: a second one pasted beside it would be a shape the fold never applies.
 
 **On an audit, no candidate tier is passed, and the staging writes none.** The manifest carries an
 empty `candidates` and the workspace holds no index, so there is nothing to hand over and nothing

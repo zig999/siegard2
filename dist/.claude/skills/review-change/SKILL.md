@@ -132,8 +132,9 @@ what a diff looks like.
 `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node
 may and must declare —
 including which passes a review answers for, what each state and each cause means, and what a
-finding carries. It is also 46 KB, and three of the four passes below need one branch of it.
-Run:
+finding carries. It is also 46 KB, and three of the four passes below need one branch of it —
+the conformance pass is the exception, and it answers to a contract of its own named further
+down. Run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract coverageEntry
@@ -336,10 +337,12 @@ runs next.
   a file set of exactly its one file; as the node set, its node pack's path from the manifest —
   the pack is the set, whole, the trace's nodes and the plan's alike, each node's text with its
   source named; as candidates, the path to the workspace's candidate index, which it may consult
-  where its file states a fact its own nodes do not settle; the specification root; the `finding`
-  slice printed above, pasted whole; and the path to
-  `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
-  to. Every path a delegation receives is absolute and already resolved, and the pack and the index
+  where its file states a fact its own nodes do not settle; the specification root; and the path
+  to `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, which is both where a finding's own
+  shape lives and the contract the whole return is held to. One contract, handed once: a second
+  one pasted beside it would be a shape the fold never applies, and this pass's findings reach a
+  delivery node's `findings` only once this skill has stamped the pass onto each of them. Every
+  path a delegation receives is absolute and already resolved, and the pack and the index
   go as paths, never as their text — one index serves the batch, and a prompt carrying it inline
   pays for it once per file. It returns where the source states a domain fact the specification
   does not hold, contradicts one it does, or became a second home for one — and, per node, where
