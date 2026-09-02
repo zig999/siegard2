@@ -92,6 +92,11 @@ decision set, and this invocation is a change to it — located, not re-derived.
   the nodes the material speaks to by identity, and where the material's vocabulary does not
   surface there, grep the specification root for its terms — a body's `## Description` costs
   nothing to grep and everything to open blind.
+- **Every `constraints/` node is an entry node, whatever the material's vocabulary surfaced.** An
+  architecture constraint declares no reference and no class declares one at it, and its `scope`
+  is the system or a whole context rather than anything the material's nouns would name — so no
+  grep and no closure reaches it, and what it constrains is exactly the work nobody connected it
+  to. There are few; name them all.
 - **Close the impact set by reading, not by hand.** Run
 
   ```

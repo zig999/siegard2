@@ -237,7 +237,13 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   <specification-root>` — every node's identity, sorted, current because the check above
   passed. That is the full manifest; it names nothing about what a node says. Grep the
   specification root for the scope's vocabulary — its nouns and the terms the material uses —
-  to find candidate files. **Naming the candidates is yours; closing over them is not.** Run
+  to find candidate files. **Every `constraints/` node is a candidate, whatever the grep
+  returned.** An architecture constraint declares no reference and no class declares one at it,
+  and its `scope` is the system or a whole context rather than anything a scope's nouns would
+  name — so it reaches no grep and no closure, and it is precisely the thing that governs work
+  nobody thought to bind to it. `spec.py --digest` lists them; there are few, and naming them all
+  costs less than the one that arrives as a binder's note after the epic is cut. **Naming the
+  candidates is yours; closing over them is not.** Run
 
   ```
   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact <identity>[,<identity>...] <specification-root>
