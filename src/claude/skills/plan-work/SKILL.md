@@ -63,9 +63,15 @@ once — never a question at a time.
 
 A closing invocation — the human declaring the initiative over — needs three of these: the ask
 with its why, the project root, and the initiative's slug. The specification root and the
-target source root play no part in closing (see "Closing the plan").
+target source root play no part in closing (see "Closing the plan"). A corrective increment
+needs all four and one more the ordinary path never asks for: the file the wrong behavior lives
+in (see "The corrective increment").
 
 ## Before anything: the specification
+
+A planning invocation reads the specification and a closing one does not, so this section and
+the next one's second root belong to planning alone: a closure stopped by a specification it
+never opens would stop for a reason closing cannot act on.
 
 The plan is only as sound as the specification it implements against. Run:
 
@@ -91,28 +97,30 @@ live, never by a value this skill computes and compares.
 The review is `git diff` over the work root — and over the specification root, which step 4's
 decided-fact route may write. A diff only says what this invocation did when the roots start
 clean. Before any write, `git status --porcelain -- <work-root> <specification-root>` must
-print nothing. Output is a stop: report what is pending and go no further — committing,
+print nothing; a closing invocation names the work root alone, because nothing it does reaches
+the other. Output is a stop: report what is pending and go no further — committing,
 discarding, or overriding is the human's decision, never the plan's. A root not under git
 control is the same stop: without git there is no review.
 
 ## Read the contract
 
 `${CLAUDE_PLUGIN_ROOT}/schemas/plan-node.json` is the single home of what a plan node may and
-must declare — the
-kinds, the fields each kind requires, and one example per kind. Every subagent below needs one
-or two of its three kinds, never the whole file. Run:
+must declare — the kinds, the fields each kind requires, and one example per kind. Every
+subagent below needs one or two of its three kinds, never the whole file, and
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract <kind>` prints one self-contained
+slice, every `$ref` already inlined.
 
-```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract inventory
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract epic
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --contract task
-```
-
-Each prints one self-contained slice, every `$ref` already inlined, and that is what steps 2
-through 4 hand their subagent, verbatim, in place of the file's path — the `task` slice once,
-reused across every `execution-contract-binder` spawned in step 4, since one skeleton and the
-next read the identical branch. Do not work from memory of any of them, and do not restate
-them: what you remember is not what the validator will apply.
+**Each slice is printed by the step that hands it over, narrowed to what that judge writes** —
+`--contract inventory` in step 2, `--contract epic` and `--contract task --without implements`
+in step 3, `--contract task --fields implements` in step 4. Two things fall out of narrowing.
+A judge stops reading a branch to write one field: the binder's slice is a sixth of the task
+branch, and step 4 pastes it once per task. And a field a judge must not fill stops being
+offered to it — the skeleton slice carries no `implements`, which is the binder's, and the
+binder's carries nothing else. `plan.py` refuses a field name the branch does not declare, so a
+typo cannot quietly widen a slice. A mode that skips a step never pays for the slice that step
+would have used, and a closing invocation prints none. What a step prints, it hands to its
+subagent verbatim, in place of the file's path. Do not work from memory of any of them, and do
+not restate them: what you remember is not what the validator will apply.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
 the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
@@ -134,9 +142,11 @@ not in your memory of it. Delegating means spawning the named subagent — in a 
 be plugin-scoped — and reading the agent's file yourself is the fallback, never the
 delegation. The binder's isolation is the point of the whole arrangement: it arrives with
 no memory of how the tasks were cut, so the specification is read for what it says today, never
-to fit a task. Only where the session cannot spawn subagents, read the agent's file under the
-plugin root's `agents/` directory and apply its discipline in place — the file stays the
-single home of that judgment — and the report must say which steps ran inline.
+to fit a task. Only a spawn that was attempted and failed opens the inline route: read the
+agent's file under the plugin root's `agents/` directory and apply its discipline in place —
+the file stays the single home of that judgment — and the report carries the failure verbatim
+beside the step's name. A session judged unable without an attempt is the isolation given up on
+a guess, and nothing downstream can tell that apart from the isolation held.
 
 ## The corrective increment
 
@@ -147,17 +157,17 @@ ceremony this framework has has already finished.
 
 **The human names this in the invocation. It is never inferred from the tree**, exactly as the
 narrow re-delivery in `/implement-task` is never inferred: a mode that decides for itself when to
-run fewer steps is a mode that runs fewer steps.
+run fewer steps is a mode that runs fewer steps. The invocation names two things: the wrong
+behavior, and the file it lives in. Both are the human's — they ran the system and they are
+holding the file — and the second is what the epic below is cut from.
 
-It exists because of what happens without it. The whole path — survey, decomposition, a binder per
-task — is sized for a scope, and a one-behavior correction is not a scope; so the correction gets
-made by hand instead, and the hand that makes it writes the implementation and the test in one
-context. That is precisely the guarantee the two producers exist to give, given up for a fix small
-enough to feel like it did not need one — and an implementation and its tests written in one pass
-agree by construction, including where both are wrong. The trace goes quiet the same way: nothing
-outside `/implement-task` binds, so the file changes and `siegard-trace.json` keeps asserting a
-digest that is no longer there. Neither of those is the correction being urgent. Both are the
-correct route costing more than the incorrect one.
+It exists because the whole path is sized for a scope, and a one-behavior correction is not one;
+priced that way, the correction gets made by hand instead, and two guarantees go with it. One
+hand writes the implementation and the test, which then agree by construction including where
+both are wrong — the exact thing two producers exist to prevent. And nothing outside
+`/implement-task` binds, so the file changes while `siegard-trace.json` keeps asserting a digest
+that is no longer there. Neither is the correction being urgent; both are the correct route
+costing more than the incorrect one.
 
 So the route is the ordinary one, at the size of the work:
 
@@ -165,7 +175,9 @@ So the route is the ordinary one, at the size of the work:
 situate → intake → the task, written here → implement-against → validate → report → stop
 ```
 
-**The survey and the decomposition do not run.** There is no tree to discover — the human is
+**The survey and the decomposition do not run.** `intake` above is step 2's first paragraph and
+only it — the scope persists exactly as it always does, and the rest of that step is the survey.
+There is no tree to discover — the human is
 holding the file — and there is nothing to decompose: the increment is one task, and where it is
 genuinely more than one, this is a scope and the ordinary path is what it gets.
 
@@ -186,6 +198,23 @@ the node that governs it — never "the bug is fixed", which no test can fail. T
 same as any node here. It declares **no** `produces`: what a task produces is what the project's
 own standard presupposes, and a correction to delivered source is not that.
 
+**The correction gets its own epic, never an existing one.** An epic's `covers` is the candidate
+set of every task under it, so growing a delivered epic's claim for one correction re-opens every
+task that epic already holds; a new epic claims exactly what this correction answers to and
+re-judges nothing. Seed its claim mechanically rather than by reading — the human named the file,
+and the trace already knows what that file answers to:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <file> [<file> ...]
+```
+
+A file the trace does not know is a stop, and the report names it: a correction to code no task
+ever bound is not a corrective increment, because there is no claim to correct against. Close
+what came back the way step 1 closes any impact set, write the epic covering it, and spawn the
+binder against it exactly as step 4 does. Afterwards the claim is reconciled to what the binder
+returned: a covered node the task does not implement is declared in `uncovered` with a why,
+because an epic answers for everything it claims and the validator refuses one that does not.
+
 Where it lands follows the rule the slug already states. A live work root takes the task as any
 other increment does. A work root holding `closure.md` is closed and takes nothing — the
 correction names a new slug, and the delivered code returns as what the specification says about
@@ -195,7 +224,8 @@ What this path does not do is end anywhere different. The task goes to `/impleme
 every other task: two producers, the standard applied, the run captured, and the trace bound at
 step 8 — which is the whole reason the correction comes back through here rather than being typed
 into the file. Say in the report that this was a corrective increment and which steps did not run,
-so a reader never mistakes a plan of one task for a scope that decomposed to one.
+and carry the `--encodes` output the epic was cut from verbatim, so a reader never mistakes a plan
+of one task for a scope that decomposed to one.
 
 ### 1. Situate
 
@@ -207,19 +237,27 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   <specification-root>` — every node's identity, sorted, current because the check above
   passed. That is the full manifest; it names nothing about what a node says. Grep the
   specification root for the scope's vocabulary — its nouns and the terms the material uses —
-  to find candidate files, then open exactly those. Close the impact set in both directions:
-  read what a candidate references in its own frontmatter — every reference-bearing field the
-  class schemas declare, read from the plugin root's `schemas/spec/` directory rather than from a
-  list here, so a field a schema gains is a field this closure reaches — and grep
-  the specification root for each candidate's identity to find what references it back —
-  there is no derived edge index to read this from instead. Read the impact-set files and
-  nothing else: the plan implements against what governs the scope, not everything the
-  specification holds. Keep the trail this closure produced — which candidate's own fields
-  were read for a reference outward, and the grep run for each to find a reference back — the
-  report in step 6 carries it verbatim. A missing node found only after a binder relit it in
-  step 4 is this closure skipped, discovered at the most expensive point to discover it: a
-  binder that already ran once pays to run again over the grown set, per task the growth
-  touches. The trail is what lets a reviewer tell the closure ran from one that was assumed.
+  to find candidate files. **Naming the candidates is yours; closing over them is not.** Run
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact <identity>[,<identity>...] <specification-root>
+  ```
+
+  over every candidate at once — it prints, per node, every reference it declares, every node
+  that declares one at it, and every decision-log entry that located it, plus the read set as
+  paths. One hop, both directions, read off the same walk that validated the specification above,
+  so a field a schema gains is a field this closure reaches without anybody maintaining a list of
+  which fields those are. Do not close a second hop by hand: the transitive closure of a
+  connected specification is the specification, and the impact set is what governs the scope, not
+  everything the specification holds. Read the files it names and nothing else.
+
+  Two halves of this step, and only one of them is now mechanical. The command's output goes to
+  the report in step 6 verbatim, and it settles that the closure ran. It settles nothing about
+  the candidates: those came from a grep of the scope's vocabulary, which is judgment, so the
+  report carries the terms that were grepped beside the output. A missing node found only after a
+  binder relit it in step 4 is now almost always a candidate nobody nominated rather than a
+  closure nobody ran — and it is still discovered at the most expensive point, a binder that
+  already ran paying to run again per task the growth touches.
 - **The plan, when the work root is populated.** Trust its index only after checking it: run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>`, and
   a stale `plan.json` is rederived by a full validation run before anything relies on it.
@@ -266,8 +304,8 @@ second mapping key; PyYAML is already a declared dependency of this framework's 
 
 Then spawn a `codebase-surveyor` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md` — passing three things: the target source
-root, the scope's path under `intake/`, and the `inventory` slice printed above, pasted whole.
-It returns
+root, the scope's path under `intake/`, and the `inventory` slice — print it here, with
+`plan.py --contract inventory`, and paste it whole. It returns
 inventory nodes — modules, evidenced conventions, reuse points, consumer-named risks, and
 the empty tree as a full answer where that is what it found. Write each returned node at the
 path its identifier computes to, verbatim.
@@ -277,8 +315,10 @@ path its identifier computes to, verbatim.
 Spawn a `backlog-decomposer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md` — passing four things: the scope's path,
 the impact set's file paths under the specification root, the surveyor's inventory, and the
-`epic` and `task` slices printed above, both pasted whole — plus, where a standard was named and the situate step found any,
-the artifacts it presupposes that the tree does not hold, each with what the registry says it
+contract slices — print them here, `--contract epic` and `--contract task --without
+implements`, and paste both whole — plus, where a standard was named and the situate step found
+any, the artifacts it presupposes that the tree does not hold, each with what the registry says
+it
 provides and the rules it carries. Those are the one thing the decomposition may cut a task for
 that the scope never asked about. Its file holds the boundary tests that shape every task; what
 comes back is epics, complete, and task skeletons — objective, criteria, dependencies —
@@ -305,7 +345,9 @@ four things: the skeleton as its title, summary, objective and criteria — neve
 `rationale`, its dependencies or its body, because an opinion about the reference travels with
 them and the clean context is the point — the candidates' file paths, its epic's `covers` less
 its `uncovered`, because naming what the epic declared untouched is a contradiction the
-validator refuses — the `task` slice printed above, pasted whole — and the decision
+validator refuses — the binding slice, `plan.py --contract task --fields implements`, printed
+once and pasted whole into every spawn: it carries the one field a binder writes, and the
+branch around it is what the decomposer and you write — and the decision
 log's path at the
 specification root, the index that says which node a decided fact landed in, so a claim about
 one rule replacing another is settled by the entry that records the replacement rather than by
@@ -319,8 +361,11 @@ isolation is the point of the whole arrangement, and it is exactly what makes th
 This is the same independence `/review-change` states of its four passes, and it is the most
 expensive judgment in this skill: a plan of ten tasks spawns ten of these, and running them in
 sequence spends ten times the waiting for nothing. What they are not independent of is the epic's
-claim: where a note below sends a skeleton back to be re-cut, or grows the claim it was judged
-against, that skeleton runs through this step again.
+claim: where a note below sends a skeleton back to be re-cut, that skeleton runs through this step
+again — and where it grows the claim, **every skeleton under that epic does**. The candidate set
+is the epic's and not the task's, so a binder that judged against the smaller set never saw what
+the growth added, and a governing node invisible to one binder is exactly the miss step 1 pays to
+prevent.
 
 A note classed `unstated` is settled here, before any task it touches is written, and it never
 reaches a task file. First hold it to the cut: grep the specification root for the fact's
@@ -342,7 +387,11 @@ the paths they name, append the returned log entry to the decision log where the
 `decided`, then revalidate — `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py
 <specification-root>`, and once it passes, `--project`, because the projections moved with the
 nodes — and re-run this step's binder for every skeleton whose candidates include a touched
-node: the note is gone, or what remains comes back reclassified. On `contradicted`, the note
+node: the note is gone, or what remains comes back reclassified. Where the edits landed in a
+node no skeleton's candidates hold — the decider reads the whole impact set, and an epic claims
+a slice of it — the fact is now stated and the candidate set that lacks it is the cut, not a
+silence: grow the epic's `covers` to that node, or move the task, and re-run this step, exactly
+as an out-of-candidates note is answered. On `contradicted`, the note
 was `blocking` wearing the wrong class: it takes the blocking route below, and the report says
 the decider refused it and why. A `noticed` line in the return is a watch item for the report,
 never a second decision made in passing. Every decided fact is a claim a reviewer can reject —
@@ -352,8 +401,9 @@ the report repeats it.
 Each fact is decided once, and the loop is bounded by that: a fact already settled in this
 invocation is never sent to a second decider, and a re-bind that returns an `unstated` note over
 a fact this step already decided is a stop, not another round — the specification now states it,
-so a binder still calling it silent is a disagreement a person settles. Two rounds that decide
-nothing new end the step.
+so a binder still calling it silent is a disagreement a person settles. That stop holds where the
+node the decision filled already sits inside the candidates that returned the note; where it does
+not, the answer is the growth above, and there is no disagreement to settle.
 
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
 returned it — bare identities, no pin. **Composing is transcription, never correction.** A
@@ -361,44 +411,50 @@ criterion whose wording must change at this point — a blocking note settled by
 decomposer's error caught late — changes the skeleton, and a changed skeleton runs through
 this step again before it touches disk: a task composed with a criterion no binder read is a
 plan whose judge saw a different plan, and a correction can make a neighboring criterion
-jointly contradictory in a way only a fresh reading of the whole set finds. A binder's notes are appended to the task body's
-`## Notes`, one sentence per line — the diff is the review, and a divergence only the
-conversation holds is a divergence the reviewer never sees — and the report repeats them by
-task. A note classed `blocking`, `underdetermined` or `remainder` opens with its class,
-literally — `BLOCKING, from the specification —`, `UNDERDETERMINED, from the specification —`,
-`REMAINDER, from the specification —` — the exact text and not a style. Two of the three are
-read by something: `bin/plan.py` refuses a task persisting an `UNSTATED` opening and holds the
-blocking and underdetermined openings as constants, and `/implement-task` collects
-underdetermined entries by that opening and nothing else marks them. `REMAINDER` is read by no
-validator today and is still written exactly, because the three classes are one vocabulary and a
-note whose class a reader cannot see by its first words is a note nobody sorts; an underdetermined note carries the implementation the binder named in `passes`, and a
-remainder note the destination it named in `belongs`. Where the binder found nothing to
-implement against, the task carries `rationale` saying why — scaffolding is real work, but
-ungoverned work is a claim someone reviews. Where a note says the task needs what the
-candidates do not hold, the cut is wrong: grow the epic's `covers` or move the task, and
-re-implement against it — never widen the reference by hand.
+jointly contradictory in a way only a fresh reading of the whole set finds.
 
-A note the binder classed `blocking` — the class its own file defines, and the one where the
-specification is not silent but overruled — is settled before the task is written, and the skeleton's `rationale` says by whom. Where the blocked statement was the decomposer's decision
-— the skeleton carries `rationale` over that cut — the skeleton goes back to the decomposer
-with the note, is re-cut, and re-run through this step. Where it came from the scope, the task
-is written with the note, and the report names it as a conflict only the human settles —
-through the scope, or through the analysis that extends the specification. An
-`underdetermined` note travels with the task and re-cuts nothing: it is what a test must
-exclude, and `/implement-task` hands it to whoever writes the tests. A `remainder` note
-travels the same way and re-cuts nothing: an unreached clause is answered where it belongs —
-another task's reference, the epic's `uncovered`, or scope this plan does not yet hold — and
-no validator walks clauses, so the report is where a reviewer checks that something answers
-it. An `advisory` note stays a note. A note of any class that names specification nodes
-outside the epic's covers never travels alone. Two of the caller's three decisions erase the
-condition rather than record it: grow the claim and re-run this step, or move the task and
-re-run it — the replacement reference answers inside the new covers. The third persists, and
-is recorded on its own line immediately after the note in `## Notes`: `Decision, beyond the
-covers — stand: <why>` — the exact opening and not a style, because the validator refuses a
-task whose `## Notes` names a specification node outside its epic's covers with no such line
-naming that node, and a refused plan derives no plan.json. The class is the binder's judgment,
-not yours to overrule: a blocking note you disagree with is still settled as blocking, and the
-disagreement goes in the report.
+A binder's notes are appended to the task body's `## Notes`, one sentence per line — the diff is
+the review, and a divergence only the conversation holds is a divergence the reviewer never sees
+— and the report repeats them by task. What each class means is the binder's file, decided there
+and not reopened here; what it does here is this:
+
+| class | the note opens | what it does to the task | what travels with it |
+|---|---|---|---|
+| `blocking` | `BLOCKING, from the specification —` | stops it being written until settled | the note, where the scope is what it blocks |
+| `underdetermined` | `UNDERDETERMINED, from the specification —` | nothing; it re-cuts nothing | the note, and the implementation named in `passes` |
+| `remainder` | `REMAINDER, from the specification —` | nothing; it re-cuts nothing | the note, and the destination named in `belongs` |
+| `advisory` | `ADVISORY, from the specification —` | nothing | the note |
+
+Every opening is exact text and not a style. Two of the four are read by something: `bin/plan.py`
+holds the blocking and underdetermined openings as constants and refuses a task persisting an
+`UNSTATED` one, `/implement-task` collects underdetermined entries by that opening and hands them
+to whoever writes the tests, and `/siegard-telemetry` counts both. `REMAINDER` and `ADVISORY` are
+read by no validator today and are still written exactly, because the four classes are one
+vocabulary and a note whose class a reader cannot see by its first words is a note nobody sorts.
+
+Settling a blocking note takes one of two routes, and the skeleton's `rationale` says which.
+Where the blocked statement was the decomposer's decision — the skeleton carries `rationale` over
+that cut — the skeleton goes back to the decomposer with the note, is re-cut, and re-run through
+this step. Where it came from the scope, the task is written with the note, and the report names
+it as a conflict only the human settles: through the scope, or through the analysis that extends
+the specification. A remainder's clause is answered where it belongs — another task's reference,
+the epic's `uncovered`, or scope this plan does not yet hold — and no validator walks clauses, so
+the report is where a reviewer checks that something answers it. The class itself is never yours
+to overrule: a blocking note you disagree with is still settled as blocking, and the disagreement
+goes in the report.
+
+Where the binder found nothing to implement against, the task carries `rationale` saying why —
+scaffolding is real work, but ungoverned work is a claim someone reviews. Where a note says the
+task needs what the candidates do not hold, the cut is wrong: grow the epic's `covers` or move
+the task, and re-implement against it — never widen the reference by hand.
+
+A note of any class that names specification nodes outside the epic's covers never travels alone.
+Two of the caller's three decisions erase the condition rather than record it: grow the claim and
+re-run this step, or move the task and re-run it — the replacement reference answers inside the
+new covers. The third persists, and is recorded on its own line immediately after the note in
+`## Notes`: `Decision, beyond the covers — stand: <why>` — the exact opening and not a style,
+because the validator refuses a task whose `## Notes` names a specification node outside its
+epic's covers with no such line naming that node, and a refused plan derives no plan.json.
 
 Each task file is checked on its own as soon as it is composed — a composition error is
 caught at the file that made it, never discovered at the end:
@@ -446,11 +502,11 @@ Report, in this order:
 
 - every node written, by identifier — on a populated root, created, changed and removed
   listed apart;
-- the impact set that was read — in the specification and, on evolution, in the plan — plus
-  step 1's closure trail: which candidate's own fields were followed outward and the grep run
-  for each to find a reference back, so the reviewer can judge not only what the planning
-  looked at, but whether the set was closed before the decomposition ran rather than assumed
-  closed;
+- the impact set that was read — in the specification and, on evolution, in the plan — as step
+  1's `--impact` output verbatim, beside the vocabulary that was grepped to nominate the
+  candidates it closed over. The output says the closure ran; the terms are what a reviewer
+  argues with, because a set closed perfectly around the wrong candidates is still the wrong
+  set, and nothing mechanical says otherwise;
 - every fact the decided-fact route wrote into the specification: each `decided` outcome by its
   log entry — the file and the field it filled, what was unstated, the value, the why — and
   each `stated` outcome with where the material already held it. These are the claims a reviewer
@@ -469,7 +525,8 @@ Report, in this order:
   say which absence it was — a declared none in the project file, or nothing anywhere — because
   a plan cut without one is a plan that cannot know whether the tree it plans over can run
   anything it delivers, and that is the honestly narrow answer rather than silence;
-- which steps, if any, ran inline instead of in a subagent, and why;
+- which steps, if any, ran inline instead of in a subagent, each with the spawn failure that
+  authorized it, verbatim;
 - the validator's final output, verbatim;
 - the handoff: the `/implement-task` invocation ready to paste — the project root, the target
   and the initiative's slug filled in, since every root they resolve to was just validated
@@ -515,12 +572,8 @@ the specification root nor the target source root.
 
 ## What you never do
 
-- Answer a question with a value the specification does not hold — a fact absent from the
-  specification is produced by the specification gaining the statement, through step 4's
-  decided-fact route or the analysis that authors it, never by a task and never by prose.
 - Record a status, an estimate, a priority or an execution order — those fields do not exist,
   and prose does not get to hold what the contract refused.
 - Commit, stash, or otherwise change the consumer's git state — a dirty root is reported, and
   what to do with it is the human's call.
-- Write into a work root that holds `closure.md`, or remove a closure — a closed plan is
-  history, and reopening it is the human's git act.
+- Remove a closure — a closed plan is history, and reopening it is the human's git act.

@@ -22,10 +22,11 @@ stop. You need:
    `type`, its declared fields, and a body under `## Description`.
 3. **the inventory** — what the surveyor found in the target tree, so no task is invented
    for what already exists and no task rewrites what must be reused.
-4. **the plan-node contract's `epic` and `task` slices** — `plan.py --contract epic` and
-   `plan.py --contract task`'s output, both pasted whole rather than paths to open. Read both
-   before writing a single field; leave `implements` alone even though the task branch
-   declares it.
+4. **the plan-node contract's `epic` and skeleton slices** — `plan.py --contract epic` and
+   `plan.py --contract task --without implements`'s output, both pasted whole rather than paths
+   to open. Read both before writing a single field. The task slice carries no `implements`,
+   because that field is not yours: it belongs to another judge, in a context that never saw
+   your reasoning.
 
 Optionally, **the absent substrate** — the artifacts the project's own standard presupposes and
 the target tree does not hold, each with what the registry says it provides and the rules it

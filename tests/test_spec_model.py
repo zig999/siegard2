@@ -535,3 +535,78 @@ def test_a_parse_failure_that_is_not_the_colon_carries_no_hint(tmp_path):
     assert front is None
     assert "does not parse" in problem
     assert "yaml.safe_dump" not in problem
+
+
+# -------------------------------------------------------------------- --impact
+
+
+def test_impact_closes_one_hop_in_both_directions(spec_root):
+    """The closure a plan's situate step and an analysis both owe, read rather than assembled by
+    hand. Outward is what the node declares; inward is what declares one at it — including the
+    back-references a hand-run grep finds one identity at a time."""
+    done = run_node("--impact", "domain/troubleshooting/case", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    assert "one hop, both directions" in done.stdout
+    assert "declares  -> domain/troubleshooting/case-status" in done.stdout
+    assert "named by  <- rules/troubleshooting/case-transitions" in done.stdout
+    assert "named by  <- domain/troubleshooting/investigation" in done.stdout, \
+        "an aggregate back-reference is an edge, and the closure that misses it under-reports"
+    assert str(spec_root / "rules/troubleshooting/case-transitions.md") in done.stdout, \
+        "the read set is printed as paths, which is what the delegations are handed"
+
+
+def test_impact_carries_the_decision_log(spec_root):
+    """A log entry locating a node is a reverse link the grep this replaces finds today, and the
+    binder is told to consult the log before settling a claim of succession. A closure that
+    dropped it would be narrower than the procedure it replaces, silently."""
+    done = run_node("--impact", "domain/troubleshooting/evidence", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    assert "named by  <- decision-log" in done.stdout
+    assert str(spec_root / "decision-log.md") in done.stdout
+
+
+def test_impact_answers_over_a_specification_with_problems(spec_root):
+    """A reading, never a derived artifact — `/analyse` closes an impact set while it is still
+    authoring the files, so a closure refused until the last file parses arrives after the
+    decisions it was for. What did not resolve is marked, and the problems are named."""
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(subject="domain/troubleshooting/nonexistent"))
+    done = run_node("--impact", "rules/troubleshooting/case-transitions", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    assert "read over a specification with" in done.stdout
+    assert "the specification does not hold this" in done.stdout
+    assert "domain/troubleshooting/nonexistent" in done.stdout
+
+
+def test_impact_reads_the_same_edges_the_validator_checks(spec_root):
+    """The canary. Two readings of one specification — the check and the report — walk the same
+    `landing`, so a field that gains a reference is seen by both or by neither. This fails if the
+    report ever grows its own list of which fields carry a reference."""
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    seen: list[tuple[str, str, str]] = []
+    spec.cross_problems(nodes, spec_root,
+                        lambda owner, at, target, resolved: seen.append((owner, at, target)))
+    every = {(owner, target) for owner, _, target in seen}
+    assert ("rules/troubleshooting/case-transitions", "domain/troubleshooting/case") in every
+    assert ("decision-log", "domain/troubleshooting/evidence") in every
+    outward, inward, _ = spec.impact_of(nodes, spec_root, ["domain/troubleshooting/case"])
+    reported = {(owner, target) for owner, edges in outward.items()
+                for _, target, _ in edges}
+    assert reported == every, \
+        "the report walks edges the validator does not, or misses edges it checks; both are the " \
+        "same walk and there is no third place to keep them agreeing"
+
+
+def test_impact_refuses_an_identity_that_names_no_file(spec_root):
+    done = run_node("--impact", "domain/troubleshooting/nope", str(spec_root))
+    assert done.returncode == 2
+    assert "names no file" in done.stderr
+
+
+def test_impact_stands_beside_no_other_flag(spec_root):
+    """`--project` and `--digest` are derived artifacts refused over a broken specification;
+    `--impact` answers over one. Letting them share an invocation would make one of the two
+    answers wrong."""
+    done = run_node("--impact", "domain/troubleshooting/case", "--digest", str(spec_root))
+    assert done.returncode == 2
+    assert "derives nothing" in done.stderr

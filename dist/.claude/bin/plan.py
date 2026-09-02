@@ -50,13 +50,18 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         together
         The specification root is required while the plan is live, and ignored once closure.md
         marks it closed.
-        plan.py --contract <branch>
+        plan.py --contract <branch> [--fields a,b | --without a,b]
                                                         print one self-contained slice of
                                                         plan-node.json — a `$defs` entry, or every
                                                         property one `kind` value admits — with
                                                         every `$ref` inlined; stands alone, needs
                                                         no root. What a delegation is handed in
-                                                        place of the whole file
+                                                        place of the whole file. `--fields` keeps
+                                                        only the named properties and `--without`
+                                                        drops them, so a judge reads the fields it
+                                                        writes and not the branch around them; a
+                                                        name the branch does not declare is
+                                                        refused, never dropped in silence
         plan.py --help
                                                         print this text and stop
 Exit:   0 sound (and, with --check, current)
@@ -175,9 +180,49 @@ def contract_branches(schema: dict) -> list[str]:
     return sorted(set(schema.get("$defs", {})) | set(kinds))
 
 
-def print_contract_branch(schema_path: Path, branch: str) -> int:
+def project_branch(sliced: dict, keep: set[str] | None, drop: set[str] | None) -> dict:
+    """One branch narrowed to the fields a delegation actually writes.
+
+    A judge is handed the contract so that what it returns is what the validator will apply, and
+    every field beyond the ones it writes is text that cannot change a single decision it makes —
+    the binder decides `implements` and reads a whole task branch to do it. Narrowing is a
+    projection of the same schema, computed here rather than quoted by whoever spawns the
+    delegation, so there is no second copy of the contract to drift.
+
+    `required` is filtered with the properties: a required name the slice no longer carries would
+    describe a shape this slice cannot satisfy. Each example is projected the same way. What
+    projects to nothing is dropped rather than printed empty — an empty example teaches nothing,
+    and an empty `required` reads as a branch that requires nothing, which is a different claim
+    from a slice that carries none of what the branch requires.
+    """
+    names = set(sliced.get("properties", {}))
+    wanted = (names & keep) if keep is not None else (names - (drop or set()))
+    narrowed = dict(sliced)
+    narrowed["properties"] = {name: value for name, value in sliced["properties"].items()
+                              if name in wanted}
+    if "required" in narrowed:
+        required = [name for name in sliced["required"] if name in wanted]
+        if required:
+            narrowed["required"] = required
+        else:
+            narrowed.pop("required")
+    examples = [{k: v for k, v in example.items() if k in wanted}
+                for example in sliced.get("examples", []) if isinstance(example, dict)]
+    examples = [example for example in examples if example]
+    if examples:
+        narrowed["examples"] = examples
+    else:
+        narrowed.pop("examples", None)
+    return narrowed
+
+
+def print_contract_branch(schema_path: Path, branch: str, keep: set[str] | None = None,
+                          drop: set[str] | None = None) -> int:
     """`--contract`'s own body: read the schema, slice it, print the slice — or refuse, naming
-    every branch that schema does answer for."""
+    every branch that schema does answer for. `--fields` and `--without` narrow the slice to what
+    one delegation writes, and a name the branch does not declare is refused rather than dropped
+    in silence: a typo that quietly widened the slice would be the drift the narrowing exists to
+    end."""
     if not schema_path.is_file():
         print(f"cannot run: {schema_path} is missing; nothing can be sliced without it",
               file=sys.stderr)
@@ -189,6 +234,15 @@ def print_contract_branch(schema_path: Path, branch: str) -> int:
         print(f"cannot run: {branch} is not a branch of {schema_path.name}; one of {available}",
               file=sys.stderr)
         return CANNOT_RUN
+    if keep is not None or drop is not None:
+        declared = set(sliced.get("properties", {}))
+        named = keep if keep is not None else drop
+        unknown = sorted(named - declared)
+        if unknown:
+            print(f"cannot run: {branch} declares no {', '.join(unknown)}; it declares "
+                  f"{', '.join(sorted(declared))}", file=sys.stderr)
+            return CANNOT_RUN
+        sliced = project_branch(sliced, keep, drop)
     print(json.dumps(sliced, indent=2, ensure_ascii=False))
     return 0
 
@@ -656,10 +710,33 @@ def main() -> int:
             return CANNOT_RUN
         branch = args[at + 1]
         del args[at:at + 2]
-        if verify or single is not None or args:
-            print("cannot run: --contract stands alone", file=sys.stderr)
+        keep = drop = None
+        for flag in ("--fields", "--without"):
+            if flag not in args:
+                continue
+            at = args.index(flag)
+            if at + 1 >= len(args):
+                print(f"cannot run: {flag} takes a comma-separated list of field names",
+                      file=sys.stderr)
+                return CANNOT_RUN
+            named = {name.strip() for name in args[at + 1].split(",") if name.strip()}
+            del args[at:at + 2]
+            if not named:
+                print(f"cannot run: {flag} names no field", file=sys.stderr)
+                return CANNOT_RUN
+            if flag == "--fields":
+                keep = named
+            else:
+                drop = named
+        if keep is not None and drop is not None:
+            print("cannot run: --fields and --without are two ways to say the same thing, and "
+                  "naming both says two", file=sys.stderr)
             return CANNOT_RUN
-        return print_contract_branch(PLAN_CONTRACT, branch)
+        if verify or single is not None or args:
+            print("cannot run: --contract stands alone, beside --fields or --without",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return print_contract_branch(PLAN_CONTRACT, branch, keep, drop)
     named = against = None
     for flag in ("--standard", "--against"):
         if flag in args:

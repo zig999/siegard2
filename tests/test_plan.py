@@ -750,3 +750,55 @@ def test_contract_stands_alone():
     combined = run("--contract", "task", "--check")
     assert combined.returncode == 2
     assert "--contract stands alone" in combined.stderr
+
+
+# --------------------------------------------------- --contract --fields / --without (narrowing)
+
+def test_the_narrowed_slices_partition_the_branch():
+    """The canary. Two delegations read one branch between them — the decomposer everything it
+    writes, the binder `implements` alone — and the split is stated in two prompts that cannot see
+    each other. A field the schema gains would reach neither: the decomposer's slice drops it by
+    name and the binder's keeps only one name, so it would escape the plan while every test stayed
+    green. This is what fails instead."""
+    whole = json.loads(run("--contract", "task").stdout)["properties"]
+    binder = json.loads(run("--contract", "task", "--fields", "implements").stdout)["properties"]
+    skeleton = json.loads(
+        run("--contract", "task", "--without", "implements").stdout)["properties"]
+    assert set(binder) | set(skeleton) == set(whole), \
+        "a task field reaches neither the skeleton's slice nor the binder's; every field of the " \
+        "branch is written by one of them, and one nobody is handed is one nobody writes"
+    assert set(binder) & set(skeleton) == set(), \
+        "a field reaches both slices; the binder writes implements and the decomposer writes " \
+        "the rest, and a field in both is a field two judges decide"
+
+
+def test_a_narrowed_slice_drops_what_no_longer_applies():
+    narrowed = json.loads(run("--contract", "task", "--fields", "implements").stdout)
+    assert narrowed["kind"] == "task"
+    assert list(narrowed["properties"]) == ["implements"]
+    assert "required" not in narrowed, \
+        "the branch requires objective and criteria, and this slice carries neither; an empty " \
+        "`required` reads as a branch that requires nothing"
+    assert narrowed["examples"] == [{"implements": ["domain/sales/order",
+                                                    "rules/sales/order-total-positive"]}]
+
+
+def test_a_narrowed_slice_is_smaller_than_the_branch_it_narrows():
+    whole = run("--contract", "task").stdout
+    narrowed = run("--contract", "task", "--fields", "implements").stdout
+    assert len(narrowed) < len(whole) / 4, \
+        "the narrowing exists to stop a judge reading a branch to write one field; a slice this " \
+        "close to the whole is not buying what it was added for"
+
+
+def test_a_field_the_branch_does_not_declare_is_refused():
+    refused = run("--contract", "task", "--fields", "implments")
+    assert refused.returncode == 2
+    assert "task declares no implments" in refused.stderr
+    assert "implements" in refused.stderr, "the refusal names what the branch does declare"
+
+
+def test_fields_and_without_are_never_named_together():
+    refused = run("--contract", "task", "--fields", "implements", "--without", "produces")
+    assert refused.returncode == 2
+    assert "two ways to say the same thing" in refused.stderr

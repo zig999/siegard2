@@ -39,6 +39,20 @@ decision-log check — those need the whole specification, and a file mid-author
 earned them yet. It is refused the same as any file the whole run would refuse; it just does
 not also fail for references a later file in the same session has not been written yet either.
 
+**An impact set is closed by reading, not by hand.** `--impact` prints, for each node named,
+every reference it declares, every node that declares one at it, and every decision-log entry
+that located it — one hop, in both directions. The edges are read off the same walk that
+validates them, so the report and the check cannot drift apart. Two things it deliberately does
+not do. It never closes a second hop: the transitive closure of a connected specification is the
+specification, and a reader who wants another hop runs it again over what the first printed. And
+it answers over a specification that still has problems, marking what does not resolve, because
+an impact set is a reading rather than a derived artifact and the analysis that authors these
+files needs one before the last file parses.
+
+What it cannot answer is which nodes to name. That is the scope's vocabulary read against the
+specification's, it is judgment, and a set closed perfectly around the wrong candidates is still
+the wrong set.
+
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  spec.py <spec-root>              validate everything
@@ -46,6 +60,8 @@ Usage:  spec.py <spec-root>              validate everything
         spec.py --digest <spec-root>     validate, then print every node's content digest
         spec.py --node <file> <spec-root>
                                           validate one file (cross-node checks do not run)
+        spec.py --impact <identity>[,<identity>...] <spec-root>
+                                          print one hop around each named node, both directions
         spec.py --help                   print this text and stop
 Exit:   0 sound
         1 problems
@@ -58,6 +74,7 @@ import hashlib
 import json
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 CANNOT_RUN = 2
@@ -432,8 +449,15 @@ def state_machine_problems(identity: str, node: dict, nodes: dict[str, dict]) ->
     return problems
 
 
-def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
-    """The rules that need to see more than one file at once."""
+def cross_problems(nodes: dict[str, dict], root: Path,
+                   record: Callable[[str, str, str, bool], None] | None = None) -> list[str]:
+    """The rules that need to see more than one file at once.
+
+    `record` is how `--impact` reads the edges without owning a second list of which fields carry
+    a reference. Every declared reference in this specification passes through `landing` below on
+    its way to being checked, so a field that gains a reference is one both the check and the
+    report see, or neither — there is no third place to keep them agreeing.
+    """
     problems: list[str] = []
     elements = {i: n for i, n in nodes.items() if n["cls"] == "element"}
     contexts = sorted({n["context"] for n in nodes.values()
@@ -442,6 +466,8 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
 
     def landing(identity: str, expectation: str, owner: str, at: str) -> dict | None:
         target = nodes.get(identity)
+        if record is not None:
+            record(owner, at, identity, target is not None)
         if target is None:
             problems.append(f"{owner}: {at} names {identity}, "
                             f"which the specification does not hold")
@@ -635,7 +661,11 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
             if not isinstance(entry, dict) or not isinstance(entry.get("location"), str):
                 continue  # the schema already reported the shape
             location = entry["location"]
-            target = nodes.get("/".join(Path(location).with_suffix("").parts))
+            located = "/".join(Path(location).with_suffix("").parts)
+            target = nodes.get(located)
+            if record is not None:
+                record("decision-log", f"entries[{index}]", located,
+                       target is not None and (root / location).is_file())
             if target is None or not (root / location).is_file():
                 problems.append(f"decision-log: entries[{index}] locates {location}, "
                                 f"which the specification does not hold (SPEC-001 R9)")
@@ -647,6 +677,81 @@ def cross_problems(nodes: dict[str, dict], root: Path) -> list[str]:
                     problems.append(f"decision-log: entries[{index}] locates `{field}` in "
                                     f"{location}, which declares no `{head}` (SPEC-001 R9)")
     return problems
+
+
+def impact_of(nodes: dict[str, dict], root: Path,
+              named: list[str]) -> tuple[dict[str, list], dict[str, list], list[str]]:
+    """One hop around each named node, in both directions, read off the same walk that validates.
+
+    The edges come from `cross_problems`'s own `landing`, so what this reports and what the
+    validator checks cannot drift apart: a field that gains a reference is seen by both, and a
+    field neither walks is a reference this specification does not declare.
+
+    **One hop, and no flag for more.** An impact set exists to say what governs a scope, and the
+    transitive closure of a connected specification is the specification — a reader who needs a
+    second hop runs this again over what the first one printed, deciding each time, rather than
+    receiving a graph nobody chose to read.
+    """
+    outward: dict[str, list] = {}
+    inward: dict[str, list] = {}
+
+    def record(owner: str, at: str, target: str, resolved: bool) -> None:
+        outward.setdefault(owner, []).append((at, target, resolved))
+        inward.setdefault(target, []).append((owner, at, resolved))
+
+    cross_problems(nodes, root, record)
+    reached = sorted({identity for identity in named}
+                     | {target for identity in named
+                        for _, target, resolved in outward.get(identity, []) if resolved}
+                     | {owner for identity in named
+                        for owner, _, resolved in inward.get(identity, []) if resolved})
+    return outward, inward, reached
+
+
+def print_impact(nodes: dict[str, dict], root: Path, named: list[str],
+                 problems: list[str]) -> int:
+    """`--impact`'s own body: the closure around the named nodes, printed to be quoted verbatim.
+
+    This is a reading, never a derived artifact, which is why it answers over a specification that
+    does not yet hold together — `/analyse` closes an impact set while it is still authoring the
+    files, and a closure refused until the last file parses is a closure that arrives after the
+    decisions it was for. What did not resolve is marked rather than dropped, and the problems are
+    named at the end so nobody quotes this as a clean run.
+
+    What it does not answer is which nodes to name in the first place. That is the scope's
+    vocabulary against the specification's, it is judgment, and no closure can supply it — a set
+    closed perfectly around the wrong candidates is still the wrong set.
+    """
+    missing = [identity for identity in named if not (root / f"{identity}.md").is_file()]
+    if missing:
+        print(f"cannot run: {', '.join(missing)} names no file under {root}; "
+              f"an identity is a node's path without `.md`", file=sys.stderr)
+        return CANNOT_RUN
+
+    outward, inward, reached = impact_of(nodes, root, named)
+    unheld = " — the specification does not hold this"
+    print(f"impact set: {len(reached)} node(s) from {len(named)} named, one hop, both directions.")
+    if problems:
+        print(f"read over a specification with {len(set(problems))} problem(s): what did not "
+              f"resolve is marked, and the problems are listed below.")
+    for identity in named:
+        print(f"\n{identity}")
+        lines = [f"  declares  -> {target:<48} {at}{'' if resolved else unheld}"
+                 for at, target, resolved in sorted(outward.get(identity, []))]
+        lines += [f"  named by  <- {owner:<48} {at}{'' if resolved else unheld}"
+                  for owner, at, resolved in sorted(inward.get(identity, []))]
+        if identity not in nodes:
+            lines.append("  (this file did not parse; its own references are unread)")
+        print("\n".join(lines) or "  (declares nothing, and nothing declares it)")
+    print("\nread:")
+    for identity in reached:
+        print(f"  {root / f'{identity}.md'}")
+    if problems:
+        print()
+        for problem in sorted(set(problems)):
+            print(problem)
+    return 0
+
 
 
 # ---------------------------------------------------------------- projections
@@ -983,6 +1088,18 @@ def main() -> int:
     write = "--project" in args
     show_digests = "--digest" in args
     args = [a for a in args if a not in ("--project", "--digest")]
+    impact = None
+    if "--impact" in args:
+        at = args.index("--impact")
+        if at + 1 >= len(args):
+            print("cannot run: --impact takes a comma-separated list of node identities",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        impact = [name.strip() for name in args[at + 1].split(",") if name.strip()]
+        del args[at:at + 2]
+        if not impact:
+            print("cannot run: --impact names no node", file=sys.stderr)
+            return CANNOT_RUN
     single = None
     if "--node" in args:
         at = args.index("--node")
@@ -991,6 +1108,10 @@ def main() -> int:
             return CANNOT_RUN
         single = args[at + 1]
         del args[at:at + 2]
+    if impact is not None and (write or show_digests or single is not None):
+        print("cannot run: --impact reads the specification and derives nothing; it stands "
+              "beside no other flag", file=sys.stderr)
+        return CANNOT_RUN
     if (write or show_digests) and single is not None:
         print("cannot run: --node validates one file, and --project/--digest are facts about "
               "the whole specification", file=sys.stderr)
@@ -999,8 +1120,8 @@ def main() -> int:
         print("cannot run: --project and --digest are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected [--project | --digest | --node <file>] <spec-root>",
-              file=sys.stderr)
+        print("cannot run: expected [--project | --digest | --node <file> | "
+              "--impact <identity>[,<identity>...]] <spec-root>", file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
     if not root.is_dir():
@@ -1017,6 +1138,8 @@ def main() -> int:
 
     nodes, problems = collect(root, validators)
     problems += cross_problems(nodes, root)
+    if impact is not None:
+        return print_impact(nodes, root, impact, problems)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)

@@ -92,12 +92,19 @@ decision set, and this invocation is a change to it — located, not re-derived.
   the nodes the material speaks to by identity, and where the material's vocabulary does not
   surface there, grep the specification root for its terms — a body's `## Description` costs
   nothing to grep and everything to open blind.
-- **Close the impact set over the references, in both directions**: what the entry nodes
-  reference in their own frontmatter — every reference-bearing field the class schemas declare,
-  read from the plugin root's `schemas/spec/` directory rather than from a list here, so a field
-  a schema gains is a field this closure reaches — and what references them back —
-  grep the specification root for each entry node's identity, because no derived edge index
-  exists to read this from instead.
+- **Close the impact set by reading, not by hand.** Run
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact <identity>[,<identity>...] <specification-root>
+  ```
+
+  over the entry nodes at once: it prints, per node, every reference it declares, every node that
+  declares one at it, and every decision-log entry that located it, plus the read set as paths.
+  One hop, both directions, off the same walk that validates references, so a field a schema
+  gains is a field this closure reaches. It answers over a specification that still has problems,
+  marking what does not resolve — which is the ordinary state here, where the files are being
+  authored. Do not close a second hop by hand, and do not treat the closure as the entry set: the
+  nodes named are the ones the material speaks to, and that judgment is yours.
 - **Read the impact set and nothing else.** Outside it, standing decisions stand: this
   invocation does not reopen them, however improvable they look. Material that invalidates a
   context boundary is a finding for the report, never a change this invocation makes on its
