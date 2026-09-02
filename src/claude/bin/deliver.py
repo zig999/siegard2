@@ -177,6 +177,7 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
     raise SystemExit(CANNOT_RUN)
 
 import plan
+import project
 import spec
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
@@ -787,6 +788,85 @@ def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
     return [said]
 
 
+RECONCILE_DIR = "siegard-reconcile"
+TRACE_FILE = "siegard-trace.json"
+
+
+def review_reconciliation_problems(nid: str, front: dict, target: Path) -> list[str]:
+    """The join between a review and the reconciliation record its conformance pass folded.
+
+    Over a traced target the conformance pass judges every node the trace binds to the reviewed
+    files — the delivery's own and every other node's claim on the same file — and binds what
+    cleared, so the delivery's bind is not the last word on a file other nodes still answer for.
+    The record that justifies that bind lives under `siegard-reconcile/` at the target's git
+    toplevel, and this field is how a review names it. The join is held only where the record
+    claims the field: a review naming a record over a pass that did not run cites a judgment nobody
+    made, a record that is not there justifies nothing, and the record's own file set must be the
+    review's — a reconciliation over fewer files than the review read is a pass that skipped part
+    of the change, and over more is a scope nobody stated. A review that names none is not
+    refused: every review written before the field existed names none, and a field that became
+    required refuses a consumer's whole delivery root the day the framework updates. What such a
+    review did — judge the plan's nodes alone and leave every other binding of its files as it
+    stood — `unreconciled_reviews()` says as a receipt."""
+    named = front.get("reconciliation")
+    if named is None:
+        return []
+    ran = "conformance" in ran_passes(front, pass_names())
+    if not ran:
+        return [f"{nid}: `reconciliation` is present and the conformance pass did not run; the "
+                f"record it names is that pass's own fold, and a pass that did not run folded "
+                f"nothing"]
+    if not isinstance(named, str):
+        return []  # the schema already reported the shape
+    home = project.toplevel_of(target)
+    record = home / named
+    if not record.is_file():
+        return [f"{nid}: `reconciliation` names {named}, and {record} does not exist; the path "
+                f"is spelled from the target's git toplevel, where {RECONCILE_DIR}/ sits"]
+    front_of = spec.parse_node(record)[0]
+    if not isinstance(front_of, dict):
+        return [f"{nid}: `reconciliation` names {named}, which carries no frontmatter this can "
+                f"read"]
+    recorded = sorted({e["path"] for e in listed(front_of, "files")
+                       if isinstance(e, dict) and isinstance(e.get("path"), str)})
+    reviewed = sorted(p for p in listed(front, "reviewed") if isinstance(p, str))
+    if recorded != reviewed:
+        missing = sorted(set(reviewed) - set(recorded))
+        stray = sorted(set(recorded) - set(reviewed))
+        parts = []
+        if missing:
+            parts.append(f"{named} accounts for none of {', '.join(missing)}")
+        if stray:
+            parts.append(f"{named} accounts for {', '.join(stray)}, which `reviewed` does not "
+                         f"list")
+        return [f"{nid}: {'; '.join(parts)}; the conformance pass is staged over the review's "
+                f"own file set, whole, and a record over a different set judged a different "
+                f"change"]
+    return []
+
+
+def unreconciled_reviews(nodes: dict[str, dict], target: Path) -> list[str]:
+    """The receipt for a review whose conformance pass ran over a traced target and folded no
+    record. A statement, never a refusal, on the same terms as the standards line: nothing here is
+    wrong by the contract the record was written under — but each such review read the plan's
+    nodes alone, and every other node bound to the files it reviewed still asserts the digest that
+    was there before the delivery, which `trace.py --check` reports as `code` drift and only a
+    `/reconcile` over those files now closes."""
+    home = project.toplevel_of(target)
+    if not (home / TRACE_FILE).is_file():
+        return []
+    names = pass_names()
+    unfolded = sorted(nid for nid, node in nodes.items()
+                      if node["kind"] == "review"
+                      and "conformance" in ran_passes(node["front"], names)
+                      and "reconciliation" not in node["front"])
+    return [f"{nid}: the conformance pass ran over a traced target and names no reconciliation "
+            f"record; it judged the plan's nodes alone, and every other binding of the files it "
+            f"reviewed stands as it stood before the delivery — `trace.py --check` reports those "
+            f"as `code` drift, and a /reconcile over those files is what closes them"
+            for nid in unfolded]
+
+
 def review_standard_problems(nid: str, front: dict, target: Path, validator) -> list[str]:
     """Every citation a review makes, resolved against the standard it names. A review may only cite
     a rule the standard leaves to a reading — judging one a tool decides exactly would re-decide it
@@ -1112,6 +1192,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                                                  names, root))
             problems.extend(review_standard_problems(nid, front, target,
                                                      standard or standard_contract()))
+            problems.extend(review_reconciliation_problems(nid, front, target))
     return problems
 
 
@@ -1857,6 +1938,8 @@ def main() -> int:
                   f"rewrite it; do not edit it, because every fact in it lives in a node file")
             return 1
         print(f"delivery checked: {index_path} matches {len(delivery['nodes'])} node(s)")
+        for line in unreconciled_reviews(nodes, target):
+            print(f"  {line}")
         return 0
 
     index_path.write_text(text, encoding="utf-8")
@@ -1870,6 +1953,8 @@ def main() -> int:
     findings = sum(n.get("findings", 0) for n in delivery["nodes"])
     print(f"derived {index_path}: {len(delivery['nodes'])} node(s), "
           f"{len(delivery['edges'])} edge(s), contract {delivery['contract_version']}")
+    for line in unreconciled_reviews(nodes, target):
+        print(f"  {line}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {done} of {tasks} task(s) hold a record; "
           f"{unmet} criterion(s) recorded unmet; {unproven} recorded unproven; "
           f"{findings} finding(s)"

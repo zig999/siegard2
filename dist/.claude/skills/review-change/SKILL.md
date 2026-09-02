@@ -1,6 +1,6 @@
 ---
 name: review-change
-description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the specification holds, whether it follows the standard the project set for itself, and why a captured run failed — runs the steps that standard declares over the whole change and captures what they printed, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
+description: Reviews a delivered change from the angles that need judgment — whether the tests prove the task's criteria, whether the source states only what the specification holds (read per file against every node the trace binds to it, the delivery's own and every other node's claim on the same file, and the bindings that judgment clears are restamped), whether it follows the standard the project set for itself, and why a captured run failed — runs the steps that standard declares over the whole change and captures what they printed, records the findings and the passes that did not run under the delivery root, and derives delivery.json. Use when a request asks to review, check, audit or verify a change that a delivered task produced. Not for writing or fixing source (that is /implement-task), not for planning (that is /plan-work), and not for approving anything — it produces evidence, and what it means is a person's to decide.
 effort: medium
 ---
 
@@ -38,11 +38,14 @@ A missing input is a stop, not a default:
    review's own record: both are `<slug>` under the project's `work_root` and `delivery_root`
    respectively. Where the invocation names none and the project's `work_root` holds exactly
    one initiative, that is the slug: decided and disclosed, never asked.
-6. **this review's own name** — what `review/<review-name>.md` under the delivery root is called, and
-   the name its captured run takes. Named by the human; where the invocation names none, it is
-   the initiative's slug. A name already taken is a stop and not a suffix: `bin/run.py` refuses a
-   run under a name that exists, and the record beside it is a judgment somebody acted on — a
-   second review of one initiative names itself, the same way a second reconciliation does.
+6. **this review's own name** — what `review/<review-name>.md` under the delivery root is called,
+   the name its captured run takes, and the slug of the reconciliation record its conformance pass
+   writes at `siegard-reconcile/<review-name>.md`, at the target's git toplevel. Named by the
+   human; where the invocation names none, it is the initiative's slug. A name already taken in
+   any of the three places is a stop and not a suffix: `bin/run.py` refuses a run under a name
+   that exists, `trace.py --stage` refuses a reconciliation slug that exists, and the record
+   beside either is a judgment somebody acted on — a second review of one initiative names itself,
+   the same way a second reconciliation does.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `specification_root`, `targets`, `work_root` and `delivery_root` answer only from here: naming
@@ -142,6 +145,12 @@ bullets below hand their subagent, verbatim, in place of the file's path. Do not
 memory of either, and do not restate them: what you remember is not what the validator will
 apply.
 
+The conformance pass answers to two more, and each is handed as a path rather than read here:
+`${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract every per-file judge's
+whole return is held to by the fold, and `${CLAUDE_PLUGIN_ROOT}/schemas/reconciliation.json`,
+the record that fold writes. Read the second once, for the `summary` and `files[].change` lines
+the premise below owes; the fold applies the rest.
+
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not, the
 plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
 install, the `.claude/` directory this skill's tree sits under. Every path below resolves the same
@@ -204,7 +213,7 @@ The next step runs the commands this registry declares, so a review that met the
 would already have run without them. And the pass that reads it is handed the registry's own path,
 which has to exist before the pass is spawned.
 
-Last, read what the trace says about this tree:
+Last, read what the trace says about this tree, and stage the conformance pass over it:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>
@@ -218,17 +227,16 @@ each class takes. `orphaned` is a binding to a specification node that no longer
 can repair it, because a bind refuses a node the base does not hold, and `trace.py --prune` is what
 clears it. `moved` is the specification moving under a binding, healed when the node's task is next
 delivered — the bind restamps at the node as it stands. `code` is a file changed without a rebind,
-whatever wrote it — a hand edit, a merge, or a delivery rewriting a file another node's binding
-claims, which no delivery can answer because a bind restamps only its own task's nodes: the route is
+whatever wrote it. Over the files of this review, the conformance pass below is what answers it:
+the delivery's bind restamped only its own task's nodes, and every other node bound to a file it
+rewrote is still asserting the digest that was there before — that is the reason the pass reads
+the trace's node set and not the plan's alone. Over files outside this review, the route is
 `/reconcile`, never a deletion.
 
 It is read here because this is the last place a delivered tree gets read whole with a report
-attached, and because the drift that matters most is the drift nothing else can see. Every path
-this framework runs binds at the end of it — but only the delivering task's own nodes; a file that
-changed any other way — a correction typed in by hand, a conflict resolved during a merge, a shared
-file rewritten under another node's claim — leaves the trace asserting a digest that is not there
-any more, and asserting it silently. A review that says nothing about it is how a tree accumulates
-a trace nobody can trust while every command still exits 0.
+attached, and because the drift that matters most is the drift nothing else can see. A review that
+says nothing about it is how a tree accumulates a trace nobody can trust while every command still
+exits 0.
 
 **Where the output carries a suppression receipt, one line of the report is owed to it, and it is
 not a finding either.** A project may declare a target whose source a person changes without a
@@ -242,6 +250,38 @@ the paths, and **offer them** — as paths the human may add to the file set of 
 standard pass reaches them, or as the argument for a `/check-source` invocation over the same list.
 Offer, never widen: a review that pulled files in on its own would be choosing its own scope, which
 is the one thing the file set exists to prevent.
+
+Then, into a fresh workspace directory nothing commits (`mktemp -d` is the ordinary choice — the
+workspace is a reading copy, and a committed copy of node text would be a second home for it):
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
+    <review-name> <workspace> <each path of the file set> --review --node <each node the tasks implement>
+```
+
+This is the locate step of the conformance pass, run by the one reader that cannot miss a binding.
+For every file of the set it computes every node the trace binds to it, writes one **node pack**
+per file — the full text of every node that file's judge reads, each entry naming its source path
+and digest — writes the **candidate index** for the whole batch, and creates
+`siegard-reconcile/<review-name>.returns/` empty beside the record's own reserved path. `--review`
+is what makes this a review's staging and not a reconciliation's, in two ways the manifest records.
+**Nothing is omitted**: the delivery's own bind stamped its nodes over these exact bytes, so the
+guard that skips a pair whose binding is current would hand each judge every binding except the
+ones this pass exists to re-read. And **the plan's nodes ride along on every file** — each
+`--node` is the identity of a node the tasks under review implement, exactly as `plan.json` names
+them — read by every judge and answered for in every return, so a fact the delivery wrote against a
+node its record never bound is still read against that node; they are never bound from here,
+because a binding this review wrote would be a claim no implementation record made. A file the
+trace binds nothing to — a test, a file the records did not name under `encoded_at` — is still
+handed a judge, over the plan's nodes alone. Run it; never infer any of it, and never reconstruct a
+node set by reading `siegard-trace.json` yourself.
+
+Two states the staging may report continue differently. **A node under the orphaned class** is a
+stop for that node alone, said plainly: the specification no longer holds it, no bind repairs the
+entry, `--prune` is its route, and no judge is handed it. **No trace file at all** is not a stop:
+nothing has been bound in this target, so there is no collateral to judge — the conformance pass
+runs over the file set with the plan's node identities as its whole node set, in one delegation,
+writes no record and binds nothing, and the report says so.
 
 ### 2. Capture
 
@@ -290,12 +330,36 @@ runs next.
   `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, passing the criteria as the task files state
   them, the test file set out of the proof records, the target source root, and the
   `coverageEntry` slice printed above, pasted whole. It returns one entry per criterion.
-- **conformance** — spawn a `specification-conformance-reviewer` subagent, its judgment at
-  `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`, passing the file set, the
-  node identities, the specification root, and the `finding` slice printed above, pasted
-  whole. It returns where the source
-  states a domain fact the specification does not hold, contradicts one it does, or became a
-  second home for one.
+- **conformance** — one `specification-conformance-reviewer` subagent **per file the staging
+  manifest holds**, spawned together rather than one after another, each judging at
+  `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
+  a file set of exactly its one file; as the node set, its node pack's path from the manifest —
+  the pack is the set, whole, the trace's nodes and the plan's alike, each node's text with its
+  source named; as candidates, the path to the workspace's candidate index, which it may consult
+  where its file states a fact its own nodes do not settle; the specification root; the `finding`
+  slice printed above, pasted whole; and the path to
+  `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
+  to. Every path a delegation receives is absolute and already resolved, and the pack and the index
+  go as paths, never as their text — one index serves the batch, and a prompt carrying it inline
+  pays for it once per file. It returns where the source states a domain fact the specification
+  does not hold, contradicts one it does, or became a second home for one — and, per node, where
+  the node's fact is held in that file, which is what a cleared binding's `how` is written from.
+
+  One judge per file rather than one over the set, because a judgment over the set saturates: a
+  single context holding every node and every file at once answers hundreds of node-file pairs in
+  one reading and claims clean over pairs it never weighed. No delegation reads another's return,
+  and the pass is the union of what they return. **Save each return verbatim the moment it
+  arrives**, at `siegard-reconcile/<review-name>.returns/<the file's path with every '/' as
+  '__'>.yaml` — a copy and nothing else, never reshaped, trimmed or repaired: the returns are the
+  evidence the record is folded from and they outlive this session. The fold admits the four keys
+  `conformance-return.json` names and refuses a fifth; what a delegation says outside them belongs
+  in your report, never in the file the fold reads. A delegation answers once: where a return is
+  unusable, the correction is a fresh delegation with the prompt fixed, never a follow-up to the
+  one that already answered.
+
+  Where the staging found no trace file, this pass is instead one delegation over the whole file
+  set with the plan's node identities as its set, as the situate step says, and nothing below
+  under *fold and bind* runs.
 - **standard** — where the caller named a project standard, run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the standard's path> --reading
   --for <every path of the file set, one --for each>` and keep its output — the rules a tool
@@ -342,12 +406,57 @@ profile. A standard is the project's and its tools are the project's, and a proj
 authored neither gets an honestly narrow review rather than a clean one. Say as much in the report,
 so a reader never mistakes four passes for every pass.
 
+### 3b. Fold and bind what the conformance pass read
+
+Write the premise — the one part of the reconciliation record that is the delivery's and no fold
+can compose. A small YAML file in the workspace, carrying `title`, `summary` (which tasks wrote
+these files, under which initiative, as the implementation records state it — never a finding of
+yours), `target`, and one `files` entry per path of the file set with its `change` line, taken
+from the implementation records' own `files[].effect` where a record names the path and stated as
+"written by the delivery of <task>" where none does. Then:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <workspace> \
+    <the premise> siegard-reconcile/<review-name>.md
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --reconciliation siegard-reconcile/<review-name>.md
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> siegard-reconcile/<review-name>.md
+```
+
+The fold writes the record mechanically from the saved returns — which answer a node folds to
+when more than one judge read it, where a finding naming a node lands, what a finding naming none
+holds, which nodes are marked `collateral` — and every rule it applies lives in the fold and its
+tests, not here. **Never apply those rules by hand, and never edit what the fold wrote.** A
+refusal naming a delegation is a fresh delegation with the prompt fixed; a refusal about the
+premise is yours to fix. The bind then writes **whatever the judgment cleared, and never anything
+else**: a node the judgment refused carries no `encoded_at`, and the binding form reads only nodes
+that do — so the invocation above restamps exactly the cleared set, the delivery's own nodes at
+the digest their own bind already wrote and every other node's claim on these files at the
+content the delivery left. It never passes `--replace`. Read the bind's receipt and carry it into
+the report: it names the nodes it did not write, which is the one place the partial shape of the
+act is stated at the moment it happens.
+
+This is the one place in this invocation that writes outside the delivery root — the
+reconciliation record and its returns under `siegard-reconcile/`, and `siegard-trace.json`, both
+at the target's git toplevel — and none of it is a decision about the change. The record states
+what the judges read; the bind states what they cleared; a finding stays a finding, routed by a
+person. **Nor is it a second judgment on the delivery's own nodes made by you:** the judges are
+the delegations above, and where this session cannot spawn subagents and wrote any node a judge
+would read, the pass stops and reports rather than running inline.
+
+Every finding a return carries — `contradicts` and `unstated` alike — is a finding of this
+pass, stamped `conformance` and placed in the review record under the file its judge read; the
+fold's `unstated` list and the review's findings are the same facts in two homes, one for the
+trace's reader and one for the delivery's.
+
 ### 4. Compose
 
 Write `review/<review-name>.md` under the delivery root, under the name input 6 fixed — the name is
 this review's identity and the path is where it lives. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
 that one ran, how many failures were counted where that one did, the run's directory where there was
-one, and every finding.
+one, the reconciliation record the conformance pass folded — `reconciliation:
+siegard-reconcile/<review-name>.md`, which the validator holds to the pass having run and to this
+review's own file set, and whose absence over a target holding a trace file it prints as a receipt
+naming the review that judged the plan's nodes alone — and every finding.
 
 The record holds no list of the rules that were in scope. That reference and its pin already
 determine that set, both sit in this root, and the validator derives it — so a stored list would be
@@ -424,13 +533,20 @@ Report, in this order:
   how it ended, how many failures were counted, and where the output sits. Name any step a rule
   expects and the registry declares no command for: that rule was decided by nothing, and a review
   silent about it reads as a review that covered the whole registry;
-- the trace: the drift counts by class over this target, and the route each class takes — `--prune`
-  for the bindings no rebind can repair, a rebind through the delivery that owns the change for the
-  rest. Say plainly that this is not a finding and settles nothing about the change: it says whether
-  the link back to the specification still describes this tree, which no pass above asks. Where a
-  suppression receipt came back, say how many were held back and under which target, that the rules
-  a reading decides went unread over those files, and offer the paths `--all` lists — for this
-  review's file set, or for a `/check-source` over the same list;
+- the trace: the drift counts by class over this target as the situate step read them, and the
+  route each class takes — `--prune` for the bindings no rebind can repair, `/reconcile` for the
+  `code` class on files outside this review. Say plainly that this is not a finding and settles
+  nothing about the change: it says whether the link back to the specification still describes
+  this tree, which no pass above asks. Where a suppression receipt came back, say how many were
+  held back and under which target, that the rules a reading decides went unread over those files,
+  and offer the paths `--all` lists — for this review's file set, or for a `/check-source` over
+  the same list;
+- what the conformance pass bound, and what it left owed, kept apart: the nodes restamped over
+  the reviewed files, as the bind's receipt names them, and the nodes it did not write, each with
+  the finding that held it — a `collateral` mark said apart from a contested one. Where the record
+  and the returns were written. `trace.py --check` over the target reports the drift that
+  remains; `trace.py --owed` reports what this pass found and no bind could close, which `--check`
+  cannot see. Neither is a verdict on the change, and no route is chosen here for either;
 - what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;
@@ -461,5 +577,8 @@ to a person.
 - Show the standard pass what an implementation record disclosed. A record may name the very rules
   this pass reads, and a pass told which departures were already admitted is a pass the producer
   shaped. It reads the source; a person reads both records and learns something neither says alone.
-- Write into the work root, the specification root, or the target source root.
+- Write into the work root, the specification root, or the target source root. The one write
+  outside the delivery root is the fold and bind above — `siegard-reconcile/<review-name>.md`, its
+  returns, and `siegard-trace.json`, at the target's git toplevel — and it states what the judges
+  read and cleared, never a decision about the change.
 - Commit, stash, or otherwise change the consumer's git state.

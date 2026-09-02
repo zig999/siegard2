@@ -649,9 +649,11 @@ are not yet linked for anyone who looks later.
 One more thing the bind may print, and it is a receipt, never a refusal: **the bindings this act
 left stale** — another node's binding over a file this delivery rewrote (a bind restamps only this
 task's own nodes), or a file this task's nodes carried forward from an earlier bind that has since
-changed. Keep the receipt whole for the report: it is the one moment those bindings are in the
-hands of whoever changed the files, and dropped here it survives only as a `--check` finding
-nobody was going to run.
+changed. Keep the receipt whole for the report. The `/review-change` that follows this delivery is
+what answers it: its conformance pass reads every file of the change against every node the trace
+binds to it and restamps what cleared. Where no review will follow, the receipt is the one moment
+those bindings are in the hands of whoever changed the files, and dropped here it survives only as
+a `--check` finding nobody was going to run.
 
 ### 9. Report, and stop
 
@@ -670,14 +672,16 @@ Report, in this order:
   what lets a future invocation ask whether this code and the specification have since moved
   apart, and a refused binding left unreported is a delivery that looks synced when it is not;
 - where the bind printed a stale-bindings receipt, the receipt verbatim, and after it one
-  `/reconcile` invocation ready to paste — the project root and the target filled in, the file
-  set being every path the receipt names, converted to the target source root's own anchor (the
-  receipt spells paths from the git toplevel, and `/reconcile` reads them relative to the target
-  source root), and a slug slot left for the human to name, since `/reconcile` requires one and
-  refuses a slug already taken — with the one sentence that makes the door real rather than decorative: it runs
-  only after the human commits this delivery's pending state, because `/reconcile` refuses a
-  named file the tree holds uncommitted. Never a stop, and never per file: one invocation, one
-  file set, and taking it is the human's;
+  `/reconcile` invocation ready to paste **for the case where no `/review-change` follows this
+  delivery** — the review's conformance pass judges and restamps these same bindings over the
+  files it reads, so the door is taken only where that review will not run — the project root and
+  the target filled in, the file set being every path the receipt names, converted to the target
+  source root's own anchor (the receipt spells paths from the git toplevel, and `/reconcile` reads
+  them relative to the target source root), and a slug slot left for the human to name, since
+  `/reconcile` requires one and refuses a slug already taken — with the one sentence that makes
+  the door real rather than decorative: it runs only after the human commits this delivery's
+  pending state, because `/reconcile` refuses a named file the tree holds uncommitted. Never a
+  stop, and never per file: one invocation, one file set, and taking it is the human's;
 - which steps, if any, ran inline instead of in a subagent, and why;
 - the validator's final output, verbatim;
 - the standard this invocation followed — where it resolved from, the invocation or the project

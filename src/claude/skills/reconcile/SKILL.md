@@ -297,8 +297,8 @@ says that happened. A score folded out of a judge that answered twice is a floor
 and a record cannot say which it is.
 
 One agent serves both routes, deliberately: what belongs in the file set and the node set is the
-caller's rule and never its own — in a review that rule is the plan and the change, here it is the
-trace, one file at a time. Duplicating the judgment into a second agent that reads it differently
+caller's rule and never its own — in a review that rule is the change, with the trace's nodes and
+the plan's read together over each file it wrote; here it is the trace alone, one file at a time. Duplicating the judgment into a second agent that reads it differently
 is how two passes end up disagreeing about what conformance means. Two things this route needs are
 in the agent's own contract rather than in this sentence: the candidate tier it may open to
 attribute a fact, and the per-node `read` it returns — `held_at` and its quoted evidence — which

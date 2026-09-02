@@ -131,7 +131,9 @@ The steps:
    findings are relayed whole in the report and never acted on here: which route a finding
    deserves, or whether it deserves one, is the decision that skill deliberately does not make,
    and this skill inherits the same restraint. Repairing anything a finding names is a new ask.
-   Commit the delivery root — `deliver-scope <slug>: review`.
+   Commit the delivery root, the trace file and `siegard-reconcile/` — the review's conformance
+   pass writes its record and returns there and restamps the trace — in one commit,
+   `deliver-scope <slug>: review`.
 
 **The orchestration log.** After each step, append one line to `orchestration.md` at the delivery
 root — what was invoked, the commit that followed by its hash, and the outcome, one sentence per

@@ -29,6 +29,10 @@ Ten things this script does, and nobody else does any of them:
                                                                   candidates, omittable pairs
     trace.py --stage ... --audit                                  the same, omitting no pair:
                                                                   every standing claim is judged
+    trace.py --stage ... --review [--node <node> ...]             a review's staging: omitting no
+                                                                  pair, keeping the candidate
+                                                                  tier, and reading each --node on
+                                                                  every file without binding it
     trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
                                                                   into the reconciliation record
     trace.py --encodes --rank <target-root> [--all]               the accretion axes: files by
@@ -1272,11 +1276,24 @@ def open_owed(home: Path) -> set[tuple[str, str]]:
 
 
 def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
-          files: list[str], audit: bool = False) -> int:
+          files: list[str], audit: bool = False, review: bool = False,
+          also: list[str] | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
     corpus — nothing is chosen, so nothing here is a judgment.
+
+    A review stages the files a delivery just wrote, and two things differ from a reconciliation
+    over a hand edit. Nothing is omitted: a delivery's own bind stamped its nodes over these exact
+    bytes, so the omission guard would hand the review's judge every binding except the ones the
+    review exists to re-read. And the candidate tier stays, unlike an audit's, because here a
+    misattribution reported as a gap is a false finding against a collateral node — a binding the
+    delivery never claimed and its record never justified — and a false finding blocks that node's
+    rebind. The nodes given as `also` are the plan's: every file's judge reads them beside the
+    trace's own set and answers for them, so a fact the delivery wrote against a node its record
+    did not bind is still read against that node, but they are never bound from here — a binding
+    the review wrote would be a claim no implementation record made. A file the trace binds nothing
+    to is still handed a judge over them alone, where it would otherwise be reported and skipped.
 
     The workspace is a reading copy and never a home. The packs restate node text so a judge
     reads its whole set in one act instead of one call per node, and they are trustworthy for
@@ -1289,6 +1306,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     survive nowhere is a judgment nobody can reopen. It is created empty beside the record's own
     reserved path, and a slug either of them already holds is the same stop a taken record slug
     has always been."""
+    also = list(dict.fromkeys(also or []))
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -1309,6 +1327,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     nodes, status = sound_specification(spec_root)
     if nodes is None:
         return status
+    unknown = [node_id for node_id in also if node_id not in nodes]
+    if unknown:
+        print(f"cannot run: {spec_root} holds no node {', '.join(unknown)}; a --node is read on "
+              f"every file as the specification states it, and one the specification does not "
+              f"hold is nothing to read", file=sys.stderr)
+        return CANNOT_RUN
 
     home = home_of(target)
     record_path = home / RECONCILE_DIR / f"{slug}.md"
@@ -1345,7 +1369,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     for given in files:
         stored = stored_of[given]
         rows = sorted(index.get(stored) or [])
-        if not rows:
+        if not rows and not also:
             unbound.append(given)
             continue
         assigned = []
@@ -1355,7 +1379,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 continue
             # An audit is the deliberate re-judgment of exactly the pairs this omission
             # skips: a binding that never drifts is a claim nothing else ever re-examines.
-            if not audit and pinned == current[stored] \
+            # A review re-reads what a delivery just stamped, which is the same set.
+            if not (audit or review) and pinned == current[stored] \
                     and (node_id, stored) not in owed_pairs:
                 omitted.append({"node": node_id, "file": given,
                                 "reason": "the binding computes at the file's content as it "
@@ -1363,10 +1388,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                                           "the pair"})
                 continue
             assigned.append(node_id)
-        if assigned:
+        if assigned or also:
             judged_files[given] = assigned
-        else:
+        elif rows:
             all_current.append(given)
+        else:
+            unbound.append(given)
 
     candidates: dict[str, list[str]] = {}
     for given, assigned in judged_files.items():
@@ -1380,7 +1407,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         pack = packs_dir / (given.replace("/", "__") + ".md")
         lines = [f"# Node pack for {given} — derived by trace.py --stage from the specification; "
                  f"a reading copy, never a home. Doubt a line, open the source it names."]
-        for node_id in assigned:
+        read_also = [node_id for node_id in also if node_id not in assigned]
+        for node_id in assigned + read_also:
             source = spec_root / f"{node_id}.md"
             lines += [f"\n=== {node_id}",
                       f"source: {source}",
@@ -1389,6 +1417,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                       source.read_text(encoding="utf-8").rstrip("\n")]
         pack.write_text("\n".join(lines) + "\n", encoding="utf-8")
         manifest_files[given] = {"nodes": assigned,
+                                 "also": read_also,
                                  "pack": str(pack)}
 
     # An audit stages no candidate tier, and the omission is the route's own logic rather than a
@@ -1414,6 +1443,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
 
     manifest = {"slug": slug,
                 "audit": audit,
+                "review": review,
+                "also": also,
                 "specification_root": str(spec_root),
                 "files": manifest_files,
                 "all_current": sorted(all_current),
@@ -1426,10 +1457,14 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     returns_dir.mkdir(parents=True)
 
     to_judge = sum(len(a) for a in judged_files.values())
-    shape = ("staged as an audit — no pair omitted, every standing claim goes to a judge"
-             if audit else
-             f"{len(omitted)} pair(s) omittable — the binding is current and nothing is owed "
-             f"on them")
+    if audit:
+        shape = "staged as an audit — no pair omitted, every standing claim goes to a judge"
+    elif review:
+        shape = (f"staged by a review — no pair omitted, and {len(also)} plan node(s) read on "
+                 f"every file without being bound")
+    else:
+        shape = (f"{len(omitted)} pair(s) omittable — the binding is current and nothing is "
+                 f"owed on them")
     print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
           f"{shape}; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} "
           f"file(s) the trace binds nothing to")
@@ -1569,7 +1604,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         except yaml.YAMLError as broken:
             rerun.append(f"{given}: the return does not parse: {broken}")
             continue
-        held = return_problems(front, manifest["files"][given]["nodes"], given)
+        staged_for = manifest["files"][given]
+        held = return_problems(front, staged_for["nodes"] + staged_for.get("also", []), given)
         if held:
             rerun += [f"{given}: {problem}" for problem in held]
             continue
@@ -1657,6 +1693,15 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     if manifest.get("audit"):
         notes.append("Staged as an audit: the source did not drift — every pair the trace held "
                      "for these files was re-judged deliberately, standing claims included.")
+    if manifest.get("review"):
+        read_also = manifest.get("also") or []
+        notes.append("Staged by a review over files a delivery wrote: no pair was omitted, so "
+                     "the delivery's own claims and every other binding of these files were "
+                     "judged alike"
+                     + (f"; the plan's node(s) {', '.join(read_also)} were read on every file "
+                        f"and answered for, and bound from nowhere here — a binding this record "
+                        f"writes is one the trace already held."
+                        if read_also else "."))
     if isinstance(premise.get("notes"), str) and premise["notes"].strip():
         notes.insert(0, premise["notes"].strip())
     for given, finding in out_of_scope:
@@ -2008,10 +2053,19 @@ def main() -> int:
     replace = "--replace" in args
     do_rank = "--rank" in args
     do_audit = "--audit" in args
+    do_review = "--review" in args
+    also: list[str] = []
+    while "--node" in args:
+        at = args.index("--node")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --node takes a specification node identity", file=sys.stderr)
+            return CANNOT_RUN
+        also.append(args[at + 1])
+        del args[at:at + 2]
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--reconciliation", "--owed", "--encodes", "--stage", "--fold",
-                         "--rank", "--audit")]
+                         "--rank", "--audit", "--review")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -2035,6 +2089,17 @@ def main() -> int:
         return CANNOT_RUN
     if do_audit and not do_stage:
         print("cannot run: --audit is a mode of --stage", file=sys.stderr)
+        return CANNOT_RUN
+    if do_review and not do_stage:
+        print("cannot run: --review is a mode of --stage", file=sys.stderr)
+        return CANNOT_RUN
+    if do_audit and do_review:
+        print("cannot run: --audit and --review are two stagings; a review re-reads files a "
+              "delivery wrote, an audit re-reads claims nothing moved", file=sys.stderr)
+        return CANNOT_RUN
+    if also and not do_review:
+        print("cannot run: --node is a mode of --stage --review; a reconciliation's node set is "
+              "the trace's alone", file=sys.stderr)
         return CANNOT_RUN
 
     if do_reconciliation:
@@ -2083,11 +2148,12 @@ def main() -> int:
     if do_stage:
         if len(args) < 5 or any(a.startswith("--") for a in args):
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
-                  "<workspace-dir> <file> [<file> ...] [--audit], every file spelled from the "
-                  "target source root", file=sys.stderr)
+                  "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...]], "
+                  "every file spelled from the target source root", file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
-        return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit)
+        return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
+                     do_review, also)
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):

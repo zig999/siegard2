@@ -1456,3 +1456,98 @@ def test_reading_refuses_alongside_against():
         capture_output=True, text=True)
     assert result.returncode == 2
     assert "--reading stands with --standard and --for at most" in result.stderr
+
+
+# ------------------------------------------------ a review and its reconciliation record
+
+
+def traced(target: Path) -> None:
+    (target / "siegard-trace.json").write_text(json.dumps(
+        {"specification": "specs", "bindings": []}) + "\n", encoding="utf-8")
+
+
+def reconciliation_record(target: Path, name: str, files: list[str]) -> str:
+    folder = target / "siegard-reconcile"
+    folder.mkdir(exist_ok=True)
+    front = {"contract_version": "siegard-reconcile/3", "title": name, "summary": "a review's",
+             "target": "backend",
+             "files": [{"path": p, "change": "written by the delivery"} for p in files],
+             "nodes": []}
+    (folder / f"{name}.md").write_text(
+        "---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n\n## What it is\n\nA review's fold.\n",
+        encoding="utf-8")
+    return f"siegard-reconcile/{name}.md"
+
+
+def test_a_review_over_a_traced_target_naming_no_record_validates_and_is_receipted(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """Every review written before the field existed names none, and a field that became
+    required would refuse a consumer's whole delivery root the day the framework updates. So the
+    absence is said, never refused: the review judged the plan's nodes alone."""
+    traced(target)
+    write_delivery("review/first", review_front(work, root))
+    assert problems_of(delivery, work, target, root) == []
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    receipt = deliver.unreconciled_reviews(nodes, target)
+    assert len(receipt) == 1 and receipt[0].startswith("review/first: ")
+    assert "judged the plan's nodes alone" in receipt[0]
+
+
+def test_a_review_naming_its_record_draws_no_receipt(delivery, work, root, target, sound_delivery,
+                                                     write_delivery):
+    traced(target)
+    front = review_front(work, root)
+    front["reconciliation"] = reconciliation_record(target, "first", front["reviewed"])
+    write_delivery("review/first", front)
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    assert deliver.unreconciled_reviews(nodes, target) == []
+
+
+def test_a_review_over_an_untraced_target_owes_no_record(delivery, work, root, target,
+                                                         sound_delivery, write_delivery):
+    write_delivery("review/first", review_front(work, root))
+    assert problems_of(delivery, work, target, root) == []
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    assert deliver.unreconciled_reviews(nodes, target) == [], \
+        "nothing has been bound in this target, so there was no collateral to judge"
+
+
+def test_the_named_record_holds_and_covers_the_reviewed_set(delivery, work, root, target,
+                                                            sound_delivery, write_delivery):
+    traced(target)
+    front = review_front(work, root)
+    front["reconciliation"] = reconciliation_record(target, "first", front["reviewed"])
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_record_over_a_different_file_set_judged_a_different_change(delivery, work, root, target,
+                                                                      sound_delivery,
+                                                                      write_delivery):
+    traced(target)
+    front = review_front(work, root)
+    front["reconciliation"] = reconciliation_record(target, "first",
+                                                    ["src/orders/place.ts", "src/orders/x.ts"])
+    write_delivery("review/first", front)
+    problems = problems_of(delivery, work, target, root)
+    said(problems, "accounts for none of tests/place.spec.ts")
+    said(problems, "accounts for src/orders/x.ts, which `reviewed` does not list")
+
+
+def test_a_record_that_does_not_exist_is_refused(delivery, work, root, target, sound_delivery,
+                                                 write_delivery):
+    traced(target)
+    front = review_front(work, root)
+    front["reconciliation"] = "siegard-reconcile/first.md"
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root), "does not exist")
+
+
+def test_a_record_named_over_a_conformance_pass_that_did_not_run(delivery, work, root, target,
+                                                                sound_delivery, write_delivery):
+    front = review_front(work, root)
+    set_pass(front, "conformance", missing="the specification root was not supplied")
+    front["reconciliation"] = reconciliation_record(target, "first", front["reviewed"])
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root),
+         "`reconciliation` is present and the conformance pass did not run")

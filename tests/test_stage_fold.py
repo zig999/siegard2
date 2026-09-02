@@ -116,7 +116,7 @@ def test_stage_assigns_the_stale_pairs_and_omits_the_current_unowed_one(consumer
     done, workspace = staged(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     manifest = manifest_of(workspace)
-    assert manifest["files"] == {FILE: {"nodes": [NODE, OTHER],
+    assert manifest["files"] == {FILE: {"nodes": [NODE, OTHER], "also": [],
                                         "pack": str(workspace / "packs"
                                                     / (FILE.replace("/", "__") + ".md"))}}
     assert manifest["all_current"] == [SECOND]
@@ -551,3 +551,107 @@ def test_a_v1_record_in_the_corpus_is_still_read_by_owed(consumer):
     assert "old-round.md" in done.stdout, \
         "the corpus is append-only; a version bump that silenced old records would erase the " \
         "only home their findings have"
+
+
+# ---------------------------------------------------------------- --review
+
+
+def review_staged(consumer: Path, *extra, slug: str = "first-review", files=None):
+    workspace = consumer / f"ws-{slug}"
+    done = run("--stage", consumer / "backend", consumer / "specs", slug, workspace,
+               *(files or [FILE, SECOND]), "--review", *extra)
+    return done, workspace
+
+
+def test_a_review_stages_every_pair_and_keeps_the_candidate_tier(consumer):
+    """A delivery's own bind stamped its nodes over these exact bytes, so the omission guard would
+    hand a review's judge every binding except the ones the review exists to re-read. And a
+    misattribution here is a false finding against a collateral node the delivery never claimed,
+    so the tier an audit drops stays."""
+    done, workspace = review_staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["review"] is True and manifest["audit"] is False
+    assert manifest["omitted"] == []
+    assert manifest["files"][SECOND]["nodes"] == [NODE], \
+        "the pair the delivery's own bind left current is exactly what a review re-reads"
+    assert (workspace / "candidates.txt").is_file()
+    assert manifest["candidates"] != {}
+    assert "staged by a review" in done.stdout
+
+
+def test_the_plans_nodes_are_read_on_every_file_and_bound_from_nowhere(consumer):
+    """The plan's node goes into every pack and every return answers for it, so a fact the delivery
+    wrote against a node its record never bound is still read against that node. It is never
+    bound: a binding the review wrote would be a claim no implementation record made."""
+    third = "domain/troubleshooting/hypothesis"
+    done, workspace = review_staged(consumer, "--node", third)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["also"] == [third]
+    for given in (FILE, SECOND):
+        assert manifest["files"][given]["also"] == [third]
+        assert third not in manifest["files"][given]["nodes"]
+        assert f"=== {third}" in Path(manifest["files"][given]["pack"]).read_text(encoding="utf-8")
+    assert third not in manifest["candidates"], \
+        "a node every judge already holds is not a candidate anyone needs to open"
+    save_return(consumer, "first-review", FILE, clean_return([NODE, OTHER, third]))
+    save_return(consumer, "first-review", SECOND, clean_return([NODE, third]))
+    record = consumer / "siegard-reconcile" / "first-review.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert third not in {entry["node"] for entry in front["nodes"]}
+    assert "Staged by a review" in front["notes"] and third in front["notes"]
+    assert run("--bind-record", consumer / "backend", consumer / "specs",
+               record).returncode == 0
+    trace_now = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert third not in {entry["node"] for entry in trace_now["bindings"]}
+    assert run("--check", consumer / "backend").stdout.count("without a rebind") == 0, \
+        "the drifted file's collateral binding was restamped by the review's own bind"
+
+
+def test_a_return_that_skips_a_plan_node_is_a_delegation_to_run_again(consumer):
+    third = "domain/troubleshooting/hypothesis"
+    _, workspace = review_staged(consumer, "--node", third)
+    save_return(consumer, "first-review", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "first-review", SECOND, clean_return([NODE, third]))
+    record = consumer / "siegard-reconcile" / "first-review.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record)
+    assert done.returncode == 1
+    assert f"no entry for {third}" in done.stdout
+
+
+def test_a_file_the_trace_binds_nothing_to_is_still_judged_over_the_plans_nodes(consumer):
+    """Outside a review an untraced file is reported and skipped. A review reads it: the file is
+    part of the change, and the plan's nodes are what it was written against."""
+    third = "domain/troubleshooting/hypothesis"
+    untraced = "src/orders/new.ts"
+    (consumer / "backend" / untraced).write_text("export const x = 1;\n", encoding="utf-8")
+    done, workspace = review_staged(consumer, "--node", third, files=[FILE, untraced])
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["unbound"] == []
+    assert manifest["files"][untraced] == {"nodes": [], "also": [third],
+                                           "pack": manifest["files"][untraced]["pack"]}
+    _, workspace = review_staged(consumer, slug="no-plan-nodes", files=[FILE, untraced])
+    assert manifest_of(workspace)["unbound"] == [untraced], \
+        "with nothing to read it against, the untraced file is reported as ever"
+
+
+def test_a_plan_node_the_specification_does_not_hold_is_refused(consumer):
+    done, _ = review_staged(consumer, "--node", "domain/troubleshooting/absent")
+    assert done.returncode == 2
+    assert "holds no node domain/troubleshooting/absent" in done.stderr
+
+
+def test_review_and_node_are_modes_of_stage_and_exclude_audit(consumer):
+    done = run("--check", consumer / "backend", "--review")
+    assert done.returncode == 2 and "--review is a mode of --stage" in done.stderr
+    done, _ = staged(consumer, slug="plain-with-node")
+    done = run("--stage", consumer / "backend", consumer / "specs", "with-node",
+               consumer / "ws-with-node", FILE, "--node", NODE)
+    assert done.returncode == 2 and "--node is a mode of --stage --review" in done.stderr
+    done = run("--stage", consumer / "backend", consumer / "specs", "both",
+               consumer / "ws-both", FILE, "--review", "--audit")
+    assert done.returncode == 2 and "two stagings" in done.stderr
