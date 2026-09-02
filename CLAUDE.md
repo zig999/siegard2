@@ -98,6 +98,10 @@ When unclear, treat the change as ordinary and say so.
 - Record the inputs, outputs, evidence, and contract version needed to reproduce a decision.
 - A proposal declined is recorded with its reason and the criterion that would reverse it; a
   decline nobody can reopen is a decision nobody can reproduce.
+- A change justified by cost cites the measurement and the estimator that produced it. A figure
+  read from a record is not a figure read from what ran, and the two disagree; where a later
+  measurement supersedes an earlier one, the change corrects it where it was recorded rather than
+  leaving two numbers for the next reader to choose between.
 
 ## Execution authority
 
@@ -105,7 +109,7 @@ The framework executes. A skill installs what a consumer's own registry authoriz
 steps it declares, so a delivery hands over a project that installs and builds rather than source
 alone. It was granted deliberately; widening or withdrawing it is the maintainer's.
 
-Four bounds hold it, and giving up any of them is a proposal, never a change:
+Five bounds hold it, and giving up any of them is a proposal, never a change:
 
 - **No agent holds a shell.** The skills run; the shipped agents do not, and
   `tests/test_agent_contract.py` is what enforces it. An agent that gained one would run outside
@@ -124,6 +128,12 @@ Four bounds hold it, and giving up any of them is a proposal, never a change:
   run — never a sweep, a branch, a push or a rewrite — and only under an ask the human's own
   words state end to end. Every other skill's refusal to commit stands; a second committer, or a
   commit outside these bounds, is a proposal, never a change.
+- **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
+  `Write` and `Edit`; every other agent returns content and the caller writes it, and
+  `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —
+  `schemas/agent.json` admits tool names and nothing narrower — so a reviewer that gained one
+  could edit what it flagged, and a finding nobody can disagree with is a decision wearing a
+  finding's clothes. Widening it is a proposal, never a change.
 
 ## Decision authority
 
