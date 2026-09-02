@@ -354,37 +354,42 @@ what it names — a registry nobody can reach, a lockfile that does not resolve 
 ### 3. Implement
 
 Spawn a `task-implementer` subagent — its judgment lives at
-`${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — passing five things: the task file's path,
-the specification root, the target source root, the paths of the plan's inventory nodes, and the
-`implementation` slice `--contract` printed above, pasted whole — plus, where one was named,
-**the standard's own path**, so what it
-reads is exactly what the record pins. Where the task declares `produces`, pass those
-paths too: they are artifacts this delivery has to create rather than conventions it has to follow,
-and the record is refused if `files` does not list every one of them. Where the standard authorizes
-dependencies, pass that list too, by name: it is what the agent may add to the manifest and the
-whole of it — a package outside it is the agent's refusal, not its judgment call, because the list
-is where a human's approval of a package survives the session it was given in.
+`${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — and hand it this, filled:
 
-**Where the task declares `reference`, resolve each path against the work root and pass them
-too** — and pass nothing the task did not name. These are artifacts the delivery reads to learn
-what the work should look like, ordinarily a layout under `intake/layout/`, and the task naming
-them is the whole of what makes them readable: an executor that went looking through `intake/` for
-something helpful would be reading the scope, which is the one document this whole route exists to
-keep out of the writing. A path that resolves to nothing is a stop, named — a task pointing at a
-layout nobody persisted is a task nobody can deliver as written, and guessing which file was meant
-is exactly the guess this field exists to remove.
+```
+task file:             <absolute path of work-root/task/<epic>/<slug>.md>
+specification root:    <absolute path>
+target source root:    <absolute path>
+inventory:             <absolute path of each inventory node whose area reaches where this
+                        task lands, one per line>
+implementation slice:  <the --contract implementation output above, pasted whole>
+standard:              <absolute path — omit this line where none was named>
+authorized packages:   <each package the registry authorizes, by name — omit where it
+                        authorizes none, or where no standard was named>
+produces:              <each path the task's `produces` declares — omit where it declares none>
+reference:             <each path the task's `reference` declares, resolved against the work
+                        root — omit where it declares none>
 
-It reads the task and the nodes it implements, writes the source, and
-returns the record: every path it created or modified and what each now does, every criterion of
-the task answered, every node it implements accounted for, which authorized dependencies it added, and
-what it inferred, departed from, preserved and deferred.
+You write no file under the delivery root: return the record's content as text.
+```
 
-**Every path in the record is relative to the target source root** — the directory the registry's
-commands run from — never to the repository around it. The target root may be the repository root
-and may just as well be `backend/` inside it: `produces` is held to `files` by spelling, and a
-registry scope reaches a file only under the same anchor, so a record that spelled paths from the
-repository while the registry spelled them from the target would answer to no rule and satisfy no
-`produces`. Spell the software's paths from the software's own root, always.
+Every path is absolute, and the contract slice is pasted rather than cited: a path resolves only
+where the delegation's own read scope reaches it, and a slice named instead of pasted is a
+delegation composing the record from memory of a shape the validator does not apply.
+
+Two of those lines carry a rule of their own. **Pass no reference the task did not name** — a
+delegation sent looking through `intake/` for something helpful is reading the scope, which is
+the one document this route exists to keep out of the writing — and a `reference` path that
+resolves to nothing is a stop, named, because guessing which file was meant is the guess the
+field exists to remove. **`authorized packages` is a whole list or an absent line**, never a
+selection: what it admits is what a human approved, and narrowing it here is this invocation
+deciding a manifest.
+
+**Every path the returned record names is relative to the target source root** — the directory
+the registry's commands run from — never to the repository around it. `produces` is held to
+`files` by spelling, and a registry scope reaches a file only under the same anchor, so a record
+spelling paths from the repository while the registry spells them from the target answers to no
+rule and satisfies no `produces`.
 
 ### 4. Build
 
@@ -478,23 +483,28 @@ report and go to step 8. Composing a proof anyway would be the one thing worse t
 record asserting that tests hold up a task, written where no test could exist.
 
 Spawn a `test-author` subagent — its judgment lives at
-`${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — passing four things: the task file's path, the
-implementation record's path, the target source root, and the `proof` slice `--contract`
-printed above, pasted whole — plus the standard's own path where one was named, because a
-project's rules about how its tests are
-written are the test author's to follow, and plus every `UNDERDETERMINED, from the specification —`
-entry of the task's `## Notes`, quoted whole: each names an implementation that satisfies every
-criterion as written and that the specification refuses, and excluding it is the test author's work.
-That set was already read for you: the situate report quotes these entries per task, by their
-opening, so what you hand over is what a script found — an entry the report carries and your
-collection lacks is your collection wrong, never the report's.
-Where the task's criteria name a failure that must stop happening, pass the reproduction too;
-without it the tests prove the fix rather than the defect, and afterwards nobody can tell the
-difference.
+`${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — and hand it this, filled:
 
-It writes the tests and returns what each proves, what would make each fail, which edge cases it
-dismissed and why, what stays unproven, where it disagrees with the implementation, and every rule
-of the standard its tests depart from.
+```
+task file:             <absolute path of work-root/task/<epic>/<slug>.md>
+implementation record: <absolute path of the record step 3 wrote>
+target source root:    <absolute path>
+proof slice:           <the --contract proof output above, pasted whole>
+standard:              <absolute path — omit this line where none was named>
+underdetermined:       <every `UNDERDETERMINED, from the specification —` entry of the task's
+                        `## Notes`, quoted whole — omit where the task carries none>
+reproduction:          <how the failure is observed — omit unless the task's criteria name a
+                        failure that must stop happening>
+
+You write no file under the delivery root: return the record's content as text.
+```
+
+The same two rules hold as at step 3: every path absolute, the slice pasted rather than cited.
+
+The `underdetermined` set was already read for you — the situate report quotes these entries per
+task, by their opening, so what you hand over is what a script found, and an entry the report
+carries and your collection lacks is your collection wrong rather than the report's. Quote them
+from the task file all the same, which is what holds them.
 
 ### 6. Suite
 
@@ -518,22 +528,42 @@ up, which is true and is the state a person should meet. Report the run by path 
 that failed.
 
 Where the step that failed is the one whose role is `suite`, spawn a `failure-diagnostician`
-subagent — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md` —
-passing the run's directory, the target source root, the task's specification nodes with the
-specification root, the `finding` slice `--contract` printed above, pasted whole, and the file
-set: every path the
-implementation record's `files` and the tests just written name. Always, on every red of that
-step, and never your own reading of the log in its place: a session probing flakiness with
-commands of its own is composing commands the registry never declared, which this skill forbids
-below, and the diagnosis is the licit form of the same question. Where an earlier step of this
-run failed instead — a typecheck or a lint reaching the files just written — no diagnosis is
-owed: the log names the file, and that red goes back to the producer whose file it is, exactly
-as a red build does.
+subagent — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md` — and
+hand it this, filled:
 
-**Four ways out, and the diagnosis's `cause` is what says which.** `code` — the source is wrong:
-the fix goes back to the `task-implementer` with the findings, and the suite runs again under
-`<epic>-<slug>-suite-2`, with the first run keeping its name. `test`, on a test this delivery
-wrote — the two producers disagree and that disagreement is what the red is: the proof asserts
+```
+run:                   <absolute path of the run's directory under the delivery root>
+target source root:    <absolute path>
+nodes:                 <the identity of each specification node the task implements, with the
+                        absolute path of the specification root>
+finding slice:         <the --contract finding output above, pasted whole>
+file set:              <every path the implementation record's `files` and the tests just
+                        written name>
+```
+
+Always, on every red of that step, and never your own reading of the log in its place: a session
+probing flakiness with commands of its own is composing commands the registry never declared,
+which this skill forbids below, and the diagnosis is the licit form of the same question. Where
+an earlier step of this run failed instead — a typecheck or a lint reaching the files just
+written — no diagnosis is owed: the log names the file, and that red goes back to the producer
+whose file it is, exactly as a red build does.
+
+**The `cause` the diagnosis returns is one of the contract's four, and it opens five ways out.**
+Four of the five it settles on its own. The fifth it does not: where the cause is `test`, which
+of that cause's two exits applies turns on who owns the failing test, and the diagnosis returns
+the file the run named without being told what this delivery wrote. This invocation knows —
+the tests step 5 just wrote are in the proof it is about to compose, and everything else is
+somebody else's. A file in that set takes the first `test` exit; any other file takes the second.
+
+`code` — the source is wrong: the fix goes back to the `task-implementer` with the findings, and
+the suite runs again under `<epic>-<slug>-suite-2`, with the first run keeping its name. `build`
+— nothing ran, because a compile the suite step performed itself failed, and every failure the
+output lists after it describes a binary nobody built. No registry owes a step that compiles
+before the suite, so this is the same red as a typecheck step's, arriving one step later instead
+of never: it goes back to the producer whose file the compiler named, the `task-implementer` for
+source and the `test-author` for a test, and the suite runs again under the next name. Nothing
+here waits on a person. `test`, on a test this
+delivery wrote — the two producers disagree and that disagreement is what the red is: the proof asserts
 what the criterion requires and the implementation does not satisfy it, and only a person
 settles that. The report quotes the diagnosis's evidence and correction in full, whole findings
 and not a summary of them — a diagnosis obvious enough to look mechanical is still a person's
@@ -551,13 +581,14 @@ was reached, because the harness or the environment it needs did not stand up: t
 delivery's defect and not its to fix, so nothing is sent to any producer. Run the suite again,
 once, under the next name. A second consecutive red the diagnosis reads the same way is a stop:
 infrastructure failing twice is a fact for a person, and the report quotes both diagnoses and
-hands the rerun invocation ready. The fourth way licenses exactly one thing — the same suite,
+hands the rerun invocation ready. That exit licenses exactly one thing — the same suite,
 again — and the run is what decides; a fix routed through it would be a fix nobody diagnosed.
 
-**A fifth way is forbidden and it is the one that is easy.** A test is never weakened, deleted,
-narrowed or rewritten to make the suite green. This invocation holds two producers precisely so
-that one cannot overrule the other, and a test edited until it passes is exactly that overruling,
-performed where nobody would see it. The third way above exists precisely so this one never looks
+**One more way out exists, it is forbidden, and it is the one that is easy.** A test is never
+weakened, deleted, narrowed or rewritten to make the suite green. This invocation holds two
+producers precisely so that one cannot overrule the other, and a test edited until it passes is
+exactly that overruling, performed where nobody would see it. The `test` exit over a test an
+earlier task owns exists precisely so this one never looks
 necessary: an over-broad assertion is re-judged whole, by the producer class that owns proofs, in
 its own invocation — never trimmed here to unblock this one. What makes the rule enforceable
 rather than pious is that the runs are on disk: four attempts leave four logs, and a test that
