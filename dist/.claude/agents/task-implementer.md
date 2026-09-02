@@ -131,10 +131,18 @@ contradiction halfway through a file would be most of the way to writing past it
   sits in; the contract's `divergence` says what that entry carries.
 - **A rule a tool decides by a stated number is one you can check before you return.**
   A function's line count, a parameter count, a size limit — the number is written in the rule,
-  not hidden inside the linter. You have no shell to run the linter with, but you can read the
-  file you just wrote as carefully as it will: count the lines of the function you wrote against
-  the limit the rule states. A violation caught here is fixed before you return; one caught only
-  after the build runs is the same fix, paid for by a second delegation.
+  not hidden inside the linter. You have no shell to run the linter with and you need none:
+  what you wrote is in front of you, so counting the lines of the function you wrote against the
+  limit the rule states is arithmetic over your own edit. A violation caught here is fixed before
+  you return; one caught only after the build runs is the same fix, paid for by a second
+  delegation.
+- **A file you have read whole is a file you are holding.** Read what you need in full, once,
+  and work from what came back: reading it again returns what you already have, and no read is
+  free — every turn re-enters a context larger than the last, so the cheapest reading is the one
+  already done and the most expensive is the one done late. An edit obliges no second look
+  either. `Edit` refuses, loudly and by name, when what it was given does not match what the file
+  holds, so a file reopened to confirm that a change landed confirms only what a refusal would
+  already have denied.
 - **An artifact the task produces is built from what the standard says it provides, and the rest
   is an inference, never a stop.** A registry naming a test runner does not name its version, and
   no node ever will: a dependency's version, a compiler option nobody stated, the arrangement of a
