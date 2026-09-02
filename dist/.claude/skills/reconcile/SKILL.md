@@ -252,6 +252,17 @@ one costs a fresh delegation over the whole file.
   guess that misses returns a refusal instead of a judgment. The refusal costs the whole
   delegation and buys nothing: it is the one failure that a resolved path makes impossible.
 
+**A judgment answers two questions, and `kind` is which one a finding answers.** Whether the
+source still states what a node holds is one; whether it states a fact **no** node holds is the
+other, and a record that folded both into one boolean per node made the second land on whichever
+node shared the file with it. `contradicts` is the pair's: a node governs the fact and the source
+disagrees with it or became a second home for it, so the node does not bind and a rebind is what
+closes it. `unstated` is the specification's: no node holds the fact at all, the route is
+`/analyse`, **no rebind can ever close it**, and so it blocks no binding a node's own reading
+cleared. The fold routes on the word and lands the second class under the record's own `unstated`,
+keyed by file rather than by node — a fact no node holds has no node to be about. `trace.py
+--owed` reports them apart from what a bind is owed, and the report hands both routes.
+
 **Save each return verbatim the moment it arrives**, at
 `siegard-reconcile/<slug>.returns/<the file's path with every '/' as '__'>.yaml` — a copy and
 nothing else. Never reshape one, never trim one, never repair one: the returns are the evidence

@@ -168,7 +168,7 @@ def test_an_orphaned_binding_is_excluded_from_the_judgment_and_named(consumer):
 def test_a_current_pair_with_an_open_owed_finding_is_never_omitted(consumer, tmp_path):
     record = consumer / "siegard-reconcile" / "earlier.md"
     record.parent.mkdir(exist_ok=True)
-    front = {"contract_version": "siegard-reconcile/2",
+    front = {"contract_version": "siegard-reconcile/3",
              "title": "Earlier round", "summary": "found against and never cleared.",
              "target": "backend",
              "files": [{"path": SECOND, "change": "judged earlier"}],
@@ -312,7 +312,8 @@ def test_an_unattributed_finding_holds_every_node_of_its_file_and_marks_the_unco
     front["read"].append({"node": OTHER, "held_at": "nowhere",
                           "evidence": "nothing in the file states the evidence shape"})
     front["findings"] = [{"where": "the last line", "evidence": "// drift",
-                          "cost": "prose carrying a fact no node holds"}]
+                          "cost": "prose carrying a fact no node holds",
+                          "kind": "contradicts"}]
     save_return(consumer, "round", FILE, front)
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -325,12 +326,52 @@ def test_an_unattributed_finding_holds_every_node_of_its_file_and_marks_the_unco
         "a fact held nowhere is a substantive answer, not collateral"
 
 
+def test_an_unstated_finding_blocks_no_binding_and_lands_in_its_own_list(consumer):
+    """The class this contract exists for. A fact no node holds is the specification's, not the
+    pair's: no rebind reaches it, so holding a binding hostage to it waits on a thing that never
+    comes. The node its judge read it beside still binds on its own reading."""
+    staged(consumer)
+    front = clean_return([NODE, OTHER])
+    front["findings"] = [{"where": "line 9", "evidence": "const DEFAULT = 'unavailable';",
+                          "cost": "which ending an unclassified status resolves to lives only here",
+                          "kind": "unstated", "node": NODE}]
+    save_return(consumer, "round", FILE, front)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front_out = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert [e["node"] for e in front_out["nodes"] if e["conforms"] is False] == [], \
+        "an unstated fact is not a contradiction; it blocks no node"
+    assert front_out["unstated"] == [{
+        "file": FILE, "where": "line 9", "evidence": "const DEFAULT = 'unavailable';",
+        "cost": "which ending an unclassified status resolves to lives only here"}], \
+        "it lands keyed by file: a fact no node holds has no node to be about"
+    assert "Unstated: 1 fact(s)" in front_out["notes"]
+
+
+def test_an_unstated_finding_is_routed_on_its_word_not_on_naming_a_node(consumer):
+    """Its judge named the node it stood beside — where it read the fact, not what the fact
+    belongs to. Routing on `node` instead of on `kind` is exactly the fold that put a
+    specification gap onto whichever node shared its file."""
+    staged(consumer)
+    front = clean_return([NODE, OTHER])
+    front["findings"] = [{"where": "line 4", "evidence": "throw new NotResolvedError();",
+                          "cost": "what the call answers when it cannot resolve is stated nowhere",
+                          "kind": "unstated"}]
+    save_return(consumer, "round", FILE, front)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front_out = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert all(e["conforms"] is True for e in front_out["nodes"]), \
+        "naming no node makes it collateral only when it is a contradiction"
+    assert len(front_out["unstated"]) == 1
+
+
 def test_a_finding_naming_a_batch_node_lands_on_it_wherever_its_own_judge_stood(consumer):
     staged(consumer)
     front = clean_return([NODE, OTHER])
     front["findings"] = [{"where": "line 2", "evidence": "// drift",
                           "cost": "states a fact differently from the node",
-                          "node": NODE}]
+                          "kind": "contradicts", "node": NODE}]
     save_return(consumer, "round", FILE, front)
     done, record = folded(consumer)
     assert done.returncode == 0
@@ -345,7 +386,7 @@ def test_a_finding_naming_a_node_outside_the_batch_blocks_nothing_and_lands_in_n
     staged(consumer)
     front = clean_return([NODE, OTHER])
     front["findings"] = [{"where": "line 1", "evidence": "export function place() {}",
-                          "cost": "a fact a sibling context governs",
+                          "cost": "a fact a sibling context governs", "kind": "contradicts",
                           "node": "rules/troubleshooting/case-transitions"}]
     save_return(consumer, "round", FILE, front)
     done, record = folded(consumer)

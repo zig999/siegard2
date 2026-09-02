@@ -66,6 +66,15 @@ stop. You need:
   vocabulary copied into a constant, a rule re-derived in a second place, a state machine's
   states enumerated where nothing reads them from the specification. Correcting one of these
   never corrects the specification, and the day they disagree nobody knows which was decided.
+- **`kind` says which of those three a finding is, in one word, and the fold routes on it.**
+  The first — a fact the source states and no node holds — is `unstated`: its subject is the
+  specification, not the pair, and what closes it is the analysis that gives the fact a node. The
+  other two are `contradicts`: a node governs the fact and the source disagrees with it or became
+  a second home for it, so the subject is the pair and the act is on the pair. Where one file
+  gives you both, they are two findings — they are owed to two different people. Set `kind` from
+  what you actually read, never from how serious it feels: an `unstated` blocks no binding and a
+  `contradicts` blocks one, and calling a contradiction `unstated` binds a file the node no longer
+  answers for.
 - **Read the node files, not a summary of them.** Open every node of your set, and any candidate
   or searched-for node you are about to make a claim about.
   A finding against a node you did not open is a finding against what you remembered.
@@ -123,6 +132,7 @@ findings:                    # omit the key entirely when you found nothing
     where: <the line, or the construct, within that file>
     evidence: <quoted from the source>
     cost: <the consequence, in the terms a reader can weigh>
+    kind: contradicts | unstated    # which question this answers; see below
     correction: <what would have to change; omit where you cannot say>
     node: <the node this is about, where one node owns it — omit where none does, and name a
           candidate here where the fact is a candidate's rather than your set's>

@@ -28,8 +28,8 @@
   },
   "properties": {
     "contract_version": {
-      "const": "siegard-reconcile/2",
-      "description": "Which contract this record was written against. A record is read by a validator that may have moved since; the version is what says whether it may be. Records written under siegard-reconcile/1 stay in the corpus and are read there — `--owed` and `--bind-record` read any siegard-reconcile/* record — but a new record is held to this version: /2 is /1 plus `pairs_omitted` and `collateral`, and a /1 record answers for every bound node with no way to say a pair was omitted."
+      "const": "siegard-reconcile/3",
+      "description": "Which contract this record was written against. siegard-reconcile/2 carried one boolean per node over a question that is two: whether the source still states what the node holds, and whether it states a fact no node holds at all. The second answer landed on whichever node the file happened to be bound to, blocked a binding its own reading had cleared, and could never be closed by any rebind — so `unstated` is its own list here, and `conforms` answers the pair alone. A /2 record is the reading it was, read by tolerant readers, never rewritten to match."
     },
     "title": {
       "type": "string",
@@ -168,6 +168,42 @@
         }
       }
     },
+    "unstated": {
+      "type": "array",
+      "description": "Facts the named source states that no node of the specification holds — found while reading these files against these nodes, and owed to the analysis rather than to any binding here. Absent where the judgments found none. It is deliberately not keyed by node: a fact no node holds has no node to be about, and attaching it to whichever node shared its file is what made a correct binding wait on a finding no rebind could close. Nothing here blocks a bind, and `--owed` reports it apart from what does.",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "where",
+          "evidence",
+          "cost"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The named file that states it, as the premise spells it."
+          },
+          "where": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where in that file the fact is stated."
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Quoted from the source — the code that states it, never a comment's claim about it."
+          },
+          "cost": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What the specification's silence costs here, in terms a reader can weigh."
+          }
+        }
+      }
+    },
     "unbound": {
       "type": "array",
       "description": "Named files the trace holds no binding for. They are reported and never guessed at: deciding which node an untraced file answers to is a delivery's judgment or an analysis's, and inventing one here would write the framework's most durable claim out of the least evidence. Every entry must be in `files`, and none may also appear under a node.",
@@ -210,7 +246,7 @@
   },
   "examples": [
     {
-      "contract_version": "siegard-reconcile/2",
+      "contract_version": "siegard-reconcile/3",
       "title": "Hand correction to order placement",
       "summary": "place() was returning the stored row rather than the order_number; corrected by hand during an incident and confirmed correct against the running system.",
       "target": "backend",
@@ -232,7 +268,7 @@
       ]
     },
     {
-      "contract_version": "siegard-reconcile/2",
+      "contract_version": "siegard-reconcile/3",
       "title": "Hand correction to invoicing",
       "summary": "The nightly run raised two invoices for one order; the guard was added by hand and the behavior is correct.",
       "target": "backend",

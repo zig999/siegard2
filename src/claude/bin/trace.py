@@ -250,6 +250,7 @@ MANIFEST_FILE = "manifest.json"
 NOWHERE = "nowhere"
 
 UNSEEN, COVERED, REPORTED = "unseen", "covered", "reported"
+UNSTATED_FACT = "unstated"
 OWED_CLASSES = {
     UNSEEN: "nothing binds the pair — `--check` has no digest to compare and never will",
     COVERED: "bound at the content on disk now — a bind wrote over the only symptom `--check` "
@@ -1000,6 +1001,32 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
     return found, cleared, unreadable
 
 
+def unstated_of(home: Path) -> list[dict]:
+    """Every fact the records name that the source states and no node holds, with the record that
+    named it and the file it was read in.
+
+    Read from the corpus the same way `judged()` reads it, and kept apart from it for the reason
+    the class exists: a pair's finding is owed to a bind, and a fact no node holds is owed to the
+    analysis that gives it one. Only `siegard-reconcile/3` records carry the list — an earlier
+    record folded the same observation into a node's `conforms`, where it is indistinguishable
+    from a contradiction, and nothing here rewrites one to say otherwise."""
+    stated: list[dict] = []
+    directory = home / RECONCILE_DIR
+    if not directory.is_dir():
+        return stated
+    for record in sorted(directory.glob("*.md")):
+        front = as_reconciliation(record)
+        if front is None:
+            continue
+        for entry in front.get("unstated") or []:
+            if not isinstance(entry, dict):
+                continue
+            if not all(isinstance(entry.get(f), str) for f in ("file", "where", "evidence", "cost")):
+                continue
+            stated.append(dict(entry, record=record.name))
+    return stated
+
+
 def owed(target: Path, show_all: bool = False) -> int:
     """What the reconciliation records found against and no bind could close, by whether the drift
     report says it too.
@@ -1104,6 +1131,21 @@ def owed(target: Path, show_all: bool = False) -> int:
                       f"the trace holds it {state}")
         else:
             print("  `--all` lists them, each with what the trace holds for it now")
+
+    # Reported apart from everything above, because it is owed to somebody else. A pair's finding
+    # waits on a bind; a fact no node holds waits on the analysis that gives it one, and counting
+    # the two together is what let a correct binding read as contested for as long as the gap stood.
+    stated = unstated_of(home)
+    if stated:
+        print(f"\n{len(stated)} unstated fact(s) the records name, over "
+              f"{len({e['file'] for e in stated})} file(s) — the source states them and no node "
+              f"holds them. No bind closes one and none is counted above:")
+        rows = sorted(stated, key=lambda e: (e["file"], e["where"]))
+        for entry in (rows if show_all else rows[:RANK_HELD_BACK]):
+            print(f"  {entry['file']} — {entry['where']}: {entry['cost']} [{entry['record']}]")
+        if not show_all and len(rows) > RANK_HELD_BACK:
+            print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
+        print("  each is the analysis's to close, through the node that gives the fact a home")
     return 1 if total else 0
 
 
@@ -1544,8 +1586,19 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     against: dict[str, list[tuple[str, dict]]] = {}
     out_of_scope: list[tuple[str, dict]] = []
     tainted: dict[str, list[dict]] = {}
+    unstated: list[dict] = []
     for given, front in returns.items():
         for finding in front.get("findings") or []:
+            # `unstated` answers the other question the pair's own conformance never asked: the
+            # source states a fact no node holds. Its subject is the specification, its route is
+            # the analysis that gives the fact a node, and no rebind reaches it — so it neither
+            # lands on a node nor taints one, however its judge filled `node`. Routed on the word
+            # rather than on whether a node was named, because a judge naming the node it read
+            # the fact beside is naming where it stood, not what the fact belongs to.
+            if finding.get("kind") == UNSTATED_FACT:
+                unstated.append({"file": given, "where": finding["where"],
+                                 "evidence": finding["evidence"], "cost": finding["cost"]})
+                continue
             node = finding.get("node")
             if node is None:
                 tainted.setdefault(given, []).append(finding)
@@ -1617,13 +1670,20 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     with_any = sum(1 for front in returns.values() if front.get("candidates_opened"))
     notes.append(f"Candidates: {opened_count} opened across {with_any} of {len(returns)} "
                  f"delegation(s); each return lists its own under `candidates_opened`.")
+    if unstated:
+        notes.append(f"Unstated: {len(unstated)} fact(s) the source states that no node holds, "
+                     f"over {len({e['file'] for e in unstated})} file(s), listed under "
+                     f"`unstated`. They block no binding here and no rebind closes them — the "
+                     f"route is the analysis that gives each fact a node.")
 
-    front = {"contract_version": "siegard-reconcile/2",
+    front = {"contract_version": "siegard-reconcile/3",
              "title": premise["title"],
              "summary": premise["summary"],
              "target": premise["target"],
              "files": [{"path": path, "change": named[path]} for path in sorted(every_named)],
              "nodes": entries}
+    if unstated:
+        front["unstated"] = sorted(unstated, key=lambda e: (e["file"], e["where"]))
     if manifest["unbound"]:
         front["unbound"] = manifest["unbound"]
     if manifest["omitted"]:

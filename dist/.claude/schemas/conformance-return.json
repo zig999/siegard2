@@ -25,7 +25,8 @@
         "required": [
           "where",
           "evidence",
-          "cost"
+          "cost",
+          "kind"
         ],
         "additionalProperties": false,
         "properties": {
@@ -48,6 +49,13 @@
             "type": "string",
             "minLength": 1,
             "description": "The consequence, in terms a reader can weigh — never only the rule it broke."
+          },
+          "kind": {
+            "enum": [
+              "contradicts",
+              "unstated"
+            ],
+            "description": "Which question this finding answers, because the pair's own conformance and the specification's completeness are two of them and one word settles which. `contradicts` — the source says what this node denies, or no longer carries the fact it holds: the pair is the subject, and the act is on the pair, so the node does not bind. `unstated` — the source states a fact no node holds at all: the specification is the subject, the route is the analysis that gives the fact a node, and no rebind can ever close it, so it never blocks a binding the node's own reading cleared. Where both are true of one file, they are two findings, because they are owed to two people."
           },
           "correction": {
             "type": "string",
@@ -120,7 +128,8 @@
           "where": "the guard added to raise(), line 12",
           "evidence": "if (order.invoices.length >= 1) return existing",
           "cost": "the at-most-one-invoice rule lives only here, so the next reader looks for it in the specification and does not find it",
-          "node": "rules/sales/invoice-immutable"
+          "node": "rules/sales/invoice-immutable",
+          "kind": "contradicts"
         }
       ],
       "read": [
