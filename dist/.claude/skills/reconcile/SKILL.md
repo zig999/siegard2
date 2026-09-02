@@ -223,6 +223,19 @@ finding's own shape lives; and the path to
 `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, the contract its whole return is held
 to by the fold below.
 
+**On an audit, no candidate tier is passed, and the staging writes none.** The manifest carries an
+empty `candidates` and the workspace holds no index, so there is nothing to hand over and nothing
+to compose. A candidate exists for one purpose — letting a judge say that a fact its own nodes do
+not hold is held by a node another file carries — and an audit asks a narrower question than the
+one that serves: does this file still carry this node's fact, so that this claim stands? Both
+answers a candidate separates end at the same act on that pair, because the claim is not carried
+either way and the release is what the report hands over; binding the node that does hold the fact
+is a delivery's act, which no reconciliation performs. What the tier would buy on an audit is a
+better sentence about a pair whose outcome it cannot change, paid for with every candidate node a
+judge opens to write it. The ordinary route keeps the tier for the opposite reason: there a
+misattribution reported as a gap is a false finding, a false finding blocks its node, and undoing
+one costs a fresh delegation over the whole file.
+
 **Two rules about the paths in those prompts, and both are about what a prompt costs.**
 
 - **The candidate index goes as its path and never as its contents.** One index serves the whole

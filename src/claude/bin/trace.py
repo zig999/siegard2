@@ -1349,13 +1349,26 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         manifest_files[given] = {"nodes": assigned,
                                  "pack": str(pack)}
 
-    lines = [f"# Candidate index — every node this batch's judgments answer for, with the "
-             f"file(s) the trace binds it to. Grep for a fact's own terms; open the node under "
-             f"the specification root before claiming anything about it."]
-    for node_id in sorted(candidates):
-        lines.append(f"{node_id} — bound in this batch to: "
-                     f"{', '.join(sorted(candidates[node_id]))}")
-    (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # An audit stages no candidate tier, and the omission is the route's own logic rather than a
+    # saving taken off it. A candidate exists so a judge can say a fact its own nodes do not hold
+    # is held by a node another file carries — an attribution, not an absence. An audit asks one
+    # thing of a pair: does this file still carry this node's fact, so that this claim stands?
+    # Both answers a candidate separates lead to the same act on that pair — the claim is not
+    # carried and the release is what the report hands over — and binding the node that does hold
+    # the fact is a delivery's act, which no reconciliation performs. So the tier refines an
+    # attribution an audit cannot act on, at the cost of every candidate a judge opens to make it.
+    # The reconcile route keeps it: there a misattribution reported as a gap is a false finding,
+    # and a false finding blocks a node and costs a fresh delegation to undo.
+    if audit:
+        candidates = {}
+    else:
+        lines = [f"# Candidate index — every node this batch's judgments answer for, with the "
+                 f"file(s) the trace binds it to. Grep for a fact's own terms; open the node under "
+                 f"the specification root before claiming anything about it."]
+        for node_id in sorted(candidates):
+            lines.append(f"{node_id} — bound in this batch to: "
+                         f"{', '.join(sorted(candidates[node_id]))}")
+        (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     manifest = {"slug": slug,
                 "audit": audit,
@@ -1378,8 +1391,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
           f"{shape}; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} "
           f"file(s) the trace binds nothing to")
-    print(f"  manifest and packs at {workspace}; candidate index at "
-          f"{workspace / 'candidates.txt'}")
+    print(f"  manifest and packs at {workspace}; "
+          + (f"candidate index at {workspace / 'candidates.txt'}" if not audit else
+             "no candidate index — an audit asks whether a claim stands, and both answers a "
+             "candidate separates release the same claim"))
     print(f"  save each delegation's return verbatim at "
           f"{returns_dir}/<file path with '/' as '__'>.yaml")
     if orphaned:

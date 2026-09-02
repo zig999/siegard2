@@ -198,6 +198,30 @@ def test_an_audit_stages_every_standing_claim_and_omits_nothing(consumer):
     assert "staged as an audit" in done.stdout
 
 
+def test_an_audit_stages_no_candidate_tier(consumer):
+    """A candidate lets a judge attribute a fact its own nodes do not hold to a node another file
+    carries. An audit asks whether one claim stands, and both answers a candidate separates release
+    that same claim — binding the node that does hold the fact is a delivery's act, which no
+    reconciliation performs. So the tier buys a better sentence about an outcome it cannot change,
+    at the price of every candidate node a judge opens to write it, and an audit stages none."""
+    workspace = consumer / "ws-audit"
+    done = run("--stage", consumer / "backend", consumer / "specs", "audit", workspace,
+               FILE, SECOND, "--audit")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert not (workspace / "candidates.txt").exists(), \
+        "an audit writes no candidate index; there is nothing for a prompt to hand over"
+    assert manifest_of(workspace)["candidates"] == {}
+    assert "no candidate index" in done.stdout
+
+
+def test_the_ordinary_route_still_stages_the_candidate_tier(consumer):
+    """The opposite reason keeps it here: a misattribution reported as a gap is a false finding, a
+    false finding blocks its node, and undoing one costs a fresh delegation over the whole file."""
+    _, workspace = staged(consumer)
+    assert (workspace / "candidates.txt").is_file()
+    assert manifest_of(workspace)["candidates"] != {}
+
+
 def test_an_audits_record_says_it_was_one(consumer):
     workspace = consumer / "ws-audit"
     run("--stage", consumer / "backend", consumer / "specs", "audit", workspace,
