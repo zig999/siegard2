@@ -39,24 +39,38 @@ and hand over both ways out of it.
 each — and this script is where that is said, because reading this report is where somebody
 learns the set holds more than one.** No orchestrator ships for it: every guarantee holds per
 worktree because each delivery is the ordinary `/implement-task` path, unvaried, and the parts
-that are not a skill's are a person's. The tempting substitute — one general-purpose agent per
-task, handed the whole delivery — is not a variation of this route but its undoing: a subagent
-cannot spawn the two producers, so the implementation and its proof are written in one context
-and agree by construction — a parallel pass paid in full whose every proof is then paid again
-through the ordinary route. Three preconditions: the plan is committed, since a
-worktree sees commits and never trees; the tasks come from this set, so nothing in the batch
-depends on anything else in it; and a task expected to install a package is delivered alone,
-because the manifest is everybody's file and two deliveries editing it concurrently is the one
-conflict no disjointness prevents.
+that are not a skill's are a person's, with two named exceptions below. The tempting substitute —
+one general-purpose agent per task, handed the whole delivery — is not a variation of this route
+but its undoing: a subagent cannot spawn the two producers, so the implementation and its proof
+are written in one context and agree by construction — a parallel pass paid in full whose every
+proof is then paid again through the ordinary route. Three preconditions: the plan is committed,
+since a worktree sees commits and never trees; the tasks come from this set, so nothing in the
+batch depends on anything else in it; and a task expected to install a package is delivered
+alone, because the manifest is everybody's file and two deliveries editing it concurrently is the
+one conflict no disjointness prevents.
 
 One absence to expect rather than diagnose: a worktree carries commits and never gitignored
 files, so an artifact the registry presupposes and git ignores — an `.env`, a credential file —
 is absent in every fresh worktree, and the substrate check refuses each delivery before it
 writes. That refusal is correct; reading this sentence first is cheaper than reading it K times.
 `.worktreeinclude` at the repository root is the harness's own mechanism for carrying such files
-into every new worktree, and writing it is the consumer's act, never this framework's.
+into every new worktree; `--worktreeinclude` derives its lines from the same `presupposes` the
+substrate check already reads, so the two can never name a different set. Writing the file with
+those lines is still the consumer's act — a hand-added line for something no registry declares
+stands untouched, and only running the flag with `--write` changes the file at all.
+
+The first named exception is `role: prepare`: a command a registry declares to provision what one
+worktree cannot share with another running the same suite concurrently — a test database schema
+chief among them. It runs once per worktree, before `install`, and it is the consumer's own
+command exactly as `install` and `suite` already are — this framework composes none of them and
+authorizes no package, only the roles that order what the registry already named. The second is
+`install` itself, run once up front instead of retyped from memory:
 
     git worktree add -b batch/<task> ../wt-<task> <base>   one per task
+    per worktree:  deliver.py --worktreeinclude <standard> \
+                        <target-source-root> --write        run from the new worktree's root
+    per worktree:  run.py --step prepare=... --step install=...
+                                                             the roles this registry declared, if any
     per worktree:  /implement-task <task>                  the ordinary invocation
     per worktree:  commit the delivery                     the orchestrator's act, never the skill's
     merge the branches, sequentially, resolving as below
@@ -137,6 +151,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         trace over files no task delivered — and
                                                         every citation it makes, against the
                                                         registry it pins
+        deliver.py --worktreeinclude <file> <target-source-root> [--write]
+                                                        print every `presupposes` path, joined
+                                                        onto the target source root, as
+                                                        `.worktreeinclude` lines — the artifacts a
+                                                        fresh worktree needs carried in because git
+                                                        never carries a gitignored file across one.
+                                                        `--write` merges the missing ones into
+                                                        `.worktreeinclude` in the current directory
+                                                        instead of printing; a line already there,
+                                                        hand-written or not, is left alone
         deliver.py --contract <branch>
                                                         print one self-contained slice of
                                                         delivery-node.json — a `$defs` entry, or
@@ -487,7 +511,7 @@ def command_problems(data: dict) -> list[str]:
         problems.append(f"declares the step `{value}` {names.count(value)} times; a run records "
                         f"one outcome per step, and two commands under one name cannot both be it")
 
-    for role in ("install", "suite"):
+    for role in ("prepare", "install", "suite"):
         carrying = [c["step"] for c in entries if c.get("role") == role
                     and isinstance(c.get("step"), str)]
         if len(carrying) > 1:
@@ -726,9 +750,11 @@ def phase_steps(commands: list[dict], phase: str) -> list[dict]:
     declaring `produces` ever runs. One selection with two readers, on purpose: `check_standard`
     prints each phase composed for `bin/run.py`, and `owed_run_problems` holds the captured run
     to the same list — what a caller was handed to run and what the validator says was owed
-    cannot drift apart while both are this function."""
+    cannot drift apart while both are this function. `prepare` carries neither reader: it runs
+    once per worktree, not once per task, so no phase here selects it and no delivery is held to
+    having run it."""
     install = [c for c in commands if c.get("role") == "install"]
-    middle = [c for c in commands if c.get("role") not in ("install", "suite")]
+    middle = [c for c in commands if c.get("role") not in ("prepare", "install", "suite")]
     suite = [c for c in commands if c.get("role") == "suite"]
     if phase == "setup":
         return install
@@ -1602,6 +1628,72 @@ def substrate_report(data: dict, tree: Path) -> tuple[list[str], int]:
     return lines, absent
 
 
+def worktreeinclude_paths(data: dict, target_root: Path) -> list[str]:
+    """Every `presupposes[].path` this registry declares, joined onto the target source root and
+    printed as a `.worktreeinclude` line — the paths a fresh worktree needs carried in because git
+    never carries a gitignored file across one. A path git already tracks is harmless to list
+    twice; deciding which of these git ignores would read a stack this framework ships no
+    knowledge of, so nothing here tries."""
+    paths = []
+    for entry in listed(data, "presupposes"):
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str):
+            paths.append((target_root / entry["path"]).as_posix())
+    return paths
+
+
+def write_worktreeinclude(paths: list[str], dest: Path) -> list[str]:
+    """`paths` merged into `dest`, one per line, in the order first seen — an existing line a
+    consumer wrote by hand for something this registry does not declare is left standing, since
+    this never repairs a file it does not own outright. Returns the lines actually added."""
+    existing = dest.read_text(encoding="utf-8").splitlines() if dest.is_file() else []
+    seen = set(existing)
+    added = [p for p in paths if p not in seen]
+    if added:
+        with dest.open("a", encoding="utf-8") as handle:
+            for path in added:
+                handle.write(path + "\n")
+    return added
+
+
+def run_worktreeinclude(named: str, target: str, write: bool) -> int:
+    """`--worktreeinclude`'s own body: load the registry, resolve `presupposes` onto the target
+    source root, and either print the lines or merge them into `.worktreeinclude` in the current
+    directory — the file the harness reads at the repository root, which this never assumes it
+    is standing in."""
+    try:
+        validator = standard_contract()
+    except (FileNotFoundError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    path = Path(named)
+    data, problems = load_standard(path, validator)
+    for problem in problems:
+        print(f"{path.name}: {problem}")
+    if data is None:
+        print(f"\n{len(problems)} problem(s). Nothing is printed or written from a registry that "
+              f"does not hold together.")
+        return 1
+    target_root = Path(target)
+    if not target_root.is_dir():
+        print(f"cannot run: target source root {target_root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    paths = worktreeinclude_paths(data, target_root)
+    if not paths:
+        print("it presupposes nothing, so there is nothing a worktree needs carried in")
+        return 0
+    if not write:
+        print("\n".join(paths))
+        return 0
+    dest = Path(".worktreeinclude")
+    added = write_worktreeinclude(paths, dest)
+    if added:
+        print(f"{dest}: added {len(added)} line(s):")
+        print("\n".join(f"  {p}" for p in added))
+    else:
+        print(f"{dest}: already carries every path this registry presupposes")
+    return 0
+
+
 def check_standard(named: str, against: str | None = None) -> int:
     """Validate one project standard on its own, so a consumer can hold a registry to its contract
     before any review reads it. Every root this framework validates has a validator; a standard is
@@ -1651,7 +1743,8 @@ def check_standard(named: str, against: str | None = None) -> int:
         print(f"  it declares {len(commands)} command(s): "
               + ", ".join(f"{c.get('step')} = {c.get('command')} "
                           f"({c.get('timeout_seconds')}s)" for c in commands))
-        print(f"    installs with {roles.get('install') or 'nothing'}, "
+        print(f"    prepares a fresh worktree with {roles.get('prepare') or 'nothing'}, "
+              f"installs with {roles.get('install') or 'nothing'}, "
               f"proves with {roles.get('suite') or 'nothing'}, "
               f"and the rest run as checks on both sides of the tests")
         # Each phase composed and ready, because the prose rule ("everything except the suite,
@@ -1799,6 +1892,20 @@ def main() -> int:
             print("cannot run: --contract stands alone", file=sys.stderr)
             return CANNOT_RUN
         return print_contract_branch(DELIVERY_CONTRACT, branch)
+    if "--worktreeinclude" in args:
+        at = args.index("--worktreeinclude")
+        if at + 1 >= len(args):
+            print("cannot run: --worktreeinclude takes a file", file=sys.stderr)
+            return CANNOT_RUN
+        named = args[at + 1]
+        del args[at:at + 2]
+        write = "--write" in args
+        args = [a for a in args if a != "--write"]
+        if verify or report or single is not None or against is not None or len(args) != 1:
+            print("cannot run: expected --worktreeinclude <file> <target-source-root> [--write]",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return run_worktreeinclude(named, args[0], write)
     if "--standard" in args:
         at = args.index("--standard")
         if at + 1 >= len(args):

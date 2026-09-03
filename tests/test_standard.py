@@ -454,7 +454,7 @@ def test_the_subcommand_composes_each_phase_for_the_runner():
     assert done.returncode == 0, done.stderr
     commands = yaml.safe_load(EXAMPLE.read_text(encoding="utf-8"))["commands"]
     install = [c for c in commands if c.get("role") == "install"]
-    middle = [c for c in commands if c.get("role") not in ("install", "suite")]
+    middle = [c for c in commands if c.get("role") not in ("prepare", "install", "suite")]
     suite = [c for c in commands if c.get("role") == "suite"]
 
     def line(phase: str, steps: list[dict]) -> str:

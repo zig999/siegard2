@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.43.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.44.0. `bin/project.py` reads this line and reports drift against
 the framework's own version.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -152,8 +152,11 @@ skill and `schemas/reconciliation.json` carry the rest.
 Where `deliver.py --outstanding` reports a deliverable set holding more than one task, those
 tasks may be delivered concurrently, one git worktree each. **The framework ships no orchestrator
 for it**: each delivery is the ordinary `/implement-task` path, unvaried, and the rest is a
-person's procedure. `bin/deliver.py`'s docstring holds the preconditions, the sequence and the
-two conflicts to expect.
+person's procedure, with two named exceptions — `deliver.py --worktreeinclude` derives
+`.worktreeinclude` from the registry's own `presupposes`, and a registry's `role: prepare` command
+provisions what one worktree cannot share with another (a test database chief among them), run
+once per worktree exactly where `role: install` already is. `bin/deliver.py`'s docstring holds the
+preconditions, the sequence and the two conflicts to expect.
 
 ## Delivering a scope end to end
 
