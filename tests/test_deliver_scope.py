@@ -17,6 +17,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import deliver
+
 REPO = Path(__file__).resolve().parent.parent
 
 
@@ -81,3 +83,10 @@ def test_the_consumer_rules_carry_the_same_bounds():
         assert sentence.lower() in RULES.lower(), \
             f"src/consumer/CLAUDE.md no longer states {sentence!r} for /deliver-scope"
     assert "review clean" not in RULES
+
+
+def test_the_orchestration_log_the_skill_names_is_the_one_the_validator_keeps():
+    """The skill says the validator keeps `orchestration.md`; deliver.py is what keeps it. Two
+    names for the marker, or a promise the code never held, is a run that ends at its own log."""
+    assert f"`{deliver.ORCHESTRATION_FILE}` at the delivery root" in SKILL
+    assert "the validator keeps it" in SKILL

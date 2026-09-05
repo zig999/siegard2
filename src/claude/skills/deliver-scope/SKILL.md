@@ -138,7 +138,8 @@ The steps:
 **The orchestration log.** After each step, append one line to `orchestration.md` at the delivery
 root — what was invoked, the commit that followed by its hash, and the outcome, one sentence per
 line. It is a marker, never a node, exactly as `closure.md` is: no contract holds it, the
-validator keeps it the way it keeps `intake/`, and it is the one place the run's own decisions —
+validator keeps it by name at the delivery root the way `plan.py` keeps `closure.md` at the work
+root, and it is the one place the run's own decisions —
 the slug derived, the target decided, the order taken, the stop that ended it — survive the
 conversation that made them.
 

@@ -15,7 +15,9 @@ express: the task exists, a proof sits beside an implementation, every criterion
 answered exactly once and nothing else is, every specification node the task implements is
 answered, the plan pin matches the plan as it stands, and no task is delivered before the tasks
 it declares it builds on. `run/` under the delivery root holds what the commands printed: kept
-for a review to point at, never validated as a node.
+for a review to point at, never validated as a node. `orchestration.md` at the delivery root is
+`/deliver-scope`'s log of its own run — a marker, never a node, kept the way plan.py keeps
+`closure.md`.
 
 **The plan is read through plan.py's own pipeline, never through its plan.json** — an index this
 script did not just derive could be stale, and a delivery validated against a stale index reports
@@ -210,6 +212,7 @@ DELIVERY_GRAPH_CONTRACT = PLUGIN_ROOT / "schemas" / "delivery.json"
 STANDARD_CONTRACT = PLUGIN_ROOT / "schemas" / "standard.json"
 DELIVERY_FILE = "delivery.json"
 RUN_DIR = "run"
+ORCHESTRATION_FILE = "orchestration.md"
 
 KINDS = ("implementation", "proof", "review")
 PAIRED = ("implementation", "proof")
@@ -1231,12 +1234,16 @@ def collect(root: Path, validator, names: list[str]) -> tuple[dict[str, dict],
         relative = path.relative_to(root)
         if relative.parts[0] == RUN_DIR:
             continue  # what a run printed: material, never a node
+        if relative.as_posix() == ORCHESTRATION_FILE:
+            continue  # the orchestration log: it says what a run did, and is never a node
         nid = id_of(relative)
         if nid is None:
             problems.append(f"{relative.as_posix()}: not implementation/<epic>/<slug>.md, "
                             f"proof/<epic>/<slug>.md or review/<slug>.md; the path is the "
                             f"identity and this one computes to none. Material a judgment was "
-                            f"read from belongs under run/, which is never validated as a node")
+                            f"read from belongs under run/, and an orchestration log is "
+                            f"{ORCHESTRATION_FILE} at the delivery root; neither is validated "
+                            f"as a node")
             continue
         front, body, unreadable = spec.parse_node(path)
         if front is None:
@@ -1333,6 +1340,10 @@ def check_single(root: Path, named: str, validator, names: list[str]) -> int:
     if relative.parts[0] == RUN_DIR:
         print(f"{relative.as_posix()}: sits under {RUN_DIR}/, which holds what the commands "
               f"printed and is never validated as a node")
+        return 0
+    if relative.as_posix() == ORCHESTRATION_FILE:
+        print(f"{relative.as_posix()}: the orchestration log — what a /deliver-scope run did, "
+              f"and never a node")
         return 0
     nid = id_of(relative)
     if nid is None:

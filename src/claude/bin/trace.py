@@ -1369,10 +1369,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     for given in files:
         stored = stored_of[given]
         rows = sorted(index.get(stored) or [])
-        if not rows and not also:
-            unbound.append(given)
-            continue
         assigned = []
+        held_current = False
         for node_id, pinned in rows:
             if node_id not in nodes:
                 orphaned.append({"node": node_id, "file": given})
@@ -1386,14 +1384,20 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                                 "reason": "the binding computes at the file's content as it "
                                           "stands, and no record holds an open finding against "
                                           "the pair"})
+                held_current = True
                 continue
             assigned.append(node_id)
+        # Whether a file is judged and whether the trace binds anything to it are two questions.
+        # A review hands an untraced file a judge over the plan's nodes, and the record still
+        # owes the fact that no binding claims it: a file under `files` that no node accounts
+        # for and no `unbound` names is a record the fold refuses to write. A file whose only
+        # bindings are orphaned is unbound the same way — nothing standing claims it.
+        if not assigned and not held_current:
+            unbound.append(given)
         if assigned or also:
             judged_files[given] = assigned
-        elif rows:
+        elif held_current:
             all_current.append(given)
-        else:
-            unbound.append(given)
 
     candidates: dict[str, list[str]] = {}
     for given, assigned in judged_files.items():
@@ -1485,9 +1489,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     else:
         shape = (f"{len(omitted)} pair(s) omittable — the binding is current and nothing is "
                  f"owed on them")
+    judged_unbound = [given for given in unbound if given in judged_files]
     print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
           f"{shape}; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} "
-          f"file(s) the trace binds nothing to")
+          f"file(s) the trace binds nothing to"
+          + (f", {len(judged_unbound)} of them judged over the plan's nodes alone"
+             if judged_unbound else ""))
     print(f"  manifest and packs at {workspace}; "
           + (f"candidate index at {workspace / 'candidates.txt'}" if not audit else
              "no candidate index — an audit asks whether a claim stands, and both answers a "

@@ -96,6 +96,20 @@ def test_run_holds_material_and_is_never_a_node(delivery, work, root, target, so
         "run/ holds what the commands printed; validating it as a node would refuse a log"
 
 
+def test_the_orchestration_log_is_a_marker_and_never_a_node(delivery, work, root, target,
+                                                             sound_delivery):
+    """/deliver-scope appends its run to orchestration.md at the delivery root and promises the
+    validator keeps it the way plan.py keeps closure.md. A marker the validator refused would be
+    dropped by the first run that met the refusal, and the run's own decisions with it."""
+    (delivery / deliver.ORCHESTRATION_FILE).write_text(
+        "plan-work checkout: commit abc1234 — planned.\n", encoding="utf-8")
+    assert problems_of(delivery, work, target, root) == []
+    (delivery / "implementation" / deliver.ORCHESTRATION_FILE).write_text("stray\n",
+                                                                         encoding="utf-8")
+    said(problems_of(delivery, work, target, root),
+         f"implementation/{deliver.ORCHESTRATION_FILE}: not implementation/")
+
+
 def test_the_body_carries_exactly_two_headings(delivery, work, root, target, sound_delivery,
                                                write_delivery):
     path = delivery / "proof/checkout/record-order.md"

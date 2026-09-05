@@ -274,7 +274,8 @@ them — read by every judge and answered for in every return, so a fact the del
 node its record never bound is still read against that node; they are never bound from here,
 because a binding this review wrote would be a claim no implementation record made. A file the
 trace binds nothing to — a test, a file the records did not name under `encoded_at` — is still
-handed a judge, over the plan's nodes alone. Run it; never infer any of it, and never reconstruct a
+handed a judge, over the plan's nodes alone, and is still staged under `unbound`: being read and
+being claimed by a binding are two facts, and the record owes both. Run it; never infer any of it, and never reconstruct a
 node set by reading `siegard-trace.json` yourself.
 
 Two states the staging may report continue differently. **A node under the orphaned class** is a

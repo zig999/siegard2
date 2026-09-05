@@ -624,16 +624,38 @@ def test_a_return_that_skips_a_plan_node_is_a_delegation_to_run_again(consumer):
 
 def test_a_file_the_trace_binds_nothing_to_is_still_judged_over_the_plans_nodes(consumer):
     """Outside a review an untraced file is reported and skipped. A review reads it: the file is
-    part of the change, and the plan's nodes are what it was written against."""
+    part of the change, and the plan's nodes are what it was written against. Being judged and
+    being unbound are two facts, and the file carries both — the record owes `unbound` for every
+    named file no node accounts for, and a staging that dropped the file from `unbound` because
+    a judge read it would compose a record its own contract refuses."""
     third = "domain/troubleshooting/hypothesis"
     untraced = "src/orders/new.ts"
     (consumer / "backend" / untraced).write_text("export const x = 1;\n", encoding="utf-8")
     done, workspace = review_staged(consumer, "--node", third, files=[FILE, untraced])
     assert done.returncode == 0, done.stdout + done.stderr
     manifest = manifest_of(workspace)
-    assert manifest["unbound"] == []
+    assert manifest["unbound"] == [untraced]
     assert manifest["files"][untraced] == {"nodes": [], "also": [third],
                                            "pack": manifest["files"][untraced]["pack"]}
+    assert "1 file(s) the trace binds nothing to, 1 of them judged over the plan's nodes alone" \
+        in done.stdout
+    save_return(consumer, "first-review", FILE, clean_return([NODE, OTHER, third]))
+    save_return(consumer, "first-review", untraced, clean_return(
+        [third], findings=[{"node": NODE, "kind": "contradicts", "where": "line 1",
+                            "evidence": "export const x = 1;", "cost": "the case is misnamed"}]))
+    premise = dict(PREMISE, files=[PREMISE["files"][0],
+                                   {"path": untraced, "change": "new, written by the delivery"}])
+    record = consumer / "siegard-reconcile" / "first-review.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer, premise), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert front["unbound"] == [untraced]
+    assert {entry["path"] for entry in front["files"]} == {FILE, untraced}
+    case = next(entry for entry in front["nodes"] if entry["node"] == NODE)
+    assert case["conforms"] is False and untraced in case["how"], \
+        "a finding the untraced file's judge raised against a batch node lands on that node"
+    assert case["observed_at"] == [FILE], "and the untraced file is bound from nowhere"
+    assert run("--reconciliation", record).returncode == 0
     _, workspace = review_staged(consumer, slug="no-plan-nodes", files=[FILE, untraced])
     assert manifest_of(workspace)["unbound"] == [untraced], \
         "with nothing to read it against, the untraced file is reported as ever"
