@@ -996,6 +996,20 @@ def overview(nodes: dict[str, dict]) -> str:
         strategic = nodes[f"domain/{context}/_context"]["front"]["strategic"]
         lines.append(f"| {context} | {strategic} | {counts['element']} | {counts['rule']} "
                      f"| {counts['contract']} | {counts['scenario']} |")
+    # One line per consistency boundary, so its size is read here rather than by opening one
+    # class diagram per context: the boundary is what changes together, and how much it holds is
+    # the first thing to weigh about it.
+    lines += ["", "## Aggregates", ""]
+    roots = [i for i, n in sorted(nodes.items())
+             if n["cls"] == "element" and n["front"].get("type") == "aggregate-root"]
+    for identity in roots:
+        root = nodes[identity]
+        inside = sum(1 for n in nodes.values() if n["cls"] == "element" and n is not root
+                     and aggregate_of(n) == (root["context"], root["slug"]))
+        lines.append(f"- {root['context']}/{root['slug']} — {inside} entity(ies) inside, "
+                     f"{len(listed(root['front'], 'attributes'))} attribute(s) on the root")
+    if not roots:
+        lines.append("None.")
     lines += ["", "## Capabilities", ""]
     capabilities = [i for i, n in sorted(nodes.items())
                     if n["cls"] == "contract" and n["front"].get("type") == "capability"]

@@ -153,7 +153,8 @@ R9–R10).
   - **state diagram** — per state-machine rule;
   - **capability map** — capability → contexts, derived from the references of the scenarios
     anchored to each capability;
-  - **system overview** — contexts, strategic classification, capabilities.
+  - **system overview** — contexts, strategic classification, each aggregate with what it
+    holds (counted, never held to a threshold), capabilities, constraints.
 
 ## What is not normative
 

@@ -360,6 +360,17 @@ def test_a_foreign_class_is_marked_with_its_home_context(spec_root):
     assert "<<external" not in home, "the owning context's diagram declares it in full"
 
 
+def test_the_overview_counts_each_aggregate(spec_root):
+    """A boundary's size is the first thing to weigh about it, and it was readable only by
+    opening one class diagram per context. Counted and said, never held to a threshold: an
+    aggregate legitimately large would be refused for a number nobody measured."""
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    overview = spec.project(nodes)["overview.md"]
+    assert "## Aggregates" in overview
+    assert "- troubleshooting/case — 3 entity(ies) inside, 4 attribute(s) on the root" in overview
+    assert "- monitoring/alert — 0 entity(ies) inside, 2 attribute(s) on the root" in overview
+
+
 def test_an_offered_contract_reaches_the_context_map(spec_root):
     """A published contract nothing inside consumes is the system's own surface, and the map
     used to be silent about every such door. Dashed, so the outward offer never reads as the
