@@ -120,6 +120,30 @@ def test_a_sound_record_holds_and_says_what_it_will_bind(write_record):
     assert "1 node(s) the judgment cleared" in done.stdout
 
 
+def test_a_record_naming_a_target_the_project_file_does_not_declare_cannot_hold(
+        consumer, write_record):
+    """The same fact `--owed` reports later, caught at the gate instead: a record whose `target`
+    is not a key `siegard.json` declares is one `--owed` can never resolve, and left to land it
+    reads that way forever. Refusing it here is where a human still edits the field."""
+    (consumer / "siegard.json").write_text(
+        json.dumps({"specification_root": "specs", "targets": {"backend": "backend"}}, indent=2),
+        encoding="utf-8")
+    record = write_record(record_of([CLEARED], target="backend/app"))
+
+    done = run("--reconciliation", record)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "backend/app" in done.stdout
+    assert "does not declare" in done.stdout
+
+
+def test_a_record_naming_its_target_holds_with_no_project_file_to_check_it_against(write_record):
+    """A `target` naming nothing `siegard.json` declares and no `siegard.json` to declare it are
+    different facts; the gate has nothing to compare against in the second and holds the record
+    rather than reading absence as a mismatch."""
+    done = run("--reconciliation", write_record(record_of([CLEARED])))
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
 def test_a_record_filed_anywhere_else_cannot_run(write_record):
     """The location is contract, not convention: a justification the next reader cannot find is a
     binding resting on nothing, and the trace outlives every other root."""

@@ -841,6 +841,14 @@ def reconciliation(record: Path) -> int:
                 for error in Draft202012Validator(schema).iter_errors(front)]
     if not problems:
         problems = accounted(front)
+    home = home_of(record.parent)
+    project_file = home / project.PROJECT_FILE
+    if not problems and isinstance(front.get("target"), str) and project_file.is_file():
+        if front["target"] not in target_roots(home):
+            problems.append(f"target: names {front['target']!r}, which {project.PROJECT_FILE} "
+                            f"does not declare as a key under `targets`; `--owed` cannot resolve "
+                            f"this record's paths from a root nothing here can find, and would "
+                            f"read it as unreadable forever")
     if problems:
         for problem in sorted(set(problems)):
             print(f"{record.name}: {problem}")
