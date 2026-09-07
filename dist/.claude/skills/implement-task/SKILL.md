@@ -302,13 +302,13 @@ field of the task file — already open from the note check above — read as a 
 Where it does not, the tree is held to what the registry presupposes on the way in:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --specification <specification-root>
 ```
 
 Where it does, drop `--against` and run the registry check alone:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --specification <specification-root>
 ```
 
 Either way, anything but a clean pass is a stop, reported verbatim. A clean pass prints each
@@ -428,7 +428,10 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py <delivery-root> --run <epic>-<slug>-
 The timeout and the step list are the registry check's `build:` line, verbatim — composed by the
 same function that will hold the captured run to them, never re-derived from this paragraph.
 `run.py` stops at the first step that does not pass, so a tree that did not install is never
-type-checked and the log says which one it was.
+type-checked and the log says which one it was. Where the step that failed is one the registry
+check listed as deciding a constraint, the red is that constraint's: name it beside the step when
+the run goes back to the producer and again in the report, so a reader meets the node the tree
+broke and not only the file.
 
 **One task runs less than that, and it is the same task and the same field as at the situate step:
 one declaring `produces`.** It runs the step whose role is `install`, and no other. What every other

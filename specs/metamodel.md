@@ -98,6 +98,13 @@ R9–R10).
   optionally states the mechanical check that verifies it. Integration strategies
   (anti-corruption layer, messaging, storage choices) live here — they constrain the solution,
   never the domain.
+- **`fitness` states the condition, never a command or a step.** Which step decides a
+  constraint is declared by a project's own registry — `commands[].decides` in
+  `schemas/standard.json`, resolved by `bin/deliver.py --standard <file> --specification
+  <root>` — so the check runs with that project's suite and is owed by every delivery, the
+  node carries no artifact the project chose, and a registry can be reported against the
+  constraints it leaves undecided. A step decided by nothing is a constraint held by reading
+  alone, and the report says which.
 
 ## Identity and references
 

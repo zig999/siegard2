@@ -87,6 +87,12 @@ the tool's own configuration only touches one directory), and `seen_at` naming t
 rule was read from — a config's path for a `tool` rule, the conversation or document the human's
 words came from for a `reading` rule, where that can be named at all.
 
+Declare `decides` on a step only where the human stated that this step is what checks a named
+Architecture Constraint, or the step's own configuration names the boundary the constraint states —
+by the constraint's identity under the specification root, never by a step guessed for a constraint
+nobody connected to one. A constraint no step decides is named in the report as held by reading
+alone.
+
 Declare `presupposes` for every artifact a `tool` rule's step depends on — the manifest, the
 compiler configuration, the linter configuration, the style checker configuration — each with what
 it provides and which rules cannot be decided while it is absent. Declare `commands` naming the
@@ -102,7 +108,8 @@ is not a rule here; `schemas/standard.json` carries the shape and an example of 
 
 ## 4. Validate, and fix the shape until it is clean
 
-Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the standard's path>`. Anything but
+Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the standard's path>
+--specification <specification-root>`, the root `project.py` printed. Anything but
 a clean pass is this invocation's own shape to fix — a duplicate id, a `tool` rule naming no step, a
 `presupposes` or `dependencies` entry citing a rule the registry does not declare — never a stop:
 getting the shape right is this skill's job, not a question for the human. Once it holds, run

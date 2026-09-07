@@ -505,3 +505,108 @@ def test_the_refusal_hands_over_the_invocation(tmp_path):
     assert f"Project standard: {registry}" in done.stdout
     assert "Work root: <" in done.stdout, \
         "what this command cannot know stays a named slot, never a guess"
+
+
+# -------------------------------------------------------------- what a step decides
+
+
+def deciding(tmp_path: Path, decides: list[str]) -> Path:
+    """The base registry with one more step, holding the tree to the constraints named."""
+    commands = list(base().get("commands") or [
+        {"step": "lint", "command": "true", "timeout_seconds": 60},
+        {"step": "test", "command": "true", "timeout_seconds": 60, "role": "suite"}])
+    commands.insert(1, {"step": "boundaries", "command": "true", "timeout_seconds": 60,
+                        "decides": decides})
+    return broken(tmp_path, base(commands=commands))
+
+
+def constrained(tmp_path: Path, *slugs: str) -> Path:
+    """A specification root holding exactly the constraints named and nothing else — existence is
+    the whole of what `--specification` reads, so nothing else needs to stand."""
+    root = tmp_path / "spec"
+    (root / "constraints").mkdir(parents=True)
+    for slug in slugs:
+        (root / "constraints" / f"{slug}.md").write_text(
+            "---\nstatement: One condition over the implementation.\nscope: system\n---\n\n"
+            "## Description\n\nNone.\n", encoding="utf-8")
+    return root
+
+
+def test_a_step_may_declare_the_constraints_it_decides(tmp_path, contract):
+    """The join the constraint side rests on, and the canary for the field: before `decides`
+    existed this registry was refused by the command's closed shape."""
+    data, problems = deliver.load_standard(
+        deciding(tmp_path, ["constraints/asynchronous-events"]), contract)
+    assert problems == [], problems
+    assert data["commands"][1]["decides"] == ["constraints/asynchronous-events"]
+
+
+def test_a_decides_entry_outside_constraints_is_refused(tmp_path, contract):
+    """A step decides an Architecture Constraint and nothing of another class: a rule is a
+    conformance test's, a scenario an acceptance test's, and neither is a command's to hold."""
+    data, problems = deliver.load_standard(deciding(tmp_path, ["rules/sales/order-total"]), contract)
+    assert data is None
+    assert any("decides" in p for p in problems), problems
+
+
+def test_the_contract_example_decides_a_constraint(contract):
+    """The worked example carries one, so an author sees the shape without reading the schema."""
+    example = contract.schema["examples"][0]
+    assert any(c.get("decides") for c in example["commands"])
+
+
+def test_decides_is_resolved_against_the_specification(tmp_path):
+    """Both halves of the report: the step that decides, and the constraint no step decides —
+    the second is the list of constraints held by reading alone, said rather than left out."""
+    root = constrained(tmp_path, "asynchronous-events", "domain-imports-nothing")
+    done = invoke("--standard", str(deciding(tmp_path, ["constraints/asynchronous-events"])),
+                  "--specification", str(root))
+    assert done.returncode == 0, done.stdout
+    assert "boundaries decides constraints/asynchronous-events" in done.stdout
+    assert "no step decides constraints/domain-imports-nothing: held by reading alone" \
+        in done.stdout
+
+
+def test_a_decides_naming_a_constraint_the_specification_does_not_hold_is_refused(tmp_path):
+    root = constrained(tmp_path, "asynchronous-events")
+    done = invoke("--standard", str(deciding(tmp_path, ["constraints/never-written"])),
+                  "--specification", str(root))
+    assert done.returncode == 1, done.stdout
+    assert "decides constraints/never-written, which" in done.stdout
+    assert "does not hold" in done.stdout
+    assert "1 `decides` reference(s) do not resolve" in done.stdout
+
+
+def test_decides_without_a_specification_says_who_resolves_it(tmp_path):
+    """Alone, the registry check cannot resolve a constraint — the same honesty `presupposes` has
+    without `--against`: count it, and name the flag that answers."""
+    done = invoke("--standard", str(deciding(tmp_path, ["constraints/asynchronous-events"])))
+    assert done.returncode == 0, done.stdout
+    assert "1 constraint reference(s) in `decides`, unresolved here" in done.stdout
+    assert "--specification <root> resolves them" in done.stdout
+
+
+def test_a_registry_deciding_nothing_still_names_what_is_held_by_reading(tmp_path):
+    """A registry from before the field, held against a specification with constraints: every one
+    of them is held by reading alone, and the check says so rather than staying silent."""
+    root = constrained(tmp_path, "asynchronous-events")
+    done = invoke("--standard", str(broken(tmp_path, base())), "--specification", str(root))
+    assert done.returncode == 0, done.stdout
+    assert "no step decides constraints/asynchronous-events: held by reading alone" in done.stdout
+
+
+def test_a_specification_holding_no_constraint_is_said(tmp_path):
+    root = tmp_path / "spec"
+    (root / "domain").mkdir(parents=True)
+    done = invoke("--standard", str(broken(tmp_path, base())), "--specification", str(root))
+    assert done.returncode == 0, done.stdout
+    assert "holds no constraint" in done.stdout
+
+
+def test_specification_holds_a_standard_and_nothing_else(tmp_path):
+    done = invoke("--specification", str(tmp_path), str(tmp_path), str(tmp_path))
+    assert done.returncode == 2
+    assert "only --standard holds one" in done.stderr
+    nowhere = invoke("--standard", str(EXAMPLE), "--specification", str(tmp_path / "nowhere"))
+    assert nowhere.returncode == 2
+    assert "is not a directory" in nowhere.stderr

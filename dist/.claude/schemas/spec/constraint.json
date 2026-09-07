@@ -20,7 +20,7 @@
     "fitness": {
       "type": "string",
       "minLength": 1,
-      "description": "The mechanical check that verifies the constraint, where one exists."
+      "description": "The mechanical check that verifies the constraint, where one exists — stated as the condition it decides, never as a command or a step. Which step of a project runs it is that project's registry's to declare, in `commands[].decides` of `schemas/standard.json`: the node stays what the solution must have, and the registry stays how one project checks it."
     }
   },
   "examples": [

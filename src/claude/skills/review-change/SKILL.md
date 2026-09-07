@@ -184,14 +184,15 @@ nothing else in either root. The specification node files belong to the passes, 
 Then, where the caller named a standard, take it in and read it here — before anything is run:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --against <target-source-root> --specification <specification-root>
 ```
 
 A registry that does not hold together is a stop, reported verbatim: a review against one reports a
 conformance nobody has, and fixing it belongs to whoever owns it. The command prints the split —
 how many rules a reading decides, how many a tool does, and the names of the steps those expect —
-and every command with its step and its bound, which is everything the capture below composes its
-run from. Do not open the registry's text here: its rules are the standard pass's judge to read,
+every command with its step and its bound, which is everything the capture below composes its
+run from, and, against the specification, which constraints each step decides and which no step
+decides. Do not open the registry's text here: its rules are the standard pass's judge to read,
 that pass is handed the path, and a registry read twice is the same registry at twice the cost.
 
 An artifact the registry presupposes and the tree does not hold is **not** a stop here. A review
@@ -529,7 +530,9 @@ Report, in this order:
   — a step naming a linter with no rule loaded for the files it read exits 0 over every one of them,
   and a scanner with no ruleset does the same — so a review reporting those rules as answered would
   have reported the exit code and called it the fact. The number is what a reader can act on: one
-  step carrying twenty rules is worth their look, and this line is where they get it. Name too every artifact the registry presupposes and the tree does not hold, with
+  step carrying twenty rules is worth their look, and this line is where they get it. Name the
+  constraints the registry's steps decide and, apart, the ones no step decides: those are held by
+  reading alone, and a green run settles nothing about them. Name too every artifact the registry presupposes and the tree does not hold, with
   the rules each one takes with it: a review that reports two findings over a standard whose
   substrate is missing has reviewed a fraction of it, and the fraction is the number this line
   gives. The way out is a task declaring the artifact in `produces`, planned through `/plan-work`;

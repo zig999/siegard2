@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.44.1. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.45.0. `bin/project.py` reads this line and reports drift against
 the framework's own version.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -235,6 +235,11 @@ departures.
   one is absent. `deliver.py --standard <file> --against <tree>` answers whether the tree holds
   them, and both the plan and the delivery refuse over an absence. A task's `produces` is how the
   absent one gets built.
+- **An Architecture Constraint is decided by a step the registry names.** `commands[].decides`
+  lists the `constraints/<slug>` identities a step holds the tree to; a constraint's `fitness`
+  states the condition and never a command. `deliver.py --standard <file> --specification <root>`
+  resolves them — a reference to a node the specification does not hold is refused — and names
+  the constraints no step decides, which are held by reading alone.
 - A project that has authored no standard gets an **honestly narrow** review — the pass records
   that it did not run, and what was absent — never a clean one.
 

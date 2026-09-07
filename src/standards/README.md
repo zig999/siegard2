@@ -22,6 +22,7 @@ So Siegard ships the **slot** and the **enforcement**, never the content:
 | the validator that holds a registry to it | `bin/deliver.py --standard <file>` |
 | the review pass that reports departures | `/review-change`, the standard pass |
 | the split between what a reading decides and what a tool decides | `decided_by` on every rule |
+| the join between a step and the Architecture Constraint it decides | `commands[].decides`, resolved by `bin/deliver.py --standard <file> --specification <root>`, which also names the constraints no step decides |
 | **any rule** | nowhere — it is the project's |
 
 These files are not this repository's standard either. This repository is Python, JSON, YAML and

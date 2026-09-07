@@ -134,12 +134,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
                                                         run; the target source root is not needed)
-        deliver.py --standard <file> [--against DIR]
+        deliver.py --standard <file> [--against DIR] [--specification DIR]
                                                         validate one project standard on its own;
                                                         stands alone, needs no root. With a tree
                                                         named, also say whether it holds what the
                                                         registry presupposes — exit 1 while any
-                                                        of it is absent
+                                                        of it is absent. With a specification root
+                                                        named, also resolve every constraint a
+                                                        step `decides` — exit 1 while one names a
+                                                        node the specification does not hold — and
+                                                        say which constraints no step decides
         deliver.py --standard <file> --reading [--for <path> ...]
                                                         print only the rules this registry marks
                                                         `decided_by: reading`, as JSON — narrowed,
@@ -1639,6 +1643,44 @@ def substrate_report(data: dict, tree: Path) -> tuple[list[str], int]:
     return lines, absent
 
 
+def decides_report(data: dict, specification: Path) -> tuple[list[str], list[str]]:
+    """Which Architecture Constraints this registry's steps decide, resolved against the
+    specification, and which constraints the specification holds that no step decides. Existence is
+    the whole of what is decided here, exactly as it is for what a registry presupposes: the nodes
+    are read through spec.py's own collection and nothing more is asked of them, so a specification
+    still being authored answers the same as a sound one. A `decides` naming a node the
+    specification does not hold is a problem — a step holding the tree to a constraint nobody wrote
+    decides nothing anybody can weigh. A constraint no step decides is a line and never a problem:
+    it is held by reading alone, and naming which ones is what this report exists for."""
+    nodes, _ = spec.collect(specification, spec.contracts())
+    constraints = {identity for identity, node in nodes.items() if node["cls"] == "constraint"}
+    decided: set[str] = set()
+    lines: list[str] = []
+    problems: list[str] = []
+    for command in listed(data, "commands"):
+        if not isinstance(command, dict) or not isinstance(command.get("step"), str):
+            continue
+        named = [c for c in listed(command, "decides") if isinstance(c, str)]
+        if not named:
+            continue
+        lines.append(f"    {command['step']} decides {', '.join(named)}")
+        for identity in named:
+            if identity in constraints:
+                decided.add(identity)
+            else:
+                problems.append(f"the step `{command['step']}` decides {identity}, which "
+                                f"{specification} does not hold; a step holding the tree to a "
+                                f"constraint nobody wrote decides nothing anybody can weigh")
+    undecided = sorted(constraints - decided)
+    if undecided:
+        lines.append(f"    no step decides {', '.join(undecided)}: held by reading alone")
+    elif constraints:
+        lines.append("    every constraint the specification holds is decided by a step")
+    else:
+        lines.append(f"    {specification} holds no constraint")
+    return lines, problems
+
+
 def worktreeinclude_paths(data: dict, target_root: Path) -> list[str]:
     """Every `presupposes[].path` this registry declares, joined onto the target source root and
     printed as a `.worktreeinclude` line — the paths a fresh worktree needs carried in because git
@@ -1705,13 +1747,16 @@ def run_worktreeinclude(named: str, target: str, write: bool) -> int:
     return 0
 
 
-def check_standard(named: str, against: str | None = None) -> int:
+def check_standard(named: str, against: str | None = None,
+                   specification: str | None = None) -> int:
     """Validate one project standard on its own, so a consumer can hold a registry to its contract
     before any review reads it. Every root this framework validates has a validator; a standard is
     not a root, and this is the closest thing it gets. With a tree named, it also answers whether
     that tree holds what the registry presupposes — the one question about a standard that cannot
     be answered from the registry alone, and the one whose wrong answer is discovered a file at a
-    time in a review instead of once, before the first of them."""
+    time in a review instead of once, before the first of them. With a specification root named,
+    it also resolves every constraint a step `decides` — the one question about a `decides` that
+    cannot be answered from the registry alone — and names the constraints no step decides."""
     try:
         validator = standard_contract()
     except (FileNotFoundError, json.JSONDecodeError) as broken:
@@ -1781,6 +1826,25 @@ def check_standard(named: str, against: str | None = None) -> int:
         print("  it declares no command: nothing runs on its own, and a review says which rules "
               "went unanswered")
 
+    referenced = sum(len(listed(c, "decides")) for c in commands)
+    unresolved: list[str] = []
+    if specification is not None:
+        root = Path(specification)
+        if not root.is_dir():
+            print(f"cannot run: {root} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+        lines, unresolved = decides_report(data, root)
+        print(f"  against the specification at {root}:")
+        print("\n".join(lines))
+        for problem in unresolved:
+            print(f"  {problem}")
+        if unresolved:
+            print(f"  {len(unresolved)} `decides` reference(s) do not resolve; a registry is never "
+                  f"held against a constraint the specification does not hold")
+    elif referenced:
+        print(f"  {referenced} constraint reference(s) in `decides`, unresolved here; "
+              f"--specification <root> resolves them and names the constraints no step decides")
+
     packages = [d for d in listed(data, "dependencies") if isinstance(d, dict)]
     print(f"  it authorizes {len(packages)} direct dependency(ies)"
           + (": " + ", ".join(str(d.get("package")) for d in packages) if packages else
@@ -1792,7 +1856,7 @@ def check_standard(named: str, against: str | None = None) -> int:
         print(f"  it presupposes {len(presupposed)} artifact(s)"
               + ("; --against <target-source-root> says whether they stand" if presupposed else
                  ": every rule is a condition over a file, and none needs one to exist first"))
-        return 0
+        return 1 if unresolved else 0
 
     tree = Path(against)
     if not tree.is_dir():
@@ -1800,7 +1864,7 @@ def check_standard(named: str, against: str | None = None) -> int:
         return CANNOT_RUN
     if not presupposed:
         print(f"  it presupposes nothing, so {tree} holds everything it needs to")
-        return 0
+        return 1 if unresolved else 0
     lines, absent = substrate_report(data, tree)
     print(f"  against {tree}:")
     print("\n".join(lines))
@@ -1821,7 +1885,7 @@ def check_standard(named: str, against: str | None = None) -> int:
               f"\n  Specification root: <the specification that plan implements against>"
               f"\n  Target source root: {tree}"
               f"\n  Project standard: {path}")
-    return 1 if absent else 0
+    return 1 if absent or unresolved else 0
 
 
 def print_reading_rules(named: str, for_paths: list[str]) -> int:
@@ -1880,6 +1944,14 @@ def main() -> int:
             return CANNOT_RUN
         against = args[at + 1]
         del args[at:at + 2]
+    specification = None
+    if "--specification" in args:
+        at = args.index("--specification")
+        if at + 1 >= len(args):
+            print("cannot run: --specification takes a directory", file=sys.stderr)
+            return CANNOT_RUN
+        specification = args[at + 1]
+        del args[at:at + 2]
     if "--check-record" in args:
         at = args.index("--check-record")
         if at + 1 >= len(args):
@@ -1887,7 +1959,8 @@ def main() -> int:
             return CANNOT_RUN
         named = args[at + 1]
         del args[at:at + 2]
-        if verify or report or single is not None or against is not None or len(args) != 1:
+        if verify or report or single is not None or against is not None \
+                or specification is not None or len(args) != 1:
             print("cannot run: expected --check-record <record> <target-source-root>",
                   file=sys.stderr)
             return CANNOT_RUN
@@ -1899,7 +1972,8 @@ def main() -> int:
             return CANNOT_RUN
         branch = args[at + 1]
         del args[at:at + 2]
-        if verify or report or single is not None or against is not None or args:
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args:
             print("cannot run: --contract stands alone", file=sys.stderr)
             return CANNOT_RUN
         return print_contract_branch(DELIVERY_CONTRACT, branch)
@@ -1912,7 +1986,8 @@ def main() -> int:
         del args[at:at + 2]
         write = "--write" in args
         args = [a for a in args if a != "--write"]
-        if verify or report or single is not None or against is not None or len(args) != 1:
+        if verify or report or single is not None or against is not None \
+                or specification is not None or len(args) != 1:
             print("cannot run: expected --worktreeinclude <file> <target-source-root> [--write]",
                   file=sys.stderr)
             return CANNOT_RUN
@@ -1939,19 +2014,24 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         if reading:
-            if verify or report or single is not None or against is not None or args:
+            if verify or report or single is not None or against is not None \
+                    or specification is not None or args:
                 print("cannot run: --reading stands with --standard and --for at most",
                       file=sys.stderr)
                 return CANNOT_RUN
             return print_reading_rules(named, for_paths)
         if verify or report or single is not None or args:
-            print("cannot run: --standard stands alone, with --against at most",
-                  file=sys.stderr)
+            print("cannot run: --standard stands alone, with --against and --specification at "
+                  "most", file=sys.stderr)
             return CANNOT_RUN
-        return check_standard(named, against)
+        return check_standard(named, against, specification)
     if against is not None:
         print("cannot run: --against says which tree a standard is held against, and only "
               "--standard holds one", file=sys.stderr)
+        return CANNOT_RUN
+    if specification is not None:
+        print("cannot run: --specification says which specification a standard's `decides` "
+              "resolve against, and only --standard holds one", file=sys.stderr)
         return CANNOT_RUN
     if report and (verify or single is not None):
         print("cannot run: --outstanding stands alone", file=sys.stderr)

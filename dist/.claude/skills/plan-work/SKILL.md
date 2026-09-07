@@ -275,15 +275,19 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
 - **The project's standard, when one was named.** Run
 
   ```
-  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the registry> --against <target-source-root>
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the registry> --against <target-source-root> --specification <specification-root>
   ```
 
   A registry that does not hold together is a stop, reported verbatim: fixing it belongs to
-  whoever owns it. An artifact it presupposes and the tree does not hold is **not** a stop — it is
-  this bullet's whole product. Keep what the command printed for each: the path, what the registry
-  says that artifact provides, and the rules it named as unanswerable while the artifact is
-  absent. That set goes to the decomposition, and it is gathered here, before any node is written,
-  because it decides whether this plan holds one more task than the scope asked for.
+  whoever owns it — and a step deciding a constraint the specification does not hold is that
+  stop, not a form problem of this plan's. An artifact it presupposes and the tree does not hold
+  is **not** a stop — it is this bullet's whole product. Keep what the command printed for each:
+  the path, what the registry says that artifact provides, and the rules it named as unanswerable
+  while the artifact is absent. That set goes to the decomposition, and it is gathered here,
+  before any node is written, because it decides whether this plan holds one more task than the
+  scope asked for. Keep too what it printed against the specification: which constraints a step
+  decides, and which no step decides — the latter are held by reading alone, and the report
+  names them beside the tasks that implement them.
 
 ### 2. Inventory
 
@@ -530,7 +534,9 @@ Report, in this order:
   produced by a task this plan now holds, named by identifier and by path. Where none resolved,
   say which absence it was — a declared none in the project file, or nothing anywhere — because
   a plan cut without one is a plan that cannot know whether the tree it plans over can run
-  anything it delivers, and that is the honestly narrow answer rather than silence;
+  anything it delivers, and that is the honestly narrow answer rather than silence. Where one
+  resolved, name too the constraints this plan's tasks implement that no step of it decides:
+  those are held by reading alone, and a green suite settles nothing about them;
 - which steps, if any, ran inline instead of in a subagent, each with the spawn failure that
   authorized it, verbatim;
 - the validator's final output, verbatim;
