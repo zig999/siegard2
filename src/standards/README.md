@@ -46,6 +46,14 @@ invocation names the one that governs the work in hand.
 Each is one project, one stack, one registry answering for all of it — proof the same contract
 holds two different stacks without a line of schema changing between them.
 
+Beside them sits one document that is not a registry: `backend-ddd-conventions.md`, an example of
+the optional input `/siegard-standard` takes — conventions in a project's own words, named by
+path. A project that adopts it edits it into its own words first and hands the path to the
+skill; the transcription into a registry is the skill's, and it writes nothing the document does
+not say. The document keeps only rules about how source is arranged; what it hands to the
+specification instead — the Architecture Constraints a step then `decides` — is listed at its end,
+so nothing in it is a rule the standard's contract excludes.
+
 - **`backend-node-service.yaml`** — a Node/TypeScript service. Fifty-nine rules across what it is
   built on (the runtime, the HTTP framework, the driver, the JWT library, the logger, the test
   runner, the datastore) and how its source is arranged: DTOs, API shape, errors, edge cases,

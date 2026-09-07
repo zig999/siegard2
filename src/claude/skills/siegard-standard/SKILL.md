@@ -25,10 +25,11 @@ A missing input is a stop, not a default:
    never inside a delivery root as its origin: a standard is the project's own artifact, and this
    skill only ever writes into the project's own tree.
 
-One optional input: **conventions in the human's own words** — prose naming what the team already
-does that no tool in the tree would show by reading it: a review habit, a naming choice enforced by
-eye, a boundary nobody wrote a linter for. Absent, this invocation writes only what the tree's own
-tooling already proves.
+One optional input: **conventions in the human's own words** — inline in the invocation, or a
+document named by path and read whole — prose naming what the team already does that no tool in
+the tree would show by reading it: a review habit, a naming choice enforced by eye, a boundary
+nobody wrote a linter for. Absent, this invocation writes only what the tree's own tooling already
+proves.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `targets` answers only from here. From here on, "the target source root" means `targets[<the
