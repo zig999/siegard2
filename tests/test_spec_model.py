@@ -252,12 +252,44 @@ def test_every_projected_fact_traces_to_a_file(spec_root):
     """Removing the one consumed contract removes the map's edge and declares separate ways."""
     nodes, _ = spec.collect(spec_root, spec.contracts())
     before = spec.project(nodes)["context-map.mmd"]
-    assert "monitoring -->|alert-raised| troubleshooting" in before
+    assert "monitoring -->|alert-raised (adopted)| troubleshooting" in before
     (spec_root / "contracts/troubleshooting/alert-raised.md").unlink()
     nodes, _ = spec.collect(spec_root, spec.contracts())
     after = spec.project(nodes)["context-map.mmd"]
     assert "-->" not in after
     assert "separate ways: monitoring and troubleshooting" in after
+
+
+def test_the_context_map_reads_adoption_from_the_payload(spec_root):
+    """The one strategic fact a consumed contract carries and nothing declares: whose model
+    crosses the boundary. The fixture's consumer names the upstream's own element as its
+    payload, so it adopts that model; renamed to an element of its own, it translates. Read from
+    the payload alone, because a field stating it would be a second home for what the payload
+    already says."""
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    assert "monitoring -->|alert-raised (adopted)| troubleshooting" \
+        in spec.project(nodes)["context-map.mmd"]
+    rewrite(spec_root, "contracts/troubleshooting/alert-raised.md",
+            lambda f: f.update(payload="domain/troubleshooting/case"))
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    assert "monitoring -->|alert-raised (translated)| troubleshooting" \
+        in spec.project(nodes)["context-map.mmd"]
+
+
+def test_a_model_referenced_across_contexts_reaches_the_context_map(spec_root):
+    """An element naming another context's element by identity is a kernel the two share, and
+    no contract declares it — so the map draws it apart from consumption, and a pair joined only
+    by a shared model has not gone separate ways."""
+    rewrite(spec_root, "domain/troubleshooting/case.md",
+            lambda f: f.update(relationships=(f.get("relationships") or []) + [
+                {"target": "domain/monitoring/alert", "type": "association",
+                 "cardinality": "1", "role": "opened-by"}]))
+    (spec_root / "contracts/troubleshooting/alert-raised.md").unlink()
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    diagram = spec.project(nodes)["context-map.mmd"]
+    assert "troubleshooting ==>|model: alert| monitoring" in diagram
+    assert "-->" not in diagram, "a shared model is not consumption"
+    assert "separate ways" not in diagram
 
 
 def test_the_class_diagram_keeps_values_outside_the_aggregate(spec_root):

@@ -41,7 +41,7 @@ The class set and every subtype vocabulary stay closed under two tests:
 | Domain Model | what exists and how it is structured | reference resolution, reachability, consistency boundaries |
 | Rule | what must always hold (universal) | falsifiable condition → conformance test |
 | Scenario | what happens in one concrete case (example) | executable as an acceptance test |
-| Contract | what is promised across a boundary | compatibility over time, direction, versioning |
+| Contract | what is promised across a boundary | direction and the upstream chain, resolved by the validator; a change over time surfaces as drift on every file the trace binds to the node |
 | Architecture Constraint | what limits the solution space | fitness function over the implementation |
 
 Every node of every class is complete: no provenance meta-fields, no open markers (SPEC-001
@@ -143,9 +143,13 @@ R9–R10).
 - **R6** — A projection is generated from the collection, is never hand-edited, and carries
   nothing normative that the files do not state. The initial closed set:
   - **class diagram** — per context, from Domain Model (SPEC-002 R15);
-  - **context map** — from Contracts: directions and parties derive who owes compatibility to
-    whom; a context pair with no contract between them has gone separate ways, and that is the
-    map saying so;
+  - **context map** — from Contracts and from cross-context references: directions and parties
+    derive who owes compatibility to whom; a consumed contract whose payload is the upstream's
+    own element adopts that model and one whose payload is its own translates it, read from the
+    payload and declared nowhere else; an element naming another context's element by identity
+    shares that model, drawn apart from consumption; a context pair with neither has gone
+    separate ways, and that is the map saying so. How a translation is built — an
+    anti-corruption layer, a mapping — stays an Architecture Constraint;
   - **state diagram** — per state-machine rule;
   - **capability map** — capability → contexts, derived from the references of the scenarios
     anchored to each capability;

@@ -182,7 +182,9 @@ that decides what goes in it:
 - **One rule, one falsifiable statement.** An invariant holds inside one aggregate,
   immediately. A policy may cross an aggregate or a context and must then declare
   `consistency` — `eventual`, because an immediate demand across a boundary is the boundary
-  redrawn, not a rule. A state machine anchors to one aggregate root and its status
+  redrawn, not a rule. Where the material says what is observable before an eventual policy
+  converges, that is a scenario anchored to the policy — never a field of it, and never
+  invented where the material is silent. A state machine anchors to one aggregate root and its status
   enumeration; decide every transition and rejection so the pairing is total over every
   non-terminal state and every mentioned trigger. Where the material does not say what a
   trigger does in some state, that silence is exactly the kind of unstated fact this step
@@ -199,7 +201,9 @@ that decides what goes in it:
   under `contracts/system/`. `direction` (`published` | `consumed`) is required on the first
   three; a consumed contract names the published one it depends on, and a third-party system
   is an upstream capability named by what it supplies, never the vendor's name written into the
-  specification.
+  specification. A consumed contract's payload says how the boundary is crossed: the upstream's
+  own element adopts that model, an element of the consuming context translates it, and the
+  context map reads the difference from the payload alone — declare it nowhere else.
 - **An architecture constraint limits the solution, never the domain.** An integration
   strategy, a storage choice, an anti-corruption layer — state its `scope` (`system` or one
   context) and, where a mechanical check exists, its `fitness`.

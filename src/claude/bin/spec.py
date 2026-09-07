@@ -852,6 +852,16 @@ def class_diagram(context: str, nodes: dict[str, dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def model_reading(node: dict) -> str | None:
+    """How a consumed contract crosses its boundary, read from the payload alone: the upstream's
+    own element means the consuming context adopts that model; an element of its own means it
+    translates. An api carries operations and no payload, so it reads neither way."""
+    payload = node["front"].get("payload")
+    if not isinstance(payload, str):
+        return None
+    return "translated" if payload.split("/")[1] == node["context"] else "adopted"
+
+
 def context_map(nodes: dict[str, dict]) -> str:
     contexts = sorted(n["context"] for n in nodes.values() if n["cls"] == "context")
     lines = ["flowchart LR"]
@@ -866,9 +876,25 @@ def context_map(nodes: dict[str, dict]) -> str:
             consumed.add(node["front"]["upstream"])
             upstream = nodes.get(node["front"]["upstream"])
             if upstream is not None:
-                edges.add((upstream["context"], node["context"], upstream["slug"]))
-    for source, target, label in sorted(edges):
-        lines.append(f"    {source.replace('-', '_')} -->|{label}| "
+                edges.add((upstream["context"], node["context"], upstream["slug"],
+                           model_reading(node)))
+    for source, target, label, reading in sorted(edges, key=lambda e: e[:3]):
+        shown = f"{label} ({reading})" if reading else label
+        lines.append(f"    {source.replace('-', '_')} -->|{shown}| "
+                     f"{target.replace('-', '_')}")
+    # A model referenced across contexts is a dependency no contract declares: the referencing
+    # context reads the owner's element as its own, which is a kernel the two share. Thick, so a
+    # shared model never reads as the consumption the solid edges state.
+    shared = set()
+    for identity, node in nodes.items():
+        if node["cls"] != "element":
+            continue
+        for target, _, _ in element_refs(node):
+            owner = nodes.get(target)
+            if owner is not None and owner["context"] != node["context"]:
+                shared.add((node["context"], owner["context"], owner["slug"]))
+    for source, target, slug in sorted(shared):
+        lines.append(f"    {source.replace('-', '_')} ==>|model: {slug}| "
                      f"{target.replace('-', '_')}")
     # A published contract nothing inside consumes is a door for the outside — the system's own
     # surface. Until these edges existed the map drew only internal consumption, so the one
@@ -883,11 +909,13 @@ def context_map(nodes: dict[str, dict]) -> str:
         lines.append("    outside([\"outside\"])")
         for context, label in offered:
             lines.append(f"    {context.replace('-', '_')} -.->|{label}| outside")
-    connected = {(s, t) for s, t, _ in edges} | {(t, s) for s, t, _ in edges}
+    pairs = {(s, t) for s, t, _, _ in edges} | {(s, t) for s, t, _ in shared}
+    connected = pairs | {(t, s) for s, t in pairs}
     for index, one in enumerate(contexts):
         for other in contexts[index + 1:]:
             if (one, other) not in connected:
-                lines.append(f"    %% separate ways: {one} and {other} share no contract")
+                lines.append(f"    %% separate ways: {one} and {other} share no contract "
+                             f"and no model")
     return "\n".join(lines) + "\n"
 
 
