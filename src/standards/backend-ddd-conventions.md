@@ -93,6 +93,32 @@ tool for a convention marked reading, the tool wins.
     where no invariant lives is cost without a rule to pay for it. — **reading**; the registry
     scopes rules 1–16 to the directories of core contexts.
 
+### Pattern triggers
+
+What rule 19 holds a pattern to, per pattern: the variation that authorizes it, and the shape
+that says it was applied without one. The reading that judges rule 19 reads this table; a pattern
+absent from it is judged by the same question — what already varies, and what does the pattern
+cost.
+
+| pattern | trigger that authorizes it | sign of misuse |
+|---|---|---|
+| Factory / Factory Method | constructing the aggregate has an invariant or more than one step | a factory that only calls the constructor |
+| Builder | an object with many valid combinations and partial construction | a builder for two required fields |
+| Strategy / Policy | two or more variants **already present**, chosen at runtime | an interface with one implementation; an enumeration of one case |
+| Specification | a selection or validation criterion reused in two or more places and testable alone | a wrapper over one `where` used once |
+| Repository | one aggregate root with its own lifecycle | a repository per table; a generic repository leaking the ORM's query type |
+| Unit of Work | one use case, one aggregate, one transaction | a unit of work committing several aggregates together |
+| Ports & Adapters | an external dependency that is replaceable or must be stood in for under test | a port for code that will never have a second implementation nor a test |
+| Domain Event | another aggregate or context reacts to the fact | an event nobody consumes |
+| Transactional Outbox | a service writes and must publish from the same operation | an in-memory queue; a publish inside the transaction |
+| Saga / Process | a business transaction spanning two or more aggregates or services, with compensation | a saga over a single aggregate |
+| CQRS | reads and writes diverge in model or in load | the same model in two packages, called CQRS |
+| Event Sourcing | history, audit or replay is a stated requirement | CRUD paying the operational cost of an event store |
+| Anticorruption Layer | an external or legacy model that cannot be changed | a layer over the project's own context that was only a mapping |
+| Decorator / Chain | cross-cutting behaviors composed at runtime | five layers for one log line |
+| Observer / internal Pub-Sub | a reaction that is decoupled and optional | an essential coupling hidden behind an event, so the flow cannot be read |
+| Singleton | a genuinely unique resource with no mutable state | mutable global state; a test that cannot isolate it |
+
 ## Tests
 
 21. A domain test runs without a stand-in for any infrastructure; a domain test that needs one is
