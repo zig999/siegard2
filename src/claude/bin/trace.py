@@ -1587,8 +1587,16 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         print(f"cannot run: {premise_path} is not a mapping", file=sys.stderr)
         return CANNOT_RUN
 
+    home = home_of(target)
     problems = [f"premise: `{field}` is missing" for field in
                 ("title", "summary", "target", "files") if field not in premise]
+    if "target" in premise and isinstance(premise["target"], str) \
+            and (home / project.PROJECT_FILE).is_file() \
+            and premise["target"] not in target_roots(home):
+        problems.append(f"premise: `target` names {premise['target']!r}, which "
+                        f"{project.PROJECT_FILE} does not declare as a key under `targets`; "
+                        f"a record naming it would bind here and read as unreadable everywhere "
+                        f"else that reads `siegard-reconcile/` back")
     named = {}
     if isinstance(premise.get("files"), list):
         for entry in premise["files"]:
@@ -1613,7 +1621,6 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             print(f"cannot fold: {problem}")
         return 1
 
-    home = home_of(target)
     returns_dir = home / RECONCILE_DIR / f"{manifest['slug']}.returns"
     if not returns_dir.is_dir():
         print(f"cannot fold: {returns_dir} does not exist; --stage is what creates it, and the "

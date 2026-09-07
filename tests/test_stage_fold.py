@@ -481,6 +481,20 @@ def test_the_premise_accounts_for_every_staged_file_and_widens_nothing(consumer)
     assert done.returncode == 1 and "never staged" in done.stdout
 
 
+def test_a_premise_naming_a_target_the_project_file_does_not_declare_cannot_fold(consumer):
+    """The same mistake `--reconciliation` refuses on the record it would have written, caught
+    one step earlier: a bad `target` here never becomes a file on disk that a human then has to
+    hand-edit to fix."""
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    misnamed = dict(PREMISE, target="backend/src")
+    done, record = folded(consumer, premise=misnamed)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "backend/src" in done.stdout
+    assert "does not declare" in done.stdout
+    assert not record.is_file()
+
+
 def test_the_return_contracts_own_examples_pass_the_gate_that_will_judge_real_returns():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/conformance-return.json")
