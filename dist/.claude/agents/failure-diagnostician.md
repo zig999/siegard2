@@ -112,8 +112,10 @@ it can tell anybody, and it is the reason you read the run rather than the diff.
 
 Return the mapping as plain YAML text, with each finding shaped as the contract's `finding`
 definition requires — the fence above shows which fields, not their shapes, and is not part of
-the return. Omit `pass` on every finding: the caller knows which pass it delegated and stamps
-it.
+the return. Write `evidence` as a YAML block scalar (`>-` or a literal block), never a bare one:
+a runner's own message routinely carries a colon — a stack trace, a `file:line:col` prefix, a
+`Type: message` pair — which a bare scalar cannot hold without breaking the parse. Omit `pass`
+on every finding: the caller knows which pass it delegated and stamps it.
 
 If you cannot diagnose — the run directory is absent or unreadable, or the run reports no failure
 — say so plainly in one sentence and return no mapping. A run holding no failure is not an error

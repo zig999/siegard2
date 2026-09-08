@@ -152,7 +152,10 @@ candidates_opened:          # omit entirely where you opened none
 ```
 
 Return the mapping as plain YAML text, with each finding shaped as the return contract requires —
-the fence above shows which fields, not their shapes, and is not part of the return. The whole
+the fence above shows which fields, not their shapes, and is not part of the return. Write
+`evidence`, `held_at` and `looked_past` as a YAML block scalar (`>-` or a literal block), never a
+bare one: source quoted verbatim routinely carries a colon, which a bare scalar cannot hold
+without breaking the parse. The whole
 mapping is held to that contract after you answer: the fence is how to write it, the contract is
 what judges it, and a return it refuses is a delegation run again, not a conversation. Which pass
 delegated you is not yours to state — the caller knows and stamps it where a record needs it.

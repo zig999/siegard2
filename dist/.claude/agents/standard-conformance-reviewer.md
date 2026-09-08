@@ -122,8 +122,10 @@ looked_past: <one sentence naming what you saw and did not report because no rul
 
 Return the mapping as plain YAML text, with each finding shaped as the contract's `finding`
 definition requires — the fence above shows which fields, not their shapes, and is not part of
-the return. Omit `pass` on every finding: the caller knows which pass it delegated and stamps it,
-so a finding cannot claim a pass that did not run.
+the return. Write `evidence` and `looked_past` as a YAML block scalar (`>-` or a literal block),
+never a bare one: source quoted verbatim routinely carries a colon, which a bare scalar cannot
+hold without breaking the parse. Omit `pass` on every finding: the caller knows which pass it
+delegated and stamps it, so a finding cannot claim a pass that did not run.
 
 `unread` is returned only where the caller asked for that mode and a path in the set could not be
 opened; it names those paths and nothing else. `in_scope` is never omitted, and an empty

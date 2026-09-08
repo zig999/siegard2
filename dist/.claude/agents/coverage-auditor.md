@@ -91,7 +91,9 @@ coverage:
 
 Return the mapping as plain YAML text, with each entry shaped as the contract's `coverageEntry`
 definition requires — the fence above shows which fields, not their shapes, and is not part of
-the return.
+the return. Write `criterion` and `why` as a YAML block scalar (`>-` or a literal block), never a
+bare one: a criterion quoted exactly as the task states it may carry a colon, which a bare scalar
+cannot hold without breaking the parse.
 
 A set where every criterion is covered is a real result and a claim: over this test set, each of
 these criteria has a test that would fail if it stopped holding.
