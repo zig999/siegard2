@@ -12,6 +12,7 @@ nothing read it at all.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -69,6 +70,20 @@ def test_every_sample_registry_holds_to_the_contract(sample, contract):
     data, problems = deliver.load_standard(sample, contract)
     assert problems == [], f"{sample.name}: {problems}"
     assert data is not None
+
+
+@pytest.mark.parametrize("sample", SAMPLES, ids=lambda p: p.stem)
+def test_the_sample_readme_quotes_the_pin_each_registry_actually_computes_to(sample):
+    """`src/standards/README.md` quotes `deliver.py --standard`'s real output over these files,
+    and a quoted figure is a second home for a value the file itself holds. The pin is the one
+    line of that block that moves whenever a registry is edited, and it moved twice without the
+    quote following, so this reads it back: the elided form the README prints, against the digest
+    the registry computes to now."""
+    readme = (REPO / "src/standards/README.md").read_text(encoding="utf-8")
+    digest = hashlib.sha256(sample.read_bytes()).hexdigest()
+    elided = f"sha256:{digest[:8]}…{digest[-8:]}"
+    assert elided in readme, (f"{sample.name} computes to {elided} and the README quotes another "
+                              f"pin for it; the quoted output is not what the command prints")
 
 
 def test_the_example_registry_parses_as_yaml():

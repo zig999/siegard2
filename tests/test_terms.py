@@ -87,6 +87,47 @@ def test_naming_an_undefined_term_is_a_refusal_not_a_silence():
     assert "record" in result.stderr
 
 
+@pytest.mark.parametrize("word", sorted({terms.base_of(t) for t in terms.TERMS}))
+def test_the_bare_word_answers_for_every_sense_it_names(word):
+    """The word is what a refusal puts in front of a reader — `a covered node reaches a task or a
+    stated why` says `covers`, not the parenthetical this table tells its senses apart by. A
+    lookup answering that word with `no contract defines it`, while holding two definitions of
+    it, is the silence this script exists to refuse."""
+    result = run(word)
+    assert result.returncode == 0, result.stderr
+    for term in terms.TERMS:
+        if terms.base_of(term) == word:
+            assert term in result.stdout, f"{word} does not answer for {term}"
+
+
+def test_a_sense_named_in_full_answers_alone():
+    result = run("covers (a test over a criterion)")
+    assert result.returncode == 0, result.stderr
+    assert "covers (an epic over specification nodes)" not in result.stdout
+
+
+def test_a_word_split_across_the_two_tables_says_both():
+    """`proof` is defined of a certification's tests and undefined of a delivery kind. Answering
+    with the definition alone would let the sense that has one stand for the whole word."""
+    result = run("proof")
+    assert result.returncode == 0, result.stderr
+    assert "proof (a certification's tests)" in result.stdout
+    assert "proof (a delivery kind)" in result.stdout
+
+
+def test_a_word_with_two_senses_is_named_apart_in_both_tables():
+    """The disambiguation rule is one rule over both tables. A word held bare in one and
+    parenthesized in the other reads, from the bare side, as the whole word — which is how
+    `proof` came to be listed as holding no definition while a contract defined it."""
+    counted: dict[str, list[str]] = {}
+    for term in list(terms.TERMS) + list(terms.OPEN):
+        counted.setdefault(terms.base_of(term), []).append(term)
+    for word, held in sorted(counted.items()):
+        if len(held) > 1:
+            assert all(term != word for term in held), \
+                f"{word} names {len(held)} senses and one of them is the bare word: {held}"
+
+
 def test_the_full_listing_holds_every_term(loaded):
     result = run()
     assert result.returncode == 0, result.stderr

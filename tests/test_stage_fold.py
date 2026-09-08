@@ -15,6 +15,7 @@ between staging and binding refuses whole.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -1066,8 +1067,41 @@ def test_a_node_edited_between_the_staging_and_the_fold_refuses(consumer):
                          + "\n### A rule invented after the staging\n", encoding="utf-8")
     folded_done, record = folded(consumer)
     assert folded_done.returncode == 1, folded_done.stdout + folded_done.stderr
-    assert "moved in the specification since the staging restated it" in folded_done.stdout
+    assert "moved in the specification since the staging read it" in folded_done.stdout
     assert not record.exists()
+
+
+def test_a_mechanical_pairs_node_edited_between_the_staging_and_the_fold_refuses(consumer):
+    """A pair the run answers reaches no pack, and the same guard holds it. The staging separated
+    it because a step decides the fact as the node then stated it; a node edited before the fold
+    is one the run never answered, and folding it would write a record saying the step passed over
+    the fact as it now stands and a bind stamping a wording nothing looked at."""
+    staged_mechanical(consumer)
+    captured_run(consumer)
+    node_file = consumer / "specs" / f"{CONSTRAINT}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8")
+                         + "\n### A clause invented after the staging\n", encoding="utf-8")
+    record = consumer / "siegard-reconcile" / "round.md"
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer), record,
+               "--run", consumer / "siegard-reconcile" / "round.returns" / "run" / "round")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert CONSTRAINT in done.stdout
+    assert "moved in the specification since the staging read it" in done.stdout
+    assert not record.exists()
+
+
+def test_the_staging_pins_the_node_text_of_every_pair_it_separated(consumer):
+    """The manifest's `node_digests` is what the fold recomputes against, so a node reaching the
+    staging only through the mechanical tier is the case no pack makes visible."""
+    workspace = staged_mechanical(consumer)
+    manifest = manifest_of(workspace)
+    assert CONSTRAINT in manifest["node_digests"], \
+        "a pair no pack restated is still a pair the fold has to hold to its text"
+    node_file = consumer / "specs" / f"{CONSTRAINT}.md"
+    expected = "sha256:" + hashlib.sha256(node_file.read_bytes()).hexdigest()
+    assert manifest["node_digests"][CONSTRAINT] == expected
+    assert CONSTRAINT not in manifest["files"][FILE]["nodes"], \
+        "and it is pinned without ever being handed a judge"
 
 
 def test_a_pair_whose_node_moved_is_never_omitted_as_current(consumer):

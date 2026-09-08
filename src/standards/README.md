@@ -90,7 +90,7 @@ Real output over the samples:
 
 ```
 standard checked: src/standards/backend-node-service.yaml declares 59 rule(s) — 35 decided by reading, 24 by a tool
-  pin sha256:cf31b196…7c179f83
+  pin sha256:2c3d34d9…6ed6e203
   the rules a tool decides run as step(s) lint (20 rule(s)), secret-scan (2 rule(s)), typecheck (2 rule(s)); a review reads only the 35 decided by reading
   what a step exits 0 over is the command exiting 0. […]
 

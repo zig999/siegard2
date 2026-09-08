@@ -818,13 +818,14 @@ def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]
             f"to the rules a reading decides")
 
 
-def as_list(value) -> list[str]:
+def as_list(value: str | list[str]) -> list[str]:
     """One step name or several, always as a list. `--check`'s receipt serves both a certification,
     which names the one step that runs its proof, and a constraint, which may name several."""
     return [value] if isinstance(value, str) else list(value)
 
 
-def step_decided(findings: list[tuple[str, str, str | None, str]], decided: dict[str, str],
+def step_decided(findings: list[tuple[str, str, str | None, str]],
+                 decided: dict[str, str | list[str]],
                  what: str = "a constraint a registry step decides") -> str:
     """The receipt for `code` findings that sit on a binding a run decides — a constraint the
     registry's step decides, or a node a certified test decides. A statement, never a second
@@ -1932,10 +1933,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     packs_dir = workspace / "packs"
     packs_dir.mkdir(parents=True, exist_ok=True)
     manifest_files: dict[str, dict] = {}
-    # The node text each pack restated, pinned. A pack header calls this "the digest the
-    # bind will stamp", and the bind reads the node fresh — so a node edited between the
-    # staging and the fold is one every judge read in its old wording while the trace goes
-    # on to assert the new one, and nothing afterwards can tell.
+    # The node text this staging read, pinned — every node a pack restated, and below every node
+    # the mechanical tier holds. A pack header calls this "the digest the bind will stamp", and
+    # the bind reads the node fresh, so a node edited between the staging and the fold is one
+    # nothing here answered while the trace goes on to assert the new wording.
     staged_nodes: dict[str, str] = {}
     for given, assigned in sorted(judged_files.items()):
         pack = packs_dir / (given.replace("/", "__") + ".md")
@@ -1958,6 +1959,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                                  "pack": str(pack)}
         staged_nodes.update({node_id: nodes[node_id]["digest"]
                              for node_id in assigned + read_also})
+
+    # A pair the mechanical tier holds reaches no pack, and its node is pinned all the same. The
+    # staging separated it because a step or a certified test decides the fact as the node then
+    # stated it — neither was asked about the sentence that replaces it, so a node edited before
+    # the fold is one the run did not answer, exactly as an edited node is one no judge read.
+    staged_nodes.update({entry["node"]: nodes[entry["node"]]["digest"] for entry in mechanical})
 
     # One certification pack per node, beside the file packs: the node's text with its source
     # named, the tests offered as its proof already resolved, and the contract the return is held
@@ -2262,11 +2269,14 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             print(f"cannot fold: {problem}")
         return 1
 
-    # Every node the packs restated, held to the text they restated. The bind reads each node
-    # fresh, so a node edited between the staging and the fold is one every judge read in its old
-    # wording while the trace goes on to assert the new one — and no later `--check` can tell,
-    # because the bind stamped the new digest itself. This is the specification-side twin of the
-    # guard the run already has over the files, and it applies whether or not a run is involved.
+    # Every node the staging pinned, held to the text it pinned — the ones a pack restated and
+    # the ones the mechanical tier holds alike. The bind reads each node fresh, so a node edited
+    # between the staging and the fold is one no judge read and no run answered, while the trace
+    # goes on to assert the new wording — and no later `--check` can tell, because the bind
+    # stamped the new digest itself. This is the specification-side twin of the guard the run
+    # already has over the files, and it covers the pairs the run answers as well as the rest:
+    # a tier separated on the node's text as it stood is not answered by a step that ran before
+    # the sentence changed.
     spec_root_at = Path(manifest.get("specification_root") or "")
     shifted = []
     for node_id, digest in sorted((manifest.get("node_digests") or {}).items()):
@@ -2275,9 +2285,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             shifted.append(node_id)
     if shifted:
         print(f"cannot fold: {', '.join(shifted)} moved in the specification since the staging "
-              f"restated it, so every judgment folded here read a wording the bind would not "
-              f"stamp; the route is a fresh invocation under a new slug, which reads each node as "
-              f"it now stands")
+              f"read it, so this fold would stamp a wording neither the judgments nor the run "
+              f"answered; the route is a fresh invocation under a new slug, which reads each "
+              f"node as it now stands")
         return 1
 
     returns_dir = home / RECONCILE_DIR / f"{manifest['slug']}.returns"

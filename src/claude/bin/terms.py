@@ -26,16 +26,25 @@ the term into the table above it; it does not mean writing a definition here.
 
 **One term, one entry, even where the word has two senses.** Where a word means two different things
 in two places — `covers` over specification nodes and `covers` over a criterion — each sense is
-its own row, named apart. A single row for a word with two meanings is the collision left in
-place with a definition on top of it.
+its own row, named apart, in whichever of the two tables holds it. A single row for a word with two
+meanings is the collision left in place with a definition on top of it.
+
+**A word answers for every sense it names.** Naming a sense in full asks for that sense; naming the
+bare word asks for all of them, and gets them. The word is what a validator's refusal puts in front
+of a reader — `a covered node reaches a task or a stated why` says `covers`, not the parenthetical
+this file tells its two senses apart by — so a lookup answering that word with `no contract defines
+it` while holding two definitions of it would be the silence this script exists to refuse. Where a
+word has a defined sense and an open one, both are said: the definition, then the sense no contract
+states.
 
 Declared dependencies: none beyond the standard library.
 
 Usage:  terms.py                 every term, alphabetically
-        terms.py <term> [...]    only the terms named
+        terms.py <term> [...]    only the terms named — a word with several senses answers with
+                                 each of them, and one sense named in full answers alone
         terms.py --help          print this text and stop
 Exit:   0 printed
-        1 a term was named that no contract defines
+        1 a term was named that no contract defines, in any sense
         2 cannot run
 """
 
@@ -103,8 +112,9 @@ OPEN: dict[str, str] = {
     "impact set": "defined three times and differently — in skills/analyse/SKILL.md, in "
                   "skills/plan-work/SKILL.md, and loosely in agents/backlog-decomposer.md — and no "
                   "contract holds any of them.",
-    "proof": "one of the three delivery kinds, with a path and a required-field branch; what a "
-             "proof node is is stated nowhere.",
+    "proof (a delivery kind)": "one of the three delivery kinds, with a path and a required-field "
+             "branch; what a proof node is is stated nowhere. Distinct from the tests a "
+             "certification pins on a trace binding, which trace.json does define.",
     "record": "the most-used term in the framework after `node` and `root`; no contract defines it, "
               "and run.py uses the same word for a run's outcome, which is explicitly not a record.",
     "root (the aggregate root)": "a value of `type` on a Domain Model element "
@@ -159,6 +169,27 @@ def definition(term: str) -> str:
     return target["description"]
 
 
+def base_of(term: str) -> str:
+    """The word an entry is looked up by: its own name without the parenthetical that tells it
+    apart from the word's other senses."""
+    return term.split(" (", 1)[0]
+
+
+def senses_of(given: str) -> tuple[list[str], list[str]]:
+    """Every entry the named word reaches — those a contract defines, and those declared as
+    holding no definition.
+
+    A sense named in full answers alone: a caller who typed the parenthetical asked for that
+    sense. Anything else is read as the bare word, which is the form a refusal hands a reader,
+    and it reaches every sense whose name it is the base of."""
+    if given in TERMS:
+        return [given], []
+    if given in OPEN:
+        return [], [given]
+    return ([term for term in sorted(TERMS) if base_of(term) == given],
+            [term for term in sorted(OPEN) if base_of(term) == given])
+
+
 def emit(term: str) -> None:
     """Resolved before anything is printed: a header above a refusal reads as a term that answered."""
     relative, pointer = TERMS[term]
@@ -176,15 +207,26 @@ def main(argv: list[str]) -> int:
         print(__doc__.strip())
         return 0
     if argv:
-        unknown = [t for t in argv if t not in TERMS]
-        if unknown:
-            print(f"no contract defines {', '.join(unknown)}", file=sys.stderr)
-            if any(t in OPEN for t in unknown):
+        resolved = [(given, *senses_of(given)) for given in argv]
+        # One word this holds no definition of refuses the whole invocation: answering the rest
+        # and dropping that one reads as a listing that was complete.
+        short = [(given, open_) for given, defined, open_ in resolved if not defined]
+        if short:
+            print(f"no contract defines {', '.join(given for given, _ in short)}",
+                  file=sys.stderr)
+            if any(open_ for _, open_ in short):
                 print("named below as holding no definition; see the full listing.",
                       file=sys.stderr)
             return 1
-        for term in argv:
-            emit(term)
+        for given, defined, open_ in resolved:
+            for term in defined:
+                emit(term)
+            # A word whose senses are split across the two tables is answered by both, or the
+            # definition it does have would read as the whole of what the word means.
+            if open_:
+                print(f"{given} also names {', '.join(open_)}, which no contract defines; the "
+                      f"full listing says what each collides with.")
+                print()
         return 0
 
     for term in sorted(TERMS):
