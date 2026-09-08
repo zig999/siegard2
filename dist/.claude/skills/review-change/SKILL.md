@@ -228,7 +228,9 @@ plan is deleted still describes the code as it stands. Report the counts by clas
 each class takes. `orphaned` is a binding to a specification node that no longer exists; no rebind
 can repair it, because a bind refuses a node the specification does not hold, and `trace.py --prune` is what
 clears it. `moved` is the specification moving under a binding, healed when the node's task is next
-delivered — the bind restamps at the node as it stands. `code` is a file changed without a rebind,
+delivered — the bind restamps at the node as it stands. `proof` is a binding a certified test
+decides whose test's text changed since; a reconciliation that certifies the test as it now stands
+is what clears it, and the node is decided by reading until then. `code` is a file changed without a rebind,
 whatever wrote it. Over the files of this review, the conformance pass below is what answers it:
 the delivery's bind restamped only its own task's nodes, and every other node bound to a file it
 rewrote is still asserting the digest that was there before — that is the reason the pass reads

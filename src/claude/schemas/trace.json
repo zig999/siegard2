@@ -38,9 +38,32 @@
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/tracedFile" },
-          "description": "Every file this node's binding produced or governs, each pinned at the digest it held when this entry was last written."
+          "description": "Every file this node's binding produced or governs, each pinned at the digest it held when this entry was last written. Held whatever decides the binding: where the node's fact lives is a question the source answers and a test cannot, and `--encodes` reads it from here."
+        },
+        "decided_by": {
+          "enum": ["reading", "test"],
+          "description": "What settles whether this node's fact still holds when one of its files moves. Absent or `reading`: a conformance judgment reads the node against the file, which is every binding's default and how every binding was written before this field existed. `test`: a test the project's own suite runs decides it — one a judgment certified, once, as a test that would fail if the fact stopped holding — so a later drift on `files` is answered by that step's run rather than by a fresh reading. It is written only from a record whose judgment certified the test, never declared by hand, and never inferred from a node's type: whether a fact is one a test decides is read off the fact's own outcome. A green run says the fact holds; it says nothing about which file holds it, which is why `files` stays and its digests still report."
+        },
+        "step": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Which step of the project's registry runs the proof, by the name `commands[].step` gives it. The runner, the command and its bound are the registry's; this names the step and nothing about how it runs, exactly as a standard rule's `tool` does."
+        },
+        "proof": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/tracedFile" },
+          "description": "The test file(s) the certification named, each pinned at the digest it held when certified. A test whose digest no longer matches is drift of its own class: the certification was of that text, and a test that changed may no longer fail when the fact stops holding — so the binding is decided by reading again until a judgment certifies the test as it now stands."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "decided_by": { "const": "test" } }, "required": ["decided_by"] },
+          "then": { "required": ["step", "proof"] },
+          "else": { "not": { "anyOf": [ { "required": ["step"] }, { "required": ["proof"] } ] } },
+          "$comment": "A binding a test decides names the test and the step that runs it, or it is not one; a binding a reading decides names neither. The join is structural so that a binding cannot claim a test it does not point at, nor point at one while claiming a reading decides it."
+        }
+      ]
     },
     "tracedFile": {
       "type": "object",

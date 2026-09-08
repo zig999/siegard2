@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/certification-return.json",
+  "title": "Siegard certification return",
+  "description": "One coverage-auditor delegation's answer to a certification: whether the tests the human named would fail if a specification node's fact stopped holding. The agent returns this mapping as plain YAML text; the caller saves it verbatim, one file per node, under `siegard-reconcile/<slug>.returns/certify__<node with '/' as '__'>.yaml` — the returns are the evidence a reconciliation record is folded from. `bin/trace.py --fold` validates every return against this contract and refuses a delegation whose answer does not hold: an unusable return means the prompt was wrong, and the correction is a fresh delegation, never a repair applied to the answer by whoever saved it. It exists apart from the delivery-node contract's `coverageEntry` because its subject is a node rather than a task's criterion, and it is read by trace.py rather than by deliver.py; the state vocabulary is `coverageEntry`'s, and what each state means is defined there and applied here, never restated.",
+  "type": "object",
+  "required": [
+    "certified"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "specNodeRef": {
+      "type": "string",
+      "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*)$",
+      "description": "A specification node, by identity (SPEC-003 R1) — its path from the specification root, without `.md`."
+    }
+  },
+  "properties": {
+    "certified": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per node the delegation was asked to certify — exactly that set. A node omitted reads as one that passed, and the fold refuses a return that answers for a different set than it was handed.",
+      "items": {
+        "type": "object",
+        "required": [
+          "node",
+          "state"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "const": "covered"
+                }
+              },
+              "required": [
+                "state"
+              ]
+            },
+            "then": {
+              "required": [
+                "tests"
+              ]
+            },
+            "else": {
+              "required": [
+                "why"
+              ]
+            },
+            "$comment": "A certified node names the tests that certify it; a node not certified says what is unexercised, in the node's own terms. Neither answer stands without its half."
+          }
+        ],
+        "properties": {
+          "node": {
+            "$ref": "#/$defs/specNodeRef"
+          },
+          "state": {
+            "enum": [
+              "covered",
+              "partial",
+              "uncovered",
+              "unauditable"
+            ],
+            "description": "The delivery-node contract's `coverageEntry.state`, applied to a node's fact in place of a task's criterion: `covered` where the named tests would fail if the fact stopped holding — the whole test — `partial` where a stated part of the fact goes unexercised, `uncovered` where nothing exercises it, `unauditable` where the fact cannot be read well enough to look for. Only `covered` certifies; the fold writes nothing for any other state and carries the `why` into the record's notes."
+          },
+          "tests": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "Every test bearing on the fact, each a file the human named as proof — a test outside the named set refuses the return, because the certification is of the tests the human offered and the binding will pin exactly those. One test may bear on several facts and one fact on several tests.",
+            "items": {
+              "type": "object",
+              "required": [
+                "file"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "file": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The test file, spelled from the target source root exactly as the certification named it."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The test's own name within the file, where the file holds more than one; a reader who opens the file finds the assertion by it."
+                }
+              }
+            }
+          },
+          "why": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What is unexercised, in the fact's own terms, or what makes the fact unauditable. \"No test\" is not an answer. A test that exists but cannot fail is named here, so a reader who finds it does not conclude the audit missed it."
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "certified": [
+        {
+          "node": "domain/sales/order",
+          "state": "covered",
+          "tests": [
+            {
+              "file": "tests/orders/place.spec.ts",
+              "name": "answers the persisted order_number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "certified": [
+        {
+          "node": "rules/sales/invoice-immutable",
+          "state": "partial",
+          "tests": [
+            {
+              "file": "tests/billing/raise.spec.ts",
+              "name": "refuses a second invoice"
+            }
+          ],
+          "why": "the refusal half is exercised; nothing in the set alters a raised invoice's amount, so the immutability the rule states over an existing invoice goes unexercised"
+        }
+      ]
+    }
+  ]
+}

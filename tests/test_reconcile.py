@@ -57,7 +57,7 @@ def consumer(tmp_path: Path) -> Path:
 
 def record_of(nodes: list[dict], files: list[dict] | None = None, **rest) -> dict:
     front = {
-        "contract_version": "siegard-reconcile/3",
+        "contract_version": "siegard-reconcile/4",
         "title": "Hand correction to order placement",
         "summary": "place() answered with the row; corrected by hand and confirmed correct.",
         "target": "backend",
@@ -104,14 +104,140 @@ def test_the_contracts_own_examples_pass_the_gate_that_will_judge_real_records(w
         assert done.returncode == 0, done.stdout + done.stderr
 
 
-def test_the_contract_demonstrates_both_outcomes():
-    """One example each way, because the two differ by which field they carry and a contract
-    showing only the cleared shape teaches that the other one is a variation on it."""
+def test_the_contract_demonstrates_every_outcome():
+    """One example each way — cleared, refused, and cleared with a certification — because the
+    three differ by which fields they carry and a contract showing only the cleared shape teaches
+    that the others are variations on it."""
     schema = json.loads(
         (REPO / "src/claude/schemas/reconciliation.json").read_text(encoding="utf-8"))
     answers = sorted(entry["conforms"] for example in schema["examples"]
                      for entry in example["nodes"])
-    assert answers == [False, True]
+    assert answers == [False, True, True]
+    certified = [entry for example in schema["examples"] for entry in example["nodes"]
+                 if entry.get("decided_by") == "test"]
+    assert len(certified) == 1 and certified[0]["conforms"] is True
+
+
+# ------------------------------------------------------------------ certification
+
+
+PROOF = "tests/orders/place.spec.ts"
+CERTIFIED = dict(CLEARED, decided_by="test", step="test", proof=[PROOF])
+
+
+def proof_at(consumer: Path, text: str = "it('answers the order_number', () => {})\n") -> Path:
+    path = consumer / "backend" / PROOF
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_a_certified_node_holds_and_the_gate_says_so(write_record):
+    done = run("--reconciliation", write_record(record_of([CERTIFIED])))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 node(s) certified as decided by a test" in done.stdout
+    assert f"{NODE} by step `test` over {PROOF}" in done.stdout
+
+
+def test_a_certification_cannot_ride_a_node_the_judgment_refused(write_record):
+    """A test-decided binding rests on a reading that cleared the node once; a node the judgment
+    refused has none to rest on, and the contract says so before the fold can."""
+    done = run("--reconciliation",
+               write_record(record_of([dict(REFUSED, decided_by="test", step="test",
+                                            proof=[PROOF])])))
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "binds nothing until" in done.stdout
+
+
+def test_a_certification_names_its_step_and_proof_or_is_not_one(write_record):
+    without_step = dict(CLEARED, decided_by="test", proof=[PROOF])
+    done = run("--reconciliation", write_record(record_of([without_step])))
+    assert done.returncode == 1, done.stdout + done.stderr
+    step_without_claim = dict(CLEARED, step="test")
+    done = run("--reconciliation", write_record(record_of([step_without_claim])))
+    assert done.returncode == 1, done.stdout + done.stderr
+
+
+def test_bind_record_writes_a_certified_binding_and_pins_the_proof(consumer, write_record):
+    proof_at(consumer)
+    record = write_record(record_of([CERTIFIED]))
+    done = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"{NODE} is decided by a test from here: step `test` over backend/{PROOF}" in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    entry = declared["bindings"][0]
+    assert entry["decided_by"] == "test"
+    assert entry["step"] == "test"
+    assert [p["path"] for p in entry["proof"]] == [f"backend/{PROOF}"]
+    assert entry["proof"][0]["digest"].startswith("sha256:")
+    assert [f["path"] for f in entry["files"]] == [f"backend/{FILE}"], \
+        "the files a node encodes stay the source's; a test decides whether, never where"
+    sound = run(consumer / "backend")
+    assert "1 binding(s), 1 of them decided by a certified test" in sound.stdout
+
+
+def test_a_certified_proof_that_is_missing_refuses_the_record_whole(consumer, write_record):
+    record = write_record(record_of([CERTIFIED]))
+    done = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "proof" in done.stdout and "does not exist" in done.stdout
+    assert not (consumer / "siegard-trace.json").exists()
+
+
+def test_a_rebind_carries_a_certification_while_the_proof_stands(consumer, write_record):
+    """A bind over a file the node encodes is not a judgment about the test that decides the
+    node, so the certification rides through — the entry is rewritten whole, and dropping it
+    with the entry would lose a claim nobody withdrew."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    done = run("--bind", consumer / "backend", consumer / "specs", NODE, FILE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    entry = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))["bindings"][0]
+    assert entry["decided_by"] == "test" and entry["step"] == "test"
+
+
+def test_a_rebind_releases_a_certification_whose_proof_changed_and_says_so(consumer, write_record):
+    """A test whose text changed was certified as something else. Carrying the claim over it
+    would assert a certification nobody made over these bytes; the receipt is what keeps the
+    release from reading like an entry never certified."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    proof_at(consumer, "it('asserts something else', () => {})\n")
+    done = run("--bind", consumer / "backend", consumer / "specs", NODE, FILE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"{NODE} was decided by a test and is decided by reading from here" in done.stdout
+    entry = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))["bindings"][0]
+    assert "decided_by" not in entry and "proof" not in entry and "step" not in entry
+
+
+def test_check_reports_a_changed_proof_under_its_own_class(consumer, write_record):
+    """The proof is pinned the way the files are and moves the same way; what differs is the
+    remedy — a fresh certification, never a rebind of the file — so the class is its own, and the
+    file's own `code` class is untouched by it."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    clean = run("--check", consumer / "backend")
+    assert clean.returncode == 0, clean.stdout + clean.stderr
+    proof_at(consumer, "it('asserts something else', () => {})\n")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert f"{NODE}: certified over backend/{PROOF}, whose text changed since" in done.stdout
+    assert "1 proof:" in done.stdout
+    assert "0 code" in done.stdout
+
+
+def test_a_code_drift_on_a_certified_binding_carries_the_receipt(consumer, write_record):
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    (consumer / "backend" / FILE).write_text("export function place() { return 1 }\n",
+                                             encoding="utf-8")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "sit on a binding a certified test decides" in done.stdout
+    assert f"{NODE} over backend/{FILE} (step `test`)" in done.stdout
+    marked = run("--encodes", consumer / "backend", FILE)
+    assert f"{NODE} — stale: the file changed without a rebind; a certified test decides it " \
+           f"(step `test`)" in marked.stdout
 
 
 def test_a_sound_record_holds_and_says_what_it_will_bind(write_record):

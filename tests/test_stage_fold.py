@@ -537,6 +537,179 @@ def test_stage_names_no_step_decided_pair_where_the_project_declares_no_registry
     assert "registry step decides" not in done.stdout
 
 
+# ---------------------------------------------------------------- --certify
+
+
+PROOF = "tests/place.spec.ts"
+
+
+def certifying(consumer: Path, *entries: dict) -> Path:
+    path = consumer / "certify.yaml"
+    path.write_text(yaml.safe_dump(list(entries), sort_keys=False), encoding="utf-8")
+    return path
+
+
+def proof_at(consumer: Path) -> Path:
+    path = consumer / "backend" / PROOF
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("it('holds', () => {})\n", encoding="utf-8")
+    return path
+
+
+def save_certification(consumer: Path, slug: str, node: str, front: dict) -> Path:
+    path = (consumer / "siegard-reconcile" / f"{slug}.returns"
+            / ("certify__" + node.replace("/", "__") + ".yaml"))
+    path.write_text(yaml.safe_dump(front, sort_keys=False), encoding="utf-8")
+    return path
+
+
+COVERED = {"certified": [{"node": NODE, "state": "covered", "tests": [{"file": PROOF}]}]}
+
+
+def test_stage_certify_refuses_what_it_cannot_judge(consumer):
+    """A node no named file encodes has no reading here to ride, a proof that is not there is a
+    test nobody can open, and a step the registry does not declare is one no run answers for.
+    Each is refused before anything is written, and all of them at once."""
+    registry_deciding(consumer)
+    proof_at(consumer)
+    ask = certifying(consumer,
+                     {"node": "domain/troubleshooting/hypothesis", "proof": [PROOF], "step": "lint"},
+                     {"node": NODE, "proof": ["tests/missing.spec.ts"], "step": "lint"},
+                     {"node": OTHER, "proof": [PROOF], "step": "suite"})
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--certify", ask)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "domain/troubleshooting/hypothesis is bound to none of the named files" in done.stderr
+    assert "tests/missing.spec.ts" in done.stderr and "does not exist" in done.stderr
+    assert "declares no step `suite`" in done.stderr
+    assert not (consumer / "siegard-reconcile" / "round.returns").exists()
+
+
+def test_stage_certify_stages_the_pack_and_never_omits_the_certified_nodes_pairs(consumer):
+    """The certification rides a fresh reading of the node against the file, so the pair (NODE,
+    SECOND) — current, unowed, and omittable on any other staging — is judged here."""
+    registry_deciding(consumer)
+    proof_at(consumer)
+    ask = certifying(consumer, {"node": NODE, "proof": [PROOF], "step": "lint"})
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--certify", ask)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(consumer / "ws")
+    assert manifest["omitted"] == []
+    assert manifest["files"][SECOND]["nodes"] == [NODE]
+    [entry] = manifest["certify"]
+    assert entry["node"] == NODE and entry["proof"] == [PROOF] and entry["step"] == "lint"
+    assert Path(entry["pack"]).is_file()
+    pack = Path(entry["pack"]).read_text(encoding="utf-8")
+    assert f"=== {NODE}" in pack and "would the proof below fail" in pack
+    assert str((consumer / "backend" / PROOF).resolve()) in pack
+    assert "1 certification(s) staged" in done.stdout
+    assert "certify__<node with '/' as '__'>.yaml" in done.stdout
+
+
+def test_certify_is_a_mode_of_stage_alone(consumer):
+    ask = certifying(consumer, {"node": NODE, "proof": [PROOF], "step": "lint"})
+    for extra in (["--audit"], ["--review"]):
+        done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+                   FILE, "--certify", ask, *extra)
+        assert done.returncode == 2 and "--certify is a mode of --stage alone" in done.stderr
+    done = run("--check", consumer / "backend", "--certify", ask)
+    assert done.returncode == 2
+
+
+def staged_with_certification(consumer: Path):
+    registry_deciding(consumer)
+    proof_at(consumer)
+    ask = certifying(consumer, {"node": NODE, "proof": [PROOF], "step": "lint"})
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws-round",
+               FILE, SECOND, "--certify", ask)
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, clean_return([NODE]))
+
+
+def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_cleared(consumer):
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, COVERED)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    assert front["contract_version"] == "siegard-reconcile/4"
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is True
+    assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
+    assert f"Certified {NODE} as decided by step `lint`" in front["notes"]
+    gate = run("--reconciliation", record)
+    assert gate.returncode == 0, gate.stdout + gate.stderr
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    trace_entry = [e for e in json.loads((consumer / "siegard-trace.json")
+                                         .read_text(encoding="utf-8"))["bindings"]
+                   if e["node"] == NODE][0]
+    assert trace_entry["decided_by"] == "test"
+    assert [p["path"] for p in trace_entry["proof"]] == [f"backend/{PROOF}"]
+
+
+def test_fold_writes_no_certification_where_the_auditor_did_not_cover(consumer):
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, {"certified": [
+        {"node": NODE, "state": "partial", "tests": [{"file": PROOF}],
+         "why": "the refusal half of the fact goes unexercised"}]})
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is True and "decided_by" not in entry
+    assert f"Certification of {NODE} did not hold: the auditor answered `partial`" in front["notes"]
+    assert "refusal half" in front["notes"]
+
+
+def test_fold_holds_a_certification_off_a_node_the_judgment_refused(consumer):
+    """The auditor may find the test sound while the reading finds the source wrong. Both are
+    recorded; the certification is not written, because a test-decided binding rests on a
+    reading that cleared the node."""
+    staged_with_certification(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER], findings=[
+        {"where": "line 1", "evidence": "export function place() {}", "kind": "contradicts",
+         "cost": "states a cap no node holds", "node": NODE}]))
+    save_certification(consumer, "round", NODE, COVERED)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is False and "decided_by" not in entry
+    assert f"Certification of {NODE} held" in front["notes"] and "is not written" in front["notes"]
+
+
+def test_fold_refuses_a_certification_return_that_is_missing_or_off_its_ask(consumer):
+    staged_with_certification(consumer)
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert f"certification of {NODE}: no return at" in done.stdout
+
+    save_certification(consumer, "round", NODE, {"certified": [
+        {"node": NODE, "state": "covered", "tests": [{"file": "tests/other.spec.ts"}]}]})
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert "tests/other.spec.ts is not among the proof offered" in done.stdout
+
+    save_certification(consumer, "round", NODE, {"certified": [
+        {"node": OTHER, "state": "covered", "tests": [{"file": PROOF}]}]})
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert f"this delegation was handed {NODE} alone" in done.stdout
+
+
+def test_the_certification_contracts_own_examples_pass_the_gate():
+    from jsonschema import Draft202012Validator
+    schema = json.loads((REPO / "src/claude/schemas/certification-return.json")
+                        .read_text(encoding="utf-8"))
+    validator = Draft202012Validator(schema)
+    assert schema["examples"]
+    for example in schema["examples"]:
+        assert [] == [error.message for error in validator.iter_errors(example)]
+
+
 def test_the_return_contracts_own_examples_pass_the_gate_that_will_judge_real_returns():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/conformance-return.json")

@@ -68,7 +68,9 @@ this invocation — it is the status, reported verbatim.
    `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
    drift counts by class, each with its route: `orphaned` is cleared by `--prune` after a
    deliberate node removal, `moved` heals when the node's task is next delivered, `code` is
-   answered by `/reconcile`. Where `code` findings exist, the report carries the `/reconcile`
+   answered by `/reconcile`, and `proof` — a binding a certified test decides whose test's text
+   changed — by `/reconcile` with a certification of the test as it now stands, the binding being
+   decided by reading until then. Where `code` findings exist, the report carries the `/reconcile`
    invocation ready to paste — the project root filled in, the target named by its `targets` key
    wherever the project declares more than one, the file set being the drifted paths converted to
    the target source root's own anchor since `--check` spells them from the git toplevel, and a
@@ -107,8 +109,8 @@ this invocation — it is the status, reported verbatim.
    again.
    Last for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes --rank
    <target-source-root>` — the trace's accretion counts: files by bindings held, nodes by files
-   bound, and files by the bindings a reading decides, with the step-decided remainder beside
-   each. Quote the top rows verbatim, as facts and never as a grade: a binding over-broad
+   bound, and files by the bindings a reading decides, with the remainder a registry step or a
+   certified test decides beside each. Quote the top rows verbatim, as facts and never as a grade: a binding over-broad
    from the day it was written never drifts, so no drift report re-examines it, and these counts
    are its one symptom. The third count is what a reconciliation's cost turns on — one judge per
    file, reading every binding on it for the first one a reading still decides — so a file high

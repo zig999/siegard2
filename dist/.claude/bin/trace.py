@@ -39,13 +39,16 @@ Ten things this script does, and nobody else does any of them:
                                                                   bindings held, nodes by files
                                                                   bound
 
-Drift is reported in three classes, because a caller can act on each differently and could act on
-none of them while all three arrived as one list. A node the specification no longer holds is
+Drift is reported in four classes, because a caller can act on each differently and could act on
+none of them while all four arrived as one list. A node the specification no longer holds is
 `orphaned`: the fact it named is gone, and no operation here can repair the entry — `--bind`
 refuses a node the specification does not hold, and this script is the trace's one writer, so the
 finding repeats on every run forever. A node whose text moved is `moved`, and a file that changed
 or vanished is `code`; both are true statements about real drift, and the answer to each is a
-rebind by whoever owns the change. Only the first is `--prune`'s, and `--prune` touches only it:
+rebind by whoever owns the change. A binding a test decides whose test's text changed is `proof`:
+the certification was of that text, and until a judgment certifies the test as it now stands the
+binding is decided by reading again — its `code` drift, if any, is still listed, and still a
+reconciliation's. Only the first is `--prune`'s, and `--prune` touches only it:
 dropping a binding whose file moved would discard the one record of which node that code answers
 to, which is the whole of what this file keeps.
 
@@ -188,6 +191,24 @@ them at all — because one judge is spawned per file, and a file pays that judg
 one binding on it that a reading still has to settle. None of it changes what is judged: the
 pair is still read, and the step's run over the tree is the run of the caller that has one.
 
+A binding may also be decided by a test, and that is the trace's own join rather than the
+registry's. `--stage --certify <file>` takes the human's certifications — a node, the test file(s)
+offered as its proof, and the registry step that runs them — refuses a node the named files do not
+encode, a proof that is not there or a step the registry does not declare, never omits a pair of a
+node being certified, and writes one certification pack per node beside the file packs. The
+judgment that certifies is the coverage auditor's and its rule is the whole of the test: the
+named tests would fail if the node's fact stopped holding. Its return is saved like every other
+under `<slug>.returns/certify__<node>.yaml`; `--fold` reads it against
+`schemas/certification-return.json`, and writes `decided_by: test` on a node only where the
+auditor answered `covered` and the node's own reading cleared — a certification never rides a node
+the judgment refused. `--bind-record` then pins the proof's digests beside the files', so the
+binding names the test that decides it and the text that was certified. From there `--check`
+reports a changed test under `proof`, a bind over the node carries the certification forward
+while the proof's text stands and releases it with a receipt the moment it does not, and every
+listing that names a step-decided pair names a test-decided one the same way. What a test decides
+is whether the fact holds; which file holds it stays the source's, which is why `files` and their
+digests are untouched by any of this.
+
 `--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every delegation that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
@@ -220,7 +241,8 @@ Usage:  trace.py <target-root>
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all]
         trace.py --encodes <target-root> <file> [<file> ...]
-        trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...] [--audit]
+        trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
+                 [--audit | --review [--node <node> ...]] [--certify <certifications-file>]
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
         trace.py --encodes --rank <target-root> [--all]
         trace.py --help
@@ -273,13 +295,18 @@ OWED_CLASSES = {
               "says what was found",
 }
 
-ORPHANED, MOVED, CODE = "orphaned", "moved", "code"
+ORPHANED, MOVED, PROOF, CODE = "orphaned", "moved", "proof", "code"
 CLASSES = {
     ORPHANED: "bound to a node the specification no longer holds — no bind can repair these, "
               "and `--prune` is the only thing that clears them",
     MOVED: "bound to a node whose text moved since the bind — rebind whoever owns the change",
+    PROOF: "decided by a test whose text changed since it was certified — the binding is "
+           "decided by reading again until a judgment certifies the test as it now stands",
     CODE: "bound to a file that changed or is gone — rebind whoever owns the change",
 }
+DECIDED_BY_TEST = "test"
+CERTIFY_PREFIX = "certify__"
+CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
 
 
 def home_of(target: Path) -> Path:
@@ -518,6 +545,23 @@ def drift_of(declared: dict,
                 continue
             if spec.digest_of(path) != file_entry["digest"]:
                 findings.append((CODE, node_id, where, "the file changed without a rebind"))
+        # A test-decided binding's proof is pinned the way its files are, and moves the same way;
+        # what differs is the remedy — a fresh certification of the test as it now stands, never
+        # a rebind of the file — so the class is its own.
+        if entry.get("decided_by") == DECIDED_BY_TEST:
+            for proof_entry in entry.get("proof") or []:
+                where = proof_entry["path"]
+                path = home / where
+                if not path.is_file():
+                    findings.append((PROOF, node_id, where,
+                                     f"{node_id}: certified over {where}, and the test no longer "
+                                     f"exists; the binding is decided by reading until a judgment "
+                                     f"certifies a test that does"))
+                elif spec.digest_of(path) != proof_entry["digest"]:
+                    findings.append((PROOF, node_id, where,
+                                     f"{node_id}: certified over {where}, whose text changed "
+                                     f"since; the binding is decided by reading until a judgment "
+                                     f"certifies the test as it now stands"))
     return findings, []
 
 
@@ -575,7 +619,7 @@ def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[di
 
 
 def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
-         replace: bool) -> tuple[int, list[str]]:
+         replace: bool, certification: dict | None = None) -> tuple[int, list[str]]:
     """Fold one binding into the trace in place; say how many files that node now holds, and which
     ones this call stopped claiming.
 
@@ -608,9 +652,53 @@ def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
                  if entry["path"] not in given] + traced_files
     files = sorted(files, key=lambda entry: entry["path"])
     bindings = [entry for entry in declared["bindings"] if entry.get("node") != node_id]
-    bindings.append({"node": node_id, "digest": digest, "files": files})
+    written = {"node": node_id, "digest": digest, "files": files}
+    # The certification is the caller's to supply, fresh from a record or carried from the entry
+    # this write replaces; supplied, it is written whole, and absent, the binding is a reading's.
+    if certification is not None:
+        written["decided_by"] = DECIDED_BY_TEST
+        written["step"] = certification["step"]
+        written["proof"] = sorted(certification["proof"], key=lambda entry: entry["path"])
+    bindings.append(written)
     declared["bindings"] = sorted(bindings, key=lambda entry: entry["node"])
     return len(files), dropped
+
+
+def carried_certification(declared: dict, node_id: str,
+                          home: Path) -> tuple[dict | None, str | None]:
+    """The certification the node's standing entry holds, where its proof's text still stands, or
+    nothing and the receipt for letting it go.
+
+    A bind rewrites the whole entry, and a bind over a file the node encodes is not a judgment
+    about the test that decides the node — so the certification is carried forward, not dropped
+    with the entry it rode. It is carried only while the proof's every digest still computes: a
+    test whose text changed was certified as something else, and a bind that carried the claim
+    over it would assert a certification nobody made over these bytes. The receipt names what was
+    released, because the entry written afterwards reads exactly like one never certified."""
+    existing = next((entry for entry in declared.get("bindings") or []
+                     if entry.get("node") == node_id), None)
+    if existing is None or existing.get("decided_by") != DECIDED_BY_TEST:
+        return None, None
+    stale = []
+    for proof_entry in existing.get("proof") or []:
+        source = home / proof_entry["path"]
+        if not source.is_file() or spec.digest_of(source) != proof_entry["digest"]:
+            stale.append(proof_entry["path"])
+    if stale:
+        return None, (f"  {node_id} was decided by a test and is decided by reading from here: "
+                      f"{', '.join(stale)} changed since it was certified, so the certification "
+                      f"is released rather than carried over text nobody certified; a "
+                      f"reconciliation that certifies the test as it now stands restores it")
+    return {"step": existing["step"], "proof": list(existing["proof"])}, None
+
+
+def certified(node_id: str, certification: dict) -> str:
+    """The receipt for a certification written. A statement, and the one place the act is said at
+    the moment it happens: the entry afterwards carries the fields, and nothing else says a bind
+    just changed what decides a node."""
+    return (f"  {node_id} is decided by a test from here: step `{certification['step']}` over "
+            f"{', '.join(entry['path'] for entry in certification['proof'])}; a drift on its files "
+            f"is that step's to answer, a drift on the test is a fresh certification's")
 
 
 def released(node_id: str, dropped: list[str]) -> str:
@@ -706,13 +794,15 @@ def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]
             f"to the rules a reading decides")
 
 
-def step_decided(findings: list[tuple[str, str, str | None, str]], decided: dict[str, str]) -> str:
-    """The receipt for `code` findings that sit on a constraint a registry step decides. A
-    statement, never a second class: the drift is real and the pair is still read — what this
-    adds is that the reading re-decides what the step decides, so a reader weighing the list
-    knows which lines a run of the step answers."""
-    lines = [f"  {len(findings)} of the `code` finding(s) sit on a constraint a registry step "
-             f"decides; the step's run over the tree is what decides each:"]
+def step_decided(findings: list[tuple[str, str, str | None, str]], decided: dict[str, str],
+                 what: str = "a constraint a registry step decides") -> str:
+    """The receipt for `code` findings that sit on a binding a run decides — a constraint the
+    registry's step decides, or a node a certified test decides. A statement, never a second
+    class: the drift is real and the pair is still listed — what this adds is that a reading
+    would re-decide what the run decides, so a reader weighing the list knows which lines a run
+    of the step answers."""
+    lines = [f"  {len(findings)} of the `code` finding(s) sit on {what}; the step's run over the "
+             f"tree is what decides each:"]
     lines += [f"    {node} over {where} (step `{decided[node]}`)"
               for _, node, where, _ in sorted(findings, key=lambda f: (f[2] or "", f[1]))]
     return "\n".join(lines)
@@ -801,13 +891,16 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
         print(f"cannot bind: {refusal}")
         return 1
 
-    held, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace)
+    carried, let_go = carried_certification(declared, node_id, home)
+    held, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace, carried)
     if write_trace(target, declared) != 0:
         return 1
     print(f"bound {node_id} to {held} file(s) at {trace_path(target)}")
     print(unrecorded(node_id))
     if dropped:
         print(released(node_id, dropped))
+    if let_go:
+        print(let_go)
     stale = stale_after(declared, home, {e["path"]: e["digest"] for e in traced}, {node_id})
     if stale:
         print(left_stale(stale))
@@ -939,6 +1032,13 @@ def reconciliation(record: Path) -> int:
     print(f"{record.name} holds: {len(front['files'])} file(s), {len(binds)} node(s) the judgment "
           f"cleared, {len(held)} it did not, {len(front.get('unbound') or [])} file(s) the trace "
           f"binds nothing to.")
+    certifies = [entry for entry in binds if entry.get("decided_by") == DECIDED_BY_TEST]
+    if certifies:
+        print(f"{len(certifies)} node(s) certified as decided by a test — "
+              + "; ".join(f"{entry['node']} by step `{entry['step']}` over "
+                          f"{', '.join(entry['proof'])}" for entry in certifies)
+              + ": --bind-record writes each binding as one a test decides, pinning the proof "
+                "beside the files.")
     if held:
         print(f"--bind-record will write {len(binds)} binding(s) from this record and none for "
               f"{', '.join(entry['node'] for entry in held)}: a node without `encoded_at` is a "
@@ -978,6 +1078,27 @@ def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
         if files:
             pairs.append((entry["node"], files))
     return pairs, []
+
+
+def certified_in(record: Path) -> dict[str, dict]:
+    """Every node a reconciliation record certifies as decided by a test, with the step and the
+    proof paths it names — spelled from the target source root, as the record spells everything.
+    Empty for a delivery record and for a reconciliation that certified nothing. Read the way
+    `encoded_in` reads its two field names: defensively, because `--reconciliation` is what held
+    the record to its contract first, and a second opinion here would be a second home for it."""
+    front = as_reconciliation(record)
+    if front is None:
+        return {}
+    found: dict[str, dict] = {}
+    for entry in front.get("nodes") or []:
+        if not isinstance(entry, dict) or entry.get("decided_by") != DECIDED_BY_TEST:
+            continue
+        node_id, step, proof = entry.get("node"), entry.get("step"), entry.get("proof")
+        if isinstance(node_id, str) and isinstance(step, str) and isinstance(proof, list):
+            paths = [p for p in proof if isinstance(p, str)]
+            if paths:
+                found[node_id] = {"step": step, "proof": paths}
+    return found
 
 
 def as_reconciliation(record: Path) -> dict | None:
@@ -1098,7 +1219,7 @@ def unstated_of(home: Path) -> list[dict]:
 
     Read from the corpus the same way `judged()` reads it, and kept apart from it for the reason
     the class exists: a pair's finding is owed to a bind, and a fact no node holds is owed to the
-    analysis that gives it one. Only `siegard-reconcile/3` records carry the list — an earlier
+    analysis that gives it one. Only `siegard-reconcile/3` and later records carry the list — an earlier
     record folded the same observation into a node's `conforms`, where it is indistinguishable
     from a contradiction, and nothing here rewrites one to say otherwise."""
     stated: list[dict] = []
@@ -1278,6 +1399,7 @@ def encodes(target: Path, files: list[str]) -> int:
                 index.setdefault(held["path"], []).append((entry.get("node"),
                                                            held.get("digest")))
     decided = decided_constraints(home, offset_of(target, home))
+    by_test = test_decided(declared)
     for held in traced:
         path, now = held["path"], held["digest"]
         rows = sorted(index.get(path) or [])
@@ -1286,11 +1408,23 @@ def encodes(target: Path, files: list[str]) -> int:
             continue
         print(f"{path}: {len(rows)} binding(s)")
         for node, stored in rows:
-            by_step = f"; a registry step decides it (`{decided[node]}`)" if node in decided else ""
+            if node in by_test:
+                beside = f"; a certified test decides it (step `{by_test[node]}`)"
+            elif node in decided:
+                beside = f"; a registry step decides it (`{decided[node]}`)"
+            else:
+                beside = ""
             print(f"  {node} — "
                   f"{'matches' if stored == now else 'stale: the file changed without a rebind'}"
-                  f"{by_step}")
+                  f"{beside}")
     return 0
+
+
+def test_decided(declared: dict) -> dict[str, str]:
+    """Every node the trace binds as decided by a test, with the step that runs its proof."""
+    return {entry["node"]: entry["step"] for entry in declared.get("bindings") or []
+            if isinstance(entry, dict) and entry.get("decided_by") == DECIDED_BY_TEST
+            and isinstance(entry.get("step"), str)}
 
 
 RANK_HELD_BACK = 15
@@ -1354,23 +1488,28 @@ def rank(target: Path, show_all: bool = False) -> int:
     # by what a reading decides, with the step-decided remainder beside it, so a reader sees which
     # files a tool already answers for and which still need a judge at all.
     decided = decided_constraints(home, offset)
-    by_reading: dict[str, tuple[int, int]] = {}
+    by_test = test_decided(declared)
+    by_reading: dict[str, tuple[int, int, int]] = {}
     for entry in declared.get("bindings") or []:
         for held in entry.get("files") or []:
             path = held.get("path") if isinstance(held, dict) else None
             if not isinstance(path, str) or not under(path, [offset]):
                 continue
-            reading, step = by_reading.get(path, (0, 0))
-            if entry["node"] in decided:
-                by_reading[path] = (reading, step + 1)
+            reading, step, test = by_reading.get(path, (0, 0, 0))
+            if entry["node"] in by_test:
+                by_reading[path] = (reading, step, test + 1)
+            elif entry["node"] in decided:
+                by_reading[path] = (reading, step + 1, test)
             else:
-                by_reading[path] = (reading + 1, step)
+                by_reading[path] = (reading + 1, step, test)
     rows = sorted(by_reading.items(), key=lambda row: (-row[1][0], row[0]))
     shown = rows if show_all else rows[:RANK_HELD_BACK]
     print(f"\nfiles by bindings a reading decides (a judge reads the whole file for the first of "
           f"them):")
-    for name, (reading, step) in shown:
-        beside = f"  ({step} decided by a registry step)" if step else ""
+    for name, (reading, step, test) in shown:
+        parts = ([f"{step} decided by a registry step"] if step else []) \
+            + ([f"{test} by a certified test"] if test else [])
+        beside = f"  ({', '.join(parts)})" if parts else ""
         print(f"  {reading:3d}  {name}{beside}")
     if len(rows) > len(shown):
         print(f"  ({len(rows) - len(shown)} more; --all lists every one)")
@@ -1392,9 +1531,47 @@ def open_owed(home: Path) -> set[tuple[str, str]]:
     return {pair for pair in found if pair not in cleared}
 
 
+def certifications_of(path: Path) -> tuple[list[dict], list[str]]:
+    """The certifications a caller asks a staging for, read from their file: a YAML list, each
+    entry a `node`, its `proof` — one or more test paths spelled from the target source root — and
+    the registry `step` that runs them. Shape alone is decided here; whether each names a node the
+    set encodes, a test that exists and a step the registry declares is the staging's, which has
+    the trace, the tree and the registry in hand."""
+    if not path.is_file():
+        return [], [f"{path} does not exist"]
+    try:
+        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as broken:
+        return [], [f"{path} does not parse: {broken}"]
+    if isinstance(loaded, dict) and isinstance(loaded.get("certify"), list):
+        loaded = loaded["certify"]
+    if not isinstance(loaded, list) or not loaded:
+        return [], [f"{path} holds no list of certifications; each entry is a node, its proof "
+                    f"and the step that runs it"]
+    problems, entries = [], []
+    for index, entry in enumerate(loaded):
+        if not isinstance(entry, dict):
+            problems.append(f"{path}: entry {index} is not a mapping")
+            continue
+        node_id, proof, step = entry.get("node"), entry.get("proof"), entry.get("step")
+        if isinstance(proof, str):
+            proof = [proof]
+        if not isinstance(node_id, str) or not isinstance(step, str) \
+                or not isinstance(proof, list) or not proof \
+                or not all(isinstance(p, str) for p in proof):
+            problems.append(f"{path}: entry {index} needs `node`, `step` and a non-empty `proof` "
+                            f"list of paths")
+            continue
+        entries.append({"node": node_id, "proof": list(dict.fromkeys(proof)), "step": step})
+    named = [entry["node"] for entry in entries]
+    problems += [f"{path}: {node_id} is certified {named.count(node_id)} times; one certification "
+                 f"per node" for node_id in sorted(set(named)) if named.count(node_id) > 1]
+    return entries, problems
+
+
 def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           files: list[str], audit: bool = False, review: bool = False,
-          also: list[str] | None = None) -> int:
+          also: list[str] | None = None, certify: Path | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -1477,6 +1654,43 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 index.setdefault(held["path"], []).append((entry["node"], held["digest"]))
 
+    # A certification asks the staging to hand a node and its offered tests to the auditor. It is
+    # refused before anything is written where the ask cannot be judged: a node no named file
+    # encodes has no reading here to ride, a proof that is not there is a test nobody can open,
+    # and a step the registry does not declare is one no run will ever answer for.
+    certify_entries: list[dict] = []
+    if certify is not None:
+        certify_entries, certify_problems = certifications_of(certify)
+        registry = registry_of(home, offset) or {}
+        steps = {c["step"] for c in registry.get("commands") or []
+                 if isinstance(c, dict) and isinstance(c.get("step"), str)}
+        for entry in certify_entries:
+            node_id = entry["node"]
+            if node_id not in nodes:
+                certify_problems.append(f"{spec_root} holds no node {node_id}; a certification "
+                                        f"is of a node the specification holds")
+                continue
+            bound_here = [given for given in files
+                          if any(n == node_id for n, _ in index.get(stored_of[given]) or [])]
+            if not bound_here:
+                certify_problems.append(f"{node_id} is bound to none of the named files; a "
+                                        f"certification rides the reading of a file that encodes "
+                                        f"the node, so name one the trace binds it to")
+            proof, absent = traced_files_of(target, home, entry["proof"])
+            certify_problems += [f"{node_id}: proof {problem}" for problem in absent]
+            if entry["step"] not in steps:
+                certify_problems.append(
+                    f"{node_id}: the registry declares no step `{entry['step']}`"
+                    + (f"; it declares {', '.join(sorted(steps))}" if steps else
+                       "; the project declares no registry for this target, and a step that "
+                       "runs the proof has to be one the registry names"))
+            entry["proof_resolved"] = [str((target / p).resolve()) for p in entry["proof"]]
+        for problem in certify_problems:
+            print(f"cannot run: {problem}", file=sys.stderr)
+        if certify_problems:
+            return CANNOT_RUN
+    certify_nodes = {entry["node"] for entry in certify_entries}
+
     owed_pairs = open_owed(home)
     judged_files: dict[str, list[str]] = {}
     all_current: list[str] = []
@@ -1495,8 +1709,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # An audit is the deliberate re-judgment of exactly the pairs this omission
             # skips: a binding that never drifts is a claim nothing else ever re-examines.
             # A review re-reads what a delivery just stamped, which is the same set.
+            # A node being certified is read whatever its digest says: the certification rides
+            # a fresh reading of the node against the file, and an omission would leave it none.
             if not (audit or review) and pinned == current[stored] \
-                    and (node_id, stored) not in owed_pairs:
+                    and (node_id, stored) not in owed_pairs and node_id not in certify_nodes:
                 omitted.append({"node": node_id, "file": given,
                                 "reason": "the binding computes at the file's content as it "
                                           "stands, and no record holds an open finding against "
@@ -1561,6 +1777,28 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                                  "also": read_also,
                                  "pack": str(pack)}
 
+    # One certification pack per node, beside the file packs: the node's text with its source
+    # named, the tests offered as its proof already resolved, and the contract the return is held
+    # to. The auditor reads one thing and hunts for nothing.
+    for entry in certify_entries:
+        node_id = entry["node"]
+        source = spec_root / f"{node_id}.md"
+        pack = packs_dir / (CERTIFY_PREFIX + node_id.replace("/", "__") + ".md")
+        lines = [f"# Certification pack for {node_id} — derived by trace.py --stage from the "
+                 f"specification; a reading copy, never a home. Doubt a line, open the source it "
+                 f"names.",
+                 f"# question: would the proof below fail if this node's fact stopped holding?",
+                 f"# proof under judgment: {', '.join(entry['proof_resolved'])}",
+                 f"# step that runs it: {entry['step']}",
+                 f"# return contract: {CERTIFICATION_CONTRACT}",
+                 f"\n=== {node_id}",
+                 f"source: {source}",
+                 f"digest: {nodes[node_id]['digest']}",
+                 "---",
+                 source.read_text(encoding="utf-8").rstrip("\n")]
+        pack.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        entry["pack"] = str(pack)
+
     # An audit stages no candidate tier, and the omission is the route's own logic rather than a
     # saving taken off it. A candidate exists so a judge can say a fact its own nodes do not hold
     # is held by a node another file carries — an attribution, not an absence. An audit asks one
@@ -1591,6 +1829,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                             for given, assigned in judged_files.items()
                             for node_id in assigned if node_id in decided),
                            key=lambda e: (e["file"], e["node"]))
+    # The same list for the bindings a certified test decides: read here like any other pair,
+    # named so a caller that runs the step knows which pairs the run answers.
+    by_test = test_decided(declared)
+    test_pairs = sorted(({"node": node_id, "file": given, "step": by_test[node_id]}
+                         for given, assigned in judged_files.items()
+                         for node_id in assigned if node_id in by_test),
+                        key=lambda e: (e["file"], e["node"]))
 
     manifest = {"slug": slug,
                 "audit": audit,
@@ -1603,6 +1848,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "omitted": sorted(omitted, key=lambda e: (e["file"], e["node"])),
                 "orphaned": sorted(orphaned, key=lambda e: (e["file"], e["node"])),
                 "decided_by_step": decided_pairs,
+                "decided_by_test": test_pairs,
+                "certify": [{"node": e["node"], "proof": e["proof"],
+                             "proof_resolved": e["proof_resolved"], "step": e["step"],
+                             "pack": e["pack"]} for e in certify_entries],
                 "candidates": {n: sorted(fs) for n, fs in sorted(candidates.items())}}
     (workspace / MANIFEST_FILE).write_text(json.dumps(manifest, indent=2) + "\n",
                                            encoding="utf-8")
@@ -1641,6 +1890,19 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
               f"decides it — the manifest names them under `decided_by_step`:")
         for entry in decided_pairs:
             print(f"    {entry['node']} — bound to {entry['file']} (step `{entry['step']}`)")
+    if test_pairs:
+        print(f"  {len(test_pairs)} pair(s) sit on a binding a certified test decides; each is "
+              f"read here like any other pair, and the step's run is what decides it — the "
+              f"manifest names them under `decided_by_test`:")
+        for entry in test_pairs:
+            print(f"    {entry['node']} — bound to {entry['file']} (step `{entry['step']}`)")
+    if certify_entries:
+        print(f"  {len(certify_entries)} certification(s) staged — one coverage-auditor "
+              f"delegation each, over the node's pack and its proof; save each return verbatim at "
+              f"{returns_dir}/{CERTIFY_PREFIX}<node with '/' as '__'>.yaml:")
+        for entry in certify_entries:
+            print(f"    {entry['node']} — proof {', '.join(entry['proof'])} (step "
+                  f"`{entry['step']}`); pack {entry['pack']}")
     return 0
 
 
@@ -1674,6 +1936,33 @@ def return_problems(front, assigned: list[str], given: str) -> list[str]:
         if named is not None and named != given:
             problems.append(f"findings: a finding names {named}, and this delegation read "
                             f"{given}; one file per delegation is the shape of this pass")
+    return problems
+
+
+def certification_problems(front, node_id: str, proof: list[str]) -> list[str]:
+    """Every way one certification's saved return fails its contract or its ask. The schema holds
+    the shape; this holds what the schema cannot see — that the return answers for exactly the node
+    it was handed, and cites no test outside the proof the human offered, because the binding pins
+    exactly that proof and a test cited from elsewhere would be certified by nobody."""
+    if not isinstance(front, dict):
+        return ["the return is not a mapping"]
+    if not CERTIFICATION_CONTRACT.is_file():
+        return [f"{CERTIFICATION_CONTRACT} is missing; nothing can be validated without it"]
+    schema = json.loads(CERTIFICATION_CONTRACT.read_text(encoding="utf-8"))
+    problems = [f"{'/'.join(str(part) for part in error.path) or 'return'}: {error.message}"
+                for error in Draft202012Validator(schema).iter_errors(front)]
+    if problems:
+        return problems
+    answered = [entry["node"] for entry in front["certified"]]
+    if answered != [node_id]:
+        problems.append(f"certified: the return answers for {', '.join(answered)}; this "
+                        f"delegation was handed {node_id} alone")
+    for entry in front["certified"]:
+        for test in entry.get("tests") or []:
+            if test["file"] not in proof:
+                problems.append(f"certified: {test['file']} is not among the proof offered "
+                                f"({', '.join(proof)}); a certification is of the tests the human "
+                                f"named, and the binding pins exactly those")
     return problems
 
 
@@ -1755,7 +2044,10 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         return CANNOT_RUN
 
     expected = {return_name(given): given for given in manifest["files"]}
-    stray = sorted(p.name for p in returns_dir.iterdir() if p.name not in expected)
+    certify_expected = {CERTIFY_PREFIX + e["node"].replace("/", "__") + ".yaml": e
+                        for e in manifest.get("certify") or []}
+    stray = sorted(p.name for p in returns_dir.iterdir()
+                   if p.name not in expected and p.name not in certify_expected)
     if stray:
         print(f"cannot fold: {returns_dir} holds {', '.join(stray)}, which no staged file "
               f"explains; a return nobody staged is an answer to a question nobody asked")
@@ -1779,6 +2071,24 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             rerun += [f"{given}: {problem}" for problem in held]
             continue
         returns[given] = front
+    # A certification's return is read by the same rule as a file's: saved verbatim, held to its
+    # own contract, and refused by name where it does not hold — the delegation runs again.
+    certified_returns: dict[str, dict] = {}
+    for name, ask in sorted(certify_expected.items()):
+        path = returns_dir / name
+        if not path.is_file():
+            rerun.append(f"certification of {ask['node']}: no return at {path}")
+            continue
+        try:
+            front = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as broken:
+            rerun.append(f"certification of {ask['node']}: the return does not parse: {broken}")
+            continue
+        held = certification_problems(front, ask["node"], ask["proof"])
+        if held:
+            rerun += [f"certification of {ask['node']}: {problem}" for problem in held]
+            continue
+        certified_returns[ask["node"]] = front["certified"][0]
     if rerun:
         for problem in rerun:
             print(f"cannot fold: {problem}")
@@ -1857,8 +2167,43 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             entry["collateral"] = True
         entries.append(entry)
 
+    # A certification lands on a node only where the auditor answered `covered` and the node's own
+    # reading cleared it. Anything else is said in the notes and writes nothing: a certification
+    # is a claim about what decides a binding, and a binding the judgment refused has none.
+    certification_notes: list[str] = []
+    by_node = {entry["node"]: entry for entry in entries}
+    for ask in manifest.get("certify") or []:
+        node_id = ask["node"]
+        answer = certified_returns[node_id]
+        entry = by_node.get(node_id)
+        if entry is None:
+            certification_notes.append(
+                f"Certification of {node_id} was asked and the node was judged over no named "
+                f"file; nothing here carries it.")
+            continue
+        if answer["state"] != "covered":
+            certification_notes.append(
+                f"Certification of {node_id} did not hold: the auditor answered `{answer['state']}` "
+                f"— {answer.get('why', '')}. The node stays decided by reading.")
+            continue
+        if not entry["conforms"]:
+            certification_notes.append(
+                f"Certification of {node_id} held ({', '.join(t['file'] for t in answer['tests'])} "
+                f"would fail if the fact stopped holding) and is not written: the judgment did not "
+                f"clear the node, and a test-decided binding rests on a reading that did.")
+            continue
+        entry["decided_by"] = DECIDED_BY_TEST
+        entry["step"] = ask["step"]
+        entry["proof"] = sorted(ask["proof"])
+        certification_notes.append(
+            f"Certified {node_id} as decided by step `{ask['step']}`: "
+            + "; ".join(f"{t['file']}" + (f" ({t['name']})" if t.get("name") else "")
+                        for t in answer["tests"])
+            + " would fail if the fact stopped holding.")
+
     notes = [f"Judged by {len(returns)} delegation(s), one per file; folded mechanically by "
              f"trace.py --fold from the returns under {RECONCILE_DIR}/{manifest['slug']}.returns/."]
+    notes += certification_notes
     if manifest.get("audit"):
         notes.append("Staged as an audit: the source did not drift — every pair the trace held "
                      "for these files was re-judged deliberately, standing claims included.")
@@ -1890,7 +2235,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                      f"`unstated`. They block no binding here and no rebind closes them — the "
                      f"route is the analysis that gives each fact a node.")
 
-    front = {"contract_version": "siegard-reconcile/3",
+    front = {"contract_version": "siegard-reconcile/4",
              "title": premise["title"],
              "summary": premise["summary"],
              "target": premise["target"],
@@ -2088,6 +2433,7 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
         return status
 
     home = home_of(target)
+    certifications = certified_in(record)
     refusals, folded = [], []
     for node_id, files in pairs:
         if node_id not in nodes:
@@ -2096,8 +2442,17 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
             continue
         traced, missing = traced_files_of(target, home, files)
         refusals += [f"{node_id}: {problem}" for problem in missing]
-        if not missing:
-            folded.append((node_id, traced))
+        # A certification's proof is pinned the way the files are, read now, and a proof that is
+        # not there refuses the record whole: a binding naming a test nobody can open decides
+        # nothing.
+        certification = None
+        if node_id in certifications:
+            proof, absent = traced_files_of(target, home, certifications[node_id]["proof"])
+            refusals += [f"{node_id}: proof {problem}" for problem in absent]
+            if not absent:
+                certification = {"step": certifications[node_id]["step"], "proof": proof}
+        if not missing and (node_id not in certifications or certification is not None):
+            folded.append((node_id, traced, certification))
 
     declared, refusal = opened(target, spec_root, home)
     if refusal is not None:
@@ -2113,23 +2468,36 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
               f"so a trace holding some of them would say this delivery is linked when it is not.")
         return 1
 
-    held = [(node_id, *fold(declared, node_id, nodes[node_id]["digest"], traced, replace))
-            for node_id, traced in folded]
+    held = []
+    for node_id, traced, certification in folded:
+        let_go = None
+        if certification is None:
+            certification, let_go = carried_certification(declared, node_id, home)
+            fresh = False
+        else:
+            fresh = True
+        count, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace,
+                              certification)
+        held.append((node_id, count, dropped, certification if fresh else None, let_go))
     if write_trace(target, declared) != 0:
         return 1
-    for node_id, count, dropped in held:
+    for node_id, count, dropped, fresh_certification, let_go in held:
         print(f"bound {node_id} to {count} file(s)")
         if dropped:
             print(released(node_id, dropped))
+        if fresh_certification is not None:
+            print(certified(node_id, fresh_certification))
+        if let_go:
+            print(let_go)
     print(f"{len(held)} binding(s) written at {trace_path(target)}, read from {record.name}")
-    let_go = sum(len(dropped) for _, _, dropped in held)
-    if let_go:
-        print(f"{let_go} path(s) released across {sum(1 for _, _, d in held if d)} node(s); a "
-              f"total is here because one node's receipt is easy to read past in a record that "
-              f"bound twenty")
+    let_go_paths = sum(len(dropped) for _, _, dropped, _, _ in held)
+    if let_go_paths:
+        print(f"{let_go_paths} path(s) released across {sum(1 for _, _, d, _, _ in held if d)} "
+              f"node(s); a total is here because one node's receipt is easy to read past in a "
+              f"record that bound twenty")
     acted = {entry["path"]: entry["digest"]
-             for _, traced in folded for entry in traced}
-    stale = stale_after(declared, home, acted, {node_id for node_id, _ in folded})
+             for _, traced, _ in folded for entry in traced}
+    stale = stale_after(declared, home, acted, {node_id for node_id, _, _ in folded})
     if stale:
         print(left_stale(stale))
     owed = withheld(record)
@@ -2231,6 +2599,19 @@ def main() -> int:
             return CANNOT_RUN
         also.append(args[at + 1])
         del args[at:at + 2]
+    certify: Path | None = None
+    if "--certify" in args:
+        at = args.index("--certify")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --certify takes the path of a YAML file listing the "
+                  "certifications — node, proof, step", file=sys.stderr)
+            return CANNOT_RUN
+        certify = Path(args[at + 1])
+        del args[at:at + 2]
+        if "--certify" in args:
+            print("cannot run: --certify is given once; one file lists every certification",
+                  file=sys.stderr)
+            return CANNOT_RUN
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--reconciliation", "--owed", "--encodes", "--stage", "--fold",
@@ -2269,6 +2650,10 @@ def main() -> int:
     if also and not do_review:
         print("cannot run: --node is a mode of --stage --review; a reconciliation's node set is "
               "the trace's alone", file=sys.stderr)
+        return CANNOT_RUN
+    if certify is not None and (not do_stage or do_audit or do_review):
+        print("cannot run: --certify is a mode of --stage alone; an audit re-reads claims and a "
+              "review re-reads a delivery, and neither certifies a test", file=sys.stderr)
         return CANNOT_RUN
 
     if do_reconciliation:
@@ -2317,12 +2702,13 @@ def main() -> int:
     if do_stage:
         if len(args) < 5 or any(a.startswith("--") for a in args):
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
-                  "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...]], "
-                  "every file spelled from the target source root", file=sys.stderr)
+                  "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...]] "
+                  "[--certify <file>], every file spelled from the target source root",
+                  file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
-                     do_review, also)
+                     do_review, also, certify)
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):
@@ -2363,7 +2749,10 @@ def main() -> int:
 
     count = len(declared.get("bindings") or [])
     if not check:
-        print(f"trace sound: {count} binding(s), traced against {declared['specification']}")
+        by_test = len(test_decided(declared))
+        print(f"trace sound: {count} binding(s)"
+              + (f", {by_test} of them decided by a certified test" if by_test else "")
+              + f", traced against {declared['specification']}")
         return 0
 
     home = home_of(target)
@@ -2396,7 +2785,7 @@ def main() -> int:
         # orphaned count is what says how much of this report no rebind will ever shorten.
         # `code` alone is listed per file (code_report): its remedy is a reconciliation, which
         # is invoked over a file set, so its listing is keyed the way the remedy consumes it.
-        for cls in (ORPHANED, MOVED):
+        for cls in (ORPHANED, MOVED, PROOF):
             for finding in [f for f in listed if f[0] == cls]:
                 print(finding[3])
         code_listed = [f for f in listed if f[0] == CODE]
@@ -2406,8 +2795,12 @@ def main() -> int:
         on_step = [f for f in code_listed if f[1] in decided]
         if on_step:
             print(step_decided(on_step, decided))
+        by_test = test_decided(declared)
+        on_test = [f for f in code_listed if f[1] in by_test and f[1] not in decided]
+        if on_test:
+            print(step_decided(on_test, by_test, "a binding a certified test decides"))
         print(f"\n{len(listed)} drift finding(s) over {count} binding(s):")
-        for cls in (ORPHANED, MOVED, CODE):
+        for cls in (ORPHANED, MOVED, PROOF, CODE):
             # The suppressed count rides its own class's line rather than sitting under the tally:
             # `0 code` printed above a receipt saying one was held back is a line a reader can
             # finish and walk away from.

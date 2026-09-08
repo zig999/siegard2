@@ -28,8 +28,8 @@
   },
   "properties": {
     "contract_version": {
-      "const": "siegard-reconcile/3",
-      "description": "Which contract this record was written against. siegard-reconcile/2 carried one boolean per node over a question that is two: whether the source still states what the node holds, and whether it states a fact no node holds at all. The second answer landed on whichever node the file happened to be bound to, blocked a binding its own reading had cleared, and could never be closed by any rebind — so `unstated` is its own list here, and `conforms` answers the pair alone. A /2 record is the reading it was, read by tolerant readers, never rewritten to match."
+      "const": "siegard-reconcile/4",
+      "description": "Which contract this record was written against. siegard-reconcile/2 carried one boolean per node over a question that is two: whether the source still states what the node holds, and whether it states a fact no node holds at all. The second answer landed on whichever node the file happened to be bound to, blocked a binding its own reading had cleared, and could never be closed by any rebind — so /3 made `unstated` its own list, and `conforms` answers the pair alone. /4 lets a cleared node carry a certification: a judgment found a test that would fail if the node's fact stopped holding, and named the step that runs it, so `--bind-record` writes the binding as one a test decides. A /2 or /3 record is the reading it was, read by tolerant readers, never rewritten to match."
     },
     "title": {
       "type": "string",
@@ -128,6 +128,41 @@
               }
             },
             "$comment": "A cleared node cannot be collateral: the mark exists to tell a blocked-only-by-a-sibling-finding node from a contested one, and both readings presuppose the node stands unbound."
+          },
+          {
+            "if": {
+              "required": [
+                "decided_by"
+              ]
+            },
+            "then": {
+              "properties": {
+                "conforms": {
+                  "const": true
+                }
+              },
+              "required": [
+                "step",
+                "proof"
+              ]
+            },
+            "else": {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "step"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "proof"
+                    ]
+                  }
+                ]
+              }
+            },
+            "$comment": "A certification rides a cleared node and names its test and step, or it is not one. A node the judgment did not clear cannot be certified — a test-decided binding rests on a reading that cleared the node once — and a node that names a test without claiming certification is a shape nobody meant."
           }
         ],
         "properties": {
@@ -161,6 +196,24 @@
             "minItems": 1,
             "uniqueItems": true,
             "description": "The file(s) of the set above the judgment read for this node, on a node it did not clear and nowhere else. It records what was looked at without claiming anything about it, which is why the accounting below can still reach every named file while nothing is bound. Every entry must be in `files`.",
+            "items": {
+              "$ref": "#/$defs/targetPath"
+            }
+          },
+          "decided_by": {
+            "const": "test",
+            "description": "Present where a judgment certified, in this reconciliation, that the tests under `proof` would fail if this node's fact stopped holding — the whole test of a test, applied by the auditor whose rule it is and never by the caller. `--bind-record` writes the binding as one a test decides; from then on a drift on the node's files is answered by the step's run, and a drift on the tests themselves by a fresh certification. Written from the auditor's return alone, never from a node's type: `policy` and `invariant` say what kind of rule a node is, not whether a test settles it."
+          },
+          "step": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "The registry step that runs the proof, by the name `commands[].step` gives it, as the human named it to the staging. The staging refuses a step the registry does not declare."
+          },
+          "proof": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "The test file(s) certified, as the human named them and as the auditor's return cites them — every test the return names must be one of these. Spelled from the target source root like every path here; not required to be in `files`, because the tests are read to certify and never reconciled by this record.",
             "items": {
               "$ref": "#/$defs/targetPath"
             }
@@ -246,7 +299,35 @@
   },
   "examples": [
     {
-      "contract_version": "siegard-reconcile/3",
+      "contract_version": "siegard-reconcile/4",
+      "title": "Certified: a placed order answers its number",
+      "summary": "place() is asserted correct as it stands; this reconciliation reads it against its node and certifies the test that proves the node, so that later drift on the file is decided by the suite.",
+      "target": "backend",
+      "files": [
+        {
+          "path": "src/orders/place.ts",
+          "change": "unchanged; read to certify the test that proves domain/sales/order"
+        }
+      ],
+      "nodes": [
+        {
+          "node": "domain/sales/order",
+          "conforms": true,
+          "how": "the node's identity is `order_number`, and `return persisted.order_number` is what the entry point answers with",
+          "encoded_at": [
+            "src/orders/place.ts"
+          ],
+          "decided_by": "test",
+          "step": "test",
+          "proof": [
+            "tests/orders/place.spec.ts"
+          ]
+        }
+      ],
+      "notes": "Certified by the coverage auditor: `it('answers the persisted order_number')` fails when place() answers anything else, so the pair is decided by the `test` step from here on."
+    },
+    {
+      "contract_version": "siegard-reconcile/4",
       "title": "Hand correction to order placement",
       "summary": "place() was returning the stored row rather than the order_number; corrected by hand during an incident and confirmed correct against the running system.",
       "target": "backend",
@@ -268,7 +349,7 @@
       ]
     },
     {
-      "contract_version": "siegard-reconcile/3",
+      "contract_version": "siegard-reconcile/4",
       "title": "Hand correction to invoicing",
       "summary": "The nightly run raised two invoices for one order; the guard was added by hand and the behavior is correct.",
       "target": "backend",

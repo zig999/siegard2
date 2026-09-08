@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.49.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.50.0. `bin/project.py` reads this line and reports drift against
 the framework's own version.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -119,6 +119,12 @@ docstring, which every command prints on `--help`; no skill passes `--replace`.
 | `moved` | the specification moved under a binding | healed when the node's task is next delivered — the bind restamps at the node as it stands |
 | `code` | the file changed without a rebind, whatever wrote it | on files a delivery wrote, `/review-change`'s conformance pass — it judges every node the trace binds to the reviewed files and restamps what cleared; on every other file, `/reconcile`, below |
 | `orphaned` | bound to a node the specification no longer holds | `trace.py --prune`, which drops exactly this class and nothing else |
+| `proof` | a binding a certified test decides, whose test's text changed since it was certified | `/reconcile` over the node's files with a certification of the test as it now stands; until then the binding is decided by reading |
+
+A binding is decided by reading unless a reconciliation certified a test for it: the human offers
+the test and the registry step that runs it, the coverage auditor decides whether the test would
+fail if the node's fact stopped holding, and only its `covered` writes `decided_by: test`. A
+node's type never decides it. The files a node encodes stay in the binding whatever decides it.
 
 **Drift is not the whole of what is owed.** A reconciliation's finding against a pair the trace
 binds nowhere has no digest to disagree with and appears in no `--check`, ever; a later bind
@@ -128,11 +134,11 @@ open finding is in; `trace.py --encodes <target-source-root> <file> ...` says wh
 is bound to right now, drifted or not. **A tree read by `--check` alone reads clean while its own
 records hold open findings.**
 
-**A target declared `edits_freely` reports two of the three.** The `code` class is counted there,
+**A target declared `edits_freely` reports three of the four.** The `code` class is counted there,
 not listed: a receipt says how many, `--all` lists them, and that list is what `/check-source`
 reads — the standard's rules a reading decides, held to files no task delivered, recorded at
-`siegard-check/<slug>.md` beside this file. Binding is untouched; `moved` and `orphaned` still
-report.
+`siegard-check/<slug>.md` beside this file. Binding is untouched; `moved`, `orphaned` and `proof`
+still report.
 
 **Never answer drift by deleting an entry.** `orphaned` is the one exception: run `--prune` after
 an `/analyse` that removed nodes, and for nothing else.

@@ -41,6 +41,15 @@ A missing input is a stop, not a default:
    toplevel. A slug already taken is a stop and not a suffix: the record it would overwrite is the
    justification for a binding that is still in the trace.
 
+One optional input: **certifications** — for a node the file set encodes, the test file(s) the
+human offers as its proof, spelled from the target source root, and the registry step that runs
+them, by the name `commands[].step` gives it. Named by the human, never chosen here: which test
+proves a fact is a claim about the project's own suite, and the judgment below decides only
+whether the claim holds — the auditor's rule, that the tests would fail if the fact stopped
+holding. Where it holds, the bind writes the node as one a test decides, so a later drift on its
+files is answered by the step's run rather than by a fresh reading. Absent, nothing is certified
+and every binding stays decided by reading, which is every binding's default.
+
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `specification_root` and `targets` answer only from here: naming one of them in the invocation
 instead has no effect, and where the file does not declare one, that is a stop — the report carries
@@ -60,7 +69,8 @@ never a question at a time.
 Here the usual rule inverts by half, and the half that inverts is the point. Everywhere else a
 pending change is somebody's work in progress; here it is the subject.
 
-**The named files must be committed.** `git status --porcelain -- <each named path>` must print
+**The named files must be committed, and so must every proof a certification names.** `git
+status --porcelain -- <each named path> <each proof path>` must print
 nothing. Not because a pending edit is hard to read, but because a bind records a digest: the digest
 of an uncommitted edit points at content the next checkout erases, and the drift that would report
 afterwards is drift nobody caused. Output is a stop that names what is pending — committing or
@@ -125,7 +135,7 @@ second home for it):
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
-    <slug> <workspace> <each named path> [--audit]
+    <slug> <workspace> <each named path> [--audit] [--certify <certifications file>]
 ```
 
 This is the locate step, run by the one reader that cannot miss a binding. It computes every node
@@ -188,7 +198,18 @@ them. The judge reads them like any other pair — the record has to account for
 file carries, and nothing in this invocation runs the step — so what the list buys is knowledge,
 not omission: a reader of the report knows which readings a tool already makes over the tree, and
 `--check`'s receipt says the same over drift. Carry the list into the report as the staging
-printed it.
+printed it. The staging names the pairs a certified test already decides the same way, under
+`decided_by_test`.
+
+**Where the human offered certifications, write them into a small YAML file in the workspace and
+pass it as `--certify`** — a list, each entry the node, its `proof` paths and its `step`, exactly
+as the human stated them. The staging refuses, before writing anything, a node none of the named
+files encodes, a proof that is not there, and a step the registry does not declare; a refusal is
+the human's to answer, never a default. It never omits a pair of a node being certified — the
+certification rides a fresh reading of the node against its file — and it writes one
+**certification pack** per node beside the file packs: the node's text with its source named, the
+proof resolved to absolute paths, the step, and the return contract's path. The pack is the whole
+of what the auditor is handed.
 
 **A node written since the bind is in none of that.** The trace is what this step reads, and a node
 no delivery ever encoded has no entry in it — which is the ordinary state of every node `/analyse`
@@ -266,6 +287,17 @@ keyed by file rather than by node — a fact no node holds has no node to be abo
 nothing else. Never reshape one, never trim one, never repair one: the returns are the evidence
 the record is folded from and they outlive this session, and a return adjusted by the hand that
 saved it carries a judgment the delegation never made.
+
+**A certification is the coverage auditor's, and it is one more delegation per node.** For each
+entry the manifest holds under `certify`, spawn a `coverage-auditor` subagent — its judgment
+lives at `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md` — handing it the certification
+pack's path and the target source root, and nothing else: the pack names the node, the proof and
+the contract. Its rule is the whole test of a test — the named tests would fail if the node's
+fact stopped holding — and it is the same rule it applies to a task's criterion in a review. Save
+its return verbatim at `siegard-reconcile/<slug>.returns/certify__<node with every '/' as
+'__'>.yaml`, under the same discipline as every other return. The conformance judge for the
+node's file runs as well, unchanged: certification rides a reading that cleared the node, and the
+fold writes it on no other.
 
 **Verbatim is literal, and the fold enforces it against four keys.** `conformance-return.json`
 admits `findings`, `read`, `looked_past` and `candidates_opened`, and nothing else at any depth.
@@ -404,7 +436,11 @@ two — and it would have thrown away every reading that succeeded, so the next 
 files whose text nobody touched.
 
 **Read the bind's receipt and carry it into the report.** It names the nodes it did not write,
-which is the one place the partial shape of the act is stated at the moment it happens.
+which is the one place the partial shape of the act is stated at the moment it happens. It names
+what it certified, too — each node now decided by a test, with the step and the proof it pinned —
+and any certification an earlier bind held that this one released because the proof's text
+changed. The fold already said which certifications did not hold and why, in the record's
+`notes`; the bind says which ones landed.
 
 ### 6. Report
 
@@ -412,7 +448,8 @@ Say, in this order and in prose: the file set as given; what the staging held fo
 state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
 unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
 answered per node, with its evidence; where the record and the returns were written; what was
-bound and what was not; and the next invocation where there is one.
+bound and what was not; which nodes are decided by a test from here and which certifications did
+not hold, in the auditor's own words; and the next invocation where there is one.
 
 Where a node the judgment did not clear carries `collateral`, say so apart from the contested
 ones: nothing was found against that node's own substance — it shares a file with a finding that
@@ -472,6 +509,9 @@ answers.
   reconciliation that repaired what it found would be a third one nobody validated.
 - **It never decides that a file is correct.** The human asserts that; this skill records the
   assertion as theirs and asks a different question.
+- **It never certifies a test itself.** Which test a human offers is theirs; whether it would
+  fail if the fact stopped holding is the auditor's; the fold writes `decided_by: test` from the
+  auditor's `covered` and from nothing else. A node's type says nothing about it either way.
 - **It is not a review.** It reads one file set against the nodes the trace already links to it. It
   says nothing about coverage, about the project's standard, or about whether anything was proven —
   those are `/review-change`'s, over a delivery, and a reconciliation that reported them would be
