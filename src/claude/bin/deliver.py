@@ -257,86 +257,77 @@ def contract() -> Draft202012Validator:
 
 
 def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
-    """Every `{"$ref": "#/$defs/X"}` this subtree carries, inlined in place. A branch printed by
-    `--contract` has to stand on its own — a reader handed a slice and a dangling pointer into a
-    file they were not given has the same problem `--contract` exists to remove. A name already
-    on the path back to itself is left as the pointer instead of expanded again, since a cycle
-    inlined without end is not a slice, it is the whole file with extra steps.
-
-    Draft 2020-12 admits keywords beside a `$ref`, and a field written that way — a shared shape,
-    with a description of what this particular use of it means — is how a contract says both
-    without copying the shape into a second home. Inlined, the siblings win over what the target
-    declares: they are the more specific statement, which is why they were written there."""
-    if isinstance(node, dict):
-        ref = node.get("$ref")
-        if isinstance(ref, str) and ref.startswith("#/$defs/"):
-            name = ref[len("#/$defs/"):]
-            target = schema.get("$defs", {}).get(name)
-            if name in seen or target is None:
-                return dict(node)
-            inlined = resolve_refs(target, schema, seen | {name})
-            beside = {key: resolve_refs(value, schema, seen)
-                      for key, value in node.items() if key != "$ref"}
-            if not beside:
-                return inlined
-            return {**inlined, **beside} if isinstance(inlined, dict) else dict(node)
-        return {key: resolve_refs(value, schema, seen) for key, value in node.items()}
-    if isinstance(node, list):
-        return [resolve_refs(item, schema, seen) for item in node]
-    return node
+    """spec.py's, which is the one home of the rule — see its docstring. Delegated rather than
+    copied: this file and plan.py each held an identical copy until one was corrected and the
+    other was not, and the import graph reaches spec.py from both."""
+    return spec.resolve_refs(node, schema, seen)
 
 
 def contract_branch(schema: dict, branch: str) -> dict | None:
-    """One self-contained slice of a node contract: a `$defs` entry, or every property one `kind`
-    value admits, both with `$ref` resolved so nothing the slice names sends its reader chasing a
-    pointer through the file it was handed instead of. `None` where `branch` names neither —
-    the caller decides what a refusal over that looks like, since the two callers here (a script
-    printing to a terminal, a skill writing a file an agent reads) refuse differently."""
-    defs = schema.get("$defs", {})
-    if branch in defs:
-        return resolve_refs(defs[branch], schema)
-    for clause in schema.get("allOf", []):
-        const = clause.get("if", {}).get("properties", {}).get("kind", {}).get("const")
-        if const != branch:
-            continue
-        then = clause.get("then", {})
-        names = then.get("propertyNames", {}).get("enum", [])
-        sliced: dict = {
-            "kind": branch,
-            "required": then.get("required", []),
-            "properties": {name: schema["properties"][name] for name in names
-                           if name in schema.get("properties", {})},
-        }
-        if "examples" in then:
-            sliced["examples"] = then["examples"]
-        return resolve_refs(sliced, schema)
-    return None
+    """spec.py's; see there."""
+    return spec.contract_branch(schema, branch)
 
 
 def contract_branches(schema: dict) -> list[str]:
-    """Every branch name `--contract` answers for this schema, sorted — what a refusal over an
-    unknown branch offers instead of leaving the caller to guess."""
-    kinds = [clause["if"]["properties"]["kind"]["const"] for clause in schema.get("allOf", [])
-             if "const" in clause.get("if", {}).get("properties", {}).get("kind", {})]
-    return sorted(set(schema.get("$defs", {})) | set(kinds))
+    """spec.py's; see there."""
+    return spec.contract_branches(schema)
 
 
-def print_contract_branch(schema_path: Path, branch: str) -> int:
-    """`--contract`'s own body: read the schema, slice it, print the slice — or refuse, naming
-    every branch that schema does answer for, because a refusal that only says "no" over a typo
-    costs the same lookup twice."""
-    if not schema_path.is_file():
-        print(f"cannot run: {schema_path} is missing; nothing can be sliced without it",
-              file=sys.stderr)
+def sliceable() -> list[Path]:
+    """The contracts this script slices, in the order a refusal offers them: what a delivery
+    records, and what the project's own registry declares. Both are this script's to validate, so
+    both are its to print — a registry is the artifact a human authors by hand, and until this
+    printed it the only home of what `commands[]` or a rule may declare was a file under the
+    plugin's own `schemas/`, which a person with the question had to know was there."""
+    return [DELIVERY_CONTRACT, STANDARD_CONTRACT]
+
+
+def print_contract_index() -> int:
+    """Every branch `--contract` answers for, by the contract it belongs to. A caller who knows
+    the flag exists and not the names is the ordinary case, and a refusal is a poor way to learn
+    them."""
+    for path in sliceable():
+        if not path.is_file():
+            continue
+        schema = json.loads(path.read_text(encoding="utf-8"))
+        print(f"{schema.get('title', path.name)}  [{path.name}]")
+        print(f"  {', '.join(contract_branches(schema))}")
+    print("\nname one to print it whole, its `$ref`s resolved: deliver.py --contract <branch>")
+    print("the specification's own node classes are spec.py --contract, and a plan node's are "
+          "plan.py --contract")
+    return 0
+
+
+def print_contract_branch(schema_path: Path | None, branch: str) -> int:
+    """`--contract`'s own body: find the contract that holds the branch, slice it, print the
+    slice — or refuse, naming every branch each contract does answer for, because a refusal that
+    only says "no" over a typo costs the same lookup twice.
+
+    The branch is searched across the contracts this script owns rather than fixed to one, so a
+    caller asking for `command` or `rule` reaches the registry's contract without having to know
+    that a second schema exists. A name two of them held would be ambiguous, and none does —
+    which is checked here rather than assumed."""
+    paths = [schema_path] if schema_path is not None else sliceable()
+    found = []
+    for path in paths:
+        if not path.is_file():
+            continue
+        schema = json.loads(path.read_text(encoding="utf-8"))
+        sliced = contract_branch(schema, branch)
+        if sliced is not None:
+            found.append((path, sliced))
+    if len(found) > 1:
+        print(f"cannot run: {branch} is a branch of "
+              f"{' and '.join(p.name for p, _ in found)}; the name is ambiguous and this script "
+              f"will not pick one", file=sys.stderr)
         return CANNOT_RUN
-    schema = json.loads(schema_path.read_text(encoding="utf-8"))
-    sliced = contract_branch(schema, branch)
-    if sliced is None:
-        available = ", ".join(contract_branches(schema))
-        print(f"cannot run: {branch} is not a branch of {schema_path.name}; one of {available}",
-              file=sys.stderr)
+    if not found:
+        offered = "; ".join(f"{p.name}: {', '.join(contract_branches(json.loads(p.read_text(encoding='utf-8'))))}"
+                            for p in paths if p.is_file())
+        print(f"cannot run: {branch} is not a branch of any contract this script slices — "
+              f"{offered}", file=sys.stderr)
         return CANNOT_RUN
-    print(json.dumps(sliced, indent=2, ensure_ascii=False))
+    print(json.dumps(found[0][1], indent=2, ensure_ascii=False))
     return 0
 
 
@@ -2002,16 +1993,15 @@ def main() -> int:
         return check_record(named, args[0])
     if "--contract" in args:
         at = args.index("--contract")
-        if at + 1 >= len(args):
-            print("cannot run: --contract takes a branch name", file=sys.stderr)
-            return CANNOT_RUN
-        branch = args[at + 1]
-        del args[at:at + 2]
+        branch = args[at + 1] if at + 1 < len(args) and not args[at + 1].startswith("--") \
+            else None
+        del args[at:at + 1 + (1 if branch is not None else 0)]
         if verify or report or single is not None or against is not None \
                 or specification is not None or args:
-            print("cannot run: --contract stands alone", file=sys.stderr)
+            print("cannot run: --contract stands alone, with a branch name at most",
+                  file=sys.stderr)
             return CANNOT_RUN
-        return print_contract_branch(DELIVERY_CONTRACT, branch)
+        return print_contract_index() if branch is None else print_contract_branch(None, branch)
     if "--worktreeinclude" in args:
         at = args.index("--worktreeinclude")
         if at + 1 >= len(args):

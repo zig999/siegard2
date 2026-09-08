@@ -59,7 +59,12 @@ TERMS: dict[str, tuple[str, str]] = {
     "covers (a test over a criterion)":
         ("delivery-node.json", "/$defs/coverageEntry/properties/state"),
     "criteria": ("plan-node.json", "/properties/criteria"),
-    "decided_by": ("standard.json", "/$defs/rule/properties/decided_by"),
+    "decided_by (a standard's rule)": ("standard.json", "/$defs/rule/properties/decided_by"),
+    "decided_by (a trace binding)": ("trace.json", "/$defs/binding/properties/decided_by"),
+    "decides": ("standard.json", "/$defs/command/properties/decides"),
+    "demonstrates": ("delivery-node.json", "/$defs/test/properties/demonstrates"),
+    "proof (a certification's tests)": ("trace.json", "/$defs/binding/properties/proof"),
+    "step (on a trace binding)": ("trace.json", "/$defs/binding/properties/step"),
     "delivery node": ("delivery-node.json", ""),
     "digest (on a trace binding)": ("trace.json", "/$defs/binding/properties/digest"),
     "delivery.json": ("delivery.json", ""),

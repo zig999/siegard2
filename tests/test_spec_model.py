@@ -30,6 +30,48 @@ def spec_root(tmp_path: Path) -> Path:
     return root
 
 
+def spec_contract(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
+                           "--contract", *args], capture_output=True, text=True)
+
+
+def test_contract_prints_what_a_node_class_may_and_must_declare():
+    """The specification is the artifact a human writes most of by hand, and until this the only
+    home of what a class admits was a file under the plugin's own schemas/spec/ — which a person
+    with the question had to know was there."""
+    import json as _json
+    for cls, marker in (("rule", "invariant"), ("element", "aggregate-root"),
+                        ("scenario", "given"), ("constraint", "fitness"),
+                        ("contract", "operations"), ("context", "Context"),
+                        ("log", "Decision")):
+        out = spec_contract(cls)
+        assert out.returncode == 0, f"--contract {cls}: {out.stderr}"
+        sliced = _json.loads(out.stdout)
+        assert marker in out.stdout, f"--contract {cls} is not that class's contract"
+        assert "$defs" not in sliced, "a slice inlines what it names; $defs is not a slice"
+        assert "$ref" not in out.stdout, f"--contract {cls} leaves a dangling pointer"
+
+
+def test_contract_with_no_class_lists_them():
+    out = spec_contract()
+    assert out.returncode == 0, out.stderr
+    for cls in ("rule", "element", "scenario", "contract", "constraint", "context", "log"):
+        assert cls in out.stdout
+    assert "spec.py --contract <class>" in out.stdout
+
+
+def test_an_unknown_class_is_refused_naming_the_classes():
+    out = spec_contract("invariant")
+    assert out.returncode == 2
+    assert "is not a node class" in out.stderr and "rule" in out.stderr
+
+
+def test_contract_stands_alone():
+    out = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
+                          "--contract", "rule", "--digest"], capture_output=True, text=True)
+    assert out.returncode == 2 and "stands alone" in out.stderr
+
+
 def problems_of(root: Path) -> list[str]:
     nodes, problems = spec.collect(root, spec.contracts())
     return problems + spec.cross_problems(nodes, root)

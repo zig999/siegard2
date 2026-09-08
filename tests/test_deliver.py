@@ -1432,7 +1432,46 @@ def test_contract_cli_prints_a_branch_and_refuses_an_unknown_one():
     refused = subprocess.run([sys.executable, "-B", str(script), "--contract", "no-such-branch"],
                              capture_output=True, text=True)
     assert refused.returncode == 2
-    assert "no-such-branch is not a branch of delivery-node.json" in refused.stderr
+    assert "no-such-branch is not a branch of any contract this script slices" in refused.stderr
+    assert "delivery-node.json:" in refused.stderr
+
+
+def contract(*args: str) -> subprocess.CompletedProcess:
+    import subprocess as _sp
+    import sys as _sys
+    return _sp.run([_sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                    "--contract", *args], capture_output=True, text=True)
+
+
+def test_contract_slices_the_registry_as_well_as_the_delivery_node():
+    """A registry is the artifact a human authors by hand, and until this printed it the only
+    home of what `commands[]` or a rule may declare was a file under the plugin's own schemas,
+    which a person with the question had to know was there."""
+    for branch, marker in (("command", "timeout_seconds"), ("rule", "decided_by"),
+                           ("presupposition", "path"), ("dependency", "")):
+        out = contract(branch)
+        assert out.returncode == 0, f"--contract {branch}: {out.stderr}"
+        assert out.stdout.strip().startswith("{"), f"--contract {branch} printed nothing"
+        assert marker in out.stdout, f"--contract {branch} is not the registry's branch"
+    proof = contract("proof")
+    assert proof.returncode == 0 and "implementation" in proof.stdout
+
+
+def test_contract_with_no_branch_lists_every_one_it_answers_for():
+    """A caller who knows the flag and not the names is the ordinary case, and a refusal is a
+    poor way to learn them."""
+    out = contract()
+    assert out.returncode == 0, out.stderr
+    for name in ("delivery-node.json", "standard.json", "proof", "command"):
+        assert name in out.stdout
+    assert "spec.py --contract" in out.stdout and "plan.py --contract" in out.stdout, \
+        "the index names where the other contracts are printed, or it is a dead end"
+
+
+def test_an_unknown_branch_is_refused_naming_every_contract_sliced():
+    out = contract("nosuchbranch")
+    assert out.returncode == 2
+    assert "delivery-node.json:" in out.stderr and "standard.json:" in out.stderr
 
 
 def test_a_branch_carries_no_pointer_into_a_file_its_reader_was_not_given():

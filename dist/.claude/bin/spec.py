@@ -62,6 +62,8 @@ Usage:  spec.py <spec-root>              validate everything
                                           validate one file (cross-node checks do not run)
         spec.py --impact <identity>[,<identity>...] <spec-root>
                                           print one hop around each named node, both directions
+        spec.py --contract [<class>]     print what one node class may and must declare, read
+                                          from its own schema; with no class, list them
         spec.py --help                   print this text and stop
 Exit:   0 sound
         1 problems
@@ -100,6 +102,82 @@ FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
 SCHEMAS = {"context": "context.json", "element": "element.json", "rule": "rule.json",
            "scenario": "scenario.json", "contract": "contract.json",
            "constraint": "constraint.json", "log": "decision-log.json"}
+
+
+def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
+    """Every `{"$ref": "#/$defs/X"}` this subtree carries, inlined in place. A slice printed for a
+    reader has to stand on its own — a reader handed a slice and a dangling pointer into a file
+    they were not given has the same problem printing the slice exists to remove. A name already
+    on the path back to itself is left as the pointer instead of expanded again, since a cycle
+    inlined without end is not a slice, it is the whole file with extra steps.
+
+    Draft 2020-12 admits keywords beside a `$ref`, and a field written that way — a shared shape,
+    with a description of what this particular use of it means — is how a contract says both
+    without copying the shape into a second home. Inlined, the siblings win over what the target
+    declares: they are the more specific statement, which is why they were written there.
+
+    This is the one home of the rule. It sits here because the import graph reaches here from
+    everywhere: `deliver.py` and `plan.py` both import this module, and each kept an identical
+    copy until one of them was corrected and the other was not — which is what two copies of one
+    rule eventually do."""
+    if isinstance(node, dict):
+        ref = node.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/$defs/"):
+            name = ref[len("#/$defs/"):]
+            target = schema.get("$defs", {}).get(name)
+            if name in seen or target is None:
+                return dict(node)
+            inlined = resolve_refs(target, schema, seen | {name})
+            beside = {key: resolve_refs(value, schema, seen)
+                      for key, value in node.items() if key != "$ref"}
+            if not beside:
+                return inlined
+            return {**inlined, **beside} if isinstance(inlined, dict) else dict(node)
+        return {key: resolve_refs(value, schema, seen) for key, value in node.items()}
+    if isinstance(node, list):
+        return [resolve_refs(item, schema, seen) for item in node]
+    return node
+
+
+def contract_branch(schema: dict, branch: str) -> dict | None:
+    """One self-contained slice of a contract: a `$defs` entry, or every property one `kind` value
+    admits, both with `$ref` resolved. `None` where `branch` names neither — the caller decides
+    what a refusal over that looks like, since its callers refuse differently."""
+    defs = schema.get("$defs", {})
+    if branch in defs:
+        return resolve_refs(defs[branch], schema)
+    for clause in schema.get("allOf", []):
+        const = clause.get("if", {}).get("properties", {}).get("kind", {}).get("const")
+        if const != branch:
+            continue
+        then = clause.get("then", {})
+        names = then.get("propertyNames", {}).get("enum", [])
+        sliced: dict = {
+            "kind": branch,
+            "required": then.get("required", []),
+            "properties": {name: schema["properties"][name] for name in names
+                           if name in schema.get("properties", {})},
+        }
+        if "examples" in then:
+            sliced["examples"] = then["examples"]
+        return resolve_refs(sliced, schema)
+    return None
+
+
+def contract_branches(schema: dict) -> list[str]:
+    """Every branch name a slice answers for in this schema, sorted — what a refusal over an
+    unknown branch offers instead of leaving the caller to guess."""
+    kinds = [clause["if"]["properties"]["kind"]["const"] for clause in schema.get("allOf", [])
+             if "const" in clause.get("if", {}).get("properties", {}).get("kind", {})]
+    return sorted(set(schema.get("$defs", {})) | set(kinds))
+
+
+def whole_contract(schema: dict) -> dict:
+    """A schema printed as its own slice: everything but `$defs`, which is inlined where it is
+    used. A node class is one file rather than a branch of one, so what answers "what does a Rule
+    carry" is the file, resolved."""
+    return {key: resolve_refs(value, schema)
+            for key, value in schema.items() if key != "$defs"}
 HEADINGS = {"context": ["## Description", "## Responsibility"],
             "element": ["## Description", "## Responsibility"],
             "rule": ["## Description"], "scenario": ["## Description"],
@@ -1120,6 +1198,39 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
     return files
 
 
+def print_class_contract(named: str | None) -> int:
+    """What one node class may and must declare, read out of its own schema and printed whole.
+
+    It exists because the specification is the artifact a human writes most of by hand, and the
+    only home of what a class admits is a file under the plugin's own `schemas/spec/`. A person
+    with the question had to know that directory exists and open it; every other contract in this
+    framework already answers the same question through its own script. Named with no class, this
+    lists them, because being told a name is wrong without being told the names costs the lookup
+    twice."""
+    if named is None:
+        print("the specification's node classes, and what each is:")
+        for cls, filename in sorted(SCHEMAS.items()):
+            path = SCHEMA_DIR / filename
+            title = "—"
+            if path.is_file():
+                title = json.loads(path.read_text(encoding="utf-8")).get("title", "—")
+            print(f"  {cls:<11} {title}  [{filename}]")
+        print("\nname one to print what it may and must declare, its `$ref`s resolved: "
+              "spec.py --contract <class>")
+        return 0
+    if named not in SCHEMAS:
+        print(f"cannot run: {named} is not a node class; one of "
+              f"{', '.join(sorted(SCHEMAS))}", file=sys.stderr)
+        return CANNOT_RUN
+    path = SCHEMA_DIR / SCHEMAS[named]
+    if not path.is_file():
+        print(f"cannot run: {path} is missing; nothing can be printed without it", file=sys.stderr)
+        return CANNOT_RUN
+    print(json.dumps(whole_contract(json.loads(path.read_text(encoding="utf-8"))),
+                     indent=2, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -1127,6 +1238,14 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
+    if "--contract" in args:
+        at = args.index("--contract")
+        rest = [a for a in args[at + 1:] if not a.startswith("--")]
+        if len(args) != at + 1 + len(rest) or len(rest) > 1 or at != 0:
+            print("cannot run: --contract stands alone, optionally with one class name",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return print_class_contract(rest[0] if rest else None)
     write = "--project" in args
     show_digests = "--digest" in args
     args = [a for a in args if a not in ("--project", "--digest")]

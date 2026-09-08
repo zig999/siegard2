@@ -129,55 +129,20 @@ def contract() -> Draft202012Validator:
 
 
 def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
-    """Every `{"$ref": "#/$defs/X"}` this subtree carries, inlined in place — see deliver.py's
-    twin of this function, which this one is kept identical to on purpose: one contract-slicing
-    rule, applied to two files, is not the same fact restated, it is the same function the
-    import graph does not let this file reach (deliver.py imports plan.py, never the reverse)."""
-    if isinstance(node, dict):
-        if set(node) == {"$ref"} and isinstance(node["$ref"], str) \
-                and node["$ref"].startswith("#/$defs/"):
-            name = node["$ref"][len("#/$defs/"):]
-            if name in seen:
-                return dict(node)
-            target = schema.get("$defs", {}).get(name)
-            if target is None:
-                return dict(node)
-            return resolve_refs(target, schema, seen | {name})
-        return {key: resolve_refs(value, schema, seen) for key, value in node.items()}
-    if isinstance(node, list):
-        return [resolve_refs(item, schema, seen) for item in node]
-    return node
+    """spec.py's, which is the one home of the rule — see its docstring. Delegated rather than
+    copied: this file and deliver.py each held an identical copy until one was corrected and the
+    other was not, and the import graph reaches spec.py from both."""
+    return spec.resolve_refs(node, schema, seen)
 
 
 def contract_branch(schema: dict, branch: str) -> dict | None:
-    """One self-contained slice of a node contract: a `$defs` entry, or every property one `kind`
-    value admits, both with `$ref` resolved. `None` where `branch` names neither."""
-    defs = schema.get("$defs", {})
-    if branch in defs:
-        return resolve_refs(defs[branch], schema)
-    for clause in schema.get("allOf", []):
-        const = clause.get("if", {}).get("properties", {}).get("kind", {}).get("const")
-        if const != branch:
-            continue
-        then = clause.get("then", {})
-        names = then.get("propertyNames", {}).get("enum", [])
-        sliced: dict = {
-            "kind": branch,
-            "required": then.get("required", []),
-            "properties": {name: schema["properties"][name] for name in names
-                           if name in schema.get("properties", {})},
-        }
-        if "examples" in then:
-            sliced["examples"] = then["examples"]
-        return resolve_refs(sliced, schema)
-    return None
+    """spec.py's; see there."""
+    return spec.contract_branch(schema, branch)
 
 
 def contract_branches(schema: dict) -> list[str]:
-    """Every branch name `--contract` answers for this schema, sorted."""
-    kinds = [clause["if"]["properties"]["kind"]["const"] for clause in schema.get("allOf", [])
-             if "const" in clause.get("if", {}).get("properties", {}).get("kind", {})]
-    return sorted(set(schema.get("$defs", {})) | set(kinds))
+    """spec.py's; see there."""
+    return spec.contract_branches(schema)
 
 
 def project_branch(sliced: dict, keep: set[str] | None, drop: set[str] | None) -> dict:
