@@ -186,15 +186,15 @@ nobody acts on stays in the corpus where `--owed` repeats it. `--rank` is where 
 set comes from: the two accretion counts, files by bindings held and nodes by files bound, stated
 as facts — which of them is worth a judge is a person's reading.
 
-A constraint some step of the project's registry `decides` is named apart wherever this script
-hands pairs to a judge or counts them. The registry's `commands[].decides` is the join that keeps
-which command checks a constraint the project's choice and never the node's; a reading that judges
-such a pair re-decides what the step decides, at a model's recall and cost. `--stage` lists those
-pairs in the manifest under `decided_by_step`, `--check` says which `code` findings sit on one,
-`--encodes` marks the binding, and `--rank` counts a file's bindings by whether a reading decides
-them at all — because one judge is spawned per file, and a file pays that judge in full for the
-one binding on it that a reading still has to settle. None of it changes what is judged: the
-pair is still read, and the step's run over the tree is the run of the caller that has one.
+A constraint some step of the project's registry `decides` is answered by running that step, not
+by a reading. The registry's `commands[].decides` is the join that keeps which command checks a
+constraint the project's choice and never the node's; a reading that judged such a pair would
+re-decide what the step decides, at a model's recall and at the price of the whole file's
+delegation, since one judge is spawned per file and reads it whole. So `--stage` hands no judge
+such a pair and lists it in the manifest under `mechanical`, `--check` says which `code` findings
+sit on one, `--encodes` marks the binding, and `--rank` counts a file's bindings by whether a
+reading decides them at all. The omission guard still runs first: a pair that is current and owes
+nothing needs no judge and no run either.
 
 A binding may also be decided by a test, and that is the trace's own join rather than the
 registry's. `--stage --certify <file>` takes the human's certifications — a node, the test file(s)
@@ -217,7 +217,9 @@ digests are untouched by any of this.
 `--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every delegation that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
-stood; a finding naming none holds every node of the file that produced it; a node whose fact no
+stood; a finding naming none holds every node of the file that produced it *that its judge was
+handed* — a node a run decided reached no judge, and what answered it is the step's own outcome
+rather than a reading's silence about which node it meant; a node whose fact no
 named file holds any more binds nothing — and none of those rules asks for judgment, so none of
 them is applied by a context that could misremember one. The caller supplies the one part that is
 not mechanical: a premise file carrying the human's `title`, `summary`, `target` and per-file
@@ -264,6 +266,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path, PurePosixPath
 from typing import NoReturn
@@ -496,8 +499,9 @@ def problems_of(declared: dict) -> list[str]:
     return problems
 
 
-def drift_of(declared: dict,
-             home: Path) -> tuple[list[tuple[str, str, str | None, str]], list[str]]:
+def drift_of(declared: dict, home: Path,
+             declared_steps: set[str] | None = None
+             ) -> tuple[list[tuple[str, str, str | None, str]], list[str]]:
     """Every binding that no longer computes to what was recorded for it, each under the class its
     remedy belongs to — and, separately, whatever stopped the reading before any of that.
 
@@ -555,6 +559,13 @@ def drift_of(declared: dict,
         # what differs is the remedy — a fresh certification of the test as it now stands, never
         # a rebind of the file — so the class is its own.
         if entry.get("decided_by") == DECIDED_BY_TEST:
+            if declared_steps is not None and entry.get("step") not in declared_steps:
+                findings.append((PROOF, node_id, None,
+                                 f"{node_id}: certified as decided by the step "
+                                 f"`{entry.get('step')}`, which the project's registry no longer "
+                                 f"declares; nothing can run it, so the binding is decided by "
+                                 f"reading until a judgment certifies it against a step that "
+                                 f"exists"))
             for proof_entry in entry.get("proof") or []:
                 where = proof_entry["path"]
                 path = home / where
@@ -1430,18 +1441,39 @@ def encodes(target: Path, files: list[str]) -> int:
         return CANNOT_RUN
 
     index: dict[str, list[tuple[str, str]]] = {}
+    # A test the trace pins as some node's proof is a file this form is asked about like any
+    # other, and answering that the trace binds nothing to it is false where the trace names it
+    # by path. It is not a binding — the node is not encoded there — so it is said apart: what a
+    # proof answers for is whether the fact holds, never where it lives.
+    proves: dict[str, list[tuple[str, str]]] = {}
     for entry in declared.get("bindings") or []:
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 index.setdefault(held["path"], []).append((entry.get("node"),
                                                            held.get("digest")))
+        for held in entry.get("proof") or []:
+            if isinstance(held, dict) and isinstance(held.get("path"), str):
+                proves.setdefault(held["path"], []).append((entry.get("node"),
+                                                            held.get("digest")))
     decided = decided_constraints(home, offset_of(target, home))
-    by_test = test_decided(declared, home)
+    by_test = test_decided(declared, home, offset_of(target, home))
+
+    def proof_lines(path: str, now: str) -> list[str]:
+        return [f"  proof of {node} — "
+                f"{'certified over this text' if stored == now else 'the test changed since it was certified'}"
+                for node, stored in sorted(proves.get(path) or [])]
+
     for held in traced:
         path, now = held["path"], held["digest"]
         rows = sorted(index.get(path) or [])
         if not rows:
-            print(f"{path}: the trace binds nothing to this file")
+            if path in proves:
+                print(f"{path}: the trace binds no node to this file, and pins it as the proof "
+                      f"of {len(proves[path])} binding(s)")
+                for line in proof_lines(path, now):
+                    print(line)
+            else:
+                print(f"{path}: the trace binds nothing to this file")
             continue
         print(f"{path}: {len(rows)} binding(s)")
         for node, stored in rows:
@@ -1454,23 +1486,43 @@ def encodes(target: Path, files: list[str]) -> int:
             print(f"  {node} — "
                   f"{'matches' if stored == now else 'stale: the file changed without a rebind'}"
                   f"{beside}")
+        for line in proof_lines(path, now):
+            print(line)
     return 0
 
 
-def test_decided(declared: dict, home: Path) -> dict[str, str]:
-    """Every node the trace binds as decided by a test *and whose proof still computes*, with the
-    step that runs it.
+def registry_steps(home: Path, offset: str) -> set[str] | None:
+    """Every step name this target's registry declares, or nothing where the project declares no
+    registry for it — which is not the same as a registry declaring no step, and is why the
+    absence is `None` rather than an empty set. Nothing is held to a registry nobody named."""
+    registry = registry_of(home, offset)
+    if registry is None:
+        return None
+    return {c["step"] for c in registry.get("commands") or []
+            if isinstance(c, dict) and isinstance(c.get("step"), str)}
 
-    The digests are recomputed rather than taken from the field, because a certification whose
-    test's text moved is exactly what `drift_of` reports under `proof`, and what it says there is
-    that the binding is decided by reading until a judgment certifies the test as it now stands.
-    A reader built on the field alone would be told by one line of a report that the certification
-    lapsed and by another that the step's run answers for the pair — and acting on the second
-    skips the reading the first says is owed."""
+
+def test_decided(declared: dict, home: Path, offset: str | None = None) -> dict[str, str]:
+    """Every node the trace binds as decided by a test *and whose certification still stands*,
+    with the step that runs it.
+
+    Two things are recomputed rather than taken from the fields, because a certification is a
+    claim about the world and the fields are only what it claimed. The proof's digests: a
+    certification whose test's text moved is what `drift_of` reports under `proof`, and what it
+    says there is that the binding is decided by reading until a judgment certifies the test as it
+    now stands — a reader built on the field alone would be told by one line of a report that the
+    certification lapsed and by another that the step's run answers for the pair, and acting on the
+    second skips the reading the first says is owed. And the step: a registry that renamed or
+    dropped it leaves the binding naming a step nothing can run, which `--stage` would then put in
+    a mechanical tier no run could ever answer — a pair with no judge and no runnable step is the
+    one state this route has no exit from."""
+    steps = registry_steps(home, offset) if offset is not None else None
     live = {}
     for entry in declared.get("bindings") or []:
         if not isinstance(entry, dict) or entry.get("decided_by") != DECIDED_BY_TEST \
                 or not isinstance(entry.get("step"), str):
+            continue
+        if steps is not None and entry["step"] not in steps:
             continue
         proof = entry.get("proof") or []
         if all(isinstance(held, dict) and (home / held["path"]).is_file()
@@ -1540,7 +1592,7 @@ def rank(target: Path, show_all: bool = False) -> int:
     # by what a reading decides, with the step-decided remainder beside it, so a reader sees which
     # files a tool already answers for and which still need a judge at all.
     decided = decided_constraints(home, offset)
-    by_test = test_decided(declared, home)
+    by_test = test_decided(declared, home, offset)
     by_reading: dict[str, tuple[int, int, int]] = {}
     for entry in declared.get("bindings") or []:
         for held in entry.get("files") or []:
@@ -1754,7 +1806,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # have moved since the bind — a step or a test decided the fact as the node then stated it,
     # and neither was asked about the sentence that replaced it.
     decided = {} if (audit or review) else decided_constraints(home, offset)
-    by_test = {} if (audit or review) else test_decided(declared, home)
+    by_test = {} if (audit or review) else test_decided(declared, home, offset)
     def decides(node_id: str) -> tuple[str, str] | None:
         if bound_digest.get(node_id) != nodes[node_id]["digest"]:
             return None
@@ -1765,6 +1817,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         return None
 
     owed_pairs = open_owed(home)
+    # A pair the corpus answers both ways is not owed — a clearance closes a finding, which is the
+    # same reading `--owed` reports by — but the omission's reason may not say no record holds a
+    # finding against it, because one does. `--owed` states plainly that which judgment is current
+    # cannot be settled mechanically, and a reason that claimed otherwise would put that sentence
+    # and this one in a committed record together.
+    _found, _cleared, _ = judged(home)
+    both_ways = {pair for pair in _found if pair in _cleared}
     judged_files: dict[str, list[str]] = {}
     all_current: list[str] = []
     unbound: list[str] = []
@@ -1782,17 +1841,27 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             if node_id not in nodes:
                 orphaned.append({"node": node_id, "file": given})
                 continue
+            # An omission borrows an earlier judgment, and a pair has two sides: the file's bytes
+            # and the node's. Comparing only the file's let a node whose text moved be omitted as
+            # "current" — the pair the drift report was calling `moved` at the same moment — so a
+            # reconciliation over it staged no judge, folded a record saying the binding was
+            # current, and bound nothing, forever. Both digests, or the pair is owed a reading.
+            #
             # An audit is the deliberate re-judgment of exactly the pairs this omission
             # skips: a binding that never drifts is a claim nothing else ever re-examines.
             # A review re-reads what a delivery just stamped, which is the same set.
             # A node being certified is read whatever its digest says: the certification rides
             # a fresh reading of the node against the file, and an omission would leave it none.
             if not (audit or review) and pinned == current[stored] \
+                    and bound_digest.get(node_id) == nodes[node_id]["digest"] \
                     and (node_id, stored) not in owed_pairs and node_id not in certify_nodes:
                 omitted.append({"node": node_id, "file": given,
-                                "reason": "the binding computes at the file's content as it "
-                                          "stands, and no record holds an open finding against "
-                                          "the pair"})
+                                "reason": "the binding computes at the file's content and at the "
+                                          "node's text as both stand, and no finding stands open "
+                                          "against the pair"
+                                          + (" — the corpus answers it both ways, and a clearance "
+                                             "closes a finding here as it does in `--owed`"
+                                             if (node_id, stored) in both_ways else "")})
                 held_current = True
                 continue
             # After the omission guard and never before it: a pair nothing has to re-decide needs
@@ -1847,6 +1916,11 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     packs_dir = workspace / "packs"
     packs_dir.mkdir(parents=True, exist_ok=True)
     manifest_files: dict[str, dict] = {}
+    # The node text each pack restated, pinned. A pack header calls this "the digest the
+    # bind will stamp", and the bind reads the node fresh — so a node edited between the
+    # staging and the fold is one every judge read in its old wording while the trace goes
+    # on to assert the new one, and nothing afterwards can tell.
+    staged_nodes: dict[str, str] = {}
     for given, assigned in sorted(judged_files.items()):
         pack = packs_dir / (given.replace("/", "__") + ".md")
         lines = [f"# Node pack for {given} — derived by trace.py --stage from the specification; "
@@ -1866,6 +1940,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         manifest_files[given] = {"nodes": assigned,
                                  "also": read_also,
                                  "pack": str(pack)}
+        staged_nodes.update({node_id: nodes[node_id]["digest"]
+                             for node_id in assigned + read_also})
 
     # One certification pack per node, beside the file packs: the node's text with its source
     # named, the tests offered as its proof already resolved, and the contract the return is held
@@ -1918,6 +1994,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "specification_root": str(spec_root),
                 "files": manifest_files,
                 "digests": {given: current[stored_of[given]] for given in files},
+                "node_digests": staged_nodes,
                 "all_current": sorted(all_current),
                 "unbound": sorted(unbound),
                 "omitted": sorted(omitted, key=lambda e: (e["file"], e["node"])),
@@ -2042,31 +2119,55 @@ def certification_problems(front, node_id: str, proof: list[str]) -> list[str]:
     return problems
 
 
-def run_problems(captured: dict, target: Path, steps: set[str]) -> list[str]:
+def run_problems(captured: dict, target: Path, steps: set[str],
+                 registry: dict | None = None) -> list[str]:
     """Every way one captured run fails to answer for this reconciliation's mechanical tier.
 
     A run is evidence exactly where it ran: the same command in two trees is two runs, so a run
     whose `cwd` is not this target answers about a tree nobody staged. And the tier is answered
     per step rather than by the run's own outcome — a run that stopped at a failed step never
-    attempted the later ones, and a step never attempted decided nothing either way."""
+    attempted the later ones, and a step never attempted decided nothing either way.
+
+    The command is held to the registry's own, because a step name is only worth what the command
+    behind it does. `--step lint="echo nothing"` records a step called `lint` that passed, and
+    without this the fold would read it as the registry's lint deciding a constraint. Compared as
+    argument vectors, the way `bin/run.py` split it, so quoting that changes nothing is nothing."""
     problems = []
     where = captured.get("cwd")
     if not isinstance(where, str) or Path(where).resolve() != target.resolve():
         problems.append(f"the run records cwd {where!r} and this reconciliation is over "
                         f"{target.resolve()}; the same command in two trees is two runs")
-    attempted = {step["name"] for step in captured.get("steps") or []
+    steps_held = captured.get("steps")
+    if steps_held is not None and not isinstance(steps_held, list):
+        return problems + [f"the run's `steps` is a {type(steps_held).__name__}, not a list; "
+                           f"bin/run.py writes one entry per step attempted"]
+    attempted = {step["name"] for step in steps_held or []
                  if isinstance(step, dict) and isinstance(step.get("name"), str)}
     missing = sorted(steps - attempted)
     if missing:
         problems.append(f"the run holds no step named {', '.join(missing)}; the mechanical tier "
                         f"is answered by those steps and a run without one answers nothing for it")
+    wanted = {c["step"]: c.get("command") for c in (registry or {}).get("commands") or []
+              if isinstance(c, dict) and isinstance(c.get("step"), str)}
+    for step in captured.get("steps") or []:
+        if not isinstance(step, dict) or step.get("name") not in steps:
+            continue
+        declared_command = wanted.get(step["name"])
+        if not isinstance(declared_command, str) or not isinstance(step.get("command"), str):
+            continue
+        if shlex.split(step["command"]) != shlex.split(declared_command):
+            problems.append(
+                f"the run's `{step['name']}` step ran {step['command']!r} and the registry "
+                f"declares {declared_command!r} for that step; a step name is worth what the "
+                f"command behind it does, and this run did something else")
     return problems
 
 
 def step_outcomes(captured: dict) -> dict[str, dict]:
     """Each step of a captured run by name, so a pair reads the outcome of the step that decides
     it rather than the run's own — the two differ the moment a run stops at a failure."""
-    return {step["name"]: step for step in captured.get("steps") or []
+    held = captured.get("steps")
+    return {step["name"]: step for step in (held if isinstance(held, list) else [])
             if isinstance(step, dict) and isinstance(step.get("name"), str)}
 
 
@@ -2109,6 +2210,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         return CANNOT_RUN
 
     home = home_of(target)
+    offset = offset_of(target, home)
     problems = [f"premise: `{field}` is missing" for field in
                 ("title", "summary", "target", "files") if field not in premise]
     if "target" in premise and isinstance(premise["target"], str) \
@@ -2142,6 +2244,24 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             print(f"cannot fold: {problem}")
         return 1
 
+    # Every node the packs restated, held to the text they restated. The bind reads each node
+    # fresh, so a node edited between the staging and the fold is one every judge read in its old
+    # wording while the trace goes on to assert the new one — and no later `--check` can tell,
+    # because the bind stamped the new digest itself. This is the specification-side twin of the
+    # guard the run already has over the files, and it applies whether or not a run is involved.
+    spec_root_at = Path(manifest.get("specification_root") or "")
+    shifted = []
+    for node_id, digest in sorted((manifest.get("node_digests") or {}).items()):
+        source = spec_root_at / f"{node_id}.md"
+        if not source.is_file() or spec.digest_of(source) != digest:
+            shifted.append(node_id)
+    if shifted:
+        print(f"cannot fold: {', '.join(shifted)} moved in the specification since the staging "
+              f"restated it, so every judgment folded here read a wording the bind would not "
+              f"stamp; the route is a fresh invocation under a new slug, which reads each node as "
+              f"it now stands")
+        return 1
+
     returns_dir = home / RECONCILE_DIR / f"{manifest['slug']}.returns"
     if not returns_dir.is_dir():
         print(f"cannot fold: {returns_dir} does not exist; --stage is what creates it, and the "
@@ -2155,7 +2275,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     # evidence of the same kind as the returns and outlive the workspace the same way.
     stray = sorted(p.name for p in returns_dir.iterdir()
                    if p.name not in expected and p.name not in certify_expected
-                   and p.name != RUN_DIR)
+                   and not (p.name == RUN_DIR and p.is_dir()))
     if stray:
         print(f"cannot fold: {returns_dir} holds {', '.join(stray)}, which no staged file "
               f"explains; a return nobody staged is an answer to a question nobody asked")
@@ -2219,6 +2339,22 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                   f"capture {', '.join(sorted(steps_named))} with bin/run.py into "
                   f"{returns_dir} and pass --run <its directory>")
             return 1
+        # The run must live under this reconciliation's own returns directory, and that is the
+        # half of the content guard the digests cannot supply. `--stage` refuses a slug whose
+        # returns directory exists and creates it empty, so anything under it postdates the
+        # staging — which closes the interval the digest check leaves open. Without it the digests
+        # bound only [stage, fold], and a run captured before the very edit under reconciliation
+        # would clear the node while its `how` said the step passed over the tree as it stands.
+        try:
+            inside = run_dir.resolve().is_relative_to(returns_dir.resolve())
+        except OSError:
+            inside = False
+        if not inside:
+            print(f"cannot fold: {run_dir} does not sit under {returns_dir}; a run this fold reads "
+                  f"is one this reconciliation captured, and the staging created that directory "
+                  f"empty — a run from anywhere else may predate the very edit being reconciled",
+                  file=sys.stderr)
+            return CANNOT_RUN
         record_json = run_dir / "run.json"
         if not record_json.is_file():
             print(f"cannot fold: {record_json} does not exist; --run names a directory bin/run.py "
@@ -2229,7 +2365,11 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         except (OSError, json.JSONDecodeError) as broken:
             print(f"cannot fold: {record_json} does not parse: {broken}", file=sys.stderr)
             return CANNOT_RUN
-        held = run_problems(captured, target, steps_named)
+        if not isinstance(captured, dict):
+            print(f"cannot fold: {record_json} holds a {type(captured).__name__}, not a run "
+                  f"record; bin/run.py writes a mapping", file=sys.stderr)
+            return CANNOT_RUN
+        held = run_problems(captured, target, steps_named, registry_of(home, offset))
         moved = sorted(given for given, digest in (manifest.get("digests") or {}).items()
                        if not (target / given).is_file()
                        or spec.digest_of(target / given) != digest)
@@ -2249,6 +2389,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     batch_nodes = {node for entry in manifest["files"].values() for node in entry["nodes"]}
     against: dict[str, list[tuple[str, dict]]] = {}
     out_of_scope: list[tuple[str, dict]] = []
+    named_mechanical: list[tuple[str, dict]] = []
     tainted: dict[str, list[dict]] = {}
     unstated: list[dict] = []
     for given, front in returns.items():
@@ -2268,6 +2409,12 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 tainted.setdefault(given, []).append(finding)
             elif node in batch_nodes:
                 against.setdefault(node, []).append((given, finding))
+            elif node in {pair["node"] for pair in tier}:
+                # A judge may name a node a run decided — it read the file, not that node's text,
+                # since a mechanical node reaches no pack. The run is what answers the pair, so
+                # the finding does not land on it; what it must not do is vanish behind a sentence
+                # saying no file here is bound to the node, which is the opposite of true.
+                named_mechanical.append((given, finding))
             else:
                 out_of_scope.append((given, finding))
 
@@ -2307,7 +2454,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         if taint:
             parts += [f"{given} returned a finding naming no node ({finding['where']}: "
                       f"{finding['evidence']} — {finding['cost']}), and an unattributed finding "
-                      f"holds every node of the file its judge read"
+                      f"holds every node of that file its judge was handed"
                       for given in taint for finding in tainted[given]]
             collateral = not found and holders == bound_in
         entry = {"node": node, "conforms": False, "how": "\n".join(parts),
@@ -2416,6 +2563,14 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         notes.append(f"A finding in {given} names {finding['node']}, which no file of this set "
                      f"is bound to: {finding['where']}: {finding['evidence']} — "
                      f"{finding['cost']}. It blocks nothing here; it is owed a route of its own.")
+    for given, finding in named_mechanical:
+        notes.append(f"A finding in {given} names {finding['node']}, which this set is bound to "
+                     f"and a run decided rather than a judge: {finding['where']}: "
+                     f"{finding['evidence']} — {finding['cost']}. The judge that filed it was "
+                     f"handed the file and not that node's text, and the step's own outcome is "
+                     f"what answered the pair — so it does not land on the node. It is owed a "
+                     f"reading of its own, and a reconciliation that names this file without the "
+                     f"node in its mechanical tier is what gives it one.")
     for entry in manifest["orphaned"]:
         notes.append(f"{entry['node']} is bound to {entry['file']} and the specification no "
                      f"longer holds it; no judge was handed it, and --prune is its route.")
@@ -2546,7 +2701,7 @@ def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
 
 
 def omitted_problems(record: Path, declared: dict, home: Path,
-                     offset: Path) -> list[str]:
+                     offset: Path, nodes: dict[str, dict] | None = None) -> list[str]:
     """Every `pairs_omitted` entry whose claim does not hold at this moment. The record's list is
     a declaration; this is the authority, recomputed at bind time, because an omission is a
     judgment borrowed from an earlier bind and the borrowing only stands while both halves do:
@@ -2561,7 +2716,9 @@ def omitted_problems(record: Path, declared: dict, home: Path,
         return []
 
     bound: dict[tuple[str, str], str] = {}
+    node_pin: dict[str, str] = {}
     for entry in declared.get("bindings") or []:
+        node_pin[entry.get("node")] = entry.get("digest")
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 bound[(entry.get("node"), held["path"])] = held.get("digest")
@@ -2585,6 +2742,12 @@ def omitted_problems(record: Path, declared: dict, home: Path,
             problems.append(f"pairs_omitted: {node_id} over {stored} is stale — the file moved "
                             f"since the binding was stamped, so the judgment the omission points "
                             f"at was over different bytes; the pair was owed a judge")
+            continue
+        if nodes is not None and node_pin.get(node_id) != (nodes.get(node_id) or {}).get("digest"):
+            problems.append(f"pairs_omitted: {node_id} over {stored} is stale on the node's own "
+                            f"side — its text moved since the binding was stamped, so the "
+                            f"judgment the omission points at was over a different sentence; the "
+                            f"pair was owed a judge")
             continue
         if (node_id, stored) in owed_pairs:
             problems.append(f"pairs_omitted: {node_id} over {stored} carries an open finding in "
@@ -2628,6 +2791,7 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
 
     home = home_of(target)
     certifications = certified_in(record)
+    declared_steps = registry_steps(home, offset_of(target, home))
     refusals, folded = [], []
     for node_id, files in pairs:
         if node_id not in nodes:
@@ -2643,8 +2807,18 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
         if node_id in certifications:
             proof, absent = traced_files_of(target, home, certifications[node_id]["proof"])
             refusals += [f"{node_id}: proof {problem}" for problem in absent]
-            if not absent:
-                certification = {"step": certifications[node_id]["step"], "proof": proof}
+            # Symmetric with `--stage --certify`, which refuses the same string. A binding naming
+            # a step the registry does not declare names one nothing can run, and every later
+            # form would read it as decided by a run that can never happen.
+            named_step = certifications[node_id]["step"]
+            if declared_steps is not None and named_step not in declared_steps:
+                refusals.append(
+                    f"{node_id}: the record certifies it as decided by the step `{named_step}`, "
+                    f"which {project.PROJECT_FILE}'s registry for this target does not declare"
+                    + (f"; it declares {', '.join(sorted(declared_steps))}" if declared_steps
+                       else " — it declares none"))
+            elif not absent:
+                certification = {"step": named_step, "proof": proof}
         if not missing and (node_id not in certifications or certification is not None):
             folded.append((node_id, traced, certification))
 
@@ -2654,7 +2828,7 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     if declared is not None:
         offset = Path(os.path.relpath(target.resolve(), home.resolve()))
         refusals += unaccounted(record, declared, nodes, offset)
-        refusals += omitted_problems(record, declared, home, offset)
+        refusals += omitted_problems(record, declared, home, offset, nodes)
     if refusals:
         for problem in refusals:
             print(f"cannot bind: {problem}")
@@ -2967,7 +3141,8 @@ def main() -> int:
 
     count = len(declared.get("bindings") or [])
     if not check:
-        by_test = len(test_decided(declared, home_of(target)))
+        by_test = len(test_decided(declared, home_of(target),
+                                   offset_of(target, home_of(target))))
         print(f"trace sound: {count} binding(s)"
               + (f", {by_test} of them decided by a certified test" if by_test else "")
               + f", traced against {declared['specification']}")
@@ -2979,7 +3154,8 @@ def main() -> int:
     # invocation visible — a trace is one file per git toplevel, so a second target under the
     # same toplevel re-reads this exact file and prints this exact report.
     print(f"trace: {path} — one file per git toplevel; every target under it reads this same one")
-    findings, refusals = drift_of(declared, home)
+    findings, refusals = drift_of(declared, home,
+                                  registry_steps(home, offset_of(target, home)))
     if refusals:
         for refusal in refusals:
             print(refusal)
@@ -3013,7 +3189,7 @@ def main() -> int:
         on_step = [f for f in code_listed if f[1] in decided]
         if on_step:
             print(step_decided(on_step, decided))
-        by_test = test_decided(declared, home)
+        by_test = test_decided(declared, home, offset_of(target, home))
         on_test = [f for f in code_listed if f[1] in by_test and f[1] not in decided]
         if on_test:
             print(step_decided(on_test, by_test, "a binding a certified test decides"))

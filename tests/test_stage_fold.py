@@ -905,6 +905,133 @@ def test_a_file_whose_every_pair_a_run_decides_is_neither_judged_nor_unbound(con
     assert entry["encoded_at"] == [third]
 
 
+def test_a_run_from_another_reconciliation_is_refused(consumer):
+    """The digests bound [stage, fold] and say nothing about [run, stage]. The staging creates the
+    returns directory empty and refuses a taken slug, so a run under it necessarily postdates the
+    staging — which is the other half of the guard, and without it a run captured before the very
+    edit being reconciled clears the node while its `how` says otherwise."""
+    staged_mechanical(consumer)
+    valid = captured_run(consumer)
+    elsewhere = consumer / "elsewhere" / "run" / "old"
+    elsewhere.mkdir(parents=True)
+    (elsewhere / "run.json").write_text((valid / "run.json").read_text(encoding="utf-8"),
+                                        encoding="utf-8")
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               consumer / "siegard-reconcile" / "round.md", "--run", elsewhere)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "does not sit under" in done.stderr
+    assert "may predate the very edit being reconciled" in done.stderr
+
+
+def test_a_run_whose_command_is_not_the_registrys_is_refused(consumer):
+    """A step name is worth what the command behind it does. `--step lint="echo nothing"` records
+    a step called lint that passed, and the fold would otherwise read it as the registry's lint."""
+    staged_mechanical(consumer)
+    where = captured_run(consumer)
+    record = json.loads((where / "run.json").read_text(encoding="utf-8"))
+    record["steps"][0]["command"] = "echo I am not the registry lint"
+    (where / "run.json").write_text(json.dumps(record), encoding="utf-8")
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               consumer / "siegard-reconcile" / "round.md", "--run", where)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "the registry declares" in done.stdout and "did something else" in done.stdout
+
+
+def test_a_malformed_run_record_is_refused_by_name_and_never_by_traceback(consumer):
+    staged_mechanical(consumer)
+    where = captured_run(consumer)
+    for shape, expected in (("[1, 2, 3]", "not a run record"),
+                            ('"hello"', "not a run record"),
+                            ('{"cwd": "x", "steps": 5}', "not a list")):
+        (where / "run.json").write_text(shape, encoding="utf-8")
+        done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+                   consumer / "siegard-reconcile" / "round.md", "--run", where)
+        assert done.returncode in (1, 2), done.stdout + done.stderr
+        assert "Traceback" not in done.stderr, f"{shape} crashed instead of refusing"
+        assert expected in done.stdout + done.stderr, f"{shape}: {done.stdout}{done.stderr}"
+
+
+def test_a_plain_file_named_run_is_still_a_stray(consumer):
+    staged_mechanical(consumer)
+    captured_run(consumer)
+    strays = consumer / "siegard-reconcile" / "round.returns"
+    import shutil as _shutil
+    _shutil.rmtree(strays / "run")
+    (strays / "run").write_text("not a directory\n", encoding="utf-8")
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               consumer / "siegard-reconcile" / "round.md")
+    assert done.returncode == 1
+    assert "which no staged file explains" in done.stdout
+
+
+def test_a_node_edited_between_the_staging_and_the_fold_refuses(consumer):
+    """The pack header calls its digest the one the bind will stamp, and the bind reads the node
+    fresh. A node edited in between is one every judge read in its old wording while the trace
+    goes on to assert the new one — and no later `--check` can tell, because the bind stamped it."""
+    done, workspace = staged(consumer)
+    assert done.returncode == 0
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8")
+                         + "\n### A rule invented after the staging\n", encoding="utf-8")
+    folded_done, record = folded(consumer)
+    assert folded_done.returncode == 1, folded_done.stdout + folded_done.stderr
+    assert "moved in the specification since the staging restated it" in folded_done.stdout
+    assert not record.exists()
+
+
+def test_a_pair_whose_node_moved_is_never_omitted_as_current(consumer):
+    """The omission borrows an earlier judgment, and a pair has two sides. Comparing only the
+    file's bytes let a node whose text moved be omitted as current — the same pair `--check` was
+    calling `moved` at that moment — so the reconciliation staged no judge and bound nothing."""
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8")
+                         + "\n### A rule added after the bind\n", encoding="utf-8")
+    drift = run("--check", consumer / "backend")
+    assert "the specification moved since this bind" in drift.stdout
+
+    done, workspace = staged(consumer, files=[SECOND])
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["omitted"] == [], \
+        "--check calls the pair moved; --stage may not call it current in the same breath"
+    assert manifest["files"][SECOND]["nodes"] == [NODE]
+
+
+def test_a_record_omitting_a_pair_whose_node_moved_is_refused_at_bind(consumer):
+    done, workspace = staged(consumer)
+    assert done.returncode == 0
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    folded_done, record = folded(consumer)
+    assert folded_done.returncode == 0, folded_done.stdout + folded_done.stderr
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8")
+                         + "\n### Moved after the fold\n", encoding="utf-8")
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 1, bound.stdout + bound.stderr
+    assert "stale on the node's own side" in bound.stdout
+
+
+def test_an_omission_over_a_pair_the_corpus_answers_both_ways_says_so(consumer):
+    """`--owed` states that which of two judgments is current cannot be settled mechanically. The
+    omission may still take the clearance — that is the same reading `--owed` reports by — but its
+    reason may not claim no record holds a finding against the pair, because one does."""
+    home = consumer / "siegard-reconcile"
+    home.mkdir(exist_ok=True)
+    for slug, conforms, field in (("found", False, "observed_at"), ("cleared", True, "encoded_at")):
+        front = {"contract_version": "siegard-reconcile/4", "title": slug, "summary": "s.",
+                 "target": "backend", "files": [{"path": SECOND, "change": "judged"}],
+                 "nodes": [{"node": NODE, "conforms": conforms, "how": "h", field: [SECOND]}]}
+        (home / f"{slug}.md").write_text(f"---\n{yaml.safe_dump(front, sort_keys=False)}---\n",
+                                         encoding="utf-8")
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = manifest_of(workspace)["omitted"]
+    assert entry["file"] == SECOND
+    assert "the corpus answers it both ways" in entry["reason"]
+    assert "no record holds an open finding" not in entry["reason"]
+
+
 def test_the_certification_contracts_own_examples_pass_the_gate():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/certification-return.json")

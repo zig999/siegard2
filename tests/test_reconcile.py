@@ -250,6 +250,23 @@ def test_a_refusal_over_a_node_that_was_never_certified_prints_no_receipt(consum
     assert "decided by reading from here" not in done.stdout
 
 
+def test_encodes_names_a_file_the_trace_pins_as_a_proof(consumer, write_record):
+    """A test the trace pins as some node's proof is named by path in the trace, so answering that
+    the trace binds nothing to it is false. It is said apart from a binding, because a proof
+    answers whether the fact holds and never where it lives."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    done = run("--encodes", consumer / "backend", PROOF)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "the trace binds nothing to this file" not in done.stdout
+    assert "pins it as the proof of 1 binding(s)" in done.stdout
+    assert f"proof of {NODE} — certified over this text" in done.stdout
+
+    proof_at(consumer, "it('asserts something else', () => {})\n")
+    later = run("--encodes", consumer / "backend", PROOF)
+    assert f"proof of {NODE} — the test changed since it was certified" in later.stdout
+
+
 def test_a_lapsed_certification_is_reported_as_lapsed_by_every_form(consumer, write_record):
     """`--check` says the certification lapsed and that the binding is decided by reading until
     it is certified again. Any other form still calling it live would tell a reader, in the same
@@ -268,6 +285,51 @@ def test_a_lapsed_certification_is_reported_as_lapsed_by_every_form(consumer, wr
     assert "a certified test decides it" not in run("--encodes", consumer / "backend", FILE).stdout
     assert "by a certified test" not in run("--encodes", "--rank", consumer / "backend").stdout
     assert "decided by a certified test" not in run(consumer / "backend").stdout
+
+
+def with_registry(consumer: Path, *steps: str) -> None:
+    """A project file and a registry declaring the named steps, so the step half of a
+    certification has something to be held against."""
+    (consumer / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [], "commands": [{"step": s, "command": f"npm run {s}", "timeout_seconds": 60}
+                                  for s in steps]}), encoding="utf-8")
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "standard": {"backend": "standard.yaml"}}) + "\n", encoding="utf-8")
+
+
+def test_a_certification_naming_a_step_the_registry_does_not_declare_is_refused(consumer,
+                                                                                write_record):
+    """Symmetric with `--stage --certify`, which refuses the same string. A binding naming a step
+    nothing can run would be read by every later form as decided by a run that cannot happen."""
+    proof_at(consumer)
+    with_registry(consumer, "verify")
+    done = run("--bind-record", consumer / "backend", consumer / "specs",
+               write_record(record_of([CERTIFIED])))
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "does not declare" in done.stdout and "verify" in done.stdout
+    assert not (consumer / "siegard-trace.json").exists()
+
+
+def test_a_certification_lapses_when_the_registry_drops_its_step(consumer, write_record):
+    """The step is a frozen string in the trace, and a registry may rename it. Left unchecked the
+    binding reads as decided by a run nothing can perform — and a reconciliation would stage it in
+    a mechanical tier with no runnable step, which is the one state this route has no exit from."""
+    proof_at(consumer)
+    with_registry(consumer, "test")
+    assert run("--bind-record", consumer / "backend", consumer / "specs",
+               write_record(record_of([CERTIFIED]))).returncode == 0
+    assert "1 of them decided by a certified test" in run(consumer / "backend").stdout
+
+    with_registry(consumer, "verify")
+    drift = run("--check", consumer / "backend")
+    assert drift.returncode == 1, drift.stdout + drift.stderr
+    assert "the project's registry no longer declares" in drift.stdout
+    assert "1 proof:" in drift.stdout
+    assert "decided by a certified test" not in run(consumer / "backend").stdout
+    assert "a certified test decides it" not in run("--encodes", consumer / "backend",
+                                                    FILE).stdout
 
 
 def test_check_reports_a_changed_proof_under_its_own_class(consumer, write_record):
