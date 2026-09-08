@@ -80,7 +80,8 @@
                 "file": {
                   "type": "string",
                   "minLength": 1,
-                  "description": "The test file, spelled from the target source root exactly as the certification named it."
+                  "pattern": "^[^/]",
+                  "description": "The test file, spelled from the target source root exactly as the certification named it — never absolute, and never spelled from the repository around the target, the same anchor every path in a reconciliation record uses. The fold refuses a cited test the offered proof does not hold, so a path spelled another way is refused there too; stating the shape here is what keeps the contract from teaching one the record cannot carry."
                 },
                 "name": {
                   "type": "string",

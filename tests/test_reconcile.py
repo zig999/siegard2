@@ -210,6 +210,66 @@ def test_a_rebind_releases_a_certification_whose_proof_changed_and_says_so(consu
     assert "decided_by" not in entry and "proof" not in entry and "step" not in entry
 
 
+def test_a_record_that_refused_the_certification_releases_the_standing_one(consumer, write_record):
+    """The auditor may find, over a test whose text never moved, that it cannot fail. Carrying the
+    certification then would leave the trace deciding by a test a judgment has just refused, while
+    the record's own notes say the node is decided by reading."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs",
+        write_record(record_of([CERTIFIED]), slug="first"))
+    refused = write_record(record_of([dict(CLEARED, decided_by="reading")]), slug="second")
+    done = run("--bind-record", consumer / "backend", consumer / "specs", refused)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"{NODE} is decided by reading from here" in done.stdout
+    entry = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))["bindings"][0]
+    assert "decided_by" not in entry and "proof" not in entry and "step" not in entry
+    assert run("--check", consumer / "backend").returncode == 0, \
+        "releasing a certification is not itself drift"
+
+
+def test_a_record_that_never_asked_carries_the_certification_and_says_nothing(consumer,
+                                                                              write_record):
+    """Absence is not refusal: a reconciliation that did not ask about the test has no business
+    releasing what stands, and a receipt for a release that did not happen is noise."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs",
+        write_record(record_of([CERTIFIED]), slug="first"))
+    done = run("--bind-record", consumer / "backend", consumer / "specs",
+               write_record(record_of([CLEARED]), slug="second"))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "decided by reading from here" not in done.stdout
+    entry = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))["bindings"][0]
+    assert entry["decided_by"] == "test"
+
+
+def test_a_refusal_over_a_node_that_was_never_certified_prints_no_receipt(consumer, write_record):
+    proof_at(consumer)
+    done = run("--bind-record", consumer / "backend", consumer / "specs",
+               write_record(record_of([dict(CLEARED, decided_by="reading")])))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "decided by reading from here" not in done.stdout
+
+
+def test_a_lapsed_certification_is_reported_as_lapsed_by_every_form(consumer, write_record):
+    """`--check` says the certification lapsed and that the binding is decided by reading until
+    it is certified again. Any other form still calling it live would tell a reader, in the same
+    breath, that a run answers for the pair — and acting on that skips the reading."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    proof_at(consumer, "it('asserts something else', () => {})\n")
+    (consumer / "backend" / FILE).write_text("export function place() { return 1 }\n",
+                                             encoding="utf-8")
+
+    drift = run("--check", consumer / "backend")
+    assert "1 proof:" in drift.stdout
+    assert "sit on a binding a certified test decides" not in drift.stdout, \
+        "one report cannot say the certification lapsed and that its step answers for the pair"
+
+    assert "a certified test decides it" not in run("--encodes", consumer / "backend", FILE).stdout
+    assert "by a certified test" not in run("--encodes", "--rank", consumer / "backend").stdout
+    assert "decided by a certified test" not in run(consumer / "backend").stdout
+
+
 def test_check_reports_a_changed_proof_under_its_own_class(consumer, write_record):
     """The proof is pinned the way the files are and moves the same way; what differs is the
     remedy — a fresh certification, never a rebind of the file — so the class is its own, and the

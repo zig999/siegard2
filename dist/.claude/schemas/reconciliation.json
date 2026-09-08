@@ -140,7 +140,22 @@
                 "conforms": {
                   "const": true
                 }
+              }
+            },
+            "$comment": "Either answer to the certification question rides a cleared node. A node the judgment did not clear is bound by nothing here, so what decides it is not this record's to say: the standing binding is left exactly as it stood."
+          },
+          {
+            "if": {
+              "properties": {
+                "decided_by": {
+                  "const": "test"
+                }
               },
+              "required": [
+                "decided_by"
+              ]
+            },
+            "then": {
               "required": [
                 "step",
                 "proof"
@@ -162,7 +177,7 @@
                 ]
               }
             },
-            "$comment": "A certification rides a cleared node and names its test and step, or it is not one. A node the judgment did not clear cannot be certified — a test-decided binding rests on a reading that cleared the node once — and a node that names a test without claiming certification is a shape nobody meant."
+            "$comment": "A certification names its test and its step, or it is not one; every other answer names neither. A node that carries a test without claiming certification is a shape nobody meant."
           }
         ],
         "properties": {
@@ -201,8 +216,11 @@
             }
           },
           "decided_by": {
-            "const": "test",
-            "description": "Present where a judgment certified, in this reconciliation, that the tests under `proof` would fail if this node's fact stopped holding — the whole test of a test, applied by the auditor whose rule it is and never by the caller. `--bind-record` writes the binding as one a test decides; from then on a drift on the node's files is answered by the step's run, and a drift on the tests themselves by a fresh certification. Written from the auditor's return alone, never from a node's type: `policy` and `invariant` say what kind of rule a node is, not whether a test settles it."
+            "enum": [
+              "test",
+              "reading"
+            ],
+            "description": "What this reconciliation found decides the node, present only where it asked. `test`: a judgment certified that the tests under `proof` would fail if the node's fact stopped holding — the whole test of a test, applied by the auditor whose rule it is and never by the caller — and `--bind-record` writes the binding as one a test decides. `reading`: it asked and the auditor refused, so the bind releases any certification standing on the node from an earlier reconciliation; saying it structurally is what keeps the trace from going on deciding by a test a judgment has just found cannot fail, while this record's notes say the node is decided by reading. Absent: this reconciliation did not ask, and a standing certification is none of its business — the bind carries it forward while its proof's text stands. Written from the auditor's return alone, never from a node's type: `policy` and `invariant` say what kind of rule a node is, not whether a test settles it."
           },
           "step": {
             "type": "string",
@@ -213,7 +231,7 @@
             "type": "array",
             "minItems": 1,
             "uniqueItems": true,
-            "description": "The test file(s) certified, as the human named them and as the auditor's return cites them — every test the return names must be one of these. Spelled from the target source root like every path here; not required to be in `files`, because the tests are read to certify and never reconciled by this record.",
+            "description": "The test file(s) the auditor cited as bearing on the fact — never the whole set the human offered, which the auditor may cite in part. A file offered and not cited bears on nothing the certification rests on, and pinning it would let an edit to it lapse a certification no reading of it supported; the fold writes the cited set and `--bind-record` pins exactly that. Spelled from the target source root like every path here; not required to be in `files`, because the tests are read to certify and never reconciled by this record.",
             "items": {
               "$ref": "#/$defs/targetPath"
             }

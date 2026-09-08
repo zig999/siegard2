@@ -650,7 +650,41 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     assert [p["path"] for p in trace_entry["proof"]] == [f"backend/{PROOF}"]
 
 
-def test_fold_writes_no_certification_where_the_auditor_did_not_cover(consumer):
+def test_the_certification_pins_what_the_auditor_cited_not_what_was_offered(consumer):
+    """A human may offer more tests than bear on the fact. Pinning the whole offer would let an
+    edit to a file the auditor never cited lapse a certification no reading of it supported."""
+    registry_deciding(consumer)
+    proof_at(consumer)
+    bystander = consumer / "backend" / "tests/bystander.spec.ts"
+    bystander.write_text("it('bears on nothing here', () => {})\n", encoding="utf-8")
+    ask = certifying(consumer, {"node": NODE, "step": "lint",
+                                "proof": [PROOF, "tests/bystander.spec.ts"]})
+    assert run("--stage", consumer / "backend", consumer / "specs", "round",
+               consumer / "ws-round", FILE, SECOND, "--certify", ask).returncode == 0
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, clean_return([NODE]))
+    save_certification(consumer, "round", NODE, COVERED)
+
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = [e for e in yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+               ["nodes"] if e["node"] == NODE]
+    assert entry["proof"] == [PROOF], "the offered bystander is not what the auditor certified"
+
+    assert run("--bind-record", consumer / "backend", consumer / "specs",
+               record).returncode == 0
+    bystander.write_text("it('renamed, and still bears on nothing', () => {})\n",
+                         encoding="utf-8")
+    check = run("--check", consumer / "backend")
+    assert check.returncode == 0, \
+        f"an edit to a test the auditor never cited lapsed the certification:\n{check.stdout}"
+    assert "no drift" in check.stdout
+
+
+def test_fold_records_a_refused_certification_as_reading_not_as_absence(consumer):
+    """A refusal is said structurally, the way a cleared node's `encoded_at` is. Left as absence
+    it would read exactly like a reconciliation that never asked — and the bind would carry a
+    standing certification past the judgment that just refused it."""
     staged_with_certification(consumer)
     save_certification(consumer, "round", NODE, {"certified": [
         {"node": NODE, "state": "partial", "tests": [{"file": PROOF}],
@@ -659,9 +693,12 @@ def test_fold_writes_no_certification_where_the_auditor_did_not_cover(consumer):
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
-    assert entry["conforms"] is True and "decided_by" not in entry
+    assert entry["conforms"] is True
+    assert entry["decided_by"] == "reading"
+    assert "step" not in entry and "proof" not in entry
     assert f"Certification of {NODE} did not hold: the auditor answered `partial`" in front["notes"]
     assert "refusal half" in front["notes"]
+    assert run("--reconciliation", record).returncode == 0
 
 
 def test_fold_holds_a_certification_off_a_node_the_judgment_refused(consumer):

@@ -33,6 +33,11 @@ Ten things this script does, and nobody else does any of them:
                                                                   pair, keeping the candidate
                                                                   tier, and reading each --node on
                                                                   every file without binding it
+    trace.py --stage ... --certify <file>                         also stage a certification per
+                                                                  node the file names: its pack,
+                                                                  the proof offered and the step
+                                                                  that runs it, omitting no pair
+                                                                  of a node being certified
     trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
                                                                   into the reconciliation record
     trace.py --encodes --rank <target-root> [--all]               the accretion axes: files by
@@ -1080,6 +1085,37 @@ def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
     return pairs, []
 
 
+def released_in(record: Path) -> set[str]:
+    """Every node a reconciliation record says a certification was asked for and did not hold.
+
+    A record answers the certification question three ways, and the third one has to be structural
+    like the other two. `decided_by: test` certifies; absence says the reconciliation never asked,
+    so a standing certification is none of its business and carries forward; `decided_by: reading`
+    says it asked and the auditor refused — and the bind must then release what stands, or the
+    trace goes on deciding by a test a judgment has just found cannot fail while the record's own
+    notes say the node is decided by reading."""
+    front = as_reconciliation(record)
+    if front is None:
+        return set()
+    return {entry["node"] for entry in front.get("nodes") or []
+            if isinstance(entry, dict) and isinstance(entry.get("node"), str)
+            and entry.get("decided_by") == "reading"}
+
+
+def withdrawn_receipt(declared: dict, node_id: str) -> str | None:
+    """The receipt for a certification this bind released because the record refused it. Nothing
+    where the node had none: a record may refuse a certification for a node that was never
+    certified, and a receipt for a release that did not happen is noise."""
+    existing = next((entry for entry in declared.get("bindings") or []
+                     if entry.get("node") == node_id), None)
+    if existing is None or existing.get("decided_by") != DECIDED_BY_TEST:
+        return None
+    return (f"  {node_id} is decided by reading from here: this record asked whether "
+            f"{', '.join(e['path'] for e in existing.get('proof') or [])} still decides it and "
+            f"the judgment answered that it does not, so the standing certification is released "
+            f"rather than carried past the reading that refused it")
+
+
 def certified_in(record: Path) -> dict[str, dict]:
     """Every node a reconciliation record certifies as decided by a test, with the step and the
     proof paths it names — spelled from the target source root, as the record spells everything.
@@ -1399,7 +1435,7 @@ def encodes(target: Path, files: list[str]) -> int:
                 index.setdefault(held["path"], []).append((entry.get("node"),
                                                            held.get("digest")))
     decided = decided_constraints(home, offset_of(target, home))
-    by_test = test_decided(declared)
+    by_test = test_decided(declared, home)
     for held in traced:
         path, now = held["path"], held["digest"]
         rows = sorted(index.get(path) or [])
@@ -1420,11 +1456,26 @@ def encodes(target: Path, files: list[str]) -> int:
     return 0
 
 
-def test_decided(declared: dict) -> dict[str, str]:
-    """Every node the trace binds as decided by a test, with the step that runs its proof."""
-    return {entry["node"]: entry["step"] for entry in declared.get("bindings") or []
-            if isinstance(entry, dict) and entry.get("decided_by") == DECIDED_BY_TEST
-            and isinstance(entry.get("step"), str)}
+def test_decided(declared: dict, home: Path) -> dict[str, str]:
+    """Every node the trace binds as decided by a test *and whose proof still computes*, with the
+    step that runs it.
+
+    The digests are recomputed rather than taken from the field, because a certification whose
+    test's text moved is exactly what `drift_of` reports under `proof`, and what it says there is
+    that the binding is decided by reading until a judgment certifies the test as it now stands.
+    A reader built on the field alone would be told by one line of a report that the certification
+    lapsed and by another that the step's run answers for the pair — and acting on the second
+    skips the reading the first says is owed."""
+    live = {}
+    for entry in declared.get("bindings") or []:
+        if not isinstance(entry, dict) or entry.get("decided_by") != DECIDED_BY_TEST \
+                or not isinstance(entry.get("step"), str):
+            continue
+        proof = entry.get("proof") or []
+        if all(isinstance(held, dict) and (home / held["path"]).is_file()
+               and spec.digest_of(home / held["path"]) == held["digest"] for held in proof):
+            live[entry["node"]] = entry["step"]
+    return live
 
 
 RANK_HELD_BACK = 15
@@ -1488,7 +1539,7 @@ def rank(target: Path, show_all: bool = False) -> int:
     # by what a reading decides, with the step-decided remainder beside it, so a reader sees which
     # files a tool already answers for and which still need a judge at all.
     decided = decided_constraints(home, offset)
-    by_test = test_decided(declared)
+    by_test = test_decided(declared, home)
     by_reading: dict[str, tuple[int, int, int]] = {}
     for entry in declared.get("bindings") or []:
         for held in entry.get("files") or []:
@@ -1831,7 +1882,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                            key=lambda e: (e["file"], e["node"]))
     # The same list for the bindings a certified test decides: read here like any other pair,
     # named so a caller that runs the step knows which pairs the run answers.
-    by_test = test_decided(declared)
+    by_test = test_decided(declared, home)
     test_pairs = sorted(({"node": node_id, "file": given, "step": by_test[node_id]}
                          for given, assigned in judged_files.items()
                          for node_id in assigned if node_id in by_test),
@@ -2182,9 +2233,14 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 f"file; nothing here carries it.")
             continue
         if answer["state"] != "covered":
+            # Said structurally as well as in prose: `--bind-record` releases a standing
+            # certification on this node, which the note below would otherwise only claim.
+            if entry["conforms"]:
+                entry["decided_by"] = "reading"
             certification_notes.append(
                 f"Certification of {node_id} did not hold: the auditor answered `{answer['state']}` "
-                f"— {answer.get('why', '')}. The node stays decided by reading.")
+                f"— {answer.get('why', '')}. The node is decided by reading, and a certification "
+                f"standing on it from an earlier reconciliation is released by the bind.")
             continue
         if not entry["conforms"]:
             certification_notes.append(
@@ -2194,7 +2250,10 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             continue
         entry["decided_by"] = DECIDED_BY_TEST
         entry["step"] = ask["step"]
-        entry["proof"] = sorted(ask["proof"])
+        # What is pinned is what the auditor cited, never the whole set the human offered. A file
+        # offered and not cited bears on nothing the certification rests on, and pinning it would
+        # make an edit to it lapse a certification no reading of it supported.
+        entry["proof"] = sorted({test["file"] for test in answer["tests"]})
         certification_notes.append(
             f"Certified {node_id} as decided by step `{ask['step']}`: "
             + "; ".join(f"{t['file']}" + (f" ({t['name']})" if t.get("name") else "")
@@ -2468,14 +2527,21 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
               f"so a trace holding some of them would say this delivery is linked when it is not.")
         return 1
 
+    withdrawn = released_in(record)
     held = []
     for node_id, traced, certification in folded:
         let_go = None
-        if certification is None:
-            certification, let_go = carried_certification(declared, node_id, home)
+        if certification is not None:
+            fresh = True
+        elif node_id in withdrawn:
+            # This record asked whether the test still decides the node and the auditor said it
+            # does not. Carrying the standing certification would leave the trace deciding by a
+            # test a judgment has just refused, and the record's own notes saying otherwise.
+            let_go = withdrawn_receipt(declared, node_id)
             fresh = False
         else:
-            fresh = True
+            certification, let_go = carried_certification(declared, node_id, home)
+            fresh = False
         count, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace,
                               certification)
         held.append((node_id, count, dropped, certification if fresh else None, let_go))
@@ -2749,7 +2815,7 @@ def main() -> int:
 
     count = len(declared.get("bindings") or [])
     if not check:
-        by_test = len(test_decided(declared))
+        by_test = len(test_decided(declared, home_of(target)))
         print(f"trace sound: {count} binding(s)"
               + (f", {by_test} of them decided by a certified test" if by_test else "")
               + f", traced against {declared['specification']}")
@@ -2795,7 +2861,7 @@ def main() -> int:
         on_step = [f for f in code_listed if f[1] in decided]
         if on_step:
             print(step_decided(on_step, decided))
-        by_test = test_decided(declared)
+        by_test = test_decided(declared, home)
         on_test = [f for f in code_listed if f[1] in by_test and f[1] not in decided]
         if on_test:
             print(step_decided(on_test, by_test, "a binding a certified test decides"))
