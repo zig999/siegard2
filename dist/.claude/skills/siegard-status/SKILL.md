@@ -106,11 +106,15 @@ this invocation — it is the status, reported verbatim.
    records it points at — those are the findings no other command in this framework will mention
    again.
    Last for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes --rank
-   <target-source-root>` — the trace's two accretion counts: files by bindings held, nodes by
-   files bound. Quote the top rows verbatim, as facts and never as a grade: a binding over-broad
+   <target-source-root>` — the trace's accretion counts: files by bindings held, nodes by files
+   bound, and files by the bindings a reading decides, with the step-decided remainder beside
+   each. Quote the top rows verbatim, as facts and never as a grade: a binding over-broad
    from the day it was written never drifts, so no drift report re-examines it, and these counts
-   are its one symptom. Which count deserves re-examining is the reader's call; the route, when
-   they make it, is `/reconcile` invoked as an audit over a file set they name.
+   are its one symptom. The third count is what a reconciliation's cost turns on — one judge per
+   file, reading every binding on it for the first one a reading still decides — so a file high
+   on the first count and low on the third is one a registry step already answers for. Which
+   count deserves re-examining is the reader's call; the route, when they make it, is
+   `/reconcile` invoked as an audit over a file set they name.
 4. **The repository.** `git log --oneline -15` over the project root, and `git status
    --porcelain` — what landed recently, and what stands uncommitted. An uncommitted change is
    not judged here: say whose diff it appears to be (paths under which root) and leave the

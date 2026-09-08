@@ -182,6 +182,14 @@ Four states the staging separates, and they do not all continue:
   such a node and names each one; do not bind around it, and do not prune it from here — this
   invocation's writes are its own record and its own bindings.
 
+**A pair on a constraint the registry's step decides is named apart, and still judged.** The
+manifest lists those pairs under `decided_by_step`, each with the step, and the staging prints
+them. The judge reads them like any other pair — the record has to account for every pair a named
+file carries, and nothing in this invocation runs the step — so what the list buys is knowledge,
+not omission: a reader of the report knows which readings a tool already makes over the tree, and
+`--check`'s receipt says the same over drift. Carry the list into the report as the staging
+printed it.
+
 **A node written since the bind is in none of that.** The trace is what this step reads, and a node
 no delivery ever encoded has no entry in it — which is the ordinary state of every node `/analyse`
 wrote after the source it governs was written, and that alternation is the rhythm this framework

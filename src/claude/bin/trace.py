@@ -178,6 +178,16 @@ nobody acts on stays in the corpus where `--owed` repeats it. `--rank` is where 
 set comes from: the two accretion counts, files by bindings held and nodes by files bound, stated
 as facts — which of them is worth a judge is a person's reading.
 
+A constraint some step of the project's registry `decides` is named apart wherever this script
+hands pairs to a judge or counts them. The registry's `commands[].decides` is the join that keeps
+which command checks a constraint the project's choice and never the node's; a reading that judges
+such a pair re-decides what the step decides, at a model's recall and cost. `--stage` lists those
+pairs in the manifest under `decided_by_step`, `--check` says which `code` findings sit on one,
+`--encodes` marks the binding, and `--rank` counts a file's bindings by whether a reading decides
+them at all — because one judge is spawned per file, and a file pays that judge in full for the
+one binding on it that a reading still has to settle. None of it changes what is judged: the
+pair is still read, and the step's run over the tree is the run of the caller that has one.
+
 `--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every delegation that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
@@ -334,6 +344,63 @@ def target_roots(home: Path) -> dict[str, str]:
     return {key: PurePosixPath(where).as_posix().rstrip("/")
             for key, where in targets.items()
             if isinstance(key, str) and isinstance(where, str) and where}
+
+
+def registry_of(home: Path, offset: str) -> dict | None:
+    """The standard the project declares for the target whose source root is `offset`, read as
+    YAML and nothing more. `deliver.py --standard` is what holds a registry to its contract, and a
+    report is the wrong place to learn it is broken — so a registry that does not parse, or a
+    project that declares none for this target, reads as no registry at all. The path is relative
+    to the project file's own directory, the way `siegard.json` spells it."""
+    declared_at = home / project.PROJECT_FILE
+    if not declared_at.is_file():
+        return None
+    try:
+        declared = json.loads(declared_at.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(declared, dict):
+        return None
+    roots = target_roots(home)
+    keys = [key for key, where in roots.items() if where == offset]
+    standard = declared.get("standard")
+    if isinstance(standard, dict):
+        named = next((standard[key] for key in keys if isinstance(standard.get(key), str)), None)
+    elif isinstance(standard, str) and len(roots) <= 1:
+        named = standard
+    else:
+        named = None
+    if not named:
+        return None
+    try:
+        loaded = yaml.safe_load((home / named).read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return None
+    return loaded if isinstance(loaded, dict) else None
+
+
+def decided_constraints(home: Path, offset: str) -> dict[str, str]:
+    """Every constraint a step of this target's registry `decides`, with the step that does.
+
+    This is the join `standard.json` holds so that which command checks a constraint stays the
+    project's choice and never the node's. A binding on one of these is a pair a reading would
+    re-decide at a model's recall, when the step already decides it over the tree — so every form
+    here that hands pairs to a judge or lists them names these apart, and a caller that runs the
+    step knows which pairs its run answers."""
+    registry = registry_of(home, offset)
+    decided: dict[str, str] = {}
+    for command in (registry or {}).get("commands") or []:
+        if not isinstance(command, dict) or not isinstance(command.get("step"), str):
+            continue
+        for identity in command.get("decides") or []:
+            if isinstance(identity, str):
+                decided[identity] = command["step"]
+    return decided
+
+
+def offset_of(target: Path, home: Path) -> str:
+    """The target source root spelled from the trace's own directory — `.` where the two are one."""
+    return Path(os.path.relpath(target.resolve(), home.resolve())).as_posix()
 
 
 def under(path: str, prefixes: list[str]) -> bool:
@@ -637,6 +704,18 @@ def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]
             f"{', '.join(prefixes)} — declared freely edited in {project.PROJECT_FILE}. "
             f"`--all` lists them, and that list is what /check-source reads to hold those files "
             f"to the rules a reading decides")
+
+
+def step_decided(findings: list[tuple[str, str, str | None, str]], decided: dict[str, str]) -> str:
+    """The receipt for `code` findings that sit on a constraint a registry step decides. A
+    statement, never a second class: the drift is real and the pair is still read — what this
+    adds is that the reading re-decides what the step decides, so a reader weighing the list
+    knows which lines a run of the step answers."""
+    lines = [f"  {len(findings)} of the `code` finding(s) sit on a constraint a registry step "
+             f"decides; the step's run over the tree is what decides each:"]
+    lines += [f"    {node} over {where} (step `{decided[node]}`)"
+              for _, node, where, _ in sorted(findings, key=lambda f: (f[2] or "", f[1]))]
+    return "\n".join(lines)
 
 
 def left_stale(stale: list[tuple[str, str, str]]) -> str:
@@ -1198,6 +1277,7 @@ def encodes(target: Path, files: list[str]) -> int:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 index.setdefault(held["path"], []).append((entry.get("node"),
                                                            held.get("digest")))
+    decided = decided_constraints(home, offset_of(target, home))
     for held in traced:
         path, now = held["path"], held["digest"]
         rows = sorted(index.get(path) or [])
@@ -1206,8 +1286,10 @@ def encodes(target: Path, files: list[str]) -> int:
             continue
         print(f"{path}: {len(rows)} binding(s)")
         for node, stored in rows:
+            by_step = f"; a registry step decides it (`{decided[node]}`)" if node in decided else ""
             print(f"  {node} — "
-                  f"{'matches' if stored == now else 'stale: the file changed without a rebind'}")
+                  f"{'matches' if stored == now else 'stale: the file changed without a rebind'}"
+                  f"{by_step}")
     return 0
 
 
@@ -1265,6 +1347,33 @@ def rank(target: Path, show_all: bool = False) -> int:
             print(f"  {count:3d}  {name}")
         if len(rows) > len(shown):
             print(f"  ({len(rows) - len(shown)} more; --all lists every one)")
+
+    # The third axis is the one a reconciliation's cost turns on. A judge is spawned per file and
+    # reads every binding on it, so a file pays that judge in full for the one binding a reading
+    # still decides — however many of its siblings a registry step already settles. Counted here
+    # by what a reading decides, with the step-decided remainder beside it, so a reader sees which
+    # files a tool already answers for and which still need a judge at all.
+    decided = decided_constraints(home, offset)
+    by_reading: dict[str, tuple[int, int]] = {}
+    for entry in declared.get("bindings") or []:
+        for held in entry.get("files") or []:
+            path = held.get("path") if isinstance(held, dict) else None
+            if not isinstance(path, str) or not under(path, [offset]):
+                continue
+            reading, step = by_reading.get(path, (0, 0))
+            if entry["node"] in decided:
+                by_reading[path] = (reading, step + 1)
+            else:
+                by_reading[path] = (reading + 1, step)
+    rows = sorted(by_reading.items(), key=lambda row: (-row[1][0], row[0]))
+    shown = rows if show_all else rows[:RANK_HELD_BACK]
+    print(f"\nfiles by bindings a reading decides (a judge reads the whole file for the first of "
+          f"them):")
+    for name, (reading, step) in shown:
+        beside = f"  ({step} decided by a registry step)" if step else ""
+        print(f"  {reading:3d}  {name}{beside}")
+    if len(rows) > len(shown):
+        print(f"  ({len(rows) - len(shown)} more; --all lists every one)")
     return 0
 
 
@@ -1473,6 +1582,16 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                          f"{', '.join(sorted(candidates[node_id]))}")
         (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    # Named, never omitted: a pair on a constraint the registry's step decides is still handed to
+    # its file's judge, because the record has to account for the pair and nothing here runs the
+    # step. What the tier buys is the list — a caller that does run the step knows which pairs
+    # that run answers, and a reader of the report knows which readings a tool already made.
+    decided = decided_constraints(home, offset)
+    decided_pairs = sorted(({"node": node_id, "file": given, "step": decided[node_id]}
+                            for given, assigned in judged_files.items()
+                            for node_id in assigned if node_id in decided),
+                           key=lambda e: (e["file"], e["node"]))
+
     manifest = {"slug": slug,
                 "audit": audit,
                 "review": review,
@@ -1483,6 +1602,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "unbound": sorted(unbound),
                 "omitted": sorted(omitted, key=lambda e: (e["file"], e["node"])),
                 "orphaned": sorted(orphaned, key=lambda e: (e["file"], e["node"])),
+                "decided_by_step": decided_pairs,
                 "candidates": {n: sorted(fs) for n, fs in sorted(candidates.items())}}
     (workspace / MANIFEST_FILE).write_text(json.dumps(manifest, indent=2) + "\n",
                                            encoding="utf-8")
@@ -1514,6 +1634,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
               f"no judge is handed those, no bind repairs them, and --prune is their route:")
         for entry in orphaned:
             print(f"    {entry['node']} — bound to {entry['file']}")
+    if decided_pairs:
+        steps = ", ".join(f"`{s}`" for s in sorted({e["step"] for e in decided_pairs}))
+        print(f"  {len(decided_pairs)} pair(s) sit on a constraint a registry step decides ({steps}); "
+              f"each is read here like any other pair, and the step's run over the tree is what "
+              f"decides it — the manifest names them under `decided_by_step`:")
+        for entry in decided_pairs:
+            print(f"    {entry['node']} — bound to {entry['file']} (step `{entry['step']}`)")
     return 0
 
 
@@ -2275,6 +2402,10 @@ def main() -> int:
         code_listed = [f for f in listed if f[0] == CODE]
         for line in code_report(code_listed):
             print(line)
+        decided = decided_constraints(home, offset_of(target, home))
+        on_step = [f for f in code_listed if f[1] in decided]
+        if on_step:
+            print(step_decided(on_step, decided))
         print(f"\n{len(listed)} drift finding(s) over {count} binding(s):")
         for cls in (ORPHANED, MOVED, CODE):
             # The suppressed count rides its own class's line rather than sitting under the tally:

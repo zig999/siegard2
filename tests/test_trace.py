@@ -280,6 +280,70 @@ def test_check_reports_a_specification_node_that_moved(consumer):
     assert "the specification moved since this bind" in done.stdout
 
 
+CONSTRAINT = "constraints/asynchronous-events"
+
+
+def registry_deciding(consumer: Path, *constraints: str) -> None:
+    """A project file naming a registry whose `lint` step decides the named constraints."""
+    (consumer / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [], "commands": [{"step": "lint", "command": "npm run lint",
+                                   "timeout_seconds": 60, "decides": list(constraints)}]}),
+        encoding="utf-8")
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "standard": {"backend": "standard.yaml"}}) + "\n", encoding="utf-8")
+
+
+def test_check_names_the_code_findings_that_sit_on_a_constraint_a_step_decides(consumer):
+    """The drift is real and stays in the `code` class — the digest is stale. What the receipt
+    adds is which of those lines a reading would only re-decide: the registry's step already
+    decides the constraint over the tree, so a reader weighing the list knows which findings a
+    run of that step answers."""
+    bind(consumer)
+    bind(consumer, node=CONSTRAINT)
+    registry_deciding(consumer, CONSTRAINT)
+    (consumer / "backend/src/orders/place.ts").write_text("export function place() { return 1 }\n",
+                                                          encoding="utf-8")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "2 code over 1 file(s)" in done.stdout
+    assert "1 of the `code` finding(s) sit on a constraint a registry step decides" in done.stdout
+    assert f"{CONSTRAINT} over backend/src/orders/place.ts (step `lint`)" in done.stdout
+
+
+def test_check_carries_no_such_receipt_where_no_step_decides_the_drifted_constraint(consumer):
+    bind(consumer, node=CONSTRAINT)
+    (consumer / "backend/src/orders/place.ts").write_text("export function place() { return 1 }\n",
+                                                          encoding="utf-8")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "registry step decides" not in done.stdout
+
+
+def test_encodes_marks_the_binding_a_registry_step_decides(consumer):
+    bind(consumer)
+    bind(consumer, node=CONSTRAINT)
+    registry_deciding(consumer, CONSTRAINT)
+    done = run("--encodes", consumer / "backend", FILE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"{CONSTRAINT} — matches; a registry step decides it (`lint`)" in done.stdout
+    assert f"{NODE} — matches\n" in done.stdout
+
+
+def test_rank_counts_a_files_bindings_by_whether_a_reading_decides_them(consumer):
+    """One judge is spawned per file and reads every binding on it, so the number a
+    reconciliation's cost turns on is how many of a file's bindings a reading still decides —
+    with the step-decided remainder beside it, never subtracted silently."""
+    bind(consumer)
+    bind(consumer, node=CONSTRAINT)
+    registry_deciding(consumer, CONSTRAINT)
+    done = run("--encodes", "--rank", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "files by bindings a reading decides" in done.stdout
+    assert "  1  backend/src/orders/place.ts  (1 decided by a registry step)" in done.stdout
+
+
 def test_check_reports_a_file_that_moved_without_a_rebind(consumer):
     bind(consumer)
     path = consumer / "backend" / FILE

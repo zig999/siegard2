@@ -495,6 +495,48 @@ def test_a_premise_naming_a_target_the_project_file_does_not_declare_cannot_fold
     assert not record.is_file()
 
 
+CONSTRAINT = "constraints/asynchronous-events"
+
+
+def registry_deciding(consumer: Path, *constraints: str) -> None:
+    """A registry whose `lint` step decides the named constraints, declared for the backend
+    target. Read by trace.py defensively — deliver.py is what holds it to its contract."""
+    (consumer / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [], "commands": [{"step": "lint", "command": "npm run lint",
+                                   "timeout_seconds": 60, "decides": list(constraints)}]}),
+        encoding="utf-8")
+    declared = json.loads((consumer / "siegard.json").read_text(encoding="utf-8"))
+    declared["standard"] = {"backend": "standard.yaml"}
+    (consumer / "siegard.json").write_text(json.dumps(declared) + "\n", encoding="utf-8")
+
+
+def test_stage_names_the_pairs_a_registry_step_decides_and_still_judges_them(consumer):
+    """A constraint the registry's step decides is a pair a reading would re-decide at a model's
+    recall. The staging names it apart so a caller that runs the step knows which pairs the run
+    answers — and still hands it to the judge, because the record must account for the pair and
+    nothing here runs the step."""
+    target = consumer / "backend"
+    assert run("--bind", target, consumer / "specs", CONSTRAINT, FILE).returncode == 0
+    with (target / FILE).open("a", encoding="utf-8") as drifted:
+        drifted.write("// more drift\n")
+    registry_deciding(consumer, CONSTRAINT)
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["decided_by_step"] == [{"node": CONSTRAINT, "file": FILE, "step": "lint"}]
+    assert CONSTRAINT in manifest["files"][FILE]["nodes"]
+    assert "a registry step decides" in done.stdout
+    assert f"{CONSTRAINT} — bound to {FILE} (step `lint`)" in done.stdout
+
+
+def test_stage_names_no_step_decided_pair_where_the_project_declares_no_registry(consumer):
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert manifest_of(workspace)["decided_by_step"] == []
+    assert "registry step decides" not in done.stdout
+
+
 def test_the_return_contracts_own_examples_pass_the_gate_that_will_judge_real_returns():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/conformance-return.json")
