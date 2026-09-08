@@ -415,8 +415,15 @@ def registry_of(home: Path, offset: str) -> dict | None:
     return loaded if isinstance(loaded, dict) else None
 
 
-def decided_constraints(home: Path, offset: str) -> dict[str, str]:
-    """Every constraint a step of this target's registry `decides`, with the step that does.
+def decided_constraints(home: Path, offset: str) -> dict[str, list[str]]:
+    """Every constraint a step of this target's registry `decides`, with every step that does.
+
+    Several steps may decide one constraint, and a registry writing it that way is saying each
+    decides a part: a lint that finds no forbidden import decides half of "the domain reaches
+    infrastructure only through ports", and the test that finds no second implementer decides the
+    other. So they come back as a list and every one of them has to pass — keyed by name alone,
+    one would silently win by its position in the file and the evidence the other named would
+    never be run.
 
     This is the join `standard.json` holds so that which command checks a constraint stays the
     project's choice and never the node's. A binding on one of these is a pair a reading would
@@ -424,13 +431,13 @@ def decided_constraints(home: Path, offset: str) -> dict[str, str]:
     here that hands pairs to a judge or lists them names these apart, and a caller that runs the
     step knows which pairs its run answers."""
     registry = registry_of(home, offset)
-    decided: dict[str, str] = {}
+    decided: dict[str, list[str]] = {}
     for command in (registry or {}).get("commands") or []:
         if not isinstance(command, dict) or not isinstance(command.get("step"), str):
             continue
         for identity in command.get("decides") or []:
-            if isinstance(identity, str):
-                decided[identity] = command["step"]
+            if isinstance(identity, str) and command["step"] not in decided.setdefault(identity, []):
+                decided[identity].append(command["step"])
     return decided
 
 
@@ -811,6 +818,12 @@ def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]
             f"to the rules a reading decides")
 
 
+def as_list(value) -> list[str]:
+    """One step name or several, always as a list. `--check`'s receipt serves both a certification,
+    which names the one step that runs its proof, and a constraint, which may name several."""
+    return [value] if isinstance(value, str) else list(value)
+
+
 def step_decided(findings: list[tuple[str, str, str | None, str]], decided: dict[str, str],
                  what: str = "a constraint a registry step decides") -> str:
     """The receipt for `code` findings that sit on a binding a run decides — a constraint the
@@ -820,7 +833,9 @@ def step_decided(findings: list[tuple[str, str, str | None, str]], decided: dict
     of the step answers."""
     lines = [f"  {len(findings)} of the `code` finding(s) sit on {what}; the step's run over the "
              f"tree is what decides each:"]
-    lines += [f"    {node} over {where} (step `{decided[node]}`)"
+    lines += [f"    {node} over {where} "
+              f"({'steps' if len(as_list(decided[node])) > 1 else 'step'} "
+              f"{', '.join(f'`{s}`' for s in as_list(decided[node]))})"
               for _, node, where, _ in sorted(findings, key=lambda f: (f[2] or "", f[1]))]
     return "\n".join(lines)
 
@@ -1480,7 +1495,8 @@ def encodes(target: Path, files: list[str]) -> int:
             if node in by_test:
                 beside = f"; a certified test decides it (step `{by_test[node]}`)"
             elif node in decided:
-                beside = f"; a registry step decides it (`{decided[node]}`)"
+                beside = (f"; a registry step decides it "
+                          f"({', '.join(f'`{s}`' for s in decided[node])})")
             else:
                 beside = ""
             print(f"  {node} — "
@@ -1807,13 +1823,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # and neither was asked about the sentence that replaced it.
     decided = {} if (audit or review) else decided_constraints(home, offset)
     by_test = {} if (audit or review) else test_decided(declared, home, offset)
-    def decides(node_id: str) -> tuple[str, str] | None:
+    def decides(node_id: str) -> tuple[str, list[str]] | None:
         if bound_digest.get(node_id) != nodes[node_id]["digest"]:
             return None
         if node_id in by_test:
-            return DECIDED_BY_TEST, by_test[node_id]
+            return DECIDED_BY_TEST, [by_test[node_id]]
         if node_id in decided:
-            return "step", decided[node_id]
+            return "step", list(decided[node_id])
         return None
 
     owed_pairs = open_owed(home)
@@ -1869,8 +1885,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # answer a question the last bind already answered over these exact bytes.
             run_decides = decides(node_id)
             if run_decides is not None and node_id not in certify_nodes:
-                kind, step_name = run_decides
-                mechanical.append({"node": node_id, "file": given, "step": step_name,
+                kind, step_names = run_decides
+                mechanical.append({"node": node_id, "file": given, "steps": step_names,
                                    "decided_by": kind})
                 held_mechanical = True
                 continue
@@ -2036,7 +2052,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         for entry in orphaned:
             print(f"    {entry['node']} — bound to {entry['file']}")
     if mechanical:
-        steps = sorted({entry["step"] for entry in mechanical})
+        steps = sorted({s for entry in mechanical for s in entry["steps"]})
         print(f"  {len(mechanical)} pair(s) are decided by a run, not by a judge — no judge is "
               f"handed one, and the fold answers each from the run you capture. Run "
               f"{', '.join(f'`{s}`' for s in steps)} into "
@@ -2044,8 +2060,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         for entry in mechanical:
             what = ("a certified test decides it" if entry["decided_by"] == DECIDED_BY_TEST
                     else "a registry step decides the constraint")
-            print(f"    {entry['node']} — bound to {entry['file']}: {what} (step "
-                  f"`{entry['step']}`)")
+            print(f"    {entry['node']} — bound to {entry['file']}: {what} "
+                  f"({'steps' if len(entry['steps']) > 1 else 'step'} "
+                  f"{', '.join(f'`{s}`' for s in entry['steps'])}"
+                  + (", and every one of them has to pass)" if len(entry['steps']) > 1 else ")"))
         print(f"    python3 -B {Path(__file__).resolve().parent / 'run.py'} {returns_dir} "
               f"--run {slug} --cwd {target.resolve()} --timeout-seconds <the registry's bound> "
               + " ".join(f'--step {s}="<the registry\'s command>"' for s in steps))
@@ -2331,7 +2349,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     # most — a run proved the tree as it stood, and binding what stands now on the strength of it
     # would stamp a claim over bytes the run never saw.
     tier = manifest.get("mechanical") or []
-    steps_named = {entry["step"] for entry in tier}
+    steps_named = {s for entry in tier for s in entry.get("steps") or []}
     captured: dict | None = None
     if tier:
         if run_dir is None:
@@ -2473,25 +2491,34 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     for pair in tier:
         by_run.setdefault(pair["node"], []).append(pair)
     for node, pairs in sorted(by_run.items()):
-        step_name = pairs[0]["step"]
-        outcome = outcomes.get(step_name, {})
+        # Every step the registry named for this node, and every one of them has to have passed:
+        # a registry naming two is saying each decides a part, so one green beside one red leaves
+        # the constraint half answered, which is not answered.
+        step_names = list(dict.fromkeys(s for pair in pairs for s in pair.get("steps") or []))
         what = ("a certified test decides this node" if pairs[0]["decided_by"] == DECIDED_BY_TEST
                 else "a registry step decides this constraint")
         where = sorted(pair["file"] for pair in pairs)
-        if outcome.get("outcome") == "passed":
+        ran = [(name, outcomes.get(name, {})) for name in step_names]
+        short = [(name, o) for name, o in ran if o.get("outcome") != "passed"]
+        said = ", ".join(f"`{name}` {o.get('outcome')}"
+                         + (f" (exit {o.get('exit_code')})" if o.get("exit_code") is not None
+                            else "")
+                         + f" over {o.get('command')}" for name, o in ran)
+        if not short:
             entries.append({
                 "node": node, "conforms": True,
-                "how": f"{what}, and the `{step_name}` step of {run_named} passed over the tree "
-                       f"as these files stand: {outcome.get('command')} — no judge read this "
-                       f"pair, and the run is the whole of what answered it",
+                "how": f"{what}, and every step the registry named for it passed over the tree as "
+                       f"these files stand — {run_named}: {said}. No judge read this pair, and "
+                       f"the run is the whole of what answered it",
                 "encoded_at": where})
         else:
             entries.append({
                 "node": node, "conforms": False,
-                "how": f"{what}, and the `{step_name}` step of {run_named} did not pass: "
-                       f"{outcome.get('outcome')} (exit {outcome.get('exit_code')}) over "
-                       f"{outcome.get('command')} — the run is the answer, and what the step "
-                       f"printed is in the run's own log",
+                "how": f"{what}, and {'a step' if len(short) == 1 else 'steps'} the registry "
+                       f"named for it did not pass — {run_named}: {said}. The run is the answer, "
+                       f"and what each step printed is in the run's own log"
+                       + ("; the constraint is answered only where every step the registry named "
+                          "for it passes" if len(step_names) > 1 else ""),
                 "observed_at": where})
 
     # A certification lands on a node only where the auditor answered `covered` and the node's own

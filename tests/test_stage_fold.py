@@ -523,7 +523,7 @@ def test_stage_hands_no_judge_a_pair_a_registry_step_decides(consumer):
     done, workspace = staged(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     manifest = manifest_of(workspace)
-    assert manifest["mechanical"] == [{"node": CONSTRAINT, "file": FILE, "step": "lint",
+    assert manifest["mechanical"] == [{"node": CONSTRAINT, "file": FILE, "steps": ["lint"],
                                        "decided_by": "step"}]
     assert CONSTRAINT not in manifest["files"][FILE]["nodes"], \
         "a pair a run decides is not also read by a judge"
@@ -811,8 +811,9 @@ def test_the_fold_answers_the_mechanical_tier_from_the_run(consumer):
     [entry] = [e for e in front["nodes"] if e["node"] == CONSTRAINT]
     assert entry["conforms"] is True
     assert entry["encoded_at"] == [FILE]
-    assert "`lint` step of run/round passed" in entry["how"]
-    assert "no judge read this pair" in entry["how"]
+    assert "every step the registry named for it passed" in entry["how"]
+    assert "`lint` passed" in entry["how"]
+    assert "No judge read this pair" in entry["how"]
     assert "were decided by run/round rather than by a judge" in front["notes"]
     assert run("--reconciliation", record).returncode == 0
     assert run("--bind-record", consumer / "backend", consumer / "specs",
@@ -830,7 +831,7 @@ def test_a_red_step_binds_nothing_and_says_which_step_answered(consumer):
     [entry] = [e for e in front["nodes"] if e["node"] == CONSTRAINT]
     assert entry["conforms"] is False
     assert entry["observed_at"] == [FILE]
-    assert "did not pass: failed (exit 1)" in entry["how"]
+    assert "did not pass" in entry["how"] and "`lint` failed (exit 1)" in entry["how"]
     assert run("--reconciliation", record).returncode == 0
 
 
@@ -914,6 +915,84 @@ def test_a_file_whose_every_pair_a_run_decides_is_neither_judged_nor_unbound(con
     assert third not in (front.get("unbound") or [])
     [entry] = [e for e in front["nodes"] if e["node"] == CONSTRAINT]
     assert entry["encoded_at"] == [third]
+
+
+def registry_deciding_twice(consumer: Path, constraint: str) -> None:
+    """Two steps declaring one constraint, which is a registry saying each decides a part."""
+    (consumer / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [],
+        "commands": [{"step": "lint", "command": "npm run lint", "timeout_seconds": 60,
+                      "decides": [constraint]},
+                     {"step": "test", "command": "npm test", "timeout_seconds": 60,
+                      "decides": [constraint]}]}), encoding="utf-8")
+    declared = json.loads((consumer / "siegard.json").read_text(encoding="utf-8"))
+    declared["standard"] = {"backend": "standard.yaml"}
+    (consumer / "siegard.json").write_text(json.dumps(declared) + "\n", encoding="utf-8")
+
+
+def two_step_run(consumer: Path, slug: str, lint: str, test: str) -> Path:
+    where = consumer / "siegard-reconcile" / f"{slug}.returns" / "run" / slug
+    where.mkdir(parents=True, exist_ok=True)
+    step = lambda name, cmd, outcome: {
+        "name": name, "command": cmd, "outcome": outcome,
+        "exit_code": 0 if outcome == "passed" else 1, "output": f"{name}.log",
+        "started_at": "2026-09-08T10:00:00Z", "ended_at": "2026-09-08T10:00:01Z"}
+    (where / "run.json").write_text(json.dumps({
+        "contract_version": "siegard-run/2", "run": f"run/{slug}",
+        "cwd": str((consumer / "backend").resolve()), "timeout_seconds": 60,
+        "outcome": "passed" if lint == test == "passed" else "failed",
+        "failed_step": None if lint == test == "passed" else "lint",
+        "steps": [step("lint", "npm run lint", lint), step("test", "npm test", test)],
+        "combined_output": "run.log"}), encoding="utf-8")
+    return where
+
+
+def staged_two_step(consumer: Path):
+    assert run("--bind", consumer / "backend", consumer / "specs", CONSTRAINT,
+               FILE).returncode == 0
+    with (consumer / "backend" / FILE).open("a", encoding="utf-8") as drifted:
+        drifted.write("// more drift\n")
+    registry_deciding_twice(consumer, CONSTRAINT)
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    return done, workspace
+
+
+def test_a_constraint_two_steps_decide_names_both_and_needs_both(consumer):
+    """A registry naming two steps for one constraint is saying each decides a part — a lint that
+    finds no forbidden import, and a test that finds no second implementer. Keyed by name alone
+    one would win by its position in the file and the other's evidence would never be run."""
+    done, workspace = staged_two_step(consumer)
+    [entry] = manifest_of(workspace)["mechanical"]
+    assert entry["steps"] == ["lint", "test"]
+    assert "every one of them has to pass" in done.stdout
+
+    record = consumer / "siegard-reconcile" / "round.md"
+    half = two_step_run(consumer, "round", lint="failed", test="passed")
+    partial = run("--fold", consumer / "backend", workspace, premised(consumer), record,
+                  "--run", half)
+    assert partial.returncode == 0, partial.stdout + partial.stderr
+    [node] = [e for e in yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+              ["nodes"] if e["node"] == CONSTRAINT]
+    assert node["conforms"] is False, "one green step beside one red leaves the constraint half " \
+                                      "answered, which is not answered"
+    assert "`lint` failed" in node["how"] and "`test` passed" in node["how"]
+    assert "only where every step the registry named for it passes" in node["how"]
+
+
+def test_a_constraint_two_steps_decide_clears_when_both_pass(consumer):
+    done, workspace = staged_two_step(consumer)
+    record = consumer / "siegard-reconcile" / "round.md"
+    both = two_step_run(consumer, "round", lint="passed", test="passed")
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record,
+               "--run", both)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [node] = [e for e in yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+              ["nodes"] if e["node"] == CONSTRAINT]
+    assert node["conforms"] is True and node["encoded_at"] == [FILE]
+    assert "every step the registry named for it passed" in node["how"]
 
 
 def test_a_run_from_another_reconciliation_is_refused(consumer):

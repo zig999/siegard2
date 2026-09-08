@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 3.52.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 3.52.1. `bin/project.py` reads this line and reports drift against
 the framework's own version.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
