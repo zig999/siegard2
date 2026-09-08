@@ -225,6 +225,52 @@ def test_a_proof_without_an_implementation(delivery, work, root, target, sound_d
     said(problems_of(delivery, work, target, root), "what a proof holds up has to exist first")
 
 
+def rewrite_proof(delivery: Path, write_delivery, **test_fields) -> None:
+    """The sound proof again, with its one test carrying whatever the caller adds."""
+    import hashlib
+    written = delivery / "implementation/checkout/record-order.md"
+    write_delivery("proof/checkout/record-order", {
+        "title": "Proof for recording a placed order",
+        "summary": "What proves the recorded order.",
+        "implementation": "sha256:" + hashlib.sha256(written.read_bytes()).hexdigest(),
+        "tests": [{"file": "tests/place.spec.ts",
+                   "name": "returns the order_number for a valid submission",
+                   "proves": "Submitting a valid order returns its order_number.",
+                   "fails_when": "place() answers with anything but the stored order_number",
+                   **test_fields}],
+    })
+
+
+def test_a_test_may_demonstrate_a_node_its_task_implements(delivery, work, root, target,
+                                                           sound_delivery, write_delivery):
+    """The claim a review certifies: this test would fail if the node's fact stopped holding."""
+    rewrite_proof(delivery, write_delivery, demonstrates="domain/sales/order")
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_test_may_not_demonstrate_a_node_its_task_does_not_implement(delivery, work, root,
+                                                                       target, sound_delivery,
+                                                                       write_delivery):
+    """A proof answers its own task, and a review would certify this claim into a binding the
+    trace decides by running that test — so a node the plan never gave the task is ground the
+    proof cannot claim."""
+    rewrite_proof(delivery, write_delivery, demonstrates="rules/sales/invoice-immutable")
+    said(problems_of(delivery, work, target, root), "which this task does not implement")
+
+
+def test_a_demonstrates_must_be_a_node_identity(delivery, work, root, target, sound_delivery,
+                                                write_delivery):
+    rewrite_proof(delivery, write_delivery, demonstrates="not a node identity")
+    said(problems_of(delivery, work, target, root), "demonstrates")
+
+
+def test_a_proof_carrying_no_demonstrates_is_the_ordinary_case(delivery, work, root, target,
+                                                               sound_delivery):
+    """Most tests prove a criterion and nothing more: a criterion is what a task owes and a node
+    is what the specification holds."""
+    assert problems_of(delivery, work, target, root) == []
+
+
 # ------------------------------------------------------------------------ the review
 
 
@@ -1387,6 +1433,26 @@ def test_contract_cli_prints_a_branch_and_refuses_an_unknown_one():
                              capture_output=True, text=True)
     assert refused.returncode == 2
     assert "no-such-branch is not a branch of delivery-node.json" in refused.stderr
+
+
+def test_a_branch_carries_no_pointer_into_a_file_its_reader_was_not_given():
+    """A slice is pasted whole into a delegation's prompt, so a `$ref` surviving in it points at
+    a file that reader does not have — the exact problem `--contract` exists to remove. Draft
+    2020-12 admits keywords beside a `$ref`, and a field written that way must inline all the
+    same, with the siblings winning: they are the more specific statement."""
+    import subprocess
+    import sys
+    script = REPO / "src/claude/bin/deliver.py"
+    for branch in ("proof", "finding", "implementation", "review", "coverageEntry"):
+        out = subprocess.run([sys.executable, "-B", str(script), "--contract", branch],
+                             capture_output=True, text=True)
+        assert out.returncode == 0, out.stderr
+        assert "$ref" not in out.stdout, f"--contract {branch} leaves a dangling pointer"
+    proof = subprocess.run([sys.executable, "-B", str(script), "--contract", "proof"],
+                           capture_output=True, text=True).stdout
+    assert "domain|rules|scenarios|contracts" in proof, \
+        "`demonstrates` shares specNodeRef's shape; the slice has to carry it"
+    assert "offered as the proof of" in proof, "the sibling description must survive the inline"
 
 
 def test_contract_stands_alone():

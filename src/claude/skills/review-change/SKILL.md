@@ -260,8 +260,20 @@ workspace is a reading copy, and a committed copy of node text would be a second
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
-    <review-name> <workspace> <each path of the file set> --review --node <each node the tasks implement>
+    <review-name> <workspace> <each path of the file set> --review --node <each node the tasks implement> \
+    [--certify <certifications file>]
 ```
+
+**Where a proof under review offers a test as the proof of a specification node, `--certify`
+carries the claim to the judgment that settles it.** Read the proof records' `tests[]`: an entry
+with `demonstrates` says this test would fail if that node's fact stopped holding. Compose the
+certifications file from those entries and nothing else — never from your own reading of a test,
+and never from a node's kind: one entry per node, its `proof` the file(s) of every test
+demonstrating it, and its `step` the registry's step whose `role` is `suite`, which is the step
+that proves the work. `deliver.py` already refused a `demonstrates` naming a node the task does
+not implement, so what reaches here is a claim the plan gave the task; what this step adds is
+whether the test makes good on it. Where no proof carries one, pass no `--certify` and say so in
+the report.
 
 This is the locate step of the conformance pass, run by the one reader that cannot miss a binding.
 For every file of the set it computes every node the trace binds to it, writes one **node pack**
@@ -378,6 +390,18 @@ runs next.
   above, pasted whole. It returns the rules that were in scope and, for each departure, a finding citing exactly one of
   them. Where the caller named no standard, the pass does not run and the record says the project
   has authored none.
+- **certification** — where the staging holds entries under `certify`, one `coverage-auditor`
+  subagent per node, its judgment at `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, handed
+  the certification pack's path from the manifest and the target source root and nothing else:
+  the pack names the node, the proof and the contract its return is held to. Its rule is the
+  whole test of a test — the named tests would fail if the node's fact stopped holding — and it
+  is the same rule the coverage pass applies to a criterion. Save each return verbatim at
+  `siegard-reconcile/<review-name>.returns/certify__<node with every '/' as '__'>.yaml`. Only its
+  `covered` makes the binding one a test decides, and only where the conformance pass cleared the
+  node as well; the fold writes both halves and says in the record's notes why any certification
+  did not land. This pass is not the coverage pass and does not replace it: that one asks whether
+  the tests prove the task's criteria, this one whether one test proves one node's fact, and a
+  criterion and a node are two things.
 - **failures** — spawn a `failure-diagnostician` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md`, passing the run's directory, the target
   source root, the specification nodes with the specification root, the file set, and the

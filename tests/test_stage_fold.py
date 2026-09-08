@@ -626,12 +626,23 @@ def test_stage_certify_stages_the_pack_and_never_omits_the_certified_nodes_pairs
     assert "certify__<node with '/' as '__'>.yaml" in done.stdout
 
 
-def test_certify_is_a_mode_of_stage_alone(consumer):
+def test_certify_is_a_mode_of_stage_and_never_of_an_audit(consumer):
+    """An audit re-examines standing claims over a tree nothing changed; a certification is a
+    claim about a test a delivery just wrote. A review is where that delivery's claim is settled,
+    so a review takes one."""
+    registry_deciding(consumer)
+    proof_at(consumer)
     ask = certifying(consumer, {"node": NODE, "proof": [PROOF], "step": "lint"})
-    for extra in (["--audit"], ["--review"]):
-        done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
-                   FILE, "--certify", ask, *extra)
-        assert done.returncode == 2 and "--certify is a mode of --stage alone" in done.stderr
+    done = run("--stage", consumer / "backend", consumer / "specs", "audited", consumer / "wsa",
+               FILE, "--certify", ask, "--audit")
+    assert done.returncode == 2 and "never of an audit" in done.stderr
+
+    done = run("--stage", consumer / "backend", consumer / "specs", "reviewed", consumer / "wsr",
+               FILE, "--certify", ask, "--review")
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = manifest_of(consumer / "wsr")["certify"]
+    assert entry["node"] == NODE and Path(entry["pack"]).is_file()
+
     done = run("--check", consumer / "backend", "--certify", ask)
     assert done.returncode == 2
 

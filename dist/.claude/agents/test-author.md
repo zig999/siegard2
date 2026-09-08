@@ -136,6 +136,15 @@ One YAML mapping, nothing else — no commentary before or after:
 ```yaml
 title: <what this proof is, in a few words>
 summary: <one sentence saying what it holds>
+**Where one test would fail if a specification node's fact stopped holding, say so on that test
+with `demonstrates`, naming the node by identity.** It is a claim about that one test, not a
+summary of the task: the node's fact, whole, has to be what the test fails over — a test that
+exercises part of it, or that fails for a broader reason, demonstrates nothing here and carries no
+`demonstrates`. Only nodes the task implements may be named, and most tests name none: a criterion
+is what a task owes and a node is what the specification holds, and the ordinary test proves the
+first. The claim is never self-settling — a review hands it to an auditor that applies the same
+rule you just read, and only that clearance makes the trace decide the node by running your test.
+
 tests: [...]                 # every test written: where it sits, its name, what it proves,
                              # and what would make it fail
 not_applicable: [...]        # omit only where every edge case above applied

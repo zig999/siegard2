@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/delivery-node.json",
   "title": "Siegard delivery node",
-  "description": "One node of a delivery: the frontmatter of one markdown file under the delivery root. The path is the identity — `implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` sit at the path of the task they answer, `review/<slug>.md` names one review — so no node carries an id, a type or a task field to disagree with where the file sits. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A delivery node records what was done and what was found, never how far the work has got: there is no status, no readiness flag and no approval field, because a producer that certified its own output would be the validator of its own work, and a root that recorded progress would be the orchestrator state file this framework refuses to have. What is delivered is what has a record, and the record's presence in git is the whole of that state. A record answers every criterion of its task and every specification node the task implements — the validator holds both totalities, so silence over either is refused. The material a run printed lives under `run/`, kept for a review to point at and never validated as a node. The body below the frontmatter carries exactly two headings, `## What it is` and `## Notes`.",
+  "description": "One node of a delivery: the frontmatter of one markdown file under the delivery root. The path is the identity \u2014 `implementation/<epic>/<slug>.md` and `proof/<epic>/<slug>.md` sit at the path of the task they answer, `review/<slug>.md` names one review \u2014 so no node carries an id, a type or a task field to disagree with where the file sits. `kind` is supplied by the validator from the path and is never written in a file; the examples omit it the same way. A delivery node records what was done and what was found, never how far the work has got: there is no status, no readiness flag and no approval field, because a producer that certified its own output would be the validator of its own work, and a root that recorded progress would be the orchestrator state file this framework refuses to have. What is delivered is what has a record, and the record's presence in git is the whole of that state. A record answers every criterion of its task and every specification node the task implements \u2014 the validator holds both totalities, so silence over either is refused. The material a run printed lives under `run/`, kept for a review to point at and never validated as a node. The body below the frontmatter carries exactly two headings, `## What it is` and `## Notes`.",
   "type": "object",
   "required": [
     "kind",
@@ -30,7 +30,7 @@
     },
     "task": {
       "$ref": "#/$defs/pin",
-      "description": "The task this record answered, pinned by content: the SHA-256 of that task file's text, computable by hand as `sha256sum <work-root>/task/<epic>/<slug>.md`. Which task it is comes from the path both records share; this says which version of it the source was written against. A pin the validator finds diverging says the task changed after the work was done — deliver it again against the task as it now stands, or restate the pin deliberately. It pins the task rather than the plan's derived index on purpose. The index carries the plan's shape and not each task's criteria, so pinning it would have left the one thing a record answers for uncovered while making every record in the root stale the moment any unrelated task was added — and no entry point owns re-pinning records it was forbidden to read. The task file carries the objective, the criteria, the binding and the triage together, so this pin covers exactly what this record answers to, and nothing else moving can disturb it."
+      "description": "The task this record answered, pinned by content: the SHA-256 of that task file's text, computable by hand as `sha256sum <work-root>/task/<epic>/<slug>.md`. Which task it is comes from the path both records share; this says which version of it the source was written against. A pin the validator finds diverging says the task changed after the work was done \u2014 deliver it again against the task as it now stands, or restate the pin deliberately. It pins the task rather than the plan's derived index on purpose. The index carries the plan's shape and not each task's criteria, so pinning it would have left the one thing a record answers for uncovered while making every record in the root stale the moment any unrelated task was added \u2014 and no entry point owns re-pinning records it was forbidden to read. The task file carries the objective, the criteria, the binding and the triage together, so this pin covers exactly what this record answers to, and nothing else moving can disturb it."
     },
     "files": {
       "type": "array",
@@ -46,7 +46,7 @@
       "items": {
         "$ref": "#/$defs/criterionEntry"
       },
-      "description": "One entry per criterion of the task, quoting the criterion as the task states it. The validator holds the totality in both directions — every criterion answered, nothing answered that the task does not state — because a record listing only the criteria it satisfied cannot be read as complete. An entry saying a criterion is unmet is an ordinary, reviewable answer; it is not a status, and nothing downstream reads it as one."
+      "description": "One entry per criterion of the task, quoting the criterion as the task states it. The validator holds the totality in both directions \u2014 every criterion answered, nothing answered that the task does not state \u2014 because a record listing only the criteria it satisfied cannot be read as complete. An entry saying a criterion is unmet is an ordinary, reviewable answer; it is not a status, and nothing downstream reads it as one."
     },
     "nodes": {
       "type": "array",
@@ -54,7 +54,7 @@
       "items": {
         "$ref": "#/$defs/nodeAnswer"
       },
-      "description": "One entry per specification node the task implements, saying how the written source answers to it. Absent only where the task implements nothing at all — a plan may cut such a task, and it must then say why in its own `rationale`, so there is nothing here to answer for. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's `implements`: a node this record passes over in silence is the specification going unanswered in code, which is the failure this field exists to expose."
+      "description": "One entry per specification node the task implements, saying how the written source answers to it. Absent only where the task implements nothing at all \u2014 a plan may cut such a task, and it must then say why in its own `rationale`, so there is nothing here to answer for. A node the delivery encodes says where; a node that only constrains the work says how the work honors it; a node the delivery did not reach says that, and why. The validator holds the totality against the task's `implements`: a node this record passes over in silence is the specification going unanswered in code, which is the failure this field exists to expose."
     },
     "inferences": {
       "type": "array",
@@ -62,7 +62,7 @@
       "items": {
         "$ref": "#/$defs/inference"
       },
-      "description": "What the implementation decided that nothing stated, and what it decided it from. Absent is a claim that nothing was inferred, and a reviewer reads it as one. An inference that would change behavior a caller depends on is not an inference — it is a fact the specification does not hold, and the answer is to stop rather than to record it here."
+      "description": "What the implementation decided that nothing stated, and what it decided it from. Absent is a claim that nothing was inferred, and a reviewer reads it as one. An inference that would change behavior a caller depends on is not an inference \u2014 it is a fact the specification does not hold, and the answer is to stop rather than to record it here."
     },
     "divergences": {
       "type": "array",
@@ -70,7 +70,7 @@
       "items": {
         "$ref": "#/$defs/divergence"
       },
-      "description": "Where what was written departs from something the task bound, the inventory recorded, or the project's standard declares, with the reason. Absent is a claim, so make it deliberately. It is carried by an implementation and by a proof alike, and a departure sits in a file that record says it wrote — the implementation's `files`, or the proof's `tests`. The proof carries it because the rules about how a project writes its tests reach files no implementation ever lists, so a rule the tests cannot satisfy had nowhere to be said: it went into prose or it went nowhere, and an omission nothing can refuse is one nobody can find. What it settles is still nothing — a disclosed departure is not permission, and the review holds the same files to the same rules without being shown what was disclosed."
+      "description": "Where what was written departs from something the task bound, the inventory recorded, or the project's standard declares, with the reason. Absent is a claim, so make it deliberately. It is carried by an implementation and by a proof alike, and a departure sits in a file that record says it wrote \u2014 the implementation's `files`, or the proof's `tests`. The proof carries it because the rules about how a project writes its tests reach files no implementation ever lists, so a rule the tests cannot satisfy had nowhere to be said: it went into prose or it went nowhere, and an omission nothing can refuse is one nobody can find. What it settles is still nothing \u2014 a disclosed departure is not permission, and the review holds the same files to the same rules without being shown what was disclosed."
     },
     "preserved": {
       "type": "array",
@@ -80,7 +80,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "What had to keep working, written down before the change rather than recalled after it — a list assembled afterwards is shaped by whatever happened to survive. It is what a later reader checks a regression against."
+      "description": "What had to keep working, written down before the change rather than recalled after it \u2014 a list assembled afterwards is shaped by whatever happened to survive. It is what a later reader checks a regression against."
     },
     "deferred": {
       "type": "array",
@@ -92,7 +92,7 @@
     },
     "implementation": {
       "$ref": "#/$defs/pin",
-      "description": "The implementation record this proof holds up, pinned by content: the SHA-256 of that file's text, computable by hand as `sha256sum <delivery-root>/implementation/<epic>/<slug>.md`. Which record it is comes from the path, which both nodes share; this says which version of it these tests were written against. A pin the validator finds diverging says the implementation was rewritten and the proof was not — and that is the failure it exists to catch, because a delivery is written again more often than anyone expects, and a proof left behind still claims to prove criteria the source now satisfies some other way, or no longer satisfies at all. It is not a second pin of the plan: the implementation beside it holds that one, and two records pinning one plan would be two places for the same fact to be wrong."
+      "description": "The implementation record this proof holds up, pinned by content: the SHA-256 of that file's text, computable by hand as `sha256sum <delivery-root>/implementation/<epic>/<slug>.md`. Which record it is comes from the path, which both nodes share; this says which version of it these tests were written against. A pin the validator finds diverging says the implementation was rewritten and the proof was not \u2014 and that is the failure it exists to catch, because a delivery is written again more often than anyone expects, and a proof left behind still claims to prove criteria the source now satisfies some other way, or no longer satisfies at all. It is not a second pin of the plan: the implementation beside it holds that one, and two records pinning one plan would be two places for the same fact to be wrong."
     },
     "tests": {
       "type": "array",
@@ -137,7 +137,7 @@
         "minLength": 1,
         "pattern": "^[^/]"
       },
-      "description": "Every path this review was computed over, as the caller listed them. Never discovered by the review itself: a review that chose its own scope reports a different set each run, and a clean result would not say what it was clean over. Each path is relative to the target source root — the root the registry's scopes are stated against — because one anchor is what lets a scope decide whether a rule reaches a reviewed file, and what keeps the set meaningful when the software lives in a subdirectory of the repository rather than at its root."
+      "description": "Every path this review was computed over, as the caller listed them. Never discovered by the review itself: a review that chose its own scope reports a different set each run, and a clean result would not say what it was clean over. Each path is relative to the target source root \u2014 the root the registry's scopes are stated against \u2014 because one anchor is what lets a scope decide whether a rule reaches a reviewed file, and what keeps the set meaningful when the software lives in a subdirectory of the repository rather than at its root."
     },
     "tasks": {
       "type": "array",
@@ -146,7 +146,7 @@
       "items": {
         "$ref": "#/$defs/taskRef"
       },
-      "description": "The tasks this review answers to. Each must already hold an implementation record: a review of a task nothing delivered has no subject. Absent, the review is over a change no task claims, and the coverage pass cannot run — there are no stated criteria to pair tests with. A review carries no pin of its own: it answers to the criteria those tasks state today, and the coverage pass is held to exactly those, so a task that changed since surfaces as a criterion the review did not answer for rather than as a hash nobody can read."
+      "description": "The tasks this review answers to. Each must already hold an implementation record: a review of a task nothing delivered has no subject. Absent, the review is over a change no task claims, and the coverage pass cannot run \u2014 there are no stated criteria to pair tests with. A review carries no pin of its own: it answers to the criteria those tasks state today, and the coverage pass is held to exactly those, so a task that changed since surfaces as a criterion the review did not answer for rather than as a hash nobody can read."
     },
     "passes": {
       "type": "array",
@@ -154,7 +154,7 @@
       "items": {
         "$ref": "#/$defs/passEntry"
       },
-      "description": "One entry per pass this framework defines, whether or not it ran. An entry carrying `missing` names the input that was absent, and its presence is what says the pass did not run. The validator holds the totality, because a review reported as clean over a pass that never ran is the failure this field exists to prevent — and no finding may be attributed to a pass that did not run."
+      "description": "One entry per pass this framework defines, whether or not it ran. An entry carrying `missing` names the input that was absent, and its presence is what says the pass did not run. The validator holds the totality, because a review reported as clean over a pass that never ran is the failure this field exists to prevent \u2014 and no finding may be attributed to a pass that did not run."
     },
     "coverage": {
       "type": "array",
@@ -162,7 +162,7 @@
       "items": {
         "$ref": "#/$defs/coverageEntry"
       },
-      "description": "One entry per criterion of every task this review names — present exactly when the coverage pass ran, and total over those criteria, because an omitted criterion reads as one that passed. There is no figure here, and none may be derived from it as a gate: a number that must rise becomes a target to satisfy, and satisfying it produces tests nobody needed. The states name which criteria are unproven, which is what a count cannot recover."
+      "description": "One entry per criterion of every task this review names \u2014 present exactly when the coverage pass ran, and total over those criteria, because an omitted criterion reads as one that passed. There is no figure here, and none may be derived from it as a gate: a number that must rise becomes a target to satisfy, and satisfying it produces tests nobody needed. The states name which criteria are unproven, which is what a count cannot recover."
     },
     "findings": {
       "type": "array",
@@ -170,30 +170,30 @@
       "items": {
         "$ref": "#/$defs/finding"
       },
-      "description": "What the passes found, each with the evidence it was observed from and the cost it carries. Absent is a claim that nothing was found, over the file set `reviewed` and the passes that ran — no more than that. There is no severity, no action and no verdict: this record is evidence, and what it means for the change is a person's to decide."
+      "description": "What the passes found, each with the evidence it was observed from and the cost it carries. Absent is a claim that nothing was found, over the file set `reviewed` and the passes that ran \u2014 no more than that. There is no severity, no action and no verdict: this record is evidence, and what it means for the change is a person's to decide."
     },
     "standard": {
       "$ref": "#/$defs/standardRef",
-      "description": "The project's standard this record read. On a review it is present exactly when the standard pass ran, and a project that has authored none records the pass as not run and says so — the honest narrow result rather than a clean one. On an implementation it says what the source was written against; on a proof, what the tests were. On either it is required once any divergence cites a rule, because a citation resolves against the pin this record carries and without one it names nothing. Absent on a record that wrote something is a claim that no standard was supplied, which nothing can verify and a reader reads as one — the skill's report and the diff are what carry it."
+      "description": "The project's standard this record read. On a review it is present exactly when the standard pass ran, and a project that has authored none records the pass as not run and says so \u2014 the honest narrow result rather than a clean one. On an implementation it says what the source was written against; on a proof, what the tests were. On either it is required once any divergence cites a rule, because a citation resolves against the pin this record carries and without one it names nothing. Absent on a record that wrote something is a claim that no standard was supplied, which nothing can verify and a reader reads as one \u2014 the skill's report and the diff are what carry it."
     },
     "failures_counted": {
       "type": "integer",
       "minimum": 0,
-      "description": "How many failures the captured run reported, counted from what it printed — present exactly when the failures pass ran. The run itself carries no count, deliberately: counting means parsing a reporter's format, which is knowledge of a stack. The validator holds this against the findings the failures pass recorded, and the two disagreeing is how a failure goes unexamined while the record still looks complete. Zero never reaches a valid record: bin/deliver.py refuses a captured run that passed (the pass should not have been asked for) and refuses a count of none over a run that did not (a run that failed reported something). The bound stays at zero so the refusal a reader gets is that sentence rather than a schema minimum.",
+      "description": "How many failures the captured run reported, counted from what it printed \u2014 present exactly when the failures pass ran. The run itself carries no count, deliberately: counting means parsing a reporter's format, which is knowledge of a stack. The validator holds this against the findings the failures pass recorded, and the two disagreeing is how a failure goes unexamined while the record still looks complete. Zero never reaches a valid record: bin/deliver.py refuses a captured run that passed (the pass should not have been asked for) and refuses a count of none over a run that did not (a run that failed reported something). The bound stays at zero so the refusal a reader gets is that sentence rather than a schema minimum.",
       "$comment": "Held against the failures findings by bin/deliver.py, which no per-file schema can express."
     },
     "run": {
       "type": "string",
       "minLength": 1,
       "pattern": "^run/[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "A captured run, as its directory under the delivery root's `run/`. The directory holds what the commands printed, verbatim, and the validator keeps it the way it keeps any material: never as a node. What it means depends on which record points at it, and the two meanings are exact mirrors. On a review it is the run the failures pass read, present exactly when that pass ran, and a run that passed is refused — there was no failure to diagnose. On an implementation or a proof it is what the delivery saw before it wrote, and a run that did not pass is refused: a record over a red run is a delivery claiming what the run denied. A record is never written to explain a failure; it is written because there was none, and the failure lives in the earlier run whose name nothing may reuse.",
+      "description": "A captured run, as its directory under the delivery root's `run/`. The directory holds what the commands printed, verbatim, and the validator keeps it the way it keeps any material: never as a node. What it means depends on which record points at it, and the two meanings are exact mirrors. On a review it is the run the failures pass read, present exactly when that pass ran, and a run that passed is refused \u2014 there was no failure to diagnose. On an implementation or a proof it is what the delivery saw before it wrote, and a run that did not pass is refused: a record over a red run is a delivery claiming what the run denied. A record is never written to explain a failure; it is written because there was none, and the failure lives in the earlier run whose name nothing may reuse.",
       "$comment": "Held by bin/deliver.py: run_problems for a review, record_run_problems for the two that write."
     },
     "reconciliation": {
       "type": "string",
       "minLength": 1,
       "pattern": "^siegard-reconcile/[a-z0-9]+(-[a-z0-9]+)*\\.md$",
-      "description": "Reviews only. The reconciliation record the conformance pass folded its per-file judgments into, spelled from the target's git toplevel where `siegard-reconcile/` sits — `siegard-reconcile/<review-name>.md`. Over a traced target that pass is staged by `bin/trace.py --stage --review` over the review's own file set: every node the trace binds to those files is judged, the delivery's own and every other node's claim on the same file alike, the plan's nodes are read on every file without being bound, and `--bind-record` over the record restamps exactly what cleared. This field is what joins the two: `bin/deliver.py` refuses it where the pass did not run, refuses a record that is not there, holds the record's file set to `reviewed`, and prints a receipt for a review that ran the pass over a target holding `siegard-trace.json` and names none — a receipt and never a refusal, because every review written before this field existed names none, and those still validate. It names; it never restates — what was judged, what cleared and what is still owed live in the record, and `trace.py --owed` reads them there."
+      "description": "Reviews only. The reconciliation record the conformance pass folded its per-file judgments into, spelled from the target's git toplevel where `siegard-reconcile/` sits \u2014 `siegard-reconcile/<review-name>.md`. Over a traced target that pass is staged by `bin/trace.py --stage --review` over the review's own file set: every node the trace binds to those files is judged, the delivery's own and every other node's claim on the same file alike, the plan's nodes are read on every file without being bound, and `--bind-record` over the record restamps exactly what cleared. This field is what joins the two: `bin/deliver.py` refuses it where the pass did not run, refuses a record that is not there, holds the record's file set to `reviewed`, and prints a receipt for a review that ran the pass over a target holding `siegard-trace.json` and names none \u2014 a receipt and never a refusal, because every review written before this field existed names none, and those still validate. It names; it never restates \u2014 what was judged, what cleared and what is still owed live in the record, and `trace.py --owed` reads them there."
     },
     "installed": {
       "type": "array",
@@ -203,7 +203,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "The direct dependencies this delivery added, by the names the project's package manager knows them by. Each must be one the pinned standard authorizes: that list is where a human's approval of a package lives, and a delivery that could install past it would make the approval decorative. Transitive dependencies are not here and could not be — nobody approved them, no package manager offers a closure anybody did, and what actually arrived is the lockfile's record. Absent is a claim that this delivery added none, which the diff of the manifest either bears out or does not."
+      "description": "The direct dependencies this delivery added, by the names the project's package manager knows them by. Each must be one the pinned standard authorizes: that list is where a human's approval of a package lives, and a delivery that could install past it would make the approval decorative. Transitive dependencies are not here and could not be \u2014 nobody approved them, no package manager offers a closure anybody did, and what actually arrived is the lockfile's record. Absent is a claim that this delivery added none, which the diff of the manifest either bears out or does not."
     }
   },
   "allOf": [
@@ -304,7 +304,7 @@
                 "cites": "ARC-02",
                 "file": "src/orders/place.ts",
                 "departure": "place() constructs the store rather than receiving it, because no factory exists for this module yet.",
-                "why": "the task's objective is the entry point, and adding the module's wiring point reaches past it — deferred below, and disclosed here so the review's finding is not read as news"
+                "why": "the task's objective is the entry point, and adding the module's wiring point reaches past it \u2014 deferred below, and disclosed here so the review's finding is not read as news"
               }
             ],
             "deferred": [
@@ -511,7 +511,7 @@
     "specNodeRef": {
       "type": "string",
       "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*)$",
-      "description": "A specification node, by identity (SPEC-003 R1) — its path from the specification root, without `.md`."
+      "description": "A specification node, by identity (SPEC-003 R1) \u2014 its path from the specification root, without `.md`."
     },
     "writtenFile": {
       "type": "object",
@@ -525,7 +525,7 @@
           "type": "string",
           "minLength": 1,
           "pattern": "^[^/]",
-          "description": "Relative to the target source root — the directory the registry's commands run from, the root its scopes and `presupposes` are stated against, and the root the task's `produces` names. One anchor for every path, or none of them can be compared: `produces` is held to this list by spelling, and a scope reaches a finding's file only under the same one. Never absolute, and never spelled from the repository around the target."
+          "description": "Relative to the target source root \u2014 the directory the registry's commands run from, the root its scopes and `presupposes` are stated against, and the root the task's `produces` names. One anchor for every path, or none of them can be compared: `produces` is held to this list by spelling, and a scope reaches a finding's file only under the same one. Never absolute, and never spelled from the repository around the target."
         },
         "effect": {
           "type": "string",
@@ -546,7 +546,7 @@
         "criterion": {
           "type": "string",
           "minLength": 1,
-          "description": "The criterion as the task states it, quoted rather than paraphrased — the validator pairs the two by their text, and a restatement is a pairing nobody can check."
+          "description": "The criterion as the task states it, quoted rather than paraphrased \u2014 the validator pairs the two by their text, and a restatement is a pairing nobody can check."
         },
         "met": {
           "type": "boolean"
@@ -577,7 +577,7 @@
             "type": "string",
             "minLength": 1
           },
-          "description": "Where a fact this node holds now lives in the written source. Absent means the node governed the work without a fact of its own reaching the code — a rule the work honors, or a node the delivery did not reach — and `how` says which."
+          "description": "Where a fact this node holds now lives in the written source. Absent means the node governed the work without a fact of its own reaching the code \u2014 a rule the work honors, or a node the delivery did not reach \u2014 and `how` says which."
         },
         "how": {
           "type": "string",
@@ -601,7 +601,7 @@
         "from": {
           "type": "string",
           "minLength": 1,
-          "description": "What the inference was drawn from — an adjacent node, a convention the inventory recorded, the shape of the code around it. An inference with no stated source is a value someone chose."
+          "description": "What the inference was drawn from \u2014 an adjacent node, a convention the inventory recorded, the shape of the code around it. An inference with no stated source is a value someone chose."
         }
       }
     },
@@ -612,16 +612,16 @@
         "why"
       ],
       "additionalProperties": false,
-      "description": "One departure, from exactly one thing: either `from`, naming a bound node or a convention in prose, or `cites` with `file`, naming a rule of the project's standard and the path the departure sits in. Never both and never neither — bin/deliver.py holds that pairing, and holds a cited rule to the standard the record pins. A divergence is a disclosure and never a permission: nothing downstream reads it as leave to depart, the pass that reviews the same rules is not shown it, and a reader who meets a finding can look here to learn whether the departure was known and reasoned. Recording one does not settle it.",
+      "description": "One departure, from exactly one thing: either `from`, naming a bound node or a convention in prose, or `cites` with `file`, naming a rule of the project's standard and the path the departure sits in. Never both and never neither \u2014 bin/deliver.py holds that pairing, and holds a cited rule to the standard the record pins. A divergence is a disclosure and never a permission: nothing downstream reads it as leave to depart, the pass that reviews the same rules is not shown it, and a reader who meets a finding can look here to learn whether the departure was known and reasoned. Recording one does not settle it.",
       "properties": {
         "from": {
           "type": "string",
           "minLength": 1,
-          "description": "What was departed from — a bound node by identifier, or a convention with the path it was seen at. For a rule of the project's standard, use `cites` instead: a rule has an identifier, and a departure named in prose is one nobody can pair with the finding that reports it."
+          "description": "What was departed from \u2014 a bound node by identifier, or a convention with the path it was seen at. For a rule of the project's standard, use `cites` instead: a rule has an identifier, and a departure named in prose is one nobody can pair with the finding that reports it."
         },
         "cites": {
           "$ref": "#/$defs/ruleRef",
-          "description": "The rule of the project's standard this departs from, by its identifier. Unlike a review's citation, which may only name a rule the standard leaves to a reading, this may name either kind: a record obeys the whole standard, and a departure from a rule a tool decides is a real departure — it will surface as that tool's failure in a captured run, and the disclosure is what lets a reader pair the two."
+          "description": "The rule of the project's standard this departs from, by its identifier. Unlike a review's citation, which may only name a rule the standard leaves to a reading, this may name either kind: a record obeys the whole standard, and a departure from a rule a tool decides is a real departure \u2014 it will surface as that tool's failure in a captured run, and the disclosure is what lets a reader pair the two."
         },
         "file": {
           "type": "string",
@@ -701,12 +701,16 @@
         "proves": {
           "type": "string",
           "minLength": 1,
-          "description": "What holding this test up demonstrates — ordinarily a criterion of the task, quoted, or an inference the implementation recorded."
+          "description": "What holding this test up demonstrates \u2014 ordinarily a criterion of the task, quoted, or an inference the implementation recorded."
         },
         "fails_when": {
           "type": "string",
           "minLength": 1,
           "description": "What would have to break for this test to fail. A test with no answer here asserts something nobody can evaluate, and a test that cannot fail occupies the place the real test would go."
+        },
+        "demonstrates": {
+          "$ref": "#/$defs/specNodeRef",
+          "description": "A specification node this test is offered as the proof of: it would fail if that node's fact stopped holding. A claim and never a finding \u2014 the review's certification is what judges it, through the same auditor and the same rule a reconciliation uses, and only its `covered` makes the trace's binding one a test decides. Omitted where the test proves a criterion and nothing more, which is the ordinary case: a criterion is what a task owes, and a node is what the specification holds. Every entry must be one the task implements \u2014 a proof answers its own task, and a test claiming a node the task never took on claims ground the plan did not give it."
         }
       }
     },
@@ -770,7 +774,7 @@
         "failures",
         "standard"
       ],
-      "description": "Which judgment the entry is about — whether the tests prove the task's criteria, whether the source states only what the specification holds, why a captured run failed, or whether the source follows the rules this project set for itself. The last is the only one whose subject the project authors rather than the framework, and it reaches only the rules of that standard whose application is a reading: a rule a linter or a compiler decides exactly runs as a step of the project's own suite, and its failures arrive through the failures pass instead."
+      "description": "Which judgment the entry is about \u2014 whether the tests prove the task's criteria, whether the source states only what the specification holds, why a captured run failed, or whether the source follows the rules this project set for itself. The last is the only one whose subject the project authors rather than the framework, and it reaches only the rules of that standard whose application is a reading: a rule a linter or a compiler decides exactly runs as a step of the project's own suite, and its failures arrive through the failures pass instead."
     },
     "standardRef": {
       "type": "object",
@@ -784,11 +788,11 @@
           "type": "string",
           "minLength": 1,
           "pattern": "^[^/]",
-          "description": "The project's registry, by its own path relative to the target source root — exactly as `siegard.json` names it, or as the invocation named it. Nothing is copied: this record points at the same file the project keeps, the way `files[].path` already does for code. Never absolute, and never spelled from the repository around the target."
+          "description": "The project's registry, by its own path relative to the target source root \u2014 exactly as `siegard.json` names it, or as the invocation named it. Nothing is copied: this record points at the same file the project keeps, the way `files[].path` already does for code. Never absolute, and never spelled from the repository around the target."
         },
         "pin": {
           "$ref": "#/$defs/pin",
-          "description": "The SHA-256 of the standard's text as this record read it, computable by hand as `sha256sum <target-source-root>/<at>` at the time this record was written. It is a citation, not a standing guarantee: like a task's `implements` and a delivered file's own path, it is read once and never mechanically reverified against the file as it stands today — a project's registry is free to evolve, and an old record is held to the text it was actually written against, not to whatever the file says now. These two fields are the whole of what a review records about a standard, and together they are what says what the pass was clean over: which rules were in scope is a function of this reference and `reviewed`, both of which this root holds, so the validator derives it rather than reading a list somebody maintained. A stored list would have been a second answer to a question the root already answers — and, being the reviewer's to write, the one nobody could check."
+          "description": "The SHA-256 of the standard's text as this record read it, computable by hand as `sha256sum <target-source-root>/<at>` at the time this record was written. It is a citation, not a standing guarantee: like a task's `implements` and a delivered file's own path, it is read once and never mechanically reverified against the file as it stands today \u2014 a project's registry is free to evolve, and an old record is held to the text it was actually written against, not to whatever the file says now. These two fields are the whole of what a review records about a standard, and together they are what says what the pass was clean over: which rules were in scope is a function of this reference and `reviewed`, both of which this root holds, so the validator derives it rather than reading a list somebody maintained. A stored list would have been a second answer to a question the root already answers \u2014 and, being the reviewer's to write, the one nobody could check."
         }
       }
     },
@@ -817,7 +821,7 @@
             "uncovered",
             "unauditable"
           ],
-          "description": "A test covers a criterion when it would fail if the criterion stopped holding — that is the whole test. It is partial where a stated part of the criterion goes unexercised, uncovered where nothing exercises it, and unauditable where the criterion cannot be read well enough to look for, which is a fact about the criterion rather than about the tests."
+          "description": "A test covers a criterion when it would fail if the criterion stopped holding \u2014 that is the whole test. It is partial where a stated part of the criterion goes unexercised, uncovered where nothing exercises it, and unauditable where the criterion cannot be read well enough to look for, which is a fact about the criterion rather than about the tests."
         },
         "tests": {
           "type": "array",
@@ -913,17 +917,17 @@
         "file": {
           "type": "string",
           "minLength": 1,
-          "description": "The path this was observed in. For a pass that scans the file set it is required, is exactly as `reviewed` lists it, and the validator holds it to that list — a finding outside the set is a finding over something nobody said was under review. For the failures pass it is the path the run's own output named, which need not be in `reviewed`: a change breaks tests it never touched, and refusing to record that would be refusing the most useful thing a run says. It is absent there only where the run named no file at all — a command that could not be found, a step that was terminated."
+          "description": "The path this was observed in. For a pass that scans the file set it is required, is exactly as `reviewed` lists it, and the validator holds it to that list \u2014 a finding outside the set is a finding over something nobody said was under review. For the failures pass it is the path the run's own output named, which need not be in `reviewed`: a change breaks tests it never touched, and refusing to record that would be refusing the most useful thing a run says. It is absent there only where the run named no file at all \u2014 a command that could not be found, a step that was terminated."
         },
         "where": {
           "type": "string",
           "minLength": 1,
-          "description": "Where in that file — the line, or the construct — so a reader opens the place rather than searching for it. Where no file is the subject, it names the step of the run instead, which is the whole of what a step that never executed can be located by."
+          "description": "Where in that file \u2014 the line, or the construct \u2014 so a reader opens the place rather than searching for it. Where no file is the subject, it names the step of the run instead, which is the whole of what a step that never executed can be located by."
         },
         "evidence": {
           "type": "string",
           "minLength": 1,
-          "description": "What was observed, quoted from the source or from what the run printed. Not a restatement of it: a finding whose evidence cannot be quoted is a finding nobody observed, and it does not belong here. A quote that joins passages the file does not hold together says where the join is; an unmarked jump reads as one continuous passage, and the reader who opens the file finds something else there. And what is cut never qualifies what is kept — dropping the sentence in which the code explains itself leaves the finding answering an author who was not allowed to speak, which is the one way a faithful quotation still misleads."
+          "description": "What was observed, quoted from the source or from what the run printed. Not a restatement of it: a finding whose evidence cannot be quoted is a finding nobody observed, and it does not belong here. A quote that joins passages the file does not hold together says where the join is; an unmarked jump reads as one continuous passage, and the reader who opens the file finds something else there. And what is cut never qualifies what is kept \u2014 dropping the sentence in which the code explains itself leaves the finding answering an author who was not allowed to speak, which is the one way a faithful quotation still misleads."
         },
         "cost": {
           "type": "string",
@@ -933,11 +937,11 @@
         "correction": {
           "type": "string",
           "minLength": 1,
-          "description": "What would have to change for this to stop being true, in the terms the evidence gives. \"Fix the assertion\" says nothing; \"the refusal code belongs in the specification as a fact, and the code reads it from there\" says what to do. It is not a decision about the change — whether to act on it, and when, is a person's — and nothing downstream reads it as one."
+          "description": "What would have to change for this to stop being true, in the terms the evidence gives. \"Fix the assertion\" says nothing; \"the refusal code belongs in the specification as a fact, and the code reads it from there\" says what to do. It is not a decision about the change \u2014 whether to act on it, and when, is a person's \u2014 and nothing downstream reads it as one."
         },
         "cites": {
           "$ref": "#/$defs/ruleRef",
-          "description": "The rule of the project's standard this finding is against, on a finding of the standard pass and nowhere else — the validator holds both halves of that, the same way it holds `cause` to the failures pass. Exactly one rule: a departure from two is two findings, because they will be settled separately, and a finding citing no rule at all is taste with a location attached. The validator also holds the cited rule to the standard — it must be declared, it must be one the standard decides by reading rather than one a tool decides, and its scope must reach this finding's file."
+          "description": "The rule of the project's standard this finding is against, on a finding of the standard pass and nowhere else \u2014 the validator holds both halves of that, the same way it holds `cause` to the failures pass. Exactly one rule: a departure from two is two findings, because they will be settled separately, and a finding citing no rule at all is taste with a location attached. The validator also holds the cited rule to the standard \u2014 it must be declared, it must be one the standard decides by reading rather than one a tool decides, and its scope must reach this finding's file."
         },
         "cause": {
           "enum": [
@@ -946,7 +950,7 @@
             "setup",
             "build"
           ],
-          "description": "Why a captured run failed, on a finding of the failures pass and nowhere else — the validator holds both halves of that. The split that matters is code against test, and the specification settles it, never which of the two is easier to change: where nothing in the specification settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached — including where the harness or the environment a test needs did not stand up, a connection timing out in a hook, a service that did not answer — so the failure says nothing about the change; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
+          "description": "Why a captured run failed, on a finding of the failures pass and nowhere else \u2014 the validator holds both halves of that. The split that matters is code against test, and the specification settles it, never which of the two is easier to change: where nothing in the specification settles it the cause is code, the reading that constrains more, because it keeps a wrong implementation from being closed by editing its test. Setup means neither was reached \u2014 including where the harness or the environment a test needs did not stand up, a connection timing out in a hook, a service that did not answer \u2014 so the failure says nothing about the change; build means nothing ran, and every failure after a failed compile describes a binary nobody built."
         }
       }
     }

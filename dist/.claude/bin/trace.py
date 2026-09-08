@@ -3042,9 +3042,10 @@ def main() -> int:
         print("cannot run: --run is a mode of --fold; it names the run that answers the "
               "mechanical tier a staging separated", file=sys.stderr)
         return CANNOT_RUN
-    if certify is not None and (not do_stage or do_audit or do_review):
-        print("cannot run: --certify is a mode of --stage alone; an audit re-reads claims and a "
-              "review re-reads a delivery, and neither certifies a test", file=sys.stderr)
+    if certify is not None and (not do_stage or do_audit):
+        print("cannot run: --certify is a mode of --stage, and never of an audit; an audit "
+              "re-examines standing claims over a tree nothing changed, and a certification is a "
+              "claim about a test a delivery just wrote", file=sys.stderr)
         return CANNOT_RUN
 
     if do_reconciliation:

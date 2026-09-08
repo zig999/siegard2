@@ -261,17 +261,25 @@ def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset())
     `--contract` has to stand on its own — a reader handed a slice and a dangling pointer into a
     file they were not given has the same problem `--contract` exists to remove. A name already
     on the path back to itself is left as the pointer instead of expanded again, since a cycle
-    inlined without end is not a slice, it is the whole file with extra steps."""
+    inlined without end is not a slice, it is the whole file with extra steps.
+
+    Draft 2020-12 admits keywords beside a `$ref`, and a field written that way — a shared shape,
+    with a description of what this particular use of it means — is how a contract says both
+    without copying the shape into a second home. Inlined, the siblings win over what the target
+    declares: they are the more specific statement, which is why they were written there."""
     if isinstance(node, dict):
-        if set(node) == {"$ref"} and isinstance(node["$ref"], str) \
-                and node["$ref"].startswith("#/$defs/"):
-            name = node["$ref"][len("#/$defs/"):]
-            if name in seen:
-                return dict(node)
+        ref = node.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/$defs/"):
+            name = ref[len("#/$defs/"):]
             target = schema.get("$defs", {}).get(name)
-            if target is None:
+            if name in seen or target is None:
                 return dict(node)
-            return resolve_refs(target, schema, seen | {name})
+            inlined = resolve_refs(target, schema, seen | {name})
+            beside = {key: resolve_refs(value, schema, seen)
+                      for key, value in node.items() if key != "$ref"}
+            if not beside:
+                return inlined
+            return {**inlined, **beside} if isinstance(inlined, dict) else dict(node)
         return {key: resolve_refs(value, schema, seen) for key, value in node.items()}
     if isinstance(node, list):
         return [resolve_refs(item, schema, seen) for item in node]
@@ -1182,6 +1190,32 @@ def run_problems(nid: str, front: dict, root: Path) -> list[str]:
     return problems
 
 
+def demonstrates_problems(nid: str, front: dict, task: dict) -> list[str]:
+    """Every node a proof's tests offer themselves as the proof of that its own task does not
+    implement.
+
+    A proof answers one task, and what that task took on is `implements`. A test claiming a node
+    outside it claims ground the plan never gave the task — and the claim is not idle: a review
+    certifies these, and a certification the auditor clears makes the trace decide that node by
+    running this test from then on. The specification is not consulted here: a task's `implements`
+    is already held to the specification by `bin/plan.py`, and a second opinion about that would
+    be a second home for it."""
+    implements = {n for n in listed(task, "implements") if isinstance(n, str)}
+    problems = []
+    for entry in listed(front, "tests"):
+        if not isinstance(entry, dict) or not isinstance(entry.get("demonstrates"), str):
+            continue
+        node = entry["demonstrates"]
+        if node not in implements:
+            problems.append(
+                f"{nid}: a test demonstrates {node}, which this task does not implement"
+                + (f"; it implements {', '.join(sorted(implements))}" if implements
+                   else " — the task implements none")
+                + ". A proof answers its own task, and a review would certify this claim into a "
+                  "binding the trace decides by running that test")
+    return problems
+
+
 def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Path,
                    names: list[str], root: Path, target: Path,
                    standard: Draft202012Validator | None = None) -> list[str]:
@@ -1207,6 +1241,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                 problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
                                                         delivered))
             else:
+                problems.extend(demonstrates_problems(nid, front, plan_nodes[task]["front"]))
                 pair = f"implementation/{nid.split('/', 1)[1]}"
                 if pair not in nodes:
                     problems.append(f"{nid}: proves a task with no implementation record at "
