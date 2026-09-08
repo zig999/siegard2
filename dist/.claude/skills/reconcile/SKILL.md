@@ -99,7 +99,7 @@ the `.claude/` directory this skill's tree sits under. Every path below resolves
 ## The order
 
 ```
-situate → stage → judge → fold → bind → report → stop
+situate → stage → judge → capture → fold → bind → report → stop
 ```
 
 ### 1. Situate
@@ -198,8 +198,17 @@ them. The judge reads them like any other pair — the record has to account for
 file carries, and nothing in this invocation runs the step — so what the list buys is knowledge,
 not omission: a reader of the report knows which readings a tool already makes over the tree, and
 `--check`'s receipt says the same over drift. Carry the list into the report as the staging
-printed it. The staging names the pairs a certified test already decides the same way, under
-`decided_by_test`.
+printed it.
+
+**A pair a run decides is handed no judge, and the staging separates it under `mechanical`.**
+Two kinds land there and both are answered the same way: a constraint some step of the project's
+registry `decides`, and a node a certified test decides. A reading of either would re-decide
+mechanically what a run settles exactly — at a model's recall, and at the price of the whole
+file's delegation. Two guards send such a pair back to a judge instead, and neither is yours to
+override: a certification whose test's text moved is no longer live, and a node whose own text
+moved was decided by a step or a test that was never asked about the sentence which replaced it.
+A pair that is current and owes nothing is omitted before either tier reaches it — nothing has to
+re-decide it, so it needs no run either.
 
 **Where the human offered certifications, write them into a small YAML file in the workspace and
 pass it as `--certify`** — a list, each entry the node, its `proof` paths and its `step`, exactly
@@ -353,6 +362,30 @@ a bind rests on for as long as the code lives. The stop is to report and wait. S
 failed, too: a spend limit or a rate limit passes, and what the human does then is run it again
 rather than accept less.
 
+### 3b. Capture the run the mechanical tier is answered by
+
+Where the staging separated nothing under `mechanical`, skip this step and say so in the report.
+
+Where it did, run the step(s) it named, once, into the returns directory beside the record —
+which is where the reconciliation's evidence already lives and outlives the workspace:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py siegard-reconcile/<slug>.returns \
+    --run <slug> --cwd <target-source-root> --timeout-seconds <the registry's bound> \
+    --step <name>="<the registry's command>" [--step ...]
+```
+
+Every string is the project's. The step names come from the staging; each command and its bound
+come from the registry's own `commands[]`, read from what `deliver.py --standard` printed — never
+composed here, never inferred from what the tree looks like. The staging prints this invocation
+with the names filled in; the commands are yours to paste from the registry.
+
+**A red step is a result, not a stop.** The fold reads the run per step and writes what it says:
+a step that passed clears its nodes, a step that failed binds nothing and the finding routes like
+any other. Do not re-run to get a green, and do not repair the tree and run again under the same
+name — `bin/run.py` refuses a name it already holds, and a second attempt is a second name, which
+is what keeps both readable.
+
 ### 4. Fold
 
 Write the premise — the one part of the record that is the human's and no fold can compose. A
@@ -363,8 +396,16 @@ was typed into it. Then:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <workspace> \
-    <the premise> siegard-reconcile/<slug>.md
+    <the premise> siegard-reconcile/<slug>.md \
+    [--run siegard-reconcile/<slug>.returns/run/<slug>]
 ```
+
+`--run` is owed exactly where the staging separated a mechanical tier, and refused where it did
+not — a run nothing reads is evidence for a question nobody asked. The fold refuses it over
+another tree, missing a step the tier names, or captured over content that has moved since the
+staging: the run proved the tree as it stood, and binding what stands now on the strength of it
+would stamp a claim over bytes the run never saw. That last refusal is the same stop the omission
+guard has at bind time, and the route is the same — a fresh invocation under a new slug.
 
 The fold writes the record, whatever the judgment returned — a reconciliation that stopped is the
 record worth keeping most, because without it the next invocation rediscovers the same divergence
@@ -447,9 +488,11 @@ changed. The fold already said which certifications did not hold and why, in the
 Say, in this order and in prose: the file set as given; what the staging held for each file, by
 state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
 unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
-answered per node, with its evidence; where the record and the returns were written; what was
-bound and what was not; which nodes are decided by a test from here and which certifications did
-not hold, in the auditor's own words; and the next invocation where there is one.
+answered per node, with its evidence; which pairs a run answered instead of a judge, with the
+step and the run's own outcome per step; where the record, the returns and the run were written;
+what was bound and what was not; which nodes are decided by a test from here and which
+certifications did not hold, in the auditor's own words; and the next invocation where there is
+one.
 
 Where a node the judgment did not clear carries `collateral`, say so apart from the contested
 ones: nothing was found against that node's own substance — it shares a file with a finding that

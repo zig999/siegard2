@@ -511,11 +511,10 @@ def registry_deciding(consumer: Path, *constraints: str) -> None:
     (consumer / "siegard.json").write_text(json.dumps(declared) + "\n", encoding="utf-8")
 
 
-def test_stage_names_the_pairs_a_registry_step_decides_and_still_judges_them(consumer):
-    """A constraint the registry's step decides is a pair a reading would re-decide at a model's
-    recall. The staging names it apart so a caller that runs the step knows which pairs the run
-    answers — and still hands it to the judge, because the record must account for the pair and
-    nothing here runs the step."""
+def test_stage_hands_no_judge_a_pair_a_registry_step_decides(consumer):
+    """A constraint the registry's step decides is answered by running that step, not by a
+    reading that would re-decide it at a model's recall and at the price of the whole file's
+    delegation. The staging separates the pair and hands the caller the run to capture."""
     target = consumer / "backend"
     assert run("--bind", target, consumer / "specs", CONSTRAINT, FILE).returncode == 0
     with (target / FILE).open("a", encoding="utf-8") as drifted:
@@ -524,17 +523,37 @@ def test_stage_names_the_pairs_a_registry_step_decides_and_still_judges_them(con
     done, workspace = staged(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     manifest = manifest_of(workspace)
-    assert manifest["decided_by_step"] == [{"node": CONSTRAINT, "file": FILE, "step": "lint"}]
-    assert CONSTRAINT in manifest["files"][FILE]["nodes"]
-    assert "a registry step decides" in done.stdout
-    assert f"{CONSTRAINT} — bound to {FILE} (step `lint`)" in done.stdout
+    assert manifest["mechanical"] == [{"node": CONSTRAINT, "file": FILE, "step": "lint",
+                                       "decided_by": "step"}]
+    assert CONSTRAINT not in manifest["files"][FILE]["nodes"], \
+        "a pair a run decides is not also read by a judge"
+    assert "decided by a run, not by a judge" in done.stdout
+    assert "--run round --cwd" in done.stdout and '--step lint=' in done.stdout
 
 
-def test_stage_names_no_step_decided_pair_where_the_project_declares_no_registry(consumer):
+def test_stage_separates_nothing_where_the_project_declares_no_registry(consumer):
     done, workspace = staged(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert manifest_of(workspace)["decided_by_step"] == []
-    assert "registry step decides" not in done.stdout
+    assert manifest_of(workspace)["mechanical"] == []
+    assert "decided by a run" not in done.stdout
+
+
+def test_a_node_whose_text_moved_goes_back_to_a_judge(consumer):
+    """A step decided the constraint as the node then stated it, and nothing asked it about the
+    sentence that replaced it. The same guard holds for a certified test."""
+    target = consumer / "backend"
+    assert run("--bind", target, consumer / "specs", CONSTRAINT, FILE).returncode == 0
+    with (target / FILE).open("a", encoding="utf-8") as drifted:
+        drifted.write("// more drift\n")
+    registry_deciding(consumer, CONSTRAINT)
+    node_file = consumer / "specs" / f"{CONSTRAINT}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8").replace(
+        "## Description", "## Description\n\nA sentence the bind never saw.\n"), encoding="utf-8")
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["mechanical"] == []
+    assert CONSTRAINT in manifest["files"][FILE]["nodes"]
 
 
 # ---------------------------------------------------------------- --certify
@@ -735,6 +754,155 @@ def test_fold_refuses_a_certification_return_that_is_missing_or_off_its_ask(cons
     done, _ = folded(consumer)
     assert done.returncode == 1
     assert f"this delegation was handed {NODE} alone" in done.stdout
+
+
+# ---------------------------------------------------------------- --fold --run
+
+
+def captured_run(consumer: Path, slug: str = "round", outcome: str = "passed",
+                 step: str = "lint", cwd: Path | None = None) -> Path:
+    """A run as bin/run.py writes one, under the returns directory where the decision put it."""
+    where = consumer / "siegard-reconcile" / f"{slug}.returns" / "run" / slug
+    where.mkdir(parents=True, exist_ok=True)
+    (where / "run.json").write_text(json.dumps({
+        "contract_version": "siegard-run/2", "run": f"run/{slug}",
+        "cwd": str((cwd or (consumer / "backend")).resolve()), "timeout_seconds": 60,
+        "outcome": outcome, "failed_step": None if outcome == "passed" else step,
+        "steps": [{"name": step, "command": "npm run lint", "outcome": outcome,
+                   "exit_code": 0 if outcome == "passed" else 1, "output": "lint.log",
+                   "started_at": "2026-09-08T10:00:00Z", "ended_at": "2026-09-08T10:00:01Z"}],
+        "combined_output": "run.log"}), encoding="utf-8")
+    return where
+
+
+def staged_mechanical(consumer: Path):
+    """CONSTRAINT bound to FILE and decided by the registry's `lint` step; NODE and OTHER still
+    read by a judge, so one staging carries both tiers."""
+    assert run("--bind", consumer / "backend", consumer / "specs", CONSTRAINT,
+               FILE).returncode == 0
+    with (consumer / "backend" / FILE).open("a", encoding="utf-8") as drifted:
+        drifted.write("// more drift\n")
+    registry_deciding(consumer, CONSTRAINT)
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    return workspace
+
+
+def test_the_fold_answers_the_mechanical_tier_from_the_run(consumer):
+    staged_mechanical(consumer)
+    where = captured_run(consumer)
+    record = consumer / "siegard-reconcile" / "round.md"
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               record, "--run", where)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    [entry] = [e for e in front["nodes"] if e["node"] == CONSTRAINT]
+    assert entry["conforms"] is True
+    assert entry["encoded_at"] == [FILE]
+    assert "`lint` step of run/round passed" in entry["how"]
+    assert "no judge read this pair" in entry["how"]
+    assert "were decided by run/round rather than by a judge" in front["notes"]
+    assert run("--reconciliation", record).returncode == 0
+    assert run("--bind-record", consumer / "backend", consumer / "specs",
+               record).returncode == 0
+
+
+def test_a_red_step_binds_nothing_and_says_which_step_answered(consumer):
+    staged_mechanical(consumer)
+    where = captured_run(consumer, outcome="failed")
+    record = consumer / "siegard-reconcile" / "round.md"
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               record, "--run", where)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    [entry] = [e for e in front["nodes"] if e["node"] == CONSTRAINT]
+    assert entry["conforms"] is False
+    assert entry["observed_at"] == [FILE]
+    assert "did not pass: failed (exit 1)" in entry["how"]
+    assert run("--reconciliation", record).returncode == 0
+
+
+def test_a_mechanical_tier_with_no_run_refuses_and_names_the_step(consumer):
+    staged_mechanical(consumer)
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert "1 pair(s) are decided by a run and none was given" in done.stdout
+    assert "lint" in done.stdout
+
+
+def test_a_run_over_another_tree_or_missing_the_step_is_refused(consumer):
+    staged_mechanical(consumer)
+    record = consumer / "siegard-reconcile" / "round.md"
+    elsewhere = captured_run(consumer, slug="round", cwd=consumer)
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               record, "--run", elsewhere)
+    assert done.returncode == 1 and "two runs" in done.stdout
+    captured_run(consumer, step="typecheck")
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               record, "--run", consumer / "siegard-reconcile/round.returns/run/round")
+    assert done.returncode == 1 and "holds no step named lint" in done.stdout
+    assert not record.exists()
+
+
+def test_a_run_over_content_that_has_since_moved_is_refused(consumer):
+    """The run proved the tree as it stood. Binding what stands now on the strength of it would
+    stamp a claim over bytes the run never saw."""
+    staged_mechanical(consumer)
+    where = captured_run(consumer)
+    (consumer / "backend" / FILE).write_text("export function place() { return 2 }\n",
+                                             encoding="utf-8")
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               consumer / "siegard-reconcile" / "round.md", "--run", where)
+    assert done.returncode == 1
+    assert "changed since the staging" in done.stdout
+    assert "a fresh invocation under a new slug" in done.stdout
+
+
+def test_a_run_nothing_reads_is_refused(consumer):
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    where = captured_run(consumer)
+    done = run("--fold", consumer / "backend", consumer / "ws-round", premised(consumer),
+               consumer / "siegard-reconcile" / "round.md", "--run", where)
+    assert done.returncode == 2
+    assert "no pair of this staging is decided by a run" in done.stderr
+
+
+def test_run_is_a_mode_of_fold(consumer):
+    done = run("--stage", consumer / "backend", consumer / "specs", "x", consumer / "wsx",
+               FILE, "--run", consumer / "anywhere")
+    assert done.returncode == 2 and "--run is a mode of --fold" in done.stderr
+
+
+def test_a_file_whose_every_pair_a_run_decides_is_neither_judged_nor_unbound(consumer):
+    """It gets no judge and no pack, and the record still accounts for it — through the nodes the
+    run answered, never under `unbound`, which would claim the trace binds it nothing."""
+    third = "src/orders/ship.ts"
+    (consumer / "backend" / third).write_text("export function ship() {}\n", encoding="utf-8")
+    assert run("--bind", consumer / "backend", consumer / "specs", CONSTRAINT,
+               third).returncode == 0
+    (consumer / "backend" / third).write_text("export function ship() { return 1 }\n",
+                                              encoding="utf-8")
+    registry_deciding(consumer, CONSTRAINT)
+    done, workspace = staged(consumer, files=[FILE, SECOND, third])
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert third not in manifest["files"] and third not in manifest["unbound"]
+    assert manifest["answered_by_run"] == [third]
+
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    where = captured_run(consumer)
+    premise = dict(PREMISE, files=PREMISE["files"] + [{"path": third, "change": "unchanged"}])
+    record = consumer / "siegard-reconcile" / "round.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer, premise), record,
+               "--run", where)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    assert third in [f["path"] for f in front["files"]]
+    assert third not in (front.get("unbound") or [])
+    [entry] = [e for e in front["nodes"] if e["node"] == CONSTRAINT]
+    assert entry["encoded_at"] == [third]
 
 
 def test_the_certification_contracts_own_examples_pass_the_gate():

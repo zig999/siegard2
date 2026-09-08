@@ -288,6 +288,7 @@ RETURN_CONTRACT = PLUGIN_ROOT / "schemas" / "conformance-return.json"
 TRACE_FILE = "siegard-trace.json"
 RECONCILE_DIR = "siegard-reconcile"
 MANIFEST_FILE = "manifest.json"
+RUN_DIR = "run"
 NOWHERE = "nowhere"
 
 UNSEEN, COVERED, REPORTED = "unseen", "covered", "reported"
@@ -1700,7 +1701,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     stored_of = {given: (given if offset == "." else f"{offset}/{given}") for given in files}
 
     index: dict[str, list[tuple[str, str]]] = {}
+    bound_digest: dict[str, str] = {}
     for entry in declared.get("bindings") or []:
+        bound_digest[entry["node"]] = entry.get("digest")
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 index.setdefault(held["path"], []).append((entry["node"], held["digest"]))
@@ -1742,17 +1745,39 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return CANNOT_RUN
     certify_nodes = {entry["node"] for entry in certify_entries}
 
+    # What a run decides is not handed to a judge. A constraint some registry step decides and a
+    # node a certified test decides are both answered by running that step over the tree, and a
+    # reading of either re-decides mechanically what a run settles exactly — at a model's recall,
+    # and at the price of the whole file's delegation. Two guards hold the tier honest, and both
+    # send the pair back to a judge rather than widening it: the certification must still be live,
+    # which `test_decided` recomputes from the proof's own digests, and the node's text must not
+    # have moved since the bind — a step or a test decided the fact as the node then stated it,
+    # and neither was asked about the sentence that replaced it.
+    decided = {} if (audit or review) else decided_constraints(home, offset)
+    by_test = {} if (audit or review) else test_decided(declared, home)
+    def decides(node_id: str) -> tuple[str, str] | None:
+        if bound_digest.get(node_id) != nodes[node_id]["digest"]:
+            return None
+        if node_id in by_test:
+            return DECIDED_BY_TEST, by_test[node_id]
+        if node_id in decided:
+            return "step", decided[node_id]
+        return None
+
     owed_pairs = open_owed(home)
     judged_files: dict[str, list[str]] = {}
     all_current: list[str] = []
     unbound: list[str] = []
     omitted: list[dict] = []
     orphaned: list[dict] = []
+    mechanical: list[dict] = []
+    answered_by_run: list[str] = []
     for given in files:
         stored = stored_of[given]
         rows = sorted(index.get(stored) or [])
         assigned = []
         held_current = False
+        held_mechanical = False
         for node_id, pinned in rows:
             if node_id not in nodes:
                 orphaned.append({"node": node_id, "file": given})
@@ -1770,18 +1795,32 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                                           "the pair"})
                 held_current = True
                 continue
+            # After the omission guard and never before it: a pair nothing has to re-decide needs
+            # no run either, and a tier that claimed it would make a caller capture a run to
+            # answer a question the last bind already answered over these exact bytes.
+            run_decides = decides(node_id)
+            if run_decides is not None and node_id not in certify_nodes:
+                kind, step_name = run_decides
+                mechanical.append({"node": node_id, "file": given, "step": step_name,
+                                   "decided_by": kind})
+                held_mechanical = True
+                continue
             assigned.append(node_id)
         # Whether a file is judged and whether the trace binds anything to it are two questions.
         # A review hands an untraced file a judge over the plan's nodes, and the record still
         # owes the fact that no binding claims it: a file under `files` that no node accounts
         # for and no `unbound` names is a record the fold refuses to write. A file whose only
         # bindings are orphaned is unbound the same way — nothing standing claims it.
-        if not assigned and not held_current:
+        if not assigned and not held_current and not held_mechanical:
             unbound.append(given)
         if assigned or also:
             judged_files[given] = assigned
         elif held_current:
             all_current.append(given)
+        elif held_mechanical:
+            # Not unbound and not judged: every pair this file carries is one a run answers, so
+            # no judge is spawned for it and the record accounts for it through those nodes.
+            answered_by_run.append(given)
 
     candidates: dict[str, list[str]] = {}
     for given, assigned in judged_files.items():
@@ -1871,35 +1910,20 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                          f"{', '.join(sorted(candidates[node_id]))}")
         (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    # Named, never omitted: a pair on a constraint the registry's step decides is still handed to
-    # its file's judge, because the record has to account for the pair and nothing here runs the
-    # step. What the tier buys is the list — a caller that does run the step knows which pairs
-    # that run answers, and a reader of the report knows which readings a tool already made.
-    decided = decided_constraints(home, offset)
-    decided_pairs = sorted(({"node": node_id, "file": given, "step": decided[node_id]}
-                            for given, assigned in judged_files.items()
-                            for node_id in assigned if node_id in decided),
-                           key=lambda e: (e["file"], e["node"]))
-    # The same list for the bindings a certified test decides: read here like any other pair,
-    # named so a caller that runs the step knows which pairs the run answers.
-    by_test = test_decided(declared, home)
-    test_pairs = sorted(({"node": node_id, "file": given, "step": by_test[node_id]}
-                         for given, assigned in judged_files.items()
-                         for node_id in assigned if node_id in by_test),
-                        key=lambda e: (e["file"], e["node"]))
-
+    mechanical = sorted(mechanical, key=lambda e: (e["file"], e["node"]))
     manifest = {"slug": slug,
                 "audit": audit,
                 "review": review,
                 "also": also,
                 "specification_root": str(spec_root),
                 "files": manifest_files,
+                "digests": {given: current[stored_of[given]] for given in files},
                 "all_current": sorted(all_current),
                 "unbound": sorted(unbound),
                 "omitted": sorted(omitted, key=lambda e: (e["file"], e["node"])),
                 "orphaned": sorted(orphaned, key=lambda e: (e["file"], e["node"])),
-                "decided_by_step": decided_pairs,
-                "decided_by_test": test_pairs,
+                "mechanical": mechanical,
+                "answered_by_run": sorted(answered_by_run),
                 "certify": [{"node": e["node"], "proof": e["proof"],
                              "proof_resolved": e["proof_resolved"], "step": e["step"],
                              "pack": e["pack"]} for e in certify_entries],
@@ -1934,19 +1958,20 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
               f"no judge is handed those, no bind repairs them, and --prune is their route:")
         for entry in orphaned:
             print(f"    {entry['node']} — bound to {entry['file']}")
-    if decided_pairs:
-        steps = ", ".join(f"`{s}`" for s in sorted({e["step"] for e in decided_pairs}))
-        print(f"  {len(decided_pairs)} pair(s) sit on a constraint a registry step decides ({steps}); "
-              f"each is read here like any other pair, and the step's run over the tree is what "
-              f"decides it — the manifest names them under `decided_by_step`:")
-        for entry in decided_pairs:
-            print(f"    {entry['node']} — bound to {entry['file']} (step `{entry['step']}`)")
-    if test_pairs:
-        print(f"  {len(test_pairs)} pair(s) sit on a binding a certified test decides; each is "
-              f"read here like any other pair, and the step's run is what decides it — the "
-              f"manifest names them under `decided_by_test`:")
-        for entry in test_pairs:
-            print(f"    {entry['node']} — bound to {entry['file']} (step `{entry['step']}`)")
+    if mechanical:
+        steps = sorted({entry["step"] for entry in mechanical})
+        print(f"  {len(mechanical)} pair(s) are decided by a run, not by a judge — no judge is "
+              f"handed one, and the fold answers each from the run you capture. Run "
+              f"{', '.join(f'`{s}`' for s in steps)} into "
+              f"{returns_dir}, then pass --run to the fold:")
+        for entry in mechanical:
+            what = ("a certified test decides it" if entry["decided_by"] == DECIDED_BY_TEST
+                    else "a registry step decides the constraint")
+            print(f"    {entry['node']} — bound to {entry['file']}: {what} (step "
+                  f"`{entry['step']}`)")
+        print(f"    python3 -B {Path(__file__).resolve().parent / 'run.py'} {returns_dir} "
+              f"--run {slug} --cwd {target.resolve()} --timeout-seconds <the registry's bound> "
+              + " ".join(f'--step {s}="<the registry\'s command>"' for s in steps))
     if certify_entries:
         print(f"  {len(certify_entries)} certification(s) staged — one coverage-auditor "
               f"delegation each, over the node's pack and its proof; save each return verbatim at "
@@ -2017,7 +2042,36 @@ def certification_problems(front, node_id: str, proof: list[str]) -> list[str]:
     return problems
 
 
-def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: Path) -> int:
+def run_problems(captured: dict, target: Path, steps: set[str]) -> list[str]:
+    """Every way one captured run fails to answer for this reconciliation's mechanical tier.
+
+    A run is evidence exactly where it ran: the same command in two trees is two runs, so a run
+    whose `cwd` is not this target answers about a tree nobody staged. And the tier is answered
+    per step rather than by the run's own outcome — a run that stopped at a failed step never
+    attempted the later ones, and a step never attempted decided nothing either way."""
+    problems = []
+    where = captured.get("cwd")
+    if not isinstance(where, str) or Path(where).resolve() != target.resolve():
+        problems.append(f"the run records cwd {where!r} and this reconciliation is over "
+                        f"{target.resolve()}; the same command in two trees is two runs")
+    attempted = {step["name"] for step in captured.get("steps") or []
+                 if isinstance(step, dict) and isinstance(step.get("name"), str)}
+    missing = sorted(steps - attempted)
+    if missing:
+        problems.append(f"the run holds no step named {', '.join(missing)}; the mechanical tier "
+                        f"is answered by those steps and a run without one answers nothing for it")
+    return problems
+
+
+def step_outcomes(captured: dict) -> dict[str, dict]:
+    """Each step of a captured run by name, so a pair reads the outcome of the step that decides
+    it rather than the run's own — the two differ the moment a run stops at a failure."""
+    return {step["name"]: step for step in captured.get("steps") or []
+            if isinstance(step, dict) and isinstance(step.get("name"), str)}
+
+
+def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: Path,
+                 run_dir: Path | None = None) -> int:
     """Write the reconciliation record from the delegations' saved returns, mechanically.
 
     Every rule here is a fold over structured answers, applied the same way every time: a node
@@ -2073,7 +2127,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             else:
                 problems.append("premise: every `files` entry carries `path` and `change`")
     every_named = (set(manifest["files"]) | set(manifest["all_current"])
-                   | set(manifest["unbound"]))
+                   | set(manifest["unbound"]) | set(manifest.get("answered_by_run") or []))
     if not problems:
         absent = sorted(every_named - set(named))
         stray = sorted(set(named) - every_named)
@@ -2097,8 +2151,11 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     expected = {return_name(given): given for given in manifest["files"]}
     certify_expected = {CERTIFY_PREFIX + e["node"].replace("/", "__") + ".yaml": e
                         for e in manifest.get("certify") or []}
+    # `run.py`'s own directory lives here too, because the runs a reconciliation captures are
+    # evidence of the same kind as the returns and outlive the workspace the same way.
     stray = sorted(p.name for p in returns_dir.iterdir()
-                   if p.name not in expected and p.name not in certify_expected)
+                   if p.name not in expected and p.name not in certify_expected
+                   and p.name != RUN_DIR)
     if stray:
         print(f"cannot fold: {returns_dir} holds {', '.join(stray)}, which no staged file "
               f"explains; a return nobody staged is an answer to a question nobody asked")
@@ -2147,6 +2204,47 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
               f"fixed — an unusable return is never repaired here, and a follow-up question to "
               f"the delegation that already answered is not a fresh judgment.")
         return 1
+
+    # The mechanical tier is answered by a run, and the run is refused before anything is written
+    # where it cannot answer: absent while the tier is not, over another tree, missing a step the
+    # tier names, or captured over content that has moved since. The last is the one that matters
+    # most — a run proved the tree as it stood, and binding what stands now on the strength of it
+    # would stamp a claim over bytes the run never saw.
+    tier = manifest.get("mechanical") or []
+    steps_named = {entry["step"] for entry in tier}
+    captured: dict | None = None
+    if tier:
+        if run_dir is None:
+            print(f"cannot fold: {len(tier)} pair(s) are decided by a run and none was given; "
+                  f"capture {', '.join(sorted(steps_named))} with bin/run.py into "
+                  f"{returns_dir} and pass --run <its directory>")
+            return 1
+        record_json = run_dir / "run.json"
+        if not record_json.is_file():
+            print(f"cannot fold: {record_json} does not exist; --run names a directory bin/run.py "
+                  f"wrote", file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            captured = json.loads(record_json.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as broken:
+            print(f"cannot fold: {record_json} does not parse: {broken}", file=sys.stderr)
+            return CANNOT_RUN
+        held = run_problems(captured, target, steps_named)
+        moved = sorted(given for given, digest in (manifest.get("digests") or {}).items()
+                       if not (target / given).is_file()
+                       or spec.digest_of(target / given) != digest)
+        if moved:
+            held.append(f"{', '.join(moved)} changed since the staging, so the run answered over "
+                        f"content this fold would not bind; the route is a fresh invocation under "
+                        f"a new slug, never a bind around the run")
+        if held:
+            for problem in held:
+                print(f"cannot fold: {problem}")
+            return 1
+    elif run_dir is not None:
+        print(f"cannot fold: --run was given and no pair of this staging is decided by a run; a "
+              f"run nothing reads is evidence for a question nobody asked", file=sys.stderr)
+        return CANNOT_RUN
 
     batch_nodes = {node for entry in manifest["files"].values() for node in entry["nodes"]}
     against: dict[str, list[tuple[str, dict]]] = {}
@@ -2218,6 +2316,37 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             entry["collateral"] = True
         entries.append(entry)
 
+    # The mechanical tier's own entries, written from the run and from nothing else. A node here
+    # was handed no judge, so there is no reading to fold: what the step's outcome says is the
+    # whole answer, and it is said per step because a run that stopped at a failure never
+    # attempted what came after it.
+    outcomes = step_outcomes(captured) if captured is not None else {}
+    run_named = captured.get("run") if captured is not None else None
+    by_run: dict[str, list[dict]] = {}
+    for pair in tier:
+        by_run.setdefault(pair["node"], []).append(pair)
+    for node, pairs in sorted(by_run.items()):
+        step_name = pairs[0]["step"]
+        outcome = outcomes.get(step_name, {})
+        what = ("a certified test decides this node" if pairs[0]["decided_by"] == DECIDED_BY_TEST
+                else "a registry step decides this constraint")
+        where = sorted(pair["file"] for pair in pairs)
+        if outcome.get("outcome") == "passed":
+            entries.append({
+                "node": node, "conforms": True,
+                "how": f"{what}, and the `{step_name}` step of {run_named} passed over the tree "
+                       f"as these files stand: {outcome.get('command')} — no judge read this "
+                       f"pair, and the run is the whole of what answered it",
+                "encoded_at": where})
+        else:
+            entries.append({
+                "node": node, "conforms": False,
+                "how": f"{what}, and the `{step_name}` step of {run_named} did not pass: "
+                       f"{outcome.get('outcome')} (exit {outcome.get('exit_code')}) over "
+                       f"{outcome.get('command')} — the run is the answer, and what the step "
+                       f"printed is in the run's own log",
+                "observed_at": where})
+
     # A certification lands on a node only where the auditor answered `covered` and the node's own
     # reading cleared it. Anything else is said in the notes and writes nothing: a certification
     # is a claim about what decides a binding, and a binding the judgment refused has none.
@@ -2262,6 +2391,12 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
 
     notes = [f"Judged by {len(returns)} delegation(s), one per file; folded mechanically by "
              f"trace.py --fold from the returns under {RECONCILE_DIR}/{manifest['slug']}.returns/."]
+    if tier:
+        notes.append(
+            f"{len(tier)} pair(s) over {len(by_run)} node(s) were decided by {run_named} rather "
+            f"than by a judge — a registry step decides the constraint, or a certified test "
+            f"decides the node — with step(s) {', '.join(sorted(steps_named))}. No delegation read "
+            f"them; the run's own log is the evidence, and it sits beside these returns.")
     notes += certification_notes
     if manifest.get("audit"):
         notes.append("Staged as an audit: the source did not drift — every pair the trace held "
@@ -2665,6 +2800,18 @@ def main() -> int:
             return CANNOT_RUN
         also.append(args[at + 1])
         del args[at:at + 2]
+    captured_run: Path | None = None
+    if "--run" in args:
+        at = args.index("--run")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --run takes the directory bin/run.py wrote", file=sys.stderr)
+            return CANNOT_RUN
+        captured_run = Path(args[at + 1])
+        del args[at:at + 2]
+        if "--run" in args:
+            print("cannot run: --run is given once; one run answers this fold's mechanical tier",
+                  file=sys.stderr)
+            return CANNOT_RUN
     certify: Path | None = None
     if "--certify" in args:
         at = args.index("--certify")
@@ -2716,6 +2863,10 @@ def main() -> int:
     if also and not do_review:
         print("cannot run: --node is a mode of --stage --review; a reconciliation's node set is "
               "the trace's alone", file=sys.stderr)
+        return CANNOT_RUN
+    if captured_run is not None and not do_fold:
+        print("cannot run: --run is a mode of --fold; it names the run that answers the "
+              "mechanical tier a staging separated", file=sys.stderr)
         return CANNOT_RUN
     if certify is not None and (not do_stage or do_audit or do_review):
         print("cannot run: --certify is a mode of --stage alone; an audit re-reads claims and a "
@@ -2779,10 +2930,11 @@ def main() -> int:
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):
             print("cannot run: expected --fold <target-root> <workspace-dir> <premise-file> "
-                  "<record>", file=sys.stderr)
+                  "<record> [--run <run-dir>]", file=sys.stderr)
             return CANNOT_RUN
         target, workspace, premise, record = args
-        return fold_returns(Path(target), Path(workspace), Path(premise), Path(record))
+        return fold_returns(Path(target), Path(workspace), Path(premise), Path(record),
+                            captured_run)
 
     if do_bind:
         if len(args) < 4:
