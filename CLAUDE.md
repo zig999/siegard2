@@ -84,8 +84,11 @@ it in the commit message.
 
 Operational time is not history. A consumer project's own lifecycle — an earlier bind, a node the
 specification no longer holds, a plan evolving toward closure — is what these artifacts exist to
-describe, and stays. And this boundary binds `src/` alone: this file, the repository's own
-schemas and its tests are the maintainer's memory, and may say what happened.
+describe, and stays. And this boundary binds `src/` alone: this file, `specs/`, the repository's
+own schemas and its tests are the maintainer's memory, and may say what happened. What a
+specification says about what happened is not quotable: the `«…»` a distributed artifact carries
+beside a citation is the requirement's statement, and it crosses into `src/` as shipped text — a
+history sentence is a substring the test accepts and a history the distribution then carries.
 
 ## Change size
 
@@ -101,6 +104,10 @@ When unclear, treat the change as ordinary and say so.
   persisted state or source before acting on it.
 - Decide mechanically decidable checks in hooks or scripts. Use agents for work that genuinely requires
   model judgment.
+- What no mechanism decides is not left unmeasured: a script reports it, names the far end of the
+  distribution so a reader can open it, and refuses nothing on a threshold this repository invented.
+  A limit stated nowhere is a limit nobody can dispute, and a report that always finds something is
+  a floor, not a finding.
 - Record the inputs, outputs, evidence, and contract version needed to reproduce a decision.
 - A proposal declined is recorded with its reason and the criterion that would reverse it; a
   decline nobody can reopen is a decision nobody can reproduce.
@@ -108,6 +115,15 @@ When unclear, treat the change as ordinary and say so.
   read from a record is not a figure read from what ran, and the two disagree; where a later
   measurement supersedes an earlier one, the change corrects it where it was recorded rather than
   leaving two numbers for the next reader to choose between.
+- A proposal to add a field, a check, a channel or an agent first names what already exists for the
+  need and shows why it does not suffice — read from that thing's record, never from its
+  description. A mechanism's prompt or docstring is what it says it does; its returns, its outputs
+  and its history are what it did, and the two disagree often enough that a proposal grounded in
+  the first alone is a proposal to build a second copy of the second.
+- A red suite stops the change until it is green on the change's own terms. A test anchored on
+  words the change rewrote is re-anchored on the new words and never loosened to pass; a test
+  asserting that something is absent is re-read whenever the words it looks for change, because
+  "not found" is true of a fragment that no longer exists and proves nothing about what replaced it.
 
 ## Execution authority
 
