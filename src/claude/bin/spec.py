@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a Siegard specification against the five-class metamodel, and derive its projections.
 
-The path is the identity (SPEC-003 R1). `domain/<context>/<slug>.md` is a Domain Model element
+«Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1). `domain/<context>/<slug>.md` is a Domain Model element
 and `domain/<context>/_context.md` its context descriptor; `rules/`, `scenarios/` and
 `contracts/` follow the same shape; `constraints/<slug>.md` is system-wide work; and
 `decision-log.md` at the root is the one mandatory non-normative artifact. No file carries an
@@ -10,16 +10,19 @@ id, a name or a class field, so none can disagree with where it sits.
 **The schema decides one file; this script decides what needs two.** Per-file validation is
 `schemas/spec/*.json` applied as written. On top run the checks no per-file schema can express:
 every reference resolves and lands on the class the field demands, an attribute never points at
-an identity-bearing element and a relationship never points at a value (one home per fact,
-SPEC-002 R8), composition stays inside its aggregate, an invariant stays inside one aggregate
-and a crossing policy says how it converges, a rule's or constraint's `statement` is one
-sentence (one falsifiable condition, SPEC-003), a state machine is total over its states and
-triggers, every entity, value object and enumeration is reachable (SPEC-001 R6), and every
-decision-log entry locates a file and field that exist (SPEC-001 R9).
+an identity-bearing element and a relationship never points at a value — «No fact appears as both» (SPEC-002 R8), composition stays inside its aggregate — «composition never crosses an aggregate boundary»
+(SPEC-002 R11), a crossing policy says how it converges — «immediate across an aggregate boundary
+is a validation error» (SPEC-003 §Rule), a rule's or constraint's `statement` is one sentence —
+«One condition is one sentence» (SPEC-003 §Rule), a state machine is total over its states and
+triggers — «an undecided pairing is a decision to make and log, never silence» (SPEC-003 §Rule),
+every entity, value object and enumeration is reachable — «an element nothing reaches is bloat and
+fails validation» (SPEC-001 R6), and every decision-log entry locates a file and field that exist
+— «An entry whose location does not resolve fails validation» (SPEC-001 R9).
 
 **No provenance meta-fields.** A `gaps`, `sources`, `rationale` or `proposal` key is refused
-with its own message (SPEC-001 R8): a fact the material does not state is decided and disclosed
-in the decision log, never marked in an artifact.
+with its own message — «Artifacts carry no provenance meta-fields» (SPEC-001 R8); «What the
+material does not state, the analysis decides» (SPEC-001 R4), and the decision is disclosed in the
+log, never marked in an artifact.
 
 **Projections are derived, never edited.** `--project` writes `projections/` from the files —
 class diagrams, the context map (a context pair with no contract between them has gone separate
@@ -69,9 +72,9 @@ recomputed; a node named in prose passes through no field and no check, so it is
 separately, a bare slug two nodes answer to is reported ambiguous rather than resolved to
 whichever sorts first, and a name that resolves to no node is listed rather than dropped — an operation, a table, a set invoked normatively with nowhere to be
 is this report's finding, not its error bar. The obligations it measures against are stated where
-obligations are stated: one falsifiable condition per `statement` (SPEC-003), and prose that says
-what a node governs rather than arguing that it agrees with its neighbours (SPEC-001 R14). Both
-are judgment (SPEC-001 R11); this is the reading a reviewer judges from.
+obligations are stated: «`statement` (one falsifiable condition) is required» (SPEC-003 §Rule), and
+«Prose explains what the node governs» (SPEC-001 R14). Both are judgment — «R3, R5, R7 and R14 are
+the analysis's judgment» (SPEC-001 R11); this is the reading a reviewer judges from.
 
 **`--of` names the nodes the reader is answerable for.** Three of the sections rank and cut,
 because their whole point is the far end. Ranked over a populated root, that far end belongs to
@@ -343,11 +346,11 @@ def body_problems(cls: str, body: str) -> list[str]:
 
 
 def statement_problems(cls: str, front: object) -> list[str]:
-    """One falsifiable condition is one sentence (SPEC-003) — the half of that rule a sentence
+    """«One condition is one sentence» (SPEC-003 §Rule) — the half of that rule a sentence
     count decides. Whether one sentence carries one condition stays judgment, and `--shape`
     naming the far end of the class is where a reviewer reads it; this refuses only what no
     reading can defend, a statement that stopped and started again. No escape hatch: a second
-    sentence is a definition (an element's, SPEC-001 R3), an example (a scenario's), or a second
+    sentence is a definition — «as the name of the element it means» (SPEC-001 R3) — an example (a scenario's), or a second
     condition (a second rule's), and each of those already has a home."""
     if cls not in ("rule", "constraint") or not isinstance(front, dict):
         return []
@@ -357,9 +360,8 @@ def statement_problems(cls: str, front: object) -> list[str]:
     count = len([s for s in SENTENCE.split(statement) if s.strip()])
     if count <= 1:
         return []
-    return [f"statement carries {count} sentences; one falsifiable condition is one sentence, "
-            f"and a second sentence is a second rule, a scenario, or an element's definition "
-            f"(SPEC-003)"]
+    return [f"statement carries {count} sentences; a second sentence is a second rule, a scenario, "
+            f"or an element's definition — «One condition is one sentence» (SPEC-003 §Rule)"]
 
 
 def contracts() -> dict[str, Draft202012Validator]:
@@ -383,7 +385,8 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
         placed = classify(relative)
         if placed is None:
             problems.append(f"{relative.as_posix()}: the path computes to no identity; "
-                            f"see the layout in SPEC-003")
+                            f"«every node of every class, flat per context, kebab-case slugs, no type in "
+                            f"filenames» (SPEC-003 R4)")
             continue
         cls, context, slug = placed
         identity = "/".join(relative.with_suffix("").parts)
@@ -397,9 +400,10 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
         for field in META_FIELDS:
             if field in front:
                 problems.append(
-                    f"{identity}: carries `{field}`, a provenance meta-field; a fact the "
-                    f"material does not state is decided and disclosed in the decision log, "
-                    f"never marked in an artifact (SPEC-001 R8)")
+                    f"{identity}: carries `{field}`, a provenance meta-field — «Artifacts carry no "
+                    f"provenance meta-fields» (SPEC-001 R8); «What the material does not state, "
+                    f"the analysis decides» (SPEC-001 R4), and the decision is disclosed in the "
+                    f"decision log, never marked in an artifact")
         front = {k: v for k, v in front.items() if k not in META_FIELDS}
         for error in validators[cls].iter_errors(front):
             where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
@@ -433,7 +437,8 @@ def check_single(root: Path, named: str, validators) -> int:
     placed = classify(relative)
     if placed is None:
         print(f"{relative.as_posix()}: the path computes to no identity; "
-              f"see the layout in SPEC-003")
+              f"«every node of every class, flat per context, kebab-case slugs, no type in "
+                            f"filenames» (SPEC-003 R4)")
         return 1
     cls, _, slug = placed
     identity = "/".join(relative.with_suffix("").parts)
@@ -452,9 +457,10 @@ def check_single(root: Path, named: str, validators) -> int:
     for field in META_FIELDS:
         if field in front:
             problems.append(
-                f"carries `{field}`, a provenance meta-field; a fact the material does not "
-                f"state is decided and disclosed in the decision log, never marked in an "
-                f"artifact (SPEC-001 R8)")
+                f"carries `{field}`, a provenance meta-field — «Artifacts carry no provenance "
+                f"meta-fields» (SPEC-001 R8); «What the material does not state, the analysis "
+                f"decides» (SPEC-001 R4), and the decision is disclosed in the decision log, never "
+                f"marked in an artifact")
     checked = {k: v for k, v in front.items() if k not in META_FIELDS}
     for error in validators[cls].iter_errors(checked):
         where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
@@ -476,8 +482,9 @@ def check_single(root: Path, named: str, validators) -> int:
 
 
 def resolve(ref: str, context: str | None) -> str:
-    """A bare slug resolves inside its own context's domain directory; everything else is
-    already an identity (SPEC-003 R2)."""
+    """«A reference is a bare slug inside the same directory and the full identity everywhere
+    else» (SPEC-003 R2); a bare slug in an element's field resolves inside its own context's
+    domain directory."""
     return ref if "/" in ref else f"domain/{context}/{ref}"
 
 
@@ -611,8 +618,8 @@ def cross_problems(nodes: dict[str, dict], root: Path,
     # --- namespaces and the floor
     for reserved in (f"domain/{SYSTEM}", f"rules/{SYSTEM}"):
         if any(i.startswith(reserved + "/") for i in nodes):
-            problems.append(f"{reserved}: `{SYSTEM}` is a reserved namespace; "
-                            f"no bounded context may take that slug (SPEC-003 R3)")
+            problems.append(f"{reserved}: `{SYSTEM}` is a reserved namespace — "
+                            f"«no bounded context may take that slug» (SPEC-003 R3)")
     if SYSTEM in contexts:
         contexts.remove(SYSTEM)
     for context in contexts:
@@ -620,8 +627,8 @@ def cross_problems(nodes: dict[str, dict], root: Path,
             problems.append(f"domain/{context}: carries no _context.md; every context "
                             f"declares its descriptor")
         if not any(n["context"] == context for n in elements.values()):
-            problems.append(f"domain/{context}: holds no element; a linguistic boundary "
-                            f"with no language is not comprehensible (SPEC-001 R2)")
+            problems.append(f"domain/{context}: holds no element — «a linguistic boundary "
+                            f"with no language is not comprehensible» (SPEC-001 R2)")
     for identity, node in sorted(nodes.items()):
         if node["cls"] in ("rule", "scenario", "contract") and node["context"] != SYSTEM \
                 and node["context"] not in contexts:
@@ -640,13 +647,14 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                 continue
             kind = target["front"].get("type")
             if expectation == "value" and kind not in ("value-object", "enumeration"):
-                problems.append(f"{identity}: {at} names {target_id}, a {kind}; a link to an "
-                                f"identity-bearing element is a relationship, never an "
-                                f"attribute (SPEC-002 R8)")
+                problems.append(f"{identity}: {at} names {target_id}, a {kind}; «A link to an "
+                                      f"entity or an aggregate root is a relationship» (SPEC-002 R8), "
+                                      f"never an attribute")
             if expectation == "identity-bearing" \
                     and kind not in ("entity", "aggregate-root"):
-                problems.append(f"{identity}: {at} names {target_id}, a {kind}; a link to a "
-                                f"value is an attribute, never a relationship (SPEC-002 R8)")
+                problems.append(f"{identity}: {at} names {target_id}, a {kind}; «A link to a "
+                                      f"primitive, a value object, or an enumeration is an attribute» "
+                                      f"(SPEC-002 R8), never a relationship")
             if expectation == "root" and kind != "aggregate-root":
                 problems.append(f"{identity}: {at} names {target_id}, a {kind}; an entity "
                                 f"belongs to an aggregate root")
@@ -667,22 +675,22 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                                     f"compose into")
                 elif kind != "entity":
                     problems.append(f"{identity}: relationships[{index}] composes {target_id}, "
-                                    f"a {kind}; composition holds entities inside one "
-                                    f"aggregate (SPEC-002 R11)")
+                                    f"a {kind} — «composition holds entities inside one "
+                                          f"aggregate» (SPEC-002 R11)")
                 elif aggregate_of(target) != aggregate_of(node):
                     problems.append(f"{identity}: relationships[{index}] composes {target_id}, "
                                     f"which sits in aggregate {aggregate_of(target)}; "
-                                    f"composition never crosses an aggregate boundary "
-                                    f"(SPEC-002 R11)")
+                                    f"«composition never crosses an aggregate boundary» "
+                                          f"(SPEC-002 R11)")
             if entry.get("type") == "reference" and kind != "aggregate-root":
                 problems.append(f"{identity}: relationships[{index}] references {target_id}, "
-                                f"a {kind}; a reference points at another aggregate's root, "
-                                f"by identity (SPEC-002 R11)")
+                                f"a {kind} — «reference is how an element points at another "
+                                          f"aggregate's root, always by identity» (SPEC-002 R11)")
         for target_id, entries in sorted(by_target.items()):
             if len(entries) > 1 and any(not isinstance(e.get("role"), str) for e in entries):
                 problems.append(f"{identity}: {len(entries)} relationships share the target "
-                                f"{target_id} and not all carry `role`; unlabeled edges to "
-                                f"one target are indistinguishable (SPEC-002 R10)")
+                                f"{target_id} and not all carry `role` — «Two unlabeled edges to "
+                                    f"one target are indistinguishable» (SPEC-002 R10)")
 
     # --- rules
     machines: dict[str, list[str]] = {}
@@ -711,8 +719,9 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                                 f"consistency; what spans two aggregates cannot hold in one "
                                 f"transaction")
             elif front.get("consistency") == "immediate":
-                problems.append(f"{identity}: immediate across an aggregate boundary is a "
-                                f"boundary redrawn, not a rule (SPEC-003)")
+                problems.append(f"{identity}: «immediate across an aggregate boundary is a "
+                                    f"validation error — that demand is a boundary redrawn, not a rule» "
+                                    f"(SPEC-003 §Rule)")
         if front.get("type") == "state-machine":
             for field in ("subject", "status"):
                 if isinstance(front.get(field), str):
@@ -737,10 +746,11 @@ def cross_problems(nodes: dict[str, dict], root: Path,
         if node["cls"] == "contract":
             if node["context"] == SYSTEM and front.get("type") != "capability":
                 problems.append(f"{identity}: the `{SYSTEM}` namespace holds capabilities "
-                                f"only (SPEC-003)")
+                                    f"only — a capability «lives only in the reserved system namespace» "
+                                    f"(SPEC-003 §Contract)")
             if node["context"] != SYSTEM and front.get("type") == "capability":
-                problems.append(f"{identity}: a capability is the system's promise and lives "
-                                f"only under contracts/{SYSTEM}/ (SPEC-003)")
+                problems.append(f"{identity}: a capability is «the system's promise to its users» "
+                                    f"(SPEC-003 §Contract), and lives only under contracts/{SYSTEM}/")
             for field in ("payload", "refusal"):
                 if isinstance(front.get(field), str):
                     target = landing(front[field], field, identity, field)
@@ -754,7 +764,7 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                 if upstream is not None:
                     # A capability declares no `direction` field at all (contract.json's
                     # capability branch admits only `type` and `display`) because it is always
-                    # published — SPEC-003 states this outright. Demanding the field here would
+                    # published — «A capability is always published» (SPEC-003 §Contract). Demanding the field here would
                     # make a third-party integration impossible to model as SKILL.md's own prose
                     # requires ("a third-party system is an upstream capability"), so its absence
                     # on a capability target counts as published, not as unset.
@@ -773,22 +783,21 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                 problems.append(f"{identity}: scope names `{scope}`, "
                                 f"which domain/ does not declare")
 
-    # --- reachability (SPEC-001 R6)
+    # --- reachability — «an element nothing reaches is bloat and fails validation» (SPEC-001 R6)
     for identity, node in sorted(elements.items()):
         kind = node["front"].get("type")
         if kind in ("aggregate-root", "domain-service"):
             continue  # a boundary and a named behavior justify themselves
         if identity not in referenced:
             problems.append(f"{identity}: nothing reaches this {kind} — no attribute, "
-                            f"relationship, rule, contract or scenario names it; an element "
-                            f"answering no comprehension question does not exist "
-                            f"(SPEC-001 R6)")
+                            f"relationship, rule, contract or scenario names it; «an element "
+                            f"nothing reaches is bloat and fails validation» (SPEC-001 R6)")
 
     # --- the decision log
     log = nodes.get("decision-log")
     if log is None:
-        problems.append("decision-log.md is missing; the log is mandatory and non-normative "
-                        "(SPEC-003 R5)")
+        problems.append("decision-log.md is missing — the log «is mandatory and non-normative: it "
+                        "constrains nothing; it discloses» (SPEC-003 R5)")
     else:
         for index, entry in enumerate(listed(log["front"], "entries")):
             if not isinstance(entry, dict) or not isinstance(entry.get("location"), str):
@@ -801,14 +810,16 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                        target is not None and (root / location).is_file())
             if target is None or not (root / location).is_file():
                 problems.append(f"decision-log: entries[{index}] locates {location}, "
-                                f"which the specification does not hold (SPEC-001 R9)")
+                        f"which the specification does not hold — «An entry whose location does "
+                        f"not resolve fails validation» (SPEC-001 R9)")
                 continue
             field = entry.get("field")
             if isinstance(field, str):
                 head = field.split(".")[0].split("[")[0]
                 if head not in target["front"]:
                     problems.append(f"decision-log: entries[{index}] locates `{field}` in "
-                                    f"{location}, which declares no `{head}` (SPEC-001 R9)")
+                                    f"{location}, which declares no `{head}` — «An entry whose location does not "
+                        f"resolve fails validation» (SPEC-001 R9)")
     return problems
 
 
@@ -914,7 +925,8 @@ def prose_mentions(identity: str, body: str,
     counted apart in the report because they are different readings, and this one resolves a bare
     slug against every node's slug rather than against the citing node's own directory: what it
     models is what an agent reading this prose will open, and an agent finds the node the name
-    denotes wherever it sits. SPEC-003 R2 governs where a *declared* reference may be bare;
+    denotes wherever it sits. Where a *declared* reference may be bare is «A reference is a bare slug
+    inside the same directory and the full identity everywhere else» (SPEC-003 R2);
     nothing here checks it.
 
     What does not resolve is named by the report rather than dropped from it. A name a
@@ -1020,8 +1032,8 @@ def shape_of(nodes: dict[str, dict], declared: dict[str, set[str]] | None = None
     transitive closure of that naming. No threshold is applied and none is held here: a word
     count that refused would be a limit invented in this file, while a node at the far end of
     its own class's distribution is a node a reader can go look at. The obligation this measures
-    is stated where obligations are stated — one falsifiable condition per `statement`
-    (SPEC-003), and prose that governs rather than argues (SPEC-001 R14).
+    is stated where obligations are stated — «`statement` (one falsifiable condition) is
+    required» (SPEC-003 §Rule), and «Prose explains what the node governs» (SPEC-001 R14).
     """
     read: dict[str, dict] = {}
     for identity, node in nodes.items():
@@ -1082,7 +1094,8 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
     This reports and returns 0 whatever it finds. A specification drifts one node at a time, and
     every node is defensible on its own; what is not defensible is a distribution nobody
     measured. So the numbers are stated per class, with the far end of each named so a reader can
-    open it, and the judgment stays where SPEC-001 R11 puts it.
+    open it, and the judgment stays with the reader — «R3, R5, R7 and R14 are the analysis's
+    judgment» (SPEC-001 R11).
 
     It answers over a specification that still has problems, for the reason `--impact` does: the
     analysis that authors these files needs the reading while it is authoring them.
@@ -1140,7 +1153,7 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
     multi = sorted(identity for identity, entry in read.items()
                    if (entry["sentences"] or 0) > 1)
     print(f"\nstatement carrying more than one sentence — {len(multi)}; "
-          f"a statement states one falsifiable condition (SPEC-003):")
+          f"«One condition is one sentence» (SPEC-003 §Rule):")
     for identity in multi:
         print(f"{mark(identity)} {read[identity]['sentences']} sentences  "
               f"{read[identity]['statement_words']:>4}w  {identity}")
@@ -1152,7 +1165,8 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
                       and entry["statement_words"] is not None
                       and entry["expression_words"] > entry["statement_words"]))
     print(f"\nexpression longer than the statement it restates — {len(outgrew)}; `statement` "
-          f"governs (SPEC-003), so a restatement that grew is one that added:")
+          f"governs and `expression` «adds no obligation of its own» (SPEC-003 §Rule), so a "
+          f"restatement that grew is one that added:")
     for identity in outgrew:
         print(f"{mark(identity)} {read[identity]['statement_words']:>4}w -> "
               f"{read[identity]['expression_words']:>4}w  {identity}")
@@ -1182,8 +1196,8 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
             continue
         far = percentile(stated, 0.9)
         print(f"\n{identity}: {len(stated)} entry(ies); `why` median "
-              f"{percentile(stated, 0.5)}w, p90 {far}w, max {max(stated)}w. `why` carries one "
-              f"claim a reviewer can reject (SPEC-001 R9) — {sum(1 for w in stated if w >= far)} "
+              f"{percentile(stated, 0.5)}w, p90 {far}w, max {max(stated)}w. «`why` carries one "
+              f"claim a reviewer can reject» (SPEC-001 R9) — {sum(1 for w in stated if w >= far)} "
               f"entry(ies) at or past that p90 are where to check whether it carries an argument "
               f"about the specification's composition instead.")
 
@@ -1198,7 +1212,8 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
     phrases = shared_phrases(nodes)
     print(f"\nlongest phrase each set of nodes shares in its normative fields — {len(phrases)} "
           f"set(s), {min(len(phrases), ROWS_SHOWN)} shown, by words times holders; a clause "
-          f"two nodes both carry is one definition kept twice (SPEC-001 R3, R7):")
+          f"two nodes both carry — «a noun phrase restated across nodes is one definition kept in as "
+          f"many places as it appears» (SPEC-001 R3):")
     for holders, phrase in cut(phrases, lambda row: row[0]):
         print(f"{'>' if named & set(holders) else ' '} {len(phrase.split()):>3}w x "
               f"{len(holders):>2} node(s)  \"{phrase}\"")
@@ -1212,7 +1227,8 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
                       for i, e in read.items()) if entry["prose_gap"] > 0), reverse=True)
     print(f"\nprose naming more sibling nodes than the fields declare — {len(argued)}; the "
           f"declared side is the walk that validates it, the prose side is a text scan. A node "
-          f"declaring two and naming twenty is arguing, not governing (SPEC-001 R14):")
+          f"declaring two and naming twenty is arguing, not governing — «It does not argue that "
+          f"the node is consistent with its neighbours» (SPEC-001 R14):")
     for gap, identity in cut(argued, lambda row: (row[1],)):
         entry = read[identity]
         print(f"{mark(identity)} {len(entry['names']):>3} in prose / "
@@ -1243,8 +1259,8 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
     for entry in read.values():
         for name in entry["ambiguous"]:
             unsure[name] = unsure.get(name, 0) + 1
-    print(f"\nbare names two nodes answer to — {len(unsure)}; resolved to neither, because a "
-          f"slug is unique in a directory and not across the specification (SPEC-003 R2):")
+    print(f"\nbare names two nodes answer to — {len(unsure)}; resolved to neither, "
+          f"«A slug is unique inside a directory and not across the specification» (SPEC-003 R2):")
     for name, count in sorted(unsure.items(), key=lambda pair: (-pair[1], pair[0])):
         holds = sorted(i for i in nodes if i.rsplit("/", 1)[-1] == name)
         print(f"  {count:>4} node(s)  `{name}`  ->  {', '.join(holds)}")

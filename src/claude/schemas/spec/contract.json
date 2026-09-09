@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/contract.json",
   "title": "Contract",
-  "description": "The frontmatter of contracts/<context-slug>/<contract-slug>.md (SPEC-003). A domain event is named in the past tense and carries what happened; a command requests what may still be refused; an api publishes operations; a capability is the system's promise to its users and lives only in the reserved `system` namespace. Direction is required on event, command and api; consumed requires upstream. The context map is a projection of these declarations: a context pair with no contract between them has gone separate ways. The body carries `## Description`.",
+  "description": "The frontmatter of contracts/<context-slug>/<contract-slug>.md. A domain event is «named in the past tense» (SPEC-003 §Contract) and carries what happened; a command requests what may still be refused; an api publishes operations; a capability is the system's promise to its users and lives only in the reserved `system` namespace. Direction is required on event, command and api; consumed requires upstream. The context map is a projection of these declarations: a context pair with no contract between them has gone separate ways. The body carries `## Description`.",
   "type": "object",
   "required": ["type"],
   "additionalProperties": false,

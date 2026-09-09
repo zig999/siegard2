@@ -128,7 +128,9 @@ limit the solution. Two rules bind the analysis:
   history. Record the decided value like any other fact — no placeholder, no `unknown`, no gap
   marker — and
   append an entry to `decision-log.md`: the file and field it filled, what the material left
-  unstated, the value decided, and why (SPEC-001 R4, R9). An undecided required field is not an
+  unstated, the value decided, and why — «What the material does not state, the analysis decides»
+  (SPEC-001 R4), and the entry records «what the material left unstated, the value decided, and
+  why that value» (SPEC-001 R9). An undecided required field is not an
   honest gap — it is a floor violation, and closing it is this step's job, disclosed rather than
   silent.
   **And it is decided here, in this context** — which is the one place this route reads
@@ -146,13 +148,14 @@ limit the solution. Two rules bind the analysis:
 - **An operative claim is recorded where something can hold the specification to it.** A
   sentence that constrains the domain — a MUST, a never, an exactly-one, an at-least — is a
   Rule's `statement`, a declared attribute or relationship, a Scenario's `given`/`when`/`then`,
-  or a Contract's `payload` or `refusal`, before it is a line of prose (SPEC-001 R7). Prose
+  or a Contract's `payload` or `refusal`, before it is a line of prose — «every operative claim lives in exactly one
+  addressable home» (SPEC-001 R7). Prose
   under `## Description` and `## Responsibility` explains; it is not addressable, so an
   obligation living only there is one nothing downstream can hold the specification to.
   Catching yourself writing one into prose is the signal that you owe a field, a rule, or a
   scenario, and then you point at it.
-- **Prose says what the node governs, never that the node agrees with its neighbours**
-  (SPEC-001 R14). Write the boundary: what this node does not decide, and which node does. Do
+- **Prose says what the node governs, never that the node agrees with its neighbours** —
+  «It does not argue that the node is consistent with its neighbours» (SPEC-001 R14). Write the boundary: what this node does not decide, and which node does. Do
   not write the case that it does not contradict a sibling — that a sibling's predicate does
   not reach here, that another rule's reasoning transfers, that one gesture keeps one answer.
   The reader you are writing for opens this node to conform to it, not to review whether the
@@ -168,14 +171,15 @@ that decides what goes in it:
 - **Language first.** The material's recurring nouns, with the meanings the material gives
   them, are the candidate Domain Model elements. A term whose meaning shifts between parts of
   the material is the strongest boundary signal you will get: two meanings, two contexts.
-  There is no alias mechanism in this model (SPEC-001 R3) — where the material uses two words
+  «There is no alias mechanism» (SPEC-001 R3) in this model — where the material uses two words
   for one thing, the analysis picks the one that best carries the term as the element's name,
   and the other does not surface as a second entry. `display` exists only to correct a slug's
   derived PascalCase where it would miscase an acronym, never to record a synonym. A phrase you
   find yourself writing again in a second node is the same signal in reverse: name the thing it
   denotes and reference the name, because a definition restated is a definition kept in as many
-  places as it appears. Every name this
-  analysis writes is English (SPEC-001 R12), whatever language the material is in — an
+  places as it appears. «Every specification is written in
+  English (en-US), whatever language the material is in» (SPEC-001 R12) — every name this analysis
+  writes is English: an
   identifier, a rule's `statement`, a scenario's `given`/`when`/`then`, a decision-log entry —
   translate the term to its closest English equivalent before it becomes one of these. The
   material's own word may still appear in a `## Description`, where it helps a reader map the
@@ -250,14 +254,14 @@ that decides what goes in it:
 
 ### 3. Write
 
-The path is the identity (SPEC-003 R1). `domain/<context-slug>/<element-slug>.md` is a Domain
+«Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1). `domain/<context-slug>/<element-slug>.md` is a Domain
 Model element; `domain/<context-slug>/_context.md` is its context descriptor. `rules/`,
 `scenarios/` and `contracts/` follow the same two-part shape; `constraints/<slug>.md` is
 system-wide; `decision-log.md` sits at the root. No file carries an id, a name, a type or a
 class field — the path already says it, so nothing in the file can disagree with where it
 sits.
 
-A reference is a bare slug inside the same directory and the full identity everywhere else
+«A reference is a bare slug inside the same directory and the full identity everywhere else»
 (SPEC-003 R2). In practice: an element's `attributes` and `relationships` may name another
 element bare when it sits in the same context, because both live under the same
 `domain/<context-slug>/`. A Rule's `constrains`/`subject`/`status`, a Scenario's
@@ -295,12 +299,15 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py <specification-root>
 
 This validates every node against its class's schema, and the checks no per-file schema can
 express: every reference resolves and lands on the class the field demands, an attribute never
-points at an identity-bearing element and a relationship never points at a value (one home per
-fact, SPEC-002 R8), composition stays inside its aggregate, an invariant stays inside one
-aggregate and a crossing policy declares how it converges, a rule's or constraint's `statement`
-is one sentence (one falsifiable condition, SPEC-003), a state machine is total over its
-states and triggers, every value object and enumeration is reachable (SPEC-001 R6), and every
-decision-log entry locates a file and field that exist (SPEC-001 R9).
+points at an identity-bearing element and a relationship never points at a value — «No fact appears as both»
+(SPEC-002 R8), composition stays inside its aggregate, an invariant stays inside one
+aggregate and a crossing policy declares how it converges — «immediate across an aggregate
+boundary is a validation error» (SPEC-003 §Rule), a rule's or constraint's `statement` is one
+sentence — «One condition is one sentence» (SPEC-003 §Rule), a state machine is total over its
+states and triggers — «an undecided pairing is a decision to make and log, never silence»
+(SPEC-003 §Rule), every value object and enumeration is reachable — «an element nothing reaches
+is bloat and fails validation» (SPEC-001 R6), and every decision-log entry locates a file and
+field that exist — «An entry whose location does not resolve fails validation» (SPEC-001 R9).
 
 Report the command's output verbatim. If it exits non-zero, the run failed — fix and rerun, and
 never describe the specification as sound while it is not.
@@ -339,10 +346,10 @@ in and not the slice you added to it.
 This refuses nothing and never fails the run. It reports what each class runs to and names the
 far end, every `statement` carrying more than one sentence, every `expression` that outgrew the
 `statement` it restates, the transitive closure of each node's prose, and the names that prose
-holds and no node does. It is the reading for the judgment halves nothing can check
-(SPEC-001 R11): one falsifiable condition per `statement`, `statement` governing its
-`expression`, a recurring phrase named rather than repeated (R3), and prose that says what a
-node governs rather than arguing that it agrees with its neighbours (R14).
+holds and no node does. It is the reading for the judgment halves nothing can check — «R3, R5, R7 and R14 are the
+analysis's judgment» (SPEC-001 R11): one falsifiable condition per `statement`, `statement`
+governing its `expression`, a recurring phrase named rather than repeated — «There is no alias
+mechanism» (SPEC-001 R3) — and «Prose explains what the node governs» (SPEC-001 R14).
 
 Read it against your own nodes before reporting. Each line is a thing to open, and each has one
 answer:
@@ -361,8 +368,9 @@ answer:
 - a long `statement` no scenario pins is where a concrete case would settle it, unless the rule
   is genuinely abstract;
 - prose naming more siblings than the fields declare is a node arguing rather than governing —
-  keep the boundary, drop the argument (SPEC-001 R14);
-- a `why` at the far end of the log is where the same argument went instead (R9);
+  «A sentence carrying both keeps the boundary and drops the argument» (SPEC-001 R14);
+- a `why` at the far end of the log is where the same argument went instead — «`why` carries one claim a
+  reviewer can reject» (SPEC-001 R9);
 - a name held nowhere is a node you owe; a bare name two nodes answer to is a reference owed its
   full identity;
 - a closure reaching most of the specification is all of the above at once.
@@ -393,7 +401,8 @@ merging the two, or by narrowing one until the ground is no longer shared, or �
 genuinely differ and the difference is not visible from either node's own statement — by making
 that difference part of what each states. Never by prose in one node explaining that it is not
 the other: the reader who has to be told two nodes differ is reading two nodes that do not say
-so themselves, and every sentence spent on it is a sentence SPEC-001 R14 refuses.
+so themselves, and every sentence spent on it is a sentence the rule refuses — «It does not argue that the node is
+consistent with its neighbours» (SPEC-001 R14).
 
 A pair with such a case is the material stating two things that cannot both hold, or the
 analysis having read one part of it one way and another part a different way. Either is decided

@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/element.json",
   "title": "Domain Model element",
-  "description": "The frontmatter of one element file, domain/<context-slug>/<element-slug>.md (SPEC-002). The filename is the identity: no name field exists, and the display form is derived from the slug — `display` is declared only where the derivation would miscase an acronym, and it must reduce back to the slug. No provenance meta-fields exist (SPEC-001 R8): a fact the material does not state is decided and disclosed in the decision log. The body carries exactly two headings, `## Description` and `## Responsibility`.",
+  "description": "The frontmatter of one element file, domain/<context-slug>/<element-slug>.md — «One element, one file, flat» (SPEC-002 R1). The filename is the identity: no name field exists, and the display form is derived from the slug — `display` is declared only where the derivation would miscase an acronym, and it must reduce back to the slug. «Artifacts carry no provenance meta-fields» (SPEC-001 R8): a fact the material does not state is decided and disclosed in the decision log. The body carries exactly two headings, `## Description` and `## Responsibility`.",
   "type": "object",
   "required": ["type"],
   "additionalProperties": false,
   "properties": {
     "type": {
       "enum": ["aggregate-root", "entity", "value-object", "domain-service", "enumeration"],
-      "description": "The DDD construct this element records. Which fields it may declare follows from it (SPEC-002 R6)."
+      "description": "The DDD construct this element records. Which fields it may declare follows from it — «Fields by type» (SPEC-002 R6)."
     },
     "display": {
       "type": "string",
@@ -139,7 +139,7 @@
     "attributeType": {
       "type": "string",
       "pattern": "^([a-z0-9]+(-[a-z0-9]+)*|domain/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$",
-      "description": "A primitive (string, integer, decimal, boolean, date, datetime) or the slug of a value-object or enumeration element — bare inside the same context, full identity across contexts (SPEC-003 R2). A link to an entity or aggregate root is a relationship, never an attribute (SPEC-002 R8). `unknown` does not exist: an undetermined type is a decision to make and log."
+      "description": "A primitive (string, integer, decimal, boolean, date, datetime) or the slug of a value-object or enumeration element — «bare (`investigation`) inside the same context, qualified (`<context-slug>/<element-slug>`) across contexts» (SPEC-002 R4). «A link to an entity or an aggregate root is a relationship» (SPEC-002 R8), never an attribute. `unknown` does not exist: an undetermined type is a decision to make and log."
     },
     "attribute": {
       "type": "object",
@@ -150,11 +150,11 @@
         "type": { "$ref": "#/$defs/attributeType" },
         "required": {
           "type": "boolean",
-          "description": "The material states the attribute is always present (SPEC-002 R9). Absent means the material did not say, which is a weaker claim than declaring it optional."
+          "description": "«An attribute the material states must always be present declares `required: true`» (SPEC-002 R9). Absent means the material did not say, which is a weaker claim than declaring it optional."
         },
         "many": {
           "type": "boolean",
-          "description": "The attribute's value repeats (SPEC-002 R9). Absent means one value."
+          "description": "«An attribute whose value repeats declares `many: true`» (SPEC-002 R9); absent means one value."
         }
       }
     },
@@ -170,11 +170,11 @@
         },
         "type": {
           "enum": ["composition", "reference", "association"],
-          "description": "composition never crosses an aggregate boundary; reference points at another aggregate's root, by identity (SPEC-002 R11)."
+          "description": "«composition never crosses an aggregate boundary» (SPEC-002 R11); «reference is how an element points at another aggregate's root, always by identity» (SPEC-002 R11)."
         },
         "cardinality": {
           "enum": ["1", "0..1", "0..*", "1..*"],
-          "description": "The target end. The source end is 1 for composition and 0..* otherwise, unless source-cardinality overrides (SPEC-002 R10)."
+          "description": "The target end. «The source end is fixed by rule: `1` for `composition`, `0..*` otherwise, overridable with `source-cardinality`» (SPEC-002 R10)."
         },
         "source-cardinality": { "enum": ["1", "0..1", "0..*", "1..*"] },
         "role": {

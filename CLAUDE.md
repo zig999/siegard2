@@ -57,6 +57,12 @@ must not be the sole home of one a specification, a schema, or a validator could
 
 Use one name for a concept across specs, schemas, code, and tests.
 
+A distributed artifact that cites a specification requirement carries, in `«…»` beside the
+citation, a sentence of that requirement verbatim. The pointer is this repository's — the consumer
+never receives `specs/` — and the sentence is the consumer's: it reads the rule in the words it was
+decided in. `tests/test_spec_citations.py` keeps the two from drifting; a spec that changes its
+words leaves the test red until what cites it follows.
+
 When two sources genuinely conflict and neither wins, say so in the change: name the files and the
 incompatible statements, then proceed under the reading that constrains more. Silently merging them, or
 picking one without saying so, is the failure to avoid.

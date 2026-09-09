@@ -151,3 +151,6 @@ enforces mechanically.
    written now would otherwise never reach the one reader obliged to fix it. Each class's own far
    end is named and not only counted, wherever the class holds enough nodes to have a
    distribution at all.
+7. Every distributed artifact citing a requirement of this specification carries a sentence
+   of it verbatim in «…» beside the citation, and `tests/test_spec_citations.py` proves each
+   such quote is a substring of the requirement it names.

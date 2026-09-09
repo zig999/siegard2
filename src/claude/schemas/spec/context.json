@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/context.json",
   "title": "Context descriptor",
-  "description": "The frontmatter of domain/<context-slug>/_context.md (SPEC-003) — the one file the underscore keeps outside the element slug space. It declares no relationships: the context map is a projection derived from Contracts. The body carries `## Description` and `## Responsibility`.",
+  "description": "The frontmatter of domain/<context-slug>/_context.md — «The underscore keeps it outside the element slug space» (SPEC-003 §Domain Model). It declares no relationships: the context map is a projection derived from Contracts. The body carries `## Description` and `## Responsibility`.",
   "type": "object",
   "required": ["strategic"],
   "additionalProperties": false,

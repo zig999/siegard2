@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/constraint.json",
   "title": "Architecture Constraint",
-  "description": "The frontmatter of constraints/<constraint-slug>.md (SPEC-003). No subtypes. A constraint limits the solution space, never the domain: integration strategies, technology bounds, quality demands. What it cannot be is a domain rule wearing an architecture name — that is a Rule. Nor is it a project's own arrangement convention wearing a system-wide name: a constraint holds what the solution must have regardless of which project or stack encodes it, and how one project's source achieves that — even the identical property — is a standard's rule, never a second entry here. The body carries `## Description`.",
+  "description": "The frontmatter of constraints/<constraint-slug>.md. No subtypes. A constraint limits the solution space: integration strategies, technology bounds, quality demands — «they constrain the solution, never the domain» (SPEC-003 §Architecture Constraint). What it cannot be is a domain rule wearing an architecture name — that is a Rule. Nor is it a project's own arrangement convention wearing a system-wide name: a constraint holds what the solution must have regardless of which project or stack encodes it, and how one project's source achieves that — even the identical property — is a standard's rule, never a second entry here. The body carries `## Description`.",
   "type": "object",
   "required": ["statement", "scope"],
   "additionalProperties": false,

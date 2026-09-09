@@ -129,7 +129,7 @@ def test_a_log_entry_locating_a_missing_file_is_refused(spec_root):
             lambda f: f["entries"].append({
                 "location": "domain/troubleshooting/ghost.md", "field": "type",
                 "unstated": "x", "decided": "y", "why": "z"}))
-    assert hits(problems_of(spec_root), "which the specification does not hold (SPEC-001 R9)")
+    assert hits(problems_of(spec_root), "which the specification does not hold")
 
 
 def test_a_log_entry_locating_a_missing_field_is_refused(spec_root):
@@ -146,14 +146,14 @@ def test_a_log_entry_locating_a_missing_field_is_refused(spec_root):
 def test_an_attribute_pointing_at_an_entity_is_refused(spec_root):
     rewrite(spec_root, "domain/troubleshooting/case.md",
             lambda f: f["attributes"].append({"name": "work", "type": "investigation"}))
-    assert hits(problems_of(spec_root), "a relationship, never an attribute")
+    assert hits(problems_of(spec_root), "is a relationship» (SPEC-002 R8), never an attribute")
 
 
 def test_a_relationship_pointing_at_a_value_is_refused(spec_root):
     rewrite(spec_root, "domain/troubleshooting/case.md",
             lambda f: f["relationships"].append(
                 {"target": "case-id", "type": "association", "cardinality": "1"}))
-    assert hits(problems_of(spec_root), "an attribute, never a relationship")
+    assert hits(problems_of(spec_root), "is an attribute» (SPEC-002 R8), never a relationship")
 
 
 def test_a_dangling_reference_is_refused(spec_root):
@@ -182,7 +182,7 @@ def test_an_unreachable_element_is_refused(spec_root):
         "---\ntype: value-object\nattributes:\n  - name: value\n    type: string\n---\n\n"
         "## Description\n\nOrphaned on purpose.\n\n## Responsibility\n\nNone.\n",
         encoding="utf-8")
-    assert hits(problems_of(spec_root), "answering no comprehension question does not exist")
+    assert hits(problems_of(spec_root), "is bloat and fails validation» (SPEC-001 R6)")
 
 
 def test_a_display_that_does_not_reduce_to_the_slug_is_refused(spec_root):
@@ -966,7 +966,7 @@ def test_a_statement_carrying_two_sentences_is_refused(spec_root):
             lambda front: front.update(
                 statement="A case moves only along the declared transitions. "
                           "A transition asked of a terminal state is refused."))
-    found = hits(problems_of(spec_root), "one falsifiable condition is one sentence")
+    found = hits(problems_of(spec_root), "«One condition is one sentence» (SPEC-003 §Rule)")
     assert found and "rules/troubleshooting/case-transitions" in found[0]
     assert "2 sentences" in found[0]
 
@@ -988,7 +988,7 @@ def test_a_two_sentence_statement_is_refused_in_node_mode_too(spec_root):
                           "Nothing else moves it."))
     done = run_node("--node", "rules/troubleshooting/case-transitions.md", str(spec_root))
     assert done.returncode == 1
-    assert "one falsifiable condition is one sentence" in done.stdout
+    assert "«One condition is one sentence» (SPEC-003 §Rule)" in done.stdout
 
 
 def test_a_semicolon_passes_the_sentence_check(spec_root):
@@ -999,4 +999,4 @@ def test_a_semicolon_passes_the_sentence_check(spec_root):
             lambda front: front.update(
                 statement="A case moves only along the declared transitions; a transition "
                           "asked of a terminal state is refused."))
-    assert not hits(problems_of(spec_root), "one falsifiable condition is one sentence")
+    assert not hits(problems_of(spec_root), "«One condition is one sentence» (SPEC-003 §Rule)")

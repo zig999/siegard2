@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/rule.json",
   "title": "Rule",
-  "description": "The frontmatter of rules/<context-slug>/<rule-slug>.md (SPEC-003). Three subtypes, each changing validation: an invariant constrains inside one aggregate and holds immediately; a policy may cross aggregates or contexts and then declares consistency — immediate across an aggregate boundary is a validation error; a state-machine anchors to one aggregate root and its status enumeration, and the validator checks totality over its transition set. A rule carries no examples: a concrete case is a Scenario anchored to the rule. The body carries `## Description`.",
+  "description": "The frontmatter of rules/<context-slug>/<rule-slug>.md. Three subtypes, each changing validation: an invariant constrains inside one aggregate and holds immediately; a policy may cross aggregates or contexts and then declares consistency — immediate across an aggregate boundary is a validation error; a state-machine anchors to one aggregate root and its status enumeration, and the validator checks totality over its transition set. «A rule carries no examples: a concrete case is a Scenario anchored to the rule» (SPEC-003 §Rule). The body carries `## Description`.",
   "type": "object",
   "required": ["type", "statement"],
   "additionalProperties": false,

@@ -202,7 +202,7 @@
           "items": {
             "type": "string",
             "pattern": "^constraints/[a-z0-9]+(-[a-z0-9]+)*$",
-            "description": "An Architecture Constraint, by identity — its path from the specification root without `.md` (SPEC-003 R1)."
+            "description": "An Architecture Constraint, by identity — «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1)."
           },
           "description": "The Architecture Constraints this step holds the tree to. A constraint states what the solution must have and its `fitness` states the condition; which command checks it is one project's choice, so the join lives here and never in the node — a specification naming a step would carry an artifact the project chose, which is exactly what its nodes keep out. A step that decides one runs with the rest and is owed by every delivery like any other, so declaring it costs nothing at runtime and buys the failure a subject: a red on this step is the constraint's, not only the file's. `bin/deliver.py --standard <file> --specification <root>` resolves every identity named here — one the specification does not hold is a refusal — and says which constraints the specification holds that no step decides, which is the list of constraints held by reading alone."
         },

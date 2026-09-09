@@ -363,7 +363,7 @@
     "specNodeRef": {
       "type": "string",
       "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*)$",
-      "description": "A specification node, by identity (SPEC-003 R1) — its path from the specification root, without `.md`."
+      "description": "A specification node, by identity — «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1)."
     },
     "taskRef": {
       "type": "string",

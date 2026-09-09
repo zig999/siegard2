@@ -101,8 +101,10 @@ nothing to say carries the literal line `None.`
   relationships share a target pair or the edge needs a label — `role`. Types are the closed
   set `composition`, `reference`, `association`; cardinalities are the closed set `1`, `0..1`,
   `0..*`, `1..*` and state the target end. The source end is fixed by rule: `1` for
-  `composition`, `0..*` otherwise, overridable with `source-cardinality`.
+  `composition`, `0..*` otherwise, overridable with `source-cardinality`. Two unlabeled edges to one target are
+  indistinguishable.
 - **R11** — Every relationship is declared exactly once, on the owning or navigating side.
+  `composition` holds entities inside one aggregate.
   `composition` never crosses an aggregate boundary, and its entity target must declare
   `aggregate` naming the composing side's aggregate; `reference` is how an element points at
   another aggregate's root, always by identity.
@@ -135,3 +137,6 @@ nothing to say carries the literal line `None.`
    round-trips: every normative fact in the diagram traces to a file, and removing any R15
    input changes the output.
 3. The template `templates/domain-model-element.md` stays in step with R5–R12.
+4. Every distributed artifact citing a requirement of this specification carries a sentence
+   of it verbatim in «…» beside the citation, and `tests/test_spec_citations.py` proves each
+   such quote is a substring of the requirement it names.

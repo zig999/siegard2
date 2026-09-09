@@ -11,7 +11,7 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^/]",
-      "description": "The specification root every node below is an identity into (SPEC-003 R1), by path relative to this file's own directory. Every binding in this file traces against the one specification named here; tracing against a second one is a second trace file, never a second entry."
+      "description": "The specification root every node below is an identity into — «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1) — by path relative to this file's own directory. Every binding in this file traces against the one specification named here; tracing against a second one is a second trace file, never a second entry."
     },
     "bindings": {
       "type": "array",
@@ -28,7 +28,7 @@
         "node": {
           "type": "string",
           "minLength": 1,
-          "description": "The specification node's identity (SPEC-003 R1): its path under `specification`, without `.md`."
+          "description": "The specification node's identity — «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1): its path under `specification`."
         },
         "digest": {
           "$ref": "#/$defs/pin",

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/scenario.json",
   "title": "Scenario",
-  "description": "The frontmatter of scenarios/<context-slug>/<scenario-slug>.md (SPEC-003). No subtypes: the subject's class already distinguishes an invariant example from an end-to-end acceptance case, so a subtype would be a tag. Exactly one subject. The body carries `## Description`.",
+  "description": "The frontmatter of scenarios/<context-slug>/<scenario-slug>.md. No subtypes: «the subject's class already distinguishes an invariant example from an end-to-end acceptance case, so a subtype would be a tag» (SPEC-003 §Scenario). Exactly one subject. The body carries `## Description`.",
   "type": "object",
   "required": ["subject", "given", "when", "then"],
   "additionalProperties": false,
@@ -19,7 +19,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/identity" },
-      "description": "The identities this scenario touches beyond its subject — the references the capability map derives from (SPEC-003 R6)."
+      "description": "The identities this scenario touches beyond its subject — «the references the capability map derives from» (SPEC-003 §Scenario)."
     }
   },
   "examples": [

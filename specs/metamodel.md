@@ -211,3 +211,6 @@ layer → Architecture Constraint.
 6. A `statement` carrying more than one sentence is refused, on a Rule and on an Architecture
    Constraint alike, in the whole run and in `--node` — a fixture proves each — and the sound
    fixture carries none.
+7. Every distributed artifact citing a requirement of this specification carries a sentence
+   of it verbatim in «…» beside the citation, and `tests/test_spec_citations.py` proves each
+   such quote is a substring of the requirement it names.
