@@ -16,7 +16,7 @@
     "expression": {
       "type": "string",
       "minLength": 1,
-      "description": "The rule stated so a consumer can evaluate it."
+      "description": "The rule stated so a consumer can evaluate it. `statement` governs: this restates the condition `statement` fixes and adds no obligation of its own, because two normative fields with no precedence make which one binds a matter of which the reader opened. A claim here that no reading of `statement` carries is a `statement` owed the claim, or a second rule."
     },
     "constrains": {
       "type": "array",

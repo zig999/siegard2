@@ -71,6 +71,12 @@ R9–R10).
     rejection, and an undecided pairing is a decision to make and log, never silence.
 - **Structure** — `statement` (one falsifiable condition) is required; `expression` optional.
   A rule carries no examples: a concrete case is a Scenario anchored to the rule.
+- **`statement` governs.** Where both are declared, `expression` restates the condition
+  `statement` fixes in a form a consumer evaluates directly, and adds no obligation of its
+  own. An obligation that reaches the specification through `expression` alone is one no
+  reading of `statement` can hold the specification to, and two normative fields with no
+  precedence make which one binds a matter of which the reader opened. An `expression` whose
+  claims exceed its `statement` is a `statement` owed the claim, or a second rule.
 
 ### Scenario
 
@@ -114,7 +120,12 @@ R9–R10).
   file, identity becomes the parent's path plus a local slug, and every reference survives.
 - **R2** — A reference is a bare slug inside the same directory and the full identity
   everywhere else. Every reference must resolve; renaming a node updates every inbound
-  reference in the same change.
+  reference in the same change. A slug is unique inside a directory and not across the
+  specification, so a slug two nodes answer to is written as the full identity wherever it is
+  written — in a declared field and in prose alike. Prose is where this bites: a field's
+  reference is resolved and checked, while a bare name in a body is resolved by whoever reads
+  it, and one that two nodes answer to resolves differently for two readers. What a reader
+  cannot resolve, a report names rather than guesses.
 - **R3** — `system` is a reserved namespace: no bounded context may take that slug.
 
 ## Storage mapping
@@ -183,3 +194,10 @@ layer → Architecture Constraint.
    identical output, and removing any contributing fact changes it.
 3. SPEC-001 and SPEC-002 stay consistent with this specification; where they disagree, this
    one wins and the change updates both.
+4. A rule declaring both `statement` and `expression` states the precedence in one place: the
+   schema's own `expression` description says `statement` governs, and a fixture proves an
+   `expression` carrying an obligation no reading of its `statement` holds is a defect a reviewer
+   sees rather than a reading a consumer has to choose between.
+5. For R2: a bare slug two nodes answer to is reported ambiguous and resolved to neither — a
+   fixture with a deliberate collision across two classes proves it, because resolving to
+   whichever sorts first would be wrong in silence.

@@ -54,7 +54,7 @@
         "why": {
           "type": "string",
           "minLength": 1,
-          "description": "Why that value — the claim a reviewer can reject."
+          "description": "Why that value — the claim a reviewer can reject. One claim: what about the material or the model makes this value the right one, stated so rejecting it is a single disagreement rather than a reading. What does not belong here is the argument that the specification composes — that this node rather than a sibling is the home, that another node's reasoning transfers, that one question keeps one answer. That argument records no decided value, so it has no entry of its own and reaches the log only smuggled into an entry about something else, where it restates the prose of the node the entry locates (SPEC-001 R7, R14). Its home is the change that made it."
         }
       }
     }

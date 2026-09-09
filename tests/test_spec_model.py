@@ -695,3 +695,262 @@ def test_impact_stands_beside_no_other_flag(spec_root):
     done = run_node("--impact", "domain/troubleshooting/case", "--digest", str(spec_root))
     assert done.returncode == 2
     assert "derives nothing" in done.stderr
+
+
+# ------------------------------------------------------------------ shape
+
+
+def test_shape_reports_and_never_refuses(spec_root):
+    """The one property that separates this from every other check in this module: a
+    specification whose prose has drifted is still a sound specification, and a word count that
+    refused would be a limit invented in `spec.py` rather than stated in a specification."""
+    done = run_node("--shape", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    assert "shape:" in done.stdout
+    (spec_root / "rules/troubleshooting/case-transitions.md").write_text(
+        (spec_root / "rules/troubleshooting/case-transitions.md").read_text(encoding="utf-8")
+        + "\nA sentence naming nothing, appended a hundred times over.\n" * 100,
+        encoding="utf-8")
+    done = run_node("--shape", str(spec_root))
+    assert done.returncode == 0, "a node grown tenfold is reported, never refused"
+
+
+def test_shape_answers_over_a_specification_that_does_not_hold(spec_root):
+    """`--impact`'s own reason: the analysis authoring these files needs the reading while it is
+    authoring them, and one refused until the last file parses arrives after the decisions it
+    was for."""
+    (spec_root / "domain/monitoring/_context.md").unlink()
+    done = run_node("--shape", str(spec_root))
+    assert done.returncode == 0
+    assert "problem(s)" in done.stdout
+
+
+def test_shape_names_a_statement_carrying_more_than_one_sentence(spec_root):
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(
+                statement="A case moves only along the declared transitions. "
+                          "And a second sentence is a second condition."))
+    done = run_node("--shape", str(spec_root))
+    assert "2 sentences" in done.stdout
+    assert "rules/troubleshooting/case-transitions" in done.stdout
+
+
+def test_shape_names_a_prose_name_that_resolves_to_no_node(spec_root):
+    """The finding this report exists to surface, and the discipline `terms.py` already holds:
+    what has no definition is named, not omitted. A name a specification uses in prose and holds
+    in no node is an operation, a table or a set with nowhere to be."""
+    path = spec_root / "rules/troubleshooting/case-transitions.md"
+    path.write_text(path.read_text(encoding="utf-8")
+                    + "\nThe refusal `read-case-by-identity` answers is the registry's own.\n",
+                    encoding="utf-8")
+    done = run_node("--shape", str(spec_root))
+    assert "resolve to no node" in done.stdout
+    assert "read-case-by-identity" in done.stdout
+
+
+def test_shape_closes_a_nodes_prose_transitively(spec_root):
+    """A node naming a node that names a third is a node whose reader opens all three; the
+    closure is what says how much must be read to conform to one rule."""
+    (spec_root / "rules/troubleshooting/case-transitions.md").write_text(
+        (spec_root / "rules/troubleshooting/case-transitions.md").read_text(encoding="utf-8")
+        + "\nThis stands beside `domain/troubleshooting/hypothesis`.\n", encoding="utf-8")
+    (spec_root / "domain/troubleshooting/hypothesis.md").write_text(
+        (spec_root / "domain/troubleshooting/hypothesis.md").read_text(encoding="utf-8")
+        + "\nAnd that one beside `domain/troubleshooting/resolution`.\n", encoding="utf-8")
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    read = spec.shape_of(nodes)
+    closure = read["rules/troubleshooting/case-transitions"]["closure"]
+    assert "domain/troubleshooting/hypothesis" in closure
+    assert "domain/troubleshooting/resolution" in closure, \
+        "the closure stopped at one hop; a reader does not"
+
+
+def test_shape_stands_beside_no_other_derived_flag(spec_root):
+    done = run_node("--shape", "--digest", str(spec_root))
+    assert done.returncode == 2
+    assert "mutually exclusive" in done.stderr
+
+
+def test_shape_names_an_expression_that_outgrew_its_statement(spec_root):
+    """`statement` governs (SPEC-003). Nothing can decide by reading whether an `expression`
+    added an obligation, but a restatement longer than what it restates is the shape that does,
+    and naming it is what makes the precedence reviewable instead of merely declared."""
+    rewrite(spec_root, "rules/troubleshooting/hypothesis-requires-evidence.md",
+            lambda front: front.update(
+                expression="For every hypothesis h of a case c, h holds at least one piece of "
+                            "evidence before c resolves, and the resolution is refused "
+                            "otherwise with an error the caller can act on."))
+    done = run_node("--shape", str(spec_root))
+    assert "expression longer than the statement" in done.stdout
+    assert "rules/troubleshooting/hypothesis-requires-evidence" in done.stdout
+
+
+def test_shape_fires_on_nothing_over_a_sound_specification(spec_root):
+    """The floor that makes every section above a finding rather than a baseline: over the sound
+    fixture, each judgment section reports `(none)`. A report that always says something is one
+    nobody reads twice."""
+    done = run_node("--shape", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    for section in ("statement carrying more than one sentence",
+                    "expression longer than the statement",
+                    "normative field speaking about the specification",
+                    "longest phrase each set of nodes shares",
+                    "prose naming more sibling nodes",
+                    "resolve to no node",
+                    "bare names two nodes answer to"):
+        at = done.stdout.index(section)
+        assert "(none)" in done.stdout[at:at + 700], \
+            f"'{section}' reports something over a sound specification; it is a floor, not a find"
+
+
+def test_shape_names_a_clause_two_rules_both_carry(spec_root):
+    """R3 and R7 leave restatement to judgment and nothing looked for it. A clause two rules both
+    carry is one definition kept in two places, and no reference resolves it because neither node
+    declares anything about the other."""
+    shared = ("A hypothesis MUST hold at least one piece of evidence before its case resolves, "
+              "and the resolution is refused with a validation error naming the hypothesis.")
+    for relative in ("rules/troubleshooting/hypothesis-requires-evidence.md",
+                     "rules/troubleshooting/case-transitions.md"):
+        rewrite(spec_root, relative, lambda front: front.update(statement=shared))
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("longest phrase each set of nodes shares")
+    found = done.stdout[at:at + 900]
+    assert "2 node(s)" in found
+    assert "rules/troubleshooting/case-transitions" in found
+
+
+def test_shape_names_prose_that_outnumbers_the_declared_references(spec_root):
+    """SPEC-001 R14's own reading. The declared count comes from the walk that validates it —
+    `cross_problems`'s `record` — so the two cannot disagree about which fields carry one."""
+    path = spec_root / "rules/troubleshooting/case-transitions.md"
+    path.write_text(path.read_text(encoding="utf-8") + "\nIt sits beside "
+                    "`domain/troubleshooting/hypothesis`, `domain/troubleshooting/evidence`, "
+                    "`domain/troubleshooting/resolution` and `domain/troubleshooting/diagnostics`, "
+                    "and contradicts none of them.\n", encoding="utf-8")
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("prose naming more sibling nodes")
+    assert "rules/troubleshooting/case-transitions" in done.stdout[at:at + 900]
+
+
+def test_shape_names_a_long_statement_no_scenario_pins(spec_root):
+    """Named against the class's own p90, never an invented word count: the threshold is what
+    this specification's own rules run to, so the list is the far end of one corpus rather than
+    a limit `spec.py` holds."""
+    long_one = " ".join(["A case version released while its manifest still holds a draft "
+                         "revision is refused by name"] * 12)
+    rewrite(spec_root, "rules/troubleshooting/alert-opens-case.md",
+            lambda front: front.update(statement=long_one))
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("with no scenario anchored")
+    assert "rules/troubleshooting/alert-opens-case" in done.stdout[at:at + 900]
+
+
+def test_shape_names_a_normative_field_talking_about_itself(spec_root):
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(
+                statement="A case moves only along the declared transitions, and every claim "
+                          "that statement makes this specification already holds elsewhere."))
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("normative field speaking about the specification")
+    assert "that statement" in done.stdout[at:at + 500]
+
+
+def test_a_bare_slug_two_nodes_answer_to_resolves_to_neither(spec_root):
+    """Silently picking whichever sorts first puts a node in the reader's closure the prose may
+    never have meant. `terms.py` holds the same rule over the framework's own vocabulary: one
+    word with two senses is two entries named apart."""
+    (spec_root / "contracts/troubleshooting/evidence-type.md").write_text(
+        "---\ntype: domain-event\ndirection: published\n"
+        "payload: domain/troubleshooting/evidence\n---\n\n"
+        "## Description\n\nA collision on purpose: the enumeration and the event share a slug.\n",
+        encoding="utf-8")
+    path = spec_root / "rules/troubleshooting/case-transitions.md"
+    path.write_text(path.read_text(encoding="utf-8")
+                    + "\nThis reads `evidence-type` without saying which.\n", encoding="utf-8")
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    read = spec.shape_of(nodes)
+    entry = read["rules/troubleshooting/case-transitions"]
+    assert "evidence-type" in entry["ambiguous"]
+    assert not any(name.endswith("/evidence-type") for name in entry["names"]), \
+        "an ambiguous bare slug was resolved to one of its holders"
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("bare names two nodes answer to")
+    assert "`evidence-type`" in done.stdout[at:at + 400]
+
+
+def test_shape_reports_how_far_the_logs_why_runs(spec_root):
+    """SPEC-001 R9 bounds `why` to one claim a reviewer can reject. The concord argument R14
+    keeps out of a node's prose has no entry of its own, so the only way it reaches the log is
+    inside the `why` of an entry about something else — which is where the report points."""
+    rewrite(spec_root, "decision-log.md",
+            lambda front: front["entries"].append({
+                "location": "domain/troubleshooting/case.md", "field": "type",
+                "unstated": "x", "decided": "aggregate-root",
+                "why": " ".join(["This rule is the home rather than a sibling's clause"] * 40)}))
+    done = run_node("--shape", str(spec_root))
+    assert done.returncode == 0
+    at = done.stdout.index("decision-log:")
+    found = done.stdout[at:at + 500]
+    assert "`why` median" in found and "entry(ies)" in found
+
+
+def test_shape_shows_a_scoped_node_past_the_cut(spec_root):
+    """The failure this closes: three sections rank and cut, and over a populated root the far
+    end belongs to what was written before — so a node written now sits below the cut and never
+    reaches the one reader obliged to fix it. Ranked last here on purpose."""
+    six = ("`domain/troubleshooting/case`, `domain/troubleshooting/evidence`, "
+           "`domain/troubleshooting/hypothesis`, `domain/troubleshooting/resolution`, "
+           "`domain/troubleshooting/diagnostics` and `domain/troubleshooting/case-status`")
+    mine = spec_root / "rules/troubleshooting/case-transitions.md"
+    for other in sorted(p for p in spec_root.rglob("*.md")
+                        if p != mine and p.name != "decision-log.md"):
+        other.write_text(other.read_text(encoding="utf-8")
+                         + f"\nIt stands beside {six}, contradicting none.\n", encoding="utf-8")
+    mine.write_text(mine.read_text(encoding="utf-8")
+                    + "\nIt stands beside `domain/troubleshooting/case`, "
+                      "`domain/troubleshooting/evidence` and "
+                      "`domain/troubleshooting/hypothesis`.\n", encoding="utf-8")
+
+    def rows(out: str) -> str:
+        at = out.index("prose naming more sibling nodes")
+        return out[at:out.index("\n\n", at)]
+
+    at_large = rows(run_node("--shape", str(spec_root)).stdout)
+    done = run_node("--shape", "--of", "rules/troubleshooting/case-transitions", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    scoped = rows(done.stdout)
+    assert "rules/troubleshooting/case-transitions" not in at_large,         "the fixture no longer ranks the scoped node below the cut; the test has lost its subject"
+    assert "rules/troubleshooting/case-transitions" in scoped,         "a scoped node was cut from the ranking it was written into"
+    assert ">" in scoped.split("rules/troubleshooting/case-transitions")[0].splitlines()[-1],         "a scoped row is not marked"
+
+
+def test_shape_keeps_the_totals_of_the_whole_root_when_scoped(spec_root):
+    """Scoping changes what is shown and never what is counted: a report narrowing its counts to
+    the slice would call a node unremarkable by comparing it only to its own siblings."""
+    at_large = run_node("--shape", str(spec_root))
+    scoped = run_node("--shape", "--of", "rules/troubleshooting/case-transitions",
+                      str(spec_root))
+    for line in at_large.stdout.splitlines():
+        if line.startswith("shape:") or line.startswith("rule "):
+            assert line in scoped.stdout, f"scoping moved a total: {line!r}"
+
+
+def test_shape_names_the_far_end_of_each_class(spec_root):
+    """`percentile` prints a number a node actually has; this is the rest of that sentence. A
+    distribution nobody can open is the measurement this reading exists to replace."""
+    done = run_node("--shape", str(spec_root))
+    header = done.stdout.index("class ")
+    table = done.stdout[header:done.stdout.index("statement carrying")]
+    assert "at or past p90" in table
+    assert "log " in table and "at or past p90: 45428w" not in table, \
+        "a class of one node has no distribution to sit at the far end of"
+
+
+def test_of_refuses_an_identity_that_names_no_file(spec_root):
+    done = run_node("--shape", "--of", "rules/troubleshooting/nope", str(spec_root))
+    assert done.returncode == 2 and "names no file" in done.stderr
+
+
+def test_of_scopes_shape_and_stands_beside_nothing_else(spec_root):
+    done = run_node("--of", "rules/troubleshooting/case-transitions", str(spec_root))
+    assert done.returncode == 2 and "stands beside nothing else" in done.stderr

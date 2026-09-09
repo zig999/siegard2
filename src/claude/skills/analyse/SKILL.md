@@ -151,6 +151,16 @@ limit the solution. Two rules bind the analysis:
   obligation living only there is one nothing downstream can hold the specification to.
   Catching yourself writing one into prose is the signal that you owe a field, a rule, or a
   scenario, and then you point at it.
+- **Prose says what the node governs, never that the node agrees with its neighbours**
+  (SPEC-001 R14). Write the boundary: what this node does not decide, and which node does. Do
+  not write the case that it does not contradict a sibling — that a sibling's predicate does
+  not reach here, that another rule's reasoning transfers, that one gesture keeps one answer.
+  The reader you are writing for opens this node to conform to it, not to review whether the
+  specification composes; the argument that it composes belongs to the log entry or the change
+  that made it. The tell is a `## Description` that names more sibling nodes than the node's
+  own fields do: each name you reach for is a sentence defending a decision instead of stating
+  one, and a node whose prose grows with the specification around it is a node arguing rather
+  than governing.
 
 How to decide, kind by kind. The schema says what each class may declare; this is the judgment
 that decides what goes in it:
@@ -158,10 +168,13 @@ that decides what goes in it:
 - **Language first.** The material's recurring nouns, with the meanings the material gives
   them, are the candidate Domain Model elements. A term whose meaning shifts between parts of
   the material is the strongest boundary signal you will get: two meanings, two contexts.
-  There is no alias mechanism in this model — where the material uses two words for one thing,
-  the analysis picks the one that best carries the term as the element's name, and the other
-  does not surface as a second entry. `display` exists only to correct a slug's derived
-  PascalCase where it would miscase an acronym, never to record a synonym. Every name this
+  There is no alias mechanism in this model (SPEC-001 R3) — where the material uses two words
+  for one thing, the analysis picks the one that best carries the term as the element's name,
+  and the other does not surface as a second entry. `display` exists only to correct a slug's
+  derived PascalCase where it would miscase an acronym, never to record a synonym. A phrase you
+  find yourself writing again in a second node is the same signal in reverse: name the thing it
+  denotes and reference the name, because a definition restated is a definition kept in as many
+  places as it appears. Every name this
   analysis writes is English (SPEC-001 R12), whatever language the material is in — an
   identifier, a rule's `statement`, a scenario's `given`/`when`/`then`, a decision-log entry —
   translate the term to its closest English equivalent before it becomes one of these. The
@@ -179,6 +192,15 @@ that decides what goes in it:
   together in one transaction; the default size is small. `composition` holds an entity inside
   its root's aggregate and never crosses it; `reference` is how an element points at another
   aggregate's root, always by identity, never by containment.
+- **A set of conditions several rules decide is an enumeration they constrain.** Where you find
+  yourself enumerating the same conditions inside a second `statement` — the readings a
+  separately-issued read passes through, the ways a collection can end, the states a submission
+  is seen in — that set is an element, and each rule then names its value rather than restating
+  the list. `constrains` admits it: an enumeration a rule names is reachable by that naming
+  alone, so this needs no field that does not exist. What it buys is not brevity. A rule stating
+  a value of a declared set is a rule whose coverage of that set is visible; a rule restating the
+  set in prose leaves the condition it forgot indistinguishable from the condition it decided to
+  say nothing about, and there is no reading of prose that recovers the difference.
 - **One rule, one falsifiable statement.** An invariant holds inside one aggregate,
   immediately. A policy may cross an aggregate or a context and must then declare
   `consistency` — `eventual`, because an immediate demand across a boundary is the boundary
@@ -297,6 +319,54 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --project <specification-root>
 diagram, the capability map and the overview are all derived, and an edit to one is a fact with
 no node behind it. Report what was written.
 
+Then read what the prose has become:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --shape --of <identity>[,<identity>...] <specification-root>
+```
+
+`--of` names every node this invocation wrote or changed — the same set step 6 reports. Pass it.
+Three of the sections rank and cut, and over a populated root that ranking belongs to what was
+written before: a node you wrote sits below the cut and never reaches you, the one reader obliged
+to fix it. A node named here is marked `>` and shown wherever it appears, past any cut. The
+totals stay the whole root's, because what makes a node remarkable is the distribution it sits
+in and not the slice you added to it.
+
+This refuses nothing and never fails the run. It reports what each class runs to and names the
+far end, every `statement` carrying more than one sentence, every `expression` that outgrew the
+`statement` it restates, the transitive closure of each node's prose, and the names that prose
+holds and no node does. It is the reading for the judgment halves nothing can check
+(SPEC-001 R11): one falsifiable condition per `statement`, `statement` governing its
+`expression`, a recurring phrase named rather than repeated (R3), and prose that says what a
+node governs rather than arguing that it agrees with its neighbours (R14).
+
+Read it against your own nodes before reporting. Each line is a thing to open, and each has one
+answer:
+
+- a node of yours at or past its class's p90 is a node to reread whole, before any single
+  section explains it. The class table is the only line that measures the specification drifting
+  rather than one node being wrong, and drift has no defect to point at: every node on that list
+  was defensible when it was written. Ask of yours what a reader gets from its length that the
+  fields do not already carry, and cut what has no answer;
+- a `statement` in two sentences is two conditions — split it, or drop the second;
+- an `expression` longer than its `statement` has added rather than restated — the claim moves
+  into the `statement` or becomes its own rule;
+- a phrase two nodes share is one definition kept twice — name what it denotes and reference the
+  name, and take the pair to the cross-check below;
+- a normative field speaking about the specification is not a falsifiable condition — cut the
+  remark;
+- a long `statement` no scenario pins is where a concrete case would settle it, unless the rule
+  is genuinely abstract;
+- prose naming more siblings than the fields declare is a node arguing rather than governing —
+  keep the boundary, drop the argument (SPEC-001 R14);
+- a `why` at the far end of the log is where the same argument went instead (R9);
+- a name held nowhere is a node you owe; a bare name two nodes answer to is a reference owed its
+  full identity;
+- a closure reaching most of the specification is all of the above at once.
+
+Each is yours to fix now, in this invocation. What you leave standing, say so in the report and
+say why — a number carried into the report unexamined is a measurement nobody acted on.
+
 ### 5. Cross-check: obligations that share a subject
 
 Mechanical validation cannot see a contradiction the schema admits, and an implementer is the
@@ -305,6 +375,22 @@ impact set joins — two rules constraining the same element, a rule and the sta
 its subject, two contracts touching the same payload — and ask of each pair one question: is
 there
 a case both speak to that the two decide differently?
+
+Asking it of every pair the impact set joins is not what this step means. Twenty-four rules
+constraining one element make two hundred and seventy-six pairs, and a question asked that many
+times is a question answered carelessly. `--shape` names which pairs to open: the sets of nodes
+sharing a phrase in their normative fields, and the nodes whose prose names siblings their
+fields do not. Those are the pairs that already speak to the same thing; take them, and take
+any pair the material itself put together.
+
+Ask each two questions, not one. **Do they decide some case differently?** — that is the
+contradiction below. **And do they decide the same case the same way?** — that is overlap, and
+it has no tension to surface, which is exactly why nothing catches it. An overlap is answered by
+merging the two, or by narrowing one until the ground is no longer shared, or — where they
+genuinely differ and the difference is not visible from either node's own statement — by making
+that difference part of what each states. Never by prose in one node explaining that it is not
+the other: the reader who has to be told two nodes differ is reading two nodes that do not say
+so themselves, and every sentence spent on it is a sentence SPEC-001 R14 refuses.
 
 A pair with such a case is the material stating two things that cannot both hold, or the
 analysis having read one part of it one way and another part a different way. Either is decided

@@ -53,11 +53,42 @@ What it cannot answer is which nodes to name. That is the scope's vocabulary rea
 specification's, it is judgment, and a set closed perfectly around the wrong candidates is still
 the wrong set.
 
+**What the prose has become is measured, never refused.** `--shape` reports, per class, how long
+a node and its `statement` run, how many statements carry more than one sentence, and which
+`expression` outgrew the `statement` it restates — `statement` governs, so a restatement that
+grew is one that added; then, per node, the reading closure — every node this one's prose names, transitively, and what that comes
+to in words. It holds no threshold: a limit invented here would be arbitrary, while a node at the
+far end of its own class's distribution is one a reader can open. It also names the longest phrase each
+set of nodes shares in its normative fields — a clause two rules both carry is one definition
+kept twice, which no reference resolves and no reachability reaches — every normative field
+speaking about the specification rather than the domain, every long statement no scenario pins,
+and how far each `why` of the decision log runs. Two readings are kept apart. A declared
+reference passes through the same walk that validates it and is passed in rather than
+recomputed; a node named in prose passes through no field and no check, so it is counted
+separately, a bare slug two nodes answer to is reported ambiguous rather than resolved to
+whichever sorts first, and a name that resolves to no node is listed rather than dropped — an operation, a table, a set invoked normatively with nowhere to be
+is this report's finding, not its error bar. The obligations it measures against are stated where
+obligations are stated: one falsifiable condition per `statement` (SPEC-003), and prose that says
+what a node governs rather than arguing that it agrees with its neighbours (SPEC-001 R14). Both
+are judgment (SPEC-001 R11); this is the reading a reviewer judges from.
+
+**`--of` names the nodes the reader is answerable for.** Three of the sections rank and cut,
+because their whole point is the far end. Ranked over a populated root, that far end belongs to
+whatever was written before, so a node written now sits below the cut and is never seen by the
+one reader obliged to fix it. A node named here is marked `>` and its line is shown wherever it
+appears, past any cut. The totals do not change: the distribution a node sits in is the whole
+root's, never one invocation's slice of it, and a report that narrowed its counts to the slice
+would say a node is unremarkable by comparing it only to its own siblings.
+
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  spec.py <spec-root>              validate everything
         spec.py --project <spec-root>    validate, then write projections/
         spec.py --digest <spec-root>     validate, then print every node's content digest
+        spec.py --shape [--of <identity>[,<identity>...]] <spec-root>
+                                          report how long the nodes run and how far their prose
+                                          reaches; never refuses. `--of` marks the nodes the
+                                          reader answers for and shows their lines past any cut
         spec.py --node <file> <spec-root>
                                           validate one file (cross-node checks do not run)
         spec.py --impact <identity>[,<identity>...] <spec-root>
@@ -832,6 +863,373 @@ def print_impact(nodes: dict[str, dict], root: Path, named: list[str],
 
 
 
+# ---------------------------------------------------------------- shape
+
+
+SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-Z`])")
+PROSE_PATH = re.compile(r"\b(?:domain|rules|scenarios|contracts|constraints)"
+                        r"/[a-z0-9-]+(?:/[a-z0-9-]+)?\b")
+PROSE_SLUG = re.compile(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`")
+
+
+def percentile(values: list[int], fraction: float) -> int:
+    """The value at `fraction` of a sorted sample, by nearest rank — no interpolation, so the
+    number printed is one a node actually has and a reader can go find.
+
+    Naming which node has it is the rest of that sentence, and the table below does: a
+    distribution nobody can open is the measurement this whole reading exists to replace."""
+    ordered = sorted(values)
+    return ordered[min(len(ordered) - 1, int(len(ordered) * fraction))]
+
+
+def prose_mentions(identity: str, body: str,
+                   nodes: dict[str, dict]) -> tuple[set[str], set[str], set[str]]:
+    """(node identities this prose names, names resolving to no node, names resolving to two).
+
+    A declared reference passes through `landing` on its way to being checked; this is the other
+    reading — a node named in prose, which no field carries and no check sees. The two are
+    counted apart in the report because they are different readings, and this one resolves a bare
+    slug against every node's slug rather than against the citing node's own directory: what it
+    models is what an agent reading this prose will open, and an agent finds the node the name
+    denotes wherever it sits. SPEC-003 R2 governs where a *declared* reference may be bare;
+    nothing here checks it.
+
+    What does not resolve is named by the report rather than dropped from it. A name a
+    specification uses in prose and holds in no node is the finding, not the error bar: an
+    operation, a table, a set invoked normatively with nowhere to be.
+
+    **A bare slug is read only where it carries a hyphen.** A single-word slug in backticks is
+    indistinguishable from any other word a writer sets in code style — a field name, a value, a
+    literal — so reading one would put nodes in this closure that no prose named. The cost is
+    stated rather than hidden: a node whose slug is one word is not counted here, so what this
+    reports of prose is a floor on it and never a total.
+
+    **A bare slug two nodes answer to is reported ambiguous, never resolved to one of them.**
+    A slug is unique inside a directory and not across the specification — `capability-registry`
+    can be the element and the api that publishes over it, two classes answering two questions —
+    so picking whichever sorts first would put a node in this reader's closure that its prose may
+    never have meant, and be wrong silently. This is `terms.py`'s own rule over the framework's
+    vocabulary: one word with two senses is two entries named apart, never one entry with a
+    definition on top of it.
+    """
+    by_slug: dict[str, set[str]] = {}
+    for held in nodes:
+        by_slug.setdefault(held.rsplit("/", 1)[-1], set()).add(held)
+    named: set[str] = set()
+    unheld: set[str] = set()
+    ambiguous: set[str] = set()
+    for match in PROSE_PATH.finditer(body):
+        written = match.group(0)
+        # A context is named by its directory; its descriptor is the node that holds it, and
+        # the underscore keeping that file outside the slug space is not something prose writes.
+        held = written if written in nodes else f"{written}/_context"
+        (named if held in nodes else unheld).add(held if held in nodes else written)
+    for match in PROSE_SLUG.finditer(body):
+        word = match.group(1)
+        if word in nodes:
+            named.add(word)
+        elif word not in by_slug:
+            unheld.add(word)
+        elif len(by_slug[word]) > 1:
+            ambiguous.add(word)
+        else:
+            named.add(next(iter(by_slug[word])))
+    named.discard(identity)
+    return named, unheld, ambiguous
+
+
+NORMATIVE = ("statement", "expression")
+PHRASE = 8
+ROWS_SHOWN = 12
+DISTRIBUTION = 10
+WORD = re.compile(r"[a-z']+")
+
+
+def shared_phrases(nodes: dict[str, dict]) -> list[tuple[frozenset[str], str]]:
+    """The longest phrase each set of nodes shares in its normative fields, longest first.
+
+    R3 and R7 leave restatement to judgment and nothing looks for it. This looks: an index of
+    every eight-word phrase to the nodes holding it, then, per set of holders, the longest phrase
+    that set shares. Collapsing to the holder set is what makes the answer readable — the same
+    duplicated clause otherwise arrives as every sub-phrase of itself.
+
+    Two properties earn its place. It fires on nothing over a sound specification, so a listing
+    is a finding rather than a floor. And what it finds is what no other check can: a clause two
+    rules both carry is one definition kept in two places, which no reference resolves and no
+    reachability reaches, because neither node declares anything about the other.
+
+    Ranked by words times holders, because both matter and neither alone: a long clause in two
+    nodes is a duplicated obligation, and a short one in nineteen is a table that has no node.
+    """
+    words = {identity: WORD.findall(" ".join(
+        node["front"][field] for field in NORMATIVE
+        if isinstance(node["front"].get(field), str)).lower())
+        for identity, node in nodes.items()}
+    index: dict[str, set[str]] = {}
+    for identity, held in words.items():
+        for at in range(max(0, len(held) - PHRASE + 1)):
+            index.setdefault(" ".join(held[at:at + PHRASE]), set()).add(identity)
+    longest: dict[frozenset[str], str] = {}
+    for phrase, holders in index.items():
+        if len(holders) < 2:
+            continue
+        key = frozenset(holders)
+        if key not in longest or len(phrase) > len(longest[key]):
+            longest[key] = phrase
+    return sorted(longest.items(),
+                  key=lambda pair: (-(len(pair[1].split()) * len(pair[0])), pair[1]))
+
+
+SELF_REFERENCE = re.compile(
+    r"\b(that statement|this statement|this specification'?s?|this node|no node stated"
+    r"|stated here)\b", re.I)
+
+
+def shape_of(nodes: dict[str, dict], declared: dict[str, set[str]] | None = None) -> dict:
+    """Every measurement `--shape` reports, read off the files in one pass.
+
+    `declared` is what the validating walk saw: `cross_problems`'s own `record`, keyed by owner.
+    It is passed in rather than recomputed so the two never disagree about which fields carry a
+    reference — the discipline that walk's own docstring states. The prose side beside it is a
+    text scan and a heuristic; the report keeps them apart and says which is which.
+
+    Sizes, the sentence count of each `statement`, what each node's prose names, and the
+    transitive closure of that naming. No threshold is applied and none is held here: a word
+    count that refused would be a limit invented in this file, while a node at the far end of
+    its own class's distribution is a node a reader can go look at. The obligation this measures
+    is stated where obligations are stated — one falsifiable condition per `statement`
+    (SPEC-003), and prose that governs rather than argues (SPEC-001 R14).
+    """
+    read: dict[str, dict] = {}
+    for identity, node in nodes.items():
+        front, body, _ = parse_node(node["path"])
+        text = node["path"].read_text(encoding="utf-8")
+        statement = front.get("statement") if isinstance(front, dict) else None
+        statement = statement if isinstance(statement, str) else None
+        selfref = sorted({m.group(0).lower() for m in SELF_REFERENCE.finditer(
+            " ".join(front.get(f) for f in NORMATIVE
+                     if isinstance(front, dict) and isinstance(front.get(f), str)))})
+        expression = front.get("expression") if isinstance(front, dict) else None
+        expression = expression if isinstance(expression, str) else None
+        named, unheld, ambiguous = prose_mentions(identity, body or "", nodes)
+        read[identity] = {
+            "cls": node["cls"],
+            "words": len(text.split()),
+            "body_words": len((body or "").split()),
+            "statement_words": len(statement.split()) if statement else None,
+            "expression_words": len(expression.split()) if expression else None,
+            "sentences": len([s for s in SENTENCE.split(statement) if s.strip()])
+                         if statement else None,
+            "names": named,
+            "unheld": unheld,
+            "ambiguous": ambiguous,
+            "selfref": selfref,
+            "declared": len((declared or {}).get(identity, ())),
+        }
+        if node["cls"] == "log":
+            entries = [e for e in listed(front or {}, "entries") if isinstance(e, dict)]
+            read[identity]["why_words"] = sorted(
+                len(e["why"].split()) for e in entries if isinstance(e.get("why"), str))
+    anchored: dict[str, int] = {}
+    for node in nodes.values():
+        subject = node["front"].get("subject")
+        if node["cls"] == "scenario" and isinstance(subject, str):
+            anchored[subject] = anchored.get(subject, 0) + 1
+    for identity, entry in read.items():
+        entry["scenarios"] = anchored.get(identity, 0)
+    for entry in read.values():
+        seen: set[str] = set()
+        frontier = sorted(entry["names"])
+        while frontier:
+            reached = frontier.pop()
+            if reached in seen or reached not in read:
+                continue
+            seen.add(reached)
+            frontier += sorted(read[reached]["names"] - seen)
+        entry["closure"] = seen
+        entry["closure_words"] = sum(read[held]["words"] for held in seen)
+    return read
+
+
+def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
+                declared: dict[str, set[str]] | None = None,
+                scope: list[str] | None = None) -> int:
+    """`--shape`'s own body: what this specification's prose has become, never a refusal.
+
+    This reports and returns 0 whatever it finds. A specification drifts one node at a time, and
+    every node is defensible on its own; what is not defensible is a distribution nobody
+    measured. So the numbers are stated per class, with the far end of each named so a reader can
+    open it, and the judgment stays where SPEC-001 R11 puts it.
+
+    It answers over a specification that still has problems, for the reason `--impact` does: the
+    analysis that authors these files needs the reading while it is authoring them.
+
+    **`scope` is which nodes the reader is answerable for, and it changes what is shown, never
+    what is counted.** Three sections rank and cut, because their whole point is the far end;
+    ranked over a populated root, the far end belongs to whatever was written before, and a node
+    written now lands below the cut and is never seen by the only reader obliged to fix it. So a
+    scoped node's line is shown wherever it appears regardless of rank, and marked. The totals
+    stay the specification's, because the distribution a node sits in is the distribution of the
+    whole root and not of one invocation's slice of it.
+    """
+    read = shape_of(nodes, declared)
+    if not read:
+        print(f"shape: {root} holds no node to measure.")
+        return 0
+    named = set(scope or ())
+
+    def mark(identity: str) -> str:
+        return ">" if identity in named else " "
+
+    def cut(rows: list, key) -> list:
+        """The top of the ranking, plus every scoped row wherever it sits."""
+        held = rows[:ROWS_SHOWN]
+        return held + [row for row in rows[ROWS_SHOWN:] if named & set(key(row))]
+
+    print(f"shape: {len(read)} node(s) over "
+          f"{len({e['cls'] for e in read.values()})} class(es), read from {root}.")
+    if named:
+        print(f"answering for {len(named)} node(s), marked `>`: their line is shown wherever it "
+              f"appears, past any cut, because a ranking over the whole root puts what was "
+              f"written now below what was written before.")
+    if problems:
+        print(f"read over a specification with {len(set(problems))} problem(s); "
+              f"a node that did not parse is not measured.")
+    print(f"\n{'class':<12}{'n':>5}{'words':>9}{'p90':>7}{'max':>7}"
+          f"{'stmt':>7}{'p90':>7}{'max':>7}{'>1 sentence':>13}")
+    for cls in sorted({entry["cls"] for entry in read.values()}):
+        held = [entry for entry in read.values() if entry["cls"] == cls]
+        words = [entry["words"] for entry in held]
+        stated = [entry["statement_words"] for entry in held
+                  if entry["statement_words"] is not None]
+        multi = sum(1 for entry in held if (entry["sentences"] or 0) > 1)
+        columns = (f"{percentile(stated, 0.5):>7}{percentile(stated, 0.9):>7}"
+                   f"{max(stated):>7}{multi:>13}") if stated else f"{'-':>7}{'-':>7}{'-':>7}{'-':>13}"
+        print(f"{cls:<12}{len(held):>5}{percentile(words, 0.5):>9}"
+              f"{percentile(words, 0.9):>7}{max(words):>7}{columns}")
+        if len(held) < DISTRIBUTION:
+            continue  # below this a class is its own list, and every node is already in view
+        far = percentile(words, 0.9)
+        for identity in sorted(identity for identity, entry in read.items()
+                               if entry["cls"] == cls and entry["words"] >= far):
+            print(f"{mark(identity)}   at or past p90: {read[identity]['words']:>5}w  {identity}")
+
+    multi = sorted(identity for identity, entry in read.items()
+                   if (entry["sentences"] or 0) > 1)
+    print(f"\nstatement carrying more than one sentence — {len(multi)}; "
+          f"a statement states one falsifiable condition (SPEC-003):")
+    for identity in multi:
+        print(f"{mark(identity)} {read[identity]['sentences']} sentences  "
+              f"{read[identity]['statement_words']:>4}w  {identity}")
+    if not multi:
+        print("  (none)")
+
+    outgrew = sorted((identity for identity, entry in read.items()
+                      if entry["expression_words"] is not None
+                      and entry["statement_words"] is not None
+                      and entry["expression_words"] > entry["statement_words"]))
+    print(f"\nexpression longer than the statement it restates — {len(outgrew)}; `statement` "
+          f"governs (SPEC-003), so a restatement that grew is one that added:")
+    for identity in outgrew:
+        print(f"{mark(identity)} {read[identity]['statement_words']:>4}w -> "
+              f"{read[identity]['expression_words']:>4}w  {identity}")
+    if not outgrew:
+        print("  (none)")
+
+    for cls in sorted({e["cls"] for e in read.values()}):
+        stated = [e["statement_words"] for e in read.values()
+                  if e["cls"] == cls and e["statement_words"] is not None]
+        if not stated:
+            continue
+        far = percentile(stated, 0.9)
+        long_unpinned = sorted(identity for identity, entry in read.items()
+                               if entry["cls"] == cls and entry["scenarios"] == 0
+                               and (entry["statement_words"] or 0) >= far)
+        print(f"\n{cls}: statement at or past this class's p90 ({far}w) with no scenario "
+              f"anchored — {len(long_unpinned)}; a long condition no concrete case pins is the "
+              f"one a scenario would settle (an abstract rule legitimately has none):")
+        for identity in long_unpinned:
+            print(f"{mark(identity)} {read[identity]['statement_words']:>4}w  {identity}")
+        if not long_unpinned:
+            print("  (none)")
+
+    for identity, entry in sorted(read.items()):
+        stated = entry.get("why_words")
+        if not stated:
+            continue
+        far = percentile(stated, 0.9)
+        print(f"\n{identity}: {len(stated)} entry(ies); `why` median "
+              f"{percentile(stated, 0.5)}w, p90 {far}w, max {max(stated)}w. `why` carries one "
+              f"claim a reviewer can reject (SPEC-001 R9) — {sum(1 for w in stated if w >= far)} "
+              f"entry(ies) at or past that p90 are where to check whether it carries an argument "
+              f"about the specification's composition instead.")
+
+    selfref = sorted(identity for identity, entry in read.items() if entry["selfref"])
+    print(f"\nnormative field speaking about the specification rather than the domain — "
+          f"{len(selfref)}; a statement is a falsifiable condition, not a remark about itself:")
+    for identity in selfref:
+        print(f"{mark(identity)} {', '.join(read[identity]['selfref'])}  in  {identity}")
+    if not selfref:
+        print("  (none)")
+
+    phrases = shared_phrases(nodes)
+    print(f"\nlongest phrase each set of nodes shares in its normative fields — {len(phrases)} "
+          f"set(s), {min(len(phrases), ROWS_SHOWN)} shown, by words times holders; a clause "
+          f"two nodes both carry is one definition kept twice (SPEC-001 R3, R7):")
+    for holders, phrase in cut(phrases, lambda row: row[0]):
+        print(f"{'>' if named & set(holders) else ' '} {len(phrase.split()):>3}w x "
+              f"{len(holders):>2} node(s)  \"{phrase}\"")
+        for identity in sorted(holders):
+            print(f"       {mark(identity)}{identity}")
+    if not phrases:
+        print("  (none)")
+
+    argued = sorted(((entry["prose_gap"], identity) for identity, entry in
+                     ((i, dict(e, prose_gap=len(e["names"]) - e["declared"]))
+                      for i, e in read.items()) if entry["prose_gap"] > 0), reverse=True)
+    print(f"\nprose naming more sibling nodes than the fields declare — {len(argued)}; the "
+          f"declared side is the walk that validates it, the prose side is a text scan. A node "
+          f"declaring two and naming twenty is arguing, not governing (SPEC-001 R14):")
+    for gap, identity in cut(argued, lambda row: (row[1],)):
+        entry = read[identity]
+        print(f"{mark(identity)} {len(entry['names']):>3} in prose / "
+              f"{entry['declared']:>2} declared  (+{gap})  {entry['words']:>5}w  {identity}")
+    if not argued:
+        print("  (none)")
+
+    ranked = cut(sorted(read.items(), key=lambda pair: -pair[1]["closure_words"]),
+                 lambda row: (row[0],))
+    print(f"\nreading closure — every node a node's prose names, transitively, and what that "
+          f"comes to in words:")
+    for identity, entry in ranked:
+        print(f"{mark(identity)} {len(entry['closure']):>4} node(s)  "
+              f"{entry['closure_words']:>7}w  {identity}")
+
+    unheld: dict[str, int] = {}
+    for entry in read.values():
+        for name in entry["unheld"]:
+            unheld[name] = unheld.get(name, 0) + 1
+    print(f"\nnames this prose holds that resolve to no node — {len(unheld)}; "
+          f"a name used normatively and held nowhere is a node owed, not a typo:")
+    for name, count in sorted(unheld.items(), key=lambda pair: (-pair[1], pair[0])):
+        print(f"  {count:>4} node(s)  {name}")
+    if not unheld:
+        print("  (none)")
+
+    unsure: dict[str, int] = {}
+    for entry in read.values():
+        for name in entry["ambiguous"]:
+            unsure[name] = unsure.get(name, 0) + 1
+    print(f"\nbare names two nodes answer to — {len(unsure)}; resolved to neither, because a "
+          f"slug is unique in a directory and not across the specification (SPEC-003 R2):")
+    for name, count in sorted(unsure.items(), key=lambda pair: (-pair[1], pair[0])):
+        holds = sorted(i for i in nodes if i.rsplit("/", 1)[-1] == name)
+        print(f"  {count:>4} node(s)  `{name}`  ->  {', '.join(holds)}")
+    if not unsure:
+        print("  (none)")
+    return 0
+
+
 # ---------------------------------------------------------------- projections
 
 
@@ -1248,7 +1646,24 @@ def main() -> int:
         return print_class_contract(rest[0] if rest else None)
     write = "--project" in args
     show_digests = "--digest" in args
-    args = [a for a in args if a not in ("--project", "--digest")]
+    shape = "--shape" in args
+    args = [a for a in args if a not in ("--project", "--digest", "--shape")]
+    of = None
+    if "--of" in args:
+        at = args.index("--of")
+        if at + 1 >= len(args):
+            print("cannot run: --of takes a comma-separated list of node identities",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        of = [name.strip() for name in args[at + 1].split(",") if name.strip()]
+        del args[at:at + 2]
+        if not of:
+            print("cannot run: --of names no node", file=sys.stderr)
+            return CANNOT_RUN
+        if not shape:
+            print("cannot run: --of scopes what --shape marks and stands beside nothing else",
+                  file=sys.stderr)
+            return CANNOT_RUN
     impact = None
     if "--impact" in args:
         at = args.index("--impact")
@@ -1269,19 +1684,21 @@ def main() -> int:
             return CANNOT_RUN
         single = args[at + 1]
         del args[at:at + 2]
-    if impact is not None and (write or show_digests or single is not None):
+    if impact is not None and (write or show_digests or shape or single is not None):
         print("cannot run: --impact reads the specification and derives nothing; it stands "
               "beside no other flag", file=sys.stderr)
         return CANNOT_RUN
-    if (write or show_digests) and single is not None:
-        print("cannot run: --node validates one file, and --project/--digest are facts about "
-              "the whole specification", file=sys.stderr)
+    if (write or show_digests or shape) and single is not None:
+        print("cannot run: --node validates one file, and --project/--digest/--shape are facts "
+              "about the whole specification", file=sys.stderr)
         return CANNOT_RUN
-    if write and show_digests:
-        print("cannot run: --project and --digest are mutually exclusive", file=sys.stderr)
+    if sum((write, show_digests, shape)) > 1:
+        print("cannot run: --project, --digest and --shape are mutually exclusive",
+              file=sys.stderr)
         return CANNOT_RUN
     if len(args) != 1 or args[0].startswith("--"):
-        print("cannot run: expected [--project | --digest | --node <file> | "
+        print("cannot run: expected [--project | --digest | "
+              "--shape [--of <identity>[,<identity>...]] | --node <file> | "
               "--impact <identity>[,<identity>...]] <spec-root>", file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
@@ -1298,9 +1715,21 @@ def main() -> int:
         return check_single(root, single, validators)
 
     nodes, problems = collect(root, validators)
-    problems += cross_problems(nodes, root)
+    declared: dict[str, set[str]] = {}
+    problems += cross_problems(
+        nodes, root,
+        (lambda owner, at, target, resolved:
+         declared.setdefault(owner, set()).add(target)) if shape else None)
     if impact is not None:
         return print_impact(nodes, root, impact, problems)
+    if shape:
+        missing = [identity for identity in (of or [])
+                   if not (root / f"{identity}.md").is_file()]
+        if missing:
+            print(f"cannot run: {', '.join(missing)} names no file under {root}; "
+                  f"an identity is a node's path without `.md`", file=sys.stderr)
+            return CANNOT_RUN
+        return print_shape(nodes, root, problems, declared, of)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)

@@ -45,8 +45,12 @@ enforces mechanically.
   artifact.
 - **R2** — Every context holds at least one definition: a linguistic boundary with no language
   is not comprehensible.
-- **R3** — Every recurring term of the material surfaces in the specification exactly once: as
-  an element's name or as an alias on the element it means.
+- **R3** — Every recurring term of the material surfaces in the specification exactly once, as
+  the name of the element it means. There is no alias mechanism: where the material uses two
+  words for one thing, the analysis picks the one that best carries the term and the other
+  surfaces nowhere. `display` corrects a slug's derived casing and never records a synonym.
+  A recurring phrase that names no element is a term owed a name, not a phrase to repeat: a
+  noun phrase restated across nodes is one definition kept in as many places as it appears.
 - **R4** — What the material does not state, the analysis decides. The artifact carries the
   decided value like any other — no placeholder, no `unknown`, no gap marker — and the decision
   is appended to the decision log. An artifact field left undecided is a floor violation.
@@ -68,18 +72,30 @@ enforces mechanically.
 - **R8** — Artifacts carry no provenance meta-fields: no `gaps`, no `sources`, no `rationale`,
   no `proposal`. What the material stated and what the analysis decided read identically in the
   specification; the decision log is where the two are told apart.
+- **R14** — Prose explains what the node governs. It does not argue that the node is consistent
+  with its neighbours. What a node does not govern is a boundary and belongs in its prose: an
+  agent deciding which node governs a task reads that boundary and would otherwise decide from
+  a resemblance. Why it does not contradict a sibling is an argument about the specification's
+  own composition, and its home is the change that made it — never the artifact a downstream
+  reader must open to conform, and not the log either (R9). A sentence carrying both keeps the
+  boundary and drops the argument. This is judgment, not a mechanical check: the report is where
+  a reviewer sees a specification whose prose has become its own defence.
 
 ### The decision log
 
 - **R9** — One decision log per specification root, append-only. Each entry records: the
   location it filled (file and field, resolvable), what the material left unstated, the value
-  decided, and why that value. An entry whose location does not resolve fails validation.
+  decided, and why that value. An entry whose location does not resolve fails validation. `why`
+  carries one claim a reviewer can reject, never the argument that the specification composes:
+  that argument records no decided value, so it has no entry of its own and reaches the log only
+  inside an entry about something else, restating the prose of the node that entry locates
+  (R7, R14). Its home is the change that made it.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the log after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol.
 - **R11** — The validator enforces the mechanically decidable half: R1's required fields, R2,
-  R6's reachability, R8's absent fields, and R9's resolvable locations. R3, R5 and R7 are the
-  analysis's judgment; the report is where a reviewer checks them.
+  R6's reachability, R8's absent fields, and R9's resolvable locations. R3, R5, R7 and R14 are
+  the analysis's judgment; the report is where a reviewer checks them.
 
 ### Facts surfaced after authoring
 
@@ -117,3 +133,21 @@ enforces mechanically.
    deciding context receives the fact without the task that surfaced it, every decided fact
    lands as a decision-log entry whose location resolves, and a planted contradiction comes
    back as the standing stop rather than a decision — a benchmark case proves each.
+4. For R14, and for the judgment halves R11 leaves to the report: `bin/spec.py --shape` reports
+   what each class runs to, names every `statement` carrying more than one sentence, closes each
+   node's prose transitively, and lists the names that prose holds and no node does — reporting
+   whatever it finds, and refusing nothing on a size. A fixture proves each, and proves the
+   report survives a specification that does not yet hold.
+5. For R3: no schema admits an alias field, and the analyse skill states that a phrase recurring
+   across nodes is a name owed rather than a phrase repeated.
+6. For R3, R7 and R14, the readings that make judgment reviewable: `--shape` names the longest
+   phrase each set of nodes shares in its normative fields, every normative field speaking about
+   the specification rather than the domain, every node whose prose names more siblings than its
+   fields declare, and how far each `why` of the decision log runs. Every one of those sections
+   reports `(none)` over the sound fixture — a section that always finds something is a floor and
+   not a finding, and a fixture test proves each. The sections that rank and cut show a node the
+   reader answers for wherever it appears, past the cut, and change no total by being scoped:
+   over a populated root the far end of a ranking belongs to what was written before, so a node
+   written now would otherwise never reach the one reader obliged to fix it. Each class's own far
+   end is named and not only counted, wherever the class holds enough nodes to have a
+   distribution at all.
