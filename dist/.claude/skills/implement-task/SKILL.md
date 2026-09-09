@@ -467,8 +467,10 @@ it was never composed.
 
 Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
 the path is the identity and nothing else names which task a record answers — from what the agent
-returned plus the pin stamped on `task`, and — where a standard was named — its own path, the pin
-of its text as read now, the build run that passed, and every dependency the agent added. The body is exactly two headings, in order:
+returned plus `target` — input 3's key, the root every path in the record is spelled from, which
+the validator resolves the record at and never the one an invocation happened to name — the pin
+stamped on `task`, and — where a standard was named — its own path, the pin of its text as read
+now, the build run that passed, and every dependency the agent added. The body is exactly two headings, in order:
 `## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
 literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
 as in its field — the diff is the review, and what only the conversation held the reviewer never
@@ -626,7 +628,7 @@ Where the registry declares no command at all, this step does not run, the tests
 and the report says so — the narrow answer rather than a clean one. A task that produced the
 substrate reaches neither this step nor the one before it, for the reason step 5 gives.
 
-Write `proof/<epic>/<slug>.md`, same epic and slug again, and check it the same way. Where a
+Write `proof/<epic>/<slug>.md`, same epic and slug again, the same `target`, and check it the same way. Where a
 standard was named, stamp its own path, the pin of its text as read now, and the suite run that
 passed on this record too, exactly as the implementation carries its own — the rules about how a
 project writes its tests reach files no implementation ever lists, so a departure from one is the

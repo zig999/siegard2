@@ -172,6 +172,11 @@
       },
       "description": "What the passes found, each with the evidence it was observed from and the cost it carries. Absent is a claim that nothing was found, over the file set `reviewed` and the passes that ran \u2014 no more than that. There is no severity, no action and no verdict: this record is evidence, and what it means for the change is a person's to decide."
     },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Which of the project's target source roots this record reaches, by the key `siegard.json`'s `targets` names it. A record is read long after the invocation that wrote it, and a path anchor whose root nobody named anchors nothing: `files`, `tests`, `reviewed` and `standard.at` are all spelled from this root, and the validator resolves each record at the root its own key names \u2014 never at the one the invocation happened to name."
+    },
     "standard": {
       "$ref": "#/$defs/standardRef",
       "description": "The project's standard this record read. On a review it is present exactly when the standard pass ran, and a project that has authored none records the pass as not run and says so \u2014 the honest narrow result rather than a clean one. On an implementation it says what the source was written against; on a proof, what the tests were. On either it is required once any divergence cites a rule, because a citation resolves against the pin this record carries and without one it names nothing. Absent on a record that wrote something is a claim that no standard was supplied, which nothing can verify and a reader reads as one \u2014 the skill's report and the diff are what carry it."
@@ -220,6 +225,7 @@
       },
       "then": {
         "required": [
+          "target",
           "task",
           "files",
           "criteria"
@@ -227,6 +233,7 @@
         "propertyNames": {
           "enum": [
             "kind",
+            "target",
             "title",
             "summary",
             "task",
@@ -244,6 +251,7 @@
         },
         "examples": [
           {
+            "target": "backend",
             "title": "Record a placed order",
             "summary": "The entry point that persists a valid order, written for task/checkout/record-order.",
             "task": "sha256:5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
@@ -330,12 +338,14 @@
       },
       "then": {
         "required": [
+          "target",
           "implementation",
           "tests"
         ],
         "propertyNames": {
           "enum": [
             "kind",
+            "target",
             "title",
             "summary",
             "implementation",
@@ -350,6 +360,7 @@
         },
         "examples": [
           {
+            "target": "backend",
             "title": "Proof for recording a placed order",
             "summary": "What proves task/checkout/record-order, written against its implementation record.",
             "implementation": "sha256:2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
@@ -406,12 +417,14 @@
       },
       "then": {
         "required": [
+          "target",
           "reviewed",
           "passes"
         ],
         "propertyNames": {
           "enum": [
             "kind",
+            "target",
             "title",
             "summary",
             "reviewed",
@@ -427,6 +440,7 @@
         },
         "examples": [
           {
+            "target": "backend",
             "title": "Checkout, first review",
             "summary": "What four passes found over the source and tests recording a placed order.",
             "reviewed": [

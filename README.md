@@ -118,3 +118,11 @@ one on this repository's default branch. A release is therefore: bump the versio
 `src/claude/.claude-plugin/plugin.json`, `dist/.claude/.claude-plugin/plugin.json` and the
 marker line of `src/consumer/CLAUDE.md` (the suite refuses a mismatch among the three), assemble
 `dist/`, run `python3 -m pytest`, and land it on `main`. No bump, no update.
+
+A major is a version whose contract a persisted record no longer satisfies, and it ships with the
+rewrite a consumer runs once, under `tools/` — outside `src/claude/`, so no assembly distributes it.
+The consumer's sequence is fixed: update the plugin, run the migration from this repository against
+the project root, run `deliver.py --check` over every delivery root and `plan.py --check` over every
+plan, and land the rewrite as one commit. Between the update and the migration every root reads as
+broken, so the two happen in one sitting. 4.0.0 is `tools/migrate_delivery_targets.py`: every
+delivery record gains `target`, the key of `siegard.json`'s `targets` its paths are anchored at.

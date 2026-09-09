@@ -86,6 +86,7 @@ TERMS: dict[str, tuple[str, str]] = {
     "slug": ("plan-node.json", "/$defs/slug"),
     "specification node": ("plan-node.json", "/$defs/specNodeRef"),
     "standard": ("standard.json", ""),
+    "target (a record's target, by key)": ("delivery-node.json", "/properties/target"),
     "telemetry report": ("telemetry.json", ""),
     "trace.json": ("trace.json", ""),
     "uncovered": ("plan-node.json", "/properties/uncovered"),

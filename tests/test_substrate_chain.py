@@ -41,6 +41,7 @@ def tree(tmp_path: Path) -> Path:
     """The target source root, greenfield: it exists and holds nothing, which is an answer."""
     where = tmp_path / "tree"
     where.mkdir()
+    (where / "siegard.json").write_text(json.dumps({"targets": {"app": "."}}), encoding="utf-8")
     return where
 
 

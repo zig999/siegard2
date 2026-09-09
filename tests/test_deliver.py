@@ -17,7 +17,7 @@ import pytest
 import yaml
 
 import deliver
-from conftest import task_pin_of
+from conftest import STANDARD, task_pin_of
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -1234,7 +1234,7 @@ def test_the_outstanding_report_names_the_standard_this_root_remembers(delivery,
     nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
     plan_nodes, _ = deliver.load_plan(work, root)
     report = deliver.outstanding_report(nodes, plan_nodes, target)
-    assert "standard.yaml: pinned by 1 record(s)" in report
+    assert "standard.yaml (target app): pinned by 1 record(s)" in report
     assert "an invocation naming no standard now writes source" in report
 
 
@@ -1670,3 +1670,133 @@ def test_a_record_named_over_a_conformance_pass_that_did_not_run(delivery, work,
     write_delivery("review/first", front)
     said(problems_of(delivery, work, target, root),
          "`reconciliation` is present and the conformance pass did not run")
+
+
+# ------------------------------------------------------------ the record's own target
+
+
+def declare_targets(target: Path, **more: str) -> None:
+    """Rewrite the target's project file to declare `app` (the fixture's root) plus the given
+    keys, each a directory created under it — the shape of a project delivering into several
+    target source roots from one delivery root."""
+    import json
+    import subprocess
+    for path in more.values():
+        (target / path).mkdir(parents=True, exist_ok=True)
+    (target / "siegard.json").write_text(
+        json.dumps({"targets": {"app": ".", **more}}), encoding="utf-8")
+    # The project file is read at the target's git toplevel, the way trace.py reads it; a
+    # consumer's targets all sit under one repository, and so do this fixture's.
+    subprocess.run(["git", "init", "-q", str(target)], check=True, capture_output=True)
+
+
+def second_target_record(home: Path, work: Path, write_delivery, **overrides) -> None:
+    """The fixture plan's other task, delivered into a second target root `web` — its files, its
+    standard and its key all spelled from that root."""
+    import hashlib
+    registry = home / "web" / "standard.yaml"
+    # Only the suite step: an implementation record owes a run for every other step, and this
+    # record's question is where its standard resolves, not whether it ran.
+    registry.write_text(yaml.safe_dump({
+        **{k: v for k, v in STANDARD.items() if k != "dependencies"},
+        "commands": [STANDARD["commands"][2]],
+        "rules": [r for r in STANDARD["rules"] if r["decided_by"] == "reading"]},
+        sort_keys=False), encoding="utf-8")
+    pin = "sha256:" + hashlib.sha256(registry.read_bytes()).hexdigest()
+    write_delivery("implementation/checkout/bill-order", {
+        "target": "web",
+        "title": "Bill a recorded order",
+        "summary": "The invoice raised once per recorded order.",
+        "task": task_pin_of(work, "task/checkout/bill-order"),
+        "standard": {"at": "standard.yaml", "pin": pin},
+        "files": [{"path": "src/billing/bill.ts", "effect": "raises exactly one invoice"}],
+        "criteria": [{"criterion": "Recording an order twice produces one invoice.",
+                      "met": True, "how": "bill() is idempotent over the order_number"}],
+        "nodes": [{"node": "domain/sales/invoice", "encoded_at": ["src/billing/bill.ts"],
+                   "how": "the invoice's shape is what bill() persists"}],
+        **overrides,
+    })
+
+
+def test_a_delivery_reaching_two_targets_validates_whole_under_either(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    declare_targets(target, web="web")
+    second_target_record(target, work, write_delivery)
+    assert problems_of(delivery, work, target, root) == []
+    assert problems_of(delivery, work, target / "web", root) == []
+
+
+def test_a_record_is_resolved_at_its_own_target_and_never_the_invocations(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """The second record's standard exists only under `web`; spelled from there it resolves, and
+    the invocation naming `app` changes nothing about that."""
+    declare_targets(target, web="web")
+    second_target_record(target, work, write_delivery)
+    assert not (target / "standard.yaml").is_file()
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_target_the_project_does_not_declare(delivery, work, root, target, sound_delivery,
+                                              write_delivery):
+    declare_targets(target, web="web")
+    second_target_record(target, work, write_delivery, target="mobile")
+    problems = problems_of(delivery, work, target, root)
+    said(problems, "implementation/checkout/bill-order: names target mobile, which siegard.json's "
+                   "`targets` does not declare (declared: app, web)")
+
+
+def test_a_record_without_a_target_is_refused_by_the_contract(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    front = yaml.safe_load(
+        (delivery / "implementation/checkout/record-order.md").read_text(encoding="utf-8")
+        .split("---\n")[1])
+    del front["target"]
+    path = delivery / "implementation/checkout/record-order.md"
+    path.write_text(f"---\n{yaml.safe_dump(front, sort_keys=False)}---\n"
+                    + path.read_text(encoding="utf-8").split("---\n", 2)[2], encoding="utf-8")
+    said(problems_of(delivery, work, target, root), "'target' is a required property")
+
+
+def test_a_project_file_nobody_wrote_resolves_no_target(delivery, work, root, target,
+                                                        sound_delivery):
+    (target / "siegard.json").unlink()
+    problems = problems_of(delivery, work, target, root)
+    said(problems, f"no project file at {target / 'siegard.json'}")
+    said(problems, "names target app, which siegard.json's `targets` does not declare "
+                   "(declared: none)")
+
+
+def test_a_standard_spelled_from_the_wrong_root_is_corrected_against_the_records_own_target(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """A record under `web` that spelled its registry from the repository around it — `web/…` —
+    is told the spelling from its own root, not from the root the invocation named."""
+    declare_targets(target, web="web")
+    second_target_record(target, work, write_delivery)
+    path = delivery / "implementation/checkout/bill-order.md"
+    path.write_text(path.read_text(encoding="utf-8")
+                    .replace("at: standard.yaml", "at: web/standard.yaml"), encoding="utf-8")
+    (target / "web/web").mkdir()
+    (target / "web/web/standard.yaml").write_bytes(b"")  # exists, so the ancestor walk is what
+    (target / "web/web/standard.yaml").unlink()          # finds it — not a file under web/web
+    problems = problems_of(delivery, work, target, root)
+    said(problems, f"web/standard.yaml: does not resolve inside {target / 'web'}")
+    said(problems, "from the target that is spelled `standard.yaml`")
+
+
+def test_the_standards_receipt_says_which_target_pins_each(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    """Two roots may hold a registry under the same relative path; the receipt keeps them apart."""
+    declare_targets(target, web="web")
+    second_target_record(target, work, write_delivery)
+    ref = write_standard()
+    path = delivery / "implementation/checkout/record-order.md"
+    front = yaml.safe_load(path.read_text(encoding="utf-8").split("---\n")[1])
+    front["standard"] = ref
+    body = path.read_text(encoding="utf-8").split("---\n", 2)[2]
+    path.write_text(f"---\n{yaml.safe_dump(front, sort_keys=False)}---\n{body}", encoding="utf-8")
+    validator = deliver.contract()
+    nodes, found = deliver.collect(delivery, validator, deliver.pass_names())
+    assert found == []
+    receipt = deliver.standards_held(nodes)
+    assert "standard.yaml (target app): pinned by 1 record(s)" in "\n".join(receipt)
+    assert "standard.yaml (target web): pinned by 1 record(s)" in "\n".join(receipt)

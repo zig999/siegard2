@@ -49,6 +49,7 @@ def front_of(root: Path, nid: str) -> dict:
 def tree(tmp_path: Path) -> Path:
     where = tmp_path / "tree"
     where.mkdir()
+    (where / "siegard.json").write_text(json.dumps({"targets": {"app": "."}}), encoding="utf-8")
     return where
 
 

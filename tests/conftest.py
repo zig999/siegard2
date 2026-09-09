@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import json
 import yaml
 
 REPO = Path(__file__).resolve().parent.parent
@@ -146,6 +147,7 @@ def delivery(tmp_path: Path) -> Path:
 def target(tmp_path: Path) -> Path:
     base = tmp_path / "target"
     base.mkdir()
+    (base / "siegard.json").write_text(json.dumps({"targets": {"app": "."}}), encoding="utf-8")
     return base
 
 
@@ -155,6 +157,7 @@ def write_delivery(delivery: Path):
     def put(did: str, front: dict, body: str = PLAN_BODY) -> Path:
         path = delivery / f"{did}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
+        front = {"target": "app", **front}
         text = yaml.safe_dump(front, sort_keys=False, allow_unicode=True)
         path.write_text(f"---\n{text}---\n{body}", encoding="utf-8")
         return path

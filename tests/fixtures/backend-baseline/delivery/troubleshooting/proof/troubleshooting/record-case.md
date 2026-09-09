@@ -1,7 +1,8 @@
 ---
+target: backend
 title: Proof for the recorded case
 summary: What proves the recorded case.
-implementation: sha256:61b3ee9606f8a087b0ead1bccedae7e16669fbbe00bb410dc529cc4eaee79606
+implementation: sha256:f45b0f00b34342fffa4dfc4516c2aa641cc6ae21d16b13456391796a68ac94bf
 tests:
 - file: tests/case.spec.ts
   name: opens a case for an alert
