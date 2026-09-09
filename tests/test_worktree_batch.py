@@ -118,14 +118,14 @@ def deliver_in(worktree: Path, slug: str) -> None:
 
     root = worktree / "delivery" / "m1"
     write_node(root, f"implementation/checkout/{slug}", {
-        "title": slug, "summary": f"What {slug} wrote.",
+        "target": "backend", "title": slug, "summary": f"What {slug} wrote.",
         "task": deliver.task_pin(worktree / "work" / "m1", f"task/checkout/{slug}"),
         "files": [{"path": f"src/{fname}", "effect": "holds the fact"}],
         "criteria": [{"criterion": criterion, "met": True, "how": "the source answers it"}],
         "nodes": [{"node": node, "encoded_at": [f"src/{fname}"], "how": "encoded there"}]})
     record = root / f"implementation/checkout/{slug}.md"
     write_node(root, f"proof/checkout/{slug}", {
-        "title": f"Proof for {slug}", "summary": "What proves it.",
+        "target": "backend", "title": f"Proof for {slug}", "summary": "What proves it.",
         "implementation": "sha256:" + hashlib.sha256(record.read_bytes()).hexdigest(),
         "tests": [{"file": f"tests/{slug}.spec.ts", "name": "holds", "proves": criterion,
                    "fails_when": "the fact stops holding"}]})

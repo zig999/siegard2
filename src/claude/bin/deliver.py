@@ -104,8 +104,9 @@ the end. And the route buys wall-clock and isolation, never model cost: each inv
 its own full reading.
 
 **A project's own standard is the project's, and it stays in the project's own tree.** A record
-names it by its own path relative to the target source root — exactly as `siegard.json` names it —
-and pins the SHA-256 of its text as read when the record was written. Nothing is copied: this is
+names it by its own path relative to the target source root — the root `siegard.json`'s `targets`
+declares under the key the record's `target` carries — and pins the SHA-256 of its text as read
+when the record was written. Nothing is copied: this is
 the same discipline `files[].path` already holds code to. The pin is a citation, not a standing
 guarantee — like a task's `implements`, it is read once and never mechanically reverified against
 the file as it stands today, so an old record stays held to the text it actually read even after
@@ -174,10 +175,12 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         with every `$ref` inlined; stands alone,
                                                         needs no root. What a delegation is handed
                                                         in place of the whole file
-        The target source root resolves every record's `standard` reference; a delivery whose
-        records name none never reads it. The specification root is required while the plan is
-        live, and ignored once closure.md marks it closed — the same rule plan.py applies,
-        because the plan is read through it.
+        The target source root is the one this invocation delivers into. Every record names its
+        own by key, and resolves its `standard` reference and its paths at the root `siegard.json`
+        declares under that key — read from the project file at the target's git toplevel, so a
+        delivery whose records reach several targets validates whole under any one of them. The
+        specification root is required while the plan is live, and ignored once closure.md marks
+        it closed — the same rule plan.py applies, because the plan is read through it.
         deliver.py --help
                                                         print this text and stop
 Exit:   0 sound (and, with --check, current)
@@ -620,6 +623,37 @@ def standard_of(nid: str | None, front: dict, target: Path,
                     f"that is spelled `{corrected}`"]
     data, found = load_standard(path, validator)
     return data, at, [f"{lead}{at}: {p}" for p in found]
+
+
+def target_roots(target: Path) -> tuple[dict[str, Path], str | None]:
+    """Every target source root the project declares, by key, read from `siegard.json` beside
+    the trace — the same file `trace.py` reads `edits_freely` and `targets` from, for the same
+    reason: which roots a project has is the consumer's declaration, not an invocation's. A record
+    names its root by key, and this is the one place a key resolves."""
+    home = project.toplevel_of(target)
+    declared_at = home / "siegard.json"
+    if not declared_at.is_file():
+        return {}, (f"no project file at {declared_at}; every record names its target by the key "
+                    f"`targets` declares there, and nothing else resolves one")
+    try:
+        declared = json.loads(declared_at.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        return {}, f"{declared_at} cannot be read: {broken}"
+    targets = declared.get("targets") if isinstance(declared, dict) else None
+    if not isinstance(targets, dict) or not targets:
+        return {}, f"{declared_at} declares no targets, so no record's target resolves"
+    return {key: home / path for key, path in targets.items() if isinstance(path, str)}, None
+
+
+def anchor_of(nid: str, front: dict, roots: dict[str, Path]) -> tuple[Path | None, list[str]]:
+    """The target source root this record's paths are anchored at, by the key it names."""
+    key = front.get("target")
+    if not isinstance(key, str):
+        return None, []  # the schema already reported the shape
+    if key not in roots:
+        return None, [f"{nid}: names target {key}, which siegard.json's `targets` does not "
+                      f"declare (declared: {', '.join(sorted(roots)) or 'none'})"]
+    return roots[key], []
 
 
 def rules_of(data: dict) -> dict[str, dict]:
@@ -1215,18 +1249,28 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
     problems: list[str] = []
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
+    roots, unresolvable = target_roots(target)
+    if unresolvable:
+        problems.append(unresolvable)
 
     for nid in sorted(nodes):
         node, front = nodes[nid], nodes[nid]["front"]
+        anchor, unresolved = anchor_of(nid, front, roots)
+        problems.extend(unresolved)
         task = task_of(nid)
         if task is not None:
             if task not in plan_nodes or plan_nodes[task]["kind"] != "task":
                 problems.append(f"{nid}: answers {task}, which the plan does not hold as a "
                                 f"task; the path is the identity and this one names nothing")
                 continue
-            problems.extend(record_standard_problems(
-                nid, front, root, target, standard or standard_contract(),
-                plan_nodes[task]["front"]))
+            if anchor is not None:
+                problems.extend(record_standard_problems(
+                    nid, front, root, anchor, standard or standard_contract(),
+                    plan_nodes[task]["front"]))
+            elif isinstance(front.get("standard"), dict):
+                problems.append(f"{nid}: names a standard, but its own target does not resolve; "
+                                f"the citation, the installed packages and the run it owes are "
+                                f"unchecked until `target` does")
             problems.extend(record_run_problems(nid, front, root))
             if node["kind"] == "implementation":
                 problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
@@ -1249,8 +1293,12 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
         if node["kind"] == "review":
             problems.extend(review_plan_problems(nid, front, plan_nodes, delivered,
                                                  names, root))
-            problems.extend(review_standard_problems(nid, front, target,
-                                                     standard or standard_contract()))
+            if anchor is not None:
+                problems.extend(review_standard_problems(nid, front, anchor,
+                                                         standard or standard_contract()))
+            elif isinstance(front.get("standard"), dict):
+                problems.append(f"{nid}: names a standard, but its own target does not resolve; "
+                                f"its citations are unchecked until `target` does")
             problems.extend(review_reconciliation_problems(nid, front, target))
     return problems
 
@@ -1518,14 +1566,15 @@ def standards_held(nodes: dict[str, dict]) -> list[str]:
     rules and one written against rules nobody handed over produce the same clean output. The root
     is what remembers. A path earlier records name, beside an invocation naming none, is the
     regression this line exists to make visible."""
-    pinned: dict[str, int] = {}
+    pinned: dict[tuple[str, str], int] = {}
     for node in nodes.values():
         declared = node["front"].get("standard")
         if isinstance(declared, dict) and isinstance(declared.get("at"), str):
-            pinned[declared["at"]] = pinned.get(declared["at"], 0) + 1
-    return [f"{at}: pinned by {count} record(s); an invocation naming no standard now writes "
-            f"source these rules will still be read against"
-            for at, count in sorted(pinned.items())]
+            key = (str(node["front"].get("target")), declared["at"])
+            pinned[key] = pinned.get(key, 0) + 1
+    return [f"{at} (target {target}): pinned by {count} record(s); an invocation naming no "
+            f"standard now writes source these rules will still be read against"
+            for (target, at), count in sorted(pinned.items())]
 
 
 def substrate_absences(plan_nodes: dict[str, dict], delivered: set[str],

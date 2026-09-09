@@ -482,7 +482,9 @@ trace's reader and one for the delivery's.
 ### 4. Compose
 
 Write `review/<review-name>.md` under the delivery root, under the name input 6 fixed — the name is
-this review's identity and the path is where it lives. It carries the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
+this review's identity and the path is where it lives. It carries `target` — input 4's key, the
+root `reviewed` and the standard's path are spelled from, which the validator resolves the record
+at — the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
 that one ran, how many failures were counted where that one did, the run's directory where there was
 one, the reconciliation record the conformance pass folded — `reconciliation:
 siegard-reconcile/<review-name>.md`, which the validator holds to the pass having run and to this
