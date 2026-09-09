@@ -12,7 +12,8 @@ id, a name or a class field, so none can disagree with where it sits.
 every reference resolves and lands on the class the field demands, an attribute never points at
 an identity-bearing element and a relationship never points at a value (one home per fact,
 SPEC-002 R8), composition stays inside its aggregate, an invariant stays inside one aggregate
-and a crossing policy says how it converges, a state machine is total over its states and
+and a crossing policy says how it converges, a rule's or constraint's `statement` is one
+sentence (one falsifiable condition, SPEC-003), a state machine is total over its states and
 triggers, every entity, value object and enumeration is reachable (SPEC-001 R6), and every
 decision-log entry locates a file and field that exist (SPEC-001 R9).
 
@@ -128,6 +129,7 @@ PRIMITIVES = ("string", "integer", "decimal", "boolean", "date", "datetime")
 META_FIELDS = ("gaps", "sources", "rationale", "proposal")
 
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-Z`])")
 FENCE = re.compile(r"^---\n(.*?)\n---\n?", re.S)
 
 SCHEMAS = {"context": "context.json", "element": "element.json", "rule": "rule.json",
@@ -340,6 +342,26 @@ def body_problems(cls: str, body: str) -> list[str]:
     return []
 
 
+def statement_problems(cls: str, front: object) -> list[str]:
+    """One falsifiable condition is one sentence (SPEC-003) — the half of that rule a sentence
+    count decides. Whether one sentence carries one condition stays judgment, and `--shape`
+    naming the far end of the class is where a reviewer reads it; this refuses only what no
+    reading can defend, a statement that stopped and started again. No escape hatch: a second
+    sentence is a definition (an element's, SPEC-001 R3), an example (a scenario's), or a second
+    condition (a second rule's), and each of those already has a home."""
+    if cls not in ("rule", "constraint") or not isinstance(front, dict):
+        return []
+    statement = front.get("statement")
+    if not isinstance(statement, str):
+        return []
+    count = len([s for s in SENTENCE.split(statement) if s.strip()])
+    if count <= 1:
+        return []
+    return [f"statement carries {count} sentences; one falsifiable condition is one sentence, "
+            f"and a second sentence is a second rule, a scenario, or an element's definition "
+            f"(SPEC-003)"]
+
+
 def contracts() -> dict[str, Draft202012Validator]:
     validators = {}
     for cls, name in SCHEMAS.items():
@@ -383,6 +405,7 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
             where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
             problems.append(f"{identity}: {where}: {error.message}")
         problems += [f"{identity}: {p}" for p in body_problems(cls, body)]
+        problems += [f"{identity}: {p}" for p in statement_problems(cls, front)]
         display = front.get("display")
         if isinstance(display, str) and reduce_display(display) != slug:
             problems.append(f"{identity}: display `{display}` reduces to "
@@ -437,6 +460,7 @@ def check_single(root: Path, named: str, validators) -> int:
         where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
         problems.append(f"{where}: {error.message}")
     problems += body_problems(cls, body)
+    problems += statement_problems(cls, front)
     display = checked.get("display")
     if isinstance(display, str) and reduce_display(display) != slug:
         problems.append(f"display `{display}` reduces to `{reduce_display(display)}`, "
@@ -866,7 +890,6 @@ def print_impact(nodes: dict[str, dict], root: Path, named: list[str],
 # ---------------------------------------------------------------- shape
 
 
-SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-Z`])")
 PROSE_PATH = re.compile(r"\b(?:domain|rules|scenarios|contracts|constraints)"
                         r"/[a-z0-9-]+(?:/[a-z0-9-]+)?\b")
 PROSE_SLUG = re.compile(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`")

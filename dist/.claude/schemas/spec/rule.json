@@ -11,7 +11,7 @@
     "statement": {
       "type": "string",
       "minLength": 1,
-      "description": "One falsifiable condition."
+      "description": "One falsifiable condition. Stated in one sentence: the sentence count is the half of this the validator decides, and a second sentence is refused — it is a second rule, a scenario, or an element's definition, each with a home of its own."
     },
     "expression": {
       "type": "string",

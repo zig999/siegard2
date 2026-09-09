@@ -297,7 +297,8 @@ This validates every node against its class's schema, and the checks no per-file
 express: every reference resolves and lands on the class the field demands, an attribute never
 points at an identity-bearing element and a relationship never points at a value (one home per
 fact, SPEC-002 R8), composition stays inside its aggregate, an invariant stays inside one
-aggregate and a crossing policy declares how it converges, a state machine is total over its
+aggregate and a crossing policy declares how it converges, a rule's or constraint's `statement`
+is one sentence (one falsifiable condition, SPEC-003), a state machine is total over its
 states and triggers, every value object and enumeration is reachable (SPEC-001 R6), and every
 decision-log entry locates a file and field that exist (SPEC-001 R9).
 
@@ -305,7 +306,10 @@ Report the command's output verbatim. If it exits non-zero, the run failed — f
 never describe the specification as sound while it is not.
 
 **Fixing means form, never knowledge.** A wrong shape — a value outside a vocabulary, a
-malformed reference, a body missing a heading — is yours to correct. A missing required field
+malformed reference, a body missing a heading, a `statement` in two sentences — is yours to
+correct. The last is the one to think about: two sentences are two conditions, and the fix is a
+second rule, a scenario, or the element the definition belongs to — never the two joined by a
+semicolon, which passes the check and keeps the defect. A missing required field
 is not a form problem: it is a fact to decide and log, never a value supplied only to satisfy
 the validator without deciding it for real.
 
@@ -348,7 +352,6 @@ answer:
   rather than one node being wrong, and drift has no defect to point at: every node on that list
   was defensible when it was written. Ask of yours what a reader gets from its length that the
   fields do not already carry, and cut what has no answer;
-- a `statement` in two sentences is two conditions — split it, or drop the second;
 - an `expression` longer than its `statement` has added rather than restated — the claim moves
   into the `statement` or becomes its own rule;
 - a phrase two nodes share is one definition kept twice — name what it denotes and reference the

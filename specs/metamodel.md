@@ -71,6 +71,13 @@ R9–R10).
     rejection, and an undecided pairing is a decision to make and log, never silence.
 - **Structure** — `statement` (one falsifiable condition) is required; `expression` optional.
   A rule carries no examples: a concrete case is a Scenario anchored to the rule.
+- **One condition is one sentence.** The sentence count is the half of "one falsifiable
+  condition" the validator decides; whether one sentence carries one condition is judgment, read
+  off `--shape` naming the far end of the class. A second sentence is refused, with no escape
+  hatch: it is a definition (SPEC-001 R3, the element's), an example (a Scenario's), or a second
+  condition (a second Rule's), and each already has a home. The check is a speed bump, not a
+  wall — a semicolon evades it — and its worth is that the rule is named at the moment of
+  writing rather than in a report after.
 - **`statement` governs.** Where both are declared, `expression` restates the condition
   `statement` fixes in a form a consumer evaluates directly, and adds no obligation of its
   own. An obligation that reaches the specification through `expression` alone is one no
@@ -100,8 +107,8 @@ R9–R10).
 
 ### Architecture Constraint
 
-- **No subtypes.** `statement` is required; `scope` is `system` or a context slug; `fitness`
-  optionally states the mechanical check that verifies it. Integration strategies
+- **No subtypes.** `statement` is required and is one sentence, as a Rule's is; `scope` is
+  `system` or a context slug; `fitness` optionally states the mechanical check that verifies it. Integration strategies
   (anti-corruption layer, messaging, storage choices) live here — they constrain the solution,
   never the domain.
 - **`fitness` states the condition, never a command or a step.** Which step decides a
@@ -201,3 +208,6 @@ layer → Architecture Constraint.
 5. For R2: a bare slug two nodes answer to is reported ambiguous and resolved to neither — a
    fixture with a deliberate collision across two classes proves it, because resolving to
    whichever sorts first would be wrong in silence.
+6. A `statement` carrying more than one sentence is refused, on a Rule and on an Architecture
+   Constraint alike, in the whole run and in `--node` — a fixture proves each — and the sound
+   fixture carries none.

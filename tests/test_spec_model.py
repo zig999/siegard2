@@ -954,3 +954,49 @@ def test_of_refuses_an_identity_that_names_no_file(spec_root):
 def test_of_scopes_shape_and_stands_beside_nothing_else(spec_root):
     done = run_node("--of", "rules/troubleshooting/case-transitions", str(spec_root))
     assert done.returncode == 2 and "stands beside nothing else" in done.stderr
+
+
+# --------------------------------------------------- one condition, one sentence (SPEC-003)
+
+
+def test_a_statement_carrying_two_sentences_is_refused(spec_root):
+    """The half of "one falsifiable condition" a sentence count decides. No escape hatch: a
+    second sentence is a definition, an example, or a second condition, and each has a home."""
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(
+                statement="A case moves only along the declared transitions. "
+                          "A transition asked of a terminal state is refused."))
+    found = hits(problems_of(spec_root), "one falsifiable condition is one sentence")
+    assert found and "rules/troubleshooting/case-transitions" in found[0]
+    assert "2 sentences" in found[0]
+
+
+def test_a_constraint_statement_is_held_to_one_sentence_too(spec_root):
+    rewrite(spec_root, "constraints/asynchronous-events.md",
+            lambda front: front.update(
+                statement="Contexts exchange events asynchronously. No context blocks on "
+                          "another's acknowledgement."))
+    assert hits(problems_of(spec_root), "constraints/asynchronous-events: statement carries 2")
+
+
+def test_a_two_sentence_statement_is_refused_in_node_mode_too(spec_root):
+    """`--node` is the per-file half of the whole run, and a file mid-authoring is where the
+    author meets this first — refusing it there is the speed bump doing its work."""
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(
+                statement="A case moves only along the declared transitions. "
+                          "Nothing else moves it."))
+    done = run_node("--node", "rules/troubleshooting/case-transitions.md", str(spec_root))
+    assert done.returncode == 1
+    assert "one falsifiable condition is one sentence" in done.stdout
+
+
+def test_a_semicolon_passes_the_sentence_check(spec_root):
+    """Stated so nobody mistakes the check for a wall: one sentence carrying two conditions on a
+    semicolon passes, and the metamodel says so. What catches it is `--shape` naming the far
+    end of the class, which is judgment and always was."""
+    rewrite(spec_root, "rules/troubleshooting/case-transitions.md",
+            lambda front: front.update(
+                statement="A case moves only along the declared transitions; a transition "
+                          "asked of a terminal state is refused."))
+    assert not hits(problems_of(spec_root), "one falsifiable condition is one sentence")
