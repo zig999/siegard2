@@ -119,6 +119,19 @@ one on this repository's default branch. A release is therefore: bump the versio
 marker line of `src/consumer/CLAUDE.md` (the suite refuses a mismatch among the three), assemble
 `dist/`, run `python3 -m pytest`, and land it on `main`. No bump, no update.
 
+Assembling `dist/` is three copies, and the suite refuses a release missing any of them:
+`src/claude/` to `dist/.claude/` (a byte-for-byte copy, `__pycache__` left out), and
+`src/consumer/CLAUDE.md` to both `dist/CLAUDE.md` — the file a consumer's root receives — and
+`dist/.claude/consumer/CLAUDE.md` — the payload `project.py` reads to report drift. The two
+copies of the consumer rules are the one place the distribution holds a file twice, and both
+are the same source.
+
+```sh
+rsync -a --delete --exclude '__pycache__' --exclude 'consumer/' src/claude/ dist/.claude/
+cp src/consumer/CLAUDE.md dist/CLAUDE.md
+cp src/consumer/CLAUDE.md dist/.claude/consumer/CLAUDE.md
+```
+
 A major is a version whose contract a persisted record no longer satisfies, and it ships with the
 rewrite a consumer runs once, under `tools/` — outside `src/claude/`, so no assembly distributes it.
 The consumer's sequence is fixed: update the plugin, run the migration from this repository against
