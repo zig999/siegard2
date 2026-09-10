@@ -273,7 +273,11 @@ demonstrating it, and its `step` the registry's step whose `role` is `suite`, wh
 that proves the work. `deliver.py` already refused a `demonstrates` naming a node the task does
 not implement, so what reaches here is a claim the plan gave the task; what this step adds is
 whether the test makes good on it. Where no proof carries one, pass no `--certify` and say so in
-the report.
+the report. Either way the report lists every node the tasks implement that no test demonstrates,
+with what the proof's `untested` says of each: «a node the task implements that no test claims is
+named in that review's report with the reason the proof gives» (SPEC-004 R13). A node with no
+claim and no reason is a proof short of what it owes, said as that and never as a finding — this
+pass judges no test.
 
 This is the locate step of the conformance pass, run by the one reader that cannot miss a binding.
 For every file of the set it computes every node the trace binds to it, writes one **node pack**
@@ -551,6 +555,8 @@ Report, in this order:
 - **which passes did not run, and which input was missing** — this line is not optional, and it is
   what separates a clean review from a narrow one;
 - every criterion the coverage pass did not find covered, and what is unexercised in each;
+- every node the tasks implement that no test demonstrates, with the reason the proof gives or
+  that it gives none, and the state each certification came back with;
 - the standard: which of its rules were in scope over this file set, and which it leaves to a tool
   — naming, for those, whether the step that decides each one ran, and how many rules rest on each
   step that did. A rule left to a tool that never ran is unanswered, and saying so is what keeps the

@@ -519,6 +519,8 @@ task file:             <absolute path of work-root/task/<epic>/<slug>.md>
 implementation record: <absolute path of the record step 3 wrote>
 target source root:    <absolute path>
 proof slice:           <the --contract proof output above, pasted whole>
+nodes:                 <the identity of each specification node the task implements, with the
+                        absolute path of the specification root — omit where the task implements none>
 standard:              <absolute path — omit this line where none was named>
 underdetermined:       <every `UNDERDETERMINED, from the specification —` entry of the task's
                         `## Notes`, quoted whole — omit where the task carries none>
@@ -529,6 +531,12 @@ You write no file under the delivery root: return the record's content as text.
 ```
 
 The same two rules hold as at step 3: every path absolute, the slice pasted rather than cited.
+
+The nodes are handed over because each is an obligation of the proof, not a reference: «Where a
+node the task implements states a fact a finite test decides, the proof carries a test that fails if
+that fact stops holding, whole, and names the node on that test» (SPEC-004 R10). The author reads
+the fact and decides whether a finite test decides it; a node it leaves without a test it names
+under `untested` with why, and a node under neither is what the report below says is open.
 
 The `underdetermined` set was already read for you — the situate report quotes these entries per
 task, by their opening, so what you hand over is what a script found, and an entry the report
@@ -726,6 +734,8 @@ Report, in this order:
 - every criterion recorded unmet, with what the record says about it;
 - every inference recorded, and every departure — these are the decisions nobody asked for, and
   they are what a reviewer reads first;
+- every node the task implements that no test demonstrates, with what the proof's `untested`
+  says of it — and, where it says nothing, that the proof leaves the node open;
 - everything the proof left unproven, every edge case it dismissed, and every disagreement it
   recorded;
 - what the implementation deferred, and what it says must keep working;

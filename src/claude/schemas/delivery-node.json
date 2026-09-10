@@ -118,7 +118,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "Behavior this record leaves unproven, stated plainly. Naming it is the point: an absence the record admits is a finding, and an absence it omits is invisible."
+      "description": "Behavior this record leaves unproven, stated plainly. Naming it is the point: an absence the record admits is a finding, and an absence it omits is invisible. A fact of a node the task implements that no finite test decides, and an inference about behavior the implementation recorded, are named here with why — «recorded as unproven with why» (SPEC-004 R12) — never approximated by a test."
     },
     "contested": {
       "type": "array",
@@ -724,7 +724,7 @@
         },
         "demonstrates": {
           "$ref": "#/$defs/specNodeRef",
-          "description": "A specification node this test is offered as the proof of: it would fail if that node's fact stopped holding. A claim and never a finding \u2014 the review's certification is what judges it, through the same auditor and the same rule a reconciliation uses, and only its `covered` makes the trace's binding one a test decides. Omitted where the test proves a criterion and nothing more, which is the ordinary case: a criterion is what a task owes, and a node is what the specification holds. Every entry must be one the task implements \u2014 a proof answers its own task, and a test claiming a node the task never took on claims ground the plan did not give it."
+          "description": "A specification node this test is offered as the proof of: it would fail if that node's fact stopped holding. A claim and never a finding \u2014 the review's certification is what judges it, through the same auditor and the same rule a reconciliation uses, and only its `covered` makes the trace's binding one a test decides. Omitted where the test proves a criterion and no node's fact whole. Where a node the task implements states a fact a finite test decides, the proof carries such a test and names the node here — «A finite test is preferred to a reading wherever one exists» (SPEC-004 R10) — and a node no finite test decides is named under `untested` with why instead. Every entry must be one the task implements \u2014 a proof answers its own task, and a test claiming a node the task never took on claims ground the plan did not give it."
         }
       }
     },

@@ -66,7 +66,8 @@ stop. You need:
   audit that resolved it silently reports coverage of a criterion nobody wrote.
 - **Every criterion gets exactly one entry.** A criterion omitted reads as one that passed, and
   the omission is invisible in the record.
-- **Report no figure.** No percentage, no ratio, no count offered as a score. A number that must
+- **Report no figure.** «Coverage is stated per obligation, never as a figure» (SPEC-004 R14).
+  No percentage, no ratio, no count offered as a score. A number that must
   rise becomes a target to satisfy, and satisfying it produces tests nobody needed. Name the
   criteria and their states; a reader who wants a count can count, and what they cannot recover
   from a number is which criterion is unproven.
@@ -79,7 +80,10 @@ stop. You need:
   Decided from the fact as the node states it, never from what the node is typed as: a `policy`
   naming a refusal is one input against one expected result, and an aggregate whose identity
   spans files is not. `testable` names the assertion that would close it — what input against
-  what result; `untestable` names what no finite test asserts and why. A node you could not read
+  what result; `untestable` names what no finite test asserts and why. A node declaring its
+  transitions and rejections is never untestable on that ground: «A declared transition set is
+  finite» (SPEC-004 R11), so the remainder is the table over the pairings the offered tests
+  leave out. A node you could not read
   well enough to look for has no remainder to classify: `why` says what is ambiguous, and a
   remainder over it would be a claim about a fact nobody read.
 

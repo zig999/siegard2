@@ -266,8 +266,8 @@ def test_a_demonstrates_must_be_a_node_identity(delivery, work, root, target, so
 
 def test_a_proof_carrying_no_demonstrates_is_the_ordinary_case(delivery, work, root, target,
                                                                sound_delivery):
-    """Most tests prove a criterion and nothing more: a criterion is what a task owes and a node
-    is what the specification holds."""
+    """A proof with no `demonstrates` validates: a task may implement only nodes no finite test
+    decides, and the claim is the author's to make, never the validator's to demand."""
     assert problems_of(delivery, work, target, root) == []
 
 
