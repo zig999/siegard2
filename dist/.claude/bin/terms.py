@@ -100,7 +100,7 @@ TERMS: dict[str, tuple[str, str]] = {
 OPEN: dict[str, str] = {
     "specification (the specification root)": "the root the analysis writes into and every plan "
                                  "implements against, defined as an input in each skill's required "
-                                 "inputs and in CLAUDE.md's `What the specification is`, and by no "
+                                 "inputs, and by no "
                                  "contract. It collides with nothing: a task names a node it "
                                  "implements by identity alone, with no pin of any kind.",
     "bound": "used of the judgment execution-contract-binder returns, in the validators' refusals "

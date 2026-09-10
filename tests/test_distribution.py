@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import os
 from pathlib import Path
 
@@ -214,38 +215,30 @@ def test_the_marketplace_entry_is_the_plugin_that_ships(marketplace):
         "check reads it there"
 
 
-# ------------------------------------------------ what the rules file has to have heard of
+# ------------------------------------------------ what the rules file may name
 
 CONSUMER_RULES = REPO / "src/consumer/CLAUDE.md"
 
 
-def test_the_rules_a_consumer_loads_name_every_skill_that_ships():
-    """The one file in this framework that cannot report its own gaps.
-
-    Every other artifact is held to something: a schema, a validator, a suite. These rules are
-    held to nothing, and a session reading them has nothing to compare them against — so a skill
-    that shipped without reaching this file is a skill no consumer has any reason to know exists,
-    and nothing anywhere says so. That is not hypothetical: `/siegard-status`, `/siegard-archive`
-    and `/siegard-standard` each shipped and each went unnamed here for releases, and `reference`
-    shipped with its contract, its skill and its agent all acting on it while this file said
-    nothing at all.
-
-    Naming is the whole of what is checked. What each one does, and how much this file says about
-    it, stays an author's judgment — mechanising that would only produce a file written to pass."""
+def test_every_skill_the_rules_name_ships():
+    """The rules file carries what binds a session outside a skill — the routes and the
+    session-wide rules — and names an entry point only where a route runs through it. The
+    catalog of what ships is the skills' own descriptions, which the harness loads in every
+    session; this file is not a second copy of it. What is checked is the other direction: a
+    route naming a skill nobody ships is a route a consumer cannot take."""
     rules = CONSUMER_RULES.read_text(encoding="utf-8")
-    shipped = sorted(p.name for p in (REPO / "src/claude/skills").iterdir() if p.is_dir())
-    absent = [name for name in shipped if f"/{name}`" not in rules]
-    assert absent == [], \
-        f"{absent} ship as skills and the consumer's own rules never name them; a consumer " \
-        f"reading these rules has no reason to know they exist"
+    shipped = {p.name for p in (REPO / "src/claude/skills").iterdir() if p.is_dir()}
+    named = set(re.findall(r"`/([a-z][a-z0-9-]*)`", rules))
+    assert named <= shipped, \
+        f"{sorted(named - shipped)} are named as entry points by the consumer rules and ship " \
+        f"as no skill"
 
 
-def test_the_rules_a_consumer_loads_name_every_agent_that_ships():
-    """The same guard one layer down. These rules tell a consumer which judgments are delegated
-    and to whom — that is how a reader knows the binder never sees the cut it judges — so an agent
-    named nowhere here is a guarantee nobody was told about."""
+def test_the_rules_name_no_agent():
+    """Which judgment is delegated to whom is each skill's own statement, made where the
+    delegation happens. An agent named in the rules would be a description of a delegation
+    held apart from the skill that performs it, and the two would drift."""
     rules = CONSUMER_RULES.read_text(encoding="utf-8")
     shipped = sorted(p.stem for p in (REPO / "src/claude/agents").glob("*.md"))
-    absent = [name for name in shipped if f"`{name}`" not in rules]
-    assert absent == [], \
-        f"{absent} ship as agents and the consumer's own rules never name them"
+    named = [name for name in shipped if f"`{name}`" in rules]
+    assert named == [], f"{named} are named by the consumer rules; the delegating skill is their home"

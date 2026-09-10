@@ -85,6 +85,16 @@ and run it. To find the copy by hand instead:
 find ~/.claude/plugins -path '*siegard*/consumer/CLAUDE.md'
 ```
 
+The file is short by design: it carries the rules that bind a session when no skill is running
+— which route a change takes, and what is never hand-edited or invented — and nothing a skill or
+a script states in its own file. `/plugin` lists the skills; each script's `--help` states what
+it does.
+
+Beside it ships `siegard-clean-zone-identifiers.sh`, a person's command and nothing a skill
+invokes: it removes every `<name>:Zone.Identifier` file from the root down — what Windows leaves
+under WSL when material is copied in — printing each removal; `--dry-run` prints without
+removing. Copy it to the project root the same way, or run it from the plugin's own copy.
+
 ### 5. Declare the project
 
 ```

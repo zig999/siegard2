@@ -550,12 +550,12 @@ Report, in this order:
   root already resolved above, names per task what has no record and everything it waits on —
   a dependency with no record, an artifact a task produces and the tree does not hold, a standing
   `BLOCKING, from the specification —` note — and then the set itself. Where that set holds more
-  than one task, the distributed consumer rules describe delivering them in parallel — one
-  worktree per task, integrated by merge — and taking that route is, like everything in this
+  than one task, `bin/deliver.py --help` describes delivering them in parallel — one worktree
+  per task, integrated by merge — and taking that route is, like everything in this
   handoff, the human's choice. A set restated here instead is a set that was true when it was
   printed. The handoff offers the next step and never takes it: filling the one open slot and
   invoking are the human's — given per invocation, or given once for a whole route through the
-  orchestrating entry point the consumer rules name, whose own file bounds what it may fill.
+  orchestrating entry point, `/deliver-scope`, whose own file bounds what it may fill.
 
 Then stop. `git diff` over the work root is the review, and it belongs to a person.
 

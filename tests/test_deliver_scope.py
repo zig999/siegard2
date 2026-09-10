@@ -29,7 +29,6 @@ def flat(path: str) -> str:
 
 
 SKILL = flat("src/claude/skills/deliver-scope/SKILL.md")
-RULES = flat("src/consumer/CLAUDE.md")
 
 
 def test_the_skill_states_it_never_invokes_analyse():
@@ -71,18 +70,6 @@ def test_the_run_ends_at_the_record_and_findings_are_never_acted_on():
     assert "review record is written" in SKILL
     assert "never acted on" in SKILL
     assert "review clean" not in SKILL
-
-
-def test_the_consumer_rules_carry_the_same_bounds():
-    """The rules file is what every consumer session loads; a bound only the skill's own file
-    holds is invisible until the skill is already running."""
-    for sentence in ("never invokes `/analyse`",
-                     "pastes, never composes",
-                     "never inferred",
-                     "review record is written"):
-        assert sentence.lower() in RULES.lower(), \
-            f"src/consumer/CLAUDE.md no longer states {sentence!r} for /deliver-scope"
-    assert "review clean" not in RULES
 
 
 def test_the_orchestration_log_the_skill_names_is_the_one_the_validator_keeps():
