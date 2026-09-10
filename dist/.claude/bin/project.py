@@ -17,13 +17,14 @@ file does not declare one, that is the calling skill's stop to raise, never this
 around. This script prints only what stands; deciding that an absence is a stop belongs to
 whichever skill needed the field.
 
-One report precedes the fields: the rules file. The consumer's root `CLAUDE.md` carries the rules
-this framework shipped with, placed there by the install because nothing loads it from anywhere
-else — and nothing in it can report its own absence or its own age, since a session that lost the
-file lost the reporter with it. This script compares the version its marker line names against the
-plugin's own manifest and prints one `rules:` line where the file is absent, unmarked, or from
-another release — a report, never a refusal, because the fields below stand either way and
-replacing a file a project may have added its own rules to is a person's act.
+One report precedes the fields: a root `CLAUDE.md` carrying the framework's rules. The rules
+reach every session and every agent through the plugin's own hooks, and nothing is placed at the
+project root for them; a root file carrying the rules' marker line is a second copy of what the
+hooks already placed, loaded beside it in every session. This script prints one `rules:` line
+naming that file and the version its marker states — a report, never a refusal, because the
+fields below stand either way and removing a portion of a file a project may have added its own
+rules to is a person's act. A root `CLAUDE.md` carrying no marker is the project's own and is
+not reported.
 
 A standard governs one target. Declared as an object keyed by target, each entry prints on its
 own line — `standard <target>: <path>` or `standard <target>: declared none` — and the calling
@@ -69,23 +70,12 @@ MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 RULES_MARKER = re.compile(r"These rules ship with Siegard (\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)")
 
 
-def rules_payload() -> Path | None:
-    """Where the current rules file sits, for the report to name. Inside the plugin in every
-    install — `consumer/CLAUDE.md` is assembled in beside `bin/` precisely so this report can
-    name a path that exists wherever this script runs — and beside `src/claude/` in the
-    repository that authors it, where the payload is the authored file itself."""
-    for candidate in (PLUGIN_ROOT / "consumer" / "CLAUDE.md",
-                      PLUGIN_ROOT.parent / "consumer" / "CLAUDE.md"):
-        if candidate.is_file():
-            return candidate
-    return None
-
-
-def report_rules_drift(home: Path) -> None:
-    """The rules file cannot report its own absence or its own age: a session that lost it lost
-    the reporter with it. This script is the one thing every skill runs first, so the comparison
-    lives here — a report, never a refusal, because the fields below stand either way, and
-    replacing a file a project may have appended its own rules to is a person's act, never this
+def report_rules_copy(home: Path) -> None:
+    """A root `CLAUDE.md` carrying the rules' marker line is a copy of what the plugin's hooks
+    place in every session: the same rules loaded twice, and a copy the plugin's updates never
+    reach. This script is the one thing every skill runs first, so the report lives here — a
+    report, never a refusal, because the fields below stand either way, and removing the Siegard
+    portion of a file a project may have appended its own rules to is a person's act, never this
     script's."""
     try:
         version = json.loads(MANIFEST.read_text(encoding="utf-8")).get("version")
@@ -95,34 +85,20 @@ def report_rules_drift(home: Path) -> None:
         return
     if not isinstance(version, str):
         return
-    payload = rules_payload()
-    source = (f"the current rules are at {payload} — replace the Siegard portion, keep "
-              f"anything the project added, and restart any running session: a session keeps "
-              f"the rules it loaded, and no report reaches it after the file matches"
-              if payload else
-              f"the distribution carries the current rules at "
-              f"{PLUGIN_ROOT / 'consumer' / 'CLAUDE.md'}, which is missing here — this install "
-              f"is incomplete")
     rules = home / "CLAUDE.md"
     if not rules.is_file():
-        act = (f"place them: cp {payload} {rules} — and restart any running session, which "
-               f"loaded nothing and keeps that" if payload else source)
-        print(f"rules: {rules} does not exist, so no session in this project loads the "
-              f"framework's rules and nothing but this line can say so; {act}")
         return
     try:
         text = rules.read_text(encoding="utf-8")
-    except OSError as broken:
-        print(f"rules: {rules} cannot be read: {broken}")
+    except OSError:
         return
     found = RULES_MARKER.search(text)
     if found is None:
-        print(f"rules: {rules} carries no Siegard version, so it predates {version} or the "
-              f"marker line was edited away; {source}")
-    elif found.group(1) != version:
-        print(f"rules: {rules} says Siegard {found.group(1)} and this framework is {version}; "
-              f"the rules and the skills are two halves of one release, and these are from two; "
-              f"{source}")
+        return
+    print(f"rules: {rules} carries the Siegard {found.group(1)} rules, and the plugin's hooks "
+          f"already place the {version} rules in every session and every agent; remove the "
+          f"Siegard portion and keep anything the project added — a copy at the root is loaded "
+          f"twice and updated never")
 
 
 def toplevel_of(directory: Path) -> Path:
@@ -161,7 +137,7 @@ def main() -> int:
         return CANNOT_RUN
 
     home = toplevel_of(directory)
-    report_rules_drift(home)
+    report_rules_copy(home)
     target = home / PROJECT_FILE
     if not target.is_file():
         print(f"no project file: {target} does not exist; every root and the standard are named "

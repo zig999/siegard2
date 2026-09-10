@@ -64,36 +64,26 @@ version it started with: the check finds, you apply with `/reload-plugins` (or a
 Without it, `/plugin marketplace update siegard-generator` followed by `/plugin update` asks the
 same question on demand.
 
-### 4. Place the rules file at the project root
+### 4. Nothing to place: the rules arrive by hook
 
-The plugin carries the session rules every Siegard skill assumes, at `consumer/CLAUDE.md` inside
-the plugin — and nothing loads a `CLAUDE.md` from inside a plugin. It has to sit at the consumer
-project's root as `CLAUDE.md`. This is the one step a plugin update cannot do for you, because the
-file may carry rules the project added of its own.
+The plugin carries the session rules every Siegard skill assumes at `hooks/rules.md`, and its
+`hooks/hooks.json` places them into every session at start and into every agent at spawn. No
+`CLAUDE.md` is copied to the project root, and a project's own `CLAUDE.md` stays its own. The
+rules are short by design: they carry what binds a session when no skill is running — which
+route a change takes, and what is never hand-edited or invented — and nothing a skill or a
+script states in its own file. `/plugin` lists the skills; each script's `--help` states what it
+does.
 
-Run any Siegard skill, for example:
+A project that placed an earlier release's rules at its root as `CLAUDE.md` hears about it: the
+first thing every skill runs is `project.py`, and where the root file carries a Siegard marker
+line it prints one `rules:` line asking for the Siegard portion to be removed, keeping anything
+the project added. Hooks are what carry the rules, so a session with hooks disabled runs the
+skills without them.
 
-```
-/siegard:siegard-status
-```
-
-The first thing every skill runs is `project.py`, and where the root `CLAUDE.md` is absent it
-prints one `rules:` line with the exact `cp` command, pointing at the plugin's own copy. Paste
-and run it. To find the copy by hand instead:
-
-```bash
-find ~/.claude/plugins -path '*siegard*/consumer/CLAUDE.md'
-```
-
-The file is short by design: it carries the rules that bind a session when no skill is running
-— which route a change takes, and what is never hand-edited or invented — and nothing a skill or
-a script states in its own file. `/plugin` lists the skills; each script's `--help` states what
-it does.
-
-Beside it ships `siegard-clean-zone-identifiers.sh`, a person's command and nothing a skill
-invokes: it removes every `<name>:Zone.Identifier` file from the root down — what Windows leaves
-under WSL when material is copied in — printing each removal; `--dry-run` prints without
-removing. Copy it to the project root the same way, or run it from the plugin's own copy.
+One file does ship for the project root, and a person copies it: `siegard-clean-zone-identifiers.sh`,
+a command no skill invokes. It removes every `<name>:Zone.Identifier` file from the root down —
+what Windows leaves under WSL when material is copied in — printing each removal; `--dry-run`
+prints without removing.
 
 ### 5. Declare the project
 
@@ -102,44 +92,37 @@ removing. Copy it to the project root the same way, or run it from the plugin's 
 ```
 
 writes `siegard.json` — the specification root, targets, work and delivery roots, and the
-standard each target follows. Commit `CLAUDE.md`, `siegard.json` and `.claude/settings.json`:
-those three make the install reproducible for everyone on the project.
+standard each target follows. Commit `siegard.json` and `.claude/settings.json`: those two
+make the install reproducible for everyone on the project.
 
 ### 6. Verify
 
 - `/plugin` → **Installed** lists `siegard` at the current version.
-- `/siegard:siegard-status` runs with no `rules:` line — the rules and the skills are from one
-  release.
+- `/siegard:siegard-status` runs with no `rules:` line — no copy of the rules sits at the root.
 - Skills are invoked as `/siegard:<name>`; the bare form (`/analyse`, `/plan-work`, …) also works
   where no other plugin claims the name.
 
 ## When an update arrives
 
-After `/reload-plugins`, the skills are the new version and the root `CLAUDE.md` is still the
-old one. The first skill you run reports it — a `rules:` line naming the version the file
-carries, the version the framework is, and where the current copy sits. Replace the Siegard
-portion of the file, keeping anything the project added. A project whose rules match its
-framework hears nothing.
+After `/reload-plugins`, the skills, the rules and the hooks are the new version together: the
+rules travel inside the plugin, and the next session or agent start places the current ones.
+Nothing at the project root needs to change.
 
 ## For maintainers: what publishes a version
 
 The consumer's update check compares the version in the installed plugin's manifest against the
 one on this repository's default branch. A release is therefore: bump the version in
 `src/claude/.claude-plugin/plugin.json`, `dist/.claude/.claude-plugin/plugin.json` and the
-marker line of `src/consumer/CLAUDE.md` (the suite refuses a mismatch among the three), assemble
+marker line of `src/claude/hooks/rules.md` (the suite refuses a mismatch among the three), assemble
 `dist/`, run `python3 -m pytest`, and land it on `main`. No bump, no update.
 
-Assembling `dist/` is three copies, and the suite refuses a release missing any of them:
-`src/claude/` to `dist/.claude/` (a byte-for-byte copy, `__pycache__` left out), and
-`src/consumer/CLAUDE.md` to both `dist/CLAUDE.md` — the file a consumer's root receives — and
-`dist/.claude/consumer/CLAUDE.md` — the payload `project.py` reads to report drift. The two
-copies of the consumer rules are the one place the distribution holds a file twice, and both
-are the same source.
+Assembling `dist/` is two copies, and the suite refuses a release missing either:
+`src/claude/` to `dist/.claude/` (a byte-for-byte copy, `__pycache__` left out), and what
+`src/consumer/` authors for the consumer's root to `dist/`, beside the plugin.
 
 ```sh
-rsync -a --delete --exclude '__pycache__' --exclude 'consumer/' src/claude/ dist/.claude/
-cp src/consumer/CLAUDE.md dist/CLAUDE.md
-cp src/consumer/CLAUDE.md dist/.claude/consumer/CLAUDE.md
+rsync -a --delete --exclude '__pycache__' src/claude/ dist/.claude/
+cp src/consumer/* dist/
 ```
 
 A major is a version whose contract a persisted record no longer satisfies, and it ships with the

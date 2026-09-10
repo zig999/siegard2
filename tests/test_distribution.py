@@ -7,11 +7,10 @@ suite and shipped anyway. This is the cheapest test here and the one that would 
 most embarrassing defect.
 
 `dist/` is the shape of a consumer repository, not a directory of parts: `.claude/` lands as the
-plugin, and `CLAUDE.md` beside it lands at the consumer's root. The rules file is authored at
-`src/consumer/CLAUDE.md` and deliberately not under `src/claude/` — it governs work in the
-repository that installs the framework rather than being installed by it, a CLAUDE.md inside the
-plugin directory is loaded by nothing, and the copy that update-by-rsync kept planting there was
-dead weight every consumer had to notice and delete.
+plugin, and what `src/consumer/` authors lands beside it, at the consumer's root, for a person to
+copy. The session rules are not among those: they ship inside the plugin at `hooks/rules.md` and
+reach every session and every agent through the plugin's own hooks, so no `CLAUDE.md` is
+authored for the consumer's root and none sits at the plugin's own root, where nothing loads it.
 """
 from __future__ import annotations
 
@@ -56,15 +55,11 @@ def test_the_distribution_holds_every_authored_file(trees):
 
 
 def test_the_distribution_holds_nothing_else(trees):
-    """One exception, by name: `consumer/CLAUDE.md` is the rules payload, assembled into the
-    plugin from `src/consumer/CLAUDE.md` so that `project.py`'s drift report can name a source
-    that exists in every install — a marketplace install never receives what sits beside the
-    plugin. It is held to the authored rules by its own test below."""
     src, dist = trees
     extra = sorted(set(dist) - set(src))
-    assert extra == ["consumer/CLAUDE.md"], \
-        f"{sorted(set(extra) - {'consumer/CLAUDE.md'})} is distributed and not authored; a file " \
-        f"nothing authors is a file nothing validates, and this suite reads src/claude"
+    assert extra == [], \
+        f"{extra} is distributed and not authored; a file nothing authors is a file nothing " \
+        f"validates, and this suite reads src/claude"
 
 
 def test_every_distributed_file_is_the_authored_file(trees):
@@ -91,38 +86,25 @@ def test_the_version_is_set_and_is_one_value():
 
 
 def test_the_plugin_ships_no_claude_md():
-    """The consumer's rules load from their repository root; a copy at the plugin's own root is
-    read by nothing — measured, not assumed — and every update-by-copy used to replant it. The
-    payload at `consumer/CLAUDE.md` is not that copy: it is equally loaded by nothing, and that is
-    its point — it is the file the placement step copies out, named by `project.py`'s report,
-    carried inside the plugin because a marketplace install receives nothing beside it."""
+    """A CLAUDE.md at the plugin's own root is read by nothing — measured, not assumed — and one
+    authored for the consumer's root would be a second copy of what the hooks place. The rules
+    have one home, `hooks/rules.md`, and one carrier, `hooks/hooks.json`."""
     assert not (SRC / "CLAUDE.md").exists(), \
-        "src/claude/CLAUDE.md is back; the consumer rules are authored at src/consumer/CLAUDE.md"
+        "src/claude/CLAUDE.md is back; the rules are authored at src/claude/hooks/rules.md"
     assert not (DIST / "CLAUDE.md").exists(), \
         "dist/.claude/CLAUDE.md is back; nothing loads a CLAUDE.md inside the plugin directory"
-
-
-def test_the_rules_payload_is_the_authored_rules():
-    """The one file the distribution holds that src/claude does not, held to the one file that
-    authors it: three copies ship — beside the plugin, inside it, and none of them is a second
-    author."""
-    payload = DIST / "consumer/CLAUDE.md"
-    assert payload.is_file(), \
-        "the rules payload is not assembled into the plugin; a marketplace install would have " \
-        "no file for project.py's drift report to name"
-    assert payload.read_bytes() == (CONSUMER_ROOT / "CLAUDE.md").read_bytes(), \
-        "dist/.claude/consumer/CLAUDE.md drifted from src/consumer/CLAUDE.md; the assembly is a copy"
+    assert not (CONSUMER_ROOT / "CLAUDE.md").exists() and not (REPO / "dist/CLAUDE.md").exists(), \
+        "a CLAUDE.md is authored for the consumer's root again; the hooks already place the rules"
 
 
 def test_the_rules_marker_names_the_shipped_version():
-    """The drift report compares the rules file's marker against the plugin manifest, so the two
-    move together or the report fires on every consumer of the release that split them. The
+    """The rules and the skills are two halves of one release; the marker line the rules open
+    with is what a root copy is recognised and dated by, so it moves with the manifest. The
     pattern has one home, `project.py`, and this test reads it from there."""
     import project
     manifest = json.loads((SRC / MANIFEST).read_text(encoding="utf-8"))
-    found = project.RULES_MARKER.search((CONSUMER_ROOT / "CLAUDE.md").read_text(encoding="utf-8"))
-    assert found is not None, \
-        "src/consumer/CLAUDE.md carries no version marker; every install would be reported unmarked"
+    found = project.RULES_MARKER.search((SRC / "hooks/rules.md").read_text(encoding="utf-8"))
+    assert found is not None, "src/claude/hooks/rules.md carries no version marker"
     assert found.group(1) == manifest["version"], \
         f"the rules say Siegard {found.group(1)} and the manifest says {manifest['version']}; " \
         f"shipping is what sets both, and it set one"
@@ -146,7 +128,6 @@ def beside_the_plugin() -> tuple[dict[str, bytes], dict[str, bytes]]:
 
 def test_everything_authored_for_the_consumer_root_is_distributed_there():
     authored, distributed = beside_the_plugin()
-    assert "CLAUDE.md" in authored, "the consumer rules file is not authored"
     assert sorted(authored) == sorted(distributed), \
         f"authored {sorted(authored)} and distributed {sorted(distributed)} beside the plugin; a " \
         f"file authored for the consumer's root and not shipped reaches nobody, and one shipped " \
@@ -217,7 +198,7 @@ def test_the_marketplace_entry_is_the_plugin_that_ships(marketplace):
 
 # ------------------------------------------------ what the rules file may name
 
-CONSUMER_RULES = REPO / "src/consumer/CLAUDE.md"
+CONSUMER_RULES = SRC / "hooks/rules.md"
 
 
 def test_every_skill_the_rules_name_ships():

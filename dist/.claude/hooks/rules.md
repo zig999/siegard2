@@ -1,7 +1,7 @@
 # Siegard
 
-These rules ship with Siegard 4.2.0. `bin/project.py` reads this line and reports drift against
-the framework's own version.
+These rules ship with Siegard 4.3.0. The plugin's hooks place them in every session and every
+agent; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
 root; source, tests and documentation derive from it. Where code and a node disagree, the node is

@@ -1,0 +1,19 @@
+{
+  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\""}
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\""}
+        ]
+      }
+    ]
+  }
+}
