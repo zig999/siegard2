@@ -89,7 +89,12 @@ enforces mechanically.
   carries one claim a reviewer can reject, never the argument that the specification composes:
   that argument records no decided value, so it has no entry of its own and reaches the log only
   inside an entry about something else, restating the prose of the node that entry locates
-  (R7, R14). Its home is the change that made it.
+  (R7, R14). Its home is the change that made it. A fact a planning step read from material
+  outside the specification root — the intake a plan was cut from — and gave an addressable home
+  is recorded in the same log as read: the location it filled, what no node stated, and where it
+  was found. It decides no value and carries no `why`; a read entry and a decided one are told
+  apart by shape, and the specification root holds the provenance of a node whose material it
+  does not keep.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the log after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol.
@@ -106,8 +111,11 @@ enforces mechanically.
   context has not seen the work that surfaced the fact — a decision made by whoever cut the
   tasks would bend the specification to fit them — and a fact the specification contradicts
   rather than omits is not decided at all: that is a conflict between the scope and the
-  specification, and only a person settles it. A fact the supplied material already states is
-  read, not decided, and earns no log entry.
+  specification, and only a person settles it. A fact the specification's own nodes already
+  state is read, not decided, and earns no log entry. A fact the supplied material states is read,
+  not decided, and is recorded as read (R9): the analysis reads material to author every node,
+  and an entry per node would restate the specification, but a node the specification gains
+  after authoring has the log as its only index, and a work root is not kept.
 
 ### Language
 
@@ -132,7 +140,10 @@ enforces mechanically.
 3. For R13: the planning route classifies an unstated fact apart from a contradiction, the
    deciding context receives the fact without the task that surfaced it, every decided fact
    lands as a decision-log entry whose location resolves, and a planted contradiction comes
-   back as the standing stop rather than a decision — a benchmark case proves each.
+   back as the standing stop rather than a decision — a benchmark case proves each. A fact read
+   from the intake lands as an entry recorded as read, and the validator refuses one carrying
+   `found` beside a decided value or a `why`, and one carrying neither shape — a fixture proves
+   each.
 4. For R14, and for the judgment halves R11 leaves to the report: `bin/spec.py --shape` reports
    what each class runs to, names every `statement` carrying more than one sentence, closes each
    node's prose transitively, and lists the names that prose holds and no node does — reporting

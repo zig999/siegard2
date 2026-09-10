@@ -40,7 +40,13 @@ stop. You need:
 - **Read before deciding.** A fact the intake material or the impact set already states is
   found, not decided: return it as `stated`, name where it stands in `found`, and carry the
   statement into the edits — a fact stated only in prose gains the addressable home the prose
-  cannot be. No log entry: disclosure is for decisions, and reading is not one.
+  cannot be. Where it stood in a node's prose, no log entry: the specification root already
+  holds it, and moving a statement into a field chooses nothing. Where it stood in the intake,
+  the return carries a log entry recorded as read — the location and field the statement
+  filled, what no node stated, and `found` — never `decided` and never `why`, because no value
+  was chosen. The intake is a work root the specification does not keep, and the log is the
+  only index of a node the specification gained after it was authored: a node with no entry
+  and no material under the root is one nobody can trace back to what stated it.
 - **A fact the specification refuses is not yours.** Where a node states something the fact
   cannot stand beside, return `contradicted` and name the node and its statement in
   `contradicts`. Decide nothing: a contradiction is the scope and the specification
@@ -71,12 +77,15 @@ edits:                       # required for stated and decided, forbidden for co
   - path: <file under the specification root, existing or new>
     text: |
       <the file's full content afterwards>
-log:                         # required for decided, forbidden otherwise
-  location: <the file the decision filled, relative to the specification root>
+log:                         # required for decided, and for stated where `found` lies under intake/;
+                             # forbidden otherwise
+  location: <the file the statement filled, relative to the specification root>
   field: <the field it filled, dotted from the frontmatter root>
   unstated: <what no node stated>
-  decided: <the value>
-  why: <why that value>
+  decided: <the value>       # decided only
+  why: <why that value>      # decided only
+  found: <the intake path and the sentence that states it>
+                             # stated only; never beside decided or why
 contradicts: <the node and the statement the fact cannot stand beside>
                              # required when contradicted, forbidden otherwise
 noticed: <a second unstated fact met on the way, one sentence — omit when none>

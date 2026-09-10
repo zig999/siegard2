@@ -820,7 +820,27 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                     problems.append(f"decision-log: entries[{index}] locates `{field}` in "
                                     f"{location}, which declares no `{head}` — «An entry whose location does not "
                         f"resolve fails validation» (SPEC-001 R9)")
+            if "found" in entry and ("decided" in entry or "why" in entry):
+                problems.append(f"decision-log: entries[{index}] carries `found` beside "
+                                f"{' and '.join(k for k in ('decided', 'why') if k in entry)} — "
+                                f"an entry recorded as read «decides no value and carries no "
+                                f"`why`» (SPEC-001 R9)")
     return problems
+
+
+def log_entries(nodes: dict[str, dict]) -> list[dict]:
+    front = nodes.get("decision-log", {"front": {}})["front"]
+    return [e for e in (front.get("entries") or []) if isinstance(e, dict)]
+
+
+def log_tally(nodes: dict[str, dict]) -> str:
+    """Decided entries and read ones counted apart — a read entry chose nothing, so counting it
+    as a decision would report choices nobody made. The read count appears only where one
+    exists, so a log holding decisions alone reads as it always has."""
+    entries = log_entries(nodes)
+    read = sum(1 for e in entries if "found" in e)
+    tally = f"{len(entries) - read} decision(s) disclosed"
+    return tally + (f", {read} fact(s) recorded as read" if read else "")
 
 
 def impact_of(nodes: dict[str, dict], root: Path,
@@ -1547,8 +1567,7 @@ def overview(nodes: dict[str, dict]) -> str:
         lines.append(f"- {node['slug']} ({node['front'].get('scope')})")
     if not constraints:
         lines.append("None.")
-    decided = len(nodes.get("decision-log", {"front": {}})["front"].get("entries") or [])
-    lines += ["", f"{decided} decision(s) disclosed in the decision log.", ""]
+    lines += ["", f"{log_tally(nodes)} in the decision log.", ""]
     return "\n".join(lines)
 
 
@@ -1582,17 +1601,20 @@ def decisions_by_node(nodes: dict[str, dict]) -> str:
              "Derived by spec.py from decision-log.md; never edited. The log is the authority —",
              "this groups its entries by the file each one located.",
              ""]
-    entries = nodes.get("decision-log", {"front": {}})["front"].get("entries") or []
     grouped: dict[str, list[dict]] = {}
-    for entry in entries:
-        if isinstance(entry, dict) and isinstance(entry.get("location"), str):
+    for entry in log_entries(nodes):
+        if isinstance(entry.get("location"), str):
             grouped.setdefault(entry["location"], []).append(entry)
     for location in sorted(grouped):
         lines.append(f"## {location}")
         for entry in grouped[location]:
-            lines += [f"- {entry.get('field', '?')} — decided: {entry.get('decided', '?')}",
-                      f"  unstated: {entry.get('unstated', '?')}",
-                      f"  why: {entry.get('why', '?')}"]
+            if "found" in entry:
+                lines += [f"- {entry.get('field', '?')} — read: {entry['found']}",
+                          f"  unstated: {entry.get('unstated', '?')}"]
+            else:
+                lines += [f"- {entry.get('field', '?')} — decided: {entry.get('decided', '?')}",
+                          f"  unstated: {entry.get('unstated', '?')}",
+                          f"  why: {entry.get('why', '?')}"]
         lines.append("")
     if not grouped:
         lines.append("No decisions disclosed yet.")
@@ -1782,9 +1804,8 @@ def main() -> int:
     by_class = {cls: sum(1 for n in nodes.values() if n["cls"] == cls)
                 for cls in ("element", "rule", "scenario", "contract", "constraint")}
     counted = ", ".join(f"{count} {cls}(s)" for cls, count in by_class.items() if count)
-    decided = len(nodes.get("decision-log", {"front": {}})["front"].get("entries") or [])
     print(f"specification sound: {counted or 'no files'} across "
-          f"{len(contexts)} context(s); {decided} decision(s) disclosed")
+          f"{len(contexts)} context(s); {log_tally(nodes)}")
 
     if write:
         target = root / PROJECTIONS

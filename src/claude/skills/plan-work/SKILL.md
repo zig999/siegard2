@@ -416,8 +416,10 @@ own text, never a binder's reasoning: the decider is blind to the cut, and the b
 what keeps the specification from being bent to fit tasks already written.
 
 What comes back is written, not judged. On `stated` or `decided`, write the edits verbatim at
-the paths they name, append the returned log entry to the decision log where the outcome is
-`decided`, then revalidate — `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py
+the paths they name, append the returned log entry to the decision log where the return carries
+one — every `decided`, and a `stated` whose fact was read under `intake/`, recorded as read so
+the specification root keeps the provenance of a node whose material lives in a work root — then
+revalidate — `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py
 <specification-root>`, and once it passes, `--project`, because the projections moved with the
 nodes — and re-run this step's binder for every skeleton whose candidates include a touched
 node: the note is gone, or what remains comes back reclassified. Where the edits landed in a
@@ -556,7 +558,8 @@ Report, in this order:
   set, and nothing mechanical says otherwise;
 - every fact the decided-fact route wrote into the specification: each `decided` outcome by its
   log entry — the file and the field it filled, what was unstated, the value, the why — and
-  each `stated` outcome with where the material already held it, in the order they surfaced,
+  each `stated` outcome with where the material already held it and, where that was under
+  `intake/`, its log entry recorded as read, in the order they surfaced,
   each with the skeleton and the re-bind that surfaced it, so a chain of facts under one skeleton
   reads as a chain; a criterion reworded on the way is named with the wording it lost. These are
   the claims a reviewer can reject, the diff over the specification root is where they sit, and

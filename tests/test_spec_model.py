@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from jsonschema import Draft202012Validator
 
 import spec
 
@@ -138,6 +139,60 @@ def test_a_log_entry_locating_a_missing_field_is_refused(spec_root):
                 "location": "domain/troubleshooting/case.md", "field": "values.open",
                 "unstated": "x", "decided": "y", "why": "z"}))
     assert hits(problems_of(spec_root), "declares no `values`")
+
+
+READ_ENTRY = {"location": "domain/troubleshooting/case.md", "field": "type",
+              "unstated": "No node said what class a case is.",
+              "found": "work/x/intake/scope.md: a case is the unit an operator opens and closes."}
+
+
+def test_a_log_entry_recorded_as_read_validates(spec_root):
+    """SPEC-001 R9: a fact a planning step read from the intake is recorded as read — location,
+    field, unstated and where it was found — with no value and no `why`. The location and field
+    still resolve exactly as a decided entry's do."""
+    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(READ_ENTRY)))
+    assert hits(problems_of(spec_root), "decision-log") == []
+
+
+def test_a_read_entry_carrying_a_decided_value_is_refused(spec_root):
+    """Both shapes on one entry disclose two provenances for one fact. The schema refuses it and
+    the validator names it, so the report says which keys collided rather than which branch of
+    a conditional failed."""
+    rewrite(spec_root, "decision-log.md",
+            lambda f: f["entries"].append({**READ_ENTRY, "decided": "aggregate-root"}))
+    found = hits(problems_of(spec_root), "carries `found` beside decided")
+    assert found and "decides no value" in found[0]
+    validator = Draft202012Validator(json.loads((SCHEMA_DIR / "decision-log.json").read_text()))
+    assert list(validator.iter_errors({"entries": [{**READ_ENTRY, "why": "because"}]}))
+
+
+def test_a_decided_entry_without_why_is_refused(spec_root):
+    rewrite(spec_root, "decision-log.md",
+            lambda f: f["entries"].append({
+                "location": "domain/troubleshooting/case.md", "field": "type",
+                "unstated": "x", "decided": "y"}))
+    assert hits(problems_of(spec_root), "'why' is a required property")
+
+
+def test_the_sound_line_counts_read_facts_apart_from_decisions(spec_root):
+    """A read entry chose nothing; counted as a decision it would report a choice nobody made.
+    A log holding decisions alone prints exactly as before, so no consumer's quoted output moves."""
+    before = run_node(str(spec_root))
+    assert before.returncode == 0 and "2 decision(s) disclosed" in before.stdout
+    assert "recorded as read" not in before.stdout
+    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(READ_ENTRY)))
+    done = run_node(str(spec_root))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "2 decision(s) disclosed, 1 fact(s) recorded as read" in done.stdout
+
+
+def test_decisions_by_node_renders_a_read_entry_by_its_shape(spec_root):
+    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(READ_ENTRY)))
+    done = run_node("--project", str(spec_root))
+    assert done.returncode == 0, done.stdout + done.stderr
+    projected = (spec_root / "projections" / "decisions-by-node.md").read_text(encoding="utf-8")
+    assert f"- type — read: {READ_ENTRY['found']}" in projected
+    assert "why: ?" not in projected
 
 
 # ------------------------------------------------------ one home per fact (SPEC-002)
