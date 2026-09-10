@@ -665,7 +665,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/4"
+    assert front["contract_version"] == "siegard-reconcile/5"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -717,9 +717,7 @@ def test_fold_records_a_refused_certification_as_reading_not_as_absence(consumer
     it would read exactly like a reconciliation that never asked — and the bind would carry a
     standing certification past the judgment that just refused it."""
     staged_with_certification(consumer)
-    save_certification(consumer, "round", NODE, {"certified": [
-        {"node": NODE, "state": "partial", "tests": [{"file": PROOF}],
-         "why": "the refusal half of the fact goes unexercised"}]})
+    save_certification(consumer, "round", NODE, PARTIAL_TESTABLE)
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
@@ -727,9 +725,73 @@ def test_fold_records_a_refused_certification_as_reading_not_as_absence(consumer
     assert entry["conforms"] is True
     assert entry["decided_by"] == "reading"
     assert "step" not in entry and "proof" not in entry
+    assert entry["remainder"] == "testable"
+    assert entry["remainder_why"] == "one input, an order with no lines, against one refusal"
     assert f"Certification of {NODE} did not hold: the auditor answered `partial`" in front["notes"]
     assert "refusal half" in front["notes"]
+    assert "The remainder is testable: one input, an order with no lines" in front["notes"]
     assert run("--reconciliation", record).returncode == 0
+
+
+PARTIAL_TESTABLE = {"certified": [
+    {"node": NODE, "state": "partial", "tests": [{"file": PROOF}],
+     "why": "the refusal half of the fact goes unexercised",
+     "remainder": "testable",
+     "remainder_why": "one input, an order with no lines, against one refusal"}]}
+
+
+def test_a_short_certification_says_whether_a_test_could_close_the_rest_or_is_refused(consumer):
+    """Left optional, a return without it would read like a fact nobody could classify, and the
+    one list `--owed` builds from the field would be short exactly where a test would pay."""
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, {"certified": [
+        {"node": NODE, "state": "uncovered", "why": "nothing in the set places an order"}]})
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert f"certification of {NODE}" in done.stdout and "remainder" in done.stdout
+
+
+@pytest.mark.parametrize("state, rest", [
+    ("covered", {"tests": [{"file": PROOF}]}),
+    ("unauditable", {"why": "the node names no outcome a reader can look for"}),
+])
+def test_a_covered_or_unauditable_certification_carries_no_remainder(consumer, state, rest):
+    """A covered fact has nothing left; an unreadable one has nothing the auditor read. A
+    remainder over either is a claim about a fact the return does not support."""
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, {"certified": [
+        dict({"node": NODE, "state": state, "remainder": "testable",
+              "remainder_why": "an assertion over a fact this state does not admit"}, **rest)]})
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert f"certification of {NODE}" in done.stdout and "remainder" in done.stdout
+
+
+def test_an_untestable_remainder_is_recorded_and_the_remainder_never_reaches_the_trace(consumer):
+    """The record carries both answers; the trace carries neither. What decides the binding is
+    `reading`, and the trace already says so — the remainder is a fact about the node that
+    `--owed` reads from the corpus, never a field a bind stamps."""
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, {"certified": [
+        {"node": NODE, "state": "partial", "tests": [{"file": PROOF}],
+         "why": "identity across the two files goes unexercised",
+         "remainder": "untestable",
+         "remainder_why": "the same case naming the same aggregate in both files is a fact about "
+                          "where the code sits, and no finite read through the entry points "
+                          "closes it"}]})
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["decided_by"] == "reading" and entry["remainder"] == "untestable"
+    assert "The remainder is untestable:" in front["notes"]
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    text = json.dumps(declared)
+    assert "remainder" not in text and "untestable" not in text
+    [binding] = [b for b in declared["bindings"] if b["node"] == NODE]
+    assert "decided_by" not in binding or binding["decided_by"] != "test"
 
 
 def test_fold_holds_a_certification_off_a_node_the_judgment_refused(consumer):
@@ -1143,7 +1205,7 @@ def test_an_omission_over_a_pair_the_corpus_answers_both_ways_says_so(consumer):
     home = consumer / "siegard-reconcile"
     home.mkdir(exist_ok=True)
     for slug, conforms, field in (("found", False, "observed_at"), ("cleared", True, "encoded_at")):
-        front = {"contract_version": "siegard-reconcile/4", "title": slug, "summary": "s.",
+        front = {"contract_version": "siegard-reconcile/5", "title": slug, "summary": "s.",
                  "target": "backend", "files": [{"path": SECOND, "change": "judged"}],
                  "nodes": [{"node": NODE, "conforms": conforms, "how": "h", field: [SECOND]}]}
         (home / f"{slug}.md").write_text(f"---\n{yaml.safe_dump(front, sort_keys=False)}---\n",

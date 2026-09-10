@@ -28,7 +28,7 @@
   },
   "properties": {
     "contract_version": {
-      "const": "siegard-reconcile/4",
+      "const": "siegard-reconcile/5",
       "description": "Which contract this record was written against. siegard-reconcile/2 carried one boolean per node over a question that is two: whether the source still states what the node holds, and whether it states a fact no node holds at all. The second answer landed on whichever node the file happened to be bound to, blocked a binding its own reading had cleared, and could never be closed by any rebind — so /3 made `unstated` its own list, and `conforms` answers the pair alone. /4 lets a cleared node carry a certification: a judgment found a test that would fail if the node's fact stopped holding, and named the step that runs it, so `--bind-record` writes the binding as one a test decides. A /2 or /3 record is the reading it was, read by tolerant readers, never rewritten to match."
     },
     "title": {
@@ -178,6 +178,35 @@
               }
             },
             "$comment": "A certification names its test and its step, or it is not one; every other answer names neither. A node that carries a test without claiming certification is a shape nobody meant."
+          },
+          {
+            "if": {
+              "anyOf": [
+                {
+                  "required": [
+                    "remainder"
+                  ]
+                },
+                {
+                  "required": [
+                    "remainder_why"
+                  ]
+                }
+              ]
+            },
+            "then": {
+              "required": [
+                "remainder",
+                "remainder_why",
+                "decided_by"
+              ],
+              "properties": {
+                "decided_by": {
+                  "const": "reading"
+                }
+              }
+            },
+            "$comment": "A remainder exists only where a certification was asked and refused: what a test could still close is a fact about a node decided by reading, and neither half stands without the other."
           }
         ],
         "properties": {
@@ -235,6 +264,18 @@
             "items": {
               "$ref": "#/$defs/targetPath"
             }
+          },
+          "remainder": {
+            "enum": [
+              "testable",
+              "untestable"
+            ],
+            "description": "On a node a certification left decided by reading: whether the part of the fact the offered tests leave unexercised is one a test could assert, or a fact no finite test closes. Carried from the auditor's return and never written from a node's type. `testable` is the one this record hands forward — `--owed` lists such nodes as the work a test closes, because a node a certified test decides pays no judge, and a file pays none once every binding on it is decided by a step or a test. `untestable` is said once, here, and handed to nothing: a fact no test closes is decided by reading for as long as it is stated as it is, and a list that repeated it would be a floor rather than a finding. Never reaches the trace: what decides the binding is `reading`, and the trace already says so."
+          },
+          "remainder_why": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The auditor's sentence beside the remainder: the assertion a test would make to close a testable one, or what no finite test asserts of an untestable one. Carried verbatim."
           }
         }
       }
@@ -317,7 +358,7 @@
   },
   "examples": [
     {
-      "contract_version": "siegard-reconcile/4",
+      "contract_version": "siegard-reconcile/5",
       "title": "Certified: a placed order answers its number",
       "summary": "place() is asserted correct as it stands; this reconciliation reads it against its node and certifies the test that proves the node, so that later drift on the file is decided by the suite.",
       "target": "backend",
@@ -345,7 +386,33 @@
       "notes": "Certified by the coverage auditor: `it('answers the persisted order_number')` fails when place() answers anything else, so the pair is decided by the `test` step from here on."
     },
     {
-      "contract_version": "siegard-reconcile/4",
+      "contract_version": "siegard-reconcile/5",
+      "title": "Certification of invoice immutability did not hold",
+      "summary": "raise() is asserted correct as it stands; the test offered for rules/sales/invoice-immutable exercises the refusal and not the immutability, so the node stays decided by reading, with the test that would close it named.",
+      "target": "backend",
+      "files": [
+        {
+          "path": "src/billing/raise.ts",
+          "change": "unchanged; read to certify the test offered for rules/sales/invoice-immutable"
+        }
+      ],
+      "nodes": [
+        {
+          "node": "rules/sales/invoice-immutable",
+          "conforms": true,
+          "how": "`if (invoice.raised) throw new ImmutableInvoice()` guards every setter the file exports, which is the rule's whole statement",
+          "encoded_at": [
+            "src/billing/raise.ts"
+          ],
+          "decided_by": "reading",
+          "remainder": "testable",
+          "remainder_why": "one input — an alteration to a raised invoice's amount — against one expected result, a refusal that leaves the invoice as it stood"
+        }
+      ],
+      "notes": "Certification of rules/sales/invoice-immutable did not hold: the auditor answered `partial` — the refusal half is exercised; nothing in the set alters a raised invoice's amount. The node is decided by reading. The remainder is testable."
+    },
+    {
+      "contract_version": "siegard-reconcile/5",
       "title": "Hand correction to order placement",
       "summary": "place() was returning the stored row rather than the order_number; corrected by hand during an incident and confirmed correct against the running system.",
       "target": "backend",
@@ -367,7 +434,7 @@
       ]
     },
     {
-      "contract_version": "siegard-reconcile/4",
+      "contract_version": "siegard-reconcile/5",
       "title": "Hand correction to invoicing",
       "summary": "The nightly run raised two invoices for one order; the guard was added by hand and the behavior is correct.",
       "target": "backend",

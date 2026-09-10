@@ -73,6 +73,8 @@ TERMS: dict[str, tuple[str, str]] = {
     "decides": ("standard.json", "/$defs/command/properties/decides"),
     "demonstrates": ("delivery-node.json", "/$defs/test/properties/demonstrates"),
     "proof (a certification's tests)": ("trace.json", "/$defs/binding/properties/proof"),
+    "remainder (of a refused certification)":
+        ("certification-return.json", "/properties/certified/items/properties/remainder"),
     "step (on a trace binding)": ("trace.json", "/$defs/binding/properties/step"),
     "delivery node": ("delivery-node.json", ""),
     "digest (on a trace binding)": ("trace.json", "/$defs/binding/properties/digest"),

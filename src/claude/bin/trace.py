@@ -21,7 +21,8 @@ Ten things this script does, and nobody else does any of them:
     trace.py --reconciliation <record>                            hold a reconciliation to its
                                                                   contract before it is bound
     trace.py --owed <target-root> [--all]                         what the reconciliations found
-                                                                  and no bind could close
+                                                                  and no bind could close, and
+                                                                  the nodes a test would close
     trace.py --encodes <target-root> <file> ...                   which nodes each file is bound to
     trace.py --stage <target-root> <spec-root> <slug> <workspace> <file> ...
                                                                   prepare a reconciliation's
@@ -206,7 +207,11 @@ named tests would fail if the node's fact stopped holding. Its return is saved l
 under `<slug>.returns/certify__<node>.yaml`; `--fold` reads it against
 `schemas/certification-return.json`, and writes `decided_by: test` on a node only where the
 auditor answered `covered` and the node's own reading cleared — a certification never rides a node
-the judgment refused. `--bind-record` then pins the proof's digests beside the files', so the
+the judgment refused. Where the auditor answered short of `covered`, the node stays decided by
+reading and its entry carries the auditor's `remainder`: whether a test could close what the
+offered tests left unexercised. `--owed` lists the testable ones, each with the assertion that
+would close it and the file's own count of bindings a reading decides — the saving is per file,
+so a node is priced where its judge is paid. `--bind-record` then pins the proof's digests beside the files', so the
 binding names the test that decides it and the text that was certified. From there `--check`
 reports a changed test under `proof`, a bind over the node carries the certification forward
 while the proof's text stands and releases it with a receipt the moment it does not, and every
@@ -314,6 +319,8 @@ CLASSES = {
     CODE: "bound to a file that changed or is gone — rebind whoever owns the change",
 }
 DECIDED_BY_TEST = "test"
+RECORD_VERSION = "siegard-reconcile/5"
+TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
 
@@ -1277,6 +1284,49 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
     return found, cleared, unreadable
 
 
+def remainders_of(home: Path) -> tuple[dict[str, list[dict]], set[str]]:
+    """Every node a refused certification left with a testable remainder, with the record that
+    said so, the auditor's sentence and the files the node was cleared at — and, apart, every
+    node some record certified as decided by a test.
+
+    Read from the corpus the way `judged()` reads it, and for the same reason it is kept apart:
+    a pair's finding is owed to a bind, a fact no node holds is owed to the analysis, and a
+    testable remainder is owed to whoever writes the test — three debts to three parties, and
+    one list would let a reader take the third for the first. Only the testable ones come back.
+    An untestable remainder was said once, in its record, and a list that repeated it every time
+    this ran would find something forever.
+
+    Paths come back spelled from this file's own directory, the anchor the trace uses. No
+    chronology is computed: a node with a testable remainder in one record and a certification in
+    another is reported as answered both ways, never resolved in favour of whichever looks later."""
+    testable: dict[str, list[dict]] = {}
+    certified: set[str] = set()
+    directory = home / RECONCILE_DIR
+    if not directory.is_dir():
+        return testable, certified
+    roots = target_roots(home)
+    for record in sorted(directory.glob("*.md")):
+        front = as_reconciliation(record)
+        if front is None:
+            continue
+        named = front.get("target")
+        where = roots.get(named) if isinstance(named, str) else None
+        if where is None:
+            continue
+        for entry in front.get("nodes") or []:
+            if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
+                continue
+            if entry.get("decided_by") == DECIDED_BY_TEST:
+                certified.add(entry["node"])
+            if entry.get("remainder") != TESTABLE or not isinstance(entry.get("remainder_why"), str):
+                continue
+            files = [path if where == "." else f"{where}/{path}"
+                     for path in entry.get("encoded_at") or [] if isinstance(path, str)]
+            testable.setdefault(entry["node"], []).append(
+                {"record": record.name, "why": entry["remainder_why"], "files": files})
+    return testable, certified
+
+
 def unstated_of(home: Path) -> list[dict]:
     """Every fact the records name that the source states and no node holds, with the record that
     named it and the file it was read in.
@@ -1368,9 +1418,11 @@ def owed(target: Path, show_all: bool = False) -> int:
 
     total = sum(len(rows) for rows in listed.values())
     if not total and not answered_both_ways:
+        # Said, and not returned on: what follows is owed to other parties than a bind — the
+        # analysis, a test's author — and a record holding only those is not a record holding
+        # nothing.
         print(f"nothing owed: no reconciliation record under {home / RECONCILE_DIR} holds a "
               f"finding against a node under {offset} that no record cleared")
-        return 0
 
     for cls in (UNSEEN, COVERED, REPORTED):
         rows = listed[cls]
@@ -1422,6 +1474,48 @@ def owed(target: Path, show_all: bool = False) -> int:
         if not show_all and len(rows) > RANK_HELD_BACK:
             print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
         print("  each is the analysis's to close, through the node that gives the fact a home")
+
+    # Owed to a third party again: a certification the auditor refused while saying a test could
+    # close what is left. Nothing here binds anything and nothing counts above. The file's own
+    # count of bindings a reading decides is printed beside each, because the saving a test buys
+    # is per file — a judge reads the whole file for the first binding a reading still decides —
+    # and a node closed on a file with nine reading-decided siblings frees no judge yet.
+    testable, certified = remainders_of(home)
+    live = test_decided(declared, home, offset) if declared is not None else {}
+    by_reading = reading_counts(declared, home, offset) if declared is not None else {}
+    listed_nodes = {node: said for node, said in testable.items()
+                    if node not in live and node not in certified
+                    and any(under(f, [offset]) for s in said for f in s["files"])}
+    both_ways = sorted(node for node in testable if node in certified and node not in live)
+    if listed_nodes:
+        print(f"\n{len(listed_nodes)} node(s) a refused certification left decided by reading with "
+              f"a testable remainder — the auditor named the assertion that would close each, and "
+              f"a node a certified test decides pays no judge again:")
+        rows = sorted(listed_nodes.items())
+        for node, said in (rows if show_all else rows[:RANK_HELD_BACK]):
+            records = ", ".join(sorted({s["record"] for s in said}))
+            print(f"  {node} [{records}]")
+            for why in sorted({s["why"] for s in said}):
+                print(f"    would close it: {why}")
+            for path in sorted({f for s in said for f in s["files"] if under(f, [offset])}):
+                counts = by_reading.get(path)
+                if counts is None:
+                    print(f"    {path} — the trace binds nothing to this file now")
+                    continue
+                reading, step, test = counts
+                print(f"    {path} — {reading} binding(s) a reading decides on this file"
+                      + (f", {step} by a registry step" if step else "")
+                      + (f", {test} by a certified test" if test else "")
+                      + ("; closing this one frees its judge" if reading == 1 else ""))
+        if not show_all and len(rows) > RANK_HELD_BACK:
+            print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
+        print("  each is closed by writing the test named and offering it to `/reconcile` "
+              "under `--certify`")
+    if both_ways:
+        print(f"\n{len(both_ways)} node(s) with a testable remainder in one record and a "
+              f"certification in another are not listed above, and the trace holds no live "
+              f"certification for them; which is current is a reading of the records: "
+              f"{', '.join(both_ways)}")
     return 1 if total else 0
 
 
@@ -1608,6 +1702,25 @@ def rank(target: Path, show_all: bool = False) -> int:
     # still decides — however many of its siblings a registry step already settles. Counted here
     # by what a reading decides, with the step-decided remainder beside it, so a reader sees which
     # files a tool already answers for and which still need a judge at all.
+    by_reading = reading_counts(declared, home, offset)
+    rows = sorted(by_reading.items(), key=lambda row: (-row[1][0], row[0]))
+    shown = rows if show_all else rows[:RANK_HELD_BACK]
+    print(f"\nfiles by bindings a reading decides (a judge reads the whole file for the first of "
+          f"them):")
+    for name, (reading, step, test) in shown:
+        parts = ([f"{step} decided by a registry step"] if step else []) \
+            + ([f"{test} by a certified test"] if test else [])
+        beside = f"  ({', '.join(parts)})" if parts else ""
+        print(f"  {reading:3d}  {name}{beside}")
+    if len(rows) > len(shown):
+        print(f"  ({len(rows) - len(shown)} more; --all lists every one)")
+    return 0
+
+
+def reading_counts(declared: dict, home: Path, offset: str) -> dict[str, tuple[int, int, int]]:
+    """Each file's bindings under the offset, counted by what decides them: a reading, a registry
+    step, a certified test — in that order. The first count is what a reconciliation's cost turns
+    on, and `--rank` and `--owed` both print it so a reader prices a file the same way in each."""
     decided = decided_constraints(home, offset)
     by_test = test_decided(declared, home, offset)
     by_reading: dict[str, tuple[int, int, int]] = {}
@@ -1623,18 +1736,7 @@ def rank(target: Path, show_all: bool = False) -> int:
                 by_reading[path] = (reading, step + 1, test)
             else:
                 by_reading[path] = (reading + 1, step, test)
-    rows = sorted(by_reading.items(), key=lambda row: (-row[1][0], row[0]))
-    shown = rows if show_all else rows[:RANK_HELD_BACK]
-    print(f"\nfiles by bindings a reading decides (a judge reads the whole file for the first of "
-          f"them):")
-    for name, (reading, step, test) in shown:
-        parts = ([f"{step} decided by a registry step"] if step else []) \
-            + ([f"{test} by a certified test"] if test else [])
-        beside = f"  ({', '.join(parts)})" if parts else ""
-        print(f"  {reading:3d}  {name}{beside}")
-    if len(rows) > len(shown):
-        print(f"  ({len(rows) - len(shown)} more; --all lists every one)")
-    return 0
+    return by_reading
 
 
 def return_name(given: str) -> str:
@@ -2547,13 +2649,22 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             continue
         if answer["state"] != "covered":
             # Said structurally as well as in prose: `--bind-record` releases a standing
-            # certification on this node, which the note below would otherwise only claim.
+            # certification on this node, which the note below would otherwise only claim. The
+            # remainder rides the same entry: whether a test could close what is left is a fact
+            # about the node, and `--owed` lists the testable ones as the work a test closes.
+            remainder = answer.get("remainder")
             if entry["conforms"]:
                 entry["decided_by"] = "reading"
+                if remainder is not None:
+                    entry["remainder"] = remainder
+                    entry["remainder_why"] = answer["remainder_why"]
+            said_remainder = "" if remainder is None else (
+                f" The remainder is {remainder}: {answer['remainder_why']}.")
             certification_notes.append(
                 f"Certification of {node_id} did not hold: the auditor answered `{answer['state']}` "
                 f"— {answer.get('why', '')}. The node is decided by reading, and a certification "
-                f"standing on it from an earlier reconciliation is released by the bind.")
+                f"standing on it from an earlier reconciliation is released by the bind."
+                + said_remainder)
             continue
         if not entry["conforms"]:
             certification_notes.append(
@@ -2621,7 +2732,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                      f"`unstated`. They block no binding here and no rebind closes them — the "
                      f"route is the analysis that gives each fact a node.")
 
-    front = {"contract_version": "siegard-reconcile/4",
+    front = {"contract_version": RECORD_VERSION,
              "title": premise["title"],
              "summary": premise["summary"],
              "target": premise["target"],

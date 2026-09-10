@@ -50,6 +50,44 @@
               ]
             },
             "$comment": "A certified node names the tests that certify it; a node not certified says what is unexercised, in the node's own terms. Neither answer stands without its half."
+          },
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "enum": [
+                    "partial",
+                    "uncovered"
+                  ]
+                }
+              },
+              "required": [
+                "state"
+              ]
+            },
+            "then": {
+              "required": [
+                "remainder",
+                "remainder_why"
+              ]
+            },
+            "else": {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "remainder"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "remainder_why"
+                    ]
+                  }
+                ]
+              }
+            },
+            "$comment": "A fact read and left short of covered has a remainder, and the auditor says whether a test can close it. A covered fact has none, and a fact that could not be read well enough to look for has none the auditor can classify — `why` already says what is ambiguous, and a remainder stated over it would be a claim about a fact nobody read."
           }
         ],
         "properties": {
@@ -63,7 +101,19 @@
               "uncovered",
               "unauditable"
             ],
-            "description": "The delivery-node contract's `coverageEntry.state`, applied to a node's fact in place of a task's criterion: `covered` where the named tests would fail if the fact stopped holding — the whole test — `partial` where a stated part of the fact goes unexercised, `uncovered` where nothing exercises it, `unauditable` where the fact cannot be read well enough to look for. Only `covered` certifies; the fold writes nothing for any other state and carries the `why` into the record's notes."
+            "description": "The delivery-node contract's `coverageEntry.state`, applied to a node's fact in place of a task's criterion: `covered` where the named tests would fail if the fact stopped holding — the whole test — `partial` where a stated part of the fact goes unexercised, `uncovered` where nothing exercises it, `unauditable` where the fact cannot be read well enough to look for. Only `covered` certifies; the fold writes nothing for any other state, carries the `why` into the record's notes, and carries `remainder` onto the node's entry where the auditor stated one."
+          },
+          "remainder": {
+            "enum": [
+              "testable",
+              "untestable"
+            ],
+            "description": "Whether the part of the fact the named tests leave unexercised is one a test could assert — one input against one expected result — or a fact no finite test closes: an identity that spans files, the exhaustiveness of a state machine, a totality over a set nothing enumerates. Decided from the fact as the node states it, never from what the node is typed as: a `policy` naming a refusal is one input against one result, and an aggregate whose identity spans files is not. `testable` says a test can decide this node whole, so that once such a test is written and certified no judge reads the pair again; it does not say the source needs no reading for anything else. Present exactly where the state is `partial` or `uncovered`."
+          },
+          "remainder_why": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where the remainder is testable, the assertion that would close it, in the fact's own terms — what input against what expected result. Where it is untestable, what no finite test asserts and why. A reader routes on this sentence: it is the test they write, or the reason they stop looking for one."
           },
           "tests": {
             "type": "array",
@@ -126,7 +176,26 @@
               "name": "refuses a second invoice"
             }
           ],
-          "why": "the refusal half is exercised; nothing in the set alters a raised invoice's amount, so the immutability the rule states over an existing invoice goes unexercised"
+          "why": "the refusal half is exercised; nothing in the set alters a raised invoice's amount, so the immutability the rule states over an existing invoice goes unexercised",
+          "remainder": "testable",
+          "remainder_why": "one input — an alteration to a raised invoice's amount — against one expected result, a refusal that leaves the invoice as it stood"
+        }
+      ]
+    },
+    {
+      "certified": [
+        {
+          "node": "domain/sales/order",
+          "state": "partial",
+          "tests": [
+            {
+              "file": "tests/orders/place.spec.ts",
+              "name": "answers the persisted order_number"
+            }
+          ],
+          "why": "the identity is exercised at placement; nothing in the set reads an order back through billing or fulfilment, so that the same order_number names the same order across every file that holds it goes unexercised",
+          "remainder": "untestable",
+          "remainder_why": "the identity spanning every file that holds the aggregate is a fact about where the code sits, and no finite set of reads through the entry points closes it"
         }
       ]
     }

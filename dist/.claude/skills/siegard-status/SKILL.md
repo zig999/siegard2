@@ -106,7 +106,9 @@ this invocation — it is the status, reported verbatim.
    records hold open conformance questions nobody withdrew. Say both numbers, say they measure
    different things, and where `--owed` lists anything under `unseen` or `covered`, name the
    records it points at — those are the findings no other command in this framework will mention
-   again.
+   again. Where it lists nodes a refused certification left with a testable remainder, quote
+   them with the assertion beside each and the file's count of bindings a reading decides: that
+   is the work a test closes, and the count says whether closing it frees a judge yet.
    Last for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes --rank
    <target-source-root>` — the trace's accretion counts: files by bindings held, nodes by files
    bound, and files by the bindings a reading decides, with the remainder a registry step or a

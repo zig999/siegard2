@@ -57,7 +57,7 @@ def consumer(tmp_path: Path) -> Path:
 
 def record_of(nodes: list[dict], files: list[dict] | None = None, **rest) -> dict:
     front = {
-        "contract_version": "siegard-reconcile/4",
+        "contract_version": "siegard-reconcile/5",
         "title": "Hand correction to order placement",
         "summary": "place() answered with the row; corrected by hand and confirmed correct.",
         "target": "backend",
@@ -105,17 +105,19 @@ def test_the_contracts_own_examples_pass_the_gate_that_will_judge_real_records(w
 
 
 def test_the_contract_demonstrates_every_outcome():
-    """One example each way — cleared, refused, and cleared with a certification — because the
-    three differ by which fields they carry and a contract showing only the cleared shape teaches
-    that the others are variations on it."""
+    """One example each way — cleared, refused, cleared with a certification, and cleared with a
+    certification refused and its remainder named — because the four differ by which fields they
+    carry and a contract showing only the cleared shape teaches that the others are variations on
+    it."""
     schema = json.loads(
         (REPO / "src/claude/schemas/reconciliation.json").read_text(encoding="utf-8"))
-    answers = sorted(entry["conforms"] for example in schema["examples"]
-                     for entry in example["nodes"])
-    assert answers == [False, True, True]
-    certified = [entry for example in schema["examples"] for entry in example["nodes"]
-                 if entry.get("decided_by") == "test"]
+    entries = [entry for example in schema["examples"] for entry in example["nodes"]]
+    assert sorted(entry["conforms"] for entry in entries) == [False, True, True, True]
+    certified = [entry for entry in entries if entry.get("decided_by") == "test"]
     assert len(certified) == 1 and certified[0]["conforms"] is True
+    refused = [entry for entry in entries if entry.get("decided_by") == "reading"]
+    assert len(refused) == 1 and refused[0]["conforms"] is True
+    assert refused[0]["remainder"] == "testable" and refused[0]["remainder_why"]
 
 
 # ------------------------------------------------------------------ certification
@@ -724,6 +726,72 @@ def owed(root: Path, *rest) -> subprocess.CompletedProcess:
 
 def bind(root: Path, node: str, *files: str) -> subprocess.CompletedProcess:
     return run("--bind", root / "backend", root / "specs", node, *files)
+
+
+TESTABLE = dict(CLEARED, decided_by="reading", remainder="testable",
+                remainder_why="one input, an order with no lines, against one refusal")
+UNTESTABLE = dict(CLEARED, decided_by="reading", remainder="untestable",
+                  remainder_why="identity across every file that holds the case is a fact about "
+                                "where the code sits")
+
+
+def test_a_remainder_rides_a_refused_certification_or_is_not_one(write_record):
+    """Two halves or neither; and only on a node decided by reading, because a remainder is what a
+    refused certification says about what is left — a certified node has none, and a node nobody
+    asked about was never read for one."""
+    assert run("--reconciliation", write_record(record_of([TESTABLE]))).returncode == 0
+    for broken in (dict(CLEARED, remainder="testable", remainder_why="an assertion"),
+                   dict(CERTIFIED, remainder="testable", remainder_why="an assertion"),
+                   dict(CLEARED, decided_by="reading", remainder="testable"),
+                   dict(CLEARED, decided_by="reading", remainder_why="an assertion")):
+        done = run("--reconciliation", write_record(record_of([broken])))
+        assert done.returncode == 1, done.stdout + done.stderr
+
+
+def test_owed_lists_the_testable_remainders_priced_per_file_and_never_the_untestable_ones(
+        declared, write_record):
+    """The list is the work a test closes, priced where the judge is paid: a node closed on a file
+    whose every other binding a reading still decides frees no judge yet, and the count beside it
+    says so. An untestable remainder was said once in its record and is handed to nothing — a
+    list that repeated it would find something forever."""
+    bind(declared, NODE, FILE)
+    bind(declared, OTHER, FILE)
+    write_record(record_of([TESTABLE]), slug="asked-case")
+    write_record(record_of([dict(UNTESTABLE, node=OTHER)]), slug="asked-evidence")
+
+    done = owed(declared)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 node(s) a refused certification left decided by reading with a testable remainder" \
+        in done.stdout
+    assert f"{NODE} [asked-case.md]" in done.stdout
+    assert "would close it: one input, an order with no lines, against one refusal" in done.stdout
+    assert f"backend/{FILE} — 2 binding(s) a reading decides on this file" in done.stdout
+    assert "frees its judge" not in done.stdout
+    assert "asked-evidence.md" not in done.stdout and "untestable" not in done.stdout
+
+    bind(declared, OTHER, SECOND, "--replace")
+    done = owed(declared)
+    assert f"backend/{FILE} — 1 binding(s) a reading decides on this file; closing this one " \
+           f"frees its judge" in done.stdout
+
+
+def test_a_testable_remainder_answered_by_a_later_certification_is_reported_apart(
+        declared, write_record):
+    """No chronology is available, so the two records are not resolved in favour of either: a live
+    certification in the trace closes the question, and without one the node is named apart."""
+    bind(declared, NODE, FILE)
+    write_record(record_of([TESTABLE]), slug="asked")
+    write_record(record_of([CERTIFIED]), slug="certified")
+    done = owed(declared)
+    assert "testable remainder in one record and a certification in another" in done.stdout
+    assert NODE in done.stdout and "would close it" not in done.stdout
+
+    proof_at(declared)
+    bound = run("--bind-record", declared / "backend", declared / "specs",
+                declared / "siegard-reconcile" / "certified.md")
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    done = owed(declared)
+    assert "testable remainder" not in done.stdout
 
 
 def test_a_finding_against_a_pair_nothing_binds_is_owed_and_no_drift_report_can_reach_it(

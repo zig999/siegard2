@@ -298,7 +298,10 @@ fact stopped holding — and it is the same rule it applies to a task's criterio
 its return verbatim at `siegard-reconcile/<slug>.returns/certify__<node with every '/' as
 '__'>.yaml`, under the same discipline as every other return. The conformance judge for the
 node's file runs as well, unchanged: certification rides a reading that cleared the node, and the
-fold writes it on no other.
+fold writes it on no other. Where the auditor answers short of `covered`, its return also says
+whether the **remainder** — what the offered tests leave unexercised — is one a test could
+assert, with the assertion named, or one no finite test closes; the fold carries that onto the
+node's entry, and `trace.py --owed` lists the testable ones as the work a test closes.
 
 **Verbatim is literal, and the fold enforces it against four keys.** `conformance-return.json`
 admits `findings`, `read`, `looked_past` and `candidates_opened`, and nothing else at any depth.
@@ -483,8 +486,10 @@ unowed; the shape the judgment ran in — how many delegations, one per file; wh
 answered per node, with its evidence; which pairs a run answered instead of a judge, with the
 step and the run's own outcome per step; where the record, the returns and the run were written;
 what was bound and what was not; which nodes are decided by a test from here and which
-certifications did not hold, in the auditor's own words; and the next invocation where there is
-one.
+certifications did not hold, in the auditor's own words — and for each of those whether the
+remainder is testable, with the assertion the auditor named beside it and the file's own count of
+bindings a reading decides, because a node a test closes frees a judge only once every binding on
+its file is decided by a step or a test; and the next invocation where there is one.
 
 Where a node the judgment did not clear carries `collateral`, say so apart from the contested
 ones: nothing was found against that node's own substance — it shares a file with a finding that
@@ -547,6 +552,10 @@ answers.
 - **It never certifies a test itself.** Which test a human offers is theirs; whether it would
   fail if the fact stopped holding is the auditor's; the fold writes `decided_by: test` from the
   auditor's `covered` and from nothing else. A node's type says nothing about it either way.
+- **It never decides that a node is testable.** Whether the remainder a refused certification
+  leaves is one a test could assert is the auditor's, read from the fact as the node states it;
+  the record carries it, and what closes it is a test the human writes and offers again. A node
+  whose type looks testable and whose fact is not is exactly the case the auditor is there for.
 - **It is not a review.** It reads one file set against the nodes the trace already links to it. It
   says nothing about coverage, about the project's standard, or about whether anything was proven —
   those are `/review-change`'s, over a delivery, and a reconciliation that reported them would be

@@ -399,7 +399,9 @@ runs next.
   `siegard-reconcile/<review-name>.returns/certify__<node with every '/' as '__'>.yaml`. Only its
   `covered` makes the binding one a test decides, and only where the conformance pass cleared the
   node as well; the fold writes both halves and says in the record's notes why any certification
-  did not land. This pass is not the coverage pass and does not replace it: that one asks whether
+  did not land — and, where the auditor answered short of `covered`, carries onto the node's
+  entry whether the remainder is one a test could assert, so that `trace.py --owed` lists it as
+  the work a test closes. This pass is not the coverage pass and does not replace it: that one asks whether
   the tests prove the task's criteria, this one whether one test proves one node's fact, and a
   criterion and a node are two things.
 - **failures** — spawn a `failure-diagnostician` subagent, its judgment at

@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 4.0.0. `bin/project.py` reads this line and reports drift against
+These rules ship with Siegard 4.1.0. `bin/project.py` reads this line and reports drift against
 the framework's own version.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -125,6 +125,9 @@ A binding is decided by reading unless a reconciliation certified a test for it:
 the test and the registry step that runs it, the coverage auditor decides whether the test would
 fail if the node's fact stopped holding, and only its `covered` writes `decided_by: test`. A
 node's type never decides it. The files a node encodes stay in the binding whatever decides it.
+A certification the auditor refused records whether the remainder is testable, and `trace.py
+--owed` lists the testable ones with the assertion that closes each; write that test and offer it
+again. An untestable remainder is recorded once and listed nowhere.
 
 **Drift is not the whole of what is owed.** A reconciliation's finding against a pair the trace
 binds nowhere has no digest to disagree with and appears in no `--check`, ever; a later bind
