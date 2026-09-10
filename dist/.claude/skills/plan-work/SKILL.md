@@ -181,6 +181,14 @@ There is no tree to discover — the human is
 holding the file — and there is nothing to decompose: the increment is one task, and where it is
 genuinely more than one, this is a scope and the ordinary path is what it gets.
 
+**The scope under `intake/` is the human's and nothing else.** The behavior as they described
+it, the reproduction, and the file by path. Nothing you read in the source goes there — not the
+line the defect lives on, not what the delivered code does around it, not why. The decider of
+step 4 reads that directory as the one place a fact may already be stated, and a description of
+the code there makes what the code does a stated fact, which is the direction this route exists
+to reverse: the specification says what the code must do, and the code is held to it. The
+source is read where it is read anyway — by the trace, which says what the file encodes.
+
 **The binder runs, per task, exactly as it always does.** It is the step whose absence would make
 this a second delivery machine instead of a smaller entrance to the one that exists: it is what
 decides which specification nodes the correction answers to, and it is what returns a classified
@@ -197,6 +205,21 @@ the node that governs it — never "the bug is fixed", which no test can fail. T
 `rationale` where it implements nothing, and `sources` pointing at the scope under `intake/`, the
 same as any node here. It declares **no** `produces`: what a task produces is what the project's
 own standard presupposes, and a correction to delivered source is not that.
+
+The one condition a criterion carries is the observed behavior's, stated in the domain's terms.
+How a target keeps an answer between surfaces — a client's cache, a marker it compares against,
+whether the data was in hand before a surface was mounted or arrived after — is how the target
+implements the domain, never a fact the domain states. A criterion conditioned on it rests on a
+fact no node can state, so the binder returns the silence, correctly, and every act the criteria
+name under that condition is a silence of its own: a set of criteria conditioned that way is
+answered one cell at a time, each decision opening the next, and the specification gains rules
+about a mechanism it never governed. The reproduction is the test's setup, not the criterion's
+condition: the criterion says what the surface presents, and the path that reached it is how the
+test gets there. Where a decided node says nothing turns on such a condition, the criterion that
+carries it was the silence, and the criterion is what changes. You wrote the skeleton and you
+rewrite it: a reworded skeleton runs through the binder again before it touches disk, exactly as
+step 4 says of any changed skeleton. That is not the correction composing forbids — that rule
+holds the file to what a binder read, never the skeleton to its first draft.
 
 **The correction gets its own epic, never an existing one.** An epic's `covers` is the candidate
 set of every task under it, so growing a delivered epic's claim for one correction re-opens every
@@ -415,6 +438,20 @@ so a binder still calling it silent is a disagreement a person settles. That sto
 node the decision filled already sits inside the candidates that returned the note; where it does
 not, the answer is the growth above, and there is no disagreement to settle.
 
+A binder classifies every divergence in one return, so a re-bind over an unchanged skeleton that
+returns an `unstated` note over a fact this invocation has not seen is examined before anything
+is spawned for it. First the tally: `git status --porcelain -- <specification-root>` lists
+exactly what this invocation has written to the specification, because the root was clean before
+the first write — print it, and say which re-bind of which skeleton this is. Then the fact
+against the criteria: where it rests on a condition a criterion carries, and a node this
+invocation wrote states that nothing turns on that condition, the silence is the skeleton's —
+the criterion draws a distinction the domain does not make, and every act the criteria name
+under that distinction is one more silence of the same kind. The criterion is reworded without
+the condition and the skeleton re-runs this step; no decider is spawned for the fact. Otherwise
+the fact is decided as above, and the report carries the sequence. Neither the count of re-binds
+nor the count of facts is a stop on its own: the tally is what lets a reader see a skeleton being
+answered one cell at a time while it happens, and the rewording is what ends it.
+
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
 returned it — bare identities, no pin. **Composing is transcription, never correction.** A
 criterion whose wording must change at this point — a blocking note settled by rewording, a
@@ -519,8 +556,11 @@ Report, in this order:
   set, and nothing mechanical says otherwise;
 - every fact the decided-fact route wrote into the specification: each `decided` outcome by its
   log entry — the file and the field it filled, what was unstated, the value, the why — and
-  each `stated` outcome with where the material already held it. These are the claims a reviewer
-  can reject, the diff over the specification root is where they sit, and every `noticed` watch item follows them;
+  each `stated` outcome with where the material already held it, in the order they surfaced,
+  each with the skeleton and the re-bind that surfaced it, so a chain of facts under one skeleton
+  reads as a chain; a criterion reworded on the way is named with the wording it lost. These are
+  the claims a reviewer can reject, the diff over the specification root is where they sit, and
+  every `noticed` watch item follows them;
 - every blocking note, by task identifier, with what it concedes — these are the tasks not yet
   written, or written with a standing conflict, and each needs either the scope answered
   differently or the specification extended through the analysis that authors it;
