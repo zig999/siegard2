@@ -231,6 +231,24 @@ def test_agents_are_summed_from_their_own_transcripts_and_repeats_are_marked(con
     assert totals["by_type"]["execution-contract-binder"]["duration_seconds"] == 268.0
 
 
+def test_a_scoped_spawn_normalizes_to_the_plugin_agents_bare_name():
+    """Skills spawn this framework's own agents by their plugin-scoped name
+    (`siegard:execution-contract-binder`), never the bare form a consumer's own
+    `.claude/agents/` could shadow — so the harness records that scoped string as
+    `subagent_type`, and a report keyed on it would split one agent into two `by_type`
+    buckets depending on which spelling a session happened to use. The namespace to strip is
+    read from `plugin.json`'s own `name`, never restated as a literal here."""
+    import telemetry
+    assert telemetry.agent_type_of({"subagent_type": "siegard:execution-contract-binder"}) \
+        == "execution-contract-binder"
+    assert telemetry.agent_type_of({"subagent_type": "execution-contract-binder"}) \
+        == "execution-contract-binder"
+    # A different plugin's own namespace is never this framework's to strip.
+    assert telemetry.agent_type_of({"subagent_type": "other-plugin:reviewer"}) \
+        == "other-plugin:reviewer"
+    assert telemetry.agent_type_of({}) == "general-purpose"
+
+
 def test_no_prompt_text_leaves_the_transcripts(consumer):
     _, report = report_of(consumer)
     dumped = json.dumps(report)

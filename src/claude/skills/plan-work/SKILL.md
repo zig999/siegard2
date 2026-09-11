@@ -138,8 +138,9 @@ survey, the decomposition, and each task's specification references are delegate
 subagents this framework ships, each in a clean context — and inside the implement-against
 step, each fact the specification turns out not to state is delegated to its own judge, blind
 to the cut that surfaced it. The judgment of each lives in the agent's file — not here, and
-not in your memory of it. Delegating means spawning the named subagent — in a plugin install the name may
-be plugin-scoped — and reading the agent's file yourself is the fallback, never the
+not in your memory of it. Delegating means spawning the subagent by its plugin-scoped name —
+`siegard:<agent-name>` — never the bare form, which a consumer's own `.claude/agents/` can shadow —
+and reading the agent's file yourself is the fallback, never the
 delegation. The binder's isolation is the point of the whole arrangement: it arrives with
 no memory of how the tasks were cut, so the specification is read for what it says today, never
 to fit a task. Only a spawn that was attempted and failed opens the inline route: read the
@@ -335,7 +336,7 @@ breaks the moment one appears in it. Emit every node's frontmatter with `python3
 `yaml.safe_dump` rather than typing it by hand, so a sentence's own colon is never read as a
 second mapping key; PyYAML is already a declared dependency of this framework's own tooling.
 
-Then spawn a `codebase-surveyor` subagent — its judgment lives at
+Then spawn a `siegard:codebase-surveyor` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/codebase-surveyor.md` — passing three things: the target source
 root, the scope's path under `intake/`, and the `inventory` slice — print it here, with
 `plan.py --contract inventory`, and paste it whole. It returns
@@ -345,7 +346,7 @@ path its identifier computes to, verbatim.
 
 ### 3. Decompose
 
-Spawn a `backlog-decomposer` subagent — its judgment lives at
+Spawn a `siegard:backlog-decomposer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/backlog-decomposer.md` — passing four things: the scope's path,
 the impact set's file paths under the specification root, the surveyor's inventory, and the
 contract slices — print them here, `--contract epic` and `--contract task --without
@@ -372,7 +373,7 @@ still what discovers a fact nobody stated.
 
 ### 4. Implement against
 
-This is per task and per judge: spawn one `execution-contract-binder` subagent per skeleton —
+This is per task and per judge: spawn one `siegard:execution-contract-binder` subagent per skeleton —
 its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/execution-contract-binder.md` — passing
 four things: the skeleton as its title, summary, objective and criteria — never its
 `rationale`, its dependencies or its body, because an opinion about the reference travels with
@@ -406,7 +407,7 @@ terms — a fact some node outside the candidates already states is a cut proble
 silence, and it takes the out-of-candidates answer below: grow the epic's `covers` or move the
 task, and re-run this step. What survives is a genuine silence. Deduplicate the survivors by
 fact — two skeletons resting on one fact are one decision, never two — then spawn one
-`unstated-fact-decider` subagent per fact — its judgment lives at
+`siegard:unstated-fact-decider` subagent per fact — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/unstated-fact-decider.md` — passing four things: the fact
 exactly as the note's `fact` carries it, the impact-set file paths under the specification
 root plus the decision log's path, the scope's paths under `intake/`, and the specification

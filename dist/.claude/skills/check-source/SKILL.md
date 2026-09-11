@@ -104,16 +104,17 @@ path below.
 
 ### 2. Read
 
-Spawn a `standard-conformance-reviewer` subagent — its judgment lives at
+Spawn a `siegard:standard-conformance-reviewer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md` — passing the standard's own path,
 the file set, the target source root, and the delivery-node contract's path. It is the same judge
 `/review-change` spawns for its standard pass, unchanged and given the same things, which is what
 makes a finding from here answerable to a finding from there. It returns the rules that were in
 scope and, for each departure, a finding citing exactly one of them.
 
-Delegating means spawning the named subagent — in a plugin install the name may be plugin-scoped.
-Only where the session cannot spawn subagents, read the agent's file under the plugin root's
-`agents/` directory and apply its discipline in place, and the report must say so.
+Delegating means spawning the subagent by its plugin-scoped name — `siegard:<agent-name>` — never
+the bare form, which a consumer's own `.claude/agents/` can shadow. Only where the session cannot
+spawn subagents, read the agent's file under the plugin root's `agents/` directory and apply its
+discipline in place, and the report must say so.
 
 Tell the agent that a path it cannot read is recorded rather than stopped on: it names each in
 `unread` and reviews the rest. That mode is stated per call and is this skill's alone — the same

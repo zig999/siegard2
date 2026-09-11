@@ -89,6 +89,30 @@ PROJECT_PY = PLUGIN_ROOT / "bin" / "project.py"
 MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 HARNESS_PROJECTS = Path.home() / ".claude" / "projects"
 
+
+def plugin_namespace() -> str | None:
+    """The prefix the harness gives this plugin's own subagents, read from `plugin.json`'s own
+    `name` rather than restated: a scoped spawn (`siegard:codebase-surveyor`) and a bare one
+    (`codebase-surveyor`) count as the same agent type, which `framework.agents` names bare."""
+    if not MANIFEST.is_file():
+        return None
+    try:
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    name = manifest.get("name")
+    return name if isinstance(name, str) and name else None
+
+
+def agent_type_of(payload: dict) -> str:
+    raw = payload.get("subagent_type")
+    if not isinstance(raw, str) or not raw:
+        return "general-purpose"
+    namespace = plugin_namespace()
+    if namespace and raw.startswith(f"{namespace}:"):
+        return raw[len(namespace) + 1:]
+    return raw
+
 SCRIPTS = ("spec.py", "plan.py", "deliver.py", "trace.py", "project.py", "run.py", "terms.py",
            "telemetry.py")
 SCRIPT_CALL = re.compile(r"bin/(" + "|".join(re.escape(s) for s in SCRIPTS) + r")\b")
@@ -398,7 +422,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
             elif block.get("name") == "Agent":
                 agents[block["id"]] = {
                     "session": session_id, "tool_use_id": block["id"],
-                    "agent_type": str(payload.get("subagent_type") or "general-purpose"),
+                    "agent_type": agent_type_of(payload),
                     "description": str(payload.get("description") or ""),
                     "invoked_at": iso(instant_of(stamp)),
                 }

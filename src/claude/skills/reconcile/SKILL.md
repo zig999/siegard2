@@ -229,7 +229,7 @@ and the bind restamps both.
 
 ### 3. Judge
 
-Spawn one `specification-conformance-reviewer` subagent per file the manifest holds nodes for,
+Spawn one `siegard:specification-conformance-reviewer` subagent per file the manifest holds nodes for,
 together rather than one after another — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
 a file set of exactly its one file; as the node set, its node pack's path from the manifest —
@@ -290,7 +290,7 @@ the record is folded from and they outlive this session, and a return adjusted b
 saved it carries a judgment the delegation never made.
 
 **A certification is the coverage auditor's, and it is one more delegation per node.** For each
-entry the manifest holds under `certify`, spawn a `coverage-auditor` subagent — its judgment
+entry the manifest holds under `certify`, spawn a `siegard:coverage-auditor` subagent — its judgment
 lives at `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md` — handing it the certification
 pack's path and the target source root, and nothing else: the pack names the node, the proof and
 the contract. Its rule is the whole test of a test — the named tests would fail if the node's
@@ -344,8 +344,9 @@ is correct; the question this step answers is a different one — whether the sp
 states what the source now says — and answering it from the same context that accepted the premise
 is answering it from the premise.
 
-Delegating means spawning the named subagents; in a plugin install the name may be plugin-scoped.
-Only where the session cannot spawn subagents, read the agent's file under the plugin root's
+Delegating means spawning the subagents by their plugin-scoped names — `siegard:<agent-name>` —
+never the bare form, which a consumer's own `.claude/agents/` can shadow. Only where the session
+cannot spawn subagents, read the agent's file under the plugin root's
 `agents/` directory and apply its discipline in place, file by file in the same shape — the file
 stays the single home of that judgment — and the report must say the pass ran inline.
 

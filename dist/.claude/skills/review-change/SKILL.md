@@ -165,8 +165,9 @@ situate → capture → pass → compose → validate → report → stop
 
 Each pass is another judge's. The four are delegated to the subagents this framework ships, each
 in a clean context, and the judgment of each lives in the agent's file — not here, and not in your
-memory of it. Delegating means spawning the named subagent — in a plugin install the name may be
-plugin-scoped — and reading the agent's file yourself is the fallback, never the delegation. Only
+memory of it. Delegating means spawning the subagent by its plugin-scoped name —
+`siegard:<agent-name>` — never the bare form, which a consumer's own `.claude/agents/` can shadow —
+and reading the agent's file yourself is the fallback, never the delegation. Only
 where the session cannot spawn subagents, read the agent's file under the plugin root's `agents/`
 directory and apply its discipline in place, and the report must say which passes ran inline.
 
@@ -347,11 +348,11 @@ passed is the one case where the pass does not run: there was no failure to read
 Four, independent, in any order or together. None reads another's output, and none decides what
 runs next.
 
-- **coverage** — spawn a `coverage-auditor` subagent, its judgment at
+- **coverage** — spawn a `siegard:coverage-auditor` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, passing the criteria as the task files state
   them, the test file set out of the proof records, the target source root, and the
   `coverageEntry` slice printed above, pasted whole. It returns one entry per criterion.
-- **conformance** — one `specification-conformance-reviewer` subagent **per file the staging
+- **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the staging
   manifest holds**, spawned together rather than one after another, each judging at
   `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
   a file set of exactly its one file; as the node set, its node pack's path from the manifest —
@@ -388,13 +389,13 @@ runs next.
   --for <every path of the file set, one --for each>` and keep its output — the rules a tool
   decides are never this pass's to read, and neither is a rule scoped away from every file under
   review, so there is no reason either ever reaches it. Spawn a
-  `standard-conformance-reviewer` subagent, its judgment at
+  `siegard:standard-conformance-reviewer` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md`, passing that output in place
   of the standard's path, the file set, the target source root, and the `finding` slice printed
   above, pasted whole. It returns the rules that were in scope and, for each departure, a finding citing exactly one of
   them. Where the caller named no standard, the pass does not run and the record says the project
   has authored none.
-- **certification** — where the staging holds entries under `certify`, one `coverage-auditor`
+- **certification** — where the staging holds entries under `certify`, one `siegard:coverage-auditor`
   subagent per node, its judgment at `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, handed
   the certification pack's path from the manifest and the target source root and nothing else:
   the pack names the node, the proof and the contract its return is held to. Its rule is the
@@ -408,7 +409,7 @@ runs next.
   the work a test closes. This pass is not the coverage pass and does not replace it: that one asks whether
   the tests prove the task's criteria, this one whether one test proves one node's fact, and a
   criterion and a node are two things.
-- **failures** — spawn a `failure-diagnostician` subagent, its judgment at
+- **failures** — spawn a `siegard:failure-diagnostician` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md`, passing the run's directory, the target
   source root, the specification nodes with the specification root, the file set, and the
   `finding` slice printed above, pasted whole. It

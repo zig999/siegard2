@@ -165,7 +165,8 @@ situate → set up → implement → build → prove → suite → validate → 
 Two of these steps are another judge's. Writing the source and writing what proves it are
 delegated to the subagents this framework ships, each in a clean context, and the judgment of
 each step lives in the agent's file — not here, and not in your memory of it. Delegating means
-spawning the named subagent — in a plugin install the name may be plugin-scoped — and reading
+spawning the subagent by its plugin-scoped name — `siegard:<agent-name>` — never the bare form,
+which a consumer's own `.claude/agents/` can shadow — and reading
 the agent's file yourself is the fallback, never the delegation. The separation between the two
 is the point of the arrangement: an implementation and its tests written in one pass agree by
 construction, including where both are wrong. Only where the session cannot spawn subagents,
@@ -377,7 +378,7 @@ what it names — a registry nobody can reach, a lockfile that does not resolve 
 
 ### 3. Implement
 
-Spawn a `task-implementer` subagent — its judgment lives at
+Spawn a `siegard:task-implementer` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/task-implementer.md` — and hand it this, filled:
 
 ```
@@ -511,7 +512,7 @@ reports the task as implemented with no proof holding it up, which is exactly tr
 report and go to step 8. Composing a proof anyway would be the one thing worse than the absence: a
 record asserting that tests hold up a task, written where no test could exist.
 
-Spawn a `test-author` subagent — its judgment lives at
+Spawn a `siegard:test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — and hand it this, filled:
 
 ```
@@ -564,7 +565,7 @@ composed, so `deliver.py --outstanding` reports the task as implemented with no 
 up, which is true and is the state a person should meet. Report the run by path and the tests
 that failed.
 
-Where the step that failed is the one whose role is `suite`, spawn a `failure-diagnostician`
+Where the step that failed is the one whose role is `suite`, spawn a `siegard:failure-diagnostician`
 subagent — its judgment lives at `${CLAUDE_PLUGIN_ROOT}/agents/failure-diagnostician.md` — and
 hand it this, filled:
 
