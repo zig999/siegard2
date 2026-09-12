@@ -288,7 +288,9 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check --all <target-source-root>
 
 over the target: the implementation's files are
 bound with digests, and one that moved since the bind is exactly what makes "the implementation
-stands" false — that drift is a stop, and the answer is a full re-delivery. **`--all` is what
+stands" false — that drift is a stop. Where what moved it is a later task's own delivery over
+that file, the answer is not this task's at all: the test is that delivery's to rewrite, under
+step 7's second `test` exit; anywhere else, the answer is a full re-delivery. **`--all` is what
 makes this mode's premise checkable at all**, and it is the one place in this framework that
 needs it: a project may declare a target freely edited, and an ordinary check then holds that
 class back as noise a reader cannot act on — but here it is the whole question, so this call asks
@@ -608,14 +610,27 @@ settles that. The report quotes the diagnosis's evidence and correction in full,
 and not a summary of them — a diagnosis obvious enough to look mechanical is still a person's
 call to make, and the report's business is to make that call fast, not to make it for them.
 `test`, on a test an earlier task owns — what broke it is not a regression but
-this delivery's own legitimate files: the old assertion claimed more than its task's criteria
-establish, totality over ground the two tasks share, and this delivery falsified the excess.
-That test is not edited from here, whatever the temptation: the way out is the proof-only
-re-delivery the re-delivery paragraph names, over the task that owns the test, and it is the
-human's to invoke. The report hands that invocation ready to paste — the owning task by
-identifier, the assertion the run named, the file this delivery added — and says plainly that it
-runs only after the human commits this delivery's pending state, because that invocation's own
-clean-tree stop refuses a tree still carrying it. And `setup` — neither the code nor the test
+this delivery's own legitimate files, and which of two shapes it took is read from the two
+implementation records, never from the assertion's wording: whether a path this delivery's
+`files` names is one the owning task's `files` names too. **Where none is**, the old assertion
+claimed more than its task's criteria establish, totality over ground the two tasks share, and
+this delivery falsified the excess beside it. That test is not edited from here, whatever the
+temptation: the way out is the proof-only re-delivery the re-delivery paragraph names, over the
+task that owns the test, and it is the human's to invoke. The report hands that invocation ready
+to paste — the owning task by identifier, the assertion the run named, the file this delivery
+added — and says plainly that it runs only after the human commits this delivery's pending
+state, because that invocation's own clean-tree stop refuses a tree still carrying it. **Where
+one is**, this delivery rewrote a file the owning task bound — the shape a corrective increment
+takes, cut over that very file — and the assertion states what the file did before the
+specification moved. The owning task's implementation no longer stands as its record describes,
+so the proof-only re-delivery is not open to it: its own `--check --all` would refuse before a
+line was written, and an invocation handed toward that refusal costs a round trip and answers
+nothing. The test is this delivery's to answer. The `test-author` is re-entered and rewrites it
+whole — never trimmed, never narrowed — against the nodes as they stand now; it joins this
+proof's `tests`; the record's `## Notes` names the owning task, the assertion the run named and
+the file this delivery moved; and the suite runs again under the next name. The owning task's
+own records are left as they are: each describes the tree it was written against, which is what
+a record is, and what the file asserts now is this proof's to say. And `setup` — neither the code nor the test
 was reached, because the harness or the environment it needs did not stand up: that is not this
 delivery's defect and not its to fix, so nothing is sent to any producer. Run the suite again,
 once, under the next name. A second consecutive red the diagnosis reads the same way is a stop:
@@ -626,10 +641,11 @@ again — and the run is what decides; a fix routed through it would be a fix no
 **One more way out exists, it is forbidden, and it is the one that is easy.** A test is never
 weakened, deleted, narrowed or rewritten to make the suite green. This invocation holds two
 producers precisely so that one cannot overrule the other, and a test edited until it passes is
-exactly that overruling, performed where nobody would see it. The `test` exit over a test an
-earlier task owns exists precisely so this one never looks
-necessary: an over-broad assertion is re-judged whole, by the producer class that owns proofs, in
-its own invocation — never trimmed here to unblock this one. What makes the rule enforceable
+exactly that overruling, performed where nobody would see it. The `test` exits over a test an
+earlier task owns exist precisely so this one never looks necessary: whichever shape applies, the
+assertion is rewritten whole by the producer class that owns proofs — in its own invocation where
+the owning implementation stands, in this one where this delivery moved what that task bound —
+and never trimmed to unblock a run. What makes the rule enforceable
 rather than pious is that the runs are on disk: four attempts leave four logs, and a test that
 changed between them is in the diff beside them.
 

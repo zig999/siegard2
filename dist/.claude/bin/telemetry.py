@@ -14,7 +14,9 @@ decisions (`decision-log.md`) and the history (git). What it never records — w
 spawned, when, by which skill, how many tokens it spent and how long it held the wall — the
 harness records on its own, in the session transcripts under its projects directory: one
 subdirectory per working directory, one `.jsonl` per session, and beside it a `subagents/`
-directory holding one transcript and one `.meta.json` per agent spawned. That directory is the
+directory holding one transcript and one `.meta.json` per agent spawned — at every depth, so an
+agent an agent spawned lands there too, and is found by reading its parent's transcript for the
+spawn the way the session's is read. That directory is the
 harness's, in an internal format this framework neither owns nor documents, and it holds every
 word of every conversation. Two rules follow. It is read only after `--probe` has said it can be,
 and the read is announced by whoever invokes it. And what leaves it is counts, names, timestamps
@@ -82,7 +84,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/2"
+CONTRACT = "siegard-telemetry/3"
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TELEMETRY_CONTRACT = PLUGIN_ROOT / "schemas" / "telemetry.json"
 PROJECT_PY = PLUGIN_ROOT / "bin" / "project.py"
@@ -115,7 +117,7 @@ def agent_type_of(payload: dict) -> str:
 
 SCRIPTS = ("spec.py", "plan.py", "deliver.py", "trace.py", "project.py", "run.py", "terms.py",
            "telemetry.py")
-SCRIPT_CALL = re.compile(r"bin/(" + "|".join(re.escape(s) for s in SCRIPTS) + r")\b")
+SCRIPT_CALL = re.compile(r"(?:^|[\s/])(" + "|".join(re.escape(s) for s in SCRIPTS) + r")\b")
 EXIT_MARKER = re.compile(r"\AExit code (\d+)")
 PROBLEMS = re.compile(r"\b(\d+) problem\(s\)")
 FENCE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
@@ -420,12 +422,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                         "command": command,
                     }
             elif block.get("name") == "Agent":
-                agents[block["id"]] = {
-                    "session": session_id, "tool_use_id": block["id"],
-                    "agent_type": agent_type_of(payload),
-                    "description": str(payload.get("description") or ""),
-                    "invoked_at": iso(instant_of(stamp)),
-                }
+                agents[block["id"]] = spawn_of(block, payload, session_id, stamp)
     for tool_use_id, command in commands.items():
         result = results.get(tool_use_id)
         command.update(exit_code=None, exit_marker=False, problems=None, interrupted=False,
@@ -444,9 +441,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         if isinstance(raw, dict) and raw.get("interrupted") is True:
             command["interrupted"] = True
     for tool_use_id, agent in agents.items():
-        raw = (results.get(tool_use_id) or {}).get("raw")
-        agent["model"] = raw.get("resolvedModel") if isinstance(raw, dict) and isinstance(
-            raw.get("resolvedModel"), str) else None
+        agent["model"] = resolved_model_of(results.get(tool_use_id))
     summary = {
         "id": session_id, "path": str(path),
         "first_timestamp": first, "last_timestamp": last,
@@ -455,6 +450,45 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "usage": usage,
     }
     return summary, list(commands.values()), list(agents.values())
+
+
+def spawn_of(block: dict, payload: dict, session_id: str, stamp: str | None) -> dict:
+    return {
+        "session": session_id, "tool_use_id": block["id"],
+        "agent_type": agent_type_of(payload),
+        "description": str(payload.get("description") or ""),
+        "invoked_at": iso(instant_of(stamp)),
+    }
+
+
+def resolved_model_of(result: dict | None) -> str | None:
+    raw = (result or {}).get("raw")
+    if isinstance(raw, dict) and isinstance(raw.get("resolvedModel"), str):
+        return raw["resolvedModel"]
+    return None
+
+
+def spawns_in(transcript: Path, session_id: str, since: datetime, until: datetime) -> list[dict]:
+    """Every `Agent` tool use an agent's own transcript holds inside the window — what it
+    spawned, in the same shape a session's spawns take. A fork's transcript opens with a copy
+    of the context it was forked from, spawns included, so the caller attributes a tool use to
+    the first transcript it was read from and never twice."""
+    agents: dict[str, dict] = {}
+    for entry in entries_of(transcript):
+        for block in blocks_of(entry):
+            if block.get("type") == "tool_result" and block.get("tool_use_id") in agents:
+                agents[block["tool_use_id"]]["model"] = resolved_model_of(
+                    {"raw": entry.get("toolUseResult")})
+        if entry.get("type") != "assistant" or not in_window(entry, since, until):
+            continue
+        for block in blocks_of(entry):
+            if block.get("type") != "tool_use" or block.get("name") != "Agent" \
+                    or not isinstance(block.get("id"), str):
+                continue
+            payload = block.get("input") if isinstance(block.get("input"), dict) else {}
+            agents[block["id"]] = dict(spawn_of(block, payload, session_id, entry.get("timestamp")),
+                                       model=None)
+    return list(agents.values())
 
 
 def subagent_metas(session_dir: Path) -> dict[str, tuple[str, Path]]:
@@ -525,17 +559,22 @@ def harness_section(root: Path, home: Path, since: datetime,
         harness["sessions"].append(summary)
         commands.extend(session_commands)
         metas = subagent_metas(root / path.stem)
-        for agent in session_agents:
+        pending = [dict(agent, spawn_depth=1, parent_agent_id=None) for agent in session_agents]
+        seen = {agent["tool_use_id"] for agent in pending}
+        while pending:
+            agent = pending.pop(0)
             found = metas.get(agent["tool_use_id"])
             agent.update(agent_id=None, transcript=None, first_timestamp=None, last_timestamp=None,
                          duration_seconds=None, messages=None, tool_calls=None, usage=None,
                          unavailable=None)
             if found is None:
                 agent["unavailable"] = (f"no subagents/*.meta.json under {root / path.stem} names "
-                                        f"tool use {agent['tool_use_id']}")
+                                        f"tool use {agent['tool_use_id']}; whatever this agent "
+                                        f"spawned is uncounted")
             elif not found[1].is_file():
                 agent["agent_id"] = found[0]
-                agent["unavailable"] = f"{found[1]} does not exist"
+                agent["unavailable"] = (f"{found[1]} does not exist; whatever this agent spawned "
+                                        f"is uncounted")
             else:
                 agent["agent_id"] = found[0]
                 agent["transcript"] = str(found[1])
@@ -543,6 +582,12 @@ def harness_section(root: Path, home: Path, since: datetime,
                 agent["model"] = agent["model"] or read.pop("model")
                 read.pop("model", None)
                 agent.update(read)
+                for child in spawns_in(found[1], summary["id"], since, until):
+                    if child["tool_use_id"] in seen:
+                        continue
+                    seen.add(child["tool_use_id"])
+                    pending.append(dict(child, spawn_depth=agent["spawn_depth"] + 1,
+                                        parent_agent_id=found[0]))
             agents.append(agent)
     commands.sort(key=lambda c: (c["issued_at"], c["tool_use_id"]))
     agents.sort(key=lambda a: (a["invoked_at"], a["tool_use_id"]))
@@ -896,7 +941,9 @@ def receipt(report: dict, destination: Path) -> str:
         + (f" ({len(report['harness']['transcript_roots']) - 1} sibling director"
            f"{'y' if len(report['harness']['transcript_roots']) == 2 else 'ies'} read)"
            if len(report["harness"]["transcript_roots"]) > 1 else ""),
-        f"agents: {totals['invocations']} spawned, {totals['with_transcript']} with a transcript, "
+        f"agents: {totals['invocations']} spawned "
+        f"({sum(1 for a in report['agents'] if a['parent_agent_id'])} of them by another agent), "
+        f"{totals['with_transcript']} with a transcript, "
         f"{totals['usage']['output_tokens']} output tokens, {totals['duration_seconds']}s",
         f"sessions: {len(report['harness']['sessions'])} orchestrating, "
         f"{session_usage['output_tokens']} output tokens — never a subagent's, which the line "

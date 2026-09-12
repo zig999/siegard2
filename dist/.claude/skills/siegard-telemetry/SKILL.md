@@ -87,7 +87,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/2
+contract_version: siegard-telemetry/3
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -125,12 +125,17 @@ What each section holds:
   `/reconcile` spawn reviewers and auditors). Where nothing carries a clock for a stretch, write
   "duration not recorded" — never a figure.
 - **3.** One table over `agents`: invoked at, type, description, model, duration, tokens (input,
-  cache creation, cache read, output), tool calls, `repeats_earlier`. Then one row per type from
+  cache creation, cache read, output), tool calls, `repeats_earlier`, and `parent_agent_id`
+  where it is set. A row with a parent ran inside another row's agent — a fork the session
+  launched to run a skill spawns that skill's agents from there — and its cost is its own: the
+  parent's row is the orchestrating turns between its spawns and nothing of theirs, so a phase
+  is attributed to the nested rows' types and never to the fork's. Then one row per type from
   `agent_totals.by_type` with invocations, how many carried a transcript, summed duration and
   tokens. Where `with_transcript` is below `invocations`, say the totals are a floor and list the
-  invocations without a transcript by their `unavailable` reason. For every repeat, judge from
-  the two descriptions and their timing whether it was rework (same input set, same reason) or
-  deliberate (the input set changed) — and mark that judgment as yours.
+  invocations without a transcript by their `unavailable` reason — an agent without one hides
+  whatever it spawned, and the floor is deeper than the count of missing rows says. For every
+  repeat, judge from the two descriptions and their timing whether it was rework (same input
+  set, same reason) or deliberate (the input set changed) — and mark that judgment as yours.
 - **4.** Every entry of `commands`: issued at, scripts, the command line, exit code where the
   harness marked one, `problems` where a validator counted, interrupted. Then every entry of
   `runs`: initiative, run, outcome, failed step, timeout, one line per step with its outcome, exit
@@ -155,7 +160,9 @@ What each section holds:
   said as one. **Then the orchestrating sessions**, summed from `harness.sessions[].usage` —
   every session's own turns, never a subagent's — beside `agent_totals.overall`, and their sum:
   what a report reading `agent_totals` alone leaves out is exactly this half, and a window with
-  several delegations from one session has spent roughly as much here as there.
+  several delegations from one session has spent roughly as much here as there. A total set
+  beside an earlier report's is compared only under one contract version: a `siegard-telemetry/2`
+  total counted the session's direct spawns alone, and reads as a floor beside a later one.
 - **10.** Judgment, and only here: a step whose cost is out of proportion to what it decided, a
   repeat an earlier check would have spared, a stop that was unnecessary or one that was missing,
   two files disagreeing. Every item carries its evidence beside it — the field, the row, the

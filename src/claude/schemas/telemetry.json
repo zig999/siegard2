@@ -24,8 +24,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/2",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. A /1 report is still the count it was when it was written, read by tolerant readers, and never rewritten to match."
+      "const": "siegard-telemetry/3",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match."
     },
     "project_root": {
       "type": "string",
@@ -123,10 +123,20 @@
         "additionalProperties": false,
         "required": ["session", "tool_use_id", "agent_type", "description", "invoked_at", "agent_id",
                      "model", "transcript", "first_timestamp", "last_timestamp", "duration_seconds",
-                     "messages", "tool_calls", "usage", "repeats_earlier", "unavailable"],
+                     "messages", "tool_calls", "usage", "repeats_earlier", "unavailable",
+                     "spawn_depth", "parent_agent_id"],
         "properties": {
           "session": { "type": "string" },
           "tool_use_id": { "type": "string" },
+          "spawn_depth": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many spawns separate this agent from the session: 1 where the session spawned it, 2 where an agent the session spawned did, and so on. An agent's `usage` is its own turns alone at every depth — a parent's row does not carry its children's, the way a session's `usage` does not carry its agents' — so the rows at every depth sum without overlap."
+          },
+          "parent_agent_id": {
+            "type": ["string", "null"],
+            "description": "The `agent_id` of the agent whose transcript holds this spawn, or null where the session's does. What a row's parent was is what tells a reader which context invoked a skill: a fork that spawned this framework's agents is a parent row here, and its own cost is the orchestrating turns between them."
+          },
           "agent_type": {
             "type": "string",
             "description": "The subagent type the skill spawned, as the harness recorded it — a shipped agent's name where a skill delegated to one, or a harness built-in."
@@ -152,7 +162,7 @@
           "unavailable": { "type": ["string", "null"] }
         }
       },
-      "description": "Every subagent the harness spawned inside the window, in the order it was spawned."
+      "description": "Every subagent the harness spawned inside the window, at every depth, in the order it was spawned — the session's own spawns, read from its transcript, and each agent's spawns, read from that agent's transcript once it was found. An agent whose transcript was not found hides whatever it spawned, and its `unavailable` says so."
     },
     "agent_totals": {
       "type": "object",

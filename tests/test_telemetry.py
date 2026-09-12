@@ -231,6 +231,103 @@ def test_agents_are_summed_from_their_own_transcripts_and_repeats_are_marked(con
     assert totals["by_type"]["execution-contract-binder"]["duration_seconds"] == 268.0
 
 
+def test_an_agent_spawned_by_an_agent_is_a_row_of_its_own_under_its_parent(consumer):
+    """A skill invoked inside a spawned context — a fork the session launched to run
+    `/implement-task` in the background — spawns this framework's agents from there, and the
+    harness writes their transcripts beside the fork's, one depth further down. A report that
+    read only the session's own spawns would carry the fork and miss what it spawned: the
+    named agents' cost would be nowhere, not folded into the fork's row, and `agent_totals`
+    would be a floor with `provenance` saying nothing. Each depth is read from the transcript
+    above it, and every row's usage is its own turns alone, so the rows sum without overlap."""
+    session = consumer["transcripts"] / "s1.jsonl"
+    session.write_text(session.read_text(encoding="utf-8") + assistant(
+        "2026-08-20T10:30:00.000Z", {
+            "type": "tool_use", "id": "tu-fork", "name": "Agent",
+            "input": {"subagent_type": "fork", "description": "Deliver record-order",
+                      "prompt": "run /implement-task"}})
+        + user_result("2026-08-20T10:30:01.000Z", "tu-fork", "launched",
+                      {"agentId": "f1", "status": "async_launched"}), encoding="utf-8")
+    subagents = consumer["transcripts"] / "s1" / "subagents"
+    (subagents / "agent-f1.meta.json").write_text(json.dumps({
+        "agentType": "fork", "isFork": True, "description": "Deliver record-order",
+        "toolUseId": "tu-fork", "spawnDepth": 1}), encoding="utf-8")
+    spend = {"input_tokens": 1, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0,
+             "output_tokens": 7}
+    (subagents / "agent-f1.jsonl").write_text(
+        # A fork opens with a copy of the context it was forked from — here the session's own
+        # spawn of a1 — which is the session's spawn and never a second row under the fork.
+        line(type="assistant", timestamp="2026-08-20T10:08:00.000Z", agentId="f1",
+             message={"role": "assistant", "content": [{
+                 "type": "tool_use", "id": "tu-agent-1", "name": "Agent",
+                 "input": {"subagent_type": "execution-contract-binder",
+                           "description": "Bind record-order"}}]})
+        + line(type="assistant", timestamp="2026-08-20T10:31:00.000Z", agentId="f1",
+             message={"role": "assistant", "model": "claude-opus-5", "usage": spend,
+                      "content": [{"type": "tool_use", "id": "tu-nested", "name": "Agent",
+                                   "input": {"subagent_type": "siegard:task-implementer",
+                                             "description": "Implement record-order",
+                                             "prompt": "nested prompt text"}}]})
+        + line(type="user", timestamp="2026-08-20T10:31:01.000Z", agentId="f1",
+               message={"role": "user", "content": [
+                   {"type": "tool_result", "tool_use_id": "tu-nested", "content": "done"}]},
+               toolUseResult={"agentId": "n1", "resolvedModel": "claude-sonnet-5"})
+        + line(type="assistant", timestamp="2026-08-20T10:45:00.000Z", agentId="f1",
+               message={"role": "assistant", "model": "claude-opus-5", "usage": spend,
+                        "content": [{"type": "text", "text": "delivered"}]}),
+        encoding="utf-8")
+    (subagents / "agent-n1.meta.json").write_text(json.dumps({
+        "agentType": "siegard:task-implementer", "description": "Implement record-order",
+        "toolUseId": "tu-nested", "parentAgentId": "f1", "spawnDepth": 2}), encoding="utf-8")
+    (subagents / "agent-n1.jsonl").write_text(
+        line(type="assistant", timestamp="2026-08-20T10:32:00.000Z", agentId="n1",
+             message={"role": "assistant", "model": "claude-sonnet-5",
+                      "content": [{"type": "text", "text": "written"}],
+                      "usage": {"input_tokens": 3, "cache_creation_input_tokens": 0,
+                                "cache_read_input_tokens": 0, "output_tokens": 300}}),
+        encoding="utf-8")
+    done, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    by_id = {a["agent_id"]: a for a in report["agents"]}
+    fork, nested = by_id["f1"], by_id["n1"]
+    assert fork["spawn_depth"] == 1 and fork["parent_agent_id"] is None
+    assert nested["spawn_depth"] == 2 and nested["parent_agent_id"] == "f1"
+    assert nested["session"] == "s1" and nested["invoked_at"] == "2026-08-20T10:31:00.000Z"
+    assert nested["agent_type"] == "task-implementer"
+    assert nested["model"] == "claude-sonnet-5"
+    assert nested["usage"]["output_tokens"] == 300
+    assert fork["usage"]["output_tokens"] == 14, "a parent's row is its own turns alone"
+    assert by_id["a1"]["spawn_depth"] == 1 and by_id["a1"]["parent_agent_id"] is None
+    assert [a["tool_use_id"] for a in report["agents"]].count("tu-agent-1") == 1
+    totals = report["agent_totals"]
+    assert totals["overall"]["invocations"] == 4
+    assert totals["overall"]["usage"]["output_tokens"] == 500 + 14 + 300
+    assert totals["by_type"]["task-implementer"]["usage"]["output_tokens"] == 300
+    assert totals["by_type"]["fork"]["usage"]["output_tokens"] == 14
+    assert "agents: 4 spawned (1 of them by another agent)" in done.stdout
+    assert "nested prompt text" not in json.dumps(report)
+
+
+def test_an_agent_without_a_transcript_says_its_spawns_are_uncounted(consumer):
+    _, report = report_of(consumer)
+    _, second = report["agents"]
+    assert second["usage"] is None
+    assert "whatever this agent spawned is uncounted" in second["unavailable"]
+
+
+def test_a_framework_script_is_recognised_by_its_file_name_however_its_path_is_spelled():
+    """The skills spell an invocation `${CLAUDE_PLUGIN_ROOT}/bin/<script>.py`, and a session
+    that shortens it — `B=<plugin>/bin; python3 -B $B/deliver.py` — has still invoked the
+    script. A match anchored on the literal `bin/` segment drops that form, and the commands
+    section becomes a floor nothing in `provenance` announces."""
+    import telemetry
+    call = telemetry.SCRIPT_CALL
+    assert call.findall("B=/p/bin; python3 -B $B/deliver.py d w t s") == ["deliver.py"]
+    assert call.findall("python3 -B /plugin/bin/plan.py --check w s") == ["plan.py"]
+    assert call.findall("cd t && python3 -B ./trace.py --check .") == ["trace.py"]
+    assert call.findall("python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/run.py x") == ["run.py"]
+    assert call.findall("python3 my-deliver.py; cat deliver.pyc; ls bin/") == []
+
+
 def test_a_scoped_spawn_normalizes_to_the_plugin_agents_bare_name():
     """Skills spawn this framework's own agents by their plugin-scoped name
     (`siegard:execution-contract-binder`), never the bare form a consumer's own
