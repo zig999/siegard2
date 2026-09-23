@@ -43,6 +43,10 @@ Ten things this script does, and nobody else does any of them:
                                                                   pair, keeping the candidate
                                                                   tier, and reading each --node on
                                                                   every file without binding it
+    trace.py --stage ... --review --demonstrated <proof-record> ...
+                                                                  also stage one certification per
+                                                                  node the proofs' tests claim to
+                                                                  demonstrate, composed here
     trace.py --stage ... --certify <file>                         also stage a certification per
                                                                   node the file names: its pack,
                                                                   the proof offered and the step
@@ -258,6 +262,22 @@ listing that names a step-decided pair names a test-decided one the same way. Wh
 is whether the fact holds; which file holds it stays the source's, which is why `files` and their
 digests are untouched by any of this.
 
+`--stage --review --demonstrated <proof-record> ...` composes those certifications from the
+proofs themselves, for the review route. «Every claim that a test demonstrates a node is carried
+to certification by the review that reads the proof» (SPEC-004 R13) — and a proof record's
+`tests[]` is where the claim lives, one `demonstrates` per test. Composing the certifications
+file from those entries was the review skill's, in prose, and a step a skill performs in prose is
+a step that is skipped: measured over one consumer, most reviews of proofs carrying a claim never
+staged a certification at all. So the staging reads the records: every test naming a node under
+`demonstrates` is one entry per node, its `proof` the files of every such test, its `step` the
+registry's command whose `role` is `suite` — the one step that proves the work, and the one
+`deliver.py` holds to being declared once. A record `deliver.py` did not first hold to its
+contract is read defensively, the way every record here is; a node no test claims gets no entry,
+and a registry declaring no suite step is a refusal, because a certification with no step to run
+its proof is one nothing can ever answer for. The human's `--certify` may ride beside it, for a
+claim no proof carries; one node certified from both is refused, the way one node certified twice
+in one file already is.
+
 `--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every delegation that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
@@ -295,7 +315,8 @@ Usage:  trace.py <target-root>
         trace.py --encodes --changed <target-root> [<ref>]
         trace.py --convergence <target-root> <spec-root> <work-root-parent> [--all]
         trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
-                 [--audit | --review [--node <node> ...]] [--certify <certifications-file>]
+                 [--audit | --review [--node <node> ...] [--demonstrated <proof-record> ...]]
+                 [--certify <certifications-file>]
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
         trace.py --encodes --rank <target-root> [--all]
         trace.py --help
@@ -755,30 +776,38 @@ def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
 
 def carried_certification(declared: dict, node_id: str,
                           home: Path) -> tuple[dict | None, str | None]:
-    """The certification the node's standing entry holds, where its proof's text still stands, or
-    nothing and the receipt for letting it go.
+    """The certification the node's standing entry holds, carried whole — and the receipt where
+    its proof's text no longer stands.
 
     A bind rewrites the whole entry, and a bind over a file the node encodes is not a judgment
     about the test that decides the node — so the certification is carried forward, not dropped
-    with the entry it rode. It is carried only while the proof's every digest still computes: a
-    test whose text changed was certified as something else, and a bind that carried the claim
-    over it would assert a certification nobody made over these bytes. The receipt names what was
-    released, because the entry written afterwards reads exactly like one never certified."""
+    with the entry it rode. It is carried whether or not the proof's digests still compute. A
+    test whose text changed is what `--check` reports under `proof`, and what every reader of a
+    certification recomputes before trusting it: `test_decided` holds a certification live only
+    while its proof's bytes are the certified ones, so a carried certification over moved text
+    decides nothing, stages nothing into a mechanical tier, and is re-read by the next judgment
+    exactly as an uncertified node is. Dropping it instead would throw away the one record of
+    which test decided the node — and drop it silently, since the entry written afterwards reads
+    exactly like one never certified, and no report ever says a certification was lost. Kept, the
+    loss is a `proof` finding with its route: a reconciliation that certifies the test as it now
+    stands. The receipt says so at the one moment both sides are in hand."""
     existing = next((entry for entry in declared.get("bindings") or []
                      if entry.get("node") == node_id), None)
     if existing is None or existing.get("decided_by") != DECIDED_BY_TEST:
         return None, None
+    carried = {"step": existing["step"], "proof": list(existing["proof"])}
     stale = []
     for proof_entry in existing.get("proof") or []:
         source = home / proof_entry["path"]
         if not source.is_file() or spec.digest_of(source) != proof_entry["digest"]:
             stale.append(proof_entry["path"])
     if stale:
-        return None, (f"  {node_id} was decided by a test and is decided by reading from here: "
-                      f"{', '.join(stale)} changed since it was certified, so the certification "
-                      f"is released rather than carried over text nobody certified; a "
-                      f"reconciliation that certifies the test as it now stands restores it")
-    return {"step": existing["step"], "proof": list(existing["proof"])}, None
+        return carried, (f"  {node_id} is decided by a test whose text moved: "
+                         f"{', '.join(stale)} changed since it was certified. The certification "
+                         f"is carried as it was, decides nothing until the test is certified as it "
+                         f"now stands, and `--check` reports it under `proof` until a "
+                         f"reconciliation does — or a judgment refuses it")
+    return carried, None
 
 
 def certified(node_id: str, certification: dict) -> str:
@@ -2152,9 +2181,54 @@ def certifications_of(path: Path) -> tuple[list[dict], list[str]]:
     return entries, problems
 
 
+def demonstrated_certifications(records: list[Path], home: Path,
+                                offset: str) -> tuple[list[dict], list[str]]:
+    """One certification per node the named proof records' tests claim to demonstrate: its proof
+    the file of every test carrying that claim, its step the registry's `role: suite` command.
+
+    Read defensively: `deliver.py` is what holds a proof record to its contract, and a record
+    that does not parse or carries no `tests` composes nothing and says so. The step is the
+    registry's to name and never this script's to guess — a registry declaring no suite step, or
+    a project declaring no registry for this target, refuses the composition whole, since a
+    certification names the step that runs its proof and one with none can never be answered."""
+    entries: dict[str, set[str]] = {}
+    problems: list[str] = []
+    for record in records:
+        front, _, unreadable = spec.parse_node(record)
+        if front is None or not isinstance(front, dict):
+            problems.append(f"{record}: {unreadable or 'carries no frontmatter this can read'}")
+            continue
+        tests = front.get("tests")
+        if not isinstance(tests, list):
+            continue
+        for test in tests:
+            if not isinstance(test, dict):
+                continue
+            node_id, path = test.get("demonstrates"), test.get("file")
+            if isinstance(node_id, str) and isinstance(path, str):
+                entries.setdefault(node_id, set()).add(path)
+    if not entries:
+        return [], problems
+    registry = registry_of(home, offset)
+    suite = [c["step"] for c in (registry or {}).get("commands") or []
+             if isinstance(c, dict) and c.get("role") == "suite" and isinstance(c.get("step"), str)]
+    if len(suite) != 1:
+        problems.append(
+            f"the proofs claim {len(entries)} node(s) demonstrated and "
+            + ("the project declares no registry for this target" if registry is None else
+               f"the registry declares {len(suite)} step(s) carrying `role: suite`")
+            + "; a certification names the step that runs its proof, and the suite step is the "
+              "registry's to declare, once")
+        return [], problems
+    composed = [{"node": node_id, "proof": sorted(paths), "step": suite[0]}
+                for node_id, paths in sorted(entries.items())]
+    return composed, problems
+
+
 def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           files: list[str], audit: bool = False, review: bool = False,
-          also: list[str] | None = None, certify: Path | None = None) -> int:
+          also: list[str] | None = None, certify: Path | None = None,
+          demonstrated: list[Path] | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -2244,8 +2318,18 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # encodes has no reading here to ride, a proof that is not there is a test nobody can open,
     # and a step the registry does not declare is one no run will ever answer for.
     certify_entries: list[dict] = []
+    certify_problems: list[str] = []
     if certify is not None:
         certify_entries, certify_problems = certifications_of(certify)
+    if demonstrated:
+        composed, composed_problems = demonstrated_certifications(demonstrated, home, offset)
+        certify_problems += composed_problems
+        twice = sorted({e["node"] for e in composed} & {e["node"] for e in certify_entries})
+        certify_problems += [f"{node_id} is certified by --certify and claimed by a proof under "
+                             f"--demonstrated; one certification per node, and a claim a proof "
+                             f"carries needs no second statement" for node_id in twice]
+        certify_entries += [e for e in composed if e["node"] not in twice]
+    if certify_entries or certify_problems:
         registry = registry_of(home, offset) or {}
         steps = {c["step"] for c in registry.get("commands") or []
                  if isinstance(c, dict) and isinstance(c.get("step"), str)}
@@ -3484,6 +3568,14 @@ def main() -> int:
             return CANNOT_RUN
         also.append(args[at + 1])
         del args[at:at + 2]
+    demonstrated: list[Path] = []
+    while "--demonstrated" in args:
+        at = args.index("--demonstrated")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --demonstrated takes the path of a proof record", file=sys.stderr)
+            return CANNOT_RUN
+        demonstrated.append(Path(args[at + 1]))
+        del args[at:at + 2]
     captured_run: Path | None = None
     if "--run" in args:
         at = args.index("--run")
@@ -3575,6 +3667,10 @@ def main() -> int:
         print("cannot run: --audit and --review are two stagings; a review re-reads files a "
               "delivery wrote, an audit re-reads claims nothing moved", file=sys.stderr)
         return CANNOT_RUN
+    if demonstrated and not (do_stage and do_review):
+        print("cannot run: --demonstrated is a mode of --stage --review; a proof's claim is "
+              "settled by the review that reads the proof, and by nothing else", file=sys.stderr)
+        return CANNOT_RUN
     if also and not do_review:
         print("cannot run: --node is a mode of --stage --review; a reconciliation's node set is "
               "the trace's alone", file=sys.stderr)
@@ -3655,7 +3751,7 @@ def main() -> int:
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
-                     do_review, also, certify)
+                     do_review, also, certify, demonstrated)
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):

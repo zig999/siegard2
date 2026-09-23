@@ -198,18 +198,37 @@ def test_a_rebind_carries_a_certification_while_the_proof_stands(consumer, write
     assert entry["decided_by"] == "test" and entry["step"] == "test"
 
 
-def test_a_rebind_releases_a_certification_whose_proof_changed_and_says_so(consumer, write_record):
-    """A test whose text changed was certified as something else. Carrying the claim over it
-    would assert a certification nobody made over these bytes; the receipt is what keeps the
-    release from reading like an entry never certified."""
+def test_a_rebind_carries_a_certification_whose_proof_changed_and_says_so(consumer, write_record):
+    """A test whose text changed is what `--check` reports under `proof`, and what every reader of
+    a certification recomputes before trusting it. Dropping the certification instead would throw
+    away the one record of which test decided the node — silently, since the entry written
+    afterwards reads exactly like one never certified. Kept, the loss is a finding with a route."""
     proof_at(consumer)
     run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
     proof_at(consumer, "it('asserts something else', () => {})\n")
     done = run("--bind", consumer / "backend", consumer / "specs", NODE, FILE)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert f"{NODE} was decided by a test and is decided by reading from here" in done.stdout
+    assert f"{NODE} is decided by a test whose text moved" in done.stdout
+    assert "carried as it was" in done.stdout and "`proof`" in done.stdout
     entry = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))["bindings"][0]
-    assert "decided_by" not in entry and "proof" not in entry and "step" not in entry
+    assert entry["decided_by"] == "test" and entry["step"] == "test"
+    assert [p["path"] for p in entry["proof"]] == [f"backend/{PROOF}"]
+
+    checked = run("--check", consumer / "backend")
+    assert checked.returncode == 1
+    assert "1 proof:" in checked.stdout, checked.stdout
+    assert "whose text changed since it was certified" in checked.stdout
+
+
+def test_a_carried_certification_over_moved_text_is_not_live_for_any_reader(consumer, write_record):
+    """Carried is not trusted: `test_decided` recomputes the proof's digests, so a certification
+    over moved text decides nothing and the next judgment re-reads the node as uncertified."""
+    proof_at(consumer)
+    run("--bind-record", consumer / "backend", consumer / "specs", write_record(record_of([CERTIFIED])))
+    proof_at(consumer, "it('asserts something else', () => {})\n")
+    run("--bind", consumer / "backend", consumer / "specs", NODE, FILE)
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert trace.test_decided(declared, consumer, "backend") == {}
 
 
 def test_a_record_that_refused_the_certification_releases_the_standing_one(consumer, write_record):

@@ -262,19 +262,24 @@ workspace is a reading copy, and a committed copy of node text would be a second
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
     <review-name> <workspace> <each path of the file set> --review --node <each node the tasks implement> \
-    [--certify <certifications file>]
+    --demonstrated <each proof record of the tasks under review> [--certify <certifications file>]
 ```
 
-**Where a proof under review offers a test as the proof of a specification node, `--certify`
-carries the claim to the judgment that settles it.** Read the proof records' `tests[]`: an entry
-with `demonstrates` says this test would fail if that node's fact stopped holding. Compose the
-certifications file from those entries and nothing else — never from your own reading of a test,
-and never from a node's kind: one entry per node, its `proof` the file(s) of every test
-demonstrating it, and its `step` the registry's step whose `role` is `suite`, which is the step
-that proves the work. `deliver.py` already refused a `demonstrates` naming a node the task does
-not implement, so what reaches here is a claim the plan gave the task; what this step adds is
-whether the test makes good on it. Where no proof carries one, pass no `--certify` and say so in
-the report. Either way the report lists every node the tasks implement that no test demonstrates,
+**Where a proof under review offers a test as the proof of a specification node, the staging
+carries the claim to the judgment that settles it.** Pass every proof record of the tasks under
+review under `--demonstrated`, one path each: `--stage --review` reads their `tests[]`, and an
+entry with `demonstrates` says this test would fail if that node's fact stopped holding. The
+staging composes one certification per node from those entries and nothing else — its `proof`
+the file(s) of every test demonstrating it, its `step` the registry's command whose `role` is
+`suite`, which is the step that proves the work — and refuses the composition where the
+registry declares no such step. Compose nothing yourself: never from your own reading of a test,
+never from a node's kind, and never from a proof you did not pass. `deliver.py` already refused
+a `demonstrates` naming a node the task does not implement, so what reaches here is a claim the
+plan gave the task; what this step adds is whether the test makes good on it. `--certify` may
+still ride beside it, for a claim no proof carries and a human states; a node under both is
+refused. Where no proof carries a claim, the staging stages no certification and the report says
+so.
+Either way the report lists every node the tasks implement that no test demonstrates,
 with what the proof's `untested` says of each: «a node the task implements that no test claims is
 named in that review's report with the reason the proof gives» (SPEC-004 R13). A node with no
 claim and no reason is a proof short of what it owes, said as that and never as a finding — this

@@ -1424,3 +1424,94 @@ def test_review_and_node_are_modes_of_stage_and_exclude_audit(consumer):
     done = run("--stage", consumer / "backend", consumer / "specs", "both",
                consumer / "ws-both", FILE, "--review", "--audit")
     assert done.returncode == 2 and "two stagings" in done.stderr
+
+
+# ------------------------------------------------------ --review --demonstrated
+
+
+def registry_with_suite(consumer: Path) -> None:
+    """A registry declaring a `lint` step and one `role: suite` step — the step that proves the
+    work, and the one a composed certification names."""
+    (consumer / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [], "commands": [
+            {"step": "lint", "command": "npm run lint", "timeout_seconds": 60, "decides": []},
+            {"step": "test", "command": "npm test", "timeout_seconds": 60, "role": "suite"}]}),
+        encoding="utf-8")
+    declared = json.loads((consumer / "siegard.json").read_text(encoding="utf-8"))
+    declared["standard"] = {"backend": "standard.yaml"}
+    (consumer / "siegard.json").write_text(json.dumps(declared) + "\n", encoding="utf-8")
+
+
+def proof_record(consumer: Path, *tests: dict) -> Path:
+    path = consumer / "delivery" / "first" / "proof" / "cases" / "record-case.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    front = {"target": "backend", "title": "Proof of record-case", "summary": "Its tests.",
+             "tests": list(tests)}
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n"
+                    "## What it is\nProse.\n\n## Notes\nNone.\n", encoding="utf-8")
+    return path
+
+
+CLAIM = {"file": PROOF, "name": "holds", "proves": "a case answers with its id",
+         "fails_when": "the id is absent", "demonstrates": NODE}
+NO_CLAIM = {"file": PROOF, "name": "holds", "proves": "a case answers with its id",
+            "fails_when": "the id is absent"}
+
+
+def test_a_review_composes_the_certification_from_the_proofs_claim(consumer):
+    """«Every claim that a test demonstrates a node is carried to certification by the review that
+    reads the proof» (SPEC-004 R13) — and a step a skill performed in prose was a step skipped:
+    most reviews of proofs carrying a claim never staged one. The staging reads the records."""
+    registry_with_suite(consumer)
+    proof_at(consumer)
+    record = proof_record(consumer, CLAIM)
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--review", "--demonstrated", record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = manifest_of(consumer / "ws")["certify"]
+    assert entry["node"] == NODE and entry["proof"] == [PROOF] and entry["step"] == "test"
+    assert "1 certification(s) staged" in done.stdout
+
+
+def test_a_composed_certification_needs_the_registrys_suite_step(consumer):
+    """The step is the registry's to name and never this script's to guess: a certification with
+    no step to run its proof is one nothing can ever answer for."""
+    registry_deciding(consumer)
+    proof_at(consumer)
+    record = proof_record(consumer, CLAIM)
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--review", "--demonstrated", record)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "carrying `role: suite`" in done.stderr
+
+
+def test_a_node_certified_by_hand_and_claimed_by_a_proof_is_refused_once(consumer):
+    registry_with_suite(consumer)
+    proof_at(consumer)
+    record = proof_record(consumer, CLAIM)
+    ask = certifying(consumer, {"node": NODE, "proof": [PROOF], "step": "test"})
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--review", "--certify", ask, "--demonstrated", record)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "one certification per node" in done.stderr
+
+
+def test_a_test_carrying_no_claim_composes_no_certification(consumer):
+    registry_with_suite(consumer)
+    proof_at(consumer)
+    record = proof_record(consumer, NO_CLAIM)
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--review", "--demonstrated", record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert not manifest_of(consumer / "ws").get("certify")
+
+
+def test_demonstrated_is_a_mode_of_the_review_staging_alone(consumer):
+    registry_with_suite(consumer)
+    proof_at(consumer)
+    record = proof_record(consumer, CLAIM)
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, "--demonstrated", record)
+    assert done.returncode == 2
+    assert "--demonstrated is a mode of --stage --review" in done.stderr
