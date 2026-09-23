@@ -43,6 +43,13 @@ that parent rather than one initiative, reads every directory under it, closed o
 and reports the specification's nodes that appear in no `implements`, no `covers` and no
 `uncovered` anywhere.
 
+An initiative `/siegard-archive` removed from the tree is read too, from git, at the commit before
+its removal: history survives only there, by that skill's own statement, and a plan that named a
+node before it was archived planned that node. Read from disk alone, this form would report every
+node such a plan covered as one nothing ever planned — and on a project that archives, that is
+most of what it would say. Where git does not hold the tree, or holds no such removal, the report
+says so in one line rather than listing a count that is a ceiling as though it were the answer.
+
 It is a query and never a check: it exits 0 over whatever it finds. A node no plan has named is
 an ordinary state of a specification that describes more than the work has reached — a Domain
 Model element the work has not needed yet is not a defect, and a form that refused over one
@@ -70,8 +77,9 @@ Usage:  plan.py <work-root> [<specification-root>]
         plan.py --unplanned <work-root-parent> <specification-root>
                                                         a query, never a check: which nodes of the
                                                         specification no initiative under that
-                                                        directory has ever named — live or closed
-                                                        — listed by class, exiting 0 either way
+                                                        directory has ever named — live, closed,
+                                                        or archived out of the tree and read back
+                                                        from git — listed by class, exit 0 always
         plan.py --contract <branch> [--fields a,b | --without a,b]
                                                         print one self-contained slice of
                                                         plan-node.json — a `$defs` entry, or every
@@ -94,7 +102,9 @@ Exit:   0 sound (and, with --check, current)
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -108,6 +118,7 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
           file=sys.stderr)
     raise SystemExit(CANNOT_RUN)
 
+import project
 import spec
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
@@ -671,6 +682,78 @@ def named_anywhere(parent: Path, validator) -> tuple[set[str], list[str], list[s
     return named, read, unreadable
 
 
+def archived_named(parent: Path) -> tuple[set[str], list[str], int, str | None]:
+    """Every specification node an initiative archived out of this tree named, read from git at
+    the commit before `/siegard-archive` removed it — with the slugs read, how many of their files
+    could not be parsed, and the reason nothing could be read where that is the case.
+
+    The removal is found by the closure marker's deletion, because that marker is the one file
+    every archived initiative had and every live one lacks. A slug standing on disk again is left
+    to the disk reading: the tree is the current statement of that plan, and history is not."""
+    home = project.toplevel_of(parent)
+    rel = os.path.relpath(parent.resolve(), home.resolve()).replace(os.sep, "/")
+    prefix = "" if rel == "." else rel + "/"
+    marker = re.compile(r"^" + re.escape(prefix) + r"([^/]+)/" + re.escape(CLOSURE_FILE) + r"$")
+
+    def git(*args: str) -> subprocess.CompletedProcess | None:
+        try:
+            return subprocess.run(["git", "-C", str(home), *args], capture_output=True, text=True)
+        except OSError:
+            return None
+
+    log = git("log", "--diff-filter=D", "--format=%H", "--name-only", "--",
+              f"{prefix}*/{CLOSURE_FILE}")
+    if log is None:
+        return set(), [], 0, "git is not on this machine"
+    if log.returncode != 0:
+        return set(), [], 0, f"git does not hold {parent}"
+
+    removed: dict[str, str] = {}
+    commit = None
+    for line in log.stdout.splitlines():
+        if not line:
+            continue
+        if re.fullmatch(r"[0-9a-f]{40}", line):
+            commit = line
+            continue
+        found = marker.match(line)
+        if found and commit and found.group(1) not in removed:
+            removed[found.group(1)] = commit  # the most recent removal is listed first
+    named: set[str] = set()
+    read: list[str] = []
+    unparsed = 0
+    for slug, at in sorted(removed.items()):
+        if (parent / slug).is_dir():
+            continue
+        before = f"{at}^"
+        tree = git("ls-tree", "-r", "--name-only", before, "--",
+                   f"{prefix}{slug}/epic", f"{prefix}{slug}/task")
+        if tree is None or tree.returncode != 0:
+            continue
+        read.append(slug)
+        for path in tree.stdout.splitlines():
+            if not path.endswith(".md"):
+                continue
+            shown = git("show", f"{before}:{path}")
+            if shown is None or shown.returncode != 0:
+                unparsed += 1
+                continue
+            fence = spec.FENCE.match(shown.stdout)
+            try:
+                front = yaml.safe_load(fence.group(1)) if fence else None
+            except yaml.YAMLError:
+                front = None
+            if not isinstance(front, dict):
+                unparsed += 1
+                continue
+            for field in NAMED_BY:
+                named |= {ref for ref in listed(front, field) if isinstance(ref, str)}
+            for entry in listed(front, "uncovered"):
+                if isinstance(entry, dict) and isinstance(entry.get("node"), str):
+                    named.add(entry["node"])
+    return named, read, unparsed, None
+
+
 def unplanned(parent: Path, specification: Path, validator) -> int:
     """Which specification nodes no initiative has ever named. A query: it exits 0 over whatever
     it finds, and states no threshold."""
@@ -684,6 +767,8 @@ def unplanned(parent: Path, specification: Path, validator) -> int:
         return CANNOT_RUN
 
     named, read, unreadable = named_anywhere(parent, validator)
+    from_git, archived, unparsed, no_git = archived_named(parent)
+    named |= from_git
     # The decision log is not a node any plan implements, and a context descriptor names a
     # context rather than stating a fact — neither is a thing a task delivers, so neither is
     # missing when nothing planned it.
@@ -695,6 +780,14 @@ def unplanned(parent: Path, specification: Path, validator) -> int:
           + (f" — {', '.join(read)}" if read else "")
           + f"; {len(considered)} node(s) of the specification, {len(considered) - len(missing)} "
           f"named by some plan")
+    if no_git is not None:
+        print(f"  initiatives archived out of this tree, if any, were not read: {no_git}; a node "
+              f"such a plan named is counted below as one nothing planned")
+    else:
+        print(f"  {len(archived)} archived initiative(s) read from git at the commit before each "
+              f"was removed" + (f" — {', '.join(archived)}" if archived else "")
+              + (f"; {unparsed} of their file(s) could not be parsed and name nothing here"
+                 if unparsed else ""))
     if unreadable:
         print(f"  {len(unreadable)} of them do not hold together and were read for what they "
               f"state anyway ({', '.join(unreadable)}); run plan.py over each — a node they name "

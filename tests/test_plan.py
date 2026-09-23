@@ -892,3 +892,68 @@ def test_unplanned_does_not_travel_with_the_forms_that_answer_about_one_plan(tmp
     done = run("--unplanned", "--check", tmp_path, root)
     assert done.returncode == plan.CANNOT_RUN
     assert "--unplanned is a query over every initiative" in done.stderr
+
+
+# ---------------------------------------- initiatives archived out of the tree
+
+def committed(where: Path, message: str) -> None:
+    subprocess.run(["git", "-C", str(where), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(where), "-c", "user.email=t@t", "-c", "user.name=t",
+                    "commit", "-qm", message], check=True, capture_output=True)
+
+
+def test_unplanned_reads_an_archived_initiative_from_git(tmp_path, work, root, sound_plan):
+    """/siegard-archive removes a closed initiative from the tree so its history survives only in
+    git. A plan that named a node before it was archived planned that node, and a reading of the
+    disk alone would report every node it covered as one nothing ever planned."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    committed(tmp_path, "plan and specification")
+    (work / plan.CLOSURE_FILE).write_text("Closed.\n", encoding="utf-8")
+    committed(tmp_path, "close")
+    subprocess.run(["git", "-C", str(tmp_path), "rm", "-r", "-q", "work"], check=True,
+                   capture_output=True)
+    committed(tmp_path, "archive")
+    assert not work.exists()
+
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "0 initiative(s) read under" in done.stdout
+    assert "1 archived initiative(s) read from git" in done.stdout and "work" in done.stdout
+    assert "domain/sales/order" not in done.stdout, \
+        "a node an archived plan covered was reported as never planned"
+    assert "rules/sales/invoice-immutable" in done.stdout
+
+
+def test_unplanned_says_when_archived_initiatives_could_not_be_read(tmp_path, work, root,
+                                                                     sound_plan):
+    """Where git does not hold the tree the count is a ceiling, and a ceiling printed as an
+    answer is the one reading this form must not produce in silence."""
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "archived out of this tree, if any, were not read" in done.stdout
+
+
+def test_a_slug_archived_and_standing_again_is_read_from_the_disk_once(tmp_path, work, root,
+                                                                       sound_plan, write_plan):
+    """The tree is the current statement of a plan; history is not. A slug removed and later
+    re-created is read as it stands, and its archived predecessor names nothing beside it."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    committed(tmp_path, "plan")
+    (work / plan.CLOSURE_FILE).write_text("Closed.\n", encoding="utf-8")
+    committed(tmp_path, "close")
+    subprocess.run(["git", "-C", str(tmp_path), "rm", "-r", "-q", "work"], check=True,
+                   capture_output=True)
+    committed(tmp_path, "archive")
+    work.mkdir()
+    write_plan("inventory/order-service", {
+        "title": "Order service", "summary": "One layered service under src/.",
+        "area": ["src/"],
+        "conventions": [{"statement": "Handlers delegate to a service module.",
+                         "seen_at": "src/orders/routes.ts"}],
+    })
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 initiative(s) read under" in done.stdout
+    assert "0 archived initiative(s) read" in done.stdout
+    assert "domain/sales/order" in done.stdout, \
+        "the re-created plan names nothing yet, and its archived predecessor must not answer for it"
