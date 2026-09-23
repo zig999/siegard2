@@ -98,17 +98,25 @@ this invocation — it is the status, reported verbatim.
      per pair and the invocation is per file, and a file carrying one recorded pair beside two
      unrecorded ones is a file the reconciliation is still owed.
 
-   Then, for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --owed
-   <target-source-root>` — what past reconciliations found and no bind could close. This is not a
-   second view of the drift counts and must never be reported as one: a finding against a pair the
-   trace binds nowhere has no digest to disagree with, so `--check` cannot reach it and no future
-   `--check` will. A status built on the drift counts alone reports a tree as clean while its
-   records hold open conformance questions nobody withdrew. Say both numbers, say they measure
-   different things, and where `--owed` lists anything under `unseen` or `covered`, name the
-   records it points at — those are the findings no other command in this framework will mention
-   again. Where it lists nodes a refused certification left with a testable remainder, quote
-   them with the assertion beside each and the file's count of bindings a reading decides: that
-   is the work a test closes, and the count says whether closing it frees a judge yet.
+   Then, for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --convergence
+   <target-source-root> <specification-root> <work-root>` — every node of the specification in
+   exactly one state, by class, read across the trace and every initiative under `work_root`,
+   the ones `/siegard-archive` removed included. This is the one reading that composes what the
+   drift counts, the outstanding report and the plans each say alone, and it exists because the
+   composition is what a reader gets wrong: a plan since archived still planned what it named, an
+   epic's `uncovered` is a decision and not a gap, and a node a delivery honored without encoding
+   is bound to nothing by design. Quote its state lines verbatim, each with the class counts under
+   it; report no ratio of one to another, because the form prints none and the contracts refused
+   the field. Its last line is the judged side, kept apart — what past reconciliations found and
+   no bind could close — and it is not a second view of the drift counts and must never be
+   reported as one: a finding against a pair the trace binds nowhere has no digest to disagree
+   with, so `--check` cannot reach it and no future `--check` will. Where that line holds
+   anything but zeros, run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --owed
+   <target-source-root>` for the same target and name the records it points at under `unseen`
+   or `covered` — those are the findings no other command in this framework will mention again.
+   Where it lists nodes a refused certification left with a testable remainder, quote them with
+   the assertion beside each and the file's count of bindings a reading decides: that is the
+   work a test closes, and the count says whether closing it frees a judge yet.
    Last for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes --rank
    <target-source-root>` — the trace's accretion counts: files by bindings held, nodes by files
    bound, and files by the bindings a reading decides, with the remainder a registry step or a
@@ -161,8 +169,8 @@ In this order, every line naming its source:
 - the trace: findings by class with each class's route, and the ready `/reconcile` invocation
   where `code` drift stands, with what that set does not answer alone — the files a review
   yet to run would reach, and the pairs a record already judged; then, kept apart from those
-  counts, what `--owed` holds — the
-  findings past reconciliations left open, and which of them no drift report can reach — and the
+  counts, what `--convergence` holds —
+  every node of the specification in one of its states, by class, and beside it what `--owed` holds where the judged tally was not zero: the findings past reconciliations left open, and which of them no drift report can reach — and the
   `--rank` accretion counts, top rows verbatim, with the audit route named and never chosen;
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;

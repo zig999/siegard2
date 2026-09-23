@@ -1017,3 +1017,117 @@ def test_changed_names_the_cause_where_the_tree_holds_no_commit(consumer):
     assert done.returncode == trace.CANNOT_RUN
     assert "holds no commit yet" in done.stderr, done.stderr
     assert "name a ref" in done.stderr
+
+
+# ----------------------------------------------------- every node in one state
+
+
+def planned(consumer: Path, slug: str = "first") -> Path:
+    """One initiative under the consumer's work root: an epic covering three nodes, a task
+    implementing the bound one, a task implementing one nothing binds, and the third declared
+    uncovered with a reason."""
+    work = consumer / "work" / slug
+    (work / "epic").mkdir(parents=True)
+    (work / "task" / "cases").mkdir(parents=True)
+    def put(rel: str, front: dict) -> None:
+        (work / rel).write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n"
+                                "## What it is\nProse.\n\n## Notes\nNone.\n", encoding="utf-8")
+    put("epic/cases.md", {"title": "Cases", "summary": "Everything a case needs.",
+                          "covers": [NODE, "domain/troubleshooting/case-id", CONSTRAINT],
+                          "uncovered": [{"node": "domain/troubleshooting/case-id",
+                                         "why": "the store issues it; no task adds to that"}]})
+    put("task/cases/record-case.md", {"title": "Record case", "summary": "Persist a case.",
+                                      "objective": "A case is persisted.",
+                                      "criteria": ["Opening a case returns its id."],
+                                      "implements": [NODE]})
+    put("task/cases/events.md", {"title": "Events", "summary": "Publish asynchronously.",
+                                 "objective": "Events leave the process asynchronously.",
+                                 "criteria": ["No handler awaits a subscriber."],
+                                 "implements": [CONSTRAINT]})
+    return consumer / "work"
+
+
+def test_convergence_puts_every_node_in_exactly_one_state(consumer):
+    """The four readings this composes are each correct alone, and composed by hand they answer
+    wrongly: an uncovered node reads as a gap, a planned one as never planned. One state per node,
+    by class, is what a reader could not assemble without knowing all four semantics."""
+    bind(consumer)
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 current:" in done.stdout, done.stdout
+    assert "0 stale:" in done.stdout
+    assert "1 planned-unbound:" in done.stdout
+    assert "1 declared-uncovered:" in done.stdout
+    assert "unreached:" in done.stdout and "0 unreached" not in done.stdout
+    assert "1 initiative(s) read under" in done.stdout
+
+
+def test_convergence_reports_a_drifted_binding_as_stale(consumer):
+    bind(consumer)
+    work = planned(consumer)
+    drifted(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "0 current:" in done.stdout and "1 stale:" in done.stdout, done.stdout
+
+
+def test_convergence_names_a_bound_node_no_initiative_named(consumer):
+    """Bound by a reconciliation over source that entered outside any task, or by a raw bind:
+    the one class `--unplanned` cannot separate from a node nothing reached."""
+    bind(consumer)
+    bind(consumer, node="domain/monitoring/alert")
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work, "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 bound node(s) no initiative names" in done.stdout, done.stdout
+    assert "domain/monitoring/alert" in done.stdout
+
+
+def test_convergence_keeps_the_judged_side_apart(consumer):
+    """A binding that computes is a fact about bytes; a record that found against a node is a
+    fact about a reading. A tally that added them would be a reading of neither."""
+    bind(consumer)
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Kept apart" in done.stdout and "`--owed` names each record" in done.stdout
+
+
+def test_convergence_exits_zero_over_a_tree_nothing_reached(consumer):
+    (consumer / "work").mkdir()
+    done = run("--convergence", consumer / "backend", consumer / "specs", consumer / "work")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "nothing has been bound yet" in done.stdout
+    assert "0 current:" in done.stdout
+
+
+def test_convergence_lists_the_nodes_of_each_state_under_all(consumer):
+    bind(consumer)
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work, "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"      {NODE}" in done.stdout
+
+
+def test_convergence_refuses_a_specification_the_trace_was_not_written_against(consumer):
+    bind(consumer)
+    shutil.copytree(consumer / "specs", consumer / "specs2")
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs2", work)
+    assert done.returncode == trace.CANNOT_RUN
+    assert "an answer about a different specification" in done.stderr
+
+
+def test_convergence_refuses_one_initiative_in_place_of_their_parent(consumer):
+    bind(consumer)
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work / "first")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "one initiative rather than the directory they sit in" in done.stderr
+
+
+def test_convergence_and_check_are_mutually_exclusive(consumer):
+    done = run("--convergence", "--check", consumer / "backend", consumer / "specs",
+               consumer / "work")
+    assert done.returncode == trace.CANNOT_RUN

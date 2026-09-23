@@ -649,20 +649,19 @@ def derive(nodes: dict[str, dict]) -> dict:
 NAMED_BY = ("implements", "covers")
 
 
-def named_anywhere(parent: Path, validator) -> tuple[set[str], list[str], list[str]]:
-    """Every specification node any initiative under this directory names, the initiatives read,
-    and the ones that could not be.
+def naming_on_disk(parent: Path, validator) -> tuple[dict[str, set[str]], list[str], list[str]]:
+    """How every initiative under this directory names each specification node — by the fields
+    that name it — with the initiatives read and the ones that could not be.
 
-    A node counts as named by any of the three ways a plan can name one: a task implementing it,
-    an epic covering it, or an epic declaring it uncovered with a reason. The third is deliberate
-    — an epic that looked at a node and said why it is not being built has planned over it, and
-    reporting it as never planned would send a reader back to a decision somebody already made
-    and wrote down.
+    Kept per field rather than as one set, because the three ways a plan names a node are three
+    different statements: a task implementing it and an epic covering it both say the work reaches
+    it; an epic declaring it `uncovered` says somebody looked and wrote down why not. A reader that
+    merged them would report the third as the first.
 
     An initiative whose files do not parse is named rather than skipped in silence: its nodes are
-    unreadable, so every node it would have accounted for reads here as unplanned, and a reader
-    who is not told which plan went unread cannot tell that from the truth."""
-    named: set[str] = set()
+    unreadable, so every node it would have accounted for reads as unplanned, and a reader who is
+    not told which plan went unread cannot tell that from the truth."""
+    how: dict[str, set[str]] = {}
     read: list[str] = []
     unreadable: list[str] = []
     for initiative in sorted(p for p in parent.iterdir() if p.is_dir()):
@@ -673,19 +672,36 @@ def named_anywhere(parent: Path, validator) -> tuple[set[str], list[str], list[s
             unreadable.append(initiative.name)
         read.append(initiative.name)
         for node in nodes.values():
-            front = node["front"]
-            for field in NAMED_BY:
-                named |= {ref for ref in listed(front, field) if isinstance(ref, str)}
-            for entry in listed(front, "uncovered"):
-                if isinstance(entry, dict) and isinstance(entry.get("node"), str):
-                    named.add(entry["node"])
-    return named, read, unreadable
+            note_naming(how, node["front"])
+    return how, read, unreadable
 
 
-def archived_named(parent: Path) -> tuple[set[str], list[str], int, str | None]:
-    """Every specification node an initiative archived out of this tree named, read from git at
-    the commit before `/siegard-archive` removed it — with the slugs read, how many of their files
-    could not be parsed, and the reason nothing could be read where that is the case.
+def note_naming(how: dict[str, set[str]], front: dict) -> None:
+    """Record, into `how`, every specification node this plan node's frontmatter names, and by
+    which field."""
+    for field in NAMED_BY:
+        for ref in listed(front, field):
+            if isinstance(ref, str):
+                how.setdefault(ref, set()).add(field)
+    for entry in listed(front, "uncovered"):
+        if isinstance(entry, dict) and isinstance(entry.get("node"), str):
+            how.setdefault(entry["node"], set()).add("uncovered")
+
+
+def named_anywhere(parent: Path, validator) -> tuple[set[str], list[str], list[str]]:
+    """Every specification node any initiative under this directory names, the initiatives read,
+    and the ones that could not be — `naming_on_disk` flattened, for a reader that asks only
+    whether a node was named at all. A node an epic declared uncovered counts: an epic that looked
+    at a node and said why it is not being built has planned over it, and reporting it as never
+    planned would send a reader back to a decision somebody already made and wrote down."""
+    how, read, unreadable = naming_on_disk(parent, validator)
+    return set(how), read, unreadable
+
+
+def naming_archived(parent: Path) -> tuple[dict[str, set[str]], list[str], int, str | None]:
+    """How every initiative archived out of this tree named each specification node, read from
+    git at the commit before `/siegard-archive` removed it — with the slugs read, how many of
+    their files could not be parsed, and the reason nothing could be read where that is the case.
 
     The removal is found by the closure marker's deletion, because that marker is the one file
     every archived initiative had and every live one lacks. A slug standing on disk again is left
@@ -701,12 +717,15 @@ def archived_named(parent: Path) -> tuple[set[str], list[str], int, str | None]:
         except OSError:
             return None
 
+    inside = git("rev-parse", "--is-inside-work-tree")
+    if inside is None:
+        return {}, [], 0, "git is not on this machine"
+    if inside.returncode != 0:
+        return {}, [], 0, f"git does not hold {parent}"
     log = git("log", "--diff-filter=D", "--format=%H", "--name-only", "--",
               f"{prefix}*/{CLOSURE_FILE}")
-    if log is None:
-        return set(), [], 0, "git is not on this machine"
-    if log.returncode != 0:
-        return set(), [], 0, f"git does not hold {parent}"
+    if log is None or log.returncode != 0:
+        return {}, [], 0, f"{home} holds no commit yet, so nothing has been archived out of it"
 
     removed: dict[str, str] = {}
     commit = None
@@ -719,7 +738,7 @@ def archived_named(parent: Path) -> tuple[set[str], list[str], int, str | None]:
         found = marker.match(line)
         if found and commit and found.group(1) not in removed:
             removed[found.group(1)] = commit  # the most recent removal is listed first
-    named: set[str] = set()
+    how: dict[str, set[str]] = {}
     read: list[str] = []
     unparsed = 0
     for slug, at in sorted(removed.items()):
@@ -746,12 +765,14 @@ def archived_named(parent: Path) -> tuple[set[str], list[str], int, str | None]:
             if not isinstance(front, dict):
                 unparsed += 1
                 continue
-            for field in NAMED_BY:
-                named |= {ref for ref in listed(front, field) if isinstance(ref, str)}
-            for entry in listed(front, "uncovered"):
-                if isinstance(entry, dict) and isinstance(entry.get("node"), str):
-                    named.add(entry["node"])
-    return named, read, unparsed, None
+            note_naming(how, front)
+    return how, read, unparsed, None
+
+
+def archived_named(parent: Path) -> tuple[set[str], list[str], int, str | None]:
+    """`naming_archived` flattened: every node an archived initiative named, however it named it."""
+    how, read, unparsed, no_git = naming_archived(parent)
+    return set(how), read, unparsed, no_git
 
 
 def unplanned(parent: Path, specification: Path, validator) -> int:

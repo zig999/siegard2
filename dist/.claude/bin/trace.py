@@ -26,6 +26,10 @@ Ten things this script does, and nobody else does any of them:
                                                                   and no bind could close, and
                                                                   the nodes a test would close
     trace.py --encodes <target-root> <file> ...                   which nodes each file is bound to
+    trace.py --convergence <target-root> <spec-root> <work-root>  every node of the specification
+                                                                  in one state, across the trace
+                                                                  and every initiative, with the
+                                                                  judged side kept apart
     trace.py --encodes --changed <target-root> [<ref>]            the same, over the files the
                                                                   tree changed rather than a set
                                                                   a caller spelled out
@@ -173,6 +177,16 @@ what the branch changed since that ref. Paths outside the target source root are
 than refused: a commit that touched a sibling target is an ordinary commit, and the answer over
 this target is still the whole answer over this target.
 
+`--convergence` is the one reading that composes what `--check`, `--owed`, `deliver.py
+--outstanding` and `plan.py --unplanned` each say alone. Each is correct alone, and a reader
+composing them by hand gets the composition wrong in ways that are not visible from any one of
+them: a plan `/siegard-archive` removed still planned what it named, an epic's `uncovered` is a
+decision, a node honored without being encoded is bound to nothing by design, and a freely-edited
+target is stale in fact while held back on purpose. This form encodes those once and answers per
+node, by class, in five states — and prints the judged side beside them, kept apart, because a
+binding that computes and a record that found against a node are facts about different things.
+A query, exit 0 always, no figure.
+
 `--fail-on` narrows what a non-zero exit means, and narrows nothing else. Every class is computed
 and printed either way — this only decides which of them the exit status answers for. The default
 is every class, because a drift report read by a person is read whole. A caller that runs on every
@@ -279,6 +293,7 @@ Usage:  trace.py <target-root>
         trace.py --owed <target-root> [--all]
         trace.py --encodes <target-root> <file> [<file> ...]
         trace.py --encodes --changed <target-root> [<ref>]
+        trace.py --convergence <target-root> <spec-root> <work-root-parent> [--all]
         trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
                  [--audit | --review [--node <node> ...]] [--certify <certifications-file>]
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
@@ -313,6 +328,7 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
           file=sys.stderr)
     raise SystemExit(CANNOT_RUN)
 
+import plan
 import project
 import spec
 
@@ -344,6 +360,21 @@ CLASSES = {
     PROOF: "decided by a test whose text changed since it was certified — the binding is "
            "decided by reading again until a judgment certifies the test as it now stands",
     CODE: "bound to a file that changed or is gone — rebind whoever owns the change",
+}
+CURRENT, STALE, PLANNED_UNBOUND, DECLARED_UNCOVERED, UNREACHED = (
+    "current", "stale", "planned-unbound", "declared-uncovered", "unreached")
+CONVERGENCE = {
+    CURRENT: "bound, and every binding computes to what was recorded — the specification and the "
+             "code stand as they did when the node was last answered",
+    STALE: "bound, and some binding no longer computes — `--check` lists each by class, and its "
+           "route is that class's",
+    PLANNED_UNBOUND: "a task implements it or an epic covers it, and no binding holds it — whether "
+                     "the task was delivered, and honored the node without encoding it, is "
+                     "`deliver.py --outstanding`'s answer per initiative",
+    DECLARED_UNCOVERED: "an epic looked at it and wrote down why it is not being built; a decision "
+                        "somebody made, never a gap",
+    UNREACHED: "no initiative names it and nothing binds it — a specification describes more than "
+               "the work has reached, and this is the part it has not",
 }
 DECIDED_BY_TEST = "test"
 RECORD_VERSION = "siegard-reconcile/5"
@@ -1425,42 +1456,25 @@ def unstated_of(home: Path) -> list[dict]:
     return stated
 
 
-def owed(target: Path, show_all: bool = False) -> int:
-    """What the reconciliation records found against and no bind could close, by whether the drift
-    report says it too.
+def owed_reading(target: Path) -> tuple[dict | None, list[str]]:
+    """Everything `--owed` says, computed and not yet printed: the findings no bind closed by class,
+    the pairs the records answer both ways, the unstated facts, and the nodes a refused
+    certification left with a testable remainder — or the problems that stopped the reading.
 
-    Three states, and only the third is one a reader already had. A pair nothing binds is one no
-    `--check` can ever reach — the judge opened it as a candidate, or the fact it names lives in a
-    file this one is not bound to — so its finding has exactly one home and this is it. A pair
-    bound at the content on disk now is worse: it was reachable, and a bind stamped the very
-    content the finding was read in, so the symptom is gone while the finding stands. A pair whose
-    binding is stale is already in the drift report, and what this adds is the record that says
-    what was found in it.
-
-    A finding some record cleared is not listed. A clearance in the corpus is a closure, and
-    printing every remediated pair would rebuild the unreadable report this file spends its
-    receipts preventing — wherever remediation happens at all, the remediated pairs outnumber
-    everything else here. The count rides a receipt instead, and `--all` lists them, exactly as
-    the same flag already works one form over: two judgments answering one pair both ways is what
-    that list shows, and it is worth a reader's attention for a different reason than a finding is."""
-    if not target.is_dir():
-        print(f"cannot run: {target} is not a directory", file=sys.stderr)
-        return CANNOT_RUN
-
+    One home for the reading, because two forms now print from it: `--owed` in full, and
+    `--convergence` as a tally kept beside the binding states. A second walk over the corpus
+    would be a second reader of `siegard-reconcile/`, and the one thing this file says about that
+    corpus is that `--owed` is its only reader."""
     home = home_of(target)
     offset = Path(os.path.relpath(target.resolve(), home.resolve())).as_posix()
     found, cleared, unreadable = judged(home)
-    for problem in unreadable:
-        print(f"{RECONCILE_DIR}/{problem}")
 
     declared = load(target)
     bound: dict[tuple[str, str], str] = {}
     if declared is not None:
         problems = problems_of(declared)
         if problems:
-            for problem in problems:
-                print(f"{trace_path(target)}: {problem}")
-            return 1
+            return None, [f"{trace_path(target)}: {problem}" for problem in problems]
         for entry in declared.get("bindings") or []:
             for held in entry.get("files") or []:
                 if isinstance(held, dict) and isinstance(held.get("path"), str):
@@ -1488,7 +1502,52 @@ def owed(target: Path, show_all: bool = False) -> int:
         else:
             listed[COVERED].append((node, path, where))
 
-    total = sum(len(rows) for rows in listed.values())
+    testable, certified = remainders_of(home)
+    live = test_decided(declared, home, offset) if declared is not None else {}
+    by_reading = reading_counts(declared, home, offset) if declared is not None else {}
+    listed_nodes = {node: said for node, said in testable.items()
+                    if node not in live and node not in certified
+                    and any(under(f, [offset]) for s in said for f in s["files"])}
+    both_ways = sorted(node for node in testable if node in certified and node not in live)
+    return {"home": home, "offset": offset, "unreadable": unreadable, "listed": listed,
+            "both_ways_pairs": answered_both_ways, "stated": unstated_of(home),
+            "testable_nodes": listed_nodes, "both_ways_nodes": both_ways,
+            "by_reading": by_reading,
+            "total": sum(len(rows) for rows in listed.values())}, []
+
+
+def owed(target: Path, show_all: bool = False) -> int:
+    """What the reconciliation records found against and no bind could close, by whether the drift
+    report says it too.
+
+    Three states, and only the third is one a reader already had. A pair nothing binds is one no
+    `--check` can ever reach — the judge opened it as a candidate, or the fact it names lives in a
+    file this one is not bound to — so its finding has exactly one home and this is it. A pair
+    bound at the content on disk now is worse: it was reachable, and a bind stamped the very
+    content the finding was read in, so the symptom is gone while the finding stands. A pair whose
+    binding is stale is already in the drift report, and what this adds is the record that says
+    what was found in it.
+
+    A finding some record cleared is not listed. A clearance in the corpus is a closure, and
+    printing every remediated pair would rebuild the unreadable report this file spends its
+    receipts preventing — wherever remediation happens at all, the remediated pairs outnumber
+    everything else here. The count rides a receipt instead, and `--all` lists them, exactly as
+    the same flag already works one form over: two judgments answering one pair both ways is what
+    that list shows, and it is worth a reader's attention for a different reason than a finding is."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+
+    reading, problems = owed_reading(target)
+    if reading is None:
+        for problem in problems:
+            print(problem)
+        return 1
+    home, offset = reading["home"], reading["offset"]
+    for problem in reading["unreadable"]:
+        print(f"{RECONCILE_DIR}/{problem}")
+    listed, answered_both_ways, total = reading["listed"], reading["both_ways_pairs"], reading["total"]
+
     if not total and not answered_both_ways:
         # Said, and not returned on: what follows is owed to other parties than a bind — the
         # analysis, a test's author — and a record holding only those is not a record holding
@@ -1535,7 +1594,7 @@ def owed(target: Path, show_all: bool = False) -> int:
     # Reported apart from everything above, because it is owed to somebody else. A pair's finding
     # waits on a bind; a fact no node holds waits on the analysis that gives it one, and counting
     # the two together is what let a correct binding read as contested for as long as the gap stood.
-    stated = unstated_of(home)
+    stated = reading["stated"]
     if stated:
         print(f"\n{len(stated)} unstated fact(s) the records name, over "
               f"{len({e['file'] for e in stated})} file(s) — the source states them and no node "
@@ -1552,13 +1611,8 @@ def owed(target: Path, show_all: bool = False) -> int:
     # count of bindings a reading decides is printed beside each, because the saving a test buys
     # is per file — a judge reads the whole file for the first binding a reading still decides —
     # and a node closed on a file with nine reading-decided siblings frees no judge yet.
-    testable, certified = remainders_of(home)
-    live = test_decided(declared, home, offset) if declared is not None else {}
-    by_reading = reading_counts(declared, home, offset) if declared is not None else {}
-    listed_nodes = {node: said for node, said in testable.items()
-                    if node not in live and node not in certified
-                    and any(under(f, [offset]) for s in said for f in s["files"])}
-    both_ways = sorted(node for node in testable if node in certified and node not in live)
+    listed_nodes, both_ways, by_reading = (reading["testable_nodes"], reading["both_ways_nodes"],
+                                           reading["by_reading"])
     if listed_nodes:
         print(f"\n{len(listed_nodes)} node(s) a refused certification left decided by reading with "
               f"a testable remainder — the auditor named the assertion that would close each, and "
@@ -1574,11 +1628,11 @@ def owed(target: Path, show_all: bool = False) -> int:
                 if counts is None:
                     print(f"    {path} — the trace binds nothing to this file now")
                     continue
-                reading, step, test = counts
-                print(f"    {path} — {reading} binding(s) a reading decides on this file"
+                reading_n, step, test = counts
+                print(f"    {path} — {reading_n} binding(s) a reading decides on this file"
                       + (f", {step} by a registry step" if step else "")
                       + (f", {test} by a certified test" if test else "")
-                      + ("; closing this one frees its judge" if reading == 1 else ""))
+                      + ("; closing this one frees its judge" if reading_n == 1 else ""))
         if not show_all and len(rows) > RANK_HELD_BACK:
             print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
         print("  each is closed by writing the test named and offering it to `/reconcile` "
@@ -1589,6 +1643,152 @@ def owed(target: Path, show_all: bool = False) -> int:
               f"certification for them; which is current is a reading of the records: "
               f"{', '.join(both_ways)}")
     return 1 if total else 0
+
+
+def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = False) -> int:
+    """Every node of the specification in exactly one state, read across the trace and every
+    initiative — live, closed, or archived out of the tree — with the judged side kept beside it.
+
+    The four readings this composes exist and are each correct alone: `--check` says which
+    bindings moved, `--owed` what the records found, `deliver.py --outstanding` what a live plan
+    still owes, `plan.py --unplanned` what no plan named. Composed by hand they answer wrongly,
+    and the ways they answer wrongly are the semantics this form encodes once: an initiative
+    `/siegard-archive` removed still planned what it named; an epic's `uncovered` is a decision
+    and not a gap; a node a delivery honored without encoding is bound to nothing by design; a
+    file a project declared freely edited is stale in fact and held back from the report on
+    purpose. A reader who knows three of the four reports a healthy tree as one carrying dozens of
+    nodes nobody asked for.
+
+    A query and never a check: exit 0 over whatever it finds, counted by class, no figure. A node
+    the work has not reached is an ordinary state of a specification, and a form that graded it
+    would be a number that must rise — and satisfying it produces bindings nobody needed. The
+    judged side is printed apart and said to be apart: a binding that computes is a fact about
+    bytes, and a record that found against a node is a fact about a reading, and a tally that
+    added them would be a reading of neither."""
+    for where, what in ((target, "target source root"), (spec_root, "specification root"),
+                        (parent, "work root")):
+        if not where.is_dir():
+            print(f"cannot run: {what} {where} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+    if any((parent / kind).is_dir() for kind in plan.KINDS):
+        print(f"cannot run: {parent} holds {'/'.join(plan.KINDS)} directories of its own, so it "
+              f"is one initiative rather than the directory they sit in; name its parent",
+              file=sys.stderr)
+        return CANNOT_RUN
+
+    spec_nodes, spec_problems = plan.load_base(spec_root)
+    if spec_problems:
+        for problem in spec_problems:
+            print(problem, file=sys.stderr)
+        print(f"cannot run: the specification at {spec_root} does not hold together "
+              f"({len(spec_problems)} problem(s) above); fix it with spec.py first",
+              file=sys.stderr)
+        return CANNOT_RUN
+    normative = {nid: node for nid, node in spec_nodes.items()
+                 if node["cls"] not in ("log", "context")}
+
+    home = home_of(target)
+    declared = load(target)
+    bound: set[str] = set()
+    stale: set[str] = set()
+    held_only: set[str] = set()
+    bindings = 0
+    if declared is not None:
+        problems = problems_of(declared)
+        if problems:
+            for problem in problems:
+                print(f"{trace_path(target)}: {problem}")
+            return 1
+        written_against = (home / declared["specification"]).resolve()
+        if written_against != spec_root.resolve():
+            print(f"cannot run: the trace at {trace_path(target)} was written against "
+                  f"{written_against}, and a convergence read against {spec_root} would be an "
+                  f"answer about a different specification", file=sys.stderr)
+            return CANNOT_RUN
+        bindings = len(declared.get("bindings") or [])
+        bound = {e["node"] for e in declared.get("bindings") or [] if isinstance(e.get("node"), str)}
+        findings, refusals = drift_of(declared, home, registry_steps(home, offset_of(target, home)))
+        if refusals:
+            for refusal in refusals:
+                print(refusal)
+            return 1
+        listed, held = partitioned(findings, freely_edited(home))
+        stale = {f[1] for f in findings}
+        held_only = {f[1] for f in held} - {f[1] for f in listed}
+
+    how, read, unreadable = plan.naming_on_disk(parent, plan.contract())
+    archived_how, archived, unparsed, no_git = plan.naming_archived(parent)
+    for node, fields in archived_how.items():
+        how.setdefault(node, set()).update(fields)
+
+    state_of: dict[str, str] = {}
+    for nid in normative:
+        if nid in bound:
+            state_of[nid] = STALE if nid in stale else CURRENT
+        elif fields := how.get(nid):
+            # An epic declares a node uncovered only over a node it covers, so `covers` rides
+            # beside `uncovered` on the same node and decides nothing by itself. What says the work
+            # reaches a node is a task implementing it anywhere, or a cover no epic declared
+            # uncovered.
+            reached = "implements" in fields or ("covers" in fields and "uncovered" not in fields)
+            state_of[nid] = PLANNED_UNBOUND if reached else DECLARED_UNCOVERED
+        else:
+            state_of[nid] = UNREACHED
+    bound_unplanned = sorted(nid for nid in bound & set(normative) if nid not in how)
+
+    print(f"{len(normative)} node(s) of {spec_root}; "
+          + (f"{bindings} binding(s) in {trace_path(target)}" if declared is not None
+             else f"no trace file at {trace_path(target)} — nothing has been bound yet"))
+    print(f"{len(read)} initiative(s) read under {parent}"
+          + (f"; {len(unreadable)} do not hold together and were read for what they state "
+             f"({', '.join(unreadable)})" if unreadable else ""))
+    if no_git is not None:
+        print(f"  initiatives archived out of this tree, if any, were not read: {no_git}; a node "
+              f"such a plan named is counted below as one nothing planned")
+    else:
+        print(f"  {len(archived)} archived initiative(s) read from git at the commit before each "
+              f"was removed" + (f"; {unparsed} file(s) could not be parsed" if unparsed else ""))
+
+    print()
+    for state in (CURRENT, STALE, PLANNED_UNBOUND, DECLARED_UNCOVERED, UNREACHED):
+        members = sorted(nid for nid, s in state_of.items() if s == state)
+        by_cls: dict[str, int] = {}
+        for nid in members:
+            by_cls[normative[nid]["cls"]] = by_cls.get(normative[nid]["cls"], 0) + 1
+        print(f"{len(members)} {state}: {CONVERGENCE[state]}")
+        if by_cls:
+            print("    " + ", ".join(f"{cls} {n}" for cls, n in sorted(by_cls.items())))
+        if show_all:
+            for nid in members:
+                print(f"      {nid}")
+    if held_only:
+        print(f"  of the stale, {len(held_only)} node(s) are stale only under a target this project "
+              f"declares freely edited — `--check` holds those back, and this form counts them")
+    if bound_unplanned:
+        print(f"\n{len(bound_unplanned)} bound node(s) no initiative names — bound by a "
+              f"reconciliation over source that entered outside any task, or by a raw --bind; "
+              + ("each:" if show_all else "`--all` lists them"))
+        if show_all:
+            for nid in bound_unplanned:
+                print(f"    {nid}")
+
+    reading, problems = owed_reading(target)
+    print()
+    if reading is None:
+        for problem in problems:
+            print(problem)
+    else:
+        listed = reading["listed"]
+        print(f"Kept apart — the judged side, which no state above counts: "
+              f"{reading['total']} finding(s) past reconciliations left open and no bind closed "
+              f"({len(listed[UNSEEN])} unseen, {len(listed[COVERED])} covered, "
+              f"{len(listed[REPORTED])} reported); {len(reading['both_ways_pairs'])} pair(s) the "
+              f"records answer both ways; {len(reading['stated'])} unstated fact(s) the source "
+              f"states and no node holds; {len(reading['testable_nodes'])} node(s) a refused "
+              f"certification left with a testable remainder. A binding that computes is a fact "
+              f"about bytes and a record that found against a node is a fact about a reading — "
+              f"`--owed` names each record.")
+    return 0
 
 
 def encodes(target: Path, files: list[str]) -> int:
@@ -3273,6 +3473,7 @@ def main() -> int:
     replace = "--replace" in args
     do_rank = "--rank" in args
     do_changed = "--changed" in args
+    do_convergence = "--convergence" in args
     do_audit = "--audit" in args
     do_review = "--review" in args
     also: list[str] = []
@@ -3329,7 +3530,7 @@ def main() -> int:
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--reconciliation", "--owed", "--encodes", "--stage", "--fold",
-                         "--rank", "--changed", "--audit", "--review")]
+                         "--rank", "--changed", "--audit", "--review", "--convergence")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -3337,16 +3538,17 @@ def main() -> int:
                                       ("--owed", do_owed),
                                       ("--encodes", do_encodes),
                                       ("--stage", do_stage),
-                                      ("--fold", do_fold)) if given]
+                                      ("--fold", do_fold),
+                                      ("--convergence", do_convergence)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
     if replace and not (do_bind or do_record):
         print("cannot run: --replace only applies to --bind and --bind-record", file=sys.stderr)
         return CANNOT_RUN
-    if show_all and not (check or do_owed or do_rank):
-        print("cannot run: --all only applies to --check, --owed and --rank; in each it is what "
-              "lists the rows the report holds back", file=sys.stderr)
+    if show_all and not (check or do_owed or do_rank or do_convergence):
+        print("cannot run: --all only applies to --check, --owed, --rank and --convergence; in "
+              "each it is what lists the rows the report holds back", file=sys.stderr)
         return CANNOT_RUN
     if do_rank and not do_encodes:
         print("cannot run: --rank is a mode of --encodes", file=sys.stderr)
@@ -3416,6 +3618,14 @@ def main() -> int:
             print("cannot run: expected --owed <target-root> [--all]", file=sys.stderr)
             return CANNOT_RUN
         return owed(Path(args[0]), show_all)
+
+    if do_convergence:
+        if len(args) != 3 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --convergence <target-root> <spec-root> "
+                  "<work-root-parent> [--all]; the last is the directory the initiatives sit in, "
+                  "not one initiative", file=sys.stderr)
+            return CANNOT_RUN
+        return convergence(Path(args[0]), Path(args[1]), Path(args[2]), show_all)
 
     if do_encodes:
         if do_rank:

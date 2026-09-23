@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 4.9.3. The plugin's hooks place them in every session and every
+These rules ship with Siegard 4.10.0. The plugin's hooks place them in every session and every
 agent; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
