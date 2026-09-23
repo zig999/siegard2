@@ -266,8 +266,23 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   and its `scope` is the system or a whole context rather than anything a scope's nouns would
   name — so it reaches no grep and no closure, and it is precisely the thing that governs work
   nobody thought to bind to it. `spec.py --digest` lists them; there are few, and naming them all
-  costs less than the one that arrives as a binder's note after the epic is cut. **Naming the
-  candidates is yours; closing over them is not.** Run
+  costs less than the one that arrives as a binder's note after the epic is cut.
+
+  Beside the manifest, one reading narrows where a scope is open-ended rather than named:
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --unplanned <work-root> <specification-root>
+  ```
+
+  over the directory the initiatives sit in — not one of them — which lists, by class, every node
+  no initiative has ever named. It answers what no single plan can: closure inside a plan is
+  total, so a node left out of every plan is invisible to each of them. A rule or a contract in
+  that list is worth a look before the cut is fixed; an element in it usually is not, which is
+  why the listing is by class. It is a query and decides nothing — a specification describes more
+  than the work has reached, and a node nothing planned is an ordinary state, never a task this
+  skill owes.
+
+  **Naming the candidates is yours; closing over them is not.** Run
 
   ```
   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact <identity>[,<identity>...] <specification-root>

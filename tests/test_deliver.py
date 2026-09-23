@@ -290,6 +290,7 @@ def review_front(work: Path, root: Path, **overrides) -> dict:
                       "state": "covered",
                       "tests": [{"file": "tests/place.spec.ts",
                                  "name": "returns the order_number for a valid submission"}]}],
+        "unpaired": [],
     }
     front.update(overrides)
     return front
@@ -383,6 +384,59 @@ def test_a_pass_that_ran_and_recorded_nothing_of_what_it_read(delivery, work, ro
     del front["coverage"]
     write_delivery("review/first", front)
     said(problems_of(delivery, work, target, root), "the coverage pass ran and `coverage` is absent")
+
+
+def test_the_coverage_pass_answers_in_both_directions(delivery, work, root, target,
+                                                      sound_delivery, write_delivery):
+    """A criterion with no test is a fact unproven; a test with no criterion is a proof of
+    something no task stated. The pass reads every test either way, so the second answer costs
+    nothing further — and omitting the key says the reading was never made, which is not the same
+    as making it and finding nothing."""
+    front = review_front(work, root)
+    del front["unpaired"]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root), "the coverage pass ran and `unpaired` is absent")
+
+
+def test_an_empty_unpaired_list_is_an_answer_and_not_an_omission(delivery, work, root, target,
+                                                                 sound_delivery, write_delivery):
+    write_delivery("review/first", review_front(work, root, unpaired=[]))
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_test_bearing_on_no_criterion_is_recorded_with_what_it_asserts(delivery, work, root,
+                                                                         target, sound_delivery,
+                                                                         write_delivery):
+    """Never a verdict on the test: it may prove a sibling task's criterion, and what says which
+    is what it asserts."""
+    front = review_front(work, root, unpaired=[
+        {"test": {"file": "tests/place.spec.ts", "name": "emits order.placed on the bus"},
+         "asserts": "that placing an order publishes an order.placed event, which no criterion "
+                    "of the tasks under this review states"}])
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_an_unpaired_entry_naming_no_assertion_is_refused(delivery, work, root, target,
+                                                          sound_delivery, write_delivery):
+    """A bare path says a test went unpaired and leaves a reader no way to tell a proof of a
+    sibling's criterion from a proof of a fact nobody stated."""
+    front = review_front(work, root, unpaired=[
+        {"test": {"file": "tests/place.spec.ts", "name": "emits order.placed on the bus"}}])
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, target, root) != []
+
+
+def test_unpaired_outside_a_coverage_pass_is_refused(delivery, work, root, target,
+                                                     sound_delivery, write_delivery):
+    front = review_front(work, root)
+    front["passes"] = [{"pass": "coverage", "missing": "no proof record named a test"}
+                       if entry["pass"] == "coverage" else entry
+                       for entry in front["passes"]]
+    del front["coverage"]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root),
+         "`unpaired` is present and the coverage pass did not run")
 
 
 def test_a_criterion_the_coverage_pass_left_out(delivery, work, root, target, sound_delivery,

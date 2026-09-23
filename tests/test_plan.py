@@ -802,3 +802,93 @@ def test_fields_and_without_are_never_named_together():
     refused = run("--contract", "task", "--fields", "implements", "--without", "produces")
     assert refused.returncode == 2
     assert "two ways to say the same thing" in refused.stderr
+
+
+# ------------------------------------------- what no initiative has ever named
+
+def test_unplanned_names_the_nodes_no_initiative_covered(tmp_path, work, root, sound_plan):
+    """Closure is total inside one initiative — an epic's covered nodes are implemented or
+    declared uncovered. The node no initiative ever covered is the one question that lives above
+    any single plan, and this is the only form that asks it."""
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "rules/sales/invoice-immutable" in done.stdout, done.stdout
+    assert "rule (1)" in done.stdout
+    assert "domain/sales/order" not in done.stdout, \
+        "a node an epic covers and a task implements has been planned over"
+
+
+def test_unplanned_is_a_query_and_exits_zero_over_what_it_finds(tmp_path, work, root, sound_plan):
+    """A specification describes more than the work has reached. A form that refused over an
+    unplanned node would report a floor as a finding, every run, until somebody switched it off."""
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0
+    assert "is not a defect" in done.stdout
+
+
+def test_unplanned_counts_a_node_an_epic_declared_uncovered_as_planned(tmp_path, work, root,
+                                                                       sound_plan, write_plan):
+    """An epic that looked at a node and wrote down why it is not being built has planned over
+    it; reporting it would send a reader back to a decision somebody already made."""
+    write_plan("epic/rules", {
+        "title": "Rules", "summary": "The invariant, considered.",
+        "covers": ["rules/sales/invoice-immutable"],
+        "uncovered": [{"node": "rules/sales/invoice-immutable",
+                       "why": "the store enforces it, and no task adds to that"}],
+    })
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "every node of the specification has been named by some plan" in done.stdout, done.stdout
+
+
+def test_unplanned_reads_closed_initiatives_too(tmp_path, work, root, sound_plan):
+    """A node delivered by an initiative that has since closed is a node the work reached. Reading
+    live plans alone would report it as never planned and send somebody to plan it twice."""
+    (work / plan.CLOSURE_FILE).write_text("This plan is closed.\n", encoding="utf-8")
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "domain/sales/order" not in done.stdout, done.stdout
+    assert "1 initiative(s) read" in done.stdout
+
+
+def test_unplanned_skips_a_directory_that_is_not_an_initiative(tmp_path, work, root, sound_plan):
+    (tmp_path / "notes").mkdir()
+    (tmp_path / "notes" / "scratch.md").write_text("not a plan\n", encoding="utf-8")
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 initiative(s) read" in done.stdout
+
+
+def test_unplanned_says_which_initiative_it_could_not_read(tmp_path, work, root, sound_plan):
+    """A node an unreadable plan names is counted below as one nothing planned, and a reader not
+    told which plan went unread cannot tell that from the truth."""
+    (work / "epic" / "broken.md").write_text("---\nnot: a plan node\n---\n", encoding="utf-8")
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "do not hold together and were read for what they state anyway" in done.stdout
+
+
+def test_unplanned_refuses_one_initiative_in_place_of_their_parent(tmp_path, work, root,
+                                                                   sound_plan):
+    """The commonest wrong call: every other form of this script takes one initiative, and this
+    one takes the directory they sit in."""
+    done = run("--unplanned", work, root)
+    assert done.returncode == plan.CANNOT_RUN
+    assert "it is one initiative rather than the directory they sit in" in done.stderr
+
+
+def test_unplanned_refuses_an_unsound_specification(tmp_path, work, root, sound_plan, write):
+    """Coverage read against a specification nobody validated is coverage of the wrong tree."""
+    write("domain/sales/orphan", {"type": "value-object",
+                                  "attributes": [{"name": "x", "type": "string",
+                                                  "required": True}]})
+    done = run("--unplanned", tmp_path, root)
+    assert done.returncode == plan.CANNOT_RUN
+    assert "does not hold together" in done.stderr
+
+
+def test_unplanned_does_not_travel_with_the_forms_that_answer_about_one_plan(tmp_path, work, root,
+                                                                            sound_plan):
+    done = run("--unplanned", "--check", tmp_path, root)
+    assert done.returncode == plan.CANNOT_RUN
+    assert "--unplanned is a query over every initiative" in done.stderr

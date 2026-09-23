@@ -34,6 +34,23 @@ specification root becomes optional, and when given it is ignored.
 **plan.json is derived, never edited.** It is refused entirely while the plan has problems: an
 index over a broken plan reports a shape nobody decided. `--check` compares and never repairs.
 
+**`--unplanned` reads across initiatives, which is the one question no other form can ask.**
+Every other form here opens one initiative, and closure is total inside it: an epic's covered
+nodes are each implemented by a task or declared uncovered. What that leaves unanswered is the
+node no initiative ever covered — never planned rather than planned and left — and the answer
+lives above any single plan, in the directory the initiatives sit in. So this form alone takes
+that parent rather than one initiative, reads every directory under it, closed ones included,
+and reports the specification's nodes that appear in no `implements`, no `covers` and no
+`uncovered` anywhere.
+
+It is a query and never a check: it exits 0 over whatever it finds. A node no plan has named is
+an ordinary state of a specification that describes more than the work has reached — a Domain
+Model element the work has not needed yet is not a defect, and a form that refused over one
+would report a floor as a finding, every run, until somebody switched it off. The listing is by
+class for the same reason: what a reader acts on is a rule or a contract nothing has planned,
+and seeing those separately from elements is what makes them visible. Nothing here is a
+threshold, a ratio or a score.
+
 Declared dependencies: PyYAML, jsonschema.
 
 Usage:  plan.py <work-root> [<specification-root>]
@@ -50,6 +67,11 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         together
         The specification root is required while the plan is live, and ignored once closure.md
         marks it closed.
+        plan.py --unplanned <work-root-parent> <specification-root>
+                                                        a query, never a check: which nodes of the
+                                                        specification no initiative under that
+                                                        directory has ever named — live or closed
+                                                        — listed by class, exiting 0 either way
         plan.py --contract <branch> [--fields a,b | --without a,b]
                                                         print one self-contained slice of
                                                         plan-node.json — a `$defs` entry, or every
@@ -613,6 +635,85 @@ def derive(nodes: dict[str, dict]) -> dict:
     return {"contract_version": "siegard-plan/3", "nodes": out_nodes, "edges": out_edges}
 
 
+NAMED_BY = ("implements", "covers")
+
+
+def named_anywhere(parent: Path, validator) -> tuple[set[str], list[str], list[str]]:
+    """Every specification node any initiative under this directory names, the initiatives read,
+    and the ones that could not be.
+
+    A node counts as named by any of the three ways a plan can name one: a task implementing it,
+    an epic covering it, or an epic declaring it uncovered with a reason. The third is deliberate
+    — an epic that looked at a node and said why it is not being built has planned over it, and
+    reporting it as never planned would send a reader back to a decision somebody already made
+    and wrote down.
+
+    An initiative whose files do not parse is named rather than skipped in silence: its nodes are
+    unreadable, so every node it would have accounted for reads here as unplanned, and a reader
+    who is not told which plan went unread cannot tell that from the truth."""
+    named: set[str] = set()
+    read: list[str] = []
+    unreadable: list[str] = []
+    for initiative in sorted(p for p in parent.iterdir() if p.is_dir()):
+        if not any((initiative / kind).is_dir() for kind in KINDS):
+            continue  # not an initiative: a sibling directory the work root happens to hold
+        nodes, problems = collect(initiative, validator)
+        if problems:
+            unreadable.append(initiative.name)
+        read.append(initiative.name)
+        for node in nodes.values():
+            front = node["front"]
+            for field in NAMED_BY:
+                named |= {ref for ref in listed(front, field) if isinstance(ref, str)}
+            for entry in listed(front, "uncovered"):
+                if isinstance(entry, dict) and isinstance(entry.get("node"), str):
+                    named.add(entry["node"])
+    return named, read, unreadable
+
+
+def unplanned(parent: Path, specification: Path, validator) -> int:
+    """Which specification nodes no initiative has ever named. A query: it exits 0 over whatever
+    it finds, and states no threshold."""
+    spec_nodes, problems = load_base(specification)
+    if problems:
+        for problem in problems:
+            print(problem, file=sys.stderr)
+        print(f"cannot run: the specification at {specification} does not hold together "
+              f"({len(problems)} problem(s) above); fix it with spec.py before reading coverage "
+              f"over it", file=sys.stderr)
+        return CANNOT_RUN
+
+    named, read, unreadable = named_anywhere(parent, validator)
+    # The decision log is not a node any plan implements, and a context descriptor names a
+    # context rather than stating a fact — neither is a thing a task delivers, so neither is
+    # missing when nothing planned it.
+    considered = {nid: node for nid, node in spec_nodes.items()
+                  if node["cls"] not in ("log", "context")}
+    missing = sorted(nid for nid in considered if nid not in named)
+
+    print(f"{len(read)} initiative(s) read under {parent}"
+          + (f" — {', '.join(read)}" if read else "")
+          + f"; {len(considered)} node(s) of the specification, {len(considered) - len(missing)} "
+          f"named by some plan")
+    if unreadable:
+        print(f"  {len(unreadable)} of them do not hold together and were read for what they "
+              f"state anyway ({', '.join(unreadable)}); run plan.py over each — a node they name "
+              f"and this could not read is counted below as one nothing planned")
+    if not missing:
+        print("every node of the specification has been named by some plan")
+        return 0
+
+    print(f"\n{len(missing)} node(s) no plan has named:")
+    for cls in sorted({considered[nid]["cls"] for nid in missing}):
+        rows = [nid for nid in missing if considered[nid]["cls"] == cls]
+        print(f"  {cls} ({len(rows)})")
+        for nid in rows:
+            print(f"    {nid}")
+    print("\nA node nothing has planned is not a defect: a specification describes more than the "
+          "work has reached, and what to do about any line above is a person's to decide.")
+    return 0
+
+
 def check_single(root: Path, named: str, validator) -> int:
     path = Path(named)
     if not path.is_absolute():
@@ -659,7 +760,8 @@ def main() -> int:
         print(__doc__.strip())
         return 0
     verify = "--check" in args
-    args = [a for a in args if a != "--check"]
+    read_unplanned = "--unplanned" in args
+    args = [a for a in args if a not in ("--check", "--unplanned")]
     single = None
     if "--node" in args:
         at = args.index("--node")
@@ -725,6 +827,33 @@ def main() -> int:
         print("cannot run: --node validates one file, and what a standard presupposes is a fact "
               "about the whole plan", file=sys.stderr)
         return CANNOT_RUN
+    if read_unplanned:
+        if verify or single is not None or named is not None:
+            print("cannot run: --unplanned is a query over every initiative under one directory, "
+                  "and --check, --node and --standard each answer about one plan", file=sys.stderr)
+            return CANNOT_RUN
+        if len(args) != 2 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --unplanned <work-root-parent> <specification-root>; the "
+                  "first is the directory the initiatives sit in, not one initiative",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        parent, specification = Path(args[0]), Path(args[1])
+        for where, what in ((parent, "work root"), (specification, "specification root")):
+            if not where.is_dir():
+                print(f"cannot run: {what} {where} is not a directory", file=sys.stderr)
+                return CANNOT_RUN
+        if any((parent / kind).is_dir() for kind in KINDS):
+            print(f"cannot run: {parent} holds {'/'.join(KINDS)} directories of its own, so it is "
+                  f"one initiative rather than the directory they sit in; name its parent — this "
+                  f"form asks what no single plan can answer", file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            validator = contract()
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
+            print(f"cannot run: {broken}", file=sys.stderr)
+            return CANNOT_RUN
+        return unplanned(parent, specification, validator)
+
     if len(args) not in (1, 2) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --node <file>] "
               "[--standard <file> --against <target-source-root>] "

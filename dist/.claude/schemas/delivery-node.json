@@ -156,6 +156,13 @@
       },
       "description": "One entry per pass this framework defines, whether or not it ran. An entry carrying `missing` names the input that was absent, and its presence is what says the pass did not run. The validator holds the totality, because a review reported as clean over a pass that never ran is the failure this field exists to prevent \u2014 and no finding may be attributed to a pass that did not run."
     },
+    "unpaired": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unpairedTest"
+      },
+      "description": "Every test in the set that bears on no criterion any task under this review states — present exactly when the coverage pass ran, and empty where every test pairs. The pass already reads each test to pair it, so this is the same reading answered in the other direction: a criterion with no test is a fact unproven, and a test with no criterion is a proof of something nobody stated. It is a finding about the specification's reach, never a verdict on the test: a test may prove a fact a sibling task's criterion states, and the entry is what lets a reader see which."
+    },
     "coverage": {
       "type": "array",
       "minItems": 1,
@@ -431,6 +438,7 @@
             "tasks",
             "passes",
             "coverage",
+            "unpaired",
             "findings",
             "standard",
             "failures_counted",
@@ -485,6 +493,15 @@
                 "criterion": "An order with a non-positive total is refused with the stated rule.",
                 "state": "uncovered",
                 "why": "nothing in the test set submits a non-positive total, so the refusal half is unproven"
+              }
+            ],
+            "unpaired": [
+              {
+                "test": {
+                  "file": "tests/orders/place.spec.ts",
+                  "name": "emits order.placed on the bus"
+                },
+                "asserts": "that placing an order publishes an order.placed event — a behavior no criterion of the tasks under this review states, and which a reader routes to a sibling task's criterion or to a specification that never gained the fact"
               }
             ],
             "findings": [
@@ -814,6 +831,25 @@
       "type": "string",
       "pattern": "^[A-Z]{2,4}-[0-9]{2}$",
       "description": "One rule of the project's standard, by the identifier the standard gives it. Deliberately unlike a specification node reference, which is a path: a rule of a standard and a `rule` node of the specification are different authorities, and the two must not be readable as one another."
+    },
+    "unpairedTest": {
+      "type": "object",
+      "required": [
+        "test",
+        "asserts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "test": {
+          "$ref": "#/$defs/testRef",
+          "description": "The test that bears on no criterion any task under this review states."
+        },
+        "asserts": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the test establishes, read off its assertions. This is what says whether the test proves a fact the specification holds through some other task, or a fact nobody asked for — and it is the whole of what a reader needs to tell those apart."
+        }
+      }
     },
     "coverageEntry": {
       "type": "object",

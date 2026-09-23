@@ -34,7 +34,11 @@ A missing input is a stop, not a default:
    root. **Never discovered**: a check that chose its own scope reads a different set each run, and
    a clean result would not say what it was clean over. Ordinarily this is what
    `trace.py --check --all` listed, or what a `/review-change` report offered; any list a human
-   states is as good, and where they name none this invocation has no subject and stops.
+   states is as good, and where they name none this invocation has no subject and stops. Where a
+   human wants to see what a change touched before naming the set,
+   `trace.py --encodes --changed <target-root> [<ref>]` prints the changed paths under the target
+   and the nodes each is bound to — a reading they then name a set from, never a set this skill
+   discovered for itself.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `targets` answers only from here. From here on, "the target source root" means

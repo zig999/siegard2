@@ -14,6 +14,8 @@ Ten things this script does, and nobody else does any of them:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root> [--all]                        the same, then report drift
+    trace.py --check ... --fail-on <class>,...                    the same, exiting non-zero for
+                                                                  the named classes alone
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind ... --replace                                 write it in full instead
@@ -24,6 +26,9 @@ Ten things this script does, and nobody else does any of them:
                                                                   and no bind could close, and
                                                                   the nodes a test would close
     trace.py --encodes <target-root> <file> ...                   which nodes each file is bound to
+    trace.py --encodes --changed <target-root> [<ref>]            the same, over the files the
+                                                                  tree changed rather than a set
+                                                                  a caller spelled out
     trace.py --stage <target-root> <spec-root> <slug> <workspace> <file> ...
                                                                   prepare a reconciliation's
                                                                   workspace: node sets, packs,
@@ -156,6 +161,26 @@ locate step needs before it can hand a judge a node set, and the only way to get
 trace and read the bindings by hand — which is unvalidated, and where a binding is missed the judge
 is handed an incomplete node set and the record that results reads exactly like a complete one.
 
+`--encodes --changed` asks that question of what the tree changed rather than of a set a caller
+spelled out. Impact runs forward everywhere else here — `spec.py --impact` opens from node
+identities somebody already holds, and `--encodes` from paths somebody already listed — and the
+question a change actually raises runs the other way: these files moved, which nodes do they
+encode. Composing it by hand means converting every path git prints from the toplevel anchor to
+the target source root's, and a caller who gets that conversion wrong is handed a refusal per
+path rather than an answer. With no `<ref>` the file set is what the working tree holds against
+`HEAD`, tracked and untracked alike, which is the set standing before a commit; with one, it is
+what the branch changed since that ref. Paths outside the target source root are dropped rather
+than refused: a commit that touched a sibling target is an ordinary commit, and the answer over
+this target is still the whole answer over this target.
+
+`--fail-on` narrows what a non-zero exit means, and narrows nothing else. Every class is computed
+and printed either way — this only decides which of them the exit status answers for. The default
+is every class, because a drift report read by a person is read whole. A caller that runs on every
+push wants the two classes a person must act on, `code` and `proof`: `moved` is the ordinary state
+of a tree between a specification's change and the delivery that answers it, and `orphaned` is
+cleared by `--prune` after a deliberate removal. A status that is red during the work it is
+supposed to be watching is a status that gets switched off, and then nothing is watching.
+
 `--stage` is `--encodes` carried to where the locate step actually spends: it computes each named
 file's node set once, writes it where every consumer of it reads the same copy, and prepares what
 each judgment needs before any judgment runs. Into a caller-named workspace it writes a manifest —
@@ -246,13 +271,14 @@ Declared dependencies: PyYAML, jsonschema (this script also imports spec.py and 
 siblings under bin/).
 
 Usage:  trace.py <target-root>
-        trace.py --check <target-root> [--all]
+        trace.py --check <target-root> [--all] [--fail-on <class>[,<class> ...]]
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
         trace.py --prune <target-root>
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all]
         trace.py --encodes <target-root> <file> [<file> ...]
+        trace.py --encodes --changed <target-root> [<ref>]
         trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
                  [--audit | --review [--node <node> ...]] [--certify <certifications-file>]
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
@@ -260,7 +286,7 @@ Usage:  trace.py <target-root>
         trace.py --help
                 print this text and stop
 Exit:   0 sound / drift-free / bound / pruned / the record holds / nothing is owed / staged /
-          folded
+          folded — and under `--fail-on`, no finding in the classes it names
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file, a record its contract refuses, a finding no bind closed, a return a
           delegation owes again
@@ -272,6 +298,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 from typing import NoReturn
@@ -823,6 +850,51 @@ def suppressed(held: list[tuple[str, str, str | None, str]], prefixes: list[str]
             f"{', '.join(prefixes)} — declared freely edited in {project.PROJECT_FILE}. "
             f"`--all` lists them, and that list is what /check-source reads to hold those files "
             f"to the rules a reading decides")
+
+
+def partitioned(findings: list[tuple[str, str, str | None, str]],
+                prefixes: list[str]) -> tuple[list, list]:
+    """The findings a report lists, and the `code` findings a freely-edited target holds back.
+
+    One home for the partition, because two readers now compute it: the drift report, and the
+    session-start receipt that prints its tally. A second copy of this predicate would be a
+    receipt that counts a suppression the report does not, and the two disagreeing about what a
+    tree holds is worse than neither existing."""
+    def held_back(finding) -> bool:
+        return finding[0] == CODE and bool(finding[2]) and under(finding[2], prefixes)
+    # Partitioned by the predicate rather than by membership in the held list: two findings that
+    # compare equal would suppress each other, and a membership test walks that list once per
+    # finding.
+    return ([f for f in findings if not held_back(f)], [f for f in findings if held_back(f)])
+
+
+def tally_of(target: Path) -> tuple[dict[str, int], int, list[str]] | None:
+    """The drift a target holds, counted by class, with the count held back and the files a
+    reconciliation would be invoked over — or nothing where there is no trace to read, nothing
+    the trace can be held to, or no git to resolve the tree.
+
+    A tally and never a listing. What a reader acts on is the count per class and the door it
+    opens; the lines themselves are `--check`'s to print, and printing them anywhere a caller did
+    not ask for them is how a report becomes something nobody finishes."""
+    try:
+        if not target.is_dir():
+            return None
+        declared = load(target)
+        if declared is None or problems_of(declared):
+            return None
+        home = home_of(target)
+        findings, refusals = drift_of(declared, home, registry_steps(home, offset_of(target, home)))
+        if refusals:
+            return None
+        listed, held = partitioned(findings, freely_edited(home))
+    except (Exception, SystemExit):
+        # Every caller of this is a report beside the answer somebody actually asked for. A trace
+        # this cannot read is the drift report's to refuse properly, with the reason; here it is
+        # silence, because a receipt that raised would take the invocation down with it. SystemExit
+        # is named because `cannot_run` is how this script refuses, and it is not an `Exception`.
+        return None
+    counts = {cls: sum(1 for f in listed if f[0] == cls) for cls in (ORPHANED, MOVED, PROOF, CODE)}
+    return counts, len(held), sorted({f[2] for f in listed if f[0] == CODE and f[2]})
 
 
 def as_list(value: str | list[str]) -> list[str]:
@@ -1600,6 +1672,94 @@ def encodes(target: Path, files: list[str]) -> int:
         for line in proof_lines(path, now):
             print(line)
     return 0
+
+
+def changed_paths(home: Path, ref: str | None) -> tuple[list[str], str | None]:
+    """Every path the tree changed, spelled from the git toplevel, and what went wrong instead.
+
+    With no ref this is the working tree against `HEAD` — staged, unstaged and untracked
+    together, which is the set standing in front of a caller about to commit. With one it is what
+    the branch changed since that ref, which is the set a reviewer of the branch is holding."""
+    if ref is None:
+        try:
+            has_head = subprocess.run(["git", "-C", str(home), "rev-parse", "--verify", "HEAD"],
+                                      capture_output=True, text=True)
+        except OSError:
+            return [], "git is not on this machine, and the changed set is git's to name"
+        if has_head.returncode != 0:
+            # Git's own message for this is its usage blurb, which says nothing a reader can act
+            # on. Before the first commit there is no HEAD to compare against and every file is
+            # new, so the whole tree would be the answer — which is no answer about a change.
+            return [], (f"{home} holds no commit yet, so there is no HEAD to compare against and "
+                        f"every file in it is new; commit the tree, or name a ref this form can "
+                        f"read the change against")
+        commands = [["diff", "--name-only", "HEAD"],
+                    ["ls-files", "--others", "--exclude-standard"]]
+    else:
+        commands = [["diff", "--name-only", f"{ref}...HEAD"]]
+    found: list[str] = []
+    for command in commands:
+        try:
+            probe = subprocess.run(["git", "-C", str(home), *command],
+                                   capture_output=True, text=True)
+        except OSError:
+            return [], "git is not on this machine, and the changed set is git's to name"
+        if probe.returncode != 0:
+            said = probe.stderr.strip().splitlines()
+            return [], (said[-1] if said else f"git {' '.join(command)} failed in {home}")
+        found += [line for line in probe.stdout.splitlines() if line]
+    return sorted(set(found)), None
+
+
+def encodes_changed(target: Path, ref: str | None) -> int:
+    """`--encodes` over what the tree changed rather than over a set a caller spelled out.
+
+    The conversion is the whole of what this adds. Git names every path from the toplevel and
+    `--encodes` reads every path from the target source root, so composing the two by hand is the
+    one step a caller gets wrong — and gets wrong silently where the wrong spelling happens to
+    name a file that exists. A path outside this target is dropped rather than refused: one
+    commit touching two targets is an ordinary commit, and the answer over this one is still
+    whole. A file the tree deleted is dropped the same way and counted in the receipt: it has no
+    digest to read, and what its bindings are now is `--check`'s question, not this one."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    home = home_of(target)
+    if home.resolve() == target.resolve() and not (home / ".git").exists():
+        # `toplevel_of` answers the directory itself where git does not hold it, which every
+        # other form treats as an ordinary anchor. Here it would mean an empty changed set
+        # reported as a clean answer, which is the one reading this must not produce.
+        print(f"cannot run: git does not hold {target}, and the changed set is git's to name",
+              file=sys.stderr)
+        return CANNOT_RUN
+    paths, refused = changed_paths(home, ref)
+    if refused is not None:
+        print(f"cannot run: {refused}", file=sys.stderr)
+        return CANNOT_RUN
+
+    inside, outside, gone = [], 0, 0
+    for path in paths:
+        whole = home / path
+        try:
+            spelled = whole.resolve().relative_to(target.resolve()).as_posix()
+        except ValueError:
+            outside += 1
+            continue
+        if not whole.is_file():
+            gone += 1
+            continue
+        inside.append(spelled)
+
+    said = (f"against {ref}" if ref is not None else "in the working tree against HEAD")
+    print(f"{len(paths)} path(s) changed {said}; {len(inside)} under {target}"
+          + (f", {outside} under another target" if outside else "")
+          + (f", {gone} no longer on disk — `--check` is what answers for a file that is gone"
+             if gone else ""))
+    if not inside:
+        print("nothing changed under this target source root; no binding is in question here")
+        return 0
+    print()
+    return encodes(target, inside)
 
 
 def registry_steps(home: Path, offset: str) -> set[str] | None:
@@ -3112,6 +3272,7 @@ def main() -> int:
     do_fold = "--fold" in args
     replace = "--replace" in args
     do_rank = "--rank" in args
+    do_changed = "--changed" in args
     do_audit = "--audit" in args
     do_review = "--review" in args
     also: list[str] = []
@@ -3134,6 +3295,24 @@ def main() -> int:
             print("cannot run: --run is given once; one run answers this fold's mechanical tier",
                   file=sys.stderr)
             return CANNOT_RUN
+    fail_on: set[str] | None = None
+    if "--fail-on" in args:
+        at = args.index("--fail-on")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print(f"cannot run: --fail-on takes a comma-separated list of drift classes "
+                  f"({', '.join(CLASSES)})", file=sys.stderr)
+            return CANNOT_RUN
+        fail_on = {name.strip() for name in args[at + 1].split(",") if name.strip()}
+        del args[at:at + 2]
+        unknown = sorted(fail_on - set(CLASSES))
+        if unknown or not fail_on:
+            print(f"cannot run: --fail-on names {', '.join(unknown) or 'no class'}; the classes "
+                  f"are {', '.join(CLASSES)}", file=sys.stderr)
+            return CANNOT_RUN
+        if "--fail-on" in args:
+            print("cannot run: --fail-on is given once; one list says what the exit answers for",
+                  file=sys.stderr)
+            return CANNOT_RUN
     certify: Path | None = None
     if "--certify" in args:
         at = args.index("--certify")
@@ -3150,7 +3329,7 @@ def main() -> int:
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--reconciliation", "--owed", "--encodes", "--stage", "--fold",
-                         "--rank", "--audit", "--review")]
+                         "--rank", "--changed", "--audit", "--review")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -3171,6 +3350,18 @@ def main() -> int:
         return CANNOT_RUN
     if do_rank and not do_encodes:
         print("cannot run: --rank is a mode of --encodes", file=sys.stderr)
+        return CANNOT_RUN
+    if do_changed and not do_encodes:
+        print("cannot run: --changed is a mode of --encodes", file=sys.stderr)
+        return CANNOT_RUN
+    if do_changed and do_rank:
+        print("cannot run: --changed names a file set and --rank reads them all; a ranking over "
+              "the files one change touched is a ranking of that change, not of the tree",
+              file=sys.stderr)
+        return CANNOT_RUN
+    if fail_on is not None and not check:
+        print("cannot run: --fail-on is a mode of --check; it says which drift classes the exit "
+              "status answers for, and nothing else here exits over drift", file=sys.stderr)
         return CANNOT_RUN
     if do_audit and not do_stage:
         print("cannot run: --audit is a mode of --stage", file=sys.stderr)
@@ -3233,6 +3424,12 @@ def main() -> int:
                       file=sys.stderr)
                 return CANNOT_RUN
             return rank(Path(args[0]), show_all)
+        if do_changed:
+            if len(args) not in (1, 2) or any(a.startswith("--") for a in args):
+                print("cannot run: expected --encodes --changed <target-root> [<ref>]",
+                      file=sys.stderr)
+                return CANNOT_RUN
+            return encodes_changed(Path(args[0]), args[1] if len(args) == 2 else None)
         if len(args) < 2 or any(a.startswith("--") for a in args):
             print("cannot run: expected --encodes <target-root> <file> [<file> ...], every file "
                   "spelled from the target source root", file=sys.stderr)
@@ -3314,14 +3511,7 @@ def main() -> int:
     # the finding was computed either way, and `--all` prints it. Suppression is a report's
     # decision about what a reader can act on, so nothing above it knows this happened.
     prefixes = [] if show_all else freely_edited(home)
-
-    def held_back(finding) -> bool:
-        return finding[0] == CODE and bool(finding[2]) and under(finding[2], prefixes)
-
-    # Partitioned by the predicate rather than by membership in `held`: two findings that compare
-    # equal would suppress each other, and the membership test walked `held` once per finding.
-    held = [f for f in findings if held_back(f)]
-    listed = [f for f in findings if not held_back(f)]
+    listed, held = partitioned(findings, prefixes)
 
     if listed:
         # Class by class rather than one flat list: the tally is what a reader acts on, and the
@@ -3361,7 +3551,15 @@ def main() -> int:
               f"target this project declares freely edited")
     if held:
         print(suppressed(held, prefixes))
-    return 1 if listed else 0
+    if fail_on is None:
+        return 1 if listed else 0
+    # Narrowed, the exit answers for less than the report says, and a reader who sees only the
+    # status has to be told which less. Said whether or not anything was found: a green status
+    # whose narrowing is invisible is the one a caller misreads as a clean tree.
+    over = [f for f in listed if f[0] in fail_on]
+    print(f"\nexit status answers for {', '.join(sorted(fail_on))}: {len(over)} finding(s) of "
+          f"{len(listed)} listed")
+    return 1 if over else 0
 
 
 if __name__ == "__main__":

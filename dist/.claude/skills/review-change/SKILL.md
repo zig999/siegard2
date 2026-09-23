@@ -351,7 +351,12 @@ runs next.
 - **coverage** — spawn a `siegard:coverage-auditor` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, passing the criteria as the task files state
   them, the test file set out of the proof records, the target source root, and the
-  `coverageEntry` slice printed above, pasted whole. It returns one entry per criterion.
+  `coverageEntry` slice printed above, pasted whole. It returns one entry per criterion, and
+  `unpaired` — every test in the set that bears on no criterion any task under this review
+  states, each with what it asserts. That list is the coverage reading answered in the other
+  direction: a criterion with no test is a fact unproven, and a test with no criterion is a proof
+  of something no task stated. It is never a verdict on the test — a test may prove a sibling
+  task's criterion — and never a recommendation to remove one.
 - **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the staging
   manifest holds**, spawned together rather than one after another, each judging at
   `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
@@ -491,7 +496,7 @@ trace's reader and one for the delivery's.
 Write `review/<review-name>.md` under the delivery root, under the name input 6 fixed — the name is
 this review's identity and the path is where it lives. It carries `target` — input 4's key, the
 root `reviewed` and the standard's path are spelled from, which the validator resolves the record
-at — the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries where that pass ran, the standard's own path and the pin of its text where
+at — the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries and the unpaired tests where that pass ran, the standard's own path and the pin of its text where
 that one ran, how many failures were counted where that one did, the run's directory where there was
 one, the reconciliation record the conformance pass folded — `reconciliation:
 siegard-reconcile/<review-name>.md`, which the validator holds to the pass having run and to this
@@ -556,6 +561,8 @@ Report, in this order:
 - **which passes did not run, and which input was missing** — this line is not optional, and it is
   what separates a clean review from a narrow one;
 - every criterion the coverage pass did not find covered, and what is unexercised in each;
+- every test that pass found bearing on no criterion, and what each asserts — a fact about what
+  this plan's criteria reach, handed as a reading and never as a verdict;
 - every node the tasks implement that no test demonstrates, with the reason the proof gives or
   that it gives none, and the state each certification came back with;
 - the standard: which of its rules were in scope over this file set, and which it leaves to a tool

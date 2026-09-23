@@ -864,3 +864,156 @@ def test_a_trace_naming_an_absolute_specification_is_refused(consumer):
     done = run(consumer / "backend")
     assert done.returncode == 1, done.stdout + done.stderr
     assert "specification" in done.stdout, done.stdout
+
+
+# ------------------------------------------------------- what the exit status answers for
+
+
+def test_fail_on_narrows_the_exit_to_the_classes_it_names(consumer):
+    """`moved` is the ordinary state of a tree between a specification's change and the delivery
+    that answers it. A caller running on every push wants the classes a person must act on, and a
+    status red during the work it watches is a status that gets switched off."""
+    bind(consumer)
+    path = consumer / "specs" / f"{NODE}.md"
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    whole = run("--check", consumer / "backend")
+    assert whole.returncode == 1, whole.stdout
+    narrowed = run("--check", "--fail-on", "code,proof", consumer / "backend")
+    assert narrowed.returncode == 0, narrowed.stdout
+    assert "the specification moved since this bind" in narrowed.stdout, \
+        "narrowing the exit must narrow nothing about what is computed or printed"
+
+
+def test_fail_on_still_exits_over_a_class_it_names(consumer):
+    bind(consumer)
+    drifted(consumer)
+    done = run("--check", "--fail-on", "code", consumer / "backend")
+    assert done.returncode == 1, done.stdout
+    assert "the file changed without a rebind" in done.stdout
+
+
+def test_fail_on_says_what_the_exit_answered_for(consumer):
+    """A green status whose narrowing is invisible is the one a caller misreads as a clean tree,
+    so the receipt is printed whether or not the named classes were found."""
+    bind(consumer)
+    done = run("--check", "--fail-on", "proof", consumer / "backend")
+    assert done.returncode == 0, done.stdout
+    assert "exit status answers for proof" in done.stdout
+
+
+def test_fail_on_defaults_to_every_class(consumer):
+    """The default is the contract every caller already has: a drift report read by a person is
+    read whole, and nothing about it changed."""
+    bind(consumer)
+    path = consumer / "specs" / f"{NODE}.md"
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1
+    assert "exit status answers for" not in done.stdout
+
+
+def test_fail_on_refuses_a_class_that_is_not_one(consumer):
+    done = run("--check", "--fail-on", "code,urgent", consumer / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "the classes are orphaned, moved, proof, code" in done.stderr
+
+
+def test_fail_on_outside_check_is_refused(consumer):
+    done = run("--fail-on", "code", consumer / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "--fail-on is a mode of --check" in done.stderr
+
+
+# ------------------------------------------------------------ impact from a change
+
+
+def committed(consumer: Path) -> None:
+    subprocess.run(["git", "-C", str(consumer), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(consumer), "-c", "user.email=t@t", "-c", "user.name=t",
+                    "commit", "-qm", "base"], check=True, capture_output=True)
+
+
+def test_changed_reads_the_file_set_off_the_working_tree(consumer):
+    """Impact runs forward everywhere else — from node identities, or from paths a caller listed.
+    The question a change raises runs the other way: these files moved, which nodes do they
+    encode."""
+    bind(consumer)
+    committed(consumer)
+    drifted(consumer)
+    done = run("--encodes", "--changed", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 path(s) changed in the working tree against HEAD" in done.stdout, done.stdout
+    assert f"{FILE}: 1 binding(s)" in done.stdout
+    assert NODE in done.stdout
+
+
+def test_changed_converts_the_anchor_git_prints_to_the_one_encodes_reads(consumer):
+    """Git names every path from the toplevel and `--encodes` reads every path from the target
+    source root. Composing the two by hand is the step a caller gets wrong: handing git's own
+    spelling straight to `--encodes` is a refusal per path, and this form is what makes the
+    composition right once instead of at every call site."""
+    bind(consumer)
+    committed(consumer)
+    drifted(consumer)
+
+    by_hand = run("--encodes", consumer / "backend", f"backend/{FILE}")
+    assert by_hand.returncode == trace.CANNOT_RUN, \
+        "the toplevel's spelling is what this form exists to convert, and it must still be a " \
+        "refusal when a caller passes it directly"
+    done = run("--encodes", "--changed", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "does not exist" not in done.stdout + done.stderr
+
+
+def test_changed_drops_what_sits_outside_the_target_rather_than_refusing_it(consumer):
+    """One commit touching two targets is an ordinary commit, and the answer over this target is
+    still the whole answer over this target."""
+    bind(consumer)
+    committed(consumer)
+    (consumer / "docs").mkdir()
+    (consumer / "docs" / "note.md").write_text("a note\n", encoding="utf-8")
+    done = run("--encodes", "--changed", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 under another target" in done.stdout, done.stdout
+    assert "nothing changed under this target source root" in done.stdout
+
+
+def test_changed_over_a_ref_reads_what_the_branch_changed(consumer):
+    bind(consumer)
+    committed(consumer)
+    drifted(consumer)
+    subprocess.run(["git", "-C", str(consumer), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(consumer), "-c", "user.email=t@t", "-c", "user.name=t",
+                    "commit", "-qm", "second"], check=True, capture_output=True)
+    done = run("--encodes", "--changed", consumer / "backend", "HEAD~1")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "against HEAD~1" in done.stdout
+    assert f"{FILE}: 1 binding(s)" in done.stdout
+
+
+def test_changed_counts_a_file_the_tree_deleted_rather_than_refusing_it(consumer):
+    """A deleted file has no digest to read, and what its bindings are now is `--check`'s
+    question — this one is about files a judge could still open."""
+    bind(consumer)
+    committed(consumer)
+    (consumer / "backend" / FILE).unlink()
+    done = run("--encodes", "--changed", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "no longer on disk" in done.stdout
+
+
+def test_changed_and_rank_are_refused_together(consumer):
+    done = run("--encodes", "--changed", "--rank", consumer / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "--changed names a file set and --rank reads them all" in done.stderr
+
+
+def test_changed_names_the_cause_where_the_tree_holds_no_commit(consumer):
+    """Git's own message for this is its usage blurb, which says nothing a reader can act on.
+    Before the first commit every file is new, so the whole tree would be the answer — which is
+    no answer about a change."""
+    done = run("--encodes", "--changed", consumer / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "holds no commit yet" in done.stderr, done.stderr
+    assert "name a ref" in done.stderr

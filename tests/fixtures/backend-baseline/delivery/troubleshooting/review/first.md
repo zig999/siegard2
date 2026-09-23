@@ -20,6 +20,7 @@ coverage:
   tests:
   - file: tests/case.spec.ts
     name: opens a case for an alert
+unpaired: []
 ---
 ## What it is
 Prose for a reader.

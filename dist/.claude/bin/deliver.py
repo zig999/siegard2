@@ -407,6 +407,8 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
                                 f"{foreign}")
 
     for field, name, want in (("coverage", "coverage", "the criteria it paired with tests"),
+                              ("unpaired", "coverage",
+                               "the tests it found bearing on no criterion"),
                               ("run", "failures", "the captured run it read"),
                               ("failures_counted", "failures",
                                "how many failures the run reported"),

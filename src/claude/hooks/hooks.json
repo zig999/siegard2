@@ -1,10 +1,11 @@
 {
-  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn.",
+  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn, and the drift a project is already carrying into every session at start.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\""}
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\""},
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/drift.py\""}
         ]
       }
     ],
