@@ -68,8 +68,8 @@ stop. You need:
   the omission is invisible in the record.
 - **Every test bearing on no criterion gets an entry of its own.** You open each test in the set
   to pair it, so this is that same reading answered in the other direction, and it costs nothing
-  further: a criterion with no test is a fact unproven, and a test with no criterion is a proof
-  of something no task under this review stated. Record what it asserts, read off its assertions
+  further: a criterion with no test is a fact unproven, and «a test with no obligation is a proof
+  of something nobody stated» (SPEC-004 R15). Record what it asserts, read off its assertions
   — that is what lets a reader tell a test proving a sibling task's criterion from a test proving
   a fact nobody asked for. It is never a verdict on the test and never a recommendation to delete
   one: which of the two it is, and what to do about it, is a person's.

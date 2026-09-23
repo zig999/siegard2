@@ -99,14 +99,20 @@ node of either project was decided by a test.
 
 - **R14** — Coverage is stated per obligation, never as a figure: the state of each obligation is
   named, and no percentage, line or branch measure stands in for it.
+- **R15** — The coverage audit names every test in the set that no criterion it was handed
+  derives, with what the test asserts. It is R1 and R4 read from the evidence side: a test with no
+  obligation is a proof of something nobody stated. It is a reading and never a verdict — a test
+  proving a node's fact under R10 stands there until the certification R13 carries claims it, and
+  which of the two a test is, and what follows, is a person's.
 
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
-   auditor's judgment states R14 and the finite-test rule of R11; `tests/test_spec_citations.py`
+   auditor's judgment states R14 and R15 and the finite-test rule of R11; `tests/test_spec_citations.py`
    proves each quote is a substring of the requirement it names.
-2. The delivery-node contract requires of every test what R2 requires, and refuses a proof naming
-   a node the task does not implement — `tests/test_deliver.py` proves each.
+2. The delivery-node contract requires of every test what R2 requires, refuses a proof naming a
+   node the task does not implement, and requires the unpaired list exactly when the coverage
+   pass ran — `tests/test_deliver.py` proves each.
 3. The certification contract admits a remainder a test can close and one no test can, and names
    as examples of the second only facts R12 names; `tests/test_reconcile.py` proves the contract
    demonstrates every outcome.
