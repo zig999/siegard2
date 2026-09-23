@@ -161,7 +161,7 @@
       "items": {
         "$ref": "#/$defs/unpairedTest"
       },
-      "description": "Every test in the set that bears on no criterion any task under this review states — present exactly when the coverage pass ran, and empty where every test pairs. The pass already reads each test to pair it, so this is the same reading answered in the other direction: a criterion with no test is a fact unproven, and a test with no criterion is a proof of something nobody stated. It is a finding about the specification's reach, never a verdict on the test: a test may prove a fact a sibling task's criterion states, and the entry is what lets a reader see which."
+      "description": "Every test in the set that bears on no criterion any task under this review states — written by every coverage pass under this contract, and empty where every test pairs. A review written before the field existed carries none: it is not refused for that, because a field that became required would refuse a consumer's whole delivery root the day the framework updates, and the validator reports it instead as a review whose test set was never read for what no criterion derives. The pass already reads each test to pair it, so this is the same reading answered in the other direction: a criterion with no test is a fact unproven, and a test with no criterion is a proof of something nobody stated. It is a finding about the specification's reach, never a verdict on the test: a test may prove a fact a sibling task's criterion states, and the entry is what lets a reader see which."
     },
     "coverage": {
       "type": "array",

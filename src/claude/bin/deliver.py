@@ -407,8 +407,6 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
                                 f"{foreign}")
 
     for field, name, want in (("coverage", "coverage", "the criteria it paired with tests"),
-                              ("unpaired", "coverage",
-                               "the tests it found bearing on no criterion"),
                               ("run", "failures", "the captured run it read"),
                               ("failures_counted", "failures",
                                "how many failures the run reported"),
@@ -420,6 +418,14 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
         if field not in front and name in ran:
             problems.append(f"the {name} pass ran and `{field}` is absent; a pass that ran "
                             f"records {want}")
+
+    # One direction only. `unpaired` present while the pass did not run is a claim about a reading
+    # nobody made; `unpaired` absent while the pass ran is every review written before the field
+    # existed, which `unread_unpaired()` says as a receipt rather than refusing the root that
+    # holds it.
+    if "unpaired" in front and "coverage" not in ran:
+        problems.append("`unpaired` is present and the coverage pass did not run; a pass that did "
+                        "not run read no test for what no criterion derives")
 
     if "coverage" in ran and not listed(front, "tasks"):
         problems.append("the coverage pass ran and this review names no task; the criteria it "
@@ -911,6 +917,26 @@ def review_reconciliation_problems(nid: str, front: dict, target: Path) -> list[
                 f"own file set, whole, and a record over a different set judged a different "
                 f"change"]
     return []
+
+
+
+def unread_unpaired(nodes: dict[str, dict]) -> list[str]:
+    """The receipt for a review whose coverage pass ran and that records no `unpaired` list. A
+    statement, never a refusal, on the same terms as `unreconciled_reviews()`: every review written
+    before the field existed records none, and a field that became required would refuse a
+    consumer's whole delivery root the day the framework updates. What such a review did not do is
+    read its test set in the other direction — «a test with no obligation is a proof of something
+    nobody stated» (SPEC-004 R15) — so a test of that kind may stand in its set unnamed, and the
+    next review over those files is where the reading is made."""
+    names = pass_names()
+    unread = sorted(nid for nid, node in nodes.items()
+                    if node["kind"] == "review"
+                    and "coverage" in ran_passes(node["front"], names)
+                    and "unpaired" not in node["front"])
+    return [f"{nid}: the coverage pass ran and the review records no `unpaired` list; it paired "
+            f"criteria with tests and never read the set for tests no criterion derives, so one "
+            f"proving a fact nobody stated may stand there unnamed"
+            for nid in unread]
 
 
 def unreconciled_reviews(nodes: dict[str, dict], target: Path) -> list[str]:
@@ -2212,6 +2238,8 @@ def main() -> int:
                   f"rewrite it; do not edit it, because every fact in it lives in a node file")
             return 1
         print(f"delivery checked: {index_path} matches {len(delivery['nodes'])} node(s)")
+        for line in unread_unpaired(nodes):
+            print(line)
         for line in unreconciled_reviews(nodes, target):
             print(f"  {line}")
         return 0
@@ -2227,6 +2255,8 @@ def main() -> int:
     findings = sum(n.get("findings", 0) for n in delivery["nodes"])
     print(f"derived {index_path}: {len(delivery['nodes'])} node(s), "
           f"{len(delivery['edges'])} edge(s), contract {delivery['contract_version']}")
+    for line in unread_unpaired(nodes):
+        print(line)
     for line in unreconciled_reviews(nodes, target):
         print(f"  {line}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {done} of {tasks} task(s) hold a record; "

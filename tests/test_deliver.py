@@ -386,16 +386,26 @@ def test_a_pass_that_ran_and_recorded_nothing_of_what_it_read(delivery, work, ro
     said(problems_of(delivery, work, target, root), "the coverage pass ran and `coverage` is absent")
 
 
-def test_the_coverage_pass_answers_in_both_directions(delivery, work, root, target,
-                                                      sound_delivery, write_delivery):
-    """A criterion with no test is a fact unproven; a test with no criterion is a proof of
-    something no task stated. The pass reads every test either way, so the second answer costs
-    nothing further — and omitting the key says the reading was never made, which is not the same
-    as making it and finding nothing."""
+def test_a_review_written_before_unpaired_existed_is_receipted_and_never_refused(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """Every review written before the field existed records no `unpaired`, and a field that
+    became required would refuse a consumer's whole delivery root the day the framework updates.
+    So absence is a receipt: what such a review did not do is read its test set in the other
+    direction, and the receipt says so once, where a reader can act on it."""
     front = review_front(work, root)
     del front["unpaired"]
     write_delivery("review/first", front)
-    said(problems_of(delivery, work, target, root), "the coverage pass ran and `unpaired` is absent")
+    assert problems_of(delivery, work, target, root) == []
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    lines = deliver.unread_unpaired(nodes)
+    assert len(lines) == 1 and "records no `unpaired` list" in lines[0], lines
+
+
+def test_a_review_carrying_unpaired_earns_no_such_receipt(delivery, work, root, target,
+                                                          sound_delivery, write_delivery):
+    write_delivery("review/first", review_front(work, root))
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    assert deliver.unread_unpaired(nodes) == []
 
 
 def test_an_empty_unpaired_list_is_an_answer_and_not_an_omission(delivery, work, root, target,

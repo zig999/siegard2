@@ -111,8 +111,10 @@ node of either project was decided by a test.
    auditor's judgment states R14 and R15 and the finite-test rule of R11; `tests/test_spec_citations.py`
    proves each quote is a substring of the requirement it names.
 2. The delivery-node contract requires of every test what R2 requires, refuses a proof naming a
-   node the task does not implement, and requires the unpaired list exactly when the coverage
-   pass ran — `tests/test_deliver.py` proves each.
+   node the task does not implement, refuses an unpaired list under a coverage pass that did not
+   run, and admits a review written before the list existed — reporting it as one whose tests
+   were never read for what no criterion derives, never refusing the delivery root that holds it
+   — `tests/test_deliver.py` proves each.
 3. The certification contract admits a remainder a test can close and one no test can, and names
    as examples of the second only facts R12 names; `tests/test_reconcile.py` proves the contract
    demonstrates every outcome.
