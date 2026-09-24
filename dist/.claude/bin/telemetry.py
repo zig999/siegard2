@@ -33,6 +33,24 @@ and is recorded. Every transcript entry, run, commit and decision outside the wi
 the report. A window inferred from when a session seemed to begin would be the recall this
 replaces.
 
+**A decision is followed to the node it filled.** The log records what the framework decided on
+the human's behalf; nothing records whether anyone read it afterwards, and «the share of
+disclosed decisions later revised, by which route and how long after, is reported by the
+telemetry, so the trade that removed the stop stays measured rather than assumed» (SPEC-001 R10).
+So every decision the window added carries its `outcome`: the commit that landed it, whether the
+field it filled reads today as that commit wrote it, and — where it does not — every later commit
+that changed the field, with its route read off the subject the skills write. Only a corrective
+increment or a hand edit is a person disagreeing; a later analysis re-deciding is the framework
+revising itself, and the tally keeps the two apart. The comparison is field against field, never
+the log's `decided` text against the field: the log paraphrases.
+
+**The session's own cost is attributed to the skill it was running.** A `Skill` call in the
+transcript names what the session runs from there to the next such call, and every turn's usage
+in that span is that skill's — a ceiling per skill, since the person's own turns land in the span
+too, said as one. `harness.skill_totals` sums it across sessions; a report that read
+`agent_totals` alone would miss this half, and one that read the session total alone could not say
+which skill spent it.
+
 **A section that cannot be read is said, not filled.** Every section carries an entry in
 `provenance` naming where it was read from or why it could not be. No source is estimated from
 another: an agent whose transcript is missing has null usage and a reason, and the totals say how
@@ -84,7 +102,30 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/3"
+CONTRACT = "siegard-telemetry/4"
+STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
+                                                     "unreadable", "unlocated")
+OUTCOME_STATES = {
+    STANDS: "the field the decision filled reads today as it read in the commit that landed it",
+    REVISED: "the field changed after the decision landed; `revised_by` says by which commits and "
+             "which route, and only `corrective` and `hand-edit` are a person disagreeing",
+    NODE_GONE: "the node the decision located is no longer in the specification",
+    UNREADABLE: "the located field could not be read at the landing commit — the log names a "
+                "field the node did not hold when the entry was written",
+    UNLOCATED: "no commit of the log contains this entry's text; the landing cannot be found",
+}
+ANALYSE, CORRECTIVE, FRAMEWORK, HAND_EDIT = "analyse", "corrective", "framework", "hand-edit"
+ROUTES = {
+    ANALYSE: "a later analysis re-decided it — the framework revising the framework, never a "
+             "person disagreeing",
+    CORRECTIVE: "a corrective increment, hotfix or fix routed through the framework — behavior "
+                "contradicted the decision and a person routed the correction",
+    FRAMEWORK: "another framework route re-authored the field without naming a correction",
+    HAND_EDIT: "a commit no framework skill wrote — a person changed the artifact directly",
+}
+ROUTE_PREFIX = re.compile(r"^(analyse|plan-work|implement-task|review-change|deliver-scope|"
+                          r"reconcile|check-source|siegard-[a-z-]+)\b")
+CORRECTION_WORDS = re.compile(r"corrective|hotfix|\bfix\b|abandon|revert", re.I)
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TELEMETRY_CONTRACT = PLUGIN_ROOT / "schemas" / "telemetry.json"
 PROJECT_PY = PLUGIN_ROOT / "bin" / "project.py"
@@ -382,6 +423,9 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     agents: dict[str, dict] = {}
     results: dict[str, dict] = {}
     usage = dict.fromkeys(USAGE_KEYS, 0)
+    namespace = plugin_namespace()
+    skill: str | None = None
+    by_skill: dict[str, dict] = {}
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
@@ -402,12 +446,25 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
             human_turns.append(iso(instant_of(stamp)))
         if entry.get("type") != "assistant":
             continue
+        for block in blocks_of(entry):
+            # A Skill call names the skill the session runs from here to the next one; the
+            # turn that launched it is already that skill's.
+            if block.get("type") == "tool_use" and block.get("name") == "Skill":
+                named = (block.get("input") or {}).get("skill") if isinstance(block.get("input"),
+                                                                             dict) else None
+                if isinstance(named, str) and named:
+                    if namespace and named.startswith(f"{namespace}:"):
+                        named = named[len(namespace) + 1:]
+                    skill = named
+        share = by_skill.setdefault(skill or "none", {"turns": 0, "usage": dict.fromkeys(USAGE_KEYS, 0)})
+        share["turns"] += 1
         spent = (entry.get("message") or {}).get("usage")
         if isinstance(spent, dict):
             for key in USAGE_KEYS:
                 value = spent.get(key)
                 if isinstance(value, int) and value >= 0:
                     usage[key] += value
+                    share["usage"][key] += value
         for block in blocks_of(entry):
             if block.get("type") != "tool_use" or not isinstance(block.get("id"), str):
                 continue
@@ -447,7 +504,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "first_timestamp": first, "last_timestamp": last,
         "harness_versions": sorted(versions), "working_directories": sorted(cwds),
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
-        "usage": usage,
+        "usage": usage, "by_skill": by_skill,
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -545,7 +602,7 @@ def harness_section(root: Path, home: Path, since: datetime,
                     until: datetime) -> tuple[dict, list, list]:
     readable, reason = probe_transcripts(root)
     harness = {"transcript_root": str(root), "transcript_roots": [str(root)],
-               "readable": readable, "reason": reason, "sessions": []}
+               "readable": readable, "reason": reason, "sessions": [], "skill_totals": {}}
     if not readable:
         return harness, [], []
     commands: list[dict] = []
@@ -589,6 +646,19 @@ def harness_section(root: Path, home: Path, since: datetime,
                     pending.append(dict(child, spawn_depth=agent["spawn_depth"] + 1,
                                         parent_agent_id=found[0]))
             agents.append(agent)
+    # The session side of the cost, by the skill the session was running. A session's own turns
+    # are half of what a stretch of work costs, and which skill each half belongs to is what a
+    # reader needs before shortening anything.
+    totals: dict[str, dict] = {}
+    for summary in harness["sessions"]:
+        for name, share in summary["by_skill"].items():
+            into = totals.setdefault(name, {"turns": 0, "sessions": 0,
+                                            "usage": dict.fromkeys(USAGE_KEYS, 0)})
+            into["turns"] += share["turns"]
+            into["sessions"] += 1
+            for key in USAGE_KEYS:
+                into["usage"][key] += share["usage"][key]
+    harness["skill_totals"] = dict(sorted(totals.items()))
     commands.sort(key=lambda c: (c["issued_at"], c["tool_use_id"]))
     agents.sort(key=lambda a: (a["invoked_at"], a["tool_use_id"]))
     seen: set[tuple[str, str]] = set()
@@ -750,8 +820,140 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
     baseline = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
     seen = {json.dumps(e, sort_keys=True) for e in baseline}
     added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
+    spec_relative = Path(relative).parent.as_posix()
+    for entry in added:
+        entry["outcome"] = outcome_of(entry, home, spec_relative, relative, specification_root)
     return {"log": str(log), "baseline": f"commit {digest}", "total_now": len(current),
-            "added": added}
+            "added": added, "outcomes": outcomes_of(added)}
+
+
+def route_of(subject: str) -> str:
+    """Which route a commit that changed a decided field came through, read off the subject the
+    skills themselves write: every framework commit opens with its skill's name, and a subject
+    with no such opening is a person's. Authorship separates nothing here — every commit a skill
+    makes is made under the human's identity."""
+    opened = ROUTE_PREFIX.match(subject or "")
+    if not opened:
+        return HAND_EDIT
+    if opened.group(1) == "analyse":
+        return ANALYSE
+    return CORRECTIVE if CORRECTION_WORDS.search(subject) else FRAMEWORK
+
+
+def field_of(front: object, dotted: str) -> tuple[bool, object]:
+    """The value a dotted field path reaches in a node's frontmatter, and whether it reached."""
+    current = front
+    for part in dotted.split("."):
+        if isinstance(current, dict) and part in current:
+            current = current[part]
+        elif isinstance(current, list) and part.isdigit() and int(part) < len(current):
+            current = current[int(part)]
+        else:
+            return False, None
+    return True, current
+
+
+def field_in_text(text: str, dotted: str) -> tuple[bool, object]:
+    match = FENCE.match(text or "")
+    if not match:
+        return False, None
+    try:
+        front = yaml.safe_load(match.group(1))
+    except yaml.YAMLError:
+        return False, None
+    return field_of(front, dotted)
+
+
+def flat(value: object) -> str:
+    return re.sub(r"\s+", " ", json.dumps(value, sort_keys=True, ensure_ascii=False)
+                  if isinstance(value, (dict, list)) else str(value)).strip()
+
+
+def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
+               specification_root: Path) -> dict:
+    """What became of one decision the framework made on the human's behalf, read from the node
+    it located rather than from the log: the log records what was decided, and the node records
+    what stands. The comparison is the field as the landing commit wrote it against the field
+    today — never the log's `decided` text against the field, because the log paraphrases and
+    the paraphrase is not the value.
+
+    The landing commit is found by the entry's own words in the log's history. The route of
+    every later commit over the node is read off the subject the skills write, and the states
+    are printed with their meaning beside them, because the one reading that matters — was this
+    a person disagreeing, or the framework re-deciding itself — is not a count."""
+    location = str(entry.get("location") or "")
+    node_relative = f"{spec_relative}/{location}" if spec_relative != "." else location
+    if not node_relative.endswith(".md"):
+        node_relative += ".md"
+    field = str(entry.get("field") or "")
+    texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why")
+             if entry.get(k) is not None]
+    needle = max(texts, key=len)[:60] if texts else ""
+    found = git(home, "log", "--reverse", "--format=%H%x09%aI", "-S", needle, "--",
+                log_relative) if needle else None
+    if found is None or found.returncode != 0 or not found.stdout.strip():
+        return {"landed": None, "state": UNLOCATED, "value_now": None, "revised_by": [],
+                "days_to_first_revision": None}
+    commit, at = found.stdout.splitlines()[0].split("\t", 1)
+    landed = {"commit": commit, "at": at}
+    shown = git(home, "show", f"{commit}:{node_relative}")
+    if shown is None or shown.returncode != 0:
+        return {"landed": landed, "state": UNREADABLE, "value_now": None, "revised_by": [],
+                "days_to_first_revision": None}
+    held, value_landed = field_in_text(shown.stdout, field)
+    if not held:
+        return {"landed": landed, "state": UNREADABLE, "value_now": None, "revised_by": [],
+                "days_to_first_revision": None}
+    now_path = specification_root / (location if location.endswith(".md") else location + ".md")
+    if not now_path.is_file():
+        return {"landed": landed, "state": NODE_GONE, "value_now": None, "revised_by": [],
+                "days_to_first_revision": None}
+    try:
+        held_now, value_now = field_in_text(now_path.read_text(encoding="utf-8-sig"), field)
+    except OSError:
+        held_now, value_now = False, None
+    revised_by: list[dict] = []
+    later = git(home, "log", "--reverse", "--format=%H%x09%aI%x09%s", f"{commit}..HEAD", "--",
+                node_relative)
+    previous = flat(value_landed)
+    for line in (later.stdout.splitlines() if later and later.returncode == 0 else []):
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
+            continue
+        at_commit = git(home, "show", f"{parts[0]}:{node_relative}")
+        held_then, value_then = field_in_text(at_commit.stdout if at_commit else "", field)
+        current = flat(value_then) if held_then else "<field-missing>"
+        if current != previous:
+            revised_by.append({"commit": parts[0], "at": parts[1], "subject": parts[2],
+                               "route": route_of(parts[2])})
+            previous = current
+    state = STANDS if held_now and flat(value_now) == flat(value_landed) else REVISED
+    if state == REVISED and not revised_by:
+        # The tree differs from every commit: an uncommitted edit stands on the field.
+        revised_by.append({"commit": None, "at": None, "subject": "(uncommitted)",
+                           "route": HAND_EDIT})
+    days = None
+    if revised_by and revised_by[0]["at"]:
+        days = seconds_between(at, revised_by[0]["at"])
+        days = round(days / 86400, 2) if days is not None else None
+    return {"landed": landed, "state": state, "value_now": value_now if held_now else None,
+            "revised_by": revised_by, "days_to_first_revision": days}
+
+
+def outcomes_of(added: list[dict]) -> dict:
+    """The tally beside the entries: how many decisions stand, how many were revised and by which
+    route. Counts and the vocabulary — never a share: what a reader acts on is the list of the
+    revised ones, each with its commit, and the one line that says which routes are a person
+    disagreeing."""
+    states = {state: 0 for state in OUTCOME_STATES}
+    routes = {route: 0 for route in ROUTES}
+    for entry in added:
+        outcome = entry.get("outcome") or {}
+        states[outcome.get("state", UNLOCATED)] += 1
+        if outcome.get("state") == REVISED and outcome.get("revised_by"):
+            routes[outcome["revised_by"][0]["route"]] += 1
+    return {"states": states, "first_revision_by_route": routes,
+            "state_meanings": OUTCOME_STATES, "route_meanings": ROUTES}
 
 
 # -------------------------------------------------------------------- notes and scope

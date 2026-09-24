@@ -24,8 +24,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/3",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match."
+      "const": "siegard-telemetry/4",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was."
     },
     "project_root": {
       "type": "string",
@@ -70,7 +70,7 @@
     "harness": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["transcript_root", "transcript_roots", "readable", "reason", "sessions"],
+      "required": ["transcript_root", "transcript_roots", "readable", "reason", "sessions", "skill_totals"],
       "properties": {
         "transcript_roots": {
           "type": "array",
@@ -85,6 +85,19 @@
         },
         "readable": { "type": "boolean" },
         "reason": { "type": ["string", "null"] },
+        "skill_totals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["turns", "sessions", "usage"],
+            "properties": {
+              "turns": { "type": "integer", "minimum": 0 },
+              "sessions": { "type": "integer", "minimum": 0 },
+              "usage": { "$ref": "#/$defs/usage" }
+            }
+          },
+          "description": "`by_skill` summed across every session in the window: the session side of the cost, by the skill the session was running. Beside `agent_totals`, which is the agent side by type, these are the two halves of what a stretch of work spent — and this is the half a report reading `agent_totals` alone leaves out."
+        },
         "sessions": {
           "type": "array",
           "items": {
@@ -92,7 +105,7 @@
             "additionalProperties": false,
             "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
                          "working_directories", "entries_in_window", "human_turns_in_window",
-                         "usage"],
+                         "usage", "by_skill"],
             "properties": {
               "id": { "type": "string", "minLength": 1 },
               "path": { "type": "string", "minLength": 1 },
@@ -105,6 +118,18 @@
                 "type": "array",
                 "items": { "$ref": "#/$defs/timestamp" },
                 "description": "When a person typed, inside the window — the timestamps of every turn that was a human's message rather than a tool's result. What was typed is not here: a telemetry report counts, it does not quote a conversation."
+              },
+              "by_skill": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": ["turns", "usage"],
+                  "properties": {
+                    "turns": { "type": "integer", "minimum": 0 },
+                    "usage": { "$ref": "#/$defs/usage" }
+                  }
+                },
+                "description": "This session's own turns and tokens by the skill it was running, keyed by the skill's bare name — `none` before the first Skill call. A Skill call names the span from itself to the next; the person's own turns inside that span count toward it, so every figure here is a ceiling per skill and is read as one."
               },
               "usage": {
                 "$ref": "#/$defs/usage",
@@ -270,7 +295,7 @@
     "decisions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["log", "baseline", "total_now", "added"],
+      "required": ["log", "baseline", "total_now", "added", "outcomes"],
       "properties": {
         "log": { "type": ["string", "null"] },
         "baseline": {
@@ -278,7 +303,17 @@
           "description": "What the current log was compared against to find what the window added: the commit that last touched it before `since`, or the reason no such baseline exists — in which case every current entry is listed and the reader knows why."
         },
         "total_now": { "type": ["integer", "null"] },
-        "added": { "type": "array", "items": { "type": "object" } }
+        "added": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "One decision the log gained inside the window, as the log states it, plus `outcome`: `landed` (the commit and instant the entry first appears in the log's history), `state` (stands, revised, node-gone, unreadable, unlocated), `value_now`, `revised_by` (every later commit that changed the located field, each with its subject and its route) and `days_to_first_revision`. The comparison is the field as the landing commit wrote it against the field today — never the log's own `decided` text, which paraphrases."
+          }
+        },
+        "outcomes": {
+          "type": "object",
+          "description": "The tally beside `added`: how many decisions stand as their landing commit wrote them, how many were revised and by which route the first revision came, with the meaning of every state and route beside the counts. Never a share: what a reader acts on is the list of the revised ones in `added[].outcome.revised_by`, each with its commit — and the one distinction that matters, that only `corrective` and `hand-edit` are a person disagreeing while `analyse` is the framework revising itself."
+        }
       }
     },
     "notes": {

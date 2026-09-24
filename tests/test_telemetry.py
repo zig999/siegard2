@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 from jsonschema import Draft202012Validator
 
 REPO = Path(__file__).resolve().parent.parent
@@ -576,3 +577,128 @@ def test_the_receipt_prints_session_tokens_separately_from_agent_tokens(consumer
     done, _ = report_of(consumer)
     assert "sessions: 1 orchestrating, 13 output tokens" in done.stdout
     assert "500 output tokens" in done.stdout, "the agents line should be unaffected"
+
+
+# ------------------------------------------------ decisions followed to their nodes
+
+
+def committed(home: Path, message: str, when: str) -> None:
+    subprocess.run(["git", "-C", str(home), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(home), "-c", "user.email=t@example.com", "-c", "user.name=t",
+                    "commit", "-q", "-m", message, "--date", when], check=True,
+                   env={"GIT_COMMITTER_DATE": when, "PATH": "/usr/bin:/bin",
+                        "HOME": str(home.parent)})
+
+
+def node_at(home: Path, rel: str, attributes: list[dict]) -> None:
+    path = home / "specification" / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("---\n" + yaml.safe_dump({"type": "value-object", "attributes": attributes},
+                                                sort_keys=False) + "---\n## Description\nProse.\n",
+                    encoding="utf-8")
+
+
+def decided(home: Path, location: str, unstated: str, value: str) -> None:
+    log = home / "specification" / "decision-log.md"
+    text = log.read_text(encoding="utf-8")
+    text = text.rstrip("-\n") + f"\n- location: {location}\n  field: attributes\n  unstated: {unstated}\n" \
+                                 f"  decided: {value}\n  why: money is decimal\n---\n"
+    log.write_text(text, encoding="utf-8")
+
+
+def test_a_decision_is_followed_to_the_field_it_filled(consumer):
+    """The log records what the framework decided on the human's behalf; nothing recorded whether
+    anyone read it. The node the decision located records what stands — so the outcome is read
+    there: the field as the landing commit wrote it against the field today, never the log's
+    paraphrase — and every later commit that changed it, with its route."""
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    node_at(home, "domain/x/d.md", [{"name": "code", "type": "string", "required": True}])
+    decided(home, "domain/x/d.md", "whether a code is a string", "code is carried as a string")
+    committed(home, "plan-work: decide total and code", "2026-08-20T11:10:00Z")
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
+    committed(home, "plan-work: corrective increment over the total's type", "2026-08-20T11:30:00Z")
+
+    _, report = report_of(consumer)
+    by = {e["unstated"]: e["outcome"] for e in report["decisions"]["added"]}
+    revised = by["whether the total is decimal"]
+    assert revised["state"] == "revised", revised
+    assert revised["landed"]["commit"] and revised["landed"]["at"].startswith("2026-08-20T11:10")
+    assert [r["route"] for r in revised["revised_by"]] == ["corrective"]
+    assert "corrective increment" in revised["revised_by"][0]["subject"]
+    assert 0 < revised["days_to_first_revision"] < 0.02
+    assert revised["value_now"][0]["type"] == "integer"
+    assert by["whether a code is a string"]["state"] == "stands"
+    # the fixture's own second decision locates a node that never existed
+    assert by["second"]["state"] == "unreadable"
+    tally = report["decisions"]["outcomes"]
+    assert tally["states"]["revised"] == 1 and tally["states"]["stands"] == 1
+    assert tally["first_revision_by_route"]["corrective"] == 1
+    assert "a person routed the correction" in tally["route_meanings"]["corrective"]
+    assert "framework revising the framework" in tally["route_meanings"]["analyse"]
+
+
+def test_a_later_analysis_is_the_framework_revising_itself_not_a_person(consumer):
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    committed(home, "plan-work: decide total", "2026-08-20T11:10:00Z")
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "money", "required": True}])
+    committed(home, "analyse: re-decide the total's type from new material", "2026-08-20T11:40:00Z")
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["unstated"] == "whether the total is decimal")
+    assert outcome["state"] == "revised" and outcome["revised_by"][0]["route"] == "analyse"
+    assert report["decisions"]["outcomes"]["first_revision_by_route"] == {
+        "analyse": 1, "corrective": 0, "framework": 0, "hand-edit": 0}
+
+
+def test_a_commit_no_skill_wrote_is_a_hand_edit(consumer):
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    committed(home, "plan-work: decide total", "2026-08-20T11:10:00Z")
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
+    committed(home, "total must be an integer, finance said so", "2026-08-20T11:50:00Z")
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["unstated"] == "whether the total is decimal")
+    assert outcome["revised_by"][0]["route"] == "hand-edit"
+
+
+# ------------------------------------------- the session's cost by the skill it ran
+
+
+def test_session_turns_are_attributed_to_the_skill_they_ran_under(consumer):
+    """A Skill call names what the session runs from there to the next one; the person's own turns
+    inside the span count toward it, so every figure is a ceiling per skill, said as one. The
+    plugin's own namespace is stripped so `siegard:plan-work` and `plan-work` are one row."""
+    second = consumer["transcripts"] / "s2.jsonl"
+    second.write_text(
+        human("2026-08-20T10:05:00.000Z")
+        + assistant("2026-08-20T10:05:30.000Z", {"type": "text", "text": "reading"}, session="s2",
+                    usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                           "cache_read_input_tokens": 0, "output_tokens": 3})
+        + assistant("2026-08-20T10:06:00.000Z", {"type": "tool_use", "id": "sk-1", "name": "Skill",
+                                                  "input": {"skill": "siegard:plan-work"}},
+                    session="s2", usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                                         "cache_read_input_tokens": 0, "output_tokens": 5})
+        + assistant("2026-08-20T10:07:00.000Z", {"type": "text", "text": "planning"}, session="s2",
+                    usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                           "cache_read_input_tokens": 0, "output_tokens": 7})
+        + assistant("2026-08-20T10:08:00.000Z", {"type": "tool_use", "id": "sk-2", "name": "Skill",
+                                                  "input": {"skill": "review-change"}},
+                    session="s2", usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                                         "cache_read_input_tokens": 0, "output_tokens": 11}),
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    s2 = next(s for s in report["harness"]["sessions"] if s["id"] == "s2")
+    assert s2["by_skill"]["none"]["turns"] == 1 and s2["by_skill"]["none"]["usage"]["output_tokens"] == 3
+    assert s2["by_skill"]["plan-work"]["turns"] == 2
+    assert s2["by_skill"]["plan-work"]["usage"]["output_tokens"] == 12
+    assert s2["by_skill"]["review-change"]["usage"]["output_tokens"] == 11
+    totals = report["harness"]["skill_totals"]
+    assert totals["plan-work"]["sessions"] == 1 and totals["plan-work"]["usage"]["output_tokens"] == 12
+    assert sum(t["usage"]["output_tokens"] for t in totals.values()) == \
+        sum(s["usage"]["output_tokens"] for s in report["harness"]["sessions"])

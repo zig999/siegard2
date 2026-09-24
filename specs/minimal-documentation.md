@@ -97,7 +97,10 @@ enforces mechanically.
   does not keep.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the log after the fact; disagreement is an ordinary
-  change to the artifact, not a ratification protocol.
+  change to the artifact, not a ratification protocol. Where no such review is made, a decision
+  stands until behavior contradicts it and a corrective change revises the artifact — and the share
+  of disclosed decisions later revised, by which route and how long after, is reported by the
+  telemetry, so the trade that removed the stop stays measured rather than assumed.
 - **R11** — The validator enforces the mechanically decidable half: R1's required fields, R2,
   R6's reachability, R8's absent fields, and R9's resolvable locations. R3, R5, R7 and R14 are
   the analysis's judgment; the report is where a reviewer checks them.

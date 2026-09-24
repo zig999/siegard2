@@ -152,7 +152,13 @@ What each section holds:
   and tag it `[recall]`; where you were not, say "not recorded" rather than reconstructing it.
 - **7.** Every entry of `decisions.added`, whole — location, field, unstated, decided, why — and
   the baseline it was diffed against. Where the baseline was unavailable, the section says every
-  current entry is listed and why.
+  current entry is listed and why. Then `decisions.outcomes`, whole, and every entry whose
+  `outcome.state` is not `stands`: its location, the landing commit, each `revised_by` commit
+  with its subject and route, and the days to the first revision. Say, in the record's own
+  words from `route_meanings`, that only `corrective` and `hand-edit` are a person disagreeing
+  and `analyse` is the framework revising itself. No share and no grade: the stop this route
+  replaced was removed on a measurement, and this section is that measurement repeated — the
+  revised ones, named, are what a reader weighs against what stopping would have cost.
 - **8.** Every entry of `notes`, verbatim, keyed by initiative and node, grouped by class.
 - **9.** Totals: `agent_totals.overall`; the same per type; the same per skill phase from §2;
   and per unit of work — divide by `scope`'s task counts and by the records landed in the window,
@@ -160,7 +166,10 @@ What each section holds:
   said as one. **Then the orchestrating sessions**, summed from `harness.sessions[].usage` —
   every session's own turns, never a subagent's — beside `agent_totals.overall`, and their sum:
   what a report reading `agent_totals` alone leaves out is exactly this half, and a window with
-  several delegations from one session has spent roughly as much here as there. A total set
+  several delegations from one session has spent roughly as much here as there. Then
+  `harness.skill_totals`: the session side by the skill it was running, every row a ceiling per
+  skill — the person's own turns inside a skill's span count toward it, and the section says so
+  — so a reader sees which skill's prose the session paid for before anyone shortens any. A total set
   beside an earlier report's is compared only under one contract version: a `siegard-telemetry/2`
   total counted the session's direct spawns alone, and reads as a floor beside a later one.
 - **10.** Judgment, and only here: a step whose cost is out of proportion to what it decided, a
