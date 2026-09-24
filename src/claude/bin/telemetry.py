@@ -398,14 +398,31 @@ def in_window(entry: dict, since: datetime, until: datetime) -> bool:
     return moment is not None and since <= moment <= until
 
 
+HARNESS_BLOCK = re.compile(
+    r"<(task-notification|system-reminder|local-command-caveat|local-command-stdout|command-name|"
+    r"command-message|command-args)\b[^>]*>.*?</\1>", re.S)
+HARNESS_LINE = re.compile(r"^\s*\[SYSTEM NOTIFICATION[^\n]*$", re.M)
+
+
 def is_human_turn(entry: dict) -> bool:
+    """Whether a user-role entry is a person typing. The harness writes in that role too — a
+    background task's completion notice, a local command's echo, a reminder it injects — and
+    counted as they land, those outnumber the person: over one consumer's transcripts, 2,297 of
+    5,497 user-role entries were task notifications and 768 held nothing but harness tags. What
+    remains after those blocks are removed is what a person wrote; a paste a person made stays,
+    because the pasting was theirs."""
     if entry.get("type") != "user" or entry.get("isSidechain"):
         return False
     content = (entry.get("message") or {}).get("content")
     if isinstance(content, str):
-        return bool(content.strip())
-    blocks = blocks_of(entry)
-    return bool(blocks) and not any(b.get("type") == "tool_result" for b in blocks)
+        text = content
+    else:
+        blocks = blocks_of(entry)
+        if not blocks or any(b.get("type") == "tool_result" for b in blocks):
+            return False
+        text = " ".join(text_of(b) for b in blocks if b.get("type") == "text")
+    text = HARNESS_LINE.sub("", HARNESS_BLOCK.sub("", text))
+    return bool(text.strip())
 
 
 def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, list, list]:

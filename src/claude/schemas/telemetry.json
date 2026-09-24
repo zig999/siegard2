@@ -117,7 +117,7 @@
               "human_turns_in_window": {
                 "type": "array",
                 "items": { "$ref": "#/$defs/timestamp" },
-                "description": "When a person typed, inside the window — the timestamps of every turn that was a human's message rather than a tool's result. What was typed is not here: a telemetry report counts, it does not quote a conversation."
+                "description": "When a person typed, inside the window — the timestamps of every turn that was a human's message rather than a tool's result. What was typed is not here: a telemetry report counts, it does not quote a conversation. A user-role entry the harness wrote — a background task's completion notice, a local command's echo, a reminder it injects — is not a person typing and is not counted; a paste a person made is."
               },
               "by_skill": {
                 "type": "object",

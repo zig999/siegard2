@@ -702,3 +702,31 @@ def test_session_turns_are_attributed_to_the_skill_they_ran_under(consumer):
     assert totals["plan-work"]["sessions"] == 1 and totals["plan-work"]["usage"]["output_tokens"] == 12
     assert sum(t["usage"]["output_tokens"] for t in totals.values()) == \
         sum(s["usage"]["output_tokens"] for s in report["harness"]["sessions"])
+
+
+# ----------------------------------------------- what counts as a person typing
+
+
+def test_a_user_role_entry_the_harness_wrote_is_not_a_human_turn(consumer):
+    """A background task's notice, a local command's echo and an injected reminder all land in
+    the user role. Counted as they land, they outnumber the person; a paste a person made stays,
+    because the pasting was theirs."""
+    (consumer["transcripts"] / "s3.jsonl").write_text(
+        human("2026-08-20T10:10:00.000Z", "<task-notification><task-id>x</task-id><status>done"
+                                          "</status></task-notification>")
+        + human("2026-08-20T10:11:00.000Z", "[SYSTEM NOTIFICATION - NOT USER INPUT]\n"
+                                            "<task-notification><task-id>y</task-id></task-notification>")
+        + human("2026-08-20T10:12:00.000Z", "<local-command-caveat>Caveat.</local-command-caveat>"
+                                            "<command-name>/model</command-name>"
+                                            "<command-message>model</command-message>"
+                                            "<local-command-stdout>Set model</local-command-stdout>")
+        + human("2026-08-20T10:13:00.000Z", "<system-reminder>ignore this</system-reminder>")
+        + human("2026-08-20T10:14:00.000Z", "<pasted_content id=\"1\">a document</pasted_content>")
+        + human("2026-08-20T10:15:00.000Z", "<system-reminder>context</system-reminder>\nand my question")
+        + assistant("2026-08-20T10:16:00.000Z", {"type": "text", "text": "ok"}, session="s3",
+                    usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                           "cache_read_input_tokens": 0, "output_tokens": 1}),
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    s3 = next(s for s in report["harness"]["sessions"] if s["id"] == "s3")
+    assert s3["human_turns_in_window"] == ["2026-08-20T10:14:00.000Z", "2026-08-20T10:15:00.000Z"]
