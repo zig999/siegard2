@@ -273,8 +273,19 @@ and leave the other. `git diff` over the two is then the history of the delivery
 
 One narrower re-delivery exists, and only the human names it — stated in the invocation, never
 inferred from the tree: **the implementation stands, and only the proof must answer a tree that
-moved.** The plain case is a sibling task's legitimate delivery falsifying an assertion that
-claimed more than this task's criteria establish — totality over ground the two tasks share.
+moved.** Two plain cases. A sibling task's legitimate delivery falsifying an assertion that
+claimed more than this task's criteria establish — totality over ground the two tasks share. And
+a certification an auditor refused while naming what would close it: a reconciliation or a
+review judged a node this task encodes as decided by reading, with `remainder: testable` and the
+assertion in `remainder_why`, and `trace.py --owed` lists it as the work a test closes. For that
+case the invocation states three things the record holds — the node's identity, the assertion
+verbatim, and the proof file(s) the record named — and they reach the test author as its
+`remainder` line below: the assertion is the obligation the new test fails for, and the test
+names the node under `demonstrates`, so the next review's staging carries the claim to
+certification without anyone composing it. The proof's `## Notes` names the record that left the
+remainder. Nothing here decides that a remainder is worth a test — `--owed` prints the count of
+bindings a reading still decides on the file, and whether closing this one frees a judge is what
+a person weighs.
 Steps 3 and 4 do not run: the implementation record is not touched, and the proof is rewritten
 whole — never amended — by a fresh test author reading the tree as it stands now, with the suite
 running and captured as ever. The pin the proof restamps is valid precisely because the
@@ -527,6 +538,10 @@ nodes:                 <the identity of each specification node the task impleme
 standard:              <absolute path — omit this line where none was named>
 underdetermined:       <every `UNDERDETERMINED, from the specification —` entry of the task's
                         `## Notes`, quoted whole — omit where the task carries none>
+remainder:             <the node's identity, the assertion an auditor named as what would close
+                        its certification, verbatim, and the proof file(s) the record named —
+                        omit unless this is the proof-only re-delivery over a refused
+                        certification>
 reproduction:          <how the failure is observed — omit unless the task's criteria name a
                         failure that must stop happening>
 

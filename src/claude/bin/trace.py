@@ -1664,8 +1664,11 @@ def owed(target: Path, show_all: bool = False) -> int:
                       + ("; closing this one frees its judge" if reading_n == 1 else ""))
         if not show_all and len(rows) > RANK_HELD_BACK:
             print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
-        print("  each is closed by writing the test named and offering it to `/reconcile` "
-              "under `--certify`")
+        print("  each is closed by writing the test named — the proof-only re-delivery of "
+              "/implement-task over the task whose implementation record lists the file, handed "
+              "the node, this assertion and the proof file — and the next review's staging "
+              "carries the new test's claim to certification; /reconcile under `--certify` is "
+              "the route where no review will run")
     if both_ways:
         print(f"\n{len(both_ways)} node(s) with a testable remainder in one record and a "
               f"certification in another are not listed above, and the trace holds no live "

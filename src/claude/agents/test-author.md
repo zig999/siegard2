@@ -37,6 +37,13 @@ stop. You need:
 5. **the delivery-node contract's `proof` slice** — `deliver.py --contract proof`'s output,
    pasted whole rather than a path to open. Read it before writing a single field.
 
+Optionally, **a remainder** — a node's identity, the assertion an auditor named as what would
+close that node's certification, verbatim, and the proof file(s) the record named. The assertion
+is an obligation exactly as a criterion is: the test you write is the one that fails when it stops
+holding, whole, in the file the record named, and it names the node under `demonstrates`. You do
+not widen it — an auditor named the one assertion the offered tests left unexercised, and a
+second one is a second remainder for a second reading to name.
+
 Optionally, **the project's standard** — the path to the rules this project set for itself. Where
 one is given, read the rules whose scope reaches the test files you write and follow
 them: how a test is arranged, how it is named, what a stand-in may replace, where the file sits,

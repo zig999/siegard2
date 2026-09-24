@@ -59,11 +59,23 @@ stop. You need:
   act on. A note that speaks of a specification node names it by identity, the way the
   candidates were named to you: what is named can be held to the epic's claim, and a
   paraphrase cannot. The caller and the reviewer decide; you report.
-- **Classify every note, and no note goes without a class.** Five classes, decided in this
-  order by four questions; the first answered yes decides, and a note answering none is
-  `advisory`. The order is the whole of the rule, because the species overlap — a
-  contradiction is trivially underdetermined too, and an unreached clause often lets a wrong
-  implementation pass — so the first yes decides, never the best fit.
+- **Classify every note, and no note goes without a class.** Six classes. One question is
+  about the skeleton's form and is asked first, of every criterion; five are about the
+  specification and are decided in order by four questions — the first answered yes decides,
+  and a note answering none is `advisory`. The order is the whole of the rule, because the
+  species overlap — a contradiction is trivially underdetermined too, and an unreached clause
+  often lets a wrong implementation pass — so the first yes decides, never the best fit.
+
+  **`compound`** — does a criterion state two conditions, such that a test of it could fail for
+  more than one reason? "Submitting a valid order returns its number and an empty order is
+  refused" is two criteria wearing one sentence. Return the criterion verbatim in `criterion`
+  and each condition standalone in `conditions`, and ask nothing else of that criterion: what it
+  states about the specification will be asked of the criteria it becomes. This is asked first
+  because the answer changes the skeleton — the caller sends it back to be re-cut, once — and
+  every other note on a criterion that is about to be rewritten would be a note about text
+  that will not exist. A criterion naming one behavior and its refusal is not compound: the
+  refusal is the same condition read from the other side. A criterion naming two behaviors
+  is.
 
   **`blocking`** — does a node *state* something the objective, or a criterion, contradicts or
   exceeds as written? A contradicted value, or a guarantee stronger than the specification
@@ -120,7 +132,11 @@ implements:                    # every candidate that governs; omit the key only
   - <identity>
 notes:                        # omit when empty; where they land is the caller's rule
   - note: <divergence or out-of-candidates need, stated so the caller can act>
-    class: <blocking | unstated | underdetermined | remainder | advisory>
+    class: <compound | blocking | unstated | underdetermined | remainder | advisory>
+    criterion: <the criterion verbatim>
+                             # required when class is compound, forbidden otherwise
+    conditions: [<each condition the criterion states, standalone>]
+                             # required when class is compound, forbidden otherwise
     fact: <the fact no node states, phrased standalone — no reference to this task or its cut>
                              # required when class is unstated, forbidden otherwise
     passes: <the implementation that satisfies every criterion as written and the specification refuses>

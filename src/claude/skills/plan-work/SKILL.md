@@ -402,7 +402,9 @@ specification root, the index that says which node a decided fact landed in, so 
 one rule replacing another is settled by the entry that records the replacement rather than by
 which node reads closest. The binder rereads the candidate files
 fresh and returns the task's `implements`; a divergence between the task and the specification
-— including a fact the specification does not state at all — comes back as a classified note.
+— including a fact the specification does not state at all — comes back as a classified note,
+and a criterion that states two conditions comes back as a `compound` note about the skeleton's
+own form, asked before anything about the specification is asked of that criterion.
 
 **Spawn them together, not one after another.** No binder reads another's return, none decides
 what the next one is given, and each arrives with no memory of how the tasks were cut — that
@@ -485,6 +487,7 @@ and not reopened here; what it does here is this:
 
 | class | the note opens | what it does to the task | what travels with it |
 |---|---|---|---|
+| `compound` | never written to a task | sends the skeleton back to the decomposer to be re-cut, once | the criterion and the conditions the binder named |
 | `blocking` | `BLOCKING, from the specification —` | stops it being written until settled | the note, where the scope is what it blocks |
 | `underdetermined` | `UNDERDETERMINED, from the specification —` | nothing; it re-cuts nothing | the note, and the implementation named in `passes` |
 | `remainder` | `REMAINDER, from the specification —` | nothing; it re-cuts nothing | the note, and the destination named in `belongs` |
@@ -494,8 +497,22 @@ Every opening is exact text and not a style. Two of the four are read by somethi
 holds the blocking and underdetermined openings as constants and refuses a task persisting an
 `UNSTATED` one, `/implement-task` collects underdetermined entries by that opening and hands them
 to whoever writes the tests, and `/siegard-telemetry` counts both. `REMAINDER` and `ADVISORY` are
-read by no validator today and are still written exactly, because the four classes are one
-vocabulary and a note whose class a reader cannot see by its first words is a note nobody sorts.
+read by no validator today and are still written exactly, because the four persisted classes
+are one vocabulary and a note whose class a reader cannot see by its first words is a note
+nobody sorts.
+
+A `compound` note is never persisted, because it is answered before the task exists as a file.
+The skeleton goes back to the decomposer with the note — the criterion verbatim and the
+conditions the binder read in it — to be re-cut into criteria of one condition each, or into two
+skeletons where the conditions are two outcomes; then it runs through this step again, and the
+notes the binder returns on the re-cut criteria are the ones that land. Once: a `compound` note
+returned over a skeleton this invocation already re-cut is written into the report with both
+readings, and the skeleton proceeds as the decomposer last left it — this skill rewrites no
+criterion itself, because the decomposer is the author of criteria and a criterion this skill
+reworded would be one no judge cut. The decomposer already states the rule the note enforces;
+the note exists because a rule a prompt states and nothing reads is a rule that is measured to
+be skipped, and a compound criterion that reaches a delivery is read back later, by the coverage
+audit, as a criterion only half proven.
 
 Settling a blocking note takes one of two routes, and the skeleton's `rationale` says which.
 Where the blocked statement was the decomposer's decision — the skeleton carries `rationale` over

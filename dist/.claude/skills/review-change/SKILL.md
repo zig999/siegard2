@@ -416,7 +416,10 @@ runs next.
   node as well; the fold writes both halves and says in the record's notes why any certification
   did not land — and, where the auditor answered short of `covered`, carries onto the node's
   entry whether the remainder is one a test could assert, so that `trace.py --owed` lists it as
-  the work a test closes. This pass is not the coverage pass and does not replace it: that one asks whether
+  the work a test closes — work whose route is the proof-only re-delivery of `/implement-task`
+  over the task whose implementation record lists the file, handed the node, the assertion and
+  the proof file; the report names that route and fills nothing in, because which remainders are
+  worth a test is not this pass's to decide. This pass is not the coverage pass and does not replace it: that one asks whether
   the tests prove the task's criteria, this one whether one test proves one node's fact, and a
   criterion and a node are two things.
 - **failures** — spawn a `siegard:failure-diagnostician` subagent, its judgment at

@@ -490,7 +490,11 @@ what was bound and what was not; which nodes are decided by a test from here and
 certifications did not hold, in the auditor's own words — and for each of those whether the
 remainder is testable, with the assertion the auditor named beside it and the file's own count of
 bindings a reading decides, because a node a test closes frees a judge only once every binding on
-its file is decided by a step or a test; and the next invocation where there is one.
+its file is decided by a step or a test — and the route that closes it, named and never filled
+in: the proof-only re-delivery of `/implement-task` over the task whose implementation record
+lists the file, handed the node, the assertion and the proof file, after which the next review's
+staging carries the new test's claim to certification. Which remainders are worth a test is a
+person's; and the next invocation where there is one.
 
 Where a node the judgment did not clear carries `collateral`, say so apart from the contested
 ones: nothing was found against that node's own substance — it shares a file with a finding that
