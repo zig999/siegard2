@@ -225,8 +225,8 @@ holds the file to what a binder read, never the skeleton to its first draft.
 **The correction gets its own epic, never an existing one.** An epic's `covers` is the candidate
 set of every task under it, so growing a delivered epic's claim for one correction re-opens every
 task that epic already holds; a new epic claims exactly what this correction answers to and
-re-judges nothing. Seed its claim mechanically rather than by reading — the human named the file,
-and the trace already knows what that file answers to:
+re-judges nothing. What it answers to is the binder's to say, and the file seeds what the binder
+reads — the human named the file, and the trace already knows what that file answers to:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <file> [<file> ...]
@@ -234,10 +234,15 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <fi
 
 A file the trace does not know is a stop, and the report names it: a correction to code no task
 ever bound is not a corrective increment, because there is no claim to correct against. Close
-what came back the way step 1 closes any impact set, write the epic covering it, and spawn the
-binder against it exactly as step 4 does. Afterwards the claim is reconciled to what the binder
-returned: a covered node the task does not implement is declared in `uncovered` with a why,
-because an epic answers for everything it claims and the validator refuses one that does not.
+what came back the way step 1 closes any impact set; that closed set is the binder's candidate set,
+handed as the candidates' file paths exactly as step 4 hands them, and in place of the epic's
+`covers` less its `uncovered`, because the epic is not written yet. Write the epic after the
+binder returns: its `covers` is the `implements` the binder returned plus any node the human named
+for this correction, and nothing else — a node the file encodes and the correction does not touch
+is not claimed, so it owes no declaration. `uncovered` holds only a node the epic claims that the
+human excluded from this correction, with the human's own why; a why composed to fill the field
+says nothing the next reader can act on. The validator refuses an epic claiming a node its task
+does not implement and `uncovered` does not declare.
 
 Where it lands follows the rule the slug already states. A live work root takes the task as any
 other increment does. A work root holding `closure.md` is closed and takes nothing — the
@@ -245,11 +250,11 @@ correction names a new slug, and the delivered code returns as what the specific
 it, not as a reference into a plan that is history.
 
 What this path does not do is end anywhere different. The task goes to `/implement-task` like
-every other task: two producers, the standard applied, the run captured, and the trace bound at
-step 8 — which is the whole reason the correction comes back through here rather than being typed
-into the file. Say in the report that this was a corrective increment and which steps did not run,
-and carry the `--encodes` output the epic was cut from verbatim, so a reader never mistakes a plan
-of one task for a scope that decomposed to one.
+every other task: two producers, the standard applied, the run captured, and the trace bound at step
+8 — which is the whole reason the correction comes back through here rather than being typed into
+the file. Say in the report that this was a corrective increment and which steps did not run, and
+carry the `--encodes` output the binder's candidates were seeded from verbatim, so a reader never
+mistakes a plan of one task for a scope that decomposed to one.
 
 ### 1. Situate
 

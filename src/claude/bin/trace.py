@@ -445,6 +445,12 @@ CONVERGENCE = {
                "the work has reached, and this is the part it has not",
 }
 DECIDED_BY_TEST = "test"
+JUDGED = "judged"
+# The reason a review writes on a pair it omits. `omitted_problems` reads it back to know the
+# omission rests on a judgment and not only on current digests, so it is matched, never paraphrased.
+CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
+                       "this pair over the file's content and the node's text as both stand, "
+                       "and no finding stands open against it")
 RECORD_VERSION = "siegard-reconcile/5"
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
@@ -2389,16 +2395,21 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     corpus — nothing is chosen, so nothing here is a judgment.
 
     A review stages the files a delivery just wrote, and two things differ from a reconciliation
-    over a hand edit. Nothing is omitted: a delivery's own bind stamped its nodes over these exact
-    bytes, so the omission guard would hand the review's judge every binding except the ones the
-    review exists to re-read. And the candidate tier stays, unlike an audit's, because here a
-    misattribution reported as a gap is a false finding against a collateral node — a binding the
-    delivery never claimed and its record never justified — and a false finding blocks that node's
-    rebind. The nodes given as `also` are the plan's: every file's judge reads them beside the
-    trace's own set and answers for them, so a fact the delivery wrote against a node its record
-    did not bind is still read against that node, but they are never bound from here — a binding
-    the review wrote would be a claim no implementation record made. A file the trace binds nothing
-    to is still handed a judge over them alone, where it would otherwise be reported and skipped.
+    over a hand edit. The omission narrows to what a judgment read: a delivery's own bind stamped
+    its nodes over these exact bytes without anyone reading them against the node, so current
+    digests alone would hand the review's judge every binding except the ones the review exists to
+    re-read. A pair
+    is omitted only where its file entry carries `judged` — a reconciliation's judgment cleared it
+    at these bytes — its node's text is unchanged, no finding stands against it in the corpus, and
+    its node is not one of the delivery's own under `also`. And the candidate tier stays, unlike an
+    audit's, because here a misattribution reported as a gap is a false finding against a collateral
+    node — a binding the delivery never claimed and its record never justified — and a false finding
+    blocks that node's rebind. The nodes given as `also` are the plan's: every file's judge reads
+    them beside the trace's own set and answers for them, so a fact the delivery wrote against a
+    node its record did not bind is still read against that node, but they are never bound from here
+    — a binding the review wrote would be a claim no implementation record made. A file the trace
+    binds nothing to is still handed a judge over them alone, where it would otherwise be reported
+    and skipped.
 
     The workspace is a reading copy and never a home. The packs restate node text so a judge
     reads its whole set in one act instead of one call per node, and they are trustworthy for
@@ -2461,11 +2472,14 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
 
     index: dict[str, list[tuple[str, str]]] = {}
     bound_digest: dict[str, str] = {}
+    judged_pairs: set[tuple[str, str]] = set()
     for entry in declared.get("bindings") or []:
         bound_digest[entry["node"]] = entry.get("digest")
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 index.setdefault(held["path"], []).append((entry["node"], held["digest"]))
+                if held.get(JUDGED) is True:
+                    judged_pairs.add((entry["node"], held["path"]))
 
     # A certification asks the staging to hand a node and its offered tests to the auditor. It is
     # refused before anything is written where the ask cannot be judged: a node no named file
@@ -2578,7 +2592,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             #
             # An audit is the deliberate re-judgment of exactly the pairs this omission
             # skips: a binding that never drifts is a claim nothing else ever re-examines.
-            # A review re-reads what a delivery just stamped, which is the same set.
+            # A review re-reads what a delivery just stamped, which is the same set; the one
+            # pair it may skip is the one a judgment already read, and the branch below is it.
             # A node being certified is read whatever its digest says: the certification rides
             # a fresh reading of the node against the file, and an omission would leave it none.
             if not (audit or review) and pinned == current[stored] \
@@ -2591,6 +2606,21 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                                           + (" — the corpus answers it both ways, and a clearance "
                                              "closes a finding here as it does in `--owed`"
                                              if (node_id, stored) in both_ways else "")})
+                held_current = True
+                continue
+            # A review omits only what a judgment already read at these bytes. A delivery's bind
+            # stamps what it wrote, not what anyone read against the node, so a pair a delivery
+            # or a hand stamped goes to the judge; and the delivery's own nodes, named by
+            # `--node`, are read on every file whatever the trace says about them. A pair the
+            # corpus answers both ways is read too: `judged` records the clearance, and a finding
+            # standing beside it is a judgment the clearance does not settle.
+            if review and not audit and pinned == current[stored] \
+                    and bound_digest.get(node_id) == nodes[node_id]["digest"] \
+                    and (node_id, stored) in judged_pairs \
+                    and (node_id, stored) not in owed_pairs \
+                    and (node_id, stored) not in both_ways \
+                    and node_id not in certify_nodes and node_id not in also:
+                omitted.append({"node": node_id, "file": given, "reason": CLEARED_BY_JUDGMENT})
                 held_current = True
                 continue
             # After the omission guard and never before it: a pair nothing has to re-decide needs
@@ -2748,8 +2778,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     if audit:
         shape = "staged as an audit — no pair omitted, every standing claim goes to a judge"
     elif review:
-        shape = (f"staged by a review — no pair omitted, and {len(also)} plan node(s) read on "
-                 f"every file without being bound")
+        shape = (f"staged by a review — {len(omitted)} pair(s) omitted as cleared by a judgment "
+                 f"at these bytes, and {len(also)} plan node(s) read on every file without being "
+                 f"bound")
     else:
         shape = (f"{len(omitted)} pair(s) omittable — the binding is current and nothing is "
                  f"owed on them")
@@ -3336,9 +3367,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                      "for these files was re-judged deliberately, standing claims included.")
     if manifest.get("review"):
         read_also = manifest.get("also") or []
-        notes.append("Staged by a review over files a delivery wrote: no pair was omitted, so "
-                     "the delivery's own claims and every other binding of these files were "
-                     "judged alike"
+        notes.append("Staged by a review over files a delivery wrote: every pair a delivery "
+                     "or a hand stamped was judged, and a pair was omitted only where a "
+                     "reconciliation's judgment had cleared it at these very bytes"
                      + (f"; the plan's node(s) {', '.join(read_also)} were read on every file "
                         f"and answered for, and bound from nowhere here — a binding this record "
                         f"writes is one the trace already held."
@@ -3502,12 +3533,15 @@ def omitted_problems(record: Path, declared: dict, home: Path,
         return []
 
     bound: dict[tuple[str, str], str] = {}
+    judged_pairs: set[tuple[str, str]] = set()
     node_pin: dict[str, str] = {}
     for entry in declared.get("bindings") or []:
         node_pin[entry.get("node")] = entry.get("digest")
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 bound[(entry.get("node"), held["path"])] = held.get("digest")
+                if held.get(JUDGED) is True:
+                    judged_pairs.add((entry.get("node"), held["path"]))
 
     owed_pairs = open_owed(home)
     problems = []
@@ -3539,6 +3573,12 @@ def omitted_problems(record: Path, declared: dict, home: Path,
             problems.append(f"pairs_omitted: {node_id} over {stored} carries an open finding in "
                             f"the reconciliation corpus; a bind already covered its only symptom "
                             f"once, and omitting it here would do it again")
+            continue
+        if entry.get("reason") == CLEARED_BY_JUDGMENT and (node_id, stored) not in judged_pairs:
+            problems.append(f"pairs_omitted: {node_id} over {stored} was omitted as cleared by a "
+                            f"judgment, and the binding no longer says a judgment cleared it — a "
+                            f"bind since stamped it from a delivery or by hand; the pair was owed "
+                            f"a judge")
     return sorted(problems)
 
 
@@ -3619,6 +3659,11 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     certifications = certified_in(record)
     declared_steps = registry_steps(home, offset_of(target, home))
     refusals, folded = [], []
+    # A reconciliation's bind stamps what a judgment read, and says so per file: `judged` is what
+    # lets a later review borrow that reading instead of buying it twice. An implementation
+    # record's bind stamps what a delivery wrote, which nobody has read against the node yet, so
+    # its entries carry no `judged` — and replacing an entry by path is what clears one.
+    judged_here = as_reconciliation(record) is not None
     if workspace is not None:
         stale_since_staging, cannot = staged_problems(workspace, target, nodes)
         if cannot is not None:
@@ -3652,6 +3697,8 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
             elif not absent:
                 certification = {"step": named_step, "proof": proof}
         if not missing and (node_id not in certifications or certification is not None):
+            if judged_here:
+                traced = [{**entry, JUDGED: True} for entry in traced]
             folded.append((node_id, traced, certification))
 
     declared, refusal = opened(target, spec_root, home)

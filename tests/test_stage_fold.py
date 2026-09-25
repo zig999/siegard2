@@ -1310,11 +1310,12 @@ def review_staged(consumer: Path, *extra, slug: str = "first-review", files=None
     return done, workspace
 
 
-def test_a_review_stages_every_pair_and_keeps_the_candidate_tier(consumer):
-    """A delivery's own bind stamped its nodes over these exact bytes, so the omission guard would
-    hand a review's judge every binding except the ones the review exists to re-read. And a
-    misattribution here is a false finding against a collateral node the delivery never claimed,
-    so the tier an audit drops stays."""
+def test_a_review_stages_every_pair_nobody_judged_and_keeps_the_candidate_tier(consumer):
+    """A delivery's own bind stamped its nodes over these exact bytes without anyone reading them,
+    so an omission by current digests alone would hand a review's judge every binding except the
+    ones the review exists to re-read; here every pair was stamped by hand, and none is omitted.
+    And a misattribution here is a false finding against a collateral node the delivery never
+    claimed, so the tier an audit drops stays."""
     done, workspace = review_staged(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     manifest = manifest_of(workspace)
@@ -1424,6 +1425,172 @@ def test_review_and_node_are_modes_of_stage_and_exclude_audit(consumer):
     done = run("--stage", consumer / "backend", consumer / "specs", "both",
                consumer / "ws-both", FILE, "--review", "--audit")
     assert done.returncode == 2 and "two stagings" in done.stderr
+
+
+# ------------------------------------------------------ judged, and the review's omission
+
+
+def trace_of(consumer: Path) -> dict:
+    return json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+
+
+def entry_of(consumer: Path, node: str, given: str) -> dict:
+    stored = f"backend/{given}"
+    binding = next(b for b in trace_of(consumer)["bindings"] if b["node"] == node)
+    return next(f for f in binding["files"] if f["path"] == stored)
+
+
+def reconciled(consumer: Path) -> None:
+    """One ordinary reconciliation, bound: FILE's two pairs are judged and stamped from its
+    record, and (NODE, SECOND) is omitted as current and keeps the stamp the hand bind wrote."""
+    done, _ = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    done = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def implementation_record(consumer: Path, node: str, given: str) -> Path:
+    path = consumer / "delivery" / "implementation" / "checkout" / "record.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    front = yaml.safe_dump({
+        "title": "Record a placed order", "summary": "What this delivery wrote.",
+        "task": "sha256:" + "0" * 64,
+        "files": [{"path": given, "effect": "persists the order"}],
+        "criteria": [{"criterion": "It works.", "met": True, "how": "it does"}],
+        "nodes": [{"node": node, "encoded_at": [given], "how": "place() persists it"}],
+    }, sort_keys=False)
+    path.write_text(f"---\n{front}---\n## What it is\nProse.\n\n## Notes\nNone.\n",
+                    encoding="utf-8")
+    return path
+
+
+def omitted_pairs(workspace: Path) -> list[tuple[str, str]]:
+    return [(entry["node"], entry["file"]) for entry in manifest_of(workspace)["omitted"]]
+
+
+def test_a_hand_bind_marks_no_pair_judged(consumer):
+    for binding in trace_of(consumer)["bindings"]:
+        assert all("judged" not in held for held in binding["files"])
+    reconciled(consumer)
+    assert run("--bind", consumer / "backend", consumer / "specs", NODE, FILE).returncode == 0
+    assert "judged" not in entry_of(consumer, NODE, FILE), \
+        "a hand stamp is nobody's reading, and it replaces the entry a judgment wrote"
+    assert entry_of(consumer, OTHER, FILE)["judged"] is True
+
+
+def test_a_reconciliations_bind_marks_every_pair_it_stamped_as_judged(consumer):
+    reconciled(consumer)
+    assert entry_of(consumer, NODE, FILE)["judged"] is True
+    assert entry_of(consumer, OTHER, FILE)["judged"] is True
+    assert "judged" not in entry_of(consumer, NODE, SECOND), \
+        "an omitted pair is not re-stamped, so it keeps what its last bind said"
+    assert run("--check", consumer / "backend").returncode == 0
+
+
+def test_an_implementation_records_bind_clears_judged(consumer):
+    reconciled(consumer)
+    done = run("--bind-record", consumer / "backend", consumer / "specs",
+               implementation_record(consumer, NODE, FILE))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "judged" not in entry_of(consumer, NODE, FILE)
+    assert entry_of(consumer, OTHER, FILE)["judged"] is True
+
+
+def test_a_review_omits_a_pair_a_judgment_cleared_at_these_bytes(consumer):
+    reconciled(consumer)
+    done, workspace = review_staged(consumer, slug="after-round")
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert omitted_pairs(workspace) == [(NODE, FILE), (OTHER, FILE)]
+    assert all(entry["reason"] == trace.CLEARED_BY_JUDGMENT for entry in manifest["omitted"])
+    assert "cleared by a judgment at these bytes" in trace.CLEARED_BY_JUDGMENT
+    assert manifest["all_current"] == [FILE], "a file whose every pair is omitted has no judge"
+    assert manifest["files"] == {SECOND: {"nodes": [NODE], "also": [],
+                                          "pack": manifest["files"][SECOND]["pack"]}}, \
+        "the pair a hand stamped carries no judged, and goes to the judge"
+    assert "2 pair(s) omitted as cleared by a judgment" in done.stdout
+
+    save_return(consumer, "after-round", SECOND, clean_return([NODE]))
+    record = consumer / "siegard-reconcile" / "after-round.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert [(e["node"], e["file"]) for e in front["pairs_omitted"]] == [(NODE, FILE),
+                                                                         (OTHER, FILE)]
+    done = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert entry_of(consumer, NODE, SECOND)["judged"] is True
+
+
+def test_a_review_reads_the_deliverys_own_nodes_whatever_judged_says(consumer):
+    reconciled(consumer)
+    done, workspace = review_staged(consumer, "--node", NODE, slug="own-node")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert omitted_pairs(workspace) == [(OTHER, FILE)]
+    assert manifest_of(workspace)["files"][FILE]["nodes"] == [NODE]
+
+
+def test_a_review_omits_no_judged_pair_whose_file_moved(consumer):
+    reconciled(consumer)
+    with (consumer / "backend" / FILE).open("a", encoding="utf-8") as moved:
+        moved.write("// the delivery's edit\n")
+    _, workspace = review_staged(consumer, slug="file-moved")
+    assert omitted_pairs(workspace) == []
+    assert manifest_of(workspace)["files"][FILE]["nodes"] == [NODE, OTHER]
+
+
+def test_a_review_omits_no_judged_pair_whose_node_moved(consumer):
+    reconciled(consumer)
+    node_file = consumer / "specs" / f"{OTHER}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8")
+                         + "\n### A rule added after the round\n", encoding="utf-8")
+    _, workspace = review_staged(consumer, slug="node-moved")
+    assert omitted_pairs(workspace) == [(NODE, FILE)]
+    assert manifest_of(workspace)["files"][FILE]["nodes"] == [OTHER]
+
+
+def test_a_review_omits_no_judged_pair_a_finding_stands_against(consumer):
+    reconciled(consumer)
+    declared = trace_of(consumer)
+    for binding in declared["bindings"]:
+        for held in binding["files"]:
+            if binding["node"] == NODE and held["path"] == f"backend/{SECOND}":
+                held["judged"] = True
+    (consumer / "siegard-trace.json").write_text(json.dumps(declared, indent=2) + "\n",
+                                                 encoding="utf-8")
+    front = {"contract_version": "siegard-reconcile/5", "title": "Found", "summary": "s.",
+             "target": "backend", "files": [{"path": SECOND, "change": "judged"}],
+             "nodes": [{"node": NODE, "conforms": False, "how": "h", "observed_at": [SECOND]}]}
+    (consumer / "siegard-reconcile" / "found.md").write_text(
+        f"---\n{yaml.safe_dump(front, sort_keys=False)}---\n", encoding="utf-8")
+    _, workspace = review_staged(consumer, slug="owed")
+    assert (NODE, SECOND) not in omitted_pairs(workspace)
+    assert manifest_of(workspace)["files"][SECOND]["nodes"] == [NODE]
+
+
+def test_a_review_record_whose_omitted_pair_lost_judged_is_refused_at_bind(consumer):
+    reconciled(consumer)
+    _, workspace = review_staged(consumer, slug="lost-judged")
+    save_return(consumer, "lost-judged", SECOND, clean_return([NODE]))
+    record = consumer / "siegard-reconcile" / "lost-judged.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run("--bind", consumer / "backend", consumer / "specs", NODE, FILE).returncode == 0
+    done = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "no longer says a judgment cleared it" in done.stdout
+    assert "nothing was bound" in done.stdout
+
+
+def test_an_ordinary_staging_still_omits_a_current_pair_nobody_judged(consumer):
+    """The narrowing is the review's alone: an ordinary reconciliation borrows the last stamp
+    whoever wrote it, judged or not."""
+    reconciled(consumer)
+    _, workspace = staged(consumer, slug="again")
+    assert omitted_pairs(workspace) == [(NODE, SECOND), (NODE, FILE), (OTHER, FILE)]
 
 
 # ------------------------------------------------------ --review --demonstrated

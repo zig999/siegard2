@@ -37,7 +37,7 @@
         "files": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/tracedFile" },
+          "items": { "$ref": "#/$defs/boundFile" },
           "description": "Every file this node's binding produced or governs, each pinned at the digest it held when this entry was last written. Held whatever decides the binding: where the node's fact lives is a question the source answers and a test cannot, and `--encodes` reads it from here."
         },
         "decided_by": {
@@ -78,6 +78,19 @@
         "digest": {
           "$ref": "#/$defs/pin",
           "description": "The file's content digest as `bin/trace.py --bind` read it. Diverging from what the file computes to now says the code changed without a rebind — an edit this trace does not yet know about, not necessarily a wrong one."
+        }
+      }
+    },
+    "boundFile": {
+      "type": "object",
+      "required": ["path", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "$ref": "#/$defs/tracedFile/properties/path" },
+        "digest": { "$ref": "#/$defs/tracedFile/properties/digest" },
+        "judged": {
+          "const": true,
+          "description": "Present only where a reconciliation's judgment cleared this pair at this digest: `--bind-record` writes it when the record it binds from is a reconciliation. Absent means the pair was stamped by a delivery or by hand and has not been read against the node since. A review's staging omits a pair only where it is present, and a later bind of the pair from an implementation record or by hand writes the entry without it."
         }
       }
     },

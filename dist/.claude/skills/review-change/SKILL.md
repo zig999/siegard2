@@ -295,9 +295,15 @@ per file — the full text of every node that file's judge reads, each entry nam
 and digest — writes the **candidate index** for the whole batch, and creates
 `siegard-reconcile/<review-name>.returns/` empty beside the record's own reserved path. `--review`
 is what makes this a review's staging and not a reconciliation's, in two ways the manifest records.
-**Nothing is omitted**: the delivery's own bind stamped its nodes over these exact bytes, so the
-guard that skips a pair whose binding is current would hand each judge every binding except the
-ones this pass exists to re-read. And **the plan's nodes ride along on every file** — each
+**Only what a judgment already read is omitted**: a pair is left out when a reconciliation's
+judgment cleared it at the very bytes on disk — its file entry in the trace carries `judged` — the
+node's text is unchanged since, and no finding stands against it in the corpus, because a second
+reading of unchanged input over the same sentence adds no confidence. Every pair a delivery or a
+hand stamped goes to a judge, since that bind recorded what was written and nobody has read it
+against the node, and so does every pair of the delivery's own nodes named under `--node`, whatever
+the trace says of them. `--bind-record` rechecks each omission when it binds and refuses the record
+where the pair has lost `judged` since the staging. And **the plan's nodes ride along on every
+file** — each
 `--node` is the identity of a node the tasks under review implement, exactly as `plan.json` names
 them — read by every judge and answered for in every return, so a fact the delivery wrote against a
 node its record never bound is still read against that node; they are never bound from here,
