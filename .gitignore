@@ -12,3 +12,6 @@ __pycache__/
 temp/
 __pycache__/
 .pytest_cache/
+
+# Concatenated distribution written by tools/export_dist.py
+export/
