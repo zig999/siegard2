@@ -470,8 +470,12 @@ from the implementation records' own `files[].effect` where a record names the p
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <workspace> \
     <the premise> siegard-reconcile/<review-name>.md
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --reconciliation siegard-reconcile/<review-name>.md
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> siegard-reconcile/<review-name>.md
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> siegard-reconcile/<review-name>.md --workspace <workspace>
 ```
+
+`--workspace` names the staging's own: the bind refuses a file or a node that moved since the
+staging read it, because it stamps what the judges read and the workspace is where the staging
+recorded what that was.
 
 The fold writes the record mechanically from the saved returns — which answer a node folds to
 when more than one judge read it, where a finding naming a node lands, what a finding naming none

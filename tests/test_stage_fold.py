@@ -1515,3 +1515,133 @@ def test_demonstrated_is_a_mode_of_the_review_staging_alone(consumer):
                FILE, "--demonstrated", record)
     assert done.returncode == 2
     assert "--demonstrated is a mode of --stage --review" in done.stderr
+
+
+# ------------------------------------------------ the bytes a judge read, held to
+
+
+def test_a_file_edited_between_the_staging_and_the_fold_refuses_on_every_tier(consumer):
+    """Every judge read the file as the staging pinned it, and the bind stamps what is on disk.
+    A file edited in between is one no judge read, whether or not a run stood beside them —
+    and no later `--check` can tell, because the bind stamped the new digest itself."""
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    (consumer / "backend" / FILE).write_text("export function place() { return 2 }\n",
+                                             encoding="utf-8")
+    folded_done, record = folded(consumer)
+    assert folded_done.returncode == 1, folded_done.stdout + folded_done.stderr
+    assert FILE in folded_done.stdout and "changed since the staging" in folded_done.stdout
+    assert "a fresh invocation under a new slug" in folded_done.stdout
+    assert not record.exists()
+
+
+def folded_clean(consumer: Path) -> Path:
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    folded_done, record = folded(consumer)
+    assert folded_done.returncode == 0, folded_done.stdout + folded_done.stderr
+    return record
+
+
+def test_bind_record_with_the_workspace_refuses_a_file_that_moved_after_the_fold(consumer):
+    """The fold checked the bytes; the bind is what stamps them, and the interval between the two
+    is open. Given the workspace, the bind holds every staged file to the digest the staging
+    read, and refuses the whole record before writing anything."""
+    record = folded_clean(consumer)
+    before = (consumer / "siegard-trace.json").read_text(encoding="utf-8")
+    (consumer / "backend" / FILE).write_text("export function place() { return 3 }\n",
+                                             encoding="utf-8")
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record,
+                "--workspace", consumer / "ws-round")
+    assert bound.returncode == 1, bound.stdout + bound.stderr
+    assert FILE in bound.stdout and "changed since the staging" in bound.stdout
+    assert "nothing was bound" in bound.stdout
+    assert (consumer / "siegard-trace.json").read_text(encoding="utf-8") == before
+
+
+def test_bind_record_with_the_workspace_refuses_a_node_that_moved_after_the_fold(consumer):
+    record = folded_clean(consumer)
+    before = (consumer / "siegard-trace.json").read_text(encoding="utf-8")
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8").replace(
+        "A customer problem submitted to the troubleshooting process.",
+        "A customer problem submitted to the troubleshooting process. It is opened once."),
+        encoding="utf-8")
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record,
+                "--workspace", consumer / "ws-round")
+    assert bound.returncode == 1, bound.stdout + bound.stderr
+    assert NODE in bound.stdout
+    assert "moved in the specification since the staging" in bound.stdout
+    assert (consumer / "siegard-trace.json").read_text(encoding="utf-8") == before
+
+
+def test_bind_record_without_the_workspace_stamps_what_is_on_disk(consumer):
+    """Stated so the difference is explicit: an implementation record has no workspace, and
+    without one the bind reads each file fresh and stamps what stands — the guard is the
+    workspace's, and only a caller that hands it over gets it."""
+    record = folded_clean(consumer)
+    (consumer / "backend" / FILE).write_text("export function place() { return 3 }\n",
+                                             encoding="utf-8")
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+
+
+def test_workspace_is_a_mode_of_bind_record_and_names_the_manifest_it_needs(consumer):
+    record = folded_clean(consumer)
+    done = run("--check", consumer / "backend", "--workspace", consumer / "ws-round")
+    assert done.returncode == 2 and "--workspace is a mode of --bind-record" in done.stderr
+    done = run("--bind-record", consumer / "backend", consumer / "specs", record,
+               "--workspace", consumer / "nowhere")
+    assert done.returncode == 2 and "manifest.json" in done.stderr
+
+
+def test_a_contradiction_naming_no_node_over_an_untraced_file_refuses_the_fold(consumer):
+    """A finding naming no node holds every node of its file, and a file the trace binds
+    nothing to has none: the finding would land nowhere and the record would carry no sign of
+    it. A contradiction names the node it contradicts; over such a file, a fact no node holds
+    is `unstated`, and that is the word the judge owes."""
+    third = "domain/troubleshooting/hypothesis"
+    untraced = "src/orders/new.ts"
+    (consumer / "backend" / untraced).write_text("export const x = 1;\n", encoding="utf-8")
+    done, workspace = review_staged(consumer, "--node", third, files=[FILE, untraced])
+    assert done.returncode == 0, done.stdout + done.stderr
+    save_return(consumer, "first-review", FILE, clean_return([NODE, OTHER, third]))
+    finding = {"kind": "contradicts", "where": "line 1", "evidence": "export const x = 1;",
+               "cost": "a constant no node names"}
+    save_return(consumer, "first-review", untraced, clean_return([third], findings=[finding]))
+    premise = dict(PREMISE, files=[PREMISE["files"][0],
+                                   {"path": untraced, "change": "new, written by the delivery"}])
+    record = consumer / "siegard-reconcile" / "first-review.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer, premise), record)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert untraced in done.stdout and "line 1" in done.stdout
+    assert "binds nothing to" in done.stdout and "`unstated`" in done.stdout
+    assert not record.exists()
+
+    save_return(consumer, "first-review", untraced,
+                clean_return([third], findings=[dict(finding, kind="unstated")]))
+    done = run("--fold", consumer / "backend", workspace, premised(consumer, premise), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert front["unstated"] == [{"file": untraced, "where": "line 1",
+                                  "evidence": "export const x = 1;",
+                                  "cost": "a constant no node names"}]
+
+
+def test_the_staging_reads_the_corpus_once(consumer, monkeypatch):
+    """One walk over `siegard-reconcile/` per staging: the omission guard and the both-ways
+    reading are two questions of one corpus, and a second walk is a second reader of it."""
+    walks: list[Path] = []
+    original = trace.judged
+
+    def counted(home: Path):
+        walks.append(home)
+        return original(home)
+
+    monkeypatch.setattr(trace, "judged", counted)
+    status = trace.stage(consumer / "backend", consumer / "specs", "once", consumer / "ws-once",
+                         [FILE, SECOND])
+    assert status == 0
+    assert len(walks) == 1, f"the corpus was walked {len(walks)} time(s)"

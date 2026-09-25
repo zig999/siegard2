@@ -969,3 +969,37 @@ def test_all_applies_to_the_form_that_holds_something_back_and_not_to_the_query(
     done = run("--encodes", declared / "backend", FILE, "--all")
     assert done.returncode == 2
     assert "--all only applies to --check, --owed, --rank and --convergence" in done.stderr
+
+
+# ------------------------------------------------------------------ an unreadable record
+
+
+MERGE_MARKED = ("---\ncontract_version: siegard-reconcile/5\n<<<<<<< HEAD\ntitle: One round\n"
+                "=======\ntitle: Another round\n>>>>>>> theirs\ntarget: backend\n---\n")
+
+
+def test_an_unreadable_record_in_the_corpus_is_named_by_owed_and_the_exit_says_so(declared):
+    """A record nobody can read may hold an open finding, and a corpus walk that skipped it
+    would say nothing is owed over a finding it never opened."""
+    (declared / "siegard-reconcile" / "half-merged.md").write_text(MERGE_MARKED,
+                                                                   encoding="utf-8")
+    done = owed(declared)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "siegard-reconcile/half-merged.md" in done.stdout
+    assert "a record nobody can read may hold an open finding" in done.stdout
+    assert "nothing owed" not in done.stdout
+
+
+def test_a_staging_refuses_to_run_while_the_corpus_holds_an_unreadable_record(declared):
+    """The omission guard borrows a judgment only where no record holds an open finding against
+    the pair, and a record it cannot read is one it cannot answer that question over."""
+    assert bind(declared, NODE, FILE).returncode == 0
+    (declared / "siegard-reconcile" / "half-merged.md").write_text(MERGE_MARKED,
+                                                                   encoding="utf-8")
+    done = run("--stage", declared / "backend", declared / "specs", "round",
+               declared / "ws-round", FILE)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "siegard-reconcile/half-merged.md" in done.stderr
+    assert "a record nobody can read may hold an open finding" in done.stderr
+    assert not (declared / "ws-round").exists()
+    assert not (declared / "siegard-reconcile" / "round.returns").exists()

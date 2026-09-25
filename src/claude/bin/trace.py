@@ -18,6 +18,9 @@ Ten things this script does, and nobody else does any of them:
                                                                   the named classes alone
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
+    trace.py --bind-record ... --workspace <dir>                  the same, refusing a file or a
+                                                                  node that moved since the
+                                                                  staging in that workspace read it
     trace.py --bind ... --replace                                 write it in full instead
     trace.py --prune <target-root>                                drop the bindings nothing can fix
     trace.py --reconciliation <record>                            hold a reconciliation to its
@@ -116,6 +119,15 @@ says about them depends on whether a binding held each pair — `--owed` is the 
 either way. What the bind owes instead is a receipt naming them, so a partial bind never reads
 like a complete one.
 
+A bind stamps what a judge read, and the workspace is where the staging recorded what that was.
+`--bind-record --workspace <dir>` reads the staging's manifest back — the digest of every staged
+file and of every node it pinned — and refuses the whole record where any of them differs from
+what stands now: the judgment was over those bytes and that sentence, and a bind over what
+replaced them would stamp a claim nobody read, with no later `--check` able to tell, because the
+bind writes the new digest itself. The fold holds the same guard at its own moment; the interval
+between the fold and the bind is the workspace's to close. An implementation record has no
+workspace, and a bind without the flag reads each file fresh and stamps what stands.
+
 `--reconciliation` is the one form here that writes nothing. It holds a reconciliation record —
 source that changed outside any task, at `siegard-reconcile/<slug>.md` beside this file — to
 `schemas/reconciliation.json`, so that `--bind-record` can then read it exactly as it reads an
@@ -151,16 +163,19 @@ every later one is held to the same specification, named once, and a bind naming
 is refused rather than silently repointed.
 
 `--owed` is the only form here that reads `siegard-reconcile/` as a corpus, and it exists because
-the rest of this script cannot answer the question it answers. Drift is computed from the bindings:
-a judgment that found against a node writes no binding, so there is nothing for the next `--check`
-to compare. Where the pair was bound before, the old digest still reports it and the report is
-honest. Where it was not — a node the judge opened as a candidate, bound to some sibling file and
-not to this one — or where a later bind stamped the very content the finding was read in, `--check`
-is silent, and silent permanently: nothing about that file has to change again. The findings are
-never lost —
-every one is in a record, and `/siegard-archive` refuses to remove them — and this form is what
-reads them back: it says which of three states each finding is in, writes nothing, decides
-nothing, and every line names the record its finding came from.
+the rest of this script cannot answer the question it answers. A record under that directory
+nobody can read is named, never skipped: it may hold an open finding, so `--owed` lists it and
+exits non-zero, and `--stage` refuses to run while it stands — an omission guard that borrows a
+judgment over a corpus it could not finish reading borrows one no record is known to contest.
+Drift is computed from the bindings: a judgment that found against a node writes no binding, so
+there is nothing for the next `--check` to compare. Where the pair was bound before, the old
+digest still reports it and the report is honest. Where it was not — a node the judge opened as a
+candidate, bound to some sibling file and not to this one — or where a later bind stamped the very
+content the finding was read in, `--check` is silent, and silent permanently: nothing about that
+file has to change again. The findings are never lost — every one is in a record, and
+`/siegard-archive` refuses to remove them — and this form is what reads them back: it says which
+of three states each finding is in, writes nothing, decides nothing, and every line names the
+record its finding came from.
 
 `--encodes` answers the other question the drift report cannot. `--check` is keyed by drift, so a
 file is in it because it changed: a file whose bindings are intact is absent from it and reads
@@ -308,6 +323,8 @@ Usage:  trace.py <target-root>
         trace.py --check <target-root> [--all] [--fail-on <class>[,<class> ...]]
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
+        trace.py --bind-record <target-root> <spec-root> <reconciliation-record>
+                 [--workspace <workspace-dir>] [--replace]
         trace.py --prune <target-root>
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all]
@@ -1304,23 +1321,35 @@ def certified_in(record: Path) -> dict[str, dict]:
     return found
 
 
-def as_reconciliation(record: Path) -> dict | None:
-    """The record read as a reconciliation, or nothing where it is not one.
+def reconciliation_or_reason(record: Path) -> tuple[dict | None, str | None]:
+    """The record read as a reconciliation, or nothing — and, where it sits under
+    `siegard-reconcile/` and cannot be read at all, the reason.
 
-    Two readers here need the same three-part guard — it sits under `siegard-reconcile/`, its
+    Every reader here needs the same three-part guard — it sits under `siegard-reconcile/`, its
     frontmatter parses, and it declares this contract — and a delivery record must fall through
-    every one of them, since `--bind-record` serves both forms. A record whose frontmatter is
-    unreadable falls through silently on purpose: `encoded_in` already refused it, and one refusal
-    per defect is enough."""
+    every one of them, since `--bind-record` serves both forms. A record under the corpus
+    directory whose frontmatter does not parse is the one case that comes back with a reason:
+    it may hold an open finding, and a walk over the corpus that skipped it would report the
+    corpus as holding none. The gates that read one record on its way through already refused
+    it by name; the walkers are what must not lose it."""
     if record.parent.name != RECONCILE_DIR:
-        return None
-    front, _ = frontmatter_of(record)
+        return None, None
+    front, why = frontmatter_of(record)
     if not isinstance(front, dict):
-        return None
+        said = why or "unreadable"
+        if said.startswith(str(record)):
+            said = said[len(str(record)):].lstrip(": ")
+        return None, said
     version = front.get("contract_version")
     if not isinstance(version, str) or not version.startswith("siegard-reconcile/"):
-        return None
-    return front
+        return None, None
+    return front, None
+
+
+def as_reconciliation(record: Path) -> dict | None:
+    """The record read as a reconciliation, or nothing where it is not one — the single-record
+    reading, for the gates that already refused an unreadable record by name once."""
+    return reconciliation_or_reason(record)[0]
 
 
 def withheld(record: Path) -> list[str]:
@@ -1393,8 +1422,11 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
         return found, cleared, unreadable
     roots = target_roots(home)
     for record in sorted(directory.glob("*.md")):
-        front = as_reconciliation(record)
+        front, why = reconciliation_or_reason(record)
         if front is None:
+            if why is not None:
+                unreadable.append(f"{record.name}: {why} — a record nobody can read may hold an "
+                                  f"open finding, and nothing here reads around it")
             continue
         named = front.get("target")
         where = roots.get(named) if isinstance(named, str) else None
@@ -1438,7 +1470,7 @@ def remainders_of(home: Path) -> tuple[dict[str, list[dict]], set[str]]:
         return testable, certified
     roots = target_roots(home)
     for record in sorted(directory.glob("*.md")):
-        front = as_reconciliation(record)
+        front, _ = reconciliation_or_reason(record)
         if front is None:
             continue
         named = front.get("target")
@@ -1465,15 +1497,16 @@ def unstated_of(home: Path) -> list[dict]:
 
     Read from the corpus the same way `judged()` reads it, and kept apart from it for the reason
     the class exists: a pair's finding is owed to a bind, and a fact no node holds is owed to the
-    analysis that gives it one. Only `siegard-reconcile/3` and later records carry the list — an earlier
-    record folded the same observation into a node's `conforms`, where it is indistinguishable
-    from a contradiction, and nothing here rewrites one to say otherwise."""
+    analysis that gives it one. A record that cannot be read is `judged()`'s to name, once.
+    Only `siegard-reconcile/3` and later records carry the list — an earlier record folded the
+    same observation into a node's `conforms`, where it is indistinguishable from a
+    contradiction, and nothing here rewrites one to say otherwise."""
     stated: list[dict] = []
     directory = home / RECONCILE_DIR
     if not directory.is_dir():
         return stated
     for record in sorted(directory.glob("*.md")):
-        front = as_reconciliation(record)
+        front, _ = reconciliation_or_reason(record)
         if front is None:
             continue
         for entry in front.get("unstated") or []:
@@ -1577,10 +1610,11 @@ def owed(target: Path, show_all: bool = False) -> int:
         print(f"{RECONCILE_DIR}/{problem}")
     listed, answered_both_ways, total = reading["listed"], reading["both_ways_pairs"], reading["total"]
 
-    if not total and not answered_both_ways:
+    if not total and not answered_both_ways and not reading["unreadable"]:
         # Said, and not returned on: what follows is owed to other parties than a bind — the
         # analysis, a test's author — and a record holding only those is not a record holding
-        # nothing.
+        # nothing. Not said over a record nobody could read: what it holds is exactly what is
+        # not known.
         print(f"nothing owed: no reconciliation record under {home / RECONCILE_DIR} holds a "
               f"finding against a node under {offset} that no record cleared")
 
@@ -1674,7 +1708,7 @@ def owed(target: Path, show_all: bool = False) -> int:
               f"certification in another are not listed above, and the trace holds no live "
               f"certification for them; which is current is a reading of the records: "
               f"{', '.join(both_ways)}")
-    return 1 if total else 0
+    return 1 if total or reading["unreadable"] else 0
 
 
 def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = False) -> int:
@@ -2138,11 +2172,12 @@ def return_name(given: str) -> str:
     return given.replace("/", "__") + ".yaml"
 
 
-def open_owed(home: Path) -> set[tuple[str, str]]:
+def open_owed(home: Path, corpus: tuple | None = None) -> set[tuple[str, str]]:
     """Every node/file pair the reconciliation corpus holds an open finding against — found by
     some record and cleared by none. A pair answered both ways is not here: a clearance in the
-    corpus closes a finding, which is the same reading `--owed` already reports by."""
-    found, cleared, _ = judged(home)
+    corpus closes a finding, which is the same reading `--owed` already reports by. A caller
+    that already walked the corpus hands it over as `corpus`, and it is not walked again."""
+    found, cleared, _ = corpus if corpus is not None else judged(home)
     return {pair for pair in found if pair not in cleared}
 
 
@@ -2382,13 +2417,25 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return "step", list(decided[node_id])
         return None
 
-    owed_pairs = open_owed(home)
+    # One walk over the corpus, read for two questions. The omission guard borrows a judgment
+    # only where no record holds an open finding against the pair, and a record it cannot read
+    # is one it cannot answer that question over — so an unreadable record is a refusal here,
+    # before anything is written, naming the record.
+    corpus = judged(home)
+    _found, _cleared, unreadable = corpus
+    if unreadable:
+        for problem in unreadable:
+            print(f"cannot run: {RECONCILE_DIR}/{problem}", file=sys.stderr)
+        print(f"cannot run: {len(unreadable)} record(s) under {home / RECONCILE_DIR} cannot be "
+              f"read, and the omission guard borrows no judgment over a corpus it could not "
+              f"finish reading; repair or remove each, then stage again", file=sys.stderr)
+        return CANNOT_RUN
+    owed_pairs = open_owed(home, corpus)
     # A pair the corpus answers both ways is not owed — a clearance closes a finding, which is the
     # same reading `--owed` reports by — but the omission's reason may not say no record holds a
     # finding against it, because one does. `--owed` states plainly that which judgment is current
     # cannot be settled mechanically, and a reason that claimed otherwise would put that sentence
     # and this one in a committed record together.
-    _found, _cleared, _ = judged(home)
     both_ways = {pair for pair in _found if pair in _cleared}
     judged_files: dict[str, list[str]] = {}
     all_current: list[str] = []
@@ -2838,6 +2885,19 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
               f"answered; the route is a fresh invocation under a new slug, which reads each "
               f"node as it now stands")
         return 1
+    # The files' side of the same guard, on every tier. Each judge read a file as the staging
+    # pinned it, and the bind stamps what is on disk; a file edited between the two is one no
+    # judge read and no run proved, while the trace would go on to assert the new bytes with
+    # no `--check` able to tell — the bind stamps the new digest itself.
+    moved = sorted(given for given, digest in (manifest.get("digests") or {}).items()
+                   if not (target / given).is_file()
+                   or spec.digest_of(target / given) != digest)
+    if moved:
+        print(f"cannot fold: {', '.join(moved)} changed since the staging, so every judgment "
+              f"and every run this fold would read answered over content it would not bind; "
+              f"the route is a fresh invocation under a new slug, never a bind around the "
+              f"answers")
+        return 1
 
     returns_dir = home / RECONCILE_DIR / f"{manifest['slug']}.returns"
     if not returns_dir.is_dir():
@@ -2905,8 +2965,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     # The mechanical tier is answered by a run, and the run is refused before anything is written
     # where it cannot answer: absent while the tier is not, over another tree, missing a step the
     # tier names, or captured over content that has moved since. The last is the one that matters
-    # most — a run proved the tree as it stood, and binding what stands now on the strength of it
-    # would stamp a claim over bytes the run never saw.
+    # most, and the file-digest guard above is what holds it — a run proved the tree as it stood,
+    # and binding what stands now on the strength of it would stamp a claim over bytes the run
+    # never saw.
     tier = manifest.get("mechanical") or []
     steps_named = {s for entry in tier for s in entry.get("steps") or []}
     captured: dict | None = None
@@ -2947,13 +3008,6 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                   f"record; bin/run.py writes a mapping", file=sys.stderr)
             return CANNOT_RUN
         held = run_problems(captured, target, steps_named, registry_of(home, offset))
-        moved = sorted(given for given, digest in (manifest.get("digests") or {}).items()
-                       if not (target / given).is_file()
-                       or spec.digest_of(target / given) != digest)
-        if moved:
-            held.append(f"{', '.join(moved)} changed since the staging, so the run answered over "
-                        f"content this fold would not bind; the route is a fresh invocation under "
-                        f"a new slug, never a bind around the run")
         if held:
             for problem in held:
                 print(f"cannot fold: {problem}")
@@ -2969,6 +3023,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     named_mechanical: list[tuple[str, dict]] = []
     tainted: dict[str, list[dict]] = {}
     unstated: list[dict] = []
+    landing_nowhere: list[str] = []
     for given, front in returns.items():
         for finding in front.get("findings") or []:
             # `unstated` answers the other question the pair's own conformance never asked: the
@@ -2983,6 +3038,18 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 continue
             node = finding.get("node")
             if node is None:
+                # An unattributed finding holds every node of its file, and a file the trace
+                # binds nothing to has none: it would land nowhere, and the record would carry
+                # no sign of it. A contradiction names the node it contradicts; over such a
+                # file, a fact no node holds is `unstated`, and that is the word owed.
+                if not manifest["files"][given]["nodes"]:
+                    landing_nowhere.append(
+                        f"{given}: a `contradicts` finding naming no node "
+                        f"({finding['where']}: {finding['evidence']} — {finding['cost']}) over "
+                        f"a file the trace binds nothing to would land on no node and leave the "
+                        f"record; a contradiction names the node it contradicts, and over a file "
+                        f"the trace binds nothing to a fact no node holds is `unstated`")
+                    continue
                 tainted.setdefault(given, []).append(finding)
             elif node in batch_nodes:
                 against.setdefault(node, []).append((given, finding))
@@ -2994,6 +3061,14 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 named_mechanical.append((given, finding))
             else:
                 out_of_scope.append((given, finding))
+
+    if landing_nowhere:
+        for problem in landing_nowhere:
+            print(f"cannot fold: {problem}")
+        print(f"\n{len(landing_nowhere)} problem(s); each names a delegation to run again with "
+              f"its prompt fixed — a finding that would vanish from the record is never folded "
+              f"around, and the judge that filed it is the one that says which word it meant.")
+        return 1
 
     read_of = {(given, entry["node"]): entry
                for given, front in returns.items() for entry in front["read"]}
@@ -3351,7 +3426,42 @@ def omitted_problems(record: Path, declared: dict, home: Path,
     return sorted(problems)
 
 
-def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = False) -> int:
+def staged_problems(workspace: Path, target: Path,
+                    nodes: dict[str, dict]) -> tuple[list[str], str | None]:
+    """Every staged file and every pinned node the workspace's manifest holds at a digest other
+    than what stands now — or the reason the manifest could not be read.
+
+    A bind stamps what a judge read, and the manifest is where the staging recorded what that
+    was: the digest of each file it handed a judge and of each node it pinned. The fold held
+    both at its own moment; between the fold and the bind the interval is open, and this is
+    what closes it. A file or a node that moved in it is one the judgment never saw, and a bind
+    over it would stamp a claim nobody read."""
+    manifest_path = workspace / MANIFEST_FILE
+    if not manifest_path.is_file():
+        return [], f"{manifest_path} does not exist; --stage is what writes it"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        return [], f"{manifest_path} does not parse: {broken}"
+    if not isinstance(manifest, dict):
+        return [], f"{manifest_path} holds a {type(manifest).__name__}, not a manifest"
+    problems = []
+    for given, digest in sorted((manifest.get("digests") or {}).items()):
+        if not (target / given).is_file() or spec.digest_of(target / given) != digest:
+            problems.append(f"{given} changed since the staging read it, so the judgment this "
+                            f"record carries was over different bytes; the route is a fresh "
+                            f"invocation under a new slug, never a bind around the judgment")
+    for node_id, digest in sorted((manifest.get("node_digests") or {}).items()):
+        if (nodes.get(node_id) or {}).get("digest") != digest:
+            problems.append(f"{node_id} moved in the specification since the staging read it, "
+                            f"so the judgment this record carries was over a different "
+                            f"sentence; the route is a fresh invocation under a new slug, which "
+                            f"reads the node as it now stands")
+    return problems, None
+
+
+def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = False,
+                workspace: Path | None = None) -> int:
     """Every binding one implementation record states, written as one act.
 
     Bound one node at a time, a record pays a full specification validation and a full
@@ -3362,7 +3472,12 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
 
     Refused means over form. What a reconciliation's judgment held back is a different thing and
     is not refused here: those nodes carry no `encoded_at`, the rest are written, and `left_owed()`
-    is what keeps the partial act legible."""
+    is what keeps the partial act legible.
+
+    Given the staging's workspace, refused also means over time: a staged file or a pinned node
+    that moved since the staging read it refuses the record whole, because the bind stamps
+    what a judge read and the workspace is the record of what that was. An implementation
+    record has no workspace, and without one each file is read fresh."""
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -3388,6 +3503,12 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     certifications = certified_in(record)
     declared_steps = registry_steps(home, offset_of(target, home))
     refusals, folded = [], []
+    if workspace is not None:
+        stale_since_staging, cannot = staged_problems(workspace, target, nodes)
+        if cannot is not None:
+            print(f"cannot run: {cannot}", file=sys.stderr)
+            return CANNOT_RUN
+        refusals += stale_since_staging
     for node_id, files in pairs:
         if node_id not in nodes:
             refusals.append(f"{spec_root} holds no node {node_id}, which {record.name} says the "
@@ -3591,6 +3712,18 @@ def main() -> int:
             print("cannot run: --run is given once; one run answers this fold's mechanical tier",
                   file=sys.stderr)
             return CANNOT_RUN
+    workspace_given: Path | None = None
+    if "--workspace" in args:
+        at = args.index("--workspace")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --workspace takes the directory --stage wrote", file=sys.stderr)
+            return CANNOT_RUN
+        workspace_given = Path(args[at + 1])
+        del args[at:at + 2]
+        if "--workspace" in args:
+            print("cannot run: --workspace is given once; one staging read what this bind stamps",
+                  file=sys.stderr)
+            return CANNOT_RUN
     fail_on: set[str] | None = None
     if "--fail-on" in args:
         at = args.index("--fail-on")
@@ -3682,6 +3815,10 @@ def main() -> int:
         print("cannot run: --run is a mode of --fold; it names the run that answers the "
               "mechanical tier a staging separated", file=sys.stderr)
         return CANNOT_RUN
+    if workspace_given is not None and not do_record:
+        print("cannot run: --workspace is a mode of --bind-record; it names the staging whose "
+              "digests the bind holds the record to", file=sys.stderr)
+        return CANNOT_RUN
     if certify is not None and (not do_stage or do_audit):
         print("cannot run: --certify is a mode of --stage, and never of an audit; an audit "
               "re-examines standing claims over a tree nothing changed, and a certification is a "
@@ -3701,10 +3838,10 @@ def main() -> int:
     if do_record:
         if len(args) != 3:
             print("cannot run: expected --bind-record <target-root> <spec-root> "
-                  "<implementation-record> [--replace]", file=sys.stderr)
+                  "<record> [--workspace <workspace-dir>] [--replace]", file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, record = args
-        return bind_record(Path(target), Path(spec_root), Path(record), replace)
+        return bind_record(Path(target), Path(spec_root), Path(record), replace, workspace_given)
 
     if do_prune:
         if len(args) != 1 or args[0].startswith("--"):

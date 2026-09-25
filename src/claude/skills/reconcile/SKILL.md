@@ -430,12 +430,15 @@ record this refuses is a defect in the staging or the premise, not in any judgme
 **Whatever the judgment cleared, and never anything else:**
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> <the record>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --bind-record <target-source-root> <specification-root> <the record> --workspace <workspace>
 ```
 
 The record is read the same way an implementation record is, and the whole of it is refused before
 anything is written — refused over form, meaning a node this specification does not hold or a file
-that is not there, which is defect in what you wrote and never the judgment's answer. What lands is
+that is not there, which is defect in what you wrote and never the judgment's answer. `--workspace`
+names the staging's own: the bind refuses a file or a node that moved since the staging read it,
+because it stamps what the judges read and the workspace is where the staging recorded what that
+was. What lands is
 the union: a file an earlier bind put on a node and this record does not name stays bound, because
 two things landing one node in two files is not one of them undoing the other's work.
 
