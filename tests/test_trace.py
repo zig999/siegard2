@@ -671,6 +671,186 @@ def test_prune_and_check_are_mutually_exclusive(consumer):
     assert "mutually exclusive" in done.stderr
 
 
+# ------------------------------------------------------------------------ --release
+
+
+def test_release_refuses_a_file_the_tree_still_holds(consumer):
+    """A file that exists is reconciled, never released: the link is the one record of which node
+    that code answers to, and a file on disk is a file a judge can still read."""
+    bind(consumer)
+    before = (consumer / "siegard-trace.json").read_text(encoding="utf-8")
+    done = run("--release", consumer / "backend", f"backend/{FILE}")
+    assert done.returncode == trace.CANNOT_RUN, done.stdout + done.stderr
+    assert f"backend/{FILE} still exists; a file that exists is reconciled, never released" \
+        in done.stderr
+    assert (consumer / "siegard-trace.json").read_text(encoding="utf-8") == before
+
+
+def test_release_removes_the_path_and_the_binding_it_emptied(consumer):
+    """A bound file gone from the tree is drift nothing else answers: no staging reads it and no
+    prune touches it. The release drops the path from every binding naming it, drops a binding
+    left with nothing, and says both."""
+    bind(consumer)
+    (consumer / "backend/src/orders/other.ts").write_text("export {}\n", encoding="utf-8")
+    second = "domain/troubleshooting/case-id"
+    bind(consumer, node=second, file=FILE)
+    bind(consumer, node=second, file="src/orders/other.ts")
+    (consumer / "backend" / FILE).unlink()
+
+    done = run("--release", consumer / "backend", f"backend/{FILE}")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"--release released 1 path(s) the tree no longer holds; {NODE} no longer claims " \
+           f"backend/{FILE}" in done.stdout
+    assert f"{second} no longer claims backend/{FILE}" in done.stdout
+    assert f"{NODE} held nothing else and is gone from the trace" in done.stdout
+    assert f"{second} held nothing else" not in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [second]
+    assert [f["path"] for f in declared["bindings"][0]["files"]] == \
+        ["backend/src/orders/other.ts"]
+    assert run("--check", consumer / "backend").returncode == 0
+
+
+def test_release_reads_the_targets_own_spelling_too(consumer):
+    bind(consumer)
+    (consumer / "backend" / FILE).unlink()
+    done = run("--release", consumer / "backend", FILE)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"{NODE} no longer claims backend/{FILE}" in done.stdout
+
+
+def test_release_refuses_a_path_no_binding_names(consumer):
+    bind(consumer)
+    done = run("--release", consumer / "backend", "backend/src/orders/nothing.ts")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "backend/src/orders/nothing.ts: no binding names it" in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [NODE]
+
+
+def test_release_refuses_the_whole_call_before_writing_any_of_it(consumer):
+    bind(consumer)
+    (consumer / "backend/src/orders/other.ts").write_text("export {}\n", encoding="utf-8")
+    bind(consumer, file="src/orders/other.ts")
+    (consumer / "backend" / FILE).unlink()
+    done = run("--release", consumer / "backend", f"backend/{FILE}",
+               "backend/src/orders/other.ts")
+    assert done.returncode == trace.CANNOT_RUN, done.stdout + done.stderr
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert len(declared["bindings"][0]["files"]) == 2
+
+
+def test_check_names_the_release_route_for_a_file_that_is_gone(consumer):
+    bind(consumer)
+    (consumer / "backend" / FILE).unlink()
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1
+    assert f"backend/{FILE}: the file no longer exists — `--release` is what answers a deleted " \
+           f"file" in done.stdout, done.stdout
+
+
+def test_release_and_prune_are_mutually_exclusive(consumer):
+    done = run("--release", "--prune", consumer / "backend", FILE)
+    assert done.returncode == trace.CANNOT_RUN
+    assert "mutually exclusive" in done.stderr
+
+
+# ------------------------------------------------------------ --prune follows a rename
+
+RENAMED = "constraints/async-events"
+
+
+def git(consumer: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(consumer), "-c", "user.email=t@t", "-c", "user.name=t",
+                    *args], check=True, capture_output=True)
+
+
+def renamed(consumer: Path) -> None:
+    """Bind a node, commit, move its file under git, commit again: the one shape in which a node
+    leaves the specification while git still knows where it went."""
+    bind(consumer, node=ORPHAN, file=FILE)
+    git(consumer, "add", "-A")
+    git(consumer, "commit", "-qm", "base")
+    git(consumer, "mv", f"specs/{ORPHAN}.md", f"specs/{RENAMED}.md")
+    git(consumer, "commit", "-qm", "rename")
+
+
+def test_check_says_where_an_orphaned_node_went_when_git_knows(consumer):
+    renamed(consumer)
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1
+    assert f"{ORPHAN}: no longer in the specification; the binding is stale — renamed to " \
+           f"{RENAMED}; `--prune` follows it" in done.stdout, done.stdout
+
+
+def test_prune_follows_a_renamed_node_and_keeps_its_files(consumer):
+    """A `git mv` of a node is the node under a new identity, not a node that left. Dropping
+    the binding would lose the one link the trace exists to keep; following the rename keeps
+    the files and the digest, and a node whose text also moved reads as `moved` afterwards."""
+    renamed(consumer)
+    before = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    done = run("--prune", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"followed rename {ORPHAN} → {RENAMED} (1 file(s) kept)" in done.stdout
+    assert f"dropped {ORPHAN}" not in done.stdout
+    assert "0 binding(s) pruned and 1 followed to a renamed node" in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [RENAMED]
+    assert declared["bindings"][0]["files"] == before["bindings"][0]["files"]
+    assert declared["bindings"][0]["digest"] == before["bindings"][0]["digest"]
+    assert run("--check", consumer / "backend").returncode == 0
+
+
+def test_prune_follows_a_chain_of_renames_to_the_latest(consumer):
+    renamed(consumer)
+    git(consumer, "mv", f"specs/{RENAMED}.md", "specs/constraints/events-async.md")
+    git(consumer, "commit", "-qm", "rename again")
+    done = run("--prune", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"followed rename {ORPHAN} → constraints/events-async (1 file(s) kept)" in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == ["constraints/events-async"]
+
+
+def test_prune_joins_a_followed_rename_to_a_binding_the_new_identity_already_holds(consumer):
+    renamed(consumer)
+    (consumer / "backend/src/orders/other.ts").write_text("export {}\n", encoding="utf-8")
+    bind(consumer, node=RENAMED, file="src/orders/other.ts")
+    done = run("--prune", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"followed rename {ORPHAN} → {RENAMED} (1 file(s) kept, joined to the binding " \
+           f"{RENAMED} already holds)" in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert [entry["node"] for entry in declared["bindings"]] == [RENAMED]
+    assert sorted(f["path"] for f in declared["bindings"][0]["files"]) == \
+        ["backend/src/orders/other.ts", "backend/src/orders/place.ts"]
+
+
+def test_prune_drops_an_orphan_whose_rename_target_is_gone_too(consumer):
+    renamed(consumer)
+    (consumer / f"specs/{RENAMED}.md").unlink()
+    done = run("--prune", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"dropped {ORPHAN}" in done.stdout
+    assert "followed rename" not in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert declared["bindings"] == []
+
+
+def test_prune_drops_as_before_where_git_holds_no_history_of_the_node(consumer):
+    """No commit is the limit case of no git: `git log` answers nothing either way, and a rename
+    nobody recorded is a rename nothing can follow."""
+    bind(consumer, node=ORPHAN, file=FILE)
+    (consumer / f"specs/{ORPHAN}.md").rename(consumer / f"specs/{RENAMED}.md")
+    done = run("--check", consumer / "backend")
+    assert "renamed to" not in done.stdout
+    done = run("--prune", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"dropped {ORPHAN}" in done.stdout
+    declared = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert declared["bindings"] == []
+
+
 # ------------------------------------------------- what a --replace stops claiming
 
 def second_file(consumer: Path) -> None:

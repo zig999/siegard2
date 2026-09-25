@@ -197,3 +197,14 @@ def test_a_subagent_start_record_is_not_answered(traced):
     path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
     done = drift_run(traced, event="SubagentStart")
     assert done.returncode == 0 and done.stdout == ""
+
+
+def test_the_receipt_names_the_route_for_a_node_that_moved(traced):
+    """`moved` has one route, said once: `/reconcile` over the bound files, or the delivery of
+    a task implementing the node. A count whose door is unnamed is a count nobody can act on."""
+    node = traced / "specs" / f"{NODE}.md"
+    node.write_text(node.read_text(encoding="utf-8") + "\nA line the bind never read.\n",
+                    encoding="utf-8")
+    said = context_of(drift_run(traced))
+    assert "1 moved" in said, said
+    assert "`/reconcile` over the bound files" in said and "delivery" in said, said

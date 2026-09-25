@@ -228,11 +228,13 @@ right. It is one fact, and no pass here produces it: whether the link this frame
 plan is deleted still describes the code as it stands. Report the counts by class, and the route
 each class takes. `orphaned` is a binding to a specification node that no longer exists; no rebind
 can repair it, because a bind refuses a node the specification does not hold, and `trace.py --prune` is what
-clears it. `moved` is the specification moving under a binding, healed when the node's task is next
-delivered — the bind restamps at the node as it stands. `proof` is a binding a certified test
+clears it. `moved` is a binding to a node whose text moved since the bind; `/reconcile` over the
+bound files re-reads them against the node as it stands, and a delivery of a task implementing the
+node restamps it. `proof` is a binding a certified test
 decides whose test's text changed since; a reconciliation that certifies the test as it now stands
 is what clears it, and the node is decided by reading until then. `code` is a file changed without a rebind,
-whatever wrote it. Over the files of this review, the conformance pass below is what answers it:
+whatever wrote it — or a file the tree no longer holds, which `trace.py --release` is what answers.
+Over the files of this review, the conformance pass below is what answers it:
 the delivery's bind restamped only its own task's nodes, and every other node bound to a file it
 rewrote is still asserting the digest that was there before — that is the reason the pass reads
 the trace's node set and not the plan's alone. Over files outside this review, the route is
@@ -598,7 +600,8 @@ Report, in this order:
   silent about it reads as a review that covered the whole registry;
 - the trace: the drift counts by class over this target as the situate step read them, and the
   route each class takes — `--prune` for the bindings no rebind can repair, `/reconcile` for the
-  `code` class on files outside this review. Say plainly that this is not a finding and settles
+  `code` and `moved` classes on files outside this review, `--release` for a bound file the tree
+  no longer holds. Say plainly that this is not a finding and settles
   nothing about the change: it says whether the link back to the specification still describes
   this tree, which no pass above asks. Where a suppression receipt came back, say how many were
   held back and under which target, that the rules a reading decides went unread over those files,

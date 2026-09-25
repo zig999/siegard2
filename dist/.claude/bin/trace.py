@@ -10,7 +10,7 @@ digests from what is on disk now and compares — a node whose digest no longer 
 the specification since the bind; a file whose digest no longer matches moved in the code without
 a rebind. Either is drift, and this script is what says so without any plan's history to consult.
 
-Ten things this script does, and nobody else does any of them:
+What this script does, and nobody else does any of it:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root> [--all]                        the same, then report drift
@@ -22,7 +22,10 @@ Ten things this script does, and nobody else does any of them:
                                                                   node that moved since the
                                                                   staging in that workspace read it
     trace.py --bind ... --replace                                 write it in full instead
-    trace.py --prune <target-root>                                drop the bindings nothing can fix
+    trace.py --prune <target-root>                                drop the bindings nothing can fix,
+                                                                  following a node git renamed
+    trace.py --release <target-root> <file> ...                   drop a file the tree no longer
+                                                                  holds from every binding naming it
     trace.py --reconciliation <record>                            hold a reconciliation to its
                                                                   contract before it is bound
     trace.py --owed <target-root> [--all]                         what the reconciliations found
@@ -66,8 +69,10 @@ none of them while all four arrived as one list. A node the specification no lon
 `orphaned`: the fact it named is gone, and no operation here can repair the entry — `--bind`
 refuses a node the specification does not hold, and this script is the trace's one writer, so the
 finding repeats on every run forever. A node whose text moved is `moved`, and a file that changed
-or vanished is `code`; both are true statements about real drift, and the answer to each is a
-rebind by whoever owns the change. A binding a test decides whose test's text changed is `proof`:
+or vanished is `code`; both are true statements about real drift, and each has one route, stated
+in the class's own line: `/reconcile` over the bound files re-reads them against the node as it
+stands, a delivery of a task implementing the node restamps it, and a file gone from the tree is
+`--release`'s. A binding a test decides whose test's text changed is `proof`:
 the certification was of that text, and until a judgment certifies the test as it now stands the
 binding is decided by reading again — its `code` drift, if any, is still listed, and still a
 reconciliation's. Only the first is `--prune`'s, and `--prune` touches only it:
@@ -77,6 +82,27 @@ to, which is the whole of what this file keeps.
 Left unpruned, the orphaned class is what makes the other two unreadable. A tree carrying eighty
 stale entries reports eighty-three findings the day three files drift, and nobody reads the three:
 the report a caller stops reading is a report that says nothing, however true every line of it is.
+
+`--prune` follows a rename before it drops. A node whose file git moved is the node under a new
+identity, not a node that left: the fact stands, the code still answers it, and the binding is
+the one link between the two. So where git records the orphaned node's file as renamed to a node
+the specification holds now, the binding is rewritten to that identity with its files and its
+digest kept — a digest that no longer computes is a `moved` finding on the next `--check`, which
+is the true statement about it — and the receipt names both identities. A chain of renames is
+followed to its latest link. `--check` says on the orphaned line where git says the node went, so
+a reader knows before pruning which entries will be followed and which dropped. No git, no
+commit, or no rename, and `--prune` drops the entry as it otherwise would.
+
+`--release` answers the one drift no other form reaches: a bound file the tree no longer holds. A
+reconciliation reads a file, and there is nothing to read; `--prune` touches the orphaned class
+alone; a bind stamps a file that exists. Left there, the binding reports `code` on every run for
+a path nothing will ever restamp. So this form drops the path from every binding that names it,
+drops a binding left holding nothing, writes once, and prints a receipt per node — the same
+receipt `--replace` prints for a path it stops claiming, because the loss is the same loss. It
+refuses a path the tree still holds: a file that exists is reconciled, never released, since the
+only thing releasing it would buy is a clean report over a link somebody deleted by hand. And it
+refuses the whole call before writing any of it, so a release of three paths of which one still
+stands is no release at all.
 
 The `code` class has the same arithmetic inside itself, and the listing answers it the same way.
 One file bound by sixteen nodes drifts sixteen findings the day it changes once — one shared
@@ -326,6 +352,7 @@ Usage:  trace.py <target-root>
         trace.py --bind-record <target-root> <spec-root> <reconciliation-record>
                  [--workspace <workspace-dir>] [--replace]
         trace.py --prune <target-root>
+        trace.py --release <target-root> <file> [<file> ...]
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all]
         trace.py --encodes <target-root> <file> [<file> ...]
@@ -338,8 +365,8 @@ Usage:  trace.py <target-root>
         trace.py --encodes --rank <target-root> [--all]
         trace.py --help
                 print this text and stop
-Exit:   0 sound / drift-free / bound / pruned / the record holds / nothing is owed / staged /
-          folded — and under `--fail-on`, no finding in the classes it names
+Exit:   0 sound / drift-free / bound / pruned / released / the record holds / nothing is owed /
+          staged / folded — and under `--fail-on`, no finding in the classes it names
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file, a record its contract refuses, a finding no bind closed, a return a
           delegation owes again
@@ -394,10 +421,13 @@ ORPHANED, MOVED, PROOF, CODE = "orphaned", "moved", "proof", "code"
 CLASSES = {
     ORPHANED: "bound to a node the specification no longer holds — no bind can repair these, "
               "and `--prune` is the only thing that clears them",
-    MOVED: "bound to a node whose text moved since the bind — rebind whoever owns the change",
+    MOVED: "bound to a node whose text moved since the bind; `/reconcile` over the bound files "
+           "re-reads them against the node as it stands, and a delivery of a task implementing "
+           "the node restamps it",
     PROOF: "decided by a test whose text changed since it was certified — the binding is "
            "decided by reading again until a judgment certifies the test as it now stands",
-    CODE: "bound to a file that changed or is gone — rebind whoever owns the change",
+    CODE: "bound to a file that changed or is gone; `/reconcile` over the files re-reads a file "
+          "that changed, and `--release` answers one the tree no longer holds",
 }
 CURRENT, STALE, PLANNED_UNBOUND, DECLARED_UNCOVERED, UNREACHED = (
     "current", "stale", "planned-unbound", "declared-uncovered", "unreached")
@@ -624,9 +654,13 @@ def drift_of(declared: dict, home: Path,
     node left the specification, `--bind` refuses a node the specification does not hold, and this
     script is the trace's one writer — so the entry stays, its finding repeats on every run, and a
     file drift that arrived today reads as one more line in a list nobody finishes. `moved` and
-    `code` are the drift this file exists to report, and neither is a deletion's business: a rebind
-    by whoever owns the change is the answer, and dropping the entry instead would throw away the
-    one record of which node that code answers to.
+    `code` are the drift this file exists to report, and neither is `--prune`'s business: a
+    reconciliation over the files, or the delivery that implements the node, is the answer, and
+    dropping the entry instead would throw away the one record of which node that code answers
+    to. The one `code` finding no reading reaches — a file the tree no longer holds — is
+    `--release`'s, which drops the path and nothing else. An orphaned finding says where git
+    records the node's file as having gone, when it does: the reader of the report is deciding
+    whether to prune, and which entries a prune will follow rather than drop is part of that.
 
     Refusals come back apart from findings because they are not findings. A specification that does
     not resolve or does not hold together says nothing about any binding — reporting `orphaned` for
@@ -661,7 +695,8 @@ def drift_of(declared: dict, home: Path,
             where = file_entry["path"]
             path = home / where
             if not path.is_file():
-                findings.append((CODE, node_id, where, "the file no longer exists"))
+                findings.append((CODE, node_id, where, "the file no longer exists — `--release` "
+                                                       "is what answers a deleted file"))
                 continue
             if spec.digest_of(path) != file_entry["digest"]:
                 findings.append((CODE, node_id, where, "the file changed without a rebind"))
@@ -689,7 +724,73 @@ def drift_of(declared: dict, home: Path,
                                      f"{node_id}: certified over {where}, whose text changed "
                                      f"since; the binding is decided by reading until a judgment "
                                      f"certifies the test as it now stands"))
+    orphaned = [finding[1] for finding in findings if finding[0] == ORPHANED]
+    if orphaned:
+        followed = rename_targets(spec_root, orphaned, nodes)
+        findings = [(cls, node_id, where,
+                     f"{why} — renamed to {followed[node_id]}; `--prune` follows it"
+                     if cls == ORPHANED and node_id in followed else why)
+                    for cls, node_id, where, why in findings]
     return findings, []
+
+
+def renamed_nodes(spec_root: Path) -> dict[str, str]:
+    """Every node identity git records as renamed under the specification root, mapped to the
+    identity its file carries now — the latest link of a chain. Empty where git is not on this
+    machine, does not hold the root, or holds no commit: a rename nobody committed is a rename
+    nothing can read, and the answer then is the one `--prune` gives without it."""
+    try:
+        probe = subprocess.run(["git", "-C", str(spec_root), "log", "-M", "--diff-filter=R",
+                                "--name-status", "--format=", "--", "."],
+                               capture_output=True, text=True)
+    except OSError:
+        return {}
+    if probe.returncode != 0:
+        return {}
+    toplevel = project.toplevel_of(spec_root)
+    try:
+        prefix = spec_root.resolve().relative_to(toplevel.resolve()).as_posix()
+    except ValueError:
+        return {}
+
+    def identity_of(spelled: str) -> str | None:
+        path = PurePosixPath(spelled)
+        if path.suffix != ".md":
+            return None
+        if prefix != ".":
+            if path.parts[:len(PurePosixPath(prefix).parts)] != PurePosixPath(prefix).parts:
+                return None
+            path = PurePosixPath(*path.parts[len(PurePosixPath(prefix).parts):])
+        return "/".join(path.with_suffix("").parts) or None
+
+    later: dict[str, str] = {}
+    for line in probe.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 3 or not parts[0].startswith("R"):
+            continue
+        old, new = identity_of(parts[1]), identity_of(parts[2])
+        if old is None or new is None or old == new:
+            continue
+        later.setdefault(old, new)
+
+    def latest(identity: str) -> str:
+        seen = {identity}
+        while identity in later and later[identity] not in seen:
+            identity = later[identity]
+            seen.add(identity)
+        return identity
+
+    return {old: latest(old) for old in later}
+
+
+def rename_targets(spec_root: Path, orphaned: list[str],
+                   nodes: dict[str, dict]) -> dict[str, str]:
+    """Each orphaned node whose file git moved to a node the specification holds now, mapped to
+    that identity. A rename whose target is gone too is no rename to follow."""
+    if not orphaned:
+        return {}
+    renamed = renamed_nodes(spec_root)
+    return {old: renamed[old] for old in orphaned if old in renamed and renamed[old] in nodes}
 
 
 def traced_files_of(target: Path, home: Path, files: list[str]) -> tuple[list[dict], list[str]]:
@@ -836,17 +937,32 @@ def certified(node_id: str, certification: dict) -> str:
             f"is that step's to answer, a drift on the test is a fresh certification's")
 
 
-def released(node_id: str, dropped: list[str]) -> str:
-    """The receipt for what a `--replace` stopped claiming. A statement, never a warning: the
-    ordinary use of `--replace` is a file that genuinely left, and an alarm on the correct path is
-    an alarm nobody reads by the third time. It ends by pointing at where the entry before this
-    write survives if it survives anywhere, which is git — stated as a direction rather than a
-    guarantee, because a trace that was never committed has no earlier state to return to."""
+def released(node_id: str, dropped: list[str], act: str = "--replace") -> str:
+    """The receipt for what a `--replace` stopped claiming, or what a `--release` dropped. A
+    statement, never a warning: the ordinary use of either is a file that genuinely left, and an
+    alarm on the correct path is an alarm nobody reads by the third time. It ends by pointing at
+    where the entry before this write survives if it survives anywhere, which is git — stated as
+    a direction rather than a guarantee, because a trace that was never committed has no earlier
+    state to return to."""
+    if act == "--release":
+        return (f"  --release released {len(dropped)} path(s) the tree no longer holds; "
+                f"{node_id} no longer claims {', '.join(dropped)}. The link those paths held is "
+                f"gone from here, and the last committed trace is where it survives if anywhere")
     return (f"  --replace released {len(dropped)} path(s) this call did not name; "
             f"{node_id} no longer claims {', '.join(dropped)}. Where the fact moved out of those "
             f"files, that is what --replace is for; where another delivery had bound one of them, "
             f"that binding is gone from here, and the last committed trace is where it survives "
             f"if anywhere")
+
+
+def emptied(node_id: str) -> str:
+    """The receipt for a binding a `--release` dropped whole: its last path left the tree, so the
+    entry linked the node to nothing. Said apart from the path receipt, because a node the trace
+    stopped holding is a different fact from a path a node stopped claiming, and the route back
+    is named where the loss is."""
+    return (f"  {node_id} held nothing else and is gone from the trace; a delivery of a task "
+            f"implementing it, or a reconciliation over the files that hold its fact now, is what "
+            f"binds it again")
 
 
 def unrecorded(node_id: str) -> str:
@@ -3647,17 +3763,125 @@ def prune(target: Path) -> int:
               f"still holds")
         return 0
 
-    gone = set(stale)
-    declared["bindings"] = [entry for entry in declared["bindings"]
-                            if entry.get("node") not in gone]
+    spec_root = home_of(target) / declared["specification"]
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    followed = rename_targets(spec_root, stale, nodes)
+    by_node = {entry["node"]: entry for entry in declared["bindings"]}
+    kept: list[dict] = []
+    receipts: list[str] = []
+    dropped: list[str] = []
+    for entry in declared["bindings"]:
+        node_id = entry["node"]
+        if node_id not in followed:
+            if node_id in stale:
+                dropped.append(node_id)
+                receipts.append(f"dropped {node_id}: the specification no longer holds it")
+            else:
+                kept.append(entry)
+            continue
+        new_id = followed[node_id]
+        existing = by_node.get(new_id)
+        if existing is None:
+            entry["node"] = new_id
+            kept.append(entry)
+            receipts.append(f"followed rename {node_id} → {new_id} "
+                            f"({len(entry['files'])} file(s) kept)")
+            continue
+        held = {file_entry["path"] for file_entry in existing["files"]}
+        joined = [file_entry for file_entry in entry["files"] if file_entry["path"] not in held]
+        existing["files"] = sorted(existing["files"] + joined,
+                                   key=lambda file_entry: file_entry["path"])
+        receipts.append(f"followed rename {node_id} → {new_id} ({len(joined)} file(s) kept, "
+                        f"joined to the binding {new_id} already holds)")
+    declared["bindings"] = sorted(kept, key=lambda entry: entry["node"])
     if write_trace(target, declared, act="prune") != 0:
         return 1
-    for node_id in stale:
-        print(f"dropped {node_id}: the specification no longer holds it")
+    for receipt in receipts:
+        print(receipt)
     remaining = len(declared["bindings"])
-    print(f"\n{len(stale)} binding(s) pruned at {path}; {remaining} remain. What was dropped was "
-          f"a link to a node that is gone — every drift with a node still in the specification is still "
-          f"here, and still owed a rebind.")
+    print(f"\n{len(dropped)} binding(s) pruned and {len(followed)} followed to a renamed node "
+          f"at {path}; {remaining} remain."
+          + (" What was dropped was a link to a node that is gone — every drift with a node "
+             "still in the specification is still here, and still owed a rebind." if dropped
+             else ""))
+    return 0
+
+
+def release(target: Path, files: list[str]) -> int:
+    """Drop a file the tree no longer holds from every binding that names it, and drop a binding
+    left holding nothing.
+
+    A path is read the way the trace stores it — from the trace's own directory, exactly as
+    `--check` prints it — and, failing that, from the target source root, the anchor every other
+    form reads. The whole call is refused before anything is written: a path the tree still holds
+    is reconciled and never released, and a path no binding names has nothing to release."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+
+    path = trace_path(target)
+    declared = load(target)
+    if declared is None:
+        print(f"cannot release: {path} does not exist; nothing has been bound, so no binding "
+              f"names any of these paths")
+        return 1
+    problems = problems_of(declared)
+    if problems:
+        for problem in problems:
+            print(f"{path}: {problem}")
+        return 1
+
+    home = home_of(target)
+    offset = offset_of(target, home)
+    bound = {file_entry["path"] for entry in declared["bindings"]
+             for file_entry in entry.get("files") or []}
+    gone: list[str] = []
+    unknown: list[str] = []
+    standing: list[str] = []
+    for given in files:
+        anchored = given if offset == "." else (PurePosixPath(offset) / given).as_posix()
+        stored = given if given in bound else anchored if anchored in bound else None
+        if stored is None:
+            unknown.append(f"{given}: no binding names it — a path is spelled as the trace "
+                           f"stores it, from {home}, or from {target}, the target source root; "
+                           f"`--encodes` says what a file is bound to")
+            continue
+        if (home / stored).is_file():
+            standing.append(stored)
+        elif stored not in gone:
+            gone.append(stored)
+    for stored in standing:
+        print(f"cannot run: {stored} still exists; a file that exists is reconciled, never "
+              f"released", file=sys.stderr)
+    if standing:
+        return CANNOT_RUN
+    for said in unknown:
+        print(f"cannot release: {said}")
+    if unknown:
+        return 1
+
+    kept: list[dict] = []
+    receipts: list[str] = []
+    for entry in declared["bindings"]:
+        dropped = sorted(file_entry["path"] for file_entry in entry["files"]
+                         if file_entry["path"] in gone)
+        if not dropped:
+            kept.append(entry)
+            continue
+        receipts.append(released(entry["node"], dropped, act="--release"))
+        remaining = [file_entry for file_entry in entry["files"]
+                     if file_entry["path"] not in gone]
+        if remaining:
+            entry["files"] = remaining
+            kept.append(entry)
+        else:
+            receipts.append(emptied(entry["node"]))
+    declared["bindings"] = kept
+    if write_trace(target, declared, act="release") != 0:
+        return 1
+    for receipt in receipts:
+        print(receipt)
+    print(f"\n{len(gone)} path(s) released at {path}; {len(kept)} binding(s) remain.")
     return 0
 
 
@@ -3673,6 +3897,7 @@ def main() -> int:
     do_bind = "--bind" in args
     do_record = "--bind-record" in args
     do_prune = "--prune" in args
+    do_release = "--release" in args
     do_reconciliation = "--reconciliation" in args
     do_owed = "--owed" in args
     do_encodes = "--encodes" in args
@@ -3757,11 +3982,13 @@ def main() -> int:
             return CANNOT_RUN
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
-                         "--reconciliation", "--owed", "--encodes", "--stage", "--fold",
-                         "--rank", "--changed", "--audit", "--review", "--convergence")]
+                         "--release", "--reconciliation", "--owed", "--encodes", "--stage",
+                         "--fold", "--rank", "--changed", "--audit", "--review",
+                         "--convergence")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
+                                      ("--release", do_release),
                                       ("--reconciliation", do_reconciliation),
                                       ("--owed", do_owed),
                                       ("--encodes", do_encodes),
@@ -3848,6 +4075,14 @@ def main() -> int:
             print("cannot run: expected --prune <target-root>", file=sys.stderr)
             return CANNOT_RUN
         return prune(Path(args[0]))
+
+    if do_release:
+        if len(args) < 2 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --release <target-root> <file> [<file> ...], every file "
+                  "spelled as the trace stores it or from the target source root",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return release(Path(args[0]), args[1:])
 
     if do_owed:
         if len(args) != 1 or args[0].startswith("--"):

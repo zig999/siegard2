@@ -525,7 +525,10 @@ and both come from `--check` rather than from your memory of this run: any file 
 follow leaves reporting `moved`, because an `/analyse` that shifts a node re-opens every file bound
 to it including one that cleared here, and any file whose nodes the remainder shares — the binding
 form refuses a record that names a file and answers for only some of the nodes bound to it. Name
-them; the file set is still the human's to state.
+them; the file set is still the human's to state. A bound file `--check` reports as no longer
+existing goes in no file set: this skill reads files, and there is nothing to read — `trace.py
+--release <target-source-root> <path>` is what answers it, and the report names that invocation
+beside the remainder.
 
 Where it did not, there are two readings and **you choose neither.** The source may be right and the
 specification behind it, or the node may be right and the source wrong — that is a person's to

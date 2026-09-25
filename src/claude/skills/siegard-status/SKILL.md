@@ -67,9 +67,13 @@ this invocation — it is the status, reported verbatim.
    about as the whole answer.
    `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
    drift counts by class, each with its route: `orphaned` is cleared by `--prune` after a
-   deliberate node removal, `moved` heals when the node's task is next delivered, `code` is
-   answered by `/reconcile`, and `proof` — a binding a certified test decides whose test's text
-   changed — by `/reconcile` with a certification of the test as it now stands, the binding being
+   deliberate node removal, and where the report says git renamed the node, `--prune` follows the
+   rename instead of dropping the binding; `moved` is answered by `/reconcile` over the bound
+   files, which re-reads them against the node as it stands, or by a delivery of a task
+   implementing the node, which restamps it; `code` is answered by `/reconcile`, and a bound file
+   the tree no longer holds by `trace.py --release` over that path; and `proof` — a binding a
+   certified test decides whose test's text changed — by `/reconcile` with a certification of the
+   test as it now stands, the binding being
    decided by reading until then. Where `code` findings exist, the report carries the `/reconcile`
    invocation ready to paste — the project root filled in, the target named by its `targets` key
    wherever the project declares more than one, the file set being the drifted paths converted to

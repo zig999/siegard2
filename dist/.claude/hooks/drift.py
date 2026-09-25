@@ -86,6 +86,10 @@ def receipt(root: Path) -> str:
         if drifted:
             lines.append(f"  {len(drifted)} file(s) carry `code` drift, which /reconcile is what "
                          f"answers; /siegard-status lists them and hands the invocation ready")
+        if counts[trace.MOVED]:
+            lines.append(f"  {counts[trace.MOVED]} binding(s) carry `moved` drift: `/reconcile` "
+                         f"over the bound files re-reads them against the node as it stands, and "
+                         f"a delivery of a task implementing the node restamps it")
     if not lines:
         return ""
     return ("This project is carrying trace drift, counted at the start of this session by "
