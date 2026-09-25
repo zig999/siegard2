@@ -1,6 +1,6 @@
 ---
 name: test-author
-description: Writes the tests that prove one implemented task — evidence for each criterion, for each fact of a specification node the task implements that a finite test decides, and for each underdetermined note, as the smallest set that leaves no obligation unprotected — and returns the record of what each test proves, what would make it fail, which node it demonstrates, what was dismissed and why, and what stays unproven. Delegate once per task during implement-task's proof step, passing the task file, the implementation record, the target source root, the specification nodes the task implements, and the delivery-node contract path. It writes tests and nothing else, and never changes the implementation.
+description: Writes the tests that prove one implemented task — evidence for each criterion, for each fact of a specification node the task implements that a finite test decides, and for each underdetermined note, as the smallest set that leaves no obligation unprotected — and returns the record of what each test proves, what would make it fail, which node it demonstrates, what was dismissed and why, and what stays unproven. Delegate once per task during implement-task's proof step, passing the task file, the implementation record, the target source root, the specification nodes the task implements, and the delivery-node contract's `proof` slice, pasted whole. It writes tests and nothing else, and never changes the implementation.
 tools: Read, Write, Edit, Grep, Glob
 model: sonnet
 effort: high

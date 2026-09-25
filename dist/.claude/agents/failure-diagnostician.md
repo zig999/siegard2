@@ -1,6 +1,6 @@
 ---
 name: failure-diagnostician
-description: Reads a captured run's output in full and says why each reported failure failed — which of the contract's causes it has, the runner's own message as evidence, and what would have to change — plus how many failures it counted. Delegate during review-change's failures pass, and during implement-task's suite step whenever the suite-role step fails, passing the run directory, the target source root, the specification nodes, and the delivery-node contract path. Read-only — it runs nothing, and it decides nothing about the change.
+description: Reads a captured run's output in full and says why each reported failure failed — which of the contract's causes it has, the runner's own message as evidence, and what would have to change — plus how many failures it counted. Delegate during review-change's failures pass, and during implement-task's suite step whenever the suite-role step fails, passing the run directory, the target source root, the specification nodes, and the delivery-node contract's `finding` slice, pasted whole. Read-only — it runs nothing, and it decides nothing about the change.
 tools: Read, Grep, Glob
 model: sonnet
 effort: medium

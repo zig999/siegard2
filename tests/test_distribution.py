@@ -223,3 +223,103 @@ def test_the_rules_name_no_agent():
     shipped = sorted(p.stem for p in (REPO / "src/claude/agents").glob("*.md"))
     named = [name for name in shipped if f"`{name}`" in rules]
     assert named == [], f"{named} are named by the consumer rules; the delegating skill is their home"
+
+
+# ------------------------------------- the copies self-contained schemas carry
+
+
+@pytest.fixture(scope="module")
+def schemas() -> dict[str, object]:
+    return {p.name: json.loads(p.read_text(encoding="utf-8"))
+            for p in (SRC / "schemas").glob("*.json")}
+
+
+SLUG_HOLDERS = ("plan-node.json", "standard.json", "project.json")
+
+
+def test_every_slug_definition_is_the_same_sentence(schemas):
+    """These schemas state what a slug is with the identical full sentence — node.json once made
+    a third before it retired, and one of the two remaining had quietly dropped the clause that
+    decides a name which will not reduce. Copies of one definition are kept honest mechanically or
+    not at all."""
+    stated = {name: schemas[name]["$defs"]["slug"]["description"] for name in SLUG_HOLDERS}
+    assert len(set(stated.values())) == 1, \
+        f"the slug definition differs across the schemas that state it: {stated}"
+
+
+@pytest.mark.parametrize("relative", ("delivery-node.json", "trace.json"))
+def test_the_shared_pin_definition_says_what_a_pin_is(relative, schemas):
+    """These schemas reference `$defs/pin` while it carried a pattern and nothing else, so the one
+    definition every pin field pointed at said nothing at all. plan-node.json dropped the concept
+    entirely: a task names what it implements by identity, and nothing there is pinned any more."""
+    shared = schemas[relative]["$defs"]["pin"]
+    assert isinstance(shared.get("description"), str) and shared["description"], \
+        f"{relative} $defs/pin carries no description; every field referencing it defines nothing"
+
+
+def test_every_slug_definition_is_the_same_pattern(schemas):
+    """The sibling test above holds the slug's *description* equal across the schemas that state
+    it, which is the half a reader sees. This holds the *pattern* equal — the half that decides
+    what validates. They were consistent when this was written, and nothing was keeping them so:
+    the descriptions could stay identical while one schema quietly accepted a name the others
+    refused, and every message about it would still read the same."""
+    stated = {name: schemas[name]["$defs"]["slug"]["pattern"] for name in SLUG_HOLDERS}
+    assert len(set(stated.values())) == 1, \
+        f"the slug pattern differs across the schemas that state it: {stated}"
+
+
+def test_the_scripts_and_the_schemas_agree_on_what_a_slug_is(schemas):
+    """Four scripts compile the slug pattern and three schemas declare it, and until this test
+    existed the seven copies were held together by nothing at all. A slug is the identity of a
+    run, a node, a target and an initiative; two spellings of it in one framework is two answers
+    to what a thing is called."""
+    compiled = {}
+    for name in ("run.py", "spec.py", "plan.py", "deliver.py"):
+        source = (SRC / "bin" / name).read_text(encoding="utf-8")
+        line = next(l for l in source.splitlines() if l.startswith("SLUG = re.compile("))
+        compiled[name] = line.split('r"', 1)[1].rsplit('"', 1)[0]
+    declared = {name: schemas[name]["$defs"]["slug"]["pattern"] for name in SLUG_HOLDERS}
+    assert len(set(compiled.values()) | set(declared.values())) == 1, \
+        f"the scripts and the schemas do not agree on what a slug is: {compiled} vs {declared}"
+
+
+SHARED_DEFS = {
+    "specNodeRef": ("plan-node.json", "delivery-node.json", "reconciliation.json"),
+    "pin": ("delivery-node.json", "trace.json", "check.json"),
+    "ruleRef": ("check.json", "delivery-node.json"),
+}
+
+
+@pytest.mark.parametrize("name,holders", sorted(SHARED_DEFS.items()))
+def test_a_definition_stated_in_more_than_one_schema_validates_the_same_thing(name, holders,
+                                                                              schemas):
+    """These schemas are deliberately self-contained — no cross-file `$ref`, so a consumer can
+    read one contract without resolving four. The cost of that choice is copies, and a copy is
+    honest only while something compares them. `slug` already lost a clause in one of its holders
+    once; these three carried the same risk with no guard at all.
+
+    What is held equal is the half that decides validation: the type and the pattern. The
+    descriptions are deliberately free to differ, because each says the same thing to a different
+    reader — `ruleRef` warns against confusing it with a specification node exactly where that
+    confusion is possible — and forcing one wording would strip the sentence that earns its place
+    in one file to make it match a file where it does not."""
+    stated = {holder: {k: v for k, v in schemas[holder]["$defs"][name].items()
+                       if k != "description"}
+              for holder in holders}
+    first = stated[holders[0]]
+    for holder in holders[1:]:
+        assert stated[holder] == first, \
+            f"`$defs/{name}` validates differently in {holders[0]} and {holder}: " \
+            f"{first} vs {stated[holder]}"
+
+
+def test_the_index_and_the_node_contract_name_the_same_passes(schemas):
+    """`delivery.json`'s `ran` enum and `delivery-node.json`'s `passName` enum are two statements
+    of one vocabulary, and the `ran` description names the risk itself: a name the node contract
+    accepts and the index does not would make the derivation refuse an index for a review nobody
+    could have written differently. The guard was deliver.py exiting 2 over its own derived
+    output, which fires only where a record happens to use the diverging name."""
+    index = schemas["delivery.json"]["properties"]["nodes"]["items"]["properties"]["ran"]["items"]
+    node = schemas["delivery-node.json"]["$defs"]["passName"]
+    assert index["enum"] == node["enum"], \
+        f"the index accepts {index['enum']} and a record accepts {node['enum']}"

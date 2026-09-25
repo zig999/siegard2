@@ -1,6 +1,6 @@
 ---
 name: specification-conformance-reviewer
-description: Reads a written change against the specification nodes its tasks implement and reports where the source states a domain fact the specification does not hold, contradicts one it does, or becomes a second home for one — each with the evidence quoted and the cost it carries. Delegate during review-change's conformance pass, passing the file set, the node identifiers, the specification root, and the delivery-node contract path. Read-only; it returns findings and no verdict.
+description: Reads a written change against the specification nodes its tasks implement and reports where the source states a domain fact the specification does not hold, contradicts one it does, or becomes a second home for one — each with the evidence quoted and the cost it carries. Delegate during review-change's conformance pass, passing the file set, the node identifiers, the specification root, and the conformance-return contract's path (`schemas/conformance-return.json`). Read-only; it returns findings and no verdict.
 tools: Read, Grep, Glob
 model: sonnet
 effort: high
@@ -42,8 +42,8 @@ stop. You need:
    you may open where your file states a fact your own nodes do not settle: a fact one file states
    can be governed by a node another file carries, and reporting it as held by nothing when a
    candidate holds it is a misattribution rather than a gap. Open them to attribute, never to
-   widen — a candidate is never reviewed, and where none is supplied your node set is the whole
-   universe you may read. The tier may arrive as identities or as the path to an **index file**
+   widen — a candidate is never reviewed. Your node set is what you answer for; the specification
+   root is what you may search to attribute a fact none of your nodes holds. The tier may arrive as identities or as the path to an **index file**
    naming every candidate with the file(s) it is bound to; consult it on demand — grep it for the
    fact's own terms — and open the node itself under the specification root before making any
    claim about it, because the index locates and never states.

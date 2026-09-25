@@ -550,7 +550,7 @@ Each task file is checked on its own as soon as it is composed — a composition
 caught at the file that made it, never discovered at the end:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --node <file> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --node <file> <work-root>
 ```
 
 ### 5. Validate, and derive the plan

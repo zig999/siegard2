@@ -82,8 +82,8 @@ never into the specification root either.
 The pin the implementation record carries is the SHA-256 of the task's own file:
 `sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`. It pins the task
 and not the plan's index, because a record answers one task and that is what it should be held to —
-and because pinning the index made every record in the root stale the moment any unrelated task was
-added, which no entry point here is allowed to go and fix. The proof carries no task pin: what it
+and because pinning the index would make every record in the root stale whenever any unrelated task
+is added, which no entry point here is allowed to go and fix. The proof carries no task pin: what it
 pins is the implementation record itself, and step 3 says why.
 
 ## Before anything: the tree
@@ -499,7 +499,7 @@ Check the file on its own as soon as it is composed, so a composition error is c
 that made it:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root>
 ```
 
 Where the agent stopped instead of writing — an input absent, a node it implements missing, the

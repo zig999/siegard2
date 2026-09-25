@@ -39,9 +39,10 @@ disclosed decisions later revised, by which route and how long after, is reporte
 telemetry, so the trade that removed the stop stays measured rather than assumed» (SPEC-001 R10).
 So every decision the window added carries its `outcome`: the commit that landed it, whether the
 field it filled reads today as that commit wrote it, and — where it does not — every later commit
-that changed the field, with its route read off the subject the skills write. Only a corrective
-increment or a hand edit is a person disagreeing; a later analysis re-deciding is the framework
-revising itself, and the tally keeps the two apart. The comparison is field against field, never
+that changed the field, with its route read off the one subject a skill writes: `/deliver-scope`
+is the only entry point that commits, and every other commit is a person's. Only a corrective
+increment or a hand edit is a person disagreeing; a delivery that re-authors the field without
+naming a correction is the framework revising itself, and the tally keeps the two apart. The comparison is field against field, never
 the log's `decided` text against the field: the log paraphrases.
 
 **The session's own cost is attributed to the skill it was running.** A `Skill` call in the
@@ -114,17 +115,16 @@ OUTCOME_STATES = {
                 "field the node did not hold when the entry was written",
     UNLOCATED: "no commit of the log contains this entry's text; the landing cannot be found",
 }
-ANALYSE, CORRECTIVE, FRAMEWORK, HAND_EDIT = "analyse", "corrective", "framework", "hand-edit"
+CORRECTIVE, FRAMEWORK, HAND_EDIT = "corrective", "framework", "hand-edit"
 ROUTES = {
-    ANALYSE: "a later analysis re-decided it — the framework revising the framework, never a "
-             "person disagreeing",
-    CORRECTIVE: "a corrective increment, hotfix or fix routed through the framework — behavior "
-                "contradicted the decision and a person routed the correction",
-    FRAMEWORK: "another framework route re-authored the field without naming a correction",
+    CORRECTIVE: "a /deliver-scope commit whose slug names a correction — corrective, hotfix, fix, "
+                "abandon or revert — read as behavior contradicting the decision and a person "
+                "routing the correction; the reading rests on the slug's words",
+    FRAMEWORK: "a /deliver-scope commit whose slug names no correction — the framework "
+               "re-authoring the field",
     HAND_EDIT: "a commit no framework skill wrote — a person changed the artifact directly",
 }
-ROUTE_PREFIX = re.compile(r"^(analyse|plan-work|implement-task|review-change|deliver-scope|"
-                          r"reconcile|check-source|siegard-[a-z-]+)\b")
+ROUTE_PREFIX = re.compile(r"^deliver-scope [^\s:]+:")
 CORRECTION_WORDS = re.compile(r"corrective|hotfix|\bfix\b|abandon|revert", re.I)
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TELEMETRY_CONTRACT = PLUGIN_ROOT / "schemas" / "telemetry.json"
@@ -156,8 +156,7 @@ def agent_type_of(payload: dict) -> str:
         return raw[len(namespace) + 1:]
     return raw
 
-SCRIPTS = ("spec.py", "plan.py", "deliver.py", "trace.py", "project.py", "run.py", "terms.py",
-           "telemetry.py")
+SCRIPTS = ("spec.py", "plan.py", "deliver.py", "trace.py", "project.py", "run.py", "telemetry.py")
 SCRIPT_CALL = re.compile(r"(?:^|[\s/])(" + "|".join(re.escape(s) for s in SCRIPTS) + r")\b")
 EXIT_MARKER = re.compile(r"\AExit code (\d+)")
 PROBLEMS = re.compile(r"\b(\d+) problem\(s\)")
@@ -349,11 +348,28 @@ def session_files(root: Path, home: Path) -> list[tuple[Path, Path]]:
     return files
 
 
+TRANSCRIPT_KEYS = ("type", "timestamp", "message")
+
+
 def probe_transcripts(root: Path) -> tuple[bool, str | None]:
+    """Whether the root can be read, and whether what it holds is the shape this reader counts.
+    The format is the harness's and undocumented: a transcript whose entries carry other keys
+    parses cleanly and counts as nothing, and a report over it would read as zero sessions and
+    complete. So the newest transcript must hold at least one entry carrying every key the
+    counting reads; a root holding no transcript at all is an honest zero."""
     if not root.is_dir():
         return False, f"{root} is not a directory"
     if not os.access(root, os.R_OK | os.X_OK):
         return False, f"{root} is not readable"
+    try:
+        newest = max(root.rglob("*.jsonl"), key=lambda path: path.stat().st_mtime, default=None)
+    except OSError as broken:
+        return False, f"{root} cannot be listed: {broken}"
+    if newest is None:
+        return True, None
+    if not any(all(key in entry for key in TRANSCRIPT_KEYS) for entry in entries_of(newest)):
+        return False, (f"{newest}: no entry carries the keys this reader counts: "
+                       f"{', '.join(TRANSCRIPT_KEYS)}")
     return True, None
 
 
@@ -407,9 +423,7 @@ HARNESS_LINE = re.compile(r"^\s*\[SYSTEM NOTIFICATION[^\n]*$", re.M)
 def is_human_turn(entry: dict) -> bool:
     """Whether a user-role entry is a person typing. The harness writes in that role too — a
     background task's completion notice, a local command's echo, a reminder it injects — and
-    counted as they land, those outnumber the person: over one consumer's transcripts, 2,297 of
-    5,497 user-role entries were task notifications and 768 held nothing but harness tags. What
-    remains after those blocks are removed is what a person wrote; a paste a person made stays,
+    counted as they land, those can outnumber the person many times over. What remains after those blocks are removed is what a person wrote; a paste a person made stays,
     because the pasting was theirs."""
     if entry.get("type") != "user" or entry.get("isSidechain"):
         return False
@@ -811,23 +825,59 @@ def entries_in(text: str) -> list[dict]:
     return [e for e in entries if isinstance(e, dict)] if isinstance(entries, list) else []
 
 
-def decisions_section(specification_root: Path | None, home: Path, since: datetime) -> dict:
+def closing_commit(home: Path, until: datetime) -> tuple[bool, str | None]:
+    """The commit a window closing at `until` reads the repository at: (False, None) where the
+    last commit is at or before `until` and the working tree is what stands at the close;
+    (True, <commit>) where later commits exist, the commit being the last at or before `until`
+    — None where the window closes before the first commit."""
+    head = git(home, "rev-parse", "--verify", "-q", "HEAD")
+    if head is None or head.returncode != 0 or not head.stdout.strip():
+        return False, None
+    cut = git(home, "rev-list", "-1", f"--before={iso(until)}", "HEAD")
+    digest = cut.stdout.strip() if cut and cut.returncode == 0 else ""
+    if digest == head.stdout.strip():
+        return False, None
+    return True, digest or None
+
+
+def decisions_section(specification_root: Path | None, home: Path, since: datetime,
+                      until: datetime) -> dict:
+    """What the decision log gained inside the window. A window closing before the last commit
+    reads the log as it stood at the last commit at or before `until`, and follows each decision
+    only that far: a decision committed after the close is outside the window, and so is a
+    revision."""
     absent = {"log": None, "baseline": "no specification_root is declared", "total_now": None,
               "added": []}
     if specification_root is None:
         return absent
     log = specification_root / "decision-log.md"
-    if not log.is_file():
-        return {**absent, "baseline": f"{log} does not exist"}
-    try:
-        current = entries_in(log.read_text(encoding="utf-8-sig"))
-    except OSError as broken:
-        return {**absent, "log": str(log), "baseline": f"{log} cannot be read: {broken}"}
+    bounded, cut = closing_commit(home, until)
     try:
         relative = log.resolve().relative_to(home.resolve()).as_posix()
     except ValueError:
+        relative = None
+    if bounded and relative is not None:
+        if cut is None:
+            return {"log": str(log), "baseline": f"no commit is at or before {iso(until)}; the "
+                    f"window closes before the log's history begins", "total_now": 0,
+                    "added": [], "outcomes": outcomes_of([])}
+        held = git(home, "show", f"{cut}:{relative}")
+        if held is None or held.returncode != 0:
+            return {"log": str(log), "baseline": f"commit {cut}, the last at or before "
+                    f"{iso(until)}, holds no {relative}", "total_now": 0, "added": [],
+                    "outcomes": outcomes_of([])}
+        current = entries_in(held.stdout)
+    else:
+        if not log.is_file():
+            return {**absent, "baseline": f"{log} does not exist"}
+        try:
+            current = entries_in(log.read_text(encoding="utf-8-sig"))
+        except OSError as broken:
+            return {**absent, "log": str(log), "baseline": f"{log} cannot be read: {broken}"}
+    if relative is None:
         return {"log": str(log), "baseline": f"{log} sits outside the git toplevel {home}; every "
                 f"current entry is listed", "total_now": len(current), "added": current}
+    upto = cut if bounded else None
     before = git(home, "rev-list", "-1", f"--before={iso(since)}", "HEAD", "--", relative)
     if before is None or before.returncode != 0 or not before.stdout.strip():
         return {"log": str(log), "baseline": f"no commit before {iso(since)} holds {relative}; "
@@ -839,21 +889,21 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
     added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
     spec_relative = Path(relative).parent.as_posix()
     for entry in added:
-        entry["outcome"] = outcome_of(entry, home, spec_relative, relative, specification_root)
+        entry["outcome"] = outcome_of(entry, home, spec_relative, relative, specification_root,
+                                      upto)
     return {"log": str(log), "baseline": f"commit {digest}", "total_now": len(current),
             "added": added, "outcomes": outcomes_of(added)}
 
 
 def route_of(subject: str) -> str:
-    """Which route a commit that changed a decided field came through, read off the subject the
-    skills themselves write: every framework commit opens with its skill's name, and a subject
-    with no such opening is a person's. Authorship separates nothing here — every commit a skill
-    makes is made under the human's identity."""
-    opened = ROUTE_PREFIX.match(subject or "")
-    if not opened:
+    """Which route a commit that changed a decided field came through, read off the one subject a
+    shipped skill writes: `/deliver-scope` is the only entry point that commits, every commit it
+    makes opens `deliver-scope <slug>:`, and a subject with no such opening is a person's.
+    Authorship separates nothing here — every commit a skill makes is made under the human's
+    identity. Whether a deliver-scope commit is corrective rests on its slug's words, which the
+    human's ask chose: a heuristic, and `route_meanings` says so beside every count."""
+    if not ROUTE_PREFIX.match(subject or ""):
         return HAND_EDIT
-    if opened.group(1) == "analyse":
-        return ANALYSE
     return CORRECTIVE if CORRECTION_WORDS.search(subject) else FRAMEWORK
 
 
@@ -887,7 +937,7 @@ def flat(value: object) -> str:
 
 
 def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
-               specification_root: Path) -> dict:
+               specification_root: Path, upto: str | None = None) -> dict:
     """What became of one decision the framework made on the human's behalf, read from the node
     it located rather than from the log: the log records what was decided, and the node records
     what stands. The comparison is the field as the landing commit wrote it against the field
@@ -897,7 +947,12 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
     The landing commit is found by the entry's own words in the log's history. The route of
     every later commit over the node is read off the subject the skills write, and the states
     are printed with their meaning beside them, because the one reading that matters — was this
-    a person disagreeing, or the framework re-deciding itself — is not a count."""
+    a person disagreeing, or the framework re-deciding itself — is not a count.
+
+    `upto` is the commit a window closing before the last commit reads at: "today" is then that
+    commit, the node is read there rather than in the working tree, and no later commit is a
+    revision the window saw."""
+    tip = upto or "HEAD"
     location = str(entry.get("location") or "")
     node_relative = f"{spec_relative}/{location}" if spec_relative != "." else location
     if not node_relative.endswith(".md"):
@@ -906,7 +961,7 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
     texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why")
              if entry.get(k) is not None]
     needle = max(texts, key=len)[:60] if texts else ""
-    found = git(home, "log", "--reverse", "--format=%H%x09%aI", "-S", needle, "--",
+    found = git(home, "log", "--reverse", "--format=%H%x09%aI", "-S", needle, tip, "--",
                 log_relative) if needle else None
     if found is None or found.returncode != 0 or not found.stdout.strip():
         return {"landed": None, "state": UNLOCATED, "value_now": None, "revised_by": [],
@@ -921,16 +976,24 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
     if not held:
         return {"landed": landed, "state": UNREADABLE, "value_now": None, "revised_by": [],
                 "days_to_first_revision": None}
-    now_path = specification_root / (location if location.endswith(".md") else location + ".md")
-    if not now_path.is_file():
-        return {"landed": landed, "state": NODE_GONE, "value_now": None, "revised_by": [],
-                "days_to_first_revision": None}
-    try:
-        held_now, value_now = field_in_text(now_path.read_text(encoding="utf-8-sig"), field)
-    except OSError:
-        held_now, value_now = False, None
+    if upto is not None:
+        standing = git(home, "show", f"{upto}:{node_relative}")
+        if standing is None or standing.returncode != 0:
+            return {"landed": landed, "state": NODE_GONE, "value_now": None, "revised_by": [],
+                    "days_to_first_revision": None}
+        held_now, value_now = field_in_text(standing.stdout, field)
+    else:
+        now_path = specification_root / (location if location.endswith(".md")
+                                         else location + ".md")
+        if not now_path.is_file():
+            return {"landed": landed, "state": NODE_GONE, "value_now": None, "revised_by": [],
+                    "days_to_first_revision": None}
+        try:
+            held_now, value_now = field_in_text(now_path.read_text(encoding="utf-8-sig"), field)
+        except OSError:
+            held_now, value_now = False, None
     revised_by: list[dict] = []
-    later = git(home, "log", "--reverse", "--format=%H%x09%aI%x09%s", f"{commit}..HEAD", "--",
+    later = git(home, "log", "--reverse", "--format=%H%x09%aI%x09%s", f"{commit}..{tip}", "--",
                 node_relative)
     previous = flat(value_landed)
     for line in (later.stdout.splitlines() if later and later.returncode == 0 else []):
@@ -945,7 +1008,7 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
                                "route": route_of(parts[2])})
             previous = current
     state = STANDS if held_now and flat(value_now) == flat(value_landed) else REVISED
-    if state == REVISED and not revised_by:
+    if state == REVISED and not revised_by and upto is None:
         # The tree differs from every commit: an uncommitted edit stands on the field.
         revised_by.append({"commit": None, "at": None, "subject": "(uncommitted)",
                            "route": HAND_EDIT})
@@ -1122,7 +1185,7 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
     specification_root = Path(roots["specification_root"]) \
         if isinstance(roots.get("specification_root"), str) else None
     repository = repository_section(home, roots, since, until)
-    decisions = decisions_section(specification_root, home, since)
+    decisions = decisions_section(specification_root, home, since, until)
     report = {
         "contract_version": CONTRACT,
         "project_root": str(home),

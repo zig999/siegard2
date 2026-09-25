@@ -104,15 +104,28 @@ as read now — `sha256sum <target-source-root>/<path>`. Nothing is copied: the 
 project's own file. That pin is a citation of what this reading read, not a standing guarantee.
 
 Do not open the registry's text yourself. Its rules are the judge's to read, and it is handed the
-path below.
+reading below.
 
 ### 2. Read
 
+First print what the judge is handed:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the project's registry> --reading --for <every path of the file set, one --for each>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
+```
+
+The first prints the rules the registry marks as decided by reading whose scope reaches at least
+one file of the set — the rules a tool decides, and a rule scoped away from every file, never
+reach the judge. The second prints the delivery-node contract's `finding` slice, every `$ref`
+already inlined. Keep both outputs.
+
 Spawn a `siegard:standard-conformance-reviewer` subagent — its judgment lives at
-`${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md` — passing the standard's own path,
-the file set, the target source root, and the delivery-node contract's path. It is the same judge
-`/review-change` spawns for its standard pass, unchanged and given the same things, which is what
-makes a finding from here answerable to a finding from there. It returns the rules that were in
+`${CLAUDE_PLUGIN_ROOT}/agents/standard-conformance-reviewer.md` — passing the first output pasted
+whole in place of the standard's path, the file set, the target source root, and the `finding`
+slice pasted whole. It is the same judge `/review-change` spawns for its standard pass, unchanged
+and handed the same four inputs, which is what makes a finding from here answerable to a finding
+from there. It returns the rules that were in
 scope and, for each departure, a finding citing exactly one of them.
 
 Delegating means spawning the subagent by its plugin-scoped name — `siegard:<agent-name>` — never

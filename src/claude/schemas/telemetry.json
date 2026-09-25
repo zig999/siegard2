@@ -307,12 +307,12 @@
           "type": "array",
           "items": {
             "type": "object",
-            "description": "One decision the log gained inside the window, as the log states it, plus `outcome`: `landed` (the commit and instant the entry first appears in the log's history), `state` (stands, revised, node-gone, unreadable, unlocated), `value_now`, `revised_by` (every later commit that changed the located field, each with its subject and its route) and `days_to_first_revision`. The comparison is the field as the landing commit wrote it against the field today — never the log's own `decided` text, which paraphrases."
+            "description": "One decision the log gained inside the window, as the log states it, plus `outcome`: `landed` (the commit and instant the entry first appears in the log's history), `state` (stands, revised, node-gone, unreadable, unlocated), `value_now`, `revised_by` (every later commit that changed the located field, each with its subject and its route) and `days_to_first_revision`. The comparison is the field as the landing commit wrote it against the field at the window's close — the working tree, or the last commit at or before `until` where later commits exist — never the log's own `decided` text, which paraphrases."
           }
         },
         "outcomes": {
           "type": "object",
-          "description": "The tally beside `added`: how many decisions stand as their landing commit wrote them, how many were revised and by which route the first revision came, with the meaning of every state and route beside the counts. Never a share: what a reader acts on is the list of the revised ones in `added[].outcome.revised_by`, each with its commit — and the one distinction that matters, that only `corrective` and `hand-edit` are a person disagreeing while `analyse` is the framework revising itself."
+          "description": "The tally beside `added`: how many decisions stand as their landing commit wrote them, how many were revised and by which route the first revision came, with the meaning of every state and route beside the counts. Never a share: what a reader acts on is the list of the revised ones in `added[].outcome.revised_by`, each with its commit — and the one distinction that matters, that only `corrective` and `hand-edit` are a person disagreeing while `framework` is the framework revising itself."
         }
       }
     },

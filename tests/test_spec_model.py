@@ -31,48 +31,6 @@ def spec_root(tmp_path: Path) -> Path:
     return root
 
 
-def spec_contract(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
-                           "--contract", *args], capture_output=True, text=True)
-
-
-def test_contract_prints_what_a_node_class_may_and_must_declare():
-    """The specification is the artifact a human writes most of by hand, and until this the only
-    home of what a class admits was a file under the plugin's own schemas/spec/ — which a person
-    with the question had to know was there."""
-    import json as _json
-    for cls, marker in (("rule", "invariant"), ("element", "aggregate-root"),
-                        ("scenario", "given"), ("constraint", "fitness"),
-                        ("contract", "operations"), ("context", "Context"),
-                        ("log", "Decision")):
-        out = spec_contract(cls)
-        assert out.returncode == 0, f"--contract {cls}: {out.stderr}"
-        sliced = _json.loads(out.stdout)
-        assert marker in out.stdout, f"--contract {cls} is not that class's contract"
-        assert "$defs" not in sliced, "a slice inlines what it names; $defs is not a slice"
-        assert "$ref" not in out.stdout, f"--contract {cls} leaves a dangling pointer"
-
-
-def test_contract_with_no_class_lists_them():
-    out = spec_contract()
-    assert out.returncode == 0, out.stderr
-    for cls in ("rule", "element", "scenario", "contract", "constraint", "context", "log"):
-        assert cls in out.stdout
-    assert "spec.py --contract <class>" in out.stdout
-
-
-def test_an_unknown_class_is_refused_naming_the_classes():
-    out = spec_contract("invariant")
-    assert out.returncode == 2
-    assert "is not a node class" in out.stderr and "rule" in out.stderr
-
-
-def test_contract_stands_alone():
-    out = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
-                          "--contract", "rule", "--digest"], capture_output=True, text=True)
-    assert out.returncode == 2 and "stands alone" in out.stderr
-
-
 def problems_of(root: Path) -> list[str]:
     nodes, problems = spec.collect(root, spec.contracts())
     return problems + spec.cross_problems(nodes, root)
@@ -791,8 +749,7 @@ def test_shape_names_a_statement_carrying_more_than_one_sentence(spec_root):
 
 
 def test_shape_names_a_prose_name_that_resolves_to_no_node(spec_root):
-    """The finding this report exists to surface, and the discipline `terms.py` already holds:
-    what has no definition is named, not omitted. A name a specification uses in prose and holds
+    """The finding this report exists to surface: what has no definition is named, not omitted. A name a specification uses in prose and holds
     in no node is an operation, a table or a set with nowhere to be."""
     path = spec_root / "rules/troubleshooting/case-transitions.md"
     path.write_text(path.read_text(encoding="utf-8")
@@ -912,8 +869,7 @@ def test_shape_names_a_normative_field_talking_about_itself(spec_root):
 
 def test_a_bare_slug_two_nodes_answer_to_resolves_to_neither(spec_root):
     """Silently picking whichever sorts first puts a node in the reader's closure the prose may
-    never have meant. `terms.py` holds the same rule over the framework's own vocabulary: one
-    word with two senses is two entries named apart."""
+    never have meant: one word with two senses is two entries named apart."""
     (spec_root / "contracts/troubleshooting/evidence-type.md").write_text(
         "---\ntype: domain-event\ndirection: published\n"
         "payload: domain/troubleshooting/evidence\n---\n\n"

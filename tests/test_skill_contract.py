@@ -44,7 +44,7 @@ SKILLS = {
                       "delegates": ["coverage-auditor", "specification-conformance-reviewer",
                                     "standard-conformance-reviewer", "failure-diagnostician"]},
     "reconcile": {"contract": "schemas/reconciliation.json", "validator": "bin/trace.py",
-                  "delegates": ["specification-conformance-reviewer"]},
+                  "delegates": ["specification-conformance-reviewer", "coverage-auditor"]},
     "siegard-status": {"contract": "schemas/project.json", "validator": "bin/project.py",
                        "delegates": []},
     "siegard-progress": {"contract": "schemas/plan.json", "validator": "bin/deliver.py",
@@ -182,6 +182,17 @@ def test_every_delegate_is_cited_and_exists(repo, case):
             f"{case['name']} delegates to {name} and never cites its file"
         assert (repo / "src/claude/agents" / f"{name}.md").is_file(), \
             f"{case['name']} delegates to {name}, which src/claude/agents does not hold"
+
+
+SPAWNED = re.compile(r"siegard:([a-z][a-z-]*)")
+
+
+def test_every_spawned_agent_is_a_declared_delegate(case):
+    """The inverse of the test above: an agent a skill spawns by its plugin-scoped name and this
+    table does not list is a delegation nothing checks the file of."""
+    spawned = set(SPAWNED.findall(case["text"]))
+    missing = sorted(spawned - set(case["delegates"]))
+    assert not missing, f"{case['name']} spawns {missing}, absent from its delegates"
 
 
 def enum_values(node):

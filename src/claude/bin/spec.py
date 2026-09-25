@@ -97,8 +97,6 @@ Usage:  spec.py <spec-root>              validate everything
                                           validate one file (cross-node checks do not run)
         spec.py --impact <identity>[,<identity>...] <spec-root>
                                           print one hop around each named node, both directions
-        spec.py --contract [<class>]     print what one node class may and must declare, read
-                                          from its own schema; with no class, list them
         spec.py --help                   print this text and stop
 Exit:   0 sound
         1 problems
@@ -153,9 +151,8 @@ def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset())
     declares: they are the more specific statement, which is why they were written there.
 
     This is the one home of the rule. It sits here because the import graph reaches here from
-    everywhere: `deliver.py` and `plan.py` both import this module, and each kept an identical
-    copy until one of them was corrected and the other was not — which is what two copies of one
-    rule eventually do."""
+    everywhere: `deliver.py` and `plan.py` both import this module, and two copies of one rule
+    drift apart the first time one is corrected and the other is not."""
     if isinstance(node, dict):
         ref = node.get("$ref")
         if isinstance(ref, str) and ref.startswith("#/$defs/"):
@@ -208,12 +205,6 @@ def contract_branches(schema: dict) -> list[str]:
     return sorted(set(schema.get("$defs", {})) | set(kinds))
 
 
-def whole_contract(schema: dict) -> dict:
-    """A schema printed as its own slice: everything but `$defs`, which is inlined where it is
-    used. A node class is one file rather than a branch of one, so what answers "what does a Rule
-    carry" is the file, resolved."""
-    return {key: resolve_refs(value, schema)
-            for key, value in schema.items() if key != "$defs"}
 HEADINGS = {"context": ["## Description", "## Responsibility"],
             "element": ["## Description", "## Responsibility"],
             "rule": ["## Description"], "scenario": ["## Description"],
@@ -322,8 +313,9 @@ def camel(slug: str) -> str:
 
 def headings_of(body: str) -> list[str]:
     """The `## ` headings a body carries, ignoring anything inside a fenced code block. A note
-    quoting markdown — a README's own `## Install`, a snippet from a task's criteria — was counted
-    as a heading of the node itself, and the file was refused for a structure it does not have."""
+    quoting markdown — a README's own `## Install`, a snippet from a task's criteria — is not a
+    heading of the node itself, and counting it would refuse the file for a structure it does not
+    have."""
     headings, fenced = [], False
     for line in body.splitlines():
         if line.lstrip().startswith("```"):
@@ -963,9 +955,8 @@ def prose_mentions(identity: str, body: str,
     A slug is unique inside a directory and not across the specification — `capability-registry`
     can be the element and the api that publishes over it, two classes answering two questions —
     so picking whichever sorts first would put a node in this reader's closure that its prose may
-    never have meant, and be wrong silently. This is `terms.py`'s own rule over the framework's
-    vocabulary: one word with two senses is two entries named apart, never one entry with a
-    definition on top of it.
+    never have meant, and be wrong silently. One word with two senses is two entries named apart,
+    never one entry with a definition on top of it.
     """
     by_slug: dict[str, set[str]] = {}
     for held in nodes:
@@ -1432,9 +1423,8 @@ def context_map(nodes: dict[str, dict]) -> str:
         lines.append(f"    {source.replace('-', '_')} ==>|model: {slug}| "
                      f"{target.replace('-', '_')}")
     # A published contract nothing inside consumes is a door for the outside — the system's own
-    # surface. Until these edges existed the map drew only internal consumption, so the one
-    # diagram a reader opens first was silent about every entry point the system offers; the
-    # dashed edge keeps the two kinds of fact apart. Capabilities are not repeated here: they
+    # surface. A map that drew only internal consumption would leave the one diagram a reader
+    # opens first silent about every entry point the system offers; the dashed edge keeps the two kinds of fact apart. Capabilities are not repeated here: they
     # live in the system context and the capability map is theirs.
     offered = sorted((node["context"], node["slug"]) for identity, node in nodes.items()
                      if node["cls"] == "contract" and node["context"] != SYSTEM
@@ -1633,8 +1623,8 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
         files[f"class-diagram-{context}.mmd"] = class_diagram(context, nodes)
     files["context-map.mmd"] = context_map(nodes)
     # A state diagram is named for the machine's subject, not for the rule's own context: two
-    # rules in one context over subjects of the same name in different contexts computed to one
-    # filename, and the second silently replaced the first in a specification with no problems.
+    # rules in one context over subjects of the same name in different contexts would compute to
+    # one filename, and the second would silently replace the first.
     projected_by: dict[str, str] = {}
     for identity in sorted(nodes):
         node = nodes[identity]
@@ -1657,39 +1647,6 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
     return files
 
 
-def print_class_contract(named: str | None) -> int:
-    """What one node class may and must declare, read out of its own schema and printed whole.
-
-    It exists because the specification is the artifact a human writes most of by hand, and the
-    only home of what a class admits is a file under the plugin's own `schemas/spec/`. A person
-    with the question had to know that directory exists and open it; every other contract in this
-    framework already answers the same question through its own script. Named with no class, this
-    lists them, because being told a name is wrong without being told the names costs the lookup
-    twice."""
-    if named is None:
-        print("the specification's node classes, and what each is:")
-        for cls, filename in sorted(SCHEMAS.items()):
-            path = SCHEMA_DIR / filename
-            title = "—"
-            if path.is_file():
-                title = json.loads(path.read_text(encoding="utf-8")).get("title", "—")
-            print(f"  {cls:<11} {title}  [{filename}]")
-        print("\nname one to print what it may and must declare, its `$ref`s resolved: "
-              "spec.py --contract <class>")
-        return 0
-    if named not in SCHEMAS:
-        print(f"cannot run: {named} is not a node class; one of "
-              f"{', '.join(sorted(SCHEMAS))}", file=sys.stderr)
-        return CANNOT_RUN
-    path = SCHEMA_DIR / SCHEMAS[named]
-    if not path.is_file():
-        print(f"cannot run: {path} is missing; nothing can be printed without it", file=sys.stderr)
-        return CANNOT_RUN
-    print(json.dumps(whole_contract(json.loads(path.read_text(encoding="utf-8"))),
-                     indent=2, ensure_ascii=False))
-    return 0
-
-
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -1697,14 +1654,6 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
-    if "--contract" in args:
-        at = args.index("--contract")
-        rest = [a for a in args[at + 1:] if not a.startswith("--")]
-        if len(args) != at + 1 + len(rest) or len(rest) > 1 or at != 0:
-            print("cannot run: --contract stands alone, optionally with one class name",
-                  file=sys.stderr)
-            return CANNOT_RUN
-        return print_class_contract(rest[0] if rest else None)
     write = "--project" in args
     show_digests = "--digest" in args
     shape = "--shape" in args

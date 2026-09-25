@@ -1,6 +1,6 @@
 ---
 name: task-implementer
-description: Writes the source one task implements against a specification, and returns the record of what it wrote — every criterion answered, every node it implements accounted for, every inference stated, every departure and every deferral. Delegate once per task during implement-task's implement step, passing the task file, the specification root, the target source root, the plan's inventory, the delivery-node contract path, and any references the task names. It writes source and nothing else — no tests, no commands, no version control.
+description: Writes the source one task implements against a specification, and returns the record of what it wrote — every criterion answered, every node it implements accounted for, every inference stated, every departure and every deferral. Delegate once per task during implement-task's implement step, passing the task file, the specification root, the target source root, the plan's inventory, the delivery-node contract's `implementation` slice, pasted whole, and any references the task names. It writes source and nothing else — no tests, no commands, no version control.
 tools: Read, Write, Edit, Grep, Glob
 model: sonnet
 effort: high

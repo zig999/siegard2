@@ -170,10 +170,10 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         validate, then print every task with no
                                                         record, what each waits on, and the set
                                                         deliverable now; write nothing
-        deliver.py --node <file> <delivery-root> <work-root> [<specification-root>]
+        deliver.py --node <file> <delivery-root>
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
-                                                        run; the target source root is not needed)
+                                                        run, so no other root is taken)
         deliver.py --standard <file> [--against DIR] [--specification DIR]
                                                         validate one project standard on its own;
                                                         stands alone, needs no root. With a tree
@@ -300,8 +300,8 @@ def contract() -> Draft202012Validator:
 
 def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
     """spec.py's, which is the one home of the rule — see its docstring. Delegated rather than
-    copied: this file and plan.py each held an identical copy until one was corrected and the
-    other was not, and the import graph reaches spec.py from both."""
+    copied: two copies of one rule drift apart the first time one is corrected and the other is
+    not, and the import graph reaches spec.py from this file and plan.py alike."""
     return spec.resolve_refs(node, schema, seen)
 
 
@@ -335,8 +335,7 @@ def print_contract_index() -> int:
         print(f"{schema.get('title', path.name)}  [{path.name}]")
         print(f"  {', '.join(contract_branches(schema))}")
     print("\nname one to print it whole, its `$ref`s resolved: deliver.py --contract <branch>")
-    print("the specification's own node classes are spec.py --contract, and a plan node's are "
-          "plan.py --contract")
+    print("a plan node's contract is plan.py --contract")
     return 0
 
 
@@ -462,8 +461,8 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
                             f"records {want}")
 
     # One direction only. `unpaired` present while the pass did not run is a claim about a reading
-    # nobody made; `unpaired` absent while the pass ran is every review written before the field
-    # existed, which `unread_unpaired()` says as a receipt rather than refusing the root that
+    # nobody made; `unpaired` absent while the pass ran is every review written under an earlier
+    # version of this contract, which `unread_unpaired()` says as a receipt rather than refusing the root that
     # holds it.
     if "unpaired" in front and "coverage" not in ran:
         problems.append("`unpaired` is present and the coverage pass did not run; a pass that did "
@@ -1038,8 +1037,9 @@ def review_reconciliation_problems(nid: str, front: dict, target: Path) -> list[
     made, a record that is not there justifies nothing, and the record's own file set must be the
     review's — a reconciliation over fewer files than the review read is a pass that skipped part
     of the change, and over more is a scope nobody stated. A review that names none is not
-    refused: every review written before the field existed names none, and a field that became
-    required refuses a consumer's whole delivery root the day the framework updates. What such a
+    refused: every review written under an earlier version of this contract names none, and a
+    field that became required refuses a consumer's whole delivery root the day the framework
+    updates. What such a
     review did — judge the plan's nodes alone and leave every other binding of its files as it
     stood — `unreconciled_reviews()` says as a receipt."""
     named = front.get("reconciliation")
@@ -1083,7 +1083,7 @@ def review_reconciliation_problems(nid: str, front: dict, target: Path) -> list[
 def unread_unpaired(nodes: dict[str, dict]) -> list[str]:
     """The receipt for a review whose coverage pass ran and that records no `unpaired` list. A
     statement, never a refusal, on the same terms as `unreconciled_reviews()`: every review written
-    before the field existed records none, and a field that became required would refuse a
+    under an earlier version of this contract records none, and a field that became required would refuse a
     consumer's whole delivery root the day the framework updates. What such a review did not do is
     read its test set in the other direction — «a test with no obligation is a proof of something
     nobody stated» (SPEC-004 R15) — so a test of that kind may stand in its set unnamed, and the
@@ -1773,9 +1773,9 @@ def task_pin(work: Path, tid: str) -> str | None:
     which the plan checks report before this is consulted.
 
     It pins the task rather than the plan's derived index deliberately. The index carries the
-    plan's shape and not each task's criteria, so pinning it left the one thing a record answers
-    for uncovered while making every record in the root stale the moment any unrelated task was
-    added — and no entry point owns re-pinning records it was forbidden to read."""
+    plan's shape and not each task's criteria, so pinning it would leave the one thing a record
+    answers for uncovered while making every record in the root stale whenever any unrelated task
+    is added — and no entry point owns re-pinning records it was forbidden to read."""
     path = work / f"{tid}.md"
     return pin_of(path) if path.is_file() else None
 
@@ -2540,11 +2540,23 @@ def main() -> int:
         return CANNOT_RUN
 
     if single is not None:
-        if len(args) not in (2, 3) or any(a.startswith("--") for a in args):
-            print("cannot run: expected --node <file> <delivery-root> <work-root> "
-                  "[<specification-root>]", file=sys.stderr)
+        if verify or len(args) != 1 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --node <file> <delivery-root>; one file is validated "
+                  "against its contract and the delivery root it sits under, and nothing else "
+                  "is opened", file=sys.stderr)
             return CANNOT_RUN
-    elif len(args) not in (3, 4) or any(a.startswith("--") for a in args):
+        root = Path(args[0])
+        if not root.is_dir():
+            print(f"cannot run: delivery root {root} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            validator = contract()
+            names = pass_names()
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
+            print(f"cannot run: {broken}", file=sys.stderr)
+            return CANNOT_RUN
+        return check_single(root, single, validator, names)
+    if len(args) not in (3, 4) or any(a.startswith("--") for a in args):
         print("cannot run: expected [--check | --outstanding] "
               "<delivery-root> <work-root> <target-source-root> [<specification-root>], "
               "or --standard <file>, or --contract <branch>, on its own", file=sys.stderr)
@@ -2566,20 +2578,6 @@ def main() -> int:
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
-
-    if single is not None:
-        closed = (work / plan.CLOSURE_FILE).is_file()
-        specification = Path(args[2]) if len(args) == 3 else None
-        if not closed:
-            if specification is None:
-                print("cannot run: a live plan validates against its specification, and this "
-                      "validates against the plan; name the specification root", file=sys.stderr)
-                return CANNOT_RUN
-            if not specification.is_dir():
-                print(f"cannot run: specification root {specification} is not a directory",
-                      file=sys.stderr)
-                return CANNOT_RUN
-        return check_single(root, single, validator, names)
 
     target = Path(args[2])
     if not target.is_dir():

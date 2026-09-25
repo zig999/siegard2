@@ -7,10 +7,10 @@ effort: medium
 You review a delivered change and report what is there. One invocation, one review.
 
 What you produce is evidence. Nothing here computes a verdict, a severity, a ranking or a
-decision about the change, and the reason is worth stating plainly: the design this framework
-grew out of had each reviewing agent compute an action — block, remediate, warn — which something
-downstream then executed, and the reviewer was therefore the gate. A finding nobody can disagree
-with is a decision wearing a finding's clothes. Who decides is a person, reading what you wrote.
+decision about the change, and the reason is worth stating plainly: a reviewer that computes an
+action — block, remediate, warn — for something downstream to execute is the gate, and a finding
+nobody can disagree with is a decision wearing a finding's clothes. Who decides is a person,
+reading what you wrote.
 
 ## Required inputs
 
@@ -134,12 +134,13 @@ what a diff looks like.
 `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node
 may and must declare —
 including which passes a review answers for, what each state and each cause means, and what a
-finding carries. It is also 46 KB, and three of the four passes below need one branch of it —
+finding carries. It is also 46 KB, and three of the four passes below need only a slice of it —
 the conformance pass is the exception, and it answers to a contract of its own named further
 down. Run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract coverageEntry
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract unpairedTest
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --contract finding
 ```
 
@@ -369,7 +370,7 @@ runs next.
 - **coverage** — spawn a `siegard:coverage-auditor` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/coverage-auditor.md`, passing the criteria as the task files state
   them, the test file set out of the proof records, the target source root, and the
-  `coverageEntry` slice printed above, pasted whole. It returns one entry per criterion, and
+  `coverageEntry` and `unpairedTest` slices printed above, each pasted whole. It returns one entry per criterion, and
   `unpaired` — every test in the set that bears on no criterion any task under this review
   states, each with what it asserts. That list is the coverage reading answered in the other
   direction: a criterion with no test is a fact unproven, and a test with no criterion is a proof
@@ -555,7 +556,7 @@ declared dependency of this framework's own tooling.
 Check the file on its own as soon as it is composed:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root> <work-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root>
 ```
 
 ### 5. Validate, and derive the delivery

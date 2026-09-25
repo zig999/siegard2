@@ -1636,7 +1636,7 @@ def test_contract_with_no_branch_lists_every_one_it_answers_for():
     assert out.returncode == 0, out.stderr
     for name in ("delivery-node.json", "standard.json", "proof", "command"):
         assert name in out.stdout
-    assert "spec.py --contract" in out.stdout and "plan.py --contract" in out.stdout, \
+    assert "plan.py --contract" in out.stdout, \
         "the index names where the other contracts are printed, or it is a dead end"
 
 

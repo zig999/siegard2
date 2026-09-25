@@ -92,9 +92,11 @@ def test_the_four_pass_review_is_still_a_complete_review(tree):
     """The review answers for coverage, conformance, standard and failures and for nothing else.
     A fifth pass added to the contract's totality would refuse it here — which is exactly the
     consumer whose delivery root stops validating the day the framework updates."""
-    done = run("deliver.py", "--node", tree / DELIVERY / "review/first.md",
-               tree / DELIVERY, tree / WORK, tree / SPEC)
+    done = run("deliver.py", "--node", tree / DELIVERY / "review/first.md", tree / DELIVERY)
     assert done.returncode == 0, done.stdout + done.stderr
+    extra = run("deliver.py", "--node", tree / DELIVERY / "review/first.md",
+                tree / DELIVERY, tree / WORK, tree / SPEC)
+    assert extra.returncode == 2 and "expected --node <file> <delivery-root>" in extra.stderr
 
 
 def test_the_contract_versions_the_frozen_indexes_name_still_stand(tree):

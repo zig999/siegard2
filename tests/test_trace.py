@@ -1046,65 +1046,6 @@ def test_a_trace_naming_an_absolute_specification_is_refused(consumer):
     assert "specification" in done.stdout, done.stdout
 
 
-# ------------------------------------------------------- what the exit status answers for
-
-
-def test_fail_on_narrows_the_exit_to_the_classes_it_names(consumer):
-    """`moved` is the ordinary state of a tree between a specification's change and the delivery
-    that answers it. A caller running on every push wants the classes a person must act on, and a
-    status red during the work it watches is a status that gets switched off."""
-    bind(consumer)
-    path = consumer / "specs" / f"{NODE}.md"
-    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
-
-    whole = run("--check", consumer / "backend")
-    assert whole.returncode == 1, whole.stdout
-    narrowed = run("--check", "--fail-on", "code,proof", consumer / "backend")
-    assert narrowed.returncode == 0, narrowed.stdout
-    assert "the specification moved since this bind" in narrowed.stdout, \
-        "narrowing the exit must narrow nothing about what is computed or printed"
-
-
-def test_fail_on_still_exits_over_a_class_it_names(consumer):
-    bind(consumer)
-    drifted(consumer)
-    done = run("--check", "--fail-on", "code", consumer / "backend")
-    assert done.returncode == 1, done.stdout
-    assert "the file changed without a rebind" in done.stdout
-
-
-def test_fail_on_says_what_the_exit_answered_for(consumer):
-    """A green status whose narrowing is invisible is the one a caller misreads as a clean tree,
-    so the receipt is printed whether or not the named classes were found."""
-    bind(consumer)
-    done = run("--check", "--fail-on", "proof", consumer / "backend")
-    assert done.returncode == 0, done.stdout
-    assert "exit status answers for proof" in done.stdout
-
-
-def test_fail_on_defaults_to_every_class(consumer):
-    """The default is the contract every caller already has: a drift report read by a person is
-    read whole, and nothing about it changed."""
-    bind(consumer)
-    path = consumer / "specs" / f"{NODE}.md"
-    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
-    done = run("--check", consumer / "backend")
-    assert done.returncode == 1
-    assert "exit status answers for" not in done.stdout
-
-
-def test_fail_on_refuses_a_class_that_is_not_one(consumer):
-    done = run("--check", "--fail-on", "code,urgent", consumer / "backend")
-    assert done.returncode == trace.CANNOT_RUN
-    assert "the classes are orphaned, moved, proof, code" in done.stderr
-
-
-def test_fail_on_outside_check_is_refused(consumer):
-    done = run("--fail-on", "code", consumer / "backend")
-    assert done.returncode == trace.CANNOT_RUN
-    assert "--fail-on is a mode of --check" in done.stderr
-
-
 # ------------------------------------------------------------ impact from a change
 
 

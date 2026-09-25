@@ -56,7 +56,8 @@ That read is permitted on two conditions, and both are yours to meet before it h
    framework's scripts — no message text), and where the report would land — including whether
    that stamp is already taken.
 2. **Announce, verbatim.** Quote the probe's output to the human before the full run, so the read
-   is stated rather than discovered. Where the probe reports the directory unavailable, say so
+   is stated rather than discovered. Where the probe reports the directory unavailable — absent,
+   unreadable, or holding transcripts whose entries lack the keys the reader counts — say so
    and continue: the report is still written, with the agent and command sections absent and the
    reason recorded in its `provenance`. Where the human, on seeing the probe, asks you not to read
    the transcripts, pass `--transcripts` a directory that does not exist — the report says why
@@ -87,7 +88,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/3
+contract_version: siegard-telemetry/4
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -156,9 +157,9 @@ What each section holds:
   `outcome.state` is not `stands`: its location, the landing commit, each `revised_by` commit
   with its subject and route, and the days to the first revision. Say, in the record's own
   words from `route_meanings`, that only `corrective` and `hand-edit` are a person disagreeing
-  and `analyse` is the framework revising itself. No share and no grade: the stop this route
-  replaced was removed on a measurement, and this section is that measurement repeated — the
-  revised ones, named, are what a reader weighs against what stopping would have cost.
+  and `framework` is the framework revising itself. No share and no grade: this section is the
+  measurement the decide-and-disclose route stands on — the revised ones, named, are what a
+  reader weighs against what stopping would cost.
 - **8.** Every entry of `notes`, verbatim, keyed by initiative and node, grouped by class.
 - **9.** Totals: `agent_totals.overall`; the same per type; the same per skill phase from §2;
   and per unit of work — divide by `scope`'s task counts and by the records landed in the window,

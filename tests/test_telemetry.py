@@ -505,6 +505,26 @@ def test_the_probe_names_an_unreadable_transcript_root(consumer):
     assert "unavailable:" in done.stdout and "is not a directory" in done.stdout
 
 
+def test_a_transcript_whose_entries_carry_other_keys_is_unreadable_not_zero(consumer):
+    """A harness that renamed the keys this reader counts leaves files that parse cleanly and
+    count as nothing; the probe says so rather than letting the report read zero sessions as
+    complete."""
+    renamed = consumer["tmp"] / "renamed"
+    renamed.mkdir()
+    (renamed / "s9.jsonl").write_text(
+        line(kind="user", time="2026-08-20T10:05:00.000Z", sessionId="s9", cwd="/consumer",
+             body={"role": "user", "content": "go on"}), encoding="utf-8")
+    probe = run("--probe", consumer["home"], "--since", SINCE, "--until", UNTIL,
+                "--transcripts", renamed)
+    assert "no entry carries the keys this reader counts: type, timestamp, message" in probe.stdout
+    done = run(consumer["home"], "--since", SINCE, "--until", UNTIL, "--transcripts", renamed)
+    assert done.returncode == 0, done.stdout + done.stderr
+    report = json.loads((consumer["home"] / "telemetry" / f"{STAMP}.json").read_text())
+    assert report["harness"]["readable"] is False
+    unavailable = {p["section"]: p["unavailable"] for p in report["provenance"]}
+    assert "no entry carries the keys" in unavailable["agents"]
+
+
 def test_the_probe_announces_a_worktree_sited_outside_the_tree(consumer):
     """A session opened in a worktree outside the project's own tree — the parallel-frontier
     route's `../wt-<task>` — transcribes under a harness directory the probe never lists, so the
@@ -616,9 +636,9 @@ def test_a_decision_is_followed_to_the_field_it_filled(consumer):
     decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
     node_at(home, "domain/x/d.md", [{"name": "code", "type": "string", "required": True}])
     decided(home, "domain/x/d.md", "whether a code is a string", "code is carried as a string")
-    committed(home, "plan-work: decide total and code", "2026-08-20T11:10:00Z")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
-    committed(home, "plan-work: corrective increment over the total's type", "2026-08-20T11:30:00Z")
+    committed(home, "deliver-scope corrective-increment-total: plan", "2026-08-20T11:30:00Z")
 
     _, report = report_of(consumer)
     by = {e["unstated"]: e["outcome"] for e in report["decisions"]["added"]}
@@ -626,7 +646,7 @@ def test_a_decision_is_followed_to_the_field_it_filled(consumer):
     assert revised["state"] == "revised", revised
     assert revised["landed"]["commit"] and revised["landed"]["at"].startswith("2026-08-20T11:10")
     assert [r["route"] for r in revised["revised_by"]] == ["corrective"]
-    assert "corrective increment" in revised["revised_by"][0]["subject"]
+    assert "corrective-increment" in revised["revised_by"][0]["subject"]
     assert 0 < revised["days_to_first_revision"] < 0.02
     assert revised["value_now"][0]["type"] == "integer"
     assert by["whether a code is a string"]["state"] == "stands"
@@ -635,36 +655,76 @@ def test_a_decision_is_followed_to_the_field_it_filled(consumer):
     tally = report["decisions"]["outcomes"]
     assert tally["states"]["revised"] == 1 and tally["states"]["stands"] == 1
     assert tally["first_revision_by_route"]["corrective"] == 1
-    assert "a person routed the correction" in tally["route_meanings"]["corrective"]
-    assert "framework revising the framework" in tally["route_meanings"]["analyse"]
+    assert "a person routing the correction" in tally["route_meanings"]["corrective"]
+    assert "the framework re-authoring the field" in tally["route_meanings"]["framework"]
+    assert "rests on the slug's words" in tally["route_meanings"]["corrective"]
 
 
-def test_a_later_analysis_is_the_framework_revising_itself_not_a_person(consumer):
+def test_a_delivery_naming_no_correction_is_the_framework_revising_itself(consumer):
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
     decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
-    committed(home, "plan-work: decide total", "2026-08-20T11:10:00Z")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "money", "required": True}])
-    committed(home, "analyse: re-decide the total's type from new material", "2026-08-20T11:40:00Z")
+    committed(home, "deliver-scope invoicing: plan", "2026-08-20T11:40:00Z")
     _, report = report_of(consumer)
     outcome = next(e["outcome"] for e in report["decisions"]["added"]
                    if e["unstated"] == "whether the total is decimal")
-    assert outcome["state"] == "revised" and outcome["revised_by"][0]["route"] == "analyse"
+    assert outcome["state"] == "revised" and outcome["revised_by"][0]["route"] == "framework"
     assert report["decisions"]["outcomes"]["first_revision_by_route"] == {
-        "analyse": 1, "corrective": 0, "framework": 0, "hand-edit": 0}
+        "corrective": 0, "framework": 1, "hand-edit": 0}
 
 
 def test_a_commit_no_skill_wrote_is_a_hand_edit(consumer):
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
     decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
-    committed(home, "plan-work: decide total", "2026-08-20T11:10:00Z")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
     committed(home, "total must be an integer, finance said so", "2026-08-20T11:50:00Z")
     _, report = report_of(consumer)
     outcome = next(e["outcome"] for e in report["decisions"]["added"]
                    if e["unstated"] == "whether the total is decimal")
     assert outcome["revised_by"][0]["route"] == "hand-edit"
+
+
+def test_only_the_subject_a_shipped_skill_writes_is_a_framework_route():
+    """`/deliver-scope` is the one entry point that commits; a subject opened by any other
+    skill's name is a convention nothing ships, and reads as what it is — a person's commit."""
+    import telemetry
+    assert telemetry.route_of("deliver-scope pricing: deliver task/x/total") == "framework"
+    assert telemetry.route_of("deliver-scope hotfix-total: review") == "corrective"
+    assert telemetry.route_of("plan-work: corrective increment over the total") == "hand-edit"
+    assert telemetry.route_of("analyse: re-decide the total") == "hand-edit"
+
+
+def test_a_decision_committed_after_the_window_closes_is_not_counted(consumer):
+    """The log is read as it stood at the last commit at or before `--until`, not as the working
+    tree holds it now, and a revision committed after the close is not one the window saw."""
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
+    committed(home, "total must be an integer", "2026-08-20T11:50:00Z")
+    decided(home, "domain/x/c.md", "whether the code is a string", "code is a string")
+    committed(home, "a later decision", "2026-08-20T11:55:00Z")
+
+    early = run(home, "--since", SINCE, "--until", "2026-08-20T11:05:00Z",
+                "--transcripts", consumer["transcripts"])
+    assert early.returncode == 0, early.stdout + early.stderr
+    report = json.loads((home / "telemetry" / "20260820T110500Z.json").read_text())
+    assert [e["unstated"] for e in report["decisions"]["added"]] == ["second"]
+    assert report["decisions"]["total_now"] == 2
+
+    middle = run(home, "--since", SINCE, "--until", "2026-08-20T11:30:00Z",
+                 "--transcripts", consumer["transcripts"])
+    assert middle.returncode == 0, middle.stdout + middle.stderr
+    report = json.loads((home / "telemetry" / "20260820T113000Z.json").read_text())
+    by = {e["unstated"]: e["outcome"] for e in report["decisions"]["added"]}
+    assert "whether the code is a string" not in by
+    assert by["whether the total is decimal"]["state"] == "stands"
+    assert by["whether the total is decimal"]["revised_by"] == []
 
 
 # ------------------------------------------- the session's cost by the skill it ran
@@ -730,3 +790,11 @@ def test_a_user_role_entry_the_harness_wrote_is_not_a_human_turn(consumer):
     _, report = report_of(consumer)
     s3 = next(s for s in report["harness"]["sessions"] if s["id"] == "s3")
     assert s3["human_turns_in_window"] == ["2026-08-20T10:14:00.000Z", "2026-08-20T10:15:00.000Z"]
+
+
+def test_the_skill_template_names_the_contract_the_script_writes():
+    """The report the skill writes carries the version the JSON beside it was written under; a
+    template naming another is a report claiming a contract its record does not hold."""
+    import telemetry
+    text = (REPO / "src/claude/skills/siegard-telemetry/SKILL.md").read_text(encoding="utf-8")
+    assert f"contract_version: {telemetry.CONTRACT}\n" in text

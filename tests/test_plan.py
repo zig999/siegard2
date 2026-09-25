@@ -128,7 +128,7 @@ def test_intake_holds_material_and_is_never_validated(work, root, sound_plan):
     assert done.returncode == 0, done.stdout + done.stderr
     derived = json.loads((work / "plan.json").read_text())
     assert all(not n["id"].startswith("intake") for n in derived["nodes"])
-    single = run("--node", work / "intake" / "scope.md", work, root)
+    single = run("--node", work / "intake" / "scope.md", work)
     assert single.returncode == 0
     assert "never validated" in single.stdout
 
@@ -563,6 +563,8 @@ def test_usage_errors_cannot_run(work, root, sound_plan):
     assert run(work).returncode == 2
     assert run(work, root, "extra").returncode == 2
     assert run("--node", work, root).returncode == 2
+    extra = run("--node", work / "task/checkout/record-order.md", work, root)
+    assert extra.returncode == 2 and "expected --node <file> <work-root>" in extra.stderr
     missing = run(work, root / "nowhere")
     assert missing.returncode == 2
     assert "not a directory" in missing.stderr
@@ -576,7 +578,7 @@ def test_single_node_mode_ignores_cross_node_references(work, root, sound_plan, 
         "objective": "Something demonstrable.",
         "criteria": ["Something falsifiable."],
         "implements": ["domain/sales/not-yet-written"]})
-    done = run("--node", path, work, root)
+    done = run("--node", path, work)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Cross-node checks and specification checks did not run" in done.stdout
 
@@ -586,7 +588,7 @@ def test_single_node_mode_still_refuses_bad_form(work, root, sound_plan, write_p
         "title": "Broken", "summary": "Malformed.", "objective": "X.",
         "criteria": ["Y."],
         "implements": "domain/sales/order"})
-    done = run("--node", path, work, root)
+    done = run("--node", path, work)
     assert done.returncode == 1
     assert "is not of type 'array'" in done.stdout
 

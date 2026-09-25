@@ -72,9 +72,10 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         validate everything, then write plan.json
         plan.py --check <work-root> [<specification-root>]
                                                         validate and compare; write nothing
-        plan.py --node <file> <work-root> [<specification-root>]
+        plan.py --node <file> <work-root>
                                                         validate one file (cross-node checks and
-                                                        specification checks do not run)
+                                                        specification checks do not run, so the
+                                                        specification root is refused)
         plan.py --standard <file> --against DIR <work-root> [<specification-root>]
                                                         also reconcile what the project's own
                                                         standard presupposes against DIR and the
@@ -171,8 +172,8 @@ def contract() -> Draft202012Validator:
 
 def resolve_refs(node: object, schema: dict, seen: frozenset[str] = frozenset()) -> object:
     """spec.py's, which is the one home of the rule — see its docstring. Delegated rather than
-    copied: this file and deliver.py each held an identical copy until one was corrected and the
-    other was not, and the import graph reaches spec.py from both."""
+    copied: two copies of one rule drift apart the first time one is corrected and the other is
+    not, and the import graph reaches spec.py from this file and deliver.py alike."""
     return spec.resolve_refs(node, schema, seen)
 
 
@@ -495,18 +496,16 @@ def substrate_problems(nodes: dict[str, dict], named: str, tree: Path) -> list[s
     source over the absence, so a plan that leaves it unplanned is a plan whose every task stops
     on a condition only the plan can end.
 
-    The reconciliation runs both ways, and it did not always. The other direction was left
-    unchecked on the reading that a task may produce an artifact no standard presupposes — creating
-    a file is ordinary work, and refusing it would make the plan relitigate what a registry never
-    asked about. That reading was wrong about what the field does. `produces` is not a description
-    of output: it is the declaration that buys three exemptions, and a plan that hands them to
+    The reconciliation runs both ways. It might seem that a task may produce an artifact no
+    standard presupposes — creating a file is ordinary work, and refusing it would make the plan
+    relitigate what a registry never asked about. That reading mistakes what the field does.
+    `produces` is not a description of output: it is the declaration that buys three exemptions, and a plan that hands them to
     ordinary work has disarmed them without deciding to. `deliver.py --outstanding` treats the
     declaring task as substrate and offers it ahead of every task that is not; `/implement-task`
     reads the same field as a yes-or-no and drops the check that the tree holds what the registry
     presupposes; and a record whose files no rule reaches owes the install alone rather than the
-    build and the suite. A consumer's plan arrived with six of its nine tasks declaring it, none of
-    them building substrate, and the schema had said `Ordinary work declares none` the whole time —
-    which is how much prose is worth against a field whose misuse nothing refuses.
+    build and the suite. The schema says `Ordinary work declares none`, and prose is worth little
+    against a field whose misuse nothing refuses.
 
     So the check is here rather than sharper wording somewhere: what a registry presupposes and
     what a task declares are both data this function already holds, and their disagreement is
@@ -671,7 +670,7 @@ def anchors(work: Path, nodes: dict[str, dict],
     """The anchors the committed index holds, keyed by (task, implemented node), and the STALE
     problems that make them unreadable. The index satisfies its schema, its edges with anchors set
     aside are what the nodes derive to, and on a live plan (spec_nodes given) every `implements`
-    edge carries its anchor — an index derived before the anchor existed guards nothing, and
+    edge carries its anchor — an index derived without anchors guards nothing, and
     reading it as current would deliver against nodes nobody pinned. The one reader both
     `--check` and deliver.py hold the index through."""
     target = work / PLAN_FILE
@@ -1043,10 +1042,28 @@ def main() -> int:
             return CANNOT_RUN
         return unplanned(parent, specification, validator)
 
+    if single is not None:
+        if verify or len(args) != 1 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --node <file> <work-root>; one file is validated against "
+                  "its contract and the work root it sits under, and nothing else is opened",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        work = Path(args[0])
+        if not work.is_dir():
+            print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            validator = contract()
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
+            print(f"cannot run: {broken}", file=sys.stderr)
+            return CANNOT_RUN
+        return check_single(work, single, validator)
+
     if len(args) not in (1, 2) or any(a.startswith("--") for a in args):
-        print("cannot run: expected [--check | --node <file>] "
+        print("cannot run: expected [--check] "
               "[--standard <file> --against <target-source-root>] "
-              "<work-root> [<specification-root>]", file=sys.stderr)
+              "<work-root> [<specification-root>], or --node <file> <work-root>",
+              file=sys.stderr)
         return CANNOT_RUN
     work = Path(args[0])
     if not work.is_dir():
@@ -1075,9 +1092,6 @@ def main() -> int:
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
         print(f"cannot run: {broken}", file=sys.stderr)
         return CANNOT_RUN
-
-    if single is not None:
-        return check_single(work, single, validator)
 
     if closed:
         spec_nodes = None  # a closed plan never opens today's specification

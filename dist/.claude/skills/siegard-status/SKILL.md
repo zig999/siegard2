@@ -148,7 +148,7 @@ agent, and the report is voiced accordingly:
   in, whatever it is. The framework's artifacts stay English; this report is not an artifact —
   it is an answer to someone, and it speaks their language.
 - **Friendly, and plain enough for a non-expert.** Assume the reader has never opened a SKILL.md
-  or a schema. Say "3 of 5 pieces of work are done; the two left are waiting on a question only
+  or a schema. Say "three of the five pieces of work are done; the two left are waiting on a question only
   you can answer" before saying `deliver.py --outstanding`. Every framework term the report
   cannot avoid — a BLOCKING note, drift, a binding — gets one plain-words clause the first time
   it appears ("drift: the code changed after the record that links it to the specification was

@@ -14,8 +14,6 @@ What this script does, and nobody else does any of it:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root> [--all]                        the same, then report drift
-    trace.py --check ... --fail-on <class>,...                    the same, exiting non-zero for
-                                                                  the named classes alone
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind-record ... --workspace <dir>                  the same, refusing a file or a
@@ -65,7 +63,7 @@ What this script does, and nobody else does any of it:
                                                                   bound
 
 Drift is reported in four classes, because a caller can act on each differently and could act on
-none of them while all four arrived as one list. A node the specification no longer holds is
+none of them if all four arrived as one list. A node the specification no longer holds is
 `orphaned`: the fact it named is gone, and no operation here can repair the entry — `--bind`
 refuses a node the specification does not hold, and this script is the trace's one writer, so the
 finding repeats on every run forever. A node whose text moved is `moved`, and a file that changed
@@ -232,13 +230,10 @@ node, by class, in five states — and prints the judged side beside them, kept 
 binding that computes and a record that found against a node are facts about different things.
 A query, exit 0 always, no figure.
 
-`--fail-on` narrows what a non-zero exit means, and narrows nothing else. Every class is computed
-and printed either way — this only decides which of them the exit status answers for. The default
-is every class, because a drift report read by a person is read whole. A caller that runs on every
-push wants the two classes a person must act on, `code` and `proof`: `moved` is the ordinary state
-of a tree between a specification's change and the delivery that answers it, and `orphaned` is
-cleared by `--prune` after a deliberate removal. A status that is red during the work it is
-supposed to be watching is a status that gets switched off, and then nothing is watching.
+A CI runs `--check` and reads its exit code: non-zero is drift of any class, and the listing says
+which. `moved` is the ordinary state of a tree between a specification's change and the delivery
+that answers it, so a caller that runs on every push reads the classes in the listing rather than
+the status alone.
 
 `--stage` is `--encodes` carried to where the locate step actually spends: it computes each named
 file's node set once, writes it where every consumer of it reads the same copy, and prepares what
@@ -307,9 +302,8 @@ digests are untouched by any of this.
 proofs themselves, for the review route. «Every claim that a test demonstrates a node is carried
 to certification by the review that reads the proof» (SPEC-004 R13) — and a proof record's
 `tests[]` is where the claim lives, one `demonstrates` per test. Composing the certifications
-file from those entries was the review skill's, in prose, and a step a skill performs in prose is
-a step that is skipped: measured over one consumer, most reviews of proofs carrying a claim never
-staged a certification at all. So the staging reads the records: every test naming a node under
+file from those entries in prose would leave it a step a skill performs in prose, which is a step
+that gets skipped. So the staging reads the records: every test naming a node under
 `demonstrates` is one entry per node, its `proof` the files of every such test, its `step` the
 registry's command whose `role` is `suite` — the one step that proves the work, and the one
 `deliver.py` holds to being declared once. A record `deliver.py` did not first hold to its
@@ -346,7 +340,7 @@ Declared dependencies: PyYAML, jsonschema (this script also imports spec.py and 
 siblings under bin/).
 
 Usage:  trace.py <target-root>
-        trace.py --check <target-root> [--all] [--fail-on <class>[,<class> ...]]
+        trace.py --check <target-root> [--all]
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
         trace.py --bind-record <target-root> <spec-root> <reconciliation-record>
@@ -366,7 +360,7 @@ Usage:  trace.py <target-root>
         trace.py --help
                 print this text and stop
 Exit:   0 sound / drift-free / bound / pruned / released / the record holds / nothing is owed /
-          staged / folded — and under `--fail-on`, no finding in the classes it names
+          staged / folded
         1 problems: an invalid file, drift found, an unsound specification, an unknown node
           or file, a record its contract refuses, a finding no bind closed, a return a
           delegation owes again
@@ -656,8 +650,7 @@ def drift_of(declared: dict, home: Path,
     a node moved or gone is not a fact about any one file.
 
     The classes are not three flavours of one fact, and a caller who cannot tell them apart cannot
-    act on any of them. `orphaned` is the one nothing here could fix until `--prune` existed: the
-    node left the specification, `--bind` refuses a node the specification does not hold, and this
+    act on any of them. `orphaned` is the one only `--prune` fixes: the node left the specification, `--bind` refuses a node the specification does not hold, and this
     script is the trace's one writer — so the entry stays, its finding repeats on every run, and a
     file drift that arrived today reads as one more line in a list nobody finishes. `moved` and
     `code` are the drift this file exists to report, and neither is `--prune`'s business: a
@@ -1360,10 +1353,10 @@ def reconciliation(record: Path) -> int:
 def encoded_in(record: Path) -> tuple[list[tuple[str, list[str]]], list[str]]:
     """Every node one implementation record says the source encodes, with the files it names.
 
-    The record is the only thing that knows which nodes reached the code and where, and until this
-    existed its caller retyped both — one node per invocation, with the rule that a bind states
-    exactly what the record says and never a second judgment about it held by prose alone. Reading
-    the record here makes that rule structural: a node it does not name cannot be bound from this
+    The record is the only thing that knows which nodes reached the code and where, and a caller
+    that retyped both — one node per invocation — would hold the rule that a bind states exactly
+    what the record says, and never a second judgment about it, by prose alone. Reading the record
+    here makes that rule structural: a node it does not name cannot be bound from this
     form, and one it does cannot be skipped.
 
     A node the record answers only by `how` — constrained, encoded nowhere — is not here, and that
@@ -3996,24 +3989,6 @@ def main() -> int:
             print("cannot run: --workspace is given once; one staging read what this bind stamps",
                   file=sys.stderr)
             return CANNOT_RUN
-    fail_on: set[str] | None = None
-    if "--fail-on" in args:
-        at = args.index("--fail-on")
-        if at + 1 >= len(args) or args[at + 1].startswith("--"):
-            print(f"cannot run: --fail-on takes a comma-separated list of drift classes "
-                  f"({', '.join(CLASSES)})", file=sys.stderr)
-            return CANNOT_RUN
-        fail_on = {name.strip() for name in args[at + 1].split(",") if name.strip()}
-        del args[at:at + 2]
-        unknown = sorted(fail_on - set(CLASSES))
-        if unknown or not fail_on:
-            print(f"cannot run: --fail-on names {', '.join(unknown) or 'no class'}; the classes "
-                  f"are {', '.join(CLASSES)}", file=sys.stderr)
-            return CANNOT_RUN
-        if "--fail-on" in args:
-            print("cannot run: --fail-on is given once; one list says what the exit answers for",
-                  file=sys.stderr)
-            return CANNOT_RUN
     certify: Path | None = None
     if "--certify" in args:
         at = args.index("--certify")
@@ -4062,10 +4037,6 @@ def main() -> int:
         print("cannot run: --changed names a file set and --rank reads them all; a ranking over "
               "the files one change touched is a ranking of that change, not of the tree",
               file=sys.stderr)
-        return CANNOT_RUN
-    if fail_on is not None and not check:
-        print("cannot run: --fail-on is a mode of --check; it says which drift classes the exit "
-              "status answers for, and nothing else here exits over drift", file=sys.stderr)
         return CANNOT_RUN
     if do_audit and not do_stage:
         print("cannot run: --audit is a mode of --stage", file=sys.stderr)
@@ -4279,15 +4250,7 @@ def main() -> int:
               f"target this project declares freely edited")
     if held:
         print(suppressed(held, prefixes))
-    if fail_on is None:
-        return 1 if listed else 0
-    # Narrowed, the exit answers for less than the report says, and a reader who sees only the
-    # status has to be told which less. Said whether or not anything was found: a green status
-    # whose narrowing is invisible is the one a caller misreads as a clean tree.
-    over = [f for f in listed if f[0] in fail_on]
-    print(f"\nexit status answers for {', '.join(sorted(fail_on))}: {len(over)} finding(s) of "
-          f"{len(listed)} listed")
-    return 1 if over else 0
+    return 1 if listed else 0
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 ---
 name: coverage-auditor
-description: Pairs every criterion the tasks under review state with the tests that would fail if it stopped holding, returning one entry per criterion, the reason for every one that is not covered, and every test in the set that bears on no criterion at all. Delegate during review-change's coverage pass, passing the criteria as the tasks state them, the test file set, the target source root, and the delivery-node contract path. Also delegated by reconcile to certify one specification node — whether the tests a human offered as its proof would fail if the node's fact stopped holding — passing the certification pack trace.py staged and the target source root; it returns the certification-return contract's mapping. Read-only, and it reports no figure — the states name which criteria are unproven, which a count cannot recover.
+description: Pairs every criterion the tasks under review state with the tests that would fail if it stopped holding, returning one entry per criterion, the reason for every one that is not covered, and every test in the set that bears on no criterion at all. Delegate during review-change's coverage pass, passing the criteria as the tasks state them, the test file set, the target source root, and the delivery-node contract's `coverageEntry` and `unpairedTest` slices, pasted whole. Also delegated by reconcile to certify one specification node — whether the tests a human offered as its proof would fail if the node's fact stopped holding — passing the certification pack trace.py staged and the target source root; it returns the certification-return contract's mapping. Read-only, and it reports no figure — the states name which criteria are unproven, which a count cannot recover.
 tools: Read, Grep, Glob
 model: opus
 effort: high
@@ -23,9 +23,10 @@ stop. You need:
 2. **the test file set** — every path holding tests that may bear on them, listed explicitly.
 3. **the target source root** — so every path you record resolves for a reader who was not
    present.
-4. **the delivery-node contract's `coverageEntry` slice** — `deliver.py --contract
-   coverageEntry`'s output, pasted whole rather than a path to open: the states and what each
-   means live there.
+4. **the delivery-node contract's `coverageEntry` and `unpairedTest` slices** — `deliver.py
+   --contract coverageEntry`'s and `deliver.py --contract unpairedTest`'s output, each pasted
+   whole rather than a path to open: the states and what each means live in the first, and the
+   shape of every `unpaired` entry in the second.
 
 **Or, to certify one specification node**, two inputs in place of the four:
 
@@ -140,7 +141,7 @@ certified:
   - node: <the identity, as the pack names it>
     state: <the same vocabulary; read it in the pack's return contract>
     tests:                   # every test bearing on the fact, each a file the pack offered as proof
-      - file: <the path, spelled from the target source root as the pack names it>
+      - file: <the path relative to the target source root; the pack names it absolute>
         name: <the test's own name within the file; omit where the file holds one>
     why: <what is unexercised, in the fact's own terms; omit only where the state is covered>
     remainder: <testable | untestable; exactly where the state is partial or uncovered>
