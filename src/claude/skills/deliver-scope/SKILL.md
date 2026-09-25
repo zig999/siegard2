@@ -150,6 +150,8 @@ verbatim, and with the log's last line naming it. None is worked around, and non
 
 - a `BLOCKING, from the specification —` note standing on every task the set has left;
 - a specification silence — the `/analyse` invocation is the human's to take, always;
+- a task `deliver.py --outstanding` lists as waiting on a re-bind — a node it implements moved
+  since the plan was derived, and the door is `/plan-work` over the slug, never a derivation;
 - a suite whose diagnosis names a disagreement between the two producers;
 - a delivery that gave up, or an infrastructure failure the diagnosis read twice;
 - a field `siegard.json` does not declare, or a standard that resolves nowhere;

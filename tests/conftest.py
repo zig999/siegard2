@@ -97,6 +97,24 @@ def write_plan(work: Path):
     return put
 
 
+def derive_plan(work: Path, root: Path | None = None) -> Path:
+    """Write the work root's plan.json the way `plan.py <work-root> <specification-root>` does —
+    what a planning run leaves behind, and what deliver.py reads a live plan's anchors from. A
+    closed plan (or no specification root) derives without anchors."""
+    import plan
+    nodes, problems = plan.collect(work, plan.contract())
+    spec_nodes = None
+    if root is not None and not (work / plan.CLOSURE_FILE).is_file():
+        spec_nodes, spec_problems = plan.load_base(root)
+        assert spec_problems == [], f"the fixture specification does not hold: {spec_problems}"
+    problems += plan.cross_problems(nodes, spec_nodes)
+    assert problems == [], f"the fixture plan does not hold together: {problems}"
+    target = work / plan.PLAN_FILE
+    target.write_text(json.dumps(plan.derive(nodes, spec_nodes), indent=2, ensure_ascii=False)
+                      + "\n", encoding="utf-8")
+    return target
+
+
 def task_pin_of(work: Path, tid: str) -> str:
     """The pin one task computes to right now: the SHA-256 of its own file."""
     import deliver

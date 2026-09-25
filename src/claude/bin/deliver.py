@@ -19,23 +19,32 @@ for a review to point at, never validated as a node. `orchestration.md` at the d
 `/deliver-scope`'s log of its own run — a marker, never a node, kept the way plan.py keeps
 `closure.md`.
 
-**The plan is read through plan.py's own pipeline, never through its plan.json** — an index this
-script did not just derive could be stale, and a delivery validated against a stale index reports
-a soundness nobody has. A plan that does not hold together is a refusal to run: fix it with
-plan.py first. The pin each record carries is the SHA-256 of its own task's file, so
+**The plan is read through plan.py's own pipeline, and its plan.json for the one fact no node
+file holds.** The nodes are collected and checked afresh, never taken from the index; what the
+index alone carries is the anchor — the digest of each specification node a task implements, as
+the derivation read it — and it is read through `plan.anchors`, the same reader `plan.py --check`
+holds it through. An index whose edges are not what the nodes derive to, or a live one carrying no
+anchors, is stale, and a delivery validated against a stale index reports a soundness nobody has;
+both are a refusal to run, as a plan that does not hold together is: fix it with plan.py first. A
+task whose implemented node no longer computes to its anchor waits on a re-bind in
+`--outstanding`, and a record over it is refused — the node moved after the binder read it, and a
+delivery against it answers text nobody cut the task from. A closed plan's index is never read.
+The pin each record carries is the SHA-256 of its own task's file, so
 `sha256sum <work-root>/task/<epic>/<slug>.md` computes the same value by hand — a record answers
 one task, and that is what it is held to.
 
 **There is no status here.** What is delivered is what has a record, and the record's presence
 in git is the whole of that state — this script stores nothing about progress and no node
 carries a field for it. `--outstanding` answers the question a status field would have answered,
-from the tasks that have no record and the three things a delivery stops on — the dependencies
-they declare, the substrate a task of this plan produces and the tree does not hold, and a
-standing `BLOCKING, from the specification —` note only a person settles — so the answer is
+from the tasks that have no record and the four things a delivery stops on — the dependencies
+they declare, the substrate a task of this plan produces and the tree does not hold, a standing
+`BLOCKING, from the specification —` note only a person settles, and an implemented node that
+moved since the plan was derived, which a re-bind settles — so the answer is
 derived from the files every time and can never be stale or wrong. It names the deliverable set
 rather than leaving it to be subtracted by eye, and the report itself refuses nothing. The stops
 it names are held where a record is validated: a record over a task whose `## Notes` still
-carries a blocking note is refused, quoting the entry and naming both ways out of it, and a task
+carries a blocking note is refused, quoting the entry and naming both ways out of it, a record
+over a task whose implemented node moved is refused naming the node, and a task
 waits on a dependency until that dependency is delivered and proven — or delivered the substrate
 alone, which no proof can hold up. A dependency delivered and never proven is source nobody
 executed under a record saying it stands.
@@ -1392,6 +1401,13 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
     tfront = task["front"]
     tid = task_of(nid)
 
+    for ref in task.get("moved") or []:
+        problems.append(f"{nid}: answers {tid}, which implements {ref}, whose text moved since "
+                        f"the plan was derived; a record over it answers the node as the binder "
+                        f"never read it. Re-run /plan-work over this slug — the binder reads the "
+                        f"node as it stands and the derivation refreshes the anchor — and hold "
+                        f"the record to the task as it then stands")
+
     blocking = plan.blocking_notes_of(task.get("notes") or "")
     if blocking:
         problems.append(f"{nid}: answers {tid}, whose ## Notes carries `{blocking[0]}`; a "
@@ -1727,9 +1743,10 @@ def collect(root: Path, validator, names: list[str], closed: bool = False,
 
 
 def load_plan(work: Path, specification: Path | None) -> tuple[dict[str, dict], list[str]]:
-    """The plan, read through plan.py's own pipeline — never through a plan.json that could be
-    stale. A closed plan is read the way plan.py reads it: without opening today's
-    specification."""
+    """The plan, read through plan.py's own pipeline, with each live task's moved nodes under
+    `moved` — read from plan.json's anchors through `plan.anchors`, so a stale or unanchored index
+    is a problem here as it is under `plan.py --check`. A closed plan is read the way plan.py reads
+    it: without opening today's specification, and without its index."""
     validator = plan.contract()
     if (work / plan.CLOSURE_FILE).is_file():
         spec_nodes = None
@@ -1739,7 +1756,15 @@ def load_plan(work: Path, specification: Path | None) -> tuple[dict[str, dict], 
             return {}, spec_problems
     nodes, problems = plan.collect(work, validator)
     problems += plan.cross_problems(nodes, spec_nodes)
-    return nodes, sorted(set(problems))
+    if problems or spec_nodes is None:
+        return nodes, sorted(set(problems))
+    held, stale = plan.anchors(work, nodes, spec_nodes)
+    if stale:
+        return nodes, stale
+    for task, refs in plan.moved(held, spec_nodes).items():
+        if task in nodes:
+            nodes[task]["moved"] = refs
+    return nodes, []
 
 
 def task_pin(work: Path, tid: str) -> str | None:
@@ -1999,21 +2024,23 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     """What the plan still holds and the delivery does not — derived from the records every
     time, which is why no field records it.
 
-    It answers one question, and it answers it in the three terms a delivery actually stops on. A
+    It answers one question, and it answers it in the four terms a delivery actually stops on. A
     task waits on the dependencies it declares: a fact of the plan, read here rather than tracked.
     It waits on the substrate, where a task of this plan produces what the tree does not hold. And
     it waits on a person, where its `## Notes` still carries a standing `BLOCKING, from the
-    specification —` entry. The first was the only one this report named, and the other two were
-    left to whoever read the files — which is how a caller chose a task that stopped two commands
-    later, and how the deliverable set the handoff describes in words stayed something nobody
-    computed. Beside those it quotes the underdetermined entries, which stop nothing: they are
+    specification —` entry. And it waits on a re-bind, where a node it implements no longer
+    computes to the anchor plan.json holds for it. The first was the only one this report named,
+    and the others were left to whoever read the files — which is how a caller chose a task that
+    stopped two commands later, and how the deliverable set the handoff describes in words stayed
+    something nobody computed. Beside those it quotes the underdetermined entries, which stop nothing: they are
     what a task's tests must exclude, `/implement-task` hands them to the test author quoted
     whole, and a set a script read is a set no eye had to collect.
 
-    None of the three is a refusal here. This writes nothing and exits 0 over every state it can
-    describe; the refusals are the records' — a record written over a blocked task, or over a
-    dependency nothing proves, is refused where the record is validated — and the skill about to
-    write one is where the entry is quoted and both doors handed over ready to open. A
+    None of the four is a refusal here. This writes nothing and exits 0 over every state it can
+    describe; the refusals are the records' — a record written over a blocked task, over a
+    dependency nothing proves, or over a node that moved, is refused where the record is
+    validated — and the skill about to write one is where the entry is quoted and both doors
+    handed over ready to open. A
     dependency is waited on until it is settled: delivered and proven, or delivered as the
     substrate alone."""
     delivered = {task_of(nid) for nid, node in nodes.items()
@@ -2042,9 +2069,13 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
         # tests — and they are quoted here so that set reaches /implement-task from a reading
         # rather than assembled by eye out of the task file.
         underdetermined = plan.underdetermined_notes_of(notes)
+        rebind = plan_nodes[tid].get("moved") or []
         said = ["no record"]
         if waits:
             said.append(f"waits on {', '.join(sorted(waits))}")
+        for ref in rebind:
+            said.append(f"waits on a re-bind: {ref} moved since the plan was derived "
+                        f"(/plan-work over this slug)")
         if tid in absences:
             said.append("produces the substrate every other delivery waits on")
         if blocking:
@@ -2057,7 +2088,7 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
             lines += [f"  {path}: {'ABSENT' if path in absent else 'stands'}"
                       for path in produces]
         lines += [f"  {entry}" for entry in blocking + underdetermined]
-        if not waits and not blocking:
+        if not waits and not blocking and not rebind:
             ready.append(tid)
 
     if any(tid not in delivered for tid in tasks):

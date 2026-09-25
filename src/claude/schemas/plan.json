@@ -55,6 +55,11 @@
           "at": {
             "type": "string",
             "description": "Where in the source node the reference sits, so a reader can open the place a defect names."
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "The anchor: the digest of the specification node an `implements` edge points at, as the derivation read it — `sha256sum` of the node's file. `implements` edges only. On a live plan every `implements` edge carries one, and an `implements` edge without it is an index derived before the anchor existed, which is stale; a node whose digest no longer matches has moved since the plan was derived, and nothing is delivered against it until the task is bound again. A closed plan's seal carries none."
           }
         }
       }

@@ -19,6 +19,12 @@ def run(*args) -> subprocess.CompletedProcess:
                           capture_output=True, text=True)
 
 
+def digest_of(root: Path, nid: str) -> str:
+    """The digest a specification node computes to right now, the way spec.py reads it."""
+    import spec
+    return spec.digest_of(root / f"{nid}.md")
+
+
 def problems_in(work, root) -> list[str]:
     validator = plan.contract()
     nodes, problems = plan.collect(work, validator)
@@ -68,7 +74,8 @@ def test_task_entries_carry_epic_and_edges(work, root, sound_plan):
     impl = next(e for e in derived["edges"] if e["kind"] == "implements"
                 and e["from"] == "task/checkout/bill-order")
     assert impl == {"from": "task/checkout/bill-order", "to": "domain/sales/invoice",
-                    "kind": "implements", "at": "implements[0]"}
+                    "kind": "implements", "at": "implements[0]",
+                    "digest": digest_of(root, "domain/sales/invoice")}
 
 
 def test_the_derivation_summary_counts_kinds_and_implements(work, root, sound_plan):
@@ -144,6 +151,104 @@ def test_check_after_an_edit_is_stale(work, root, sound_plan):
     done = run("--check", work, root)
     assert done.returncode == 1
     assert "STALE" in done.stdout
+
+
+# ---------------------------------------------------------------- the anchor
+
+def test_a_live_derivation_anchors_each_implemented_node(work, root, sound_plan):
+    """Each `implements` edge carries the digest of the node as the derivation read it; the
+    edges that point at a task or a claim carry none, because nothing is delivered against
+    them."""
+    assert run(work, root).returncode == 0
+    derived = json.loads((work / "plan.json").read_text())
+    for edge in derived["edges"]:
+        if edge["kind"] == "implements":
+            assert edge["digest"] == digest_of(root, edge["to"]), edge
+        else:
+            assert "digest" not in edge, edge
+
+
+def test_a_closed_derivation_writes_no_anchor(work, root, sound_plan):
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    assert run(work).returncode == 0
+    derived = json.loads((work / "plan.json").read_text())
+    assert all("digest" not in edge for edge in derived["edges"])
+
+
+def rewrite_order(write) -> None:
+    write("domain/sales/order", {
+        "type": "aggregate-root",
+        "attributes": [
+            {"name": "order_number", "type": "string", "required": True},
+            {"name": "total", "type": "decimal", "required": True},
+            {"name": "placed_by", "type": "string", "required": False},
+        ],
+    })
+
+
+def test_a_node_that_moved_is_reported_moved_and_not_stale(work, root, sound_plan, write):
+    assert run(work, root).returncode == 0
+    rewrite_order(write)
+    done = run("--check", work, root)
+    assert done.returncode == 1
+    assert ("MOVED: task/checkout/record-order implements domain/sales/order, whose text moved "
+            "since the plan was derived") in done.stdout
+    assert "task/checkout/bill-order" not in done.stdout
+    assert "STALE" not in done.stdout
+
+
+def test_a_moved_node_is_reported_beside_a_stale_index(work, root, sound_plan, write):
+    """The planning run's second --check reads a plan mid-edit: the index is stale because the
+    run just wrote nodes, and a task whose node moved still has to be named."""
+    assert run(work, root).returncode == 0
+    rewrite_order(write)
+    sound_plan("task/checkout/bill-order", {
+        "title": "Bill order", "summary": "Raise the bill for a recorded order, reworded.",
+        "objective": "A recorded order produces exactly one invoice.",
+        "criteria": ["Recording an order twice produces one invoice."],
+        "implements": ["domain/sales/invoice"],
+        "depends_on": ["task/checkout/record-order"],
+    })
+    done = run("--check", work, root)
+    assert done.returncode == 1
+    assert "MOVED: task/checkout/record-order implements domain/sales/order" in done.stdout
+    assert "STALE" in done.stdout
+
+
+def test_an_edit_to_a_node_no_task_implements_moves_nothing(work, root, sound_plan, write):
+    assert run(work, root).returncode == 0
+    write("domain/sales/_context", {"strategic": "supporting"})
+    done = run("--check", work, root)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "MOVED" not in done.stdout
+
+
+def test_a_live_index_without_anchors_is_stale(work, root, sound_plan):
+    assert run(work, root).returncode == 0
+    graph = json.loads((work / "plan.json").read_text())
+    for edge in graph["edges"]:
+        edge.pop("digest", None)
+    (work / "plan.json").write_text(json.dumps(graph, indent=2, ensure_ascii=False) + "\n",
+                                    encoding="utf-8")
+    done = run("--check", work, root)
+    assert done.returncode == 1
+    assert "STALE" in done.stdout
+    assert "predates the anchor" in done.stdout
+    assert "MOVED" not in done.stdout
+
+
+def test_a_closed_plan_never_reports_moved(work, root, sound_plan, write):
+    """A closed index keeps whatever anchors it was sealed with, and the closure's own
+    re-derivation dropping them is not staleness: a closed plan answers to the specification it
+    read, never to today's."""
+    assert run(work, root).returncode == 0
+    rewrite_order(write)
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    done = run("--check", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "MOVED" not in done.stdout
+    assert run(work).returncode == 0
+    assert run("--check", work).returncode == 0
 
 
 # ---------------------------------------------------------------- the closed plan

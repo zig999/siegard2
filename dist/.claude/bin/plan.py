@@ -18,18 +18,26 @@ disclosed in its decision log during planning, so a task still carrying one is a
 skipped the route. `intake/` under the work root holds the material the planning read: kept for
 `sources` to point at, never validated.
 
-**The specification is read through spec.py's own pipeline, and does not move underfoot.** A plan
-carries no pin against it: the specification does not change during a plan's execution, by
-convention — decide-and-disclose leaves a specification no way to carry an open question a task
-could outlive, which is what a pin would watch for. A specification that
-does not hold together is a refusal to run: fix it with spec.py first.
+**The specification is read through spec.py's own pipeline, and each node a task implements is
+anchored where the derivation read it.** Every `implements` edge of a live plan's plan.json
+carries the digest of that specification node as it stood when the plan was derived — the text
+the binder cut the task against. The specification moves while a plan is live: a fact decided
+during planning and a corrective increment each write into it. `--check` reports a task whose
+implemented node no longer computes to its anchor as MOVED, and deliver.py reads the same anchors
+through `anchors` and refuses a record over that task, so no delivery answers a node as the binder
+never read it. The anchor guards delivery, not derivation: a derivation writes the digests as the
+specification stands, so a MOVED task goes through the binder again before the next derivation,
+and a derivation run to clear the report is the report suppressed. A specification that does not
+hold together is a refusal to run: fix it with spec.py first.
 
 **A `closure.md` at the work root marks the plan closed.** A closed plan is history: every
 structural check still runs — corrupted history is refused — but the specification is never
 touched, because history must stay checkable after it moves on, breaks, or disappears. Each
 task's `implements` stands as the historical record of which nodes the work addressed. The marker
 itself is prose for the reviewer, kept like `intake/` and never validated as a node; the
-specification root becomes optional, and when given it is ignored.
+specification root becomes optional, and when given it is ignored. A closed plan's derivation
+writes no anchor, and `--check` compares a closed index with its anchors set aside — the closure's
+own re-derivation is the seal, and a closed plan never reports MOVED.
 
 **plan.json is derived, never edited.** It is refused entirely while the plan has problems: an
 index over a broken plan reports a shape nobody decided. `--check` compares and never repairs.
@@ -624,9 +632,10 @@ def load_base(root: Path) -> tuple[dict[str, dict], list[str]]:
     return nodes, sorted(set(problems + spec.cross_problems(nodes, root)))
 
 
-def derive(nodes: dict[str, dict]) -> dict:
+def derive(nodes: dict[str, dict], spec_nodes: dict[str, dict] | None = None) -> dict:
     """The plan graph a sound plan derives to. Sorted throughout, so identical input is
-    byte-identical output."""
+    byte-identical output. With the specification loaded — a live plan — each `implements` edge
+    carries the digest of the node it points at, as read now; a closed plan's carries none."""
     out_nodes, out_edges = [], []
     for nid in sorted(nodes):
         node, front = nodes[nid], nodes[nid]["front"]
@@ -641,9 +650,75 @@ def derive(nodes: dict[str, dict]) -> dict:
             entry["epic"] = node["epic"]
         out_nodes.append(entry)
         for target, edge_kind, at in references(front, node["kind"]):
-            out_edges.append({"from": nid, "to": target, "kind": edge_kind, "at": at})
+            edge = {"from": nid, "to": target, "kind": edge_kind, "at": at}
+            if (edge_kind == "implements" and spec_nodes is not None
+                    and target in spec_nodes):
+                edge["digest"] = spec_nodes[target]["digest"]
+            out_edges.append(edge)
     out_edges.sort(key=lambda e: (e["from"], e["at"], e["to"]))
     return {"contract_version": "siegard-plan/3", "nodes": out_nodes, "edges": out_edges}
+
+
+def unanchored(graph: dict) -> dict:
+    """The graph with every edge's anchor set aside: what the plan nodes alone decide."""
+    edges = [{k: v for k, v in edge.items() if k != "digest"}
+             for edge in graph.get("edges", []) if isinstance(edge, dict)]
+    return {**graph, "edges": edges}
+
+
+def anchors(work: Path, nodes: dict[str, dict],
+            spec_nodes: dict[str, dict] | None) -> tuple[dict[tuple[str, str], str], list[str]]:
+    """The anchors the committed index holds, keyed by (task, implemented node), and the STALE
+    problems that make them unreadable. The index satisfies its schema, its edges with anchors set
+    aside are what the nodes derive to, and on a live plan (spec_nodes given) every `implements`
+    edge carries its anchor — an index derived before the anchor existed guards nothing, and
+    reading it as current would deliver against nodes nobody pinned. The one reader both
+    `--check` and deliver.py hold the index through."""
+    target = work / PLAN_FILE
+    rerun = "run plan.py over the specification to derive it"
+    if not target.is_file():
+        return {}, [f"STALE: {target} does not exist; the plan has never been derived — {rerun}"]
+    try:
+        stored = json.loads(target.read_text(encoding="utf-8"))
+        schema = json.loads(PLAN_GRAPH_CONTRACT.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as broken:
+        return {}, [f"STALE: {target} does not parse ({broken}) — {rerun}"]
+    broken = sorted(Draft202012Validator(schema).iter_errors(stored), key=str)
+    if broken:
+        return {}, [f"STALE: {target} does not satisfy {PLAN_GRAPH_CONTRACT.name}: "
+                    f"{broken[0].message} — {rerun}"]
+    if unanchored(stored)["edges"] != unanchored(derive(nodes))["edges"]:
+        return {}, [f"STALE: {target} holds edges that are not what the plan nodes derive to — "
+                    f"{rerun}"]
+    held = stored_anchors(stored)
+    bare = [f"{edge['from']} implements {edge['to']}" for edge in stored["edges"]
+            if edge["kind"] == "implements" and "digest" not in edge]
+    if bare and spec_nodes is not None:
+        return {}, [f"STALE: {target} predates the anchor — {len(bare)} implements edge(s) carry "
+                    f"no digest, first {bare[0]}; an unanchored index cannot say whether a node "
+                    f"moved after the binder read it — {rerun}"]
+    return held, []
+
+
+def stored_anchors(stored: object) -> dict[tuple[str, str], str]:
+    """Every anchor an index holds, keyed by (task, implemented node) — read defensively, because
+    `--check` reads them from an index it is about to call stale."""
+    edges = stored.get("edges") if isinstance(stored, dict) else None
+    return {(e["from"], e["to"]): e["digest"] for e in edges or []
+            if isinstance(e, dict) and e.get("kind") == "implements"
+            and isinstance(e.get("from"), str) and isinstance(e.get("to"), str)
+            and isinstance(e.get("digest"), str)}
+
+
+def moved(held: dict[tuple[str, str], str],
+          spec_nodes: dict[str, dict]) -> dict[str, list[str]]:
+    """Each task whose implemented node no longer computes to its anchor, with those nodes."""
+    out: dict[str, list[str]] = {}
+    for (task, node), digest in sorted(held.items()):
+        current = spec_nodes.get(node)
+        if current is not None and current["digest"] != digest:
+            out.setdefault(task, []).append(node)
+    return out
 
 
 NAMED_BY = ("implements", "covers")
@@ -1031,7 +1106,7 @@ def main() -> int:
               f"plan.json is not derived over a plan that does not hold together.")
         return 1
 
-    plan = derive(nodes)
+    plan = derive(nodes, spec_nodes)
     try:
         plan_contract = json.loads(PLAN_GRAPH_CONTRACT.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as broken:
@@ -1049,9 +1124,36 @@ def main() -> int:
         if not target.is_file():
             print(f"STALE: {target} does not exist; the plan has never been derived")
             return 1
-        if target.read_text(encoding="utf-8") != text:
+        stored_text = target.read_text(encoding="utf-8")
+        try:
+            stored = json.loads(stored_text)
+        except json.JSONDecodeError:
+            stored = None
+        # A moved node is reported even beside a stale index: the edges the nodes still declare
+        # keep the anchor the last derivation wrote, and a planning run mid-edit is exactly where
+        # a task has to learn its node moved before the derivation refreshes the anchor.
+        current = {(e["from"], e["to"]) for e in plan["edges"] if e["kind"] == "implements"}
+        held = {key: digest for key, digest in stored_anchors(stored).items() if key in current}
+        shifted = {} if spec_nodes is None else moved(held, spec_nodes)
+        for task, refs in shifted.items():
+            for ref in refs:
+                print(f"MOVED: {task} implements {ref}, whose text moved since the plan was "
+                      f"derived — re-run /plan-work over this slug; the binder reads the node as "
+                      f"it stands")
+        if (stored_text != text and (
+                not isinstance(stored, dict)
+                or json.dumps(stored, indent=2, ensure_ascii=False) + "\n" != stored_text
+                or unanchored(stored) != unanchored(plan))):
             print(f"STALE: {target} is not what the nodes derive to. Run without --check to "
-                  f"rewrite it; do not edit it, because every fact in it lives in a node file")
+                  f"rewrite it; do not edit it, because every fact in it is read from a node "
+                  f"file or from the specification")
+            return 1
+        _, stale = anchors(work, nodes, spec_nodes)
+        if stale:
+            for line in stale:
+                print(line)
+            return 1
+        if shifted:
             return 1
         print(f"plan checked: {target} matches {len(plan['nodes'])} node(s)")
         return 0

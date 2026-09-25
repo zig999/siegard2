@@ -305,7 +305,10 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   already ran paying to run again per task the growth touches.
 - **The plan, when the work root is populated.** Trust its index only after checking it: run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>`, and
-  a stale `plan.json` is rederived by a full validation run before anything relies on it.
+  a `STALE` `plan.json` is rederived by a full validation run before anything relies on it. A
+  `MOVED` line is never cleared by a derivation: the task it names joins the impact set and goes
+  through step 4's binder, which reads the node as it stands. The anchor guards delivery, not
+  derivation.
   Read `plan.json`, and only it: locate the epics and tasks the scope touches, and close the
   impact set over its edges — dependencies in both directions, and `implements` references
   that reach the specification's impact set. Read those files alone. Outside the set, standing
@@ -547,7 +550,10 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --node <file> <work-root> <specific
 
 ### 5. Validate, and derive the plan
 
-When every node is written, run:
+When every node is written, run `plan.py --check <work-root> <specification-root>` once more: a
+fact decided in step 4 writes into the specification, and a node it moved moves every task that
+implements it. Each `MOVED` task not yet bound in this invocation goes through step 4's binder
+first. Then run the derivation, which refreshes the anchors:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py <work-root> <specification-root>
@@ -653,7 +659,8 @@ the specification root nor the target source root.
   because a closed plan validates without one. The derivation is the seal: it still refuses a
   plan whose structure does not hold, and a specification that moved since the tasks were
   written is no obstacle — each task's `implements` now stands as the historical record of
-  which nodes the work addressed.
+  which nodes the work addressed. Without a specification root the derivation drops each
+  `implements` edge's anchor, and the closure diff shows it.
 - Report the closure and offer the `/plan-work` invocation that opens the successor
   initiative's new slug under the same work root and project root — the delivered work returns
   as inventory through the survey there, never as a reference into this closed plan. Then stop.

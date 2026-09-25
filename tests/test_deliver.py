@@ -17,15 +17,20 @@ import pytest
 import yaml
 
 import deliver
-from conftest import STANDARD, task_pin_of
+from conftest import STANDARD, derive_plan, task_pin_of
 
 REPO = Path(__file__).resolve().parent.parent
 
 
-def problems_of(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
-    """Everything the validator would report over this delivery, in one list."""
+def problems_of(delivery: Path, work: Path, target: Path, root: Path,
+                derived: bool = False) -> list[str]:
+    """Everything the validator would report over this delivery, in one list. The plan is
+    derived first, as a planning run leaves it, unless the test already derived it — `derived`
+    — and moved something since."""
     validator = deliver.contract()
     names = deliver.pass_names()
+    if not derived:
+        derive_plan(work, root)
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], f"the fixture plan does not hold together: {plan_problems}"
     nodes, found = deliver.collect(delivery, validator, names)
@@ -218,6 +223,79 @@ def test_another_task_moving_leaves_a_record_alone(delivery, work, root, target,
         "implements": ["domain/sales/order"],
     })
     assert problems_of(delivery, work, target, root) == []
+
+
+# ----------------------------------------------------------------- the anchor
+
+
+def move(write, nid: str) -> None:
+    """Rewrite one fixture specification node's text, leaving the specification sound."""
+    if nid == "domain/sales/order":
+        write(nid, {"type": "aggregate-root", "attributes": [
+            {"name": "order_number", "type": "string", "required": True},
+            {"name": "total", "type": "decimal", "required": True},
+            {"name": "placed_by", "type": "string", "required": False}]})
+    else:
+        write(nid, {"type": "value-object", "attributes": [
+            {"name": "amount", "type": "decimal", "required": True},
+            {"name": "currency", "type": "string", "required": False}]})
+
+
+def test_a_task_whose_node_moved_waits_on_a_re_bind(delivery, work, root, target,
+                                                    sound_delivery, write):
+    derive_plan(work, root)
+    move(write, "domain/sales/invoice")
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    plan_nodes, plan_problems = deliver.load_plan(work, root)
+    assert plan_problems == []
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert ("task/checkout/bill-order: no record; waits on a re-bind: domain/sales/invoice moved "
+            "since the plan was derived (/plan-work over this slug)") in report, report
+    assert "deliverable now: none" in report, \
+        "a task whose node moved after the binder read it is not deliverable now"
+
+
+def test_a_record_over_a_task_whose_node_moved_is_refused(delivery, work, root, target,
+                                                          sound_delivery, write):
+    derive_plan(work, root)
+    move(write, "domain/sales/order")
+    found = problems_of(delivery, work, target, root, derived=True)
+    said(found, "implementation/checkout/record-order: answers task/checkout/record-order, which "
+                "implements domain/sales/order, whose text moved since the plan was derived")
+    assert all("bill-order" not in p for p in found), found
+
+
+def test_a_stale_index_cannot_be_delivered_against(delivery, work, root, target, sound_delivery):
+    _, never = deliver.load_plan(work, root)
+    assert any("STALE" in p and "never been derived" in p for p in never), never
+
+    index = derive_plan(work, root)
+    graph = json.loads(index.read_text(encoding="utf-8"))
+    for edge in graph["edges"]:
+        edge.pop("digest", None)
+    index.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
+    _, bare = deliver.load_plan(work, root)
+    assert any("predates the anchor" in p for p in bare), bare
+
+    graph["edges"] = graph["edges"][1:]
+    index.write_text(json.dumps(graph, indent=2) + "\n", encoding="utf-8")
+    _, short = deliver.load_plan(work, root)
+    assert any("STALE" in p and "not what the plan nodes derive to" in p for p in short), short
+
+
+def test_a_closed_plan_delivery_ignores_the_anchors(delivery, work, root, target,
+                                                    sound_delivery, write):
+    derive_plan(work, root)
+    move(write, "domain/sales/order")
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    plan_nodes, plan_problems = deliver.load_plan(work, None)
+    assert plan_problems == []
+    assert all("moved" not in node for node in plan_nodes.values())
+    (work / "plan.json").unlink()
+    assert deliver.load_plan(work, None)[1] == [], "a closed plan's index is never read"
+    nodes, found = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    assert found + deliver.cross_problems(nodes, plan_nodes, work, deliver.pass_names(),
+                                          delivery, target, closed=True) == []
 
 
 def test_a_proof_without_an_implementation(delivery, work, root, target, sound_delivery):
@@ -1046,6 +1124,7 @@ def test_the_cli_derives_checks_and_reports(delivery, work, root, target, sound_
         return subprocess.run([sys.executable, "-B", str(script), *args, str(delivery),
                                str(work), str(target), str(root)], capture_output=True, text=True)
 
+    derive_plan(work, root)
     stale = invoke("--check")
     assert stale.returncode == 1 and "STALE" in stale.stdout, \
         "an index that has never been derived is stale, not sound"
@@ -2165,6 +2244,7 @@ def test_the_six_findings_are_receipts_over_a_closed_plan(delivery, work, root, 
     write_delivery("review/first", review_front(work, root, reviewed=["src/orders/place.ts"],
                                                 unpaired=[]))
     script = REPO / "src/claude/bin/deliver.py"
+    derive_plan(work, root)
     live = subprocess.run([sys.executable, "-B", str(script), str(delivery), str(work),
                            str(target), str(root)], capture_output=True, text=True)
     assert live.returncode == 1

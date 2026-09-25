@@ -41,7 +41,8 @@
       "from": "task/troubleshooting/record-case",
       "to": "domain/troubleshooting/case",
       "kind": "implements",
-      "at": "implements[0]"
+      "at": "implements[0]",
+      "digest": "sha256:9e85d9145db8f5f67feee52781d20091759321ef039946f126559aa29d5e93ad"
     }
   ]
 }

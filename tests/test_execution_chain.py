@@ -22,7 +22,7 @@ import pytest
 import yaml
 
 import deliver
-from conftest import STANDARD, task_pin_of
+from conftest import STANDARD, derive_plan, task_pin_of
 
 REPO = Path(__file__).resolve().parent.parent
 RUN_PY = REPO / "src/claude/bin/run.py"
@@ -68,6 +68,7 @@ def registry(tree: Path):
 def problems_of(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
     validator = deliver.contract()
     names = deliver.pass_names()
+    derive_plan(work, root)
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], plan_problems
     nodes, found = deliver.collect(delivery, validator, names)
@@ -257,6 +258,7 @@ def test_a_check_with_nothing_to_check_is_not_what_the_substrate_owes(
     (delivery / "proof/checkout/record-order.md").unlink()
 
     assert problems_of(delivery, work, tree, root) == []
+    derive_plan(work, root)
     outstanding = invoke(DELIVER_PY, "--outstanding", delivery, work, tree, root)
     assert "implemented, and no proof record holds it up" in outstanding.stdout, outstanding.stdout
 

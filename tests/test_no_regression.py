@@ -6,7 +6,11 @@ derived index, a target source root with a standard, a `siegard.json` declaring 
 that existed when it was written, and a trace carrying one drift of each class. It was generated
 once, against the code as it stood before any of this, and it is **never regenerated**. That is
 the whole point: the code moved and the fixture did not, so what these tests compare is the new
-validator against the old artifact.
+validator against the old artifact. One byte range is the exception, and it is recorded here so
+it is never mistaken for the rule: the plan index was re-derived once when each `implements` edge
+gained the digest of the node it anchors. The plan is live, a live index derived before the anchor
+existed is stale by design, and that one re-derivation is the upgrade a consumer's live plan pays
+too; every other byte stands as generated.
 
 Three failure modes this exists to catch, all of them silent and all of them expensive:
 
