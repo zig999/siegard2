@@ -763,9 +763,19 @@ def standard_review(work: Path, root: Path, ref: dict, **overrides) -> dict:
     return front
 
 
+def green_review(work: Path, root: Path, ref: dict, run_dir, **overrides) -> dict:
+    """A review against the fixture standard — which declares commands — over the run those
+    commands owe it, green: the run is recorded, and the failures pass did not run because there
+    was no failure to read, which is what its entry says."""
+    run_dir("passed", "first")
+    front = standard_review(work, root, ref, run="run/first", **overrides)
+    set_pass(front, "failures", missing="run/first passed; there was no failure to read")
+    return front
+
+
 def test_a_review_against_a_standard_holds(delivery, work, root, target, sound_delivery,
-                                           write_delivery, write_standard):
-    front = standard_review(work, root, write_standard())
+                                           write_delivery, write_standard, run_dir):
+    front = green_review(work, root, write_standard(), run_dir)
     front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts",
                           "where": "line 12, the constructor", "cites": "ARC-01",
                           "evidence": "constructor(private readonly store: PostgresStore)",
@@ -776,10 +786,10 @@ def test_a_review_against_a_standard_holds(delivery, work, root, target, sound_d
 
 def test_a_clean_standard_pass_says_what_it_was_clean_over(delivery, work, root, target,
                                                            sound_delivery, write_delivery,
-                                                           write_standard):
+                                                           write_standard, run_dir):
     """No findings at all is a real result: the copy and its pin are what the set of rules in
     scope derives from, so the record needs no list of them to be answerable."""
-    write_delivery("review/first", standard_review(work, root, write_standard()))
+    write_delivery("review/first", green_review(work, root, write_standard(), run_dir))
     assert problems_of(delivery, work, target, root) == []
 
 
@@ -832,14 +842,14 @@ def test_a_standard_that_does_not_hold_together(delivery, work, root, target, so
 
 
 def test_a_review_pin_is_never_reverified_against_the_live_standard(
-        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard, run_dir):
     """Same discipline as an implementation's: the pin is a citation of what this review read
     when it was written, never mechanically reverified against the file as it stands today."""
     ref = write_standard()
     path = target / ref["at"]
     path.write_text(path.read_text(encoding="utf-8") + "\n# edited after the review\n",
                     encoding="utf-8")
-    write_delivery("review/first", standard_review(work, root, ref))
+    write_delivery("review/first", green_review(work, root, ref, run_dir))
     assert problems_of(delivery, work, target, root) == []
 
 
@@ -1107,15 +1117,20 @@ def test_a_captured_run_reaches_a_review(delivery, work, root, target, sound_del
 
 
 @pytest.fixture
-def run_dir(delivery: Path):
+def run_dir(delivery: Path, target: Path):
     """A captured run, as the runner writes one. The validator opens it, so a bare directory is
     not a run."""
     def put(outcome: str = "failed", slug: str = "first",
-            steps: tuple[str, ...] = ("install", "lint", "test")) -> Path:
-        # The step names are the registry's, because that is the join the whole split hangs on: a
-        # rule names the step that decides it, the runner records the outcome under that name, and
-        # a record is held to having covered it. A fixture inventing a name of its own would be a
-        # run nothing could be checked against, which is what it was until this took the registry's.
+            steps: tuple[str, ...] = ("install", "lint", "test"),
+            commands: dict[str, str] | None = None, cwd: Path | None = None,
+            contract: str = "siegard-run/2") -> Path:
+        # The step names and the commands are the registry's, because that is the join the whole
+        # split hangs on: a rule names the step that decides it, the runner records the outcome
+        # and the command under that name, and a record is held to having covered it under that
+        # command, from the target. A fixture inventing a name, a command or a directory of its
+        # own would be a run nothing could be checked against.
+        declared = {c["step"]: c["command"] for c in STANDARD["commands"]}
+        declared.update(commands or {})
         recorded, stopped = [], False
         for name in steps:
             if stopped:
@@ -1125,7 +1140,8 @@ def run_dir(delivery: Path):
             else:
                 said = "passed"
             attempted = said != "not_run"
-            recorded.append({"name": name, "command": f"run-{name}", "outcome": said,
+            recorded.append({"name": name, "command": declared.get(name, "true"),
+                             "outcome": said,
                              "exit_code": 0 if said == "passed" else 1,
                              "output": f"{name}.log" if attempted else None,
                              "started_at": "2026-01-01T00:00:00.000+00:00" if attempted else None,
@@ -1134,7 +1150,7 @@ def run_dir(delivery: Path):
         where = delivery / "run" / slug
         where.mkdir(parents=True, exist_ok=True)
         (where / "run.json").write_text(json.dumps({
-            "contract_version": "siegard-run/2", "run": f"run/{slug}", "cwd": "/tmp/project",
+            "contract_version": contract, "run": f"run/{slug}", "cwd": str(cwd or target),
             "timeout_seconds": 20, "outcome": outcome,
             "failed_step": None if outcome == "passed" else steps[-1],
             "steps": recorded,
@@ -1229,8 +1245,21 @@ def test_a_task_that_produces_an_artifact_is_held_to_writing_it(delivery, work, 
 
 def test_a_task_that_produces_what_the_record_wrote_holds(delivery, work, root, target, sound_delivery,
                                                           write_plan, write_delivery):
+    (target / "src" / "orders").mkdir(parents=True)
+    (target / "src" / "orders" / "place.ts").write_text("export {};\n", encoding="utf-8")
     produces(work, delivery, write_plan, write_delivery, ["src/orders/place.ts"])
     assert problems_of(delivery, work, target, root) == []
+
+
+def test_what_a_task_produces_stands_in_the_target(delivery, work, root, target, sound_delivery,
+                                                   write_plan, write_delivery):
+    """`files` listing the artifact is the record's claim; the tree is what the next delivery
+    refuses on. A record claiming an artifact the target does not hold is the claim outliving
+    the thing, and every later task stops on an absence this record says was ended."""
+    produces(work, delivery, write_plan, write_delivery, ["src/orders/place.ts"])
+    said(problems_of(delivery, work, target, root),
+         "the task says it produces src/orders/place.ts, `files` lists it, and")
+    said(problems_of(delivery, work, target, root), "does not hold it")
 
 
 def test_the_substrate_barrier_is_named_because_no_edge_can_carry_it(delivery, work, root, target,
@@ -1864,3 +1893,292 @@ def test_the_standards_receipt_says_which_target_pins_each(
     receipt = deliver.standards_held(nodes)
     assert "standard.yaml (target app): pinned by 1 record(s)" in "\n".join(receipt)
     assert "standard.yaml (target web): pinned by 1 record(s)" in "\n".join(receipt)
+
+
+# ------------------------------- a run is held to its commands and its directory, not its names
+
+
+def test_a_step_run_under_another_command_than_the_registrys(delivery, work, root, target,
+                                                             sound_delivery, write_delivery,
+                                                             write_standard, run_dir):
+    """A run whose `lint` passed says a step called lint exited 0; the rule `lint` decides needs
+    the registry's lint to have — and the only thing tying the two is the command string the
+    runner wrote beside the outcome. `--step lint="echo X"` validating is the name standing in
+    for the command."""
+    run_dir("passed", "build", commands={"lint": "echo X"})
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, target, root),
+         "run run/build step lint ran `echo X` where the registry declares `true`")
+
+
+def test_a_command_is_compared_by_what_the_shell_reads(delivery, work, root, target,
+                                                       sound_delivery, write_delivery,
+                                                       write_standard, run_dir):
+    """The runner records `shlex.join` of what it split; the registry spells the command by
+    hand. A quoting difference is not a different command."""
+    run_dir("passed", "build", commands={"lint": "'true'"})
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_run_from_outside_the_target_is_refused(delivery, work, root, target, sound_delivery,
+                                                  write_delivery, write_standard, run_dir,
+                                                  tmp_path):
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    run_dir("passed", "build", cwd=elsewhere)
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, target, root),
+         f"run run/build ran in {elsewhere}, not the target")
+
+
+def test_a_run_from_the_same_path_under_another_checkout_is_the_target(
+        delivery, work, root, target, sound_delivery, write_delivery, run_dir, tmp_path):
+    """A git worktree carries the whole tree at another toplevel, and the parallel route the
+    module docstring describes captures every run there. The target is held by its path within
+    the project, so a run from `<other checkout>/web` is a run in the target `web`."""
+    import hashlib
+    declare_targets(target, web="web")
+    second_target_record(target, work, write_delivery)
+    registry = target / "web" / "standard.yaml"
+    front = json_front(delivery, "implementation/checkout/bill-order")
+    data = yaml.safe_load(registry.read_text(encoding="utf-8"))
+    data["commands"] = [{"step": "lint", "command": "true", "timeout_seconds": 60}]
+    registry.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    front["standard"] = {"at": "standard.yaml",
+                         "pin": "sha256:" + hashlib.sha256(registry.read_bytes()).hexdigest()}
+    front["run"] = "run/web-build"
+    write_delivery("implementation/checkout/bill-order", front)
+    worktree = tmp_path / "wt-bill-order" / "web"
+    worktree.mkdir(parents=True)
+    run_dir("passed", "web-build", steps=("lint",), cwd=worktree)
+    assert problems_of(delivery, work, target, root) == []
+    run_dir("passed", "web-build", steps=("lint",), cwd=tmp_path / "wt-bill-order")
+    said(problems_of(delivery, work, target, root), "not the target")
+
+
+def test_a_step_the_caller_added_beyond_the_registry_stands(delivery, work, root, target,
+                                                            sound_delivery, write_delivery,
+                                                            write_standard, run_dir):
+    """The registry says what must run, not what may: a caller's own step under a name the
+    registry does not declare is held to nothing."""
+    run_dir("passed", "build", steps=("install", "lint", "smoke", "test"),
+            commands={"smoke": "echo smoke"})
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, target, root) == []
+
+
+# ------------------------------------------------- a review over a registry declaring commands
+
+
+def test_a_review_over_a_registry_declaring_commands_owes_a_run(delivery, work, root, target,
+                                                                sound_delivery, write_delivery,
+                                                                write_standard):
+    """The review is the one run over the whole change. Over a registry that declares how the
+    project is checked, a review naming no run read the change and never built it."""
+    write_delivery("review/first", standard_review(work, root, write_standard()))
+    said(problems_of(delivery, work, target, root),
+         "declares the step(s) install, lint, test and this review captured no run")
+
+
+def test_a_review_records_its_green_run_and_the_failures_pass_says_it_passed(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard, run_dir):
+    """A run in which everything passed is the one case where the failures pass does not run,
+    and the run is still recorded: the entry says the run passed, which is what was missing."""
+    write_delivery("review/first", green_review(work, root, write_standard(), run_dir))
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_review_recording_a_red_run_it_did_not_read(delivery, work, root, target,
+                                                      sound_delivery, write_delivery,
+                                                      write_standard, run_dir):
+    """A run that did not pass reported something, and the failures pass is what reads it."""
+    run_dir("failed", "first")
+    front = standard_review(work, root, write_standard(), run="run/first")
+    set_pass(front, "failures", missing="no run was captured")
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root),
+         "run/first ended `failed` and the failures pass did not run")
+
+
+def test_a_reviews_green_run_that_skipped_a_registry_step(delivery, work, root, target,
+                                                          sound_delivery, write_delivery,
+                                                          write_standard, run_dir):
+    run_dir("passed", "first", steps=("install", "test"))
+    front = standard_review(work, root, write_standard(), run="run/first")
+    set_pass(front, "failures", missing="run/first passed; there was no failure to read")
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root),
+         "run/first passed having run only install, test; nothing decided the rules lint own")
+
+
+def test_a_reviews_run_is_held_to_the_registrys_commands(delivery, work, root, target,
+                                                         sound_delivery, write_delivery,
+                                                         write_standard, run_dir):
+    run_dir("passed", "first", commands={"test": "echo X"})
+    front = standard_review(work, root, write_standard(), run="run/first")
+    set_pass(front, "failures", missing="run/first passed; there was no failure to read")
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root),
+         "review/first: run run/first step test ran `echo X` where the registry declares `true`")
+
+
+# ----------------------------------------------------- four prose stops, now refusals
+
+
+def blocked_task(work: Path, delivery: Path, write_plan, write_delivery) -> None:
+    """The fixture task with a standing blocking note, and its record repinned to it."""
+    front = json_front(work, "task/checkout/record-order")
+    write_plan("task/checkout/record-order", front,
+               body="## What it is\nProse for a reader.\n\n## Notes\n"
+                    "BLOCKING, from the specification — the criterion asserts an order with no "
+                    "lines, which domain/sales/order refuses.\n")
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    write_delivery("implementation/checkout/record-order", record)
+    repin_proof(delivery, write_delivery)
+
+
+def test_a_record_over_a_blocked_task_is_refused(delivery, work, root, target, sound_delivery,
+                                                 write_plan, write_delivery):
+    """Writing source past a blocking note encodes the contradiction as though the business had
+    decided it. The record is refused quoting the entry and naming both doors, the way the stale
+    pin refusal hands its three ways out."""
+    blocked_task(work, delivery, write_plan, write_delivery)
+    found = problems_of(delivery, work, target, root)
+    said(found, "whose ## Notes carries `BLOCKING, from the specification — the criterion "
+                "asserts an order with no lines")
+    said(found, "`/plan-work`, re-cutting the scope")
+    said(found, "`/analyse`, amending the specification")
+
+
+def test_a_review_over_fewer_files_than_its_tasks_records_wrote(delivery, work, root, target,
+                                                                sound_delivery, write_delivery):
+    """`reviewed` cut to one file derived before: every pass was clean over a set nobody
+    delivered. The set is the caller's to state, and the validator holds it to the records."""
+    write_delivery("review/first", review_front(work, root, reviewed=["src/orders/place.ts"],
+                                                unpaired=[]))
+    said(problems_of(delivery, work, target, root),
+         "review/first: `reviewed` does not list tests/place.spec.ts, which "
+         "proof/checkout/record-order says it wrote in `tests`")
+
+
+def dependent(work: Path, write_delivery) -> None:
+    write_delivery("implementation/checkout/bill-order", {
+        "title": "Bill", "summary": "Raise the bill.",
+        "task": task_pin_of(work, "task/checkout/bill-order"),
+        "files": [{"path": "src/bill.ts", "effect": "bills"}],
+        "criteria": [{"criterion": "Recording an order twice produces one invoice.",
+                      "met": True, "how": "idempotent on order_number"}],
+        "nodes": [{"node": "domain/sales/invoice", "how": "the invoice shape"}],
+    })
+
+
+def test_nothing_builds_on_a_dependency_nobody_proved(delivery, work, root, target,
+                                                      sound_delivery, write_delivery):
+    """An implementation without its proof is source nobody executed under a record saying it
+    stands; a dependent written over it builds on a claim."""
+    (delivery / "proof/checkout/record-order.md").unlink()
+    dependent(work, write_delivery)
+    said(problems_of(delivery, work, target, root),
+         "builds on task/checkout/record-order, which is implemented and no proof record holds up")
+    (delivery / "implementation/checkout/bill-order.md").unlink()
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    assert "task/checkout/bill-order: no record; waits on task/checkout/record-order" in report, \
+        report
+    assert "nothing that builds on it is deliverable until one does" in report, report
+
+
+def test_a_substrate_delivered_alone_is_built_on_without_a_proof(delivery, work, root, target,
+                                                                 sound_delivery, write_plan,
+                                                                 write_delivery):
+    """The exemption is `substrate_only`'s: a task that produced the artifacts every rule needs
+    and wrote nothing a test can reach has no suite to prove, and holding it to one would hold it
+    to the suite the registry held back."""
+    write_plan("task/checkout/scaffold", {
+        "title": "Scaffold", "summary": "Set the toolchain up.",
+        "objective": "The project builds and its suite runs.",
+        "criteria": ["The suite runs and reports."],
+        "produces": ["package.json"],
+        "rationale": "No base node governs the toolchain; the plan decided this cut itself."})
+    bill = json_front(work, "task/checkout/bill-order")
+    bill["depends_on"] = ["task/checkout/scaffold"]
+    write_plan("task/checkout/bill-order", bill)
+    (target / "package.json").write_text("{}\n", encoding="utf-8")
+    write_delivery("implementation/checkout/scaffold", {
+        "title": "Scaffold", "summary": "The toolchain this project builds with.",
+        "task": task_pin_of(work, "task/checkout/scaffold"),
+        "files": [{"path": "package.json", "effect": "declares the build and the suite"}],
+        "criteria": [{"criterion": "The suite runs and reports.", "met": True,
+                      "how": "the suite script runs the runner over the test tree"}]})
+    dependent(work, write_delivery)
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_red_suite_attempt_the_proof_does_not_name(delivery, work, root, target,
+                                                     sound_delivery, write_delivery, run_dir):
+    """The diagnosis of a red attempt otherwise lives only in the conversation that made it. A
+    reader meeting the run directory beside the proof is owed the sentence that says why."""
+    run_dir("failed", "checkout-record-order-suite")
+    run_dir("passed", "checkout-record-order-suite-2")
+    found = problems_of(delivery, work, target, root)
+    said(found, "proof/checkout/record-order: ## Notes names none of "
+                "run/checkout-record-order-suite, which ran this task's suite and did not pass")
+    assert not any("suite-2" in p for p in found), "the green attempt is owed nothing"
+    front = json_front(delivery, "proof/checkout/record-order")
+    write_delivery("proof/checkout/record-order", front,
+                   body="## What it is\nProse for a reader.\n\n## Notes\n"
+                        "run/checkout-record-order-suite failed at test: the fixture order "
+                        "carried no order_number.\n")
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_another_tasks_suite_is_not_this_proofs(delivery, work, root, target, sound_delivery,
+                                                run_dir):
+    run_dir("failed", "checkout-record-order-again-suite")
+    run_dir("failed", "checkout-bill-order-suite")
+    assert problems_of(delivery, work, target, root) == []
+
+
+# ------------------------------------------------ over a closed plan, receipts and not refusals
+
+
+def test_the_six_findings_are_receipts_over_a_closed_plan(delivery, work, root, target,
+                                                          sound_delivery, write_delivery,
+                                                          run_dir):
+    """A closed plan takes no further record, so a refusal there stops no writer. The finding is
+    printed as a receipt and the exit stays what it was; a live plan is refused."""
+    import subprocess
+    import sys
+    run_dir("failed", "checkout-record-order-suite")
+    write_delivery("review/first", review_front(work, root, reviewed=["src/orders/place.ts"],
+                                                unpaired=[]))
+    script = REPO / "src/claude/bin/deliver.py"
+    live = subprocess.run([sys.executable, "-B", str(script), str(delivery), str(work),
+                           str(target), str(root)], capture_output=True, text=True)
+    assert live.returncode == 1
+    assert "## Notes names none of run/checkout-record-order-suite" in live.stdout
+    assert "`reviewed` does not list tests/place.spec.ts" in live.stdout
+
+    (work / deliver.plan.CLOSURE_FILE).write_text("Closed.\n", encoding="utf-8")
+    closed = subprocess.run([sys.executable, "-B", str(script), str(delivery), str(work),
+                             str(target)], capture_output=True, text=True)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert closed.stdout.count("a receipt, never a refusal: the plan is closed") == 2, \
+        closed.stdout
+    assert "## Notes names none of run/checkout-record-order-suite" in closed.stdout
+    assert "`reviewed` does not list tests/place.spec.ts" in closed.stdout
+    checked = subprocess.run([sys.executable, "-B", str(script), "--check", str(delivery),
+                              str(work), str(target)], capture_output=True, text=True)
+    assert checked.returncode == 0 and "a receipt, never a refusal" in checked.stdout

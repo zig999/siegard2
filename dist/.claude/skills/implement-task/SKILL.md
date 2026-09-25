@@ -251,15 +251,15 @@ decided it: here the specification is not silent but overruled — the failure t
 discipline exists to prevent. The class is the binder's judgment and not yours to overrule: a note you
 disagree with is still a stop, and the disagreement goes in what you report.
 
-**This stop is the skill's and not the validator's, and the report naming it changes nothing about
-that.** `deliver.py` says which tasks carry one and quotes it, because a caller choosing which task
-to deliver had no other way to learn it than opening every task file — and it exits 0 over every one
-of them. It does not refuse, deliberately: a blocking note is cleared by amending the scope or the
-specification, and by the time either lands the task has re-run through implement-against and the
-note is gone, so a gate in the validator would only ever fire on a state this stop already refuses.
-And the stop belongs here because only here are both doors open — the two invocations that settle
-it leave from this report, and a validator has nowhere to hand them over. What the plan records, the
-code cannot embody; those are different acts and they get different answers.
+**This stop is the skill's and the validator's, and each holds what only it can.** Here, the
+stop is made before a file is written, and both doors leave ready to paste — the two invocations
+that settle it are composed from what this invocation already knows, which no validator holds. In
+`deliver.py`, a record over a task whose `## Notes` still carries the entry is refused, quoting it
+and naming both doors, so a delivery that wrote past this stop does not derive; and `--outstanding`
+says which tasks carry one, because a caller choosing which task to deliver learns it there rather
+than by opening every task file. A blocking note is cleared by amending the scope or the
+specification, never by the record: by the time either lands the task has re-run through
+implement-against and the note is gone, and the record is written then.
 
 A third fact the report does not carry, because you can see it directly: **a record already at the
 path this task computes to.** That is a re-delivery, not a stop, and the report says so. Every run

@@ -146,6 +146,14 @@ def test_the_chain_holds_from_an_empty_tree_to_a_delivery_that_ran(
     assert green.returncode == 0, green.stdout + green.stderr
     proof["run"] = "run/checkout-record-order-suite-2"
     write_delivery("proof/checkout/record-order", proof)
+    assert any("## Notes names none of run/checkout-record-order-suite," in p
+               for p in problems_of(delivery, work, tree, root)), \
+        "the red attempt beside the proof is named in its Notes with its cause, or the proof " \
+        "is refused"
+    write_delivery("proof/checkout/record-order", proof,
+                   body="## What it is\nProse for a reader.\n\n## Notes\n"
+                        "run/checkout-record-order-suite failed at test: the assertion "
+                        "read the stored order_number before it was persisted.\n")
     assert problems_of(delivery, work, tree, root) == []
 
     # Both attempts are on disk, which is the whole of what replaced "this invocation runs nothing".

@@ -27,7 +27,9 @@ A missing input is a stop, not a default:
    result would not say what it was clean over. Each path is relative to the target source root,
    exactly as the records spell them: resolve them against that root to open the files, and state
    every finding with the same spelling — a scope's `under` is stated against the same anchor,
-   and a finding spelled from the repository instead of the target answers to no rule.
+   and a finding spelled from the repository instead of the target answers to no rule. The
+   validator holds the set to the records: every path the tasks' implementation and proof
+   records say they wrote is in it, and a review over fewer is refused.
 3. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 4. **the target** — which of the project's target source roots this change reaches, by the key
@@ -348,7 +350,10 @@ record says so.
 A captured run whose outcome says nothing executed — a command not found, a step terminated — is
 still diagnosed. Nothing was proved about the code, and that is precisely what the diagnosis
 records; a run that could not execute is a finding, not an absent input. A run in which everything
-passed is the one case where the pass does not run: there was no failure to read.
+passed is the one case where the pass does not run: there was no failure to read. The run is still
+recorded — its directory goes in the record whether it was green or red, and the validator holds
+it to the registry's steps by name, by command and by directory, and refuses a review over a
+registry declaring commands that names no run at all.
 
 ### 3. The passes
 
@@ -511,8 +516,10 @@ Write `review/<review-name>.md` under the delivery root, under the name input 6 
 this review's identity and the path is where it lives. It carries `target` — input 4's key, the
 root `reviewed` and the standard's path are spelled from, which the validator resolves the record
 at — the file set it was computed over, the tasks it answers, one entry per pass, the coverage entries and the unpaired tests where that pass ran, the standard's own path and the pin of its text where
-that one ran, how many failures were counted where that one did, the run's directory where there was
-one, the reconciliation record the conformance pass folded — `reconciliation:
+that one ran, how many failures were counted where that one did, the run's directory whenever one
+was captured — green or red: a red run is what the failures pass read, and a green one is the
+evidence that the change built and its failures entry says so, `missing: run/<review-name> passed;
+there was no failure to read` — the reconciliation record the conformance pass folded — `reconciliation:
 siegard-reconcile/<review-name>.md`, which the validator holds to the pass having run and to this
 review's own file set, and whose absence over a target holding a trace file it prints as a receipt
 naming the review that judged the plan's nodes alone — and every finding.

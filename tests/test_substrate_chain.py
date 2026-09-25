@@ -109,7 +109,9 @@ def test_the_chain_holds_from_an_absent_manifest_to_a_delivered_one(
     empty_handed = deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree)
     assert any("the task says it produces package.json" in p for p in empty_handed), empty_handed
 
-    # 6. The record that lists it holds.
+    # 6. The record that lists it holds — once the tree holds it too. The claim is the record's
+    #    and the artifact is the tree's, and a record over an artifact the tree does not hold is
+    #    refused on the same terms as one that never claimed it.
     record["files"] = record["files"] + [
         {"path": "package.json", "effect": "declares the lint step and the logger dependency"}]
     write_delivery("implementation/checkout/record-order", record)
@@ -117,11 +119,14 @@ def test_the_chain_holds_from_an_absent_manifest_to_a_delivered_one(
         delivery / "implementation/checkout/record-order.md")
     write_delivery("proof/checkout/record-order", proof)
     nodes, found = deliver.collect(delivery, validator, names)
+    claimed = found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree)
+    assert any("does not hold it" in p for p in claimed), claimed
+    (tree / "package.json").write_text(json.dumps({"name": "x"}), encoding="utf-8")
+    nodes, found = deliver.collect(delivery, validator, names)
     assert found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree) == []
 
     # 7. And once the artifact stands, the gate opens for every task, including the ones that
     #    produce nothing. Nothing had to be told it was over: the tree is the state.
-    (tree / "package.json").write_text(json.dumps({"name": "x"}), encoding="utf-8")
     opened = invoke(DELIVER_PY, "--standard", registry, "--against", tree)
     assert opened.returncode == 0, opened.stdout
     assert "stands, and PRH-01 can be applied" in opened.stdout

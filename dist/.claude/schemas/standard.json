@@ -71,7 +71,7 @@
         "id": {
           "type": "string",
           "pattern": "^[A-Z]{2,4}-[0-9]{2}$",
-          "description": "How a finding cites this rule. Short and stable: an id that changes orphans every finding that cited it, and a review from last month is read beside the registry as it stands."
+          "description": "How a finding cites this rule. Short and permanent: every record's citation — a review finding's `cites`, a delivery record's departure — resolves against the registry as it stands, never against the text the record pinned, so an id is never renamed and never reused. Renaming a rule is declaring a new rule under a new id and retiring the old one; an id reused under a different statement has every earlier record that cited it re-read against words nobody wrote at the time."
         },
         "statement": {
           "type": "string",

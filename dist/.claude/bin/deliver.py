@@ -33,9 +33,35 @@ from the tasks that have no record and the three things a delivery stops on — 
 they declare, the substrate a task of this plan produces and the tree does not hold, and a
 standing `BLOCKING, from the specification —` note only a person settles — so the answer is
 derived from the files every time and can never be stale or wrong. It names the deliverable set
-rather than leaving it to be subtracted by eye, and it refuses nothing: the stop over a blocking
-note stays with whoever is about to write source, which is the only place it can quote the entry
-and hand over both ways out of it.
+rather than leaving it to be subtracted by eye, and the report itself refuses nothing. The stops
+it names are held where a record is validated: a record over a task whose `## Notes` still
+carries a blocking note is refused, quoting the entry and naming both ways out of it, and a task
+waits on a dependency until that dependency is delivered and proven — or delivered the substrate
+alone, which no proof can hold up. A dependency delivered and never proven is source nobody
+executed under a record saying it stands.
+
+**A run is held to what it ran, never to the names it ran under.** A record that points at a run
+is held to the registry's steps by name, by command and by working directory: each owed step
+passed, the command it ran is the command the registry declares under that name — compared as
+`bin/run.py` records it, one string per step, both sides normalised the same way — and the run's
+`cwd` is the target source root. A step the caller added beyond the registry stands; one the
+registry declares under a different command is a step nobody decided the rule under. The
+working directory is held by its path within the project: the target root itself, or the same
+path under another checkout of the project, which is what a git worktree is. A target that is its
+project's whole tree has no path within it to hold, and the check says nothing there.
+
+**Over a closed plan, the checks that hold a record to what stands beside it are receipts.** A
+plan `closure.md` marks closed takes no further record — nothing delivers into it again — so a
+refusal there stops no writer and only hides the index of a finished initiative behind a fact
+nobody remains to settle. Six findings are receipted over a closed plan, printed with the index
+and refused over a live one: a run's step under a command the registry does not declare under
+that name, or a run from outside the target; a review naming no run over a registry declaring
+commands; a review's green run that skipped a step the registry declares; a review's file set
+narrower than what its tasks' records wrote; a dependency delivered and never proven; and a red
+suite attempt the proof's `## Notes` does not name. No delivery node carries a contract version
+of its own, so the plan's closure is the one fact that separates a record nobody will write
+again from one being written now. Every other refusal holds over a closed plan as over a live
+one.
 
 **A deliverable set holding more than one task may be delivered in parallel, one git worktree
 each — and this script is where that is said, because reading this report is where somebody
@@ -110,8 +136,12 @@ when the record was written. Nothing is copied: this is
 the same discipline `files[].path` already holds code to. The pin is a citation, not a standing
 guarantee — like a task's `implements`, it is read once and never mechanically reverified against
 the file as it stands today, so an old record stays held to the text it actually read even after
-the project's registry moves on. `--standard <file>` validates a registry on its own, which is what
-a consumer runs before any review reads it.
+the project's registry moves on. What the pin does not do is freeze the rules: every citation a
+record makes — a finding's `cites`, a departure's `cites` — resolves against the registry as it
+stands, so a rule's id is permanent. Renaming a rule is declaring a new rule and retiring the old
+one, and a registry that reused an id under a different statement would have every earlier record
+citing it re-read against words nobody wrote at the time. `--standard <file>` validates a registry
+on its own, which is what a consumer runs before any review reads it.
 
 **delivery.json is derived, never edited.** It is refused entirely while the delivery has
 problems: an index over a broken delivery reports a shape nobody decided. `--check` compares and
@@ -412,7 +442,10 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
                                "how many failures the run reported"),
                               ("standard", "standard",
                                "the standard it read and the rules that were in scope")):
-        if field in front and name not in ran:
+        # `run` is the one field a pass that did not run may hold: a run that passed is
+        # recorded as evidence and read by no pass, and `run_problems` holds the outcome to
+        # the entry — a run that did not pass is a failures pass that ran.
+        if field in front and name not in ran and field != "run":
             problems.append(f"`{field}` is present and the {name} pass did not run; "
                             f"a pass that did not run holds {want} over nothing")
         if field not in front and name in ran:
@@ -756,16 +789,127 @@ def installed_problems(nid: str, front: dict, data: dict, at: str) -> list[str]:
             if isinstance(package, str) and package not in authorized]
 
 
-def steps_that_passed(root: Path, where: str) -> set[str] | None:
-    """The steps one captured run recorded as passed, or `None` where the run cannot be read at
-    all. The `None` matters: `record_run_problems` already refuses a record whose run holds no
-    run.json or will not parse, and a second refusal here would name one missing file twice."""
+def steps_that_passed(root: Path, where: str) -> dict[str, dict] | None:
+    """The steps one captured run recorded as passed, by name, each with what the runner wrote of
+    it — the command it ran above all — or `None` where the run cannot be read at all. The `None`
+    matters: `record_run_problems` already refuses a record whose run holds no run.json or will
+    not parse, and a second refusal here would name one missing file twice."""
     captured, _ = read_run(root / where / "run.json", where)
-    if captured is None:
-        return None
-    return {step["name"] for step in listed(captured, "steps")
+    return None if captured is None else passed_steps_of(captured)
+
+
+def passed_steps_of(captured: dict) -> dict[str, dict]:
+    return {step["name"]: step for step in listed(captured, "steps")
             if isinstance(step, dict) and isinstance(step.get("name"), str)
             and step.get("outcome") == "passed"}
+
+
+def normalised(command: str) -> str:
+    """One command line as `bin/run.py` records it: split by the shell's own rules and joined
+    back, so a quoting difference between the registry's spelling and the runner's is not a
+    different command. A line the shell cannot split is compared as written."""
+    try:
+        return shlex.join(shlex.split(command))
+    except ValueError:
+        return command
+
+
+def within_project(target: Path) -> Path | None:
+    """The target source root's path inside its project — relative to the git toplevel — or
+    `None` where the target is the toplevel itself, which has no path within it to hold a
+    working directory to."""
+    home = project.toplevel_of(target)
+    try:
+        relative = target.resolve().relative_to(home.resolve())
+    except ValueError:
+        return None
+    return None if relative == Path(".") else relative
+
+
+def ran_in_target(cwd: str, target: Path) -> bool:
+    """Whether a run's working directory is the target source root: the root itself, or the same
+    path within the project under another checkout of it — a git worktree carries the whole tree
+    at another toplevel, and a run captured there ran in the target as much as one captured
+    here. A target that is its project's whole tree is held to itself alone, because no path
+    within the project remains to compare, and a run anywhere would match it."""
+    where = Path(cwd).resolve()
+    if where == target.resolve():
+        return True
+    inside = within_project(target)
+    if inside is None:
+        return False
+    parts = inside.parts
+    return len(where.parts) > len(parts) and where.parts[-len(parts):] == parts
+
+
+def held_run_problems(nid: str, where: str, owed: list[dict], at: str, root: Path,
+                      target: Path) -> list[str]:
+    """One captured run against the registry's steps it owes: each step that passed did so under
+    the command the registry declares for that name, and the whole run was in the target source
+    root. Whether every owed step passed is the coverage check's, stated once there. A step the
+    caller added beyond the registry is not held: the registry says what must run, not what may.
+
+    The name is the join and never the whole of it. A run recording `lint` as passed says a step
+    called `lint` exited 0; what the rule `lint` decides needs is the registry's `lint` to have
+    exited 0, and the only thing that ties the two is the command string the runner wrote beside
+    the outcome. A run from another directory is the same gap one level up: the registry's
+    commands are stated against the target source root, and a step run from anywhere else
+    reports on a tree nobody delivered into."""
+    captured, _ = read_run(root / where / "run.json", where)
+    if captured is None:
+        return []  # record_run_problems and run_problems name the run that cannot be read
+    passed = passed_steps_of(captured)
+    found: list[str] = []
+    for command in owed:
+        name, declared = command.get("step"), command.get("command")
+        step = passed.get(name)
+        if step is None or not isinstance(declared, str):
+            continue  # a step that did not pass is the coverage refusal's, stated once
+        ran = step.get("command")
+        if isinstance(ran, str) and normalised(ran) != normalised(declared):
+            found.append(f"{nid}: run {where} step {name} ran `{ran}` where the registry "
+                         f"declares `{declared}`; a step is held to the command {at} declares "
+                         f"under its name, because the name alone is what a rule's `tool` "
+                         f"resolves to and a different command under it decided nothing that "
+                         f"rule states")
+    cwd = captured.get("cwd")
+    if isinstance(cwd, str) and not ran_in_target(cwd, target):
+        found.append(f"{nid}: run {where} ran in {cwd}, not the target {target}; the registry's "
+                     f"commands are stated against the target source root, and a run from "
+                     f"anywhere else reports on a tree this record did not deliver into")
+    return found
+
+
+def run_holding_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], root: Path,
+                         roots: dict[str, Path], validator) -> list[str]:
+    """Every record's run against the registry's commands and the target, through
+    `held_run_problems`: a paired record over the steps its kind owes, a review over every step
+    the registry declares but `prepare`. Held here, beside the coverage check rather than inside
+    it, because the module docstring receipts this finding over a closed plan and refuses it
+    over a live one, and the one place that knows which is `cross_problems`."""
+    problems: list[str] = []
+    for nid in sorted(nodes):
+        node, front = nodes[nid], nodes[nid]["front"]
+        where = front.get("run")
+        if not isinstance(where, str) or Path(where).is_absolute():
+            continue
+        anchor, _ = anchor_of(nid, front, roots)
+        if anchor is None:
+            continue
+        data, at, _ = standard_of(nid, front, anchor, validator)
+        if data is None:
+            continue
+        task = task_of(nid)
+        if node["kind"] == "review":
+            owed = phase_steps([c for c in listed(data, "commands") if isinstance(c, dict)],
+                               "suite")
+        elif task in plan_nodes and plan_nodes[task]["kind"] == "task":
+            owed = owed_steps(front, data, plan_nodes[task]["front"])
+        else:
+            continue
+        if owed and (root / where / "run.json").is_file():
+            problems += held_run_problems(nid, where, owed, at, root, anchor)
+    return problems
 
 
 def substrate_only(front: dict, tfront: dict, data: dict) -> bool:
@@ -811,27 +955,34 @@ def phase_steps(commands: list[dict], phase: str) -> list[dict]:
     return install + middle + suite
 
 
-def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
-                      tfront: dict) -> list[str]:
-    """Whether a record captured the run its kind owes, and whether that run covered it. A registry
-    declaring how the project is installed and checked is a registry whose delivery could be run,
-    and a delivery that could be run and was not is the state this whole arrangement exists to end:
-    source handed over having never been executed, with every rule a tool decides unanswered by
-    anything. What each kind owes differs because of when it is written — an implementation is
-    written before any test exists, so it owes the checks that do not need one; a proof is written
-    after, so it owes them all.
-
-    Presence was never the whole question, and until the coverage below existed it was the whole
-    check: a record pointing at a run of one step out of four is the same source nobody executed,
-    declared executed, and the docstring above claimed a guarantee the code did not hold.
-
-    One exemption, and it is `substrate_only`'s. It is an implementation's alone: a proof exists
-    because tests exist, and a suite held back is the one thing a proof is for."""
+def owed_steps(front: dict, data: dict, tfront: dict) -> list[dict]:
+    """The registry's steps one record owes a run of. What each kind owes differs because of when
+    it is written — an implementation is written before any test exists, so it owes the checks
+    that do not need one; a proof is written after, so it owes them all. One exemption, and it is
+    `substrate_only`'s. It is an implementation's alone: a proof exists because tests exist, and
+    a suite held back is the one thing a proof is for."""
     commands = [c for c in listed(data, "commands") if isinstance(c, dict)]
     kind = "proof" if "tests" in front else "implementation"
     owed = phase_steps(commands, "suite" if kind == "proof" else "build")
     if kind == "implementation" and substrate_only(front, tfront, data):
         owed = phase_steps(commands, "setup")
+    return owed
+
+
+def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
+                      tfront: dict) -> list[str]:
+    """Whether a record captured the run its kind owes, and whether that run covered it — every
+    owed step passed. A registry declaring how the project is installed and checked is a registry
+    whose delivery could be run, and a delivery that could be run and was not is the state this
+    whole arrangement exists to end: source handed over having never been executed, with every
+    rule a tool decides unanswered by anything.
+
+    Presence is not the whole question: a record pointing at a run of one step out of four is the
+    same source nobody executed, declared executed. Nor is the step's name: a run whose `lint`
+    passed under a command that is not the registry's `lint` decided nothing that rule states,
+    and a run from another directory decided it over another tree. `held_run_problems` holds
+    those two, for a delivery's run and a review's alike."""
+    owed = owed_steps(front, data, tfront)
     if not owed:
         return []
 
@@ -966,7 +1117,8 @@ def review_standard_problems(nid: str, front: dict, target: Path, validator) -> 
     a rule the standard leaves to a reading — judging one a tool decides exactly would re-decide it
     in a model at worse recall, and would make the tool's own findings look like opinions. Which
     rules were in scope is not read from the record: it is a function of this reference and
-    `reviewed`, and both sit in this root."""
+    `reviewed`, and both sit in this root. The run the registry's commands make the review owe is
+    `review_run_problems`'."""
     data, at, problems = standard_of(nid, front, target, validator)
     if data is None:
         return problems
@@ -990,6 +1142,43 @@ def review_standard_problems(nid: str, front: dict, target: Path, validator) -> 
             problems.append(f"{nid}: findings[{index}] cites {cited} against {where}, which that "
                             f"rule's scope does not reach")
     return problems
+
+
+def review_run_problems(nid: str, front: dict, target: Path, validator, root: Path) -> list[str]:
+    """The run a registry's commands make a review owe. A registry declaring commands is a registry
+    whose review runs them over the whole change — the one run that exercises the union of every
+    task under review, which no delivery's own run did — so a review naming no run over such a
+    registry is a review that read the change and never built it. The run it names is held to
+    every step the registry declares other than `prepare`: a green run that skipped one proved
+    nothing about the rules that step decides. A red run is held to what it ran, because the step
+    it failed at is where the run stopped, and the failures pass is what reads it. The commands
+    and the directory are `run_holding_problems`', for a review's run as for a delivery's."""
+    data, at, _ = standard_of(nid, front, target, validator)
+    if data is None:
+        return []  # review_standard_problems reports the registry that does not resolve
+    owed = phase_steps([c for c in listed(data, "commands") if isinstance(c, dict)], "suite")
+    if not owed:
+        return []
+    named = ", ".join(str(c.get("step")) for c in owed)
+    where = front.get("run")
+    if not isinstance(where, str):
+        return [f"{nid}: {at} declares the step(s) {named} and this review captured no run; the "
+                f"review is the one run over the whole change, and a change reviewed without "
+                f"being built is source nobody executed together — run them under this "
+                f"review's name and point at that run"]
+    if Path(where).is_absolute() or not (root / where / "run.json").is_file():
+        return []  # run_problems names the run that is not there
+    captured, _ = read_run(root / where / "run.json", where)
+    if captured is None or captured.get("outcome") != "passed":
+        return []
+    passed = passed_steps_of(captured)
+    missing = [str(c.get("step")) for c in owed if c.get("step") not in passed]
+    if not missing:
+        return []
+    return [f"{nid}: {at} declares the step(s) {named} and {where} passed having run only "
+            f"{', '.join(sorted(passed)) or 'none of them'}; nothing decided the rules "
+            f"{', '.join(missing)} own, and a green run over a fraction of the registry is not "
+            f"the change passing"]
 
 
 def wrote(front: dict) -> tuple[set[str], str]:
@@ -1083,6 +1272,49 @@ def body_problems(body: str) -> list[str]:
     return []
 
 
+def notes_of(body: str) -> str:
+    """The text under `## Notes`, the section a record explains itself in."""
+    _, found, notes = body.partition(HEADINGS[-1])
+    return notes if found else ""
+
+
+def red_suite_runs(nid: str, root: Path) -> list[str]:
+    """Every run under the delivery root captured under this proof's suite name — `<epic>-<slug>-
+    suite`, and the `-N` names a retry takes — whose outcome is not `passed`, as the runner named
+    them. Read from the directory and never from a record, because the runs that failed are
+    exactly the ones no record points at."""
+    _, epic, slug = nid.split("/")
+    suite = re.compile(rf"^{re.escape(epic)}-{re.escape(slug)}-suite(-[0-9]+)?$")
+    red: list[str] = []
+    runs = root / RUN_DIR
+    if not runs.is_dir():
+        return red
+    for directory in sorted(runs.iterdir()):
+        if not suite.fullmatch(directory.name) or not (directory / "run.json").is_file():
+            continue
+        captured, _ = read_run(directory / "run.json", f"{RUN_DIR}/{directory.name}")
+        if captured is not None and captured.get("outcome") != "passed":
+            red.append(directory.name)
+    return red
+
+
+def red_run_problems(nid: str, body: str, root: Path) -> list[str]:
+    """A proof's `## Notes` against the red suite runs beside it. A suite that failed before it
+    passed keeps every attempt's directory, and the proof names each red one with the cause its
+    diagnosis returned — the diagnosis otherwise lives only in the conversation that made it,
+    and a reader meeting three run directories beside one proof is owed the sentence that says
+    why. Held as a substring of the section, so the run is named by its directory or by its
+    `run/` path alike."""
+    notes = notes_of(body)
+    unnamed = [name for name in red_suite_runs(nid, root) if name not in notes]
+    if not unnamed:
+        return []
+    return [f"## Notes names none of {', '.join(f'{RUN_DIR}/{n}' for n in unnamed)}, which "
+            f"ran this task's suite and did not pass; a proof names each red attempt with the "
+            f"cause its diagnosis returned, one sentence per run, because the cause otherwise "
+            f"lives in no file"]
+
+
 def references(nid: str, front: dict, kind: str) -> list[tuple[str, str, str]]:
     """Every reference this node declares: (target, edge kind, locator). `implements` and
     `reviews` point at tasks of the plan, `proves` at the implementation this proof sits beside,
@@ -1104,13 +1336,73 @@ def references(nid: str, front: dict, kind: str) -> list[tuple[str, str, str]]:
     return refs
 
 
+def settled_tasks(nodes: dict[str, dict], plan_nodes: dict[str, dict], roots: dict[str, Path],
+                  validator) -> set[str]:
+    """Every task a dependent may build on: delivered, and either proven or delivered as the
+    substrate alone. A dependency is what has to stand first, and an implementation record
+    without its proof is source nobody executed under a record saying it stands — a dependent
+    written over it builds on a claim. The substrate is the one exemption, and it is
+    `substrate_only`'s: what builds the artifacts every rule needs wrote nothing a test can
+    reach, and holding it to a proof would hold it to a suite the registry held back."""
+    proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"}
+    settled: set[str] = set()
+    for nid in sorted(nodes):
+        node = nodes[nid]
+        if node["kind"] != "implementation":
+            continue
+        task = task_of(nid)
+        if task in proven:
+            settled.add(task)
+            continue
+        planned = plan_nodes.get(task)
+        if planned is None or planned["kind"] != "task":
+            continue
+        anchor, _ = anchor_of(nid, node["front"], roots)
+        data = None
+        if anchor is not None:
+            data, _, _ = standard_of(nid, node["front"], anchor, validator)
+        if substrate_only(node["front"], planned["front"], data or {}):
+            settled.add(task)
+    return settled
+
+
+def unproven_dependency_problems(nid: str, tfront: dict, delivered: set[str],
+                                 settled: set[str]) -> list[str]:
+    """Every dependency this record's task builds on that is delivered and not settled — an
+    implementation record with no proof beside it, over a task that did not deliver the
+    substrate alone. Beside `implementation_problems` rather than in it because the module
+    docstring receipts this over a closed plan and refuses it over a live one."""
+    return [f"{nid}: the task declares it builds on {target}, which is implemented and no proof "
+            f"record holds up; a dependency is delivered and proven before anything builds on "
+            f"it, because an implementation without its proof is source nobody executed under a "
+            f"record saying it stands — write the proof, or, where the task delivered the "
+            f"substrate alone, nothing any rule reaches"
+            for target in listed(tfront, "depends_on")
+            if isinstance(target, str) and target in delivered and target not in settled]
+
+
 def implementation_problems(nid: str, front: dict, task: dict, work: Path,
-                            delivered: set[str]) -> list[str]:
-    """One implementation against the task it answers: the criteria and the specification
-    references are each answered in full, the dependencies it declares are delivered first, and
-    the pin matches the plan as it stands."""
+                            delivered: set[str], anchor: Path | None) -> list[str]:
+    """One implementation against the task it answers: the task is not blocked, the criteria and
+    the specification references are each answered in full, what the task produces was written
+    and stands in the target, the dependencies it declares are delivered first, and the pin
+    matches the plan as it stands. That a dependency is also proven is
+    `unproven_dependency_problems`'."""
     problems: list[str] = []
     tfront = task["front"]
+    tid = task_of(nid)
+
+    blocking = plan.blocking_notes_of(task.get("notes") or "")
+    if blocking:
+        problems.append(f"{nid}: answers {tid}, whose ## Notes carries `{blocking[0]}`; a "
+                        f"record over a task the plan holds blocked encodes a contradiction "
+                        f"the specification has not settled, as though the business had "
+                        f"decided it, and only a person settles it. Two doors, and the record "
+                        f"waits behind either: `/plan-work`, re-cutting the scope so it no "
+                        f"longer asserts what the note names, or `/analyse`, amending the "
+                        f"specification with the statement the note quotes. After either the "
+                        f"task re-runs the implement-against step and the note is gone; the "
+                        f"record is written then, against the task as it then stands")
 
     stated = [c for c in listed(tfront, "criteria") if isinstance(c, str)]
     answered = texts(listed(front, "criteria"), "criterion")
@@ -1127,12 +1419,21 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
 
     written, _ = wrote(front)
     for path in listed(tfront, "produces"):
-        if isinstance(path, str) and path not in written:
+        if not isinstance(path, str):
+            continue
+        if path not in written:
             problems.append(f"{nid}: the task says it produces {path}, and `files` does not list "
                             f"it; what a task produces is what its own standard presupposes — the "
                             f"artifact no rule can ask for and every rule needs — so a record "
                             f"claiming the task and not the artifact leaves the next delivery "
                             f"stopped on an absence this one was cut to end")
+        elif anchor is not None and not Path(path).is_absolute() \
+                and not (anchor / path).exists():
+            problems.append(f"{nid}: the task says it produces {path}, `files` lists it, and "
+                            f"{anchor} does not hold it; the claim that ends the substrate stop "
+                            f"is held to the tree and not to the record alone, because every "
+                            f"later delivery refuses on this artifact's absence and a record "
+                            f"saying it stands is what would hide that it does not")
 
     implements = sorted(plan.implements_of(tfront))
     accounted = texts(listed(front, "nodes"), "node")
@@ -1203,20 +1504,23 @@ def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict],
                                 f"this review names states; the criterion is quoted as the "
                                 f"task states it")
 
-    problems.extend(run_problems(nid, front, root))
+    problems.extend(run_problems(nid, front, root, names))
     return problems
 
 
-def run_problems(nid: str, front: dict, root: Path) -> list[str]:
-    """One review against the run it read. The record says a run failed and says how many failures
-    it counted; this opens the run and holds both to it. Without that, every fact a review states
-    about a run is the reviewer's own, and a review claiming the failures pass ran and found
-    nothing over a run that failed passes every other check — which is exactly the failure the
-    count was written to expose."""
+def run_problems(nid: str, front: dict, root: Path, names: list[str]) -> list[str]:
+    """One review against the run it read. The record says whether the failures pass ran and, if
+    it did, how many failures it counted; this opens the run and holds both to it. A run that
+    passed is recorded and read by no pass — the entry says the run passed, which is what was
+    missing — and a run that did not pass is a failures pass that ran. Without that, every fact
+    a review states about a run is the reviewer's own, and a review claiming the failures pass
+    ran and found nothing over a run that failed passes every other check — which is exactly the
+    failure the count was written to expose."""
     problems: list[str] = []
     where = front.get("run")
     if not isinstance(where, str):
         return problems
+    read = "failures" in ran_passes(front, names)
     directory = root / where
     if not directory.is_dir():
         return [f"{nid}: run names {where}, which the delivery root does not hold; "
@@ -1231,10 +1535,15 @@ def run_problems(nid: str, front: dict, root: Path) -> list[str]:
         return [f"{nid}: {unreadable}"]
 
     outcome = captured.get("outcome")
-    if outcome == "passed":
+    if outcome == "passed" and read:
         problems.append(f"{nid}: {where} passed, and the failures pass reads a run to say why it "
                         f"failed; a run holding no failure is a pass that should not have been "
                         f"asked for, and the entry says so instead")
+    if outcome != "passed" and not read:
+        problems.append(f"{nid}: {where} ended `{outcome}` and the failures pass did not run; a "
+                        f"run that did not pass reported something, and a review recording the "
+                        f"run without reading it leaves the failure unexamined under a record "
+                        f"that looks complete")
     counted = front.get("failures_counted")
     if outcome != "passed" and counted == 0:
         problems.append(f"{nid}: {where} ended `{outcome}` and this review counted no failures; a "
@@ -1271,15 +1580,20 @@ def demonstrates_problems(nid: str, front: dict, task: dict) -> list[str]:
 
 def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Path,
                    names: list[str], root: Path, target: Path,
-                   standard: Draft202012Validator | None = None) -> list[str]:
+                   standard: Draft202012Validator | None = None, closed: bool = False,
+                   receipts: list[str] | None = None) -> list[str]:
     """The rules that need to see more than one node at once — or the plan, or the project's own
-    standard, read fresh from the target source root."""
+    standard, read fresh from the target source root. Over a closed plan the findings the module
+    docstring receipts land in `receipts` instead of being returned, worded as what they are."""
     problems: list[str] = []
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
     roots, unresolvable = target_roots(target)
     if unresolvable:
         problems.append(unresolvable)
+    validator = standard or standard_contract()
+    settled = settled_tasks(nodes, plan_nodes, roots, validator)
+    held: list[str] = run_holding_problems(nodes, plan_nodes, root, roots, validator)
 
     for nid in sorted(nodes):
         node, front = nodes[nid], nodes[nid]["front"]
@@ -1302,7 +1616,9 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
             problems.extend(record_run_problems(nid, front, root))
             if node["kind"] == "implementation":
                 problems.extend(implementation_problems(nid, front, plan_nodes[task], work,
-                                                        delivered))
+                                                        delivered, anchor))
+                held.extend(unproven_dependency_problems(nid, plan_nodes[task]["front"],
+                                                         delivered, settled))
             else:
                 problems.extend(demonstrates_problems(nid, front, plan_nodes[task]["front"]))
                 pair = f"implementation/{nid.split('/', 1)[1]}"
@@ -1322,20 +1638,64 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
             problems.extend(review_plan_problems(nid, front, plan_nodes, delivered,
                                                  names, root))
             if anchor is not None:
-                problems.extend(review_standard_problems(nid, front, anchor,
-                                                         standard or standard_contract()))
+                problems.extend(review_standard_problems(nid, front, anchor, validator))
+                held.extend(review_run_problems(nid, front, anchor, validator, root))
             elif isinstance(front.get("standard"), dict):
                 problems.append(f"{nid}: names a standard, but its own target does not resolve; "
-                                f"its citations are unchecked until `target` does")
+                                f"its citations and the run it owes are unchecked until "
+                                f"`target` does")
             problems.extend(review_reconciliation_problems(nid, front, target))
+            held.extend(review_set_problems(nid, front, nodes))
+    return problems + receipted(held, closed, receipts)
+
+
+def receipted(found: list[str], closed: bool, receipts: list[str] | None) -> list[str]:
+    """The findings the module docstring receipts over a closed plan: returned as refusals over a
+    live one, and over a closed one appended to `receipts` — worded as a receipt — and withheld
+    from the refusals. The caller that prints receipts hands the list; one that only asks whether
+    the delivery holds together hands none, and the receipts are dropped rather than refused."""
+    if not closed:
+        return found
+    if receipts is not None:
+        receipts.extend(f"{line} — a receipt, never a refusal: the plan is closed, nothing "
+                        f"delivers into it again, and the record stands as written"
+                        for line in found)
+    return []
+
+
+def review_set_problems(nid: str, front: dict, nodes: dict[str, dict]) -> list[str]:
+    """The review's file set against the records of the tasks it answers: every path an
+    implementation or a proof of those tasks says it wrote is in `reviewed`. The set is the
+    caller's to state and never the review's to discover, and this is what holds the statement
+    to the records: a review over fewer files than the tasks wrote is a review that skipped part
+    of the change, and every pass it ran was clean over a set nobody delivered."""
+    reviewed = {p for p in listed(front, "reviewed") if isinstance(p, str)}
+    problems: list[str] = []
+    for task in listed(front, "tasks"):
+        if not isinstance(task, str) or not task.startswith("task/"):
+            continue
+        for kind in PAIRED:
+            record = f"{kind}/{task[len('task/'):]}"
+            if record not in nodes:
+                continue
+            written, field = wrote(nodes[record]["front"])
+            missing = sorted(written - reviewed)
+            if missing:
+                problems.append(f"{nid}: `reviewed` does not list {', '.join(missing)}, which "
+                                f"{record} says it wrote in `{field}`; a review answers for a "
+                                f"task over every file its records wrote, and one over fewer "
+                                f"was clean over a change nobody delivered")
     return problems
 
 
-def collect(root: Path, validator, names: list[str]) -> tuple[dict[str, dict],
-                                                                      list[str]]:
-    """Every node in the delivery, and everything wrong with the files as files."""
+def collect(root: Path, validator, names: list[str], closed: bool = False,
+            receipts: list[str] | None = None) -> tuple[dict[str, dict], list[str]]:
+    """Every node in the delivery, and everything wrong with the files as files. A proof's `##
+    Notes` is held to the red suite attempts beside it here, where the body is read; over a
+    closed plan that finding is a receipt, on the terms `cross_problems` states."""
     nodes: dict[str, dict] = {}
     problems: list[str] = []
+    unnamed: list[str] = []
     for path in sorted(root.rglob("*.md")):
         relative = path.relative_to(root)
         if relative.parts[0] == RUN_DIR:
@@ -1359,9 +1719,11 @@ def collect(root: Path, validator, names: list[str]) -> tuple[dict[str, dict],
         problems += [f"{nid}: {p}"
                      for p in node_problems(front, kind, validator, names)]
         problems += [f"{nid}: {p}" for p in body_problems(body)]
+        if kind == "proof":
+            unnamed += [f"{nid}: {p}" for p in red_run_problems(nid, body, root)]
         if isinstance(front, dict):
             nodes[nid] = {"front": front, "kind": kind}
-    return nodes, problems
+    return nodes, problems + receipted(unnamed, closed, receipts)
 
 
 def load_plan(work: Path, specification: Path | None) -> tuple[dict[str, dict], list[str]]:
@@ -1649,11 +2011,16 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     whole, and a set a script read is a set no eye had to collect.
 
     None of the three is a refusal here. This writes nothing and exits 0 over every state it can
-    describe; the stop over a blocking note stays the skill's, where it can quote the entry and
-    hand over both doors."""
+    describe; the refusals are the records' — a record written over a blocked task, or over a
+    dependency nothing proves, is refused where the record is validated — and the skill about to
+    write one is where the entry is quoted and both doors handed over ready to open. A
+    dependency is waited on until it is settled: delivered and proven, or delivered as the
+    substrate alone."""
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
     proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"}
+    roots, _ = target_roots(target)
+    settled = settled_tasks(nodes, plan_nodes, roots, standard_contract())
     tasks = [tid for tid in sorted(plan_nodes) if plan_nodes[tid]["kind"] == "task"]
     absences = substrate_absences(plan_nodes, delivered, target)
 
@@ -1663,10 +2030,12 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
         front = plan_nodes[tid]["front"]
         if tid in delivered:
             if tid not in proven:
-                lines.append(f"{tid}: implemented, and no proof record holds it up")
+                lines.append(f"{tid}: implemented, and no proof record holds it up"
+                             + ("" if tid in settled else
+                                "; nothing that builds on it is deliverable until one does"))
             continue
         waits = [t for t in listed(front, "depends_on")
-                 if isinstance(t, str) and t not in delivered]
+                 if isinstance(t, str) and t not in settled]
         notes = plan_nodes[tid].get("notes") or ""
         blocking = plan.blocking_notes_of(notes)
         # Underdetermined entries bar nothing — they travel with the task to whoever writes the
@@ -2205,8 +2574,10 @@ def main() -> int:
               f"({len(plan_problems)} problem(s) above); fix it with plan.py before "
               f"delivering against it", file=sys.stderr)
         return CANNOT_RUN
-    nodes, problems = collect(root, validator, names)
-    problems += cross_problems(nodes, plan_nodes, work, names, root, target, standard)
+    receipts: list[str] = []
+    nodes, problems = collect(root, validator, names, closed, receipts)
+    problems += cross_problems(nodes, plan_nodes, work, names, root, target, standard, closed,
+                               receipts)
     if problems:
         for problem in sorted(set(problems)):
             print(problem)
@@ -2242,6 +2613,8 @@ def main() -> int:
             print(line)
         for line in unreconciled_reviews(nodes, target):
             print(f"  {line}")
+        for line in receipts:
+            print(f"  {line}")
         return 0
 
     index_path.write_text(text, encoding="utf-8")
@@ -2258,6 +2631,8 @@ def main() -> int:
     for line in unread_unpaired(nodes):
         print(line)
     for line in unreconciled_reviews(nodes, target):
+        print(f"  {line}")
+    for line in receipts:
         print(f"  {line}")
     print(f"  {', '.join(by_kind) or 'no nodes'}; {done} of {tasks} task(s) hold a record; "
           f"{unmet} criterion(s) recorded unmet; {unproven} recorded unproven; "
