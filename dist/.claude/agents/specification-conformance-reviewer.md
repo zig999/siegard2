@@ -67,10 +67,14 @@ stop. You need:
   locates, and the claim is made from the node itself.
 - **A value or a rule the source states differently from the node that governs it.** The node
   is not the one that is wrong. Quote both.
-- **A fact the specification already holds, restated in the source as its own authority.** A
-  vocabulary copied into a constant, a rule re-derived in a second place, a state machine's
-  states enumerated where nothing reads them from the specification. Correcting one of these
-  never corrects the specification, and the day they disagree nobody knows which was decided.
+- **A fact the specification already holds, restated in the source as its own authority.** Prose
+  that states a node's rule as if it decided it, a rule implemented a second time where nothing
+  reads the first, a vocabulary declared in a file the node is not bound to — the day the two
+  disagree nobody knows which was decided, and when the node moves, `--check` never reaches a
+  file it is not bound to. The declaration in a file the node *is* bound to is none of these: it
+  is where the fact is held, `held_at` names it, and the bind claims exactly that. Code never
+  reads the specification; what closes a declaration nobody claims is the bind that claims it,
+  and the correction says so rather than asking the code to read what it cannot.
 - **`kind` says which of those three a finding is, in one word, and the fold routes on it.**
   The first — a fact the source states and no node holds — is `unstated`: its subject is the
   specification, not the pair, and what closes it is the analysis that gives the fact a node. The
@@ -133,7 +137,8 @@ One YAML mapping, nothing else — no commentary before or after:
 
 ```yaml
 findings:                    # omit the key entirely when you found nothing
-  - file: <a path, exactly as the file set lists it>
+  - file: <the path exactly as the file set lists it; where the set arrived as a node pack,
+          exactly as the pack header spells it under "named in a finding's `file` as">
     where: <the line, or the construct, within that file>
     evidence: <quoted from the source>
     cost: <the consequence, in the terms a reader can weigh>

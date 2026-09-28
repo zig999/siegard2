@@ -148,13 +148,14 @@ never infer any of it, and never reconstruct a node set by reading `siegard-trac
 A node missed in a hand reading is a judge handed an incomplete node set, and the record that
 comes back reads exactly like a complete one.
 
-**Two anchors meet here, and only one of them belongs in what you write.** Findings are spelled from
-the target's git toplevel, because that is where the trace file sits; everything you author — the
-file set the human gave you, every path in the premise — is spelled from the target source root,
-the same anchor every other record in this framework uses. `--stage` takes the human's own
-spelling and refuses the other one naming the correction, which is the cheap failure; the
-expensive one is converting the human's paths the other way to match the drift report you just
-read. **What is judged is every node the trace binds to the set, and never a chosen subset** —
+**Two anchors meet here, and only one of them belongs in what anyone writes.** The git toplevel
+is the anchor of what `trace.py` *prints* — a `--check` finding, an entry of the trace file — and
+nothing else. Everything written — the file set the human gave you, every path in the premise,
+and the `file` every finding names — is spelled from the target source root, the anchor every
+other record in this framework uses; the pack header hands the judge that spelling verbatim, and
+the judge copies it. `--stage` takes the human's own spelling and refuses the other one naming
+the correction, which is the cheap failure; the expensive one is converting the human's paths
+the other way to match the drift report you just read. **What is judged is every node the trace binds to the set, and never a chosen subset** —
 which nodes a file answers to is what the trace holds, and reconciling a file against the part of
 the specification that happens to agree with it is the failure this whole route exists to prevent.
 The one subtraction is `--stage`'s own, mechanical and rechecked at bind time: a pair whose
@@ -232,7 +233,8 @@ and the bind restamps both.
 Spawn one `siegard:specification-conformance-reviewer` subagent per file the manifest holds nodes for,
 together rather than one after another — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
-a file set of exactly its one file; as the node set, its node pack's path from the manifest —
+a file set of exactly its one file — the resolved path its pack header names, the spelling a
+finding echoes being the header's own; as the node set, its node pack's path from the manifest —
 the pack is the set, whole, each node's text with its source named; as candidates, the path to
 the workspace's candidate index — together with the identities of any node the human named as
 written since the bind — which it may consult where its file states a fact its own nodes do not
@@ -553,6 +555,16 @@ prices a line of prose like a defect. The consumer rules' comment route is the a
 removes the prose, never refreshes it, and this skill invoked again over that file under a new slug
 is what re-judges and rebinds. Hand that invocation ready to paste, and say which findings it
 answers.
+
+The fourth, where the fold placed a finding in the record's `notes` because it names a node no
+file of this set is bound to — the note ends "owed a route of its own". It blocked nothing here,
+and `trace.py --owed` reads a record's nodes and its `unstated`, never its notes, so this report
+is the one place the finding is handed on: name it apart, with the node, the file and the
+evidence, and hand it the same two doors as a finding on a node — `/analyse` where the fact
+belongs in the specification, `/plan-work` where the node is right and the behavior is not —
+or, where the finding says the file holds the node's fact and nothing binds it, this skill
+invoked again over that file under a new slug, which is what hands a judge that node's text.
+A finding left in the notes and not in the report is a finding nobody will act on.
 
 ## What this never does
 

@@ -454,6 +454,27 @@ def test_a_return_answering_for_a_node_it_was_never_handed_is_refused(consumer):
     assert "never answered for in `read`" in done.stdout
 
 
+def test_the_pack_header_hands_the_judge_the_spelling_a_finding_echoes(consumer):
+    _, workspace = staged(consumer)
+    pack = Path(manifest_of(workspace)["files"][FILE]["pack"]).read_text(encoding="utf-8")
+    assert f"# named in a finding's `file` as: {FILE} — copy this spelling" in pack, \
+        "a judge handed only the resolved path composes the spelling, and under a target root " \
+        "holding its own `src/` the toplevel's spelling and the target's differ"
+
+
+def test_a_finding_spelled_from_the_toplevel_is_refused_naming_the_targets_spelling(consumer):
+    staged(consumer)
+    front = clean_return([NODE, OTHER])
+    front["findings"] = [{"file": f"backend/{FILE}", "where": "line 2", "evidence": "// drift",
+                          "cost": "states a fact differently from the node",
+                          "kind": "contradicts", "node": NODE}]
+    save_return(consumer, "round", FILE, front)
+    done, _ = folded(consumer)
+    assert done.returncode == 1
+    assert f"a finding names backend/{FILE}, and this delegation read {FILE}, which is the " \
+           f"spelling its pack header hands it" in done.stdout
+
+
 def test_a_missing_return_names_the_delegation_owed(consumer):
     staged(consumer)
     done, _ = folded(consumer)

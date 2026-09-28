@@ -2678,7 +2678,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         lines = [f"# Node pack for {given} — derived by trace.py --stage from the specification; "
                  f"a reading copy, never a home. Doubt a line, open the source it names.",
                  f"# resolved, nothing here needs searching for — "
-                 f"file under judgment: {(target / given).resolve()}"]
+                 f"file under judgment: {(target / given).resolve()}",
+                 f"# named in a finding's `file` as: {given} — copy this spelling; never "
+                 f"compose one"]
         lines += [f"#   {entry}" for entry in beside]
         read_also = [node_id for node_id in also if node_id not in assigned]
         for node_id in assigned + read_also:
@@ -2849,7 +2851,8 @@ def return_problems(front, assigned: list[str], given: str) -> list[str]:
         named = finding.get("file")
         if named is not None and named != given:
             problems.append(f"findings: a finding names {named}, and this delegation read "
-                            f"{given}; one file per delegation is the shape of this pass")
+                            f"{given}, which is the spelling its pack header hands it; one "
+                            f"file per delegation is the shape of this pass")
     return problems
 
 

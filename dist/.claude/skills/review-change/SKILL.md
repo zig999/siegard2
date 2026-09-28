@@ -379,7 +379,8 @@ runs next.
 - **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the staging
   manifest holds**, spawned together rather than one after another, each judging at
   `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
-  a file set of exactly its one file; as the node set, its node pack's path from the manifest —
+  a file set of exactly its one file — the resolved path its pack header names, the spelling a
+  finding echoes being the header's own; as the node set, its node pack's path from the manifest —
   the pack is the set, whole, the trace's nodes and the plan's alike, each node's text with its
   source named; as candidates, the path to the workspace's candidate index, which it may consult
   where its file states a fact its own nodes do not settle; the specification root; and the path
@@ -626,7 +627,11 @@ Report, in this order:
   the finding that held it — a `collateral` mark said apart from a contested one. Where the record
   and the returns were written. `trace.py --check` over the target reports the drift that
   remains; `trace.py --owed` reports what this pass found and no bind could close, which `--check`
-  cannot see. Neither is a verdict on the change, and no route is chosen here for either;
+  cannot see. Neither is a verdict on the change, and no route is chosen here for either. Apart
+  from both, every finding the fold placed in the record's `notes` because it names a node no
+  reviewed file is bound to — the note ends "owed a route of its own": `--owed` reads a record's
+  nodes and its `unstated`, never its notes, so this report is the one place such a finding is
+  handed on, with its node, its file and its evidence;
 - what this framework does not review at all, so four passes are never mistaken for every pass;
 - what the passes looked past as another judgment's;
 - which passes, if any, ran inline instead of in a subagent, and why;

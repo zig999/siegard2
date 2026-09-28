@@ -33,7 +33,7 @@
           "file": {
             "type": "string",
             "minLength": 1,
-            "description": "The path the finding was observed in, exactly as the file set lists it. A reconciliation delegation reads one file, so the fold already knows it; stated here, it must match."
+            "description": "The path the finding was observed in, exactly as the file set lists it — spelled from the target source root, the anchor every record in this framework uses. A reconciliation delegation reads one file and its node pack header names the spelling; stated here, it must match."
           },
           "where": {
             "type": "string",
