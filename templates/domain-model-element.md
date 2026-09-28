@@ -9,25 +9,30 @@ type: {{aggregate-root | entity | value-object | domain-service | enumeration}}
 aggregate: {{root_slug}}
 
 # aggregate-root, entity, value-object. Attribute types are primitives (string, integer,
-# decimal, boolean, date, datetime) or the slug of a value-object / enumeration element.
-# A link to an entity or aggregate root is a relationship, never an attribute. `unknown` is
-# forbidden — an undetermined type is a decision to make and log.
+# decimal, boolean, date, datetime) or a value-object / enumeration element: its bare slug
+# inside the same context, its full identity (domain/{{other_context}}/{{element_slug}})
+# across contexts. A link to an entity or aggregate root is a relationship, never an
+# attribute. `unknown` is forbidden — an undetermined type is a decision to make and log.
+# `required: true` only where the material states the attribute is always present; absent
+# means the material did not say. `many: true` only where the value repeats.
 attributes:
   - name: {{snake_case_name}}
-    type: {{primitive_or_element_slug}}
-    required: {{true | false}}
-    many: {{true, only where the value repeats}}
+    type: {{primitive_or_element_reference}}
+    required: true
+    many: true
 
 # aggregate-root, entity, value-object — optional. One declaration per fact, on the
 # owning/navigating side.
-# type: composition | reference | association. cardinality states the target end (1, 0..1,
-# 0..*, 1..*); the source end defaults to 1 for composition and 0..* otherwise
-# (source-cardinality overrides). role labels the edge; required when two relationships share
-# the same target.
+# target is an entity or aggregate root: bare slug inside the same context, full identity
+# across. type: composition | reference | association. cardinality states the target end (1,
+# 0..1, 0..*, 1..*); the source end defaults to 1 for composition and 0..* otherwise —
+# source-cardinality overrides it, only where it differs. role labels the edge; required when
+# two relationships share the same target.
 relationships:
-  - target: {{element_slug}}
+  - target: {{element_reference}}
     type: {{composition | reference | association}}
     cardinality: "{{1 | 0..1 | 0..* | 1..*}}"
+    source-cardinality: "{{1 | 0..1 | 0..* | 1..*}}"
     role: {{role_slug}}
 
 # aggregate-root, entity (optional); domain-service (required). Names only, kebab-case verbs —

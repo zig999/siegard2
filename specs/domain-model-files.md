@@ -52,8 +52,8 @@ domain/
   reduce back to the slug.
 - **R3** — The element type never enters the filename. Reclassifying an element (entity →
   aggregate-root) changes one frontmatter line and breaks no reference.
-- **R4** — A reference is the target's slug: bare (`investigation`) inside the same context,
-  qualified (`<context-slug>/<element-slug>`) across contexts. Renaming a file is an identity
+- **R4** — A reference is the target's slug, bare (`investigation`), inside the same context,
+  and the target's full identity (`domain/<context-slug>/<element-slug>`) across contexts. Renaming a file is an identity
   change: every inbound reference updates in the same change, and validation fails otherwise.
 
 ## Element structure

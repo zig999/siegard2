@@ -139,7 +139,7 @@
     "attributeType": {
       "type": "string",
       "pattern": "^([a-z0-9]+(-[a-z0-9]+)*|domain/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*)$",
-      "description": "A primitive (string, integer, decimal, boolean, date, datetime) or the slug of a value-object or enumeration element — «bare (`investigation`) inside the same context, qualified (`<context-slug>/<element-slug>`) across contexts» (SPEC-002 R4). «A link to an entity or an aggregate root is a relationship» (SPEC-002 R8), never an attribute. `unknown` does not exist: an undetermined type is a decision to make and log."
+      "description": "A primitive (string, integer, decimal, boolean, date, datetime) or the slug of a value-object or enumeration element — «bare (`investigation`), inside the same context, and the target's full identity (`domain/<context-slug>/<element-slug>`) across contexts» (SPEC-002 R4). «A link to an entity or an aggregate root is a relationship» (SPEC-002 R8), never an attribute. `unknown` does not exist: an undetermined type is a decision to make and log."
     },
     "attribute": {
       "type": "object",
