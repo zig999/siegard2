@@ -784,7 +784,10 @@ def test_owed_lists_the_testable_remainders_priced_per_file_and_never_the_untest
         in done.stdout
     assert f"{NODE} [asked-case.md]" in done.stdout
     assert "would close it: one input, an order with no lines, against one refusal" in done.stdout
-    assert f"backend/{FILE} — 2 binding(s) a reading decides on this file" in done.stdout
+    assert f"    {FILE} — 2 binding(s) a reading decides on this file" in done.stdout, \
+        "the files are what the proof increment's ask names, and `stands` is spelled from the " \
+        "target source root; the toplevel's spelling would be refused by `--encodes`"
+    assert f"backend/{FILE}" not in done.stdout
     assert "frees its judge" not in done.stdout
     assert "asked-evidence.md" not in done.stdout and "untestable" not in done.stdout
     assert "the route that writes it is a proof increment: `/deliver-scope`" in done.stdout, \
@@ -794,7 +797,7 @@ def test_owed_lists_the_testable_remainders_priced_per_file_and_never_the_untest
 
     bind(declared, OTHER, SECOND, "--replace")
     done = owed(declared)
-    assert f"backend/{FILE} — 1 binding(s) a reading decides on this file; closing this one " \
+    assert f"    {FILE} — 1 binding(s) a reading decides on this file; closing this one " \
            f"frees its judge" in done.stdout
 
 

@@ -1802,12 +1802,14 @@ def owed(target: Path, show_all: bool = False) -> int:
             for why in sorted({s["why"] for s in said}):
                 print(f"    would close it: {why}")
             for path in sorted({f for s in said for f in s["files"] if under(f, [offset])}):
+                spelled = (path if offset in (".", "")
+                           else PurePosixPath(path).relative_to(offset).as_posix())
                 counts = by_reading.get(path)
                 if counts is None:
-                    print(f"    {path} — the trace binds nothing to this file now")
+                    print(f"    {spelled} — the trace binds nothing to this file now")
                     continue
                 reading_n, step, test = counts
-                print(f"    {path} — {reading_n} binding(s) a reading decides on this file"
+                print(f"    {spelled} — {reading_n} binding(s) a reading decides on this file"
                       + (f", {step} by a registry step" if step else "")
                       + (f", {test} by a certified test" if test else "")
                       + ("; closing this one frees its judge" if reading_n == 1 else ""))
@@ -1816,7 +1818,8 @@ def owed(target: Path, show_all: bool = False) -> int:
         print("  each is closed by writing the test named, and the route that writes it is a "
               "proof increment: `/deliver-scope`, with an ask naming the proof increment and, "
               "per fact to close, the node, the assertion verbatim, the record in brackets and "
-              "the files above — /plan-work plans one task per fact, /implement-task writes the "
+              "the files above, spelled from the target source root as printed — /plan-work "
+              "plans one task per fact, /implement-task writes the "
               "proof alone, and the review certifies it. Which facts are worth a test is the "
               "asker's; name the ones wanted, under a new slug")
     if both_ways:
