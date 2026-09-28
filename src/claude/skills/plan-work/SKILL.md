@@ -1,6 +1,6 @@
 ---
 name: plan-work
-description: Turns a stated development scope plus a validated specification into a development plan — an inventory, epics and tasks recorded as markdown nodes under a work root, each task naming the specification nodes it implements — validates the plan against the specification, and derives plan.json. A fact the specification does not state is decided on the way, blind to the task cut, and disclosed in the decision log. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task on the same route, without the survey or the decomposition. Also closes a plan when the human declares its initiative over, marking the work root as history. Use when a request asks to plan, decompose, or prepare development work over a domain the specification already holds, to route a bug found by running the delivered system, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
+description: Turns a stated development scope plus a validated specification into a development plan — inventory, epics and tasks as markdown nodes, each task naming the nodes it implements — validates the plan against the specification, and derives plan.json. A fact the specification does not state is decided on the way, blind to the task cut, and disclosed in the decision log. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task, without the survey or the decomposition. Also takes a proof increment — facts a test decides, held by delivered code, proven by none — one task per fact. Also closes a plan whose initiative the human declares over. Use to plan or decompose work over a domain the specification holds, to route a bug found by running the delivered system, to owe a node its test, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
 effort: medium
 ---
 
@@ -65,7 +65,8 @@ A closing invocation — the human declaring the initiative over — needs three
 with its why, the project root, and the initiative's slug. The specification root and the
 target source root play no part in closing (see "Closing the plan"). A corrective increment
 needs all four and one more the ordinary path never asks for: the file the wrong behavior lives
-in (see "The corrective increment").
+in (see "The corrective increment"). A proof increment needs all four, with the facts it names as
+its scope (see "The proof increment").
 
 ## Before anything: the specification
 
@@ -255,6 +256,65 @@ every other task: two producers, the standard applied, the run captured, and the
 the file. Say in the report that this was a corrective increment and which steps did not run, and
 carry the `--encodes` output the binder's candidates were seeded from verbatim, so a reader never
 mistakes a plan of one task for a scope that decomposed to one.
+
+## The proof increment
+
+One or more facts a finite test decides, held by code already delivered and proven by no test — a
+certification the coverage auditor refused with `remainder: testable`, naming the assertion that
+would close it. «A finite test is preferred to a reading, and to a registry step's decision,
+wherever one exists» (SPEC-004 R10): a node left decided by a reading or a step where a test could
+decide it is owed that test, and the implementation holding the fact may have been delivered long
+before anyone could write it — by another task, in a plan already closed, or bound by a
+reconciliation no task ever planned. This is the route that owes it a task.
+
+**The human names this in the invocation, exactly as the corrective increment is named.** For each
+fact the invocation names four things, all the human's: the node, by identity; the assertion,
+verbatim, as the record's `remainder_why` states it; the record that stated it, by path under
+`siegard-reconcile/`; and the file or files the node is bound to where its fact is held. `trace.py
+--owed` prints the first three and the files beside every node it lists, and its closing line hands
+this invocation ready to fill. Which facts are worth a test is the human's: this route takes the
+ones named and proposes none.
+
+Two stops, each reported with what answered it. Every named file must be one the trace binds the
+node to:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <file> [<file> ...]
+```
+
+A node the output does not list for a named file is a fact that does not stand there, and a proof
+task over it would certify ground nothing claims — the route is `/reconcile` over that file, which
+reads the node against it. And the record must carry the node with `remainder: testable`: an
+`untestable` remainder is one no finite test closes, and a task over it would write the partial
+test R12 forbids.
+
+**The survey and the decomposition do not run**, and neither does anything that reads source: the
+implementation stands, the trace says where, and what the task owes is stated in the assertion.
+`intake/` holds the invocation and nothing else — per fact the node, the assertion verbatim, the
+record's path and the files — because the decider of step 4 reads that directory as the one place a
+fact may already be stated, and the assertion is a test's condition over a fact the node already
+holds, never a new one.
+
+**One task per fact, under one epic of their own.** The binder runs per task exactly as step 4 runs
+it, handed the one node as its whole candidate set: it confirms that the node governs the criterion
+as the assertion states it, or it returns the note that says why not, and every note routes the way
+step 4 routes it. A binder that returns no `implements` for the node is a stop for that fact alone,
+reported with the binder's own reason — an assertion the node does not govern is not a proof of it.
+The task you write carries:
+
+- `implements`: the node, and nothing else;
+- one criterion: the assertion, verbatim — it is falsifiable because an auditor wrote it as the
+  one thing a test must fail over;
+- `stands`: the files, exactly as the invocation named them and `--encodes` confirmed them;
+- `sources`: the scope under `intake/`;
+- no `produces` — a proof task builds no substrate, and the schema refuses the two together.
+
+The epic's `covers` is the tasks' nodes. The landing follows the slug's rule, exactly as the
+corrective increment's does: a closed work root takes nothing, so these facts name a new slug.
+
+The tasks go to `/implement-task` like every other task, which reads `stands` and writes the proof
+alone; the review that reads that proof is what certifies each node. Say in the report that this
+was a proof increment, which steps did not run, and carry the `--encodes` output verbatim.
 
 ### 1. Situate
 

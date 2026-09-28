@@ -79,7 +79,8 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 ## The order
 
 ```
-gate → plan → commit → [deliver → commit, per task] → review → commit → report → stop
+gate → plan → commit → [deliver → commit, per task] → review → commit
+     → [prove → commit, per task left testable] → review → commit → report → stop
 ```
 
 Two rules bind every step, and they are what this skill is:
@@ -127,13 +128,26 @@ The steps:
    human's.
 4. **Review.** When the deliverable set is empty, invoke `/review-change` from the last
    delivery's handoff: the tasks being every task this run delivered, the file set being the
-   union of the paths their reports named. The run ends when the review record is written — the
+   union of the paths their reports named. The review is done when its record is written — the
    findings are relayed whole in the report and never acted on here: which route a finding
    deserves, or whether it deserves one, is the decision that skill deliberately does not make,
    and this skill inherits the same restraint. Repairing anything a finding names is a new ask.
    Commit the delivery root, the trace file and `siegard-reconcile/` — the review's conformance
    pass writes its record and returns there and restamps the trace — in one commit,
    `deliver-scope <slug>: review`.
+5. **Close what the review left testable, once.** A certification the review refused over a node
+   one of this run's own tasks implements, with `remainder: testable`, is the handoff that
+   review's report names — the proof-only re-delivery of `/implement-task` over that task,
+   handed the node, the assertion and the proof file, all read from the review's record — and
+   taking it is inside the ask: carrying the scope end to end is carrying its nodes to the proof
+   the specification prefers. «A finite test is preferred to a reading, and to a registry
+   step's decision, wherever one exists» (SPEC-004 R10). Fill those slots from the record, one
+   re-delivery per task, commit each as `deliver-scope <slug>: prove <task>`, then invoke
+   `/review-change` once more over exactly those tasks and commit it as `deliver-scope <slug>:
+   review again`. This step runs once per run: a certification refused again is relayed with
+   its new remainder, and a third attempt is the human's decision about cost. A remainder over a
+   node no task of this run implements is not this run's; the report hands it on as `trace.py
+   --owed` does.
 
 **The orchestration log.** After each step, append one line to `orchestration.md` at the delivery
 root — what was invoked, the commit that followed by its hash, and the outcome, one sentence per
@@ -164,7 +178,9 @@ and message, and the `git log` range that holds them, because the range is the r
 belongs to a person; every input this skill decided rather than was told — the slug derived, the
 target decided, the order taken — each disclosed; every step invoked with its outcome, and the
 path of `orchestration.md`; the review's findings, relayed whole, with that report's own account
-of which passes did not run; what ended the run, where it ended early, with the stopping report's
+of which passes did not run; which nodes this run left decided by a test, which certifications
+were refused again and with what remainder, and — for any testable remainder over a node no task
+of this run implements — `trace.py --owed`'s closing invocation, relayed; what ended the run, where it ended early, with the stopping report's
 doors verbatim; and what this skill never did — no `/analyse`, no repair of any finding, no step
 beyond the route.
 

@@ -180,6 +180,30 @@ def test_a_project_the_framework_does_not_hold_says_nothing(tmp_path):
     assert done.returncode == 0 and done.stdout == ""
 
 
+def test_a_node_owed_a_test_is_counted_at_the_start_of_the_session(traced):
+    """A refused certification that named the assertion closing it is owed that test, and no
+    drift report shows it: the count here is `--owed`'s own, placed where the session starts."""
+    import yaml
+    record = {"contract_version": "siegard-reconcile/5", "title": "An audit",
+              "summary": "The claims were re-read; the source did not change.",
+              "target": "backend",
+              "files": [{"path": FILE, "change": "unchanged; re-read"}],
+              "nodes": [{"node": NODE, "conforms": True, "decided_by": "reading",
+                         "how": "`export function place() {}` is where the case is placed",
+                         "encoded_at": [FILE], "remainder": "testable",
+                         "remainder_why": "one input, an order with no lines, against one "
+                                          "refusal"}]}
+    (traced / "siegard-reconcile").mkdir()
+    (traced / "siegard-reconcile" / "audit.md").write_text(
+        f"---\n{yaml.safe_dump(record, sort_keys=False)}---\n\n## Notes\nNone.\n",
+        encoding="utf-8")
+    done = drift_run(traced)
+    assert done.returncode == 0, done.stderr
+    said = context_of(done)
+    assert "1 node(s) a finite test would decide are still decided by a reading or a step" in said
+    assert "hands the proof increment that writes those tests" in said
+
+
 def test_the_drift_hook_never_fails_a_session(traced):
     """A hook that exits non-zero stops every session of every project holding the plugin. An
     unreadable trace is the drift report's to refuse properly, where somebody asked it."""

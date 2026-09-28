@@ -114,8 +114,9 @@ test of what the code does, and what the code does is the thing under question.
   test decides it whole — one input against one expected result, or every pairing of a set the
   node declares. Where one does: «the proof carries a test that fails if that fact stops holding,
   whole, and names the node on that test» (SPEC-004 R10), in `demonstrates`. «A finite test is
-  preferred to a reading wherever one exists» (SPEC-004 R10), so a node left without such a test
-  where one could be written leaves a reading on duty that a test would have relieved. A node
+  preferred to a reading, and to a registry step's decision, wherever one exists» (SPEC-004 R10),
+  so a node left without such a test where one could be written leaves a reading or a step on
+  duty that a test would have relieved. A node
   declaring its transitions and rejections is the plainest case: «A declared transition set is
   finite» (SPEC-004 R11), and a test over every pairing of a state and a trigger decides it. Where
   no finite test decides the fact — an identity spanning files, a totality over a set nothing

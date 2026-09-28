@@ -1813,11 +1813,12 @@ def owed(target: Path, show_all: bool = False) -> int:
                       + ("; closing this one frees its judge" if reading_n == 1 else ""))
         if not show_all and len(rows) > RANK_HELD_BACK:
             print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
-        print("  each is closed by writing the test named — the proof-only re-delivery of "
-              "/implement-task over the task whose implementation record lists the file, handed "
-              "the node, this assertion and the proof file — and the next review's staging "
-              "carries the new test's claim to certification; /reconcile under `--certify` is "
-              "the route where no review will run")
+        print("  each is closed by writing the test named, and the route that writes it is a "
+              "proof increment: `/deliver-scope`, with an ask naming the proof increment and, "
+              "per fact to close, the node, the assertion verbatim, the record in brackets and "
+              "the files above — /plan-work plans one task per fact, /implement-task writes the "
+              "proof alone, and the review certifies it. Which facts are worth a test is the "
+              "asker's; name the ones wanted, under a new slug")
     if both_ways:
         print(f"\n{len(both_ways)} node(s) with a testable remainder in one record and a "
               f"certification in another are not listed above, and the trace holds no live "

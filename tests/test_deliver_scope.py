@@ -67,7 +67,7 @@ def test_the_run_ends_at_the_record_and_findings_are_never_acted_on():
     """`/review-change` produces evidence, never a verdict, and the orchestrator inherits the
     restraint: the run's end state is the record's existence. A text that promised a *clean*
     review would make the orchestrator the gate the review pass refuses to be."""
-    assert "review record is written" in SKILL
+    assert "The review is done when its record is written" in SKILL
     assert "never acted on" in SKILL
     assert "review clean" not in SKILL
 

@@ -8,6 +8,11 @@ thinks to look, and the reading that would have caught it is the reading nobody 
 placed at the start of the session is the trigger: the session, and every agent that later edits
 in it, begins holding what the tree already owes.
 
+The same trigger carries the other thing the trace owes and no drift report shows: nodes a
+refused certification left decided by a reading or a step, with the assertion that would let a
+test decide them named. `trace.py --owed` is the one reader of that corpus, and the count here is
+its own, never recounted.
+
 A tally and never a listing. What a reader acts on is the number per class and the door it opens;
 the lines themselves are the drift report's to print, and a hook that pasted them would spend a
 session's opening context on a report nobody asked for — and would be switched off for it.
@@ -90,11 +95,26 @@ def receipt(root: Path) -> str:
             lines.append(f"  {counts[trace.MOVED]} binding(s) carry `moved` drift: `/reconcile` "
                          f"over the bound files re-reads them against the node as it stands, and "
                          f"a delivery of a task implementing the node restamps it")
+    for target in targets_of(root):
+        try:
+            if trace.tally_of(target) is None:
+                continue
+            reading, problems = trace.owed_reading(target)
+        except (Exception, SystemExit):
+            continue
+        if reading is None or problems:
+            continue
+        owed = len(reading["testable_nodes"])
+        if owed:
+            lines.append(f"- {target}: {owed} node(s) a finite test would decide are still "
+                         f"decided by a reading or a step — each with the assertion that closes "
+                         f"it named; `bin/trace.py --owed {target}` lists them and hands the "
+                         f"proof increment that writes those tests")
     if not lines:
         return ""
-    return ("This project is carrying trace drift, counted at the start of this session by "
-            "`bin/trace.py`:\n\n" + "\n".join(lines) + "\n\nA count, not a stop: nothing here is "
-            "owed before other work, and none of it is repaired by editing the trace. Where a "
+    return ("This project is carrying what the trace owes, counted at the start of this session "
+            "by `bin/trace.py`:\n\n" + "\n".join(lines) + "\n\nA count, not a stop: nothing here "
+            "is owed before other work, and none of it is repaired by editing the trace. Where a "
             "reading is wanted, /siegard-status prints the findings and their routes.")
 
 

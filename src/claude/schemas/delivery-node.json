@@ -32,13 +32,23 @@
       "$ref": "#/$defs/pin",
       "description": "The task this record answered, pinned by content: the SHA-256 of that task file's text, computable by hand as `sha256sum <work-root>/task/<epic>/<slug>.md`. Which task it is comes from the path both records share; this says which version of it the source was written against. A pin the validator finds diverging says the task changed after the work was done \u2014 deliver it again against the task as it now stands, or restate the pin deliberately. It pins the task rather than the plan's derived index on purpose. The index carries the plan's shape and not each task's criteria, so pinning it would have left the one thing a record answers for uncovered while making every record in the root stale the moment any unrelated task was added \u2014 and no entry point owns re-pinning records it was forbidden to read. The task file carries the objective, the criteria, the binding and the triage together, so this pin covers exactly what this record answers to, and nothing else moving can disturb it."
     },
-    "files": {
+    "stands": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^/]"
+      },
+      "description": "The files where the implementation this delivery answers already stands, exactly as the task's own `stands` lists them, spelled from the target source root. A record carrying it wrote no source: `files` is empty, no node answer carries `encoded_at`, and the delivery binds nothing — the proof it is paired with is what the review reads, together with these files, to certify the node. Each node answer's `how` says where in these files the node's fact is held now."
+    },
+    "files": {
+      "type": "array",
       "items": {
         "$ref": "#/$defs/writtenFile"
       },
-      "description": "Every path this delivery created or modified, and what each now does. Paths and effects only: the code is in the repository, and a copy here is the copy that stops being maintained."
+      "description": "Every path this delivery created or modified, and what each now does. Paths and effects only: the code is in the repository, and a copy here is the copy that stops being maintained. At least one, except where the record carries `stands`, which writes none."
     },
     "criteria": {
       "type": "array",
@@ -247,6 +257,7 @@
             "standard",
             "run",
             "installed",
+            "stands",
             "files",
             "criteria",
             "nodes",
@@ -256,6 +267,41 @@
             "deferred"
           ]
         },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "stands"
+              ]
+            },
+            "then": {
+              "required": [
+                "nodes"
+              ],
+              "properties": {
+                "files": {
+                  "maxItems": 0
+                },
+                "nodes": {
+                  "items": {
+                    "not": {
+                      "required": [
+                        "encoded_at"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "files": {
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        ],
         "examples": [
           {
             "target": "backend",
@@ -741,7 +787,7 @@
         },
         "demonstrates": {
           "$ref": "#/$defs/specNodeRef",
-          "description": "A specification node this test is offered as the proof of: it would fail if that node's fact stopped holding. A claim and never a finding \u2014 the review's certification is what judges it, through the same auditor and the same rule a reconciliation uses, and only its `covered` makes the trace's binding one a test decides. Omitted where the test proves a criterion and no node's fact whole. Where a node the task implements states a fact a finite test decides, the proof carries such a test and names the node here — «A finite test is preferred to a reading wherever one exists» (SPEC-004 R10) — and a node no finite test decides is named under `untested` with why instead. Every entry must be one the task implements \u2014 a proof answers its own task, and a test claiming a node the task never took on claims ground the plan did not give it."
+          "description": "A specification node this test is offered as the proof of: it would fail if that node's fact stopped holding. A claim and never a finding \u2014 the review's certification is what judges it, through the same auditor and the same rule a reconciliation uses, and only its `covered` makes the trace's binding one a test decides. Omitted where the test proves a criterion and no node's fact whole. Where a node the task implements states a fact a finite test decides, the proof carries such a test and names the node here — «A finite test is preferred to a reading, and to a registry step's decision, wherever one exists» (SPEC-004 R10) — and a node no finite test decides is named under `untested` with why instead. Every entry must be one the task implements \u2014 a proof answers its own task, and a test claiming a node the task never took on claims ground the plan did not give it."
         }
       }
     },

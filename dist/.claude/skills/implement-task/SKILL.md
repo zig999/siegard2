@@ -309,6 +309,26 @@ for the findings rather than the report. And the reason the proof had to move go
 `## Notes`, naming the task whose delivery falsified it, so the diff carries what only the
 conversation would otherwise hold.
 
+**A task carrying `stands` is delivered the same way from its first delivery, because its plan
+says so** — the one case where the narrower route is read from the task rather than from the
+invocation, and it is still the human's naming: `/plan-work` writes `stands` only in the proof
+increment, which only the human names. The implementation stands at the files `stands` lists,
+and nothing in this delivery writes source. Before anything is written, the same `trace.py
+--check --all` holds every one of those files current — a moved one makes "stands" false, and
+the task is re-planned rather than delivered — and `trace.py --encodes <target-source-root>
+<each file>` must still list every node the task implements for them. Step 3 does not run. Step
+4 does, over the tree as it stands: the build is what shows the standing implementation still
+builds, and the record points at that run as any implementation record does. You write the
+implementation record yourself, from the plan and from the record the task's `sources` name,
+never from a reading of the source: `stands` exactly as the task lists it, `files` empty, one
+criteria entry per criterion — `met: true`, its `how` saying that the implementation stands at
+those files and the proof below decides it — and one node answer per node the task implements,
+`how` quoting where the fact is held as the named record's reading states it, never
+`encoded_at`: this delivery binds nothing, and step 8 prints that and moves on. The test author
+receives each criterion's assertion as its `remainder` line and the task's `stands` as the files
+under test; the proof names the node under `demonstrates`, and the review that reads it — with
+the `stands` files in its file set, which the validator holds — certifies it.
+
 Where a standard was named, take it in before anything is written. Which command depends on one
 field of the task file — already open from the note check above — read as a yes or a no:
 **does the task declare `produces`?**
@@ -541,7 +561,8 @@ underdetermined:       <every `UNDERDETERMINED, from the specification —` entr
 remainder:             <the node's identity, the assertion an auditor named as what would close
                         its certification, verbatim, and the proof file(s) the record named —
                         omit unless this is the proof-only re-delivery over a refused
-                        certification>
+                        certification, or a task carrying `stands`, where each criterion is
+                        the assertion and the files are the task's `stands`>
 reproduction:          <how the failure is observed — omit unless the task's criteria name a
                         failure that must stop happening>
 

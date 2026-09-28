@@ -1341,6 +1341,109 @@ def test_what_a_task_produces_stands_in_the_target(delivery, work, root, target,
     said(problems_of(delivery, work, target, root), "does not hold it")
 
 
+def stand(work: Path, delivery: Path, target: Path, write_plan, write_delivery,
+          task_stands: list[str], record_stands: list[str] | None = None,
+          files: list[dict] | None = None, encoded: bool = False, on_disk: bool = True) -> None:
+    """The fixture task rewritten as a proof task over an implementation that already stands,
+    and its record rewritten to match — repinned, and the proof repinned under it."""
+    if on_disk:
+        (target / "src" / "orders").mkdir(parents=True, exist_ok=True)
+        (target / "src" / "orders" / "place.ts").write_text("export {};\n", encoding="utf-8")
+    front = json_front(work, "task/checkout/record-order")
+    front["stands"] = task_stands
+    write_plan("task/checkout/record-order", front)
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    record["stands"] = task_stands if record_stands is None else record_stands
+    record["files"] = files or []
+    for entry in record["nodes"]:
+        if encoded:
+            entry["encoded_at"] = ["src/orders/place.ts"]
+        else:
+            entry.pop("encoded_at", None)
+    write_delivery("implementation/checkout/record-order", record)
+    repin_proof(delivery, write_delivery)
+
+
+def test_a_task_whose_implementation_stands_is_delivered_by_a_record_that_wrote_nothing(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    """A node a finite test decides is owed that test wherever one can be written, and the
+    implementation may have been delivered long before it was: the record says where it stands,
+    writes nothing, and binds nothing."""
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"])
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_record_standing_elsewhere_than_its_task_says_is_refused(delivery, work, root, target,
+                                                                    sound_delivery, write_plan,
+                                                                    write_delivery):
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"],
+          record_stands=["src/orders/bill.ts"])
+    said(problems_of(delivery, work, target, root),
+         "the task says its implementation stands at src/orders/place.ts and this record says "
+         "src/orders/bill.ts")
+
+
+def test_a_proof_task_delivered_as_source_is_refused(delivery, work, root, target,
+                                                     sound_delivery, write_plan, write_delivery):
+    """A record answering a task that `stands` and writing no `stands` of its own is source
+    written under a proof task — the one thing that task was cut not to do."""
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"],
+          record_stands=[], files=[{"path": "src/orders/place.ts", "effect": "rewrote it"}],
+          encoded=True)
+    said(problems_of(delivery, work, target, root), "and this record says nothing")
+
+
+def test_a_record_that_stands_writes_no_file_and_encodes_nothing(delivery, work, root, target,
+                                                                 sound_delivery, write_plan,
+                                                                 write_delivery):
+    """No source was written, so nothing is bound: an `encoded_at` would restamp the trace over
+    bytes no judge read, and a `files` entry would be a write the task never owed."""
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"],
+          files=[{"path": "src/orders/place.ts", "effect": "rewrote it"}])
+    said(problems_of(delivery, work, target, root), "files")
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"],
+          encoded=True)
+    said(problems_of(delivery, work, target, root), "encoded_at")
+
+
+def test_an_implementation_that_stands_where_the_target_holds_nothing_is_refused(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/gone.ts"])
+    said(problems_of(delivery, work, target, root),
+         "says the implementation stands at src/orders/gone.ts, and")
+
+
+def test_a_review_that_did_not_read_where_the_implementation_stands_is_refused(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    """The proof's node is certified against the standing file; a review that never read it
+    cleared nothing, so the certification it would carry rests on nobody's reading."""
+    stand(work, delivery, target, write_plan, write_delivery, ["src/orders/place.ts"])
+    write_delivery("review/first", review_front(work, root, reviewed=["tests/place.spec.ts"]))
+    said(problems_of(delivery, work, target, root),
+         "`reviewed` does not list src/orders/place.ts, where implementation/checkout/"
+         "record-order says the implementation stands")
+    write_delivery("review/first", review_front(work, root))
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_proof_task_builds_no_substrate_and_always_implements_a_node():
+    """`stands` is a proof task's mark: what it proves is a node's fact, so a task without
+    `implements` has nothing to demonstrate, and one that also `produces` would be building the
+    substrate under a task that writes no source."""
+    import jsonschema
+    schema = json.loads((Path(deliver.__file__).resolve().parent.parent / "schemas"
+                         / "plan-node.json").read_text(encoding="utf-8"))
+    validator = jsonschema.Draft202012Validator(schema)
+    task = {"kind": "task", "title": "Prove it", "summary": "The proof of one fact.",
+            "objective": "The fact is decided by a test.", "criteria": ["one assertion"],
+            "stands": ["src/orders/place.ts"], "implements": ["domain/sales/order"],
+            "sources": ["intake/scope.md"]}
+    assert list(validator.iter_errors(task)) == []
+    assert list(validator.iter_errors({k: v for k, v in task.items() if k != "implements"}))
+    assert list(validator.iter_errors(dict(task, produces=["package.json"])))
+
+
 def test_the_substrate_barrier_is_named_because_no_edge_can_carry_it(delivery, work, root, target,
                                                                     sound_delivery, write_plan):
     """The one thing `waits on` cannot say. The task producing what every rule needs takes no

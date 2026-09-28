@@ -83,8 +83,9 @@ node of either project was decided by a test.
 
 - **R10** — Where a node the task implements states a fact a finite test decides, the proof
   carries a test that fails if that fact stops holding, whole, and names the node on that test.
-  A finite test is preferred to a reading wherever one exists: a reading is the fallback for a
-  fact no finite test decides, never the default for one a test could.
+  A finite test is preferred to a reading, and to a registry step's decision, wherever one exists:
+  a reading or a step is the fallback for a fact no finite test decides, never the default for one
+  a test could.
 - **R11** — A declared transition set is finite: a node stating every pairing of a state and a
   trigger as a transition or a rejection is decided by a test over every pairing.
 - **R12** — A fact no finite test decides — an identity spanning files, a totality over a set

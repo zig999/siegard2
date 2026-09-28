@@ -787,6 +787,10 @@ def test_owed_lists_the_testable_remainders_priced_per_file_and_never_the_untest
     assert f"backend/{FILE} — 2 binding(s) a reading decides on this file" in done.stdout
     assert "frees its judge" not in done.stdout
     assert "asked-evidence.md" not in done.stdout and "untestable" not in done.stdout
+    assert "the route that writes it is a proof increment: `/deliver-scope`" in done.stdout, \
+        "every testable remainder is owed a route that runs, and the route over a node no task " \
+        "implements is the proof increment — never a re-delivery of a task that does not exist"
+    assert "proof-only re-delivery" not in done.stdout
 
     bind(declared, OTHER, SECOND, "--replace")
     done = owed(declared)

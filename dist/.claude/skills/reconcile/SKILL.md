@@ -495,11 +495,15 @@ what was bound and what was not; which nodes are decided by a test from here and
 certifications did not hold, in the auditor's own words — and for each of those whether the
 remainder is testable, with the assertion the auditor named beside it and the file's own count of
 bindings a reading decides, because a node a test closes frees a judge only once every binding on
-its file is decided by a step or a test — and the route that closes it, named and never filled
-in: the proof-only re-delivery of `/implement-task` over the task whose implementation record
-lists the file, handed the node, the assertion and the proof file, after which the next review's
-staging carries the new test's claim to certification. Which remainders are worth a test is a
-person's; and the next invocation where there is one.
+its file is decided by a step or a test — and the route that closes them, as one invocation: a
+proof increment, `/deliver-scope` with an ask naming the proof increment and, per testable
+remainder, the node, the assertion verbatim, this record's path and the files the node is bound
+to, all read from the record you just folded, under a new slug. `/plan-work` plans one task per
+fact, `/implement-task` writes the proof alone, and the review that reads it certifies the node —
+«A finite test is preferred to a reading, and to a registry step's decision, wherever one exists»
+(SPEC-004 R10), so every testable remainder is handed on, never only the ones that look cheap.
+Which to take is the human's: they paste the invocation whole, or trimmed to the facts they want.
+And the next invocation where there is one.
 
 Where a node the judgment did not clear carries `collateral`, say so apart from the contested
 ones: nothing was found against that node's own substance — it shares a file with a finding that

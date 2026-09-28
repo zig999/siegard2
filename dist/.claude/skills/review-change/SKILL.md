@@ -29,7 +29,10 @@ A missing input is a stop, not a default:
    every finding with the same spelling — a scope's `under` is stated against the same anchor,
    and a finding spelled from the repository instead of the target answers to no rule. The
    validator holds the set to the records: every path the tasks' implementation and proof
-   records say they wrote is in it, and a review over fewer is refused.
+   records say they wrote is in it, and so is every path an implementation record says the
+   implementation `stands` at — a task whose implementation already stood wrote only its proof,
+   and the node that proof demonstrates is certified against the standing file, which a review
+   that did not read it cannot clear. A review over fewer is refused.
 3. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 4. **the target** — which of the project's target source roots this change reaches, by the key

@@ -1451,6 +1451,23 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
                             f"later delivery refuses on this artifact's absence and a record "
                             f"saying it stands is what would hide that it does not")
 
+    said_stands = {p for p in listed(tfront, "stands") if isinstance(p, str)}
+    record_stands = {p for p in listed(front, "stands") if isinstance(p, str)}
+    if said_stands != record_stands:
+        problems.append(f"{nid}: the task says its implementation stands at "
+                        f"{', '.join(sorted(said_stands)) or 'nothing'} and this record says "
+                        f"{', '.join(sorted(record_stands)) or 'nothing'}; a record answering a "
+                        f"task whose implementation already stands writes no source and names "
+                        f"exactly where it stands, and one that disagrees with its task is either "
+                        f"source written under a proof task or a proof task delivered as source")
+    elif anchor is not None:
+        for path in sorted(record_stands):
+            if not Path(path).is_absolute() and not (anchor / path).is_file():
+                problems.append(f"{nid}: says the implementation stands at {path}, and "
+                                f"{anchor} does not hold it; the proof this record pairs with "
+                                f"is read against that file to certify the node, and a file "
+                                f"that is not there certifies nothing")
+
     implements = sorted(plan.implements_of(tfront))
     accounted = texts(listed(front, "nodes"), "node")
     for node_ref in implements:
@@ -1701,6 +1718,14 @@ def review_set_problems(nid: str, front: dict, nodes: dict[str, dict]) -> list[s
                                 f"{record} says it wrote in `{field}`; a review answers for a "
                                 f"task over every file its records wrote, and one over fewer "
                                 f"was clean over a change nobody delivered")
+            standing = {p for p in listed(nodes[record]["front"], "stands")
+                        if isinstance(p, str)}
+            unread = sorted(standing - reviewed)
+            if unread:
+                problems.append(f"{nid}: `reviewed` does not list {', '.join(unread)}, where "
+                                f"{record} says the implementation stands; the proof of a task "
+                                f"whose implementation already stood is certified against that "
+                                f"file, and a review that did not read it certified nothing")
     return problems
 
 
