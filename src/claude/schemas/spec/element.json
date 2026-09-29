@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/element.json",
   "title": "Domain Model element",
-  "description": "The frontmatter of one element file, domain/<context-slug>/<element-slug>.md — «One element, one file, flat» (SPEC-002 R1). The filename is the identity: no name field exists, and the display form is derived from the slug — `display` is declared only where the derivation would miscase an acronym, and it must reduce back to the slug. «Artifacts carry no provenance meta-fields» (SPEC-001 R8): a fact the material does not state is decided and disclosed in the decision log. The body carries exactly two headings, `## Description` and `## Responsibility`.",
+  "description": "The frontmatter of one element file, domain/<context-slug>/<element-slug>.md — «One element, one file, flat» (SPEC-002 R1). The filename is the identity: no name field exists, and the display form is derived from the slug — `display` is declared only where the derivation would miscase an acronym, and it must reduce back to the slug. «Artifacts carry no provenance meta-fields» (SPEC-001 R8): a fact the material does not state is decided and disclosed in the decision log. The body carries exactly two headings, «`## Description` (what the concept represents in the domain — never how it is implemented) and `## Responsibility` (why the concept exists; its one main responsibility)» (SPEC-002 §Element structure); «A heading with nothing to say carries the literal line `None.`» (SPEC-002 §Element structure)",
   "type": "object",
   "required": ["type"],
   "additionalProperties": false,
