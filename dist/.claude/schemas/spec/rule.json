@@ -11,7 +11,7 @@
     "statement": {
       "type": "string",
       "minLength": 1,
-      "description": "One falsifiable condition. Stated in one sentence: the sentence count is the half of this the validator decides, and a second sentence is refused — it is a second rule, a scenario, or an element's definition, each with a home of its own."
+      "description": "One falsifiable condition. Stated in one sentence: the sentence count is the half of this the validator decides, and a second sentence is refused — it is a second rule, a scenario, or an element's definition, each with a home of its own. It states what is refused, never what a surface answers when it refuses — «A Rule states the condition and never the answer» (SPEC-003 §Contract): the status and the error value are the api's `answers`, whose refusal names this rule."
     },
     "expression": {
       "type": "string",

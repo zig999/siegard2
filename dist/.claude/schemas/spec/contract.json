@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/contract.json",
   "title": "Contract",
-  "description": "The frontmatter of contracts/<context-slug>/<contract-slug>.md. A domain event is «named in the past tense» (SPEC-003 §Contract) and carries what happened; a command requests what may still be refused; an api publishes operations; a capability is the system's promise to its users and lives only in the reserved `system` namespace. Direction is required on event, command and api; consumed requires upstream. The context map is a projection of these declarations: a context pair with no contract between them has gone separate ways. The body carries `## Description`.",
+  "description": "The frontmatter of contracts/<context-slug>/<contract-slug>.md. A domain event is «named in the past tense» (SPEC-003 §Contract) and carries what happened; a command requests what may still be refused; an api publishes operations; a capability is the system's promise to its users and lives only in the reserved `system` namespace. Direction is required on event, command and api; consumed requires upstream. The context map is a projection of these declarations: a context pair with no contract between them has gone separate ways. An api's `answers` say what each operation answers, accepted and refused; the condition a refusal answers stays a Rule's. The body carries `## Description`.",
   "type": "object",
   "required": ["type"],
   "additionalProperties": false,
@@ -30,6 +30,12 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/slug" },
       "description": "Api only: what it exposes, by name."
+    },
+    "answers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/answer" },
+      "description": "Api only: what each operation answers across the boundary — the answer it gives when it accepts, and the answer each of its refusals takes. «An answer is what a caller of the boundary reads, so it is the Contract's, published or consumed» (SPEC-003 §Contract): a status, an error value, a body's absence, in the surface's own words. The condition a refusal answers is not an answer and is not stated here a second time: it is a Rule's where one states it, named by identity in `rule`, and it is stated in `when`, one sentence, only where no Rule states it and the surface alone refuses — an identity nothing is held at, a request the operation cannot carry out. An operation appears once, and only if `operations` declares it."
     }
   },
   "allOf": [
@@ -65,12 +71,27 @@
       "if": { "properties": { "type": { "const": "api" } }, "required": ["type"] },
       "then": {
         "required": ["direction", "operations"],
-        "propertyNames": { "enum": ["type", "display", "direction", "operations", "upstream"] },
+        "propertyNames": { "enum": ["type", "display", "direction", "operations", "answers", "upstream"] },
         "examples": [
           {
             "type": "api",
             "direction": "published",
-            "operations": ["open-case", "read-case"]
+            "operations": ["open-case", "read-case"],
+            "answers": [
+              {
+                "operation": "open-case",
+                "accepted": "HTTP 201 carrying the opened case",
+                "refusals": [
+                  { "rule": "rules/troubleshooting/case-requires-a-customer", "answer": "HTTP 422 reporting case-without-customer" }
+                ]
+              },
+              {
+                "operation": "read-case",
+                "refusals": [
+                  { "when": "No case is held at the requested identity.", "answer": "HTTP 404 reporting case-not-found" }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -101,6 +122,54 @@
     "contractRef": {
       "type": "string",
       "pattern": "^contracts/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "ruleRef": {
+      "type": "string",
+      "pattern": "^rules/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "answer": {
+      "type": "object",
+      "required": ["operation"],
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["accepted"] }, { "required": ["refusals"] }],
+      "properties": {
+        "operation": {
+          "$ref": "#/$defs/slug",
+          "description": "One of this contract's `operations`."
+        },
+        "accepted": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the operation answers when it accepts."
+        },
+        "refusals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/refusalAnswer" }
+        }
+      }
+    },
+    "refusalAnswer": {
+      "type": "object",
+      "required": ["answer"],
+      "additionalProperties": false,
+      "oneOf": [{ "required": ["rule"] }, { "required": ["when"] }],
+      "properties": {
+        "rule": {
+          "$ref": "#/$defs/ruleRef",
+          "description": "The Rule whose condition this refusal answers, by full identity."
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The condition, one sentence, where no Rule states it and the surface alone refuses."
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the operation answers when it refuses on that condition."
+        }
+      }
     }
   }
 }

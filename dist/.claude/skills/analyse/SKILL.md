@@ -223,7 +223,11 @@ that decides what goes in it:
 - **A contract is what crosses a boundary.** One kind records a fact that already happened,
   named in the past tense. A `command` requests something that may be refused — name the value
   object its refusal surfaces where the material states one. An `api` is a
-  synchronous interface. A `capability` is the system's own promise to its users and lives only
+  synchronous interface; where the material states what an operation answers — accepted or
+  refused — that answer lands in the api's `answers`, and the condition a refusal answers stays
+  the Rule's, named there by identity: «A Rule states the condition and never the answer»
+  (SPEC-003 §Contract), so a status or an error value never enters a rule's statement. A
+  `capability` is the system's own promise to its users and lives only
   under `contracts/system/`. `direction` (`published` | `consumed`) is required on the first
   three; a consumed contract names the published one it depends on, and a third-party system
   is an upstream capability named by what it supplies, never the vendor's name written into the
@@ -250,7 +254,10 @@ that decides what goes in it:
   node holds, which is the finding a conformance pass reports as the most expensive one there is,
   and which is then discovered file by file forever. A published surface is the opposite case and
   keeps the rule: this system chose its own route, its own column, its own table, and those stay
-  out.
+  out. What its operations answer is the one thing it chose that does not:
+  «An answer is what a caller of the boundary reads, so it is the Contract's, published or
+  consumed» (SPEC-003 §Contract), and it lands in `answers` — never in a rule, and never in a
+  constraint per operation.
 
 ### 3. Write
 

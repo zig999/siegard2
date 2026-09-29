@@ -356,6 +356,47 @@ def statement_problems(cls: str, front: object) -> list[str]:
             f"or an element's definition — «One condition is one sentence» (SPEC-003 §Rule)"]
 
 
+def answer_problems(identity: str, front: dict, landing) -> list[str]:
+    """An api's `answers`, held to what no schema can see: «An operation appears in `answers` at
+    most once, and only if the contract's `operations` declares it» (SPEC-003 §Contract), a
+    refusal's rule resolves, one rule is refused once per operation, and a `when` is one
+    sentence — the same count a `statement` is held to, because it is a condition too."""
+    problems: list[str] = []
+    declared = {o for o in listed(front, "operations") if isinstance(o, str)}
+    seen: set[str] = set()
+    for index, answer in enumerate(listed(front, "answers")):
+        if not isinstance(answer, dict) or not isinstance(answer.get("operation"), str):
+            continue  # the schema already reported the shape
+        operation = answer["operation"]
+        if operation not in declared:
+            problems.append(f"{identity}: answers[{index}] answers `{operation}`, which "
+                            f"`operations` does not declare")
+        if operation in seen:
+            problems.append(f"{identity}: answers[{index}] answers `{operation}` a second time; "
+                            f"an operation appears in `answers` at most once")
+        seen.add(operation)
+        refused: set[str] = set()
+        for position, refusal in enumerate(listed(answer, "refusals")):
+            if not isinstance(refusal, dict):
+                continue
+            at = f"answers[{index}].refusals[{position}]"
+            rule = refusal.get("rule")
+            if isinstance(rule, str):
+                landing(rule, "refused", identity, f"{at}.rule")
+                if rule in refused:
+                    problems.append(f"{identity}: {at} refuses `{operation}` on {rule} a second "
+                                    f"time; one condition takes one answer")
+                refused.add(rule)
+            when = refusal.get("when")
+            if isinstance(when, str):
+                count = len([s for s in SENTENCE.split(when) if s.strip()])
+                if count > 1:
+                    problems.append(f"{identity}: {at}.when carries {count} sentences; a "
+                                    f"condition is one sentence — «One condition is one "
+                                    f"sentence» (SPEC-003 §Rule)")
+    return problems
+
+
 def contracts() -> dict[str, Draft202012Validator]:
     validators = {}
     for cls, name in SCHEMAS.items():
@@ -769,6 +810,7 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                     if upstream["context"] == node["context"]:
                         problems.append(f"{identity}: upstream sits in the same context; "
                                         f"a context does not consume its own contract")
+            problems += answer_problems(identity, front, landing)
         if node["cls"] == "constraint":
             scope = front.get("scope")
             if isinstance(scope, str) and scope != SYSTEM and scope not in contexts:

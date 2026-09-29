@@ -104,6 +104,14 @@ R9–R10).
   `capability` is always published.
 - **Payloads** reference Domain Model elements. A third-party system is an upstream contract
   named by the capability it supplies; the vendor is implementation.
+- **Answers** — an `api` may declare `answers`: per operation, what it answers when it accepts
+  and what each of its refusals answers. An answer is what a caller of the boundary reads, so it
+  is the Contract's, published or consumed. The condition a refusal answers is a Rule's, named by
+  identity; where no Rule states it and the surface alone refuses, it is stated in `when`, one
+  sentence. A Rule states the condition and never the answer. An operation appears in `answers`
+  at most once, and only if the contract's `operations` declares it. The route, the table and the
+  column a published surface chose stay implementation: an answer is admitted because a caller
+  reads it, and nothing the caller does not read is.
 
 ### Architecture Constraint
 
@@ -214,3 +222,8 @@ layer → Architecture Constraint.
 7. Every distributed artifact citing a requirement of this specification carries a sentence
    of it verbatim in «…» beside the citation, and `tests/test_spec_citations.py` proves each
    such quote is a substring of the requirement it names.
+8. For an api's `answers`: an operation `operations` does not declare, an operation answered
+   twice, a refusal naming a rule the specification does not hold, a refusal carrying both `rule`
+   and `when` or neither, the same rule refused twice in one operation, and a `when` of more
+   than one sentence are each refused — a fixture proves each — and an api declaring `answers`
+   validates sound.

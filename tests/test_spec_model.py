@@ -284,6 +284,80 @@ def test_an_upstream_that_is_not_published_is_refused(spec_root):
     assert hits(problems_of(spec_root), "whose direction is not published")
 
 
+DESK = "contracts/troubleshooting/case-desk.md"
+
+
+def write_desk(root: Path, answers: list) -> None:
+    """An api answering its operations — the fixture holds no api, and adding one to it would
+    move every count the other suites read off the sound fixture."""
+    front = {"type": "api", "direction": "published",
+             "operations": ["resolve-case", "read-case"], "answers": answers}
+    (root / DESK).write_text("---\n" + yaml.safe_dump(front, sort_keys=False)
+                             + "---\n\n## Description\n\nThe desk operators work cases through.\n",
+                             encoding="utf-8")
+
+
+SOUND_ANSWERS = [
+    {"operation": "resolve-case", "accepted": "HTTP 200 carrying the resolved case",
+     "refusals": [{"rule": "rules/troubleshooting/hypothesis-requires-evidence",
+                   "answer": "HTTP 422 reporting hypothesis-without-evidence"}]},
+    {"operation": "read-case",
+     "refusals": [{"when": "No case is held at the requested identity.",
+                   "answer": "HTTP 404 reporting case-not-found"}]},
+]
+
+
+def test_an_api_declaring_answers_is_sound(spec_root):
+    write_desk(spec_root, SOUND_ANSWERS)
+    assert problems_of(spec_root) == []
+
+
+def test_an_answer_to_an_undeclared_operation_is_refused(spec_root):
+    write_desk(spec_root, [{"operation": "reopen-case", "accepted": "HTTP 200"}])
+    assert hits(problems_of(spec_root), "answers `reopen-case`, which `operations` does not declare")
+
+
+def test_an_operation_answered_twice_is_refused(spec_root):
+    write_desk(spec_root, SOUND_ANSWERS + [{"operation": "read-case", "accepted": "HTTP 200"}])
+    assert hits(problems_of(spec_root), "answers `read-case` a second time")
+
+
+def test_a_refusal_naming_an_absent_rule_is_refused(spec_root):
+    write_desk(spec_root, [{"operation": "resolve-case", "refusals": [
+        {"rule": "rules/troubleshooting/case-needs-a-customer", "answer": "HTTP 422"}]}])
+    assert hits(problems_of(spec_root),
+                "names rules/troubleshooting/case-needs-a-customer, which the specification "
+                "does not hold")
+
+
+@pytest.mark.parametrize("refusal,message", [
+    ({"rule": "rules/troubleshooting/hypothesis-requires-evidence",
+      "when": "The hypothesis holds no evidence.", "answer": "HTTP 422"}, "is valid under each of"),
+    ({"answer": "HTTP 422"}, "is not valid under any of the given schemas"),
+])
+def test_a_refusal_carries_exactly_one_of_rule_and_when(spec_root, refusal, message):
+    write_desk(spec_root, [{"operation": "resolve-case", "refusals": [refusal]}])
+    assert hits(problems_of(spec_root), f"answers.0.refusals.0: {refusal!r} {message}")
+
+
+def test_one_rule_refused_twice_in_one_operation_is_refused(spec_root):
+    refusal = {"rule": "rules/troubleshooting/hypothesis-requires-evidence", "answer": "HTTP 422"}
+    write_desk(spec_root, [{"operation": "resolve-case", "refusals": [refusal, dict(refusal)]}])
+    assert hits(problems_of(spec_root), "a second time; one condition takes one answer")
+
+
+def test_a_when_of_two_sentences_is_refused(spec_root):
+    write_desk(spec_root, [{"operation": "read-case", "refusals": [
+        {"when": "No case is held there. The identity is malformed.", "answer": "HTTP 404"}]}])
+    assert hits(problems_of(spec_root), ".when carries 2 sentences")
+
+
+def test_answers_are_an_api_field_only(spec_root):
+    rewrite(spec_root, "contracts/troubleshooting/case-resolved.md",
+            lambda f: f.update(answers=SOUND_ANSWERS))
+    assert hits(problems_of(spec_root), "frontmatter: 'answers' is not one of")
+
+
 def test_a_capability_is_a_valid_upstream_despite_declaring_no_direction(spec_root):
     """A capability's schema branch admits only `type` and `display` — it is always published
     by SPEC-003's own description, never by an explicit field. Before this held, a consumed
