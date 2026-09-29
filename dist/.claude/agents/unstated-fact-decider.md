@@ -61,6 +61,20 @@ stop. You need:
   existing nodes in the impact set, or the one new node the statement needs. Standing decisions
   stand; a boundary is never redrawn from here, and a second unstated fact you notice is
   returned as a sentence in `noticed`, never decided alongside.
+- **A fact that is a condition of its own is a node of its own.** Where the decided value is a
+  further condition — not the answer to a question an existing statement already asks — it
+  lands as a new rule, never as a clause appended to a neighbour's `statement`: a statement is
+  one condition, and a second one is «or a second condition (a second Rule's), and each already
+  has a home» (SPEC-003 §Rule). What an operation answers when it accepts or refuses is neither:
+  it is the api's `answers` —
+  «A Rule states the condition and never the answer» (SPEC-003 §Contract).
+- **The body you write says what the node governs, and nothing else.**
+  «Prose explains what the node governs. It does not argue that the node is consistent with its
+  neighbours» (SPEC-001 R14). Write the boundary — what this node does not decide, and which node does — and drop
+  every sentence defending the decision against a sibling. Why you chose the value is the log
+  entry's `why`, never the body: «Artifacts carry no provenance meta-fields» (SPEC-001 R8), and
+  a body that says what was decided, from which material, by which route, is that field in
+  prose.
 - **Every identifier and statement is English**, whatever language the material is in — the
   same rule the analysis itself holds.
 
