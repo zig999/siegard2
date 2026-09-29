@@ -24,8 +24,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/4",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was."
+      "const": "siegard-telemetry/5",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero."
     },
     "project_root": {
       "type": "string",
@@ -89,11 +89,16 @@
           "type": "object",
           "additionalProperties": {
             "type": "object",
-            "required": ["turns", "sessions", "usage"],
+            "required": ["turns", "sessions", "usage", "compactions"],
             "properties": {
               "turns": { "type": "integer", "minimum": 0 },
               "sessions": { "type": "integer", "minimum": 0 },
-              "usage": { "$ref": "#/$defs/usage" }
+              "usage": { "$ref": "#/$defs/usage" },
+              "compactions": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many of the window's sessions' `compactions` fell while this skill was running."
+              }
             }
           },
           "description": "`by_skill` summed across every session in the window: the session side of the cost, by the skill the session was running. Beside `agent_totals`, which is the agent side by type, these are the two halves of what a stretch of work spent — and this is the half a report reading `agent_totals` alone leaves out."
@@ -105,7 +110,7 @@
             "additionalProperties": false,
             "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
                          "working_directories", "entries_in_window", "human_turns_in_window",
-                         "usage", "by_skill"],
+                         "usage", "by_skill", "compactions"],
             "properties": {
               "id": { "type": "string", "minLength": 1 },
               "path": { "type": "string", "minLength": 1 },
@@ -131,6 +136,29 @@
                 },
                 "description": "This session's own turns and tokens by the skill it was running, keyed by the skill's bare name — `none` before the first Skill call. A Skill call names the span from itself to the next; the person's own turns inside that span count toward it, so every figure here is a ceiling per skill and is read as one."
               },
+              "compactions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["at", "skill", "trigger", "pre_tokens", "post_tokens"],
+                  "properties": {
+                    "at": { "$ref": "#/$defs/timestamp" },
+                    "skill": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The skill the session was running when its context was compacted, by the same span `by_skill` counts — `none` before the first Skill call."
+                    },
+                    "trigger": {
+                      "type": ["string", "null"],
+                      "description": "What the harness recorded as the cause: `auto` where the context reached its window, `manual` where a person asked for it."
+                    },
+                    "pre_tokens": { "type": ["integer", "null"], "minimum": 0 },
+                    "post_tokens": { "type": ["integer", "null"], "minimum": 0 }
+                  }
+                },
+                "description": "Every compaction the harness recorded in this session inside the window. A compaction replaces the context with a summary of it: from there on, what the session holds of its earlier reading is a paraphrase, and an invocation that reaches one has outgrown the window it runs in. Counted so that a change to what a skill loads or how much one invocation carries answers to a count rather than to a guess."
+              },
               "usage": {
                 "$ref": "#/$defs/usage",
                 "description": "The tokens this session's own turns spent inside the window — never a subagent's, which `agent_totals` already carries. A report reading `agent_totals` alone sees roughly half of what a task with several delegations actually cost: the orchestrating turns between them are the other half, and this is where they are counted."
@@ -149,7 +177,7 @@
         "required": ["session", "tool_use_id", "agent_type", "description", "invoked_at", "agent_id",
                      "model", "transcript", "first_timestamp", "last_timestamp", "duration_seconds",
                      "messages", "tool_calls", "usage", "repeats_earlier", "unavailable",
-                     "spawn_depth", "parent_agent_id"],
+                     "spawn_depth", "parent_agent_id", "compactions"],
         "properties": {
           "session": { "type": "string" },
           "tool_use_id": { "type": "string" },
@@ -176,6 +204,11 @@
           "duration_seconds": { "type": ["number", "null"], "minimum": 0 },
           "messages": { "type": ["integer", "null"], "minimum": 0 },
           "tool_calls": { "type": ["integer", "null"], "minimum": 0 },
+          "compactions": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "How many times the harness compacted this agent's own context. Null where the transcript was not found. An agent is handed what it needs and returns; one that compacts read past what it was handed."
+          },
           "usage": {
             "oneOf": [ { "$ref": "#/$defs/usage" }, { "type": "null" } ],
             "description": "Token usage summed over every assistant message in the agent's own transcript. Null where the transcript was not found — then `unavailable` says so."

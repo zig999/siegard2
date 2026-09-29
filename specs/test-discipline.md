@@ -16,14 +16,18 @@ agent that writes a proof, the agent that audits coverage, and the entry points 
 their inputs.
 
 It decides the obligation set, the necessity and stopping rules, the partition of inputs, the
-preference for a test over a reading wherever a finite test decides a fact, and which halves the
-validator enforces mechanically.
+preference for a test over a reading wherever a finite test decides a fact, that no test a
+delivery changes goes unnamed by its records, and which halves the validator enforces
+mechanically.
 
 Grounds: measured over 483 proof records and 95 reviews of two consumer projects in September
 2026, the share of criteria a coverage audit found covered rose from 60% at one test per
 criterion to 83% at two, and stayed between 78% and 82% at three or more. The proofs averaged
 2.5 tests per criterion, the test code ran to 3.6 times the source it proved, and no specification
-node of either project was decided by a test.
+node of either project was decided by a test. Over the same period, 13 of 97 delivery commits of
+one of the two projects changed a file under the target that no record of the delivery named —
+every one of them a test file or a test's helper, an existing test adjusted as often as a new one
+left out — so the file set the review that followed was handed never held them.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -106,6 +110,15 @@ node of either project was decided by a test.
   proving a node's fact under R10 stands there until the certification R13 carries claims it, and
   which of the two a test is, and what follows, is a person's.
 
+### What a delivery names
+
+- **R16** — Every path a delivery created, modified or deleted under its target source root is
+  named by one of the delivery's records: the implementation's `files`, or the proof's `tests` or
+  `files`. The file set a review is handed is the one the records name, so a path none names is a
+  change no review reads, and a test changed there is changed where nobody would see it. A
+  delivery whose tree holds such a path is refused before it is validated, and the refusal names
+  the path.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -119,6 +132,10 @@ node of either project was decided by a test.
 3. The certification contract admits a remainder a test can close and one no test can, and names
    as examples of the second only facts R12 names; `tests/test_reconcile.py` proves the contract
    demonstrates every outcome.
-4. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
+4. `bin/deliver.py --unrecorded` refuses a tree holding a path under the target that no named
+   record names, admits a helper the proof's `files` names and a deleted path a record names, and
+   never counts the framework's own roots as the delivery's change; `tests/test_unrecorded.py`
+   proves each.
+5. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.

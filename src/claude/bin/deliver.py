@@ -197,6 +197,15 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         trace over files no task delivered — and
                                                         every citation it makes, against the
                                                         registry it pins
+        deliver.py --unrecorded <target-source-root> <record> [<record> ...]
+                                                        print every path the working tree
+                                                        changed under the target source root —
+                                                        against HEAD, untracked included — that
+                                                        none of the named records names, outside
+                                                        the framework's own roots; exit 1 while
+                                                        any is. What a delivery runs over its own
+                                                        records before it validates, since the
+                                                        tree it started from was clean
         deliver.py --worktreeinclude <file> <target-source-root> [--write]
                                                         print every `presupposes` path, joined
                                                         onto the target source root, as
@@ -1192,8 +1201,8 @@ def review_run_problems(nid: str, front: dict, target: Path, validator, root: Pa
 
 def wrote(front: dict) -> tuple[set[str], str]:
     """Every path one record says it wrote, and the field that said so. An implementation writes
-    `files` and a proof writes `tests`; no record carries both, so one expression serves either and
-    a departure is checked against the same rule whichever wrote it."""
+    `files`; a proof writes `tests`, and `files` for what it changed that holds no test. One
+    expression serves either, so a departure is checked against the same rule whichever wrote it."""
     files = {f["path"] for f in listed(front, "files")
              if isinstance(f, dict) and isinstance(f.get("path"), str)}
     tests = {t["file"] for t in listed(front, "tests")
@@ -2275,6 +2284,97 @@ def run_worktreeinclude(named: str, target: str, write: bool) -> int:
     return 0
 
 
+FRAMEWORK_FILES = ("siegard.json", "siegard-trace.json", "siegard-reconcile", "siegard-check",
+                   ".worktreeinclude")
+FRAMEWORK_ROOTS = ("specification_root", "work_root", "delivery_root", "telemetry_root")
+
+
+def framework_paths(home: Path) -> list[Path]:
+    """Every path at the project's toplevel that the framework writes rather than a delivery:
+    the roots `siegard.json` declares, and the files beside it the scripts own. A delivery into a
+    target that is the whole tree writes its records under one of these, and none of them is the
+    change a review reads source for."""
+    found = [home / name for name in FRAMEWORK_FILES]
+    try:
+        declared = json.loads((home / "siegard.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return found
+    if isinstance(declared, dict):
+        found += [home / declared[key] for key in FRAMEWORK_ROOTS
+                  if isinstance(declared.get(key), str) and declared[key].strip()]
+    return found
+
+
+def unrecorded(target: str, named: list[str]) -> int:
+    """`--unrecorded`'s own body: every path the working tree changed under the target source
+    root — against `HEAD`, staged, unstaged and untracked together — that none of the named
+    records names, «Every path a delivery created, modified or deleted under its target source
+    root is named by one of the delivery's records» (SPEC-004 R16).
+
+    The tree is the witness, and it is a sound one only because the delivering invocation starts
+    from a tree its own pathspec holds clean: what git shows changed under the target is what
+    this delivery did. A record names a path under its own target's root, the same anchor every
+    other check resolves it at, so a record over another target names nothing here."""
+    import trace
+
+    target_root = Path(target)
+    if not target_root.is_dir():
+        print(f"cannot run: target source root {target_root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    if not named:
+        print("cannot run: expected --unrecorded <target-source-root> <record> ...; the records "
+              "are what the tree is held to, and none was named", file=sys.stderr)
+        return CANNOT_RUN
+    roots, trouble = target_roots(target_root)
+    if trouble is not None:
+        print(f"cannot run: {trouble}", file=sys.stderr)
+        return CANNOT_RUN
+    recorded: set[Path] = set()
+    for each in named:
+        path = Path(each)
+        if not path.is_file():
+            print(f"cannot run: record {path} does not exist", file=sys.stderr)
+            return CANNOT_RUN
+        front, _, unreadable = spec.parse_node(path)
+        if front is None:
+            print(f"cannot run: {path}: {unreadable}", file=sys.stderr)
+            return CANNOT_RUN
+        anchor = roots.get(front.get("target")) if isinstance(front.get("target"), str) else None
+        if anchor is None:
+            print(f"cannot run: {path} names target {front.get('target')!r}, which siegard.json's "
+                  f"`targets` does not declare", file=sys.stderr)
+            return CANNOT_RUN
+        written, _ = wrote(front)
+        recorded |= {(anchor / p).resolve() for p in written}
+    home = project.toplevel_of(target_root)
+    changed, failed = trace.changed_paths(home, None)
+    if failed is not None:
+        print(f"cannot run: {failed}", file=sys.stderr)
+        return CANNOT_RUN
+    base = target_root.resolve()
+    owned = [p.resolve() for p in framework_paths(home)]
+    missing: list[str] = []
+    for spelled in changed:
+        where = (home / spelled).resolve()
+        if where != base and base not in where.parents:
+            continue
+        if any(where == o or o in where.parents for o in owned):
+            continue
+        if where not in recorded:
+            missing.append(where.relative_to(base).as_posix())
+    if missing:
+        for path in missing:
+            print(f"unrecorded: {path}")
+        print(f"\n{len(missing)} path(s) this tree changed under {target_root} that no named "
+              f"record names. A source path goes in the implementation's `files`; a test file in "
+              f"the proof's `tests`, or its `files` where the path holds no test `tests` names — "
+              f"each with what the producer that changed it says it now does.")
+        return 1
+    print(f"every path this tree changed under {target_root} is named by the "
+          f"{len(named)} record(s) given")
+    return 0
+
+
 def check_standard(named: str, against: str | None = None,
                    specification: str | None = None) -> int:
     """Validate one project standard on its own, so a consumer can hold a registry to its contract
@@ -2493,6 +2593,17 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return check_record(named, args[0])
+    if "--unrecorded" in args:
+        at = args.index("--unrecorded")
+        rest = args[at + 1:]
+        del args[at:]
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args or not rest \
+                or any(a.startswith("--") for a in rest):
+            print("cannot run: expected --unrecorded <target-source-root> <record> ...",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return unrecorded(rest[0], rest[1:])
     if "--contract" in args:
         at = args.index("--contract")
         branch = args[at + 1] if at + 1 < len(args) and not args[at + 1].startswith("--") \

@@ -206,7 +206,9 @@ test of what the code does, and what the code does is the thing under question.
    inference about behavior, an entry that names no implementation, what a rearrangement left
    uncovered. Send to `not_applicable` each edge case no obligation reaches, with why.
 7. Compose your return mapping last, from the tests that exist rather than the ones you meant
-   to write.
+   to write, and from every file you touched: a path you changed that neither `tests` nor
+   `files` names is refused before the proof is validated, because the review reads only the
+   paths the records name.
 
 ## What you return
 
@@ -217,6 +219,9 @@ title: <what this proof is, in a few words>
 summary: <one sentence saying what it holds>
 tests: [...]                 # every test written: where it sits, its name, what it proves,
                              # what would make it fail, and the node it demonstrates where one
+files: [...]                 # every path you changed that holds no test `tests` names — a
+                             # helper or fixture the tests share, an existing test adjusted
+                             # rather than written — with what it now does; omit when none
 not_applicable: [...]        # omit only where every edge case above applied
 untested: [...]              # omit when nothing is left unproven
 contested: [...]             # omit when you disagree with nothing

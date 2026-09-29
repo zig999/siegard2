@@ -52,6 +52,12 @@ too, said as one. `harness.skill_totals` sums it across sessions; a report that 
 `agent_totals` alone would miss this half, and one that read the session total alone could not say
 which skill spent it.
 
+**A compaction is counted where it falls.** The harness records one in the transcript each time
+it replaces a context with a summary of it — in a session under the skill whose span it falls in,
+and in an agent's own transcript as a count. Past one, what the context holds of its earlier
+reading is a paraphrase; an invocation that reaches one has outgrown its window, and whether a
+skill's invocations do is a count this reads rather than an impression.
+
 **A section that cannot be read is said, not filled.** Every section carries an entry in
 `provenance` naming where it was read from or why it could not be. No source is estimated from
 another: an agent whose transcript is missing has null usage and a reason, and the totals say how
@@ -103,7 +109,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/4"
+CONTRACT = "siegard-telemetry/5"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -457,6 +463,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     namespace = plugin_namespace()
     skill: str | None = None
     by_skill: dict[str, dict] = {}
+    compactions: list[dict] = []
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
@@ -475,6 +482,9 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         entries_in_window += 1
         if is_human_turn(entry):
             human_turns.append(iso(instant_of(stamp)))
+        if is_compaction(entry):
+            compactions.append(dict(compaction_of(entry), at=iso(instant_of(stamp)),
+                                    skill=skill or "none"))
         if entry.get("type") != "assistant":
             continue
         for block in blocks_of(entry):
@@ -535,9 +545,27 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "first_timestamp": first, "last_timestamp": last,
         "harness_versions": sorted(versions), "working_directories": sorted(cwds),
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
-        "usage": usage, "by_skill": by_skill,
+        "usage": usage, "by_skill": by_skill, "compactions": compactions,
     }
     return summary, list(commands.values()), list(agents.values())
+
+
+def is_compaction(entry: dict) -> bool:
+    return entry.get("type") == "system" and entry.get("subtype") == "compact_boundary"
+
+
+def compaction_of(entry: dict) -> dict:
+    """What the harness recorded about one compaction: its cause and the context's size either
+    side of it, each null where the entry does not carry it."""
+    meta = entry.get("compactMetadata") if isinstance(entry.get("compactMetadata"), dict) else {}
+
+    def count(key: str) -> int | None:
+        value = meta.get(key)
+        return value if isinstance(value, int) and value >= 0 else None
+
+    trigger = meta.get("trigger")
+    return {"trigger": trigger if isinstance(trigger, str) else None,
+            "pre_tokens": count("preTokens"), "post_tokens": count("postTokens")}
 
 
 def spawn_of(block: dict, payload: dict, session_id: str, stamp: str | None) -> dict:
@@ -604,13 +632,15 @@ def subagent_metas(session_dir: Path) -> dict[str, tuple[str, Path]]:
 def read_subagent(transcript: Path) -> dict:
     usage = dict.fromkeys(USAGE_KEYS, 0)
     first = last = None
-    messages = tool_calls = 0
+    messages = tool_calls = compactions = 0
     model = None
     for entry in entries_of(transcript):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
             first = stamp if first is None or stamp < first else first
             last = stamp if last is None or stamp > last else last
+        if is_compaction(entry):
+            compactions += 1
         if entry.get("type") != "assistant":
             continue
         message = entry.get("message") or {}
@@ -626,7 +656,7 @@ def read_subagent(transcript: Path) -> dict:
         tool_calls += sum(1 for b in blocks_of(entry) if b.get("type") == "tool_use")
     return {"model": model, "first_timestamp": first, "last_timestamp": last,
             "duration_seconds": seconds_between(first, last), "messages": messages,
-            "tool_calls": tool_calls, "usage": usage}
+            "tool_calls": tool_calls, "compactions": compactions, "usage": usage}
 
 
 def harness_section(root: Path, home: Path, since: datetime,
@@ -653,8 +683,8 @@ def harness_section(root: Path, home: Path, since: datetime,
             agent = pending.pop(0)
             found = metas.get(agent["tool_use_id"])
             agent.update(agent_id=None, transcript=None, first_timestamp=None, last_timestamp=None,
-                         duration_seconds=None, messages=None, tool_calls=None, usage=None,
-                         unavailable=None)
+                         duration_seconds=None, messages=None, tool_calls=None, compactions=None,
+                         usage=None, unavailable=None)
             if found is None:
                 agent["unavailable"] = (f"no subagents/*.meta.json under {root / path.stem} names "
                                         f"tool use {agent['tool_use_id']}; whatever this agent "
@@ -683,12 +713,16 @@ def harness_section(root: Path, home: Path, since: datetime,
     totals: dict[str, dict] = {}
     for summary in harness["sessions"]:
         for name, share in summary["by_skill"].items():
-            into = totals.setdefault(name, {"turns": 0, "sessions": 0,
+            into = totals.setdefault(name, {"turns": 0, "sessions": 0, "compactions": 0,
                                             "usage": dict.fromkeys(USAGE_KEYS, 0)})
             into["turns"] += share["turns"]
             into["sessions"] += 1
             for key in USAGE_KEYS:
                 into["usage"][key] += share["usage"][key]
+        for compaction in summary["compactions"]:
+            totals.setdefault(compaction["skill"], {"turns": 0, "sessions": 0, "compactions": 0,
+                                                    "usage": dict.fromkeys(USAGE_KEYS, 0)})
+            totals[compaction["skill"]]["compactions"] += 1
     harness["skill_totals"] = dict(sorted(totals.items()))
     commands.sort(key=lambda c: (c["issued_at"], c["tool_use_id"]))
     agents.sort(key=lambda a: (a["invoked_at"], a["tool_use_id"]))
@@ -847,7 +881,7 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
     only that far: a decision committed after the close is outside the window, and so is a
     revision."""
     absent = {"log": None, "baseline": "no specification_root is declared", "total_now": None,
-              "added": []}
+              "added": [], "outcomes": outcomes_of([])}
     if specification_root is None:
         return absent
     log = specification_root / "decision-log.md"
@@ -876,22 +910,26 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
             return {**absent, "log": str(log), "baseline": f"{log} cannot be read: {broken}"}
     if relative is None:
         return {"log": str(log), "baseline": f"{log} sits outside the git toplevel {home}; every "
-                f"current entry is listed", "total_now": len(current), "added": current}
+                f"current entry is listed", "total_now": len(current), "added": current,
+                "outcomes": outcomes_of(current)}
     upto = cut if bounded else None
     before = git(home, "rev-list", "-1", f"--before={iso(since)}", "HEAD", "--", relative)
     if before is None or before.returncode != 0 or not before.stdout.strip():
-        return {"log": str(log), "baseline": f"no commit before {iso(since)} holds {relative}; "
-                f"every current entry is listed", "total_now": len(current), "added": current}
-    digest = before.stdout.strip()
-    shown = git(home, "show", f"{digest}:{relative}")
-    baseline = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
-    seen = {json.dumps(e, sort_keys=True) for e in baseline}
-    added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
+        baseline_said = (f"no commit before {iso(since)} holds {relative}; every current "
+                         f"entry is listed")
+        added = current
+    else:
+        digest = before.stdout.strip()
+        baseline_said = f"commit {digest}"
+        shown = git(home, "show", f"{digest}:{relative}")
+        baseline = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
+        seen = {json.dumps(e, sort_keys=True) for e in baseline}
+        added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
     spec_relative = Path(relative).parent.as_posix()
     for entry in added:
         entry["outcome"] = outcome_of(entry, home, spec_relative, relative, specification_root,
                                       upto)
-    return {"log": str(log), "baseline": f"commit {digest}", "total_now": len(current),
+    return {"log": str(log), "baseline": baseline_said, "total_now": len(current),
             "added": added, "outcomes": outcomes_of(added)}
 
 

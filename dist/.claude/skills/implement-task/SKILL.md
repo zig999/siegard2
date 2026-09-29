@@ -712,7 +712,26 @@ sentence that says why.
 
 ### 7. Validate, and derive the delivery
 
-When both records are written, run:
+When both records are written, hold the tree to them first — every record this invocation
+wrote, and on a proof-only re-delivery the standing implementation record beside the new proof:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --unrecorded <target-source-root> <implementation record> [<proof record>]
+```
+
+«Every path a delivery created, modified or deleted under its target source root is named by one
+of the delivery's records» (SPEC-004 R16). The tree started clean under this invocation's
+pathspec, so what git shows changed under the target is what this delivery did, and the file set
+the report hands `/review-change` is the records' — a path they leave out is one no review reads.
+Each path it prints is named where it belongs: a source path in the implementation's `files`, a
+test file in the proof's `tests`, or in its `files` where the path holds no test `tests` names —
+with the effect the producer that changed it states, that delegation re-entered to say it where
+its return did not. A path neither producer claims is reported as such and never reverted: what
+to do with a change nobody explains is a person's. Rerun until it exits 0. An implementation
+record rewritten here changes the hash the proof pinned, so the proof's `implementation` is
+stamped again from the record as it now stands.
+
+Then run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <target-source-root> <specification-root>
@@ -782,8 +801,9 @@ a `--check` finding nobody was going to run.
 Report, in this order:
 
 - the two nodes written, by identifier, and whether this was a re-delivery;
-- every path the delivery created or modified — this is the file set `/review-change` needs, and
-  the one thing it must never discover for itself;
+- every path the delivery created, modified or deleted — the records' `files` and `tests`
+  together, which `--unrecorded` held to the tree — this is the file set `/review-change` needs,
+  and the one thing it must never discover for itself;
 - every criterion recorded unmet, with what the record says about it;
 - every inference recorded, and every departure — these are the decisions nobody asked for, and
   they are what a reviewer reads first;

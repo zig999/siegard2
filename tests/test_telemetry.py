@@ -764,6 +764,53 @@ def test_session_turns_are_attributed_to_the_skill_they_ran_under(consumer):
         sum(s["usage"]["output_tokens"] for s in report["harness"]["sessions"])
 
 
+# ----------------------------------------------------------------- compactions
+
+
+def compacted(stamp: str, trigger: str = "auto", pre: int = 970714, post: int = 13469) -> str:
+    """A compaction as the harness records it: a system entry marking the boundary, with the
+    context's size either side."""
+    return line(type="system", subtype="compact_boundary", timestamp=stamp, sessionId="s4",
+                cwd="/consumer", content="Conversation compacted",
+                compactMetadata={"trigger": trigger, "preTokens": pre, "postTokens": post})
+
+
+def test_a_compaction_is_counted_under_the_skill_it_fell_in(consumer):
+    (consumer["transcripts"] / "s4.jsonl").write_text(
+        human("2026-08-20T10:05:00.000Z")
+        + compacted("2026-08-20T10:05:30.000Z", trigger="manual", pre=500, post=40)
+        + assistant("2026-08-20T10:06:00.000Z", {"type": "tool_use", "id": "sk-4", "name": "Skill",
+                                                  "input": {"skill": "siegard:review-change"}},
+                    session="s4", usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                                         "cache_read_input_tokens": 0, "output_tokens": 1})
+        + compacted("2026-08-20T10:30:00.000Z")
+        + compacted("2026-08-20T13:30:00.000Z"),
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    assert not list(contract().iter_errors(report))
+    s4 = next(s for s in report["harness"]["sessions"] if s["id"] == "s4")
+    assert s4["compactions"] == [
+        {"trigger": "manual", "pre_tokens": 500, "post_tokens": 40,
+         "at": "2026-08-20T10:05:30.000Z", "skill": "none"},
+        {"trigger": "auto", "pre_tokens": 970714, "post_tokens": 13469,
+         "at": "2026-08-20T10:30:00.000Z", "skill": "review-change"}]
+    totals = report["harness"]["skill_totals"]
+    assert totals["review-change"]["compactions"] == 1
+    assert totals["none"]["compactions"] == 1
+    s1 = next(s for s in report["harness"]["sessions"] if s["id"] == "s1")
+    assert s1["compactions"] == []
+
+
+def test_an_agent_s_own_compactions_are_counted_on_its_row(consumer):
+    transcript = consumer["transcripts"] / "s1" / "subagents" / "agent-a1.jsonl"
+    transcript.write_text(transcript.read_text(encoding="utf-8")
+                          + compacted("2026-08-20T10:12:40.000Z"), encoding="utf-8")
+    _, report = report_of(consumer)
+    rows = {a["tool_use_id"]: a for a in report["agents"]}
+    assert rows["tu-agent-1"]["compactions"] == 1
+    assert rows["tu-agent-2"]["compactions"] is None
+
+
 # ----------------------------------------------- what counts as a person typing
 
 
@@ -798,3 +845,18 @@ def test_the_skill_template_names_the_contract_the_script_writes():
     import telemetry
     text = (REPO / "src/claude/skills/siegard-telemetry/SKILL.md").read_text(encoding="utf-8")
     assert f"contract_version: {telemetry.CONTRACT}\n" in text
+
+
+def test_a_window_opening_before_the_log_s_history_follows_every_entry(consumer):
+    """With no commit before `since` holding the log, every current entry is one the window
+    added, and each is still followed to the field it filled — the report keeps its contract."""
+    done = run(consumer["home"], "--since", "2026-08-19T00:00:00Z", "--until", UNTIL,
+               "--transcripts", consumer["transcripts"])
+    assert done.returncode == 0, done.stdout + done.stderr
+    report = json.loads((consumer["home"] / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8"))
+    assert not list(contract().iter_errors(report))
+    decisions = report["decisions"]
+    assert decisions["baseline"].startswith("no commit before")
+    assert len(decisions["added"]) == 2
+    assert all("outcome" in entry for entry in decisions["added"])
+    assert sum(decisions["outcomes"]["states"].values()) == 2

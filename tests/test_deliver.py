@@ -319,6 +319,26 @@ def rewrite_proof(delivery: Path, write_delivery, **test_fields) -> None:
     })
 
 
+def test_a_proof_may_name_a_helper_it_changed_in_files(delivery, work, root, target,
+                                                      sound_delivery, write_delivery):
+    """SPEC-004 R16: a path the proof changed that holds no test its `tests` names is named in
+    its `files`, so the review handed the records' file set reads it."""
+    import hashlib
+    written = delivery / "implementation/checkout/record-order.md"
+    write_delivery("proof/checkout/record-order", {
+        "title": "Proof for recording a placed order",
+        "summary": "What proves the recorded order.",
+        "implementation": "sha256:" + hashlib.sha256(written.read_bytes()).hexdigest(),
+        "tests": [{"file": "tests/place.spec.ts",
+                   "name": "returns the order_number for a valid submission",
+                   "proves": "Submitting a valid order returns its order_number.",
+                   "fails_when": "place() answers with anything but the stored order_number"}],
+        "files": [{"path": "tests/order.test-support.ts",
+                   "effect": "builds the valid submission every test of the order places"}],
+    })
+    assert problems_of(delivery, work, target, root) == []
+
+
 def test_a_test_may_demonstrate_a_node_its_task_implements(delivery, work, root, target,
                                                            sound_delivery, write_delivery):
     """The claim a review certifies: this test would fail if the node's fact stopped holding."""

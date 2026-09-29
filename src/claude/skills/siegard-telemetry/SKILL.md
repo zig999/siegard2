@@ -88,7 +88,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/4
+contract_version: siegard-telemetry/5
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -170,7 +170,12 @@ What each section holds:
   several delegations from one session has spent roughly as much here as there. Then
   `harness.skill_totals`: the session side by the skill it was running, every row a ceiling per
   skill — the person's own turns inside a skill's span count toward it, and the section says so
-  — so a reader sees which skill's prose the session paid for before anyone shortens any. A total set
+  — so a reader sees which skill's prose the session paid for before anyone shortens any. **Then
+  the compactions**: every entry of `harness.sessions[].compactions` — when, under which skill,
+  its trigger, and the context's size either side — then `skill_totals[].compactions` per skill
+  and every agent whose `compactions` is above zero. A compaction is an invocation that outgrew
+  its window, and past it the session holds a paraphrase of what it read; a skill with none in
+  the window says zero, and a `siegard-telemetry/4` record says nothing, which is not zero. A total set
   beside an earlier report's is compared only under one contract version: a `siegard-telemetry/2`
   total counted the session's direct spawns alone, and reads as a floor beside a later one.
 - **10.** Judgment, and only here: a step whose cost is out of proportion to what it decided, a

@@ -48,7 +48,7 @@
       "items": {
         "$ref": "#/$defs/writtenFile"
       },
-      "description": "Every path this delivery created or modified, and what each now does. Paths and effects only: the code is in the repository, and a copy here is the copy that stops being maintained. At least one, except where the record carries `stands`, which writes none."
+      "description": "Every path this record created, modified or deleted, and what each now does. Paths and effects only: the code is in the repository, and a copy here is the copy that stops being maintained. On an implementation, every source path, and at least one except where the record carries `stands`, which writes none. On a proof, every path the proof changed that holds no test its `tests` names — a helper or a fixture the tests share, an existing test adjusted rather than written — and absent where every path it changed is a test file `tests` names. Between them, a delivery's records name every path it changed under its target, and `deliver.py --unrecorded` refuses a tree holding one they do not: the file set a review is handed is the records', so a path none names is a change no review reads."
     },
     "criteria": {
       "type": "array",
@@ -405,6 +405,7 @@
             "standard",
             "run",
             "tests",
+            "files",
             "not_applicable",
             "untested",
             "contested",
