@@ -593,6 +593,59 @@ def test_session_usage_sums_only_its_own_turns_inside_the_window(consumer):
                                     "cache_read_input_tokens": 0, "output_tokens": 13}
 
 
+def split(stamp: str, message_id: str, blocks: list[dict], final_output: int,
+          **extra) -> str:
+    """One assistant message as the harness transcribes it: one entry per content block, every
+    entry carrying the message's usage, `output_tokens` reaching its final value on the last."""
+    written = ""
+    for at, block in enumerate(blocks):
+        last = at == len(blocks) - 1
+        written += line(type="assistant", timestamp=stamp, message={
+            "id": message_id, "role": "assistant", "model": "claude-opus-5", "content": [block],
+            "usage": {"input_tokens": 7, "cache_creation_input_tokens": 100,
+                      "cache_read_input_tokens": 1000,
+                      "output_tokens": final_output if last else 1}}, **extra)
+    return written
+
+
+def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
+    session = consumer["transcripts"] / "s1.jsonl"
+    session.write_text(session.read_text(encoding="utf-8")
+                       + split("2026-08-20T10:50:00.000Z", "m-split",
+                               [{"type": "thinking", "thinking": ""},
+                                {"type": "text", "text": "t"},
+                                {"type": "tool_use", "id": "tu-x", "name": "Read", "input": {}}],
+                               40, sessionId="s1", cwd="/consumer", version="2.1.0"),
+                       encoding="utf-8")
+    agent = consumer["transcripts"] / "s1" / "subagents" / "agent-a1.jsonl"
+    agent.write_text(agent.read_text(encoding="utf-8")
+                     + split("2026-08-20T10:12:40.000Z", "m-agent",
+                             [{"type": "text", "text": "a"}, {"type": "text", "text": "b"}],
+                             60, isSidechain=True, agentId="a1"),
+                     encoding="utf-8")
+    _, report = report_of(consumer)
+    assert report["contract_version"] == "siegard-telemetry/6"
+    assert report["harness"]["sessions"][0]["usage"] == {
+        "input_tokens": 57, "cache_creation_input_tokens": 100,
+        "cache_read_input_tokens": 1000, "output_tokens": 53}
+    row = next(a for a in report["agents"] if a["tool_use_id"] == "tu-agent-1")
+    assert row["usage"] == {"input_tokens": 22, "cache_creation_input_tokens": 200,
+                            "cache_read_input_tokens": 4000, "output_tokens": 560}
+    assert row["messages"] == 3
+
+
+def test_distinct_messages_are_each_counted(consumer):
+    session = consumer["transcripts"] / "s1.jsonl"
+    extra = "".join(split(f"2026-08-20T10:5{n}:00.000Z", f"m-{n}",
+                          [{"type": "text", "text": "t"}], 40,
+                          sessionId="s1", cwd="/consumer", version="2.1.0") for n in range(3))
+    session.write_text(session.read_text(encoding="utf-8") + extra, encoding="utf-8")
+    _, report = report_of(consumer)
+    assert report["harness"]["sessions"][0]["usage"] == {
+        "input_tokens": 50 + 21, "cache_creation_input_tokens": 300,
+        "cache_read_input_tokens": 3000, "output_tokens": 13 + 120}
+
+
 def test_the_receipt_prints_session_tokens_separately_from_agent_tokens(consumer):
     done, _ = report_of(consumer)
     assert "sessions: 1 orchestrating, 13 output tokens" in done.stdout

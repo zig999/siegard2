@@ -52,6 +52,12 @@ too, said as one. `harness.skill_totals` sums it across sessions; a report that 
 `agent_totals` alone would miss this half, and one that read the session total alone could not say
 which skill spent it.
 
+**A message is counted once.** The harness writes an assistant message received in several
+content blocks as several transcript entries, each carrying the message's whole `usage`. Every
+count here is per message, grouped by `message.id`, each figure the largest any of its entries
+states — so a session's or an agent's usage is what the API calls cost, not that cost times the
+blocks each call returned.
+
 **A compaction is counted where it falls.** The harness records one in the transcript each time
 it replaces a context with a summary of it — in a session under the skill whose span it falls in,
 and in an agent's own transcript as a count. Past one, what the context holds of its earlier
@@ -109,7 +115,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/5"
+CONTRACT = "siegard-telemetry/6"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -169,6 +175,51 @@ PROBLEMS = re.compile(r"\b(\d+) problem\(s\)")
 FENCE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 USAGE_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
               "output_tokens")
+
+
+class MessageUsage:
+    """The usage of a transcript's assistant messages, one count per message.
+
+    The harness writes a message it received in several content blocks as several transcript
+    entries, and every one of them carries the message's `usage`: the input and cache figures
+    repeated, `output_tokens` growing to its final value on the last. Summed per entry, one API
+    call is counted once per block. So entries are grouped by `message.id`, each key keeps its
+    largest value across the group, and the message is attributed to the skill named at its last
+    entry. An entry carrying no message id is its own message."""
+
+    def __init__(self) -> None:
+        self.messages: dict[str, dict] = {}
+
+    def add(self, entry: dict, skill: str | None = None) -> None:
+        message = entry.get("message") or {}
+        key = message.get("id") if isinstance(message.get("id"), str) \
+            else f"entry:{len(self.messages)}"
+        held = self.messages.setdefault(key, {"usage": dict.fromkeys(USAGE_KEYS, 0),
+                                              "skill": skill})
+        held["skill"] = skill
+        spent = message.get("usage")
+        if isinstance(spent, dict):
+            for name in USAGE_KEYS:
+                value = spent.get(name)
+                if isinstance(value, int) and value >= 0 and value > held["usage"][name]:
+                    held["usage"][name] = value
+
+    def total(self) -> dict:
+        usage = dict.fromkeys(USAGE_KEYS, 0)
+        for held in self.messages.values():
+            for name in USAGE_KEYS:
+                usage[name] += held["usage"][name]
+        return usage
+
+    def by_skill(self) -> dict[str, dict]:
+        shares: dict[str, dict] = {}
+        for held in self.messages.values():
+            share = shares.setdefault(held["skill"] or "none",
+                                      {"turns": 0, "usage": dict.fromkeys(USAGE_KEYS, 0)})
+            share["turns"] += 1
+            for name in USAGE_KEYS:
+                share["usage"][name] += held["usage"][name]
+        return shares
 
 
 def cannot_run(message: str) -> NoReturn:
@@ -459,10 +510,9 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     commands: dict[str, dict] = {}
     agents: dict[str, dict] = {}
     results: dict[str, dict] = {}
-    usage = dict.fromkeys(USAGE_KEYS, 0)
+    spent = MessageUsage()
     namespace = plugin_namespace()
     skill: str | None = None
-    by_skill: dict[str, dict] = {}
     compactions: list[dict] = []
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
@@ -497,15 +547,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                     if namespace and named.startswith(f"{namespace}:"):
                         named = named[len(namespace) + 1:]
                     skill = named
-        share = by_skill.setdefault(skill or "none", {"turns": 0, "usage": dict.fromkeys(USAGE_KEYS, 0)})
-        share["turns"] += 1
-        spent = (entry.get("message") or {}).get("usage")
-        if isinstance(spent, dict):
-            for key in USAGE_KEYS:
-                value = spent.get(key)
-                if isinstance(value, int) and value >= 0:
-                    usage[key] += value
-                    share["usage"][key] += value
+        spent.add(entry, skill)
         for block in blocks_of(entry):
             if block.get("type") != "tool_use" or not isinstance(block.get("id"), str):
                 continue
@@ -545,7 +587,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "first_timestamp": first, "last_timestamp": last,
         "harness_versions": sorted(versions), "working_directories": sorted(cwds),
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
-        "usage": usage, "by_skill": by_skill, "compactions": compactions,
+        "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -630,9 +672,9 @@ def subagent_metas(session_dir: Path) -> dict[str, tuple[str, Path]]:
 
 
 def read_subagent(transcript: Path) -> dict:
-    usage = dict.fromkeys(USAGE_KEYS, 0)
+    spent = MessageUsage()
     first = last = None
-    messages = tool_calls = compactions = 0
+    tool_calls = compactions = 0
     model = None
     for entry in entries_of(transcript):
         stamp = entry.get("timestamp")
@@ -644,19 +686,13 @@ def read_subagent(transcript: Path) -> dict:
         if entry.get("type") != "assistant":
             continue
         message = entry.get("message") or {}
-        messages += 1
         if isinstance(message.get("model"), str):
             model = message["model"]
-        spent = message.get("usage")
-        if isinstance(spent, dict):
-            for key in USAGE_KEYS:
-                value = spent.get(key)
-                if isinstance(value, int) and value >= 0:
-                    usage[key] += value
+        spent.add(entry)
         tool_calls += sum(1 for b in blocks_of(entry) if b.get("type") == "tool_use")
     return {"model": model, "first_timestamp": first, "last_timestamp": last,
-            "duration_seconds": seconds_between(first, last), "messages": messages,
-            "tool_calls": tool_calls, "compactions": compactions, "usage": usage}
+            "duration_seconds": seconds_between(first, last), "messages": len(spent.messages),
+            "tool_calls": tool_calls, "compactions": compactions, "usage": spent.total()}
 
 
 def harness_section(root: Path, home: Path, since: datetime,
