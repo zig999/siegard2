@@ -1677,7 +1677,7 @@ def remainders_of(home: Path) -> tuple[dict[str, list[dict]], set[str]]:
 
 def restated_of(home: Path) -> list[dict]:
     """Every place a record names where text in the source restates a fact a node holds while the
-    code holds it too — a comment, a docstring, a description the source carries. Kept apart
+    code holds it too — a comment or a docstring, never text the system emits. Kept apart
     from the pair's findings because the pair conforms: what is owed is the text's removal, by
     the route that answers prose, and no bind is. Only `siegard-reconcile/8` and later records
     carry the list; an earlier one filed the same observation as `contradicts`."""

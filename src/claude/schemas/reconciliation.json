@@ -320,7 +320,7 @@
     "restates": {
       "type": "array",
       "minItems": 1,
-      "description": "Every place a judge read text in the source — a comment, a docstring, a description the source carries — restating a fact a node holds while the code holds it too. Listed apart from the nodes because the pair conforms: none blocks a binding, and what each owes is the text's removal by the route that answers prose, with the file reconciled after. `trace.py --owed` lists them apart from what a bind is owed.",
+      "description": "Every place a judge read a comment or a docstring — prose no running system emits — restating a fact a node holds while code holds it too. Listed apart from the nodes because the pair conforms: none blocks a binding, and what each owes is the text's removal by the route that answers prose, with the file reconciled after. `trace.py --owed` lists them apart from what a bind is owed.",
       "items": {
         "type": "object",
         "required": ["file", "where", "evidence", "cost"],

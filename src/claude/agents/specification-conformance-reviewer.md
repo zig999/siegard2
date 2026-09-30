@@ -70,27 +70,31 @@ stop. You need:
 - **A fact the specification already holds, restated in the source as its own authority.** A
   rule implemented a second time where nothing reads the first, a vocabulary declared in a file
   the node is not bound to — the day the two disagree nobody knows which was decided, and when
-  the node moves, `--check` never reaches a file it is not bound to. Text restating it is apart
-  from these: a comment, a docstring, or a description the source carries that says a node's
-  fact while code holds it too — in this file, or in another file you can name. That text is a
-  second home in prose, not in behavior: the pair still conforms where the code is, and what the
-  text owes is its removal. The declaration in a file the node *is* bound to is none of these: it
+  the node moves, `--check` never reaches a file it is not bound to. A comment or a docstring
+  restating it is apart from these: prose no running system emits, saying a node's fact while
+  code holds it too — in this file, or in another file you can name. That prose is a second home
+  outside behavior: the pair still conforms where the code is, and what the prose owes is its
+  removal. Text the running system emits is not prose — a tool's description, an error message,
+  a prompt sent to a model, a log line: it is what the system tells someone. Where it states a
+  node's fact truly, it is behavior agreeing with the node, and it is no finding; where it states
+  the fact differently from the node, it is `contradicts`. The declaration in a file the node *is* bound to is none of these: it
   is where the fact is held, `held_at` names it, and the bind claims exactly that. Code never
   reads the specification; what closes a declaration nobody claims is the bind that claims it,
   and the correction says so rather than asking the code to read what it cannot.
 - **`kind` says which of those a finding is, in one word, and the fold routes on it.**
   The first — a fact the source states and no node holds — is `unstated`: its subject is the
   specification, not the pair, and what closes it is the analysis that gives the fact a node.
-  Text restating a node's fact the code holds is `restates`: the pair conforms, the node binds,
-  and what closes it is removing the text. The rest are `contradicts`: a node governs the fact and
+  A comment or a docstring restating a node's fact the code holds is `restates`: the pair
+  conforms, the node binds, and what closes it is removing the prose. Never file emitted text as
+  `restates` — removing it would change what the system tells someone. The rest are `contradicts`: a node governs the fact and
   the code disagrees with it or holds it a second time, so the subject is the pair and the act is
   on the pair. The line between `restates` and `contradicts` is whether code anywhere in the tree
-  holds the fact, not whether this file does: a description saying "max 100" beside a call that
+  holds the fact, not whether this file does: a comment saying "max 100" above a call that
   forwards the limit to a schema enforcing `max(100)` in another file restates a fact that code
   holds, and the finding names that file in `evidence`; the node's own `held_at` for this file is
   still `nowhere` if this file does not hold it. Only where no code holds the fact at all — the
-  text is the one place it appears — is the finding `contradicts`, however well the text agrees
-  with the node. Where one file gives you more than
+  comment is the one place it appears — is the finding `contradicts`, however well the comment
+  agrees with the node. Where one file gives you more than
   one, they are separate findings — they are owed to different people. Set `kind` from what you
   actually read, never from how serious it feels: `unstated` and `restates` block no binding and
   `contradicts` blocks one, and calling a contradiction by either of the others binds a file the
