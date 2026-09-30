@@ -1032,7 +1032,7 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
     if not node_relative.endswith(".md"):
         node_relative += ".md"
     field = str(entry.get("field") or "")
-    texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why")
+    texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why", "retired")
              if entry.get(k) is not None]
     needle = max(texts, key=len)[:60] if texts else ""
     found = git(home, "log", "--reverse", "--format=%H%x09%aI", "-S", needle, tip, "--",

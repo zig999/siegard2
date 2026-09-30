@@ -296,6 +296,13 @@ element nothing has reached so far, does not fail there. Run the full validation
 each context's nodes close rather than once at the end, so an error surfaces at the batch that
 made it, not under everything stacked on top of it.
 
+**A node or a field that leaves the specification leaves its log entries standing.** «An entry
+is never edited or removed» (SPEC-001 R9). For every entry that located what you removed —
+`spec.py --impact` over the node lists them — append one entry retiring it: the same `location`
+and `field`, and `retired` saying which node and field hold the fact now, or that nothing does.
+Never move an entry's `location` to the node that replaced it: that rewrites a decision made
+about one node into a decision made about another.
+
 ### 4. Validate, and derive the projections
 
 When every node is written, run:
@@ -427,7 +434,7 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 Report, in this order:
 
 - every node written, by identifier — on a populated root, created, changed and removed
-  listed apart;
+  listed apart, each removed node with the log entries its removal retired;
 - the impact set that was read, so the reviewer can judge what the analysis looked at, not
   only what it touched;
 - every decision logged in this invocation, by location and field, with what was decided and

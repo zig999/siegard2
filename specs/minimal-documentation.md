@@ -85,7 +85,11 @@ enforces mechanically.
 
 - **R9** — One decision log per specification root, append-only. Each entry records: the
   location it filled (file and field, resolvable), what the material left unstated, the value
-  decided, and why that value. An entry whose location does not resolve fails validation. `why`
+  decided, and why that value. An entry is never edited or removed. Where a node or a field an
+  entry locates leaves the specification, the change that removes it appends an entry retiring
+  that location: the same file and field, and where the fact is held now, or that it is held
+  nowhere. An entry whose location does not resolve fails validation unless a later entry
+  retires that location. `why`
   carries one claim a reviewer can reject, never the argument that the specification composes:
   that argument records no decided value, so it has no entry of its own and reaches the log only
   inside an entry about something else, restating the prose of the node that entry locates

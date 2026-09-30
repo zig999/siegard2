@@ -153,6 +153,61 @@ def test_decisions_by_node_renders_a_read_entry_by_its_shape(spec_root):
     assert "why: ?" not in projected
 
 
+GHOST = {"location": "domain/troubleshooting/ghost.md", "field": "type",
+         "unstated": "x", "decided": "y", "why": "z"}
+GHOST_RETIRED = {"location": "domain/troubleshooting/ghost.md", "field": "type",
+                 "retired": "held nowhere: the element left the specification"}
+
+
+def test_an_entry_a_later_entry_retires_may_stop_resolving(spec_root):
+    """SPEC-001 R9: «An entry is never edited or removed»; a node that left is answered by an
+    entry retiring its location, and the entry that located it then stands unresolved."""
+    rewrite(spec_root, "decision-log.md",
+            lambda f: f["entries"].extend([dict(GHOST), dict(GHOST_RETIRED)]))
+    assert hits(problems_of(spec_root), "decision-log") == []
+
+
+def test_a_field_a_later_entry_retires_may_stop_resolving(spec_root):
+    entry = {"location": "domain/troubleshooting/case.md", "field": "values.open",
+             "unstated": "x", "decided": "y", "why": "z"}
+    retired = {"location": "domain/troubleshooting/case.md", "field": "values.open",
+               "retired": "rules/troubleshooting/x.md statement"}
+    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].extend([entry, retired]))
+    assert hits(problems_of(spec_root), "decision-log") == []
+
+
+def test_a_retirement_before_the_entry_retires_nothing(spec_root):
+    """Only a later entry retires: an entry appended after a retirement of its location is a
+    decision made about a node that must exist."""
+    rewrite(spec_root, "decision-log.md",
+            lambda f: f["entries"].extend([dict(GHOST_RETIRED), dict(GHOST)]))
+    found = problems_of(spec_root)
+    assert hits(found, "which no earlier entry locates")
+    assert hits(found, "which the specification does not hold")
+
+
+def test_a_retirement_of_a_location_no_entry_named_is_refused(spec_root):
+    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(GHOST_RETIRED)))
+    assert hits(problems_of(spec_root), "which no earlier entry locates")
+
+
+def test_a_retirement_carries_no_decided_value(spec_root):
+    validator = Draft202012Validator(json.loads((SCHEMA_DIR / "decision-log.json").read_text()))
+    assert list(validator.iter_errors({"entries": [{**GHOST_RETIRED, "decided": "y"}]}))
+    assert list(validator.iter_errors({"entries": [{**GHOST_RETIRED, "unstated": "x"}]}))
+    assert not list(validator.iter_errors({"entries": [dict(GHOST), dict(GHOST_RETIRED)]}))
+
+
+def test_the_sound_line_counts_retirements_apart_and_the_projection_shows_them(spec_root):
+    rewrite(spec_root, "decision-log.md",
+            lambda f: f["entries"].extend([dict(GHOST), dict(GHOST_RETIRED)]))
+    done = run_node("--project", str(spec_root))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "3 decision(s) disclosed, 1 location(s) retired" in done.stdout
+    projected = (spec_root / "projections" / "decisions-by-node.md").read_text(encoding="utf-8")
+    assert f"- type — retired: {GHOST_RETIRED['retired']}" in projected
+
+
 # ------------------------------------------------------ one home per fact (SPEC-002)
 
 

@@ -833,19 +833,39 @@ def cross_problems(nodes: dict[str, dict], root: Path,
         problems.append("decision-log.md is missing — the log «is mandatory and non-normative: it "
                         "constrains nothing; it discloses» (SPEC-003 R5)")
     else:
-        for index, entry in enumerate(listed(log["front"], "entries")):
+        entries = listed(log["front"], "entries")
+        retired_at: dict[tuple, list[int]] = {}
+        for index, entry in enumerate(entries):
+            if isinstance(entry, dict) and "retired" in entry:
+                retired_at.setdefault((entry.get("location"), entry.get("field")), []).append(index)
+        for index, entry in enumerate(entries):
             if not isinstance(entry, dict) or not isinstance(entry.get("location"), str):
                 continue  # the schema already reported the shape
             location = entry["location"]
             located = "/".join(Path(location).with_suffix("").parts)
             target = nodes.get(located)
+            resolves = target is not None and (root / location).is_file()
             if record is not None:
-                record("decision-log", f"entries[{index}]", located,
-                       target is not None and (root / location).is_file())
-            if target is None or not (root / location).is_file():
+                record("decision-log", f"entries[{index}]", located, resolves)
+            key = (location, entry.get("field"))
+            if "retired" in entry:
+                if not any(earlier < index and "retired" not in entries[earlier]
+                           for earlier, other in enumerate(entries)
+                           if isinstance(other, dict)
+                           and (other.get("location"), other.get("field")) == key):
+                    problems.append(f"decision-log: entries[{index}] retires `{entry.get('field')}` "
+                                    f"in {location}, which no earlier entry locates — a "
+                                    f"retirement answers an entry «whose location does not "
+                                    f"resolve» (SPEC-001 R9), and there is none")
+                continue
+            if any(later > index for later in retired_at.get(key, [])):
+                continue  # «unless a later entry retires that location» (SPEC-001 R9)
+            if not resolves:
                 problems.append(f"decision-log: entries[{index}] locates {location}, "
                         f"which the specification does not hold — «An entry whose location does "
-                        f"not resolve fails validation» (SPEC-001 R9)")
+                        f"not resolve fails validation» (SPEC-001 R9); a node that left the "
+                        f"specification is answered by an entry retiring the location, never by "
+                        f"editing this one")
                 continue
             field = entry.get("field")
             if isinstance(field, str):
@@ -853,7 +873,8 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                 if head not in target["front"]:
                     problems.append(f"decision-log: entries[{index}] locates `{field}` in "
                                     f"{location}, which declares no `{head}` — «An entry whose location does not "
-                        f"resolve fails validation» (SPEC-001 R9)")
+                        f"resolve fails validation» (SPEC-001 R9); a field that left the node is "
+                        f"answered by an entry retiring it")
             if "found" in entry and ("decided" in entry or "why" in entry):
                 problems.append(f"decision-log: entries[{index}] carries `found` beside "
                                 f"{' and '.join(k for k in ('decided', 'why') if k in entry)} — "
@@ -868,13 +889,16 @@ def log_entries(nodes: dict[str, dict]) -> list[dict]:
 
 
 def log_tally(nodes: dict[str, dict]) -> str:
-    """Decided entries and read ones counted apart — a read entry chose nothing, so counting it
-    as a decision would report choices nobody made. The read count appears only where one
-    exists, so a log holding decisions alone reads as it always has."""
+    """Decided entries, read ones and retirements counted apart — a read entry chose nothing and
+    a retirement records where a decision went, so counting either as a decision would report
+    choices nobody made. Each count past the first appears only where one exists, so a log
+    holding decisions alone reads as it always has."""
     entries = log_entries(nodes)
     read = sum(1 for e in entries if "found" in e)
-    tally = f"{len(entries) - read} decision(s) disclosed"
-    return tally + (f", {read} fact(s) recorded as read" if read else "")
+    retired = sum(1 for e in entries if "retired" in e)
+    tally = f"{len(entries) - read - retired} decision(s) disclosed"
+    tally += f", {read} fact(s) recorded as read" if read else ""
+    return tally + (f", {retired} location(s) retired" if retired else "")
 
 
 def impact_of(nodes: dict[str, dict], root: Path,
@@ -1627,7 +1651,9 @@ def decisions_by_node(nodes: dict[str, dict]) -> str:
     question a conformance reading asks, which is `what was decided about this node`: answering
     that from the log reads every entry ever written, and the read grows with the project's whole
     history. The log stays the authority; this locates its entries and restates nothing beyond
-    what each one says."""
+    what each one says. A retirement sits under the location it retired, after the entries it
+    answers, so a node that left the specification still reads as decided, then gone, then
+    where its fact went."""
     lines = ["# Decisions by node",
              "",
              "Derived by spec.py from decision-log.md; never edited. The log is the authority —",
@@ -1640,7 +1666,9 @@ def decisions_by_node(nodes: dict[str, dict]) -> str:
     for location in sorted(grouped):
         lines.append(f"## {location}")
         for entry in grouped[location]:
-            if "found" in entry:
+            if "retired" in entry:
+                lines += [f"- {entry.get('field', '?')} — retired: {entry['retired']}"]
+            elif "found" in entry:
                 lines += [f"- {entry.get('field', '?')} — read: {entry['found']}",
                           f"  unstated: {entry.get('unstated', '?')}"]
             else:
