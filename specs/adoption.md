@@ -31,14 +31,18 @@ exhibits and the documentation forbids.
 - What an upstream system imposes that a consumed contract may name —
   `specs/metamodel.md` (SPEC-003 §Contract).
 - How a test becomes a binding's decider — `specs/test-discipline.md` (SPEC-004).
-- The shape of a reconciliation record — `reconciliation.json`.
+- The shape of a reconciliation record — `reconciliation.json`; of survey material —
+  `survey.json`; of the ledger — `ledger.json`.
 
 ## Definitions
 
 - **Adopted source** — source under a target that no delivery wrote and the trace binds nothing
   to.
 - **Candidate** — a node an analysis wrote from material read from adopted source, named to the
-  staging that judges that source.
+  staging that judges that source — by the ledger, per file the material read it at, or by the
+  invocation.
+- **Ledger** — the record beside survey material saying, per fact line, the node that holds the
+  fact or why none does.
 - **Adoption** — a reconciliation whose record carries `adopted`: every candidate read on every
   file of its set.
 
@@ -74,3 +78,10 @@ exhibits and the documentation forbids.
 - **R7** — Adoption is complete when no file is unsurveyed and no node is unreached. Completion is
   computed, never recorded, and it is no gate: work may begin before it, at the cost the unbound
   files carry into the first review that reaches them.
+
+### What the material owes
+
+- **R8** — Every fact line of the material lands in a node or is left out with a stated reason,
+  recorded per line in a ledger beside the material and outside the specification root. A line
+  with neither is a fact the analysis dropped, and the ledger is refused. The ledger discloses
+  where each fact went; it holds no fact, and no node carries it.

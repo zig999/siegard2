@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/ledger.json",
+  "title": "Siegard material ledger",
+  "description": "The frontmatter of `ledger.md` beside survey material: where every fact line of the material went. «Every fact line of the material lands in a node or is left out with a stated reason» (SPEC-005 R8). One entry per fact line, keyed by the material file and the line's number; a line with no entry is a fact the analysis dropped, and `bin/trace.py --ledger` refuses the ledger. It is disclosure, not a second home: the fact lives in the node the entry names, and an entry names a node or a reason, never both. It sits beside the material, outside the specification root, so «Artifacts carry no provenance meta-fields» (SPEC-001 R8). `--stage --adopt --ledger` reads it to hand each file's judge the nodes its own facts landed in.",
+  "type": "object",
+  "required": ["contract_version", "material", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": { "const": "siegard-ledger/1" },
+    "material": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Every material file this ledger accounts for, by path relative to the ledger's own directory. A fact line of a file not listed here is unaccounted for."
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at"],
+        "additionalProperties": false,
+        "oneOf": [ { "required": ["node"] }, { "required": ["outside"] } ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "pattern": "^[^:]+:[1-9][0-9]*$",
+            "description": "The fact line: `<material file>:<line number>`, the file as `material` spells it."
+          },
+          "node": {
+            "type": "string",
+            "pattern": "^((domain|rules|scenarios|contracts)/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*|constraints/[a-z0-9]+(-[a-z0-9]+)*)$",
+            "description": "The node whose fields hold this fact — «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1). Where one line's fact lands in several nodes, one entry per node."
+          },
+          "outside": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why no node holds this fact: implementation knowledge, a fact another increment owns, a behavior the material observed and did not decide. One claim a reviewer can reject."
+          }
+        }
+      }
+    }
+  }
+}

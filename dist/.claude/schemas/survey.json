@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/survey.json",
+  "title": "Siegard survey material",
+  "description": "The frontmatter of one file of material read from source no delivery wrote — «The first material of an adopted system is read from its source alone, stating observable behavior, each fact beside the path it was read at» (SPEC-005 R2). The body carries six headings, in this order: `## Facts`, `## Answers`, `## Vocabularies`, `## Upstream artifacts`, `## Outside the domain`, `## Observed and not decided here`. A fact line is a top-level bullet (`- `) under the first four headings, ending with the path it was read at in backticks; an indented bullet belongs to the fact above it. `bin/trace.py --ledger` reads the fact lines to hold a ledger to the material, and the paths on them to say which files each candidate node is read against. A heading with nothing to say carries the line `None.`.",
+  "type": "object",
+  "required": ["contract_version", "target", "files"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "siegard-survey/1",
+      "description": "Which contract this material was written against."
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "The key of `siegard.json`'s `targets` the paths below are spelled from."
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "pattern": "^[^/]" },
+      "description": "Every file the survey read as its area, spelled from the target source root. The adoption's file set is this list, and a fact line names a file of it."
+    },
+    "read_outside_area": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Any other file opened to understand one of the area's, with why, one line each. Read, never surveyed: no fact is attributed to it."
+    }
+  }
+}

@@ -395,6 +395,29 @@ answer:
 Each is yours to fix now, in this invocation. What you leave standing, say so in the report and
 say why — a number carried into the report unexamined is a measurement nobody acted on.
 
+### 4b. Where the material is a survey: the ledger
+
+Material whose frontmatter declares `siegard-survey/1` was read from source no delivery wrote,
+and its fact lines — the top-level bullets under `## Facts`, `## Answers`, `## Vocabularies` and
+`## Upstream artifacts` — are each owed an answer: «Every fact line of the material lands in a
+node or is left out with a stated reason» (SPEC-005 R8). Read
+`${CLAUDE_PLUGIN_ROOT}/schemas/ledger.json` and write `ledger.md` beside the material — never
+under the specification root — with one entry per fact line: `at` as `<material file>:<line>`,
+and `node` naming the node whose fields now hold the fact, or `outside` saying why none does —
+implementation knowledge, a fact another increment owns, a behavior the material observed and did
+not decide. A fact that lands in several nodes takes one entry per node. Then run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --ledger <ledger.md> <specification-root>
+```
+
+A refusal names each fact line with no entry. Each is a fact you read and did not write, and the
+answer is one of two: give it the field, rule, scenario or answer it is owed — then rerun step 4
+— or state why no node holds it. Never an entry naming a node that does not hold the fact: the
+ledger is what an adoption reads to hand each file's judge its candidates, and a wrong entry
+sends a judge to the wrong node. Sound, the command prints the file set the material read and
+the candidates per file; both go into the report and the handoff below.
+
 ### 5. Cross-check: obligations that share a subject
 
 Mechanical validation cannot see a contradiction the schema admits, and an implementer is the
@@ -444,6 +467,9 @@ Report, in this order:
   why — these are the claims a reviewer can reject, and the log is the whole of what lets them:
   nothing else in the artifacts marks a decided fact apart from a stated one;
 - every tension the cross-check step found without a case to decide, named as a watch item;
+- where the material was a survey: `--ledger`'s output verbatim — how many fact lines landed in
+  nodes and how many were left out, and the reasons given, grouped — so a reviewer sees what the
+  analysis chose not to hold before an adoption reads it;
 - **what this increment may have put the delivered code in breach of, said plainly.** This step
   never reads the target, deliberately — so a node written here can state an obligation the code
   already violates, and nothing in this invocation could have noticed. Say so: the decisions of
@@ -460,9 +486,9 @@ Report, in this order:
   human decides: the scope, which target, and the initiative's slug. The handoff offers the
   next step, never takes it: filling the slots and invoking are the human's.
   Where the material was read from source no delivery wrote — a survey of a running system —
-  the handoff is the `/reconcile` adoption instead, and it comes first: the candidates are the
-  nodes this increment wrote, the file set is the one the material was read from, and one slot
-  is left for the slug and one for the files the human keeps out of the judgment. «The first
+  the handoff is the `/reconcile` adoption instead, and it comes first: the ledger's path, from
+  which the staging reads the file set and each file's candidates; the counts `--ledger`
+  printed; and one slot for the slug and one for the files the human keeps out of the judgment. «The first
   material of an adopted system is read from its source alone» (SPEC-005 R2), so where the human
   also holds documentation, the increment it feeds is this skill again, after the adoption.
 

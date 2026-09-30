@@ -69,6 +69,10 @@ What this script does, and nobody else does any of it:
                                                                   bound
     trace.py --untraced <target-root> [--all]                     every tracked file under the
                                                                   target no binding names
+    trace.py --ledger <ledger.md> <spec-root>                     hold a material ledger to the
+                                                                  survey it accounts for and the
+                                                                  nodes it names; print the file
+                                                                  set and candidates per file
 
 Drift is reported in four classes, because a caller can act on each differently and could act on
 none of them if all four arrived as one list. A node the specification no longer holds is
@@ -478,6 +482,9 @@ RECORD_VERSION = "siegard-reconcile/8"
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
+SURVEY_CONTRACT = PLUGIN_ROOT / "schemas" / "survey.json"
+LEDGER_CONTRACT = PLUGIN_ROOT / "schemas" / "ledger.json"
+FACT_HEADINGS = ("Facts", "Answers", "Vocabularies", "Upstream artifacts")
 
 
 def home_of(target: Path) -> Path:
@@ -2311,6 +2318,154 @@ def test_decided(declared: dict, home: Path, offset: str | None = None) -> dict[
 
 
 RANK_HELD_BACK = 15
+
+
+def read_survey(path: Path) -> tuple[dict | None, list[dict], list[str]]:
+    """One file of survey material: its frontmatter held to `survey.json`, and every fact line —
+    a top-level bullet under Facts, Answers, Vocabularies or Upstream artifacts — with its line
+    number in the file and the files of the area it names in backticks. Exactly one of the
+    mapping and a non-empty problem list is set."""
+    if not path.is_file():
+        return None, [], [f"{path} does not exist"]
+    text, unreadable = spec.read_node(path)
+    if text is None:
+        return None, [], [f"{path}: {unreadable}"]
+    match = spec.FENCE.match(text)
+    if not match:
+        return None, [], [f"{path} carries no frontmatter fence; survey material opens with one"]
+    try:
+        front = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as broken:
+        return None, [], [f"{path}: frontmatter does not parse: {broken}"]
+    if not SURVEY_CONTRACT.is_file():
+        return None, [], [f"{SURVEY_CONTRACT} is missing; nothing can be validated without it"]
+    schema = json.loads(SURVEY_CONTRACT.read_text(encoding="utf-8"))
+    problems = [f"{path}: {'/'.join(str(part) for part in error.path) or 'frontmatter'}: "
+                f"{error.message}" for error in Draft202012Validator(schema).iter_errors(front)]
+    if problems:
+        return None, [], problems
+    area = set(front["files"])
+    facts: list[dict] = []
+    heading = None
+    offset = match.group(0).count("\n")
+    for number, line in enumerate(text[match.end():].split("\n"), start=offset + 1):
+        if line.startswith("## "):
+            heading = line[3:].strip()
+            continue
+        if heading in FACT_HEADINGS and line.startswith("- "):
+            named = [token for token in re.findall(r"`([^`]+)`", line) if token in area]
+            facts.append({"at": f"{path.name}:{number}", "line": number, "text": line[2:],
+                          "files": sorted(set(named)), "heading": heading})
+    return front, facts, []
+
+
+def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[str]]:
+    """The ledger held to its contract, with every material file it names read as survey
+    material — keyed by the path the ledger spells — or the problems that stop the reading."""
+    front, why = frontmatter_of(ledger)
+    if front is None:
+        return None, {}, [why or f"{ledger} cannot be read"]
+    if not LEDGER_CONTRACT.is_file():
+        return None, {}, [f"{LEDGER_CONTRACT} is missing; nothing can be validated without it"]
+    schema = json.loads(LEDGER_CONTRACT.read_text(encoding="utf-8"))
+    problems = [f"{'/'.join(str(part) for part in error.path) or 'ledger'}: {error.message}"
+                for error in Draft202012Validator(schema).iter_errors(front)]
+    if problems:
+        return None, {}, problems
+    surveys: dict[str, list[dict]] = {}
+    fronts: dict[str, dict] = {}
+    for relative in front["material"]:
+        material_front, facts, held = read_survey(ledger.parent / relative)
+        if material_front is None:
+            problems += held
+            continue
+        for fact in facts:
+            fact["at"] = f"{relative}:{fact['line']}"
+        surveys[relative] = facts
+        fronts[relative] = material_front
+    if problems:
+        return None, {}, problems
+    front["_surveys"] = fronts
+    return front, surveys, []
+
+
+def ledger_candidates(front: dict, surveys: dict[str, list[dict]]) -> dict[str, set[str]]:
+    """Per file of the material's areas, the nodes the ledger lands its facts in — what an
+    adoption's judge of that file is handed as its candidates. A file no fact names is a key with
+    an empty set: it is judged for what it states that no node holds, against nothing in
+    particular."""
+    by_at = {fact["at"]: fact for facts in surveys.values() for fact in facts}
+    per_file: dict[str, set[str]] = {}
+    for material_front in front["_surveys"].values():
+        for path in material_front["files"]:
+            per_file.setdefault(path, set())
+    for entry in front["entries"]:
+        fact = by_at.get(entry["at"])
+        if fact is None or "node" not in entry:
+            continue
+        for path in fact["files"]:
+            per_file.setdefault(path, set()).add(entry["node"])
+    return per_file
+
+
+def ledger(path: Path, spec_root: Path) -> int:
+    """Hold a ledger to the material it accounts for and to the specification it names.
+
+    «Every fact line of the material lands in a node or is left out with a stated reason»
+    (SPEC-005 R8). Every fact line has at least one entry; every entry names a fact line; every
+    node named is one the specification holds. Refused whole otherwise: a ledger short one fact
+    reads exactly like a complete one, and the fact it is short is the one the analysis dropped.
+    Sound, it prints what an adoption reads from it — the file set, and the candidates per file."""
+    if not spec_root.is_dir():
+        print(f"cannot run: {spec_root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    front, surveys, problems = read_ledger(path)
+    if front is None:
+        for problem in problems:
+            print(f"cannot run: {problem}", file=sys.stderr)
+        return CANNOT_RUN
+    nodes, status = sound_specification(spec_root)
+    if nodes is None:
+        return status
+    by_at = {fact["at"]: fact for facts in surveys.values() for fact in facts}
+    landed: dict[str, list[dict]] = {}
+    for index, entry in enumerate(front["entries"]):
+        if entry["at"] not in by_at:
+            problems.append(f"entries[{index}]: {entry['at']} is no fact line of the material — "
+                            f"a top-level bullet under {', '.join(FACT_HEADINGS)}")
+            continue
+        node = entry.get("node")
+        if node is not None and node not in nodes:
+            problems.append(f"entries[{index}]: {spec_root} holds no node {node}")
+        if node is not None and is_descriptor(node):
+            problems.append(f"entries[{index}]: {node} {DESCRIPTOR_REFUSAL}")
+        landed.setdefault(entry["at"], []).append(entry)
+    dropped = [fact for facts in surveys.values() for fact in facts if fact["at"] not in landed]
+    for fact in dropped:
+        problems.append(f"{fact['at']}: no entry — «Every fact line of the material lands in a "
+                        f"node or is left out with a stated reason» (SPEC-005 R8): {fact['text'][:90]}")
+    if problems:
+        for problem in problems:
+            print(f"{path}: {problem}")
+        print(f"\n{len(problems)} problem(s); a fact with no entry is a fact the analysis "
+              f"dropped — land it in a node, or say why none holds it.")
+        return 1
+    facts_total = sum(len(f) for f in surveys.values())
+    in_nodes = sum(1 for at, entries in landed.items() if any("node" in e for e in entries))
+    outside = facts_total - in_nodes
+    per_file = ledger_candidates(front, surveys)
+    every_node = sorted({e["node"] for e in front["entries"] if "node" in e})
+    print(f"ledger sound: {facts_total} fact line(s) over {len(surveys)} material file(s) — "
+          f"{in_nodes} landed in {len(every_node)} node(s), {outside} left out with a reason")
+    print(f"  file set: {len(per_file)} file(s) the material read; candidates per file:")
+    for given in sorted(per_file):
+        print(f"    {given}: {len(per_file[given])}")
+    empty = sorted(g for g, ns in per_file.items() if not ns)
+    if empty:
+        print(f"  {len(empty)} file(s) no fact names; each is judged for what it states that no "
+              f"node holds, over no candidate of its own: {', '.join(empty)}")
+    print(f"  candidates, all: {' '.join(every_node)}")
+    return 0
 
 
 def tracked_under(target: Path, home: Path) -> tuple[list[str] | None, str | None]:
@@ -4333,6 +4488,7 @@ def main() -> int:
     do_review = "--review" in args
     do_untraced = "--untraced" in args
     do_adopt = "--adopt" in args
+    do_ledger = "--ledger" in args and not do_stage
     also: list[str] = []
     while "--node" in args:
         at = args.index("--node")
@@ -4399,7 +4555,7 @@ def main() -> int:
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--rank", "--changed", "--audit", "--review",
-                         "--convergence", "--untraced", "--adopt")]
+                         "--convergence", "--untraced", "--adopt", "--ledger")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -4410,7 +4566,8 @@ def main() -> int:
                                       ("--stage", do_stage),
                                       ("--fold", do_fold),
                                       ("--convergence", do_convergence),
-                                      ("--untraced", do_untraced)) if given]
+                                      ("--untraced", do_untraced),
+                                      ("--ledger", do_ledger)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
@@ -4476,6 +4633,12 @@ def main() -> int:
               "re-examines standing claims over a tree nothing changed, and a certification is a "
               "claim about a test a delivery just wrote", file=sys.stderr)
         return CANNOT_RUN
+
+    if do_ledger:
+        if len(args) != 2 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --ledger <ledger.md> <spec-root>", file=sys.stderr)
+            return CANNOT_RUN
+        return ledger(Path(args[0]), Path(args[1]))
 
     if do_reconciliation:
         if len(args) != 1 or args[0].startswith("--"):
