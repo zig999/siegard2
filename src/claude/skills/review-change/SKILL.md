@@ -516,7 +516,7 @@ person. **Nor is it a second judgment on the delivery's own nodes made by you:**
 the delegations above, and where this session cannot spawn subagents and wrote any node a judge
 would read, the pass stops and reports rather than running inline.
 
-Every finding a return carries — `contradicts` and `unstated` alike — is a finding of this
+Every finding a return carries — `contradicts`, `unstated` and `restates` alike — is a finding of this
 pass, stamped `conformance` and placed in the review record under the file its judge read; the
 fold's `unstated` list and the review's findings are the same facts in two homes, one for the
 trace's reader and one for the delivery's.

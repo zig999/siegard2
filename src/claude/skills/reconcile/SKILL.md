@@ -292,8 +292,12 @@ disagrees with it or became a second home for it, so the node does not bind and 
 closes it. `unstated` is the specification's: no node holds the fact at all, the route is
 `/analyse`, **no rebind can ever close it**, and so it blocks no binding a node's own reading
 cleared. The fold routes on the word and lands the second class under the record's own `unstated`,
-keyed by file rather than by node — a fact no node holds has no node to be about. `trace.py
---owed` reports them apart from what a bind is owed, and the report hands both routes.
+keyed by file rather than by node — a fact no node holds has no node to be about. A third word
+answers a third question: `restates` is text in the source — a comment, a docstring, a
+description — saying a node's fact while the code holds it too. The pair conforms and binds;
+the fold lands the finding under the record's own `restates`, and what it owes is the text's
+removal, then this route over the file. `trace.py --owed` reports all three apart from what a
+bind is owed, and the report hands each its route.
 
 **Save each return verbatim the moment it arrives**, at
 `siegard-reconcile/<slug>.returns/<the file's path with every '/' as '__'>.yaml` — a copy and
@@ -606,7 +610,8 @@ The same order, with four differences, each held by the scripts rather than by t
   carry, or one the files outside this set carry: the analysis's to revisit, or the adoption of
   those files; every
   `contradicts` against a candidate — a reading of the source the node misstates, the same route;
-  every `unstated` fact — the source carries it and no node does, the same route again; and the
+  every `unstated` fact — the source carries it and no node does, the same route again; every
+  `restates` — text the comment route removes before this route runs over the file again; and the
   target's standing as `trace.py --untraced` prints it, because «Adoption is complete when no file
   is unsurveyed and no node is unreached» (SPEC-005 R7) and this is the file half of that count.
 

@@ -349,6 +349,30 @@ def test_an_unstated_finding_blocks_no_binding_and_lands_in_its_own_list(consume
     assert "Unstated: 1 fact(s)" in front_out["notes"]
 
 
+def test_text_restating_a_held_fact_blocks_no_binding_and_lands_in_its_own_list(consumer):
+    """A comment saying a node's fact while the code holds it too is prose, not a contradiction:
+    the pair conforms and binds, and the record lists the text for the route that removes it."""
+    staged(consumer)
+    front = clean_return([NODE, OTHER])
+    front["findings"] = [{"where": "line 2", "evidence": "// a case opens on an alert",
+                          "cost": "the rule is said again in prose beside the code that holds it",
+                          "kind": "restates", "node": NODE}]
+    save_return(consumer, "round", FILE, front)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front_out = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert [e["node"] for e in front_out["nodes"] if e["conforms"] is False] == []
+    assert front_out["restates"] == [{
+        "file": FILE, "where": "line 2", "evidence": "// a case opens on an alert",
+        "cost": "the rule is said again in prose beside the code that holds it", "node": NODE}]
+    assert "Restates: 1 place(s)" in front_out["notes"]
+    assert run("--reconciliation", record).returncode == 0
+    assert run("--bind-record", consumer / "backend", consumer / "specs", record).returncode == 0
+    owed = run("--owed", consumer / "backend")
+    assert "1 place(s) the records name where text in the source restates" in owed.stdout
+    assert f"{FILE} — line 2 ({NODE})" in owed.stdout
+
+
 def test_an_unstated_finding_is_routed_on_its_word_not_on_naming_a_node(consumer):
     """Its judge named the node it stood beside — where it read the fact, not what the fact
     belongs to. Routing on `node` instead of on `kind` is exactly the fold that put a
@@ -686,7 +710,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/7"
+    assert front["contract_version"] == "siegard-reconcile/8"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -1956,7 +1980,7 @@ def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopti
     })
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
-    assert front["contract_version"] == "siegard-reconcile/7"
+    assert front["contract_version"] == "siegard-reconcile/8"
     assert front["adopted"] is True and front["outside"] == [KEPT_OUT]
     by_node = {entry["node"]: entry for entry in front["nodes"]}
     assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
@@ -2018,7 +2042,7 @@ def test_untraced_tells_the_four_states_apart_after_an_adoption(adopting):
 def test_outside_needs_adopted_in_the_contract():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
-    base = {"contract_version": "siegard-reconcile/7", "title": "t", "summary": "s",
+    base = {"contract_version": "siegard-reconcile/8", "title": "t", "summary": "s",
             "target": "backend", "files": [{"path": FILE, "change": "c"}],
             "nodes": [], "unbound": [FILE], "outside": [KEPT_OUT]}
     assert list(Draft202012Validator(schema).iter_errors(base))
@@ -2045,3 +2069,21 @@ def test_an_adoption_owes_only_what_was_found(adopting):
     assert RULE not in owed.stdout
     convergence = run("--convergence", adopting / "backend", adopting / "specs", adopting / "specs")
     assert "1 finding(s) past reconciliations left open" in convergence.stdout, convergence.stdout
+
+
+def test_a_restating_comment_does_not_keep_a_candidate_unbound(adopting):
+    adopt_staged(adopting)
+    restated = read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"})
+    restated["findings"] = [{"file": FILE, "where": "line 1", "node": OTHER, "kind": "restates",
+                             "evidence": "// evidence is attached to a case",
+                             "cost": "the fact is said again in prose"}]
+    done, record = adopted_record(adopting, {
+        FILE: restated,
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    by_node = {entry["node"]: entry for entry in front["nodes"]}
+    assert by_node[OTHER]["conforms"] is True and by_node[OTHER]["encoded_at"] == [FILE]
+    assert [e["file"] for e in front["restates"]] == [FILE]

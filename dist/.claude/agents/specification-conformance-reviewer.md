@@ -67,23 +67,29 @@ stop. You need:
   locates, and the claim is made from the node itself.
 - **A value or a rule the source states differently from the node that governs it.** The node
   is not the one that is wrong. Quote both.
-- **A fact the specification already holds, restated in the source as its own authority.** Prose
-  that states a node's rule as if it decided it, a rule implemented a second time where nothing
-  reads the first, a vocabulary declared in a file the node is not bound to — the day the two
-  disagree nobody knows which was decided, and when the node moves, `--check` never reaches a
-  file it is not bound to. The declaration in a file the node *is* bound to is none of these: it
+- **A fact the specification already holds, restated in the source as its own authority.** A
+  rule implemented a second time where nothing reads the first, a vocabulary declared in a file
+  the node is not bound to — the day the two disagree nobody knows which was decided, and when
+  the node moves, `--check` never reaches a file it is not bound to. Text restating it is apart
+  from these: a comment, a docstring, or a description the source carries that says a node's
+  fact while the code holds it too. That text is a second home in prose, not in behavior — the
+  pair still conforms, and what it owes is the text's removal. The declaration in a file the node *is* bound to is none of these: it
   is where the fact is held, `held_at` names it, and the bind claims exactly that. Code never
   reads the specification; what closes a declaration nobody claims is the bind that claims it,
   and the correction says so rather than asking the code to read what it cannot.
-- **`kind` says which of those three a finding is, in one word, and the fold routes on it.**
+- **`kind` says which of those a finding is, in one word, and the fold routes on it.**
   The first — a fact the source states and no node holds — is `unstated`: its subject is the
-  specification, not the pair, and what closes it is the analysis that gives the fact a node. The
-  other two are `contradicts`: a node governs the fact and the source disagrees with it or became
-  a second home for it, so the subject is the pair and the act is on the pair. Where one file
-  gives you both, they are two findings — they are owed to two different people. Set `kind` from
-  what you actually read, never from how serious it feels: an `unstated` blocks no binding and a
-  `contradicts` blocks one, and calling a contradiction `unstated` binds a file the node no longer
-  answers for.
+  specification, not the pair, and what closes it is the analysis that gives the fact a node.
+  Text restating a node's fact the code holds is `restates`: the pair conforms, the node binds,
+  and what closes it is removing the text. The rest are `contradicts`: a node governs the fact and
+  the code disagrees with it or holds it a second time, so the subject is the pair and the act is
+  on the pair. The line between `restates` and `contradicts` is whether the code holds the fact:
+  where it does not, the text is the only place the fact appears and the finding is
+  `contradicts`, however well the text agrees with the node. Where one file gives you more than
+  one, they are separate findings — they are owed to different people. Set `kind` from what you
+  actually read, never from how serious it feels: `unstated` and `restates` block no binding and
+  `contradicts` blocks one, and calling a contradiction by either of the others binds a file the
+  node no longer answers for.
 - **Read the node files, not a summary of them.** Open every node of your set, and any candidate
   or searched-for node you are about to make a claim about.
   A finding against a node you did not open is a finding against what you remembered.
@@ -145,7 +151,7 @@ findings:                    # omit the key entirely when you found nothing
       <quoted from the source>
     cost: >-
       <the consequence, in the terms a reader can weigh>
-    kind: contradicts | unstated    # which question this answers; see below
+    kind: contradicts | unstated | restates    # which question this answers; see below
     correction: >-
       <what would have to change; omit where you cannot say>
     node: <the node this is about, where one node owns it — omit where none does, and name a

@@ -422,6 +422,7 @@ NOWHERE = "nowhere"
 
 UNSEEN, COVERED, REPORTED = "unseen", "covered", "reported"
 UNSTATED_FACT = "unstated"
+RESTATED_FACT = "restates"
 OWED_CLASSES = {
     UNSEEN: "nothing binds the pair — `--check` has no digest to compare and never will",
     COVERED: "bound at the content on disk now — a bind wrote over the only symptom `--check` "
@@ -464,7 +465,7 @@ JUDGED = "judged"
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
                        "this pair over the file's content and the node's text as both stand, "
                        "and no finding stands open against it")
-RECORD_VERSION = "siegard-reconcile/7"
+RECORD_VERSION = "siegard-reconcile/8"
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
@@ -1653,6 +1654,27 @@ def remainders_of(home: Path) -> tuple[dict[str, list[dict]], set[str]]:
     return testable, certified
 
 
+def restated_of(home: Path) -> list[dict]:
+    """Every place a record names where text in the source restates a fact a node holds while the
+    code holds it too — a comment, a docstring, a description the source carries. Kept apart
+    from the pair's findings because the pair conforms: what is owed is the text's removal, by
+    the route that answers prose, and no bind is. Only `siegard-reconcile/8` and later records
+    carry the list; an earlier one filed the same observation as `contradicts`."""
+    restated: list[dict] = []
+    directory = home / RECONCILE_DIR
+    if not directory.is_dir():
+        return restated
+    for record in sorted(directory.glob("*.md")):
+        front, _ = reconciliation_or_reason(record)
+        if front is None:
+            continue
+        for entry in front.get("restates") or []:
+            if isinstance(entry, dict) and all(isinstance(entry.get(f), str)
+                                               for f in ("file", "where", "evidence", "cost")):
+                restated.append(dict(entry, record=record.name))
+    return restated
+
+
 def unstated_of(home: Path) -> list[dict]:
     """Every fact the records name that the source states and no node holds, with the record that
     named it and the file it was read in.
@@ -1735,6 +1757,7 @@ def owed_reading(target: Path) -> tuple[dict | None, list[str]]:
     both_ways = sorted(node for node in testable if node in certified and node not in live)
     return {"home": home, "offset": offset, "unreadable": unreadable, "listed": listed,
             "both_ways_pairs": answered_both_ways, "stated": unstated_of(home),
+            "restated": restated_of(home),
             "testable_nodes": listed_nodes, "both_ways_nodes": both_ways,
             "by_reading": by_reading,
             "total": sum(len(rows) for rows in listed.values())}, []
@@ -1830,6 +1853,22 @@ def owed(target: Path, show_all: bool = False) -> int:
         if not show_all and len(rows) > RANK_HELD_BACK:
             print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
         print("  each is the analysis's to close, through the node that gives the fact a home")
+
+    # Owed to nobody's judgment: the pair conforms, and the text restating it is prose the
+    # comment route removes. Listed so the removal has a list; counted nowhere above.
+    restated = reading["restated"]
+    if restated:
+        print(f"\n{len(restated)} place(s) the records name where text in the source restates a "
+              f"node's fact the code holds, over {len({e['file'] for e in restated})} file(s). "
+              f"The pair conforms and none is counted above:")
+        rows = sorted(restated, key=lambda e: (e["file"], e["where"]))
+        for entry in (rows if show_all else rows[:RANK_HELD_BACK]):
+            print(f"  {entry['file']} — {entry['where']}"
+                  + (f" ({entry['node']})" if isinstance(entry.get("node"), str) else "")
+                  + f" [{entry['record']}]")
+        if not show_all and len(rows) > RANK_HELD_BACK:
+            print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
+        print("  a comment is removed, never refreshed, and the file reconciled after")
 
     # Owed to a third party again: a certification the auditor refused while saying a test could
     # close what is left. Nothing here binds anything and nothing counts above. The file's own
@@ -2023,7 +2062,8 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
               f"({len(listed[UNSEEN])} unseen, {len(listed[COVERED])} covered, "
               f"{len(listed[REPORTED])} reported); {len(reading['both_ways_pairs'])} pair(s) the "
               f"records answer both ways; {len(reading['stated'])} unstated fact(s) the source "
-              f"states and no node holds; {len(reading['testable_nodes'])} node(s) a refused "
+              f"states and no node holds; {len(reading['restated'])} place(s) text restates a "
+              f"node's fact; {len(reading['testable_nodes'])} node(s) a refused "
               f"certification left with a testable remainder. A binding that computes is a fact "
               f"about bytes and a record that found against a node is a fact about a reading — "
               f"`--owed` names each record.")
@@ -3397,6 +3437,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     named_mechanical: list[tuple[str, dict]] = []
     tainted: dict[str, list[dict]] = {}
     unstated: list[dict] = []
+    restated: list[dict] = []
     landing_nowhere: list[str] = []
     for given, front in returns.items():
         for finding in front.get("findings") or []:
@@ -3406,6 +3447,16 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             # lands on a node nor taints one, however its judge filled `node`. Routed on the word
             # rather than on whether a node was named, because a judge naming the node it read
             # the fact beside is naming where it stood, not what the fact belongs to.
+            if finding.get("kind") == RESTATED_FACT:
+                # The code holds the fact and the text beside it says it again: the pair
+                # conforms, so this lands on no node and blocks no binding. What it owes is the
+                # text's removal, and the record lists it for the route that removes prose.
+                entry = {"file": given, "where": finding["where"],
+                         "evidence": finding["evidence"], "cost": finding["cost"]}
+                if isinstance(finding.get("node"), str):
+                    entry["node"] = finding["node"]
+                restated.append(entry)
+                continue
             if finding.get("kind") == UNSTATED_FACT:
                 unstated.append({"file": given, "where": finding["where"],
                                  "evidence": finding["evidence"], "cost": finding["cost"]})
@@ -3673,6 +3724,11 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                      f"over {len({e['file'] for e in unstated})} file(s), listed under "
                      f"`unstated`. They block no binding here and no rebind closes them — the "
                      f"route is the analysis that gives each fact a node.")
+    if restated:
+        notes.append(f"Restates: {len(restated)} place(s) where text in the source restates a "
+                     f"node's fact the code holds, over {len({e['file'] for e in restated})} "
+                     f"file(s), listed under `restates`. The pair conforms, so none blocks a "
+                     f"binding — the route is removing the text, and reconciling the file after.")
 
     front = {"contract_version": RECORD_VERSION,
              "title": premise["title"],
@@ -3682,6 +3738,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
              "nodes": entries}
     if unstated:
         front["unstated"] = sorted(unstated, key=lambda e: (e["file"], e["where"]))
+    if restated:
+        front["restates"] = sorted(restated, key=lambda e: (e["file"], e["where"]))
     claimed = {path for entry in entries
                for path in entry.get("encoded_at") or entry.get("observed_at") or []}
     unbound_now = [given for given in manifest["unbound"] if given not in claimed]
