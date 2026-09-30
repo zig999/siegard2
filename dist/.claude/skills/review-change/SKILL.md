@@ -380,7 +380,9 @@ runs next.
   of something no task stated. It is never a verdict on the test — a test may prove a sibling
   task's criterion — and never a recommendation to remove one.
 - **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the staging
-  manifest holds**, spawned together rather than one after another, each judging at
+  manifest holds**, spawned together rather than one after another — in batches no larger than
+  the harness runs at once where it caps concurrent delegations, a refused launch dispatched again
+  and never counted — each judging at
   `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
   a file set of exactly its one file — the resolved path its pack header names, the spelling a
   finding echoes being the header's own; as the node set, its node pack's path from the manifest —

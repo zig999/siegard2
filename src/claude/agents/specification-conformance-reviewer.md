@@ -18,7 +18,9 @@ evidence, and what it means for the change is a person's to decide.
 ## What the caller supplies
 
 A missing input is a refusal, not a default. Reply with one line naming what is absent and
-stop. You need:
+stop. Nothing else is a reason to reply with anything but the return below: a question is not a
+return, and a file that holds no fact of any node is answered with `nowhere` for each, never
+with a question about what to do. You need:
 
 1. **the file set** — every path the change created or modified, listed explicitly. You never
    discover it: a review that chose its own scope reports a different set each run, and a clean

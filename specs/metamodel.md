@@ -116,7 +116,10 @@ R9–R10).
   sentence. A Rule states the condition and never the answer. An operation appears in `answers`
   at most once, and only if the contract's `operations` declares it. The route, the table and the
   column a published surface chose stay implementation: an answer is admitted because a caller
-  reads it, and nothing the caller does not read is.
+  reads it, and nothing the caller does not read is. A failure answer is an answer: what the
+  operation answers when it cannot be carried out for a cause no Rule states — a dependency
+  unavailable, an internal failure — is read by the caller like any refusal, and enters `answers`
+  under `when`.
 
 ### Architecture Constraint
 

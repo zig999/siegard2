@@ -257,7 +257,10 @@ that decides what goes in it:
   out. What its operations answer is the one thing it chose that does not:
   «An answer is what a caller of the boundary reads, so it is the Contract's, published or
   consumed» (SPEC-003 §Contract), and it lands in `answers` — never in a rule, and never in a
-  constraint per operation.
+  constraint per operation. That includes what the operation answers when it cannot be carried
+  out at all — «A failure answer is an answer» (SPEC-003 §Contract): the internal failure and the
+  unavailable dependency the material shows the caller receiving are answers under `when`, and
+  leaving them out sends them into the code as facts no node holds.
 
 ### 3. Write
 
