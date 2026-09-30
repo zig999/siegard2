@@ -57,6 +57,11 @@ R9–R10).
   description, responsibility, and `strategic` (`core` | `supporting` | `generic`). The
   underscore keeps it outside the element slug space. It declares no relationships: the context
   map is a projection (below).
+- **Where an element is held** — An element is held in a file that declares its shape: a type,
+  an interface, a schema, an enumeration, a table, or a row type naming its attributes, whole or
+  in part. A file that only passes an element's value along, or reads a field of a shape declared
+  elsewhere, does not hold it. This is what a binding of an element claims, and what a judgment
+  of a file answers for it.
 
 ### Rule
 

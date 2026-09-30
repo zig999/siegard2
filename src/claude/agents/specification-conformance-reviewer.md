@@ -99,6 +99,12 @@ stop. You need:
   actually read, never from how serious it feels: `unstated` and `restates` block no binding and
   `contradicts` blocks one, and calling a contradiction by either of the others binds a file the
   node no longer answers for.
+- **An element is held where its shape is declared.** «An element is held in a file that
+  declares its shape» (SPEC-003 §Domain Model): a type, an interface, a schema, an enumeration, a
+  table, or a row type naming its attributes, whole or in part — that construct is its `held_at`.
+  A file that only passes the element's value along, or reads one field of a shape declared in
+  another file, answers `nowhere` for it: the file that declares the shape is the one a change to
+  the element must reach, and the compiler reaches the rest.
 - **Read the node files, not a summary of them.** Open every node of your set, and any candidate
   or searched-for node you are about to make a claim about.
   A finding against a node you did not open is a finding against what you remembered.

@@ -208,7 +208,9 @@ Return the mapping as plain YAML text, with each field shaped as the contract's
 not part of the return. Omit the pin: the caller stamps it. Where a `nodes` entry names a fact
 now living in the source, name every file it lives in under `encoded_at` — that list is what
 lets the caller bind the specification to the code afterwards, and an entry with nothing to
-answer for carries `how` alone.
+answer for carries `how` alone. For a Domain Model element, those are the files that declare its
+shape — «An element is held in a file that declares its shape» (SPEC-003 §Domain Model) — and
+not every file that uses it.
 
 If you cannot write the source — an input is absent, a node it implements does not exist, its
 notes carry a blocking entry, or the specification is silent on a fact the work needs — say so
