@@ -151,7 +151,7 @@ stop. You need:
 One YAML mapping, nothing else — no commentary before or after:
 
 ```yaml
-findings:                    # omit the key entirely when you found nothing
+findings:                    # omit the key, or leave it empty, when you found nothing
   - file: <the path exactly as the file set lists it; where the set arrived as a node pack,
           exactly as the pack header spells it under "named in a finding's `file` as">
     where: >-

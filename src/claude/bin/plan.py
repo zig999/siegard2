@@ -780,7 +780,12 @@ def naming_archived(parent: Path) -> tuple[dict[str, set[str]], list[str], int, 
     The removal is found by the closure marker's deletion, because that marker is the one file
     every archived initiative had and every live one lacks. A slug standing on disk again is left
     to the disk reading: the tree is the current statement of that plan, and history is not."""
-    home = project.toplevel_of(parent)
+    # A work root whose every initiative was archived holds no file, so git holds no directory
+    # for it and it is absent from the tree; its history is still in the repository around it.
+    anchor = parent
+    while not anchor.exists() and anchor != anchor.parent:
+        anchor = anchor.parent
+    home = project.toplevel_of(anchor)
     rel = os.path.relpath(parent.resolve(), home.resolve()).replace(os.sep, "/")
     prefix = "" if rel == "." else rel + "/"
     marker = re.compile(r"^" + re.escape(prefix) + r"([^/]+)/" + re.escape(CLOSURE_FILE) + r"$")

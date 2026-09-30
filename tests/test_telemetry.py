@@ -398,6 +398,31 @@ def test_decisions_added_are_diffed_against_the_commit_before_the_window(consume
     assert [e["unstated"] for e in report["decisions"]["added"]] == ["second"]
 
 
+def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer):
+    """A retirement says where an earlier decision went when its node left; it decides nothing,
+    so it is neither counted with the decisions nor followed to a field that is gone."""
+    log = consumer["home"] / "specification" / "decision-log.md"
+    closing = "\n---\n"
+    text = log.read_text(encoding="utf-8")
+    assert text.endswith(closing)
+    log.write_text(text[:-len(closing)] + "\n- location: domain/x/b.md\n  field: attributes\n"
+                   "  retired: held nowhere; the element left the specification" + closing,
+                   encoding="utf-8")
+    home = consumer["home"]
+    subprocess.run(["git", "-C", str(home), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(home), "-c", "user.email=t@example.com", "-c", "user.name=t",
+                    "commit", "-q", "-m", "retire", "--date", "2026-08-20T11:30:00Z"], check=True,
+                   env={"GIT_COMMITTER_DATE": "2026-08-20T11:30:00Z", "PATH": "/usr/bin:/bin",
+                        "HOME": str(consumer["tmp"])})
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert report["contract_version"] == "siegard-telemetry/7"
+    assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
+    assert [e["retired"] for e in report["decisions"]["retired"]] == [
+        "held nowhere; the element left the specification"]
+    assert "1 location(s) retired" in done.stdout
+
+
 def test_scope_counts_tasks_and_records_landed_in_the_window(consumer):
     _, report = report_of(consumer)
     [initiative] = report["scope"]["initiatives"]
@@ -624,7 +649,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/6"
+    assert report["contract_version"] == "siegard-telemetry/7"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}

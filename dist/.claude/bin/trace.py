@@ -1957,12 +1957,18 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
     judged side is printed apart and said to be apart: a binding that computes is a fact about
     bytes, and a record that found against a node is a fact about a reading, and a tally that
     added them would be a reading of neither."""
-    for where, what in ((target, "target source root"), (spec_root, "specification root"),
-                        (parent, "work root")):
+    for where, what in ((target, "target source root"), (spec_root, "specification root")):
         if not where.is_dir():
             print(f"cannot run: {what} {where} is not a directory", file=sys.stderr)
             return CANNOT_RUN
-    if any((parent / kind).is_dir() for kind in plan.KINDS):
+    # A work root nobody has planned into yet does not exist, and that is the ordinary state of a
+    # project whose code arrived by adoption: no initiative is a count of zero, not a stop. A path
+    # that exists and is not a directory is still one.
+    planned_in = parent.is_dir()
+    if parent.exists() and not planned_in:
+        print(f"cannot run: work root {parent} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    if planned_in and any((parent / kind).is_dir() for kind in plan.KINDS):
         print(f"cannot run: {parent} holds {'/'.join(plan.KINDS)} directories of its own, so it "
               f"is one initiative rather than the directory they sit in; name its parent",
               file=sys.stderr)
@@ -2008,7 +2014,8 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
         stale = {f[1] for f in findings}
         held_only = {f[1] for f in held} - {f[1] for f in listed}
 
-    how, read, unreadable = plan.naming_on_disk(parent, plan.contract())
+    how, read, unreadable = (plan.naming_on_disk(parent, plan.contract()) if planned_in
+                             else ({}, [], []))
     archived_how, archived, unparsed, no_git = plan.naming_archived(parent)
     for node, fields in archived_how.items():
         how.setdefault(node, set()).update(fields)
@@ -2032,6 +2039,7 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
           + (f"{bindings} binding(s) in {trace_path(target)}" if declared is not None
              else f"no trace file at {trace_path(target)} — nothing has been bound yet"))
     print(f"{len(read)} initiative(s) read under {parent}"
+          + ("" if planned_in else " — it does not exist, so none stands on disk")
           + (f"; {len(unreadable)} do not hold together and were read for what they state "
              f"({', '.join(unreadable)})" if unreadable else ""))
     if no_git is not None:

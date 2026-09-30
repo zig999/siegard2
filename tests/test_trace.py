@@ -1317,3 +1317,16 @@ def test_convergence_counts_the_files_no_binding_names(consumer):
     assert done.returncode == 0, done.stdout + done.stderr
     assert ("files under backend: 2 tracked, 1 bound, 1 no binding names (1 unsurveyed) — "
             "`--untraced` lists them") in done.stdout
+
+
+def test_convergence_reads_a_work_root_nobody_planned_into_as_no_initiative(consumer):
+    """A project whose code arrived by adoption has no initiative yet, so its work root does not
+    exist; that is a count of zero, and a path that exists and is not a directory is still a stop."""
+    bind(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", consumer / "no-work-yet")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "0 initiative(s) read under" in done.stdout and "it does not exist" in done.stdout
+    assert "1 current:" in done.stdout
+    (consumer / "a-file").write_text("x\n", encoding="utf-8")
+    done = run("--convergence", consumer / "backend", consumer / "specs", consumer / "a-file")
+    assert done.returncode == 2 and "is not a directory" in done.stderr

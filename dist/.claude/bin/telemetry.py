@@ -115,7 +115,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/6"
+CONTRACT = "siegard-telemetry/7"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -945,9 +945,10 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
         except OSError as broken:
             return {**absent, "log": str(log), "baseline": f"{log} cannot be read: {broken}"}
     if relative is None:
+        decided, retired = apart_from_retirements(current)
         return {"log": str(log), "baseline": f"{log} sits outside the git toplevel {home}; every "
-                f"current entry is listed", "total_now": len(current), "added": current,
-                "outcomes": outcomes_of(current)}
+                f"current entry is listed", "total_now": len(current), "added": decided,
+                "retired": retired, "outcomes": outcomes_of(decided)}
     upto = cut if bounded else None
     before = git(home, "rev-list", "-1", f"--before={iso(since)}", "HEAD", "--", relative)
     if before is None or before.returncode != 0 or not before.stdout.strip():
@@ -962,11 +963,21 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
         seen = {json.dumps(e, sort_keys=True) for e in baseline}
         added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
     spec_relative = Path(relative).parent.as_posix()
+    added, retired = apart_from_retirements(added)
     for entry in added:
         entry["outcome"] = outcome_of(entry, home, spec_relative, relative, specification_root,
                                       upto)
     return {"log": str(log), "baseline": baseline_said, "total_now": len(current),
-            "added": added, "outcomes": outcomes_of(added)}
+            "added": added, "retired": retired, "outcomes": outcomes_of(added)}
+
+
+def apart_from_retirements(entries: list[dict]) -> tuple[list[dict], list[dict]]:
+    """The entries that record a decision or a reading, and the ones that retire a location.
+
+    A retirement decides nothing: it says where an earlier decision went when its node or field
+    left the specification. Followed to its field like a decision, it would read as a decision
+    whose node is gone — the opposite of what it records."""
+    return ([e for e in entries if "retired" not in e], [e for e in entries if "retired" in e])
 
 
 def route_of(subject: str) -> str:
@@ -1032,7 +1043,7 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
     if not node_relative.endswith(".md"):
         node_relative += ".md"
     field = str(entry.get("field") or "")
-    texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why", "retired")
+    texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why")
              if entry.get(k) is not None]
     needle = max(texts, key=len)[:60] if texts else ""
     found = git(home, "log", "--reverse", "--format=%H%x09%aI", "-S", needle, tip, "--",
@@ -1309,8 +1320,10 @@ def receipt(report: dict, destination: Path) -> str:
         f"runs: {len(report['runs'])} captured",
         f"commits: {len(report['repository']['commits'])}; uncommitted: "
         f"{len(report['repository']['uncommitted'])}",
-        f"decisions added: {len(report['decisions']['added'])} (baseline: "
-        f"{report['decisions']['baseline']})",
+        f"decisions added: {len(report['decisions']['added'])}"
+        + (f", {len(report['decisions']['retired'])} location(s) retired"
+           if report['decisions'].get('retired') else "")
+        + f" (baseline: {report['decisions']['baseline']})",
         f"notes standing: {len(report['notes'])}",
     ]
     missing = [p for p in report["provenance"] if p["unavailable"]]

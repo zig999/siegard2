@@ -2172,3 +2172,14 @@ def test_an_adoption_refuses_to_certify_a_node_it_does_not_read(adopting):
     done, _ = adopt_staged(adopting, "--certify", ask)
     assert done.returncode == 2
     assert "is no candidate of this adoption" in done.stderr
+
+
+def test_an_empty_findings_list_says_what_an_absent_one_says(consumer):
+    """A judge writing `findings: []` found nothing, exactly as one omitting the key; refusing it
+    would buy a second delegation over the same bytes for the same answer."""
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER], findings=[]))
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert all(entry["conforms"] for entry in front["nodes"])

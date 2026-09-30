@@ -18,8 +18,7 @@
   "properties": {
     "findings": {
       "type": "array",
-      "description": "What the judgment found against, with the evidence quoted. Absent entirely where nothing was found — an absent key is a real result and a claim: over this file and these nodes, the source states what the specification holds and nothing else.",
-      "minItems": 1,
+      "description": "What the judgment found against, with the evidence quoted. Absent, or an empty list, where nothing was found — the two say one thing, and it is a real result and a claim: over this file and these nodes, the source states what the specification holds and nothing else.",
       "items": {
         "type": "object",
         "required": [
