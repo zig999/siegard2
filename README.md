@@ -109,16 +109,19 @@ time, after steps 1–6 above:
 
 1. **Measure the start.** `python3 -B <plugin>/bin/trace.py --untraced <target-source-root>` lists
    every tracked file no binding names. Before an adoption every file is `unsurveyed`.
-2. **Write the material from the source alone.** Read the context's code, not its documentation:
-   every observable behavior — what it accepts, refuses and answers, with the codes — each fact
-   beside the path it was read at. Code comments are not evidence. What the implementation chose
-   (routes, tables, logging) is listed apart as outside the domain.
-3. **`/siegard:analyse`** over that material. Its report lists the nodes it wrote and hands the
-   adoption invocation ready to fill.
-4. **`/siegard:reconcile` as an adoption** over the context's files, with those nodes as the
-   candidates and the files to keep out of the judgment (configuration, wiring) named as outside.
-   Each cleared node is bound to the files that hold its fact; the first adoption writes
-   `siegard-trace.json`. Offer the tests already in the tree as certifications in the same run.
+2. **`/siegard:survey`** over the context's source, cut into areas you name. One surveyor per
+   area reads the code — never its documentation or comments — and returns material: every
+   observable behavior, every refusal with its answer, the closed vocabularies, what upstream
+   imposes, each fact beside the path it was read at. The material lands under
+   `siegard-survey/<slug>/`, held to `schemas/survey.json`.
+3. **`/siegard:analyse`** over that material. Beside the nodes it writes a ledger saying where
+   every fact line went — a node, or a stated reason none holds it — and `trace.py --ledger`
+   refuses a ledger short one fact. Its report hands the adoption invocation ready to fill.
+4. **`/siegard:reconcile` as an adoption** over the ledger, with the files to keep out of the
+   judgment (configuration, wiring) named as outside. Each file's judge reads the candidates that
+   file's own facts reached; each cleared node is bound to the files that hold its fact; the
+   first adoption writes `siegard-trace.json`. Tests you know assert a node's own condition may
+   be offered as certifications in the same run.
 5. **Read what it hands back.** A candidate no file holds, a `contradicts` and an `unstated`
    finding all go back to `/siegard:analyse`.
 6. **Then the documentation**, as an ordinary `/siegard:analyse` increment over the adopted

@@ -152,3 +152,21 @@ def test_ledger_is_its_own_form(surveyed):
     done = run("--ledger", ledger_at(surveyed, full_entries(surveyed)), surveyed / "specs",
                "--check")
     assert done.returncode == 2 and "mutually exclusive" in done.stderr
+
+
+def test_survey_holds_material_to_its_contract_and_counts_its_fact_lines(surveyed):
+    material = surveyed / "siegard-survey" / "adopt-orders" / "orders.md"
+    done = run("--survey", material)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "4 fact line(s) over 2 file(s) — Facts 3, Answers 1, Vocabularies 0, Upstream artifacts 0" \
+        in done.stdout
+    assert "no fact names" not in done.stdout
+    broken = surveyed / "siegard-survey" / "adopt-orders" / "broken.md"
+    broken.write_text(MATERIAL.replace("  - src/orders/bill.ts\n", "  - src/orders/bill.ts\n  - src/orders/quiet.ts\n"),
+                      encoding="utf-8")
+    done = run("--survey", material, broken)
+    assert done.returncode == 0 and "1 file(s) no fact names: src/orders/quiet.ts" in done.stdout
+    broken.write_text(MATERIAL.replace("contract_version: siegard-survey/1", "contract_version: x"),
+                      encoding="utf-8")
+    done = run("--survey", material, broken)
+    assert done.returncode == 2 and "contract_version" in done.stderr

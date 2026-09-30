@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 4.26.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 4.27.0. The plugin's hooks place them in every session and every
 agent; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -24,7 +24,7 @@ fifth names none.
 | one wrong behavior in code already delivered | `/plan-work`'s corrective increment → `/implement-task` — never a fix typed straight into the file |
 | **the comment alone** — prose in source that breaks the comment rule below, with the behavior correct and the fact already held | the source, changed directly (removal, never refresh), then `/reconcile` over that file |
 | **the surface alone** — a control's label, a colour, spacing, a column's order, an icon | the source, changed directly, on a target `siegard.json` declares `edits_freely` |
-| **source no delivery wrote** — a project adopting Siegard | `/analyse` over material read from the source alone → `/reconcile` as an adoption, one context at a time; the documentation then through the first route |
+| **source no delivery wrote** — a project adopting Siegard | `/survey` → `/analyse` → `/reconcile` as an adoption, one context at a time; the documentation then through the first route |
 
 **The fourth route answers a finding against prose, never against behavior.** Four things hold
 it, and none is optional:

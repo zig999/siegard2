@@ -74,6 +74,9 @@ What this script does, and nobody else does any of it:
                                                                   bound
     trace.py --untraced <target-root> [--all]                     every tracked file under the
                                                                   target no binding names
+    trace.py --survey <material.md> ...                           hold survey material to its
+                                                                  contract and count its fact
+                                                                  lines per heading
     trace.py --ledger <ledger.md> <spec-root>                     hold a material ledger to the
                                                                   survey it accounts for and the
                                                                   nodes it names; print the file
@@ -2364,6 +2367,34 @@ def read_survey(path: Path) -> tuple[dict | None, list[dict], list[str]]:
     return front, facts, []
 
 
+def survey(paths: list[Path]) -> int:
+    """Hold survey material to its contract, file by file, and count what each holds: fact lines
+    per heading, and the files of the area no fact names. Refused whole where one file fails —
+    a material file the adoption reads later as if it held together is a survey nobody held."""
+    problems: list[str] = []
+    counted: list[tuple[Path, dict, list[dict]]] = []
+    for path in paths:
+        front, facts, held = read_survey(path)
+        if front is None:
+            problems += held
+            continue
+        counted.append((path, front, facts))
+    if problems:
+        for problem in problems:
+            print(f"cannot run: {problem}", file=sys.stderr)
+        return CANNOT_RUN
+    for path, front, facts in counted:
+        per_heading = {heading: sum(1 for f in facts if f["heading"] == heading)
+                       for heading in FACT_HEADINGS}
+        named = {given for f in facts for given in f["files"]}
+        silent = [given for given in front["files"] if given not in named]
+        print(f"{path}: {len(facts)} fact line(s) over {len(front['files'])} file(s) — "
+              + ", ".join(f"{heading} {n}" for heading, n in per_heading.items()))
+        if silent:
+            print(f"  {len(silent)} file(s) no fact names: {', '.join(silent)}")
+    return 0
+
+
 def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[str]]:
     """The ledger held to its contract, with every material file it names read as survey
     material — keyed by the path the ledger spells — or the problems that stop the reading."""
@@ -4539,6 +4570,7 @@ def main() -> int:
     do_untraced = "--untraced" in args
     do_adopt = "--adopt" in args
     do_ledger = "--ledger" in args and not do_stage
+    do_survey = "--survey" in args
     also: list[str] = []
     while "--node" in args:
         at = args.index("--node")
@@ -4618,7 +4650,7 @@ def main() -> int:
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--rank", "--changed", "--audit", "--review",
-                         "--convergence", "--untraced", "--adopt", "--ledger")]
+                         "--convergence", "--untraced", "--adopt", "--ledger", "--survey")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -4630,7 +4662,8 @@ def main() -> int:
                                       ("--fold", do_fold),
                                       ("--convergence", do_convergence),
                                       ("--untraced", do_untraced),
-                                      ("--ledger", do_ledger)) if given]
+                                      ("--ledger", do_ledger),
+                                      ("--survey", do_survey)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
@@ -4700,6 +4733,13 @@ def main() -> int:
               "re-examines standing claims over a tree nothing changed, and a certification is a "
               "claim about a test a delivery just wrote", file=sys.stderr)
         return CANNOT_RUN
+
+    if do_survey:
+        if not args or any(a.startswith("--") for a in args):
+            print("cannot run: expected --survey <material.md> [<material.md> ...]",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return survey([Path(a) for a in args])
 
     if do_ledger:
         if len(args) != 2 or any(a.startswith("--") for a in args):

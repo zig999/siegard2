@@ -38,6 +38,7 @@ GRANTS = {
     "backlog-decomposer": READS,
     "specification-conformance-reviewer": READS,
     "codebase-surveyor": READS,
+    "domain-surveyor": READS,
     "coverage-auditor": READS,
     "execution-contract-binder": READS,
     "failure-diagnostician": READS,

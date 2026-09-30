@@ -57,6 +57,8 @@ SKILLS = {
                      "delegates": ["standard-conformance-reviewer"]},
     "siegard-telemetry": {"contract": "schemas/telemetry.json", "validator": "bin/telemetry.py",
                           "delegates": []},
+    "survey": {"contract": "schemas/survey.json", "validator": "bin/trace.py",
+               "delegates": ["domain-surveyor"]},
 }
 
 
@@ -101,6 +103,10 @@ MODEL_MAY_REACH = {
     "implement-task": True,
     "review-change": True,
     "reconcile": True,
+    # Reachable: its inputs — the target, the slug and the areas — are stated in the invocation,
+    # and what it writes is material a human reads before any node exists. The gate it has is the
+    # committed tree.
+    "survey": True,
     "siegard-config": False,
     # Read-only and input-free beyond the project root: nothing here is the human's to assert,
     # so a session may reach for it when asked how the work stands — that reachability is the
@@ -253,6 +259,7 @@ def skill_text(name: str) -> str:
 # and it authors the pre-redesign knowledge base plan-work no longer accepts. Its replacement is
 # named below instead of appended beside it.
 FORWARD_SEAMS = (
+    ("survey", "analyse"),
     ("analyse", "plan-work"),
     ("plan-work", "implement-task"),
     ("implement-task", "review-change"),
