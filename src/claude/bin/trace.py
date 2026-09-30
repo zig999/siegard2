@@ -2786,9 +2786,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             bound_here = [given for given in files
                           if any(n == node_id for n, _ in index.get(stored_of[given]) or [])]
             if not bound_here and not (adopt and node_id in also):
-                certify_problems.append(f"{node_id} is bound to none of the named files; a "
-                                        f"certification rides the reading of a file that encodes "
-                                        f"the node, so name one the trace binds it to")
+                certify_problems.append(
+                    f"{node_id} is bound to none of the named files"
+                    + (" and is no candidate of this adoption; a certification rides the reading "
+                       "that decides the node, so name it with --node or name a file the trace "
+                       "binds it to" if adopt else
+                       "; a certification rides the reading of a file that encodes the node, so "
+                       "name one the trace binds it to"))
             proof, absent = traced_files_of(target, home, entry["proof"])
             certify_problems += [f"{node_id}: proof {problem}" for problem in absent]
             if entry["step"] not in steps:

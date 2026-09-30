@@ -2132,3 +2132,43 @@ def test_a_later_adoption_that_finds_a_candidate_unheld_closes_its_earlier_findi
     assert owed.returncode == 0, owed.stdout
     assert "no bind closed" not in owed.stdout, "the later unheld reading closed the finding"
     assert "1 pair(s) the records answer both ways" in owed.stdout
+
+
+def test_an_adoption_certifies_a_candidate_no_trace_binds_yet(adopting):
+    """A certification rides the reading that decides whether a candidate is bound at all, so an
+    adoption takes one for a node the trace does not hold yet, and the bind writes it as decided
+    by the test from the first binding it ever has."""
+    registry_deciding(adopting)
+    proof_at(adopting)
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    ask = certifying(adopting, {"node": NODE, "proof": [PROOF], "step": "lint"})
+    staged_done, _ = adopt_staged(adopting, "--certify", ask)
+    assert staged_done.returncode == 0, staged_done.stdout + staged_done.stderr
+    save_certification(adopting, "adopt-orders", NODE, COVERED)
+    done, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is True and entry["decided_by"] == "test"
+    assert run("--reconciliation", record).returncode == 0
+    bound = run("--bind-record", adopting / "backend", adopting / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    trace_entry = [e for e in json.loads((adopting / "siegard-trace.json")
+                                         .read_text(encoding="utf-8"))["bindings"]
+                   if e["node"] == NODE][0]
+    assert trace_entry["decided_by"] == "test"
+
+
+def test_an_adoption_refuses_to_certify_a_node_it_does_not_read(adopting):
+    registry_deciding(adopting)
+    proof_at(adopting)
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    ask = certifying(adopting, {"node": "domain/troubleshooting/hypothesis", "proof": [PROOF],
+                                "step": "lint"})
+    done, _ = adopt_staged(adopting, "--certify", ask)
+    assert done.returncode == 2
+    assert "is no candidate of this adoption" in done.stderr
