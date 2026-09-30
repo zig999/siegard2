@@ -294,7 +294,8 @@ closes it. `unstated` is the specification's: no node holds the fact at all, the
 cleared. The fold routes on the word and lands the second class under the record's own `unstated`,
 keyed by file rather than by node — a fact no node holds has no node to be about. A third word
 answers a third question: `restates` is text in the source — a comment, a docstring, a
-description — saying a node's fact while the code holds it too. The pair conforms and binds;
+description — saying a node's fact while code holds it too, in that file or in another. The pair
+conforms and binds where the code is;
 the fold lands the finding under the record's own `restates`, and what it owes is the text's
 removal, then this route over the file. `trace.py --owed` reports all three apart from what a
 bind is owed, and the report hands each its route.
