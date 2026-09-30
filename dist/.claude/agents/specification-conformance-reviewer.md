@@ -159,7 +159,8 @@ findings:                    # omit the key entirely when you found nothing
 read:                        # one entry per node of your set, in the order the set gave them
   - node: <the identity, as the caller gave it>
     held_at: >-
-      <where in the file the node's fact sits now, or the word `nowhere`>
+      <where in the file the node's fact sits now, or the bare word `nowhere` — the reason goes
+      in `evidence`>
     evidence: >-
       <quoted from the source — what you read to say that; code, never a comment's claim>
 looked_past: >-

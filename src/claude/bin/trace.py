@@ -390,6 +390,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -419,6 +420,14 @@ RECONCILE_DIR = "siegard-reconcile"
 MANIFEST_FILE = "manifest.json"
 RUN_DIR = "run"
 NOWHERE = "nowhere"
+
+
+def held_nowhere(held_at: object) -> bool:
+    """Whether a judge's `held_at` answers that the node's fact is not in the file. The contract
+    asks for the bare word, and judges write it with a reason after it — `nowhere. The file does
+    no ranking.` — often enough that comparing the whole string against the word binds a node to
+    a file its own judge said does not hold it. The answer is the first word, whatever follows."""
+    return isinstance(held_at, str) and re.match(r"\s*nowhere\b", held_at, re.IGNORECASE) is not None
 
 UNSEEN, COVERED, REPORTED = "unseen", "covered", "reported"
 UNSTATED_FACT = "unstated"
@@ -1608,6 +1617,18 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
                     continue
                 anchored = path if where == "." else f"{where}/{path}"
                 sink.setdefault((node, anchored), []).append(record.name)
+        # An adoption's unheld candidate was read on every file of its set and found neither held
+        # nor contradicted there: a later reading of the pair that owes nothing, which closes an
+        # earlier finding on it the way a clearance does.
+        if front.get("adopted") is True:
+            judged_paths = [e["path"] for e in front.get("files") or []
+                            if isinstance(e, dict) and isinstance(e.get("path"), str)]
+            for entry in front.get("unheld") or []:
+                if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
+                    continue
+                for path in judged_paths:
+                    anchored = path if where == "." else f"{where}/{path}"
+                    cleared.setdefault((entry["node"], anchored), []).append(record.name)
     return found, cleared, unreadable
 
 
@@ -3508,7 +3529,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                           if node in meta["nodes"])
         judged_in = sorted(given for given in manifest["files"] if (given, node) in read_of)
         holders = [given for given in judged_in
-                   if read_of[(given, node)]["held_at"].strip().lower() != NOWHERE]
+                   if not held_nowhere(read_of[(given, node)]["held_at"])]
         found = against.get(node) or []
         taint = [given for given in bound_in if given in tainted]
         lost = [given for given in bound_in if given not in holders]
@@ -3543,7 +3564,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
         holders = [given for given in bound_in
-                   if read_of[(given, node)]["held_at"].strip().lower() != NOWHERE]
+                   if not held_nowhere(read_of[(given, node)]["held_at"])]
         found = against.get(node) or []
         taint = [given for given in bound_in if given in tainted]
         if not found and not taint and holders == bound_in:

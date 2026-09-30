@@ -2087,3 +2087,48 @@ def test_a_restating_comment_does_not_keep_a_candidate_unbound(adopting):
     by_node = {entry["node"]: entry for entry in front["nodes"]}
     assert by_node[OTHER]["conforms"] is True and by_node[OTHER]["encoded_at"] == [FILE]
     assert [e["file"] for e in front["restates"]] == [FILE]
+
+
+def test_nowhere_with_a_reason_after_it_is_still_nowhere(adopting):
+    """A judge writing `nowhere. The file does no ranking.` answered nowhere; binding the node to
+    that file would stamp a claim its own judge denied."""
+    adopt_staged(adopting)
+    done, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "nowhere. The file declares no evidence.",
+                       RULE: "Nowhere in this file."}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    cleared = {e["node"]: e["encoded_at"] for e in front["nodes"] if e["conforms"]}
+    assert cleared == {NODE: sorted([FILE, SECOND])}
+    assert sorted(e["node"] for e in front["unheld"]) == sorted([OTHER, RULE])
+
+
+def test_a_later_adoption_that_finds_a_candidate_unheld_closes_its_earlier_finding(adopting):
+    adopt_staged(adopting, slug="first")
+    contradicted = read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"})
+    contradicted["findings"] = [{"file": FILE, "where": "line 1", "node": OTHER,
+                                 "kind": "contradicts", "evidence": "// evidence belongs to a case",
+                                 "cost": "the rule is said in prose", "correction": "remove it"}]
+    _, first = adopted_record(adopting, {
+        FILE: contradicted,
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    }, slug="first")
+    assert run("--bind-record", adopting / "backend", adopting / "specs", first).returncode == 0
+    assert OTHER in run("--owed", adopting / "backend").stdout
+    (adopting / "backend" / FILE).write_text("export const y = 1;\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    staged_done, _ = adopt_staged(adopting, slug="second", files=[FILE], nodes=[OTHER])
+    assert staged_done.returncode == 0, staged_done.stdout + staged_done.stderr
+    premise = dict(ADOPT_PREMISE, files=[{"path": FILE, "change": "a comment removed"}])
+    save_return(adopting, "second", FILE, read_as({NODE: "line 1", OTHER: "nowhere"}))
+    done, second = folded(adopting, "second", premise)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run("--bind-record", adopting / "backend", adopting / "specs", second).returncode == 0
+    owed = run("--owed", adopting / "backend")
+    assert owed.returncode == 0, owed.stdout
+    assert "no bind closed" not in owed.stdout, "the later unheld reading closed the finding"
+    assert "1 pair(s) the records answer both ways" in owed.stdout
