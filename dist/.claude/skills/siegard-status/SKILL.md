@@ -174,7 +174,10 @@ In this order, every line naming its source:
   where `code` drift stands, with what that set does not answer alone — the files a review
   yet to run would reach, and the pairs a record already judged; then, kept apart from those
   counts, what `--convergence` holds —
-  every node of the specification in one of its states, by class, and beside it what `--owed` holds where the judged tally was not zero: the findings past reconciliations left open, and which of them no drift report can reach — and the
+  every node of the specification in one of its states, by class, and its `files under` line —
+  tracked, bound and unsurveyed, verbatim, with `trace.py --untraced` named as the listing, because
+  «Adoption is complete when no file is unsurveyed and no node is unreached» (SPEC-005 R7) and those
+  two counts are the whole of it — and beside it what `--owed` holds where the judged tally was not zero: the findings past reconciliations left open, and which of them no drift report can reach — and the
   `--rank` accretion counts, top rows verbatim, with the audit route named and never chosen;
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;

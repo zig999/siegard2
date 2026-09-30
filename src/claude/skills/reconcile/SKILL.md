@@ -1,6 +1,6 @@
 ---
 name: reconcile
-description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads the trace for which specification nodes a named file set is bound to, holds that source to those nodes through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when a human edited source by hand, resolved a file during a merge, or a delivery modified a file that other nodes' bindings still claim (a bind restamps only the delivering task's own nodes), and the trace should describe the tree as it now stands — or, invoked as an audit over a set the human names, to re-examine standing bindings that never drifted and say which files still carry the facts they claim. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
+description: Reconciles source that changed without a rebind — whatever wrote it — with the specification the trace says it encodes — reads which nodes a named file set is bound to, holds that source to them through the conformance judgment, records the answer per node, and rebinds only what the judgment cleared. Use when source was edited by hand, resolved in a merge, or rewritten by a delivery while other nodes' bindings still claim it; as an audit over a set the human names, to re-examine standing bindings that never drifted; or as an adoption of source no delivery wrote, binding each node /analyse wrote from it to the files that hold its fact. Not for changing the specification (that is /analyse), not for routing a wrong behavior into a task (that is /plan-work), not for reviewing what a delivered task produced (that is /review-change), and never for writing source.
 effort: medium
 ---
 
@@ -49,6 +49,14 @@ whether the claim holds — the auditor's rule, that the tests would fail if the
 holding. Where it holds, the bind writes the node as one a test decides, so a later drift on its
 files is answered by the step's run rather than by a fresh reading. Absent, nothing is certified
 and every binding stays decided by reading, which is every binding's default.
+
+And one mode, named by the human and never inferred: **adoption** — the file set is source no
+delivery wrote, and the invocation also names the **candidates**, the nodes `/analyse` wrote from
+material read from that source, which its report lists, and optionally the files kept **outside**
+the judgment, which no judge reads. «A binding of adopted source rests on a reconciliation record
+whose judgment cleared the pair» (SPEC-005 R3), and the candidates are the human's to name, never
+discovered here. Without the word, this is an ordinary reconciliation and a file the trace binds
+nothing to is reported and goes no further.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 `specification_root` and `targets` answer only from here: naming one of them in the invocation
@@ -111,7 +119,8 @@ situate → stage → judge → capture → fold → bind → report → stop
 - **The trace must hold together too.** Run
   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py <target-source-root>`. A trace file that does not
   exist is a stop with a plain answer: nothing has ever been bound in this target, so there is no
-  link to reconcile, and what the human wants is a delivery.
+  link to reconcile, and what the human wants is a delivery — or, for source no delivery wrote, an
+  adoption, the one invocation that begins without a trace and writes the first one.
 - **The record's own path must be free.** `siegard-reconcile/<slug>.md`, at the target source
   root's git toplevel — the directory `git -C <target-source-root> rev-parse --show-toplevel`
   prints, which is where `siegard.json` and `siegard-trace.json` already sit. A path that exists is
@@ -183,7 +192,8 @@ Four states the staging separates, and they do not all continue:
 - **A file the trace binds nothing to.** Reported, never guessed. Deciding which node an untraced
   file answers to is a delivery's judgment or an analysis's, and inventing one here would write
   this framework's most durable claim out of its thinnest evidence. The manifest holds it under
-  `unbound`, the fold carries it into the record, and it goes no further.
+  `unbound`, the fold carries it into the record, and it goes no further — except on an
+  adoption, where the analysis's candidates are what its judge reads it against.
 - **A file whose every pair the staging omitted.** Nothing left to judge: each of its bindings
   was stamped over the content on disk now and nothing is owed against any of them. It stays in
   the file set and in the premise, and the record accounts for it under `pairs_omitted`.
@@ -569,6 +579,35 @@ belongs in the specification, `/plan-work` where the node is right and the behav
 or, where the finding says the file holds the node's fact and nothing binds it, this skill
 invoked again over that file under a new slug, which is what hands a judge that node's text.
 A finding left in the notes and not in the report is a finding nobody will act on.
+
+## Adoption
+
+The same order, with four differences, each held by the scripts rather than by this prose.
+
+- **Stage with `--adopt`.** Pass every candidate with `--node` and every file kept out with
+  `--outside`:
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
+      <slug> <workspace> <each named path> --adopt --node <candidate> [--node ...] \
+      [--outside <path> ...] [--certify <certifications file>]
+  ```
+
+  No trace is needed; a file the trace already binds keeps its own node set beside the
+  candidates. Every candidate goes to every file's judge, none is omitted and none is answered by
+  a run, because its reading is what decides whether it is bound at all.
+- **Judge and fold as always.** The premise's `summary` says the source is adopted as it stands
+  and did not change. The fold writes `adopted`, and «An adopted node binds the files whose
+  judgment holds its fact and no others» (SPEC-005 R4): each cleared candidate's `encoded_at` is
+  the files whose judge read its fact there. A candidate every judge answered `nowhere` is not
+  cleared.
+- **Bind with `--bind-record --workspace`,** which writes the trace if this is the target's first.
+- **Report** what an adoption adds: every candidate no file holds — a node the source does not
+  carry is the analysis's to revisit, and the `/analyse` invocation over it is the route; every
+  `contradicts` against a candidate — a reading of the source the node misstates, the same route;
+  every `unstated` fact — the source carries it and no node does, the same route again; and the
+  target's standing as `trace.py --untraced` prints it, because «Adoption is complete when no file
+  is unsurveyed and no node is unreached» (SPEC-005 R7) and this is the file half of that count.
 
 ## What this never does
 

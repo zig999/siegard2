@@ -1290,8 +1290,8 @@ def test_untraced_leaves_out_what_a_binding_names_and_what_git_does_not_track(co
     done = run("--untraced", consumer / "backend", "--all")
     assert done.returncode == 0, done.stdout + done.stderr
     assert "2 tracked file(s) under backend: 1 bound, 1 no binding names" in done.stdout
-    assert "  backend/src/orders/cancel.ts" in done.stdout
-    assert "place.ts" not in done.stdout.split("untraced:")[1]
+    assert "unsurveyed:\n  backend/src/orders/cancel.ts" in done.stdout
+    assert "place.ts" not in done.stdout.split("unsurveyed:\n")[1]
     assert "scratch.ts" not in done.stdout
 
 
@@ -1315,5 +1315,5 @@ def test_convergence_counts_the_files_no_binding_names(consumer):
     work = planned(consumer)
     done = run("--convergence", consumer / "backend", consumer / "specs", work)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert ("files under backend: 2 tracked, 1 bound, 1 no binding names — `--untraced` lists "
-            "them") in done.stdout
+    assert ("files under backend: 2 tracked, 1 bound, 1 no binding names (1 unsurveyed) — "
+            "`--untraced` lists them") in done.stdout

@@ -102,6 +102,33 @@ make the install reproducible for everyone on the project.
 - Skills are invoked as `/siegard:<name>`; the bare form (`/analyse`, `/plan-work`, …) also works
   where no other plugin claims the name.
 
+## Adopting an existing project
+
+A project whose code was written before Siegard is adopted, never re-delivered. One context at a
+time, after steps 1–6 above:
+
+1. **Measure the start.** `python3 -B <plugin>/bin/trace.py --untraced <target-source-root>` lists
+   every tracked file no binding names. Before an adoption every file is `unsurveyed`.
+2. **Write the material from the source alone.** Read the context's code, not its documentation:
+   every observable behavior — what it accepts, refuses and answers, with the codes — each fact
+   beside the path it was read at. Code comments are not evidence. What the implementation chose
+   (routes, tables, logging) is listed apart as outside the domain.
+3. **`/siegard:analyse`** over that material. Its report lists the nodes it wrote and hands the
+   adoption invocation ready to fill.
+4. **`/siegard:reconcile` as an adoption** over the context's files, with those nodes as the
+   candidates and the files to keep out of the judgment (configuration, wiring) named as outside.
+   Each cleared node is bound to the files that hold its fact; the first adoption writes
+   `siegard-trace.json`. Offer the tests already in the tree as certifications in the same run.
+5. **Read what it hands back.** A candidate no file holds, a `contradicts` and an `unstated`
+   finding all go back to `/siegard:analyse`.
+6. **Then the documentation**, as an ordinary `/siegard:analyse` increment over the adopted
+   specification. What it corrects surfaces as drift, and a behavior the business wants changed is
+   a corrective increment of `/siegard:plan-work`.
+
+The adoption is complete when `--untraced` shows no `unsurveyed` file and `--convergence` no
+`unreached` node; `/siegard:siegard-status` prints both. Nothing waits for it: new work may start
+before, and the first review that reaches an unsurveyed file pays for it.
+
 ## When an update arrives
 
 After `/reload-plugins`, the skills, the rules and the hooks are the new version together: the

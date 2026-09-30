@@ -215,6 +215,20 @@ def test_every_skill_the_rules_name_ships():
         f"as no skill"
 
 
+def test_the_route_table_counts_the_routes_it_lists():
+    """The sentence opening the table says how many routes a change can take, and a reader
+    trusts it over counting rows. Source no delivery wrote is one of them: an adoption is the
+    one route that begins without a trace (SPEC-005)."""
+    rules = CONSUMER_RULES.read_text(encoding="utf-8")
+    table = rules.split("## Which route a change takes", 1)[1].split("\n\n**", 1)[0]
+    rows = [line for line in table.splitlines()
+            if line.startswith("| ") and not line.startswith("| what changed")]
+    words = {5: "Five", 6: "Six", 7: "Seven"}
+    assert f"{words[len(rows)]} routes;" in table, f"{len(rows)} rows under the heading"
+    assert any("source no delivery wrote" in row and "`/reconcile` as an adoption" in row
+               for row in rows)
+
+
 def test_the_rules_name_no_agent():
     """Which judgment is delegated to whom is each skill's own statement, made where the
     delegation happens. An agent named in the rules would be a description of a delegation

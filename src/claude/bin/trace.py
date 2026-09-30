@@ -51,6 +51,12 @@ What this script does, and nobody else does any of it:
                                                                   also stage one certification per
                                                                   node the proofs' tests claim to
                                                                   demonstrate, composed here
+    trace.py --stage ... --adopt --node <node> ... [--outside <file> ...]
+                                                                  an adoption's staging: source no
+                                                                  delivery wrote, read on every
+                                                                  file against the candidates an
+                                                                  analysis wrote from it; no trace
+                                                                  needed to begin
     trace.py --stage ... --certify <file>                         also stage a certification per
                                                                   node the file names: its pack,
                                                                   the proof offered and the step
@@ -458,7 +464,7 @@ JUDGED = "judged"
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
                        "this pair over the file's content and the node's text as both stand, "
                        "and no finding stands open against it")
-RECORD_VERSION = "siegard-reconcile/5"
+RECORD_VERSION = "siegard-reconcile/6"
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
@@ -1315,6 +1321,9 @@ def accounted(front: dict) -> list[str]:
             problems.append(f"pairs_omitted: {entry['file']} is also under `unbound`; a pair "
                             f"can only be omitted where a binding holds it")
 
+    problems += [f"outside: {path} is also in `files`; a file is judged or kept out of the "
+                 f"judgment, never both" for path in front.get("outside") or [] if path in named]
+
     for path in sorted(set(named) - claimed - set(unbound) - omitted_files):
         problems.append(f"files: {path} is named and no node accounts for it; a file the trace "
                         f"binds nothing to belongs under `unbound`, said rather than left out")
@@ -1986,8 +1995,8 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
         print(f"\nfiles under the target: not counted — {why}")
     else:
         print(f"\nfiles under {files['offset']}: {len(files['tracked'])} tracked, "
-              f"{len(files['bound'])} bound, {len(files['untraced'])} no binding names — "
-              f"`--untraced` lists them")
+              f"{len(files['bound'])} bound, {len(files['untraced'])} no binding names "
+              f"({len(files['unsurveyed'])} unsurveyed) — `--untraced` lists them")
     if bound_unplanned:
         print(f"\n{len(bound_unplanned)} bound node(s) no initiative names — bound by a "
               f"reconciliation over source that entered outside any task, or by a raw --bind; "
@@ -2245,8 +2254,42 @@ def tracked_under(target: Path, home: Path) -> tuple[list[str] | None, str | Non
     return sorted(line for line in listed.stdout.splitlines() if line), None
 
 
+def adopted_ground(home: Path) -> tuple[set[str], set[str], list[str]]:
+    """What the adoptions in the corpus judged and what they kept out, spelled from the toplevel
+    as the trace spells a path, and every record that could not be read. Only a record carrying
+    `adopted` counts: any other reconciliation judged files the trace already bound, so a file it
+    named and left unbound says nothing about whether the file holds a fact."""
+    judged_files: set[str] = set()
+    kept_out: set[str] = set()
+    unreadable: list[str] = []
+    directory = home / RECONCILE_DIR
+    if not directory.is_dir():
+        return judged_files, kept_out, unreadable
+    roots = target_roots(home)
+    for record in sorted(directory.glob("*.md")):
+        front, why = reconciliation_or_reason(record)
+        if front is None:
+            if why is not None:
+                unreadable.append(f"{record.name}: {why}")
+            continue
+        if front.get("adopted") is not True:
+            continue
+        where = roots.get(front.get("target")) if isinstance(front.get("target"), str) else None
+        if where is None:
+            unreadable.append(f"{record.name}: names target {front.get('target')!r}, which "
+                              f"{project.PROJECT_FILE} does not declare")
+            continue
+        spelled = (lambda path: path) if where in (".", "") else (lambda path: f"{where}/{path}")
+        judged_files |= {spelled(e["path"]) for e in front.get("files") or []
+                         if isinstance(e, dict) and isinstance(e.get("path"), str)}
+        kept_out |= {spelled(path) for path in front.get("outside") or [] if isinstance(path, str)}
+    return judged_files, kept_out, unreadable
+
+
 def untraced_of(target: Path, declared: dict | None) -> tuple[dict | None, str | None]:
-    """The tracked files under the target split by whether any binding names one."""
+    """The tracked files under the target in exactly one state each — «Every tracked file under
+    a target is in exactly one state» (SPEC-005 R5): bound; judged by an adoption that bound
+    none of its candidates to it; kept outside an adoption's judgment; or unsurveyed."""
     home = home_of(target)
     tracked, why = tracked_under(target, home)
     if tracked is None:
@@ -2254,21 +2297,35 @@ def untraced_of(target: Path, declared: dict | None) -> tuple[dict | None, str |
     bound = {f["path"] for entry in (declared or {}).get("bindings") or []
              for f in entry.get("files") or []
              if isinstance(f, dict) and isinstance(f.get("path"), str)}
-    return {"offset": offset_of(target, home), "tracked": tracked,
-            "bound": [p for p in tracked if p in bound],
-            "untraced": [p for p in tracked if p not in bound]}, None
+    judged_files, kept_out, unreadable = adopted_ground(home)
+    split = {"offset": offset_of(target, home), "tracked": tracked, "unreadable": unreadable,
+             "bound": [], "holds_nothing": [], "outside": [], "unsurveyed": []}
+    for path in tracked:
+        state = ("bound" if path in bound else "holds_nothing" if path in judged_files
+                 else "outside" if path in kept_out else "unsurveyed")
+        split[state].append(path)
+    split["untraced"] = split["holds_nothing"] + split["outside"] + split["unsurveyed"]
+    return split, None
+
+
+UNTRACED_STATES = (("holds_nothing", "judged by an adoption, which bound none of its candidates to it"),
+                   ("outside", "kept outside an adoption's judgment"),
+                   ("unsurveyed", "no binding and no adoption names it"))
 
 
 def untraced(target: Path, show_all: bool = False) -> int:
-    """Every file git tracks under the target that no binding names, counted and grouped.
+    """Every file git tracks under the target that no binding names, in the state it is in.
 
     Drift is keyed by change and `--rank` by what the trace holds, so neither can see code the
     trace never reached: a file no delivery wrote and no reconciliation judged is in no report,
-    however much of the system it carries. This names it. It refuses nothing and decides
-    nothing — most files of a real system carry no domain fact and are never bound, so a count
-    here is a fact about the tree and never a floor to reach. The directories are ranked by how
-    many untraced files each holds, the tail held back as `--rank` holds it; `--all` lists every
-    file."""
+    however much of the system it carries. This names it, and tells apart the three ways a file
+    can be unbound — an adoption judged it and bound none of its candidates to it, the human kept
+    it out of an adoption's judgment, or nothing has looked at it at all — because only the last
+    is ground an adoption has not covered. «Adoption is complete when no file is unsurveyed and no
+    node is unreached» (SPEC-005 R7); `--convergence` counts the second half. It refuses nothing:
+    most files of a real system carry no domain fact and are never bound, so a count here is a
+    fact about the tree and never a floor to reach. The unsurveyed directories are ranked, the
+    tail held back as `--rank` holds it; `--all` lists every file of every state."""
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -2283,31 +2340,36 @@ def untraced(target: Path, show_all: bool = False) -> int:
     if split is None:
         print(f"cannot run: {why}", file=sys.stderr)
         return CANNOT_RUN
-    tracked, bound, left = split["tracked"], split["bound"], split["untraced"]
-    print(f"{len(tracked)} tracked file(s) under {split['offset']}: {len(bound)} bound, "
-          f"{len(left)} no binding names"
+    print(f"{len(split['tracked'])} tracked file(s) under {split['offset']}: "
+          f"{len(split['bound'])} bound, {len(split['untraced'])} no binding names"
           + ("" if declared is not None
              else f" — no trace file at {trace_path(target)}, so nothing has been bound yet"))
-    if not left:
-        return 0
+    for state, meaning in UNTRACED_STATES:
+        print(f"  {len(split[state])} {state.replace('_', '-')}: {meaning}")
+    for problem in split["unreadable"]:
+        print(f"  unread: {RECONCILE_DIR}/{problem} — the files it judged or kept out count as "
+              f"unsurveyed here")
     if show_all:
-        print("\nuntraced:")
-        for path in left:
-            print(f"  {path}")
-        return 0
-    per_dir: dict[str, int] = {}
-    for path in left:
-        parent = PurePosixPath(path).parent.as_posix()
-        per_dir[parent] = per_dir.get(parent, 0) + 1
-    rows = sorted(per_dir.items(), key=lambda row: (-row[1], row[0]))
-    print("\ndirectories by untraced files:")
-    for name, count in rows[:RANK_HELD_BACK]:
-        print(f"  {count:3d}  {name}")
-    if len(rows) > RANK_HELD_BACK:
-        print(f"  ({len(rows) - RANK_HELD_BACK} more directories; --all lists every file)")
-    else:
-        print("  (--all lists every file)")
-    return 0
+        for state, _ in UNTRACED_STATES:
+            if split[state]:
+                print(f"\n{state.replace('_', '-')}:")
+                for path in split[state]:
+                    print(f"  {path}")
+        return 1 if split["unreadable"] else 0
+    if split["unsurveyed"]:
+        per_dir: dict[str, int] = {}
+        for path in split["unsurveyed"]:
+            parent = PurePosixPath(path).parent.as_posix()
+            per_dir[parent] = per_dir.get(parent, 0) + 1
+        rows = sorted(per_dir.items(), key=lambda row: (-row[1], row[0]))
+        print("\ndirectories by unsurveyed files:")
+        for name, count in rows[:RANK_HELD_BACK]:
+            print(f"  {count:3d}  {name}")
+        if len(rows) > RANK_HELD_BACK:
+            print(f"  ({len(rows) - RANK_HELD_BACK} more directories; --all lists every file)")
+        else:
+            print("  (--all lists every file)")
+    return 1 if split["unreadable"] else 0
 
 
 def rank(target: Path, show_all: bool = False) -> int:
@@ -2505,7 +2567,8 @@ def demonstrated_certifications(records: list[Path], home: Path,
 def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           files: list[str], audit: bool = False, review: bool = False,
           also: list[str] | None = None, certify: Path | None = None,
-          demonstrated: list[Path] | None = None) -> int:
+          demonstrated: list[Path] | None = None, adopt: bool = False,
+          outside: list[str] | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -2538,8 +2601,18 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     the returns are the evidence the record is folded from, and a record whose raw answers
     survive nowhere is a judgment nobody can reopen. It is created empty beside the record's own
     reserved path, and a slug either of them already holds is the same stop a taken record slug
-    has always been."""
+    has always been.
+
+    An adoption stages source no delivery wrote. The nodes given as `also` are the candidates an
+    analysis wrote from that source, and every file's judge reads them all; unlike a review's,
+    they are bound from the fold — each to the files whose judgment holds its fact — because
+    «A binding of adopted source rests on a reconciliation record whose judgment cleared the
+    pair» (SPEC-005 R3). No trace is needed to begin: the first adoption of a target is the one
+    that writes it. A candidate is never omitted and never answered by a run here, since its
+    reading is what decides whether it is bound at all. `outside` names tracked files the human
+    keeps out of the judgment; they are reserved in the manifest and judged by no one."""
     also = list(dict.fromkeys(also or []))
+    outside = list(dict.fromkeys(outside or []))
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -2547,16 +2620,24 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         print(f"cannot run: {spec_root} is not a directory", file=sys.stderr)
         return CANNOT_RUN
     declared = load(target)
-    if declared is None:
+    if declared is None and not adopt:
         print(f"no trace file: {trace_path(target)} does not exist; nothing has been bound in "
-              f"this target, so there is no binding to reconcile and what the caller wants is a "
-              f"delivery", file=sys.stderr)
+              f"this target, so there is no binding to reconcile — what the caller wants is a "
+              f"delivery, or, for source no delivery wrote, an adoption (--adopt)",
+              file=sys.stderr)
         return CANNOT_RUN
-    problems = problems_of(declared)
-    if problems:
-        for problem in problems:
-            print(f"{trace_path(target)}: {problem}")
-        return 1
+    if declared is not None:
+        problems = problems_of(declared)
+        if problems:
+            for problem in problems:
+                print(f"{trace_path(target)}: {problem}")
+            return 1
+    else:
+        declared = {"bindings": []}
+    if adopt and not also:
+        print("cannot run: --adopt reads the candidates an analysis wrote from this source, and "
+              "none was named; pass each with --node", file=sys.stderr)
+        return CANNOT_RUN
     nodes, status = sound_specification(spec_root)
     if nodes is None:
         return status
@@ -2584,6 +2665,11 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return CANNOT_RUN
 
     traced, path_problems = traced_files_of(target, home, files)
+    if outside:
+        _, outside_problems = traced_files_of(target, home, outside)
+        path_problems += [f"--outside {problem}" for problem in outside_problems]
+        path_problems += [f"--outside {given} is also in the file set; a file is judged or kept "
+                          f"out of the judgment, never both" for given in outside if given in files]
     for problem in path_problems:
         print(f"cannot run: {problem}", file=sys.stderr)
     if path_problems:
@@ -2632,7 +2718,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 continue
             bound_here = [given for given in files
                           if any(n == node_id for n, _ in index.get(stored_of[given]) or [])]
-            if not bound_here:
+            if not bound_here and not (adopt and node_id in also):
                 certify_problems.append(f"{node_id} is bound to none of the named files; a "
                                         f"certification rides the reading of a file that encodes "
                                         f"the node, so name one the trace binds it to")
@@ -2721,7 +2807,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # a fresh reading of the node against the file, and an omission would leave it none.
             if not (audit or review) and pinned == current[stored] \
                     and bound_digest.get(node_id) == nodes[node_id]["digest"] \
-                    and (node_id, stored) not in owed_pairs and node_id not in certify_nodes:
+                    and (node_id, stored) not in owed_pairs and node_id not in certify_nodes \
+                    and node_id not in also:
                 omitted.append({"node": node_id, "file": given,
                                 "reason": "the binding computes at the file's content and at the "
                                           "node's text as both stand, and no finding stands open "
@@ -2750,7 +2837,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # no run either, and a tier that claimed it would make a caller capture a run to
             # answer a question the last bind already answered over these exact bytes.
             run_decides = decides(node_id)
-            if run_decides is not None and node_id not in certify_nodes:
+            if run_decides is not None and node_id not in certify_nodes and node_id not in also:
                 kind, step_names = run_decides
                 mechanical.append({"node": node_id, "file": given, "steps": step_names,
                                    "decided_by": kind})
@@ -2880,7 +2967,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     manifest = {"slug": slug,
                 "audit": audit,
                 "review": review,
+                "adopt": adopt,
                 "also": also,
+                "outside": sorted(outside),
                 "specification_root": str(spec_root),
                 "files": manifest_files,
                 "digests": {given: current[stored_of[given]] for given in files},
@@ -2906,14 +2995,19 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         shape = (f"staged by a review — {len(omitted)} pair(s) omitted as cleared by a judgment "
                  f"at these bytes, and {len(also)} plan node(s) read on every file without being "
                  f"bound")
+    elif adopt:
+        shape = (f"staged as an adoption — {len(also)} candidate node(s) read on every file, each "
+                 f"bound by the fold to the files that hold its fact; {len(outside)} file(s) kept "
+                 f"outside the judgment")
     else:
         shape = (f"{len(omitted)} pair(s) omittable — the binding is current and nothing is "
                  f"owed on them")
     judged_unbound = [given for given in unbound if given in judged_files]
+    judged_over = "the candidates" if adopt else "the plan's nodes"
     print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
           f"{shape}; {len(all_current)} file(s) with nothing left to judge; {len(unbound)} "
           f"file(s) the trace binds nothing to"
-          + (f", {len(judged_unbound)} of them judged over the plan's nodes alone"
+          + (f", {len(judged_unbound)} of them judged over {judged_over} alone"
              if judged_unbound else ""))
     print(f"  manifest and packs at {workspace}; "
           + (f"candidate index at {workspace / 'candidates.txt'}" if not audit else
@@ -3291,6 +3385,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         return CANNOT_RUN
 
     batch_nodes = {node for entry in manifest["files"].values() for node in entry["nodes"]}
+    adopted = set(manifest.get("also") or []) if manifest.get("adopt") else set()
     against: dict[str, list[tuple[str, dict]]] = {}
     out_of_scope: list[tuple[str, dict]] = []
     named_mechanical: list[tuple[str, dict]] = []
@@ -3324,7 +3419,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                         f"the trace binds nothing to a fact no node holds is `unstated`")
                     continue
                 tainted.setdefault(given, []).append(finding)
-            elif node in batch_nodes:
+            elif node in batch_nodes or node in adopted:
                 against.setdefault(node, []).append((given, finding))
             elif node in {pair["node"] for pair in tier}:
                 # A judge may name a node a run decided — it read the file, not that node's text,
@@ -3347,7 +3442,39 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                for given, front in returns.items() for entry in front["read"]}
 
     entries = []
-    for node in sorted(batch_nodes):
+    for node in sorted(adopted):
+        # A file the trace already binds the node to must still hold it, as on any
+        # reconciliation; a file it was only read on is ground it may or may not reach —
+        # «An adopted node binds the files whose judgment holds its fact and no others» (SPEC-005 R4).
+        bound_in = sorted(given for given, meta in manifest["files"].items()
+                          if node in meta["nodes"])
+        judged_in = sorted(given for given in manifest["files"] if (given, node) in read_of)
+        holders = [given for given in judged_in
+                   if read_of[(given, node)]["held_at"].strip().lower() != NOWHERE]
+        found = against.get(node) or []
+        taint = [given for given in bound_in if given in tainted]
+        lost = [given for given in bound_in if given not in holders]
+        if holders and not found and not taint and not lost:
+            how = "\n".join(f"{given}: held at {read_of[(given, node)]['held_at']} — "
+                            f"{read_of[(given, node)]['evidence']}" for given in holders)
+            entries.append({"node": node, "conforms": True, "how": how,
+                            "encoded_at": holders})
+            continue
+        parts = [f"{given}, {finding['where']}: {finding['evidence']} — {finding['cost']}"
+                 for given, finding in found]
+        if not holders:
+            parts.append("no file of the set holds this fact: every judge that read the node "
+                         "answered `nowhere` — a candidate the source does not carry is the "
+                         "analysis's to revisit, and it is bound to nothing")
+        if lost and not found:
+            parts.append(f"{', '.join(lost)} is bound to this node and no longer holds its fact")
+        parts += [f"{given} returned a finding naming no node ({finding['where']}: "
+                  f"{finding['evidence']} — {finding['cost']}), and an unattributed finding "
+                  f"holds every node of that file its judge was handed"
+                  for given in taint for finding in tainted[given]]
+        entries.append({"node": node, "conforms": False, "how": "\n".join(parts),
+                        "observed_at": sorted(set(judged_in) | set(bound_in))})
+    for node in sorted(batch_nodes - adopted):
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
         holders = [given for given in bound_in
@@ -3491,6 +3618,12 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     if manifest.get("audit"):
         notes.append("Staged as an audit: the source did not drift — every pair the trace held "
                      "for these files was re-judged deliberately, standing claims included.")
+    if manifest.get("adopt"):
+        notes.append(f"Staged as an adoption of source no delivery wrote: "
+                     f"{len(adopted)} candidate node(s) were read on every file, and each "
+                     f"cleared one is bound to the files whose judgment holds its fact"
+                     + (f"; {len(manifest.get('outside') or [])} file(s) were kept outside the "
+                        f"judgment, listed under `outside`." if manifest.get("outside") else "."))
     if manifest.get("review"):
         read_also = manifest.get("also") or []
         notes.append("Staged by a review over files a delivery wrote: every pair a delivery "
@@ -3535,8 +3668,15 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
              "nodes": entries}
     if unstated:
         front["unstated"] = sorted(unstated, key=lambda e: (e["file"], e["where"]))
-    if manifest["unbound"]:
-        front["unbound"] = manifest["unbound"]
+    claimed = {path for entry in entries
+               for path in entry.get("encoded_at") or entry.get("observed_at") or []}
+    unbound_now = [given for given in manifest["unbound"] if given not in claimed]
+    if unbound_now:
+        front["unbound"] = unbound_now
+    if manifest.get("adopt"):
+        front["adopted"] = True
+        if manifest.get("outside"):
+            front["outside"] = manifest["outside"]
     if manifest["omitted"]:
         front["pairs_omitted"] = manifest["omitted"]
     front["notes"] = "\n".join(notes)
@@ -4083,6 +4223,7 @@ def main() -> int:
     do_audit = "--audit" in args
     do_review = "--review" in args
     do_untraced = "--untraced" in args
+    do_adopt = "--adopt" in args
     also: list[str] = []
     while "--node" in args:
         at = args.index("--node")
@@ -4090,6 +4231,15 @@ def main() -> int:
             print("cannot run: --node takes a specification node identity", file=sys.stderr)
             return CANNOT_RUN
         also.append(args[at + 1])
+        del args[at:at + 2]
+    outside: list[str] = []
+    while "--outside" in args:
+        at = args.index("--outside")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --outside takes a file spelled from the target source root",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        outside.append(args[at + 1])
         del args[at:at + 2]
     demonstrated: list[Path] = []
     while "--demonstrated" in args:
@@ -4140,7 +4290,7 @@ def main() -> int:
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--rank", "--changed", "--audit", "--review",
-                         "--convergence", "--untraced")]
+                         "--convergence", "--untraced", "--adopt")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -4180,6 +4330,18 @@ def main() -> int:
     if do_review and not do_stage:
         print("cannot run: --review is a mode of --stage", file=sys.stderr)
         return CANNOT_RUN
+    if do_adopt and not do_stage:
+        print("cannot run: --adopt is a mode of --stage", file=sys.stderr)
+        return CANNOT_RUN
+    if do_adopt and (do_audit or do_review):
+        print("cannot run: --adopt is its own staging; an adoption reads source no delivery "
+              "wrote against the candidates an analysis wrote from it, an audit re-reads claims "
+              "nothing moved, and a review re-reads files a delivery wrote", file=sys.stderr)
+        return CANNOT_RUN
+    if outside and not do_adopt:
+        print("cannot run: --outside is a mode of --stage --adopt; it names the files an "
+              "adoption keeps out of the judgment", file=sys.stderr)
+        return CANNOT_RUN
     if do_audit and do_review:
         print("cannot run: --audit and --review are two stagings; a review re-reads files a "
               "delivery wrote, an audit re-reads claims nothing moved", file=sys.stderr)
@@ -4188,9 +4350,9 @@ def main() -> int:
         print("cannot run: --demonstrated is a mode of --stage --review; a proof's claim is "
               "settled by the review that reads the proof, and by nothing else", file=sys.stderr)
         return CANNOT_RUN
-    if also and not do_review:
-        print("cannot run: --node is a mode of --stage --review; a reconciliation's node set is "
-              "the trace's alone", file=sys.stderr)
+    if also and not (do_review or do_adopt):
+        print("cannot run: --node is a mode of --stage --review or --stage --adopt; a "
+              "reconciliation's node set is the trace's alone", file=sys.stderr)
         return CANNOT_RUN
     if captured_run is not None and not do_fold:
         print("cannot run: --run is a mode of --fold; it names the run that answers the "
@@ -4280,13 +4442,14 @@ def main() -> int:
     if do_stage:
         if len(args) < 5 or any(a.startswith("--") for a in args):
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
-                  "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...]] "
-                  "[--certify <file>], every file spelled from the target source root",
+                  "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...] | "
+                  "--adopt --node <node> ... [--outside <file> ...]] [--certify <file>], every "
+                  "file spelled from the target source root",
                   file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
-                     do_review, also, certify, demonstrated)
+                     do_review, also, certify, demonstrated, do_adopt, outside)
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):

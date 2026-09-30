@@ -686,7 +686,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/5"
+    assert front["contract_version"] == "siegard-reconcile/6"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -1843,3 +1843,182 @@ def test_the_staging_reads_the_corpus_once(consumer, monkeypatch):
                          [FILE, SECOND])
     assert status == 0
     assert len(walks) == 1, f"the corpus was walked {len(walks)} time(s)"
+
+
+# ---------------------------------------------------------------- adoption (SPEC-005)
+
+
+RULE = "rules/troubleshooting/hypothesis-requires-evidence"
+THIRD = "src/orders/index.ts"
+KEPT_OUT = "src/orders/config.ts"
+CANDIDATES = [NODE, OTHER, RULE]
+
+
+@pytest.fixture
+def adopting(tmp_path: Path) -> Path:
+    """A consumer whose source no delivery wrote: no trace, four tracked files, a specification
+    an analysis wrote from that source."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    spec_root = tmp_path / "specs"
+    shutil.copytree(FIXTURE, spec_root)
+    shutil.rmtree(spec_root / "projections", ignore_errors=True)
+    target = tmp_path / "backend"
+    (target / "src/orders").mkdir(parents=True)
+    for given in (FILE, SECOND, THIRD, KEPT_OUT):
+        (target / given).write_text(f"export const x = '{given}';\n", encoding="utf-8")
+    (tmp_path / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"}}) + "\n",
+        encoding="utf-8")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], check=True)
+    return tmp_path
+
+
+def adopt_staged(consumer: Path, *extra, slug: str = "adopt-orders", files=None, nodes=None):
+    workspace = consumer / f"ws-{slug}"
+    node_args = [arg for node in (nodes or CANDIDATES) for arg in ("--node", node)]
+    done = run("--stage", consumer / "backend", consumer / "specs", slug, workspace,
+               *(files or [FILE, SECOND, THIRD]), "--adopt", *node_args, *extra)
+    return done, workspace
+
+
+def read_as(held: dict[str, str]) -> dict:
+    return {"read": [{"node": node, "held_at": where,
+                      "evidence": "export const x" if where != "nowhere" else "no construct"}
+                     for node, where in held.items()]}
+
+
+ADOPT_PREMISE = {"title": "Adopt the orders module",
+                 "summary": "Source no delivery wrote, read against the nodes an analysis wrote "
+                            "from it; the source did not change.",
+                 "target": "backend",
+                 "files": [{"path": given, "change": "unchanged; adopted as it stands"}
+                           for given in (FILE, SECOND, THIRD)]}
+
+
+def adopted_record(adopting: Path, returns: dict[str, dict], slug: str = "adopt-orders"):
+    for given, front in returns.items():
+        save_return(adopting, slug, given, front)
+    return folded(adopting, slug, ADOPT_PREMISE)
+
+
+def test_an_adoption_stages_without_a_trace_and_reads_every_candidate_on_every_file(adopting):
+    assert not (adopting / "siegard-trace.json").exists()
+    done, workspace = adopt_staged(adopting, "--outside", KEPT_OUT)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "staged as an adoption — 3 candidate node(s)" in done.stdout
+    manifest = manifest_of(workspace)
+    assert manifest["adopt"] is True and manifest["outside"] == [KEPT_OUT]
+    assert sorted(manifest["files"]) == sorted([FILE, SECOND, THIRD])
+    assert all(sorted(meta["also"]) == sorted(CANDIDATES) for meta in manifest["files"].values())
+
+
+def test_a_staging_without_a_trace_names_the_adoption_route(adopting):
+    done = run("--stage", adopting / "backend", adopting / "specs", "plain", adopting / "ws",
+               FILE)
+    assert done.returncode == 2
+    assert "an adoption (--adopt)" in done.stderr
+
+
+@pytest.mark.parametrize("extra,said", [
+    ((), "none was named"),
+    (("--review",), "--adopt is its own staging"),
+    (("--audit",), "--adopt is its own staging"),
+])
+def test_an_adoption_needs_candidates_and_is_no_other_staging(adopting, extra, said):
+    nodes = [] if not extra else None
+    workspace = adopting / "ws-bad"
+    node_args = [arg for node in (CANDIDATES if nodes is None else nodes)
+                 for arg in ("--node", node)]
+    done = run("--stage", adopting / "backend", adopting / "specs", "bad", workspace, FILE,
+               "--adopt", *node_args, *extra)
+    assert done.returncode == 2
+    assert said in done.stderr
+
+
+def test_outside_belongs_to_an_adoption_and_never_to_the_file_set(adopting):
+    done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x", FILE,
+               "--outside", KEPT_OUT)
+    assert done.returncode == 2 and "--outside is a mode of --stage --adopt" in done.stderr
+    done, _ = adopt_staged(adopting, "--outside", FILE)
+    assert done.returncode == 2 and "is also in the file set" in done.stderr
+
+
+def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopting):
+    """SPEC-005 R4: an adopted node binds the files whose judgment holds its fact and no others;
+    a candidate no file holds is reported and bound to nothing, and a file holding no candidate
+    is unbound."""
+    staged_done, _ = adopt_staged(adopting, "--outside", KEPT_OUT)
+    assert staged_done.returncode == 0, staged_done.stderr
+    done, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert front["contract_version"] == "siegard-reconcile/6"
+    assert front["adopted"] is True and front["outside"] == [KEPT_OUT]
+    by_node = {entry["node"]: entry for entry in front["nodes"]}
+    assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
+    assert by_node[OTHER]["conforms"] and by_node[OTHER]["encoded_at"] == [FILE]
+    assert by_node[RULE]["conforms"] is False
+    assert "no file of the set holds this fact" in by_node[RULE]["how"]
+    assert by_node[RULE]["observed_at"] == sorted([FILE, SECOND, THIRD]), \
+        "a candidate held nowhere was read on every file, and says so"
+    assert "unbound" not in front, "every file is accounted for by a node it was read against"
+    assert run("--reconciliation", record).returncode == 0
+    bound = run("--bind-record", adopting / "backend", adopting / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    trace_file = json.loads((adopting / "siegard-trace.json").read_text(encoding="utf-8"))
+    assert {e["node"]: sorted(f["path"] for f in e["files"]) for e in trace_file["bindings"]} == {
+        NODE: sorted([f"backend/{FILE}", f"backend/{SECOND}"]), OTHER: [f"backend/{FILE}"]}
+
+
+def test_a_contradiction_against_a_candidate_leaves_it_unbound(adopting):
+    adopt_staged(adopting)
+    contradicted = read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"})
+    contradicted["findings"] = [{"file": FILE, "where": "line 1", "node": OTHER,
+                                 "kind": "contradicts", "evidence": "export const x",
+                                 "cost": "the node says otherwise",
+                                 "correction": "the source or the node"}]
+    done, record = adopted_record(adopting, {
+        FILE: contradicted,
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    by_node = {entry["node"]: entry for entry in front["nodes"]}
+    assert by_node[OTHER]["conforms"] is False and FILE in by_node[OTHER]["observed_at"]
+    assert by_node[NODE]["conforms"] is True
+
+
+def test_untraced_tells_the_four_states_apart_after_an_adoption(adopting):
+    """SPEC-005 R5: bound, holds-nothing, outside, unsurveyed — one state per tracked file."""
+    (adopting / "backend/src/orders/later.ts").write_text("x\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    adopt_staged(adopting, "--outside", KEPT_OUT)
+    _, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    done = run("--untraced", adopting / "backend", "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "5 tracked file(s) under backend: 2 bound, 3 no binding names" in done.stdout
+    assert "  1 holds-nothing:" in done.stdout and "  1 outside:" in done.stdout
+    assert "  1 unsurveyed:" in done.stdout
+    assert f"holds-nothing:\n  backend/{THIRD}" in done.stdout
+    assert f"outside:\n  backend/{KEPT_OUT}" in done.stdout
+    assert "unsurveyed:\n  backend/src/orders/later.ts" in done.stdout
+
+
+def test_outside_needs_adopted_in_the_contract():
+    from jsonschema import Draft202012Validator
+    schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
+    base = {"contract_version": "siegard-reconcile/6", "title": "t", "summary": "s",
+            "target": "backend", "files": [{"path": FILE, "change": "c"}],
+            "nodes": [], "unbound": [FILE], "outside": [KEPT_OUT]}
+    assert list(Draft202012Validator(schema).iter_errors(base))
+    assert not list(Draft202012Validator(schema).iter_errors({**base, "adopted": True}))

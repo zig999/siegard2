@@ -57,7 +57,7 @@ def consumer(tmp_path: Path) -> Path:
 
 def record_of(nodes: list[dict], files: list[dict] | None = None, **rest) -> dict:
     front = {
-        "contract_version": "siegard-reconcile/5",
+        "contract_version": "siegard-reconcile/6",
         "title": "Hand correction to order placement",
         "summary": "place() answered with the row; corrected by hand and confirmed correct.",
         "target": "backend",
