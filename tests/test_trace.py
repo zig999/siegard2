@@ -186,6 +186,13 @@ def test_a_clean_bind_prints_no_stale_receipt(consumer):
     assert "stale" not in done.stdout
 
 
+def test_binding_a_context_descriptor_is_refused(consumer):
+    done = bind(consumer, node="domain/troubleshooting/_context")
+    assert done.returncode == 1
+    assert "is a context descriptor" in done.stdout
+    assert not (consumer / "siegard-trace.json").is_file()
+
+
 def test_binding_an_unknown_node_is_refused(consumer):
     done = bind(consumer, node="domain/troubleshooting/ghost")
     assert done.returncode == 1

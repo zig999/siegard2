@@ -1436,6 +1436,16 @@ def test_a_plan_node_the_specification_does_not_hold_is_refused(consumer):
     assert "holds no node domain/troubleshooting/absent" in done.stderr
 
 
+def test_a_context_descriptor_is_refused_as_a_plan_node(consumer):
+    """A descriptor carries no operative claim and no return contract can spell it, so a judge
+    handed one returns what the fold must refuse — refused here, before a pack is written."""
+    assert (consumer / "specs" / "domain" / "troubleshooting" / "_context.md").is_file()
+    done, workspace = review_staged(consumer, "--node", "domain/troubleshooting/_context")
+    assert done.returncode == 2
+    assert "domain/troubleshooting/_context is a context descriptor" in done.stderr
+    assert not workspace.exists()
+
+
 def test_review_and_node_are_modes_of_stage_and_exclude_audit(consumer):
     done = run("--check", consumer / "backend", "--review")
     assert done.returncode == 2 and "--review is a mode of --stage" in done.stderr

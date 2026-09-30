@@ -122,6 +122,10 @@ specification shifted under those files, `orphaned` still says the node is gone.
 silence: a receipt says how many findings were held back and `--all` lists them, which is what
 keeps a declaration a consumer can measure from becoming one it forgets it made.
 
+A context descriptor, `domain/<context>/_context`, is never bound and never staged. It carries a
+context's description and classification and no operative claim, so no file holds it and no
+return contract can name it: `--bind` refuses it, and so does `--stage --review --node`.
+
 `--bind-record` is the form a delivery uses. An implementation record names every node the source
 encodes and
 every file each one reached; binding them one invocation at a time pays a full specification
@@ -1143,6 +1147,22 @@ def opened(target: Path, spec_root: Path,
     return declared, None
 
 
+def is_descriptor(node_id: str) -> bool:
+    """A context descriptor — `domain/<context>/_context` — and not a node a file can answer to.
+
+    It holds a context's description, responsibility and strategic classification, and no
+    operative claim: «every operative claim lives in exactly one addressable home» (SPEC-001 R7),
+    and that home is an element, a rule, a scenario, a contract or a constraint. So no file holds
+    it, no judgment can return it — every return contract spells a node without the underscore —
+    and a binding to it would assert a link to a fact that does not exist."""
+    parts = node_id.split("/")
+    return len(parts) == 3 and parts[0] == "domain" and parts[2] == "_context"
+
+
+DESCRIPTOR_REFUSAL = ("is a context descriptor: it carries no operative claim, so no file holds "
+                      "it and no judgment can return it")
+
+
 def sound_specification(spec_root: Path) -> tuple[dict[str, dict] | None, int]:
     """Every node the specification holds, or nothing and the exit status. Read through spec.py's
     own pipeline, because a trace bound against a specification that does not hold together records
@@ -1181,6 +1201,9 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
         return status
     if node_id not in nodes:
         print(f"cannot bind: {spec_root} holds no node {node_id}")
+        return 1
+    if is_descriptor(node_id):
+        print(f"cannot bind: {node_id} {DESCRIPTOR_REFUSAL}")
         return 1
 
     home = home_of(target)
@@ -2445,6 +2468,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         print(f"cannot run: {spec_root} holds no node {', '.join(unknown)}; a --node is read on "
               f"every file as the specification states it, and one the specification does not "
               f"hold is nothing to read", file=sys.stderr)
+        return CANNOT_RUN
+    descriptors = [node_id for node_id in also if is_descriptor(node_id)]
+    if descriptors:
+        print(f"cannot run: --node {', '.join(descriptors)} {DESCRIPTOR_REFUSAL}; name the "
+              f"context's elements, rules, scenarios, contracts or constraints instead",
+              file=sys.stderr)
         return CANNOT_RUN
 
     home = home_of(target)
