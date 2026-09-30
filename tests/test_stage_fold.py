@@ -2293,3 +2293,18 @@ def test_ledger_with_stage_is_a_mode_of_adopt(adopting):
     done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x", FILE,
                "--ledger", ledger)
     assert done.returncode == 2 and "is a mode of --adopt" in done.stderr
+
+
+def test_a_pair_stamped_against_an_earlier_node_text_is_never_omitted(consumer):
+    """The omission guard reads the pair's own stamp, not the entry's: a file a later bind left
+    at the node's earlier text is owed a judge even while the entry's digest is current."""
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8") + "\nMoved.\n", encoding="utf-8")
+    third = "src/orders/ship.ts"
+    (consumer / "backend" / third).write_text("export function ship() {}\n", encoding="utf-8")
+    assert run("--bind", consumer / "backend", consumer / "specs", NODE, third).returncode == 0
+    done, workspace = staged(consumer, files=[SECOND])
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["omitted"] == [], "(NODE, SECOND) computes at the file but not at the node's text it was stamped against"
+    assert NODE in manifest["files"][SECOND]["nodes"]

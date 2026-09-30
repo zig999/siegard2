@@ -84,8 +84,11 @@ with a question about what to do. You need:
   reads the specification; what closes a declaration nobody claims is the bind that claims it,
   and the correction says so rather than asking the code to read what it cannot.
 - **`kind` says which of those a finding is, in one word, and the fold routes on it.**
-  The first — a fact the source states and no node holds — is `unstated`: its subject is the
+  The first — a fact the code states and no node holds — is `unstated`: its subject is the
   specification, not the pair, and what closes it is the analysis that gives the fact a node.
+  A fact only a comment or a docstring states, that no code and no emitted text carries, is not
+  `unstated` and not a finding: prose is what someone believed, its route is the comment route
+  that removes it, and the analysis reads code for its facts. Name it in `looked_past`.
   A comment or a docstring restating a node's fact the code holds is `restates`: the pair
   conforms, the node binds, and what closes it is removing the prose. Never file emitted text as
   `restates` — removing it would change what the system tells someone. The rest are `contradicts`: a node governs the fact and

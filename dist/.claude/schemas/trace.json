@@ -32,7 +32,7 @@
         },
         "digest": {
           "$ref": "#/$defs/pin",
-          "description": "The node's content digest as `bin/trace.py --bind` read it, the same value `spec.py --digest` computes for it. Diverging from what the node computes to now says the specification moved since this binding was written — the files below may no longer be what the node asks for."
+          "description": "The node's content digest as `bin/trace.py --bind` last read it, the same value `spec.py --digest` computes for it. Diverging from what the node computes to now says the specification moved since this binding was last written — the files below may no longer be what the node asks for. Which text each file was stamped against is the file's own `node_digest`; this is the latest of them."
         },
         "files": {
           "type": "array",
@@ -88,6 +88,10 @@
       "properties": {
         "path": { "$ref": "#/$defs/tracedFile/properties/path" },
         "digest": { "$ref": "#/$defs/tracedFile/properties/digest" },
+        "node_digest": {
+          "$ref": "#/$defs/pin",
+          "description": "The node's content digest this file was last stamped against — the node as the bind that named this file read it. A bind stamps only the files its record names, so a node bound in two targets and rebound from one keeps the other target's files at the earlier text, and `--check` reports each such file as `moved` on its own. Absent on an entry written before the field existed: the binding's own `digest` is what that file was stamped against, and every reader takes it so."
+        },
         "judged": {
           "const": true,
           "description": "Present only where a reconciliation's judgment cleared this pair at this digest: `--bind-record` writes it when the record it binds from is a reconciliation. Absent means the pair was stamped by a delivery or by hand and has not been read against the node since. A review's staging omits a pair only where it is present, and a later bind of the pair from an implementation record or by hand writes the entry without it."

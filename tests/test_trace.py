@@ -71,7 +71,8 @@ def test_binding_creates_the_file_beside_where_siegard_json_would_sit(consumer):
     assert entry["node"] == NODE
     assert entry["digest"].startswith("sha256:")
     assert entry["files"] == [{"path": "backend/src/orders/place.ts",
-                               "digest": entry["files"][0]["digest"]}]
+                               "digest": entry["files"][0]["digest"],
+                               "node_digest": entry["digest"]}]
 
 
 def test_a_rebind_extends_the_files_list_by_default(consumer):
@@ -1330,3 +1331,39 @@ def test_convergence_reads_a_work_root_nobody_planned_into_as_no_initiative(cons
     (consumer / "a-file").write_text("x\n", encoding="utf-8")
     done = run("--convergence", consumer / "backend", consumer / "specs", consumer / "a-file")
     assert done.returncode == 2 and "is not a directory" in done.stderr
+
+
+# ------------------------------------------- a file is stamped against the node it was read at
+
+
+def test_a_bind_restamps_only_the_files_its_record_names(consumer):
+    """A node bound to two files and rebound from a record naming one: the other file keeps the
+    node text it was read against, and `--check` reports it moved on its own — the cross-target
+    restamp that once silenced 22 files' drift."""
+    other = "src/orders/ship.ts"
+    (consumer / "backend" / other).write_text("export function ship() {}\n", encoding="utf-8")
+    assert bind(consumer).returncode == 0
+    node_file = consumer / "specs" / f"{NODE}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8") + "\nMoved.\n", encoding="utf-8")
+    assert bind(consumer, file=other).returncode == 0
+    trace_file = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
+    [entry] = [e for e in trace_file["bindings"] if e["node"] == NODE]
+    stamped = {f["path"]: f["node_digest"] for f in entry["files"]}
+    assert stamped[f"backend/{other}"] == entry["digest"]
+    assert stamped[f"backend/{FILE}"] != entry["digest"], "kept at the text it was read against"
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 1, done.stdout
+    assert f"{NODE}: backend/{FILE} was stamped against" in done.stdout
+    assert "1 moved:" in done.stdout and "0 code" in done.stdout
+
+
+def test_a_file_stamped_before_the_field_existed_reads_as_stamped_at_the_binding(consumer):
+    assert bind(consumer).returncode == 0
+    path = consumer / "siegard-trace.json"
+    declared = json.loads(path.read_text(encoding="utf-8"))
+    for entry in declared["bindings"]:
+        for held in entry["files"]:
+            held.pop("node_digest", None)
+    path.write_text(json.dumps(declared, indent=2) + "\n", encoding="utf-8")
+    done = run("--check", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr

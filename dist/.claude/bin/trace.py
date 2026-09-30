@@ -90,7 +90,9 @@ finding repeats on every run forever. A node whose text moved is `moved`, and a 
 or vanished is `code`; both are true statements about real drift, and each has one route, stated
 in the class's own line: `/reconcile` over the bound files re-reads them against the node as it
 stands, a delivery of a task implementing the node restamps it, and a file gone from the tree is
-`--release`'s. A binding a test decides whose test's text changed is `proof`:
+`--release`'s. A file is stamped against the node's text it was last read at, and a bind stamps only the files its
+record names: a node bound in two targets and rebound from one keeps the other's files at the
+earlier text, and each of those is `moved` on its own until something reads it. A binding a test decides whose test's text changed is `proof`:
 the certification was of that text, and until a judgment certifies the test as it now stands the
 binding is decided by reading again — its `code` drift, if any, is still listed, and still a
 reconciliation's. Only the first is `--prune`'s, and `--prune` touches only it:
@@ -456,9 +458,10 @@ ORPHANED, MOVED, PROOF, CODE = "orphaned", "moved", "proof", "code"
 CLASSES = {
     ORPHANED: "bound to a node the specification no longer holds — no bind can repair these, "
               "and `--prune` is the only thing that clears them",
-    MOVED: "bound to a node whose text moved since the bind; `/reconcile` over the bound files "
-           "re-reads them against the node as it stands, and a delivery of a task implementing "
-           "the node restamps it",
+    MOVED: "bound to a node whose text moved since the bind, or a file stamped against an "
+           "earlier text of a node a later bind restamped elsewhere; `/reconcile` over the bound "
+           "files re-reads them against the node as it stands, and a delivery of a task "
+           "implementing the node restamps it",
     PROOF: "decided by a test whose text changed since it was certified — the binding is "
            "decided by reading again until a judgment certifies the test as it now stands",
     CODE: "bound to a file that changed or is gone; `/reconcile` over the files re-reads a file "
@@ -481,6 +484,15 @@ CONVERGENCE = {
 }
 DECIDED_BY_TEST = "test"
 JUDGED = "judged"
+NODE_DIGEST = "node_digest"
+
+
+def stamped_against(entry: dict, held: dict) -> str | None:
+    """The node's digest this file was last stamped against. Written per file since a bind
+    stamps only the files its record names; a file written before that carries none, and the
+    binding's own digest — the node as the entry was last written — is what it was stamped
+    against, exactly as every reader took it before the field existed."""
+    return held.get(NODE_DIGEST) or entry.get("digest")
 # The reason a review writes on a pair it omits. `omitted_problems` reads it back to know the
 # omission rests on a judgment and not only on current digests, so it is matched, never paraphrased.
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
@@ -734,6 +746,20 @@ def drift_of(declared: dict, home: Path,
             findings.append((MOVED, node_id, None,
                              f"{node_id}: bound at {digest}, now {current['digest']}; "
                              f"the specification moved since this bind"))
+        else:
+            # The node stands where the entry was last written, and a file of it may still have
+            # been stamped against an earlier text: a bind restamps the files its record names,
+            # and the rest keep the digest they were read against. Such a file is `moved` on its
+            # own — nobody read it against the node as it stands — and a reader who saw only the
+            # entry's digest would take the whole node for current.
+            for file_entry in entry.get("files") or []:
+                stamped = stamped_against(entry, file_entry)
+                if stamped != digest:
+                    findings.append((MOVED, node_id, file_entry["path"],
+                                     f"{node_id}: {file_entry['path']} was stamped against "
+                                     f"{stamped}, and the node now reads {digest}; a later bind "
+                                     f"restamped the node on other files and nobody read this "
+                                     f"one against it"))
         for file_entry in entry.get("files") or []:
             where = file_entry["path"]
             path = home / where
@@ -916,11 +942,15 @@ def fold(declared: dict, node_id: str, digest: str, traced_files: list[dict],
     dropped = (sorted(entry["path"] for entry in existing.get("files") or []
                       if entry["path"] not in given)
                if replace and existing is not None else [])
+    stamped_now = [dict(entry, **{NODE_DIGEST: digest}) for entry in traced_files]
     if replace or existing is None:
-        files = traced_files
+        files = stamped_now
     else:
-        files = [entry for entry in existing.get("files") or []
-                 if entry["path"] not in given] + traced_files
+        # A file this bind does not name keeps the digest it was stamped against — the entry's
+        # own where it carried none — so the node moving on is drift on that file, never a
+        # restamp nobody read.
+        files = [dict(entry, **{NODE_DIGEST: stamped_against(existing, entry)})
+                 for entry in existing.get("files") or [] if entry["path"] not in given] + stamped_now
     files = sorted(files, key=lambda entry: entry["path"])
     bindings = [entry for entry in declared["bindings"] if entry.get("node") != node_id]
     written = {"node": node_id, "digest": digest, "files": files}
@@ -2971,13 +3001,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     stored_of = {given: (given if offset == "." else f"{offset}/{given}") for given in files}
 
     index: dict[str, list[tuple[str, str]]] = {}
-    bound_digest: dict[str, str] = {}
+    pair_node_digest: dict[tuple[str, str], str | None] = {}
     judged_pairs: set[tuple[str, str]] = set()
     for entry in declared.get("bindings") or []:
-        bound_digest[entry["node"]] = entry.get("digest")
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 index.setdefault(held["path"], []).append((entry["node"], held["digest"]))
+                pair_node_digest[(entry["node"], held["path"])] = stamped_against(entry, held)
                 if held.get(JUDGED) is True:
                     judged_pairs.add((entry["node"], held["path"]))
 
@@ -3042,8 +3072,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # and neither was asked about the sentence that replaced it.
     decided = {} if (audit or review) else decided_constraints(home, offset)
     by_test = {} if (audit or review) else test_decided(declared, home, offset)
-    def decides(node_id: str) -> tuple[str, list[str]] | None:
-        if bound_digest.get(node_id) != nodes[node_id]["digest"]:
+    def decides(node_id: str, stored: str) -> tuple[str, list[str]] | None:
+        if pair_node_digest.get((node_id, stored)) != nodes[node_id]["digest"]:
             return None
         if node_id in by_test:
             return DECIDED_BY_TEST, [by_test[node_id]]
@@ -3101,7 +3131,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # A node being certified is read whatever its digest says: the certification rides
             # a fresh reading of the node against the file, and an omission would leave it none.
             if not (audit or review) and pinned == current[stored] \
-                    and bound_digest.get(node_id) == nodes[node_id]["digest"] \
+                    and pair_node_digest.get((node_id, stored)) == nodes[node_id]["digest"] \
                     and (node_id, stored) not in owed_pairs and node_id not in certify_nodes \
                     and node_id not in adopted_all:
                 omitted.append({"node": node_id, "file": given,
@@ -3120,7 +3150,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # corpus answers both ways is read too: `judged` records the clearance, and a finding
             # standing beside it is a judgment the clearance does not settle.
             if review and not audit and pinned == current[stored] \
-                    and bound_digest.get(node_id) == nodes[node_id]["digest"] \
+                    and pair_node_digest.get((node_id, stored)) == nodes[node_id]["digest"] \
                     and (node_id, stored) in judged_pairs \
                     and (node_id, stored) not in owed_pairs \
                     and (node_id, stored) not in both_ways \
@@ -3131,7 +3161,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # After the omission guard and never before it: a pair nothing has to re-decide needs
             # no run either, and a tier that claimed it would make a caller capture a run to
             # answer a question the last bind already answered over these exact bytes.
-            run_decides = decides(node_id)
+            run_decides = decides(node_id, stored)
             if run_decides is not None and node_id not in certify_nodes \
                     and node_id not in adopted_all:
                 kind, step_names = run_decides
@@ -4145,12 +4175,12 @@ def omitted_problems(record: Path, declared: dict, home: Path,
 
     bound: dict[tuple[str, str], str] = {}
     judged_pairs: set[tuple[str, str]] = set()
-    node_pin: dict[str, str] = {}
+    node_pin: dict[tuple[str, str], str | None] = {}
     for entry in declared.get("bindings") or []:
-        node_pin[entry.get("node")] = entry.get("digest")
         for held in entry.get("files") or []:
             if isinstance(held, dict) and isinstance(held.get("path"), str):
                 bound[(entry.get("node"), held["path"])] = held.get("digest")
+                node_pin[(entry.get("node"), held["path"])] = stamped_against(entry, held)
                 if held.get(JUDGED) is True:
                     judged_pairs.add((entry.get("node"), held["path"]))
 
@@ -4174,7 +4204,7 @@ def omitted_problems(record: Path, declared: dict, home: Path,
                             f"since the binding was stamped, so the judgment the omission points "
                             f"at was over different bytes; the pair was owed a judge")
             continue
-        if nodes is not None and node_pin.get(node_id) != (nodes.get(node_id) or {}).get("digest"):
+        if nodes is not None and node_pin.get((node_id, stored)) != (nodes.get(node_id) or {}).get("digest"):
             problems.append(f"pairs_omitted: {node_id} over {stored} is stale on the node's own "
                             f"side — its text moved since the binding was stamped, so the "
                             f"judgment the omission points at was over a different sentence; the "
