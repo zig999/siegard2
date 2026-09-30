@@ -592,18 +592,25 @@ A finding left in the notes and not in the report is a finding nobody will act o
 
 The same order, with four differences, each held by the scripts rather than by this prose.
 
-- **Stage with `--adopt`.** Pass every candidate with `--node` and every file kept out with
-  `--outside`:
+- **Stage with `--adopt`, over the ledger.** Where `/analyse` wrote a ledger beside the survey
+  material — its handoff names it — pass it, and the files the human keeps out with `--outside`:
 
   ```
   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
-      <slug> <workspace> <each named path> --adopt --node <candidate> [--node ...] \
+      <slug> <workspace> --adopt --ledger <ledger.md> [<each named path>] \
       [--outside <path> ...] [--certify <certifications file>]
   ```
 
-  No trace is needed; a file the trace already binds keeps its own node set beside the
-  candidates. Every candidate goes to every file's judge, none is omitted and none is answered by
-  a run, because its reading is what decides whether it is bound at all.
+  The file set is the material's areas, or the named subset of them; each file's judge is handed
+  the candidates the ledger landed that file's own facts in — «Every fact line of the material
+  lands in a node or is left out with a stated reason» (SPEC-005 R8), so the pack is the nodes
+  that file's facts reached and not the whole increment. A file no fact names is handed no judge
+  and stays unbound. The candidate index still lists every candidate with the files it is read
+  on, for a fact a judge meets that its own pack does not settle. Where no ledger exists, name
+  every candidate with `--node` instead, and every file's judge reads them all. No trace is
+  needed either way; a file the trace already binds keeps its own node set beside the
+  candidates. No candidate is omitted and none is answered by a run, because its reading is what
+  decides whether it is bound at all.
 - **Judge and fold as always.** The premise's `summary` says the source is adopted as it stands
   and did not change. The fold writes `adopted`, and «An adopted node binds the files whose
   judgment holds its fact and no others» (SPEC-005 R4): each cleared candidate's `encoded_at` is

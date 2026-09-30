@@ -2183,3 +2183,113 @@ def test_an_empty_findings_list_says_what_an_absent_one_says(consumer):
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
     assert all(entry["conforms"] for entry in front["nodes"])
+
+
+# ---------------------------------------------------------- adoption over a ledger (SPEC-005 R8)
+
+
+LEDGER_MATERIAL = """---
+contract_version: siegard-survey/1
+target: backend
+files:
+  - src/orders/place.ts
+  - src/orders/bill.ts
+  - src/orders/index.ts
+---
+
+## Facts
+- A case is opened and carries a status. `src/orders/place.ts` (`place`).
+- A hypothesis needs evidence before it is accepted. `src/orders/bill.ts` (`bill`).
+- Evidence is attached to a case. `src/orders/place.ts` (`place`), `src/orders/bill.ts` (`bill`).
+- The module re-exports its routes. `src/orders/index.ts`.
+
+## Answers
+None.
+
+## Vocabularies
+None.
+
+## Upstream artifacts
+None.
+
+## Outside the domain
+None.
+
+## Observed and not decided here
+None.
+"""
+
+
+def ledgered(adopting: Path) -> Path:
+    survey = adopting / "siegard-survey" / "adopt-orders"
+    survey.mkdir(parents=True)
+    (survey / "orders.md").write_text(LEDGER_MATERIAL, encoding="utf-8")
+    lines = LEDGER_MATERIAL.split("\n")
+    at = {key: n for n, line in enumerate(lines, start=1)
+          for key in ("opened", "hypothesis", "attached", "re-exports") if key in line}
+    front = {"contract_version": "siegard-ledger/1", "material": ["orders.md"], "entries": [
+        {"at": f"orders.md:{at['opened']}", "node": NODE},
+        {"at": f"orders.md:{at['hypothesis']}", "node": RULE},
+        {"at": f"orders.md:{at['attached']}", "node": OTHER},
+        {"at": f"orders.md:{at['re-exports']}", "outside": "module wiring"}]}
+    path = survey / "ledger.md"
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    return path
+
+
+def test_a_ledger_hands_each_file_the_candidates_its_own_facts_landed_in(adopting):
+    ledger = ledgered(adopting)
+    workspace = adopting / "ws-ledger"
+    done = run("--stage", adopting / "backend", adopting / "specs", "adopt-orders", workspace,
+               "--adopt", "--ledger", ledger)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["ledger"] == str(ledger)
+    assert sorted(manifest["files"]) == [SECOND, FILE], "index.ts, which no fact names, is not judged"
+    assert manifest["files"][FILE]["also"] == sorted([NODE, OTHER])
+    assert manifest["files"][SECOND]["also"] == sorted([OTHER, RULE])
+    assert manifest["unbound"] == [SECOND, FILE, THIRD] or THIRD in manifest["unbound"]
+    pack = Path(manifest["files"][FILE]["pack"]).read_text(encoding="utf-8")
+    assert f"=== {NODE}" in pack and f"=== {OTHER}" in pack and f"=== {RULE}" not in pack
+    index = (workspace / "candidates.txt").read_text(encoding="utf-8")
+    assert f"{RULE} — a candidate of this adoption, read against: {SECOND}" in index
+    assert "3 candidate node(s) from the ledger, 4 pair(s) over 2 file(s) (2 at most on one file)" \
+        in done.stdout
+
+
+def test_a_ledger_adoption_folds_and_binds_per_file(adopting):
+    ledger = ledgered(adopting)
+    workspace = adopting / "ws-adopt-orders"
+    done = run("--stage", adopting / "backend", adopting / "specs", "adopt-orders", workspace,
+               "--adopt", "--ledger", ledger)
+    assert done.returncode == 0, done.stderr
+    premise = dict(ADOPT_PREMISE, files=[{"path": given, "change": "adopted as it stands"}
+                                         for given in (FILE, SECOND, THIRD)])
+    save_return(adopting, "adopt-orders", FILE, read_as({NODE: "line 1", OTHER: "line 1"}))
+    save_return(adopting, "adopt-orders", SECOND, read_as({OTHER: "nowhere", RULE: "line 1"}))
+    done, record = folded(adopting, "adopt-orders", premise)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    by_node = {e["node"]: e for e in front["nodes"]}
+    assert by_node[NODE]["encoded_at"] == [FILE]
+    assert by_node[OTHER]["encoded_at"] == [FILE], "read nowhere in bill.ts, held in place.ts"
+    assert by_node[RULE]["encoded_at"] == [SECOND]
+    assert front["unbound"] == [THIRD], "a file no fact names is in the set, judged by nobody"
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    untraced = run("--untraced", adopting / "backend")
+    assert "1 holds-nothing" in untraced.stdout
+
+
+def test_a_named_file_outside_the_ledger_s_areas_is_refused(adopting):
+    ledger = ledgered(adopting)
+    done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x",
+               KEPT_OUT, "--adopt", "--ledger", ledger)
+    assert done.returncode == 2 and "is not a file the ledger's material read" in done.stderr
+
+
+def test_ledger_with_stage_is_a_mode_of_adopt(adopting):
+    ledger = ledgered(adopting)
+    done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x", FILE,
+               "--ledger", ledger)
+    assert done.returncode == 2 and "is a mode of --adopt" in done.stderr

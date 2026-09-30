@@ -57,6 +57,11 @@ What this script does, and nobody else does any of it:
                                                                   file against the candidates an
                                                                   analysis wrote from it; no trace
                                                                   needed to begin
+    trace.py --stage ... --adopt --ledger <ledger.md> [<file> ...]
+                                                                  the same, each file read against
+                                                                  the candidates the ledger landed
+                                                                  its own facts in; the file set
+                                                                  defaults to the material's areas
     trace.py --stage ... --certify <file>                         also stage a certification per
                                                                   node the file names: its pack,
                                                                   the proof offered and the step
@@ -2462,8 +2467,8 @@ def ledger(path: Path, spec_root: Path) -> int:
         print(f"    {given}: {len(per_file[given])}")
     empty = sorted(g for g, ns in per_file.items() if not ns)
     if empty:
-        print(f"  {len(empty)} file(s) no fact names; each is judged for what it states that no "
-              f"node holds, over no candidate of its own: {', '.join(empty)}")
+        print(f"  {len(empty)} file(s) no fact names; an adoption over this ledger hands them no "
+              f"judge and leaves them unbound: {', '.join(empty)}")
     print(f"  candidates, all: {' '.join(every_node)}")
     return 0
 
@@ -2798,7 +2803,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           files: list[str], audit: bool = False, review: bool = False,
           also: list[str] | None = None, certify: Path | None = None,
           demonstrated: list[Path] | None = None, adopt: bool = False,
-          outside: list[str] | None = None) -> int:
+          outside: list[str] | None = None, ledger_path: Path | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -2840,9 +2845,34 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     pair» (SPEC-005 R3). No trace is needed to begin: the first adoption of a target is the one
     that writes it. A candidate is never omitted and never answered by a run here, since its
     reading is what decides whether it is bound at all. `outside` names tracked files the human
-    keeps out of the judgment; they are reserved in the manifest and judged by no one."""
+    keeps out of the judgment; they are reserved in the manifest and judged by no one.
+
+    With a ledger, the candidates are per file: each file's judge is handed the nodes the ledger
+    landed that file's own facts in, and the file set is the material's areas where the caller
+    named none. A file no fact names is not judged — its judge would answer for no node — and
+    stays unbound. The candidate index lists every ledger node with the files it is read on, so a
+    judge can still attribute a fact to a node another file's pack carries. Nodes given as
+    `--node` beside a ledger are read on every file, as without one."""
     also = list(dict.fromkeys(also or []))
     outside = list(dict.fromkeys(outside or []))
+    per_file_ledger: dict[str, set[str]] = {}
+    if ledger_path is not None:
+        ledger_front, surveys, ledger_problems = read_ledger(ledger_path)
+        if ledger_front is None:
+            for problem in ledger_problems:
+                print(f"cannot run: {ledger_path}: {problem}", file=sys.stderr)
+            return CANNOT_RUN
+        per_file_ledger = ledger_candidates(ledger_front, surveys)
+        if not files:
+            files = sorted(per_file_ledger)
+        strangers = [given for given in files if given not in per_file_ledger]
+        if strangers:
+            print(f"cannot run: {', '.join(strangers)} is not a file the ledger's material read; "
+                  f"an adoption over a ledger judges the material's areas, and a file outside "
+                  f"them is surveyed first", file=sys.stderr)
+            return CANNOT_RUN
+    ledger_nodes = sorted({n for ns in per_file_ledger.values() for n in ns})
+    adopted_all = set(also) | set(ledger_nodes)
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -2864,20 +2894,20 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return 1
     else:
         declared = {"bindings": []}
-    if adopt and not also:
+    if adopt and not adopted_all:
         print("cannot run: --adopt reads the candidates an analysis wrote from this source, and "
-              "none was named; pass each with --node", file=sys.stderr)
+              "none was named; pass a ledger with --ledger, or each with --node", file=sys.stderr)
         return CANNOT_RUN
     nodes, status = sound_specification(spec_root)
     if nodes is None:
         return status
-    unknown = [node_id for node_id in also if node_id not in nodes]
+    unknown = [node_id for node_id in sorted(adopted_all) if node_id not in nodes]
     if unknown:
         print(f"cannot run: {spec_root} holds no node {', '.join(unknown)}; a --node is read on "
               f"every file as the specification states it, and one the specification does not "
               f"hold is nothing to read", file=sys.stderr)
         return CANNOT_RUN
-    descriptors = [node_id for node_id in also if is_descriptor(node_id)]
+    descriptors = [node_id for node_id in sorted(adopted_all) if is_descriptor(node_id)]
     if descriptors:
         print(f"cannot run: --node {', '.join(descriptors)} {DESCRIPTOR_REFUSAL}; name the "
               f"context's elements, rules, scenarios, contracts or constraints instead",
@@ -2948,7 +2978,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 continue
             bound_here = [given for given in files
                           if any(n == node_id for n, _ in index.get(stored_of[given]) or [])]
-            if not bound_here and not (adopt and node_id in also):
+            if not bound_here and not (adopt and node_id in adopted_all):
                 certify_problems.append(
                     f"{node_id} is bound to none of the named files"
                     + (" and is no candidate of this adoption; a certification rides the reading "
@@ -3042,7 +3072,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             if not (audit or review) and pinned == current[stored] \
                     and bound_digest.get(node_id) == nodes[node_id]["digest"] \
                     and (node_id, stored) not in owed_pairs and node_id not in certify_nodes \
-                    and node_id not in also:
+                    and node_id not in adopted_all:
                 omitted.append({"node": node_id, "file": given,
                                 "reason": "the binding computes at the file's content and at the "
                                           "node's text as both stand, and no finding stands open "
@@ -3063,7 +3093,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                     and (node_id, stored) in judged_pairs \
                     and (node_id, stored) not in owed_pairs \
                     and (node_id, stored) not in both_ways \
-                    and node_id not in certify_nodes and node_id not in also:
+                    and node_id not in certify_nodes and node_id not in adopted_all:
                 omitted.append({"node": node_id, "file": given, "reason": CLEARED_BY_JUDGMENT})
                 held_current = True
                 continue
@@ -3071,7 +3101,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # no run either, and a tier that claimed it would make a caller capture a run to
             # answer a question the last bind already answered over these exact bytes.
             run_decides = decides(node_id)
-            if run_decides is not None and node_id not in certify_nodes and node_id not in also:
+            if run_decides is not None and node_id not in certify_nodes \
+                    and node_id not in adopted_all:
                 kind, step_names = run_decides
                 mechanical.append({"node": node_id, "file": given, "steps": step_names,
                                    "decided_by": kind})
@@ -3085,7 +3116,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         # bindings are orphaned is unbound the same way — nothing standing claims it.
         if not assigned and not held_current and not held_mechanical:
             unbound.append(given)
-        if assigned or also:
+        if assigned or also or per_file_ledger.get(given):
             judged_files[given] = assigned
         elif held_current:
             all_current.append(given)
@@ -3133,7 +3164,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                  f"# named in a finding's `file` as: {given} — copy this spelling; never "
                  f"compose one"]
         lines += [f"#   {entry}" for entry in beside]
-        read_also = [node_id for node_id in also if node_id not in assigned]
+        read_also = [node_id for node_id in also + sorted(per_file_ledger.get(given, set()))
+                     if node_id not in assigned]
+        read_also = list(dict.fromkeys(read_also))
         for node_id in assigned + read_also:
             source = spec_root / f"{node_id}.md"
             lines += [f"\n=== {node_id}",
@@ -3195,6 +3228,14 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         for node_id in sorted(candidates):
             lines.append(f"{node_id} — bound in this batch to: "
                          f"{', '.join(sorted(candidates[node_id]))}")
+        read_on: dict[str, list[str]] = {}
+        for given, node_ids in per_file_ledger.items():
+            for node_id in node_ids:
+                read_on.setdefault(node_id, []).append(given)
+        for node_id in sorted(read_on):
+            if node_id not in candidates:
+                lines.append(f"{node_id} — a candidate of this adoption, read against: "
+                             f"{', '.join(sorted(read_on[node_id]))}")
         (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     mechanical = sorted(mechanical, key=lambda e: (e["file"], e["node"]))
@@ -3203,6 +3244,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "review": review,
                 "adopt": adopt,
                 "also": also,
+                "ledger": str(ledger_path) if ledger_path is not None else None,
                 "outside": sorted(outside),
                 "specification_root": str(spec_root),
                 "files": manifest_files,
@@ -3230,9 +3272,16 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                  f"at these bytes, and {len(also)} plan node(s) read on every file without being "
                  f"bound")
     elif adopt:
-        shape = (f"staged as an adoption — {len(also)} candidate node(s) read on every file, each "
-                 f"bound by the fold to the files that hold its fact; {len(outside)} file(s) kept "
-                 f"outside the judgment")
+        per_file_counts = [len(per_file_ledger.get(g, set())) for g in judged_files]
+        shape = (f"staged as an adoption — "
+                 + (f"{len(ledger_nodes)} candidate node(s) from the ledger, "
+                    f"{sum(per_file_counts)} pair(s) over {len(judged_files)} file(s) "
+                    f"({max(per_file_counts) if per_file_counts else 0} at most on one file)"
+                    + (f", and {len(also)} node(s) read on every file" if also else "")
+                    if ledger_path is not None else
+                    f"{len(also)} candidate node(s) read on every file")
+                 + f", each bound by the fold to the files that hold its fact; {len(outside)} "
+                 f"file(s) kept outside the judgment")
     else:
         shape = (f"{len(omitted)} pair(s) omittable — the binding is current and nothing is "
                  f"owed on them")
@@ -3619,7 +3668,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         return CANNOT_RUN
 
     batch_nodes = {node for entry in manifest["files"].values() for node in entry["nodes"]}
-    adopted = set(manifest.get("also") or []) if manifest.get("adopt") else set()
+    adopted = ({n for meta in manifest["files"].values() for n in meta.get("also") or []}
+               | set(manifest.get("also") or [])) if manifest.get("adopt") else set()
     against: dict[str, list[tuple[str, dict]]] = {}
     out_of_scope: list[tuple[str, dict]] = []
     named_mechanical: list[tuple[str, dict]] = []
@@ -4497,6 +4547,19 @@ def main() -> int:
             return CANNOT_RUN
         also.append(args[at + 1])
         del args[at:at + 2]
+    ledger_given: Path | None = None
+    if do_stage and "--ledger" in args:
+        at = args.index("--ledger")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --ledger takes the path of the ledger /analyse wrote beside the "
+                  "survey material", file=sys.stderr)
+            return CANNOT_RUN
+        ledger_given = Path(args[at + 1])
+        del args[at:at + 2]
+        if "--ledger" in args:
+            print("cannot run: --ledger is given once; one ledger accounts for one increment's "
+                  "material", file=sys.stderr)
+            return CANNOT_RUN
     outside: list[str] = []
     while "--outside" in args:
         at = args.index("--outside")
@@ -4603,6 +4666,10 @@ def main() -> int:
         print("cannot run: --adopt is its own staging; an adoption reads source no delivery "
               "wrote against the candidates an analysis wrote from it, an audit re-reads claims "
               "nothing moved, and a review re-reads files a delivery wrote", file=sys.stderr)
+        return CANNOT_RUN
+    if ledger_given is not None and not do_adopt:
+        print("cannot run: --ledger with --stage is a mode of --adopt; the ledger says which "
+              "candidates each file of adopted source is read against", file=sys.stderr)
         return CANNOT_RUN
     if outside and not do_adopt:
         print("cannot run: --outside is a mode of --stage --adopt; it names the files an "
@@ -4712,16 +4779,18 @@ def main() -> int:
         return encodes(Path(args[0]), args[1:])
 
     if do_stage:
-        if len(args) < 5 or any(a.startswith("--") for a in args):
+        least = 4 if ledger_given is not None else 5
+        if len(args) < least or any(a.startswith("--") for a in args):
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
                   "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...] | "
-                  "--adopt --node <node> ... [--outside <file> ...]] [--certify <file>], every "
-                  "file spelled from the target source root",
+                  "--adopt (--ledger <ledger.md> [<file> ...] | --node <node> ...) "
+                  "[--outside <file> ...]] [--certify <file>], every file spelled from the "
+                  "target source root; with --ledger the files default to the material's areas",
                   file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
-                     do_review, also, certify, demonstrated, do_adopt, outside)
+                     do_review, also, certify, demonstrated, do_adopt, outside, ledger_given)
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):
