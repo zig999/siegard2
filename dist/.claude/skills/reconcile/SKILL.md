@@ -599,11 +599,12 @@ The same order, with four differences, each held by the scripts rather than by t
 - **Judge and fold as always.** The premise's `summary` says the source is adopted as it stands
   and did not change. The fold writes `adopted`, and «An adopted node binds the files whose
   judgment holds its fact and no others» (SPEC-005 R4): each cleared candidate's `encoded_at` is
-  the files whose judge read its fact there. A candidate every judge answered `nowhere` is not
-  cleared.
+  the files whose judge read its fact there. A candidate every judge answered `nowhere`, with
+  nothing found against it, is listed under `unheld` and claims no file.
 - **Bind with `--bind-record --workspace`,** which writes the trace if this is the target's first.
-- **Report** what an adoption adds: every candidate no file holds — a node the source does not
-  carry is the analysis's to revisit, and the `/analyse` invocation over it is the route; every
+- **Report** what an adoption adds: every candidate under `unheld` — a node the source does not
+  carry, or one the files outside this set carry: the analysis's to revisit, or the adoption of
+  those files; every
   `contradicts` against a candidate — a reading of the source the node misstates, the same route;
   every `unstated` fact — the source carries it and no node does, the same route again; and the
   target's standing as `trace.py --untraced` prints it, because «Adoption is complete when no file

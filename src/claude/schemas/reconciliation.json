@@ -13,7 +13,7 @@
     "nodes"
   ],
   "additionalProperties": false,
-  "dependentRequired": { "outside": ["adopted"] },
+  "dependentRequired": { "outside": ["adopted"], "unheld": ["adopted"] },
   "$defs": {
     "targetPath": {
       "type": "string",
@@ -29,8 +29,8 @@
   },
   "properties": {
     "contract_version": {
-      "const": "siegard-reconcile/6",
-      "description": "Which contract this record was written against. siegard-reconcile/2 carried one boolean per node over a question that is two: whether the source still states what the node holds, and whether it states a fact no node holds at all. The second answer landed on whichever node the file happened to be bound to, blocked a binding its own reading had cleared, and could never be closed by any rebind — so /3 made `unstated` its own list, and `conforms` answers the pair alone. /4 lets a cleared node carry a certification: a judgment found a test that would fail if the node's fact stopped holding, and named the step that runs it, so `--bind-record` writes the binding as one a test decides. /6 lets a record adopt source no delivery wrote: `adopted` says the candidates an analysis wrote from that source were judged on every file, a cleared node carries under `encoded_at` the files that hold its fact and no others, and `outside` names the tracked files the human kept out of the judgment. A /2 to /5 record is the reading it was, read by tolerant readers, never rewritten to match."
+      "const": "siegard-reconcile/7",
+      "description": "Which contract this record was written against. siegard-reconcile/2 carried one boolean per node over a question that is two: whether the source still states what the node holds, and whether it states a fact no node holds at all. The second answer landed on whichever node the file happened to be bound to, blocked a binding its own reading had cleared, and could never be closed by any rebind — so /3 made `unstated` its own list, and `conforms` answers the pair alone. /4 lets a cleared node carry a certification: a judgment found a test that would fail if the node's fact stopped holding, and named the step that runs it, so `--bind-record` writes the binding as one a test decides. /6 lets a record adopt source no delivery wrote: `adopted` says the candidates an analysis wrote from that source were judged on every file, a cleared node carries under `encoded_at` the files that hold its fact and no others, and `outside` names the tracked files the human kept out of the judgment. /7 keeps an adoption's candidate that no file of the set holds out of `nodes`: it is listed under `unheld`, claiming no file, and a candidate a finding stands against names under `observed_at` the files the finding was read in and no others — a /6 record named every judged file for both, which reads as one open finding per file. A /2 to /6 record is the reading it was, read by tolerant readers, never rewritten to match."
     },
     "title": {
       "type": "string",
@@ -319,7 +319,7 @@
     },
     "unbound": {
       "type": "array",
-      "description": "Named files the trace holds no binding for. They are reported and never guessed at: deciding which node an untraced file answers to is a delivery's judgment or an analysis's, and inventing one here would write the framework's most durable claim out of the least evidence. On an adoption every file is read against every candidate, so a file is accounted for by the entry of each candidate read on it, held or not; which files it bound none of them to is what `trace.py --untraced` counts as holds-nothing. Every entry must be in `files`, and none may also appear under a node.",
+      "description": "Named files the trace holds no binding for. They are reported and never guessed at: deciding which node an untraced file answers to is a delivery's judgment or an analysis's, and inventing one here would write the framework's most durable claim out of the least evidence. On an adoption a file listed here is one no candidate was cleared in and no finding named; which files an adoption judged and bound nothing to is what `trace.py --untraced` counts as holds-nothing. Every entry must be in `files`, and none may also appear under a node.",
       "items": {
         "$ref": "#/$defs/targetPath"
       }
@@ -327,6 +327,20 @@
     "adopted": {
       "const": true,
       "description": "This record adopts source no delivery wrote — «A binding of adopted source rests on a reconciliation record whose judgment cleared the pair» (SPEC-005 R3). Every candidate node was read on every file of the set, and a cleared node's `encoded_at` names the files whose judgment holds its fact and no others. Absent on every other reconciliation, where a cleared node holds its fact in every file the trace binds it to."
+    },
+    "unheld": {
+      "type": "array",
+      "minItems": 1,
+      "description": "An adoption's candidates that no file of the set holds and nothing was found against: every judge that read one answered `nowhere`. Listed apart from `nodes` because the answer is about the node and not about any pair — it claims no file and owes no reading; it is the analysis's to revisit, or the adoption of the files that do hold it. Only an adopted record carries it.",
+      "items": {
+        "type": "object",
+        "required": ["node", "how"],
+        "additionalProperties": false,
+        "properties": {
+          "node": { "$ref": "#/$defs/specNodeRef" },
+          "how": { "type": "string", "minLength": 1 }
+        }
+      }
     },
     "outside": {
       "type": "array",
@@ -372,7 +386,7 @@
   },
   "examples": [
     {
-      "contract_version": "siegard-reconcile/6",
+      "contract_version": "siegard-reconcile/7",
       "title": "Certified: a placed order answers its number",
       "summary": "place() is asserted correct as it stands; this reconciliation reads it against its node and certifies the test that proves the node, so that later drift on the file is decided by the suite.",
       "target": "backend",
@@ -400,7 +414,7 @@
       "notes": "Certified by the coverage auditor: `it('answers the persisted order_number')` fails when place() answers anything else, so the pair is decided by the `test` step from here on."
     },
     {
-      "contract_version": "siegard-reconcile/6",
+      "contract_version": "siegard-reconcile/7",
       "title": "Certification of invoice immutability did not hold",
       "summary": "raise() is asserted correct as it stands; the test offered for rules/sales/invoice-immutable exercises the refusal and not the immutability, so the node stays decided by reading, with the test that would close it named.",
       "target": "backend",
@@ -426,7 +440,7 @@
       "notes": "Certification of rules/sales/invoice-immutable did not hold: the auditor answered `partial` — the refusal half is exercised; nothing in the set alters a raised invoice's amount. The node is decided by reading. The remainder is testable."
     },
     {
-      "contract_version": "siegard-reconcile/6",
+      "contract_version": "siegard-reconcile/7",
       "title": "Hand correction to order placement",
       "summary": "place() was returning the stored row rather than the order_number; corrected by hand during an incident and confirmed correct against the running system.",
       "target": "backend",
@@ -448,7 +462,7 @@
       ]
     },
     {
-      "contract_version": "siegard-reconcile/6",
+      "contract_version": "siegard-reconcile/7",
       "title": "Hand correction to invoicing",
       "summary": "The nightly run raised two invoices for one order; the guard was added by hand and the behavior is correct.",
       "target": "backend",

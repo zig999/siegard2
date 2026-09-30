@@ -686,7 +686,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/6"
+    assert front["contract_version"] == "siegard-reconcile/7"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -1956,16 +1956,16 @@ def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopti
     })
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
-    assert front["contract_version"] == "siegard-reconcile/6"
+    assert front["contract_version"] == "siegard-reconcile/7"
     assert front["adopted"] is True and front["outside"] == [KEPT_OUT]
     by_node = {entry["node"]: entry for entry in front["nodes"]}
     assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
     assert by_node[OTHER]["conforms"] and by_node[OTHER]["encoded_at"] == [FILE]
-    assert by_node[RULE]["conforms"] is False
-    assert "no file of the set holds this fact" in by_node[RULE]["how"]
-    assert by_node[RULE]["observed_at"] == sorted([FILE, SECOND, THIRD]), \
-        "a candidate held nowhere was read on every file, and says so"
-    assert "unbound" not in front, "every file is accounted for by a node it was read against"
+    assert RULE not in by_node, "a candidate no file holds answers for no pair"
+    assert front["unheld"] == [{"node": RULE, "how": "read on 3 file(s), and every judge "
+                                                   "answered `nowhere`: no file of the set "
+                                                   "holds this fact"}]
+    assert front["unbound"] == [THIRD], "a file no candidate was cleared in and no finding named"
     assert run("--reconciliation", record).returncode == 0
     bound = run("--bind-record", adopting / "backend", adopting / "specs", record)
     assert bound.returncode == 0, bound.stdout + bound.stderr
@@ -1989,7 +1989,8 @@ def test_a_contradiction_against_a_candidate_leaves_it_unbound(adopting):
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
     by_node = {entry["node"]: entry for entry in front["nodes"]}
-    assert by_node[OTHER]["conforms"] is False and FILE in by_node[OTHER]["observed_at"]
+    assert by_node[OTHER]["conforms"] is False and by_node[OTHER]["observed_at"] == [FILE], \
+        "a contradicted candidate names the files the finding was read in, and no others"
     assert by_node[NODE]["conforms"] is True
 
 
@@ -2017,8 +2018,30 @@ def test_untraced_tells_the_four_states_apart_after_an_adoption(adopting):
 def test_outside_needs_adopted_in_the_contract():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
-    base = {"contract_version": "siegard-reconcile/6", "title": "t", "summary": "s",
+    base = {"contract_version": "siegard-reconcile/7", "title": "t", "summary": "s",
             "target": "backend", "files": [{"path": FILE, "change": "c"}],
             "nodes": [], "unbound": [FILE], "outside": [KEPT_OUT]}
     assert list(Draft202012Validator(schema).iter_errors(base))
     assert not list(Draft202012Validator(schema).iter_errors({**base, "adopted": True}))
+
+
+def test_an_adoption_owes_only_what_was_found(adopting):
+    """A candidate no file holds claims no pair, so `--owed` lists the finding against the
+    contradicted candidate and nothing per file for the unheld one."""
+    adopt_staged(adopting)
+    contradicted = read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"})
+    contradicted["findings"] = [{"file": FILE, "where": "line 1", "node": OTHER,
+                                 "kind": "contradicts", "evidence": "export const x",
+                                 "cost": "the node says otherwise",
+                                 "correction": "the source or the node"}]
+    _, record = adopted_record(adopting, {
+        FILE: contradicted,
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    owed = run("--owed", adopting / "backend")
+    assert OTHER in owed.stdout
+    assert RULE not in owed.stdout
+    convergence = run("--convergence", adopting / "backend", adopting / "specs", adopting / "specs")
+    assert "1 finding(s) past reconciliations left open" in convergence.stdout, convergence.stdout

@@ -464,7 +464,7 @@ JUDGED = "judged"
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
                        "this pair over the file's content and the node's text as both stand, "
                        "and no finding stands open against it")
-RECORD_VERSION = "siegard-reconcile/6"
+RECORD_VERSION = "siegard-reconcile/7"
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
@@ -1323,6 +1323,12 @@ def accounted(front: dict) -> list[str]:
 
     problems += [f"outside: {path} is also in `files`; a file is judged or kept out of the "
                  f"judgment, never both" for path in front.get("outside") or [] if path in named]
+    listed = {entry["node"] for entry in front["nodes"]}
+    unheld = [entry.get("node") for entry in front.get("unheld") or []]
+    problems += [f"unheld: {node} is listed {unheld.count(node)} times; one entry per node"
+                 for node in sorted(set(unheld)) if unheld.count(node) > 1]
+    problems += [f"unheld: {node} is also answered under `nodes`; a candidate no file holds has "
+                 f"no pair to answer" for node in sorted(set(unheld) & listed)]
 
     for path in sorted(set(named) - claimed - set(unbound) - omitted_files):
         problems.append(f"files: {path} is named and no node accounts for it; a file the trace "
@@ -3442,6 +3448,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                for given, front in returns.items() for entry in front["read"]}
 
     entries = []
+    unheld: list[dict] = []
     for node in sorted(adopted):
         # A file the trace already binds the node to must still hold it, as on any
         # reconciliation; a file it was only read on is ground it may or may not reach —
@@ -3460,12 +3467,18 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             entries.append({"node": node, "conforms": True, "how": how,
                             "encoded_at": holders})
             continue
+        if not holders and not found and not taint and not lost:
+            # Nothing was found against it and nothing holds it: the answer is about the node,
+            # not about any pair, so it is listed apart and claims no file — a pair listed per
+            # file would read as an open finding on every file of the set.
+            unheld.append({"node": node,
+                           "how": f"read on {len(judged_in)} file(s), and every judge answered "
+                                  f"`nowhere`: no file of the set holds this fact"})
+            continue
         parts = [f"{given}, {finding['where']}: {finding['evidence']} — {finding['cost']}"
                  for given, finding in found]
         if not holders:
-            parts.append("no file of the set holds this fact: every judge that read the node "
-                         "answered `nowhere` — a candidate the source does not carry is the "
-                         "analysis's to revisit, and it is bound to nothing")
+            parts.append("no file of the set holds this fact beside what was found against it")
         if lost and not found:
             parts.append(f"{', '.join(lost)} is bound to this node and no longer holds its fact")
         parts += [f"{given} returned a finding naming no node ({finding['where']}: "
@@ -3473,7 +3486,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                   f"holds every node of that file its judge was handed"
                   for given in taint for finding in tainted[given]]
         entries.append({"node": node, "conforms": False, "how": "\n".join(parts),
-                        "observed_at": sorted(set(judged_in) | set(bound_in))})
+                        "observed_at": sorted({given for given, _ in found} | set(lost)
+                                              | set(taint))})
     for node in sorted(batch_nodes - adopted):
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
@@ -3677,6 +3691,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         front["adopted"] = True
         if manifest.get("outside"):
             front["outside"] = manifest["outside"]
+        if unheld:
+            front["unheld"] = unheld
     if manifest["omitted"]:
         front["pairs_omitted"] = manifest["omitted"]
     front["notes"] = "\n".join(notes)
@@ -3712,7 +3728,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     marks = sum(1 for entry in blocked if entry.get("collateral"))
     print(f"folded {record_out.name}: {cleared} node(s) cleared, {len(blocked)} not — "
           f"{marks} of those collateral, blocked only by an unattributed sibling finding — "
-          f"{len(manifest['omitted'])} pair(s) omitted as current and unowed")
+          f"{len(manifest['omitted'])} pair(s) omitted as current and unowed"
+          + (f"; {len(unheld)} candidate(s) no file of the set holds, listed under `unheld`"
+             if unheld else ""))
     print(f"  next: trace.py --reconciliation {record_out}")
     return 0
 

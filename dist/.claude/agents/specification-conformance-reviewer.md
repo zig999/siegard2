@@ -139,28 +139,35 @@ One YAML mapping, nothing else — no commentary before or after:
 findings:                    # omit the key entirely when you found nothing
   - file: <the path exactly as the file set lists it; where the set arrived as a node pack,
           exactly as the pack header spells it under "named in a finding's `file` as">
-    where: <the line, or the construct, within that file>
-    evidence: <quoted from the source>
-    cost: <the consequence, in the terms a reader can weigh>
+    where: >-
+      <the line, or the construct, within that file>
+    evidence: >-
+      <quoted from the source>
+    cost: >-
+      <the consequence, in the terms a reader can weigh>
     kind: contradicts | unstated    # which question this answers; see below
-    correction: <what would have to change; omit where you cannot say>
+    correction: >-
+      <what would have to change; omit where you cannot say>
     node: <the node this is about, where one node owns it — omit where none does, and name a
           candidate here where the fact is a candidate's rather than your set's>
 read:                        # one entry per node of your set, in the order the set gave them
   - node: <the identity, as the caller gave it>
-    held_at: <where in the file the node's fact sits now, or the word `nowhere`>
-    evidence: <quoted from the source — what you read to say that; code, never a comment's claim>
-looked_past: <one sentence naming what you saw and did not report because it is another
-             judgment's — omit when there was nothing>
+    held_at: >-
+      <where in the file the node's fact sits now, or the word `nowhere`>
+    evidence: >-
+      <quoted from the source — what you read to say that; code, never a comment's claim>
+looked_past: >-
+  <one sentence naming what you saw and did not report because it is another judgment's — omit
+  when there was nothing>
 candidates_opened:          # omit entirely where you opened none
   - <the identity of every candidate you actually opened, finding or no finding>
 ```
 
 Return the mapping as plain YAML text, with each finding shaped as the return contract requires —
-the fence above shows which fields, not their shapes, and is not part of the return. Write
-`evidence`, `held_at` and `looked_past` as a YAML block scalar (`>-` or a literal block), never a
-bare one: source quoted verbatim routinely carries a colon, which a bare scalar cannot hold
-without breaking the parse. The whole
+the fence above shows which fields, not their shapes, and is not part of the return. Write every
+free-text field — `where`, `evidence`, `cost`, `correction`, `held_at` and `looked_past` — as a
+YAML block scalar, as the fence does (`>-` or a literal block), never a bare one: source quoted
+verbatim routinely carries a colon, which a bare scalar cannot hold without breaking the parse. The whole
 mapping is held to that contract after you answer: the fence is how to write it, the contract is
 what judges it, and a return it refuses is a delegation run again, not a conversation. Which pass
 delegated you is not yours to state — the caller knows and stamps it where a record needs it.
