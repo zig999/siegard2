@@ -24,8 +24,16 @@ behind a gate.
 ## Language
 
 Write every artifact in this repository in English (en-US): source, generated distribution, specs,
-schemas, tests, fixtures, docs, and commit messages. Conversation with a maintainer may use any
-language; committed content may not.
+schemas, tests, fixtures, and commit messages. Conversation with a maintainer may use any
+language; committed content may not, with one exception.
+
+Explanatory material — a manual, a glossary, a README, a guide — may be written in another
+language. It explains and never governs: it states no requirement, and where it disagrees with a
+specification, a schema or code, those win. Its reserved terms stay in English, always: every
+identifier the framework defines — a field, a flag, a command, a skill, an agent, a class, an
+enumerated value, a file or directory name — and every command, path and quoted output, spelled
+exactly as the framework spells it and never translated. A translation of an English document sits
+beside its original as `<name>.<locale>.md`, and the English one governs where the two differ.
 
 ## Decision order
 
