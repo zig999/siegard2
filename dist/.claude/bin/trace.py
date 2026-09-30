@@ -61,6 +61,8 @@ What this script does, and nobody else does any of it:
     trace.py --encodes --rank <target-root> [--all]               the accretion axes: files by
                                                                   bindings held, nodes by files
                                                                   bound
+    trace.py --untraced <target-root> [--all]                     every tracked file under the
+                                                                  target no binding names
 
 Drift is reported in four classes, because a caller can act on each differently and could act on
 none of them if all four arrived as one list. A node the specification no longer holds is
@@ -121,6 +123,13 @@ not a change to what is bound — `--bind-record` still writes the link, `moved`
 specification shifted under those files, `orphaned` still says the node is gone. And it is not
 silence: a receipt says how many findings were held back and `--all` lists them, which is what
 keeps a declaration a consumer can measure from becoming one it forgets it made.
+
+`--untraced` is the one report keyed by the tree rather than by the trace. Every other form reads
+what a binding holds, so code no delivery wrote and no reconciliation judged is in none of them:
+nothing binds it, so nothing drifts. This lists every file git tracks under the target that no
+binding names, ranked by directory, and `--convergence` prints the same count beside the node
+states. It refuses nothing: most files of a real system carry no domain fact and are never bound,
+so the count is a fact about the tree and never a floor to reach.
 
 A context descriptor, `domain/<context>/_context`, is never bound and never staged. It carries a
 context's description and classification and no operative claim, so no file holds it and no
@@ -1972,6 +1981,13 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
     if held_only:
         print(f"  of the stale, {len(held_only)} node(s) are stale only under a target this project "
               f"declares freely edited — `--check` holds those back, and this form counts them")
+    files, why = untraced_of(target, declared)
+    if files is None:
+        print(f"\nfiles under the target: not counted — {why}")
+    else:
+        print(f"\nfiles under {files['offset']}: {len(files['tracked'])} tracked, "
+              f"{len(files['bound'])} bound, {len(files['untraced'])} no binding names — "
+              f"`--untraced` lists them")
     if bound_unplanned:
         print(f"\n{len(bound_unplanned)} bound node(s) no initiative names — bound by a "
               f"reconciliation over source that entered outside any task, or by a raw --bind; "
@@ -2211,6 +2227,87 @@ def test_decided(declared: dict, home: Path, offset: str | None = None) -> dict[
 
 
 RANK_HELD_BACK = 15
+
+
+def tracked_under(target: Path, home: Path) -> tuple[list[str] | None, str | None]:
+    """Every file git tracks under the target, spelled from the toplevel as the trace spells a
+    path, or nothing and why. Tracked and not merely present: an ignored or never-added file is
+    no part of the tree a delivery or a reconciliation could bind."""
+    offset = offset_of(target, home)
+    try:
+        listed = subprocess.run(["git", "-C", str(home), "ls-files", "--", offset],
+                                capture_output=True, text=True)
+    except OSError:
+        return None, "git is not on this machine, and which files the tree tracks is git's to name"
+    if listed.returncode != 0:
+        said = listed.stderr.strip().splitlines()
+        return None, said[-1] if said else f"git ls-files failed in {home}"
+    return sorted(line for line in listed.stdout.splitlines() if line), None
+
+
+def untraced_of(target: Path, declared: dict | None) -> tuple[dict | None, str | None]:
+    """The tracked files under the target split by whether any binding names one."""
+    home = home_of(target)
+    tracked, why = tracked_under(target, home)
+    if tracked is None:
+        return None, why
+    bound = {f["path"] for entry in (declared or {}).get("bindings") or []
+             for f in entry.get("files") or []
+             if isinstance(f, dict) and isinstance(f.get("path"), str)}
+    return {"offset": offset_of(target, home), "tracked": tracked,
+            "bound": [p for p in tracked if p in bound],
+            "untraced": [p for p in tracked if p not in bound]}, None
+
+
+def untraced(target: Path, show_all: bool = False) -> int:
+    """Every file git tracks under the target that no binding names, counted and grouped.
+
+    Drift is keyed by change and `--rank` by what the trace holds, so neither can see code the
+    trace never reached: a file no delivery wrote and no reconciliation judged is in no report,
+    however much of the system it carries. This names it. It refuses nothing and decides
+    nothing — most files of a real system carry no domain fact and are never bound, so a count
+    here is a fact about the tree and never a floor to reach. The directories are ranked by how
+    many untraced files each holds, the tail held back as `--rank` holds it; `--all` lists every
+    file."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    declared = load(target)
+    if declared is not None:
+        problems = problems_of(declared)
+        if problems:
+            for problem in problems:
+                print(f"{trace_path(target)}: {problem}")
+            return 1
+    split, why = untraced_of(target, declared)
+    if split is None:
+        print(f"cannot run: {why}", file=sys.stderr)
+        return CANNOT_RUN
+    tracked, bound, left = split["tracked"], split["bound"], split["untraced"]
+    print(f"{len(tracked)} tracked file(s) under {split['offset']}: {len(bound)} bound, "
+          f"{len(left)} no binding names"
+          + ("" if declared is not None
+             else f" — no trace file at {trace_path(target)}, so nothing has been bound yet"))
+    if not left:
+        return 0
+    if show_all:
+        print("\nuntraced:")
+        for path in left:
+            print(f"  {path}")
+        return 0
+    per_dir: dict[str, int] = {}
+    for path in left:
+        parent = PurePosixPath(path).parent.as_posix()
+        per_dir[parent] = per_dir.get(parent, 0) + 1
+    rows = sorted(per_dir.items(), key=lambda row: (-row[1], row[0]))
+    print("\ndirectories by untraced files:")
+    for name, count in rows[:RANK_HELD_BACK]:
+        print(f"  {count:3d}  {name}")
+    if len(rows) > RANK_HELD_BACK:
+        print(f"  ({len(rows) - RANK_HELD_BACK} more directories; --all lists every file)")
+    else:
+        print("  (--all lists every file)")
+    return 0
 
 
 def rank(target: Path, show_all: bool = False) -> int:
@@ -3985,6 +4082,7 @@ def main() -> int:
     do_convergence = "--convergence" in args
     do_audit = "--audit" in args
     do_review = "--review" in args
+    do_untraced = "--untraced" in args
     also: list[str] = []
     while "--node" in args:
         at = args.index("--node")
@@ -4042,7 +4140,7 @@ def main() -> int:
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--rank", "--changed", "--audit", "--review",
-                         "--convergence")]
+                         "--convergence", "--untraced")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -4052,16 +4150,18 @@ def main() -> int:
                                       ("--encodes", do_encodes),
                                       ("--stage", do_stage),
                                       ("--fold", do_fold),
-                                      ("--convergence", do_convergence)) if given]
+                                      ("--convergence", do_convergence),
+                                      ("--untraced", do_untraced)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
     if replace and not (do_bind or do_record):
         print("cannot run: --replace only applies to --bind and --bind-record", file=sys.stderr)
         return CANNOT_RUN
-    if show_all and not (check or do_owed or do_rank or do_convergence):
-        print("cannot run: --all only applies to --check, --owed, --rank and --convergence; in "
-              "each it is what lists the rows the report holds back", file=sys.stderr)
+    if show_all and not (check or do_owed or do_rank or do_convergence or do_untraced):
+        print("cannot run: --all only applies to --check, --owed, --rank, --convergence and "
+              "--untraced; in each it is what lists the rows the report holds back",
+              file=sys.stderr)
         return CANNOT_RUN
     if do_rank and not do_encodes:
         print("cannot run: --rank is a mode of --encodes", file=sys.stderr)
@@ -4143,6 +4243,12 @@ def main() -> int:
             print("cannot run: expected --owed <target-root> [--all]", file=sys.stderr)
             return CANNOT_RUN
         return owed(Path(args[0]), show_all)
+
+    if do_untraced:
+        if len(args) != 1 or args[0].startswith("--"):
+            print("cannot run: expected --untraced <target-root> [--all]", file=sys.stderr)
+            return CANNOT_RUN
+        return untraced(Path(args[0]), show_all)
 
     if do_convergence:
         if len(args) != 3 or any(a.startswith("--") for a in args):

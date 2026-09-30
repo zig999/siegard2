@@ -1259,3 +1259,61 @@ def test_convergence_and_check_are_mutually_exclusive(consumer):
     done = run("--convergence", "--check", consumer / "backend", consumer / "specs",
                consumer / "work")
     assert done.returncode == trace.CANNOT_RUN
+
+
+# --------------------------------------------------------------------------- untraced
+
+
+def tracked(consumer: Path, *paths: str) -> None:
+    for rel in paths:
+        (consumer / "backend" / rel).parent.mkdir(parents=True, exist_ok=True)
+        if not (consumer / "backend" / rel).exists():
+            (consumer / "backend" / rel).write_text("export {}\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(consumer), "add", "--", "backend"], check=True)
+
+
+def test_untraced_names_every_tracked_file_with_no_trace_yet(consumer):
+    """Code no delivery wrote is in no drift report: nothing binds it, so nothing changes. This
+    is the one report that sees it, and with no trace every tracked file is untraced."""
+    tracked(consumer, "src/orders/cancel.ts")
+    done = run("--untraced", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "2 tracked file(s) under backend: 0 bound, 2 no binding names" in done.stdout
+    assert "no trace file" in done.stdout
+    assert "backend/src/orders" in done.stdout
+
+
+def test_untraced_leaves_out_what_a_binding_names_and_what_git_does_not_track(consumer):
+    tracked(consumer, "src/orders/cancel.ts")
+    (consumer / "backend/src/orders/scratch.ts").write_text("x\n", encoding="utf-8")
+    assert bind(consumer).returncode == 0
+    done = run("--untraced", consumer / "backend", "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "2 tracked file(s) under backend: 1 bound, 1 no binding names" in done.stdout
+    assert "  backend/src/orders/cancel.ts" in done.stdout
+    assert "place.ts" not in done.stdout.split("untraced:")[1]
+    assert "scratch.ts" not in done.stdout
+
+
+def test_untraced_refuses_nothing_when_every_file_is_bound(consumer):
+    tracked(consumer)
+    assert bind(consumer).returncode == 0
+    done = run("--untraced", consumer / "backend")
+    assert done.returncode == 0
+    assert "1 tracked file(s) under backend: 1 bound, 0 no binding names" in done.stdout
+
+
+def test_untraced_is_its_own_form(consumer):
+    done = run("--untraced", consumer / "backend", "--check")
+    assert done.returncode == 2
+    assert "mutually exclusive" in done.stderr
+
+
+def test_convergence_counts_the_files_no_binding_names(consumer):
+    tracked(consumer, "src/orders/cancel.ts")
+    bind(consumer)
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert ("files under backend: 2 tracked, 1 bound, 1 no binding names — `--untraced` lists "
+            "them") in done.stdout

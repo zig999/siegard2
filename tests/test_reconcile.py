@@ -975,7 +975,7 @@ def test_the_reading_forms_are_exclusive_with_every_other_one(declared):
 def test_all_applies_to_the_form_that_holds_something_back_and_not_to_the_query(declared):
     done = run("--encodes", declared / "backend", FILE, "--all")
     assert done.returncode == 2
-    assert "--all only applies to --check, --owed, --rank and --convergence" in done.stderr
+    assert "--all only applies to --check, --owed, --rank, --convergence and --untraced" in done.stderr
 
 
 # ------------------------------------------------------------------ an unreadable record
