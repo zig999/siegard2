@@ -850,6 +850,34 @@ def test_a_log_that_moved_with_its_node_is_followed(consumer):
     assert outcome["landed"]["at"].startswith("2026-08-20T11:10")
 
 
+def test_a_field_spelled_through_a_list_by_name_is_read_to_the_item(consumer):
+    """`attributes.total.type` is how a log entry names an attribute's type (SPEC-002 names list
+    items by `name`); a reader that only indexed lists by number called every such decision
+    `unreadable`, and the outcome metric R10 promises stopped at the list."""
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True},
+                                    {"name": "code", "type": "string", "required": True}])
+    decided(home, "domain/x/c", "whether the total is decimal", "decimal",
+            field="attributes.total.type")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["node"] == "domain/x/c")
+    assert outcome["state"] == "stands" and outcome["value_now"] == "decimal", outcome
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True},
+                                    {"name": "code", "type": "string", "required": True}])
+    committed(home, "total must be an integer", "2026-08-20T11:50:00Z")
+    (home / "telemetry" / f"{STAMP}.json").unlink()
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["node"] == "domain/x/c")
+    assert outcome["state"] == "revised" and outcome["value_now"] == "integer", outcome
+    import telemetry
+    assert telemetry.field_of({"attributes": [{"name": "a"}, {"name": "a"}]},
+                              "attributes.a") == (False, None), "two items under one name"
+    assert telemetry.field_of({"attributes": [{"name": "a"}]}, "attributes.b") == (False, None)
+
+
 def test_an_entry_in_no_commit_yet_is_unlocated(consumer):
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])

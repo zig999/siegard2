@@ -1059,13 +1059,24 @@ def route_of(subject: str) -> str:
 
 
 def field_of(front: object, dotted: str) -> tuple[bool, object]:
-    """The value a dotted field path reaches in a node's frontmatter, and whether it reached."""
+    """The value a dotted field path reaches in a node's frontmatter, and whether it reached.
+
+    A list of mappings is addressed by index or by the one item whose `name` is the part — the
+    way a node names an attribute, a relationship or an operation, and the way a log entry's
+    `field` spells `attributes.<name>.type`. No item or two items under that name is a path
+    that does not reach."""
     current = front
     for part in dotted.split("."):
         if isinstance(current, dict) and part in current:
             current = current[part]
         elif isinstance(current, list) and part.isdigit() and int(part) < len(current):
             current = current[int(part)]
+        elif isinstance(current, list):
+            named = [item for item in current
+                     if isinstance(item, dict) and item.get("name") == part]
+            if len(named) != 1:
+                return False, None
+            current = named[0]
         else:
             return False, None
     return True, current
