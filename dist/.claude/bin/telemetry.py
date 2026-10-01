@@ -10,7 +10,7 @@ counts. Every figure this writes is read from a file, or is absent with the reas
 
 **Where the numbers live.** The framework itself records the runs (`run/<slug>/run.json` under
 each delivery root, with a clock on every step), the notes (`## Notes` on every plan node), the
-decisions (`decision-log.md`) and the history (git). What it never records — which subagent was
+decisions (`<slug>.log.md` beside each node) and the history (git). What it never records — which subagent was
 spawned, when, by which skill, how many tokens it spent and how long it held the wall — the
 harness records on its own, in the session transcripts under its projects directory: one
 subdirectory per working directory, one `.jsonl` per session, and beside it a `subagents/`
@@ -115,7 +115,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/7"
+CONTRACT = "siegard-telemetry/8"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -125,7 +125,8 @@ OUTCOME_STATES = {
     NODE_GONE: "the node the decision located is no longer in the specification",
     UNREADABLE: "the located field could not be read at the landing commit — the log names a "
                 "field the node did not hold when the entry was written",
-    UNLOCATED: "no commit of the log contains this entry's text; the landing cannot be found",
+    UNLOCATED: "no commit of the node's log contains this entry: it stands in the working tree "
+               "only, or the log was rewritten rather than appended to",
 }
 CORRECTIVE, FRAMEWORK, HAND_EDIT = "corrective", "framework", "hand-edit"
 ROUTES = {
@@ -910,65 +911,130 @@ def closing_commit(home: Path, until: datetime) -> tuple[bool, str | None]:
     return True, digest or None
 
 
+LOG_SUFFIX = ".log.md"
+
+
+def is_log(relative: str) -> bool:
+    """Whether a specification-relative path is a node's decision log, `<slug>.log.md` — read
+    by the same classifier the validator uses, so what telemetry counts is what validates."""
+    placed = spec.classify(Path(relative))
+    return placed is not None and placed[0] == "log"
+
+
+def logs_in_tree(specification_root: Path) -> list[str]:
+    return sorted(p.relative_to(specification_root).as_posix()
+                  for p in specification_root.rglob(f"*{LOG_SUFFIX}")
+                  if is_log(p.relative_to(specification_root).as_posix()))
+
+
+def logs_at(home: Path, commit: str, spec_relative: str) -> list[str]:
+    """Every decision log the specification held at `commit`, specification-relative."""
+    scope = [] if spec_relative == "." else [spec_relative]
+    listed = git(home, "ls-tree", "-r", "--name-only", commit, "--", *scope)
+    if listed is None or listed.returncode != 0:
+        return []
+    prefix = "" if spec_relative == "." else spec_relative + "/"
+    found = []
+    for line in listed.stdout.splitlines():
+        if not line.endswith(LOG_SUFFIX) or not line.startswith(prefix):
+            continue
+        relative = line[len(prefix):]
+        if is_log(relative):
+            found.append(relative)
+    return sorted(found)
+
+
+def node_of(log_relative: str) -> str:
+    """The identity of the node a decision log sits beside, from the log's own path."""
+    return log_relative[:-len(LOG_SUFFIX)]
+
+
 def decisions_section(specification_root: Path | None, home: Path, since: datetime,
                       until: datetime) -> dict:
-    """What the decision log gained inside the window. A window closing before the last commit
-    reads the log as it stood at the last commit at or before `until`, and follows each decision
-    only that far: a decision committed after the close is outside the window, and so is a
-    revision."""
+    """What the decision logs gained inside the window — one log beside each node, read one by
+    one against its own baseline. A window closing before the last commit reads every log as it
+    stood at the last commit at or before `until`, and follows each decision only that far: a
+    decision committed after the close is outside the window, and so is a revision."""
     absent = {"log": None, "baseline": "no specification_root is declared", "total_now": None,
-              "added": [], "outcomes": outcomes_of([])}
+              "added": [], "retired": [], "outcomes": outcomes_of([])}
     if specification_root is None:
         return absent
-    log = specification_root / "decision-log.md"
     bounded, cut = closing_commit(home, until)
     try:
-        relative = log.resolve().relative_to(home.resolve()).as_posix()
+        spec_relative = specification_root.resolve().relative_to(home.resolve()).as_posix()
     except ValueError:
-        relative = None
-    if bounded and relative is not None:
-        if cut is None:
-            return {"log": str(log), "baseline": f"no commit is at or before {iso(until)}; the "
-                    f"window closes before the log's history begins", "total_now": 0,
-                    "added": [], "outcomes": outcomes_of([])}
-        held = git(home, "show", f"{cut}:{relative}")
-        if held is None or held.returncode != 0:
-            return {"log": str(log), "baseline": f"commit {cut}, the last at or before "
-                    f"{iso(until)}, holds no {relative}", "total_now": 0, "added": [],
-                    "outcomes": outcomes_of([])}
-        current = entries_in(held.stdout)
-    else:
-        if not log.is_file():
-            return {**absent, "baseline": f"{log} does not exist"}
-        try:
-            current = entries_in(log.read_text(encoding="utf-8-sig"))
-        except OSError as broken:
-            return {**absent, "log": str(log), "baseline": f"{log} cannot be read: {broken}"}
-    if relative is None:
-        decided, retired = apart_from_retirements(current)
-        return {"log": str(log), "baseline": f"{log} sits outside the git toplevel {home}; every "
-                f"current entry is listed", "total_now": len(current), "added": decided,
+        spec_relative = None
+    logs: list[dict] = []
+    current_all: list[dict] = []
+    added_all: list[dict] = []
+
+    def repo_path(relative: str) -> str:
+        return relative if spec_relative in (None, ".") else f"{spec_relative}/{relative}"
+
+    if spec_relative is None:
+        for relative in logs_in_tree(specification_root):
+            try:
+                current = entries_in((specification_root / relative).read_text(encoding="utf-8-sig"))
+            except OSError as broken:
+                logs.append({"path": relative, "baseline": f"cannot be read: {broken}"})
+                continue
+            logs.append({"path": relative, "baseline": f"sits outside the git toplevel {home}; "
+                         f"every current entry is listed"})
+            for entry in current:
+                entry["node"] = node_of(relative)
+            current_all += current
+            added_all += current
+        decided, retired = apart_from_retirements(added_all)
+        return {"log": logs, "baseline": f"{len(logs)} log(s) read outside git; every current "
+                f"entry is listed", "total_now": len(current_all), "added": decided,
                 "retired": retired, "outcomes": outcomes_of(decided)}
-    upto = cut if bounded else None
-    before = git(home, "rev-list", "-1", f"--before={iso(since)}", "HEAD", "--", relative)
-    if before is None or before.returncode != 0 or not before.stdout.strip():
-        baseline_said = (f"no commit before {iso(since)} holds {relative}; every current "
-                         f"entry is listed")
-        added = current
+    if bounded:
+        if cut is None:
+            return {"log": [], "baseline": f"no commit is at or before {iso(until)}; the window "
+                    f"closes before the specification's history begins", "total_now": 0,
+                    "added": [], "retired": [], "outcomes": outcomes_of([])}
+        paths = logs_at(home, cut, spec_relative)
     else:
-        digest = before.stdout.strip()
-        baseline_said = f"commit {digest}"
-        shown = git(home, "show", f"{digest}:{relative}")
-        baseline = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
-        seen = {json.dumps(e, sort_keys=True) for e in baseline}
-        added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
-    spec_relative = Path(relative).parent.as_posix()
-    added, retired = apart_from_retirements(added)
+        paths = logs_in_tree(specification_root)
+    upto = cut if bounded else None
+    with_baseline = 0
+    for relative in paths:
+        at_repo = repo_path(relative)
+        if bounded:
+            held = git(home, "show", f"{cut}:{at_repo}")
+            current = entries_in(held.stdout) if held and held.returncode == 0 else []
+        else:
+            try:
+                current = entries_in((specification_root / relative).read_text(encoding="utf-8-sig"))
+            except OSError as broken:
+                logs.append({"path": at_repo, "baseline": f"cannot be read: {broken}"})
+                continue
+        before = git(home, "rev-list", "-1", f"--before={iso(since)}", "HEAD", "--", at_repo)
+        if before is None or before.returncode != 0 or not before.stdout.strip():
+            baseline_said = (f"no commit before {iso(since)} holds {at_repo}; every current "
+                             f"entry is listed")
+            added = list(current)
+        else:
+            digest = before.stdout.strip()
+            baseline_said = f"commit {digest}"
+            with_baseline += 1
+            shown = git(home, "show", f"{digest}:{at_repo}")
+            baseline = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
+            seen = {json.dumps(e, sort_keys=True) for e in baseline}
+            added = [e for e in current if json.dumps(e, sort_keys=True) not in seen]
+        logs.append({"path": at_repo, "baseline": baseline_said})
+        for entry in added:
+            entry["node"] = node_of(relative)
+        current_all += current
+        added_all += added
+    added, retired = apart_from_retirements(added_all)
     for entry in added:
-        entry["outcome"] = outcome_of(entry, home, spec_relative, relative, specification_root,
-                                      upto)
-    return {"log": str(log), "baseline": baseline_said, "total_now": len(current),
-            "added": added, "retired": retired, "outcomes": outcomes_of(added)}
+        entry["outcome"] = outcome_of(entry, home, spec_relative, specification_root, upto)
+    return {"log": logs,
+            "baseline": f"{len(logs)} log(s) read, {with_baseline} with a commit before "
+                        f"{iso(since)}; each log's own baseline is under `log`",
+            "total_now": len(current_all), "added": added, "retired": retired,
+            "outcomes": outcomes_of(added)}
 
 
 def apart_from_retirements(entries: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -1021,39 +1087,60 @@ def flat(value: object) -> str:
                   if isinstance(value, (dict, list)) else str(value)).strip()
 
 
-def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
-               specification_root: Path, upto: str | None = None) -> dict:
+def outcome_of(entry: dict, home: Path, spec_relative: str, specification_root: Path,
+               upto: str | None = None) -> dict:
     """What became of one decision the framework made on the human's behalf, read from the node
-    it located rather than from the log: the log records what was decided, and the node records
-    what stands. The comparison is the field as the landing commit wrote it against the field
-    today — never the log's `decided` text against the field, because the log paraphrases and
-    the paraphrase is not the value.
+    it sits beside rather than from the log: the log records what was decided, and the node
+    records what stands. The comparison is the field as the landing commit wrote it against the
+    field today — never the log's `decided` text against the field, because the log paraphrases
+    and the paraphrase is not the value.
 
-    The landing commit is found by the entry's own words in the log's history. The route of
-    every later commit over the node is read off the subject the skills write, and the states
-    are printed with their meaning beside them, because the one reading that matters — was this
-    a person disagreeing, or the framework re-deciding itself — is not a count.
+    The landing commit is exact: the first commit of the node's own log whose entries contain
+    this one, read by following the log through its renames — a log moves with its node, one
+    path at a time, so `--follow` on that one path is the whole of what a rename needs. The
+    route of every later commit over the node is read off the subject the skills write, and the
+    states are printed with their meaning beside them, because the one reading that matters —
+    was this a person disagreeing, or the framework re-deciding itself — is not a count.
 
     `upto` is the commit a window closing before the last commit reads at: "today" is then that
     commit, the node is read there rather than in the working tree, and no later commit is a
     revision the window saw."""
     tip = upto or "HEAD"
-    location = str(entry.get("location") or "")
-    node_relative = f"{spec_relative}/{location}" if spec_relative != "." else location
-    if not node_relative.endswith(".md"):
-        node_relative += ".md"
+    node = str(entry.get("node") or "")
+    at_repo = (lambda rel: rel if spec_relative in (None, ".") else f"{spec_relative}/{rel}")
+    log_relative = at_repo(f"{node}{LOG_SUFFIX}")
+    node_relative = at_repo(f"{node}.md")
     field = str(entry.get("field") or "")
-    texts = [flat(entry.get(k)) for k in ("decided", "found", "unstated", "why")
-             if entry.get(k) is not None]
-    needle = max(texts, key=len)[:60] if texts else ""
-    found = git(home, "log", "--reverse", "--format=%H%x09%aI", "-S", needle, tip, "--",
-                log_relative) if needle else None
-    if found is None or found.returncode != 0 or not found.stdout.strip():
+    wanted = json.dumps({k: v for k, v in entry.items() if k not in ("node", "outcome")},
+                        sort_keys=True)
+    # `--follow` walks newest to oldest and does not combine with `--reverse`; the history is
+    # collected as git emits it and read oldest first here.
+    listing = git(home, "log", "--follow", "--format=%H%x09%aI", "--name-only", tip, "--",
+                  log_relative)
+    history: list[tuple[str, str, str]] = []
+    if listing is not None and listing.returncode == 0:
+        commit = at = None
+        for line in listing.stdout.splitlines():
+            if "\t" in line and len(line.split("\t", 1)[0]) == 40:
+                commit, at = line.split("\t", 1)
+                continue
+            if line.strip() and commit is not None:
+                history.append((commit, at, line.strip()))
+                commit = None
+    landed = None
+    node_then = node_relative
+    for commit, at, path_then in reversed(history):
+        shown = git(home, "show", f"{commit}:{path_then}")
+        held = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
+        if wanted in {json.dumps(e, sort_keys=True) for e in held}:
+            landed = {"commit": commit, "at": at}
+            node_then = path_then[:-len(LOG_SUFFIX)] + ".md"
+            break
+    if landed is None:
         return {"landed": None, "state": UNLOCATED, "value_now": None, "revised_by": [],
                 "days_to_first_revision": None}
-    commit, at = found.stdout.splitlines()[0].split("\t", 1)
-    landed = {"commit": commit, "at": at}
-    shown = git(home, "show", f"{commit}:{node_relative}")
+    commit, at = landed["commit"], landed["at"]
+    shown = git(home, "show", f"{commit}:{node_then}")
     if shown is None or shown.returncode != 0:
         return {"landed": landed, "state": UNREADABLE, "value_now": None, "revised_by": [],
                 "days_to_first_revision": None}
@@ -1068,8 +1155,7 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, log_relative: str,
                     "days_to_first_revision": None}
         held_now, value_now = field_in_text(standing.stdout, field)
     else:
-        now_path = specification_root / (location if location.endswith(".md")
-                                         else location + ".md")
+        now_path = specification_root / f"{node}.md"
         if not now_path.is_file():
             return {"landed": landed, "state": NODE_GONE, "value_now": None, "revised_by": [],
                     "days_to_first_revision": None}
@@ -1237,8 +1323,11 @@ def provenance_of(roots: dict[str, object], harness: dict, repository: dict,
                           None if isinstance(where, str) else f"siegard.json declares no {key}"))
     rows.append(entry("repository", None if repository["unavailable"] else "git",
                       repository["unavailable"]))
-    rows.append(entry("decisions", decisions["log"],
-                      None if decisions["log"] else decisions["baseline"]))
+    logs = decisions["log"]
+    rows.append(entry("decisions",
+                      f"{len(logs)} decision log(s) beside the specification's nodes"
+                      if isinstance(logs, list) else None,
+                      None if isinstance(logs, list) else decisions["baseline"]))
     return rows
 
 

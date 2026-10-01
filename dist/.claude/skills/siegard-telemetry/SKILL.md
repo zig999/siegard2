@@ -88,7 +88,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/7
+contract_version: siegard-telemetry/8
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -187,7 +187,7 @@ What each section holds:
   `git` command you used to turn a commit into an instant.
 - **12.** Computed from `provenance`, never from impression: `complete: true` where no entry
   carries a reason; otherwise `false`, with every section and reason listed and what a complete
-  report would need (a readable transcript root, a declared root, a decision log in git). Then
+  report would need (a readable transcript root, a declared root, decision logs in git). Then
   one line: whether this report is ready to send to the framework's maintainer as a consumer
   report, which is exactly the same question.
 

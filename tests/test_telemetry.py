@@ -79,9 +79,10 @@ def consumer(tmp_path: Path) -> dict:
     (home / "backend").mkdir()
     spec_root = home / "specification"
     spec_root.mkdir()
-    (spec_root / "decision-log.md").write_text(
-        "---\nentries:\n- location: domain/x/a.md\n  field: attributes\n  unstated: u\n"
-        "  decided: d\n  why: w\n---\n", encoding="utf-8")
+    (spec_root / "domain/x").mkdir(parents=True)
+    (spec_root / "domain/x/a.log.md").write_text(
+        "---\nentries:\n- field: attributes\n  unstated: u\n  decided: d\n  why: w\n---\n",
+        encoding="utf-8")
 
     def commit(message: str, when: str) -> None:
         subprocess.run(["git", "-C", str(home), "add", "-A"], check=True)
@@ -92,10 +93,9 @@ def consumer(tmp_path: Path) -> dict:
 
     commit("before the window", "2026-08-20T09:00:00Z")
 
-    (spec_root / "decision-log.md").write_text(
-        "---\nentries:\n- location: domain/x/a.md\n  field: attributes\n  unstated: u\n"
-        "  decided: d\n  why: w\n- location: domain/x/b.md\n  field: attributes\n"
-        "  unstated: second\n  decided: e\n  why: v\n---\n", encoding="utf-8")
+    (spec_root / "domain/x/b.log.md").write_text(
+        "---\nentries:\n- field: attributes\n  unstated: second\n  decided: e\n  why: v\n---\n",
+        encoding="utf-8")
     task = home / "work/checkout/task/checkout/record-order.md"
     task.parent.mkdir(parents=True)
     task.write_text(
@@ -394,19 +394,24 @@ def test_notes_are_quoted_as_the_validator_spells_them(consumer):
 def test_decisions_added_are_diffed_against_the_commit_before_the_window(consumer):
     _, report = report_of(consumer)
     assert report["decisions"]["total_now"] == 2
-    assert report["decisions"]["baseline"].startswith("commit ")
+    logs = {entry["path"]: entry["baseline"] for entry in report["decisions"]["log"]}
+    assert logs["specification/domain/x/a.log.md"].startswith("commit ")
+    assert logs["specification/domain/x/b.log.md"].startswith("no commit before")
+    assert report["decisions"]["baseline"].startswith("2 log(s) read, 1 with a commit before")
     assert [e["unstated"] for e in report["decisions"]["added"]] == ["second"]
+    assert [e["node"] for e in report["decisions"]["added"]] == ["domain/x/b"], \
+        "each added entry names the node its log sits beside; the file never carries it"
 
 
 def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer):
     """A retirement says where an earlier decision went when its node left; it decides nothing,
     so it is neither counted with the decisions nor followed to a field that is gone."""
-    log = consumer["home"] / "specification" / "decision-log.md"
-    closing = "\n---\n"
+    log = consumer["home"] / "specification" / "domain/x/b.log.md"
+    closing = "---\n"
     text = log.read_text(encoding="utf-8")
     assert text.endswith(closing)
-    log.write_text(text[:-len(closing)] + "\n- location: domain/x/b.md\n  field: attributes\n"
-                   "  retired: held nowhere; the element left the specification" + closing,
+    log.write_text(text[:-len(closing)] + "- field: attributes\n"
+                   "  retired: held nowhere; the element left the specification\n" + closing,
                    encoding="utf-8")
     home = consumer["home"]
     subprocess.run(["git", "-C", str(home), "add", "-A"], check=True)
@@ -416,7 +421,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/7"
+    assert report["contract_version"] == "siegard-telemetry/8"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -649,7 +654,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/7"
+    assert report["contract_version"] == "siegard-telemetry/8"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -696,12 +701,17 @@ def node_at(home: Path, rel: str, attributes: list[dict]) -> None:
                     encoding="utf-8")
 
 
-def decided(home: Path, location: str, unstated: str, value: str) -> None:
-    log = home / "specification" / "decision-log.md"
-    text = log.read_text(encoding="utf-8")
-    text = text.rstrip("-\n") + f"\n- location: {location}\n  field: attributes\n  unstated: {unstated}\n" \
-                                 f"  decided: {value}\n  why: money is decimal\n---\n"
-    log.write_text(text, encoding="utf-8")
+def decided(home: Path, node: str, unstated: str, value: str, field: str = "attributes") -> None:
+    """Append one decided entry to the log beside `node`, the way `spec.py --decide` lays it out:
+    one block per entry, every scalar on one line, no body."""
+    log = home / "specification" / f"{node}.log.md"
+    block = yaml.safe_dump([{"field": field, "unstated": unstated, "decided": value,
+                             "why": "money is decimal"}], sort_keys=False, width=float("inf"))
+    if log.is_file():
+        text = log.read_text(encoding="utf-8")
+        log.write_text(text[:-len("---\n")] + block + "---\n", encoding="utf-8")
+    else:
+        log.write_text(f"---\nentries:\n{block}---\n", encoding="utf-8")
 
 
 def test_a_decision_is_followed_to_the_field_it_filled(consumer):
@@ -711,9 +721,9 @@ def test_a_decision_is_followed_to_the_field_it_filled(consumer):
     paraphrase — and every later commit that changed it, with its route."""
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
-    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
     node_at(home, "domain/x/d.md", [{"name": "code", "type": "string", "required": True}])
-    decided(home, "domain/x/d.md", "whether a code is a string", "code is carried as a string")
+    decided(home, "domain/x/d", "whether a code is a string", "code is carried as a string")
     committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
     committed(home, "deliver-scope corrective-increment-total: plan", "2026-08-20T11:30:00Z")
@@ -741,7 +751,7 @@ def test_a_decision_is_followed_to_the_field_it_filled(consumer):
 def test_a_delivery_naming_no_correction_is_the_framework_revising_itself(consumer):
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
-    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
     committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "money", "required": True}])
     committed(home, "deliver-scope invoicing: plan", "2026-08-20T11:40:00Z")
@@ -756,7 +766,7 @@ def test_a_delivery_naming_no_correction_is_the_framework_revising_itself(consum
 def test_a_commit_no_skill_wrote_is_a_hand_edit(consumer):
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
-    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
     committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
     committed(home, "total must be an integer, finance said so", "2026-08-20T11:50:00Z")
@@ -781,11 +791,11 @@ def test_a_decision_committed_after_the_window_closes_is_not_counted(consumer):
     tree holds it now, and a revision committed after the close is not one the window saw."""
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
-    decided(home, "domain/x/c.md", "whether the total is decimal", "total is carried as decimal")
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
     committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "integer", "required": True}])
     committed(home, "total must be an integer", "2026-08-20T11:50:00Z")
-    decided(home, "domain/x/c.md", "whether the code is a string", "code is a string")
+    decided(home, "domain/x/c", "whether the code is a string", "code is a string")
     committed(home, "a later decision", "2026-08-20T11:55:00Z")
 
     early = run(home, "--since", SINCE, "--until", "2026-08-20T11:05:00Z",
@@ -803,6 +813,52 @@ def test_a_decision_committed_after_the_window_closes_is_not_counted(consumer):
     assert "whether the code is a string" not in by
     assert by["whether the total is decimal"]["state"] == "stands"
     assert by["whether the total is decimal"]["revised_by"] == []
+
+
+def test_a_decision_lands_on_the_exact_commit_without_a_text_search(consumer):
+    """A /7 report found an entry's landing by searching the log's history for sixty characters
+    of its text, and found nothing for an entry whose text wrapped across lines. The landing is
+    now the first commit of the node's own log whose entries contain the entry."""
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c", "whether the total,\nwhich the material shows in two currencies,\n"
+            "is carried as one decimal or as a money value with its own currency", "decimal")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["node"] == "domain/x/c")
+    assert outcome["state"] == "stands", outcome
+    assert outcome["landed"]["at"].startswith("2026-08-20T11:10")
+
+
+def test_a_log_that_moved_with_its_node_is_followed(consumer):
+    """A log moves with its node and no entry records the move; following the one path through
+    its renames is what finds the landing commit under the node's old name."""
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
+    committed(home, "deliver-scope pricing: plan", "2026-08-20T11:10:00Z")
+    for name in ("c.md", "c.log.md"):
+        subprocess.run(["git", "-C", str(home), "mv", f"specification/domain/x/{name}",
+                        f"specification/domain/x/{name.replace('c.', 'charge.', 1)}"],
+                       check=True)
+    committed(home, "analyse: rename c to charge", "2026-08-20T11:20:00Z")
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["node"] == "domain/x/charge")
+    assert outcome["state"] == "stands", outcome
+    assert outcome["landed"]["at"].startswith("2026-08-20T11:10")
+
+
+def test_an_entry_in_no_commit_yet_is_unlocated(consumer):
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
+    _, report = report_of(consumer)
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["node"] == "domain/x/c")
+    assert outcome["state"] == "unlocated" and outcome["landed"] is None
+    assert "working tree only" in report["decisions"]["outcomes"]["state_meanings"]["unlocated"]
 
 
 # ------------------------------------------- the session's cost by the skill it ran
@@ -934,7 +990,8 @@ def test_a_window_opening_before_the_log_s_history_follows_every_entry(consumer)
     report = json.loads((consumer["home"] / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8"))
     assert not list(contract().iter_errors(report))
     decisions = report["decisions"]
-    assert decisions["baseline"].startswith("no commit before")
+    assert decisions["baseline"].startswith("2 log(s) read, 0 with a commit before")
+    assert all(entry["baseline"].startswith("no commit before") for entry in decisions["log"])
     assert len(decisions["added"]) == 2
     assert all("outcome" in entry for entry in decisions["added"])
     assert sum(decisions["outcomes"]["states"].values()) == 2
