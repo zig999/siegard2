@@ -32,8 +32,11 @@ A missing input is a stop, not a default:
    does not hold, and the report says so.
 5. **the areas** — each a short name and the files it holds, in the ask's own words, spelled
    from the target source root as paths or directories. They are `/survey`'s own input, handed
-   through unchanged; this skill never widens, narrows or cuts an area.
-6. **outside** — optional: the tracked files the ask keeps out of the judgment. Absent, none.
+   through unchanged; this skill never widens, narrows or cuts an area. What leaves an area is
+   the project's declared tests, which `/survey` reads through `trace.py --area`: the
+   declaration narrows it, never this skill.
+6. **outside** — optional: the tracked files the ask keeps out of the judgment. Absent, none. A
+   declared test is never one of them: it is uncertified until a certification names it.
 7. **certifications** — optional: the tests the ask offers as proof of named nodes, in the shape
    `/reconcile` takes. Absent, none; this skill proposes no certification of its own.
 
@@ -163,7 +166,7 @@ target decided, the step resumed from — each disclosed; `--survey`'s counts pe
 `--ledger`'s output verbatim, with every reason a fact was left out, grouped; every decision the
 analysis logged, by node and field; the adoption's counts as its report gave them — bound,
 `unheld`, `contradicts`, `unstated`, `restates`, certified — and `trace.py --untraced` over the
-target after the bind; the telemetry's receipt; what ended the run, where it ended early, with the
+target after the bind, every state it prints, the uncertified tests among them; the telemetry's receipt; what ended the run, where it ended early, with the
 stopping report's doors verbatim; and what this skill never did — no `/plan-work`, no
 `/implement-task`, no repair of any finding, no certification it proposed, no step beyond the
 route.

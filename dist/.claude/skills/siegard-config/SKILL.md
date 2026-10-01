@@ -1,6 +1,6 @@
 ---
 name: siegard-config
-description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, and which targets a person edits without a task — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
+description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, which targets a person edits without a task, and where each target's tests sit — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
 disable-model-invocation: true
 effort: low
 ---
@@ -23,7 +23,9 @@ A missing input is a stop, not a default:
    exactly one key, where that key is decided and disclosed rather than asked), `telemetry_root`
    (where `/siegard-telemetry` lands its reports — the one root nothing else reads), or
    `edits_freely` (the targets whose source a person changes without a task, by their keys in
-   `targets`). An invocation naming none has nothing to write, and is a stop.
+   `targets`), or one or more `tests` entries (a target's key in `targets` and, for it, the
+   scopes its tests sit in — each an `under`, a `suffix` and whether it is `nested`). An
+   invocation naming none has nothing to write, and is a stop.
 
 ## Before anything: the tree
 
@@ -89,6 +91,13 @@ declaration costs: over those targets `trace.py --check` stops listing files tha
 a rebind, counting them in a receipt instead, so an edit made without a task is answered by the
 project's own suite for the rules a tool decides and by `/check-source` or a later review for the
 rules a reading decides — never by a reading this framework schedules on its own.
+
+`tests` is keyed by target, the way `standard`'s object is: the named key is added or overwritten
+and a key the human did not name is left standing. A target's scopes are written as the human
+states them, whole — a list overlaid scope by scope could never lose one. Every key must be one
+`targets` holds, and the report says what the declaration changes: `trace.py --untraced` counts
+those files uncertified instead of unsurveyed, `trace.py --area` leaves them out of every area a
+survey reads, and an adoption refuses them as source and takes them as a certification's proof.
 
 ### 3. Write
 

@@ -52,6 +52,18 @@
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/slug" },
       "description": "The targets whose source a person may change without a task, by their keys in `targets`. It is a declaration about how a surface behaves, not a permission this framework grants: what it changes is one line of one report. `bin/trace.py --check` stops listing the `code` class — a file that changed without a rebind — for files sitting under these targets, counts what it suppressed in a receipt, and lists them under `--all`. The other two classes are untouched, and that split is the whole of the reasoning: `moved` says the specification changed under a screen and `orphaned` says the node is gone, and both stay worth reading no matter how often the files move. `code` is the one whose usefulness depends on the files being rare to change by hand — on a surface where a label, a colour or a column order moves weekly it names every one of them, and a report nobody finishes is a report that hides the two findings that mattered. A project declaring none is held to all three classes on every target, which is what every project was held to before this field existed. Declaring one is not free and the trade is stated where it is felt: an edit made this way is answered by the project's own suite for the rules a tool decides, by `/check-source` when somebody asks, and by the next review that reaches those files — never by a reading this framework schedules on its own."
+    },
+    "tests": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": { "$ref": "#/$defs/scope" }
+      },
+      "description": "Where each target's tests live, keyed exactly as `targets` keys them, each value the scopes that hold them, spelled from that target's source root in the parts a standard rule's scope uses — `under`, `suffix`, `nested` — never a glob, and read by the same `project.reaches`. A test is a certification's material and never a survey's: it states what the source should do, and a survey reads what the source does. So `trace.py --area` leaves a declared test out of an area and names it, `--survey` refuses material that lists one, `--stage --adopt` refuses one in its file set and hands the certification shape instead, and `--untraced` counts one no certification names as `uncertified` rather than `unsurveyed`. A key `targets` does not hold is a defect `bin/project.py` refuses. Absent, the project declares nothing about its tests: no file is uncertified, and every tracked file is held to the states that need no declaration."
     }
   },
   "$defs": {
@@ -59,6 +71,28 @@
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
       "description": "A name reduced to kebab-case. A name that will not reduce is a refusal, not a transliteration."
+    },
+    "scope": {
+      "type": "object",
+      "required": ["under", "suffix"],
+      "additionalProperties": false,
+      "properties": {
+        "under": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\](?:[^\\\\]*[^/\\\\])?$",
+          "description": "The directory this scope starts at, relative to the target source root and without a trailing separator."
+        },
+        "suffix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What a path must end with — an extension, or a role and an extension together such as `.service.ts`."
+        },
+        "nested": {
+          "type": "boolean",
+          "description": "Whether the scope reaches directories below `under`. Absent is false: the scope is exactly the files sitting directly in `under`. This is the distinction a glob language gets wrong in both directions — one tool's single star crosses a separator and another's double star means exactly one directory — so it is stated rather than pattern-matched."
+        }
+      }
     }
   }
 }

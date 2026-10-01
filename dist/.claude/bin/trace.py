@@ -74,6 +74,9 @@ What this script does, and nobody else does any of it:
                                                                   bound
     trace.py --untraced <target-root> [--all]                     every tracked file under the
                                                                   target no binding names
+    trace.py --area <target-root> <path-or-dir> ...               the tracked files an area holds,
+                                                                  with the target's declared tests
+                                                                  left out and named
     trace.py --survey <material.md> ...                           hold survey material to its
                                                                   contract and count its fact
                                                                   lines per heading
@@ -569,6 +572,43 @@ def target_roots(home: Path) -> dict[str, str]:
     return {key: PurePosixPath(where).as_posix().rstrip("/")
             for key, where in targets.items()
             if isinstance(key, str) and isinstance(where, str) and where}
+
+
+def test_scopes_of(home: Path, offset: str) -> list[dict] | None:
+    """The scopes the project declares its tests in for the target whose source root is
+    `offset`, or None where it declares none — read the way `target_roots()` reads the same file,
+    for the same reason. None is not an empty list: a project that has not declared its tests
+    has no uncertified file and refuses no test, because nothing says which files those are."""
+    declared_at = home / project.PROJECT_FILE
+    if not declared_at.is_file():
+        return None
+    try:
+        declared = json.loads(declared_at.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(declared, dict) or not isinstance(declared.get("tests"), dict):
+        return None
+    for key, where in target_roots(home).items():
+        if where == offset.rstrip("/"):
+            scopes = declared["tests"].get(key)
+            if isinstance(scopes, list) and scopes:
+                return [scope for scope in scopes if isinstance(scope, dict)]
+    return None
+
+
+def declared_test(scopes: list[dict] | None, path: str) -> bool:
+    """Whether a path spelled from the target source root is one of the target's declared
+    tests, read by the one matcher a standard rule's scope is read by."""
+    return bool(scopes) and any(project.reaches(scope, path) for scope in scopes)
+
+
+def from_target(path: str, offset: str) -> str | None:
+    """A path spelled from the toplevel, spelled from the target source root instead; None where
+    it sits under another target."""
+    if offset in (".", ""):
+        return path
+    prefix = f"{offset.rstrip('/')}/"
+    return path[len(prefix):] if path.startswith(prefix) else None
 
 
 def registry_of(home: Path, offset: str) -> dict | None:
@@ -2117,7 +2157,9 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
     else:
         print(f"\nfiles under {files['offset']}: {len(files['tracked'])} tracked, "
               f"{len(files['bound'])} bound, {len(files['untraced'])} no binding names "
-              f"({len(files['unsurveyed'])} unsurveyed) — `--untraced` lists them")
+              f"({len(files['unsurveyed'])} unsurveyed"
+              + (f", {len(files['uncertified'])} uncertified" if files["declares_tests"] else "")
+              + ") — `--untraced` lists them")
     if bound_unplanned:
         print(f"\n{len(bound_unplanned)} bound node(s) no initiative names — bound by a "
               f"reconciliation over source that entered outside any task, or by a raw --bind; "
@@ -2410,6 +2452,9 @@ def survey(paths: list[Path]) -> int:
         if front is None:
             problems += held
             continue
+        problems += [f"{path}: lists {given}, which the target's declared test scope holds; a "
+                     f"test is a certification's material and never a survey's"
+                     for given in declared_tests_of_material(path, front)]
         counted.append((path, front, facts))
     if problems:
         for problem in problems:
@@ -2425,6 +2470,19 @@ def survey(paths: list[Path]) -> int:
         if silent:
             print(f"  {len(silent)} file(s) no fact names: {', '.join(silent)}")
     return 0
+
+
+def declared_tests_of_material(path: Path, front: dict) -> list[str]:
+    """The files survey material lists that its target declares as tests. Asked only of the
+    `--survey` form: a ledger rereads its material through `read_survey`, and material held
+    before a project declared its tests is read as it was held."""
+    home = home_of(path.resolve().parent)
+    where = target_roots(home).get(front.get("target")) if isinstance(front.get("target"), str) \
+        else None
+    if where is None:
+        return []
+    scopes = test_scopes_of(home, where)
+    return [given for given in front.get("files") or [] if declared_test(scopes, given)]
 
 
 def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[str]]:
@@ -2587,28 +2645,110 @@ def adopted_ground(home: Path) -> tuple[set[str], set[str], list[str]]:
 def untraced_of(target: Path, declared: dict | None) -> tuple[dict | None, str | None]:
     """The tracked files under the target in exactly one state each — «Every tracked file under
     a target is in exactly one state» (SPEC-005 R5): bound; judged by an adoption that bound
-    none of its candidates to it; kept outside an adoption's judgment; or unsurveyed."""
+    none of its candidates to it; kept outside an adoption's judgment; or unsurveyed. A binding
+    names a file either as one it encodes or as the proof a certification pinned, and both are
+    bound: the trace pins the proof's digest and reports its drift the way it does the files'."""
     home = home_of(target)
     tracked, why = tracked_under(target, home)
     if tracked is None:
         return None, why
-    bound = {f["path"] for entry in (declared or {}).get("bindings") or []
-             for f in entry.get("files") or []
-             if isinstance(f, dict) and isinstance(f.get("path"), str)}
+    bindings = (declared or {}).get("bindings") or []
+    encoded = {f["path"] for entry in bindings for f in entry.get("files") or []
+               if isinstance(f, dict) and isinstance(f.get("path"), str)}
+    proven = {p["path"] for entry in bindings for p in entry.get("proof") or []
+              if isinstance(p, dict) and isinstance(p.get("path"), str)}
+    bound = encoded | proven
     judged_files, kept_out, unreadable = adopted_ground(home)
-    split = {"offset": offset_of(target, home), "tracked": tracked, "unreadable": unreadable,
-             "bound": [], "holds_nothing": [], "outside": [], "unsurveyed": []}
+    offset = offset_of(target, home)
+    scopes = test_scopes_of(home, offset)
+    split = {"offset": offset, "tracked": tracked, "unreadable": unreadable,
+             "declares_tests": scopes is not None, "bound": [], "as_proof": [],
+             "holds_nothing": [], "outside": [], "uncertified": [], "unsurveyed": []}
     for path in tracked:
         state = ("bound" if path in bound else "holds_nothing" if path in judged_files
-                 else "outside" if path in kept_out else "unsurveyed")
+                 else "outside" if path in kept_out
+                 else "uncertified" if declared_test(scopes, from_target(path, offset) or "")
+                 else "unsurveyed")
         split[state].append(path)
-    split["untraced"] = split["holds_nothing"] + split["outside"] + split["unsurveyed"]
+        if path in proven and path not in encoded:
+            split["as_proof"].append(path)
+    split["untraced"] = (split["holds_nothing"] + split["outside"] + split["uncertified"]
+                         + split["unsurveyed"])
     return split, None
 
 
 UNTRACED_STATES = (("holds_nothing", "judged by an adoption, which bound none of its candidates to it"),
                    ("outside", "kept outside an adoption's judgment"),
+                   ("uncertified", "in the target's declared test scope, and no certification "
+                                   "names it"),
                    ("unsurveyed", "no binding and no adoption names it"))
+
+
+def untraced_states(split: dict) -> list[tuple[str, str]]:
+    """The states a report prints for this target: `uncertified` only where the project
+    declares the target's tests, since without the declaration no file can be in it."""
+    return [(state, meaning) for state, meaning in UNTRACED_STATES
+            if state != "uncertified" or split["declares_tests"]]
+
+
+def area(target: Path, given: list[str]) -> int:
+    """The tracked files an area holds, each spelled from the target source root, with the
+    target's declared tests left out and named. An area is named by a person as paths or
+    directories, and a directory holds the tests beside the source they test; the survey reads
+    what the source does, and a test states what it should do, so the declaration — not the
+    caller — is what takes them out. A test named as a file of the area is a stop rather than a
+    silent drop: whoever named it meant it, and what they meant is a certification."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    home = home_of(target)
+    offset = offset_of(target, home)
+    scopes = test_scopes_of(home, offset)
+    held: list[str] = []
+    problems: list[str] = []
+    for name in given:
+        spelled = PurePosixPath(name).as_posix().strip("/")
+        anchored = spelled if offset in (".", "") else f"{offset}/{spelled}"
+        try:
+            listed = subprocess.run(["git", "-C", str(home), "ls-files", "--", anchored],
+                                    capture_output=True, text=True)
+        except OSError:
+            print("cannot run: git is not on this machine, and which files an area holds is "
+                  "git's to name", file=sys.stderr)
+            return CANNOT_RUN
+        if listed.returncode != 0:
+            said = listed.stderr.strip().splitlines()
+            print(f"cannot run: {said[-1] if said else 'git ls-files failed in ' + str(home)}",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        files = [from_target(line, offset) for line in listed.stdout.splitlines() if line]
+        files = [f for f in files if f]
+        if not files:
+            problems.append(f"{spelled} names no file git tracks under {target}; an area is "
+                            f"spelled from the target source root")
+        elif files == [spelled] and declared_test(scopes, spelled):
+            problems.append(f"{spelled} is a declared test; a test is a certification's "
+                            f"material and never a survey's — offer it as a certification's "
+                            f"proof instead")
+        held += files
+    if problems:
+        for problem in problems:
+            print(f"cannot run: {problem}", file=sys.stderr)
+        return CANNOT_RUN
+    held = sorted(set(held))
+    tests = [f for f in held if declared_test(scopes, f)]
+    source = [f for f in held if f not in tests]
+    print(f"{len(source)} file(s) in the area under {offset}"
+          + (f", {len(tests)} left out as declared tests" if tests else "")
+          + ("" if scopes is not None
+             else " — the project declares no tests for this target, so none was left out"))
+    for path in source:
+        print(f"  {path}")
+    if tests:
+        print("\nleft out as declared tests:")
+        for path in tests:
+            print(f"  {path}")
+    return 0
 
 
 def untraced(target: Path, show_all: bool = False) -> int:
@@ -2616,10 +2756,11 @@ def untraced(target: Path, show_all: bool = False) -> int:
 
     Drift is keyed by change and `--rank` by what the trace holds, so neither can see code the
     trace never reached: a file no delivery wrote and no reconciliation judged is in no report,
-    however much of the system it carries. This names it, and tells apart the three ways a file
-    can be unbound — an adoption judged it and bound none of its candidates to it, the human kept
-    it out of an adoption's judgment, or nothing has looked at it at all — because only the last
-    is ground an adoption has not covered. «Adoption is complete when no file is unsurveyed and no
+    however much of the system it carries. This names it, and tells apart the ways a file can be
+    unbound — an adoption judged it and bound none of its candidates to it, the human kept it out
+    of an adoption's judgment, it is a test the project declares and no certification names, or
+    nothing has looked at it at all — because only the last is ground an adoption has not
+    covered. A test is never that ground: it is a certification's material, offered or not. «Adoption is complete when no file is unsurveyed and no
     node is unreached» (SPEC-005 R7); `--convergence` counts the second half. It refuses nothing:
     most files of a real system carry no domain fact and are never bound, so a count here is a
     fact about the tree and never a floor to reach. The unsurveyed directories are ranked, the
@@ -2639,16 +2780,18 @@ def untraced(target: Path, show_all: bool = False) -> int:
         print(f"cannot run: {why}", file=sys.stderr)
         return CANNOT_RUN
     print(f"{len(split['tracked'])} tracked file(s) under {split['offset']}: "
-          f"{len(split['bound'])} bound, {len(split['untraced'])} no binding names"
+          f"{len(split['bound'])} bound"
+          + (f" ({len(split['as_proof'])} as a certification's proof)" if split["as_proof"] else "")
+          + f", {len(split['untraced'])} no binding names"
           + ("" if declared is not None
              else f" — no trace file at {trace_path(target)}, so nothing has been bound yet"))
-    for state, meaning in UNTRACED_STATES:
+    for state, meaning in untraced_states(split):
         print(f"  {len(split[state])} {state.replace('_', '-')}: {meaning}")
     for problem in split["unreadable"]:
         print(f"  unread: {RECONCILE_DIR}/{problem} — the files it judged or kept out count as "
               f"unsurveyed here")
     if show_all:
-        for state, _ in UNTRACED_STATES:
+        for state, _ in untraced_states(split):
             if split[state]:
                 print(f"\n{state.replace('_', '-')}:")
                 for path in split[state]:
@@ -2988,6 +3131,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return CANNOT_RUN
 
     traced, path_problems = traced_files_of(target, home, files)
+    if adopt:
+        scopes = test_scopes_of(home, offset_of(target, home))
+        path_problems += [f"{given} is a declared test; a test is a certification's material and "
+                          f"never adopted source — leave it out of the file set and offer it with "
+                          f"--certify as {{node: <the node it proves>, proof: [{given}], step: "
+                          f"<the registry step that runs it>}}"
+                          for given in files if declared_test(scopes, given)]
     if outside:
         _, outside_problems = traced_files_of(target, home, outside)
         path_problems += [f"--outside {problem}" for problem in outside_problems]
@@ -4603,6 +4753,7 @@ def main() -> int:
     do_adopt = "--adopt" in args
     do_ledger = "--ledger" in args and not do_stage
     do_survey = "--survey" in args
+    do_area = "--area" in args
     also: list[str] = []
     while "--node" in args:
         at = args.index("--node")
@@ -4682,7 +4833,8 @@ def main() -> int:
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--rank", "--changed", "--audit", "--review",
-                         "--convergence", "--untraced", "--adopt", "--ledger", "--survey")]
+                         "--convergence", "--untraced", "--adopt", "--ledger", "--survey",
+                         "--area")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -4695,7 +4847,8 @@ def main() -> int:
                                       ("--convergence", do_convergence),
                                       ("--untraced", do_untraced),
                                       ("--ledger", do_ledger),
-                                      ("--survey", do_survey)) if given]
+                                      ("--survey", do_survey),
+                                      ("--area", do_area)) if given]
     if len(named) > 1:
         print(f"cannot run: {' and '.join(named)} are mutually exclusive", file=sys.stderr)
         return CANNOT_RUN
@@ -4772,6 +4925,13 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return survey([Path(a) for a in args])
+
+    if do_area:
+        if len(args) < 2 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --area <target-root> <path-or-dir> [<path-or-dir> ...]",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return area(Path(args[0]), args[1:])
 
     if do_ledger:
         if len(args) != 2 or any(a.startswith("--") for a in args):

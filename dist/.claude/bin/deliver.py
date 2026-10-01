@@ -615,30 +615,8 @@ def pin_of(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def reaches(scope, path: str) -> bool:
-    """Whether one scope of a standard rule reaches one path. The scope is stated in parts rather
-    than as a glob pattern deliberately: one tool's single star crosses a separator and another's
-    double star means exactly one directory, and that difference would decide whether a finding is
-    refused."""
-    if not isinstance(scope, dict):
-        return False
-    under, suffix = scope.get("under"), scope.get("suffix")
-    if not isinstance(under, str) or not isinstance(suffix, str):
-        return False
-    # `.` is the target root itself, the same thing it means to trace.py's `under()`, which reads
-    # the other path vocabulary in this framework. Composed as a prefix it would be `./`, which no
-    # stored path starts with, so a rule scoped to the whole target reached nothing at all — a
-    # registry's broadest rule was the one that silently checked no file.
-    if under.strip("/") in ("", "."):
-        return path.endswith(suffix) and (bool(scope.get("nested")) or "/" not in path)
-    prefix = f"{under.rstrip('/')}/"
-    if not path.startswith(prefix) or not path.endswith(suffix):
-        return False
-    return bool(scope.get("nested")) or "/" not in path[len(prefix):]
-
-
 def in_scope(rule: dict, paths: list[str]) -> bool:
-    return any(reaches(scope, path)
+    return any(project.reaches(scope, path)
                for scope in listed(rule, "applies_to") for path in paths)
 
 
