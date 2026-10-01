@@ -144,6 +144,48 @@ After `/reload-plugins`, the skills, the rules and the hooks are the new version
 rules travel inside the plugin, and the next session or agent start places the current ones.
 Nothing at the project root needs to change.
 
+### Across a major
+
+A major changes something a consumer's own files hold, and says so in its version: the files a
+consumer already has stop satisfying the contract, and the plugin refuses them rather than
+reading them differently. The rewrite that brings them across is a tool in this repository's
+`tools/`, which the plugin does not carry — clone this repository and run it from there, once
+per project, over the project's own files.
+
+**5.0.0 — one decision log beside each node.** Before 5.0.0 a specification held a single
+`decision-log.md` at its root, each entry naming the file it filled under `location`. From 5.0.0
+the log is `<slug>.log.md` beside the node it discloses, an entry names only its `field`, an
+entry is written by `spec.py --decide` and never by hand, and the derived
+`projections/decisions-by-node.md` no longer exists. A project still holding the root log has it
+reported as a file that computes to no identity, which is the sign the rewrite has not run.
+
+To migrate a project:
+
+1. Update the plugin to 5.0.2 or later, so `spec.py` is the version that reads the new logs.
+2. Commit or stash what the working tree holds. The rewrite touches only the specification
+   root; a commit of that path keeps the rest of the tree out of it.
+3. Preview it, then run it, from a clone of this repository:
+
+   ```sh
+   python3 tools/migrate_decision_log.py --dry-run <project>/<specification-root>
+   python3 tools/migrate_decision_log.py <project>/<specification-root>
+   ```
+
+   It reads every YAML block of the root log, not only the first, groups the entries by
+   `location`, writes one log per node, refuses unless the entries written equal the entries
+   read, removes the root log and the projection, and runs `spec.py` over the root.
+4. If it refuses an entry as not YAML, it names the lines: usually a colon inside an unquoted
+   scalar. Quote the value, or turn it into a `|-` block with the text unchanged, and rerun.
+   Nothing is written until every entry parses.
+5. If `spec.py` then reports a log beside no node, a node left the specification without its
+   decisions being retired; append the retirement with `spec.py --decide <identity> <root>` —
+   a decision about where the fact went is the project's, and the tool makes none.
+6. Run `spec.py --project <specification-root>` and commit the specification root in one commit.
+
+A telemetry report written before 5.0.0 is the count it was and is read as such; the first
+report written after it is `siegard-telemetry/8`, and its decision figures are not comparable
+to a `/7` report's over the same window.
+
 ## For maintainers: what publishes a version
 
 The consumer's update check compares the version in the installed plugin's manifest against the

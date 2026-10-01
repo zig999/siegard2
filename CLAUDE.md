@@ -182,7 +182,7 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   surfaced the fact — a decision made where the cut is visible is the specification bent
   to fit it.
 - **Every decision is disclosed, and disclosure is never a gate.** The decided value lands
-  in the specification and its entry in the decision log; a human reviews after the fact,
+  in the specification and its entry in the node's decision log; a human reviews after the fact,
   and disagreement is an ordinary change. A decided fact with no log entry is invention.
 - **A contradiction is never decided.** A node stating the opposite turns the route back
   into the standing stop — the scope and the specification disagreeing is the one thing
