@@ -1392,3 +1392,96 @@ def test_a_file_stamped_before_the_field_existed_reads_as_stamped_at_the_binding
     path.write_text(json.dumps(declared, indent=2) + "\n", encoding="utf-8")
     done = run("--check", consumer / "backend")
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+# --------------------------------------------------------------------- declared tests
+
+SPEC_TS = {"under": "src", "suffix": ".spec.ts", "nested": True}
+
+
+def declare_tests(consumer: Path, scopes=(SPEC_TS,)) -> None:
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "tests": {"backend": list(scopes)}}) + "\n", encoding="utf-8")
+
+
+def test_untraced_counts_a_declared_test_no_certification_names_as_uncertified(consumer):
+    """SPEC-005 R5: a test the target's scope holds is uncertified, never unsurveyed — it is a
+    certification's material, offered or not, and never ground an adoption left uncovered."""
+    tracked(consumer, "src/orders/place.spec.ts", "src/orders/cancel.spec.ts",
+            "src/orders/cancel.ts")
+    assert bind(consumer).returncode == 0
+    certified(consumer, "src/orders/place.spec.ts")
+    declare_tests(consumer)
+    done = run("--untraced", consumer / "backend", "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert ("4 tracked file(s) under backend: 2 bound (1 as a certification's proof), "
+            "2 no binding names") in done.stdout
+    assert "  1 uncertified: in the target's declared test scope" in done.stdout
+    assert "uncertified:\n  backend/src/orders/cancel.spec.ts" in done.stdout
+    assert "unsurveyed:\n  backend/src/orders/cancel.ts" in done.stdout
+
+
+def test_untraced_prints_no_uncertified_line_where_no_tests_are_declared(consumer):
+    tracked(consumer, "src/orders/cancel.spec.ts")
+    done = run("--untraced", consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "uncertified" not in done.stdout
+    assert "  2 unsurveyed:" in done.stdout
+
+
+def test_convergence_counts_uncertified_tests_only_where_they_are_declared(consumer):
+    tracked(consumer, "src/orders/cancel.spec.ts")
+    bind(consumer)
+    work = planned(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work)
+    assert ("files under backend: 2 tracked, 1 bound, 1 no binding names (1 unsurveyed) — "
+            "`--untraced` lists them") in done.stdout
+    declare_tests(consumer)
+    done = run("--convergence", consumer / "backend", consumer / "specs", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert ("files under backend: 2 tracked, 1 bound, 1 no binding names (0 unsurveyed, "
+            "1 uncertified) — `--untraced` lists them") in done.stdout
+
+
+def test_area_lists_a_directory_s_source_and_names_the_declared_tests_it_left_out(consumer):
+    tracked(consumer, "src/orders/cancel.ts", "src/orders/__tests__/cancel.spec.ts")
+    declare_tests(consumer)
+    done = run("--area", consumer / "backend", "src/orders")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.startswith(
+        "2 file(s) in the area under backend, 1 left out as declared tests\n"
+        "  src/orders/cancel.ts\n  src/orders/place.ts\n")
+    assert "left out as declared tests:\n  src/orders/__tests__/cancel.spec.ts" in done.stdout
+
+
+def test_area_without_declared_tests_leaves_nothing_out_and_says_so(consumer):
+    tracked(consumer, "src/orders/cancel.spec.ts")
+    done = run("--area", consumer / "backend", "src/orders")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "2 file(s) in the area under backend — the project declares no tests" in done.stdout
+    assert "  src/orders/cancel.spec.ts" in done.stdout
+
+
+def test_area_stops_on_a_test_named_as_a_file_of_the_area(consumer):
+    """Whoever named a test as a file of an area meant it, and what they meant is a
+    certification: dropping it silently would answer a question nobody asked."""
+    tracked(consumer, "src/orders/cancel.spec.ts")
+    declare_tests(consumer)
+    done = run("--area", consumer / "backend", "src/orders/place.ts", "src/orders/cancel.spec.ts")
+    assert done.returncode == 2
+    assert "src/orders/cancel.spec.ts is a declared test" in done.stderr
+    assert done.stdout == ""
+
+
+def test_area_stops_on_a_path_naming_no_tracked_file(consumer):
+    tracked(consumer)
+    done = run("--area", consumer / "backend", "src/nowhere")
+    assert done.returncode == 2
+    assert "src/nowhere names no file git tracks" in done.stderr
+
+
+def test_area_is_its_own_form(consumer):
+    done = run("--area", consumer / "backend", "src", "--untraced")
+    assert done.returncode == 2
+    assert "mutually exclusive" in done.stderr

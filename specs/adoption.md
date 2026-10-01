@@ -22,7 +22,10 @@ Grounds: a pilot over one context of a consumer backend in September 2026 — 15
 nodes written from a survey of the source alone — found every node held by at least one file and
 none held by no file; 35 findings, 18 of them facts the survey had left out or misread; and a
 documentation increment that followed corrected 4 nodes, one of them a behavior the source
-exhibits and the documentation forbids.
+exhibits and the documentation forbids. A later consumer, read on 2026-10-01, held 286 tracked
+files under one adopted target, 117 of them unsurveyed: 115 were tests, 7 of those already a
+certification's proof. No route gave a test any other state, and the rule that tests are never
+an area lived in a skill's prose, kept by a person filtering each area by hand.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -45,6 +48,9 @@ exhibits and the documentation forbids.
   fact or why none does.
 - **Adoption** — a reconciliation whose record carries `adopted`: every candidate read on every
   file of its set.
+- **Test scope** — the files of a target the project declares as its tests, in `siegard.json`
+  under `tests`. A test is a certification's material and never a survey's: it states what the
+  source should do, and a survey reads what the source does.
 
 ## Requirements
 
@@ -69,15 +75,20 @@ exhibits and the documentation forbids.
 
 ### What the tree holds
 
-- **R5** — Every tracked file under a target is in exactly one state: bound — a binding names it;
-  holds-nothing — an adoption judged it and bound none of its candidates to it; outside — an
-  adoption kept it out of the judgment; unsurveyed — none of these. The states are computed from
-  the trace and the reconciliation corpus, and the report refuses nothing.
+- **R5** — Every tracked file under a target is in exactly one state: bound — a binding names it,
+  as a file it encodes or as the proof a certification pinned; holds-nothing — an adoption judged
+  it and bound none of its candidates to it; outside — an adoption kept it out of the judgment;
+  uncertified — the target's test scope holds it and no certification names it; unsurveyed —
+  none of these. The states are computed from the trace, the reconciliation corpus and the
+  project file, and the report refuses nothing.
 - **R6** — Adoption changes no source. Tests already in the tree are certified where the human
-  offers them, and prose in source is answered by the routes that already answer it.
+  offers them, and prose in source is answered by the routes that already answer it. A declared
+  test is never adopted as source: an area leaves it out, and material or an adoption that names
+  one is refused.
 - **R7** — Adoption is complete when no file is unsurveyed and no node is unreached. Completion is
   computed, never recorded, and it is no gate: work may begin before it, at the cost the unbound
-  files carry into the first review that reaches them.
+  files carry into the first review that reaches them. An uncertified test does not hold
+  completion back: a test is certified where the human offers it, never owed.
 
 ### What the material owes
 

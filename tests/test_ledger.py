@@ -4,6 +4,7 @@ the node that holds it, or why none does — and is refused whole where a fact h
 candidates per file."""
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import sys
@@ -170,3 +171,30 @@ def test_survey_holds_material_to_its_contract_and_counts_its_fact_lines(surveye
                       encoding="utf-8")
     done = run("--survey", material, broken)
     assert done.returncode == 2 and "contract_version" in done.stderr
+
+
+def declared_tests(surveyed: Path) -> Path:
+    """The surveyed tree as a project declaring `src/orders/*.ts` its tests, so material over
+    `src/orders` lists only tests."""
+    subprocess.run(["git", "init", "-q", str(surveyed)], check=True, capture_output=True)
+    (surveyed / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "tests": {"backend": [{"under": "src/orders", "suffix": "bill.ts"}]}}) + "\n",
+        encoding="utf-8")
+    return surveyed / "siegard-survey" / "adopt-orders" / "orders.md"
+
+
+def test_survey_refuses_material_that_lists_a_declared_test(surveyed):
+    material = declared_tests(surveyed)
+    done = run("--survey", material)
+    assert done.returncode == 2
+    assert "lists src/orders/bill.ts, which the target's declared test scope holds" in done.stderr
+
+
+def test_a_ledger_still_reads_material_held_before_tests_were_declared(surveyed):
+    """The refusal is the `--survey` form's: a ledger rereads its material as it was held, and a
+    declaration added afterwards does not unmake an increment already analysed."""
+    declared_tests(surveyed)
+    ledger = ledger_at(surveyed, full_entries(surveyed))
+    done = run("--ledger", ledger, surveyed / "specs")
+    assert done.returncode == 0, done.stdout + done.stderr

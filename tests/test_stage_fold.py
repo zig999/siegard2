@@ -2308,3 +2308,57 @@ def test_a_pair_stamped_against_an_earlier_node_text_is_never_omitted(consumer):
     manifest = manifest_of(workspace)
     assert manifest["omitted"] == [], "(NODE, SECOND) computes at the file but not at the node's text it was stamped against"
     assert NODE in manifest["files"][SECOND]["nodes"]
+
+
+def declare_tests(consumer: Path) -> None:
+    declared = json.loads((consumer / "siegard.json").read_text(encoding="utf-8"))
+    declared["tests"] = {"backend": [{"under": "tests", "suffix": ".spec.ts", "nested": True}]}
+    (consumer / "siegard.json").write_text(json.dumps(declared) + "\n", encoding="utf-8")
+
+
+def test_an_adoption_refuses_a_declared_test_in_its_file_set_and_hands_the_certification(adopting):
+    """SPEC-005 R6: a declared test is never adopted as source. The refusal names the route the
+    test does have — a certification's proof — in the shape `--certify` takes."""
+    proof_at(adopting)
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    declare_tests(adopting)
+    done, _ = adopt_staged(adopting, files=[FILE, SECOND, PROOF])
+    assert done.returncode == 2
+    assert f"{PROOF} is a declared test" in done.stderr
+    assert f"proof: [{PROOF}]" in done.stderr
+
+
+def test_an_adoption_still_certifies_a_declared_test_offered_as_proof(adopting):
+    registry_deciding(adopting)
+    proof_at(adopting)
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    declare_tests(adopting)
+    ask = certifying(adopting, {"node": NODE, "proof": [PROOF], "step": "lint"})
+    done, _ = adopt_staged(adopting, "--certify", ask)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_test_an_earlier_adoption_judged_stays_holds_nothing_once_tests_are_declared(adopting):
+    """The chain reads what a record says before what the declaration says: a test a record
+    judged or kept out is read as that record read it, and no record is rewritten."""
+    proof_at(adopting)
+    subprocess.run(["git", "-C", str(adopting), "add", "-A"], check=True)
+    staged, _ = adopt_staged(adopting, files=[FILE, SECOND, THIRD, PROOF])
+    assert staged.returncode == 0, staged.stdout + staged.stderr
+    for given, front in {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "line 1"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+        PROOF: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    }.items():
+        save_return(adopting, "adopt-orders", given, front)
+    premise = dict(ADOPT_PREMISE, files=ADOPT_PREMISE["files"] + [
+        {"path": PROOF, "change": "unchanged; adopted as it stands"}])
+    done, record = folded(adopting, "adopt-orders", premise)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    declare_tests(adopting)
+    done = run("--untraced", adopting / "backend", "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"holds-nothing:\n  backend/{THIRD}\n  backend/{PROOF}" in done.stdout
+    assert "  0 uncertified:" in done.stdout
