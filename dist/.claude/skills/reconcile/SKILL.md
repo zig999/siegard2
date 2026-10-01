@@ -443,7 +443,8 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --reconciliation <the record>
 ```
 
 Anything but a clean pass is a stop, reported verbatim: the fold validates what it writes, so a
-record this refuses is a defect in the staging or the premise, not in any judgment.
+record this refuses is a defect in the staging, the premise or the fold itself, not in any
+judgment.
 
 ### 5. Bind
 
