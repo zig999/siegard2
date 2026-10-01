@@ -740,10 +740,12 @@ em `intake/` é lido pelos juízes do planejamento, mas só o que uma tarefa nom
 lido por quem escreve o código. Um layout decide forma, nunca fato: os status, os textos e as
 recusas de uma tela continuam vindo da especificação.
 
-### Decision log (`decision-log.md`) — o registro de decisões
-**O que é.** Uma lista única, na raiz da especificação, de todo fato que alguém **decidiu** porque
-o material não dizia. É **só de acréscimo** (append-only): entradas nunca são editadas nem
-removidas.
+### Decision log (`<slug>.log.md`) — o registro de decisões
+**O que é.** Uma lista **ao lado de cada nó** que recebeu uma decisão — `evidence.log.md` ao lado
+de `evidence.md`, na mesma pasta — de todo fato que alguém **decidiu** sobre aquele nó porque o
+material não dizia. É **só de acréscimo** (append-only): entradas nunca são editadas nem
+removidas. Um nó sem log é um nó cujo material respondeu tudo. O ponto no nome mantém o arquivo
+fora do espaço de slugs, então nenhum nó pode se chamar `foo.log`.
 **Por que existe.** Nenhum material é completo. Quando a análise ou o planejamento precisam de um
 valor que ninguém declarou (por exemplo, "que forma tem o valor de uma evidência?"), eles
 **decidem** esse valor em vez de parar. Mas uma decisão silenciosa seria uma invenção; por isso,
@@ -751,21 +753,19 @@ toda decisão é **divulgada** no log, onde uma pessoa pode revisá-la depois e 
 uma mudança comum.
 **Nunca bloqueia.** O log não é uma fila de aprovação: a decisão vale a partir do momento em que é
 escrita.
-**Exemplo.**
+**Exemplo** (`domain/troubleshooting/evidence.log.md`).
 
 ```yaml
 entries:
-  - location: domain/troubleshooting/evidence.md
-    field: attributes.value.type
-    unstated: The material does not say what shape an evidence value takes.
-    decided: string
-    why: Every evidence sample in the material is shown as free text.
+- field: attributes.value.type
+  unstated: The material does not say what shape an evidence value takes.
+  decided: string
+  why: Every evidence sample in the material is shown as free text.
 ```
 
 | Campo | Significado |
 |---|---|
-| `location` | O arquivo do nó onde o valor foi gravado. |
-| `field` | O campo exato preenchido. |
+| `field` | O campo exato preenchido, no nó ao lado do qual o log está. |
 | `unstated` | O que o material deixou de dizer. |
 | `decided` | O valor decidido. |
 | `why` | Uma única justificativa que um revisor possa rejeitar. |
@@ -774,9 +774,18 @@ entries:
 - **decidida** — `decided` + `why`: um valor escolhido.
 - **lida** — `found`: o fato foi encontrado fora da especificação (por exemplo, no intake de um
   plano) e registrado para que a especificação guarde a procedência. Não tem `why`.
-- **aposentada** — `retired`: registra para onde foi um fato quando o nó ou campo que o continha
-  saiu da especificação (ou que nada mais o contém). Como entradas nunca são editadas, a
-  aposentadoria é uma entrada nova com o mesmo `location` e `field`.
+- **aposentada** — `retired`: registra para onde foi um fato quando o campo que o continha, ou o
+  próprio nó, saiu da especificação (ou que nada mais o contém). Como entradas nunca são
+  editadas, a aposentadoria é uma entrada nova com o mesmo `field`.
+
+**Como se escreve.** Só por `spec.py --decide <identity> <root>`, com uma entrada em JSON na
+entrada padrão: o escritor confere a entrada contra o schema e contra o nó, anexa um bloco e
+valida a raiz. Ninguém edita um log à mão. O arquivo é só frontmatter, e a entrada mais recente
+sobre um campo é a que vale.
+**Quando um nó sai ou muda de nome.** Remover um nó anexa uma entrada `retired` ao log dele e
+deixa o log no lugar, como lápide — o validador aceita um log sem nó ao lado só quando a última
+entrada aposenta um campo. Renomear um nó é `git mv` do nó e do log no mesmo commit; nenhuma
+entrada registra a mudança.
 
 ### Decidir e divulgar (decide-and-disclose)
 A disciplina por trás do log: o que o material não diz é decidido, escrito no nó como qualquer
@@ -866,9 +875,9 @@ spec.py --shape [--of <id>,...] <spec-root>  # mede o tamanho e a forma dos nós
   relacionamento nunca aponta para um valor; a composição fica dentro do agregado; um invariante
   fica dentro de um agregado; uma política que cruza agregados declara como converge; um
   `statement` tem uma só frase; uma máquina de estados é total; todo objeto de valor e enumeração é
-  alcançado; toda entrada do log aponta para um arquivo e um campo que existem.
+  alcançado; todo decision log está ao lado do seu nó e toda entrada aponta para um campo que ele declara.
 - **`--impact`** calcula o **conjunto de impacto**: para cada nó informado, todo nó que ele
-  referencia, todo nó que o referencia e toda entrada do decision log sobre ele. Um único salto,
+  referencia, todo nó que o referencia e o decision log ao lado dele. Um único salto,
   nas duas direções. O planejamento e a análise usam isso para saber o que ler.
 - **`--shape`** é um relatório, nunca uma recusa: tamanho dos statements por classe (com a "cauda"
   da distribuição nomeada), statements com mais de uma frase, frases repetidas entre nós, prosa

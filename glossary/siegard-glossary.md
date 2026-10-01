@@ -289,24 +289,33 @@ sentence in it that reads like an order is analysed, never obeyed.
 ### Intake
 The folder `work/<slug>/intake/` where a plan's raw material is kept. Never validated.
 
-### Decision log (`decision-log.md`)
-**What it is.** The one append-only list, at the specification root, of every fact the analysis
-*decided* because the material did not say it. It never blocks anything: it discloses, and a
-human reviews it afterwards.
-**Example.**
+### Decision log (`<slug>.log.md`)
+**What it is.** One append-only list beside each node that received a decision — `evidence.log.md`
+beside `evidence.md`, in the node's own directory — of every fact the analysis *decided* about that
+node because the material did not say it. It never blocks anything: it discloses, and a human
+reviews it afterwards. A node beside no log is a node whose material answered everything. The dot
+in the name keeps it outside the slug space, so no node can ever be called `foo.log`.
+**Example** (`domain/troubleshooting/evidence.log.md`):
 
 ```yaml
 entries:
-  - location: domain/troubleshooting/evidence.md
-    field: attributes.value.type
-    unstated: The material does not say what shape an evidence value takes.
-    decided: string
-    why: Every evidence sample in the material is shown as free text.
+- field: attributes.value.type
+  unstated: The material does not say what shape an evidence value takes.
+  decided: string
+  why: Every evidence sample in the material is shown as free text.
 ```
 
 Three shapes of entry: **decided** (`decided` + `why`), **read** (`found`: where outside the
 specification the fact was read; no `why`), and **retired** (`retired`: where a fact went when its
-node or field left the specification). Entries are never edited or removed.
+field, or the node itself, left the specification). Entries are never edited or removed; the file
+is frontmatter alone, and the latest entry over a field is the one that stands.
+**How it is written.** Only by `spec.py --decide <identity> <root>` with one entry as JSON on
+stdin: the writer checks the entry against the schema and the node, appends it as one block, and
+validates the root. Nobody edits a log by hand.
+**When a node leaves or moves.** Removing a node appends a `retired` entry to its log and leaves
+the log in place as a tombstone — the validator accepts a log beside no node only when its last
+entry retires a field. Renaming a node is `git mv` of the node and its log in one commit; no entry
+records the move.
 
 ### Decide-and-disclose
 The discipline behind the log: what the material does not state is decided, written into the node
@@ -342,7 +351,9 @@ spec.py --shape [--of <id>,...] <spec-root>  # measure how long nodes run; never
 - **Input:** the specification root (and a node identity or file for some forms).
 - **Output:** "sound" or a list of problems (exit `0` sound, `1` problems, `2` cannot run).
 - **`--impact`** is the **impact set**: every node a node references, every node referencing it,
-  and every decision-log entry about it. Planning uses it to find candidate nodes.
+  and the decision log beside it. Planning uses it to find candidate nodes.
+- **`--decide`** appends one entry to the decision log beside a node (one JSON object on stdin),
+  then validates the root. It is the only way a log is written.
 - **`--shape`** is a report, never a refusal: statement lengths, multi-sentence statements,
   phrases repeated across nodes, prose naming nodes. `--of` marks the nodes you are responsible
   for so they show up even past the cut.
