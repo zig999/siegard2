@@ -68,9 +68,21 @@ def test_a_context_with_no_descriptor_is_refused(spec_root):
     assert hits(problems_of(spec_root), "carries no _context.md")
 
 
-def test_a_missing_decision_log_is_refused(spec_root):
-    (spec_root / "decision-log.md").unlink()
-    assert hits(problems_of(spec_root), "decision-log.md is missing")
+def test_a_root_without_logs_is_sound(spec_root):
+    """SPEC-003 R5: a log is «present where a decision was made, absent where none was». A root
+    whose material answered everything holds no log, and that is not a problem."""
+    for log in spec_root.rglob("*.log.md"):
+        log.unlink()
+    assert problems_of(spec_root) == []
+    done = run_node(str(spec_root))
+    assert done.returncode == 0 and "0 decision(s) disclosed" in done.stdout
+
+
+def test_a_root_decision_log_file_is_refused(spec_root):
+    """The one-file-per-root log is no longer a node: a leftover `decision-log.md` computes to
+    no identity, which is the signal a consumer has not migrated."""
+    (spec_root / "decision-log.md").write_text("---\nentries: []\n---\n", encoding="utf-8")
+    assert hits(problems_of(spec_root), "decision-log.md: the path computes to no identity")
 
 
 # ------------------------------------------------- decide-and-disclose (SPEC-001)
@@ -83,41 +95,88 @@ def test_a_provenance_meta_field_is_refused_by_name(spec_root):
     assert found and "decision log" in found[0]
 
 
-def test_a_log_entry_locating_a_missing_file_is_refused(spec_root):
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].append({
-                "location": "domain/troubleshooting/ghost.md", "field": "type",
-                "unstated": "x", "decided": "y", "why": "z"}))
-    assert hits(problems_of(spec_root), "which the specification does not hold")
-
-
-def test_a_log_entry_locating_a_missing_field_is_refused(spec_root):
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].append({
-                "location": "domain/troubleshooting/case.md", "field": "values.open",
-                "unstated": "x", "decided": "y", "why": "z"}))
-    assert hits(problems_of(spec_root), "declares no `values`")
-
-
-READ_ENTRY = {"location": "domain/troubleshooting/case.md", "field": "type",
-              "unstated": "No node said what class a case is.",
+CASE_LOG = "domain/troubleshooting/case.log.md"
+GHOST_LOG = "domain/troubleshooting/ghost.log.md"
+DECIDED = {"field": "type", "unstated": "x", "decided": "y", "why": "z"}
+RETIRED = {"field": "type", "retired": "held nowhere: the element left the specification"}
+READ_ENTRY = {"field": "type", "unstated": "No node said what class a case is.",
               "found": "work/x/intake/scope.md: a case is the unit an operator opens and closes."}
 
 
+def log_beside(root: Path, relative: str, entries: list[dict]) -> None:
+    """Write a decision log holding exactly these entries, the way the writer lays them out."""
+    blocks = "".join(yaml.safe_dump([e], sort_keys=False, width=float("inf")) for e in entries)
+    (root / relative).write_text(f"---\nentries:\n{blocks}---\n", encoding="utf-8")
+
+
+def log_problems(root: Path) -> list[str]:
+    return [p for p in problems_of(root) if ".log" in p]
+
+
+def test_a_log_without_its_node_is_refused(spec_root):
+    """SPEC-001 R9: «A log whose node does not exist fails validation unless its last entry
+    retires a field» — a log beside nothing, still deciding, is a decision about a node the
+    specification does not hold."""
+    log_beside(spec_root, GHOST_LOG, [dict(DECIDED)])
+    found = hits(problems_of(spec_root), "sits beside no node domain/troubleshooting/ghost")
+    assert found and "retires a field" in found[0]
+
+
+def test_a_log_entry_naming_a_field_the_node_lacks_is_refused(spec_root):
+    log_beside(spec_root, CASE_LOG, [{**DECIDED, "field": "values.open"}])
+    found = hits(problems_of(spec_root), "which domain/troubleshooting/case does not declare")
+    assert found and "`values.open`" in found[0]
+
+
+def test_a_log_with_a_body_is_refused(spec_root):
+    """The file is frontmatter alone. An entry written past the closing fence is read by nothing,
+    and a validator that ignored the body would call a log sound while under-counting it."""
+    path = spec_root / CASE_LOG
+    log_beside(spec_root, CASE_LOG, [dict(DECIDED)])
+    path.write_text(path.read_text(encoding="utf-8")
+                    + "- field: type\n  unstated: lost\n  decided: lost\n  why: lost\n",
+                    encoding="utf-8")
+    found = hits(problems_of(spec_root), "carries text after its frontmatter fence")
+    assert found and found[0].startswith("domain/troubleshooting/case.log:")
+    single = run_node("--node", CASE_LOG, str(spec_root))
+    assert single.returncode == 1 and "after its frontmatter fence" in single.stdout
+
+
+def test_a_log_beside_a_context_descriptor_validates(spec_root):
+    log_beside(spec_root, "domain/troubleshooting/_context.log.md",
+               [{**DECIDED, "field": "strategic"}])
+    assert log_problems(spec_root) == []
+    done = run_node(str(spec_root))
+    assert done.returncode == 0 and "3 decision(s) disclosed" in done.stdout
+
+
+def test_a_log_stem_that_is_no_node_computes_to_nothing(spec_root):
+    """`<slug>.log.md` is the log of `<slug>.md` and of nothing else: a log beside a path no
+    class owns is not a node of any class, and the dot keeps a slug from ever reading as a log."""
+    assert spec.classify(Path("domain/troubleshooting/case.log.md")) == \
+        ("log", "troubleshooting", "case")
+    assert spec.classify(Path("constraints/asynchronous-events.log.md")) == \
+        ("log", None, "asynchronous-events")
+    assert spec.classify(Path("domain/troubleshooting/_context.log.md")) == \
+        ("log", "troubleshooting", "troubleshooting")
+    assert spec.classify(Path("decision-log.md")) is None
+    assert spec.classify(Path("nowhere/case.log.md")) is None
+    assert spec.classify(Path("domain/troubleshooting/case.log.log.md")) is None
+
+
 def test_a_log_entry_recorded_as_read_validates(spec_root):
-    """SPEC-001 R9: a fact a planning step read from the intake is recorded as read — location,
-    field, unstated and where it was found — with no value and no `why`. The location and field
-    still resolve exactly as a decided entry's do."""
-    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(READ_ENTRY)))
-    assert hits(problems_of(spec_root), "decision-log") == []
+    """SPEC-001 R9: a fact a planning step read from the intake is recorded as read — field,
+    unstated and where it was found — with no value and no `why`. The field still resolves
+    exactly as a decided entry's does."""
+    log_beside(spec_root, CASE_LOG, [dict(READ_ENTRY)])
+    assert log_problems(spec_root) == []
 
 
 def test_a_read_entry_carrying_a_decided_value_is_refused(spec_root):
     """Both shapes on one entry disclose two provenances for one fact. The schema refuses it and
     the validator names it, so the report says which keys collided rather than which branch of
     a conditional failed."""
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].append({**READ_ENTRY, "decided": "aggregate-root"}))
+    log_beside(spec_root, CASE_LOG, [{**READ_ENTRY, "decided": "aggregate-root"}])
     found = hits(problems_of(spec_root), "carries `found` beside decided")
     assert found and "decides no value" in found[0]
     validator = Draft202012Validator(json.loads((SCHEMA_DIR / "decision-log.json").read_text()))
@@ -125,11 +184,15 @@ def test_a_read_entry_carrying_a_decided_value_is_refused(spec_root):
 
 
 def test_a_decided_entry_without_why_is_refused(spec_root):
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].append({
-                "location": "domain/troubleshooting/case.md", "field": "type",
-                "unstated": "x", "decided": "y"}))
+    log_beside(spec_root, CASE_LOG, [{"field": "type", "unstated": "x", "decided": "y"}])
     assert hits(problems_of(spec_root), "'why' is a required property")
+
+
+def test_an_entry_carrying_a_location_is_refused(spec_root):
+    """The log sits beside the node it discloses, so an entry naming a file would name it twice
+    and could disagree with where it sits; the schema admits no `location`."""
+    log_beside(spec_root, CASE_LOG, [{**DECIDED, "location": "domain/troubleshooting/case.md"}])
+    assert hits(problems_of(spec_root), "'location' was unexpected")
 
 
 def test_the_sound_line_counts_read_facts_apart_from_decisions(spec_root):
@@ -138,74 +201,65 @@ def test_the_sound_line_counts_read_facts_apart_from_decisions(spec_root):
     before = run_node(str(spec_root))
     assert before.returncode == 0 and "2 decision(s) disclosed" in before.stdout
     assert "recorded as read" not in before.stdout
-    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(READ_ENTRY)))
+    log_beside(spec_root, CASE_LOG, [dict(READ_ENTRY)])
     done = run_node(str(spec_root))
     assert done.returncode == 0, done.stdout + done.stderr
     assert "2 decision(s) disclosed, 1 fact(s) recorded as read" in done.stdout
 
 
-def test_decisions_by_node_renders_a_read_entry_by_its_shape(spec_root):
-    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(READ_ENTRY)))
+def test_project_writes_no_decisions_by_node_and_removes_a_stale_one(spec_root):
+    """The logs beside the nodes are the grouping a `decisions-by-node` projection used to
+    derive; a derived copy of what the tree already states is a second home for one fact."""
+    (spec_root / "projections").mkdir()
+    (spec_root / "projections" / "decisions-by-node.md").write_text("stale\n", encoding="utf-8")
     done = run_node("--project", str(spec_root))
     assert done.returncode == 0, done.stdout + done.stderr
-    projected = (spec_root / "projections" / "decisions-by-node.md").read_text(encoding="utf-8")
-    assert f"- type — read: {READ_ENTRY['found']}" in projected
-    assert "why: ?" not in projected
+    assert not (spec_root / "projections" / "decisions-by-node.md").exists()
+    overview = (spec_root / "projections" / "overview.md").read_text(encoding="utf-8")
+    assert "2 decision(s) disclosed in the decision logs." in overview
 
 
-GHOST = {"location": "domain/troubleshooting/ghost.md", "field": "type",
-         "unstated": "x", "decided": "y", "why": "z"}
-GHOST_RETIRED = {"location": "domain/troubleshooting/ghost.md", "field": "type",
-                 "retired": "held nowhere: the element left the specification"}
-
-
-def test_an_entry_a_later_entry_retires_may_stop_resolving(spec_root):
+def test_a_tombstone_log_without_its_node_is_sound(spec_root):
     """SPEC-001 R9: «An entry is never edited or removed»; a node that left is answered by an
-    entry retiring its location, and the entry that located it then stands unresolved."""
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].extend([dict(GHOST), dict(GHOST_RETIRED)]))
-    assert hits(problems_of(spec_root), "decision-log") == []
+    entry retiring the field, and its log stands beside nothing as the record of where the fact
+    went."""
+    log_beside(spec_root, GHOST_LOG, [dict(DECIDED), dict(RETIRED)])
+    assert log_problems(spec_root) == []
 
 
 def test_a_field_a_later_entry_retires_may_stop_resolving(spec_root):
-    entry = {"location": "domain/troubleshooting/case.md", "field": "values.open",
-             "unstated": "x", "decided": "y", "why": "z"}
-    retired = {"location": "domain/troubleshooting/case.md", "field": "values.open",
-               "retired": "rules/troubleshooting/x.md statement"}
-    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].extend([entry, retired]))
-    assert hits(problems_of(spec_root), "decision-log") == []
+    entry = {**DECIDED, "field": "values.open"}
+    retired = {"field": "values.open", "retired": "rules/troubleshooting/x.md statement"}
+    log_beside(spec_root, CASE_LOG, [entry, retired])
+    assert log_problems(spec_root) == []
 
 
 def test_a_retirement_before_the_entry_retires_nothing(spec_root):
-    """Only a later entry retires: an entry appended after a retirement of its location is a
+    """Only a later entry retires: an entry appended after a retirement of its field is a
     decision made about a node that must exist."""
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].extend([dict(GHOST_RETIRED), dict(GHOST)]))
+    log_beside(spec_root, GHOST_LOG, [dict(RETIRED), dict(DECIDED)])
     found = problems_of(spec_root)
-    assert hits(found, "which no earlier entry locates")
-    assert hits(found, "which the specification does not hold")
+    assert hits(found, "which no earlier entry of this log filled")
+    assert hits(found, "sits beside no node")
 
 
-def test_a_retirement_of_a_location_no_entry_named_is_refused(spec_root):
-    rewrite(spec_root, "decision-log.md", lambda f: f["entries"].append(dict(GHOST_RETIRED)))
-    assert hits(problems_of(spec_root), "which no earlier entry locates")
+def test_a_retirement_of_a_field_no_entry_filled_is_refused(spec_root):
+    log_beside(spec_root, CASE_LOG, [dict(RETIRED)])
+    assert hits(problems_of(spec_root), "which no earlier entry of this log filled")
 
 
 def test_a_retirement_carries_no_decided_value(spec_root):
     validator = Draft202012Validator(json.loads((SCHEMA_DIR / "decision-log.json").read_text()))
-    assert list(validator.iter_errors({"entries": [{**GHOST_RETIRED, "decided": "y"}]}))
-    assert list(validator.iter_errors({"entries": [{**GHOST_RETIRED, "unstated": "x"}]}))
-    assert not list(validator.iter_errors({"entries": [dict(GHOST), dict(GHOST_RETIRED)]}))
+    assert list(validator.iter_errors({"entries": [{**RETIRED, "decided": "y"}]}))
+    assert list(validator.iter_errors({"entries": [{**RETIRED, "unstated": "x"}]}))
+    assert not list(validator.iter_errors({"entries": [dict(DECIDED), dict(RETIRED)]}))
 
 
-def test_the_sound_line_counts_retirements_apart_and_the_projection_shows_them(spec_root):
-    rewrite(spec_root, "decision-log.md",
-            lambda f: f["entries"].extend([dict(GHOST), dict(GHOST_RETIRED)]))
-    done = run_node("--project", str(spec_root))
+def test_the_sound_line_counts_retirements_apart(spec_root):
+    log_beside(spec_root, GHOST_LOG, [dict(DECIDED), dict(RETIRED)])
+    done = run_node(str(spec_root))
     assert done.returncode == 0, done.stdout + done.stderr
     assert "3 decision(s) disclosed, 1 location(s) retired" in done.stdout
-    projected = (spec_root / "projections" / "decisions-by-node.md").read_text(encoding="utf-8")
-    assert f"- type — retired: {GHOST_RETIRED['retired']}" in projected
 
 
 # ------------------------------------------------------ one home per fact (SPEC-002)
@@ -609,7 +663,7 @@ def test_the_cli_prints_digests_sorted_by_identity(spec_root):
 
 
 def test_digests_are_refused_over_an_unsound_specification(spec_root):
-    (spec_root / "decision-log.md").unlink()
+    (spec_root / "domain/troubleshooting/_context.md").unlink()
     run = subprocess.run(
         [sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"),
          "--digest", str(spec_root)],
@@ -637,12 +691,12 @@ def test_the_cli_validates_and_projects(spec_root):
     assert "specification sound" in run.stdout
     assert (spec_root / "projections/overview.md").is_file()
 
-    (spec_root / "decision-log.md").unlink()
+    (spec_root / "domain/troubleshooting/evidence.md").unlink()
     run = subprocess.run(
         [sys.executable, "-B", str(REPO / "src/claude/bin/spec.py"), str(spec_root)],
         capture_output=True, text=True)
     assert run.returncode == 1
-    assert "decision-log.md is missing" in run.stdout
+    assert "sits beside no node domain/troubleshooting/evidence" in run.stdout
 
 
 # --------------------------------------------------------------------- --node
@@ -788,8 +842,8 @@ def test_impact_carries_the_decision_log(spec_root):
     dropped it would be narrower than the procedure it replaces, silently."""
     done = run_node("--impact", "domain/troubleshooting/evidence", str(spec_root))
     assert done.returncode == 0, done.stderr
-    assert "named by  <- decision-log" in done.stdout
-    assert str(spec_root / "decision-log.md") in done.stdout
+    assert "named by  <- domain/troubleshooting/evidence.log" in done.stdout
+    assert str(spec_root / "domain/troubleshooting/evidence.log.md") in done.stdout
 
 
 def test_impact_answers_over_a_specification_with_problems(spec_root):
@@ -815,7 +869,7 @@ def test_impact_reads_the_same_edges_the_validator_checks(spec_root):
                         lambda owner, at, target, resolved: seen.append((owner, at, target)))
     every = {(owner, target) for owner, _, target in seen}
     assert ("rules/troubleshooting/case-transitions", "domain/troubleshooting/case") in every
-    assert ("decision-log", "domain/troubleshooting/evidence") in every
+    assert ("domain/troubleshooting/evidence.log", "domain/troubleshooting/evidence") in every
     outward, inward, _ = spec.impact_of(nodes, spec_root, ["domain/troubleshooting/case"])
     reported = {(owner, target) for owner, edges in outward.items()
                 for _, target, _ in edges}
@@ -1022,16 +1076,28 @@ def test_shape_reports_how_far_the_logs_why_runs(spec_root):
     """SPEC-001 R9 bounds `why` to one claim a reviewer can reject. The concord argument R14
     keeps out of a node's prose has no entry of its own, so the only way it reaches the log is
     inside the `why` of an entry about something else — which is where the report points."""
-    rewrite(spec_root, "decision-log.md",
-            lambda front: front["entries"].append({
-                "location": "domain/troubleshooting/case.md", "field": "type",
-                "unstated": "x", "decided": "aggregate-root",
-                "why": " ".join(["This rule is the home rather than a sibling's clause"] * 40)}))
+    log_beside(spec_root, CASE_LOG, [{
+        **DECIDED, "decided": "aggregate-root",
+        "why": " ".join(["This rule is the home rather than a sibling's clause"] * 40)}])
     done = run_node("--shape", str(spec_root))
     assert done.returncode == 0
-    at = done.stdout.index("decision-log:")
-    found = done.stdout[at:at + 500]
-    assert "`why` median" in found and "entry(ies)" in found
+    at = done.stdout.index("decision log:")
+    found = done.stdout[at:at + 700]
+    assert "3 decided entry(ies) across 3 log(s)" in found and "`why` median" in found
+    assert "domain/troubleshooting/case.log" in found, \
+        "the log holding the far end is named, not only counted"
+
+
+def test_shape_lists_fields_a_log_decided_more_than_once(spec_root):
+    """SPEC-001 R9: «The latest entry over a field is the disclosure that stands». Two decided
+    entries over one field are two answers to one question, and the report names where."""
+    sound = run_node("--shape", str(spec_root))
+    at = sound.stdout.index("fields a log decided more than once")
+    assert "(none)" in sound.stdout[at:at + 400]
+    log_beside(spec_root, CASE_LOG, [dict(DECIDED), {**DECIDED, "decided": "entity"}])
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("fields a log decided more than once — 1")
+    assert "2x  type  in  domain/troubleshooting/case.log" in done.stdout[at:at + 400]
 
 
 def test_shape_shows_a_scoped_node_past_the_cut(spec_root):
@@ -1043,7 +1109,7 @@ def test_shape_shows_a_scoped_node_past_the_cut(spec_root):
            "`domain/troubleshooting/diagnostics` and `domain/troubleshooting/case-status`")
     mine = spec_root / "rules/troubleshooting/case-transitions.md"
     for other in sorted(p for p in spec_root.rglob("*.md")
-                        if p != mine and p.name != "decision-log.md"):
+                        if p != mine and not p.name.endswith(".log.md")):
         other.write_text(other.read_text(encoding="utf-8")
                          + f"\nIt stands beside {six}, contradicting none.\n", encoding="utf-8")
     mine.write_text(mine.read_text(encoding="utf-8")

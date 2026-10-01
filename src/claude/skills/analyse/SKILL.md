@@ -323,8 +323,9 @@ boundary is a validation error» (SPEC-003 §Rule), a rule's or constraint's `st
 sentence — «One condition is one sentence» (SPEC-003 §Rule), a state machine is total over its
 states and triggers — «an undecided pairing is a decision to make and log, never silence»
 (SPEC-003 §Rule), every value object and enumeration is reachable — «an element nothing reaches
-is bloat and fails validation» (SPEC-001 R6), and every decision-log entry locates a file and
-field that exist — «An entry whose location does not resolve fails validation» (SPEC-001 R9).
+is bloat and fails validation» (SPEC-001 R6), every decision log sits beside its node or closes
+with a retirement, and every entry names a field that node declares — «an entry whose field does
+not resolve fails validation» (SPEC-001 R9).
 
 Report the command's output verbatim. If it exits non-zero, the run failed — fix and rerun, and
 never describe the specification as sound while it is not.

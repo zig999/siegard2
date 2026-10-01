@@ -83,37 +83,42 @@ enforces mechanically.
 
 ### The decision log
 
-- **R9** — One decision log per specification root, append-only. Each entry records: the
-  location it filled (file and field, resolvable), what the material left unstated, the value
-  decided, and why that value. An entry is never edited or removed. Where a node or a field an
-  entry locates leaves the specification, the change that removes it appends an entry retiring
-  that location: the same file and field, and where the fact is held now, or that it is held
-  nowhere. An entry whose location does not resolve fails validation unless a later entry
-  retires that location. `why`
+- **R9** — One decision log beside every node that received a decision: `<slug>.log.md` in
+  the node's own directory, append-only, moving with its node. Each entry records: the field it
+  filled (resolvable in the node beside it), what the material left unstated, the value
+  decided, and why that value. An entry is never edited or removed. Where a node leaves the
+  specification, the change that removes it appends an entry to its log retiring the field:
+  where the fact is held now, or that it is held nowhere; where a field leaves a node that
+  stays, the same. A log whose node does not exist fails validation unless its last entry
+  retires a field, and an entry whose field does not resolve fails validation unless a later
+  entry retires that field. The latest entry over a field is the disclosure that stands. A log
+  is frontmatter alone: text after its fence is not an entry and fails validation. `why`
   carries one claim a reviewer can reject, never the argument that the specification composes:
   that argument records no decided value, so it has no entry of its own and reaches the log only
   inside an entry about something else, restating the prose of the node that entry locates
   (R7, R14). Its home is the change that made it. A fact a planning step read from material
   outside the specification root — the intake a plan was cut from — and gave an addressable home
-  is recorded in the same log as read: the location it filled, what no node stated, and where it
+  is recorded in that node's log as read: the field it filled, what no node stated, and where it
   was found. It decides no value and carries no `why`; a read entry and a decided one are told
   apart by shape, and the specification root holds the provenance of a node whose material it
   does not keep.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
-  entry blocks delivery. A human reviews the log after the fact; disagreement is an ordinary
+  entry blocks delivery. A human reviews the logs after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol. Where no such review is made, a decision
   stands until behavior contradicts it and a corrective change revises the artifact — and the share
   of disclosed decisions later revised, by which route and how long after, is reported by the
   telemetry, so the trade that removed the stop stays measured rather than assumed.
 - **R11** — The validator enforces the mechanically decidable half: R1's required fields, R2,
-  R6's reachability, R8's absent fields, and R9's resolvable locations. R3, R5, R7 and R14 are
+  R6's reachability, R8's absent fields, and R9's log rules — a node beside every log or a
+  retirement closing it, every field head declared by that node, no text after the fence. R3,
+  R5, R7 and R14 are
   the analysis's judgment; the report is where a reviewer checks them.
 
 ### Facts surfaced after authoring
 
 - **R13** — An unstated fact surfaced after the specification is authored — a planning step
   finding that no node states a fact an objective or a criterion needs — is decided by the same
-  discipline as R4 and disclosed in the same log (R9, R10), never left standing as a stop for a
+  discipline as R4 and disclosed in the node's log (R9, R10), never left standing as a stop for a
   person whose only move is to trigger the decision. Two bounds hold the route: the deciding
   context has not seen the work that surfaced the fact — a decision made by whoever cut the
   tasks would bend the specification to fit them — and a fact the specification contradicts
@@ -138,15 +143,16 @@ enforces mechanically.
 ## Validation required before acceptance
 
 1. The validator rejects a specification with a context holding no definition, an unreachable
-   element, any provenance meta-field, or a decision-log entry whose location does not resolve
-   — a fixture proves each.
+   element, any provenance meta-field, a decision log beside no node whose last entry retires
+   nothing, a log entry whose field the node does not declare, or a log carrying text after its
+   fence — a fixture proves each.
 2. The analyse skill states the floor, the ceiling, the decide-and-disclose discipline, and the
    English-language requirement, and its output on a benchmark material — including material
    written in another language — yields artifacts with zero open markers, every identifier and
-   statement in English, and a log whose entries all resolve.
+   statement in English, and logs whose fields all resolve.
 3. For R13: the planning route classifies an unstated fact apart from a contradiction, the
    deciding context receives the fact without the task that surfaced it, every decided fact
-   lands as a decision-log entry whose location resolves, and a planted contradiction comes
+   lands as an entry in the node's own log whose field resolves, and a planted contradiction comes
    back as the standing stop rather than a decision — a benchmark case proves each. A fact read
    from the intake lands as an entry recorded as read, and the validator refuses one carrying
    `found` beside a decided value or a `why`, and one carrying neither shape — a fixture proves
@@ -161,7 +167,8 @@ enforces mechanically.
 6. For R3, R7 and R14, the readings that make judgment reviewable: `--shape` names the longest
    phrase each set of nodes shares in its normative fields, every normative field speaking about
    the specification rather than the domain, every node whose prose names more siblings than its
-   fields declare, and how far each `why` of the decision log runs. Every one of those sections
+   fields declare, how far each `why` across the decision logs runs, and which fields a log
+   decided more than once. Every one of those sections
    reports `(none)` over the sound fixture — a section that always finds something is a floor and
    not a finding, and a fixture test proves each. The sections that rank and cut show a node the
    reader answers for wherever it appears, past the cut, and change no total by being scoped:

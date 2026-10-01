@@ -49,7 +49,7 @@ def consumer(tmp_path: Path) -> Path:
     put(home / "src" / "orders" / "place.ts")
     put(home / "src" / "orders" / "place.spec.ts")
     put(home / "src" / "orders" / "legacy.ts")
-    put(home / "knowledge" / "decision-log.md")
+    put(home / "knowledge" / "domain" / "orders" / "_context.md")
     git(home, "init", "-q")
     git(home, "add", "-A")
     git(home, "commit", "-qm", "base")

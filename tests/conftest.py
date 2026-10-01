@@ -48,13 +48,29 @@ def write(root: Path):
 
 
 @pytest.fixture
+def decide(root: Path):
+    """Append one entry to the decision log beside a node, `<nid>.log.md`, the way `spec.py
+    --decide` writes it: one block per entry, every scalar on one line, no body (SPEC-001 R9)."""
+    def append(nid: str, entry: dict) -> Path:
+        path = root / f"{nid}.log.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        block = yaml.safe_dump([entry], sort_keys=False, allow_unicode=True, width=float("inf"))
+        if path.is_file():
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text[:-len("---\n")] + block + "---\n", encoding="utf-8")
+        else:
+            path.write_text(f"---\nentries:\n{block}---\n", encoding="utf-8")
+        return path
+    return append
+
+
+@pytest.fixture
 def sound_base(write):
     """The smallest specification every cross-node check passes: a context, an aggregate root,
     and a value object a rule makes reachable. The exemption an aggregate root enjoys is
     bin/spec.py's, stated in a code comment and by no specification — SPEC-001 R6 states
     reachability without exception, and this docstring used to cite it as the exemption's
     source, which it is not."""
-    write("decision-log", {"entries": []}, body="")
     write("domain/sales/_context", {"strategic": "core"})
     write("domain/sales/order", {
         "type": "aggregate-root",

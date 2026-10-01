@@ -209,7 +209,7 @@ def test_binding_a_missing_file_is_refused(consumer):
 
 
 def test_binding_over_an_unsound_specification_is_refused(consumer):
-    (consumer / "specs/decision-log.md").unlink()
+    (consumer / "specs/domain/troubleshooting/_context.md").unlink()
     done = bind(consumer)
     assert done.returncode == 1
     assert "is not sound; nothing was bound" in done.stdout

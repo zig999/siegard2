@@ -4,7 +4,8 @@
 «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1). `domain/<context>/<slug>.md` is a Domain Model element
 and `domain/<context>/_context.md` its context descriptor; `rules/`, `scenarios/` and
 `contracts/` follow the same shape; `constraints/<slug>.md` is system-wide work; and
-`decision-log.md` at the root is the one mandatory non-normative artifact. No file carries an
+`<slug>.log.md` beside any node is that node's decision log, the one non-normative artifact —
+«One decision log beside every node that received a decision» (SPEC-001 R9). No file carries an
 id, a name or a class field, so none can disagree with where it sits.
 
 **The schema decides one file; this script decides what needs two.** Per-file validation is
@@ -16,13 +17,15 @@ is a validation error» (SPEC-003 §Rule), a rule's or constraint's `statement` 
 «One condition is one sentence» (SPEC-003 §Rule), a state machine is total over its states and
 triggers — «an undecided pairing is a decision to make and log, never silence» (SPEC-003 §Rule),
 every entity, value object and enumeration is reachable — «an element nothing reaches is bloat and
-fails validation» (SPEC-001 R6), and every decision-log entry locates a file and field that exist
-— «An entry whose location does not resolve fails validation» (SPEC-001 R9).
+fails validation» (SPEC-001 R6), every decision log sits beside its node or closes with a
+retirement — «A log whose node does not exist fails validation unless its last entry retires a
+field» (SPEC-001 R9) — and every entry names a field that node declares — «an entry whose field
+does not resolve fails validation» (SPEC-001 R9).
 
 **No provenance meta-fields.** A `gaps`, `sources`, `rationale` or `proposal` key is refused
 with its own message — «Artifacts carry no provenance meta-fields» (SPEC-001 R8); «What the
 material does not state, the analysis decides» (SPEC-001 R4), and the decision is disclosed in the
-log, never marked in an artifact.
+node's log, never marked in an artifact.
 
 **Projections are derived, never edited.** `--project` writes `projections/` from the files —
 class diagrams, the context map (a context pair with no contract between them has gone separate
@@ -39,13 +42,13 @@ node moved. Refused entirely while the specification has problems, the same as `
 
 **A file can be checked on its own while it is being written.** `--node <file>` applies the
 one schema its class demands and nothing else: no reference resolution, no reachability, no
-decision-log check — those need the whole specification, and a file mid-authoring has not
+check that a log's node exists — those need the whole specification, and a file mid-authoring has not
 earned them yet. It is refused the same as any file the whole run would refuse; it just does
 not also fail for references a later file in the same session has not been written yet either.
 
 **An impact set is closed by reading, not by hand.** `--impact` prints, for each node named,
-every reference it declares, every node that declares one at it, and every decision-log entry
-that located it — one hop, in both directions. The edges are read off the same walk that
+every reference it declares, every node that declares one at it, and every entry of the
+decision log beside it — one hop, in both directions. The edges are read off the same walk that
 validates them, so the report and the check cannot drift apart. Two things it deliberately does
 not do. It never closes a second hop: the transitive closure of a connected specification is the
 specification, and a reader who wants another hop runs it again over what the first printed. And
@@ -66,7 +69,8 @@ far end of its own class's distribution is one a reader can open. It also names 
 set of nodes shares in its normative fields — a clause two rules both carry is one definition
 kept twice, which no reference resolves and no reachability reaches — every normative field
 speaking about the specification rather than the domain, every long statement no scenario pins,
-and how far each `why` of the decision log runs. Two readings are kept apart. A declared
+how far each `why` across the decision logs runs, and which fields a log decided more than
+once. Two readings are kept apart. A declared
 reference passes through the same walk that validates it and is passed in rather than
 recomputed; a node named in prose passes through no field and no check, so it is counted
 separately, a bare slug two nodes answer to is reported ambiguous rather than resolved to
@@ -221,8 +225,13 @@ def classify(relative: Path) -> tuple[str, str | None, str] | None:
     if relative.suffix != ".md":
         return None
     parts = relative.with_suffix("").parts
-    if parts == ("decision-log",):
-        return ("log", None, "decision-log")
+    if parts and parts[-1].endswith(".log"):
+        # A node's decision log sits beside it as `<slug>.log.md`: the dot keeps the stem outside
+        # the slug space, so the file computes to the class `log` over its sibling's identity.
+        beside = classify(relative.with_name(parts[-1][:-len(".log")] + ".md"))
+        if beside is None or beside[0] == "log":
+            return None
+        return ("log", beside[1], beside[2])
     if len(parts) == 3 and parts[0] == "domain" and parts[2] == "_context":
         return ("context", parts[1], parts[1]) if SLUG.fullmatch(parts[1]) else None
     if len(parts) == 3 and parts[0] in ("domain", "rules", "scenarios", "contracts"):
@@ -329,6 +338,11 @@ def headings_of(body: str) -> list[str]:
 def body_problems(cls: str, body: str) -> list[str]:
     expected = HEADINGS[cls]
     if expected is None:
+        if cls == "log" and body.strip():
+            return ["carries text after its frontmatter fence — «A log is frontmatter alone: "
+                    "text after its fence is not an entry and fails validation» (SPEC-001 R9); "
+                    "an entry written past the fence is read by nothing, and the count the "
+                    "validator reports would be short by exactly what it missed"]
         return []
     headings = headings_of(body)
     if headings != expected:
@@ -436,7 +450,7 @@ def collect(root: Path, validators) -> tuple[dict[str, dict], list[str]]:
                     f"{identity}: carries `{field}`, a provenance meta-field — «Artifacts carry no "
                     f"provenance meta-fields» (SPEC-001 R8); «What the material does not state, "
                     f"the analysis decides» (SPEC-001 R4), and the decision is disclosed in the "
-                    f"decision log, never marked in an artifact")
+                    f"node's decision log, never marked in an artifact")
         front = {k: v for k, v in front.items() if k not in META_FIELDS}
         for error in validators[cls].iter_errors(front):
             where = ".".join(str(part) for part in error.absolute_path) or "frontmatter"
@@ -492,7 +506,7 @@ def check_single(root: Path, named: str, validators) -> int:
             problems.append(
                 f"carries `{field}`, a provenance meta-field — «Artifacts carry no provenance "
                 f"meta-fields» (SPEC-001 R8); «What the material does not state, the analysis "
-                f"decides» (SPEC-001 R4), and the decision is disclosed in the decision log, never "
+                f"decides» (SPEC-001 R4), and the decision is disclosed in the node's decision log, never "
                 f"marked in an artifact")
     checked = {k: v for k, v in front.items() if k not in META_FIELDS}
     for error in validators[cls].iter_errors(checked):
@@ -827,65 +841,64 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                             f"relationship, rule, contract or scenario names it; «an element "
                             f"nothing reaches is bloat and fails validation» (SPEC-001 R6)")
 
-    # --- the decision log
-    log = nodes.get("decision-log")
-    if log is None:
-        problems.append("decision-log.md is missing — the log «is mandatory and non-normative: it "
-                        "constrains nothing; it discloses» (SPEC-003 R5)")
-    else:
-        entries = listed(log["front"], "entries")
-        retired_at: dict[tuple, list[int]] = {}
+    # --- the decision logs, one beside each node that received a decision
+    for identity in sorted(n for n in nodes if nodes[n]["cls"] == "log"):
+        sibling = beside_of(identity)
+        target = nodes.get(sibling)
+        entries = [e for e in listed(nodes[identity]["front"], "entries") if isinstance(e, dict)]
+        if target is None and not (entries and "retired" in entries[-1]):
+            problems.append(f"{identity}: sits beside no node {sibling} — «A log whose node does "
+                            f"not exist fails validation unless its last entry retires a field» "
+                            f"(SPEC-001 R9); a node that left the specification is answered by "
+                            f"an entry retiring the field, never by deleting its log")
+        retired_at: dict[object, list[int]] = {}
         for index, entry in enumerate(entries):
-            if isinstance(entry, dict) and "retired" in entry:
-                retired_at.setdefault((entry.get("location"), entry.get("field")), []).append(index)
+            if "retired" in entry:
+                retired_at.setdefault(entry.get("field"), []).append(index)
         for index, entry in enumerate(entries):
-            if not isinstance(entry, dict) or not isinstance(entry.get("location"), str):
-                continue  # the schema already reported the shape
-            location = entry["location"]
-            located = "/".join(Path(location).with_suffix("").parts)
-            target = nodes.get(located)
-            resolves = target is not None and (root / location).is_file()
+            field = entry.get("field")
             if record is not None:
-                record("decision-log", f"entries[{index}]", located, resolves)
-            key = (location, entry.get("field"))
+                record(identity, f"entries[{index}]", sibling, target is not None)
             if "retired" in entry:
                 if not any(earlier < index and "retired" not in entries[earlier]
                            for earlier, other in enumerate(entries)
-                           if isinstance(other, dict)
-                           and (other.get("location"), other.get("field")) == key):
-                    problems.append(f"decision-log: entries[{index}] retires `{entry.get('field')}` "
-                                    f"in {location}, which no earlier entry locates — a "
-                                    f"retirement answers an entry «whose location does not "
-                                    f"resolve» (SPEC-001 R9), and there is none")
+                           if other.get("field") == field):
+                    problems.append(f"{identity}: entries[{index}] retires `{field}`, which no "
+                                    f"earlier entry of this log filled — a retirement answers an "
+                                    f"entry «whose field does not resolve» (SPEC-001 R9), and "
+                                    f"there is none")
                 continue
-            if any(later > index for later in retired_at.get(key, [])):
-                continue  # «unless a later entry retires that location» (SPEC-001 R9)
-            if not resolves:
-                problems.append(f"decision-log: entries[{index}] locates {location}, "
-                        f"which the specification does not hold — «An entry whose location does "
-                        f"not resolve fails validation» (SPEC-001 R9); a node that left the "
-                        f"specification is answered by an entry retiring the location, never by "
-                        f"editing this one")
-                continue
-            field = entry.get("field")
-            if isinstance(field, str):
+            if any(later > index for later in retired_at.get(field, [])):
+                continue  # «unless a later entry retires that field» (SPEC-001 R9)
+            if target is not None and isinstance(field, str):
                 head = field.split(".")[0].split("[")[0]
                 if head not in target["front"]:
-                    problems.append(f"decision-log: entries[{index}] locates `{field}` in "
-                                    f"{location}, which declares no `{head}` — «An entry whose location does not "
-                        f"resolve fails validation» (SPEC-001 R9); a field that left the node is "
-                        f"answered by an entry retiring it")
+                    problems.append(f"{identity}: entries[{index}] locates `{field}`, which "
+                                    f"{sibling} does not declare — «an entry whose field does "
+                                    f"not resolve fails validation» (SPEC-001 R9); a field that "
+                                    f"left the node is answered by an entry retiring it")
             if "found" in entry and ("decided" in entry or "why" in entry):
-                problems.append(f"decision-log: entries[{index}] carries `found` beside "
+                problems.append(f"{identity}: entries[{index}] carries `found` beside "
                                 f"{' and '.join(k for k in ('decided', 'why') if k in entry)} — "
                                 f"an entry recorded as read «decides no value and carries no "
                                 f"`why`» (SPEC-001 R9)")
     return problems
 
 
+def beside_of(log_identity: str) -> str:
+    """The identity of the node a decision log sits beside: the log's own, less `.log`."""
+    return log_identity[:-len(".log")]
+
+
+def log_entries_of(nodes: dict[str, dict], log_identity: str) -> list[dict]:
+    front = nodes.get(log_identity, {"front": {}})["front"]
+    return [e for e in listed(front, "entries") if isinstance(e, dict)]
+
+
 def log_entries(nodes: dict[str, dict]) -> list[dict]:
-    front = nodes.get("decision-log", {"front": {}})["front"]
-    return [e for e in (front.get("entries") or []) if isinstance(e, dict)]
+    """Every entry of every decision log, in identity order of the logs."""
+    return [entry for identity in sorted(nodes) if nodes[identity]["cls"] == "log"
+            for entry in log_entries_of(nodes, identity)]
 
 
 def log_tally(nodes: dict[str, dict]) -> str:
@@ -968,6 +981,8 @@ def print_impact(nodes: dict[str, dict], root: Path, named: list[str],
     print("\nread:")
     for identity in reached:
         print(f"  {root / f'{identity}.md'}")
+        if (root / f"{identity}.log.md").is_file():
+            print(f"  {root / f'{identity}.log.md'}")
     if problems:
         print()
         for problem in sorted(set(problems)):
@@ -1142,6 +1157,12 @@ def shape_of(nodes: dict[str, dict], declared: dict[str, set[str]] | None = None
             entries = [e for e in listed(front or {}, "entries") if isinstance(e, dict)]
             read[identity]["why_words"] = sorted(
                 len(e["why"].split()) for e in entries if isinstance(e.get("why"), str))
+            filled: dict[object, int] = {}
+            for entry in entries:
+                if "retired" not in entry:
+                    filled[entry.get("field")] = filled.get(entry.get("field"), 0) + 1
+            read[identity]["redecided"] = {field: count for field, count in filled.items()
+                                           if count > 1}
     anchored: dict[str, int] = {}
     for node in nodes.values():
         subject = node["front"].get("subject")
@@ -1267,16 +1288,29 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
         if not long_unpinned:
             print("  (none)")
 
-    for identity, entry in sorted(read.items()):
-        stated = entry.get("why_words")
-        if not stated:
-            continue
+    logs = sorted(identity for identity, entry in read.items() if entry["cls"] == "log")
+    stated = sorted(w for identity in logs for w in read[identity].get("why_words", []))
+    if stated:
         far = percentile(stated, 0.9)
-        print(f"\n{identity}: {len(stated)} entry(ies); `why` median "
-              f"{percentile(stated, 0.5)}w, p90 {far}w, max {max(stated)}w. «`why` carries one "
-              f"claim a reviewer can reject» (SPEC-001 R9) — {sum(1 for w in stated if w >= far)} "
-              f"entry(ies) at or past that p90 are where to check whether it carries an argument "
-              f"about the specification's composition instead.")
+        past = sorted(identity for identity in logs
+                      if any(w >= far for w in read[identity].get("why_words", [])))
+        print(f"\ndecision log: {len(stated)} decided entry(ies) across {len(logs)} log(s); "
+              f"`why` median {percentile(stated, 0.5)}w, p90 {far}w, max {max(stated)}w. "
+              f"«`why` carries one claim a reviewer can reject» (SPEC-001 R9) — "
+              f"{sum(1 for w in stated if w >= far)} entry(ies) at or past that p90 are where to "
+              f"check whether it carries an argument about the specification's composition "
+              f"instead, in:")
+        for identity in cut(past, lambda row: [row]):
+            print(f"{mark(identity)} {identity}")
+    redecided = sorted((identity, field, count) for identity in logs
+                       for field, count in read[identity].get("redecided", {}).items())
+    print(f"\nfields a log decided more than once — {len(redecided)}; «The latest entry over a "
+          f"field is the disclosure that stands» (SPEC-001 R9), and the earlier one is where to "
+          f"check that the two agree or that the later one meant to overrule:")
+    for identity, field, count in redecided:
+        print(f"{mark(identity)} {count:>2}x  {field}  in  {identity}")
+    if not redecided:
+        print("  (none)")
 
     selfref = sorted(identity for identity, entry in read.items() if entry["selfref"])
     print(f"\nnormative field speaking about the specification rather than the domain — "
@@ -1623,7 +1657,7 @@ def overview(nodes: dict[str, dict]) -> str:
         lines.append(f"- {node['slug']} ({node['front'].get('scope')})")
     if not constraints:
         lines.append("None.")
-    lines += ["", f"{log_tally(nodes)} in the decision log.", ""]
+    lines += ["", f"{log_tally(nodes)} in the decision logs.", ""]
     return "\n".join(lines)
 
 
@@ -1643,42 +1677,6 @@ def full_text(nodes: dict[str, dict]) -> str:
                   nodes[identity]["path"].read_text(encoding="utf-8").rstrip("\n"),
                   ""]
     return "\n".join(lines)
-
-
-def decisions_by_node(nodes: dict[str, dict]) -> str:
-    """The decision log's entries, grouped by the file each one located. The log itself is
-    append-only and ordered by when — the right shape for disclosure, the wrong one for the
-    question a conformance reading asks, which is `what was decided about this node`: answering
-    that from the log reads every entry ever written, and the read grows with the project's whole
-    history. The log stays the authority; this locates its entries and restates nothing beyond
-    what each one says. A retirement sits under the location it retired, after the entries it
-    answers, so a node that left the specification still reads as decided, then gone, then
-    where its fact went."""
-    lines = ["# Decisions by node",
-             "",
-             "Derived by spec.py from decision-log.md; never edited. The log is the authority —",
-             "this groups its entries by the file each one located.",
-             ""]
-    grouped: dict[str, list[dict]] = {}
-    for entry in log_entries(nodes):
-        if isinstance(entry.get("location"), str):
-            grouped.setdefault(entry["location"], []).append(entry)
-    for location in sorted(grouped):
-        lines.append(f"## {location}")
-        for entry in grouped[location]:
-            if "retired" in entry:
-                lines += [f"- {entry.get('field', '?')} — retired: {entry['retired']}"]
-            elif "found" in entry:
-                lines += [f"- {entry.get('field', '?')} — read: {entry['found']}",
-                          f"  unstated: {entry.get('unstated', '?')}"]
-            else:
-                lines += [f"- {entry.get('field', '?')} — decided: {entry.get('decided', '?')}",
-                          f"  unstated: {entry.get('unstated', '?')}",
-                          f"  why: {entry.get('why', '?')}"]
-        lines.append("")
-    if not grouped:
-        lines.append("No decisions disclosed yet.")
-    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 class Collision(Exception):
@@ -1713,7 +1711,6 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
     files["capability-map.mmd"] = capability_map(nodes)
     files["overview.md"] = overview(nodes)
     files["full-text.md"] = full_text(nodes)
-    files["decisions-by-node.md"] = decisions_by_node(nodes)
     return files
 
 

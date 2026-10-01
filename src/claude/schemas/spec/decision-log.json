@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/spec/decision-log.json",
   "title": "Decision log",
-  "description": "The frontmatter of decision-log.md at the specification root — «One decision log per specification root, append-only» (SPEC-001 R9). «It is mandatory and non-normative: it constrains nothing; it discloses» (SPEC-003 R5). One append-only list — each entry records a fact the analysis decided rather than read, locating the file and field it filled so a human can evaluate the decision after the fact; a node or field that leaves the specification is answered by an entry retiring its location, never by editing the entry that located it. The log is the only place where agent-decided and material-stated are told apart, and after authoring it is the only index of a node the specification gained by reading a plan's material: that entry carries `found` and no value — «It decides no value and carries no `why`» (SPEC-001 R9) — and a read entry and a decided one are told apart by shape. An empty list is a specification whose material answered everything, and that claim must be true. `field` locates frontmatter and cannot locate a body heading, and that boundary is deliberate: a decision lands in an addressable home — a declared field, a rule's statement, a scenario's case — never in body prose, so a fact whose shape only prose could hold gains a field or a node before it is decided. Prose brought into agreement with a fact a node already states is not a decision and takes no entry; an entry pointing at prose would disclose a decision no validator can re-find.",
+  "description": "The frontmatter of a node's decision log, `<slug>.log.md` beside `<slug>.md` in the node's own directory — «One decision log beside every node that received a decision» (SPEC-001 R9). «It is non-normative: it constrains nothing; it discloses» (SPEC-003 R5). The file is frontmatter alone: text after its fence is not an entry, and a log is present only where a decision was made — a node beside no log is a node whose material answered everything, and that claim must be true. One append-only list — each entry records a fact the analysis decided rather than read, naming the field of the node beside it that the decision filled, so a human can evaluate the decision after the fact; a field or the node itself leaving the specification is answered by an entry retiring the field, never by editing the entry that filled it, and a log whose node is gone stands as that node's tombstone with the retirement as its last entry. The log moves with its node: a renamed node carries its log along, and no entry records the move. The log is the only place where agent-decided and material-stated are told apart, and after authoring it is the only index of a node the specification gained by reading a plan's material: that entry carries `found` and no value — «It decides no value and carries no `why`» (SPEC-001 R9) — and a read entry and a decided one are told apart by shape. Within one log the latest entry over a field is the disclosure that stands; an earlier one is history the diff keeps. `field` locates frontmatter and cannot locate a body heading, and that boundary is deliberate: a decision lands in an addressable home — a declared field, a rule's statement, a scenario's case — never in body prose, so a fact whose shape only prose could hold gains a field or a node before it is decided. Prose brought into agreement with a fact a node already states is not a decision and takes no entry; an entry pointing at prose would disclose a decision no validator can re-find.",
   "type": "object",
   "required": ["entries"],
   "additionalProperties": false,
@@ -16,7 +16,6 @@
     {
       "entries": [
         {
-          "location": "domain/troubleshooting/evidence.md",
           "field": "attributes.value.type",
           "unstated": "The material does not say what shape an evidence value takes.",
           "decided": "string",
@@ -28,7 +27,7 @@
   "$defs": {
     "entry": {
       "type": "object",
-      "required": ["location", "field"],
+      "required": ["field"],
       "additionalProperties": false,
       "if": { "required": ["retired"] },
       "then": {
@@ -42,15 +41,10 @@
         "else": { "required": ["decided", "why"] }
       },
       "properties": {
-        "location": {
-          "type": "string",
-          "pattern": "^[a-z0-9_./-]+\\.md$",
-          "description": "The file the decision filled, relative to the specification root. Must resolve, unless a later entry retires this location."
-        },
         "field": {
           "type": "string",
           "pattern": "^[a-z_]+(\\.[a-z0-9_.\\[\\]-]+)*$",
-          "description": "The field the decision filled, dotted from the frontmatter root. Its head must exist in the located file, unless a later entry retires this location."
+          "description": "The field the decision filled, dotted from the frontmatter root of the node this log sits beside. Its head must exist in that node, unless a later entry in this log retires the field — «an entry whose field does not resolve fails validation» (SPEC-001 R9)."
         },
         "unstated": {
           "type": "string",
@@ -70,12 +64,12 @@
         "retired": {
           "type": "string",
           "minLength": 1,
-          "description": "Where the fact an earlier entry located is held now that its node or field left the specification — the node and field that hold it, or that it is held nowhere — on an entry retiring that location. «An entry is never edited or removed» (SPEC-001 R9): the earlier entry stands, and this one is what lets its location stop resolving. Present here, `unstated`, `decided`, `why` and `found` are refused: a retirement discloses where a decision went, and decides and reads nothing. It retires every earlier entry carrying the same `location` and `field`, and one retiring nothing an earlier entry located is refused."
+          "description": "Where the fact an earlier entry of this log filled is held now that its field, or the node itself, left the specification — the node and field that hold it, or that it is held nowhere — on an entry retiring that field. «An entry is never edited or removed» (SPEC-001 R9): the earlier entry stands, and this one is what lets its field stop resolving, and what lets the log stand beside no node. Present here, `unstated`, `decided`, `why` and `found` are refused: a retirement discloses where a decision went, and decides and reads nothing. It retires every earlier entry of this log carrying the same `field`, and one retiring a field no earlier entry filled is refused."
         },
         "why": {
           "type": "string",
           "minLength": 1,
-          "description": "Why that value — the claim a reviewer can reject; absent on a read entry. One claim: what about the material or the model makes this value the right one, stated so rejecting it is a single disagreement rather than a reading. What does not belong here is the argument that the specification composes — that this node rather than a sibling is the home, that another node's reasoning transfers, that one question keeps one answer. That argument records no decided value, so it has no entry of its own and reaches the log only smuggled into an entry about something else, where it restates the prose of the node the entry locates — «No artifact restates another's statement» (SPEC-001 R7). Its home is the change that made it."
+          "description": "Why that value — the claim a reviewer can reject; absent on a read entry. One claim: what about the material or the model makes this value the right one, stated so rejecting it is a single disagreement rather than a reading. What does not belong here is the argument that the specification composes — that this node rather than a sibling is the home, that another node's reasoning transfers, that one question keeps one answer. That argument records no decided value, so it has no entry of its own and reaches the log only smuggled into an entry about something else, where it restates the prose of the node beside this log — «No artifact restates another's statement» (SPEC-001 R7). Its home is the change that made it."
         }
       }
     }

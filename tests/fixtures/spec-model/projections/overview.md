@@ -17,4 +17,4 @@ Derived by spec.py from the specification files; never edited.
 
 - asynchronous-events (system)
 
-2 decision(s) disclosed in the decision log.
+2 decision(s) disclosed in the decision logs.

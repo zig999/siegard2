@@ -42,7 +42,9 @@ domain/
 
 - **R1** — One element, one file, flat: `domain/<context-slug>/<element-slug>.md`. No
   subdirectories below the context. Beside the elements sits the context descriptor
-  `_context.md` (SPEC-003) — the underscore keeps it outside the element slug space.
+  `_context.md` (SPEC-003) — the underscore keeps it outside the element slug space — and,
+  beside any element that received a decision, its decision log `<element-slug>.log.md`
+  (SPEC-001 R9) — the dot keeps it outside the slug space too (R2).
 - **R2** — Slugs are kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`) of the ubiquitous-language term,
   in English (SPEC-001 R12): a term the material states in another language is translated to
   its closest English equivalent before the slug is derived from it. The filename is the
@@ -82,7 +84,7 @@ nothing to say carries the literal line `None.`
 - **R7** — Elements carry no provenance meta-fields — no `gaps`, `sources`, `rationale`, or
   `proposal` (SPEC-001 R8). A fact the material does not state is decided by the analysis, the
   element carries the decided value like any other, and the decision is appended to the
-  decision log (SPEC-001 R9) naming the file and field it filled. An attribute typed `unknown`
+  element's own decision log (SPEC-001 R9) naming the field it filled. An attribute typed `unknown`
   is forbidden — an undetermined type is a decision to make and log, never a placeholder.
 
 ## Attributes and relationships — one home per fact

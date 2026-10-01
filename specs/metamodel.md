@@ -19,7 +19,7 @@ subtype vocabularies, the anchor rules, and the storage mapping.
 
 ### Decided elsewhere, deliberately not restated here
 
-- The floor, the ceiling, and the decision log — `specs/minimal-documentation.md` (SPEC-001).
+- The floor, the ceiling, and the decision logs — `specs/minimal-documentation.md` (SPEC-001).
 - The Domain Model element fields, naming derivations, and diagram projection rules —
   `specs/domain-model-files.md` (SPEC-002), which this specification positions as the storage
   chapter of the Domain Model class.
@@ -45,8 +45,8 @@ The class set and every subtype vocabulary stay closed under two tests:
 | Architecture Constraint | what limits the solution space | fitness function over the implementation |
 
 Every node of every class is complete: no provenance meta-fields, no open markers (SPEC-001
-R8); a fact the material does not state is decided and disclosed in the decision log (SPEC-001
-R9–R10).
+R8); a fact the material does not state is decided and disclosed in the node's decision log
+(SPEC-001 R9–R10).
 
 ### Domain Model
 
@@ -161,16 +161,18 @@ R9–R10).
 ├── scenarios/system/<scenario-slug>.md          (a capability's scenario, owned by no context)
 ├── contracts/system/<capability-slug>.md
 ├── contracts/<context-slug>/<contract-slug>.md
-├── constraints/<constraint-slug>.md
-└── decision-log.md
+└── constraints/<constraint-slug>.md
+
+<any node>.log.md                            (its decision log, beside it — SPEC-001 R9)
 ```
 
 - **R4** — A node gets its own file when something outside its parent references it or when it
   changes independently of its parent; today that is every node of every class, flat per
   context, kebab-case slugs, no type in filenames (SPEC-002 R1–R3 generalized). Moving a class
   to inline storage is a change to this specification, never a per-model choice.
-- **R5** — The decision log sits at the specification root (SPEC-001 R9). It is mandatory and
-  non-normative: it constrains nothing; it discloses.
+- **R5** — A decision log sits beside the node it discloses, `<slug>.log.md` in that node's
+  directory (SPEC-001 R9): present where a decision was made, absent where none was, and moving
+  with its node. It is non-normative: it constrains nothing; it discloses.
 
 ## Projections
 
