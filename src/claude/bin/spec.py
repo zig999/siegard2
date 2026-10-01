@@ -145,6 +145,8 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
           file=sys.stderr)
     raise SystemExit(CANNOT_RUN)
 
+from project import PROJECT_FILE
+
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_DIR = PLUGIN_ROOT / "schemas" / "spec"
 PROJECTIONS = "projections"
@@ -308,7 +310,8 @@ def parse_node(path: Path) -> tuple[dict | None, str, str | None]:
     if not match:
         return None, "", "carries no frontmatter fence"
     try:
-        front = yaml.safe_load(match.group(1)) or {}
+        # The fence's own line goes in front, so every line PyYAML names is the file's line.
+        front = yaml.safe_load("\n" + match.group(1)) or {}
     except yaml.YAMLError as broken:
         said = f"frontmatter does not parse: {broken}"
         # PyYAML's own message for the commonest authoring error — a colon inside an unquoted
@@ -1856,6 +1859,21 @@ def project(nodes: dict[str, dict]) -> dict[str, str]:
     return files
 
 
+def declared_specification_root(root: Path) -> Path | None:
+    """The specification root a project file at `root` declares, where it is not `root` itself.
+    Every markdown file under a project root reads as a node that fails its contract, so the
+    report would be one problem per file of the repository and say nothing about the
+    specification it was meant to check."""
+    try:
+        declared = json.loads((root / PROJECT_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    named = declared.get("specification_root") if isinstance(declared, dict) else None
+    if not isinstance(named, str) or (root / named).resolve() == root.resolve():
+        return None
+    return root / named
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -1938,6 +1956,11 @@ def main() -> int:
     root = Path(args[0])
     if not root.is_dir():
         print(f"cannot run: {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    declared_root = declared_specification_root(root)
+    if declared_root is not None:
+        print(f"cannot run: {root} is a project root, and its {PROJECT_FILE} declares "
+              f"the specification at {declared_root} — spec.py {declared_root}", file=sys.stderr)
         return CANNOT_RUN
     try:
         validators = contracts()

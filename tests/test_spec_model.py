@@ -832,6 +832,28 @@ def test_a_parse_failure_that_is_not_the_colon_carries_no_hint(tmp_path):
     assert "yaml.safe_dump" not in problem
 
 
+def test_a_parse_failure_names_the_file_s_line_and_not_the_frontmatter_s(tmp_path):
+    path = tmp_path / "node.md"
+    path.write_text("---\ntitle: Sound\na: &id011 x\nb: &id011 y\n---\n## Description\n",
+                    encoding="utf-8")
+    front, _, problem = spec.parse_node(path)
+    assert front is None
+    assert "duplicate anchor 'id011'" in problem
+    assert "line 3" in problem and "line 4" in problem, \
+        "a line counted from inside the fence sends the reader one line above the error"
+
+
+def test_spec_py_on_a_project_root_hands_the_specification_root(spec_root):
+    home = spec_root.parent
+    (home / "siegard.json").write_text(json.dumps({"specification_root": spec_root.name}),
+                                       encoding="utf-8")
+    done = run_node(str(home))
+    assert done.returncode == 2
+    assert f"spec.py {spec_root}" in done.stderr, \
+        "every markdown file of a repository read as a node is a problem per file"
+    assert run_node(str(spec_root)).returncode == 0
+
+
 # -------------------------------------------------------------------- --impact
 
 
