@@ -67,6 +67,11 @@ What this script does, and nobody else does any of it:
                                                                   the proof offered and the step
                                                                   that runs it, omitting no pair
                                                                   of a node being certified
+    trace.py --save-return <target-root> <workspace> <file> <transcript>
+                                                                  save one delegation's final
+                                                                  reply, verbatim, as the return
+                                                                  for a staged file (or a node
+                                                                  staged for certification)
     trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
                                                                   into the reconciliation record
     trace.py --encodes --rank <target-root> [--all]               the accretion axes: files by
@@ -290,6 +295,10 @@ recomputed by `--bind-record` at bind time; the manifest's list is a preparation
 authority. `--stage` also reserves the reconciliation's own ground: it refuses a slug whose record
 or returns directory already exists, and creates `siegard-reconcile/<slug>.returns/` empty — the
 returns saved there are the evidence the record is folded from, and they outlive the workspace.
+`--save-return` writes one there from the delegation's own transcript: the last assistant message,
+byte for byte, under the name the fold reads for the staged file. A notification relays that reply
+re-rendered for display — an entity-escaped `&gt;` reads as text inside a scalar and parses — so a
+return copied from what was shown can carry characters the delegation never wrote.
 
 `--audit` inverts that one omission, deliberately. Every report keyed by change has a blind spot:
 a binding over-broad from the day it was written never drifts, so nothing that watches for drift
@@ -427,6 +436,7 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
 import plan
 import project
 import spec
+import telemetry
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TRACE_CONTRACT = PLUGIN_ROOT / "schemas" / "trace.json"
@@ -3570,6 +3580,68 @@ def load_return(text: str):
     return yaml.load(text, Loader=ReturnLoader)
 
 
+def final_reply_of(transcript: Path) -> tuple[str | None, str | None]:
+    """The text a delegation answered with, read from its own transcript: the last assistant
+    message, which must carry text and no tool call. A notification relays that text re-rendered
+    for display, so what it shows is not what the delegation wrote; the transcript is. The format
+    is the harness's and undocumented, read here the way the telemetry reads it, and a transcript
+    that does not hold the shape is refused rather than guessed at."""
+    if not transcript.is_file():
+        return None, f"{transcript} is not a file"
+    last = None
+    for entry in telemetry.entries_of(transcript):
+        if entry.get("type") == "assistant" and isinstance(entry.get("message"), dict):
+            last = entry
+    if last is None:
+        return None, f"{transcript} holds no assistant message; it is not a delegation's transcript"
+    blocks = telemetry.blocks_of(last)
+    if any(block.get("type") == "tool_use" for block in blocks):
+        return None, (f"{transcript} ends in a tool call; the delegation has not answered yet, "
+                      f"so there is no return to save")
+    text = "".join(block["text"] for block in blocks
+                   if block.get("type") == "text" and isinstance(block.get("text"), str))
+    if not text.strip():
+        return None, f"{transcript}'s last assistant message carries no text"
+    return text, None
+
+
+def save_return_from(target: Path, workspace: Path, given: str, transcript: Path) -> int:
+    """Save one delegation's return, verbatim, where the fold reads it. The bytes are the final
+    reply's and nothing else: no fence is stripped and nothing is trimmed, because a return the
+    saving reshaped carries a judgment the delegation never made, and one the fold refuses names
+    the delegation to run again."""
+    manifest_path = workspace / "manifest.json"
+    if not manifest_path.is_file():
+        print(f"cannot run: {workspace} holds no manifest.json; save into a staged workspace",
+              file=sys.stderr)
+        return CANNOT_RUN
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    certified = {entry["node"] for entry in manifest.get("certify") or []}
+    if given in manifest["files"]:
+        name = return_name(given)
+    elif given in certified:
+        name = CERTIFY_PREFIX + given.replace("/", "__") + ".yaml"
+    else:
+        print(f"cannot run: {given} is neither a staged file nor a node staged for "
+              f"certification in {workspace}; a return answers a question the staging asked",
+              file=sys.stderr)
+        return CANNOT_RUN
+    text, problem = final_reply_of(transcript)
+    if problem is not None:
+        print(f"cannot run: {problem}", file=sys.stderr)
+        return CANNOT_RUN
+    returns_dir = home_of(target) / RECONCILE_DIR / f"{manifest['slug']}.returns"
+    if not returns_dir.is_dir():
+        print(f"cannot run: {returns_dir} does not exist; --stage creates it", file=sys.stderr)
+        return CANNOT_RUN
+    path = returns_dir / name
+    replaced = path.exists()
+    path.write_text(text, encoding="utf-8")
+    print(f"{'replaced' if replaced else 'saved'} {path} — {len(text.encode('utf-8'))} byte(s) "
+          f"of the delegation's final reply, verbatim")
+    return 0
+
+
 def return_problems(front, assigned: list[str], given: str) -> list[str]:
     """Every way one delegation's saved return fails its contract or its assignment. The schema
     holds the shape; this holds the relation the schema cannot see — that `read` answers for
@@ -4782,6 +4854,7 @@ def main() -> int:
     do_encodes = "--encodes" in args
     do_stage = "--stage" in args
     do_fold = "--fold" in args
+    do_save_return = "--save-return" in args
     replace = "--replace" in args
     do_rank = "--rank" in args
     do_changed = "--changed" in args
@@ -4871,7 +4944,7 @@ def main() -> int:
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
-                         "--fold", "--rank", "--changed", "--audit", "--review",
+                         "--fold", "--save-return", "--rank", "--changed", "--audit", "--review",
                          "--convergence", "--untraced", "--adopt", "--ledger", "--survey",
                          "--area")]
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
@@ -4883,6 +4956,7 @@ def main() -> int:
                                       ("--encodes", do_encodes),
                                       ("--stage", do_stage),
                                       ("--fold", do_fold),
+                                      ("--save-return", do_save_return),
                                       ("--convergence", do_convergence),
                                       ("--untraced", do_untraced),
                                       ("--ledger", do_ledger),
@@ -5062,6 +5136,14 @@ def main() -> int:
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
                      do_review, also, certify, demonstrated, do_adopt, outside, ledger_given)
+
+    if do_save_return:
+        if len(args) != 4 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --save-return <target-root> <workspace-dir> <file> "
+                  "<transcript>", file=sys.stderr)
+            return CANNOT_RUN
+        target, workspace, given, transcript = args
+        return save_return_from(Path(target), Path(workspace), given, Path(transcript))
 
     if do_fold:
         if len(args) != 4 or any(a.startswith("--") for a in args):
