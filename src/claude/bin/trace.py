@@ -3131,6 +3131,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return CANNOT_RUN
 
     traced, path_problems = traced_files_of(target, home, files)
+    by_name: dict[str, list[str]] = {}
+    for given in dict.fromkeys(files):
+        by_name.setdefault(return_name(given), []).append(given)
+    path_problems += [f"{' and '.join(same)} share the pack and return name {name}; one would "
+                      f"overwrite the other and be bound on a reading of the other file — judge "
+                      f"them in separate rounds"
+                      for name, same in sorted(by_name.items()) if len(same) > 1]
     if adopt:
         scopes = test_scopes_of(home, offset_of(target, home))
         path_problems += [f"{given} is a declared test; a test is a certification's material and "
@@ -3542,6 +3549,27 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     return 0
 
 
+class ReturnLoader(yaml.SafeLoader):
+    """A judge's return read with every mapping key once. A key given twice is two answers to one
+    question, and a plain load keeps the last and drops the first without a word, so the fold
+    would compose from whichever block the judge happened to write second."""
+
+    def construct_mapping(self, node, deep=False):
+        seen = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if key in seen:
+                raise yaml.constructor.ConstructorError(
+                    None, None, f"`{key}` is given twice; a return answers once, and two answers "
+                                f"void each other", key_node.start_mark)
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
+def load_return(text: str):
+    return yaml.load(text, Loader=ReturnLoader)
+
+
 def return_problems(front, assigned: list[str], given: str) -> list[str]:
     """Every way one delegation's saved return fails its contract or its assignment. The schema
     holds the shape; this holds the relation the schema cannot see — that `read` answers for
@@ -3789,7 +3817,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             rerun.append(f"{given}: no return at {path}")
             continue
         try:
-            front = yaml.safe_load(path.read_text(encoding="utf-8"))
+            front = load_return(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as broken:
             rerun.append(f"{given}: the return does not parse: {broken}")
             continue
@@ -3808,7 +3836,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             rerun.append(f"certification of {ask['node']}: no return at {path}")
             continue
         try:
-            front = yaml.safe_load(path.read_text(encoding="utf-8"))
+            front = load_return(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as broken:
             rerun.append(f"certification of {ask['node']}: the return does not parse: {broken}")
             continue
@@ -3982,14 +4010,24 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         if not holders:
             parts.append("no file of the set holds this fact beside what was found against it")
         if lost and not found:
-            parts.append(f"{', '.join(lost)} is bound to this node and no longer holds its fact")
+            still = [given for given in bound_in if given in holders]
+            if still:
+                parts.append(f"the fact left part of its ground: still held in "
+                             f"{', '.join(still)}, and {', '.join(lost)} is bound to this node "
+                             f"and no longer holds it — the pair that stopped holding it is "
+                             f"released by `--bind ... --replace`, never restamped here")
+            else:
+                parts.append(f"{', '.join(lost)} is bound to this node and no longer holds "
+                             f"its fact")
         parts += [f"{given} returned a finding naming no node ({finding['where']}: "
                   f"{finding['evidence']} — {finding['cost']}), and an unattributed finding "
                   f"holds every node of that file its judge was handed"
                   for given in taint for finding in tainted[given]]
+        # Every file the trace binds the node to is named, holder or not: a bound pair the
+        # record does not answer is one the bind cannot account for, and a holder left out
+        # would reach no node of the record at all.
         entries.append({"node": node, "conforms": False, "how": "\n".join(parts),
-                        "observed_at": sorted({given for given, _ in found} | set(lost)
-                                              | set(taint))})
+                        "observed_at": sorted({given for given, _ in found} | set(bound_in))})
     for node in sorted(batch_nodes - adopted):
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
@@ -4215,7 +4253,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         for problem in sorted(set(held)):
             print(f"cannot fold: {problem}")
         print(f"\n{len(set(held))} problem(s) in what the fold composed; this is a defect in the "
-              f"staging or the premise, and nothing was written.")
+              f"staging, the premise or the fold itself, never in a judgment, and nothing was "
+              f"written.")
         return 1
 
     if record_out.parent.name != RECONCILE_DIR:

@@ -149,6 +149,17 @@ def test_a_taken_slug_is_a_stop_for_the_record_and_the_returns_alike(consumer):
     assert "already exists" in again.stderr
 
 
+def test_two_files_one_return_name_would_share_is_a_stop_naming_both(consumer):
+    for given in ("src/x/b__c.ts", "src/x__b/c.ts"):
+        (consumer / "backend" / given).parent.mkdir(parents=True, exist_ok=True)
+        (consumer / "backend" / given).write_text("export {}\n", encoding="utf-8")
+    done, workspace = staged(consumer, files=[FILE, "src/x/b__c.ts", "src/x__b/c.ts"])
+    assert done.returncode == 2
+    assert "src/x/b__c.ts and src/x__b/c.ts share the pack and return name" in done.stderr, \
+        "one return would stand for both files, and one of them would be bound unread"
+    assert not workspace.exists()
+
+
 def test_a_file_the_trace_binds_nothing_to_is_staged_under_unbound(consumer):
     loose = consumer / "backend/src/orders/loose.ts"
     loose.write_text("export {}\n", encoding="utf-8")
@@ -476,6 +487,18 @@ def test_a_return_answering_for_a_node_it_was_never_handed_is_refused(consumer):
     done, _ = folded(consumer)
     assert done.returncode == 1
     assert "never answered for in `read`" in done.stdout
+
+
+def test_a_return_giving_a_key_twice_is_refused_by_name(consumer):
+    staged(consumer)
+    path = save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    first = yaml.safe_dump(clean_return([NODE]), sort_keys=False)
+    path.write_text(first + path.read_text(encoding="utf-8"), encoding="utf-8")
+    done, record = folded(consumer)
+    assert done.returncode == 1
+    assert "`read` is given twice" in done.stdout, \
+        "a plain load keeps the second block and drops the first without a word"
+    assert not record.exists()
 
 
 def test_the_pack_header_hands_the_judge_the_spelling_a_finding_echoes(consumer):
@@ -2016,6 +2039,31 @@ def test_a_contradiction_against_a_candidate_leaves_it_unbound(adopting):
     assert by_node[OTHER]["conforms"] is False and by_node[OTHER]["observed_at"] == [FILE], \
         "a contradicted candidate names the files the finding was read in, and no others"
     assert by_node[NODE]["conforms"] is True
+
+
+def test_a_bound_file_that_still_holds_a_node_another_bound_file_lost_is_named(adopting):
+    adopt_staged(adopting)
+    _, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    adopt_staged(adopting, slug="adopt-again", nodes=[NODE])
+    done, again = adopted_record(adopting, {
+        FILE: read_as({NODE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1"}),
+        THIRD: read_as({NODE: "nowhere"}),
+    }, slug="adopt-again")
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(again.read_text(encoding="utf-8").split("---")[1])
+    entry = {e["node"]: e for e in front["nodes"]}[NODE]
+    assert entry["conforms"] is False
+    assert entry["observed_at"] == sorted([FILE, SECOND]), \
+        "every file the trace binds the node to is named, the one still holding it too"
+    assert f"still held in {SECOND}" in entry["how"]
+    bound = run("--bind-record", adopting / "backend", adopting / "specs", again)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
 
 
 def test_untraced_tells_the_four_states_apart_after_an_adoption(adopting):
