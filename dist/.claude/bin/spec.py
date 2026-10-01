@@ -60,6 +60,22 @@ What it cannot answer is which nodes to name. That is the scope's vocabulary rea
 specification's, it is judgment, and a set closed perfectly around the wrong candidates is still
 the wrong set.
 
+**A decision is written by this script, never by hand.** `--decide <identity>` reads one entry
+as a JSON object on stdin and appends it to the decision log beside the named node,
+`<identity>.log.md`, creating the log where none exists — «One decision log beside every node
+that received a decision» (SPEC-001 R9). Before writing it applies the log's schema to the
+entry, refuses a node that does not exist unless the entry retires a field, refuses a field
+head the node does not declare, refuses a retirement no earlier entry of that log filled, and
+refuses to append to a log carrying text after its fence. The entry is appended as one block
+with every scalar on one line, so the diff of a log is additions only and «An entry is never
+edited or removed» (SPEC-001 R9) is a property `git diff` shows; the file is never re-serialised.
+Then the whole specification is validated, and the first line printed says what landed —
+`decided:`, `read:` or `retired:` with the log and the entry's index — followed by how far the
+entry's `why` runs against the root's p90, and the validation's own output. Exit 0 when the
+root is sound, 1 when the entry landed but problems stand (the analysis appends mid-authoring,
+and a write refused there would send it back to editing YAML by hand), and 1 with `refused:`
+and nothing written when a check above fails.
+
 **What the prose has become is measured, never refused.** `--shape` reports, per class, how long
 a node and its `statement` run, how many statements carry more than one sentence, and which
 `expression` outgrew the `statement` it restates — `statement` governs, so a restatement that
@@ -101,6 +117,9 @@ Usage:  spec.py <spec-root>              validate everything
                                           validate one file (cross-node checks do not run)
         spec.py --impact <identity>[,<identity>...] <spec-root>
                                           print one hop around each named node, both directions
+        spec.py --decide <identity> <spec-root>  < entry.json
+                                          append one decision-log entry beside the named node,
+                                          then validate everything
         spec.py --help                   print this text and stop
 Exit:   0 sound
         1 problems
@@ -1679,6 +1698,114 @@ def full_text(nodes: dict[str, dict]) -> str:
     return "\n".join(lines)
 
 
+def entry_block(entry: dict) -> str:
+    """One entry as the text the log carries it in: a one-item list, every scalar on one line,
+    so an entry is greppable whole and a log's diff is additions only."""
+    return yaml.safe_dump([entry], sort_keys=False, allow_unicode=True, width=float("inf"))
+
+
+def decide(root: Path, identity: str, raw: str, validators) -> int:
+    """`--decide`'s own body: one entry appended beside one node, then the whole root validated.
+
+    The checks run before any byte is written and refuse with `refused:`; the write appends a
+    block and never re-serialises what stands; the validation after it reports and never
+    unwrites, because the analysis appends while the root is still being authored."""
+    try:
+        entry = json.loads(raw)
+    except json.JSONDecodeError as broken:
+        print(f"cannot run: stdin is not one JSON object; --decide reads exactly one entry "
+              f"({broken})", file=sys.stderr)
+        return CANNOT_RUN
+    if not isinstance(entry, dict):
+        print("cannot run: stdin is not one JSON object; --decide reads exactly one entry",
+              file=sys.stderr)
+        return CANNOT_RUN
+    placed = classify(Path(f"{identity}.md"))
+    if placed is None or placed[0] == "log":
+        print(f"cannot run: {identity} computes to no node identity; an identity is a node's "
+              f"path without `.md`", file=sys.stderr)
+        return CANNOT_RUN
+    log_identity = f"{identity}.log"
+    node_path = root / f"{identity}.md"
+    log_path = root / f"{log_identity}.md"
+    refused: list[str] = []
+    for error in validators["log"].iter_errors({"entries": [entry]}):
+        where = ".".join(str(part) for part in error.absolute_path) or "entry"
+        refused.append(f"{where}: {error.message}")
+    if refused:
+        for problem in refused:
+            print(f"refused: {problem}")
+        return 1
+    retiring = "retired" in entry
+    if not node_path.is_file() and not retiring:
+        print(f"refused: {identity} names no node under {root} — «A log whose node does not "
+              f"exist fails validation unless its last entry retires a field» (SPEC-001 R9)")
+        return 1
+    existing: list[dict] = []
+    if log_path.is_file():
+        front, body, unreadable = parse_node(log_path)
+        if front is None:
+            print(f"refused: {log_identity}: {unreadable}")
+            return 1
+        if body.strip():
+            print(f"refused: {log_identity} carries text after its fence; repair it before "
+                  f"appending — «A log is frontmatter alone: text after its fence is not an "
+                  f"entry and fails validation» (SPEC-001 R9)")
+            return 1
+        existing = [e for e in listed(front, "entries") if isinstance(e, dict)]
+    field = entry["field"]
+    if retiring:
+        if not any("retired" not in e and e.get("field") == field for e in existing):
+            print(f"refused: no earlier entry of {log_identity} filled `{field}`; a retirement "
+                  f"answers an entry «whose field does not resolve» (SPEC-001 R9), and there "
+                  f"is none")
+            return 1
+    elif node_path.is_file():
+        front, _, unreadable = parse_node(node_path)
+        if front is None:
+            print(f"refused: {identity}: {unreadable}")
+            return 1
+        head = field.split(".")[0].split("[")[0]
+        if head not in front:
+            print(f"refused: {identity} declares no `{head}` — «an entry whose field does not "
+                  f"resolve fails validation» (SPEC-001 R9)")
+            return 1
+    block = entry_block(entry)
+    if existing:
+        old = log_path.read_text(encoding="utf-8-sig")
+        text = old[:-len("---\n")] + block + "---\n"
+    else:
+        text = f"---\nentries:\n{block}---\n"
+    match = FENCE.match(text)
+    reparsed = yaml.safe_load(match.group(1)) if match else None
+    if not isinstance(reparsed, dict) or reparsed.get("entries") != existing + [entry]:
+        print(f"refused: the appended block does not read back as the entry — nothing written")
+        return 1
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(text, encoding="utf-8")
+    shape = "retired" if retiring else "read" if "found" in entry else "decided"
+    print(f"{shape}: {log_identity}.md entries[{len(existing)}] — {field}")
+
+    nodes, problems = collect(root, validators)
+    problems += cross_problems(nodes, root)
+    if shape == "decided":
+        words = sorted(len(e["why"].split()) for e in log_entries(nodes)
+                       if isinstance(e.get("why"), str))
+        mine = len(entry["why"].split())
+        far = percentile(words, 0.9) if words else mine
+        print(f"`why` {mine}w; this root's p90 is {far}w"
+              + (" — at or past the p90: check it carries one claim, not an argument"
+                 if mine >= far and len(words) > 1 else ""))
+    if problems:
+        for problem in sorted(set(problems)):
+            print(problem)
+        print(f"\n{len(set(problems))} problem(s) over {len(nodes)} file(s); the entry landed "
+              f"and the specification is not sound while these stand.")
+        return 1
+    print(f"specification sound: {log_tally(nodes)}")
+    return 0
+
+
 class Collision(Exception):
     """Two nodes computing to one projection filename. Raised rather than returned because it is
     a defect in this script's naming, not a problem with the specification it read."""
@@ -1761,6 +1888,20 @@ def main() -> int:
             return CANNOT_RUN
         single = args[at + 1]
         del args[at:at + 2]
+    deciding = None
+    if "--decide" in args:
+        at = args.index("--decide")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --decide takes a node identity and reads one entry as JSON on "
+                  "stdin", file=sys.stderr)
+            return CANNOT_RUN
+        deciding = args[at + 1]
+        del args[at:at + 2]
+    if deciding is not None and (write or show_digests or shape or single is not None
+                                 or impact is not None):
+        print("cannot run: --decide writes one entry and revalidates; it stands beside no "
+              "other flag", file=sys.stderr)
+        return CANNOT_RUN
     if impact is not None and (write or show_digests or shape or single is not None):
         print("cannot run: --impact reads the specification and derives nothing; it stands "
               "beside no other flag", file=sys.stderr)
@@ -1776,7 +1917,8 @@ def main() -> int:
     if len(args) != 1 or args[0].startswith("--"):
         print("cannot run: expected [--project | --digest | "
               "--shape [--of <identity>[,<identity>...]] | --node <file> | "
-              "--impact <identity>[,<identity>...]] <spec-root>", file=sys.stderr)
+              "--impact <identity>[,<identity>...] | --decide <identity>] <spec-root>",
+              file=sys.stderr)
         return CANNOT_RUN
     root = Path(args[0])
     if not root.is_dir():
@@ -1790,6 +1932,8 @@ def main() -> int:
 
     if single is not None:
         return check_single(root, single, validators)
+    if deciding is not None:
+        return decide(root, deciding, sys.stdin.read(), validators)
 
     nodes, problems = collect(root, validators)
     declared: dict[str, set[str]] = {}
