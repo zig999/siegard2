@@ -307,7 +307,19 @@ bind is owed, and the report hands each its route.
 `siegard-reconcile/<slug>.returns/<the file's path with every '/' as '__'>.yaml` — a copy and
 nothing else. Never reshape one, never trim one, never repair one: the returns are the evidence
 the record is folded from and they outlive this session, and a return adjusted by the hand that
-saved it carries a judgment the delegation never made.
+saved it carries a judgment the delegation never made. The copy is the script's, from the
+delegation's transcript — the output file the harness names for the spawned agent:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-root> <workspace> <file> <transcript>
+```
+
+`<file>` is the staged file's path as the manifest lists it, or the node identity of a
+certification. Never retype a return from the notification that relays it: that text is
+re-rendered for display, and an escaped character it carries parses as part of a scalar. A
+refusal says why: a delegation whose transcript ends in a tool call has not answered yet and is
+waited for, and only one whose transcript cannot be read is saved by hand, under the same
+discipline.
 
 **A certification is the coverage auditor's, and it is one more delegation per node.** For each
 entry the manifest holds under `certify`, spawn a `siegard:coverage-auditor` subagent — its judgment

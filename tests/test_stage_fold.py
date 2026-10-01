@@ -522,6 +522,50 @@ def test_a_finding_spelled_from_the_toplevel_is_refused_naming_the_targets_spell
            f"spelling its pack header hands it" in done.stdout
 
 
+def transcript_of(path: Path, *assistant_blocks: list[dict]) -> Path:
+    entries = [{"type": "user", "message": {"role": "user", "content": "judge the pack"}}]
+    entries += [{"type": "assistant", "message": {"role": "assistant", "content": blocks}}
+                for blocks in assistant_blocks]
+    path.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+    return path
+
+
+def test_save_return_copies_the_delegation_s_final_reply_byte_for_byte(consumer):
+    _, workspace = staged(consumer)
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False).replace(
+        "export function place() {}", "if (a < b && c) -> place()")
+    transcript = transcript_of(consumer / "agent.jsonl",
+                               [{"type": "tool_use", "name": "Read", "input": {}}],
+                               [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == reply, \
+        "the transcript holds what the delegation wrote; a notification holds it re-rendered"
+    assert folded(consumer)[0].returncode == 0
+
+
+def test_save_return_refuses_a_delegation_that_has_not_answered(consumer):
+    _, workspace = staged(consumer)
+    transcript = transcript_of(consumer / "agent.jsonl",
+                               [{"type": "text", "text": "reading"},
+                                {"type": "tool_use", "name": "Read", "input": {}}])
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 2
+    assert "has not answered yet" in done.stderr
+    assert not (consumer / "siegard-reconcile" / "round.returns"
+                / "src__orders__place.ts.yaml").exists()
+
+
+def test_save_return_refuses_a_file_the_staging_never_asked_about(consumer):
+    _, workspace = staged(consumer)
+    transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": "read: []"}])
+    done = run("--save-return", consumer / "backend", workspace, "src/orders/stray.ts",
+               transcript)
+    assert done.returncode == 2
+    assert "neither a staged file nor a node staged for certification" in done.stderr
+
+
 def test_a_missing_return_names_the_delegation_owed(consumer):
     staged(consumer)
     done, _ = folded(consumer)
