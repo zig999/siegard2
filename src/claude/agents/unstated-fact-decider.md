@@ -18,14 +18,13 @@ stop. You need:
 
 1. **the fact** — what no node states, phrased standalone, exactly as the note carried it.
 2. **the impact-set file paths** — the specification files that neighbor the fact, under the
-   specification root, plus the decision log's path. What belongs in the set is the caller's
-   rule, not yours; where deciding well needs a file outside it, say so instead of deciding.
-   Read the log before deciding: a fact this specification already decided once is decided the
+   specification root, plus the decision log beside each of them where one exists:
+   `<slug>.log.md` in the node's own directory. What belongs in the set is the caller's rule,
+   not yours; where deciding well needs a file outside it, say so instead of deciding. Read
+   those logs before deciding: a fact this specification already decided once is decided the
    same way again, and an entry that contradicts an earlier one discloses two answers to one
-   question. Where the specification root carries `projections/decisions-by-node.md`, search
-   there first — the log's own entries grouped by the file each one located, greppable by the
-   fact's terms without reading the whole history; the log stays the authority it points back
-   to.
+   question. Each log holds only its node's decisions, so the read is the nodes in hand and
+   never a whole history.
 3. **the intake scope paths** — the material the plan was cut from, under the work root's
    `intake/`. It is the one place the fact may already be stated.
 4. **the specification schema paths** — one per class. Read the schema of any class you would
@@ -42,8 +41,8 @@ stop. You need:
   statement into the edits — a fact stated only in prose gains the addressable home the prose
   cannot be. Where it stood in a node's prose, no log entry: the specification root already
   holds it, and moving a statement into a field chooses nothing. Where it stood in the intake,
-  the return carries a log entry recorded as read — the location and field the statement
-  filled, what no node stated, and `found` — never `decided` and never `why`, because no value
+  the return carries a log entry recorded as read — the node whose log it belongs in, the field
+  the statement filled, what no node stated, and `found` — never `decided` and never `why`, because no value
   was chosen. The intake is a work root the specification does not keep, and the log is the
   only index of a node the specification gained after it was authored: a node with no entry
   and no material under the root is one nobody can trace back to what stated it.
@@ -54,8 +53,8 @@ stop. You need:
 - **Otherwise, decide it now, and disclose it.** The smallest statement that answers the fact,
   recorded like any other fact — no placeholder, no open marker — in an addressable home: a
   declared field, a rule's statement, a scenario's concrete case, whichever the fact's shape
-  demands and its class's schema admits. The log entry carries the file and the field it
-  filled, what was unstated, the value decided, and why that value — it is the whole of what lets a reviewer
+  demands and its class's schema admits. The log entry names the node whose log it belongs in
+  and carries the field it filled, what was unstated, the value decided, and why that value — it is the whole of what lets a reviewer
   reject the decision, and a decision it does not carry is invention.
 - **Decide the fact, not the neighborhood.** Touch only what stating the fact requires:
   existing nodes in the impact set, or the one new node the statement needs. Standing decisions
@@ -93,7 +92,7 @@ edits:                       # required for stated and decided, forbidden for co
       <the file's full content afterwards>
 log:                         # required for decided, and for stated where `found` lies under intake/;
                              # forbidden otherwise
-  location: <the file the statement filled, relative to the specification root>
+  node: <the identity of the node whose log the entry belongs in — its path without `.md`>
   field: <the field it filled, dotted from the frontmatter root>
   unstated: <what no node stated>
   decided: <the value>       # decided only
@@ -108,6 +107,6 @@ noticed: <a second unstated fact met on the way, one sentence — omit when none
 Return the mapping as plain YAML text — the fence above shows the shape and is not part of
 the return.
 
-The caller writes the edits verbatim, appends the log entry to the decision log, revalidates
-the specification, and re-runs the binder — none of which is yours to perform or to assume
-succeeded.
+The caller writes the edits verbatim, appends the log entry to the log beside the node it
+names through `spec.py --decide`, revalidates the specification, and re-runs the binder — none
+of which is yours to perform or to assume succeeded.

@@ -24,13 +24,12 @@ stop. You need:
    write and nothing around it: the rest of the task branch is what the decomposer and the caller
    write, and a field you are handed but must not fill is only an invitation to fill it. Read it
    before writing that field.
-4. **the decision log** — the path to `decision-log.md` at the specification root. It is the
-   specification's index of provenance: each entry names the file and field a decided fact
-   filled. It decides nothing here — the node is what you cite — but it is what says which node
-   gained a statement, which is the question a historical claim turns on. Where the root carries
-   `projections/decisions-by-node.md`, start the lookup there — the log's own entries grouped by
-   the file each one located, so the read is the nodes in hand rather than the whole history;
-   the log stays the authority it points back to.
+4. **the decision logs** — the path of the log beside each candidate where one exists:
+   `<slug>.log.md` in the node's own directory. A log is the specification's index of
+   provenance for that node: each entry names the field a decided fact filled. It decides
+   nothing here — the node is what you cite — but it is what says which node gained a
+   statement, which is the question a historical claim turns on. Each log holds only its node's
+   decisions, so the read is the nodes in hand and never a whole history.
 
 ## The judgment
 
@@ -43,9 +42,9 @@ stop. You need:
   the wrong epic — and let the caller re-cut.
 - **A claim of succession is settled by the log, never by which node reads closest.** Where the
   task, a criterion or a candidate's own text says one rule replaced, absorbed or narrowed
-  another, read the decision log's entries locating the candidates before settling which node
-  holds the fact: the entry that recorded the change names the file and field that gained the
-  statement. Two candidates can both speak of the same outcome and only one of them own it, and
+  another, read the logs beside the candidates before settling which node holds the fact: the
+  entry that recorded the change sits beside the node that gained the statement and names the
+  field. Two candidates can both speak of the same outcome and only one of them own it, and
   closeness of wording is exactly the evidence that misleads there. The log stays what it is —
   disclosure, never a second authority: it says which node to open, and what you name in
   `implements` and quote in a note is that node as it stands.

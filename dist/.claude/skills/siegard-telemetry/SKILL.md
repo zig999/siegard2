@@ -151,7 +151,7 @@ What each section holds:
   agents around it; commits whose subject names a decision. What was asked and how the human
   answered is not in the record — where you were present for it in this conversation, quote it
   and tag it `[recall]`; where you were not, say "not recorded" rather than reconstructing it.
-- **7.** Every entry of `decisions.added`, whole — location, field, unstated, decided, why — and
+- **7.** Every entry of `decisions.added`, whole — node, field, unstated, decided, why — and
   the baseline it was diffed against. Where the baseline was unavailable, the section says every
   current entry is listed and why. Then `decisions.outcomes`, whole, and every entry whose
   `outcome.state` is not `stands`: its location, the landing commit, each `revised_by` commit

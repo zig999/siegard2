@@ -840,6 +840,8 @@ def renamed_nodes(spec_root: Path) -> dict[str, str]:
         old, new = identity_of(parts[1]), identity_of(parts[2])
         if old is None or new is None or old == new:
             continue
+        if old.endswith(".log") or new.endswith(".log"):
+            continue  # a decision log moves with its node; the node's own rename is the record
         later.setdefault(old, new)
 
     def latest(identity: str) -> str:
@@ -3200,10 +3202,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # stated where that file is authoritative, and a sentence repeated here would be bought once
     # per turn to say what the file itself says once.
     projections = [(label, spec_root / relative) for label, relative in
-                   (("nodes verbatim", "projections/full-text.md"),
-                    ("decisions by node", "projections/decisions-by-node.md"),
-                    ("decision log", "decision-log.md"))]
+                   (("nodes verbatim", "projections/full-text.md"),)]
     beside = [f"{label}: {path}" for label, path in projections if path.is_file()]
+    beside.append(f"decision logs: <node>.log.md beside each node under {spec_root}, where "
+                  f"one exists")
     if not audit:
         beside.append(f"candidate index: {workspace / 'candidates.txt'}")
     beside.append(f"return contract: {RETURN_CONTRACT}")

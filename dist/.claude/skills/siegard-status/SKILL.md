@@ -32,9 +32,12 @@ Everything below is read-only. Where a command exits non-zero, its output is not
 this invocation — it is the status, reported verbatim.
 
 1. **The specification.** `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py <specification-root>` —
-   sound or not, node counts, decisions disclosed. Then read the tail of `decision-log.md` at
-   the specification root: the last five entries are the decisions most recently made on the
-   human's behalf, and a status that hides them hides exactly what changed hands.
+   sound or not, node counts, decisions disclosed. Then
+   `git -C <project-root> log -5 --format='%h %ad %s' --date=short --
+   '<specification-root>/**/*.log.md'`: the last five commits that touched a decision log
+   beside a node are the decisions most recently made on the human's behalf — `git show
+   --stat` on each names the node — and a status that hides them hides exactly what changed
+   hands.
 2. **Each initiative.** List the directories under `work_root`. One holding `closure.md` is
    closed history — name it and move on. For each live one:
    - `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root>/<slug> <specification-root>`
@@ -169,7 +172,7 @@ In this order, every line naming its source:
   on; standing BLOCKING notes, quoted whole; and what `review/` under its delivery root holds.
   Closed initiatives by name only;
 - the specification: sound or not (validator output verbatim), node counts, and the last five
-  disclosed decisions — location, what was decided, why;
+  disclosed decisions — node and field, what was decided, why;
 - the trace: findings by class with each class's route, and the ready `/reconcile` invocation
   where `code` drift stands, with what that set does not answer alone — the files a review
   yet to run would reach, and the pairs a record already judged; then, kept apart from those

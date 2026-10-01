@@ -869,9 +869,9 @@ def unplanned(parent: Path, specification: Path, validator) -> int:
     named, read, unreadable = named_anywhere(parent, validator)
     from_git, archived, unparsed, no_git = archived_named(parent)
     named |= from_git
-    # The decision log is not a node any plan implements, and a context descriptor names a
-    # context rather than stating a fact — neither is a thing a task delivers, so neither is
-    # missing when nothing planned it.
+    # A decision log beside a node is not a node any plan implements, and a context descriptor
+    # names a context rather than stating a fact — neither is a thing a task delivers, so neither
+    # is missing when nothing planned it.
     considered = {nid: node for nid, node in spec_nodes.items()
                   if node["cls"] not in ("log", "context")}
     missing = sorted(nid for nid in considered if nid not in named)

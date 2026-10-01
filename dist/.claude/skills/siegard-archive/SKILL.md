@@ -10,7 +10,7 @@ invocation, one archiving act — and the act is a working-tree change like any 
 the human reviews it and the human commits it.
 
 The boundary this skill exists to hold: the framework keeps **understanding** in the
-specification (with its decision log), `siegard-trace.json`, `siegard-reconcile/` and the code
+specification (with the decision logs beside its nodes), `siegard-trace.json`, `siegard-reconcile/` and the code
 itself, and keeps **evidence** — plans, delivery records, proofs, captured runs, reviews — in
 the work and delivery roots. Evidence may leave the tree, because git history holds it; nothing
 that carries understanding ever does. The reconciliation records in particular live beside the
@@ -67,8 +67,8 @@ criterion that failed, repaired by nothing here — and the rest still proceed:
 ## The act
 
 Remove the eligible directories from the working tree. Nothing else: no commit, no tag, no
-staging, no touch on `siegard.json`, `siegard-trace.json`, the specification root, its
-decision log, or `siegard-reconcile/` — and nothing outside the named pairs, however
+staging, no touch on `siegard.json`, `siegard-trace.json`, the specification root, the
+decision logs beside its nodes, or `siegard-reconcile/` — and nothing outside the named pairs, however
 archivable it looks.
 
 ## Report, and stop

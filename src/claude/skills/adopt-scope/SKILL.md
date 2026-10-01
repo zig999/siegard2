@@ -66,7 +66,7 @@ this skill invokes `/analyse` where `/deliver-scope` never does. What stands in 
 person would give the diff before it is committed is disclosure, mechanical and complete: every
 fact line of the material lands in a node or is left out with a reason the ledger records,
 «Every fact line of the material lands in a node or is left out with a stated reason» (SPEC-005 R8),
-every decided value is an entry of the decision log, the validator holds the root together, and
+every decided value is an entry of the decision log beside its node, the validator holds the root together, and
 the report below lists all of it. A person reviews the commit range afterwards, and
 disagreeing with a node is an ordinary `/analyse` change.
 
@@ -114,10 +114,10 @@ The steps:
    `adopt-scope <slug>: survey`. Every commit this skill makes names its paths; none sweeps the
    tree.
 3. **Analyse.** Take the `/analyse` invocation from the survey's handoff and invoke it. That
-   skill writes the nodes, the decision log's entries and the ledger, and holds all three
+   skill writes the nodes, the decision logs beside them and the ledger, and holds all three
    together; its stop is this skill's stop.
 4. **Commit the increment**: the specification root and `siegard-survey/<slug>` — the nodes,
-   the log and the ledger are one increment — under `adopt-scope <slug>: analyse`.
+   their logs and the ledger are one increment — under `adopt-scope <slug>: analyse`.
 5. **Adopt.** Take the `/reconcile` invocation from the analysis's handoff, fill the outside set
    and the certifications from the ask where it names them, and invoke it. The judges, the fold,
    the record and the bind are that skill's; a return it re-delegates once and refuses again is
@@ -161,7 +161,7 @@ and message, and the `git log` range that holds them, because the range is the r
 belongs to a person; every input this skill decided rather than was told — the slug derived, the
 target decided, the step resumed from — each disclosed; `--survey`'s counts per area and
 `--ledger`'s output verbatim, with every reason a fact was left out, grouped; every decision the
-analysis logged, by location and field; the adoption's counts as its report gave them — bound,
+analysis logged, by node and field; the adoption's counts as its report gave them — bound,
 `unheld`, `contradicts`, `unstated`, `restates`, certified — and `trace.py --untraced` over the
 target after the bind; the telemetry's receipt; what ended the run, where it ended early, with the
 stopping report's doors verbatim; and what this skill never did — no `/plan-work`, no

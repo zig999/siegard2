@@ -354,8 +354,9 @@ is a cheap manifest of what exists, and a grep to narrow before anything is open
   ```
 
   over every candidate at once — it prints, per node, every reference it declares, every node
-  that declares one at it, and every decision-log entry that located it, plus the read set as
-  paths. One hop, both directions, read off the same walk that validated the specification above,
+  that declares one at it, and every entry of the decision log beside it, plus the read set as
+  paths with each node's own `<slug>.log.md` after it where one exists. One hop, both
+  directions, read off the same walk that validated the specification above,
   so a field a schema gains is a field this closure reaches without anybody maintaining a list of
   which fields those are. Do not close a second hop by hand: the transitive closure of a
   connected specification is the specification, and the impact set is what governs the scope, not
@@ -495,19 +496,22 @@ fact — two skeletons resting on one fact are one decision, never two — then 
 `siegard:unstated-fact-decider` subagent per fact — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/unstated-fact-decider.md` — passing four things: the fact
 exactly as the note's `fact` carries it, the impact-set file paths under the specification
-root plus the decision log's path, the scope's paths under `intake/`, and the specification
+root plus the decision log beside each of them where one exists (`<slug>.log.md`), the scope's
+paths under `intake/`, and the specification
 schema paths — the files under the plugin root's `schemas/spec/` directory, one per class, the
 same seven `/analyse` reads. Never the skeleton, never the note's
 own text, never a binder's reasoning: the decider is blind to the cut, and the blindness is
 what keeps the specification from being bent to fit tasks already written.
 
 What comes back is written, not judged. On `stated` or `decided`, write the edits verbatim at
-the paths they name, append the returned log entry to the decision log where the return carries
-one — every `decided`, and a `stated` whose fact was read under `intake/`, recorded as read so
-the specification root keeps the provenance of a node whose material lives in a work root — then
-revalidate — `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py
-<specification-root>`, and once it passes, `--project`, because the projections moved with the
-nodes — and re-run this step's binder for every skeleton whose candidates include a touched
+the paths they name, then append the returned log entry where the return carries one — every
+`decided`, and a `stated` whose fact was read under `intake/`, recorded as read so the
+specification root keeps the provenance of a node whose material lives in a work root —
+through the writer and never by hand: `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --decide
+<the return's log.node> <specification-root>` with the rest of `log` as one JSON object on
+stdin; it appends to the log beside that node and validates the root, and its first line is
+what the report quotes. Once the root passes, `--project`, because the projections moved with
+the nodes — and re-run this step's binder for every skeleton whose candidates include a touched
 node: the note is gone, or what remains comes back reclassified. Where the edits landed in a
 node no skeleton's candidates hold — the decider reads the whole impact set, and an epic claims
 a slice of it — the fact is now stated and the candidate set that lacks it is the cut, not a
@@ -646,8 +650,8 @@ and never describe the plan as valid while it is not.
 field — is yours to correct. A coverage hole is settled by a task or by `uncovered` with a why
 — whichever the scope actually decided, not whichever passes. A blocking note is settled by
 judgment, never here. An unstated fact is settled only through step 4's route — decided by the
-context that never saw the cut and disclosed in the decision log — never filled in passing to
-make a check go green.
+context that never saw the cut and disclosed in the node's decision log — never filled in
+passing to make a check go green.
 
 ### 6. Report, and stop
 
@@ -661,7 +665,8 @@ Report, in this order:
   argues with, because a set closed perfectly around the wrong candidates is still the wrong
   set, and nothing mechanical says otherwise;
 - every fact the decided-fact route wrote into the specification: each `decided` outcome by its
-  log entry — the file and the field it filled, what was unstated, the value, the why — and
+  log entry — the node and the field it filled, what was unstated, the value, the why, as the
+  writer's first line names it — and
   each `stated` outcome with where the material already held it and, where that was under
   `intake/`, its log entry recorded as read, in the order they surfaced,
   each with the skeleton and the re-bind that surfaced it, so a chain of facts under one skeleton

@@ -104,7 +104,8 @@ decision set, and this invocation is a change to it — located, not re-derived.
   ```
 
   over the entry nodes at once: it prints, per node, every reference it declares, every node that
-  declares one at it, and every decision-log entry that located it, plus the read set as paths.
+  declares one at it, and every entry of the decision log beside it, plus the read set as paths
+  — each node's own `<slug>.log.md` listed after it where one exists.
   One hop, both directions, off the same walk that validates references, so a field a schema
   gains is a field this closure reaches. It answers over a specification that still has problems,
   marking what does not resolve — which is the ordinary state here, where the files are being
@@ -123,14 +124,23 @@ limit the solution. Two rules bind the analysis:
 
 - **A fact the material does not state is decided by the analysis, now, and disclosed.** Before
   deciding, look up whether this specification already decided it — a fact decided once is
-  decided the same way again, and `projections/decisions-by-node.md`, where it exists, is the
-  log's entries grouped by located file, greppable by the fact's terms without reading the whole
-  history. Record the decided value like any other fact — no placeholder, no `unknown`, no gap
-  marker — and
-  append an entry to `decision-log.md`: the file and field it filled, what the material left
-  unstated, the value decided, and why — «What the material does not state, the analysis decides»
-  (SPEC-001 R4), and the entry records «what the material left unstated, the value decided, and
-  why that value» (SPEC-001 R9). An undecided required field is not an
+  decided the same way again, and the log beside the node, `<slug>.log.md` in its directory,
+  holds every decision about that node and nothing else. Record the decided value like any
+  other fact — no placeholder, no `unknown`, no gap marker — and append the entry to that log
+  through the writer, never by hand:
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --decide <identity> <specification-root> <<'JSON'
+  {"field": "<dotted field>", "unstated": "<what the material left unsaid>",
+   "decided": "<the value>", "why": "<one claim a reviewer can reject>"}
+  JSON
+  ```
+
+  It checks the entry against the schema and the node, appends it, prints `decided:` with the
+  log and the entry's index, measures the `why` against the root's p90, and validates the
+  root — «What the material does not state, the analysis decides» (SPEC-001 R4), and the entry
+  records «what the material left unstated, the value decided, and why that value»
+  (SPEC-001 R9). Quote its first line in the report. An undecided required field is not an
   honest gap — it is a floor violation, and closing it is this step's job, disclosed rather than
   silent.
   **And it is decided here, in this context** — which is the one place this route reads
@@ -180,7 +190,7 @@ that decides what goes in it:
   places as it appears. «Every specification is written in
   English (en-US), whatever language the material is in» (SPEC-001 R12) — every name this analysis
   writes is English: an
-  identifier, a rule's `statement`, a scenario's `given`/`when`/`then`, a decision-log entry —
+  identifier, a rule's `statement`, a scenario's `given`/`when`/`then`, a log entry —
   translate the term to its closest English equivalent before it becomes one of these. The
   material's own word may still appear in a `## Description`, where it helps a reader map the
   name back to the source; it is prose there, never the identity.
@@ -267,9 +277,9 @@ that decides what goes in it:
 «Identity is the node's path from the specification root, without `.md`» (SPEC-003 R1). `domain/<context-slug>/<element-slug>.md` is a Domain
 Model element; `domain/<context-slug>/_context.md` is its context descriptor. `rules/`,
 `scenarios/` and `contracts/` follow the same two-part shape; `constraints/<slug>.md` is
-system-wide; `decision-log.md` sits at the root. No file carries an id, a name, a type or a
-class field — the path already says it, so nothing in the file can disagree with where it
-sits.
+system-wide; `<slug>.log.md` beside any node is that node's decision log, present only where a
+decision was made. No file carries an id, a name, a type or a class field — the path already
+says it, so nothing in the file can disagree with where it sits.
 
 «A reference is a bare slug inside the same directory and the full identity everywhere else»
 (SPEC-003 R2). In practice: an element's `attributes` and `relationships` may name another
@@ -299,12 +309,15 @@ element nothing has reached so far, does not fail there. Run the full validation
 each context's nodes close rather than once at the end, so an error surfaces at the batch that
 made it, not under everything stacked on top of it.
 
-**A node or a field that leaves the specification leaves its log entries standing.** «An entry
-is never edited or removed» (SPEC-001 R9). For every entry that located what you removed —
-`spec.py --impact` over the node lists them — append one entry retiring it: the same `location`
-and `field`, and `retired` saying which node and field hold the fact now, or that nothing does.
-Never move an entry's `location` to the node that replaced it: that rewrites a decision made
-about one node into a decision made about another.
+**A node or a field that leaves the specification leaves its log standing.** «An entry is never
+edited or removed» (SPEC-001 R9). For every field the removed node's log filled — `spec.py
+--impact` over the node lists its entries — append one entry retiring it through the writer,
+`--decide <identity>` with `{"field": "<the field>", "retired": "<which node and field hold the
+fact now, or that nothing does>"}`; the log stays beside where the node was, as its tombstone,
+and the validator accepts it there only because its last entry retires. Never delete a log, and
+never move its entries to the node that replaced it: that rewrites a decision made about one
+node into a decision made about another. A node renamed keeps its log: `git mv` the node and
+its log in the same change, and record nothing — the log moves with its node.
 
 ### 4. Validate, and derive the projections
 
@@ -448,7 +461,7 @@ consistent with its neighbours» (SPEC-001 R14).
 A pair with such a case is the material stating two things that cannot both hold, or the
 analysis having read one part of it one way and another part a different way. Either is decided
 now, the same as any other fact the material left unclear enough to read two ways: pick the
-reading that holds, and log the decision — the location naming one of the two nodes, `unstated`
+reading that holds, and log the decision — in the log beside one of the two nodes, `unstated`
 describing the conflict and the concrete case that exposes it, `decided` naming which reading
 stands, `why` saying what settled it. A tension with no concrete case both nodes decide
 differently is not logged — nothing needs deciding yet, and the report is where a reviewer sees
@@ -461,12 +474,13 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 Report, in this order:
 
 - every node written, by identifier — on a populated root, created, changed and removed
-  listed apart, each removed node with the log entries its removal retired;
+  listed apart, each removed node with the fields its log retired;
 - the impact set that was read, so the reviewer can judge what the analysis looked at, not
   only what it touched;
-- every decision logged in this invocation, by location and field, with what was decided and
-  why — these are the claims a reviewer can reject, and the log is the whole of what lets them:
-  nothing else in the artifacts marks a decided fact apart from a stated one;
+- every decision logged in this invocation, by node and field, with what was decided and
+  why — the writer's first line for each — these are the claims a reviewer can reject, and the
+  logs are the whole of what lets them: nothing else in the artifacts marks a decided fact
+  apart from a stated one;
 - every tension the cross-check step found without a case to decide, named as a watch item;
 - where the material was a survey: `--ledger`'s output verbatim — how many fact lines landed in
   nodes and how many were left out, and the reasons given, grouped — so a reviewer sees what the

@@ -1038,7 +1038,7 @@ def decisions_section(specification_root: Path | None, home: Path, since: dateti
 
 
 def apart_from_retirements(entries: list[dict]) -> tuple[list[dict], list[dict]]:
-    """The entries that record a decision or a reading, and the ones that retire a location.
+    """The entries that record a decision or a reading, and the ones that retire a field.
 
     A retirement decides nothing: it says where an earlier decision went when its node or field
     left the specification. Followed to its field like a decision, it would read as a decision

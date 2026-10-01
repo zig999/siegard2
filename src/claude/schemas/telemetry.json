@@ -350,7 +350,7 @@
         "total_now": { "type": ["integer", "null"] },
         "retired": {
           "type": "array",
-          "description": "The decision-log entries the window added that retire a location — a node or a field that left the specification, and where its fact went. Listed apart from `added` because a retirement decides nothing and is followed to no field.",
+          "description": "The decision-log entries the window added that retire a field — a field, or the node itself, that left the specification, and where its fact went. Listed apart from `added` because a retirement decides nothing and is followed to no field.",
           "items": { "type": "object" }
         },
         "added": {
