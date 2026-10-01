@@ -367,3 +367,41 @@ def test_the_copy_report_never_refuses(consumer):
     assert done.returncode == 1
     assert "rules:" in done.stdout
     assert "standrd" in done.stdout
+
+
+# ------------------------------------------------------------------------------ tests
+
+SPEC_TS = {"under": "src", "suffix": ".spec.ts", "nested": True}
+
+
+def test_declared_tests_print_one_line_per_target_in_their_parts(consumer):
+    declare(consumer, {"targets": {"backend": "backend"},
+                       "tests": {"backend": [SPEC_TS, {"under": "test", "suffix": ".ts"}]}})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert ("tests backend: under src, suffix .spec.ts, nested; under test, suffix .ts"
+            in done.stdout)
+
+
+def test_tests_keyed_by_a_target_nobody_declared_is_refused(consumer):
+    """A scope under a key `targets` lacks reaches no file, and every test it was written for
+    would go on counting unsurveyed with nothing saying why."""
+    declare(consumer, {"targets": {"backend": "backend"}, "tests": {"frontend": [SPEC_TS]}})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "tests names frontend, which targets does not declare" in done.stdout
+
+
+def test_a_test_scope_is_held_to_the_parts_a_rule_scope_admits(consumer):
+    declare(consumer, {"targets": {"backend": "backend"},
+                       "tests": {"backend": [{"under": "src", "suffix": ".ts", "glob": "**"}]}})
+    done = run(consumer / "backend")
+    assert done.returncode == 1
+    assert "glob" in done.stdout
+
+
+def test_no_tests_declared_prints_no_tests_line(consumer):
+    declare(consumer, {"targets": {"backend": "backend"}})
+    done = run(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert not [line for line in done.stdout.splitlines() if line.startswith("tests ")]

@@ -23,6 +23,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 import deliver
+import project
 
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLE = REPO / "src/standards/backend-node-service.yaml"
@@ -198,7 +199,7 @@ def test_a_registry_that_does_not_parse(tmp_path, contract):
     ("src/**", "src/a.ts", False),
 ])
 def test_a_scope_reaches_exactly_what_it_says(scope, path, expected):
-    assert deliver.reaches(scope, path) is expected
+    assert project.reaches(scope, path) is expected
 
 
 def test_every_scope_in_the_example_reaches_something_plausible(contract):
@@ -214,6 +215,15 @@ def test_every_scope_in_the_example_reaches_something_plausible(contract):
     for rule in data["rules"]:
         assert deliver.in_scope(rule, candidates), \
             f"{rule['id']} reaches none of an ordinary tree's paths; its scope is unusable"
+
+
+def test_a_declared_test_is_scoped_in_the_parts_a_rule_is():
+    """`siegard.json`'s `tests` and a rule's `applies_to` are read by one `project.reaches`, so
+    the two contracts must state the same parts: a property one admitted and the other refused
+    would be a scope one file accepts and the matcher reads as the other's."""
+    standard = json.loads((REPO / "src/claude/schemas/standard.json").read_text(encoding="utf-8"))
+    declared = json.loads((REPO / "src/claude/schemas/project.json").read_text(encoding="utf-8"))
+    assert declared["$defs"]["scope"] == standard["$defs"]["scope"]
 
 
 # -------------------------------------------------------------------- the subcommand

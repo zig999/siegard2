@@ -33,6 +33,11 @@ an absence, and the skill's stop. Declared as a bare path, it prints as `standar
 refused here where `targets` holds more than one key: one registry answering for two stacks is
 the wrong registry for one of them, and that error passes every structural check.
 
+Tests are declared per target, in the scope parts a standard rule's scope uses, and print one
+line per target — `tests <target>: <scope>; <scope>`. `reaches()` here is the one reading of those
+parts for every script: a rule's scope and a declared test are matched by the same function, so
+a path one of them reaches is never read differently by the other.
+
 Declared dependencies: jsonschema.
 
 Usage:  project.py <project-root>    resolve siegard.json for the tree holding <project-root> —
@@ -99,6 +104,33 @@ def report_rules_copy(home: Path) -> None:
           f"already place the {version} rules in every session and every agent; remove the "
           f"Siegard portion and keep anything the project added — a copy at the root is loaded "
           f"twice and updated never")
+
+
+def reaches(scope, path: str) -> bool:
+    """Whether one scope reaches one path spelled from the target source root. The scope is
+    stated in parts rather than as a glob pattern deliberately: one tool's single star crosses a
+    separator and another's double star means exactly one directory, and that difference would
+    decide whether a finding is refused."""
+    if not isinstance(scope, dict):
+        return False
+    under, suffix = scope.get("under"), scope.get("suffix")
+    if not isinstance(under, str) or not isinstance(suffix, str):
+        return False
+    # `.` is the target root itself, the same thing it means to trace.py's `under()`, which reads
+    # the other path vocabulary in this framework. Composed as a prefix it would be `./`, which no
+    # stored path starts with, so a scope over the whole target would reach nothing at all.
+    if under.strip("/") in ("", "."):
+        return path.endswith(suffix) and (bool(scope.get("nested")) or "/" not in path)
+    prefix = f"{under.rstrip('/')}/"
+    if not path.startswith(prefix) or not path.endswith(suffix):
+        return False
+    return bool(scope.get("nested")) or "/" not in path[len(prefix):]
+
+
+def spelled(scope: dict) -> str:
+    """One scope as `project.py` prints it, in the parts it is declared in."""
+    return (f"under {scope.get('under')}, suffix {scope.get('suffix')}"
+            + (", nested" if scope.get("nested") else ""))
 
 
 def toplevel_of(directory: Path) -> Path:
@@ -194,6 +226,15 @@ def main() -> int:
                   f"exemption it was written for is silently suppressing nothing")
         return 1
 
+    # The same silent no-op again: a test scope keyed by a target nobody declared reaches no
+    # file, and trace.py, which reads `tests` defensively, would count every test unsurveyed.
+    unknown = sorted(set(declared.get("tests") or {}) - set(declared.get("targets", {})))
+    if unknown:
+        for name in unknown:
+            print(f"{target}: tests names {name}, which targets does not declare; the scopes "
+                  f"declared under it reach no file")
+        return 1
+
     # A standard governs one target. As an object it is keyed by target, and a key `targets`
     # does not hold governs nothing — the same silent no-op `edits_freely` is refused for above.
     # As a bare path it governs the one target the project has; over two or more it would answer
@@ -244,6 +285,8 @@ def main() -> int:
         print(f"telemetry_root: {home / declared['telemetry_root']}")
     if declared.get("edits_freely"):
         print(f"edits_freely: {', '.join(sorted(declared['edits_freely']))}")
+    for name, scopes in sorted((declared.get("tests") or {}).items()):
+        print(f"tests {name}: {'; '.join(spelled(scope) for scope in scopes)}")
     return 0
 
 
