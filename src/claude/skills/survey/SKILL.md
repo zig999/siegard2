@@ -17,10 +17,10 @@ A missing input is a stop, not a default:
    disclosed in the report, never asked.
 3. **the slug** — this survey's name, one directory under `siegard-survey/` at the target's git
    toplevel, beside `siegard-reconcile/`. A slug already taken is a stop and not a suffix.
-4. **the areas** — named by the human: each a short name and the files it holds, spelled from the
-   target source root, as paths or as directories this skill lists with `git ls-files`. Tests are
-   not an area: a test is a certification's material, not a survey's. The areas together are the
-   context's source, and a file in two areas is a stop.
+4. **the areas** — named by the human: each a short name and the paths or directories it holds,
+   spelled from the target source root. Tests are not an area: a test is a certification's
+   material, not a survey's. The areas together are the context's source, and a file in two
+   areas is a stop.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything
 else. `targets` and `specification_root` answer only from here.
@@ -58,6 +58,14 @@ root is the ordinary first run, and the context so far is empty.
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --untraced <target-source-root>` and keep the
 line: it is where this adoption starts from, and the report repeats it.
 
+For each area, run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --area <target-source-root>
+<each path or directory the area names>`. The files it lists are the area — never a listing of
+your own — and the declared tests it leaves out are named for the report. It stops on a test named
+as a file of the area, and its stop is this skill's. Where the project declares no tests for the
+target the script says so and leaves nothing out; which of the files it lists are tests is then
+the human's to say, by naming the area again or by declaring the target's tests through
+`/siegard-config`, never this skill's to guess.
+
 ### 2. Delegate
 
 Spawn one `siegard:domain-surveyor` subagent per area, together rather than one after another —
@@ -85,7 +93,7 @@ the report, not to fix: the code may hold nothing of the domain, and the analysi
 
 Report, in this order:
 
-- the areas as given, and the files each holds;
+- the areas as given, the files `--area` listed for each, and the declared tests it left out;
 - `--untraced`'s line before this survey;
 - per area, `--survey`'s counts verbatim: fact lines per heading, and the files no fact names;
 - every line under `## Observed and not decided here`, gathered across areas — two behaviors of

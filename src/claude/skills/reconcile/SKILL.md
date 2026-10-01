@@ -610,7 +610,9 @@ The same order, with four differences, each held by the scripts rather than by t
   every candidate with `--node` instead, and every file's judge reads them all. No trace is
   needed either way; a file the trace already binds keeps its own node set beside the
   candidates. No candidate is omitted and none is answered by a run, because its reading is what
-  decides whether it is bound at all.
+  decides whether it is bound at all. A file the target declares as a test is refused in the
+  set: a test is never adopted source, and the refusal hands the `--certify` entry it takes
+  instead — a test offered as a node's proof rides the same staging.
 - **Judge and fold as always.** The premise's `summary` says the source is adopted as it stands
   and did not change. The fold writes `adopted`, and «An adopted node binds the files whose
   judgment holds its fact and no others» (SPEC-005 R4): each cleared candidate's `encoded_at` is
