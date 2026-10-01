@@ -2587,21 +2587,28 @@ def adopted_ground(home: Path) -> tuple[set[str], set[str], list[str]]:
 def untraced_of(target: Path, declared: dict | None) -> tuple[dict | None, str | None]:
     """The tracked files under the target in exactly one state each — «Every tracked file under
     a target is in exactly one state» (SPEC-005 R5): bound; judged by an adoption that bound
-    none of its candidates to it; kept outside an adoption's judgment; or unsurveyed."""
+    none of its candidates to it; kept outside an adoption's judgment; or unsurveyed. A binding
+    names a file either as one it encodes or as the proof a certification pinned, and both are
+    bound: the trace pins the proof's digest and reports its drift the way it does the files'."""
     home = home_of(target)
     tracked, why = tracked_under(target, home)
     if tracked is None:
         return None, why
-    bound = {f["path"] for entry in (declared or {}).get("bindings") or []
-             for f in entry.get("files") or []
-             if isinstance(f, dict) and isinstance(f.get("path"), str)}
+    bindings = (declared or {}).get("bindings") or []
+    encoded = {f["path"] for entry in bindings for f in entry.get("files") or []
+               if isinstance(f, dict) and isinstance(f.get("path"), str)}
+    proven = {p["path"] for entry in bindings for p in entry.get("proof") or []
+              if isinstance(p, dict) and isinstance(p.get("path"), str)}
+    bound = encoded | proven
     judged_files, kept_out, unreadable = adopted_ground(home)
     split = {"offset": offset_of(target, home), "tracked": tracked, "unreadable": unreadable,
-             "bound": [], "holds_nothing": [], "outside": [], "unsurveyed": []}
+             "bound": [], "as_proof": [], "holds_nothing": [], "outside": [], "unsurveyed": []}
     for path in tracked:
         state = ("bound" if path in bound else "holds_nothing" if path in judged_files
                  else "outside" if path in kept_out else "unsurveyed")
         split[state].append(path)
+        if path in proven and path not in encoded:
+            split["as_proof"].append(path)
     split["untraced"] = split["holds_nothing"] + split["outside"] + split["unsurveyed"]
     return split, None
 
@@ -2639,7 +2646,9 @@ def untraced(target: Path, show_all: bool = False) -> int:
         print(f"cannot run: {why}", file=sys.stderr)
         return CANNOT_RUN
     print(f"{len(split['tracked'])} tracked file(s) under {split['offset']}: "
-          f"{len(split['bound'])} bound, {len(split['untraced'])} no binding names"
+          f"{len(split['bound'])} bound"
+          + (f" ({len(split['as_proof'])} as a certification's proof)" if split["as_proof"] else "")
+          + f", {len(split['untraced'])} no binding names"
           + ("" if declared is not None
              else f" — no trace file at {trace_path(target)}, so nothing has been bound yet"))
     for state, meaning in UNTRACED_STATES:

@@ -1304,6 +1304,31 @@ def test_untraced_refuses_nothing_when_every_file_is_bound(consumer):
     assert "1 tracked file(s) under backend: 1 bound, 0 no binding names" in done.stdout
 
 
+def certified(consumer: Path, proof: str) -> None:
+    """The binding of NODE as a certification leaves it: decided by a test whose file is pinned
+    beside the files', written here directly because only the paths are what --untraced reads."""
+    trace_file = consumer / "siegard-trace.json"
+    declared = json.loads(trace_file.read_text(encoding="utf-8"))
+    entry = next(e for e in declared["bindings"] if e["node"] == NODE)
+    entry.update({"decided_by": "test", "step": "test",
+                  "proof": [{"path": f"backend/{proof}",
+                             "digest": trace.spec.digest_of(consumer / "backend" / proof)}]})
+    trace_file.write_text(json.dumps(declared, indent=2) + "\n", encoding="utf-8")
+
+
+def test_untraced_counts_a_certification_s_proof_as_bound(consumer):
+    """SPEC-005 R5: bound is a binding naming the file, and a certified binding names its proof:
+    the trace pins that file's digest and reports its drift, so it is never unsurveyed."""
+    tracked(consumer, "src/orders/place.spec.ts", "src/orders/cancel.ts")
+    assert bind(consumer).returncode == 0
+    certified(consumer, "src/orders/place.spec.ts")
+    done = run("--untraced", consumer / "backend", "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert ("3 tracked file(s) under backend: 2 bound (1 as a certification's proof), "
+            "1 no binding names") in done.stdout
+    assert "place.spec.ts" not in done.stdout.split("unsurveyed:\n")[1]
+
+
 def test_untraced_is_its_own_form(consumer):
     done = run("--untraced", consumer / "backend", "--check")
     assert done.returncode == 2
