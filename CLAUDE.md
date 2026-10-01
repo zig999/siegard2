@@ -153,11 +153,15 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   framework says it does not know. Approval of a package is that registry gaining an entry — a
   human editing their own file — never an answer given in a session, which the next invocation
   does not have.
-- **Only the orchestrating entry point commits, and only under bounds.** `/deliver-scope` is the
-  one component granted a git commit: pathspec-scoped, one per step, under a message naming the
-  run — never a sweep, a branch, a push or a rewrite — and only under an ask the human's own
-  words state end to end. Every other skill's refusal to commit stands; a second committer, or a
-  commit outside these bounds, is a proposal, never a change.
+- **Only the orchestrating entry points commit, and only under bounds.** `/deliver-scope` and
+  `/adopt-scope` are the two components granted a git commit, each over its own route:
+  pathspec-scoped, one per step, under a message naming the run — never a sweep, a branch, a
+  push or a rewrite — and only under an ask the human's own words state end to end.
+  `/adopt-scope` is the one that invokes `/analyse`, because writing the specification from
+  adopted source is its route, and the specification it commits is disclosed by its ledger, its
+  decision log and its report rather than reviewed before the commit; the gate `/deliver-scope`
+  keeps over `/analyse` stands for every delivery. Every other skill's refusal to commit stands;
+  a third committer, or a commit outside these bounds, is a proposal, never a change.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —

@@ -1,7 +1,8 @@
 """The bounds that keep orchestration from harming the framework, held to the text that states them.
 
-`/deliver-scope` is the one skill allowed to take the handoffs the others only offer, and the one
-allowed to commit — two grants every other entry point explicitly refuses. Nothing mechanical can
+`/deliver-scope` is one of the two skills allowed to take the handoffs the others only offer and
+to commit — `/adopt-scope` is the other, over the adoption route, held by its own module — two
+grants every other entry point explicitly refuses. Nothing mechanical can
 watch a session exercise them, so what this module holds is the next best thing: the sentences
 that bound the grants must survive in the artifacts, character for character where a rewording
 would change what a session does. `test_skill_contract.py` already holds the skill's frontmatter,

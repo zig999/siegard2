@@ -128,6 +128,12 @@ time, after steps 1–6 above:
    specification. What it corrects surfaces as drift, and a behavior the business wants changed is
    a corrective increment of `/siegard:plan-work`.
 
+Steps 2–4 run as one under `/siegard:adopt-scope`, given an ask in your own words naming the
+context, its areas and what stays outside: it invokes the three, commits after each with a
+pathspec, and reports every decision, finding and count for you to review afterwards. A standing
+`/goal` whose condition names it and reads mechanically — `trace.py --untraced <target>` printing
+`0 unsurveyed` — carries every context in turn.
+
 The adoption is complete when `--untraced` shows no `unsurveyed` file and `--convergence` no
 `unreached` node; `/siegard:siegard-status` prints both. Nothing waits for it: new work may start
 before, and the first review that reaches an unsurveyed file pays for it.

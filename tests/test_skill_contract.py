@@ -59,6 +59,8 @@ SKILLS = {
                           "delegates": []},
     "survey": {"contract": "schemas/survey.json", "validator": "bin/trace.py",
                "delegates": ["domain-surveyor"]},
+    "adopt-scope": {"contract": "schemas/ledger.json", "validator": "bin/trace.py",
+                    "delegates": []},
 }
 
 
@@ -99,6 +101,9 @@ MODEL_MAY_REACH = {
     # inferred from anything less is the skill's own stop. Closing it would only stop the
     # routing — a standing automation the human armed could then never reach the route at all.
     "deliver-scope": True,
+    # The same gate as /deliver-scope's, over the adoption route: the ask is the human's own
+    # words end to end, quoted verbatim, and this skill's stop otherwise.
+    "adopt-scope": True,
     "plan-work": True,
     "implement-task": True,
     "review-change": True,
@@ -260,6 +265,7 @@ def skill_text(name: str) -> str:
 # named below instead of appended beside it.
 FORWARD_SEAMS = (
     ("survey", "analyse"),
+    ("analyse", "reconcile"),
     ("analyse", "plan-work"),
     ("plan-work", "implement-task"),
     ("implement-task", "review-change"),

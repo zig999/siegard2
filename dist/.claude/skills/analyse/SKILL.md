@@ -485,12 +485,14 @@ Report, in this order:
   the specification it holds was just validated, and one named slot for each input only the
   human decides: the scope, which target, and the initiative's slug. The handoff offers the
   next step, never takes it: filling the slots and invoking are the human's.
-  Where the material was read from source no delivery wrote — a survey of a running system —
-  the handoff is the `/reconcile` adoption instead, and it comes first: the ledger's path, from
-  which the staging reads the file set and each file's candidates; the counts `--ledger`
-  printed; and one slot for the slug and one for the files the human keeps out of the judgment. «The first
-  material of an adopted system is read from its source alone» (SPEC-005 R2), so where the human
-  also holds documentation, the increment it feeds is this skill again, after the adoption.
+- where the material was a survey, the `/reconcile` invocation ready to paste, before the
+  `/plan-work` one and in its place as the next step: as an adoption, over the ledger — its
+  path, from which the staging reads the file set (the material's areas) and each file's
+  candidates — this project root filled in, the target the material declares, and one slot for
+  the slug and one for the files the human keeps out of the judgment, with the counts
+  `--ledger` printed beside it. «The first material of an adopted system is read from its
+  source alone» (SPEC-005 R2), so where the human also holds documentation, the increment it
+  feeds is this skill again, after the adoption.
 
 Then stop. `git diff` over the specification root is the review, and it belongs to a person.
 
