@@ -227,6 +227,20 @@ def test_a_tombstone_log_without_its_node_is_sound(spec_root):
     assert log_problems(spec_root) == []
 
 
+def test_a_tombstone_log_must_retire_every_field_it_filled(spec_root):
+    """SPEC-001 R9: an entry whose field does not resolve fails validation unless a later entry
+    retires that field. A node that left resolves no field, so a log closing on one retirement
+    while another field's decision stands unanswered is not a tombstone, it is a decision about
+    a node the specification no longer holds."""
+    other = {**DECIDED, "field": "attributes"}
+    log_beside(spec_root, GHOST_LOG, [dict(DECIDED), other, dict(RETIRED)])
+    found = hits(problems_of(spec_root), "entries[1] fills `attributes`")
+    assert found and "still unanswered" in found[0]
+    log_beside(spec_root, GHOST_LOG,
+               [dict(DECIDED), other, dict(RETIRED), {"field": "attributes", "retired": "gone"}])
+    assert log_problems(spec_root) == []
+
+
 def test_a_field_a_later_entry_retires_may_stop_resolving(spec_root):
     entry = {**DECIDED, "field": "values.open"}
     retired = {"field": "values.open", "retired": "rules/troubleshooting/x.md statement"}

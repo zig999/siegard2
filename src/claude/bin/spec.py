@@ -67,7 +67,7 @@ that received a decision» (SPEC-001 R9). Before writing it applies the log's sc
 entry, refuses a node that does not exist unless the entry retires a field, refuses a field
 head the node does not declare, refuses a retirement no earlier entry of that log filled, and
 refuses to append to a log carrying text after its fence. The entry is appended as one block
-with every scalar on one line, so the diff of a log is additions only and «An entry is never
+with no scalar re-wrapped, so the diff of a log is additions only and «An entry is never
 edited or removed» (SPEC-001 R9) is a property `git diff` shows; the file is never re-serialised.
 Then the whole specification is validated, and the first line printed says what landed —
 `decided:`, `read:` or `retired:` with the log and the entry's index — followed by how far the
@@ -889,7 +889,15 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                 continue
             if any(later > index for later in retired_at.get(field, [])):
                 continue  # «unless a later entry retires that field» (SPEC-001 R9)
-            if target is not None and isinstance(field, str):
+            if target is None:
+                if entries and "retired" in entries[-1]:
+                    problems.append(f"{identity}: entries[{index}] fills `{field}`, which no node "
+                                    f"holds now — «an entry whose field does not resolve fails "
+                                    f"validation unless a later entry retires that field» "
+                                    f"(SPEC-001 R9); the last entry retires another field, and "
+                                    f"this one is still unanswered")
+                continue  # a log beside no node and closing on no retirement is reported once above
+            if isinstance(field, str):
                 head = field.split(".")[0].split("[")[0]
                 if head not in target["front"]:
                     problems.append(f"{identity}: entries[{index}] locates `{field}`, which "
@@ -1699,8 +1707,8 @@ def full_text(nodes: dict[str, dict]) -> str:
 
 
 def entry_block(entry: dict) -> str:
-    """One entry as the text the log carries it in: a one-item list, every scalar on one line,
-    so an entry is greppable whole and a log's diff is additions only."""
+    """One entry as the text the log carries it in: a one-item list, no scalar re-wrapped (a value
+    holding a newline keeps it), so an entry is greppable and a log's diff is additions only."""
     return yaml.safe_dump([entry], sort_keys=False, allow_unicode=True, width=float("inf"))
 
 
@@ -1772,12 +1780,19 @@ def decide(root: Path, identity: str, raw: str, validators) -> int:
             return 1
     block = entry_block(entry)
     if existing:
-        old = log_path.read_text(encoding="utf-8-sig")
-        text = old[:-len("---\n")] + block + "---\n"
+        old = log_path.read_text(encoding="utf-8-sig").rstrip()
+        if not old.endswith("---"):
+            print(f"refused: {log_identity} does not end at its closing fence; repair it before "
+                  f"appending — a log is frontmatter alone")
+            return 1
+        text = old[:-len("---")] + block + "---\n"
     else:
         text = f"---\nentries:\n{block}---\n"
     match = FENCE.match(text)
-    reparsed = yaml.safe_load(match.group(1)) if match else None
+    try:
+        reparsed = yaml.safe_load(match.group(1)) if match else None
+    except yaml.YAMLError:
+        reparsed = None
     if not isinstance(reparsed, dict) or reparsed.get("entries") != existing + [entry]:
         print(f"refused: the appended block does not read back as the entry — nothing written")
         return 1

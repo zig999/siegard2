@@ -176,3 +176,14 @@ def test_the_flag_cannot_run_without_an_identity_an_object_or_alone(spec_root):
     done = decide(spec_root, "domain/troubleshooting/case.log", DECIDED)
     assert done.returncode == spec.CANNOT_RUN and "computes to no node identity" in done.stderr
     assert not (spec_root / CASE_LOG).exists()
+
+
+def test_a_log_ending_without_a_newline_after_its_fence_is_refused_not_a_traceback(spec_root):
+    log = spec_root / "domain/troubleshooting/evidence.log.md"
+    text = log.read_text(encoding="utf-8")
+    log.write_text(text.rstrip("\n"), encoding="utf-8")
+    assert not log.read_text(encoding="utf-8").endswith("\n")
+    done = decide(spec_root, "domain/troubleshooting/evidence", {**DECIDED, "field": "type"})
+    assert "Traceback" not in done.stderr and done.returncode in (0, 1), done.stderr
+    entries = entries_of(spec_root, "domain/troubleshooting/evidence.log.md")
+    assert len(entries) == 2, "a fence with no trailing newline is still the log's fence"
