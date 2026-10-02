@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/ledger.json",
   "title": "Siegard material ledger",
-  "description": "The frontmatter of `ledger.md` beside survey material: where every fact line of the material went. «Every fact line of the material lands in a node or is left out with a stated reason» (SPEC-005 R8). One entry per fact line, keyed by the material file and the line's number; a line with no entry is a fact the analysis dropped, and `bin/trace.py --ledger` refuses the ledger. It is disclosure, not a second home: the fact lives in the node the entry names, and an entry names a node or a reason, never both. It sits beside the material, outside the specification root, so «Artifacts carry no provenance meta-fields» (SPEC-001 R8). `--stage --adopt --ledger` reads it to hand each file's judge the nodes its own facts landed in.",
+  "description": "The frontmatter of `ledger.md` beside survey or intent material: where every fact line of the material went. «Every fact line of the material lands in a node or is left out with a stated reason» (SPEC-005 R8). One entry per fact line, keyed by the material file and the line's number; a line with no entry is a fact the analysis dropped, and `bin/trace.py --ledger` refuses the ledger. It is disclosure, not a second home: the fact lives in the node the entry names, and an entry names a node or a reason, never both. It sits beside the material, outside the specification root, so «Artifacts carry no provenance meta-fields» (SPEC-001 R8). `--stage --adopt --ledger` reads it to hand each file's judge the nodes its own facts landed in.",
   "type": "object",
   "required": ["contract_version", "material", "entries"],
   "additionalProperties": false,
@@ -13,7 +13,7 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 },
-      "description": "Every material file this ledger accounts for, by path relative to the ledger's own directory. A fact line of a file not listed here is unaccounted for."
+      "description": "Every material file this ledger accounts for — survey material or intent material, each read against its own contract — by path relative to the ledger's own directory. A fact line of a file not listed here is unaccounted for."
     },
     "entries": {
       "type": "array",

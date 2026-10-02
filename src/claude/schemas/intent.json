@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/intent.json",
+  "title": "Siegard intent material",
+  "description": "The frontmatter of one file of material read from a target's declared tests — what the source should do, where survey material reads what it does. «Every fact line of intent material names a test the material read and a file of the source it governs, and a line that names no test or no governed file is refused» (SPEC-005 R9). The body carries the six headings survey material carries, in the same order: `## Facts`, `## Answers`, `## Vocabularies`, `## Upstream artifacts`, `## Outside the domain`, `## Observed and not decided here`. A fact line is a top-level bullet (`- `) under the first four headings, naming in backticks the test it was read at and each file of `files` it governs; an indented bullet belongs to the fact above it. `bin/trace.py --survey` holds the file to this contract, and `--ledger` reads the governed files on each fact line to say which files each candidate node is read against. A heading with nothing to say carries the line `None.`.",
+  "type": "object",
+  "required": ["contract_version", "target", "tests", "files"],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "siegard-intent/1",
+      "description": "Which contract this material was written against."
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "The key of `siegard.json`'s `targets` the paths below are spelled from. Its declared tests are what `tests` may list."
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "pattern": "^[^/]" },
+      "description": "Every test the material read, spelled from the target source root, each one the target's declared test scope holds. A test is where a fact was read and never a file an adoption judges."
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "pattern": "^[^/]" },
+      "description": "Every file of the source a fact governs, spelled from the target source root, none of them a declared test. The adoption's file set is this list, and each file's judge is handed the nodes the facts governing it landed in."
+    },
+    "read_outside_area": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Any other file opened to say which source file a test governs, with why, one line each. Read, never material: no fact is attributed to it."
+    }
+  }
+}
