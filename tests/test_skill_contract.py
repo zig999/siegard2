@@ -58,7 +58,8 @@ SKILLS = {
     "siegard-telemetry": {"contract": "schemas/telemetry.json", "validator": "bin/telemetry.py",
                           "delegates": []},
     "survey": {"contract": "schemas/survey.json", "validator": "bin/trace.py",
-               "delegates": ["domain-surveyor"]},
+               "also": ["schemas/intent.json"],
+               "delegates": ["domain-surveyor", "test-intent-reader"]},
     "adopt-scope": {"contract": "schemas/ledger.json", "validator": "bin/trace.py",
                     "delegates": []},
 }
@@ -185,6 +186,8 @@ def test_the_contract_and_the_validator_are_both_cited(case):
     cited = set(CITATION.findall(case["text"]))
     assert case["contract"] in cited
     assert case["validator"] in cited
+    for contract in case.get("also", []):
+        assert contract in cited, f"{case['name']} writes {contract} and never cites it"
 
 
 def test_every_delegate_is_cited_and_exists(repo, case):

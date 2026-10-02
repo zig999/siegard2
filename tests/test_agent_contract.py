@@ -44,6 +44,7 @@ GRANTS = {
     "failure-diagnostician": READS,
     "standard-conformance-reviewer": READS,
     "task-implementer": WRITES,
+    "test-intent-reader": READS,
     "test-author": WRITES,
     "unstated-fact-decider": READS,
 }

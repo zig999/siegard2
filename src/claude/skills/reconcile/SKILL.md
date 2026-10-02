@@ -605,8 +605,9 @@ A finding left in the notes and not in the report is a finding nobody will act o
 
 The same order, with four differences, each held by the scripts rather than by this prose.
 
-- **Stage with `--adopt`, over the ledger.** Where `/analyse` wrote a ledger beside the survey
-  material — its handoff names it — pass it, and the files the human keeps out with `--outside`:
+- **Stage with `--adopt`, over the ledger.** Where `/analyse` wrote a ledger beside survey or
+  intent material — its handoff names it — pass it, and the files the human keeps out with
+  `--outside`:
 
   ```
   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
@@ -614,7 +615,8 @@ The same order, with four differences, each held by the scripts rather than by t
       [--outside <path> ...] [--certify <certifications file>]
   ```
 
-  The file set is the material's areas, or the named subset of them; each file's judge is handed
+  The file set is the material's areas — on intent material, the files it governs, never its
+  tests — or the named subset of them; each file's judge is handed
   the candidates the ledger landed that file's own facts in — «Every fact line of the material
   lands in a node or is left out with a stated reason» (SPEC-005 R8), so the pack is the nodes
   that file's facts reached and not the whole increment. A file no fact names is handed no judge

@@ -127,6 +127,12 @@ time, after steps 1–6 above:
 6. **Then the documentation**, as an ordinary `/siegard:analyse` increment over the adopted
    specification. What it corrects surfaces as drift, and a behavior the business wants changed is
    a corrective increment of `/siegard:plan-work`.
+7. **And the tests, where the target declares them.** `/siegard:survey` in its tests form reads
+   the declared tests instead of the source and writes intent material, held to
+   `schemas/intent.json`: what the source should do, each fact beside the test it was read at and
+   the source file it governs. `/siegard:analyse` writes its ledger as in step 3, and the adoption
+   over that ledger judges each governed file against the nodes its own facts reached — never
+   every candidate on every file, and never the tests themselves.
 
 Steps 2–4 run as one under `/siegard:adopt-scope`, given an ask in your own words naming the
 context, its areas and what stays outside: it invokes the three, commits after each with a
