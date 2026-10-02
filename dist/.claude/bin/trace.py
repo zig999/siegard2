@@ -82,11 +82,11 @@ What this script does, and nobody else does any of it:
     trace.py --area <target-root> <path-or-dir> ...               the tracked files an area holds,
                                                                   with the target's declared tests
                                                                   left out and named
-    trace.py --survey <material.md> ...                           hold survey material to its
-                                                                  contract and count its fact
-                                                                  lines per heading
+    trace.py --survey <material.md> ...                           hold survey or intent material
+                                                                  to its contract and count its
+                                                                  fact lines per heading
     trace.py --ledger <ledger.md> <spec-root>                     hold a material ledger to the
-                                                                  survey it accounts for and the
+                                                                  material it accounts for and the
                                                                   nodes it names; print the file
                                                                   set and candidates per file
 
@@ -516,6 +516,8 @@ TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
 SURVEY_CONTRACT = PLUGIN_ROOT / "schemas" / "survey.json"
+INTENT_CONTRACT = PLUGIN_ROOT / "schemas" / "intent.json"
+INTENT_VERSION = "siegard-intent/1"
 LEDGER_CONTRACT = PLUGIN_ROOT / "schemas" / "ledger.json"
 FACT_HEADINGS = ("Facts", "Answers", "Vocabularies", "Upstream artifacts")
 
@@ -2412,11 +2414,15 @@ def test_decided(declared: dict, home: Path, offset: str | None = None) -> dict[
 RANK_HELD_BACK = 15
 
 
-def read_survey(path: Path) -> tuple[dict | None, list[dict], list[str]]:
-    """One file of survey material: its frontmatter held to `survey.json`, and every fact line —
-    a top-level bullet under Facts, Answers, Vocabularies or Upstream artifacts — with its line
-    number in the file and the files of the area it names in backticks. Exactly one of the
-    mapping and a non-empty problem list is set."""
+def read_material(path: Path) -> tuple[dict | None, list[dict], list[str]]:
+    """One file of material: its frontmatter held to the contract its `contract_version` names —
+    `intent.json` for material read from tests, `survey.json` otherwise — and every fact line, a
+    top-level bullet under Facts, Answers, Vocabularies or Upstream artifacts, with its line number
+    in the file and the files of `files` it names in backticks. On intent material each fact also
+    carries the tests of `tests` it names, and a line naming no test or no governed file is
+    refused by number: «Every fact line of intent material names a test the material read and a
+    file of the source it governs, and a line that names no test or no governed file is refused»
+    (SPEC-005 R9). Exactly one of the mapping and a non-empty problem list is set."""
     if not path.is_file():
         return None, [], [f"{path} does not exist"]
     text, unreadable = spec.read_node(path)
@@ -2424,19 +2430,22 @@ def read_survey(path: Path) -> tuple[dict | None, list[dict], list[str]]:
         return None, [], [f"{path}: {unreadable}"]
     match = spec.FENCE.match(text)
     if not match:
-        return None, [], [f"{path} carries no frontmatter fence; survey material opens with one"]
+        return None, [], [f"{path} carries no frontmatter fence; material opens with one"]
     try:
         front = yaml.safe_load(match.group(1)) or {}
     except yaml.YAMLError as broken:
         return None, [], [f"{path}: frontmatter does not parse: {broken}"]
-    if not SURVEY_CONTRACT.is_file():
-        return None, [], [f"{SURVEY_CONTRACT} is missing; nothing can be validated without it"]
-    schema = json.loads(SURVEY_CONTRACT.read_text(encoding="utf-8"))
+    intent = isinstance(front, dict) and front.get("contract_version") == INTENT_VERSION
+    contract = INTENT_CONTRACT if intent else SURVEY_CONTRACT
+    if not contract.is_file():
+        return None, [], [f"{contract} is missing; nothing can be validated without it"]
+    schema = json.loads(contract.read_text(encoding="utf-8"))
     problems = [f"{path}: {'/'.join(str(part) for part in error.path) or 'frontmatter'}: "
                 f"{error.message}" for error in Draft202012Validator(schema).iter_errors(front)]
     if problems:
         return None, [], problems
     area = set(front["files"])
+    read = set(front["tests"]) if intent else set()
     facts: list[dict] = []
     heading = None
     offset = match.group(0).count("\n")
@@ -2445,26 +2454,44 @@ def read_survey(path: Path) -> tuple[dict | None, list[dict], list[str]]:
             heading = line[3:].strip()
             continue
         if heading in FACT_HEADINGS and line.startswith("- "):
-            named = [token for token in re.findall(r"`([^`]+)`", line) if token in area]
-            facts.append({"at": f"{path.name}:{number}", "line": number, "text": line[2:],
-                          "files": sorted(set(named)), "heading": heading})
+            quoted = re.findall(r"`([^`]+)`", line)
+            named = [token for token in quoted if token in area]
+            fact = {"at": f"{path.name}:{number}", "line": number, "text": line[2:],
+                    "files": sorted(set(named)), "heading": heading}
+            if intent:
+                fact["tests"] = sorted({token for token in quoted if token in read})
+                missing = [what for what, held in (("a test of `tests`", fact["tests"]),
+                                                   ("a file of `files`", fact["files"]))
+                           if not held]
+                if missing:
+                    problems.append(f"{path}:{number}: the fact names {' or '.join(missing)} "
+                                    f"nowhere in backticks — an intent fact names the test it "
+                                    f"was read at and each source file it governs: "
+                                    f"{line[2:][:90]}")
+            facts.append(fact)
+    if problems:
+        return None, [], problems
     return front, facts, []
 
 
 def survey(paths: list[Path]) -> int:
-    """Hold survey material to its contract, file by file, and count what each holds: fact lines
-    per heading, and the files of the area no fact names. Refused whole where one file fails —
-    a material file the adoption reads later as if it held together is a survey nobody held."""
+    """Hold material to its contract, file by file, and count what each holds: fact lines per
+    heading, and the files of the area no fact names — on intent material also the tests no fact
+    was read at. Refused whole where one file fails — a material file the adoption reads later as
+    if it held together is material nobody held."""
     problems: list[str] = []
     counted: list[tuple[Path, dict, list[dict]]] = []
     for path in paths:
-        front, facts, held = read_survey(path)
+        front, facts, held = read_material(path)
         if front is None:
             problems += held
             continue
-        problems += [f"{path}: lists {given}, which the target's declared test scope holds; a "
-                     f"test is a certification's material and never a survey's"
-                     for given in declared_tests_of_material(path, front)]
+        if front["contract_version"] == INTENT_VERSION:
+            problems += intent_scope_problems(path, front)
+        else:
+            problems += [f"{path}: lists {given}, which the target's declared test scope holds; "
+                         f"a test is a certification's material and never a survey's"
+                         for given in declared_tests_of_material(path, front)]
         counted.append((path, front, facts))
     if problems:
         for problem in problems:
@@ -2479,25 +2506,55 @@ def survey(paths: list[Path]) -> int:
               + ", ".join(f"{heading} {n}" for heading, n in per_heading.items()))
         if silent:
             print(f"  {len(silent)} file(s) no fact names: {', '.join(silent)}")
+        if front["contract_version"] == INTENT_VERSION:
+            cited = {given for f in facts for given in f["tests"]}
+            unread = [given for given in front["tests"] if given not in cited]
+            if unread:
+                print(f"  {len(unread)} test(s) no fact was read at: {', '.join(unread)}")
     return 0
 
 
-def declared_tests_of_material(path: Path, front: dict) -> list[str]:
-    """The files survey material lists that its target declares as tests. Asked only of the
-    `--survey` form: a ledger rereads its material through `read_survey`, and material held
-    before a project declared its tests is read as it was held."""
+def scopes_of_material(path: Path, front: dict) -> tuple[bool, list[dict] | None]:
+    """Whether the material's `target` is one `siegard.json` declares, and the test scopes it
+    declares for that target, read from the project the material sits in."""
     home = home_of(path.resolve().parent)
     where = target_roots(home).get(front.get("target")) if isinstance(front.get("target"), str) \
         else None
     if where is None:
-        return []
-    scopes = test_scopes_of(home, where)
+        return False, None
+    return True, test_scopes_of(home, where)
+
+
+def declared_tests_of_material(path: Path, front: dict) -> list[str]:
+    """The files survey material lists that its target declares as tests. Asked only of the
+    `--survey` form: a ledger rereads its material through `read_material`, and material held
+    before a project declared its tests is read as it was held."""
+    _, scopes = scopes_of_material(path, front)
     return [given for given in front.get("files") or [] if declared_test(scopes, given)]
 
 
+def intent_scope_problems(path: Path, front: dict) -> list[str]:
+    """Every way intent material disagrees with the test scope its target declares: a target
+    `siegard.json` does not hold, a target that declares no tests — so no file is known to be
+    one — a listed test the scope does not hold, and a governed file it does hold."""
+    known, scopes = scopes_of_material(path, front)
+    if not known:
+        return [f"{path}: target {front['target']} is no key of siegard.json's `targets`"]
+    if scopes is None:
+        return [f"{path}: the project declares no tests for target {front['target']}, so no "
+                f"file is known to be one — declare them in siegard.json's `tests` through "
+                f"/siegard-config, then hold this material again"]
+    return ([f"{path}: lists {given} under `tests`, which the target's declared test scope "
+             f"does not hold; intent material is read from declared tests"
+             for given in front["tests"] if not declared_test(scopes, given)]
+            + [f"{path}: lists {given} under `files`, which the target's declared test scope "
+               f"holds; a test is where an intent fact was read and never a file it governs"
+               for given in front["files"] if declared_test(scopes, given)])
+
+
 def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[str]]:
-    """The ledger held to its contract, with every material file it names read as survey
-    material — keyed by the path the ledger spells — or the problems that stop the reading."""
+    """The ledger held to its contract, with every material file it names read against its own
+    contract — keyed by the path the ledger spells — or the problems that stop the reading."""
     front, why = frontmatter_of(ledger)
     if front is None:
         return None, {}, [why or f"{ledger} cannot be read"]
@@ -2511,7 +2568,7 @@ def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[
     surveys: dict[str, list[dict]] = {}
     fronts: dict[str, dict] = {}
     for relative in front["material"]:
-        material_front, facts, held = read_survey(ledger.parent / relative)
+        material_front, facts, held = read_material(ledger.parent / relative)
         if material_front is None:
             problems += held
             continue
@@ -4879,7 +4936,7 @@ def main() -> int:
         at = args.index("--ledger")
         if at + 1 >= len(args) or args[at + 1].startswith("--"):
             print("cannot run: --ledger takes the path of the ledger /analyse wrote beside the "
-                  "survey material", file=sys.stderr)
+                  "material", file=sys.stderr)
             return CANNOT_RUN
         ledger_given = Path(args[at + 1])
         del args[at:at + 2]

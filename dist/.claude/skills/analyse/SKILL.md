@@ -409,10 +409,11 @@ answer:
 Each is yours to fix now, in this invocation. What you leave standing, say so in the report and
 say why — a number carried into the report unexamined is a measurement nobody acted on.
 
-### 4b. Where the material is a survey: the ledger
+### 4b. Where the material is a survey or intent material: the ledger
 
-Material whose frontmatter declares `siegard-survey/1` was read from source no delivery wrote,
-and its fact lines — the top-level bullets under `## Facts`, `## Answers`, `## Vocabularies` and
+Material whose frontmatter declares `siegard-survey/1` was read from source no delivery wrote;
+material declaring `siegard-intent/1` was read from the target's declared tests, each fact beside
+the source file it governs. Either way its fact lines — the top-level bullets under `## Facts`, `## Answers`, `## Vocabularies` and
 `## Upstream artifacts` — are each owed an answer: «Every fact line of the material lands in a
 node or is left out with a stated reason» (SPEC-005 R8). Read
 `${CLAUDE_PLUGIN_ROOT}/schemas/ledger.json` and write `ledger.md` beside the material — never
@@ -482,9 +483,9 @@ Report, in this order:
   logs are the whole of what lets them: nothing else in the artifacts marks a decided fact
   apart from a stated one;
 - every tension the cross-check step found without a case to decide, named as a watch item;
-- where the material was a survey: `--ledger`'s output verbatim — how many fact lines landed in
-  nodes and how many were left out, and the reasons given, grouped — so a reviewer sees what the
-  analysis chose not to hold before an adoption reads it;
+- where the material was a survey or intent material: `--ledger`'s output verbatim — how many
+  fact lines landed in nodes and how many were left out, and the reasons given, grouped — so a
+  reviewer sees what the analysis chose not to hold before an adoption reads it;
 - **what this increment may have put the delivered code in breach of, said plainly.** This step
   never reads the target, deliberately — so a node written here can state an obligation the code
   already violates, and nothing in this invocation could have noticed. Say so: the decisions of
@@ -500,14 +501,14 @@ Report, in this order:
   the specification it holds was just validated, and one named slot for each input only the
   human decides: the scope, which target, and the initiative's slug. The handoff offers the
   next step, never takes it: filling the slots and invoking are the human's.
-- where the material was a survey, the `/reconcile` invocation ready to paste, before the
-  `/plan-work` one and in its place as the next step: as an adoption, over the ledger — its
-  path, from which the staging reads the file set (the material's areas) and each file's
-  candidates — this project root filled in, the target the material declares, and one slot for
+- where the material was a survey or intent material, the `/reconcile` invocation ready to
+  paste, before the `/plan-work` one and in its place as the next step: as an adoption, over the
+  ledger — its path, from which the staging reads the file set (the material's areas, or the
+  files intent material governs) and each file's candidates — this project root filled in, the target the material declares, and one slot for
   the slug and one for the files the human keeps out of the judgment, with the counts
   `--ledger` printed beside it. «The first material of an adopted system is read from its
   source alone» (SPEC-005 R2), so where the human also holds documentation, the increment it
-  feeds is this skill again, after the adoption.
+  feeds is this skill again, after the adoption — and so is intent material read from the tests.
 
 Then stop. `git diff` over the specification root is the review, and it belongs to a person.
 
