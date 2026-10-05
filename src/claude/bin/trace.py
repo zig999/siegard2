@@ -421,7 +421,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
-from typing import NoReturn
+from typing import Callable, NoReturn
 
 CANNOT_RUN = 2
 
@@ -748,7 +748,7 @@ def problems_of(declared: dict) -> list[str]:
 
 
 def drift_of(declared: dict, home: Path,
-             declared_steps: set[str] | None = None
+             steps_for: Callable[[dict], set[str] | None] | None = None
              ) -> tuple[list[tuple[str, str, str | None, str]], list[str]]:
     """Every binding that no longer computes to what was recorded for it, each under the class its
     remedy belongs to — and, separately, whatever stopped the reading before any of that.
@@ -825,6 +825,7 @@ def drift_of(declared: dict, home: Path,
         # what differs is the remedy — a fresh certification of the test as it now stands, never
         # a rebind of the file — so the class is its own.
         if entry.get("decided_by") == DECIDED_BY_TEST:
+            declared_steps = steps_for(entry) if steps_for is not None else None
             if declared_steps is not None and entry.get("step") not in declared_steps:
                 findings.append((PROOF, node_id, None,
                                  f"{node_id}: certified as decided by the step "
@@ -1203,7 +1204,7 @@ def tally_of(target: Path) -> tuple[dict[str, int], int, list[str]] | None:
         if declared is None or problems_of(declared):
             return None
         home = home_of(target)
-        findings, refusals = drift_of(declared, home, registry_steps(home, offset_of(target, home)))
+        findings, refusals = drift_of(declared, home, certifying_steps(home, offset_of(target, home)))
         if refusals:
             return None
         listed, held = partitioned(findings, freely_edited(home))
@@ -2104,7 +2105,7 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
             return CANNOT_RUN
         bindings = len(declared.get("bindings") or [])
         bound = {e["node"] for e in declared.get("bindings") or [] if isinstance(e.get("node"), str)}
-        findings, refusals = drift_of(declared, home, registry_steps(home, offset_of(target, home)))
+        findings, refusals = drift_of(declared, home, certifying_steps(home, offset_of(target, home)))
         if refusals:
             for refusal in refusals:
                 print(refusal)
@@ -2382,6 +2383,36 @@ def registry_steps(home: Path, offset: str) -> set[str] | None:
             if isinstance(c, dict) and isinstance(c.get("step"), str)}
 
 
+def certifying_steps(home: Path, offset: str) -> Callable[[dict], set[str] | None]:
+    """For each test-decided binding, the step names of the registry its certification is held
+    to: the registry of the target whose source root holds the binding's proof — or, with no proof
+    named, its files — read once per target.
+
+    The trace is one file per git toplevel and every target under it reads the same one, so a
+    report run from one target reads certifications another target's tests made. A step is a
+    command of the registry that runs the test, and that is the registry of the target the test
+    sits under: held to the registry of whichever target the report was run from, a certification
+    the backend's `test` step decides reads as lapsed from a target whose registry names no such
+    step, and the same trace reports a different drift from each of its targets. Where no one
+    target's root holds every path, the certification is held to `offset`'s registry, the one the
+    caller was asked about."""
+    roots = sorted(set(target_roots(home).values()),
+                   key=lambda root: -len(PurePosixPath(root).parts) if root not in (".", "") else 1)
+    read: dict[str, set[str] | None] = {}
+
+    def steps_for(entry: dict) -> set[str] | None:
+        held = [p["path"] for p in entry.get("proof") or []
+                if isinstance(p, dict) and isinstance(p.get("path"), str)]
+        paths = held or [f["path"] for f in entry.get("files") or []
+                         if isinstance(f, dict) and isinstance(f.get("path"), str)]
+        owner = next((root for root in roots if paths and all(under(p, [root]) for p in paths)),
+                     offset)
+        if owner not in read:
+            read[owner] = registry_steps(home, owner)
+        return read[owner]
+    return steps_for
+
+
 def test_decided(declared: dict, home: Path, offset: str | None = None) -> dict[str, str]:
     """Every node the trace binds as decided by a test *and whose certification still stands*,
     with the step that runs it.
@@ -2396,12 +2427,13 @@ def test_decided(declared: dict, home: Path, offset: str | None = None) -> dict[
     dropped it leaves the binding naming a step nothing can run, which `--stage` would then put in
     a mechanical tier no run could ever answer — a pair with no judge and no runnable step is the
     one state this route has no exit from."""
-    steps = registry_steps(home, offset) if offset is not None else None
+    steps_for = certifying_steps(home, offset) if offset is not None else None
     live = {}
     for entry in declared.get("bindings") or []:
         if not isinstance(entry, dict) or entry.get("decided_by") != DECIDED_BY_TEST \
                 or not isinstance(entry.get("step"), str):
             continue
+        steps = steps_for(entry) if steps_for is not None else None
         if steps is not None and entry["step"] not in steps:
             continue
         proof = entry.get("proof") or []
@@ -5256,7 +5288,7 @@ def main() -> int:
     # same toplevel re-reads this exact file and prints this exact report.
     print(f"trace: {path} — one file per git toplevel; every target under it reads this same one")
     findings, refusals = drift_of(declared, home,
-                                  registry_steps(home, offset_of(target, home)))
+                                  certifying_steps(home, offset_of(target, home)))
     if refusals:
         for refusal in refusals:
             print(refusal)

@@ -353,6 +353,49 @@ def test_a_certification_lapses_when_the_registry_drops_its_step(consumer, write
                                                     FILE).stdout
 
 
+def with_two_registries(consumer: Path, backend_steps: tuple[str, ...]) -> None:
+    """Two targets under one toplevel, each with its own registry: `backend` declaring the
+    named steps and `database` declaring `suite` alone — so one trace is read from two targets
+    whose registries name different steps."""
+    for name, steps in (("backend", backend_steps), ("database", ("suite",))):
+        (consumer / f"{name}.yaml").write_text(yaml.safe_dump({
+            "contract_version": "siegard-standard/1", "standard": name, "summary": "a test's",
+            "rules": [], "commands": [{"step": s, "command": f"npm run {s}",
+                                       "timeout_seconds": 60} for s in steps]}),
+            encoding="utf-8")
+    (consumer / "migrations").mkdir(exist_ok=True)
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs",
+         "targets": {"backend": "backend", "database": "migrations"},
+         "standard": {"backend": "backend.yaml", "database": "database.yaml"}}) + "\n",
+        encoding="utf-8")
+
+
+def test_a_certification_is_held_to_the_registry_of_the_target_its_test_sits_under(
+        consumer, write_record):
+    """The trace is one file per toplevel and every target reads it. A certification the
+    backend's `test` step decides, read from a target whose registry declares no `test`, is not
+    lapsed — nothing about it changed — and the same trace reports the same drift from each of
+    its targets."""
+    proof_at(consumer)
+    with_two_registries(consumer, ("test",))
+    assert run("--bind-record", consumer / "backend", consumer / "specs",
+               write_record(record_of([CERTIFIED]))).returncode == 0
+
+    for target in ("backend", "migrations"):
+        drift = run("--check", consumer / target)
+        assert drift.returncode == 0, drift.stdout + drift.stderr
+        assert "no longer declares" not in drift.stdout
+        assert "1 of them decided by a certified test" in run(consumer / target).stdout
+
+    with_two_registries(consumer, ("verify",))
+    for target in ("backend", "migrations"):
+        drift = run("--check", consumer / target)
+        assert drift.returncode == 1, drift.stdout + drift.stderr
+        assert "the project's registry no longer declares" in drift.stdout
+        assert "1 proof:" in drift.stdout
+
+
 def test_check_reports_a_changed_proof_under_its_own_class(consumer, write_record):
     """The proof is pinned the way the files are and moves the same way; what differs is the
     remedy — a fresh certification, never a rebind of the file — so the class is its own, and the
