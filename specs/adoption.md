@@ -70,7 +70,11 @@ constraints spent 26 judges on files the notes never cited while the notes named
   observable behavior, each fact beside the path it was read at. Documentation and intent
   material are material for the increments that follow, never merged into the first: the first
   specification is one every node of which the source holds, and what either corrects arrives as
-  an ordinary change to it.
+  an ordinary change to it. Text that only names a control — a button, column, tab or menu label,
+  an accessible name, a placeholder — and a client's tuning of its own requests — a cache
+  lifetime, a retry count — are what the implementation chose and never a fact of the domain;
+  text that changes what a person can learn or do — a refusal or failure message, a closed
+  vocabulary's label, an outcome notice — is one.
 
 ### What a binding rests on
 

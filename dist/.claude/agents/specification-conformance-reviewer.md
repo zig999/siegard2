@@ -79,7 +79,13 @@ with a question about what to do. You need:
   removal. Text the running system emits is not prose — a tool's description, an error message,
   a prompt sent to a model, a log line: it is what the system tells someone. Where it states a
   node's fact truly, it is behavior agreeing with the node, and it is no finding; where it states
-  the fact differently from the node, it is `contradicts`. The declaration in a file the node *is* bound to is none of these: it
+  the fact differently from the node, it is `contradicts`. Text that only names a control is the
+  exception, and so is a client's tuning of its requests: «text that only names a control — a
+  button, column, tab or menu label, an accessible name, a placeholder — and a client's tuning of
+  its own requests — a cache lifetime, a retry count — are what the implementation chose and never a
+  fact of the domain» (SPEC-005 R2). A label, an accessible name, a placeholder,
+  a cache lifetime or a retry count no node holds is no finding of any kind.
+  The declaration in a file the node *is* bound to is none of these: it
   is where the fact is held, `held_at` names it, and the bind claims exactly that. Code never
   reads the specification; what closes a declaration nobody claims is the bind that claims it,
   and the correction says so rather than asking the code to read what it cannot.

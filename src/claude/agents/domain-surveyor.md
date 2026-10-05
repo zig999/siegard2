@@ -52,7 +52,12 @@ return. You need:
   them apart, under upstream artifacts.
 - **What this implementation chose is not a domain fact.** Transport paths, framework wiring,
   log events, performance caps, index shapes, internal helper names, a default model: list each
-  under "Outside the domain" in one line, so the analysis sees it was read and left out.
+  under "Outside the domain" in one line, so the analysis sees it was read and left out. So is
+  «text that only names a control — a button, column, tab or menu label, an accessible name, a
+  placeholder — and a client's tuning of its own requests — a cache lifetime, a retry count — are
+  what the implementation chose and never a fact of the domain» (SPEC-005 R2); a refusal or failure
+  message a person reads, a closed vocabulary's label and an
+  outcome notice stay facts.
 - **Two behaviors of the same code that disagree are both recorded**, side by side, under
   "Observed and not decided here". You choose between them nowhere.
 - **Name things by the domain, not the identifier.** "An accepted fragment", not

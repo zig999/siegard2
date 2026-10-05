@@ -248,7 +248,11 @@ that decides what goes in it:
   strategy, a storage choice, an anti-corruption layer — state its `scope` (`system` or one
   context) and, where a mechanical check exists, its `fitness`.
 - **What never enters the specification:** persistence, UI, stack, performance — implementation
-  knowledge is not domain knowledge, whichever class would otherwise hold it. Nor a technical
+  knowledge is not domain knowledge, whichever class would otherwise hold it. Of what an
+  interface shows, «text that only names a control — a button, column, tab or menu label, an
+  accessible name, a placeholder — and a client's tuning of its own requests — a cache lifetime, a
+  retry count — are what the implementation chose and never a fact of the domain» (SPEC-005 R2);
+  what changes what a person can learn or do is a fact. Nor a technical
   artifact — a DTO, a repository, a table, a topic: it emerges from implementation, and no
   class admits it.
 - **The line is who chose the artifact, and there is one place it falls the other way.** The rule
