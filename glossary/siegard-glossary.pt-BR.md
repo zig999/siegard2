@@ -6,9 +6,10 @@ Siegard**: nenhum conhecimento prévio do framework é pressuposto. Cada verbete
 significa, por que ele existe, em que momento do trabalho aparece, como funciona passo a passo e,
 sempre que possível, traz um exemplo.
 
-**Versão descrita.** Esta edição descreve o Siegard **4.27.0**. Ela amplia a tradução de
+**Versão descrita.** Esta edição descreve o Siegard **5.4.0**. Ela amplia a tradução de
 `glossary/siegard-glossary.md`, que ainda descreve a 4.21.3; os verbetes sobre levantamento
-(`/survey`), ledger e agente `domain-surveyor` ainda não têm par na versão inglesa. Onde as duas
+(`/survey`), material de intenção, ledger, `/adopt-scope`, o campo `tests` e os agentes
+`domain-surveyor` e `test-intent-reader` ainda não têm par na versão inglesa. Onde as duas
 versões divergirem, vale a inglesa, conforme a regra do repositório para traduções.
 
 **Precedência.** Este glossário explica; ele não governa. Onde ele divergir do `SKILL.md` de uma
@@ -328,7 +329,7 @@ especificação contém, se o código segue o standard, e por que alguma execuç
 é um **registro de revisão** com **findings**.
 
 *(As etapas 3 a 5 podem ser executadas de ponta a ponta por `/deliver-scope`, que também faz os
-commits entre elas.)*
+commits entre elas e, ao final, mede o custo da execução.)*
 
 **Etapa 6 — Semanas depois: uma edição fora do fluxo.** Durante um incidente, alguém corrige um
 arquivo diretamente e commita. O trace continua afirmando o digest antigo daquele arquivo. Quando
@@ -343,7 +344,8 @@ nós que os juízes liberaram. Para os demais, entrega as duas portas: corrigir 
 **Caminho alternativo — adoção.** Se o projeto já tinha código antes do Siegard, o percurso começa
 por `/survey` (levantamento do código existente), segue para `/analyse` (que escreve a
 especificação a partir do levantamento e um **ledger**) e termina num `/reconcile` em modo
-**adoção**, que cria o primeiro trace. Ver §11 e §16.
+**adoção**, que cria o primeiro trace. O `/adopt-scope` executa esses três passos de ponta a
+ponta, um contexto por vez. Ver §11 e §16.
 
 ---
 
@@ -372,7 +374,8 @@ parada, e o relatório traz a invocação do `/siegard-config` pronta para colar
   "delivery_root": "delivery",
   "standard": { "backend": "backend/standard.yaml" },
   "telemetry_root": "telemetry",
-  "edits_freely": ["frontend"]
+  "edits_freely": ["frontend"],
+  "tests": { "backend": [ { "under": "src", "suffix": ".spec.ts", "nested": true } ] }
 }
 ```
 
@@ -385,6 +388,7 @@ parada, e o relatório traz a invocação do `/siegard-config` pronta para colar
 | `standard` | Para cada target, o caminho do seu standard (ou `null`, declarando que não há). |
 | `telemetry_root` | Onde os relatórios de telemetria são gravados. |
 | `edits_freely` | Targets cuja superfície pode ser editada livremente (ver verbete próprio). |
+| `tests` | Para cada target, onde ficam os seus testes (ver verbete próprio). |
 
 ### Raiz do projeto (project root)
 A pasta que contém o `siegard.json`. Toda skill exige que ela seja informada e nunca a adivinha:
@@ -527,6 +531,29 @@ pode saber ou fazer, **não é superfície**. Um botão com rótulo novo que faz
 superfície; o texto de uma recusa, uma coluna com dados novos ou uma tela que passa a recusar algo
 não são.
 
+### `tests` — onde ficam os testes de cada target
+**O que é.** Um campo do `siegard.json`, com uma chave por target (as mesmas chaves de `targets`),
+que declara em quais arquivos moram os testes daquele target. Cada valor é uma lista de
+**escopos**, escritos nas mesmas partes que o `applies_to` de uma regra do standard usa: a pasta
+(`under`), o sufixo (`suffix`) e se inclui subpastas (`nested`) — nunca um glob.
+**Por que existe.** Um teste diz o que o código **deveria** fazer; um levantamento lê o que o código
+**faz**. Por isso um teste nunca é material de levantamento nem código adotado: é material de
+certificação (§10) ou de **material de intenção** (§11). Sem a declaração, nada diz quais arquivos
+são testes.
+**O que muda quando é declarado.**
+- `trace.py --untraced` conta um teste declarado que nenhuma certificação nomeia como
+  **`uncertified`** (não certificado), e não como `unsurveyed` (§9).
+- `trace.py --area` deixa os testes declarados fora de toda área que um levantamento lê, e os
+  nomeia (§11).
+- `--survey` recusa material de levantamento que liste um teste; `--stage --adopt` recusa um teste
+  no conjunto de arquivos e entrega, no lugar, a forma de oferecê-lo como certificação.
+
+**Por que fica no `siegard.json` e não no standard.** `standard: null` é uma resposta completa, e
+um projeto que não escreve standard nenhum continua tendo testes.
+**Quem escreve.** O `/siegard-config`, como todo campo do arquivo. Uma chave que `targets` não
+contém é recusada pelo `project.py`. Ausente, o projeto não declara nada sobre os seus testes:
+nenhum arquivo fica `uncertified`.
+
 ### O arquivo de regras (`hooks/rules.md`)
 **O que é.** O conjunto curto de regras de sessão que o Siegard injeta, por hook, em **toda
 sessão e em todo agente** de um projeto que usa o plugin. Nada é copiado para a raiz do projeto.
@@ -557,12 +584,15 @@ ser feita **invocando a skill da rota**, nunca reproduzindo o trabalho dela de f
 | 3. **Um comportamento errado** em código já entregue | incremento corretivo do `/plan-work` → `/implement-task` — nunca uma correção digitada direto no arquivo |
 | 4. **Só um comentário** (prosa no código que viola a regra de comentários, com o comportamento correto e o fato já num nó) | remover o comentário diretamente, depois `/reconcile` sobre aquele arquivo |
 | 5. **Só a superfície** (rótulo, cor, espaçamento, ordem de colunas, ícone) | editar diretamente, num target declarado em `edits_freely` |
-| 6. **Código que nenhuma entrega escreveu** (adoção do Siegard num projeto existente) | `/survey` → `/analyse` → `/reconcile` como adoção, um contexto por vez; a documentação entra depois, pela rota 1 |
+| 6. **Código que nenhuma entrega escreveu** (adoção do Siegard num projeto existente) | `/survey` → `/analyse` → `/reconcile` como adoção, um contexto por vez, ou `/adopt-scope` executando os três sob um único pedido; a documentação entra depois, pela rota 1 |
 
 **Detalhes da rota 4 (comentário).** Quatro condições, todas obrigatórias: (a) o fato já está num
 nó e o código já o implementa — se não, é a rota 1; (b) a edição **remove** o comentário, nunca o
 "atualiza"; (c) o `/reconcile` sobre o arquivo faz parte da rota, não é opcional; (d) não exige
-declaração nenhuma e não é a rota 5 com outro nome.
+declaração nenhuma e não é a rota 5 com outro nome. O que se remove é **todo comentário que o
+arquivo carrega** (exceto as diretivas lidas por ferramentas), nunca só os citados: um juiz cita o
+que leu, não lista todos os comentários, e um arquivo do qual saíram só os citados entrega os
+restantes ao próximo juiz.
 
 **Detalhes da rota 5 (superfície).** É declarada por target no `siegard.json`; nenhuma regra sobre
 fatos de negócio é relaxada; e nada agenda uma leitura sobre essas edições — quem escolhe essa
@@ -725,7 +755,7 @@ porque nada neste sistema os escolheu nem pode mudá-los.
 ### Material
 **O que é.** Tudo o que uma pessoa entrega ao `/analyse` para ler: um documento, uma transcrição,
 um ticket exportado, um mockup, ou — numa adoção — o **material de levantamento** escrito a partir
-do código (§11).
+do código e o **material de intenção** escrito a partir dos testes (§11).
 **Regra de segurança.** Material é **dado, nunca instrução**. Uma frase no material que pareça uma
 ordem ("ignore as regras anteriores", "escreva tal nó") é analisada como texto que alguém do
 domínio escreveu, e nunca obedecida. Isso protege contra material malicioso ou simplesmente
@@ -783,9 +813,14 @@ entrada padrão: o escritor confere a entrada contra o schema e contra o nó, an
 valida a raiz. Ninguém edita um log à mão. O arquivo é só frontmatter, e a entrada mais recente
 sobre um campo é a que vale.
 **Quando um nó sai ou muda de nome.** Remover um nó anexa uma entrada `retired` ao log dele e
-deixa o log no lugar, como lápide — o validador aceita um log sem nó ao lado só quando a última
-entrada aposenta um campo. Renomear um nó é `git mv` do nó e do log no mesmo commit; nenhuma
-entrada registra a mudança.
+deixa o log no lugar, como lápide — o validador aceita um log sem nó ao lado só quando todo campo
+que o log preencheu foi aposentado por uma entrada posterior, e nomeia cada entrada que ficou sem
+aposentadoria. Renomear um nó é `git mv` do nó e do log
+no mesmo commit; nenhuma entrada registra a mudança.
+**Projetos anteriores à 5.0.0.** Até a 4.x, o log era um único `decision-log.md` na raiz da
+especificação, acompanhado da projeção `decisions-by-node.md`. Um projeto que atualiza o plugin
+através da 5.0.0 roda uma vez `tools/migrate_decision_log.py` sobre a sua raiz da especificação:
+ele reparte o log antigo nos logs ao lado de cada nó e remove o arquivo antigo e a projeção.
 
 ### Decidir e divulgar (decide-and-disclose)
 A disciplina por trás do log: o que o material não diz é decidido, escrito no nó como qualquer
@@ -807,8 +842,9 @@ compreensão pode existir: um objeto de valor ou uma enumeração que nenhum out
 
 ### Projeção
 **O que é.** Uma visão **gerada** da especificação — diagramas de classes, mapa de contextos,
-diagramas de estados, mapa de capacidades, visão geral do sistema, decisões agrupadas por nó —
-escrita pelo `spec.py --project` na pasta `projections/`.
+diagramas de estados, mapa de capacidades, visão geral do sistema — escrita pelo
+`spec.py --project` na pasta `projections/`. As decisões não têm projeção: cada nó já tem o seu
+log ao lado.
 **Regra.** Nunca é editada à mão. Uma edição numa projeção seria um fato sem nó por trás, e seria
 apagada na próxima geração.
 
@@ -865,9 +901,12 @@ spec.py --digest <spec-root>                 # imprime a identidade e o digest d
 spec.py --project <spec-root>                # valida e depois escreve projections/
 spec.py --impact <id>[,<id>...] <spec-root>  # um salto em volta de cada nó, nas duas direções
 spec.py --shape [--of <id>,...] <spec-root>  # mede o tamanho e a forma dos nós; nunca recusa
+spec.py --decide <id> <spec-root>            # anexa uma entrada (JSON na entrada padrão) ao log do nó
 ```
 
-- **Entrada:** a raiz da especificação (e, em algumas formas, uma identidade ou um arquivo).
+- **Entrada:** a raiz da especificação (e, em algumas formas, uma identidade ou um arquivo). Uma
+  raiz de projeto passada no lugar dela (`spec.py .`) é recusada, e a saída entrega o comando com a
+  `specification_root` que o `siegard.json` declara.
 - **Saída:** `sound` ("íntegro") ou uma lista de problemas. Código de saída `0` = íntegro,
   `1` = problemas, `2` = não pôde rodar.
 - **O que a validação completa verifica**, além do schema de cada classe: toda referência resolve
@@ -879,9 +918,12 @@ spec.py --shape [--of <id>,...] <spec-root>  # mede o tamanho e a forma dos nós
 - **`--impact`** calcula o **conjunto de impacto**: para cada nó informado, todo nó que ele
   referencia, todo nó que o referencia e o decision log ao lado dele. Um único salto,
   nas duas direções. O planejamento e a análise usam isso para saber o que ler.
+- **`--decide`** anexa uma entrada ao decision log ao lado de um nó e depois valida a raiz. É o
+  único jeito de escrever um log (ver "Decision log", acima).
 - **`--shape`** é um relatório, nunca uma recusa: tamanho dos statements por classe (com a "cauda"
   da distribuição nomeada), statements com mais de uma frase, frases repetidas entre nós, prosa
-  que menciona outros nós, nomes usados na prosa que nenhum nó define. `--of` marca os nós pelos
+  que menciona outros nós, nomes usados na prosa que nenhum nó define, e os campos que um log
+  decidiu mais de uma vez. `--of` marca os nós pelos
   quais você responde, para que apareçam mesmo abaixo do corte do ranking.
 
 ---
@@ -1265,8 +1307,9 @@ precisa (arquivos de ambiente, por exemplo).
 ### `/deliver-scope` e `orchestration.md`
 **O que é.** A skill que executa um escopo **de ponta a ponta**: plano, cada tarefa, revisão e uma
 rodada de prova, fazendo commit entre os passos.
-**Autorização.** É o **único** componente autorizado a executar `git commit`, e só quando a
-mensagem da própria pessoa pede a rota inteira (citada literalmente). Commits são sempre restritos
+**Autorização.** É um dos **dois** componentes autorizados a executar `git commit` (o outro é o
+`/adopt-scope`, §11), cada um sobre a sua própria rota, e só quando a mensagem da própria pessoa
+pede a rota inteira (citada literalmente). Commits são sempre restritos
 a caminhos (pathspec), um por passo, com mensagem que nomeia o passo — nunca cria branch, nunca faz
 push, nunca reescreve histórico.
 **Limites.** Nunca invoca `/analyse`: a especificação precisa ter sido escrita, revisada e
@@ -1274,10 +1317,16 @@ commitada por uma pessoa antes. Toda parada de uma skill interna encerra a execu
 dessa parada são repassadas literalmente.
 **Log.** Mantém `orchestration.md` na raiz de entrega: uma linha por passo, com o que foi invocado,
 o commit e o resultado.
+**Medição.** Toda execução termina **medida**, inclusive a que uma parada encerrou: o passo
+`measure` roda o `telemetry.py` (§12) sobre o período da execução e commita só a raiz de
+telemetria, com a mensagem `deliver-scope <slug>: measure`. O custo de uma execução é a metade do
+registro que ninguém consegue reconstruir depois que as transcrições somem. Uma sonda que não
+consegue ler vira uma linha no relatório, nunca uma parada.
 
 ```
 gate → plan → commit → [deliver → commit, por tarefa] → review → commit
-     → [prove → commit, por tarefa deixada testável] → review → commit → report → stop
+     → [prove → commit, por tarefa deixada testável] → review → commit → measure → commit
+     → report → stop
 ```
 
 ### `deliver.py` — o validador da entrega
@@ -1435,6 +1484,7 @@ essa pasta.
       "files": [
         { "path": "backend/src/troubleshooting/case.ts",
           "digest": "sha256:dce326b5…",
+          "node_digest": "sha256:9e85d914…",
           "judged": true }
       ]
     },
@@ -1451,8 +1501,9 @@ essa pasta.
 ```
 
 **Leitura do exemplo.** O primeiro vínculo diz: "o fato do nó `domain/troubleshooting/case` mora em
-`case.ts`; quando isso foi registrado, o nó tinha o digest `9e85…` e o arquivo `dce3…`; e uma
-reconciliação julgou esse par (`judged: true`)". O segundo diz o mesmo para outra regra e
+`case.ts`; quando isso foi registrado, o nó tinha o digest `9e85…` e o arquivo `dce3…`; o arquivo
+foi carimbado contra esse mesmo texto do nó (`node_digest`); e uma reconciliação julgou esse par
+(`judged: true`)". O segundo diz o mesmo para outra regra e
 acrescenta que ela é **decidida por teste**: o arquivo `raise.spec.ts`, rodado pelo step `test`,
 prova o fato.
 
@@ -1463,6 +1514,12 @@ par.
 **`judged`.** Num arquivo, significa que o julgamento de uma reconciliação liberou aquele par
 naquele digest. Ausente significa que o par foi carimbado por uma entrega (ou à mão) e ninguém o
 releu desde então contra o nó.
+**`node_digest`.** Num arquivo, o digest do nó **contra o qual aquele arquivo foi carimbado** — o
+texto do nó como o bind que nomeou o arquivo o leu. Existe porque um bind carimba só os arquivos
+que o seu registro nomeia: um nó vinculado em dois targets e revinculado a partir de um deles
+mantém os arquivos do outro no texto anterior, e esses arquivos continuam devendo uma leitura. O
+`digest` do binding é o mais recente desses textos. Numa entrada gravada antes de o campo existir,
+vale o `digest` do binding, que era o que o arquivo de fato tinha.
 
 ### Bind (vincular)
 **O que é.** Escrever ou estender um binding. Normalmente é feito por uma skill a partir de um
@@ -1511,9 +1568,13 @@ uma tem um remédio diferente:
 | Classe | Significa | Resolvido por |
 |---|---|---|
 | `orphaned` (órfão) | O vínculo aponta para um nó que a especificação não contém mais. | `trace.py --prune` |
-| `moved` (movido) | O texto do nó mudou desde o bind. | `/reconcile` sobre os arquivos vinculados, ou uma entrega que implemente o nó |
+| `moved` (movido) | O texto do nó mudou desde o bind — ou um arquivo ficou carimbado contra um texto anterior do nó, que um bind posterior recarimbou só em outros arquivos (aí a linha é **por arquivo**). | `/reconcile` sobre os arquivos vinculados, ou uma entrega que implemente o nó |
 | `code` (código) | Um arquivo vinculado mudou (ou sumiu) sem rebind. | `/reconcile` sobre o arquivo; `--release` se ele sumiu |
 | `proof` (prova) | O teste que decide um vínculo certificado mudou. | uma nova certificação; até lá, o vínculo volta a ser decidido por leitura |
+
+**Um trace, vários targets.** O trace é um arquivo só por topo do git, e todo target o lê. Por isso
+o step de cada certificação é procurado no standard **do target sob o qual o teste está**, e não no
+do target passado ao `--check`: o mesmo trace relata o mesmo drift a partir de qualquer target.
 
 **Exemplo de saída (de uma fixture de teste):**
 
@@ -1571,24 +1632,31 @@ backend/src/troubleshooting/case.ts: 2 binding(s)
   vínculos carregam, e nós ordenados por quantos arquivos têm. Um arquivo com muitos vínculos é
   candidato natural a uma auditoria.
 
-### `--untraced` e os quatro estados de arquivo
+### `--untraced` e os cinco estados de arquivo
 Lista todo arquivo rastreado pelo git sob um target que nenhum vínculo nomeia. Cada arquivo está
 em exatamente um estado:
 
 | Estado | Significado |
 |---|---|
-| **bound** (vinculado) | Algum vínculo o nomeia. |
+| **bound** (vinculado) | Algum vínculo o nomeia — como arquivo que codifica o fato ou como a prova que uma certificação fixou. |
 | **holds-nothing** (não contém nada) | Uma adoção o julgou e não vinculou nenhum candidato a ele. |
 | **outside** (fora) | Uma adoção o deixou deliberadamente fora do julgamento (configuração, fiação). |
+| **uncertified** (não certificado) | Está no escopo de testes que o target declara em `tests` (§4), e nenhuma certificação o nomeia. Só aparece quando o target declara os seus testes. |
 | **unsurveyed** (não levantado) | Nenhum dos anteriores: ninguém olhou para ele ainda. |
 
 ```
 $ trace.py --untraced backend
-3 tracked file(s) under backend: 2 bound, 1 no binding names
+5 tracked file(s) under backend: 2 bound (1 as a certification's proof), 3 no binding names
   0 holds-nothing: judged by an adoption, which bound none of its candidates to it
   0 outside: kept outside an adoption's judgment
+  2 uncertified: in the target's declared test scope, and no certification names it
   1 unsurveyed: no binding and no adoption names it
 ```
+
+**Submódulos.** O git rastreia um submódulo como uma única entrada, e ela também entra na
+contagem. Como um submódulo não contém nada deste repositório, `outside` é o único estado para o
+qual uma adoção pode movê-lo: o `--stage --adopt --outside` o aceita, e o `--area` nunca o entrega
+a um levantamento.
 
 Não recusa nada: a maioria dos arquivos de um sistema real não contém fato de negócio e nunca será
 vinculada. O número é um fato sobre a árvore, não uma meta.
@@ -1734,7 +1802,9 @@ dos juízes serão salvos.
 
 **Exemplo de nome de pacote.** O arquivo `src/billing/raise.ts` recebe o pacote
 `packs/src__billing__raise.ts.md`. A troca de `/` por `__` transforma um caminho num nome de
-arquivo único e sem subpastas.
+arquivo único e sem subpastas. Se dois caminhos do conjunto resultarem no mesmo nome
+(`src/x/b__c.ts` e `src/x__b/c.ts`), o stage recusa o conjunto: um arquivo seria vinculado pela
+leitura do outro.
 
 ### O que o stage separa
 Cada arquivo e cada nó do conjunto cai numa destas situações:
@@ -1842,7 +1912,10 @@ Uma pergunta devolvida pelo juiz ("o que devo fazer?") não é um retorno.
 ### O retorno (conformance return)
 **O que é.** O que um juiz responde: YAML puro, com **só quatro chaves permitidas, em qualquer
 profundidade** — `findings`, `read`, `looked_past` e `candidates_opened`. Uma quinta chave (um
-`notes` com um parágrafo de conclusão, um resumo para humanos) faz o fold recusar o retorno.
+`notes` com um parágrafo de conclusão, um resumo para humanos) faz o fold recusar o retorno, e
+uma mesma chave dada duas vezes também. **Sem cerca de código** (```` ```yaml ````) em volta: todo
+agente cuja resposta um script lê é instruído a não cercá-la, e uma resposta cercada não é lida —
+o fold a recusa nomeando a delegação.
 **Exemplo:**
 
 ```yaml
@@ -1874,7 +1947,7 @@ candidates_opened:
 | `read[].node` | A identidade do nó. |
 | `read[].held_at` | Onde no arquivo o fato do nó está agora (`the return statement of place(), line 41`), **ou a palavra `nowhere`** ("em lugar nenhum"). Um fato é contido por **código**, nunca por um comentário sobre ele. A resposta é lida pela primeira palavra: `nowhere. The file does no ranking.` continua significando "em lugar nenhum". Um arquivo que não contém fato algum é respondido `nowhere` para cada nó. |
 | `read[].evidence` | Código citado que sustenta a resposta. Quando `held_at` é `nowhere`, cita o que foi examinado. |
-| **`looked_past`** | Uma frase nomeando o que foi visto e não relatado porque pertence a outro julgamento (por exemplo, um problema de estilo, que é do standard). |
+| **`looked_past`** | Uma frase nomeando o que foi visto e não relatado porque pertence a outro julgamento (por exemplo, um problema de estilo, que é do standard, ou um fato que só um comentário afirma). |
 | **`candidates_opened`** | Todo candidato que o juiz de fato abriu, tenha ou não resultado em finding. Vazio ou ausente significa que não abriu nenhum. Serve para medir se vale a pena oferecer a camada de candidatos. |
 
 **`node` num finding.** Quando o finding é sobre um nó específico, nomeia-o (pode ser um
@@ -1887,15 +1960,27 @@ Um julgamento responde a perguntas diferentes, e o `kind` diz a qual delas o fin
 | `kind` | Significa | Bloqueia o vínculo do nó? | Rota |
 |---|---|---|---|
 | **`contradicts`** (contradiz) | O código diz o que o nó nega, ou não carrega mais o fato do nó, ou virou uma segunda casa para ele. | **Sim** — o nó não é vinculado. | `/analyse` (a especificação está atrasada) ou corretivo do `/plan-work` (o código está errado) |
-| **`unstated`** (não declarado) | O código afirma um fato que **nenhum nó contém**. | Não — nenhum rebind poderia resolvê-lo, então ele não impede o vínculo que a leitura do nó liberou. | `/analyse` |
+| **`unstated`** (não declarado) | O **código** afirma um fato que **nenhum nó contém**. | Não — nenhum rebind poderia resolvê-lo, então ele não impede o vínculo que a leitura do nó liberou. | `/analyse` |
 | **`restates`** (repete) | Um **comentário** ou uma **docstring** — prosa que nenhum sistema em execução emite — repete o fato de um nó, **enquanto algum código também contém esse fato** (neste arquivo ou noutro que o finding nomeia). | Não — o par está conforme e é vinculado onde o código está. | Remover a prosa (rota 4), depois `/reconcile` sobre o arquivo de novo |
 
 **Casos de fronteira:**
-- Se **nenhum código** contém o fato, um comentário que o afirma é `contradicts`, não `restates`.
+- Se **nenhum código** contém o fato de um nó, um comentário que o afirma é `contradicts`, não
+  `restates`.
+- **Um fato que só um comentário ou uma docstring afirma** — e que nenhum nó contém, nenhum
+  código e nenhum texto emitido carrega — **não é finding** de tipo nenhum, nem `unstated`: prosa é
+  o que alguém acreditava, e a análise lê os fatos no código. O juiz o nomeia em `looked_past`, e a
+  rota de comentários o remove.
 - **Texto que o sistema em execução emite é comportamento, nunca `restates`** — a descrição de
   uma ferramenta, uma mensagem de erro, um prompt enviado a um modelo, uma linha de log. É o que o
   sistema diz a alguém; removê-lo mudaria o comportamento. Se afirma corretamente o fato de um nó,
   **não é finding**; se afirma algo diferente do nó, é `contradicts`.
+- **Exceção: texto que só nomeia um controle, e o ajuste que um cliente faz das suas
+  requisições.** O rótulo de um botão, de uma coluna, de uma aba ou de um menu, um nome acessível
+  (`aria-label`), um placeholder, o tempo de cache ou o número de tentativas de uma requisição são
+  escolhas da implementação, nunca fatos do domínio: um deles que nenhum nó contém **não é
+  finding** de tipo nenhum. Já o texto que muda o que uma pessoa pode saber ou fazer — uma mensagem
+  de recusa ou de falha, o rótulo de um vocabulário fechado, um aviso de resultado — continua sendo
+  fato.
 - Se duas coisas são verdadeiras sobre um mesmo arquivo, são dois findings, porque são devidos a
   pessoas diferentes.
 
@@ -1911,6 +1996,21 @@ siegard-reconcile/<slug>.returns/certify__<nó com cada '/' trocado por '__'>.ya
 sobrevivem à sessão. Um retorno "ajustado" por quem o salvou carregaria um julgamento que o juiz
 nunca fez. Por isso: nunca reformate, corte ou conserte um retorno. O que o juiz disse fora das
 quatro chaves vai para o relatório à pessoa, nunca para o arquivo que o fold lê.
+**Quem copia é um script.** A cópia é feita pelo `trace.py --save-return`, a partir da
+**transcrição** da delegação (o arquivo de saída que o ambiente nomeia para o agente disparado):
+
+```sh
+trace.py --save-return <target-root> <workspace> <arquivo> <transcrição>
+```
+
+`<arquivo>` é o caminho do arquivo preparado, como o manifesto o lista, ou a identidade do nó de
+uma certificação. O script grava a última mensagem do agente byte a byte, com o nome que o fold
+lê. **Nunca redigite um retorno a partir da notificação** que o repassa: esse texto é reformatado
+para exibição, e um caractere escapado (`&gt;` no lugar de `>`) quebra o YAML ou corrompe a
+evidência. O script recusa uma transcrição que termina numa chamada de ferramenta (o agente ainda
+não respondeu: espere), uma sem nenhuma mensagem do agente, e um arquivo que o stage não preparou.
+Nada é retirado: uma resposta cercada continua cercada, e o fold a recusa. Só quando a transcrição
+não pode ser lida o retorno é salvo à mão, sob a mesma disciplina.
 
 ### Premissa
 **O que é.** A **única parte do registro que pertence à pessoa**: um pequeno arquivo YAML no
@@ -1973,8 +2073,8 @@ gravado.
 
 **As regras que aplica, com exemplos.**
 1. **Validação dos retornos.** Cada retorno é conferido contra `conformance-return.json`. Um
-   retorno faltando para um arquivo preparado, um nó sem resposta em `read`, ou uma quinta chave
-   faz o fold recusar — e recusar o lote inteiro.
+   retorno faltando para um arquivo preparado, um nó sem resposta em `read`, uma quinta chave, uma
+   chave repetida ou uma cerca de código faz o fold recusar — e recusar o lote inteiro.
 2. **Um nó está conforme apenas onde todo juiz que leu um de seus arquivos o liberou.** Liberar
    significa: nenhum finding contra o nó, nenhum finding sem nó no mesmo arquivo, e todos os
    arquivos do vínculo ainda contêm o fato (nenhum respondeu `nowhere`). *Exemplo:* o nó
@@ -2059,7 +2159,7 @@ notes: The behavior is right and the specification is behind it.
 | `conforms` | `true` = o julgamento liberou o nó; `false` = há um finding de pé contra ele. |
 | `how` | Por quê, com o que foi lido citado. |
 | `encoded_at` | Só num nó liberado: os arquivos que contêm o fato dele. **É exatamente isso que o bind vincula.** |
-| `observed_at` | Só num nó não liberado: os arquivos que foram lidos, sem afirmar nada sobre eles. |
+| `observed_at` | Só num nó não liberado: os arquivos que foram lidos — os do finding e todo arquivo a que o trace vincula o nó —, sem afirmar nada sobre eles. |
 | `collateral` | Num nó não liberado: nada foi encontrado contra a substância **dele**; ele apenas divide o arquivo com um finding que não nomeou nó. Resolva esse finding e o nó é liberado junto. |
 | `decided_by`, `step`, `proof` | Uma certificação que se sustentou: o nó agora é decidido por teste. |
 | `remainder`, `remainder_why` | Uma certificação que não se sustentou: se um teste **poderia** fechar a lacuna (`testable`) ou não (`untestable`), e a asserção que a fecharia. |
@@ -2174,7 +2274,9 @@ Alguém precisa ler o código, dizer o que ele faz em termos de negócio, transf
 finalmente, vincular cada nó aos arquivos que de fato o contêm.
 **Os passos**, um contexto delimitado por vez:
 
-1. `trace.py --untraced <target>` — no início, todo arquivo está `unsurveyed`.
+1. `trace.py --untraced <target>` — no início, todo arquivo está `unsurveyed` (ou `uncertified`,
+   se for um teste que o target declara em `tests`). Declarar os testes antes do primeiro
+   levantamento é o que os mantém fora das áreas.
 2. **`/survey`** — agentes leem o código, área por área, e devolvem o **material de
    levantamento**: os fatos de domínio que o código exibe, cada um ao lado do arquivo onde foi
    lido.
@@ -2184,23 +2286,35 @@ finalmente, vincular cada nó aos arquivos que de fato o contêm.
    seus próprios fatos foram parar. A primeira adoção cria o `siegard-trace.json`.
 5. Ler o que voltou: candidatos `unheld`, findings `contradicts` e `unstated` → de volta ao
    `/analyse`; `restates` → remover o comentário e reconciliar de novo.
-6. Só então, a documentação existente (manuais, wikis) entra como material de um incremento
-   comum do `/analyse`.
+6. Só então, os incrementos seguintes: o que os testes declarados afirmam, lido pela forma de
+   testes do `/survey` como **material de intenção**, e a documentação existente (manuais,
+   wikis), cada um como material de um incremento comum do `/analyse`.
+
+O `/adopt-scope` executa os passos 2 a 4 de ponta a ponta, sob um único pedido (verbete
+próprio, abaixo).
 
 **Por que a documentação vem depois.** O primeiro material de um sistema adotado é lido **só do
 código**, descrevendo comportamento observável. Uma documentação pode estar desatualizada; o código
 é o que de fato roda.
 **Quando está completa.** A adoção está completa quando o `--untraced` não mostra nenhum arquivo
 `unsurveyed` e o `--convergence` não mostra nenhum nó `unreached`. Isso é calculado, nunca
-registrado, e nada espera por isso.
+registrado, e nada espera por isso. Um teste `uncertified` não impede a conclusão: um teste é
+certificado quando a pessoa o oferece, nunca é uma dívida.
 
 ### `/survey` — o levantamento
 **O que é.** A skill que lê código que nenhuma entrega escreveu e grava o **material de
 levantamento**, um arquivo por área, e entrega a invocação do `/analyse` que o transformará em nós.
+**As duas formas.** A **forma de código** (o padrão) lê o código e grava material de
+levantamento. A **forma de testes**, pedida pela pessoa, lê os testes que o target declara em
+`tests` e grava **material de intenção** (verbete próprio, abaixo). Um teste diz o que o código
+deveria fazer e um levantamento lê o que ele faz, por isso as duas formas nunca dividem um arquivo.
+A forma de testes exige os testes declarados; um target que não os declara é uma parada que
+entrega o `/siegard-config`.
 **Entradas obrigatórias.** A raiz do projeto; o target; o **slug** do levantamento (uma pasta em
 `siegard-survey/`, no topo do git — slug já usado é parada); e as **áreas**, nomeadas pela pessoa,
-cada uma com um nome curto e os arquivos que contém (caminhos ou pastas). Testes não são área: um
-teste é material de certificação, não de levantamento. Um arquivo em duas áreas é parada.
+cada uma com um nome curto e os caminhos ou pastas que contém. Na forma de código, testes não são
+área: um teste é material de certificação, não de levantamento. Na forma de testes, a área são os
+testes declarados que esses caminhos contêm, e nada mais. Um arquivo em duas áreas é parada.
 **Pré-condição.** Todo arquivo de toda área precisa estar commitado.
 **A ordem:**
 
@@ -2209,18 +2323,24 @@ situate → delegate → hold → report → stop
 ```
 
 1. **situate** — roda `spec.py --digest` (as identidades já existentes são o "contexto até agora",
-   para que a mesma coisa receba o mesmo nome) e `trace.py --untraced` (o ponto de partida).
-2. **delegate (delegar)** — dispara um agente `domain-surveyor` por área, todos juntos (em lotes
-   que o ambiente comporte), e salva cada retorno **literalmente** como
-   `siegard-survey/<slug>/<area>.md`.
-3. **hold (conferir)** — `trace.py --survey` confere cada arquivo contra o contrato
-   `schemas/survey.json` e conta as linhas de fato por cabeçalho. Um arquivo recusado é refeito
-   pelo agente, nunca consertado à mão (um fato acrescentado à mão seria um fato que ninguém leu).
-4. **report** — relata as áreas, as contagens, tudo o que ficou em "observado e não decidido
-   aqui" (dois comportamentos do código que discordam), os arquivos lidos fora das áreas, e
-   entrega a invocação do `/analyse` com os arquivos do levantamento como material.
+   para que a mesma coisa receba o mesmo nome) e `trace.py --untraced` (o ponto de partida). Para
+   cada área, roda `trace.py --area`: os arquivos que ele lista **são** a área — nunca uma listagem
+   própria da skill —, e os testes declarados que ele deixa de fora são nomeados no relatório (na
+   forma de testes, a área é justamente essa segunda metade da saída).
+2. **delegate (delegar)** — dispara um agente por área — `domain-surveyor` na forma de código,
+   `test-intent-reader` na forma de testes —, todos juntos (em lotes que o ambiente comporte), e
+   salva cada retorno **literalmente** como `siegard-survey/<slug>/<area>.md`.
+3. **hold (conferir)** — `trace.py --survey` confere cada arquivo contra o contrato que o seu
+   `contract_version` nomeia (`schemas/survey.json` ou `schemas/intent.json`) e conta as linhas de
+   fato por cabeçalho. Um arquivo recusado é refeito pelo agente, nunca consertado à mão (um fato
+   acrescentado à mão seria um fato que ninguém leu).
+4. **report** — relata as áreas, os arquivos que o `--area` listou e os testes que deixou de fora,
+   as contagens, tudo o que ficou em "observado e não decidido aqui" (dois comportamentos do código
+   que discordam), os arquivos lidos fora das áreas, e entrega a invocação do `/analyse` com os
+   arquivos do levantamento como material.
 
-**O que nunca faz.** Não lê documentação como material; não escreve nó, ledger nem vínculo; não faz
+**O que nunca faz.** Não lê documentação como material; não lê um teste como material de
+levantamento nem o código como material de intenção; não escreve nó, ledger nem vínculo; não faz
 commit.
 
 ### `domain-surveyor` — o agente de levantamento
@@ -2229,6 +2349,12 @@ Lê **uma área** de código e devolve o material de levantamento no formato de
 Sua regra principal: **código é evidência; texto nunca é**. Comentários, docstrings, READMEs e
 mensagens de commit dizem o que alguém acreditava; o agente lê os desvios, as comparações e as
 respostas do código.
+
+### `test-intent-reader` — o agente da forma de testes
+Lê **uma área de testes declarados** e devolve material de intenção no formato de
+`schemas/intent.json`: o que o código deveria fazer, segundo o que os testes **afirmam**. Só lê
+(ferramentas `Read`, `Grep`, `Glob`); devolve texto, e a skill grava. A evidência é a asserção,
+nunca o título do teste. O código só é aberto para dizer qual arquivo cada teste governa.
 
 ### Material de levantamento (survey material)
 **O que é.** Um arquivo markdown por área, com frontmatter `contract_version: siegard-survey/1`,
@@ -2255,9 +2381,27 @@ pertence ao fato acima dele. Exemplo:
 - Placing an order for a customer with an overdue invoice is refused with `CUSTOMER_BLOCKED`. `src/orders/place.ts`
 ```
 
+### Material de intenção (intent material)
+**O que é.** O material lido dos **testes declarados** de um target pela forma de testes do
+`/survey`: o que o código **deveria** fazer, cada fato ao lado do teste onde foi lido **e** do
+arquivo de código que ele governa. Contrato: `schemas/intent.json` (`siegard-intent/1`).
+**Quando aparece.** Nunca no primeiro material de um sistema adotado, que é lido só do código: o
+material de intenção é um dos incrementos que vêm depois da adoção, e o que ele corrige entra como
+uma mudança comum à especificação.
+**Formato.** O frontmatter traz `contract_version`, `target`, `tests` (todo teste lido, cada um no
+escopo de testes declarado), `files` (todo arquivo de código que algum fato governa, nenhum deles
+um teste) e, opcionalmente, `read_outside_area`. O corpo tem os mesmos seis cabeçalhos do material
+de levantamento, na mesma ordem.
+**Linha de fato.** Nomeia, entre crases, o teste onde o fato foi lido **e** cada arquivo de `files`
+que ele governa. Uma linha que não nomeia teste ou não nomeia arquivo governado é recusada.
+**Para que a adoção o usa.** O `/analyse` escreve sobre ele o mesmo ledger, e a adoção sobre esse
+ledger entrega a cada **arquivo governado** os nós em que os seus fatos foram parar. Um teste é só
+o lugar onde um fato foi lido: nunca é um arquivo do conjunto julgado.
+
 ### Ledger (livro-razão do material)
-**O que é.** O arquivo `ledger.md`, escrito pelo `/analyse` **ao lado do material** (nunca dentro da
-especificação), que diz para onde foi **cada linha de fato** do material. Contrato:
+**O que é.** O arquivo `ledger.md`, escrito pelo `/analyse` **ao lado do material** — de
+levantamento ou de intenção — (nunca dentro da especificação), que diz para onde foi **cada linha
+de fato** do material. Contrato:
 `schemas/ledger.json` (`siegard-ledger/1`).
 **Por que existe.** Sem ele, um fato que o material declarava e a análise não transformou em nó
 simplesmente desapareceria — e só seria redescoberto, arquivo por arquivo e a alto custo, pelos
@@ -2276,17 +2420,25 @@ Uma entrada tem `node` **ou** `outside`, nunca os dois.
 no seu pacote, **só os candidatos em que os fatos daquele arquivo foram parar** — em vez de todos
 os candidatos do incremento. Isso reduz muito o que cada juiz precisa ler.
 
-### `trace.py --survey` e `trace.py --ledger`
+### `trace.py --area`, `trace.py --survey` e `trace.py --ledger`
 
 ```sh
-trace.py --survey <material.md> ...          # confere material contra survey.json e conta fatos por cabeçalho
+trace.py --area <target-root> <caminho-ou-pasta> ...  # os arquivos de uma área, sem os testes declarados
+trace.py --survey <material.md> ...          # confere material contra o seu contrato e conta fatos por cabeçalho
 trace.py --ledger <ledger.md> <spec-root>    # confere o ledger contra o material e os nós
 ```
 
+- `--area` lista os arquivos rastreados que os caminhos de uma área contêm, deixa de fora os
+  testes que o target declara (e os nomeia) e também deixa de fora um submódulo. Para quando um
+  teste declarado é nomeado sozinho como arquivo da área: quem o nomeou queria uma certificação.
+  Se o target não declara testes, o script diz isso e não deixa nada de fora.
 - `--survey` recusa um arquivo cujo frontmatter não cumpre o contrato, cujo `files` não é a área,
-  ou cujo corpo não tem um dos cabeçalhos. Íntegro, conta as linhas de fato por cabeçalho e aponta
-  os arquivos da área que nenhum fato menciona (isso é um dado a relatar, não um erro: o arquivo
-  pode não conter nada de domínio).
+  ou cujo corpo não tem um dos cabeçalhos — e, no material de levantamento, um arquivo que seja
+  teste declarado; no material de intenção, um teste que o target não declara, um arquivo
+  governado que seja teste, ou uma linha de fato sem teste ou sem arquivo governado. Íntegro, conta
+  as linhas de fato por cabeçalho e aponta os arquivos da área que nenhum fato menciona (isso é um
+  dado a relatar, não um erro: o arquivo pode não conter nada de domínio) e, no material de
+  intenção, os testes em que nenhum fato foi lido.
 - `--ledger` recusa um ledger ao qual falte uma linha de fato, ou que nomeie um nó que não existe.
   Íntegro, imprime o conjunto de arquivos que o material leu e os candidatos por arquivo — o que a
   adoção vai usar.
@@ -2298,7 +2450,11 @@ trace.py --stage <target-root> <spec-root> <slug> <workspace> \
     --adopt --ledger <ledger.md> [<arquivos>] [--outside <arquivo> ...] [--certify <arquivo>]
 ```
 
-- O conjunto de arquivos é, por padrão, o das áreas do material (ou o subconjunto nomeado).
+- O conjunto de arquivos é, por padrão, o das áreas do material — no material de intenção, os
+  arquivos que ele governa, nunca os testes — (ou o subconjunto nomeado).
+- Um arquivo que o target declara como teste é recusado no conjunto: um teste nunca é código
+  adotado. A recusa entrega, no lugar, a entrada de `--certify` para oferecê-lo como prova de um
+  nó, que segue no mesmo stage.
 - Cada arquivo recebe os candidatos em que o ledger colocou os seus fatos. Um arquivo que nenhum
   fato menciona não recebe juiz e fica `unbound`.
 - O índice de candidatos continua listando todos os candidatos, com os arquivos de cada um, para
@@ -2306,7 +2462,9 @@ trace.py --stage <target-root> <spec-root> <slug> <workspace> \
 - **Sem ledger**, cada candidato é nomeado com `--node`, e o juiz de todo arquivo lê todos eles.
 - Não é preciso trace para começar. Nenhum candidato é omitido nem respondido por execução: é a
   leitura dele que decide se será vinculado.
-- `--outside` nomeia arquivos (configuração, fiação) que ficam fora do julgamento.
+- `--outside` nomeia arquivos (configuração, fiação) que ficam fora do julgamento — inclusive um
+  submódulo — e é passado junto com a adoção do contexto a que esses arquivos pertencem. Um
+  teste declarado nunca é `outside`: fica `uncertified` até que uma certificação o nomeie.
 
 ### Como uma adoção termina para cada candidato
 - **Liberado** → vinculado aos arquivos cujo juiz leu o fato ali, e a nenhum outro.
@@ -2314,6 +2472,42 @@ trace.py --stage <target-root> <spec-root> <slug> <workspace> \
   contra ele. Ou o código não carrega esse nó, ou ele está em arquivos fora deste conjunto: cabe à
   análise revisitar, ou à adoção desses outros arquivos.
 - **`contradicts`** → o nó descreve mal o código: volta ao `/analyse`.
+
+### `/adopt-scope` — a adoção de ponta a ponta
+**O que é.** A skill que leva **um contexto** de código adotado pela rota inteira — `/survey` sobre
+as áreas do pedido, `/analyse` sobre o material que ele escreveu, `/reconcile` como adoção sobre o
+ledger —, fazendo commit entre os passos. Uma invocação = um contexto adotado. É o segundo
+orquestrador, construído como o `/deliver-scope` (§7).
+**Autorização.** Só quando a mensagem da própria pessoa pede a rota inteira para aquele contexto
+(citada literalmente). Um pedido que nomeia uma só fase recebe aquela skill, não esta. Commits
+sempre restritos a caminhos (pathspec), um por passo, com a mensagem
+`adopt-scope <slug>: survey|analyse|adopt|measure` — nunca cria branch, nunca faz push, nunca
+reescreve histórico.
+**A diferença em relação ao `/deliver-scope`.** Esta skill **invoca o `/analyse`**, porque
+escrever a especificação a partir do código adotado é a sua rota. O que faz as vezes da revisão
+que uma pessoa daria ao diff antes do commit é a divulgação completa: o ledger (todo fato cai num
+nó ou fica de fora com motivo), o decision log ao lado de cada nó, o validador e o relatório. A
+pessoa revisa o intervalo de commits depois. Em compensação, **nunca** invoca `/plan-work`,
+`/implement-task`, `/review-change` nem `/deliver-scope`: a adoção não muda código, e um
+comportamento errado que ela encontre é um novo pedido.
+**Entradas.** O pedido (literal), a raiz do projeto, o target, o slug do contexto e as áreas; e,
+opcionalmente, os arquivos `outside` e as certificações, sempre nas palavras do pedido. Um slug cujo
+registro de reconciliação já existe é uma **retomada**: a skill continua do passo cujo commit o log
+não tem.
+
+```
+gate → survey → commit → analyse → commit → adopt → commit → measure → commit → report → stop
+```
+
+**Duas regras.** **Colar, nunca compor**: cada skill termina entregando a próxima invocação
+pronta, e esta skill a usa literalmente, preenchendo só as lacunas que o pedido cobre. **Toda
+decisão de rota é a resposta de um script** (`--survey`, `--ledger`, `spec.py`, o fold,
+`--reconciliation`, `--untraced`): uma parada de script é parada desta skill.
+**Log.** Mantém `orchestration.md` em `siegard-survey/<slug>/`, uma linha por passo — um marcador,
+nunca um nó.
+**Paradas.** Toda parada de uma skill interna encerra a execução, com as portas repassadas
+literalmente; nenhuma é contornada nem repetida. Candidatos `unheld`, findings, fatos deixados de
+fora pelo ledger e decisões registradas **não** param nada: são divulgação, e vão para o relatório.
 
 ---
 
@@ -2406,6 +2600,7 @@ podem escrever arquivos**; todos os outros devolvem texto, e a skill grava.
 | `specification-conformance-reviewer` | `/review-change`, `/reconcile` | Lê um arquivo contra os seus nós; devolve findings e `read` | Não |
 | `standard-conformance-reviewer` | `/review-change`, `/check-source` | Lê arquivos contra as regras de leitura do standard | Não |
 | `domain-surveyor` | `/survey` | Lê uma área de código não entregue e devolve material de levantamento | Não |
+| `test-intent-reader` | `/survey` (forma de testes) | Lê uma área de testes declarados e devolve material de intenção | Não |
 
 **Delegação** = disparar um destes num contexto limpo. **Inline** = o recurso de emergência quando
 a sessão não consegue disparar agentes: a própria sessão aplica o arquivo do agente, e o relatório
@@ -2432,7 +2627,7 @@ nem flags do framework (exceto onde indicado); eis o termo oficial que cada uma 
 | **unfold / unfolded** | Nome interno no `deliver.py` para uma revisão cujo passe de conformidade rodou sobre um target com trace mas **não dobrou nenhum registro de reconciliação**. O `deliver.py` imprime um recibo: os outros nós vinculados aos arquivos revisados ainda carregam digests antigos, e um `/reconcile` sobre esses arquivos os fecha. | o recibo de "revisão não reconciliada" |
 | **certificate** (certificado) | Uma certificação que se sustentou. | `decided_by: test` (+ `step`, `proof`) |
 | **comment findings** | Findings `restates` em que o texto é um **comentário** ou docstring no código. | `kind: restates` |
-| **emitted-text findings** | Findings sobre texto que o **sistema em execução emite** — descrição de ferramenta ou API, mensagem de erro, prompt, linha de log. Desde a 4.21.3, esse texto é comportamento, nunca `restates`: se concorda com o nó, não é finding; se discorda, é `contradicts`. (Antes da 4.21.3, uma descrição repetindo um fato que o código impunha era registrada como `restates`, por isso registros antigos ainda podem ter entradas assim.) | nenhum finding, ou `kind: contradicts` |
+| **emitted-text findings** | Findings sobre texto que o **sistema em execução emite** — descrição de ferramenta ou API, mensagem de erro, prompt, linha de log. Desde a 4.21.3, esse texto é comportamento, nunca `restates`: se concorda com o nó, não é finding; se discorda, é `contradicts`. (Antes da 4.21.3, uma descrição repetindo um fato que o código impunha era registrada como `restates`, por isso registros antigos ainda podem ter entradas assim.) Desde a 5.4.0, texto que só nomeia um controle (rótulo, nome acessível, placeholder) não é finding nenhum (§10). | nenhum finding, ou `kind: contradicts` |
 | **unheld** | *(este é oficial)* Um candidato de adoção que nenhum arquivo contém. | `unheld` no registro |
 | **o corpus** | Todos os registros em `siegard-reconcile/`, lidos em conjunto. | lido pelo `--owed` |
 | **par** | Um nó + um de seus arquivos. | par nó-arquivo |
@@ -2612,6 +2807,10 @@ reconciliação sobre os arquivos restantes. `restates` → remover comentários
 mostrar nó `unreached`, a adoção está completa. Só então a documentação do sistema entra como
 material de um `/analyse` comum.
 
+**Atalho.** Os passos 2 a 4 podem ser pedidos de uma vez ao `/adopt-scope`, que faz um commit por
+passo (`adopt-scope orders: survey`, `…: analyse`, `…: adopt`, `…: measure`) e para nas mesmas
+paradas.
+
 ---
 
 ## 17. Perguntas frequentes
@@ -2670,6 +2869,7 @@ sobrescrevê-lo apagaria essa justificativa.
 | Termo | Seção |
 |---|---|
 | `_context.md` | 5 |
+| `/adopt-scope` | 4, 11, 16 |
 | adoção, `--adopt` | 10, 11, 16 |
 | advisory (nota) | 6 |
 | afirmação operativa | 5 |
@@ -2678,6 +2878,7 @@ sobrescrevê-lo apagaria essa justificativa.
 | âncora | 6 |
 | `/analyse` | 5 |
 | `answers` (api) | 5 |
+| `--area` | 11 |
 | árvore limpa | 1 |
 | auditoria, `--audit` | 10 |
 | bind, `--bind`, `--bind-record` | 9, 10 |
@@ -2724,6 +2925,7 @@ sobrescrevê-lo apagaria essa justificativa.
 | `decided_by` (standard) | 4 |
 | `decided_by: test` / `reading` (trace) | 9, 10 |
 | decidir e divulgar | 5 |
+| `--decide` | 5 |
 | decision log | 5 |
 | `deferred` | 7 |
 | `/deliver-scope`, `orchestration.md` | 7 |
@@ -2749,7 +2951,7 @@ sobrescrevê-lo apagaria essa justificativa.
 | `--fold` (dobra) | 10 |
 | frontmatter, YAML | 1 |
 | `held_at` | 10 |
-| holds-nothing / outside / unsurveyed / bound | 9 |
+| holds-nothing / outside / uncertified / unsurveyed / bound | 9 |
 | hook | 1, 4 |
 | `how` | 7, 10 |
 | identidade | 5 |
@@ -2768,9 +2970,12 @@ sobrescrevê-lo apagaria essa justificativa.
 | `looked_past` | 10 |
 | manifest (`manifest.json`) | 10 |
 | material | 5 |
+| material de intenção | 11 |
 | material de levantamento | 11 |
+| medição (`measure`) | 7, 11 |
 | `moved` | 9 |
 | nó | 5 |
+| `node_digest` | 9 |
 | `nowhere` | 10 |
 | obrigação | 8 |
 | `observed_at` | 10 |
@@ -2817,6 +3022,7 @@ sobrescrevê-lo apagaria essa justificativa.
 | rotas | 4 |
 | `rules.md` (arquivo de regras) | 4 |
 | `run.py` | 7 |
+| `--save-return` | 10 |
 | scenario | 5 |
 | schema (contrato) | 1 |
 | script | 1 |
@@ -2834,15 +3040,19 @@ sobrescrevê-lo apagaria essa justificativa.
 | standard (registro de regras) | 4 |
 | standard (pass) | 8 |
 | `stands` | 6 |
-| `/survey`, `--survey` | 11 |
+| submódulo | 9, 11 |
+| `/survey`, `--survey`, forma de testes | 11 |
 | target | 4 |
 | tarefa | 6 |
 | telemetria | 12 |
+| `test-intent-reader` | 11, 13 |
+| `tests` (`siegard.json`) | 4 |
 | teste finito | 8 |
 | topo do git | 1, 4 |
 | trace | 9 |
 | underdetermined (nota) | 6 |
 | `unbound` | 10 |
+| `uncertified` | 4, 9, 11 |
 | unfold / unfolded (informal) | 14 |
 | `unheld` | 10, 11 |
 | `unpaired` | 8 |
