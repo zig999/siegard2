@@ -5244,6 +5244,13 @@ def main() -> int:
 
     if do_stage:
         least = 4 if ledger_given is not None else 5
+        if outside and ledger_given is None and len(args) == 4 \
+                and not any(a.startswith("--") for a in args):
+            print("cannot run: --outside names the files an adoption keeps out of its judgment, "
+                  "and this staging judges no file; an outside set is named with the adoption of "
+                  "the context whose files it borders, never recorded without a judgment",
+                  file=sys.stderr)
+            return CANNOT_RUN
         if len(args) < least or any(a.startswith("--") for a in args):
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
                   "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...] | "

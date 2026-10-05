@@ -2050,6 +2050,16 @@ def test_outside_belongs_to_an_adoption_and_never_to_the_file_set(adopting):
     assert done.returncode == 2 and "is also in the file set" in done.stderr
 
 
+def test_an_outside_set_with_no_file_judged_is_refused_naming_the_route(adopting):
+    """An outside set is recorded by the adoption that judges the files it borders; a staging
+    judging nothing would be a record of a judgment that never happened."""
+    done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x",
+               "--adopt", "--node", NODE, "--outside", KEPT_OUT)
+    assert done.returncode == 2
+    assert "this staging judges no file" in done.stderr
+    assert "named with the adoption of the context whose files it borders" in done.stderr
+
+
 def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopting):
     """SPEC-005 R4: an adopted node binds the files whose judgment holds its fact and no others;
     a candidate no file holds is reported and bound to nothing, and a file holding no candidate

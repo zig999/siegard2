@@ -36,8 +36,10 @@ lets you add it as a marketplace.
 /plugin install siegard@siegard-generator
 ```
 
-When asked for a **scope**, choose **project**. That records the marketplace and the plugin in
-the consumer's `.claude/settings.json`, in this shape:
+When asked for a **scope**, choose **project**. That records the plugin in the consumer's
+`.claude/settings.json` under `enabledPlugins`. For anyone who opens the repository afterwards
+to be offered the same install, that file also needs the marketplace: where the install did not
+write `extraKnownMarketplaces`, add it by hand, so the file reads in this shape:
 
 ```json
 {
@@ -95,6 +97,19 @@ writes `siegard.json` — the specification root, targets, work and delivery roo
 standard each target follows. Commit `siegard.json` and `.claude/settings.json`: those two
 make the install reproducible for everyone on the project.
 
+What else the file declares, and what each declaration changes, is `schemas/project.json`'s to
+say; three of its fields are worth deciding before any work starts:
+
+- **`standard`, one registry per target.** `/siegard:siegard-standard` writes a target's registry
+  from the project's own configuration; a project with more than one target declares `standard`
+  keyed by target. This repository's `src/standards/` holds worked registries that do not ship —
+  read them in a clone, as with `tools/` below.
+- **`tests`, per target.** Declare which files are a target's tests before the first survey:
+  a declared test is never read as source, and `--untraced` counts it `uncertified` until a
+  certification names it.
+- **`edits_freely`**, for a target whose bytes change without a task — what it holds back from
+  `trace.py --check`, and what answers it instead (`/siegard:check-source`), is in the schema.
+
 ### 6. Verify
 
 - `/plugin` → **Installed** lists `siegard` at the current version.
@@ -107,8 +122,11 @@ make the install reproducible for everyone on the project.
 A project whose code was written before Siegard is adopted, never re-delivered. One context at a
 time, after steps 1–6 above:
 
-1. **Measure the start.** `python3 -B <plugin>/bin/trace.py --untraced <target-source-root>` lists
-   every tracked file no binding names. Before an adoption every file is `unsurveyed`.
+1. **Measure the start, and sort the tree.** `python3 -B <plugin>/bin/trace.py --untraced
+   <target-source-root>` lists every tracked file no binding names. Before an adoption every
+   file is `unsurveyed`, except the declared tests, which are `uncertified`. Decide each one's
+   place before the first survey: a context's source, or outside — configuration, wiring, a
+   submodule — named with the adoption of the context it borders.
 2. **`/siegard:survey`** over the context's source, cut into areas you name. One surveyor per
    area reads the code — never its documentation or comments — and returns material: every
    observable behavior, every refusal with its answer, the closed vocabularies, what upstream
@@ -123,7 +141,9 @@ time, after steps 1–6 above:
    first adoption writes `siegard-trace.json`. Tests you know assert a node's own condition may
    be offered as certifications in the same run.
 5. **Read what it hands back.** A candidate no file holds, a `contradicts` and an `unstated`
-   finding all go back to `/siegard:analyse`.
+   finding all go back to `/siegard:analyse`. A `restates` finding is a comment saying a node's
+   fact: remove every comment the file carries, not only the one cited, and reconcile the file
+   again.
 6. **Then the documentation**, as an ordinary `/siegard:analyse` increment over the adopted
    specification. What it corrects surfaces as drift, and a behavior the business wants changed is
    a corrective increment of `/siegard:plan-work`.

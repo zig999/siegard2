@@ -588,8 +588,10 @@ prose — a comment breaking the consumer rules' comment rule. Neither door abov
 no fact to decide into the specification and no behavior to correct, and routing it through either
 prices a line of prose like a defect. The consumer rules' comment route is the answer — the human
 removes the prose, never refreshes it, and this skill invoked again over that file under a new slug
-is what re-judges and rebinds. Hand that invocation ready to paste, and say which findings it
-answers.
+is what re-judges and rebinds. The prose removed is every comment the file carries, directives the
+toolchain reads excepted, never only the ones cited: a judge names what it read, it does not list
+every comment, so a file stripped of the cited ones hands the next judge the rest. Hand that
+invocation ready to paste, and say which findings it answers.
 
 The fourth, where the fold placed a finding in the record's `notes` because it names a node no
 file of this set is bound to — the note ends "owed a route of its own". It blocked nothing here,
