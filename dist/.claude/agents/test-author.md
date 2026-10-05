@@ -212,7 +212,8 @@ test of what the code does, and what the code does is the thing under question.
 
 ## What you return
 
-One YAML mapping, nothing else — no commentary before or after:
+One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
+fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
 
 ```yaml
 title: <what this proof is, in a few words>

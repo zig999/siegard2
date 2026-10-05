@@ -545,6 +545,22 @@ def test_save_return_copies_the_delegation_s_final_reply_byte_for_byte(consumer)
     assert folded(consumer)[0].returncode == 0
 
 
+def test_a_fenced_reply_is_saved_as_written_and_the_fold_refuses_it_by_name(consumer):
+    """The saved return is the reply's bytes and nothing else, so a fence the judge wrote stays;
+    the fold reads what was saved, finds no YAML, and names the delegation to run again — it never
+    strips the fence and reads a return nobody wrote."""
+    _, workspace = staged(consumer)
+    reply = "```yaml\n" + yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False) + "```\n"
+    transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": reply}])
+    assert run("--save-return", consumer / "backend", workspace, FILE, transcript).returncode == 0
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == reply
+    done, record = folded(consumer)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert f"{FILE}: the return does not parse" in done.stdout
+    assert not record.exists()
+
+
 def test_save_return_refuses_a_delegation_that_has_not_answered(consumer):
     _, workspace = staged(consumer)
     transcript = transcript_of(consumer / "agent.jsonl",

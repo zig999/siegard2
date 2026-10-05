@@ -121,6 +121,16 @@ def test_only_the_writers_write(agent):
             f"writes it, so a reviewer cannot edit what it flagged"
 
 
+def test_an_agent_returning_a_yaml_mapping_is_told_not_to_fence_it(agent):
+    """A script parses the reply, and a reply opening with a code fence is not YAML: the parse
+    refuses it whole and the delegation is paid for twice. The shape is shown inside a fence, and
+    the model mirrors the example unless the prompt says the fence is not the reply."""
+    if "One YAML mapping, nothing else" not in agent["body"]:
+        pytest.skip("returns no YAML mapping")
+    assert "no code fence around it" in agent["body"], \
+        f"{agent['stem']} returns a YAML mapping a script parses and never says not to fence it"
+
+
 def test_the_agent_restates_no_node_vocabulary(agent):
     from test_skill_contract import shipped_vocabulary
     distinctive = shipped_vocabulary()

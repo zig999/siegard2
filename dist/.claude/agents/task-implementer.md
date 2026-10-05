@@ -183,7 +183,8 @@ contradiction halfway through a file would be most of the way to writing past it
 
 ## What you return
 
-One YAML mapping, nothing else — no commentary before or after:
+One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
+fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
 
 ```yaml
 title: <what this delivery is, in a few words>
