@@ -876,6 +876,11 @@ def test_a_field_spelled_through_a_list_by_name_is_read_to_the_item(consumer):
     assert telemetry.field_of({"attributes": [{"name": "a"}, {"name": "a"}]},
                               "attributes.a") == (False, None), "two items under one name"
     assert telemetry.field_of({"attributes": [{"name": "a"}]}, "attributes.b") == (False, None)
+    answers = {"answers": [{"operation": "send-message", "accepted": "the turn"},
+                           {"operation": "list", "accepted": "the page"}]}
+    assert telemetry.field_of(answers, "answers.send-message.accepted") == (True, "the turn"), \
+        "a contract keys each answer by its operation, and a log entry spells it that way"
+    assert telemetry.field_of(answers, "answers.1.accepted") == (True, "the page")
 
 
 def test_an_entry_in_no_commit_yet_is_unlocated(consumer):

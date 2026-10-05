@@ -901,7 +901,7 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                                     f"this one is still unanswered")
                 continue  # a log beside no node and closing on no retirement is reported once above
             if isinstance(field, str):
-                head = field.split(".")[0].split("[")[0]
+                head = field.split(".")[0]
                 if head not in target["front"]:
                     problems.append(f"{identity}: entries[{index}] locates `{field}`, which "
                                     f"{sibling} does not declare — «an entry whose field does "
@@ -1776,7 +1776,7 @@ def decide(root: Path, identity: str, raw: str, validators) -> int:
         if front is None:
             print(f"refused: {identity}: {unreadable}")
             return 1
-        head = field.split(".")[0].split("[")[0]
+        head = field.split(".")[0]
         if head not in front:
             print(f"refused: {identity} declares no `{head}` — «an entry whose field does not "
                   f"resolve fails validation» (SPEC-001 R9)")

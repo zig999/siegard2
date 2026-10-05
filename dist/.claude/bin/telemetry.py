@@ -1063,8 +1063,9 @@ def field_of(front: object, dotted: str) -> tuple[bool, object]:
 
     A list of mappings is addressed by index or by the one item whose `name` is the part — the
     way a node names an attribute, a relationship or an operation, and the way a log entry's
-    `field` spells `attributes.<name>.type`. No item or two items under that name is a path
-    that does not reach."""
+    `field` spells `attributes.<name>.type` — or whose `operation` is, the way a contract keys
+    each of its `answers` and a log entry spells `answers.<operation>.accepted`. No item or two
+    items under that name is a path that does not reach."""
     current = front
     for part in dotted.split("."):
         if isinstance(current, dict) and part in current:
@@ -1073,7 +1074,8 @@ def field_of(front: object, dotted: str) -> tuple[bool, object]:
             current = current[int(part)]
         elif isinstance(current, list):
             named = [item for item in current
-                     if isinstance(item, dict) and item.get("name") == part]
+                     if isinstance(item, dict) and part in (item.get("name"),
+                                                            item.get("operation"))]
             if len(named) != 1:
                 return False, None
             current = named[0]
