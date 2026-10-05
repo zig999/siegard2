@@ -64,6 +64,14 @@ def test_every_commit_is_pathspec_scoped_and_nothing_sweeps_the_tree():
     assert "never creates a branch" in SKILL
 
 
+def test_every_run_ends_measured_and_a_stop_does_not_skip_it():
+    """The harness keeps the transcripts a run's cost is read from for a while, not for ever, and
+    a run that ended at a stop is the one whose cost a retrospective most needs."""
+    assert "`deliver-scope <slug>: measure`" in SKILL
+    assert "telemetry.py --probe --since <the instant step 1 began>" in SKILL
+    assert "A stop ends the route, never the measure" in SKILL
+
+
 def test_the_run_ends_at_the_record_and_findings_are_never_acted_on():
     """`/review-change` produces evidence, never a verdict, and the orchestrator inherits the
     restraint: the run's end state is the record's existence. A text that promised a *clean*
