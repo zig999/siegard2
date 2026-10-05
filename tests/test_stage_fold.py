@@ -2136,6 +2136,42 @@ def test_a_bound_file_that_still_holds_a_node_another_bound_file_lost_is_named(a
     assert bound.returncode == 0, bound.stdout + bound.stderr
 
 
+def test_a_node_contradicted_in_one_file_while_its_bound_files_still_hold_it_binds_the_rest(
+        adopting):
+    """A contradiction in a file the node was never bound to, while every file it is bound to
+    still holds it: the node is not released, every bound file is named so the bind can account
+    for its pair, and the rest of the record is bound."""
+    adopt_staged(adopting)
+    _, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    adopt_staged(adopting, slug="adopt-again", nodes=[NODE, RULE])
+    contradicted = read_as({NODE: "nowhere", RULE: "line 1"})
+    contradicted["findings"] = [{"file": THIRD, "where": "line 1", "node": NODE,
+                                 "kind": "contradicts", "evidence": "export const x",
+                                 "cost": "the node says otherwise",
+                                 "correction": "the source or the node"}]
+    done, again = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", RULE: "nowhere"}),
+        THIRD: contradicted,
+    }, slug="adopt-again")
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(again.read_text(encoding="utf-8").split("---")[1])
+    by_node = {e["node"]: e for e in front["nodes"]}
+    assert by_node[NODE]["conforms"] is False
+    assert by_node[NODE]["observed_at"] == sorted([FILE, SECOND, THIRD])
+    bound = run("--bind-record", adopting / "backend", adopting / "specs", again)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    trace_file = json.loads((adopting / "siegard-trace.json").read_text(encoding="utf-8"))
+    files_of = {e["node"]: sorted(f["path"] for f in e["files"]) for e in trace_file["bindings"]}
+    assert files_of[RULE] == [f"backend/{THIRD}"]
+    assert files_of[NODE] == sorted([f"backend/{FILE}", f"backend/{SECOND}"])
+
+
 def test_untraced_tells_the_four_states_apart_after_an_adoption(adopting):
     """SPEC-005 R5: bound, holds-nothing, outside, unsurveyed — one state per tracked file."""
     (adopting / "backend/src/orders/later.ts").write_text("x\n", encoding="utf-8")
