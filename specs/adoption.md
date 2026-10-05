@@ -88,7 +88,9 @@ constraints spent 26 judges on files the notes never cited while the notes named
   it and bound none of its candidates to it; outside — an adoption kept it out of the judgment;
   uncertified — the target's test scope holds it and no certification names it; unsurveyed —
   none of these. The states are computed from the trace, the reconciliation corpus and the
-  project file, and the report refuses nothing.
+  project file, and the report refuses nothing. A tracked file is every entry git tracks under the
+  target, a submodule included; a submodule holds no content of the repository, so outside is the
+  one state an adoption can move it to.
 - **R6** — Adoption changes no source. Tests already in the tree are certified where the human
   offers them, and prose in source is answered by the routes that already answer it. A declared
   test is never adopted as source: an area leaves it out, survey material or an adoption that

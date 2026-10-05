@@ -2709,6 +2709,28 @@ def tracked_under(target: Path, home: Path) -> tuple[list[str] | None, str | Non
     return sorted(line for line in listed.stdout.splitlines() if line), None
 
 
+def kept_out_problems(target: Path, home: Path, outside: list[str]) -> list[str]:
+    """What is wrong with the paths an adoption keeps out of its judgment, read as a bound file
+    is read — except that a path git tracks under the target and the working tree holds no file
+    at is kept out as it stands. A submodule is the one such path a tree carries by design: git
+    tracks it as one entry, and no judgment, binding or certification can ever name it — «a
+    submodule holds no content of the repository, so outside is the one state an adoption can
+    move it to» (SPEC-005 R5).
+    Nothing an outside entry records is read back as bytes — the record keeps the path alone — so
+    a path nothing is read from is never asked to be a file."""
+    tracked, _ = tracked_under(target, home)
+    offset = offset_of(target, home)
+    held = set(tracked or [])
+
+    def stored(given: str) -> str:
+        spelled = PurePosixPath(given).as_posix().strip("/")
+        return spelled if offset in (".", "") else f"{offset}/{spelled}"
+    as_files = [given for given in outside
+                if (target / given).is_file() or stored(given) not in held]
+    _, problems = traced_files_of(target, home, as_files)
+    return problems
+
+
 def adopted_ground(home: Path) -> tuple[set[str], set[str], list[str]]:
     """What the adoptions in the corpus judged and what they kept out, spelled from the toplevel
     as the trace spells a path, and every record that could not be read. Only a record carrying
@@ -2796,7 +2818,9 @@ def area(target: Path, given: list[str]) -> int:
     directories, and a directory holds the tests beside the source they test; the survey reads
     what the source does, and a test states what it should do, so the declaration — not the
     caller — is what takes them out. A test named as a file of the area is a stop rather than a
-    silent drop: whoever named it meant it, and what they meant is a certification."""
+    silent drop: whoever named it meant it, and what they meant is a certification. A submodule
+    git tracks under the area is left out too: it is one entry holding no source of this
+    repository, and a survey handed it would be handed a directory to read as a file."""
     if not target.is_dir():
         print(f"cannot run: {target} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -2820,9 +2844,15 @@ def area(target: Path, given: list[str]) -> int:
             print(f"cannot run: {said[-1] if said else 'git ls-files failed in ' + str(home)}",
                   file=sys.stderr)
             return CANNOT_RUN
-        files = [from_target(line, offset) for line in listed.stdout.splitlines() if line]
+        lines = [line for line in listed.stdout.splitlines() if line]
+        submodules = [line for line in lines if (home / line).is_dir()]
+        files = [from_target(line, offset) for line in lines if line not in submodules]
         files = [f for f in files if f]
-        if not files:
+        if not files and submodules:
+            problems.append(f"{spelled} is a submodule git tracks as one entry under {target}; it "
+                            f"holds no source of this repository to survey — keep it outside "
+                            f"the adoption instead")
+        elif not files:
             problems.append(f"{spelled} names no file git tracks under {target}; an area is "
                             f"spelled from the target source root")
         elif files == [spelled] and declared_test(scopes, spelled):
@@ -3245,8 +3275,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                           f"<the registry step that runs it>}}"
                           for given in files if declared_test(scopes, given)]
     if outside:
-        _, outside_problems = traced_files_of(target, home, outside)
-        path_problems += [f"--outside {problem}" for problem in outside_problems]
+        path_problems += [f"--outside {problem}"
+                          for problem in kept_out_problems(target, home, outside)]
         path_problems += [f"--outside {given} is also in the file set; a file is judged or kept "
                           f"out of the judgment, never both" for given in outside if given in files]
     for problem in path_problems:

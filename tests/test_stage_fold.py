@@ -2131,6 +2131,44 @@ def test_untraced_tells_the_four_states_apart_after_an_adoption(adopting):
     assert "unsurveyed:\n  backend/src/orders/later.ts" in done.stdout
 
 
+def listed(report: str, state: str) -> list[str]:
+    """The lines `--untraced --all` lists under one state."""
+    return report.split(f"\n{state}:\n", 1)[1].split("\n\n", 1)[0].splitlines()
+
+
+def test_a_submodule_is_kept_outside_and_never_handed_to_a_survey(adopting):
+    """SPEC-005 R5: a submodule is one entry git tracks, holding no content of the repository —
+    outside is the one state an adoption can move it to, and a survey is never handed it."""
+    submodule = "vendor/kit"
+    (adopting / "backend" / submodule).mkdir(parents=True)
+    subprocess.run(["git", "-C", str(adopting), "update-index", "--add", "--cacheinfo",
+                    f"160000,{'1' * 40},backend/{submodule}"], check=True)
+    before = run("--untraced", adopting / "backend", "--all")
+    assert f"  backend/{submodule}" in listed(before.stdout, "unsurveyed"), before.stdout
+
+    area = run("--area", adopting / "backend", "vendor")
+    assert area.returncode == 2 and "is a submodule" in area.stderr, area.stdout + area.stderr
+
+    staged, workspace = adopt_staged(adopting, "--outside", KEPT_OUT, "--outside", submodule)
+    assert staged.returncode == 0, staged.stdout + staged.stderr
+    assert manifest_of(workspace)["outside"] == sorted([KEPT_OUT, submodule])
+    _, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    after = run("--untraced", adopting / "backend", "--all")
+    assert "  2 outside:" in after.stdout, after.stdout
+    assert f"  backend/{submodule}" in listed(after.stdout, "outside")
+    assert "  0 unsurveyed:" in after.stdout
+
+
+def test_an_outside_path_nothing_tracks_and_nothing_holds_is_still_refused(adopting):
+    done, _ = adopt_staged(adopting, "--outside", "src/orders/never.ts")
+    assert done.returncode == 2 and "does not exist" in done.stderr
+
+
 def test_outside_needs_adopted_in_the_contract():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
