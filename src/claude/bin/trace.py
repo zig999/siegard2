@@ -1236,8 +1236,9 @@ def uncommitted_under(home: Path, root: Path) -> set[str]:
 
 
 def reconcile_set_report(declared: dict, home: Path, target: Path,
-                         findings: list[tuple[str, str, str | None, str]]) -> list[str]:
-    """The file set one `/reconcile` over this target reads, composed from the drift the report
+                         listed: list[tuple[str, str, str | None, str]],
+                         held: list[tuple[str, str, str | None, str]]) -> list[str]:
+    """The file set one `/reconcile` over a target reads, composed from the drift the report
     above listed, and — kept apart, each under the reason — the files it leaves out.
 
     The remedy for `code` and `moved` is one reconciliation over a file set, and the drift
@@ -1245,8 +1246,16 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     the set by hand from the two listings answers it wrongly in a way nothing above catches —
     a node's files taken for one file's nodes, a file of another target taken for this one's, a
     node whose text is pending in the working tree reconciled against text the next checkout
-    erases. So the set is printed once, here, spelled from the target source root the way
-    `/reconcile` reads it.
+    erases. So the set is printed here, spelled from the target source root the way
+    `/reconcile` reads it. Where the root this was invoked over holds more than one target the
+    project declares, one set is printed per target, each from its own root: a reconciliation
+    is invoked over one target, and a set spelled from the toplevel is a set the staging
+    refuses. A file under no declared target is listed apart, spelled from the toplevel.
+
+    The set is composed from the findings the report listed, never from the ones it held back:
+    a `code` finding under a target declared freely edited is answered by `/check-source` and
+    the next review, and a set that named those files would reconcile what the project said
+    not to. The count held back is said.
 
     Three things are left out and said: a file bound to a node whose own file is uncommitted
     under the specification root — a bind stamps the digest on disk, and a digest of pending
@@ -1263,77 +1272,102 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
         files_of[entry["node"]] = [f["path"] for f in entry.get("files") or []]
     pending = uncommitted_under(home, spec_root)
     implementers = live_implementers(work_root_of(home))
-
-    def within(path: str) -> bool:
-        return under(path, [offset])
-
-    def spelled(path: str) -> str:
-        return path if offset == "." else PurePosixPath(path).relative_to(offset).as_posix()
+    roots = target_roots(home)
+    declared_under = {key: root for key, root in roots.items() if under(root, [offset])}
+    if len(declared_under) > 1 or (declared_under and set(declared_under.values()) != {offset}):
+        blocks = sorted(declared_under.items(), key=lambda kv: kv[1])
+    else:
+        blocks = [(next(iter(declared_under), None), offset)]
 
     def node_pending(node_id: str) -> bool:
-        return f"{spec_relative}/{node_id}.md".replace("//", "/") in pending \
-            or f"{PurePosixPath(spec_relative) / (node_id + '.md')}" in pending
+        return f"{PurePosixPath(spec_relative) / (node_id + '.md')}" in pending
 
-    reasons: dict[str, set[str]] = {}
-    retained: dict[str, set[str]] = {}
-    planned: dict[str, set[str]] = {}
-    proofs: dict[str, set[str]] = {}
-    for cls, node_id, where, _ in findings:
-        if cls == CODE:
-            if where and within(where) and (home / where).is_file():
-                reasons.setdefault(where, set()).add("code")
-        elif cls == MOVED:
-            paths = [where] if where else files_of.get(node_id, [])
-            for path in paths:
-                if not within(path):
-                    continue
-                if node_pending(node_id):
-                    retained.setdefault(path, set()).add(node_id)
-                elif node_id in implementers:
-                    planned.setdefault(path, set()).add(node_id)
-                else:
-                    reasons.setdefault(path, set()).add(f"moved: {node_id}")
-        elif cls == PROOF:
-            for path in files_of.get(node_id, []):
-                if within(path):
-                    proofs.setdefault(path, set()).add(node_id)
-    for path in list(reasons):
-        if path in retained or path in planned:
-            # A file is one reading: where one of its nodes holds it back, the set does not name
-            # it, and the line that holds it back says every node the reading would have covered.
-            kept = retained if path in retained else planned
-            kept[path].update(r.removeprefix("moved: ") for r in reasons.pop(path)
-                              if r != "code")
-    lines = [f"\nreconcile set over {offset}, spelled from the target source root — one "
-             f"/reconcile invocation reads it whole:"]
-    if reasons:
-        for path in sorted(reasons):
-            lines.append(f"  {spelled(path)}  ({', '.join(sorted(reasons[path]))})")
-        lines.append(f"  {len(reasons)} file(s)")
-    else:
-        lines.append("  nothing: no drift this target holds is a reconciliation's to read")
-    if retained:
-        lines.append(f"retained — bound to a node whose file is uncommitted under "
-                     f"{spec_relative}; a bind would stamp text the next checkout may erase. "
-                     f"Committing or discarding it is what returns these to the set:")
-        for path in sorted(retained):
-            lines.append(f"  {spelled(path)}  ({', '.join(sorted(retained[path]))})")
-    if planned:
-        lines.append("left to a delivery — a live task implements the node, and its delivery "
-                     "restamps it; reconciling first reads the file twice:")
-        for path in sorted(planned):
-            tasks = sorted({t for n in planned[path] for t in implementers.get(n, [])})
-            lines.append(f"  {spelled(path)}  ({', '.join(sorted(planned[path]))}; "
-                         f"{', '.join(tasks)})")
-    if proofs:
-        lines.append("decided by a certified test whose text changed — a certification of the "
-                     "test as it now stands is what answers it, offered by the human and never "
-                     "a reading owed:")
-        for path in sorted(proofs):
-            lines.append(f"  {spelled(path)}  ({', '.join(sorted(proofs[path]))})")
+    def block(label: str | None, root: str, exclude: list[str]) -> list[str]:
+        def within(path: str) -> bool:
+            return under(path, [root]) and not under(path, exclude)
+
+        def spelled(path: str) -> str:
+            return path if root == "." else PurePosixPath(path).relative_to(root).as_posix()
+
+        reasons: dict[str, set[str]] = {}
+        retained: dict[str, set[str]] = {}
+        planned: dict[str, set[str]] = {}
+        proofs: dict[str, set[str]] = {}
+        for cls, node_id, where, _ in listed:
+            if cls == CODE:
+                if where and within(where) and (home / where).is_file():
+                    reasons.setdefault(where, set()).add("code")
+            elif cls == MOVED:
+                for path in ([where] if where else files_of.get(node_id, [])):
+                    if not within(path):
+                        continue
+                    if node_pending(node_id):
+                        retained.setdefault(path, set()).add(node_id)
+                    elif node_id in implementers:
+                        planned.setdefault(path, set()).add(node_id)
+                    else:
+                        reasons.setdefault(path, set()).add(f"moved: {node_id}")
+            elif cls == PROOF:
+                for path in files_of.get(node_id, []):
+                    if within(path):
+                        proofs.setdefault(path, set()).add(node_id)
+        for path in list(reasons):
+            if path in retained or path in planned:
+                # A file is one reading: where one of its nodes holds it back, the set does not
+                # name it, and the line that holds it back says every node the reading would
+                # have covered.
+                kept = retained if path in retained else planned
+                kept[path].update(r.removeprefix("moved: ") for r in reasons.pop(path)
+                                  if r != "code")
+        named = f"target {label} ({root})" if label else (
+            "files under no declared target, spelled from the toplevel" if root == "."
+            else root)
+        lines = [f"\nreconcile set over {named}, spelled from the target source root — one "
+                 f"/reconcile invocation reads it whole:"]
+        if reasons:
+            for path in sorted(reasons):
+                lines.append(f"  {spelled(path)}  ({', '.join(sorted(reasons[path]))})")
+            lines.append(f"  {len(reasons)} file(s)")
+        else:
+            lines.append("  nothing: no drift this target holds is a reconciliation's to read")
+        if retained:
+            lines.append(f"retained — bound to a node whose file is uncommitted under "
+                         f"{spec_relative}; a bind would stamp text the next checkout may erase. "
+                         f"Committing or discarding it is what returns these to the set:")
+            for path in sorted(retained):
+                lines.append(f"  {spelled(path)}  ({', '.join(sorted(retained[path]))})")
+        if planned:
+            lines.append("left to a delivery — a live task implements the node, and its delivery "
+                         "restamps it; reconciling first reads the file twice:")
+            for path in sorted(planned):
+                tasks = sorted({t for n in planned[path] for t in implementers.get(n, [])})
+                lines.append(f"  {spelled(path)}  ({', '.join(sorted(planned[path]))}; "
+                             f"{', '.join(tasks)})")
+        if proofs:
+            lines.append("decided by a certified test whose text changed — a certification of "
+                         "the test as it now stands is what answers it, offered by the human and "
+                         "never a reading owed:")
+            for path in sorted(proofs):
+                lines.append(f"  {spelled(path)}  ({', '.join(sorted(proofs[path]))})")
+        return lines
+
+    out: list[str] = []
+    for label, root in blocks:
+        out += block(label, root, [])
+    if len(blocks) > 1 or (blocks and blocks[0][1] != offset):
+        # Whatever sits under the invoked root and under none of the declared targets.
+        stray = block(None, offset, [root for _, root in blocks])
+        if "nothing:" not in stray[1]:
+            out += stray
+    if held:
+        held_files = {f[2] for f in held if under(f[2] or "", [offset])}
+        if held_files:
+            out.append(f"  {len(held_files)} file(s) with `code` drift held back — under a target "
+                       f"declared freely edited — are not in any set above; `--all` lists them, "
+                       f"and /check-source is what reads them")
     if work_root_of(home) is None:
-        lines.append("  (no work_root in the project file: nothing was held back for a live task)")
-    return lines
+        out.append("  (no work_root in the project file: nothing was held back for a live task)")
+    return out
 
 
 def tally_of(target: Path) -> tuple[dict[str, int], int, list[str]] | None:
@@ -5592,7 +5626,7 @@ def main() -> int:
     if held:
         print(suppressed(held, prefixes))
     if reconcile_set:
-        for line in reconcile_set_report(declared, home, target, findings):
+        for line in reconcile_set_report(declared, home, target, listed, held):
             print(line)
     return 1 if listed else 0
 

@@ -1592,3 +1592,33 @@ def test_a_records_frontmatter_is_parsed_once_per_process_and_again_once_it_chan
     record.write_text("---\ncontract_version: siegard-reconcile/4\nslug: r2\n---\n", encoding="utf-8")
     third, _ = trace.frontmatter_of(record)
     assert third["slug"] == "r2" and len(parses) == 2
+
+
+def test_over_a_toplevel_holding_several_targets_the_set_is_printed_per_target(consumer):
+    """A reconciliation is invoked over one target and reads paths from its root; a set spelled
+    from the toplevel is a set the staging refuses. So the toplevel prints one set per declared
+    target, each from its own root, and a `code` finding a target declared freely edited is
+    held back from every set and counted."""
+    (consumer / "frontend/src").mkdir(parents=True)
+    (consumer / "frontend/src/view.ts").write_text("export {}\n", encoding="utf-8")
+    bind(consumer)
+    run("--bind", consumer / "frontend", consumer / "specs", "domain/monitoring/alert",
+        "src/view.ts")
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend", "frontend": "frontend"},
+         "edits_freely": ["frontend"]}) + "\n", encoding="utf-8")
+    committed(consumer)
+    drifted(consumer)
+    (consumer / "frontend/src/view.ts").write_text("export const v = 1;\n", encoding="utf-8")
+    moved_node(consumer, "domain/monitoring/alert")
+    committed(consumer)
+    done = run("--check", consumer, "--reconcile-set")
+    assert done.returncode == 1
+    assert "reconcile set over target backend (backend)" in done.stdout
+    assert f"  {FILE}  (code)" in done.stdout
+    assert "reconcile set over target frontend (frontend)" in done.stdout
+    assert "  src/view.ts  (moved: domain/monitoring/alert)" in done.stdout
+    assert "backend/src" not in done.stdout.split("reconcile set over")[1]
+    assert "(code, moved" not in done.stdout and "src/view.ts  (code)" not in done.stdout
+    assert ("1 file(s) with `code` drift held back — under a target declared freely edited — "
+            "are not in any set above") in done.stdout

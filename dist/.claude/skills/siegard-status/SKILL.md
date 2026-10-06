@@ -67,13 +67,18 @@ one's output, so a round trip per command pays the wait once per command instead
 3. **The trace, once per trace file.** The trace lives at the git toplevel of its target source
    root — where `siegard.json` sits — so targets sharing one repository share one trace file, and
    targets in separate repositories each keep their own. Run
-   `--check` once per distinct toplevel among the keys `project.py` printed, and say which
-   target(s) each block answers: a second reading of the same file is the same content paid for
+   `--check` once per distinct toplevel among the keys `project.py` printed — invoked over one
+   of that toplevel's target source roots by name, never over the toplevel itself, because
+   everything after the drift counts is read per target — and say which target(s) each block
+   answers: a second reading of the same file is the same content paid for
    twice, and a status that read only one toplevel of several would report a tree nobody asked
    about as the whole answer.
    `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root> --reconcile-set` —
    drift counts by class, each with its route, and after them the file set one `/reconcile`
-   over this target reads, with what it leaves out and why: `orphaned` is cleared by `--prune` after a
+   over this target reads, with what it leaves out and why. Where the toplevel holds several
+   targets, run `--check --reconcile-set` once per target: each set is spelled from its own
+   root, which is the one spelling the staging accepts, and the drift counts above it are the
+   same trace file's every time: `orphaned` is cleared by `--prune` after a
    deliberate node removal, and where the report says git renamed the node, `--prune` follows the
    rename instead of dropping the binding; `moved` is answered by `/reconcile` over the bound
    files, which re-reads them against the node as it stands, or by a delivery of a task
@@ -160,7 +165,12 @@ one's output, so a round trip per command pays the wait once per command instead
    `/plan-work` and `/deliver-scope`; the delivery root, `/implement-task`, `/review-change` and
    `/deliver-scope`; a target source root, `/implement-task` and `/deliver-scope`; and
    `/reconcile` refuses any named file the tree holds uncommitted. Drift, open findings and a
-   missing review record are never owed: nothing refuses to run over them.
+   missing review record are never owed: nothing refuses to run over them. «Every item of the
+   opening is labelled by its role, in plain words of the session's language» (SPEC-006 R1):
+   an owed act is labelled as what the person must do and says in one clause what "owed" means
+   here — a named entry point refuses to start until it is done — an offered one as offered,
+   a pair the records answer both ways as the person's own decision, and the close's
+   recommendation is repeated in the opening, labelled as recommended, with its criterion.
 5. **The session.** Last, and clearly fenced apart: what this conversation has done or is in
    the middle of that has not reached disk yet. This is the one section whose source is not a
    command, and it says so.
@@ -212,7 +222,9 @@ In this order, every line naming its source:
   `--rank` accretion counts, top rows verbatim, with the audit route named and never chosen;
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;
-- the close: the single next invocation most ready to run, and nothing more. Ready is a
+- the close: the single next invocation most ready to run, and nothing more — named here and
+  already named in the opening, since «where the report recommends a door, the opening names
+  it with its criterion, before any explanation» (SPEC-006 R1). Ready is a
   statement about the tree, never about worth: it is the invocation whose inputs this report
   already holds and whose preconditions the tree already meets. Where the report named more
   than one door over the same files, the close names the reading that is owed once over the
