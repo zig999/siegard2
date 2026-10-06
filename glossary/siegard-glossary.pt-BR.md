@@ -6,7 +6,7 @@ Siegard**: nenhum conhecimento prévio do framework é pressuposto. Cada verbete
 significa, por que ele existe, em que momento do trabalho aparece, como funciona passo a passo e,
 sempre que possível, traz um exemplo.
 
-**Versão descrita.** Esta edição descreve o Siegard **5.5.0**. Ela amplia a tradução de
+**Versão descrita.** Esta edição descreve o Siegard **5.6.0**. Ela amplia a tradução de
 `glossary/siegard-glossary.md`, que ainda descreve a 4.21.3; os verbetes sobre levantamento
 (`/survey`), material de intenção, ledger, `/adopt-scope`, o campo `tests` e os agentes
 `domain-surveyor` e `test-intent-reader` ainda não têm par na versão inglesa. Onde as duas
@@ -420,6 +420,15 @@ Esta é a fonte de erro mais comum, e por isso merece um verbete próprio.
 
 Quando você lê uma saída do `--check` e vai montar um conjunto de arquivos para o `/reconcile`,
 precisa remover o prefixo do target. O `--stage` recusa a grafia errada e diz qual é a certa.
+Desde a 5.6.0 esse conjunto não precisa ser montado à mão: `trace.py --check <target>
+--reconcile-set` imprime, já na grafia do target, os arquivos que um único `/reconcile` deve ler
+(os de drift `code` mais os arquivos ligados a nós `moved`) e, separados e com o motivo, os que
+ficam de fora: **retidos** porque o arquivo do nó está sem commit na especificação (um bind
+gravaria um digest de texto que o próximo checkout pode apagar), **deixados a uma entrega** porque
+uma tarefa de iniciativa viva implementa o nó (a entrega reestampa o vínculo; reconciliar antes
+paga a leitura duas vezes) e os **decididos por um teste certificado que mudou** (resolve-se com
+uma certificação que você oferece, nunca com uma leitura devida). O `/siegard-status` cola essa
+saída na invocação pronta e nunca compõe o conjunto por conta própria.
 
 ### `specification_root`, `work_root`, `delivery_root`, `telemetry_root`
 As pastas onde moram, respectivamente, a especificação, os planos, os registros de entrega e os
@@ -1763,12 +1772,14 @@ Verifica, nesta ordem:
 - que o trace é válido (`trace.py`) — se não existe trace, a resposta é uma entrega ou, para
   código antigo, uma adoção;
 - que o caminho do registro `siegard-reconcile/<slug>.md` está livre;
-- que os arquivos nomeados (e as provas oferecidas) estão **commitados** e que o
-  `siegard-trace.json` está limpo.
+- que os arquivos nomeados (e as provas oferecidas) estão **commitados**, que o
+  `siegard-trace.json` está limpo e, desde a 5.6.0, que o arquivo de cada nó candidato também
+  está commitado na especificação.
 
-**Por que commitados.** O bind grava um digest. O digest de uma edição não commitada aponta para
-um conteúdo que o próximo checkout pode apagar, e o drift que surgiria depois seria causado por
-ninguém.
+**Por que commitados.** O bind grava um digest dos dois lados. O digest de uma edição não
+commitada aponta para um conteúdo que o próximo checkout pode apagar, e um nó estampado a partir
+de um texto que ninguém commitou é um vínculo com uma especificação que pode nunca ter existido;
+o drift que surgiria depois, num caso ou no outro, seria causado por ninguém.
 
 ### Workspace (área de trabalho)
 Uma pasta temporária e descartável (normalmente criada com `mktemp -d`) onde o `--stage` grava o
@@ -2574,7 +2585,16 @@ recentes, tarefas pendentes e notas `BLOCKING` de cada iniciativa ativa, drift d
 trabalho não commitado. Cada afirmação vem com o comando que a sustenta. Termina com a invocação
 mais pronta para rodar. Desde a 5.5.0 essa invocação é uma recomendação no sentido do handoff
 (acima): traz o critério, o fato que decide e o fato que a inverteria. A skill continua não
-decidindo nada por você, porque nomear uma porta não é tomá-la.
+decidindo nada por você, porque nomear uma porta não é tomá-la. Desde a 5.6.0 a abertura deriva
+os atos devidos do `git status` por raiz: uma raiz com alteração pendente é um ato devido, e a
+linha nomeia as skills que se recusam a começar sobre ela (a especificação trava `/analyse`,
+`/plan-work` e `/deliver-scope`; a raiz de trabalho, `/plan-work` e `/deliver-scope`; a raiz de
+entrega, `/implement-task`, `/review-change` e `/deliver-scope`; a raiz de código de um target,
+`/implement-task` e `/deliver-scope`). Drift e findings nunca são devidos. Um par que um
+`/reconcile` anterior já julgou e nenhum bind fechou (`reported` no `--owed`) aparece como decisão
+pendente com as duas portas — `/plan-work` corretivo se o nó está certo, `/analyse` se o código
+está — e nenhuma recomendação, porque é juízo seu. A invocação de `/reconcile` vem do
+`--reconcile-set`, nunca de uma composição da skill.
 
 ### `/siegard-progress`
 Uma tabela compacta das tarefas de uma iniciativa (status derivado + porquê), feita para rodar
