@@ -77,12 +77,14 @@ never a question at a time.
 Here the usual rule inverts by half, and the half that inverts is the point. Everywhere else a
 pending change is somebody's work in progress; here it is the subject.
 
-**The named files must be committed, and so must every proof a certification names.** `git
-status --porcelain -- <each named path> <each proof path>` must print
-nothing. Not because a pending edit is hard to read, but because a bind records a digest: the digest
-of an uncommitted edit points at content the next checkout erases, and the drift that would report
-afterwards is drift nobody caused. Output is a stop that names what is pending — committing or
-discarding is the human's decision, never this skill's.
+**The named files must be committed, and so must every proof a certification names, and so must
+every candidate node's own file.** `git status --porcelain -- <each named path> <each proof path>
+<the specification root>` must print nothing. Not because a pending edit is hard to read, but
+because a bind records a digest on both sides: the digest of an uncommitted edit points at content
+the next checkout erases, and a node stamped from text nobody committed is a binding to a
+specification that may never have existed — the drift that would report afterwards, either way, is
+drift nobody caused. Output is a stop that names what is pending — committing or discarding is the
+human's decision, never this skill's.
 
 `siegard-trace.json` must be clean for the same reason every other entry point wants its own output
 clean: it is what this invocation writes, and a diff only says what this run did when it starts from

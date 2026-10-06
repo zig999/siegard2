@@ -1485,3 +1485,92 @@ def test_area_is_its_own_form(consumer):
     done = run("--area", consumer / "backend", "src", "--untraced")
     assert done.returncode == 2
     assert "mutually exclusive" in done.stderr
+
+
+# ------------------------------------------------------------------ the reconcile set
+
+
+def moved_node(consumer: Path, node: str = NODE) -> None:
+    path = consumer / "specs" / f"{node}.md"
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+
+def committed(consumer: Path) -> None:
+    subprocess.run(["git", "-C", str(consumer), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(consumer), "-c", "user.email=t@example.com",
+                    "-c", "user.name=t", "commit", "-q", "-m", "state"], check=True,
+                   capture_output=True)
+
+
+def test_the_reconcile_set_is_the_code_and_moved_files_of_this_target_spelled_from_it(consumer):
+    """`code` is listed per file and `moved` per node, and a reconciliation reads a file set:
+    the set is composed once here, from both, in the anchor `/reconcile` reads paths in."""
+    bind(consumer)
+    bind(consumer, node="domain/monitoring/alert", file="src/alerts.ts")
+    (consumer / "backend/src/alerts.ts").write_text("export const a = 1;\n", encoding="utf-8")
+    bind(consumer, node="domain/monitoring/alert", file="src/alerts.ts")
+    committed(consumer)
+    drifted(consumer)
+    moved_node(consumer, "domain/monitoring/alert")
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert done.returncode == 1
+    assert ("reconcile set over backend, spelled from the target source root — one /reconcile "
+            "invocation reads it whole:") in done.stdout
+    assert f"  {FILE}  (code)" in done.stdout
+    assert "  src/alerts.ts  (moved: domain/monitoring/alert)" in done.stdout
+    assert "  2 file(s)" in done.stdout
+    assert "retained" not in done.stdout and "left to a delivery" not in done.stdout
+
+
+def test_a_file_of_a_node_pending_in_the_working_tree_is_retained_from_the_set(consumer):
+    """A bind stamps the digest on disk; a digest of uncommitted node text is a binding to a
+    specification that may never exist, so the file is named apart, with the node, and the
+    set does not carry it."""
+    bind(consumer)
+    committed(consumer)
+    moved_node(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert done.returncode == 1
+    assert "  nothing: no drift this target holds is a reconciliation's to read" in done.stdout
+    assert "retained — bound to a node whose file is uncommitted under specs" in done.stdout
+    assert f"  {FILE}  ({NODE})" in done.stdout
+
+
+def test_a_file_of_a_node_a_live_task_implements_is_left_to_the_delivery(consumer):
+    bind(consumer)
+    committed(consumer)
+    planned(consumer)
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "work_root": "work"}) + "\n", encoding="utf-8")
+    moved_node(consumer)
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert done.returncode == 1
+    assert "left to a delivery — a live task implements the node" in done.stdout
+    assert f"  {FILE}  ({NODE}; first task/cases/record-case)" in done.stdout
+    assert "  nothing: no drift" in done.stdout
+    (consumer / "work/first/closure.md").write_text("closed\n", encoding="utf-8")
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert "left to a delivery" not in done.stdout
+    assert f"  {FILE}  (moved: {NODE})" in done.stdout
+
+
+def test_a_file_of_another_target_is_not_in_this_targets_set(consumer):
+    (consumer / "frontend/src").mkdir(parents=True)
+    (consumer / "frontend/src/view.ts").write_text("export {}\n", encoding="utf-8")
+    bind(consumer)
+    run("--bind", consumer / "frontend", consumer / "specs", NODE, "src/view.ts")
+    committed(consumer)
+    moved_node(consumer)
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert f"  {FILE}  (moved: {NODE})" in done.stdout
+    assert "view.ts" not in done.stdout.split("reconcile set over")[1]
+
+
+def test_the_reconcile_set_is_a_mode_of_check(consumer):
+    done = run("--reconcile-set", consumer / "backend")
+    assert done.returncode == trace.CANNOT_RUN
+    assert "--reconcile-set is a mode of --check" in done.stderr

@@ -14,6 +14,9 @@ What this script does, and nobody else does any of it:
 
     trace.py <target-root>                                        read and validate the file
     trace.py --check <target-root> [--all]                        the same, then report drift
+    trace.py --check <target-root> --reconcile-set                the same, then the file set one
+                                                                  /reconcile over this target
+                                                                  reads, and what it leaves out
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind-record ... --workspace <dir>                  the same, refusing a file or a
@@ -1187,6 +1190,150 @@ def partitioned(findings: list[tuple[str, str, str | None, str]],
     # compare equal would suppress each other, and a membership test walks that list once per
     # finding.
     return ([f for f in findings if not held_back(f)], [f for f in findings if held_back(f)])
+
+
+def work_root_of(home: Path) -> Path | None:
+    """The work root the project file declares, read as defensively as `freely_edited` reads its
+    field: a project file that does not parse or declares none leaves the reconcile set without
+    the list a live plan would have kept out of it, and says so on its own line."""
+    declared_at = home / project.PROJECT_FILE
+    if not declared_at.is_file():
+        return None
+    try:
+        declared = json.loads(declared_at.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    named = declared.get("work_root") if isinstance(declared, dict) else None
+    return home / named if isinstance(named, str) and named else None
+
+
+def live_implementers(work_root: Path | None) -> dict[str, list[str]]:
+    """Node -> every task of a live initiative that implements it, as `<slug> <task id>`. A
+    closed initiative implements nothing now, and a task's delivery is what restamps the node."""
+    held: dict[str, list[str]] = {}
+    if work_root is None or not work_root.is_dir():
+        return held
+    for initiative in sorted(p for p in work_root.iterdir() if p.is_dir()):
+        if (initiative / plan.CLOSURE_FILE).is_file() or not (initiative / "task").is_dir():
+            continue
+        nodes, _ = plan.collect(initiative, plan.contract())
+        for nid, node in nodes.items():
+            if not nid.startswith("task/"):
+                continue
+            for ref in spec.listed(node.get("front") or {}, "implements"):
+                if isinstance(ref, str):
+                    held.setdefault(ref, []).append(f"{initiative.name} {nid}")
+    return held
+
+
+def uncommitted_under(home: Path, root: Path) -> set[str]:
+    """The paths git reports pending under one root, spelled from the toplevel."""
+    done = subprocess.run(["git", "-C", str(home), "status", "--porcelain", "--", str(root)],
+                          capture_output=True, text=True)
+    if done.returncode != 0:
+        return set()
+    return {line[3:].strip() for line in done.stdout.splitlines() if len(line) > 3}
+
+
+def reconcile_set_report(declared: dict, home: Path, target: Path,
+                         findings: list[tuple[str, str, str | None, str]]) -> list[str]:
+    """The file set one `/reconcile` over this target reads, composed from the drift the report
+    above listed, and — kept apart, each under the reason — the files it leaves out.
+
+    The remedy for `code` and `moved` is one reconciliation over a file set, and the drift
+    report lists them the other way round: `code` per file, `moved` per node. A reader composing
+    the set by hand from the two listings answers it wrongly in a way nothing above catches —
+    a node's files taken for one file's nodes, a file of another target taken for this one's, a
+    node whose text is pending in the working tree reconciled against text the next checkout
+    erases. So the set is printed once, here, spelled from the target source root the way
+    `/reconcile` reads it.
+
+    Three things are left out and said: a file bound to a node whose own file is uncommitted
+    under the specification root — a bind stamps the digest on disk, and a digest of pending
+    text is a binding to a specification that may never exist; a file bound to a node a live
+    task implements — that task's delivery restamps it, and a reconciliation first pays the
+    reading twice; and a certified test that changed, which a certification the human offers
+    answers, never a reading owed. Any of the three the human still wants read is named to
+    `/reconcile` by hand, which is why each is listed by path."""
+    spec_relative = declared["specification"]
+    spec_root = home / spec_relative
+    offset = offset_of(target, home)
+    files_of: dict[str, list[str]] = {}
+    for entry in declared.get("bindings") or []:
+        files_of[entry["node"]] = [f["path"] for f in entry.get("files") or []]
+    pending = uncommitted_under(home, spec_root)
+    implementers = live_implementers(work_root_of(home))
+
+    def within(path: str) -> bool:
+        return under(path, [offset])
+
+    def spelled(path: str) -> str:
+        return path if offset == "." else PurePosixPath(path).relative_to(offset).as_posix()
+
+    def node_pending(node_id: str) -> bool:
+        return f"{spec_relative}/{node_id}.md".replace("//", "/") in pending \
+            or f"{PurePosixPath(spec_relative) / (node_id + '.md')}" in pending
+
+    reasons: dict[str, set[str]] = {}
+    retained: dict[str, set[str]] = {}
+    planned: dict[str, set[str]] = {}
+    proofs: dict[str, set[str]] = {}
+    for cls, node_id, where, _ in findings:
+        if cls == CODE:
+            if where and within(where) and (home / where).is_file():
+                reasons.setdefault(where, set()).add("code")
+        elif cls == MOVED:
+            paths = [where] if where else files_of.get(node_id, [])
+            for path in paths:
+                if not within(path):
+                    continue
+                if node_pending(node_id):
+                    retained.setdefault(path, set()).add(node_id)
+                elif node_id in implementers:
+                    planned.setdefault(path, set()).add(node_id)
+                else:
+                    reasons.setdefault(path, set()).add(f"moved: {node_id}")
+        elif cls == PROOF:
+            for path in files_of.get(node_id, []):
+                if within(path):
+                    proofs.setdefault(path, set()).add(node_id)
+    for path in list(reasons):
+        if path in retained or path in planned:
+            # A file is one reading: where one of its nodes holds it back, the set does not name
+            # it, and the line that holds it back says every node the reading would have covered.
+            kept = retained if path in retained else planned
+            kept[path].update(r.removeprefix("moved: ") for r in reasons.pop(path)
+                              if r != "code")
+    lines = [f"\nreconcile set over {offset}, spelled from the target source root — one "
+             f"/reconcile invocation reads it whole:"]
+    if reasons:
+        for path in sorted(reasons):
+            lines.append(f"  {spelled(path)}  ({', '.join(sorted(reasons[path]))})")
+        lines.append(f"  {len(reasons)} file(s)")
+    else:
+        lines.append("  nothing: no drift this target holds is a reconciliation's to read")
+    if retained:
+        lines.append(f"retained — bound to a node whose file is uncommitted under "
+                     f"{spec_relative}; a bind would stamp text the next checkout may erase. "
+                     f"Committing or discarding it is what returns these to the set:")
+        for path in sorted(retained):
+            lines.append(f"  {spelled(path)}  ({', '.join(sorted(retained[path]))})")
+    if planned:
+        lines.append("left to a delivery — a live task implements the node, and its delivery "
+                     "restamps it; reconciling first reads the file twice:")
+        for path in sorted(planned):
+            tasks = sorted({t for n in planned[path] for t in implementers.get(n, [])})
+            lines.append(f"  {spelled(path)}  ({', '.join(sorted(planned[path]))}; "
+                         f"{', '.join(tasks)})")
+    if proofs:
+        lines.append("decided by a certified test whose text changed — a certification of the "
+                     "test as it now stands is what answers it, offered by the human and never "
+                     "a reading owed:")
+        for path in sorted(proofs):
+            lines.append(f"  {spelled(path)}  ({', '.join(sorted(proofs[path]))})")
+    if work_root_of(home) is None:
+        lines.append("  (no work_root in the project file: nothing was held back for a live task)")
+    return lines
 
 
 def tally_of(target: Path) -> tuple[dict[str, int], int, list[str]] | None:
@@ -4964,6 +5111,7 @@ def main() -> int:
         return 0
     check = "--check" in args
     show_all = "--all" in args
+    reconcile_set = "--reconcile-set" in args
     do_bind = "--bind" in args
     do_record = "--bind-record" in args
     do_prune = "--prune" in args
@@ -5065,7 +5213,10 @@ def main() -> int:
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
                          "--fold", "--save-return", "--rank", "--changed", "--audit", "--review",
                          "--convergence", "--untraced", "--adopt", "--ledger", "--survey",
-                         "--area")]
+                         "--area", "--reconcile-set")]
+    if reconcile_set and not check:
+        print("cannot run: --reconcile-set is a mode of --check", file=sys.stderr)
+        return CANNOT_RUN
     named = [name for name, given in (("--check", check), ("--bind", do_bind),
                                       ("--bind-record", do_record),
                                       ("--prune", do_prune),
@@ -5375,6 +5526,9 @@ def main() -> int:
               f"target this project declares freely edited")
     if held:
         print(suppressed(held, prefixes))
+    if reconcile_set:
+        for line in reconcile_set_report(declared, home, target, findings):
+            print(line)
     return 1 if listed else 0
 
 

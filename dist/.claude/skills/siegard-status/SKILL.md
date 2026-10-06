@@ -68,8 +68,9 @@ this invocation — it is the status, reported verbatim.
    target(s) each block answers: a second reading of the same file is the same content paid for
    twice, and a status that read only one toplevel of several would report a tree nobody asked
    about as the whole answer.
-   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` —
-   drift counts by class, each with its route: `orphaned` is cleared by `--prune` after a
+   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root> --reconcile-set` —
+   drift counts by class, each with its route, and after them the file set one `/reconcile`
+   over this target reads, with what it leaves out and why: `orphaned` is cleared by `--prune` after a
    deliberate node removal, and where the report says git renamed the node, `--prune` follows the
    rename instead of dropping the binding; `moved` is answered by `/reconcile` over the bound
    files, which re-reads them against the node as it stands, or by a delivery of a task
@@ -77,15 +78,21 @@ this invocation — it is the status, reported verbatim.
    the tree no longer holds by `trace.py --release` over that path; and `proof` — a binding a
    certified test decides whose test's text changed — by `/reconcile` with a certification of the
    test as it now stands, the binding being
-   decided by reading until then. Where `code` findings exist, the report carries the `/reconcile`
-   invocation ready to paste — the project root filled in, the target named by its `targets` key
-   wherever the project declares more than one, the file set being the drifted paths converted to
-   the target source root's own anchor since `--check` spells them from the git toplevel, and a
-   slug slot left for the human to name, since `/reconcile` requires one and refuses a slug
-   already taken. With it, the two sentences that make the door real rather than decorative: it
-   runs only over a committed tree, because `/reconcile` refuses a named file the tree holds
+   decided by reading until then. Where the reconcile set is not empty, the report carries the
+   `/reconcile` invocation ready to paste — the project root filled in, the target named by its
+   `targets` key wherever the project declares more than one, the file set being exactly the
+   paths the set lists, already spelled from the target source root, and a slug slot left for
+   the human to name, since `/reconcile` requires one and refuses a slug already taken. The set
+   is the script's composition and never yours: a `code` finding is listed per file and a
+   `moved` one per node, and a set composed by hand from the two answers wrongly in ways nothing
+   catches. With it, the two sentences that make the door real rather than decorative: it runs
+   only over a committed tree, because `/reconcile` refuses a named file the tree holds
    uncommitted, and one invocation covers one file set — never one per file. A ready invocation
-   that stops on a missing input was never ready.
+   that stops on a missing input was never ready. What the set leaves out is quoted beside it,
+   each list under the reason the script printed — retained for a node pending in the working
+   tree, left to a live task's delivery, decided by a certified test that changed — because
+   those are the lines a reader acts on apart from the paste, and the first of them is what an
+   owed act over the specification root returns to the set.
 
    That invocation is composed from a report rather than named by the reader, so the report says
    what it will and will not answer, and says it in the same breath as the paste. Two statements
@@ -100,10 +107,15 @@ this invocation — it is the status, reported verbatim.
    - **Where `--owed` below puts a pair of a drifted file under `reported`**, a past
      reconciliation already judged that pair and no bind closed it. Reconciling it again without
      the source having changed re-reads what the record already says. Where such a finding is a
-     divergence nobody resolved, the door is `/plan-work` — the behavior, not the binding, is
-     what is outstanding. Name the pairs and the record; subtract nothing, because the class is
+     divergence nobody resolved, the binding is not what is outstanding — a reading is, and no
+     reconciliation makes it. Name the pairs and the record; subtract nothing, because the class is
      per pair and the invocation is per file, and a file carrying one recorded pair beside two
-     unrecorded ones is a file the reconciliation is still owed.
+     unrecorded ones is a file the reconciliation is still owed. Which of the two is wrong — the
+     behavior or the node — is the one question the record does not answer: hand it in the
+     opening as a pending decision with both doors, `/plan-work` for a corrective increment
+     where the node is right and `/analyse` where the source is, and what stays as it is
+     if neither is taken — the pair stays under `reported` in `--owed` — and recommend
+     neither: «Each is the person's, and a handoff hands its doors and names none» (SPEC-006 R3).
 
    Then, for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --convergence
    <target-source-root> <specification-root> <work-root>` — every node of the specification in
@@ -137,7 +149,15 @@ this invocation — it is the status, reported verbatim.
 4. **The repository.** `git log --oneline -15` over the project root, and `git status
    --porcelain` — what landed recently, and what stands uncommitted. An uncommitted change is
    not judged here: say whose diff it appears to be (paths under which root) and leave the
-   verdict to the reader.
+   verdict to the reader. What it is judged for is what it stops: every entry point holds the
+   roots it writes to `git status --porcelain` before its first write, so a root with a pending
+   change is an owed act in the opening — committing or discarding, the reader's choice of which
+   — naming the entry points that refuse to start over it, read from each one's own file:
+   the specification root stops `/analyse`, `/plan-work` and `/deliver-scope`; the work root,
+   `/plan-work` and `/deliver-scope`; the delivery root, `/implement-task`, `/review-change` and
+   `/deliver-scope`; a target source root, `/implement-task` and `/deliver-scope`; and
+   `/reconcile` refuses any named file the tree holds uncommitted. Drift, open findings and a
+   missing review record are never owed: nothing refuses to run over them.
 5. **The session.** Last, and clearly fenced apart: what this conversation has done or is in
    the middle of that has not reached disk yet. This is the one section whose source is not a
    command, and it says so.
@@ -197,8 +217,12 @@ In this order, every line naming its source:
   reader has to ask the reason for was a preference wearing a derivation's clothes. It is a
   recommendation, and «A recommendation names the door, the criterion, the deciding fact and the
   reversing fact» (SPEC-006 R2): the criterion is `precondition unmet` where another door's
-  inputs are not on disk and `reading paid twice` where two readings cover the same files, and
-  the reversing fact is the one whose change would make another door the most ready.
+  inputs are not on disk and `reading paid twice` where two readings cover the same files —
+  the reconcile set's own lines are where both are read, the files it names being one reading
+  and the files it retained being the second a commit would fold into it —
+  «named as written here, untranslated, whatever the session's language» (SPEC-006 R2) — the
+  deciding fact is a line of this report, quoted, and the reversing fact is the one whose change
+  would make another door the most ready.
 
 ## What you never do
 
