@@ -130,7 +130,10 @@ with a question about what to do. You need:
   its node's decisions, so the read is the nodes in hand and never a whole history.
 - **Evidence is quoted, never restated.** A finding whose evidence you cannot quote from the
   source is a finding you did not observe, and it does not go in the result. Where the finding
-  is an absence, quote the construct that should have held the fact.
+  is an absence, quote the construct that should have held the fact. Quote the statement that
+  holds the fact — the line, the clause, the declaration — never the function or block around
+  it: a quote is evidence by what it names, and a block quoted whole names nothing in
+  particular while costing every later reader its length.
 - **A fact is held by code, never by prose about it.** `held_at` names what the source does or
   declares — a branch, a type, a statement, a schema — and its evidence quotes that. A comment
   restating the node, citing it, or claiming what governs it is never evidence the node is held:

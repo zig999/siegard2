@@ -1053,3 +1053,50 @@ def test_a_staging_refuses_to_run_while_the_corpus_holds_an_unreadable_record(de
     assert "a record nobody can read may hold an open finding" in done.stderr
     assert not (declared / "ws-round").exists()
     assert not (declared / "siegard-reconcile" / "round.returns").exists()
+
+
+# --------------------------------------------------- restates stand while the text does
+
+
+def test_a_restate_stands_while_its_quoted_text_is_in_the_file_and_is_counted_apart_after(
+        consumer, write_record):
+    """The corpus is appended to and never rewritten, so a record names prose long after the
+    comment route removed it; what says the finding stands is the quoted evidence still on
+    disk — folded for whitespace, because a quote wraps where the file does not — and never a
+    later judgment's silence, since a judge names what it read and lists no comment it did not."""
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"}}) + "\n",
+        encoding="utf-8")
+    target = consumer / "backend" / FILE
+    target.write_text("// the order number is the persisted one\nexport function place() {}\n",
+                      encoding="utf-8")
+    write_record(record_of([CLEARED], restates=[
+        {"file": FILE, "where": "line 1", "node": NODE,
+         "evidence": "// the order number is\n  the persisted one",
+         "cost": "a second home for the fact"},
+        {"file": FILE, "where": "line 9", "node": NODE,
+         "evidence": "// a comment the route already removed",
+         "cost": "a second home for the fact"}]))
+    bind(consumer, NODE, FILE)
+    done = owed(consumer)
+    assert ("1 place(s) the records name where text in the source restates a node's fact the "
+            "code holds, over 1 file(s), the quoted text still in the file") in done.stdout
+    assert f"  {FILE} — line 1 ({NODE}) [order-fix.md]" in done.stdout
+    assert "line 9" not in done.stdout
+    assert ("1 more the records name whose quoted text is no longer in the file: answered, "
+            "and kept in the record that read it") in done.stdout
+    target.write_text("export function place() {}\n", encoding="utf-8")
+    done = owed(consumer)
+    assert "the quoted text still in the file" not in done.stdout
+    assert "2 more the records name whose quoted text is no longer in the file" in done.stdout
+
+
+def test_a_restate_on_a_target_the_project_file_does_not_resolve_stands_unchecked(
+        consumer, write_record):
+    write_record(record_of([CLEARED], target="legacy", restates=[
+        {"file": FILE, "where": "line 1", "node": NODE, "evidence": "// gone",
+         "cost": "a second home for the fact"}]))
+    bind(consumer, NODE, FILE)
+    done = owed(consumer)
+    assert ("1 of them on a target the project file does not resolve, so unchecked and kept"
+            in done.stdout)

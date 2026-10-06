@@ -1945,20 +1945,55 @@ def restated_of(home: Path) -> list[dict]:
     code holds it too — a comment or a docstring, never text the system emits. Kept apart
     from the pair's findings because the pair conforms: what is owed is the text's removal, by
     the route that answers prose, and no bind is. Only `siegard-reconcile/8` and later records
-    carry the list; an earlier one filed the same observation as `contradicts`."""
+    carry the list; an earlier one filed the same observation as `contradicts`.
+
+    Each entry carries `standing`: whether the text the record quoted is still in the file.
+    The corpus is appended to and never rewritten, so a record keeps naming prose long after
+    the comment route removed it, and a count over the records alone grows forever; the quoted
+    evidence is what the finding was read in, so its presence on disk is what says the finding
+    still stands. Whitespace is folded on both sides, because a quote wraps where the file does
+    not. A later judgment's silence is not used: a judge names what it read and does not list
+    every comment, so a file re-judged without the entry proves nothing about the prose.
+    Where the record's target resolves to no root, the entry stands — a finding nobody can
+    check is not a finding that closed — and `unresolved` says so."""
     restated: list[dict] = []
     directory = home / RECONCILE_DIR
     if not directory.is_dir():
         return restated
+    roots = target_roots(home)
+    folded_files: dict[Path, str | None] = {}
+
+    def folded_text(path: Path) -> str | None:
+        if path not in folded_files:
+            try:
+                folded_files[path] = fold_space(path.read_text(encoding="utf-8",
+                                                               errors="replace"))
+            except OSError:
+                folded_files[path] = None
+        return folded_files[path]
+
     for record in sorted(directory.glob("*.md")):
         front, _ = reconciliation_or_reason(record)
         if front is None:
             continue
+        root = roots.get(front.get("target")) if isinstance(front.get("target"), str) else None
         for entry in front.get("restates") or []:
             if isinstance(entry, dict) and all(isinstance(entry.get(f), str)
                                                for f in ("file", "where", "evidence", "cost")):
-                restated.append(dict(entry, record=record.name))
+                if root is None:
+                    standing, unresolved = True, True
+                else:
+                    text = folded_text(home / root / entry["file"])
+                    quoted = fold_space(entry["evidence"])
+                    standing = text is not None and bool(quoted) and quoted in text
+                    unresolved = False
+                restated.append(dict(entry, record=record.name, standing=standing,
+                                     unresolved=unresolved))
     return restated
+
+
+def fold_space(text: str) -> str:
+    return " ".join(text.split())
 
 
 def unstated_of(home: Path) -> list[dict]:
@@ -2035,6 +2070,7 @@ def owed_reading(target: Path) -> tuple[dict | None, list[str]]:
             listed[COVERED].append((node, path, where))
 
     testable, certified = remainders_of(home)
+    restated = restated_of(home)
     live = test_decided(declared, home, offset) if declared is not None else {}
     by_reading = reading_counts(declared, home, offset) if declared is not None else {}
     listed_nodes = {node: said for node, said in testable.items()
@@ -2043,7 +2079,8 @@ def owed_reading(target: Path) -> tuple[dict | None, list[str]]:
     both_ways = sorted(node for node in testable if node in certified and node not in live)
     return {"home": home, "offset": offset, "unreadable": unreadable, "listed": listed,
             "both_ways_pairs": answered_both_ways, "stated": unstated_of(home),
-            "restated": restated_of(home),
+            "restated": [e for e in restated if e["standing"]],
+            "restated_gone": [e for e in restated if not e["standing"]],
             "testable_nodes": listed_nodes, "both_ways_nodes": both_ways,
             "by_reading": by_reading,
             "total": sum(len(rows) for rows in listed.values())}, []
@@ -2143,10 +2180,15 @@ def owed(target: Path, show_all: bool = False) -> int:
     # Owed to nobody's judgment: the pair conforms, and the text restating it is prose the
     # comment route removes. Listed so the removal has a list; counted nowhere above.
     restated = reading["restated"]
+    gone = reading["restated_gone"]
     if restated:
+        unresolved = sum(1 for e in restated if e["unresolved"])
         print(f"\n{len(restated)} place(s) the records name where text in the source restates a "
-              f"node's fact the code holds, over {len({e['file'] for e in restated})} file(s). "
-              f"The pair conforms and none is counted above:")
+              f"node's fact the code holds, over {len({e['file'] for e in restated})} file(s), "
+              f"the quoted text still in the file"
+              + (f" — {unresolved} of them on a target the project file does not resolve, "
+                 f"so unchecked and kept" if unresolved else "")
+              + ". The pair conforms and none is counted above:")
         rows = sorted(restated, key=lambda e: (e["file"], e["where"]))
         for entry in (rows if show_all else rows[:RANK_HELD_BACK]):
             print(f"  {entry['file']} — {entry['where']}"
@@ -2155,6 +2197,9 @@ def owed(target: Path, show_all: bool = False) -> int:
         if not show_all and len(rows) > RANK_HELD_BACK:
             print(f"  ... and {len(rows) - RANK_HELD_BACK} more; `--all` lists them")
         print("  a comment is removed, never refreshed, and the file reconciled after")
+    if gone:
+        print(f"{'' if restated else chr(10)}{len(gone)} more the records name whose quoted text "
+              f"is no longer in the file: answered, and kept in the record that read it")
 
     # Owed to a third party again: a certification the auditor refused while saying a test could
     # close what is left. Nothing here binds anything and nothing counts above. The file's own
@@ -2359,7 +2404,9 @@ def convergence(target: Path, spec_root: Path, parent: Path, show_all: bool = Fa
               f"{len(listed[REPORTED])} reported); {len(reading['both_ways_pairs'])} pair(s) the "
               f"records answer both ways; {len(reading['stated'])} unstated fact(s) the source "
               f"states and no node holds; {len(reading['restated'])} place(s) text restates a "
-              f"node's fact; {len(reading['testable_nodes'])} node(s) a refused "
+              f"node's fact, the quoted text still in the file, and "
+              f"{len(reading['restated_gone'])} the records name whose text is gone; "
+              f"{len(reading['testable_nodes'])} node(s) a refused "
               f"certification left with a testable remainder. A binding that computes is a fact "
               f"about bytes and a record that found against a node is a fact about a reading — "
               f"`--owed` names each record.")

@@ -362,7 +362,11 @@ def test_an_unstated_finding_blocks_no_binding_and_lands_in_its_own_list(consume
 
 def test_text_restating_a_held_fact_blocks_no_binding_and_lands_in_its_own_list(consumer):
     """A comment saying a node's fact while the code holds it too is prose, not a contradiction:
-    the pair conforms and binds, and the record lists the text for the route that removes it."""
+    the pair conforms and binds, and the record lists the text for the route that removes it —
+    and `--owed` lists it for as long as the quoted text is in the file."""
+    path = consumer / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "// a case opens on an alert\n",
+                    encoding="utf-8")
     staged(consumer)
     front = clean_return([NODE, OTHER])
     front["findings"] = [{"where": "line 2", "evidence": "// a case opens on an alert",
