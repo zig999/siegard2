@@ -838,7 +838,7 @@ def naming_archived(parent: Path) -> tuple[dict[str, set[str]], list[str], int, 
                 continue
             fence = spec.FENCE.match(shown.stdout)
             try:
-                front = yaml.safe_load(fence.group(1)) if fence else None
+                front = spec.load_yaml(fence.group(1)) if fence else None
             except yaml.YAMLError:
                 front = None
             if not isinstance(front, dict):

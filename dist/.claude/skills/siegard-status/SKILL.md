@@ -29,7 +29,10 @@ install, the `.claude/` directory this skill's tree sits under.
 ## The order
 
 Everything below is read-only. Where a command exits non-zero, its output is not a failure of
-this invocation — it is the status, reported verbatim.
+this invocation — it is the status, reported verbatim. Run them as one batch, each command's
+output into its own file, and read the files: no input of a later command comes from an earlier
+one's output, so a round trip per command pays the wait once per command instead of once, and a
+`head` over an output is a second run of a command that already cost its reading.
 
 1. **The specification.** `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py <specification-root>` —
    sound or not, node counts, decisions disclosed. Then

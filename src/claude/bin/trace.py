@@ -653,7 +653,7 @@ def registry_of(home: Path, offset: str) -> dict | None:
     if not named:
         return None
     try:
-        loaded = yaml.safe_load((home / named).read_text(encoding="utf-8"))
+        loaded = spec.load_yaml((home / named).read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError):
         return None
     return loaded if isinstance(loaded, dict) else None
@@ -1506,13 +1506,31 @@ def bind(target: Path, spec_root: Path, node_id: str, files: list[str],
     return 0
 
 
+FRONTMATTER_READ: dict[tuple[str, int, int], tuple[dict | None, str | None]] = {}
+
+
 def frontmatter_of(record: Path) -> tuple[dict | None, str | None]:
     """One record's frontmatter as a mapping, or nothing and the reason it could not be read.
 
     Every way a file fails to be a record at all is the same failure to both callers here, and
-    saying it twice is how the two drift into disagreeing about what a record even is."""
+    saying it twice is how the two drift into disagreeing about what a record even is.
+
+    Read once per process: the walkers over the reconciliation corpus each open every record,
+    and a record is hundreds of kilobytes of frontmatter, so the parse is the cost and the walks
+    are its multiplier. The key carries the file's size and modification time, so a record
+    rewritten by this same process is read again; the mapping is shared, and every reader
+    builds its own structures from it rather than writing into it."""
     if not record.is_file():
         return None, f"{record} does not exist"
+    stat = record.stat()
+    key = (str(record.resolve()), stat.st_mtime_ns, stat.st_size)
+    if key in FRONTMATTER_READ:
+        return FRONTMATTER_READ[key]
+    FRONTMATTER_READ[key] = read = frontmatter_read(record)
+    return read
+
+
+def frontmatter_read(record: Path) -> tuple[dict | None, str | None]:
     text, unreadable = spec.read_node(record)
     if text is None:
         return None, f"{record}: {unreadable}"
@@ -1520,7 +1538,7 @@ def frontmatter_of(record: Path) -> tuple[dict | None, str | None]:
     if not match:
         return None, f"{record} carries no frontmatter fence; it is not a record this can read"
     try:
-        front = yaml.safe_load(match.group(1)) or {}
+        front = spec.load_yaml(match.group(1)) or {}
     except yaml.YAMLError as broken:
         return None, f"{record}: frontmatter does not parse: {broken}"
     if not isinstance(front, dict):
@@ -2611,7 +2629,7 @@ def read_material(path: Path) -> tuple[dict | None, list[dict], list[str]]:
     if not match:
         return None, [], [f"{path} carries no frontmatter fence; material opens with one"]
     try:
-        front = yaml.safe_load(match.group(1)) or {}
+        front = spec.load_yaml(match.group(1)) or {}
     except yaml.YAMLError as broken:
         return None, [], [f"{path}: frontmatter does not parse: {broken}"]
     intent = isinstance(front, dict) and front.get("contract_version") == INTENT_VERSION
@@ -3208,7 +3226,7 @@ def certifications_of(path: Path) -> tuple[list[dict], list[str]]:
     if not path.is_file():
         return [], [f"{path} does not exist"]
     try:
-        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+        loaded = spec.load_yaml(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as broken:
         return [], [f"{path} does not parse: {broken}"]
     if isinstance(loaded, dict) and isinstance(loaded.get("certify"), list):
@@ -4051,7 +4069,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         print(f"cannot run: {premise_path} does not exist", file=sys.stderr)
         return CANNOT_RUN
     try:
-        premise = yaml.safe_load(premise_path.read_text(encoding="utf-8"))
+        premise = spec.load_yaml(premise_path.read_text(encoding="utf-8"))
     except yaml.YAMLError as broken:
         print(f"cannot run: {premise_path} does not parse: {broken}", file=sys.stderr)
         return CANNOT_RUN

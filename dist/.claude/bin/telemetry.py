@@ -333,7 +333,7 @@ def frontmatter_of(path: Path) -> dict:
     if not match:
         return {}
     try:
-        front = yaml.safe_load(match.group(1))
+        front = spec.load_yaml(match.group(1))
     except yaml.YAMLError:
         return {}
     return front if isinstance(front, dict) else {}
@@ -897,7 +897,7 @@ def entries_in(text: str) -> list[dict]:
     if not match:
         return []
     try:
-        front = yaml.safe_load(match.group(1))
+        front = spec.load_yaml(match.group(1))
     except yaml.YAMLError:
         return []
     entries = front.get("entries") if isinstance(front, dict) else None
@@ -1097,7 +1097,7 @@ def field_in_text(text: str, dotted: str) -> tuple[bool, object]:
     if not match:
         return False, None
     try:
-        front = yaml.safe_load(match.group(1))
+        front = spec.load_yaml(match.group(1))
     except yaml.YAMLError:
         return False, None
     return field_of(front, dotted)

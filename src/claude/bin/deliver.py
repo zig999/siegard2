@@ -528,7 +528,7 @@ def _read_standard(path: Path, validator) -> tuple[dict | None, list[str]]:
     if not path.is_file():
         return None, [f"{path} does not exist"]
     try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        data = spec.load_yaml(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as broken:
         return None, [f"{path} cannot be read: {broken}"]
     if not isinstance(data, dict):

@@ -278,6 +278,19 @@ def listed(front: dict, field: str) -> list:
     return value if isinstance(value, list) else []
 
 
+YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+def load_yaml(text: str):
+    """PyYAML's safe loader through libyaml where the interpreter has it, and its own scanner
+    where it does not — the same documents, the same mappings, the same `YAMLError` on the same
+    input. One home for the choice: a corpus of reconciliation records is megabytes of
+    frontmatter, and the pure-Python scanner reads it an order of magnitude slower than the C
+    one, which is the whole of the difference between a status that answers now and one a
+    person waits a minute for."""
+    return yaml.load(text, Loader=YAML_LOADER)
+
+
 def read_node(path: Path) -> tuple[str | None, str | None]:
     """A node file's text, or the problem that says why it could not be read — never a traceback.
     Exactly one of the two is set.
@@ -311,7 +324,7 @@ def parse_node(path: Path) -> tuple[dict | None, str, str | None]:
         return None, "", "carries no frontmatter fence"
     try:
         # The fence's own line goes in front, so every line PyYAML names is the file's line.
-        front = yaml.safe_load("\n" + match.group(1)) or {}
+        front = load_yaml("\n" + match.group(1)) or {}
     except yaml.YAMLError as broken:
         said = f"frontmatter does not parse: {broken}"
         # PyYAML's own message for the commonest authoring error — a colon inside an unquoted
@@ -1793,7 +1806,7 @@ def decide(root: Path, identity: str, raw: str, validators) -> int:
         text = f"---\nentries:\n{block}---\n"
     match = FENCE.match(text)
     try:
-        reparsed = yaml.safe_load(match.group(1)) if match else None
+        reparsed = load_yaml(match.group(1)) if match else None
     except yaml.YAMLError:
         reparsed = None
     if not isinstance(reparsed, dict) or reparsed.get("entries") != existing + [entry]:

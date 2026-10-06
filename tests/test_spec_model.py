@@ -838,7 +838,9 @@ def test_a_parse_failure_names_the_file_s_line_and_not_the_frontmatter_s(tmp_pat
                     encoding="utf-8")
     front, _, problem = spec.parse_node(path)
     assert front is None
-    assert "duplicate anchor 'id011'" in problem
+    # Both loaders say "duplicate anchor"; only the pure-Python one names the anchor. The line
+    # is what this test guards, and it is the file's either way.
+    assert "duplicate anchor" in problem
     assert "line 3" in problem and "line 4" in problem, \
         "a line counted from inside the fence sends the reader one line above the error"
 
@@ -1242,3 +1244,17 @@ def test_a_semicolon_passes_the_sentence_check(spec_root):
                 statement="A case moves only along the declared transitions; a transition "
                           "asked of a terminal state is refused."))
     assert not hits(problems_of(spec_root), "«One condition is one sentence» (SPEC-003 §Rule)")
+
+
+def test_yaml_is_read_through_libyaml_where_the_interpreter_has_it():
+    """The same documents either way; what differs is an order of magnitude over a corpus of
+    reconciliation records, which is the difference between a status that answers now and one
+    a person waits for."""
+    import yaml
+    if yaml.__with_libyaml__:
+        assert spec.YAML_LOADER is yaml.CSafeLoader
+    else:
+        assert spec.YAML_LOADER is yaml.SafeLoader
+    assert spec.load_yaml("a: [1, 2]\nb: {c: d}\n") == {"a": [1, 2], "b": {"c": "d"}}
+    with pytest.raises(yaml.YAMLError):
+        spec.load_yaml("a: b: c\n")

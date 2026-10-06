@@ -1574,3 +1574,21 @@ def test_the_reconcile_set_is_a_mode_of_check(consumer):
     done = run("--reconcile-set", consumer / "backend")
     assert done.returncode == trace.CANNOT_RUN
     assert "--reconcile-set is a mode of --check" in done.stderr
+
+
+# ------------------------------------------------------------- reading the corpus once
+
+
+def test_a_records_frontmatter_is_parsed_once_per_process_and_again_once_it_changes(consumer, monkeypatch):
+    record = consumer / "siegard-reconcile" / "r.md"
+    record.parent.mkdir()
+    record.write_text("---\ncontract_version: siegard-reconcile/4\nslug: r\n---\n", encoding="utf-8")
+    parses = []
+    real = trace.frontmatter_read
+    monkeypatch.setattr(trace, "frontmatter_read", lambda p: parses.append(p) or real(p))
+    first, _ = trace.frontmatter_of(record)
+    second, _ = trace.frontmatter_of(record)
+    assert first is second and len(parses) == 1
+    record.write_text("---\ncontract_version: siegard-reconcile/4\nslug: r2\n---\n", encoding="utf-8")
+    third, _ = trace.frontmatter_of(record)
+    assert third["slug"] == "r2" and len(parses) == 2
