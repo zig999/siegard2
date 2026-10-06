@@ -85,6 +85,9 @@ name.
 
 ## The report
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 One table per target (one table total where `targets` names exactly one), in this order:
 
 - a header naming the project root, the initiative slug, and — where more than one target

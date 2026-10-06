@@ -360,3 +360,18 @@ def test_every_skill_spelling_of_a_note_opening_is_the_validators_own(case):
                 f"{case['name']} opens a note with {text[at:at + len(literal)]!r}, which is not " \
                 f"how bin/plan.py spells it ({literal!r})"
             at = text.find(head, at + 1)
+
+
+REPORT_HEADING = re.compile(r"^#{2,3} (?:\d+\. )?(?:Report\b|The report\b)|^\d+\. \*\*Report, and stop", re.M)
+
+
+@pytest.mark.parametrize("skill", sorted(p.parent.name for p in
+                                         (REPO / "src/claude/skills").glob("*/SKILL.md")))
+def test_every_skill_that_reports_opens_its_report_as_the_handoff_states(skill):
+    """A skill whose file states a report states what that report opens with, by citing the
+    requirement that fixes it — so a skill added later cannot hand a person a report in an
+    order of its own."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    if not REPORT_HEADING.search(text):
+        pytest.skip("this skill states no report")
+    assert "(SPEC-006 R1)" in text, f"{skill}: its report never cites SPEC-006 R1"

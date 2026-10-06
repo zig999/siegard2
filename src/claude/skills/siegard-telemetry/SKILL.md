@@ -78,7 +78,8 @@ project.py → telemetry.py --probe → announce → telemetry.py → read the J
 4. **Read the record whole.** Open the JSON it wrote. Every number in the report below comes from
    a field in this file; the field is the citation.
 5. **Write the report** at `<telemetry_root>/<stamp>.md` — the same stem, beside the record.
-6. **Report, and stop.** Print both paths, the receipt, and the completeness verdict.
+6. **Report, and stop.** Open as «A handoff opens with what needs the person, and explains
+   after» (SPEC-006 R1) states; then print both paths, the receipt, and the completeness verdict.
 
 ## The report
 
@@ -88,7 +89,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/8
+contract_version: siegard-telemetry/9
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -108,6 +109,7 @@ complete: true | false
 ## 10. Friction and anomalies
 ## 11. Evidence
 ## 12. Completeness
+## 13. Recommendations recorded
 ```
 
 What each section holds:
@@ -191,15 +193,23 @@ What each section holds:
   one line: whether this report is ready to send to the framework's maintainer as a consumer
   report, which is exactly the same question.
 
+- **13.** Every entry of `recommendations.lines`: initiative, log line, door, criterion, deciding
+  fact, the commit that landed it, and `next_commit` with its subject — and `by_criterion` whole.
+  Whether the commit that followed took the door recommended is a reading, tagged `[judgment]`,
+  never a count; a line no commit holds yet has no follower, said as such. Every entry of
+  `recommendations.malformed` verbatim, as a log line nothing could count. A window whose
+  orchestration logs hold none says zero; a `siegard-telemetry/8` record says nothing, which is
+  not zero.
+
 ### Provenance tags
 
-Every claim in §§2–10 carries one tag, and the tag is the claim's source:
+Every claim in §§2–10 and §13 carries one tag, and the tag is the claim's source:
 
 - `[record: <field>]` — read from the JSON record, by field path (`agents[3].usage.output_tokens`,
   `runs[0].steps[1].duration_seconds`).
 - `[disk: <path>]` — read from a file the record points at, by path (a run's log, a note's node).
 - `[recall]` — this conversation, and only in §6 and §10, and never a number.
-- `[judgment]` — yours, and only in §3's rework column and §10.
+- `[judgment]` — yours, and only in §3's rework column, §10 and §13.
 - `[unavailable: <reason>]` — the reason from `provenance`, in place of the figure.
 
 ## What you never do

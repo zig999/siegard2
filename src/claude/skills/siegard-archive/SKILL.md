@@ -73,6 +73,9 @@ archivable it looks.
 
 ## Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 - per initiative archived: the two directories removed, with file counts;
 - per initiative skipped: which criterion failed, verbatim where a command said it;
 - the git acts, ready to paste and in this order — both the human's, never this skill's:

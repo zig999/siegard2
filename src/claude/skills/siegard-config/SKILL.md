@@ -123,6 +123,9 @@ declaration on disk.
 
 ### 5. Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Report, in this order:
 
 - whether this created the file or updated an existing one;

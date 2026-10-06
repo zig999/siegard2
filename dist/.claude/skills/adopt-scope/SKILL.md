@@ -142,7 +142,9 @@ stop that ended it — survive the conversation that made them.
 ## What ends the run
 
 Every stop below ends the run with the doors the stopping report already carried, relayed
-verbatim, and with the log's last line naming it. None is worked around, and none is retried:
+verbatim, and with the log's last line naming it — and, where that report recommended a door, one
+line after it, «`recommended: <door> — <criterion> — <deciding fact>`» (SPEC-006 R5), copied from
+the report and never composed here. None is worked around, and none is retried:
 
 - a material file `--survey` refuses after the one re-delegation `/survey` makes;
 - a specification that does not hold together, or a ledger `--ledger` still refuses after the
@@ -159,6 +161,9 @@ the report is where a person reads it.
 
 ## Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Report, in this order: where `HEAD` stood when the run began; every commit this run made, by hash
 and message, and the `git log` range that holds them, because the range is the review and it
 belongs to a person; every input this skill decided rather than was told — the slug derived, the
@@ -167,7 +172,7 @@ target decided, the step resumed from — each disclosed; `--survey`'s counts pe
 analysis logged, by node and field; the adoption's counts as its report gave them — bound,
 `unheld`, `contradicts`, `unstated`, `restates`, certified — and `trace.py --untraced` over the
 target after the bind, every state it prints, the uncertified tests among them; the telemetry's receipt; what ended the run, where it ended early, with the
-stopping report's doors verbatim; and what this skill never did — no `/plan-work`, no
+stopping report's doors verbatim and its recommendation where it made one; and what this skill never did — no `/plan-work`, no
 `/implement-task`, no repair of any finding, no certification it proposed, no step beyond the
 route.
 

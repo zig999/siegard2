@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.4.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.5.0. The plugin's hooks place them in every session and every
 agent; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -81,3 +81,9 @@ not. Three things hold that route:
   never invokes an entry point it was not handed, and never reports a step it did not run. When
   what it was handed is done or stopped, it returns; what comes next is the invoking context's
   to decide.
+- **A report opens with what needs the person, and recommends only what a fact on disk
+  decides.** «A handoff opens with what needs the person, and explains after» (SPEC-006 R1).
+  «A recommendation names the door, the criterion, the deciding fact and the reversing fact;
+  without all four, none is named» (SPEC-006 R2). The ask, a contradiction, two readings of one
+  piece of evidence, a finding's worth and a decision about cost are the person's: a report hands
+  their doors and names none.

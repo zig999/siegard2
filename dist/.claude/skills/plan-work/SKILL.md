@@ -293,7 +293,13 @@ implementation stands, the trace says where, and what the task owes is stated in
 `intake/` holds the invocation and nothing else — per fact the node, the assertion verbatim, the
 record's path and the files — because the decider of step 4 reads that directory as the one place a
 fact may already be stated, and the assertion is a test's condition over a fact the node already
-holds, never a new one.
+holds, never a new one. A decider return whose edit writes into a node a fact it found only in
+an assertion under `intake/` is therefore not written: the task stays out of the plan, and the
+report hands two doors — `/analyse` over the node, with the assertion as its material, or the
+return written as it stands — and recommends the first, as «A recommendation names the door, the
+criterion, the deciding fact and the reversing fact» (SPEC-006 R2) states: the criterion is
+`rule violated`, the deciding fact the return's edit quoted beside the `intake/` path it cites,
+and the reversing fact a node that already held the fact before this invocation.
 
 **One task per fact, under one epic of their own.** The binder runs per task exactly as step 4 runs
 it, handed the one node as its whole candidate set: it confirms that the node governs the criterion
@@ -655,6 +661,9 @@ passing to make a check go green.
 
 ### 6. Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Report, in this order:
 
 - every node written, by identifier — on a populated root, created, changed and removed
@@ -731,7 +740,8 @@ the specification root nor the target source root.
   written is no obstacle — each task's `implements` now stands as the historical record of
   which nodes the work addressed. Without a specification root the derivation drops each
   `implements` edge's anchor, and the closure diff shows it.
-- Report the closure and offer the `/plan-work` invocation that opens the successor
+- Report the closure, opened as «A handoff opens with what needs the person» (SPEC-006 R1)
+  states, and offer the `/plan-work` invocation that opens the successor
   initiative's new slug under the same work root and project root — the delivered work returns
   as inventory through the survey there, never as a reference into this closed plan. Then stop.
 

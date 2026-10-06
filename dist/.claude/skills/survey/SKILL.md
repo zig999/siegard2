@@ -107,6 +107,9 @@ the report, not to fix: the code may hold nothing of the domain, and the analysi
 
 ### 4. Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Report, in this order:
 
 - the areas as given, the files `--area` listed for each, and the declared tests it left out;

@@ -421,7 +421,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/8"
+    assert report["contract_version"] == "siegard-telemetry/9"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -654,7 +654,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/8"
+    assert report["contract_version"] == "siegard-telemetry/9"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1028,3 +1028,75 @@ def test_a_window_opening_before_the_log_s_history_follows_every_entry(consumer)
     assert len(decisions["added"]) == 2
     assert all("outcome" in entry for entry in decisions["added"])
     assert sum(decisions["outcomes"]["states"].values()) == 2
+
+
+# ------------------------------------------------------------------- the recommendations
+
+
+def commit_at(consumer: dict, message: str, when: str) -> str:
+    home = consumer["home"]
+    subprocess.run(["git", "-C", str(home), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(home), "-c", "user.email=t@example.com", "-c", "user.name=t",
+                    "commit", "-q", "-m", message, "--date", when], check=True,
+                   env={"GIT_COMMITTER_DATE": when, "PATH": "/usr/bin:/bin",
+                        "HOME": str(consumer["tmp"])})
+    return subprocess.run(["git", "-C", str(home), "rev-parse", "HEAD"], capture_output=True,
+                          text=True, check=True).stdout.strip()
+
+
+def test_a_recommendation_line_is_counted_with_what_landed_it_and_what_followed(consumer):
+    log = consumer["home"] / "delivery/checkout/orchestration.md"
+    log.write_text(
+        "deliver-scope checkout: deliver task/checkout/record-order — stopped.\n"
+        "recommended: /plan-work over checkout — precondition unmet — siegard-reconcile/ holds "
+        "no record with `remainder: testable` for domain/x/a\n"
+        "- `recommended: /analyse over domain/x/a — rule violated — intake/proof.md`\n"
+        "recommended: the second door because I prefer it\n", encoding="utf-8")
+    landed = commit_at(consumer, "deliver-scope checkout: log", "2026-08-20T11:10:00Z")
+    (consumer["home"] / "work/checkout/task/checkout/record-order.md").write_text(
+        "---\ntitle: t\nsummary: s\nobjective: o\ncriteria:\n- c\nimplements:\n- domain/x/a\n---\n"
+        "## What it is\nRe-planned.\n", encoding="utf-8")
+    followed = commit_at(consumer, "deliver-scope checkout: plan", "2026-08-20T11:20:00Z")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    recommendations = report["recommendations"]
+    assert recommendations["emitted"] == 2
+    assert recommendations["by_criterion"] == {"precondition unmet": 1, "rule violated": 1,
+                                               "already done": 0, "reading paid twice": 0}
+    first, second = recommendations["lines"]
+    assert (first["slug"], first["line"], first["door"]) == ("checkout", 2, "/plan-work over checkout")
+    assert first["landed_in"] == landed
+    assert first["next_commit"]["hash"] == followed
+    assert first["next_commit"]["subject"] == "deliver-scope checkout: plan"
+    assert second["criterion"] == "rule violated" and second["fact"] == "intake/proof.md"
+    assert [m["line"] for m in recommendations["malformed"]] == [4]
+    assert "recommendations: 2 recorded, 1 line(s) that do not parse" in done.stdout
+
+
+def test_a_recommendation_no_commit_holds_yet_is_counted_with_no_follower(consumer):
+    (consumer["home"] / "delivery/checkout/orchestration.md").write_text(
+        "recommended: /reconcile over the remainder — reading paid twice — the bind's receipt\n",
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    (line_,) = report["recommendations"]["lines"]
+    assert line_["landed_in"] is None and line_["next_commit"] is None
+
+
+def test_a_recommendation_landed_outside_the_window_is_not_counted(consumer):
+    (consumer["home"] / "delivery/checkout/orchestration.md").write_text(
+        "recommended: /reconcile over the remainder — reading paid twice — the bind's receipt\n",
+        encoding="utf-8")
+    commit_at(consumer, "deliver-scope checkout: log", "2026-08-20T12:30:00Z")
+    _, report = report_of(consumer)
+    assert report["recommendations"]["emitted"] == 0
+
+
+def test_no_orchestration_log_is_zero_recommendations_and_the_survey_root_is_never_read(consumer):
+    survey = consumer["home"] / "siegard-survey/adopt/orchestration.md"
+    survey.parent.mkdir(parents=True)
+    survey.write_text("recommended: /reconcile — already done — a note\n", encoding="utf-8")
+    _, report = report_of(consumer)
+    assert report["recommendations"] == {"emitted": 0, "by_criterion": {
+        "precondition unmet": 0, "rule violated": 0, "already done": 0, "reading paid twice": 0},
+        "lines": [], "malformed": []}

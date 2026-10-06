@@ -64,6 +64,13 @@ and in an agent's own transcript as a count. Past one, what the context holds of
 reading is a paraphrase; an invocation that reaches one has outgrown its window, and whether a
 skill's invocations do is a count this reads rather than an impression.
 
+**A recommendation is counted from the log that recorded it.** An orchestrating entry point that
+relays a report naming one door over the others writes it to the run's `orchestration.md` as one
+line, «`recommended: <door> — <criterion> — <deciding fact>`» (SPEC-006 R5). Every such line under
+the delivery root is read, with the commit that landed it and the first commit after it touching
+that initiative's delivery or work root. Which door was then taken is never computed: the commit
+that followed is the evidence, and reading it is a person's.
+
 **A section that cannot be read is said, not filled.** Every section carries an entry in
 `provenance` naming where it was read from or why it could not be. No source is estimated from
 another: an agent whose transcript is missing has null usage and a reason, and the totals say how
@@ -111,11 +118,12 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
           file=sys.stderr)
     raise SystemExit(2)
 
+import deliver
 import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/8"
+CONTRACT = "siegard-telemetry/9"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -1296,6 +1304,90 @@ def scope_section(work_root: Path | None, delivery_root: Path | None, home: Path
     return {"initiatives": initiatives}
 
 
+# ------------------------------------------------------------------- the recommendations
+
+
+CRITERIA = ("precondition unmet", "rule violated", "already done", "reading paid twice")
+RECOMMENDED = re.compile(r"^recommended: (?P<door>.+?) — (?P<criterion>"
+                         + "|".join(CRITERIA) + r") — (?P<fact>.+)$")
+UNCOMMITTED = "0" * 40
+
+
+def landing_of(home: Path, log: Path) -> dict[int, tuple[str, datetime] | None]:
+    """Line number -> (commit, author time) of the commit that wrote it; None for a line no
+    commit holds yet."""
+    blame = git(home, "blame", "--line-porcelain", "--", str(log))
+    if blame is None or blame.returncode != 0:
+        return {}
+    landed: dict[int, tuple[str, datetime] | None] = {}
+    digest, line_number, when = None, None, None
+    for raw in blame.stdout.splitlines():
+        if raw.startswith("\t"):
+            if line_number is not None:
+                landed[line_number] = None if digest == UNCOMMITTED or when is None \
+                    else (digest, when)
+            digest, line_number, when = None, None, None
+            continue
+        head = raw.split(" ")
+        if digest is None and len(head) >= 3 and len(head[0]) == 40:
+            digest, line_number = head[0], int(head[2])
+        elif head[0] == "author-time" and len(head) == 2:
+            when = datetime.fromtimestamp(int(head[1]), timezone.utc)
+    return landed
+
+
+def next_commit_after(home: Path, digest: str, paths: list[Path], until: datetime) -> dict | None:
+    listing = git(home, "log", "--reverse", f"--until={iso(until)}", "--format=%H%x09%aI%x09%s",
+                  f"{digest}..HEAD", "--", *(str(p) for p in paths))
+    if listing is None or listing.returncode != 0:
+        return None
+    for line in listing.stdout.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) == 3:
+            return {"hash": parts[0], "timestamp": parts[1], "subject": parts[2]}
+    return None
+
+
+def recommendations_section(delivery_root: Path | None, work_root: Path | None, home: Path,
+                            since: datetime, until: datetime) -> dict:
+    lines: list[dict] = []
+    malformed: list[dict] = []
+    logs = sorted(delivery_root.glob(f"*/{deliver.ORCHESTRATION_FILE}")) \
+        if delivery_root is not None and delivery_root.is_dir() else []
+    for log in logs:
+        slug = log.parent.name
+        try:
+            text = log.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        landed = landing_of(home, log)
+        roots = [log.parent] + ([work_root / slug] if work_root is not None else [])
+        for number, raw in enumerate(text.splitlines(), start=1):
+            line = raw.strip()
+            if line.startswith("- "):
+                line = line[2:].strip()
+            line = line.strip("`").strip()
+            if not line.startswith("recommended:"):
+                continue
+            landing = landed.get(number)
+            if landing is not None and not (since <= landing[1] <= until):
+                continue
+            where = {"slug": slug, "log": str(log), "line": number}
+            match = RECOMMENDED.match(line)
+            if match is None:
+                malformed.append({**where, "text": line})
+                continue
+            lines.append({**where, "door": match.group("door"),
+                          "criterion": match.group("criterion"), "fact": match.group("fact"),
+                          "landed_in": landing[0] if landing else None,
+                          "next_commit": next_commit_after(home, landing[0], roots, until)
+                          if landing else None})
+    by_criterion = {criterion: sum(1 for l in lines if l["criterion"] == criterion)
+                    for criterion in CRITERIA}
+    return {"emitted": len(lines), "by_criterion": by_criterion, "lines": lines,
+            "malformed": malformed}
+
+
 # --------------------------------------------------------------------------- the whole
 
 
@@ -1330,7 +1422,7 @@ def provenance_of(roots: dict[str, object], harness: dict, repository: dict,
         entry("commands", transcript_source, transcript_reason),
     ]
     for key, section in (("delivery_root", "runs"), ("work_root", "notes"),
-                         ("work_root", "scope")):
+                         ("work_root", "scope"), ("delivery_root", "recommendations")):
         where = roots.get(key)
         rows.append(entry(section, where if isinstance(where, str) else None,
                           None if isinstance(where, str) else f"siegard.json declares no {key}"))
@@ -1388,6 +1480,7 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
         "decisions": decisions,
         "notes": notes_section(work_root),
         "scope": scope_section(work_root, delivery_root, home, repository["commits"]),
+        "recommendations": recommendations_section(delivery_root, work_root, home, since, until),
         "provenance": provenance_of(roots, harness, repository, decisions),
     }
     return report, telemetry_dir, telemetry_dir / f"{stamp_of(until)}.json"
@@ -1427,6 +1520,9 @@ def receipt(report: dict, destination: Path) -> str:
            if report['decisions'].get('retired') else "")
         + f" (baseline: {report['decisions']['baseline']})",
         f"notes standing: {len(report['notes'])}",
+        f"recommendations: {report['recommendations']['emitted']} recorded"
+        + (f", {len(report['recommendations']['malformed'])} line(s) that do not parse"
+           if report['recommendations']['malformed'] else ""),
     ]
     missing = [p for p in report["provenance"] if p["unavailable"]]
     lines.append("unavailable: " + ("; ".join(f"{p['section']} — {p['unavailable']}"

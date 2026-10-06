@@ -517,6 +517,9 @@ changed. The fold already said which certifications did not hold and why, in the
 
 ### 6. Report
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Say, in this order and in prose: the file set as given; what the staging held for each file, by
 state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
 unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
@@ -570,7 +573,8 @@ beside the remainder.
 Where it did not, there are two readings and **you choose neither.** The source may be right and the
 specification behind it, or the node may be right and the source wrong — that is a person's to
 settle, and a reviewer that settles it is a decision wearing a finding's clothes. Hand both, and say
-which finding each one answers.
+which finding each one answers: two readings of one piece of evidence are a door nobody
+recommends — «Each is the person's, and a handoff hands its doors and names none» (SPEC-006 R3).
 
 The first, where the fact the source now states belongs in the specification — the `/analyse`
 invocation ready to paste, naming the material (the finding's evidence, the file it was read in, and
@@ -591,7 +595,12 @@ removes the prose, never refreshes it, and this skill invoked again over that fi
 is what re-judges and rebinds. The prose removed is every comment the file carries, directives the
 toolchain reads excepted, never only the ones cited: a judge names what it read, it does not list
 every comment, so a file stripped of the cited ones hands the next judge the rest. Hand that
-invocation ready to paste, and say which findings it answers.
+invocation ready to paste, and say which findings it answers. Over these findings the comment
+route is recommended, as «A recommendation names the door, the criterion, the deciding fact and
+the reversing fact» (SPEC-006 R2) states: the criterion is `rule violated`, since either door
+above would route prose as a fact or a behavior; the deciding fact is the judge's return naming
+prose and no contradicted node, quoted; the reversing fact is a return naming a fact or a
+behavior, which puts the finding back between the two readings above.
 
 The fourth, where the fold placed a finding in the record's `notes` because it names a node no
 file of this set is bound to — the note ends "owed a route of its own". It blocked nothing here,
@@ -601,6 +610,10 @@ evidence, and hand it the same two doors as a finding on a node — `/analyse` w
 belongs in the specification, `/plan-work` where the node is right and the behavior is not —
 or, where the finding says the file holds the node's fact and nothing binds it, this skill
 invoked again over that file under a new slug, which is what hands a judge that node's text.
+Where the note says so, that door is recommended as R2 states: the criterion is `already done`,
+since the fact is already in the file and only the binding is owed; the deciding fact is the note,
+quoted; the reversing fact is a note saying the file contradicts the node, which leaves the two
+readings and recommends neither.
 A finding left in the notes and not in the report is a finding nobody will act on.
 
 ## Adoption

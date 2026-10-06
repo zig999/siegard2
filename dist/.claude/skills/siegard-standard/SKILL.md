@@ -134,6 +134,9 @@ still incomplete carries that into the report as fact, not as a defect of the fi
 
 ## Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Report, in this order:
 
 - every rule written, by `id`, with its source — the exact config file and line-adjacent context

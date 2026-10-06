@@ -144,8 +144,8 @@ this invocation — it is the status, reported verbatim.
 
 ## The voice
 
-This is the one skill in the framework whose product is written for a person, not for another
-agent, and the report is voiced accordingly:
+The whole product of this skill is a handoff, and «every command output, note and log entry
+quoted verbatim and untranslated» (SPEC-006 R1) is one of the rules it is voiced by:
 
 - **The session's language.** Write the report in the language the conversation is happening
   in, whatever it is. The framework's artifacts stay English; this report is not an artifact —
@@ -165,6 +165,9 @@ agent, and the report is voiced accordingly:
   telling, never in the facts.
 
 ## The report
+
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
 
 In this order, every line naming its source:
 
@@ -191,7 +194,11 @@ In this order, every line naming its source:
   already holds and whose preconditions the tree already meets. Where the report named more
   than one door over the same files, the close names the reading that is owed once over the
   reading that would be paid twice, and says which fact of this report decides it — a close a
-  reader has to ask the reason for was a preference wearing a derivation's clothes.
+  reader has to ask the reason for was a preference wearing a derivation's clothes. It is a
+  recommendation, and «A recommendation names the door, the criterion, the deciding fact and the
+  reversing fact» (SPEC-006 R2): the criterion is `precondition unmet` where another door's
+  inputs are not on disk and `reading paid twice` where two readings cover the same files, and
+  the reversing fact is the one whose change would make another door the most ready.
 
 ## What you never do
 

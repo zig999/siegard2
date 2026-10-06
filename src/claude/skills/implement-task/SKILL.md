@@ -798,6 +798,9 @@ a `--check` finding nobody was going to run.
 
 ### 9. Report, and stop
 
+Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
+states; what follows is the report that opening sits above.
+
 Report, in this order:
 
 - the two nodes written, by identifier, and whether this was a re-delivery;
@@ -827,6 +830,14 @@ Report, in this order:
   pending state, because `/reconcile` refuses a named file the tree holds uncommitted. Never a
   stop, and never per file: one invocation, one file set, and taking it is the human's;
 - which steps, if any, ran inline instead of in a subagent, and why;
+- where this invocation stopped and hands more than one door, the door a fact on disk decides,
+  as «A recommendation names the door, the criterion, the deciding fact and the reversing fact»
+  (SPEC-006 R2) states. A door whose entry point would refuse its inputs as the tree stands — a
+  proof increment over a node no record under `siegard-reconcile/` carries with `remainder:
+  testable`, a task `deliver.py --outstanding` does not list as deliverable — is `precondition
+  unmet`, and the door left is the one recommended; a door whose work the producer's own return
+  says the delivered tree already holds is `already done`. A stop over a BLOCKING note, a
+  contradiction, or a suite whose diagnosis two producers read apart recommends nothing;
 - the validator's final output, verbatim;
 - the standard this invocation followed — where it resolved from, the invocation or the project
   file by path — by its own path and the pin taken of it, every departure
