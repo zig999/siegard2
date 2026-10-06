@@ -6,7 +6,7 @@ Siegard**: nenhum conhecimento prévio do framework é pressuposto. Cada verbete
 significa, por que ele existe, em que momento do trabalho aparece, como funciona passo a passo e,
 sempre que possível, traz um exemplo.
 
-**Versão descrita.** Esta edição descreve o Siegard **5.4.0**. Ela amplia a tradução de
+**Versão descrita.** Esta edição descreve o Siegard **5.5.0**. Ela amplia a tradução de
 `glossary/siegard-glossary.md`, que ainda descreve a 4.21.3; os verbetes sobre levantamento
 (`/survey`), material de intenção, ledger, `/adopt-scope`, o campo `tests` e os agentes
 `domain-surveyor` e `test-intent-reader` ainda não têm par na versão inglesa. Onde as duas
@@ -1316,7 +1316,10 @@ push, nunca reescreve histórico.
 commitada por uma pessoa antes. Toda parada de uma skill interna encerra a execução, e as portas
 dessa parada são repassadas literalmente.
 **Log.** Mantém `orchestration.md` na raiz de entrega: uma linha por passo, com o que foi invocado,
-o commit e o resultado.
+o commit e o resultado. Desde a 5.5.0, quando o relatório que parou a execução recomendou uma porta
+(§12, "O handoff"), a skill copia essa recomendação para o log numa linha própria, no formato
+`recommended: <porta> — <critério> — <fato que decide>`. É dessa linha que a telemetria conta as
+recomendações. O `/adopt-scope` faz o mesmo no seu próprio log.
 **Medição.** Toda execução termina **medida**, inclusive a que uma parada encerrou: o passo
 `measure` roda o `telemetry.py` (§12) sobre o período da execução e commita só a raiz de
 telemetria, com a mensagem `deliver-scope <slug>: measure`. O custo de uma execução é a metade do
@@ -2513,6 +2516,45 @@ fora pelo ledger e decisões registradas **não** param nada: são divulgação,
 
 ## 12. As demais skills e os scripts auxiliares
 
+### O handoff: a mensagem final de uma skill, e o que ela recomenda
+**O que é.** *Handoff* é a última mensagem de uma invocação de skill, aquela em que o controle
+volta para você: o relatório, ou a parada que encerrou a execução antes do fim. Desde a 5.5.0 a
+forma dessa mensagem é fixada pela especificação do framework (SPEC-006) e vale para todas as
+skills que relatam algo.
+**Como abre.** Antes de qualquer explicação vem o que precisa de você, nesta ordem e omitindo o
+que estiver vazio:
+1. o estado em uma linha (concluído, parado e por quê, ou aguardando você);
+2. o que o relatório retira do que a mesma invocação disse antes (uma correção do próprio agente);
+3. cada decisão pendente, com suas portas, o que cada porta faz e o que fica como está se nenhuma
+   for tomada;
+4. cada ato **devido** (*owed*), com a invocação pronta e o passo que ele destrava, separado dos
+   atos apenas **oferecidos** (*offered*).
+
+Depois vem o relatório na ordem que o `SKILL.md` daquela skill define, no idioma da conversa, com
+cada termo do Siegard explicado uma vez, na primeira ocorrência. Saídas de comando, notas e
+entradas de log são citadas literalmente, sem tradução.
+**Porta (door).** Cada ato que o handoff entrega a você, como uma invocação pronta para colar.
+**Recomendação.** Quando há mais de uma porta e um **fato no disco** decide entre elas, o handoff
+nomeia a porta recomendada com quatro coisas: a porta, o **critério**, o fato que decide e o fato
+que inverteria a recomendação. Sem as quatro, nenhuma porta é recomendada. O critério vem de uma
+lista fechada, sempre escrito em inglês:
+
+| Critério | Quando vale |
+|---|---|
+| `precondition unmet` | a skill da porta recusaria as entradas do jeito que a árvore está (por exemplo, um incremento de prova sem nenhum registro `remainder: testable`) |
+| `rule violated` | a porta quebra uma regra do framework (por exemplo, gravar na especificação um fato tirado só da asserção de um teste) |
+| `already done` | o trabalho da porta já está na árvore |
+| `reading paid twice` | entre duas leituras sobre os mesmos arquivos, a que se paga uma vez é preferida à que se pagaria duas |
+
+**O que nunca é recomendado.** O pedido e o seu escopo; uma contradição entre escopo e
+especificação; duas leituras da mesma evidência (o código está certo ou a especificação?); se um
+finding importa ou qual rota ele merece; e qualquer decisão de custo, como tentar de novo. Nesses
+casos o handoff entrega as portas e não nomeia nenhuma. Os revisores continuam entregando só
+evidência, sem veredito, severidade ou ranking.
+**Finding não para nada.** Um finding de revisão nunca é uma parada. O handoff só chama algo de
+parada quando o `SKILL.md` da skill o chama assim. Quando diz que um passo pode seguir, lista as
+verificações que rodou, com a saída de cada uma.
+
 ### `/siegard-config`
 Escreve ou atualiza o `siegard.json` a partir do que a pessoa diz. É o único que escreve esse
 arquivo.
@@ -2529,7 +2571,10 @@ compilador, verificador de segredos) e do que uma pessoa declara. Nunca inventa 
 ### `/siegard-status`
 Um panorama amigável e só de leitura do projeto inteiro: integridade da especificação, decisões
 recentes, tarefas pendentes e notas `BLOCKING` de cada iniciativa ativa, drift do trace por classe,
-trabalho não commitado. Cada afirmação vem com o comando que a sustenta.
+trabalho não commitado. Cada afirmação vem com o comando que a sustenta. Termina com a invocação
+mais pronta para rodar. Desde a 5.5.0 essa invocação é uma recomendação no sentido do handoff
+(acima): traz o critério, o fato que decide e o fato que a inverteria. A skill continua não
+decidindo nada por você, porque nomear uma porta não é tomá-la.
 
 ### `/siegard-progress`
 Uma tabela compacta das tarefas de uma iniciativa (status derivado + porquê), feita para rodar
@@ -2552,6 +2597,12 @@ telemetry.py <project-root> --since 2026-09-29T00:00:00Z [--until …]
 ```
 
 Saída: `<telemetry_root>/<carimbo>.json` e um relatório Markdown ao lado.
+
+Desde a 5.5.0 (contrato `siegard-telemetry/9`), o relatório tem a seção `recommendations`. Ela lê
+cada linha `recommended:` dos `orchestration.md` sob a raiz de entrega e conta as linhas por
+critério. Ao lado de cada linha põe o commit que a gravou e o primeiro commit seguinte que tocou
+a iniciativa. Se a porta recomendada foi tomada, o script não calcula: o commit seguinte é a
+evidência, e quem o lê é uma pessoa. Linhas que não seguem o formato aparecem em `malformed`.
 
 ### `project.py`
 
