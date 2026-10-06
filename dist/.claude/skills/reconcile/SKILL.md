@@ -602,7 +602,8 @@ route is recommended, as «A recommendation names the door, the criterion, the d
 the reversing fact» (SPEC-006 R2) states: the criterion is `rule violated`, since either door
 above would route prose as a fact or a behavior; the deciding fact is the judge's return naming
 prose and no contradicted node, quoted; the reversing fact is a return naming a fact or a
-behavior, which puts the finding back between the two readings above.
+behavior, which puts the finding back between the two readings above. The person reads the
+reason in plain words; the criterion's name is for the orchestration log.
 
 The fourth, where the fold placed a finding in the record's `notes` because it names a node no
 file of this set is bound to — the note ends "owed a route of its own". It blocked nothing here,
@@ -615,7 +616,7 @@ invoked again over that file under a new slug, which is what hands a judge that 
 Where the note says so, that door is recommended as R2 states: the criterion is `already done`,
 since the fact is already in the file and only the binding is owed; the deciding fact is the note,
 quoted; the reversing fact is a note saying the file contradicts the node, which leaves the two
-readings and recommends neither.
+readings and recommends neither. Said in plain words, as above.
 A finding left in the notes and not in the report is a finding nobody will act on.
 
 ## Adoption

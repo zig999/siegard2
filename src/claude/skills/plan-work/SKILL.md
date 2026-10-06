@@ -299,7 +299,8 @@ report hands two doors — `/analyse` over the node, with the assertion as its m
 return written as it stands — and recommends the first, as «A recommendation names the door, the
 criterion, the deciding fact and the reversing fact» (SPEC-006 R2) states: the criterion is
 `rule violated`, the deciding fact the return's edit quoted beside the `intake/` path it cites,
-and the reversing fact a node that already held the fact before this invocation.
+and the reversing fact a node that already held the fact before this invocation — said to the
+person as the reason in plain words, the name kept for the orchestration log.
 
 **One task per fact, under one epic of their own.** The binder runs per task exactly as step 4 runs
 it, handed the one node as its whole candidate set: it confirms that the node governs the criterion

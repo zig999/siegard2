@@ -836,8 +836,10 @@ Report, in this order:
   proof increment over a node no record under `siegard-reconcile/` carries with `remainder:
   testable`, a task `deliver.py --outstanding` does not list as deliverable — is `precondition
   unmet`, and the door left is the one recommended; a door whose work the producer's own return
-  says the delivered tree already holds is `already done`. A stop over a BLOCKING note, a
-  contradiction, or a suite whose diagnosis two producers read apart recommends nothing;
+  says the delivered tree already holds is `already done`. The name classifies the reason for
+  the log; what the person reads is the reason in plain words, with the fact quoted and what
+  would change it. A stop over a BLOCKING note, a contradiction, or a suite whose diagnosis
+  two producers read apart recommends nothing;
 - the validator's final output, verbatim;
 - the standard this invocation followed — where it resolved from, the invocation or the project
   file by path — by its own path and the pin taken of it, every departure

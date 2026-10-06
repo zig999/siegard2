@@ -165,12 +165,15 @@ one's output, so a round trip per command pays the wait once per command instead
    `/plan-work` and `/deliver-scope`; the delivery root, `/implement-task`, `/review-change` and
    `/deliver-scope`; a target source root, `/implement-task` and `/deliver-scope`; and
    `/reconcile` refuses any named file the tree holds uncommitted. Drift, open findings and a
-   missing review record are never owed: nothing refuses to run over them. «Every item of the
-   opening is labelled by its role, in plain words of the session's language» (SPEC-006 R1):
-   an owed act is labelled as what the person must do and says in one clause what "owed" means
-   here — a named entry point refuses to start until it is done — an offered one as offered,
-   a pair the records answer both ways as the person's own decision, and the close's
-   recommendation is repeated in the opening, labelled as recommended, with its criterion.
+   missing review record are never owed: nothing refuses to run over them. «Each item of the
+   opening says what it is for the person, in the session's own plain words» (SPEC-006 R1) —
+   "owed", "offered", "door", "criterion" are this file's words and never the opening's. An
+   owed act opens with what it unblocks ("before `/plan-work` or `/deliver-scope` can run:
+   commit or discard …"); an offered one with the fact that nothing waits on it ("you can
+   also …, and nothing is blocked by it"); a pair the records answer both ways as the person's
+   own call, with both doors and no preference; and the close's recommendation as a suggestion
+   with its reason in a sentence ("I suggest …, because …; what would change this: …"), never
+   as a criterion's name or a field's.
 5. **The session.** Last, and clearly fenced apart: what this conversation has done or is in
    the middle of that has not reached disk yet. This is the one section whose source is not a
    command, and it says so.
@@ -223,8 +226,8 @@ In this order, every line naming its source:
 - the repository: recent commits, and what is uncommitted, by root;
 - the session: in-flight work not yet on disk, fenced as such;
 - the close: the single next invocation most ready to run, and nothing more — named here and
-  already named in the opening, since «where the report recommends a door, the opening names
-  it with its criterion, before any explanation» (SPEC-006 R1). Ready is a
+  already named in the opening, since «Where the report recommends a door, the opening says so
+  and why, before any explanation» (SPEC-006 R1). Ready is a
   statement about the tree, never about worth: it is the invocation whose inputs this report
   already holds and whose preconditions the tree already meets. Where the report named more
   than one door over the same files, the close names the reading that is owed once over the
@@ -232,12 +235,13 @@ In this order, every line naming its source:
   reader has to ask the reason for was a preference wearing a derivation's clothes. It is a
   recommendation, and «A recommendation names the door, the criterion, the deciding fact and the
   reversing fact» (SPEC-006 R2): the criterion is `precondition unmet` where another door's
-  inputs are not on disk and `reading paid twice` where two readings cover the same files —
-  the reconcile set's own lines are where both are read, the files it names being one reading
-  and the files it retained being the second a commit would fold into it —
-  «named as written here, untranslated, whatever the session's language» (SPEC-006 R2) — the
-  deciding fact is a line of this report, quoted, and the reversing fact is the one whose change
-  would make another door the most ready.
+  inputs are not on disk, and `reading paid twice` where the same file would be read by two
+  judgments — a review about to reach the files the reconcile set names, and nothing else:
+  «two invocations over different files are each paid once, and their order is a decision
+  about cost» (SPEC-006 R2), so the set as it stands now is the ready one, and the files a
+  commit would return to it are the reversing fact, never a reason to wait. The deciding fact
+  is a line of this report, quoted. In prose the criterion is its reason in plain words; its
+  name is for the orchestration log alone.
 
 ## What you never do
 
