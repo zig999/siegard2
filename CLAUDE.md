@@ -187,3 +187,22 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
 - **A contradiction is never decided.** A node stating the opposite turns the route back
   into the standing stop — the scope and the specification disagreeing is the one thing
   only a person settles, and the only thing left that stops a task.
+
+## Recommendation authority
+
+The framework recommends. Where a handoff hands more than one door and a fact on disk decides
+between them, it names the door — SPEC-006 R2 is the rule, and it was granted deliberately,
+after measurement showed the person choosing between doors the tree had already chosen.
+
+Three bounds hold it, and giving up any of them is a proposal, never a change:
+
+- **A recommendation is derived, never preferred.** It carries the criterion from the closed
+  list, the deciding fact and the fact that would reverse it; a door named without all four is
+  a preference wearing a derivation's clothes.
+- **The person's own questions are never recommended over.** The ask, a contradiction, two
+  readings of one piece of evidence, a finding's worth and a decision about cost — SPEC-006 R3
+  names them, and the reviewing agents stay evidence-only.
+- **A recommendation is never taken.** The door stays the person's; an orchestrator that took
+  one would be deciding, and `/deliver-scope` relays doors whole. What was recommended is
+  counted from the orchestration log; what was taken is a person's reading of the commit that
+  followed, and that count is the criterion that reverses this grant.
