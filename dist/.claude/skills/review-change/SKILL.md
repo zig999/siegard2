@@ -177,6 +177,11 @@ and reading the agent's file yourself is the fallback, never the delegation. Onl
 where the session cannot spawn subagents, read the agent's file under the plugin root's `agents/`
 directory and apply its discipline in place, and the report must say which passes ran inline.
 
+A spawned judge runs in the background and the harness delivers a notification when it answers;
+the session waits for that notification and nothing else — never a `sleep`, a scheduled wakeup,
+an agent listing or a message to the judge, each of which is a turn spent reading nothing — and
+saves the return when the notification names it.
+
 ### 1. Situate
 
 Read the indexes, not the trees. `plan.json` and `delivery.json` are both current, because the
@@ -487,7 +492,18 @@ can compose. A small YAML file in the workspace, carrying `title`, `summary` (wh
 these files, under which initiative, as the implementation records state it — never a finding of
 yours), `target`, and one `files` entry per path of the file set with its `change` line, taken
 from the implementation records' own `files[].effect` where a record names the path and stated as
-"written by the delivery of <task>" where none does. Then:
+"written by the delivery of <task>" where none does.
+
+Every conformance return is already on disk by then, saved verbatim the moment its notification
+arrived — a copy of the delegation's transcript and nothing else, never retyped from the
+notification that relays it:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-source-root> <workspace> <file> <transcript>
+```
+
+`<file>` is the staged file's path as the manifest lists it; `<transcript>` is the output file
+the harness names for the spawned agent. Then:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <workspace> \

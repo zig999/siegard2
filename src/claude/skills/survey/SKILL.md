@@ -82,8 +82,12 @@ the human's to say, by naming the area again or by declaring the target's tests 
 
 Spawn one subagent per area, in waves of at most twenty — the harness's ceiling on delegations
 running at once, the same number `trace.py --stage` cuts a reconciliation's waves by — one wave
-whole in one message, the next only after every return of the last is in hand; a launch the
-harness refuses is a wave cut too wide, never a surveyor dispatched a second time on its own:
+whole in one message, the next only after every return of the last has arrived; a launch the
+harness refuses is a wave cut too wide, never a surveyor dispatched a second time on its own.
+A spawned surveyor runs in the background and the harness delivers a notification when it
+answers; the session waits for that notification and nothing else — never a `sleep`, a
+scheduled wakeup, an agent listing or a message to the surveyor, each of which is a turn spent
+reading nothing — and reads the return when the notification names it. The surveyors are
 `siegard:domain-surveyor` in the
 source form, its judgment at `${CLAUDE_PLUGIN_ROOT}/agents/domain-surveyor.md`, and
 `siegard:test-intent-reader` in the tests form, its judgment at

@@ -404,3 +404,57 @@ def test_a_state_question_s_skill_opens_its_description_with_the_trigger(skill):
     front = yaml.safe_load(FENCE.match(text).group(1))
     assert front["description"].startswith("Use whenever a person asks"), \
         f"{skill}: the description opens with what it does, not with when to use it"
+
+
+WAITING = ("review-change", "reconcile", "survey", "plan-work", "implement-task")
+
+
+@pytest.mark.parametrize("skill", WAITING)
+def test_a_skill_that_delegates_waits_for_the_harness_and_never_polls(skill):
+    """A spawned delegation runs in the background and the harness notifies when it answers.
+    A session that sleeps, schedules wakeups, lists agents or messages the judge in between
+    spends turns reading nothing; the text names the one signal and forbids the rest."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    assert "waits for that notification and nothing else" in text, \
+        f"{skill} never says what the session waits for"
+    assert "never a `sleep`" in text, f"{skill} never forbids polling"
+
+
+def test_review_change_saves_each_return_before_it_folds():
+    """The fold reads returns from disk; a skill that folds and never says how the returns got
+    there leaves the one copy to a session's own retyping."""
+    text = (REPO / "src/claude/skills/review-change/SKILL.md").read_text(encoding="utf-8")
+    assert "--save-return" in text
+
+
+def test_plan_work_spawns_the_decider_and_never_offers_it():
+    """R13 decides an unstated fact and discloses it; a session that asks permission first has
+    turned the one stop R13 removed back into a question with a default answer."""
+    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
+    assert "The decider is spawned, never offered" in text
+    assert "(SPEC-001 R13)" in text
+
+
+def test_a_closure_reads_what_it_leaves_standing_before_the_marker_is_written():
+    """Closing is the human's act and stays one; what it closes over is three counts a script
+    prints — findings nobody routed, nodes still owed a test, notes still standing — never a
+    verdict, and never a stop."""
+    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
+    closing = text.split("## Closing the plan", 1)[1]
+    assert "what this closure leaves standing" in closing
+    for command in ("deliver.py --findings", "trace.py --owed", "--plan <work-root>",
+                    "plan.py --notes"):
+        assert command in closing, f"the closing step never cites {command}"
+    assert "None of the three is a stop" in closing
+
+
+def test_a_proof_task_is_bound_against_the_nodes_that_name_its_node():
+    """An auditor's assertion can contradict a contract that answers the same case; a binder
+    handed the one node alone cannot see it, and the contradiction then surfaces as a red test
+    after a delivery was paid for. The neighbours come from `spec.py --impact`, read."""
+    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
+    increment = text.split("## The proof increment", 1)[1].split("### 1. Situate", 1)[0]
+    assert "spec.py --impact" in increment
+    assert "every node that names it" in increment
+    assert "the one node as its whole candidate set" not in increment
+    assert "BLOCKING, from the specification" in increment

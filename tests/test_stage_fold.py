@@ -797,7 +797,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/8"
+    assert front["contract_version"] == "siegard-reconcile/9"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -2077,7 +2077,7 @@ def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopti
     })
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
-    assert front["contract_version"] == "siegard-reconcile/8"
+    assert front["contract_version"] == "siegard-reconcile/9"
     assert front["adopted"] is True and front["outside"] == [KEPT_OUT]
     by_node = {entry["node"]: entry for entry in front["nodes"]}
     assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
@@ -2238,7 +2238,7 @@ def test_an_outside_path_nothing_tracks_and_nothing_holds_is_still_refused(adopt
 def test_outside_needs_adopted_in_the_contract():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
-    base = {"contract_version": "siegard-reconcile/8", "title": "t", "summary": "s",
+    base = {"contract_version": "siegard-reconcile/9", "title": "t", "summary": "s",
             "target": "backend", "files": [{"path": FILE, "change": "c"}],
             "nodes": [], "unbound": [FILE], "outside": [KEPT_OUT]}
     assert list(Draft202012Validator(schema).iter_errors(base))
@@ -2603,3 +2603,83 @@ def test_concurrency_is_a_whole_number_and_a_mode_of_stage_alone(consumer):
     assert zero.returncode == 2 and "at least 1" in zero.stderr
     elsewhere = run("--check", consumer / "backend", "--concurrency", "3")
     assert elsewhere.returncode == 2 and "a mode of --stage" in elsewhere.stderr
+
+
+# ------------------------------------------------ a refusal is pinned at what it was read at
+
+
+def test_the_staging_pins_each_offered_proof_s_digest_on_the_certification(consumer):
+    """What the auditor is about to read is taken now, by digest, so that a refusal can say what
+    it was read at and a later staging can tell an unchanged pair from one that moved."""
+    staged_with_certification(consumer)
+    [ask] = manifest_of(consumer / "ws-round")["certify"]
+    [pin] = ask["proof_digests"]
+    assert pin["file"] == PROOF
+    import hashlib
+    assert pin["digest"] == "sha256:" + hashlib.sha256(
+        (consumer / "backend" / PROOF).read_bytes()).hexdigest()
+
+
+def test_a_refused_certification_is_pinned_at_the_node_and_proof_digests_it_was_read_at(consumer):
+    """A refusal written as `reading` plus a remainder could be any reading of any bytes; with
+    `read_at` it is this reading of these bytes, and a staging that finds the same bytes can name
+    this record rather than pay the reading again. The bytes are compared, never the answer."""
+    staged_with_certification(consumer)
+    manifest = manifest_of(consumer / "ws-round")
+    save_certification(consumer, "round", NODE, PARTIAL_TESTABLE)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    assert front["contract_version"] == "siegard-reconcile/9"
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["read_at"] == {"node": manifest["node_digests"][NODE],
+                                "proof": manifest["certify"][0]["proof_digests"]}
+    assert run("--reconciliation", record).returncode == 0
+
+
+def test_a_covered_certification_carries_no_read_at(consumer):
+    """A certification that held is pinned by the trace at what the auditor cited; a second pin
+    on the record would be a second home for the same digest."""
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, COVERED)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = [e for e in yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+               ["nodes"] if e["node"] == NODE]
+    assert "read_at" not in entry and entry["decided_by"] == "test"
+
+
+# ------------------------------------------------------------- --owed --plan
+
+
+def test_owed_kept_to_a_plan_lists_only_the_nodes_its_tasks_implement(consumer):
+    """A closure reads what its own plan leaves owed. The filter is the derived index's
+    `implements` edges, never a reading of the tasks, and a node the plan never named is not
+    its debt whatever its state."""
+    staged_with_certification(consumer)
+    save_certification(consumer, "round", NODE, PARTIAL_TESTABLE)
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run("--bind-record", consumer / "backend", consumer / "specs", record).returncode == 0
+    work = consumer / "work" / "checkout"
+    work.mkdir(parents=True)
+    (work / "plan.json").write_text(json.dumps({
+        "contract_version": "siegard-plan/3",
+        "nodes": [{"id": "task/checkout/record-order", "kind": "task", "epic": "checkout"}],
+        "edges": [{"from": "task/checkout/record-order", "to": OTHER, "kind": "implements",
+                   "at": "implements[0]"}]}), encoding="utf-8")
+    everything = run("--owed", consumer / "backend")
+    assert NODE in everything.stdout
+    kept = run("--owed", consumer / "backend", "--plan", work)
+    assert "0 of 1 node(s) owed a test are implemented by a task of checkout" in kept.stdout
+    assert "would close it" not in kept.stdout
+    (work / "plan.json").write_text(json.dumps({
+        "contract_version": "siegard-plan/3",
+        "nodes": [{"id": "task/checkout/record-order", "kind": "task", "epic": "checkout"}],
+        "edges": [{"from": "task/checkout/record-order", "to": NODE, "kind": "implements",
+                   "at": "implements[0]"}]}), encoding="utf-8")
+    kept = run("--owed", consumer / "backend", "--plan", work)
+    assert "1 of 1 node(s) owed a test are implemented by a task of checkout" in kept.stdout
+    assert f"  {NODE} [" in kept.stdout
+    missing = run("--owed", consumer / "backend", "--plan", consumer / "work" / "nowhere")
+    assert missing.returncode == 2 and "plan.py is what writes it" in missing.stderr

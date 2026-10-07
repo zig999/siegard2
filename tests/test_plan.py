@@ -1064,3 +1064,39 @@ def test_a_slug_archived_and_standing_again_is_read_from_the_disk_once(tmp_path,
     assert "0 archived initiative(s) read" in done.stdout
     assert "domain/sales/order" in done.stdout, \
         "the re-created plan names nothing yet, and its archived predecessor must not answer for it"
+
+
+# ------------------------------------------------------------------- --notes
+
+
+def test_notes_prints_every_classified_note_as_counts_a_reader_opens_by_node(work, root,
+                                                                           sound_plan, write_plan):
+    """A closure says the work is over; this says what it leaves standing, by the same readers
+    the validator classifies with. A task with no note prints no line; the totals always do."""
+    write_plan("task/checkout/record-order", {
+        "title": "Record order", "summary": "Persist a placed order.",
+        "objective": "A valid order is persisted and retrievable by its order_number.",
+        "criteria": ["Submitting a valid order returns its order_number."],
+        "implements": ["domain/sales/order"],
+    }, body="## What it is\nProse.\n\n## Notes\n"
+            "BLOCKING, from the specification — domain/sales/order states the opposite.\n"
+            "UNDERDETERMINED, from the specification — an empty order satisfies every criterion.\n"
+            "UNDERDETERMINED, from the specification — a negative total does too.\n")
+    write_plan("epic/checkout", {
+        "title": "Checkout", "summary": "Everything order placement needs.",
+        "covers": ["domain/sales/order", "domain/sales/invoice"],
+        "uncovered": [{"node": "domain/sales/invoice", "why": "left to the next initiative"}],
+    })
+    done = run("--notes", work)
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert "task/checkout/record-order: blocking 1, underdetermined 2" in lines
+    assert "epic/checkout: uncovered 1" in lines
+    assert "task/checkout/bill-order" not in done.stdout
+    assert lines[-1] == "notes standing: blocking 1, underdetermined 2, uncovered 1"
+    (work / "closure.md").write_text("Closed.\n", encoding="utf-8")
+    closed = run("--notes", work)
+    assert closed.returncode == 0
+    assert closed.stdout.splitlines()[-1].endswith("(closed plan)")
+    refused = run("--notes", work, root)
+    assert refused.returncode == 2 and "on its own" in refused.stderr

@@ -347,3 +347,14 @@ def test_the_rules_send_a_state_question_to_disk():
     assert "A question about where the project stands is answered from disk" in rules
     assert "`/siegard-status`" in rules and "`/siegard-progress`" in rules
     assert "`bin/project.py`" in rules
+
+
+def test_the_rules_bound_the_session_s_own_commits():
+    """The skills refuse to commit and the spawned contexts never do; the session that commits
+    after a skill returns was named by nothing. The rule binds it to the person's own words in
+    this session, to what the skill wrote, and to a pathspec — and says a summary of an earlier
+    context is not an authorization."""
+    rules = CONSUMER_RULES.read_text(encoding="utf-8")
+    assert "A session commits only what the person's own words in this session authorized" in rules
+    assert "a summary of an earlier context is not" in rules
+    assert "never `git add -A` without a pathspec" in rules

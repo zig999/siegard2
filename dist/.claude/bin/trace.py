@@ -29,9 +29,13 @@ What this script does, and nobody else does any of it:
                                                                   holds from every binding naming it
     trace.py --reconciliation <record>                            hold a reconciliation to its
                                                                   contract before it is bound
-    trace.py --owed <target-root> [--all]                         what the reconciliations found
+    trace.py --owed <target-root> [--all] [--plan <work-root>]    what the reconciliations found
                                                                   and no bind could close, and
-                                                                  the nodes a test would close
+                                                                  the nodes a test would close;
+                                                                  with --plan, the owed nodes
+                                                                  are kept to the ones a task of
+                                                                  that plan implements, read from
+                                                                  its plan.json
     trace.py --encodes <target-root> <file> ...                   which nodes each file is bound to
     trace.py --convergence <target-root> <spec-root> <work-root>  every node of the specification
                                                                   in one state, across the trace
@@ -401,7 +405,7 @@ Usage:  trace.py <target-root>
         trace.py --prune <target-root>
         trace.py --release <target-root> <file> [<file> ...]
         trace.py --reconciliation <reconciliation-record>
-        trace.py --owed <target-root> [--all]
+        trace.py --owed <target-root> [--all] [--plan <work-root>]
         trace.py --encodes <target-root> <file> [<file> ...]
         trace.py --encodes --changed <target-root> [<ref>]
         trace.py --convergence <target-root> <spec-root> <work-root-parent> [--all]
@@ -522,7 +526,7 @@ def stamped_against(entry: dict, held: dict) -> str | None:
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
                        "this pair over the file's content and the node's text as both stand, "
                        "and no finding stands open against it")
-RECORD_VERSION = "siegard-reconcile/8"
+RECORD_VERSION = "siegard-reconcile/9"
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
@@ -2128,7 +2132,20 @@ def owed_reading(target: Path) -> tuple[dict | None, list[str]]:
             "total": sum(len(rows) for rows in listed.values())}, []
 
 
-def owed(target: Path, show_all: bool = False) -> int:
+def planned_nodes_of(plan_root: Path) -> set[str]:
+    """The specification nodes some task of the plan implements, read from the derived index's
+    `implements` edges — never from a reading of the tasks."""
+    try:
+        graph = json.loads((plan_root / plan.PLAN_FILE).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    return {edge["to"] for edge in graph.get("edges") or []
+            if isinstance(edge, dict) and edge.get("kind") == "implements"
+            and isinstance(edge.get("from"), str) and edge["from"].startswith("task/")
+            and isinstance(edge.get("to"), str)}
+
+
+def owed(target: Path, show_all: bool = False, plan_root: Path | None = None) -> int:
     """What the reconciliation records found against and no bind could close, by whether the drift
     report says it too.
 
@@ -2250,6 +2267,17 @@ def owed(target: Path, show_all: bool = False) -> int:
     # and a node closed on a file with nine reading-decided siblings frees no judge yet.
     listed_nodes, both_ways, by_reading = (reading["testable_nodes"], reading["both_ways_nodes"],
                                            reading["by_reading"])
+    if plan_root is not None:
+        # A closure reads what its own plan leaves owed: the filter is the index's `implements`
+        # edges, so a node the plan never named is not this plan's debt whatever its state.
+        planned = planned_nodes_of(plan_root)
+        kept = {node: said for node, said in listed_nodes.items() if node in planned}
+        kept_both = [node for node in both_ways if node in planned]
+        print(f"\n{len(kept)} of {len(listed_nodes)} node(s) owed a test are implemented by a task "
+              f"of {plan_root.name}"
+              + (f", and {len(kept_both)} of {len(both_ways)} answered both ways" if both_ways
+                 else ""))
+        listed_nodes, both_ways = kept, kept_both
     if listed_nodes:
         print(f"\n{len(listed_nodes)} node(s) a refused certification left decided by reading with "
               f"a testable remainder — the auditor named the assertion that would close each, and "
@@ -3605,6 +3633,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                        "; the project declares no registry for this target, and a step that "
                        "runs the proof has to be one the registry names"))
             entry["proof_resolved"] = [str((target / p).resolve()) for p in entry["proof"]]
+            # What the auditor is about to read, pinned now: a refusal carries these digests so
+            # a later staging can tell an unchanged pair from one that moved.
+            entry["proof_digests"] = [{"file": given, "digest": read["digest"]}
+                                      for given, read in zip(entry["proof"], proof)]
         for problem in certify_problems:
             print(f"cannot run: {problem}", file=sys.stderr)
         if certify_problems:
@@ -3871,7 +3903,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "mechanical": mechanical,
                 "answered_by_run": sorted(answered_by_run),
                 "certify": [{"node": e["node"], "proof": e["proof"],
-                             "proof_resolved": e["proof_resolved"], "step": e["step"],
+                             "proof_resolved": e["proof_resolved"],
+                             "proof_digests": e["proof_digests"], "step": e["step"],
                              "pack": e["pack"]} for e in certify_entries],
                 "candidates": {n: sorted(fs) for n, fs in sorted(candidates.items())}}
     (workspace / MANIFEST_FILE).write_text(json.dumps(manifest, indent=2) + "\n",
@@ -4604,6 +4637,12 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 if remainder is not None:
                     entry["remainder"] = remainder
                     entry["remainder_why"] = answer["remainder_why"]
+                # The refusal is pinned at what was read: the node's digest and each offered
+                # proof's, as the staging took them. A later staging compares a pair to this
+                # and names this record where nothing moved; the judgment itself is not reused.
+                node_digest = (manifest.get("node_digests") or {}).get(node_id)
+                if isinstance(node_digest, str) and "proof_digests" in ask:
+                    entry["read_at"] = {"node": node_digest, "proof": ask["proof_digests"]}
             said_remainder = "" if remainder is None else (
                 f" The remainder is {remainder}: {answer['remainder_why']}.")
             certification_notes.append(
@@ -5500,10 +5539,24 @@ def main() -> int:
         return release(Path(args[0]), args[1:])
 
     if do_owed:
+        plan_root: Path | None = None
+        if "--plan" in args:
+            at = args.index("--plan")
+            if at + 1 >= len(args) or args[at + 1].startswith("--"):
+                print("cannot run: --plan takes a work root whose plan.json names the nodes to "
+                      "keep", file=sys.stderr)
+                return CANNOT_RUN
+            plan_root = Path(args[at + 1])
+            del args[at:at + 2]
+            if not (plan_root / plan.PLAN_FILE).is_file():
+                print(f"cannot run: {plan_root / plan.PLAN_FILE} does not exist; --plan reads the "
+                      f"derived index, and plan.py is what writes it", file=sys.stderr)
+                return CANNOT_RUN
         if len(args) != 1 or args[0].startswith("--"):
-            print("cannot run: expected --owed <target-root> [--all]", file=sys.stderr)
+            print("cannot run: expected --owed <target-root> [--all] [--plan <work-root>]",
+                  file=sys.stderr)
             return CANNOT_RUN
-        return owed(Path(args[0]), show_all)
+        return owed(Path(args[0]), show_all, plan_root)
 
     if do_untraced:
         if len(args) != 1 or args[0].startswith("--"):

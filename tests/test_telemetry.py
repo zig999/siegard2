@@ -421,7 +421,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/10"
+    assert report["contract_version"] == "siegard-telemetry/11"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -654,7 +654,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/10"
+    assert report["contract_version"] == "siegard-telemetry/11"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1189,3 +1189,86 @@ def test_the_handoffs_section_names_the_transcripts_as_its_source(consumer):
     report = json.loads((consumer["home"] / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8")) \
         if done.returncode == 0 else None
     assert report is None or report["handoffs"]["confirmations"] == 0
+
+
+# ------------------------------------------------------------- commits inside a span
+
+
+def git_call(stamp: str, tool_use_id: str, command: str, session: str) -> str:
+    return assistant(stamp, {"type": "tool_use", "id": tool_use_id, "name": "Bash",
+                             "input": {"command": command}}, session=session,
+                     usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0, "output_tokens": 1})
+
+
+def skill_call(stamp: str, tool_use_id: str, skill: str, session: str) -> str:
+    return assistant(stamp, {"type": "tool_use", "id": tool_use_id, "name": "Skill",
+                             "input": {"skill": skill, "args": "x"}}, session=session)
+
+
+def test_a_commit_inside_a_skill_span_is_counted_with_what_authorized_it(consumer):
+    """A commit the session ran after a Skill call and before the person's next turn is the
+    session's own act. Each leaves as the skill it fell under, whether it named a pathspec,
+    whether it pushed, and the strongest authorization the session could read: a typed commit
+    word, an armed loop, a word only in a continuation summary, or nothing."""
+    (consumer["transcripts"] / "s6.jsonl").write_text(
+        skill_call("2026-08-20T10:30:00.000Z", "tu-s1", "siegard:implement-task", "s6")
+        + git_call("2026-08-20T10:31:00.000Z", "tu-g1",
+                   "git add -A && git commit -m 'implement-task: x'", "s6")
+        + human("2026-08-20T10:32:00.000Z", "ok, pode comitar os próximos também")
+        + skill_call("2026-08-20T10:33:00.000Z", "tu-s2", "siegard:review-change", "s6")
+        + git_call("2026-08-20T10:34:00.000Z", "tu-g2",
+                   "git add -- delivery && git commit -m 'review-change: y' && git push", "s6")
+        + human("2026-08-20T10:35:00.000Z", "e agora?")
+        + git_call("2026-08-20T10:36:00.000Z", "tu-g3", "git commit -a -m 'after a turn'", "s6"),
+        encoding="utf-8")
+    (consumer["transcripts"] / "s7.jsonl").write_text(
+        human("2026-08-20T10:40:00.000Z", "This session is being continued from a previous "
+                                          "conversation. Summary: run the route, committing "
+                                          "between steps.")
+        + skill_call("2026-08-20T10:41:00.000Z", "tu-s3", "siegard:plan-work", "s7")
+        + git_call("2026-08-20T10:42:00.000Z", "tu-g4", "git -C /x commit -m 'plan' -- work",
+                   "s7"),
+        encoding="utf-8")
+    (consumer["transcripts"] / "s8.jsonl").write_text(
+        human("2026-08-20T10:50:00.000Z", "/loop 5m continue the delivery loop")
+        + skill_call("2026-08-20T10:51:00.000Z", "tu-s4", "siegard:reconcile", "s8")
+        + git_call("2026-08-20T10:52:00.000Z", "tu-g5", "git commit -m 'reconcile' -- siegard-reconcile",
+                   "s8"),
+        encoding="utf-8")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    s6 = next(s for s in report["harness"]["sessions"] if s["id"] == "s6")
+    assert [(c["skill"], c["authorized_by"], c["pathspec"], c["push"]) for c in s6["commits"]] == [
+        ("implement-task", "none", False, False), ("review-change", "typed", True, True)], \
+        "the third commit came after a human turn and is not the session's own act in a span"
+    in_span = report["handoffs"]["in_span_commits"]
+    assert in_span["count"] == 4
+    assert in_span["by_authorization"] == {"typed": 1, "loop": 1, "summary": 1, "none": 1}
+    assert in_span["by_skill"] == {"implement-task": 1, "plan-work": 1, "reconcile": 1,
+                                   "review-change": 1}
+    assert in_span["pathspec"] == 3 and in_span["push"] == 1
+    assert "git add -A" not in json.dumps(report)
+    assert "commits inside a skill's span: 4 — typed 1, loop 1, summary 1, none 1; 3 pathspec-scoped, 1 pushed" in done.stdout
+
+
+def test_pathspec_scoping_is_read_from_the_command_alone():
+    import telemetry
+    assert telemetry.pathspec_scoped("git add -A -- work && git commit -m x") is True
+    assert telemetry.pathspec_scoped("git add -A && git commit -m x") is False
+    assert telemetry.pathspec_scoped("git add . && git commit -m x") is False
+    assert telemetry.pathspec_scoped("git commit -a -m x") is False
+    assert telemetry.pathspec_scoped("git add work/a.md && git commit -m x") is True
+
+
+def test_a_note_in_a_closed_plan_is_marked_not_live(consumer):
+    """A note in a closed plan is what a person closed over, not the state the window's work ran
+    under; the record carries the marker so a report can list the two apart."""
+    _, report = report_of(consumer)
+    assert all(note["live"] is True for note in report["notes"])
+    (consumer["home"] / "work/checkout/closure.md").write_text("Closed.\n", encoding="utf-8")
+    (consumer["home"] / "telemetry" / f"{STAMP}.json").unlink()
+    _, report = report_of(consumer)
+    assert report["notes"] and all(note["live"] is False for note in report["notes"])
+    assert [e.message for e in contract().iter_errors(report)] == []

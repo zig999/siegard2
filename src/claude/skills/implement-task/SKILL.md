@@ -174,6 +174,11 @@ read the agent's file under the plugin root's `agents/` directory and apply its 
 place — the file stays the single home of that judgment — and the report must say which steps
 ran inline.
 
+A spawned delegation runs in the background and the harness delivers a notification when it
+answers; the session waits for that notification and nothing else — never a `sleep`, a scheduled
+wakeup, an agent listing or a message to the delegation, each of which is a turn spent reading
+nothing — and reads the return when the notification names it.
+
 A spawned subagent that stalls is never resumed. Its partial work already stands on disk — a
 draft implementation, a run directory, a half-written record — and resuming a stalled context
 asks it to continue from a state it may no longer hold, where a fresh one asks it to continue

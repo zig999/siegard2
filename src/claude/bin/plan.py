@@ -83,6 +83,13 @@ Usage:  plan.py <work-root> [<specification-root>]
                                                         together
         The specification root is required while the plan is live, and ignored once closure.md
         marks it closed.
+        plan.py --notes <work-root>
+                                                        a query, never a check: every classified
+                                                        note standing in the plan — one line per
+                                                        task with its BLOCKING and UNDERDETERMINED
+                                                        counts, one per epic with its `uncovered`
+                                                        count, and the totals — live or closed,
+                                                        no specification root, exit 0 always
         plan.py --unplanned <work-root-parent> <specification-root>
                                                         a query, never a check: which nodes of the
                                                         specification no initiative under that
@@ -623,6 +630,34 @@ def collect(root: Path, validator) -> tuple[dict[str, dict], list[str]]:
     return nodes, problems
 
 
+def print_notes(root: Path, validator) -> int:
+    """Every classified note standing in the plan, as counts a reader opens by node — the
+    readers are the same ones every other caller uses, so what prints here is what the validator
+    would classify. A query over a live or a closed plan alike: a closure says the work is over,
+    and these are what it leaves standing."""
+    nodes, _ = collect(root, validator)
+    totals = {"blocking": 0, "underdetermined": 0, "uncovered": 0}
+    for nid in sorted(nodes):
+        node = nodes[nid]
+        if node["kind"] == "task":
+            blocking = len(blocking_notes_of(node.get("notes", "")))
+            under = len(underdetermined_notes_of(node.get("notes", "")))
+            if blocking or under:
+                print(f"{nid}: blocking {blocking}, underdetermined {under}")
+            totals["blocking"] += blocking
+            totals["underdetermined"] += under
+        elif node["kind"] == "epic":
+            uncovered = len([e for e in listed(node["front"], "uncovered")
+                             if isinstance(e, (dict, str))])
+            if uncovered:
+                print(f"{nid}: uncovered {uncovered}")
+            totals["uncovered"] += uncovered
+    print(f"notes standing: blocking {totals['blocking']}, underdetermined "
+          f"{totals['underdetermined']}, uncovered {totals['uncovered']}"
+          + (" (closed plan)" if (root / CLOSURE_FILE).is_file() else ""))
+    return 0
+
+
 def load_base(root: Path) -> tuple[dict[str, dict], list[str]]:
     """The specification, read through spec.py's own pipeline — never through a derived index
     that could be stale."""
@@ -954,7 +989,22 @@ def main() -> int:
         return 0
     verify = "--check" in args
     read_unplanned = "--unplanned" in args
-    args = [a for a in args if a not in ("--check", "--unplanned")]
+    read_notes = "--notes" in args
+    args = [a for a in args if a not in ("--check", "--unplanned", "--notes")]
+    if read_notes:
+        if verify or read_unplanned or len(args) != 1 or any(a.startswith("--") for a in args):
+            print("cannot run: expected --notes <work-root>, on its own", file=sys.stderr)
+            return CANNOT_RUN
+        work = Path(args[0])
+        if not work.is_dir():
+            print(f"cannot run: work root {work} is not a directory", file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            validator = contract()
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
+            print(f"cannot run: {broken}", file=sys.stderr)
+            return CANNOT_RUN
+        return print_notes(work, validator)
     single = None
     if "--node" in args:
         at = args.index("--node")

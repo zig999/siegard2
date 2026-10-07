@@ -89,7 +89,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/10
+contract_version: siegard-telemetry/11
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -111,6 +111,7 @@ complete: true | false
 ## 12. Completeness
 ## 13. Recommendations recorded
 ## 14. Confirmations typed
+## 15. Commits inside a skill's span
 ```
 
 What each section holds:
@@ -163,7 +164,10 @@ What each section holds:
   and `framework` is the framework revising itself. No share and no grade: this section is the
   measurement the decide-and-disclose route stands on — the revised ones, named, are what a
   reader weighs against what stopping would cost.
-- **8.** Every entry of `notes`, verbatim, keyed by initiative and node, grouped by class.
+- **8.** Every entry of `notes`, verbatim, keyed by initiative and node, grouped by class — the
+  live plans' notes first, and the closed plans' apart under their own heading: a note in a
+  closed plan is what a person closed over, not the state the window's work ran under, and a
+  `siegard-telemetry/10` record, which carries no `live`, lists them together and says so.
 - **9.** Totals: `agent_totals.overall`; the same per type; the same per skill phase from §2;
   and per unit of work — divide by `scope`'s task counts and by the records landed in the window,
   naming the denominator each time. A total over fewer transcripts than invocations is a floor,
@@ -214,15 +218,28 @@ What each section holds:
   count. A window with none says zero; a `siegard-telemetry/9` record says nothing, which is
   not zero.
 
+- **15.** `handoffs.in_span_commits` whole: how many commits the sessions made after a Skill
+  call and before the person's next turn; `by_authorization` — `typed`, `loop`, `summary`,
+  `none` — and `by_skill`; how many carried a pathspec and how many pushed; then every entry of
+  `lines`. Say plainly what each class is: `typed` is a commit word the person typed earlier in
+  the session, `loop` an autonomous loop they armed, `summary` a word only in the continuation
+  summary the harness wrote after a compaction, `none` no commit word anywhere. An ask stating
+  the whole route end to end, which the session rule also accepts as authorization, is not a
+  word the script reads, so a `none` is opened and read before it is counted against a session.
+  `summary` and `none` are the counts the session rule exists to bring to zero, and a commit
+  without a pathspec is one the rule forbids; whether a given commit was wanted is a reading,
+  tagged `[judgment]`. A
+  window with none says zero; a `siegard-telemetry/10` record says nothing, which is not zero.
+
 ### Provenance tags
 
-Every claim in §§2–10, §13 and §14 carries one tag, and the tag is the claim's source:
+Every claim in §§2–10 and §§13–15 carries one tag, and the tag is the claim's source:
 
 - `[record: <field>]` — read from the JSON record, by field path (`agents[3].usage.output_tokens`,
   `runs[0].steps[1].duration_seconds`).
 - `[disk: <path>]` — read from a file the record points at, by path (a run's log, a note's node).
 - `[recall]` — this conversation, and only in §6 and §10, and never a number.
-- `[judgment]` — yours, and only in §3's rework column, §10, §13 and §14.
+- `[judgment]` — yours, and only in §3's rework column, §10 and §§13–15.
 - `[unavailable: <reason>]` — the reason from `provenance`, in place of the figure.
 
 ## What you never do

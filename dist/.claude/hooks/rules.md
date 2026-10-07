@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.9.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.11.0. The plugin's hooks place them in every session and every
 agent; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -81,6 +81,14 @@ not. Three things hold that route:
   never invokes an entry point it was not handed, and never reports a step it did not run. When
   what it was handed is done or stopped, it returns; what comes next is the invoking context's
   to decide.
+- **A session commits only what the person's own words in this session authorized, and only
+  what the skill it invoked wrote.** A commit word, or an ask stating the whole route end to end,
+  is the authorization; a summary of an earlier context is not, and a route resumed after a
+  compaction is re-authorized by the person before its next commit. Each commit is
+  pathspec-scoped to the roots that invocation wrote, one per invocation, under a message naming
+  the skill and the slug — never `git add -A` without a pathspec, never a branch, a push, a
+  stash or a rewrite. A skill's own refusal to commit is unchanged: the commit is the session's
+  act after the skill returned, never the skill's.
 - **A report opens with what needs the person, and recommends only what a fact on disk
   decides.** «A handoff opens with what needs the person, and explains after» (SPEC-006 R1).
   «A recommendation names the door, the criterion, the deciding fact and the reversing fact;

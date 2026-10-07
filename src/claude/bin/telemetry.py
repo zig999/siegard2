@@ -84,7 +84,19 @@ word list is this script's and is finite: a short turn it does not match is coun
 longer turn is a message, never a confirmation. `handoffs` sums these across sessions, beside
 the Skill calls the sessions made, which is the denominator a confirmation count is read per.
 
-**A section that cannot be read is said, not filled.** Every section carries an entry in
+**A commit the session made inside a skill's span is counted with what authorized it.** A `git
+commit` or `git push` the session ran after a Skill call and before the person's next turn is
+the session's own act — the skill refused it, the person did not type for it just then — and
+each is recorded with the skill whose span it fell in, whether the command carried a pathspec,
+whether it pushed, and what the session had to go on: `typed`, a commit word in a message the
+person typed earlier in this session; `loop`, an autonomous loop the person armed; `summary`,
+a commit word only in the continuation summary the harness wrote after a compaction; `none`.
+The classification is the same word match the confirmations use, read over the whole session;
+what it does not read is whether the person meant it, which the rules state and this counts.
+
+**A section that cannot be read is said, not filled.**
+
+Every section carries an entry in
 `provenance` naming where it was read from or why it could not be. No source is estimated from
 another: an agent whose transcript is missing has null usage and a reason, and the totals say how
 many invocations they actually sum over.
@@ -136,7 +148,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/10"
+CONTRACT = "siegard-telemetry/11"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -206,6 +218,11 @@ GO_AHEAD = re.compile(
     r"|segue|siga|vai|bora|manda|pode(?: \w+){0,2}|faça|faz|isso|certo|beleza|perfeito|concordo"
     r"|de acordo|aprovado|pode ser)[\s.!]*$", re.I)
 CHOICE = re.compile(r"^(?:op[çc][ãa]o|option)?\s*[1-9a-d][).]?[\s.!]*$", re.I)
+GIT_COMMIT = re.compile(r"\bgit\s+(?:-C\s+\S+\s+)?(?:-c\s+\S+\s+)*(commit|push)\b")
+GIT_SWEEP = re.compile(r"\bgit\s+(?:-C\s+\S+\s+)?add\s+(?:-A|--all|-a|\.)(?:\s|$)|\bgit\s+(?:-C\s+\S+\s+)?commit\s+(?:\S+\s+)*-a\b")
+CONTINUATION = "This session is being continued"
+LOOP_MARKS = ("<<autonomous-loop", "/loop")
+AUTHORIZATIONS = ("typed", "loop", "summary", "none")
 
 
 class MessageUsage:
@@ -553,6 +570,15 @@ def asks(text: str) -> bool:
     return "?" in text.strip().rsplit("\n\n", 1)[-1]
 
 
+def pathspec_scoped(command: str) -> bool:
+    """Whether a commit command names what it commits. A ` -- ` separator anywhere in the
+    command is a pathspec; `git add -A`, `--all`, `-a`, `.` or `git commit -a` without one is a
+    sweep. A command with neither names its paths some other way and is read as scoped."""
+    if " -- " in command:
+        return True
+    return GIT_SWEEP.search(command) is None
+
+
 def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, list, list]:
     """One session transcript: its summary row — including the tokens its own turns spent inside
     the window, the half of a run's cost `agent_totals` alone never carried — the framework
@@ -576,6 +602,9 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     short_turns = 0
     last_assistant_at: str | None = None
     last_assistant_text: str = ""
+    in_span_commits: list[dict] = []
+    turns_since_skill = 0
+    commit_word_typed = commit_word_in_summary = loop_armed = False
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
@@ -602,6 +631,12 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         typed = human_text_of(entry)
         if typed is not None:
             human_turns.append(iso(instant_of(stamp)))
+            turns_since_skill += 1
+            if typed.startswith(CONTINUATION):
+                commit_word_in_summary = commit_word_in_summary or bool(COMMIT_WORDS.search(typed))
+            else:
+                commit_word_typed = commit_word_typed or bool(COMMIT_WORDS.search(typed))
+                loop_armed = loop_armed or any(mark in typed for mark in LOOP_MARKS)
             if len(typed) <= SHORT_TURN:
                 short_turns += 1
             kind = confirmation_class(typed)
@@ -627,6 +662,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                         named = named[len(namespace) + 1:]
                     skill = named
                     skill_calls[named] = skill_calls.get(named, 0) + 1
+                    turns_since_skill = 0
         spent.add(entry, skill)
         for block in blocks_of(entry):
             if block.get("type") != "tool_use" or not isinstance(block.get("id"), str):
@@ -634,6 +670,14 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
             payload = block.get("input") if isinstance(block.get("input"), dict) else {}
             if block.get("name") == "Bash":
                 command = payload.get("command")
+                if isinstance(command, str) and skill and turns_since_skill == 0 \
+                        and GIT_COMMIT.search(command):
+                    in_span_commits.append({
+                        "at": iso(instant_of(stamp)), "skill": skill,
+                        "push": "push" in {m.group(1) for m in GIT_COMMIT.finditer(command)},
+                        "pathspec": pathspec_scoped(command),
+                        "authorized_by": "typed" if commit_word_typed else "loop" if loop_armed
+                        else "summary" if commit_word_in_summary else "none"})
                 if isinstance(command, str) and SCRIPT_CALL.search(command):
                     commands[block["id"]] = {
                         "session": session_id, "tool_use_id": block["id"],
@@ -669,7 +713,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
         "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
         "skill_calls": dict(sorted(skill_calls.items())), "short_turns": short_turns,
-        "confirmations": confirmations,
+        "confirmations": confirmations, "commits": in_span_commits,
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -1311,8 +1355,12 @@ def initiatives_of(work_root: Path | None) -> list[Path]:
 
 
 def notes_section(work_root: Path | None) -> list[dict]:
+    """Every classified note under the work root, each marked `live`: a note in a closed plan is
+    what that plan left standing, not the state the window's work ran under, and the two are
+    told apart by the same marker `scope` reads."""
     notes: list[dict] = []
     for initiative in initiatives_of(work_root):
+        live = not (initiative / plan.CLOSURE_FILE).is_file()
         for path in sorted(initiative.rglob("*.md")):
             relative = path.relative_to(initiative)
             nid = plan.id_of(relative)
@@ -1325,15 +1373,15 @@ def notes_section(work_root: Path | None) -> list[dict]:
                 text = plan.notes_of(body)
                 for line in plan.blocking_notes_of(text):
                     notes.append({"initiative": initiative.name, "node": nid,
-                                  "class": "blocking", "text": line})
+                                  "class": "blocking", "text": line, "live": live})
                 for line in plan.underdetermined_notes_of(text):
                     notes.append({"initiative": initiative.name, "node": nid,
-                                  "class": "underdetermined", "text": line})
+                                  "class": "underdetermined", "text": line, "live": live})
             elif nid.startswith("epic/"):
                 for entry in spec.listed(front, "uncovered"):
                     if isinstance(entry, (dict, str)):
                         notes.append({"initiative": initiative.name, "node": nid,
-                                      "class": "uncovered", "text": entry})
+                                      "class": "uncovered", "text": entry, "live": live})
     return notes
 
 
@@ -1495,9 +1543,20 @@ def handoffs_section(harness: dict) -> dict:
                                 {"calls": 0, "confirmations": 0})["confirmations"] += 1
     lines.sort(key=lambda c: (c["at"], c["session"]))
     confirmations = sum(t["count"] for t in by_class.values())
+    commits = [{"session": s["id"], **c} for s in harness["sessions"] for c in s["commits"]]
+    commits.sort(key=lambda c: (c["at"], c["session"]))
+    in_span = {"count": len(commits),
+               "by_authorization": {name: sum(1 for c in commits if c["authorized_by"] == name)
+                                    for name in AUTHORIZATIONS},
+               "by_skill": {name: sum(1 for c in commits if c["skill"] == name)
+                            for name in sorted({c["skill"] for c in commits})},
+               "pathspec": sum(1 for c in commits if c["pathspec"]),
+               "push": sum(1 for c in commits if c["push"]),
+               "lines": commits}
     return {"skill_calls": skill_calls, "human_turns": human_turns, "short_turns": short_turns,
             "confirmations": confirmations, "unclassified_short": short_turns - confirmations,
-            "by_class": by_class, "by_skill": dict(sorted(by_skill.items())), "lines": lines}
+            "by_class": by_class, "by_skill": dict(sorted(by_skill.items())), "lines": lines,
+            "in_span_commits": in_span}
 
 
 # --------------------------------------------------------------------------- the whole
@@ -1643,6 +1702,11 @@ def receipt(report: dict, destination: Path) -> str:
                     f"{tally['wait_seconds_total']}s waited)"
                     for name, tally in report["handoffs"]["by_class"].items())
         + f"; {report['handoffs']['unclassified_short']} short turn(s) unclassified",
+        f"commits inside a skill's span: {report['handoffs']['in_span_commits']['count']} — "
+        + ", ".join(f"{name} {n}" for name, n in
+                    report["handoffs"]["in_span_commits"]["by_authorization"].items())
+        + f"; {report['handoffs']['in_span_commits']['pathspec']} pathspec-scoped, "
+        f"{report['handoffs']['in_span_commits']['push']} pushed",
     ]
     missing = [p for p in report["provenance"] if p["unavailable"]]
     lines.append("unavailable: " + ("; ".join(f"{p['section']} — {p['unavailable']}"

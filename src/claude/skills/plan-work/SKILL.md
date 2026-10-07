@@ -142,7 +142,11 @@ to the cut that surfaced it. The judgment of each lives in the agent's file — 
 not in your memory of it. Delegating means spawning the subagent by its plugin-scoped name —
 `siegard:<agent-name>` — never the bare form, which a consumer's own `.claude/agents/` can shadow —
 and reading the agent's file yourself is the fallback, never the
-delegation. The binder's isolation is the point of the whole arrangement: it arrives with
+delegation. A spawned delegation runs in the background and the harness delivers a notification
+when it answers; the session waits for that notification and nothing else — never a `sleep`, a
+scheduled wakeup, an agent listing or a message to the delegation, each of which is a turn spent
+reading nothing — and reads the return when the notification names it. The binder's isolation
+is the point of the whole arrangement: it arrives with
 no memory of how the tasks were cut, so the specification is read for what it says today, never
 to fit a task. Only a spawn that was attempted and failed opens the inline route: read the
 agent's file under the plugin root's `agents/` directory and apply its discipline in place —
@@ -303,11 +307,22 @@ and the reversing fact a node that already held the fact before this invocation 
 person as the reason in plain words, the name kept for the orchestration log.
 
 **One task per fact, under one epic of their own.** The binder runs per task exactly as step 4 runs
-it, handed the one node as its whole candidate set: it confirms that the node governs the criterion
-as the assertion states it, or it returns the note that says why not, and every note routes the way
-step 4 routes it. A binder that returns no `implements` for the node is a stop for that fact alone,
-reported with the binder's own reason — an assertion the node does not govern is not a proof of it.
-The task you write carries:
+it, handed as its candidate set the node **and every node that names it** — read, never
+recalled, from:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact <node> <specification-root>
+```
+
+A contract or a rule that answers the same case is where an assertion contradicts the
+specification, and a binder handed the one node alone cannot see it: it confirms that the node
+governs the criterion as the assertion states it, or it returns the note that says why not, and
+every note routes the way step 4 routes it. A `BLOCKING, from the specification —` note here is
+the standing stop for that fact: the assertion the auditor wrote contradicts a node, and that is
+settled by a person before any test is written, never by the test going red. A binder that
+returns no `implements` for the node is a stop for that fact alone, reported with the binder's
+own reason — an assertion the node does not govern is not a proof of it. The task you write
+carries:
 
 - `implements`: the node, and nothing else;
 - one criterion: the assertion, verbatim — it is falsifiable because an auditor wrote it as the
@@ -321,7 +336,8 @@ corrective increment's does: a closed work root takes nothing, so these facts na
 
 The tasks go to `/implement-task` like every other task, which reads `stands` and writes the proof
 alone; the review that reads that proof is what certifies each node. Say in the report that this
-was a proof increment, which steps did not run, and carry the `--encodes` output verbatim.
+was a proof increment, which steps did not run, and carry the `--encodes` and `--impact` outputs
+verbatim.
 
 ### 1. Situate
 
@@ -551,6 +567,14 @@ the fact is decided as above, and the report carries the sequence. Neither the c
 nor the count of facts is a stop on its own: the tally is what lets a reader see a skeleton being
 answered one cell at a time while it happens, and the rewording is what ends it.
 
+The decider is spawned, never offered: a fact a binder returns as unstated is not a question for
+the person — not because the specification root is shared, and not because the person set the
+area's route earlier. A node the person excluded from this scope is `uncovered` on the epic with
+their why, and a fact that is not excluded is decided — «never left standing as a stop for a
+person whose only move is to trigger the decision» (SPEC-001 R13). The disclosure is the log
+entry and the report, after the write; a person who disagrees reverts the entry as an ordinary
+change.
+
 Then compose and write each task: the skeleton, plus `implements` exactly as the binder
 returned it — bare identities, no pin. **Composing is transcription, never correction.** A
 criterion whose wording must change at this point — a blocking note settled by rewording, a
@@ -732,6 +756,20 @@ the specification root nor the target source root.
 - The root must be under git and clean, exactly as before any write — the closure diff is
   its own review. A root already holding `closure.md` is already closed: stop.
 - Persist the ask under `intake/`, like any scope.
+- Read what this closure leaves standing, from disk, before the marker is written — three
+  commands, their output quoted whole in the report:
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --findings <delivery-root>/<slug>/review/<the newest review>.md
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --owed <target-source-root> --plan <work-root>
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --notes <work-root>
+  ```
+
+  The newest review is the last name `ls` lists under `review/`; where the delivery root holds
+  none, say "no review". None of the three is a stop, and none is a judgment: closing is the
+  human's act, and these are the counts it closes over — findings nobody routed, nodes still
+  owed a test, notes still standing — so that "complete" is a word read beside them rather than
+  said instead of them.
 - Write `closure.md` at the work root: prose, one sentence per line — the why as the human
   gave it, and the intake file it was read from. It is a marker, never a node: the
   validator keeps it the way it keeps `intake/`.
@@ -742,7 +780,9 @@ the specification root nor the target source root.
   which nodes the work addressed. Without a specification root the derivation drops each
   `implements` edge's anchor, and the closure diff shows it.
 - Report the closure, opened as «A handoff opens with what needs the person» (SPEC-006 R1)
-  states, and offer the `/plan-work` invocation that opens the successor
+  states; right after the opening, **what this closure leaves standing** — the three counts
+  above, each with the command that printed it, never a verdict on whether the work was
+  complete — and then offer the `/plan-work` invocation that opens the successor
   initiative's new slug under the same work root and project root — the delivered work returns
   as inventory through the survey there, never as a reference into this closed plan. Then stop.
 
