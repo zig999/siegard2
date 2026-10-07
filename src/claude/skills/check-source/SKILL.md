@@ -198,7 +198,9 @@ Report, in this order:
   over a delivered one — and it does not judge whether tests prove anything, because a file set
   nobody delivered answers to no criteria;
 - whether the judge ran inline instead of in a subagent, and why;
-- the validator's final output, verbatim;
+- the validator's final output, verbatim — the one check this reading proceeds past, listed with
+  its output because «Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim» (SPEC-006 R4); and «A finding stops nothing» (SPEC-006 R4): every stop
+  this skill names is one its own steps above name, and a finding is never one;
 - where the repairs live, as routes and not as a reading of the findings: source is changed by
   whoever owns it, or through a task where the change is more than superficial; a rule that seems
   wrong is changed by whoever owns the registry. This skill hands nothing forward as an invocation

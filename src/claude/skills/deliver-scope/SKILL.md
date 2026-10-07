@@ -102,7 +102,8 @@ Two rules bind every step, and they are what this skill is:
   ```
 
   run fresh before each delivery, never a reading of the plan or a memory of the last run. A stop
-  the script reports is this skill's stop.
+  the script reports is this skill's stop. The lines it prints of records pinning no standard, or
+  another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — are relayed in the report below, verbatim, from the last run that printed them; they route nothing here.
 
 The steps:
 
@@ -193,13 +194,18 @@ Report, in this order: where `HEAD` stood when the run began; every commit this 
 and message, and the `git log` range that holds them, because the range is the review and it
 belongs to a person; every input this skill decided rather than was told — the slug derived, the
 target decided, the order taken — each disclosed; every step invoked with its outcome, and the
-path of `orchestration.md`; the review's findings, relayed whole, with that report's own account
+path of `orchestration.md`; every line the last `deliver.py --outstanding` printed of records
+pinning no standard or another than their target declares, verbatim and as a fact; the review's
+findings, relayed whole, with that report's own account
 of which passes did not run; which nodes this run left decided by a test, which certifications
 were refused again and with what remainder, and — for any testable remainder over a node no task
 of this run implements — `trace.py --owed`'s closing invocation, relayed; the telemetry report the
 measure wrote, by path, or the line saying why it could not read; what ended the run, where it ended early, with the stopping report's
 doors verbatim and its recommendation where it made one; and what this skill never did — no `/analyse`, no repair of any finding, no step
-beyond the route.
+beyond the route. «A finding stops nothing» (SPEC-006 R4): a finding the review relayed is
+reported, and what ended the run is a stop a step's own file names. Where this report says a
+step proceeded, it lists the `--outstanding` run and the checks the step ran, with their output
+verbatim — «Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim» (SPEC-006 R4).
 
 Then stop. The commit range is the review, and it belongs to a person.
 

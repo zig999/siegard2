@@ -1030,10 +1030,40 @@ def test_shape_fires_on_nothing_over_a_sound_specification(spec_root):
                     "longest phrase each set of nodes shares",
                     "prose naming more sibling nodes",
                     "resolve to no node",
-                    "bare names two nodes answer to"):
+                    "bare names two nodes answer to",
+                    "constraint: statement at or past this class's p90",
+                    "rule: statement at or past this class's p90",
+                    "decision log:"):
         at = done.stdout.index(section)
         assert "(none)" in done.stdout[at:at + 700], \
             f"'{section}' reports something over a sound specification; it is a floor, not a find"
+
+
+def test_the_committed_projections_are_what_project_writes():
+    """The fixture's `projections/` is kept as the output `--project` writes over it, file for
+    file: a projection that changes shape leaves this red until the committed copy follows, so
+    the directory is a record of the output and never a stale example of one."""
+    nodes, problems = spec.collect(FIXTURE, spec.contracts())
+    assert problems + spec.cross_problems(nodes, FIXTURE) == []
+    expected = spec.project(nodes)
+    committed = {path.name: path.read_text(encoding="utf-8")
+                 for path in (FIXTURE / "projections").iterdir()}
+    assert committed == expected
+
+
+def test_the_full_text_projection_restates_every_node_verbatim(spec_root):
+    """SPEC-003 R6's full text: one header per node, in identity order, each followed by the
+    node's own file unchanged — so a grep over it locates and the node is what gets opened."""
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    text = spec.project(nodes)["full-text.md"]
+    headers = [line[4:] for line in text.splitlines() if line.startswith("=== ")]
+    assert headers == sorted(nodes)
+    for identity, node in nodes.items():
+        assert node["path"].read_text(encoding="utf-8").rstrip("\n") in text
+    rewrite(spec_root, "rules/troubleshooting/alert-opens-case.md",
+            lambda front: front.update(statement="An alert unresolved for 48 hours MUST open a case."))
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    assert "48 hours" in spec.project(nodes)["full-text.md"]
 
 
 def test_shape_names_a_clause_two_rules_both_carry(spec_root):
@@ -1065,17 +1095,39 @@ def test_shape_names_prose_that_outnumbers_the_declared_references(spec_root):
     assert "rules/troubleshooting/case-transitions" in done.stdout[at:at + 900]
 
 
+def widen_rules(root: Path, count: int) -> None:
+    """Copies of the fixture's policy under new slugs, so the rule class holds a distribution:
+    under `DISTRIBUTION` statements the p90 is the maximum and a ranking names the largest of any
+    sample, so the far-end sections are a floor there and say so instead."""
+    for n in range(count):
+        (root / f"rules/troubleshooting/stale-alert-copy-{n}.md").write_text(
+            f"---\ntype: policy\nstatement: An alert unresolved for {n + 25} hours MUST open a "
+            "case.\nconstrains:\n  - domain/monitoring/alert\n  - domain/troubleshooting/case\n"
+            "consistency: eventual\n---\n\n## Description\n\nA copy that widens the class.\n",
+            encoding="utf-8")
+
+
 def test_shape_names_a_long_statement_no_scenario_pins(spec_root):
     """Named against the class's own p90, never an invented word count: the threshold is what
     this specification's own rules run to, so the list is the far end of one corpus rather than
-    a limit `spec.py` holds."""
+    a limit `spec.py` holds — and only where the class holds enough statements to have a far
+    end apart from its maximum."""
     long_one = " ".join(["A case version released while its manifest still holds a draft "
                          "revision is refused by name"] * 12)
     rewrite(spec_root, "rules/troubleshooting/alert-opens-case.md",
             lambda front: front.update(statement=long_one))
     done = run_node("--shape", str(spec_root))
-    at = done.stdout.index("with no scenario anchored")
-    assert "rules/troubleshooting/alert-opens-case" in done.stdout[at:at + 900]
+    at = done.stdout.index("rule: statement at or past this class's p90")
+    found = done.stdout[at:at + 900]
+    assert "(none) — 3 statement(s) is below the 10 a distribution needs" in found
+    assert "rules/troubleshooting/alert-opens-case" not in found, \
+        "the largest of three was named as a far end; three values have no p90 but their maximum"
+    widen_rules(spec_root, spec.DISTRIBUTION - 3)
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("rule: statement at or past this class's p90")
+    found = done.stdout[at:at + 900]
+    assert "with no scenario anchored — 1" in found
+    assert "rules/troubleshooting/alert-opens-case" in found
 
 
 def test_shape_names_a_normative_field_talking_about_itself(spec_root):
@@ -1114,14 +1166,25 @@ def test_shape_reports_how_far_the_logs_why_runs(spec_root):
     """SPEC-001 R9 bounds `why` to one claim a reviewer can reject. The concord argument R14
     keeps out of a node's prose has no entry of its own, so the only way it reaches the log is
     inside the `why` of an entry about something else — which is where the report points."""
-    log_beside(spec_root, CASE_LOG, [{
-        **DECIDED, "decided": "aggregate-root",
-        "why": " ".join(["This rule is the home rather than a sibling's clause"] * 40)}])
+    argued = {**DECIDED, "decided": "aggregate-root",
+              "why": " ".join(["This rule is the home rather than a sibling's clause"] * 40)}
+    log_beside(spec_root, CASE_LOG, [argued])
     done = run_node("--shape", str(spec_root))
     assert done.returncode == 0
     at = done.stdout.index("decision log:")
     found = done.stdout[at:at + 700]
     assert "3 decided entry(ies) across 3 log(s)" in found and "`why` median" in found
+    assert "(none) — 3 decided entry(ies) is below the 10 a distribution needs" in found
+    assert "domain/troubleshooting/case.log" not in found, \
+        "the longest of three was named as a far end; three values have no p90 but their maximum"
+    log_beside(spec_root, CASE_LOG,
+               [argued] + [dict(DECIDED) for _ in range(spec.DISTRIBUTION - 3)])
+    done = run_node("--shape", str(spec_root))
+    assert done.returncode == 0
+    at = done.stdout.index("decision log:")
+    found = done.stdout[at:at + 700]
+    assert f"{spec.DISTRIBUTION} decided entry(ies) across 3 log(s)" in found
+    assert "1 log(s) with an entry at or past that p90" in found
     assert "domain/troubleshooting/case.log" in found, \
         "the log holding the far end is named, not only counted"
 

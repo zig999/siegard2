@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.13.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.14.0. The plugin's hooks place them in every session and every
 agent; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -94,7 +94,9 @@ not. Three things hold that route:
   «A recommendation names the door, the criterion, the deciding fact and the reversing fact;
   without all four, none is named» (SPEC-006 R2). The ask, a contradiction, two readings of one
   piece of evidence, a finding's worth and a decision about cost are the person's: a report hands
-  their doors and names none.
+  their doors and names none. «A finding stops nothing» (SPEC-006 R4): a stop is named only
+  where the skill's own file names one, and a report that says a step may proceed lists the
+  checks it ran and their output verbatim.
 - **A question about where the project stands is answered from disk, never from the
   conversation.** Which initiatives are live, what is delivered, what is outstanding, what is
   blocked, what drifted, what is uncommitted: `/siegard-status` over the project, or

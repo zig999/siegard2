@@ -110,7 +110,8 @@ ran is the failure that rule exists to prevent.
 
 ## Before anything: the plan, the delivery, the tree
 
-Run both checks, and report either output verbatim as a stop:
+Run both checks, and report either output verbatim as a stop — and where both pass, the report
+says so by listing them with their output verbatim, «Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim» (SPEC-006 R4). These two are the review's only stops before its own validator: «A finding stops nothing» (SPEC-006 R4), and a finding this review records is reported, never a stop.
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root> <specification-root>

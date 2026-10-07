@@ -377,6 +377,42 @@ def test_every_skill_that_reports_opens_its_report_as_the_handoff_states(skill):
     assert "(SPEC-006 R1)" in text, f"{skill}: its report never cites SPEC-006 R1"
 
 
+OUTSTANDING = re.compile(r"bin/deliver\.py --outstanding")
+
+
+@pytest.mark.parametrize("skill", sorted(p.parent.name for p in
+                                         (REPO / "src/claude/skills").glob("*/SKILL.md")))
+def test_every_skill_that_runs_outstanding_relays_the_records_pinning_no_standard(skill):
+    """SPEC-007 R1: the lines `--outstanding` prints of records pinning no standard, or another
+    than their target declares, are reported where the command ran, never dropped by a reading
+    that only wanted the tasks. A skill that hands the command in a handoff without running it
+    states no report over its output and owes nothing here."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    if not OUTSTANDING.search(text):
+        pytest.skip("this skill never runs --outstanding")
+    assert "(SPEC-007 R1)" in text, f"{skill}: runs --outstanding and never cites SPEC-007 R1"
+
+
+PROCEEDING = ("review-change", "check-source", "deliver-scope")
+
+
+@pytest.mark.parametrize("skill", PROCEEDING)
+def test_a_skill_that_proceeds_past_a_check_lists_it_and_stops_on_no_finding(skill):
+    """SPEC-006 R4: a finding stops nothing, and a report that says a step may proceed lists the
+    checks it ran with their output. The three skills that run checks and go on are where the
+    rule is read; the session-wide rules carry its first sentence for every other report."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    assert "«A finding stops nothing» (SPEC-006 R4)" in text, \
+        f"{skill}: never says a finding stops nothing"
+    assert "it lists the checks it ran and their output verbatim» (SPEC-006 R4)" in text, \
+        f"{skill}: proceeds past a check without listing it"
+
+
+def test_the_session_rules_carry_that_a_finding_stops_nothing():
+    text = (REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8")
+    assert "«A finding stops nothing» (SPEC-006 R4)" in text
+
+
 WAVED = ("review-change", "reconcile", "survey")
 
 

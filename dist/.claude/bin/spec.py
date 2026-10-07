@@ -29,8 +29,9 @@ node's log, never marked in an artifact.
 
 **Projections are derived, never edited.** `--project` writes `projections/` from the files —
 class diagrams, the context map (a context pair with no contract between them has gone separate
-ways, and the map says so), state diagrams, the capability map and the overview — sorted
-throughout, so identical input is byte-identical output. They are refused entirely while the
+ways, and the map says so), state diagrams, the capability map, the overview and the full text
+(every node verbatim under its identity, so one grep locates a node and the node's own file is
+what is opened) — sorted throughout, so identical input is byte-identical output. They are refused entirely while the
 specification has problems.
 
 **Every node's digest is content identity.** `--digest` prints `<identity>  sha256:<hexdigest>`
@@ -1044,6 +1045,17 @@ PROSE_PATH = re.compile(r"\b(?:domain|rules|scenarios|contracts|constraints)"
 PROSE_SLUG = re.compile(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`")
 
 
+def below_distribution(count: int, unit: str) -> str:
+    """The `(none)` line a ranking prints where its sample is too small to rank. Under
+    `DISTRIBUTION` values the nearest-rank p90 is the maximum, so "at or past p90" names the
+    largest of any sample, sound or not — a floor and not a finding. Every value of such a sample
+    is already in view in the table above."""
+    if count >= DISTRIBUTION:
+        return "  (none)"
+    return (f"  (none) — {count} {unit} is below the {DISTRIBUTION} a distribution needs; "
+            f"under that the p90 is the maximum, and every one is already in view")
+
+
 def percentile(values: list[int], fraction: float) -> int:
     """The value at `fraction` of a sorted sample, by nearest rank — no interpolation, so the
     number printed is one a node actually has and a reader can go find.
@@ -1348,13 +1360,15 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
         long_unpinned = sorted(identity for identity, entry in read.items()
                                if entry["cls"] == cls and entry["scenarios"] == 0
                                and (entry["statement_words"] or 0) >= far)
+        if len(stated) < DISTRIBUTION:
+            long_unpinned = []
         print(f"\n{cls}: statement at or past this class's p90 ({far}w) with no scenario "
               f"anchored — {len(long_unpinned)}; a long condition no concrete case pins is the "
               f"one a scenario would settle (an abstract rule legitimately has none):")
         for identity in long_unpinned:
             print(f"{mark(identity)} {read[identity]['statement_words']:>4}w  {identity}")
         if not long_unpinned:
-            print("  (none)")
+            print(below_distribution(len(stated), "statement(s)"))
 
     logs = sorted(identity for identity, entry in read.items() if entry["cls"] == "log")
     stated = sorted(w for identity in logs for w in read[identity].get("why_words", []))
@@ -1362,14 +1376,18 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
         far = percentile(stated, 0.9)
         past = sorted(identity for identity in logs
                       if any(w >= far for w in read[identity].get("why_words", [])))
+        if len(stated) < DISTRIBUTION:
+            past = []
         print(f"\ndecision log: {len(stated)} decided entry(ies) across {len(logs)} log(s); "
               f"`why` median {percentile(stated, 0.5)}w, p90 {far}w, max {max(stated)}w. "
               f"«`why` carries one claim a reviewer can reject» (SPEC-001 R9) — "
-              f"{sum(1 for w in stated if w >= far)} entry(ies) at or past that p90 are where to "
+              f"{len(past)} log(s) with an entry at or past that p90 are where to "
               f"check whether it carries an argument about the specification's composition "
               f"instead, in:")
         for identity in cut(past, lambda row: [row]):
             print(f"{mark(identity)} {identity}")
+        if not past:
+            print(below_distribution(len(stated), "decided entry(ies)"))
 
     carrying = sorted(((entry["decided_fields"], identity) for identity, entry in read.items()
                        if entry["cls"] != "log" and entry.get("decided_fields")),

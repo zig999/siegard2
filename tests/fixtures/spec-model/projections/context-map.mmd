@@ -1,6 +1,6 @@
 flowchart LR
     monitoring["Monitoring (supporting)"]
     troubleshooting["Troubleshooting (core)"]
-    monitoring -->|alert-raised| troubleshooting
+    monitoring -->|alert-raised (adopted)| troubleshooting
     outside(["outside"])
     troubleshooting -.->|case-resolved| outside

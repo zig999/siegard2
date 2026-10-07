@@ -190,7 +190,11 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   - **capability map** — capability → contexts, derived from the references of the scenarios
     anchored to each capability;
   - **system overview** — contexts, strategic classification, each aggregate with what it
-    holds (counted, never held to a threshold), capabilities, constraints.
+    holds (counted, never held to a threshold), capabilities, constraints;
+  - **full text** — every node's file verbatim under a header naming its identity, in identity
+    order: one grep target instead of a walk, so a reader locates where a fact lives and then
+    opens the node the match names. It locates and never states: a claim about a node is made
+    from the node's own file, and the projection carries nothing that file does not.
 
 ## What is not normative
 
