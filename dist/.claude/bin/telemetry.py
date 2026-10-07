@@ -71,6 +71,19 @@ the delivery root is read, with the commit that landed it and the first commit a
 that initiative's delivery or work root. Which door was then taken is never computed: the commit
 that followed is the evidence, and reading it is a person's.
 
+**A confirmation is counted, never quoted.** A handoff costs the person a turn whose whole
+content is permission: "commit", "go on", "2". Each human turn inside the window is read once, in
+the session's own context, and leaves as a class and nothing else — `commit_authorization` where
+a short turn names a commit or a push, `go_ahead` where it is one of the go-ahead words this
+script lists, `choice_by_label` where it is a bare label picking one offered door — with the
+skill the session was running, the seconds since the assistant's last entry, and whether that
+entry's closing paragraph asked anything. A confirmation after a message that asked nothing is
+a turn the framework's own stop cost; one after a question is a turn a person was asked for. The
+word list is this script's and is finite: a short turn it does not match is counted under
+`unclassified_short`, so what the classifier reaches is read beside what it does not, and a
+longer turn is a message, never a confirmation. `handoffs` sums these across sessions, beside
+the Skill calls the sessions made, which is the denominator a confirmation count is read per.
+
 **A section that cannot be read is said, not filled.** Every section carries an entry in
 `provenance` naming where it was read from or why it could not be. No source is estimated from
 another: an agent whose transcript is missing has null usage and a reason, and the totals say how
@@ -123,7 +136,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/9"
+CONTRACT = "siegard-telemetry/10"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -184,6 +197,15 @@ PROBLEMS = re.compile(r"\b(\d+) problem\(s\)")
 FENCE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 USAGE_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
               "output_tokens")
+
+CONFIRMATION_CLASSES = ("commit_authorization", "go_ahead", "choice_by_label")
+SHORT_TURN = 60
+COMMIT_WORDS = re.compile(r"\b(?:commit\w*|comit\w*|push\w*)\b", re.I)
+GO_AHEAD = re.compile(
+    r"^(?:sim|ok|okay|yes|yep|go|go on|go ahead|proceed|continue|continua\w*|prossiga|prosseguir"
+    r"|segue|siga|vai|bora|manda|pode(?: \w+){0,2}|faça|faz|isso|certo|beleza|perfeito|concordo"
+    r"|de acordo|aprovado|pode ser)[\s.!]*$", re.I)
+CHOICE = re.compile(r"^(?:op[çc][ãa]o|option)?\s*[1-9a-d][).]?[\s.!]*$", re.I)
 
 
 class MessageUsage:
@@ -486,23 +508,49 @@ HARNESS_BLOCK = re.compile(
 HARNESS_LINE = re.compile(r"^\s*\[SYSTEM NOTIFICATION[^\n]*$", re.M)
 
 
-def is_human_turn(entry: dict) -> bool:
-    """Whether a user-role entry is a person typing. The harness writes in that role too — a
-    background task's completion notice, a local command's echo, a reminder it injects — and
-    counted as they land, those can outnumber the person many times over. What remains after those blocks are removed is what a person wrote; a paste a person made stays,
-    because the pasting was theirs."""
+def human_text_of(entry: dict) -> str | None:
+    """What a person typed in a user-role entry, or None where the entry is not a person's. The
+    harness writes in that role too — a background task's completion notice, a local command's
+    echo, a reminder it injects — and counted as they land, those can outnumber the person many
+    times over. What remains after those blocks are removed is what a person wrote; a paste a
+    person made stays, because the pasting was theirs. The text is read here and classified
+    here; nothing of it leaves the session's context."""
     if entry.get("type") != "user" or entry.get("isSidechain"):
-        return False
+        return None
     content = (entry.get("message") or {}).get("content")
     if isinstance(content, str):
         text = content
     else:
         blocks = blocks_of(entry)
         if not blocks or any(b.get("type") == "tool_result" for b in blocks):
-            return False
+            return None
         text = " ".join(text_of(b) for b in blocks if b.get("type") == "text")
-    text = HARNESS_LINE.sub("", HARNESS_BLOCK.sub("", text))
-    return bool(text.strip())
+    text = HARNESS_LINE.sub("", HARNESS_BLOCK.sub("", text)).strip()
+    return text or None
+
+
+def is_human_turn(entry: dict) -> bool:
+    return human_text_of(entry) is not None
+
+
+def confirmation_class(text: str) -> str | None:
+    """Which confirmation a short human turn is, or None where it is not one. A turn that asks
+    something is never a confirmation, whatever words it uses; a commit word is read first, so
+    "go ahead and commit" is a commit authorization and not a go-ahead."""
+    if len(text) > SHORT_TURN or text.endswith("?"):
+        return None
+    if COMMIT_WORDS.search(text):
+        return "commit_authorization"
+    if GO_AHEAD.match(text):
+        return "go_ahead"
+    if CHOICE.match(text):
+        return "choice_by_label"
+    return None
+
+
+def asks(text: str) -> bool:
+    """Whether the assistant's message closed on a question: its final paragraph holds one."""
+    return "?" in text.strip().rsplit("\n\n", 1)[-1]
 
 
 def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, list, list]:
@@ -523,6 +571,11 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     namespace = plugin_namespace()
     skill: str | None = None
     compactions: list[dict] = []
+    skill_calls: dict[str, int] = {}
+    confirmations: list[dict] = []
+    short_turns = 0
+    last_assistant_at: str | None = None
+    last_assistant_text: str = ""
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
@@ -536,11 +589,28 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
             if block.get("type") == "tool_result" and isinstance(block.get("tool_use_id"), str):
                 results[block["tool_use_id"]] = {"text": text_of(block),
                                                  "raw": entry.get("toolUseResult")}
+        if entry.get("type") == "assistant" and not entry.get("isSidechain"):
+            # What the person answers to: the assistant's last entry, and the last text it wrote.
+            last_assistant_at = stamp if isinstance(stamp, str) else last_assistant_at
+            spoken = "\n".join(b.get("text", "") for b in blocks_of(entry)
+                               if b.get("type") == "text" and isinstance(b.get("text"), str))
+            if spoken.strip():
+                last_assistant_text = spoken
         if not in_window(entry, since, until):
             continue
         entries_in_window += 1
-        if is_human_turn(entry):
+        typed = human_text_of(entry)
+        if typed is not None:
             human_turns.append(iso(instant_of(stamp)))
+            if len(typed) <= SHORT_TURN:
+                short_turns += 1
+            kind = confirmation_class(typed)
+            if kind is not None:
+                confirmations.append({
+                    "at": iso(instant_of(stamp)), "class": kind, "skill": skill or "none",
+                    "after_question": asks(last_assistant_text),
+                    "wait_seconds": seconds_between(last_assistant_at, stamp)
+                    if last_assistant_at is not None else None})
         if is_compaction(entry):
             compactions.append(dict(compaction_of(entry), at=iso(instant_of(stamp)),
                                     skill=skill or "none"))
@@ -556,6 +626,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                     if namespace and named.startswith(f"{namespace}:"):
                         named = named[len(namespace) + 1:]
                     skill = named
+                    skill_calls[named] = skill_calls.get(named, 0) + 1
         spent.add(entry, skill)
         for block in blocks_of(entry):
             if block.get("type") != "tool_use" or not isinstance(block.get("id"), str):
@@ -597,6 +668,8 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "harness_versions": sorted(versions), "working_directories": sorted(cwds),
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
         "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
+        "skill_calls": dict(sorted(skill_calls.items())), "short_turns": short_turns,
+        "confirmations": confirmations,
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -1388,6 +1461,45 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
             "malformed": malformed}
 
 
+# ------------------------------------------------------------------------- the handoffs
+
+
+def handoffs_section(harness: dict) -> dict:
+    """Every confirmation the sessions' human turns were, summed across sessions and set beside
+    the Skill calls the sessions made. Nothing here is a judgment: a class is a word match, a
+    wait is two timestamps apart, and `after_question` is a question mark in the paragraph the
+    person answered to."""
+    by_class = {name: {"count": 0, "unasked": 0, "wait_seconds_total": 0.0,
+                       "wait_seconds_max": None} for name in CONFIRMATION_CLASSES}
+    by_skill: dict[str, dict] = {}
+    lines: list[dict] = []
+    skill_calls = human_turns = short_turns = 0
+    for session in harness["sessions"]:
+        human_turns += len(session["human_turns_in_window"])
+        short_turns += session["short_turns"]
+        for name, count in session["skill_calls"].items():
+            by_skill.setdefault(name, {"calls": 0, "confirmations": 0})["calls"] += count
+            skill_calls += count
+        for confirmation in session["confirmations"]:
+            lines.append({"session": session["id"], **confirmation})
+            tally = by_class[confirmation["class"]]
+            tally["count"] += 1
+            if not confirmation["after_question"]:
+                tally["unasked"] += 1
+            wait = confirmation["wait_seconds"]
+            if wait is not None:
+                tally["wait_seconds_total"] = round(tally["wait_seconds_total"] + wait, 3)
+                if tally["wait_seconds_max"] is None or wait > tally["wait_seconds_max"]:
+                    tally["wait_seconds_max"] = wait
+            by_skill.setdefault(confirmation["skill"],
+                                {"calls": 0, "confirmations": 0})["confirmations"] += 1
+    lines.sort(key=lambda c: (c["at"], c["session"]))
+    confirmations = sum(t["count"] for t in by_class.values())
+    return {"skill_calls": skill_calls, "human_turns": human_turns, "short_turns": short_turns,
+            "confirmations": confirmations, "unclassified_short": short_turns - confirmations,
+            "by_class": by_class, "by_skill": dict(sorted(by_skill.items())), "lines": lines}
+
+
 # --------------------------------------------------------------------------- the whole
 
 
@@ -1420,6 +1532,7 @@ def provenance_of(roots: dict[str, object], harness: dict, repository: dict,
         entry("harness", transcript_source, transcript_reason),
         entry("agents", transcript_source, transcript_reason),
         entry("commands", transcript_source, transcript_reason),
+        entry("handoffs", transcript_source, transcript_reason),
     ]
     for key, section in (("delivery_root", "runs"), ("work_root", "notes"),
                          ("work_root", "scope"), ("delivery_root", "recommendations")):
@@ -1481,6 +1594,7 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
         "notes": notes_section(work_root),
         "scope": scope_section(work_root, delivery_root, home, repository["commits"]),
         "recommendations": recommendations_section(delivery_root, work_root, home, since, until),
+        "handoffs": handoffs_section(harness),
         "provenance": provenance_of(roots, harness, repository, decisions),
     }
     return report, telemetry_dir, telemetry_dir / f"{stamp_of(until)}.json"
@@ -1523,6 +1637,12 @@ def receipt(report: dict, destination: Path) -> str:
         f"recommendations: {report['recommendations']['emitted']} recorded"
         + (f", {len(report['recommendations']['malformed'])} line(s) that do not parse"
            if report['recommendations']['malformed'] else ""),
+        f"handoffs: {report['handoffs']['confirmations']} confirmation(s) typed over "
+        f"{report['handoffs']['skill_calls']} Skill call(s) — "
+        + ", ".join(f"{name} {tally['count']} ({tally['unasked']} after no question, "
+                    f"{tally['wait_seconds_total']}s waited)"
+                    for name, tally in report["handoffs"]["by_class"].items())
+        + f"; {report['handoffs']['unclassified_short']} short turn(s) unclassified",
     ]
     missing = [p for p in report["provenance"] if p["unavailable"]]
     lines.append("unavailable: " + ("; ".join(f"{p['section']} — {p['unavailable']}"
@@ -1590,7 +1710,8 @@ def main() -> int:
                       f"directories {', '.join(summary['working_directories']) or 'unrecorded'}"
                       f"{where}")
         print("what leaves the transcripts: agent types, descriptions, token counts, timestamps, "
-              "and the command lines that invoked this framework's scripts — no message text")
+              "the class of each short confirmation a person typed, and the command lines that "
+              "invoked this framework's scripts — no message text")
         if isinstance(telemetry_root, str):
             destination = Path(telemetry_root) / f"{stamp_of(until)}.json"
             print(f"would write: {destination}"

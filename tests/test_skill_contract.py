@@ -375,3 +375,32 @@ def test_every_skill_that_reports_opens_its_report_as_the_handoff_states(skill):
     if not REPORT_HEADING.search(text):
         pytest.skip("this skill states no report")
     assert "(SPEC-006 R1)" in text, f"{skill}: its report never cites SPEC-006 R1"
+
+
+WAVED = ("review-change", "reconcile", "survey")
+
+
+@pytest.mark.parametrize("skill", WAVED)
+def test_a_skill_that_fans_out_dispatches_by_the_waves_the_staging_cuts(skill):
+    """A sentence asking for batches no larger than the harness allows sized nothing, and the
+    harness refused launches in series under it. The wave is a list the staging prints, or for
+    the one skill that stages nothing a number stated beside the staging's own, and a refused
+    launch is a wave cut too wide — never a delegation dispatched again on the skill's own
+    account."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    assert "batches no larger" not in text, f"{skill} still sizes its fan-out by a sentence"
+    assert "wave" in text and "cut too wide" in text, f"{skill} never dispatches by waves"
+    if skill != "survey":
+        assert "--concurrency" in text, f"{skill} hands no route when a wave is refused"
+
+
+@pytest.mark.parametrize("skill", ("siegard-status", "siegard-progress"))
+def test_a_state_question_s_skill_opens_its_description_with_the_trigger(skill):
+    """The description is the only instruction that reaches a session before the skill loads,
+    and the platform truncates it; a trigger stated last is a trigger never read. A question
+    about where the project stands has to reach disk, and the description is what routes it."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    import yaml
+    front = yaml.safe_load(FENCE.match(text).group(1))
+    assert front["description"].startswith("Use whenever a person asks"), \
+        f"{skill}: the description opens with what it does, not with when to use it"

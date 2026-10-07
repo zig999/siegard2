@@ -337,3 +337,13 @@ def test_the_index_and_the_node_contract_name_the_same_passes(schemas):
     node = schemas["delivery-node.json"]["$defs"]["passName"]
     assert index["enum"] == node["enum"], \
         f"the index accepts {index['enum']} and a record accepts {node['enum']}"
+
+
+def test_the_rules_send_a_state_question_to_disk():
+    """A question about where the project stands answered from the conversation is the one
+    recall the rules already call non-authoritative, asked in its most common form. The rule
+    names the two skills that read disk for it, and the version's one reader."""
+    rules = CONSUMER_RULES.read_text(encoding="utf-8")
+    assert "A question about where the project stands is answered from disk" in rules
+    assert "`/siegard-status`" in rules and "`/siegard-progress`" in rules
+    assert "`bin/project.py`" in rules

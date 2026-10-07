@@ -1040,6 +1040,14 @@
           "$ref": "#/$defs/ruleRef",
           "description": "The rule of the project's standard this finding is against, on a finding of the standard pass and nowhere else \u2014 the validator holds both halves of that, the same way it holds `cause` to the failures pass. Exactly one rule: a departure from two is two findings, because they will be settled separately, and a finding citing no rule at all is taste with a location attached. The validator also holds the cited rule to the standard \u2014 it must be declared, it must be one the standard decides by reading rather than one a tool decides, and its scope must reach this finding's file."
         },
+        "kind": {
+          "enum": [
+            "contradicts",
+            "unstated",
+            "restates"
+          ],
+          "description": "Which question a conformance finding answers, on a finding of the conformance pass and nowhere else — the validator holds the second half of that. The judge's return already says it: `contradicts` where the source states something the node does not hold, `unstated` where it states a fact no node holds, `restates` where prose restates a fact a node holds. Carried here so the record groups by it without anyone re-reading the evidence: a count by kind is a count of where each repair would go, which is not a decision that any goes there. Absent on a conformance finding is a record written before the field reached the contract, and `deliver.py --findings` counts those apart."
+        },
         "cause": {
           "enum": [
             "code",

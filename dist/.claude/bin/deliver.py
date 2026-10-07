@@ -197,6 +197,16 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         trace over files no task delivered — and
                                                         every citation it makes, against the
                                                         registry it pins
+        deliver.py --findings <review>
+                                                        print one review's findings as counts —
+                                                        by pass; the conformance ones by `kind`,
+                                                        the standard ones by the rule cited, the
+                                                        failures by `cause`; and by file — so a
+                                                        reader sees how many go where before
+                                                        reading any one. Stands alone, reads the
+                                                        record and nothing else, decides nothing:
+                                                        which route a group deserves, or whether
+                                                        it deserves one, stays the person's
         deliver.py --unrecorded <target-source-root> <record> [<record> ...]
                                                         print every path the working tree
                                                         changed under the target source root —
@@ -452,6 +462,12 @@ def review_problems(front: dict, names: list[str]) -> list[str]:
             if name != owner and field in finding:
                 problems.append(f"findings[{index}] states `{field}` outside the {owner} pass; "
                                 f"{foreign}")
+        # `kind` is the conformance pass's and only one half is held: a conformance finding
+        # without it is a record written before the field reached the contract, and
+        # `--findings` counts those apart rather than this refusing the root that holds them.
+        if name != "conformance" and "kind" in finding:
+            problems.append(f"findings[{index}] states `kind` outside the conformance pass; kind "
+                            f"says which question a conformance judge answered and nothing else")
 
     for field, name, want in (("coverage", "coverage", "the criteria it paired with tests"),
                               ("run", "failures", "the captured run it read"),
@@ -1938,6 +1954,53 @@ def check_record(named: str, target_root: str) -> int:
     return 0
 
 
+def tally(values: list[str]) -> str:
+    """`a 3, b 1` — counts by value, most first, ties by name; `none` where the list is empty."""
+    counts: dict[str, int] = {}
+    for value in values:
+        counts[value] = counts.get(value, 0) + 1
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return ", ".join(f"{value} {count}" for value, count in ordered) or "none"
+
+
+def print_findings(named: str) -> int:
+    """One review's findings as counts, read from the record alone. Every group here is a field
+    the record already carries — the pass, a conformance finding's `kind`, a standard finding's
+    `cites`, a failure's `cause`, the file — so the counts are a reading of the record and never
+    a reading of the evidence. A conformance finding with no `kind` is counted apart, as the
+    record's gap, never guessed into a group."""
+    path = Path(named)
+    if not path.is_file():
+        print(f"cannot run: {path} does not exist", file=sys.stderr)
+        return CANNOT_RUN
+    front, _, unreadable = spec.parse_node(path)
+    if front is None:
+        print(f"cannot run: {path.name}: {unreadable}", file=sys.stderr)
+        return CANNOT_RUN
+    if "reviewed" not in front:
+        print(f"cannot run: {path.name} carries no `reviewed`; --findings reads a review record",
+              file=sys.stderr)
+        return CANNOT_RUN
+    findings = [f for f in listed(front, "findings") if isinstance(f, dict)]
+    by_pass = {name: [f for f in findings if f.get("pass") == name]
+               for name in ("conformance", "standard", "failures", "coverage")}
+    print(f"{path.name}: {len(findings)} finding(s) over {len(listed(front, 'reviewed'))} "
+          f"reviewed file(s)")
+    print(f"  by pass: {tally([str(f.get('pass')) for f in findings])}")
+    conformance = by_pass["conformance"]
+    unkinded = sum(1 for f in conformance if "kind" not in f)
+    print(f"  conformance by kind: "
+          f"{tally([str(f['kind']) for f in conformance if 'kind' in f])}"
+          + (f"; {unkinded} carrying no `kind`" if unkinded else ""))
+    print(f"  standard by rule cited: "
+          f"{tally([str(f.get('cites')) for f in by_pass['standard']])}")
+    print(f"  failures by cause: {tally([str(f.get('cause')) for f in by_pass['failures']])}")
+    print(f"  by file: {tally([str(f.get('file', '(no file)')) for f in findings])}")
+    print("  a count says how many findings share a field, never which route any takes or "
+          "whether it takes one")
+    return 0
+
+
 def check_citation_problems(front: dict, target: Path, validator) -> list[str]:
     """Every citation a check record makes, resolved against the standard it pins — declared, left
     to a reading, and in scope for the file. Held to the file set too: a finding outside it is a
@@ -2571,6 +2634,19 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         return check_record(named, args[0])
+    if "--findings" in args:
+        at = args.index("--findings")
+        if at + 1 >= len(args):
+            print("cannot run: --findings takes a review record", file=sys.stderr)
+            return CANNOT_RUN
+        named = args[at + 1]
+        del args[at:at + 2]
+        if verify or report or single is not None or against is not None \
+                or specification is not None or args:
+            print("cannot run: --findings stands alone, with the review record",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        return print_findings(named)
     if "--unrecorded" in args:
         at = args.index("--unrecorded")
         rest = args[at + 1:]

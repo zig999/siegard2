@@ -2558,3 +2558,48 @@ def test_a_test_an_earlier_adoption_judged_stays_holds_nothing_once_tests_are_de
     assert done.returncode == 0, done.stdout + done.stderr
     assert f"holds-nothing:\n  backend/{THIRD}\n  backend/{PROOF}" in done.stdout
     assert "  0 uncertified:" in done.stdout
+
+
+# ---------------------------------------------------------------- the waves
+
+
+def test_the_staging_cuts_the_delegations_into_waves_and_the_receipt_lists_them(consumer):
+    """"No larger than the harness runs at once" was a sentence in three skills, and a sentence
+    sizes nothing: the staging cuts the list, the manifest carries it, and the receipt prints
+    it, so a session dispatches what it reads rather than what it estimates."""
+    done, workspace = staged(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["concurrency"] == 20
+    assert manifest["waves"] == [[FILE]], "the second file is current and unowed; no judge, no wave"
+    assert "dispatch in 1 wave(s) of at most 20 delegation(s)" in done.stdout
+    assert f"wave 1: 1 — {FILE}" in done.stdout
+
+
+def test_a_narrower_concurrency_cuts_more_waves_in_the_staged_order(consumer):
+    workspace = consumer / "ws-narrow"
+    done = run("--stage", consumer / "backend", consumer / "specs", "narrow", workspace,
+               FILE, SECOND, "--audit", "--concurrency", "1")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert manifest_of(workspace)["waves"] == [[SECOND], [FILE]], \
+        "the waves follow the manifest's own order, which is the files sorted"
+    assert "wave 2: 1 — " + FILE in done.stdout
+
+
+def test_a_missing_return_names_the_wave_that_has_not_finished(consumer):
+    workspace = consumer / "ws-narrow"
+    run("--stage", consumer / "backend", consumer / "specs", "narrow", workspace,
+        FILE, SECOND, "--audit", "--concurrency", "1")
+    save_return(consumer, "narrow", FILE, clean_return([NODE, OTHER]))
+    done, _ = folded(consumer, "narrow")
+    assert done.returncode == 1
+    assert f"{SECOND}: no return at" in done.stdout and "(wave 1 has not finished)" in done.stdout
+
+
+def test_concurrency_is_a_whole_number_and_a_mode_of_stage_alone(consumer):
+    workspace = consumer / "ws-bad"
+    zero = run("--stage", consumer / "backend", consumer / "specs", "bad", workspace, FILE,
+               "--concurrency", "0")
+    assert zero.returncode == 2 and "at least 1" in zero.stderr
+    elsewhere = run("--check", consumer / "backend", "--concurrency", "3")
+    assert elsewhere.returncode == 2 and "a mode of --stage" in elsewhere.stderr

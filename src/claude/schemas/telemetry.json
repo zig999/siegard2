@@ -21,12 +21,13 @@
     "notes",
     "scope",
     "recommendations",
+    "handoffs",
     "provenance"
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/9",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero."
+      "const": "siegard-telemetry/10",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero."
     },
     "project_root": {
       "type": "string",
@@ -111,7 +112,8 @@
             "additionalProperties": false,
             "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
                          "working_directories", "entries_in_window", "human_turns_in_window",
-                         "usage", "by_skill", "compactions"],
+                         "usage", "by_skill", "compactions", "skill_calls", "short_turns",
+                         "confirmations"],
             "properties": {
               "id": { "type": "string", "minLength": 1 },
               "path": { "type": "string", "minLength": 1 },
@@ -159,6 +161,46 @@
                   }
                 },
                 "description": "Every compaction the harness recorded in this session inside the window. A compaction replaces the context with a summary of it: from there on, what the session holds of its earlier reading is a paraphrase, and an invocation that reaches one has outgrown the window it runs in. Counted so that a change to what a skill loads or how much one invocation carries answers to a count rather than to a guess."
+              },
+              "skill_calls": {
+                "type": "object",
+                "additionalProperties": { "type": "integer", "minimum": 1 },
+                "description": "How many times this session invoked each skill through the harness's Skill tool inside the window, keyed by the skill's bare name. The denominator a confirmation count is read per: a session that invoked five entry points and typed five go-aheads paid one turn per invocation."
+              },
+              "short_turns": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many of `human_turns_in_window` were at most sixty characters once the harness's own blocks were removed — the length a confirmation has. Beside `confirmations` it says how many short turns the classifier did not match."
+              },
+              "confirmations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["at", "class", "skill", "after_question", "wait_seconds"],
+                  "properties": {
+                    "at": { "$ref": "#/$defs/timestamp" },
+                    "class": {
+                      "enum": ["commit_authorization", "go_ahead", "choice_by_label"],
+                      "description": "What the turn was: a short turn naming a commit or a push; one of the go-ahead words the script lists; a bare label picking one offered door. A turn ending in a question mark is none of these."
+                    },
+                    "skill": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The skill the session was running when the person typed it, by the same span `by_skill` counts — `none` before the first Skill call."
+                    },
+                    "after_question": {
+                      "type": "boolean",
+                      "description": "Whether the assistant's last text before this turn closed on a question — its final paragraph holds a question mark. False is a confirmation the person typed after a message that asked for nothing: a turn a stop cost, not one a question asked for."
+                    },
+                    "wait_seconds": {
+                      "type": ["number", "null"],
+                      "minimum": 0,
+                      "description": "Seconds from the assistant's last entry to this turn — how long the work stood still for the permission; null where no assistant entry preceded it in this transcript."
+                    }
+                  }
+                },
+                "description": "Every short human turn inside the window that was a confirmation, as a class and its circumstances. What was typed is not here: a telemetry record leaves a word match, a wait and a flag, never a person's words."
               },
               "usage": {
                 "$ref": "#/$defs/usage",
@@ -489,6 +531,64 @@
       },
       "description": "What the handoffs recorded as recommended, read from each `orchestration.md` under the delivery root. A recommendation made where no orchestration log exists is in its report alone and is not here."
     },
+    "handoffs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_calls", "human_turns", "short_turns", "confirmations",
+                   "unclassified_short", "by_class", "by_skill", "lines"],
+      "properties": {
+        "skill_calls": { "type": "integer", "minimum": 0 },
+        "human_turns": { "type": "integer", "minimum": 0 },
+        "short_turns": { "type": "integer", "minimum": 0 },
+        "confirmations": { "type": "integer", "minimum": 0 },
+        "unclassified_short": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "`short_turns` less `confirmations`: the short turns the word list did not match. The classifier's reach, read beside what it counted."
+        },
+        "by_class": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commit_authorization", "go_ahead", "choice_by_label"],
+          "properties": {
+            "commit_authorization": { "$ref": "#/$defs/confirmationTally" },
+            "go_ahead": { "$ref": "#/$defs/confirmationTally" },
+            "choice_by_label": { "$ref": "#/$defs/confirmationTally" }
+          }
+        },
+        "by_skill": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["calls", "confirmations"],
+            "properties": {
+              "calls": { "type": "integer", "minimum": 0 },
+              "confirmations": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "description": "Per skill: how many times the sessions invoked it, and how many confirmations the person typed while it was the running span. The two beside each other are what a change to a skill's stops answers to."
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["session", "at", "class", "skill", "after_question", "wait_seconds"],
+            "properties": {
+              "session": { "type": "string", "minLength": 1 },
+              "at": { "$ref": "#/$defs/timestamp" },
+              "class": { "enum": ["commit_authorization", "go_ahead", "choice_by_label"] },
+              "skill": { "type": "string", "minLength": 1 },
+              "after_question": { "type": "boolean" },
+              "wait_seconds": { "type": ["number", "null"], "minimum": 0 }
+            }
+          },
+          "description": "Every confirmation across the window's sessions, in order — the far end of each wait is a row a reader opens by its session and timestamp."
+        }
+      },
+      "description": "The confirmations the window's sessions cost the person, summed from `harness.sessions[].confirmations` and set beside the Skill calls those sessions made. A confirmation after a message that asked nothing is a turn a stop of this framework's cost; one after a question is a turn a question asked for. No text and no judgment: a class, a wait, a flag."
+    },
     "provenance": {
       "type": "array",
       "items": {
@@ -509,6 +609,25 @@
     "timestamp": {
       "type": "string",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "confirmationTally": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "unasked", "wait_seconds_total", "wait_seconds_max"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "unasked": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many of `count` came after a message whose closing paragraph asked nothing."
+        },
+        "wait_seconds_total": { "type": "number", "minimum": 0 },
+        "wait_seconds_max": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "The longest single wait of the class — the far end, which `lines` locates by session and timestamp; null where no wait was measurable."
+        }
+      }
     },
     "configured": {
       "type": "object",

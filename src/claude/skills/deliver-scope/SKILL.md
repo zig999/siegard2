@@ -130,9 +130,10 @@ The steps:
 4. **Review.** When the deliverable set is empty, invoke `/review-change` from the last
    delivery's handoff: the tasks being every task this run delivered, the file set being the
    union of the paths their reports named. The review is done when its record is written — the
-   findings are relayed whole in the report and never acted on here: which route a finding
-   deserves, or whether it deserves one, is the decision that skill deliberately does not make,
-   and this skill inherits the same restraint. Repairing anything a finding names is a new ask.
+   findings are relayed whole in the report, opened by the counts that review's own report
+   opens with, and never acted on here: which route a finding deserves, or whether it deserves
+   one, is the decision that skill deliberately does not make, and this skill inherits the same
+   restraint. Repairing anything a finding names is a new ask.
    Commit the delivery root, the trace file and `siegard-reconcile/` — the review's conformance
    pass writes its record and returns there and restamps the trace — in one commit,
    `deliver-scope <slug>: review`.

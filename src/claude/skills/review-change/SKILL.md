@@ -380,9 +380,12 @@ runs next.
   of something no task stated. It is never a verdict on the test — a test may prove a sibling
   task's criterion — and never a recommendation to remove one.
 - **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the staging
-  manifest holds**, spawned together rather than one after another — in batches no larger than
-  the harness runs at once where it caps concurrent delegations, a refused launch dispatched again
-  and never counted — each judging at
+  manifest holds**, dispatched **by the waves the staging receipt lists**: one wave whole, in one
+  message, then every return of that wave saved before the next wave is spawned. The wave is
+  the harness's ceiling on delegations running at once, cut by `--stage` into a list rather than
+  estimated here; a launch the harness refuses is a wave cut too wide, reported with `--stage
+  --concurrency <fewer>` ready to run again, and never a judge dispatched a second time on its
+  own — each judging at
   `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
   a file set of exactly its one file — the resolved path its pack header names, the spelling a
   finding echoes being the header's own; as the node set, its node pack's path from the manifest —
@@ -519,9 +522,11 @@ the delegations above, and where this session cannot spawn subagents and wrote a
 would read, the pass stops and reports rather than running inline.
 
 Every finding a return carries — `contradicts`, `unstated` and `restates` alike — is a finding of this
-pass, stamped `conformance` and placed in the review record under the file its judge read; the
-fold's `unstated` list and the review's findings are the same facts in two homes, one for the
-trace's reader and one for the delivery's.
+pass, stamped `conformance` and placed in the review record under the file its judge read,
+carrying the return's `kind` as the finding's own `kind`; the fold's `unstated` list and the
+review's findings are the same facts in two homes, one for the trace's reader and one for the
+delivery's. The word is copied from the return, never re-judged here: it is what lets the
+record be counted by where each repair would go without anyone re-reading the evidence.
 
 ### 4. Compose
 
@@ -594,6 +599,18 @@ states; what follows is the report that opening sits above.
 
 Report, in this order:
 
+- the findings as counts before any one of them, exactly as this prints them:
+
+  ```
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --findings <delivery-root>/review/<review-name>.md
+  ```
+
+  by pass, the conformance ones by `kind`, the standard ones by the rule cited, the failures by
+  `cause`, and by file — with, beside each group, the route the last bullet of this list names
+  for findings of that shape. The opening carries this grouping's one line: a person reads how
+  many findings go where before reading any, and decides over a group where the group is what
+  they would decide over. A count is never a verdict, a group is never ranked, and a route named
+  beside a count is where a repair would go, not a decision that it goes there;
 - every finding, grouped by pass, each with its evidence and what it costs;
 - **which passes did not run, and which input was missing** — this line is not optional, and it is
   what separates a clean review from a narrow one;

@@ -421,7 +421,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/9"
+    assert report["contract_version"] == "siegard-telemetry/10"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -654,7 +654,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/9"
+    assert report["contract_version"] == "siegard-telemetry/10"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1100,3 +1100,92 @@ def test_no_orchestration_log_is_zero_recommendations_and_the_survey_root_is_nev
     assert report["recommendations"] == {"emitted": 0, "by_criterion": {
         "precondition unmet": 0, "rule violated": 0, "already done": 0, "reading paid twice": 0},
         "lines": [], "malformed": []}
+
+
+# ------------------------------------------------------------------------ the handoffs
+
+
+def spoken(stamp: str, text: str, session: str = "s1") -> str:
+    return assistant(stamp, {"type": "text", "text": text}, session=session,
+                     usage={"input_tokens": 1, "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0, "output_tokens": 1})
+
+
+def test_a_confirmation_is_a_class_with_its_wait_and_whether_it_was_asked_for(consumer):
+    """What a handoff costs the person is a turn whose whole content is permission. Each one
+    leaves the transcript as a class, the skill it answered under, the seconds it waited and
+    whether the message it answered asked anything — and never as the words typed."""
+    (consumer["transcripts"] / "s4.jsonl").write_text(
+        spoken("2026-08-20T10:30:00.000Z", "Delivered.\n\nShall I commit it?", session="s4")
+        + human("2026-08-20T10:32:00.000Z", "pode comitar")
+        + spoken("2026-08-20T10:40:00.000Z", "Done. The plan holds.", session="s4")
+        + human("2026-08-20T10:41:30.000Z", "sim")
+        + spoken("2026-08-20T10:45:00.000Z", "Two doors: /plan-work, or /reconcile.\n\nWhich?",
+                 session="s4")
+        + human("2026-08-20T10:46:00.000Z", "2")
+        + human("2026-08-20T10:47:00.000Z", "qual status?")
+        + human("2026-08-20T10:48:00.000Z", "can you go ahead and explain the second door?")
+        + human("2026-08-20T10:49:00.000Z", "x" * 61 + " go on"),
+        encoding="utf-8")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    s4 = next(s for s in report["harness"]["sessions"] if s["id"] == "s4")
+    assert [(c["class"], c["after_question"], c["wait_seconds"]) for c in s4["confirmations"]] == [
+        ("commit_authorization", True, 120.0), ("go_ahead", False, 90.0),
+        ("choice_by_label", True, 60.0)]
+    assert s4["short_turns"] == 5, "both questions are short and unclassified; the long turn is not short"
+    handoffs = report["handoffs"]
+    assert handoffs["human_turns"] == 6 + 1, "s4's six and the fixture's own `go on`"
+    assert handoffs["confirmations"] == 4 and handoffs["unclassified_short"] == 2
+    assert handoffs["by_class"]["commit_authorization"] == {
+        "count": 1, "unasked": 0, "wait_seconds_total": 120.0, "wait_seconds_max": 120.0}
+    assert handoffs["by_class"]["go_ahead"]["count"] == 2
+    assert handoffs["by_class"]["go_ahead"]["unasked"] == 2
+    assert handoffs["by_class"]["go_ahead"]["wait_seconds_max"] == 90.0
+    dumped = json.dumps(report)
+    assert "pode comitar" not in dumped and "qual status" not in dumped
+    assert "handoffs: 4 confirmation(s) typed over 0 Skill call(s)" in done.stdout
+
+
+def test_a_confirmation_is_attributed_to_the_skill_the_session_was_running(consumer):
+    """A go-ahead typed while a skill's span is open is that skill's stop the person paid for;
+    the Skill calls beside it are the denominator."""
+    (consumer["transcripts"] / "s5.jsonl").write_text(
+        assistant("2026-08-20T10:30:00.000Z", {
+            "type": "tool_use", "id": "tu-skill", "name": "Skill",
+            "input": {"skill": "siegard:implement-task", "args": "task/checkout/record-order"}},
+            session="s5")
+        + user_result("2026-08-20T10:30:01.000Z", "tu-skill", "loaded")
+        + spoken("2026-08-20T10:50:00.000Z", "The delivery is written; the tree is yours.",
+                 session="s5")
+        + human("2026-08-20T10:51:00.000Z", "comite e siga"),
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    s5 = next(s for s in report["harness"]["sessions"] if s["id"] == "s5")
+    assert s5["skill_calls"] == {"implement-task": 1}
+    assert [c["skill"] for c in s5["confirmations"]] == ["implement-task"]
+    assert report["handoffs"]["by_skill"]["implement-task"] == {"calls": 1, "confirmations": 1}
+    assert report["handoffs"]["skill_calls"] == 1
+
+
+def test_the_classifier_reads_a_commit_word_first_and_a_question_never(consumer):
+    import telemetry
+    assert telemetry.confirmation_class("go ahead and commit") == "commit_authorization"
+    assert telemetry.confirmation_class("pode seguir") == "go_ahead"
+    assert telemetry.confirmation_class("opção b") == "choice_by_label"
+    assert telemetry.confirmation_class("pode seguir?") is None
+    assert telemetry.confirmation_class("sim, mas antes troque o nome do campo para x") is None
+    assert telemetry.asks("Done.\n\nShall I commit?") is True
+    assert telemetry.asks("Is it done? Yes.\n\nThe tree is yours.") is False
+
+
+def test_the_handoffs_section_names_the_transcripts_as_its_source(consumer):
+    _, report = report_of(consumer)
+    row = next(p for p in report["provenance"] if p["section"] == "handoffs")
+    assert row["source"] == str(consumer["transcripts"]) and row["unavailable"] is None
+    done = run(consumer["home"], "--since", SINCE, "--until", UNTIL, "--transcripts",
+               consumer["tmp"] / "nowhere")
+    report = json.loads((consumer["home"] / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8")) \
+        if done.returncode == 0 else None
+    assert report is None or report["handoffs"]["confirmations"] == 0

@@ -80,8 +80,11 @@ the human's to say, by naming the area again or by declaring the target's tests 
 
 ### 2. Delegate
 
-Spawn one subagent per area, together rather than one after another — in batches no larger than
-the harness runs at once, where it caps concurrent delegations: `siegard:domain-surveyor` in the
+Spawn one subagent per area, in waves of at most twenty — the harness's ceiling on delegations
+running at once, the same number `trace.py --stage` cuts a reconciliation's waves by — one wave
+whole in one message, the next only after every return of the last is in hand; a launch the
+harness refuses is a wave cut too wide, never a surveyor dispatched a second time on its own:
+`siegard:domain-surveyor` in the
 source form, its judgment at `${CLAUDE_PLUGIN_ROOT}/agents/domain-surveyor.md`, and
 `siegard:test-intent-reader` in the tests form, its judgment at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-intent-reader.md`. Each is passed the target source root, its

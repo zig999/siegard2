@@ -243,9 +243,12 @@ and the bind restamps both.
 ### 3. Judge
 
 Spawn one `siegard:specification-conformance-reviewer` subagent per file the manifest holds nodes for,
-together rather than one after another — in batches no larger than the harness runs at once,
-where it caps concurrent delegations; a launch the harness refused ran no judge and is dispatched
-again in the next batch, never counted or answered for — its judgment lives at
+dispatched by the waves the staging receipt lists: one wave whole, in one message, then every
+return of that wave saved with `--save-return` before the next wave is spawned. The wave is the
+harness's ceiling on delegations running at once, cut by `--stage` into a list rather than
+estimated here; a launch the harness refuses ran no judge and is a wave cut too wide — the
+report hands `--stage --concurrency <fewer>` ready to run again, and no judge is dispatched a
+second time on this invocation's own account — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/specification-conformance-reviewer.md`. Each delegation is passed:
 a file set of exactly its one file — the resolved path its pack header names, the spelling a
 finding echoes being the header's own; as the node set, its node pack's path from the manifest —

@@ -2385,3 +2385,84 @@ def test_the_six_findings_are_receipts_over_a_closed_plan(delivery, work, root, 
     checked = subprocess.run([sys.executable, "-B", str(script), "--check", str(delivery),
                               str(work), str(target)], capture_output=True, text=True)
     assert checked.returncode == 0 and "a receipt, never a refusal" in checked.stdout
+
+
+# ------------------------------------------------------------- findings counted by field
+
+
+def test_a_kind_belongs_to_the_conformance_pass_and_nowhere_else(delivery, work, root, target,
+                                                                 sound_delivery, write_delivery):
+    """`kind` is the conformance judge's word, copied onto its finding so the record counts by
+    where a repair would go. On another pass's finding it names a question that pass never
+    asked. A conformance finding without it is a record written before the field existed, and
+    the validator leaves that to `--findings` to count rather than refusing the root."""
+    front = review_front(work, root)
+    front["findings"] = [{"pass": "conformance", "file": "src/orders/place.ts",
+                          "where": "line 3", "kind": "unstated",
+                          "evidence": "return refuse('ORDER_TOTAL_INVALID')",
+                          "cost": "the code became the home of the refusal code"},
+                         {"pass": "conformance", "file": "src/orders/place.ts",
+                          "where": "line 9",
+                          "evidence": "// an order is refused when its total is zero",
+                          "cost": "prose restates the node"}]
+    write_delivery("review/first", front)
+    assert problems_of(delivery, work, target, root) == []
+    set_pass(front, "standard")
+    front["standard"] = {"at": "standards/example.yaml", "pin": "0" * 64}
+    front["findings"] = [{"pass": "standard", "file": "src/orders/place.ts", "where": "line 3",
+                          "cites": "NAM-01", "kind": "restates",
+                          "evidence": "const x = 1", "cost": "the name says nothing"}]
+    write_delivery("review/first", front)
+    said(problems_of(delivery, work, target, root), "states `kind` outside the conformance pass")
+
+
+def test_findings_are_counted_by_the_fields_the_record_carries(tmp_path: Path):
+    """The counts are a reading of the record and never of the evidence: pass, kind, rule, cause
+    and file are fields, and a conformance finding with no `kind` is the record's own gap,
+    counted apart rather than guessed into a group."""
+    import subprocess
+    import sys
+    record = tmp_path / "review" / "first.md"
+    record.parent.mkdir()
+    front = {
+        "target": "app", "title": "t", "summary": "s",
+        "reviewed": ["src/a.ts", "src/b.ts", "tests/a.spec.ts"],
+        "tasks": ["task/checkout/record-order"],
+        "passes": [{"pass": "coverage"}, {"pass": "conformance"}, {"pass": "standard"},
+                   {"pass": "failures"}],
+        "findings": [
+            {"pass": "conformance", "file": "src/a.ts", "where": "l1", "kind": "unstated",
+             "evidence": "e", "cost": "c"},
+            {"pass": "conformance", "file": "src/a.ts", "where": "l2", "kind": "unstated",
+             "evidence": "e", "cost": "c"},
+            {"pass": "conformance", "file": "src/b.ts", "where": "l3", "kind": "restates",
+             "evidence": "e", "cost": "c"},
+            {"pass": "conformance", "file": "src/b.ts", "where": "l4", "evidence": "e", "cost": "c"},
+            {"pass": "standard", "file": "src/a.ts", "where": "l5", "cites": "MNT-03",
+             "evidence": "e", "cost": "c"},
+            {"pass": "standard", "file": "src/b.ts", "where": "l6", "cites": "MNT-03",
+             "evidence": "e", "cost": "c"},
+            {"pass": "standard", "file": "src/b.ts", "where": "l7", "cites": "TST-01",
+             "evidence": "e", "cost": "c"},
+            {"pass": "failures", "file": "tests/a.spec.ts", "where": "l8", "cause": "code",
+             "evidence": "e", "cost": "c"},
+        ],
+    }
+    record.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n## What it is\nP.\n\n"
+                      "## Notes\nNone.\n", encoding="utf-8")
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                           "--findings", str(record)], capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert lines[0] == "first.md: 8 finding(s) over 3 reviewed file(s)"
+    assert "  by pass: conformance 4, standard 3, failures 1" in lines
+    assert "  conformance by kind: unstated 2, restates 1; 1 carrying no `kind`" in lines
+    assert "  standard by rule cited: MNT-03 2, TST-01 1" in lines
+    assert "  failures by cause: code 1" in lines
+    assert "  by file: src/b.ts 4, src/a.ts 3, tests/a.spec.ts 1" in lines
+    assert "never which route any takes" in done.stdout
+    not_a_review = tmp_path / "implementation.md"
+    not_a_review.write_text("---\ntitle: t\n---\n", encoding="utf-8")
+    refused = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                              "--findings", str(not_a_review)], capture_output=True, text=True)
+    assert refused.returncode == 2 and "reads a review record" in refused.stderr

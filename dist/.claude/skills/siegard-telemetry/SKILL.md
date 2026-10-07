@@ -89,7 +89,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/9
+contract_version: siegard-telemetry/10
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -110,6 +110,7 @@ complete: true | false
 ## 11. Evidence
 ## 12. Completeness
 ## 13. Recommendations recorded
+## 14. Confirmations typed
 ```
 
 What each section holds:
@@ -201,15 +202,27 @@ What each section holds:
   orchestration logs hold none says zero; a `siegard-telemetry/8` record says nothing, which is
   not zero.
 
+- **14.** `handoffs` whole: the Skill calls the sessions made, the human turns, the short ones,
+  and every confirmation by class — commit authorizations, go-aheads, choices by label — each
+  class with its count, how many came after a message that asked nothing, the seconds waited in
+  total and the longest single wait. Then `by_skill`: calls and confirmations side by side, one
+  row per skill, so a reader sees which skill's stops the person paid for in turns. Then every
+  entry of `lines`: session, timestamp, class, skill, whether a question preceded it, seconds
+  waited. Say `unclassified_short` beside the count: it is what the word list did not reach, and
+  a count read without it is a floor. A confirmation after no question is a turn the framework's
+  own stop cost; naming which stop is a reading of the session, tagged `[judgment]`, never a
+  count. A window with none says zero; a `siegard-telemetry/9` record says nothing, which is
+  not zero.
+
 ### Provenance tags
 
-Every claim in §§2–10 and §13 carries one tag, and the tag is the claim's source:
+Every claim in §§2–10, §13 and §14 carries one tag, and the tag is the claim's source:
 
 - `[record: <field>]` — read from the JSON record, by field path (`agents[3].usage.output_tokens`,
   `runs[0].steps[1].duration_seconds`).
 - `[disk: <path>]` — read from a file the record points at, by path (a run's log, a note's node).
 - `[recall]` — this conversation, and only in §6 and §10, and never a number.
-- `[judgment]` — yours, and only in §3's rework column, §10 and §13.
+- `[judgment]` — yours, and only in §3's rework column, §10, §13 and §14.
 - `[unavailable: <reason>]` — the reason from `provenance`, in place of the figure.
 
 ## What you never do

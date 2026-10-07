@@ -65,6 +65,11 @@ What this script does, and nobody else does any of it:
                                                                   the candidates the ledger landed
                                                                   its own facts in; the file set
                                                                   defaults to the material's areas
+    trace.py --stage ... --concurrency <n>                        cut the delegations into waves
+                                                                  of at most n, in the manifest
+                                                                  and the receipt; the default is
+                                                                  the harness's own ceiling on
+                                                                  delegations running at once
     trace.py --stage ... --certify <file>                         also stage a certification per
                                                                   node the file names: its pack,
                                                                   the proof offered and the step
@@ -450,6 +455,9 @@ RECONCILE_DIR = "siegard-reconcile"
 MANIFEST_FILE = "manifest.json"
 RUN_DIR = "run"
 NOWHERE = "nowhere"
+# The harness's own ceiling on delegations running at once, read from the refusal it prints past
+# it; `--concurrency` overrides it where a harness sets another. Not this framework's number.
+CONCURRENCY = 20
 
 
 def held_nowhere(held_at: object) -> bool:
@@ -3384,11 +3392,18 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           files: list[str], audit: bool = False, review: bool = False,
           also: list[str] | None = None, certify: Path | None = None,
           demonstrated: list[Path] | None = None, adopt: bool = False,
-          outside: list[str] | None = None, ledger_path: Path | None = None) -> int:
+          outside: list[str] | None = None, ledger_path: Path | None = None,
+          concurrency: int = CONCURRENCY) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
     corpus — nothing is chosen, so nothing here is a judgment.
+
+    The delegations are also cut into waves of at most `concurrency`, in the manifest and in the
+    receipt: a judge per file and an auditor per certification, in the order staged. A session
+    dispatches one wave whole, saves every return, then the next. A wave is the harness's ceiling
+    made a list, so that "no larger than the harness runs at once" is read rather than guessed
+    at, and a launch the harness refused is a wave cut too wide rather than a judge to try again.
 
     A review stages the files a delivery just wrote, and two things differ from a reconciliation
     over a hand edit. The omission narrows to what a judgment read: a delivery's own bind stamped
@@ -3834,7 +3849,11 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     mechanical = sorted(mechanical, key=lambda e: (e["file"], e["node"]))
+    delegations = list(manifest_files) + [f"{CERTIFY_PREFIX}{e['node']}" for e in certify_entries]
+    waves = [delegations[at:at + concurrency] for at in range(0, len(delegations), concurrency)]
     manifest = {"slug": slug,
+                "concurrency": concurrency,
+                "waves": waves,
                 "audit": audit,
                 "review": review,
                 "adopt": adopt,
@@ -3893,6 +3912,13 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
              "candidate separates release the same claim"))
     print(f"  save each delegation's return verbatim at "
           f"{returns_dir}/<file path with '/' as '__'>.yaml")
+    if waves:
+        print(f"  dispatch in {len(waves)} wave(s) of at most {concurrency} delegation(s) — a "
+              f"wave spawned whole in one message, the next only after every return of the "
+              f"last is saved; a launch the harness refuses is a wave cut too wide, and "
+              f"--concurrency <fewer> is its route:")
+        for number, wave in enumerate(waves, start=1):
+            print(f"    wave {number}: {len(wave)} — {', '.join(wave)}")
     if orphaned:
         print(f"  {len(orphaned)} binding(s) name a node the specification no longer holds — "
               f"no judge is handed those, no bind repairs them, and --prune is their route:")
@@ -4248,10 +4274,14 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
 
     returns: dict[str, dict] = {}
     rerun: list[str] = []
+    wave_of = {name: number for number, wave in enumerate(manifest.get("waves") or [], start=1)
+               for name in wave}
     for name, given in sorted(expected.items()):
         path = returns_dir / name
         if not path.is_file():
-            rerun.append(f"{given}: no return at {path}")
+            rerun.append(f"{given}: no return at {path}"
+                         + (f" (wave {wave_of[given]} has not finished)" if given in wave_of
+                            else ""))
             continue
         try:
             front = load_return(path.read_text(encoding="utf-8"))
@@ -4270,7 +4300,10 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     for name, ask in sorted(certify_expected.items()):
         path = returns_dir / name
         if not path.is_file():
-            rerun.append(f"certification of {ask['node']}: no return at {path}")
+            key = f"{CERTIFY_PREFIX}{ask['node']}"
+            rerun.append(f"certification of {ask['node']}: no return at {path}"
+                         + (f" (wave {wave_of[key]} has not finished)" if key in wave_of
+                            else ""))
             continue
         try:
             front = load_return(path.read_text(encoding="utf-8"))
@@ -5294,6 +5327,19 @@ def main() -> int:
             print("cannot run: --workspace is given once; one staging read what this bind stamps",
                   file=sys.stderr)
             return CANNOT_RUN
+    concurrency = CONCURRENCY
+    if "--concurrency" in args:
+        at = args.index("--concurrency")
+        if at + 1 >= len(args) or not args[at + 1].isdigit() or int(args[at + 1]) < 1:
+            print("cannot run: --concurrency takes a whole number of delegations a wave holds, "
+                  "at least 1", file=sys.stderr)
+            return CANNOT_RUN
+        concurrency = int(args[at + 1])
+        del args[at:at + 2]
+        if not do_stage:
+            print("cannot run: --concurrency is a mode of --stage; the waves are cut where the "
+                  "delegations are", file=sys.stderr)
+            return CANNOT_RUN
     certify: Path | None = None
     if "--certify" in args:
         at = args.index("--certify")
@@ -5511,7 +5557,8 @@ def main() -> int:
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
-                     do_review, also, certify, demonstrated, do_adopt, outside, ledger_given)
+                     do_review, also, certify, demonstrated, do_adopt, outside, ledger_given,
+                     concurrency)
 
     if do_save_return:
         if len(args) != 4 or any(a.startswith("--") for a in args):
