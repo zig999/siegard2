@@ -34,9 +34,10 @@ the report. A window inferred from when a session seemed to begin would be the r
 replaces.
 
 **A decision is followed to the node it filled.** The log records what the framework decided on
-the human's behalf; nothing records whether anyone read it afterwards, and «the share of
-disclosed decisions later revised, by which route and how long after, is reported by the
-telemetry, so the trade that removed the stop stays measured rather than assumed» (SPEC-001 R10).
+the human's behalf; nothing records whether anyone read it afterwards, and «the disclosed
+decisions later revised are reported by the telemetry — counted beside those that stand, each
+revised one named with the route that revised it and how long after — so the trade that removed
+the stop stays measured rather than assumed» (SPEC-001 R10).
 So every decision the window added carries its `outcome`: the commit that landed it, whether the
 field it filled reads today as that commit wrote it, and — where it does not — every later commit
 that changed the field, with its route read off the one subject a skill writes: `/deliver-scope`

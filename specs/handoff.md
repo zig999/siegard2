@@ -74,3 +74,10 @@ precondition the report before it already held.
    was taken.
 3. A consumer initiative run under this specification is read for the lines it recorded: fewer
    than two per ten handoffs that hand doors reverses R2, leaving R1, R3 and R4.
+
+## Readings
+
+- 2026-10-07 — not yet read: no initiative has run end to end through `/deliver-scope` or
+  `/adopt-scope` under 5.5.0 or later, so no orchestration log holds a `recommended:` line. The
+  numerator is `telemetry.py`'s `recommendations` count by criterion; the denominator — handoffs
+  that hand doors — is read from the transcript until telemetry counts it. Verdict pending.

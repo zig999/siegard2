@@ -1,0 +1,17 @@
+{
+  "case": 7,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "contradicted",
+  "outcome": "contradicted",
+  "ground_truth": null,
+  "matches_ground_truth": null,
+  "coherent_and_disclosed": null,
+  "log_entry": false,
+  "log_kind": "none",
+  "location_resolves": null,
+  "second_fact_decided": false,
+  "tokens": 36015,
+  "names": "rules/sales/invoice-immutable",
+  "note": "named the planted rule and its statement; decided nothing."
+}

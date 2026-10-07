@@ -103,6 +103,11 @@ def test_every_citation_names_a_requirement_or_section(held):
             if not number and not section:
                 problems.append(f"{path.relative_to(REPO)}:{line_of(text, m.start())}: "
                                 f"({spec}) names no requirement and no section")
+            elif section == "Readings":
+                # A reading is what happened — a consumer, a date, a figure — and what ships is
+                # timeless: the section parses so the next test can see it, and is never quoted.
+                problems.append(f"{path.relative_to(REPO)}:{line_of(text, m.start())}: "
+                                f"({spec} §Readings) quotes a reading, which is history")
             elif key_of(spec, number, section) not in held:
                 problems.append(f"{path.relative_to(REPO)}:{line_of(text, m.start())}: "
                                 f"{key_of(spec, number, section)} — nothing under specs/ answers to it")

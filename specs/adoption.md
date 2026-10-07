@@ -114,3 +114,56 @@ constraints spent 26 judges on files the notes never cited while the notes named
   source it governs, and a line that names no test or no governed file is refused. An adoption
   over its ledger hands each governed file the nodes its facts landed in; a test is never a file
   of that set.
+
+## Validation required before acceptance
+
+1. For R3 and R4: an adoption stages without a trace and reads every candidate on every file of
+   its set, a staging that names no candidate is refused, each cleared candidate is bound to the
+   files whose judgment holds its fact and no others, and a candidate held nowhere is reported and
+   bound to nothing — `tests/test_stage_fold.py` proves each
+   (`test_an_adoption_stages_without_a_trace_and_reads_every_candidate_on_every_file`,
+   `test_an_adoption_needs_candidates_and_is_no_other_staging`,
+   `test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact`,
+   `test_a_fact_held_nowhere_with_no_finding_binds_nothing_and_says_why`).
+2. For R5: `trace.py --untraced` puts every tracked file in exactly one of the five states, a
+   certification's proof counts as bound, a declared test no certification names counts as
+   uncertified and that line is absent where no test is declared, and a submodule is kept outside
+   and never handed to a survey — `tests/test_stage_fold.py` and `tests/test_trace.py` prove each
+   (`test_untraced_tells_the_four_states_apart_after_an_adoption`,
+   `test_untraced_counts_a_certification_s_proof_as_bound`,
+   `test_untraced_counts_a_declared_test_no_certification_names_as_uncertified`,
+   `test_untraced_prints_no_uncertified_line_where_no_tests_are_declared`,
+   `test_a_submodule_is_kept_outside_and_never_handed_to_a_survey`).
+3. For R6: survey material listing a declared test is refused, an adoption whose file set holds
+   one is refused and hands the certification route, and a declared test offered as a proof is
+   still certified — `tests/test_ledger.py` and `tests/test_stage_fold.py` prove each
+   (`test_survey_refuses_material_that_lists_a_declared_test`,
+   `test_an_adoption_refuses_a_declared_test_in_its_file_set_and_hands_the_certification`,
+   `test_an_adoption_still_certifies_a_declared_test_offered_as_proof`).
+4. For R7: `trace.py --convergence` puts every node in exactly one state, counts the files no
+   binding names, and counts uncertified tests only where they are declared; no record of any
+   contract carries a completion — `tests/test_trace.py` proves each
+   (`test_convergence_puts_every_node_in_exactly_one_state`,
+   `test_convergence_counts_the_files_no_binding_names`,
+   `test_convergence_counts_uncertified_tests_only_where_they_are_declared`).
+5. For R8: a fact line with no entry, an entry at no fact line, an entry naming a node the
+   specification does not hold, and an entry naming both a node and a reason are each refused,
+   and a complete ledger prints the candidates per file — `tests/test_ledger.py` proves each
+   (`test_a_fact_line_with_no_entry_refuses_the_ledger`, `test_an_entry_at_no_fact_line_is_refused`,
+   `test_a_node_the_specification_does_not_hold_is_refused`,
+   `test_an_entry_naming_both_a_node_and_a_reason_is_refused_by_the_contract`,
+   `test_a_complete_ledger_is_sound_and_prints_the_candidates_per_file`).
+6. For R9: a fact line naming no test or no governed file is refused by line, a listed test the
+   scope does not declare and a governed file that is a declared test are refused, a target
+   declaring no tests refuses intent material, and an adoption over the ledger hands each
+   governed file the nodes its facts landed in — `tests/test_intent.py` proves each
+   (`test_a_fact_line_naming_no_test_is_refused_by_line`,
+   `test_a_fact_line_naming_no_governed_file_is_refused_by_line`,
+   `test_a_listed_test_the_scope_does_not_declare_is_refused`,
+   `test_a_governed_file_that_is_a_declared_test_is_refused`,
+   `test_a_target_declaring_no_tests_refuses_intent_material`,
+   `test_an_adoption_over_intent_material_routes_each_governed_file`).
+7. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
+   domain surveyor cite the requirement each step carries in «…», `tests/test_spec_citations.py`
+   proves each quote is a substring of the requirement it names, and `tests/test_adopt_scope.py`
+   holds the skill's R1, R6 and R8 sentences.

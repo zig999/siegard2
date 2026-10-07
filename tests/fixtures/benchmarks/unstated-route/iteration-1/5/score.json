@@ -1,0 +1,18 @@
+{
+  "case": 5,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "decided",
+  "outcome": "decided",
+  "ground_truth": "exact name match",
+  "matches_ground_truth": true,
+  "coherent_and_disclosed": true,
+  "log_entry": true,
+  "log_kind": "decided",
+  "location_resolves": true,
+  "second_fact_decided": false,
+  "tokens": 41697,
+  "tokens_first_run": 39162,
+  "deviation": "the first run (return-before-fixture-extension.md) came back `contradicted` over a root that held no citation and no capability output \u2014 a fixture short of what the corpus presumes, and a return that misread a schema's silence as a node's contradiction. The root was extended as the corpus's protocol allows (diagnostic-capability, citation, evidence.citation) and the case ran once more; both returns are kept.",
+  "note": "'character for character and with case significant' \u2014 exact comparison, the human's value; stated as an invariant on the citation."
+}

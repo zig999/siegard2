@@ -1,0 +1,27 @@
+{
+  "run": "candidate-minimal",
+  "arm": "candidate (src/claude working tree after A1-A3, Siegard 5.13.0 candidate)",
+  "material": "materials/minimal.md",
+  "started": "2026-10-07T11:13:25-03:00",
+  "ended": "2026-10-07T11:14:25-03:00",
+  "subagent_tokens": 52253,
+  "tool_uses": 11,
+  "deviation": "the arm symlink was broken at launch (one `..` too many); the agent read the skill, the rules and bin/project.py from the evident target /home/siegfriedneto/projects/siegard2/src/claude, which is the candidate arm, and changed nothing. The link was repaired before candidate-rich.",
+  "expectations": [
+    {"text": "mechanical: the skill stops before any write — spec/ unchanged, no .log.md, no projections",
+     "passed": true,
+     "evidence": "find runs/candidate-minimal/spec -type f | wc -l → 0; git status --porcelain → 0 lines; agent: 'Commands that wrote to disk: none.'"},
+    {"text": "mechanical: the stop cites SPEC-001 R15 with its sentence verbatim",
+     "passed": true,
+     "evidence": "«Material that states no fact any of the five classes admits is an absent input, never a specification to decide» (SPEC-001 R15) appears in the stop"},
+    {"text": "judged: the stop names what the material would have to state, per class, in plain words",
+     "passed": true,
+     "evidence": "five bullets — Domain Model, Rule, Scenario, Contract, Architecture Constraint — each saying what a customer registration would have to state; UI text named as not a fact"},
+    {"text": "judged: the stop is over the input and never a question about content",
+     "passed": true,
+     "evidence": "'Supplying the material is a new invocation' with the /analyse invocation and the material slot open; no question asked, nothing decided or named as what it would have decided"},
+    {"text": "judged: the stop says nothing it would have decided",
+     "passed": true,
+     "evidence": "no attribute, no subtype, no strategic classification named — against the baseline, which decided `supporting`, `aggregate-root`, `name` and `register`"}
+  ]
+}

@@ -108,9 +108,10 @@ enforces mechanically.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the logs after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol. Where no such review is made, a decision
-  stands until behavior contradicts it and a corrective change revises the artifact — and the share
-  of disclosed decisions later revised, by which route and how long after, is reported by the
-  telemetry, so the trade that removed the stop stays measured rather than assumed.
+  stands until behavior contradicts it and a corrective change revises the artifact — and the
+  disclosed decisions later revised are reported by the telemetry — counted beside those that
+  stand, each revised one named with the route that revised it and how long after — so the trade
+  that removed the stop stays measured rather than assumed.
 - **R11** — The validator enforces the mechanically decidable half: R1's required fields, R2,
   R6's reachability, R8's absent fields, and R9's log rules — a node beside every log or a
   retirement closing it, every field head declared by that node, no text after the fence. R3,
@@ -163,14 +164,22 @@ enforces mechanically.
 2. The analyse skill states the floor, the ceiling, the decide-and-disclose discipline, and the
    English-language requirement, and its output on a benchmark material — including material
    written in another language — yields artifacts with zero open markers, every identifier and
-   statement in English, and logs whose fields all resolve.
+   statement in English, and logs whose fields all resolve. The benchmark is
+   `tests/fixtures/benchmarks/analyse/`: its materials, written in Portuguese, and under
+   `iteration-1/` each run's verbatim report, written root and grading, recorded once per
+   iteration and never overwritten; `tests/test_benchmarks.py` holds every recorded root sound
+   under the validator as it stands, free of open markers, and every expectation the grading
+   marks mechanical recomputed from the root rather than trusted.
 3. For R13: the planning route classifies an unstated fact apart from a contradiction, the
    deciding context receives the fact without the task that surfaced it, every decided fact
    lands as an entry in the node's own log whose field resolves, and a planted contradiction comes
-   back as the standing stop rather than a decision — a benchmark case proves each. A fact read
-   from the intake lands as an entry recorded as read, and the validator refuses one carrying
-   `found` beside a decided value or a `why`, and one carrying neither shape — a fixture proves
-   each.
+   back as the standing stop rather than a decision — a benchmark case proves each. The cases are
+   `tests/fixtures/benchmarks/unstated-route/`: the corpus, nine case roots each with its fact
+   and the inputs the decider is handed, and under `iteration-1/` each case's verbatim return and
+   score; `tests/test_benchmarks.py` holds every case root sound and every scored case at the
+   outcome the corpus expects. A fact read from the intake lands as an entry recorded as read,
+   and the validator refuses one carrying `found` beside a decided value or a `why`, and one
+   carrying neither shape — a fixture proves each.
 4. For R14, and for the judgment halves R11 leaves to the report: `bin/spec.py --shape` reports
    what each class runs to, names every `statement` carrying more than one sentence, closes each
    node's prose transitively, and lists the names that prose holds and no node does — reporting

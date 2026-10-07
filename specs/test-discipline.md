@@ -139,3 +139,11 @@ left out — so the file set the review that followed was handed never held them
 5. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
+
+## Readings
+
+- 2026-10-07 — not yet read: the measurement has no measurer in the distribution — the grounding
+  figures were produced by throwaway scripts outside this repository — so it waits on a telemetry
+  section over proof and review records (tests per criterion as a histogram, coverage states per
+  review, bindings decided by a test) and on consumer deliveries made after it ships. Verdict
+  pending.

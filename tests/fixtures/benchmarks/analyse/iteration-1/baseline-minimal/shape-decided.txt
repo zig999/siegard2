@@ -1,0 +1,4 @@
+decided fields per node — 2 node(s) carry a decision, 2 decided field(s) over 7 declared across the root; «What the material does not state, the analysis decides» (SPEC-001 R4), and a node whose declared fields its log mostly filled is one the material barely described:
+    1 decided /   1 declared  domain/customer-management/_context
+    1 decided /   5 declared  domain/customer-management/customer
+

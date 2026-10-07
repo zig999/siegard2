@@ -1,0 +1,10 @@
+decided fields per node — 8 node(s) carry a decision, 18 decided field(s) over 56 declared across the root; «What the material does not state, the analysis decides» (SPEC-001 R4), and a node whose declared fields its log mostly filled is one the material barely described:
+    7 decided /  19 declared  domain/customer-registry/customer
+    4 decided /  15 declared  rules/customer-registry/customer-lifecycle
+    2 decided /   7 declared  domain/customer-registry/document
+    1 decided /   1 declared  domain/customer-registry/_context
+    1 decided /   4 declared  domain/customer-registry/customer-id
+    1 decided /   3 declared  domain/customer-registry/customer-status
+    1 decided /   3 declared  domain/customer-registry/document-kind
+    1 decided /   4 declared  rules/customer-registry/document-is-unique
+

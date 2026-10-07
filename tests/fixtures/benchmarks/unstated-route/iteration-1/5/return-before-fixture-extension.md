@@ -1,0 +1,5 @@
+fact: how a citation's name is compared against the names a capability's output declares
+outcome: contradicted
+contracts: null
+contradicts: "contracts/system/troubleshoot-customer-problem declares only `type: capability` and the body 'The system's promise: a submitted customer problem gets diagnosed and resolved.' Its class admits nothing more: the capability branch of schemas/spec/contract.json restricts propertyNames to `type` and `display`, so a capability declares no output and no names. The fact assumes a capability output that declares names, and that cannot stand beside this node and its class. No node under the specification root names a citation either: no element, no rule, no contract. To state the comparison, the specification would first need a field its schema refuses and an element nothing names. That is two nodes and a schema change, not one decided value, so a person settles it."
+noticed: The specification names no citation concept anywhere, so whether citations belong to the troubleshooting context at all is unstated.

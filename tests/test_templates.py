@@ -118,6 +118,35 @@ def test_every_specification_declares_a_status_the_vocabulary_holds(spec):
         f"{spec} declares status {front.get('status')!r}, which is not one of {SPEC_STATUSES}"
 
 
+VALIDATION = re.compile(r"^## Validation required before acceptance\n\n1\. ", re.M)
+REVERSAL = re.compile(r"\b(reverses|reversed|reopens)\b")
+READING = re.compile(r"^- \d{4}-\d{2}-\d{2} — ", re.M)
+
+
+@pytest.mark.parametrize("spec", sorted(p.name for p in (REPO / "specs").glob("*.md")))
+def test_every_specification_carries_its_validation_list(spec):
+    """`proposed` and `accepted` are statements about the validation list, so a specification
+    with no list has no exit from `proposed` and nothing names what would prove it."""
+    text = (REPO / "specs" / spec).read_text(encoding="utf-8")
+    assert VALIDATION.search(text), \
+        f"{spec} carries no 'Validation required before acceptance' list with a first item"
+
+
+@pytest.mark.parametrize("spec", sorted(p.name for p in (REPO / "specs").glob("*.md")))
+def test_a_specification_naming_a_reversal_records_its_readings(spec):
+    """A validation item that names the fact reversing a requirement is an obligation to read
+    that fact; a reading nobody records is a reversal nobody can trigger. The section is the
+    record, one dated line per reading, and `not yet read` with its precondition is a reading."""
+    text = (REPO / "specs" / spec).read_text(encoding="utf-8")
+    validation = text.split("## Validation required before acceptance", 1)[-1]
+    validation = validation.split("## Readings", 1)[0]
+    if not REVERSAL.search(validation):
+        pytest.skip("this specification names no reversal")
+    assert "\n## Readings\n" in text, f"{spec} names a reversal and records no readings"
+    readings = text.split("\n## Readings\n", 1)[1]
+    assert READING.search(readings), f"{spec}: its Readings section holds no dated line"
+
+
 def test_the_specification_template_states_what_each_status_means():
     """The vocabulary is only a vocabulary while something says what its words mean. A template
     that listed the three words without defining them would leave the same gap one level down."""

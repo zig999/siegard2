@@ -1,0 +1,16 @@
+{
+  "case": 6,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "decided",
+  "outcome": "decided",
+  "ground_truth": "the caller supplies it",
+  "matches_ground_truth": false,
+  "coherent_and_disclosed": true,
+  "log_entry": true,
+  "log_kind": "decided",
+  "location_resolves": true,
+  "second_fact_decided": false,
+  "tokens": 45079,
+  "note": "decided the opposite of the human's value: identity read from the authenticated credential, never from the request; the human had the caller supply it in the call's own payload. Coherent and disclosed, but the corpus scores this case against ground truth, so it fails."
+}

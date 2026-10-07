@@ -1,0 +1,16 @@
+{
+  "case": 9,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "stated",
+  "outcome": "stated",
+  "ground_truth": null,
+  "matches_ground_truth": null,
+  "coherent_and_disclosed": true,
+  "log_entry": false,
+  "log_kind": "none",
+  "location_resolves": true,
+  "second_fact_decided": false,
+  "tokens": 41378,
+  "note": "found in the node's own prose; promoted to an invariant (evidence-cites-by-name) and the prose sentence removed; no log entry."
+}

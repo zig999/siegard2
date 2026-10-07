@@ -1,0 +1,16 @@
+{
+  "case": 4,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "decided",
+  "outcome": "decided",
+  "ground_truth": "the whole file",
+  "matches_ground_truth": true,
+  "coherent_and_disclosed": true,
+  "log_entry": true,
+  "log_kind": "decided",
+  "location_resolves": true,
+  "second_fact_decided": false,
+  "tokens": 44342,
+  "note": "'the whole published payload' \u2014 the whole of what is published, as the human decided; stated as an invariant on the case."
+}

@@ -1,0 +1,16 @@
+{
+  "case": 8,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "stated",
+  "outcome": "stated",
+  "ground_truth": null,
+  "matches_ground_truth": null,
+  "coherent_and_disclosed": true,
+  "log_entry": true,
+  "log_kind": "read",
+  "location_resolves": true,
+  "second_fact_decided": false,
+  "tokens": 42521,
+  "note": "found in intake/scope.md; the fact gained an addressable home (attributes.recipient_role on the case) and the entry is recorded as read \u2014 `found`, no `decided`, no `why` \u2014 as SPEC-001 R13 requires for a fact read under intake since the corpus was written."
+}

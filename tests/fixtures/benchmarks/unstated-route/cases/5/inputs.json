@@ -1,0 +1,33 @@
+{
+  "case": 5,
+  "fact": "how a citation's name is compared against the names a capability's output declares",
+  "expected": "decided",
+  "ground_truth": "exact name match",
+  "specification_root": "spec",
+  "impact_set": [
+    "domain/troubleshooting/diagnostic-capability.md",
+    "domain/troubleshooting/citation.md",
+    "domain/troubleshooting/case.md",
+    "domain/troubleshooting/hypothesis.md",
+    "domain/troubleshooting/resolution.md",
+    "domain/troubleshooting/evidence.md",
+    "domain/troubleshooting/evidence.log.md",
+    "rules/troubleshooting/case-transitions.md",
+    "rules/troubleshooting/case-transitions.log.md",
+    "rules/troubleshooting/hypothesis-requires-evidence.md",
+    "contracts/troubleshooting/diagnose.md",
+    "contracts/troubleshooting/case-resolved.md",
+    "contracts/system/troubleshoot-customer-problem.md"
+  ],
+  "intake": [],
+  "schemas": [
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/constraint.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/context.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/contract.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/decision-log.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/element.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/rule.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/scenario.json"
+  ],
+  "deviation": "first run handed a root with no citation and no capability output; the corpus says the fixture is extended as each case needs, so the root gained diagnostic-capability and citation and the case ran again \u2014 both returns are recorded"
+}

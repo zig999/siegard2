@@ -512,6 +512,105 @@ def test_every_projected_fact_traces_to_a_file(spec_root):
     assert "separate ways: monitoring and troubleshooting" in after
 
 
+def drop_listed(key: str, name: str, by: str = "name"):
+    def mutate(front: dict) -> None:
+        front[key] = [e for e in front[key] if (e if isinstance(e, str) else e[by]) != name]
+    return mutate
+
+
+def edit_listed(key: str, name: str, change: dict, by: str = "name"):
+    def mutate(front: dict) -> None:
+        for entry in front[key]:
+            if entry[by] == name:
+                entry.update(change)
+    return mutate
+
+
+def swap_rejection_for_transition(front: dict) -> None:
+    front["rejections"] = [r for r in front["rejections"]
+                           if not (r["from"] == "open" and r["trigger"] == "resolve")]
+    front["transitions"].append({"from": "open", "trigger": "resolve", "to": "resolved"})
+
+
+def swap_transition_for_rejection(front: dict) -> None:
+    front["transitions"] = [t for t in front["transitions"]
+                            if not (t["from"] == "investigating" and t["trigger"] == "cancel")]
+    front["rejections"].append({"from": "investigating", "trigger": "cancel"})
+
+
+LOAD_BEARING = [
+    # (file, mutation of its frontmatter or None to unlink, projection, gone, appears)
+    ("domain/troubleshooting/case.md", drop_listed("attributes", "opened_at"),
+     "class-diagram-troubleshooting.mmd", "+datetime openedAt", None),
+    ("domain/troubleshooting/case.md", drop_listed("operations", "open"),
+     "class-diagram-troubleshooting.mmd", "+open()", None),
+    ("domain/troubleshooting/case.md",
+     edit_listed("relationships", "resolution", {"cardinality": "1"}, by="target"),
+     "class-diagram-troubleshooting.mmd", 'Case "1" *-- "0..1" Resolution',
+     'Case "1" *-- "1" Resolution'),
+    ("domain/troubleshooting/case.md",
+     edit_listed("relationships", "resolution", {"role": "outcome"}, by="target"),
+     "class-diagram-troubleshooting.mmd", None, "outcome"),
+    ("domain/troubleshooting/case.md",
+     edit_listed("relationships", "investigation", {"source-cardinality": "0..1"}, by="target"),
+     "class-diagram-troubleshooting.mmd", 'Case "1" *-- "1" Investigation',
+     'Case "0..1" *-- "1" Investigation'),
+    ("domain/troubleshooting/hypothesis.md",
+     lambda front: [e.pop("many") for e in front["attributes"] if e["name"] == "evidence"],
+     "class-diagram-troubleshooting.mmd", "+Evidence[] evidence", "+Evidence evidence"),
+    ("domain/troubleshooting/diagnostics.md",
+     lambda front: front.update(operations=["rank-hypotheses"]),
+     "class-diagram-troubleshooting.mmd", "+correlateEvidence()", "+rankHypotheses()"),
+    ("domain/troubleshooting/evidence-type.md", drop_listed("values", "report"),
+     "class-diagram-troubleshooting.mmd", "REPORT", None),
+    ("rules/troubleshooting/case-transitions.md", swap_rejection_for_transition,
+     "state-troubleshooting-case.mmd", "%% rejected: resolve in open",
+     "open --> resolved : resolve"),
+    ("rules/troubleshooting/case-transitions.md", swap_transition_for_rejection,
+     "state-troubleshooting-case.mmd", "investigating --> cancelled : cancel",
+     "%% rejected: cancel in investigating"),
+    ("scenarios/system/troubleshoot-from-alert.md",
+     drop_listed("involves", "contracts/monitoring/alert-raised"),
+     "capability-map.mmd", "cap_troubleshoot_customer_problem --> monitoring", None),
+    ("domain/monitoring/_context.md", lambda front: front.update(strategic="generic"),
+     "context-map.mmd", "Monitoring (supporting)", "Monitoring (generic)"),
+    ("domain/monitoring/_context.md", lambda front: front.update(strategic="generic"),
+     "overview.md", "| monitoring | supporting |", "| monitoring | generic |"),
+    ("constraints/asynchronous-events.md", None,
+     "overview.md", "- asynchronous-events (system)", None),
+    ("domain/troubleshooting/evidence.log.md", None,
+     "overview.md", "2 decision(s) disclosed", "1 decision(s) disclosed"),
+]
+
+
+@pytest.mark.parametrize("relative,mutate,projection,gone,appears", LOAD_BEARING,
+                         ids=[f"{row[0]}:{row[3] or row[4]}" for row in LOAD_BEARING])
+def test_each_projection_input_is_load_bearing(spec_root, relative, mutate, projection, gone,
+                                                appears):
+    """SPEC-002 item 2 and SPEC-003 item 2: removing any contributing fact changes the
+    projection. A golden copy proves the output is reproducible, not that each input reaches
+    it — a renderer that silently ignored `source-cardinality` would still match its own golden
+    file. One row per input the two specifications name, each on a root that stays sound."""
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    before = spec.project(nodes)[projection]
+    if gone:
+        assert gone in before
+    if appears:
+        assert appears not in before
+    if mutate is None:
+        (spec_root / relative).unlink()
+    else:
+        rewrite(spec_root, relative, mutate)
+    assert problems_of(spec_root) == [], "the mutation must leave the root sound"
+    nodes, _ = spec.collect(spec_root, spec.contracts())
+    after = spec.project(nodes)[projection]
+    assert after != before
+    if gone:
+        assert gone not in after
+    if appears:
+        assert appears in after
+
+
 def test_the_context_map_reads_adoption_from_the_payload(spec_root):
     """The one strategic fact a consumed contract carries and nothing declares: whose model
     crosses the boundary. The fixture's consumer names the upstream's own element as its

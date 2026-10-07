@@ -1,0 +1,6 @@
+stateDiagram-v2
+    [*] --> active
+    active --> inactive : deactivate
+    inactive --> active : activate
+    %% rejected: activate in active
+    %% rejected: deactivate in inactive

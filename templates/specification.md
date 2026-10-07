@@ -38,3 +38,12 @@ It decides {{decides}}.
 ## Validation required before acceptance
 
 1. {{acceptance_condition}}
+
+## Readings
+
+<!-- Present wherever the list above names a fact that reverses or reopens a requirement. One line
+     per reading, dated: the consumer and framework version read, the figure, what it was read
+     from (a command, a file), and the verdict — `stands`, `reversed`, or `not yet read` with what
+     must happen first. A criterion nobody records a reading for is a reversal nobody can trigger. -->
+
+- {{date}} — {{verdict}}: {{figure, where it was read from, consumer and version}}.

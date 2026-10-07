@@ -1,0 +1,16 @@
+{
+  "case": 1,
+  "date": "2026-10-07",
+  "model": "opus",
+  "expected": "decided",
+  "outcome": "decided",
+  "ground_truth": "all refusals",
+  "matches_ground_truth": true,
+  "coherent_and_disclosed": true,
+  "log_entry": true,
+  "log_kind": "decided",
+  "location_resolves": true,
+  "second_fact_decided": false,
+  "tokens": 45369,
+  "note": "decided as an Architecture Constraint scoped to troubleshooting: 'reports every refusal it finds and never stops at the first' \u2014 the human's value."
+}

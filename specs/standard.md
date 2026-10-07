@@ -52,3 +52,9 @@ framework output named a file of a reviewed set that no rule of the registry rea
 2. A consumer tree read again after a release holds fewer records pinning no standard where one is
    declared than the 14 of 496 above; if it does not, R1 reports a thing nobody reads and is
    reversed in favor of a refusal over new records only.
+
+## Readings
+
+- 2026-10-07 — not yet read: no consumer tree has been re-read under 5.12.0 or later, the
+  release that ships R1. The figure is the standard lines `deliver.py --outstanding` prints per
+  target, counted over `implementation/` records written after that release. Verdict pending.

@@ -1,0 +1,29 @@
+{
+  "run": "baseline-rich",
+  "arm": "baseline (src/claude at 4d2d8d5, Siegard 5.12.0)",
+  "material": "materials/rich.md",
+  "started": "2026-10-07T11:13:24-03:00",
+  "ended": "2026-10-07T11:16:54-03:00",
+  "subagent_tokens": 83855,
+  "tool_uses": 27,
+  "expectations": [
+    {"text": "mechanical: spec.py exits 0",
+     "passed": true,
+     "evidence": "specification sound: 5 element(s), 2 rule(s), 1 contract(s) across 1 context(s); 13 decision(s) disclosed"},
+    {"text": "mechanical: decisions are the peripheral ones predicted (strategic, primitive types, required flags, state-machine totality) and no business fact beyond the material",
+     "passed": true,
+     "evidence": "13 decisions: strategic; id/name/document required; name/email/id.value types string; status attribute; operations register/activate/deactivate; document attributes kind+number; lifecycle initial/transitions/rejections. Facts read not decided: AR, four attributes, Document VO of CPF|CNPJ, email optional, two statuses, uniqueness."},
+    {"text": "judged: no business decision beyond the predicted — the one closest to one is `operations: register, activate, deactivate` (two triggers the material never named)",
+     "passed": true,
+     "evidence": "the report itself flags transitions/rejections/initial/operations as 'mine to a greater degree' and asks the reader to open them first"},
+    {"text": "observation: nodes the material does not name and whether their existence is disclosed",
+     "passed": false,
+     "evidence": "rules/customers/customer-lifecycle (state machine), domain/customers/document-kind and domain/customers/customer-status are not named by the material; none has an entry over `type`. The lifecycle's existence is readable only from its initial/transitions/rejections entries; the two enumerations have no log at all. This is the A2 gap."},
+    {"text": "observation: decided fields per node, measured with the candidate --shape over the baseline output",
+     "passed": true,
+     "evidence": "5 node(s) carry a decision, 13 decided / 59 declared; customer 7/19, customer-lifecycle 3/15, _context 1/1, customer-id 1/4, document 1/7"},
+    {"text": "observation: the report carries no per-node count (the baseline skill does not ask for one)",
+     "passed": false,
+     "evidence": "nodes are listed by identifier with their class; the decided/declared count appears nowhere; the reader finds which node was barely described only by reading all 13 entries"}
+  ]
+}

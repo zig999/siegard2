@@ -1,0 +1,32 @@
+{
+  "case": 8,
+  "fact": "whether a role, not a person, may be a recipient",
+  "expected": "stated",
+  "ground_truth": null,
+  "specification_root": "spec",
+  "impact_set": [
+    "domain/troubleshooting/case.md",
+    "domain/troubleshooting/hypothesis.md",
+    "domain/troubleshooting/resolution.md",
+    "domain/troubleshooting/evidence.md",
+    "domain/troubleshooting/evidence.log.md",
+    "rules/troubleshooting/case-transitions.md",
+    "rules/troubleshooting/case-transitions.log.md",
+    "rules/troubleshooting/hypothesis-requires-evidence.md",
+    "contracts/troubleshooting/diagnose.md",
+    "contracts/troubleshooting/case-resolved.md",
+    "contracts/system/troubleshoot-customer-problem.md"
+  ],
+  "intake": [
+    "intake/scope.md"
+  ],
+  "schemas": [
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/constraint.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/context.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/contract.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/decision-log.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/element.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/rule.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/scenario.json"
+  ]
+}

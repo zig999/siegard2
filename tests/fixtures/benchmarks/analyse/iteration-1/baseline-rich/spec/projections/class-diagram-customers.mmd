@@ -1,0 +1,33 @@
+classDiagram
+    namespace CustomerAggregate {
+        class Customer {
+            <<AggregateRoot>>
+            +CustomerId id
+            +string name
+            +Document document
+            +string email
+            +CustomerStatus status
+            +register()
+            +activate()
+            +deactivate()
+        }
+    }
+    class CustomerId {
+        <<ValueObject>>
+        +string value
+    }
+    class CustomerStatus {
+        <<Enumeration>>
+        ACTIVE
+        INACTIVE
+    }
+    class Document {
+        <<ValueObject>>
+        +DocumentKind kind
+        +string number
+    }
+    class DocumentKind {
+        <<Enumeration>>
+        CPF
+        CNPJ
+    }

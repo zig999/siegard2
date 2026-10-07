@@ -1,0 +1,24 @@
+{
+  "case": 7,
+  "fact": "that an invoice can be amended after issue",
+  "expected": "contradicted",
+  "ground_truth": null,
+  "specification_root": "spec",
+  "impact_set": [
+    "domain/sales/_context.md",
+    "domain/sales/invoice.md",
+    "rules/sales/invoice-immutable.md",
+    "domain/troubleshooting/case.md",
+    "contracts/troubleshooting/case-resolved.md"
+  ],
+  "intake": [],
+  "schemas": [
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/constraint.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/context.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/contract.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/decision-log.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/element.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/rule.json",
+    "${CLAUDE_PLUGIN_ROOT}/schemas/spec/scenario.json"
+  ]
+}
