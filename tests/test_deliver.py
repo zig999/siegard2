@@ -2092,9 +2092,66 @@ def test_the_standards_receipt_says_which_target_pins_each(
     validator = deliver.contract()
     nodes, found = deliver.collect(delivery, validator, deliver.pass_names())
     assert found == []
-    receipt = deliver.standards_held(nodes)
+    receipt = deliver.standards_held(nodes, target)
     assert "standard.yaml (target app): pinned by 1 record(s)" in "\n".join(receipt)
     assert "standard.yaml (target web): pinned by 1 record(s)" in "\n".join(receipt)
+
+
+def declared_report(delivery, work, root, target, standard):
+    """`--outstanding`'s report over a root, after the project file declares `standard` for its
+    one target — or declares nothing where it is `...`."""
+    declared = {"targets": {"app": "."}}
+    if standard is not ...:
+        declared["standard"] = standard
+    (target / "siegard.json").write_text(json.dumps(declared), encoding="utf-8")
+    nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    return deliver.outstanding_report(nodes, plan_nodes, target)
+
+
+def test_records_pinning_no_standard_where_the_project_declares_one_are_reported(
+        delivery, work, root, target, sound_delivery):
+    report = declared_report(delivery, work, root, target, "standard.yaml")
+    assert ("target app: 2 record(s) pin no standard while siegard.json declares standard.yaml"
+            in report)
+    assert "implementation/checkout/record-order" in report
+
+
+def test_a_project_declaring_none_is_not_told_its_records_pin_none(
+        delivery, work, root, target, sound_delivery):
+    assert "pin no standard" not in declared_report(delivery, work, root, target, None)
+
+
+def test_a_project_declaring_nothing_says_nothing_of_records_pinning_none(
+        delivery, work, root, target, sound_delivery):
+    assert "pin no standard" not in declared_report(delivery, work, root, target, ...)
+
+
+def test_a_record_pinning_another_registry_than_the_declared_one_is_reported(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard()))
+    repin_proof(delivery, write_delivery)
+    report = declared_report(delivery, work, root, target, "other.yaml")
+    assert "record(s) pin standard.yaml, not the other.yaml siegard.json declares" in report
+
+
+def test_a_record_pinning_the_declared_registry_is_not_reported(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard()))
+    repin_proof(delivery, write_delivery)
+    report = declared_report(delivery, work, root, target, "standard.yaml")
+    assert "record(s) pin standard.yaml, not the" not in report
+    assert "implementation/checkout/record-order" not in report
+
+
+def test_a_record_pinning_none_is_reported_and_never_refused(
+        delivery, work, root, target, sound_delivery):
+    """An invocation may name another registry on purpose, and a record written before a
+    declaration changed is not wrong for having been written."""
+    declared_report(delivery, work, root, target, "standard.yaml")
+    assert problems_of(delivery, work, target, root) == []
 
 
 # ------------------------------- a run is held to its commands and its directory, not its names

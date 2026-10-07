@@ -635,3 +635,69 @@ def test_specification_holds_a_standard_and_nothing_else(tmp_path):
     nowhere = invoke("--standard", str(EXAMPLE), "--specification", str(tmp_path / "nowhere"))
     assert nowhere.returncode == 2
     assert "is not a directory" in nowhere.stderr
+
+
+def reach(target, write_standard, *paths):
+    import subprocess
+    import sys
+    ref = write_standard()
+    args = [a for each in paths for a in ("--for", each)]
+    return subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"), "--standard",
+         str(target / ref["at"]), "--reach", *args], capture_output=True, text=True)
+
+
+def test_reach_says_per_path_which_rules_reach_it_apart_by_what_decides_them(target,
+                                                                           write_standard):
+    result = reach(target, write_standard, "src/a.ts")
+    assert result.returncode == 0, result.stderr
+    assert "src/a.ts: reading ARC-01; tool PRH-01" in result.stdout
+
+
+def test_reach_names_every_path_no_rule_reaches_and_how_many_that_is(target, write_standard):
+    result = reach(target, write_standard, "src/a.ts", "README.md", "notes/b.md")
+    assert result.returncode == 0, result.stderr
+    assert "reached by no rule: 2 of 3" in result.stdout
+    assert "  README.md" in result.stdout and "  notes/b.md" in result.stdout
+    assert "  src/a.ts" not in result.stdout
+
+
+def test_reach_over_a_set_every_rule_reaches_reports_none_unreached(target, write_standard):
+    result = reach(target, write_standard, "src/a.ts")
+    assert "reached by no rule: 0 of 1" in result.stdout
+
+
+def test_reach_needs_a_path_and_stands_with_nothing_else(target, write_standard):
+    assert reach(target, write_standard).returncode == 2
+    import subprocess
+    import sys
+    ref = write_standard()
+    mixed = subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"), "--standard",
+         str(target / ref["at"]), "--reach", "--reading", "--for", "src/a.ts"],
+        capture_output=True, text=True)
+    assert mixed.returncode == 2
+
+
+def test_reach_refuses_a_registry_that_does_not_hold_together(tmp_path):
+    import subprocess
+    import sys
+    broken = tmp_path / "standard.yaml"
+    broken.write_text("rules: []\n", encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"), "--standard",
+         str(broken), "--reach", "--for", "src/a.ts"], capture_output=True, text=True)
+    assert result.returncode == 1
+
+
+def test_reading_is_unchanged_by_reach_existing(target, write_standard):
+    """What a reading judgment is handed is JSON the judge pastes whole; --reach prints beside it
+    and never into it."""
+    import subprocess
+    import sys
+    ref = write_standard()
+    out = subprocess.run(
+        [sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"), "--standard",
+         str(target / ref["at"]), "--reading", "--for", "src/a.ts"], capture_output=True, text=True)
+    assert out.returncode == 0
+    assert json.loads(out.stdout)

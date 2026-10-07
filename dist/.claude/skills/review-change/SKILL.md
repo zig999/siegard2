@@ -635,7 +635,11 @@ Report, in this order:
   this plan's criteria reach, handed as a reading and never as a verdict;
 - every node the tasks implement that no test demonstrates, with the reason the proof gives or
   that it gives none, and the state each certification came back with;
-- the standard: which of its rules were in scope over this file set, and which it leaves to a tool
+- the standard: which of its rules were in scope over this file set, and which it leaves to a tool;
+  and, from `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard <the standard's path> --reach
+  --for <every path of the file set, one --for each>`, the paths no rule reaches, apart from the
+  rules that do — «A review reports the paths of its file set that no rule of the standard reaches, apart from the rules that do.» (SPEC-007 R2) — said as a fact about the registry and never as a finding: the reading
+  was clean over those paths because nothing was read against them;
   — naming, for those, whether the step that decides each one ran, and how many rules rest on each
   step that did. A rule left to a tool that never ran is unanswered, and saying so is what keeps the
   split between reading and tool honest instead of convenient. Say too what a step that ran and

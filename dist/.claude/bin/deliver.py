@@ -191,6 +191,15 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         scope reaches at least one named path.
                                                         What a reading judgment is handed in place
                                                         of the whole registry
+        deliver.py --standard <file> --reach --for <path> [--for <path> ...]
+                                                        print, per named path, the rules of this
+                                                        registry that reach it — those a reading
+                                                        decides and those a tool does, apart — and
+                                                        then every path no rule reaches, with how
+                                                        many of the set that is. A fact about the
+                                                        registry, never a finding: it decides
+                                                        nothing and exits 0 over every registry
+                                                        that holds together
         deliver.py --check-record <record> <target-source-root>
                                                         validate one source check record — the
                                                         reading /check-source leaves beside the
@@ -2049,22 +2058,76 @@ def check_citation_problems(front: dict, target: Path, validator) -> list[str]:
     return problems
 
 
-def standards_held(nodes: dict[str, dict]) -> list[str]:
-    """The standards this root's records were written against, and how many pin each. It is here
-    because the one thing that silences the whole standard half of this framework is nobody naming
-    a registry, and that is invisible from inside an invocation: a delivery written against no
-    rules and one written against rules nobody handed over produce the same clean output. The root
-    is what remembers. A path earlier records name, beside an invocation naming none, is the
-    regression this line exists to make visible."""
+def declared_standards(target: Path) -> dict[str, str | None]:
+    """The registry the project file declares for each target, by key, spelled from that target's
+    source root — the way a record spells the path it pins — or `None` where the project declares
+    it follows none. A target the file declares nothing for is absent. Read from `siegard.json`
+    as `target_roots` reads it, and as JSON only: whether the registry holds together is
+    `--standard`'s question."""
+    roots, _ = target_roots(target)
+    home = project.toplevel_of(target)
+    try:
+        declared = json.loads((home / "siegard.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not roots or not isinstance(declared, dict) or "standard" not in declared:
+        return {}
+    named = declared["standard"]
+    if not isinstance(named, dict):
+        named = {key: named for key in roots}
+    return {key: None if named[key] is None else Path(os.path.relpath(home / named[key], root)).as_posix()
+            for key, root in roots.items()
+            if key in named and (named[key] is None or isinstance(named[key], str))}
+
+
+def standards_held(nodes: dict[str, dict], target: Path) -> list[str]:
+    """The standards this root's records were written against, how many pin each, and where a
+    record pins none or another than its target declares. It is here because the one thing that
+    silences the whole standard half of this framework is nobody naming a registry, and that is
+    invisible from inside an invocation: a delivery written against no rules and one written
+    against rules nobody handed over produce the same clean output. The root is what remembers.
+    A path earlier records name, beside an invocation naming none, is the regression this line
+    exists to make visible, and so is a record that pins none where the project declares one — a
+    statement and never a refusal, because an invocation may name another registry on purpose and
+    a record written before a declaration changed is not wrong for having been written. The far
+    end is named: the first three records, so a reader can open them."""
     pinned: dict[tuple[str, str], int] = {}
     for node in nodes.values():
         declared = node["front"].get("standard")
         if isinstance(declared, dict) and isinstance(declared.get("at"), str):
             key = (str(node["front"].get("target")), declared["at"])
             pinned[key] = pinned.get(key, 0) + 1
-    return [f"{at} (target {target}): pinned by {count} record(s); an invocation naming no "
-            f"standard now writes source these rules will still be read against"
-            for (target, at), count in sorted(pinned.items())]
+    lines = [f"{at} (target {key}): pinned by {count} record(s); an invocation naming no "
+             f"standard now writes source these rules will still be read against"
+             for (key, at), count in sorted(pinned.items())]
+
+    def said(ids: list[str]) -> str:
+        return ", ".join(ids[:3]) + (f" and {len(ids) - 3} more" if len(ids) > 3 else "")
+
+    for key, declared_at in sorted(declared_standards(target).items()):
+        if declared_at is None:
+            continue
+        none: list[str] = []
+        other: dict[str, list[str]] = {}
+        for nid, node in sorted(nodes.items()):
+            front = node["front"]
+            if node["kind"] not in ("implementation", "proof", "review") \
+                    or str(front.get("target")) != key:
+                continue
+            held = front.get("standard")
+            at = held.get("at") if isinstance(held, dict) else None
+            if not isinstance(at, str):
+                none.append(nid)
+            elif at != declared_at:
+                other.setdefault(at, []).append(nid)
+        if none:
+            lines.append(f"target {key}: {len(none)} record(s) pin no standard while siegard.json "
+                         f"declares {declared_at} ({said(none)}); what they hold was not written "
+                         f"or read against its rules")
+        for at, ids in sorted(other.items()):
+            lines.append(f"target {key}: {len(ids)} record(s) pin {at}, not the {declared_at} "
+                         f"siegard.json declares ({said(ids)})")
+    return lines
 
 
 def substrate_absences(plan_nodes: dict[str, dict], delivered: set[str],
@@ -2172,7 +2235,7 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
         lines.append(deliverable_line(ready, bool(absences)))
     if not lines:
         lines = ["every task has a record, and every record its proof"]
-    return "\n".join(lines + standards_held(nodes))
+    return "\n".join(lines + standards_held(nodes, target))
 
 
 def deliverable_line(ready: list[str], barred: bool) -> str:
@@ -2586,6 +2649,41 @@ def print_reading_rules(named: str, for_paths: list[str]) -> int:
     return 0
 
 
+def print_reach(named: str, for_paths: list[str]) -> int:
+    """What the registry reaches over a file set, said apart from what it says about it. A rule
+    reaches a path when one of its scopes does; a path no rule reaches is a path the review read
+    against nothing, and a clean review over it is clean over an empty set. Nothing here is a
+    finding or a threshold — the count and the paths are the report, and whether a path is
+    meant to be outside every rule is the registry's owner's to say."""
+    try:
+        validator = standard_contract()
+    except (FileNotFoundError, json.JSONDecodeError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    path = Path(named)
+    data, problems = load_standard(path, validator)
+    for problem in problems:
+        print(f"{path.name}: {problem}")
+    if data is None:
+        print(f"\n{len(problems)} problem(s). A review is never checked against a standard that "
+              f"does not hold together.")
+        return 1
+    rules = [r for r in listed(data, "rules") if isinstance(r, dict)]
+    unreached: list[str] = []
+    for each in for_paths:
+        by = {kind: [str(r.get("id")) for r in rules
+                     if r.get("decided_by") == kind and in_scope(r, [each])]
+              for kind in ("reading", "tool")}
+        print(f"{each}: reading {', '.join(by['reading']) or 'none'}; "
+              f"tool {', '.join(by['tool']) or 'none'}")
+        if not by["reading"] and not by["tool"]:
+            unreached.append(each)
+    print(f"reached by no rule: {len(unreached)} of {len(for_paths)}")
+    for each in unreached:
+        print(f"  {each}")
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -2693,6 +2791,8 @@ def main() -> int:
         del args[at:at + 2]
         reading = "--reading" in args
         args = [a for a in args if a != "--reading"]
+        reach = "--reach" in args
+        args = [a for a in args if a != "--reach"]
         for_paths: list[str] = []
         while "--for" in args:
             at = args.index("--for")
@@ -2701,10 +2801,17 @@ def main() -> int:
                 return CANNOT_RUN
             for_paths.append(args[at + 1])
             del args[at:at + 2]
-        if for_paths and not reading:
-            print("cannot run: --for narrows --reading; it has no effect without it",
-                  file=sys.stderr)
+        if for_paths and not (reading or reach):
+            print("cannot run: --for narrows --reading and names what --reach reports on; it has "
+                  "no effect without one of them", file=sys.stderr)
             return CANNOT_RUN
+        if reach:
+            if reading or not for_paths or verify or report or single is not None \
+                    or against is not None or specification is not None or args:
+                print("cannot run: --reach stands with --standard and at least one --for, and "
+                      "nothing else", file=sys.stderr)
+                return CANNOT_RUN
+            return print_reach(named, for_paths)
         if reading:
             if verify or report or single is not None or against is not None \
                     or specification is not None or args:

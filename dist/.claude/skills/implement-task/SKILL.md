@@ -853,7 +853,8 @@ Report, in this order:
   the only project convention followed is what the inventory evidenced, which is the honestly narrow
   answer rather than a clean one — and where `--outstanding` named a standard this root's earlier
   records pin, say that too: an invocation naming none over a root that remembers one is writing
-  source the review will still read against those rules;
+  source the review will still read against those rules. Say too every line the report prints of
+  records that pin no standard, or another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — a statement and never a stop: an invocation may name another registry on purpose;
 - every run this invocation captured, by path and by outcome, including the ones that failed —
   those are not noise and they are not a draft: they are the only record of what it took, and a
   report naming only the run that passed describes a delivery that went right the first time
