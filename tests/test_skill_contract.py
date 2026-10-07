@@ -448,6 +448,40 @@ def test_a_closure_reads_what_it_leaves_standing_before_the_marker_is_written():
     assert "None of the three is a stop" in closing
 
 
+def unwrapped(text: str) -> str:
+    """Prose may wrap anywhere; a sentence anchor is judged on the words, not on the line break."""
+    return re.sub(r"\s+", " ", text)
+
+
+def test_the_analysis_stops_on_material_that_states_no_fact():
+    """SPEC-001 R15: material that states nothing is an absent input, and the stop is over the
+    input — never a question about content, which R10 keeps out of the route. The sentence is held
+    because a skill that decides everything the material leaves unsaid would otherwise produce a
+    floor from no material at all."""
+    text = unwrapped(skill_text("analyse"))
+    assert "(SPEC-001 R15)" in text, "the skill never cites the stop over an absent material"
+    assert "Material present and stating nothing is the first input absent" in text
+    assert "never a question about the content" in text
+
+
+def test_the_analysis_discloses_a_node_the_material_does_not_name():
+    """SPEC-001 R9: the log is the only place a decided fact is told from a stated one, and a node
+    the analysis introduced is a decided fact with no field of its own — so its first entry, over
+    the field its class requires, is what discloses it. Both writers of such a node state it."""
+    decider = (REPO / "src/claude/agents/unstated-fact-decider.md").read_text(encoding="utf-8")
+    for text in (unwrapped(skill_text("analyse")), unwrapped(decider)):
+        assert "names no such thing" in text
+        assert "(SPEC-001 R9)" in text
+
+
+def test_the_analysis_reports_how_many_fields_it_decided_per_node():
+    """The count is the one line a reviewer reads before any node; it opens the report's body
+    beside every node written, read from `--shape --of` and never composed."""
+    report = unwrapped(skill_text("analyse").split("### 6. Report, and stop", 1)[1])
+    assert "how many of its declared fields this invocation decided" in report
+    assert "`--shape --of` printed it" in report
+
+
 def test_a_proof_task_is_bound_against_the_nodes_that_name_its_node():
     """An auditor's assertion can contradict a contract that answers the same case; a binder
     handed the one node alone cannot see it, and the contradiction then surfaces as a red test

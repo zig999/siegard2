@@ -1138,6 +1138,38 @@ def test_shape_lists_fields_a_log_decided_more_than_once(spec_root):
     assert "2x  type  in  domain/troubleshooting/case.log" in done.stdout[at:at + 400]
 
 
+def test_shape_counts_the_fields_a_log_decided_per_node(spec_root):
+    """SPEC-001 R4 and R8: a decided field reads like a stated one in the node, and the log is
+    the only place the two are told apart. This section is the one line a reviewer reads before
+    any node — which node the material barely described — so it is a count, never `(none)` over a
+    root that holds decisions, ranked with the far end first; a read entry and a retirement are
+    not decisions and are not counted, and a scoped node is marked past the cut."""
+    sound = run_node("--shape", str(spec_root))
+    at = sound.stdout.index("decided fields per node — 2 node(s) carry a decision, 2 decided")
+    section = sound.stdout[at:sound.stdout.index("\n\n", at)]
+    assert "1 decided /  10 declared  domain/troubleshooting/evidence" in section
+    assert "1 decided /  23 declared  rules/troubleshooting/case-transitions" in section
+    assert "domain/troubleshooting/case" not in section, "a node with no log is not listed"
+    log_beside(spec_root, CASE_LOG, [dict(DECIDED), {**DECIDED, "field": "attributes"},
+                                     {**READ_ENTRY, "field": "operations"},
+                                     {**DECIDED, "field": "relationships"},
+                                     {"field": "relationships", "retired": "held nowhere"}])
+    done = run_node("--shape", "--of", "domain/troubleshooting/case", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    at = done.stdout.index("decided fields per node — 3 node(s) carry a decision, 4 decided")
+    section = done.stdout[at:done.stdout.index("\n\n", at)]
+    rows = [line for line in section.splitlines()[1:]]
+    assert rows[0].startswith(">   2 decided /") and rows[0].endswith("domain/troubleshooting/case"), \
+        "the node with most decided fields leads, and the scoped node is marked"
+    assert "4 decided field(s) over" in section, \
+        "a read entry and a retired field were counted as decisions"
+    for log in spec_root.rglob("*.log.md"):
+        log.unlink()
+    done = run_node("--shape", str(spec_root))
+    at = done.stdout.index("decided fields per node — 0 node(s)")
+    assert "(none)" in done.stdout[at:at + 400]
+
+
 def test_shape_shows_a_scoped_node_past_the_cut(spec_root):
     """The failure this closes: three sections rank and cut, and over a populated root the far
     end belongs to what was written before — so a node written now sits below the cut and never

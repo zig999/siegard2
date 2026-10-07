@@ -85,8 +85,10 @@ far end of its own class's distribution is one a reader can open. It also names 
 set of nodes shares in its normative fields — a clause two rules both carry is one definition
 kept twice, which no reference resolves and no reachability reaches — every normative field
 speaking about the specification rather than the domain, every long statement no scenario pins,
-how far each `why` across the decision logs runs, and which fields a log decided more than
-once. Two readings are kept apart. A declared
+how far each `why` across the decision logs runs, which fields a log decided more than
+once, and how many of each node's declared fields its log decided — ranked, the far end named,
+so the node the material barely described is the first line a reviewer reads, and a node the
+analysis introduced counts its own existence among them. Two readings are kept apart. A declared
 reference passes through the same walk that validates it and is passed in rather than
 recomputed; a node named in prose passes through no field and no check, so it is counted
 separately, a bare slug two nodes answer to is reported ambiguous rather than resolved to
@@ -1155,6 +1157,19 @@ SELF_REFERENCE = re.compile(
     r"|stated here)\b", re.I)
 
 
+def leaves_of(front: object) -> list[str]:
+    """Every scalar a node's frontmatter declares, as a dotted path — the denominator a decided
+    field is counted against. A list is addressed by index here, since this is a count and not a
+    reference; what a log entry spells by name resolves to one of these leaves all the same."""
+    if isinstance(front, dict):
+        return [f"{key}.{leaf}" if leaf else key
+                for key, value in front.items() for leaf in (leaves_of(value) or [""])]
+    if isinstance(front, list):
+        return [f"[{index}].{leaf}" if leaf else f"[{index}]"
+                for index, value in enumerate(front) for leaf in (leaves_of(value) or [""])]
+    return []
+
+
 def shape_of(nodes: dict[str, dict], declared: dict[str, set[str]] | None = None) -> dict:
     """Every measurement `--shape` reports, read off the files in one pass.
 
@@ -1196,6 +1211,16 @@ def shape_of(nodes: dict[str, dict], declared: dict[str, set[str]] | None = None
             "selfref": selfref,
             "declared": len((declared or {}).get(identity, ())),
         }
+        if node["cls"] != "log":
+            beside = log_entries_of(nodes, f"{identity}.log")
+            retired = {e.get("field") for e in beside if "retired" in e}
+            read[identity]["declared_leaves"] = len(leaves_of(front or {}))
+            read[identity]["decided_fields"] = sorted(
+                {e["field"] for e in beside if "retired" not in e and "found" not in e
+                 and isinstance(e.get("field"), str)} - retired)
+            read[identity]["read_fields"] = sorted(
+                {e["field"] for e in beside if "found" in e and isinstance(e.get("field"), str)}
+                - retired)
         if node["cls"] == "log":
             entries = [e for e in listed(front or {}, "entries") if isinstance(e, dict)]
             read[identity]["why_words"] = sorted(
@@ -1345,6 +1370,23 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
               f"instead, in:")
         for identity in cut(past, lambda row: [row]):
             print(f"{mark(identity)} {identity}")
+
+    carrying = sorted(((entry["decided_fields"], identity) for identity, entry in read.items()
+                       if entry["cls"] != "log" and entry.get("decided_fields")),
+                      key=lambda row: (-len(row[0]), row[1]))
+    decided_total = sum(len(fields) for fields, _ in carrying)
+    declared_total = sum(entry["declared_leaves"] for entry in read.values()
+                         if entry["cls"] != "log")
+    print(f"\ndecided fields per node — {len(carrying)} node(s) carry a decision, {decided_total} "
+          f"decided field(s) over {declared_total} declared across the root; «What the material "
+          f"does not state, the analysis decides» (SPEC-001 R4), and a node whose declared fields "
+          f"its log mostly filled is one the material barely described:")
+    for fields, identity in cut(carrying, lambda row: (row[1],)):
+        print(f"{mark(identity)} {len(fields):>3} decided / "
+              f"{read[identity]['declared_leaves']:>3} declared  {identity}")
+    if not carrying:
+        print("  (none)")
+
     redecided = sorted((identity, field, count) for identity in logs
                        for field, count in read[identity].get("redecided", {}).items())
     print(f"\nfields a log decided more than once — {len(redecided)}; «The latest entry over a "

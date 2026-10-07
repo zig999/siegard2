@@ -55,7 +55,13 @@ stop. You need:
   declared field, a rule's statement, a scenario's concrete case, whichever the fact's shape
   demands and its class's schema admits. The log entry names the node whose log it belongs in
   and carries the field it filled, what was unstated, the value decided, and why that value — it is the whole of what lets a reviewer
-  reject the decision, and a decision it does not carry is invention.
+  reject the decision, and a decision it does not carry is invention. Where the statement needs
+  a node of its own, the node is a decided fact too and the one entry you return is the one that
+  says so — «A node the material does not name is disclosed by the entry over the field its class
+  requires — `type` for an element, a rule or a contract, `strategic` for a context, `subject` for
+  a scenario, `statement` for a constraint — whose `unstated` says the material names no such
+  thing» (SPEC-001 R9) — `unstated` saying no node and no material names it, and `why` carrying
+  the fact in one claim; the value the fact fills is read from the edit.
 - **Decide the fact, not the neighborhood.** Touch only what stating the fact requires:
   existing nodes in the impact set, or the one new node the statement needs. Standing decisions
   stand; a boundary is never redrawn from here, and a second unstated fact you notice is

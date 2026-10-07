@@ -16,6 +16,17 @@ A missing input is a stop, not a default:
 2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 
+Material present and stating nothing is the first input absent. «Material that states no fact any
+of the five classes admits is an absent input, never a specification to decide» (SPEC-001 R15): a
+request that names a screen, a feature or an improvement and states no fact of the domain — no
+term with a meaning, no condition that must hold, no concrete case, no boundary crossed, no limit
+on the solution — stops here, before the tree is checked and before any write. The stop says in
+plain words what the material would have to state for each class the analysis would otherwise have
+decided alone, and names nothing it would have decided. It is a stop over an input and never a
+question about the content: the floor is owed to material, a floor produced from none is invention
+with a log, and supplying the material is a new invocation. Over a populated root the same holds of
+material that names nodes and states no change about them.
+
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` — this is the specification
 root's only source. `specification_root` answers only from here: naming a specification root in
 the invocation instead has no effect, and where this file does not declare one, that is a stop —
@@ -143,6 +154,15 @@ limit the solution. Two rules bind the analysis:
   (SPEC-001 R9). Quote its first line in the report. An undecided required field is not an
   honest gap — it is a floor violation, and closing it is this step's job, disclosed rather than
   silent.
+  A node the material never names — a value object the analysis carved out, an enumeration it
+  closed, a rule it needed — is itself a decided fact, and its first entry says so: «A node the
+  material does not name is disclosed by the entry over the field its class requires — `type` for
+  an element, a rule or a contract, `strategic` for a context, `subject` for a scenario,
+  `statement` for a constraint — whose `unstated` says the material names no such thing»
+  (SPEC-001 R9). Write that entry before any other over the node, `unstated` saying the material
+  names no such thing and `why` saying what in the material made the node necessary, so the count
+  step 4 reads and the reviewer who opens the log both see the node as introduced rather than
+  described.
   **And it is decided here, in this context** — which is the one place this route reads
   differently from planning's, where the same class of fact goes to the `unstated-fact-decider`
   and is never shown the task that surfaced it. The blindness there is blindness to *the cut*: a
@@ -380,8 +400,8 @@ in and not the slice you added to it.
 
 This refuses nothing and never fails the run. It reports what each class runs to and names the
 far end, every `statement` carrying more than one sentence, every `expression` that outgrew the
-`statement` it restates, the transitive closure of each node's prose, and the names that prose
-holds and no node does. It is the reading for the judgment halves nothing can check — «R3, R5, R7 and R14 are the
+`statement` it restates, how many of each node's declared fields the logs decided, the transitive
+closure of each node's prose, and the names that prose holds and no node does. It is the reading for the judgment halves nothing can check — «R3, R5, R7 and R14 are the
 analysis's judgment» (SPEC-001 R11): one falsifiable condition per `statement`, `statement`
 governing its `expression`, a recurring phrase named rather than repeated — «There is no alias
 mechanism» (SPEC-001 R3) — and «Prose explains what the node governs» (SPEC-001 R14).
@@ -394,6 +414,10 @@ answer:
   rather than one node being wrong, and drift has no defect to point at: every node on that list
   was defensible when it was written. Ask of yours what a reader gets from its length that the
   fields do not already carry, and cut what has no answer;
+- a node of yours whose declared fields the log mostly filled is a node the material barely
+  described: each decided field is a claim the reviewer accepts or rejects, a node the analysis
+  introduced counts its own existence among them, and the count beside the node is what the report
+  carries for it — the reviewer reads it before any node, so it must be true of the log as written;
 - an `expression` longer than its `statement` has added rather than restated — the claim moves
   into the `statement` or becomes its own rule;
 - a phrase two nodes share is one definition kept twice — name what it denotes and reference the
@@ -481,7 +505,8 @@ states; what follows is the report that opening sits above.
 
 Report, in this order:
 
-- every node written, by identifier — on a populated root, created, changed and removed
+- every node written, by identifier, each with how many of its declared fields this invocation
+  decided, as `--shape --of` printed it — on a populated root, created, changed and removed
   listed apart, each removed node with the fields its log retired;
 - the impact set that was read, so the reviewer can judge what the analysis looked at, not
   only what it touched;

@@ -101,7 +101,10 @@ enforces mechanically.
   is recorded in that node's log as read: the field it filled, what no node stated, and where it
   was found. It decides no value and carries no `why`; a read entry and a decided one are told
   apart by shape, and the specification root holds the provenance of a node whose material it
-  does not keep.
+  does not keep. A node the material does not name is disclosed by the entry over the field its
+  class requires — `type` for an element, a rule or a contract, `strategic` for a context,
+  `subject` for a scenario, `statement` for a constraint — whose `unstated` says the material
+  names no such thing; a node beside no such entry is one the material described.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the logs after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol. Where no such review is made, a decision
@@ -128,6 +131,17 @@ enforces mechanically.
   not decided, and is recorded as read (R9): the analysis reads material to author every node,
   and an entry per node would restate the specification, but a node the specification gains
   after authoring has the log as its only index, and a work root is not kept.
+
+### What the material must hold
+
+- **R15** — Material that states no fact any of the five classes admits is an absent input, never a
+  specification to decide: the analysis stops before any write, names what the material would have
+  to state, and writes no node and no log entry. The stop is over the input and precedes every
+  decision, so R4 and R10 are untouched — there is nothing yet to decide and nothing yet to disclose.
+  It holds over an empty root, where the floor would otherwise be produced from nothing, and over a
+  populated root, where material that names nodes and states no change about them is material that
+  states nothing. It is never a question about the material's content: what the stop names is the
+  input that was absent, and supplying it is a new invocation.
 
 ### Language
 
@@ -175,7 +189,17 @@ enforces mechanically.
    over a populated root the far end of a ranking belongs to what was written before, so a node
    written now would otherwise never reach the one reader obliged to fix it. Each class's own far
    end is named and not only counted, wherever the class holds enough nodes to have a
-   distribution at all.
+   distribution at all. Beside those sections, as a reading rather than a finding, `--shape`
+   counts how many of each node's declared fields its log decided, ranked with the far end named
+   and the scoped node shown past the cut — the one line that tells a reviewer which node the
+   material barely described (R4, R8). It reports a count over the sound fixture, because the
+   fixture's own disclosed decisions are what it counts, and a fixture test proves the count, that
+   a read entry and a retirement are not counted, and that a scoped node is marked.
 7. Every distributed artifact citing a requirement of this specification carries a sentence
    of it verbatim in «…» beside the citation, and `tests/test_spec_citations.py` proves each
    such quote is a substring of the requirement it names.
+8. For R15: the analyse skill states the stop among its required inputs, as a stop over an absent
+   input and never as a question about the material's content, and `tests/test_skill_contract.py`
+   holds the sentence. For the disclosure R9 adds over a node the material does not name: the
+   analyse skill and the unstated-fact decider each state it beside the entry they write, and the
+   same test holds the skill's sentence.
