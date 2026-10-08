@@ -81,7 +81,7 @@ def check(text: str, contract: dict) -> list[str]:
     mode = known_only.get("MODE", [None])[0]
     bounding = [line for line in known_only.get("CONSTRAINTS", []) if line.startswith(prefixes)]
     if mode in bound["values"] and not bounding:
-        problems.append(f"mode {mode} authorizes no change and CONSTRAINTS carries no line "
+        problems.append(f"mode {mode} authorizes no change to the project's files and CONSTRAINTS carries no line "
                         f"beginning {' or '.join(repr(p) for p in prefixes)}")
     if mode and mode not in bound["values"] and bounding:
         problems.append(f"mode {mode} authorizes a change and CONSTRAINTS says {bounding[0]!r}")

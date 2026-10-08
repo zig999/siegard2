@@ -19,7 +19,7 @@ import clarify
 REPO = Path(__file__).resolve().parent.parent
 SKILL = REPO / "src/claude/skills/clarify-request"
 CONTRACT = json.loads((REPO / "src/claude/schemas/clarified-request.json").read_text("utf-8"))
-FENCE = re.compile(r"^```prompt\n(.*?)^```", re.S | re.M)
+FENCE = re.compile(r"^<!-- instruction -->\n```\n(.*?)^```", re.S | re.M)
 VALID = "MODE: ANALYZE\nTASK: Validate the module.\nCONSTRAINTS:\n- Do not modify code.\n"
 
 
@@ -32,7 +32,7 @@ def examples() -> list[str]:
 
 
 def test_the_skill_ships_examples():
-    assert len(examples()) >= 5, "the examples are what teaches the contract; the guard lost its subject"
+    assert len(examples()) >= 6, "the examples are what teaches the contract; the guard lost its subject"
 
 
 @pytest.mark.parametrize("index", range(len(examples())))
@@ -58,6 +58,8 @@ def test_a_well_formed_instruction_has_no_problem():
     (VALID.replace("- Do not modify code.", "- Be careful."), "authorizes no change"),
     ("MODE: PLAN\nTASK: Propose a design.\n", "authorizes no change"),
     (VALID.replace("Do not modify code.", "Do not modify the CSS file."), "authorizes no change"),
+    (VALID.replace("ANALYZE", "OPERATE").replace("- Do not modify code.", "- Send to the local gateway only."),
+     "authorizes no change"),
     ("MODE: IMPLEMENT\nTASK: Add the endpoint.\nCONSTRAINTS:\n- Do not modify code.\n",
      "authorizes a change"),
     ("```\n" + VALID + "```\n", "text before the first section"),

@@ -12,7 +12,7 @@
   "properties": {
     "MODE": {
       "$ref": "#/$defs/mode",
-      "description": "What the instruction authorizes, exactly one value. The mode is read from the operator's words and never raised: an analysis request is never promoted to a change, nor a plan to an implementation. A request stating both an analysis and a change takes the more permissive value its parts state. ANALYZE: investigate, explain, diagnose, review, compare, validate; no file of the project is modified, and a command that only observes (an existing test suite, a linter, a read-only query) is within it. PLAN: propose a solution or a plan; the project is not modified. IMPLEMENT: change the project within the clarified scope. IMPLEMENT_AND_VALIDATE: change the project and verify the change by tests, checks, build, lint or a run."
+      "description": "What the instruction authorizes, exactly one value. The mode is read from the operator's words and never raised: an analysis request is never promoted to a change, nor a plan to an implementation. A request stating both an analysis and a change takes the more permissive value its parts state. ANALYZE: investigate, explain, diagnose, review, compare, validate; no file of the project is modified, and a command that only observes (an existing test suite, a linter, a read-only query) is within it. PLAN: propose a solution or a plan; the project is not modified. OPERATE: run a command or send a request whose effect is not observation (a call that creates or changes data, a deploy, an install, a deletion outside the project's files) without modifying the project's files; the effect is named in TASK and bounded in CONSTRAINTS. IMPLEMENT: change the project within the clarified scope. IMPLEMENT_AND_VALIDATE: change the project and verify the change by tests, checks, build, lint or a run."
     },
     "TASK": {
       "$ref": "#/$defs/lines",
@@ -76,6 +76,7 @@
         "enum": [
           "ANALYZE",
           "PLAN",
+          "OPERATE",
           "IMPLEMENT",
           "IMPLEMENT_AND_VALIDATE"
         ]
@@ -85,12 +86,13 @@
   "x-read-only-modes": {
     "values": [
       "ANALYZE",
-      "PLAN"
+      "PLAN",
+      "OPERATE"
     ],
     "constraint-prefixes": [
       "Do not modify the project",
       "Do not modify code"
     ],
-    "description": "A mode that authorizes no change carries the bound in CONSTRAINTS: at least one line beginning with one of the prefixes, each of which bounds the whole project. A line bounding less (`Do not modify the CSS file`) leaves the rest of the project authorized. A mode that authorizes a change carries none of them: the prompt is read by an executor that has no other way to learn the mode's meaning, and a bound contradicting the mode is a prompt it cannot follow."
+    "description": "A mode that authorizes no change to the project's files carries the bound in CONSTRAINTS: at least one line beginning with one of the prefixes, each of which bounds the whole project. A line bounding less (`Do not modify the CSS file`) leaves the rest of the project authorized. A mode that authorizes a change to them carries none of them: the prompt is read by an executor that has no other way to learn the mode's meaning, and a bound contradicting the mode is a prompt it cannot follow."
   }
 }

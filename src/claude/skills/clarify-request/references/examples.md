@@ -1,6 +1,6 @@
 # Examples
 
-Each instruction in a `prompt` fence is held to the contract by `bin/clarify.py`. The requests are
+Each instruction below, in the fence that follows an `instruction` comment, is held to the contract by `bin/clarify.py`; the comment is the test's marker and is not part of an instruction. The requests are
 shown in the language they were made in; every instruction is in English.
 
 ## 1. A read-only request that leans on references
@@ -12,7 +12,8 @@ Olha essa implementação e vê se ela está seguindo o standard que a gente def
 The reference "essa implementação" resolves from the conversation or the open file; "o standard"
 resolves from the project. Neither is asked.
 
-```prompt
+<!-- instruction -->
+```
 MODE: ANALYZE
 TASK: Validate the implementation in src/billing/invoice.py against the project's standard.
 SCOPE:
@@ -38,7 +39,8 @@ Precisamos guardar o histórico das mudanças de status do pedido.
 "Guardar" does not name a storage mechanism, and the project has one: not asked, delegated. The
 request asks for no verification, so the mode is the one that authorizes the change and no more.
 
-```prompt
+<!-- instruction -->
+```
 MODE: IMPLEMENT
 TASK: Implement persistence of the status-change history of an order.
 CONSTRAINTS:
@@ -68,13 +70,15 @@ Why it matters: Orders reference customers; the choice decides whether purchase 
 
 The answer, "Soft delete", enters the instruction as a requirement:
 
-```prompt
+<!-- instruction -->
+```
 MODE: IMPLEMENT
 TASK: Remove inactive customers from the system.
 SCOPE:
 - Customer removal only.
 REQUIREMENTS:
 - Remove by soft delete: mark the customer removed and keep the row and its relationships.
+- Apply the removal to the existing data, not only to the code.
 CONSTRAINTS:
 - Do not delete rows.
 - Do not modify orders.
@@ -93,7 +97,8 @@ Roda a suíte de testes de src/auth e me diz o que falhou.
 Nothing to resolve and nothing to ask: the mode, the target and the output are stated. Running an
 existing suite only observes, so it sits within the mode that modifies nothing.
 
-```prompt
+<!-- instruction -->
+```
 MODE: ANALYZE
 TASK: Run the test suite of src/auth and report the failures.
 CONSTRAINTS:
@@ -106,7 +111,8 @@ CONSTRAINTS:
 Como a gente poderia expor o relatório mensal por API? Só quero o plano.
 ```
 
-```prompt
+<!-- instruction -->
+```
 MODE: PLAN
 TASK: Propose how to expose the monthly report through the project's API.
 CONSTRAINTS:
@@ -115,4 +121,29 @@ DISCOVERY:
 - Find how the report is produced today and how the project exposes comparable resources.
 OUTPUT:
 A plan stating the interface, the changes it needs, and the decisions that remain the operator's.
+```
+
+## 6. A call that changes state is not a look
+
+```text
+Usa essa chave pra chamar o POST /pay do gateway local com valor 1 e ver se responde 200.
+```
+
+The call creates a charge on the endpoint it reaches, so it is not observation, and the credential
+is a secret that does not enter the instruction.
+
+<!-- instruction -->
+```
+MODE: OPERATE
+TASK: Send one POST request with amount 1 to the /pay endpoint of the local gateway and report whether the response status is 200.
+CONSTRAINTS:
+- Do not modify the project.
+- Send the request to the local gateway only.
+- Do not write the credential into any file, log or output.
+ASSUMPTIONS:
+- The credential is the one the operator gave in the request; it is not reproduced here and the operator supplies it when executing.
+DISCOVERY:
+- Find the address of the local gateway in the project.
+OUTPUT:
+The response status code, and whether it is 200.
 ```

@@ -43,8 +43,13 @@ instruction of the session.
 
 1. **Read the request for its operation.** Which operation, on which target, in which mode. The
    mode is the one the words state and is never raised: a request to look is not a request to
-   change, and a request to plan is not a request to build. A mode the words do not settle is a
-   candidate blocking. A request that is already one precise operation, in a stated mode, over a
+   change, and a request to plan is not a request to build. An operation that changes state — a
+   call that creates data, a deletion, an install — is not a look, whatever verb the request uses
+   for it: it takes the mode the contract gives it. A request phrased as an act on the data the
+   system holds ("remove the inactive customers") is applied to that data, and the instruction
+   says so; one phrased as a capability ("let us remove…") builds the means and applies nothing.
+   Where the words leave it open and the effect cannot be undone, that is a candidate blocking;
+   where it can, it is an assumption. A mode the words do not settle is a candidate blocking. A request that is already one precise operation, in a stated mode, over a
    target that resolves, skips steps 3 to 5: its instruction is the mode, the task and what the
    person stated, and nothing added.
 2. **Take what was already decided.** A decision the person stated in this conversation is a
@@ -66,16 +71,18 @@ instruction of the session.
    without an instruction — the person invokes again with that decision stated. Where
    `AskUserQuestion` is unavailable, print the same questions as text — each with its options,
    consequence and recommendation — and stop the same way.
-6. **Write the instruction.** Then validate it, without any code fence around it:
-   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/clarify.py -` with the instruction on standard input. A
-   refusal is a defect in the instruction: correct it and run it again. An instruction that was
-   never validated is not handed over.
-7. **Hand it over, and stop.** The final message holds the instruction in one fenced block and
-   nothing else around it — no preamble, no summary of what changed, no justification, no
-   question. The turn ends there, on purpose: what the person says next is a new message, and
-   nothing of this skill — its withheld tools, its effort — reaches the work that follows. The
-   person executes the instruction as they would any message of their own, or states what to
-   change, and the work returns to the earliest step that correction touches.
+6. **Write the instruction.** Then validate it, without any code fence around it, in exactly
+   this form, the instruction as a here-document and the path absolute:
+   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/clarify.py - <<'EOF'`, the instruction, `EOF`. That form is
+   what the grant covers; a pipe, a redirect or a `cd` before it is another command and is not
+   pre-approved. A refusal from the validator is a defect in the instruction: correct it and run
+   it again. An instruction that was never validated is not handed over.
+7. **Hand it over, and stop.** The final message holds the instruction in one fenced block, the
+   fence carrying no language label, and nothing else around it — no preamble, no summary of what
+   changed, no justification, no question. The turn ends there, on purpose: what the person says
+   next is a new message, and nothing of this skill — its withheld tools, its effort — reaches the
+   work that follows. The person executes the instruction as they would any message of their own,
+   or states what to change, and the work returns to the earliest step that correction touches.
 
 ## What the instruction may contain
 
@@ -83,7 +90,9 @@ Every line has exactly one source, and a line with none is deleted:
 
 - the person's words, normalized to an operational verb, a stated target and an atomic condition;
 - a decision the person took, in this conversation or in step 5;
-- a fact read from the project, cited by path and line where it changes what is executed;
+- a fact read from the project, cited by path and line as the basis of an ASSUMPTION. What the
+  executor can find for itself is a DISCOVERY line, and the instruction does not also list it as
+  an answer;
 - the bound its mode carries, which the contract states.
 
 A line the executor would honor without being told — carefulness, minimal change, following the
@@ -91,6 +100,9 @@ project's conventions, not asking for what the project answers — is not a sour
 written. The same goes for a line that restates another. An instruction is judged by what it
 adds to what the executor does anyway. A verification the person did not ask for is such a line:
 a mode that includes it is chosen only when the words ask for it.
+
+A DISCOVERY line says what to find and never what to do when it is absent: a stop condition or
+a fallback is a decision, and one the person did not take is not the instruction's to write.
 
 A line may make an objective explicit only where the operation cannot be performed without it,
 or where a project rule applying by path requires it. "Likely useful" is not a source.
