@@ -1,5 +1,5 @@
 {
-  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn, and the drift a project is already carrying into every session at start.",
+  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start.",
   "hooks": {
     "SessionStart": [
       {

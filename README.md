@@ -83,7 +83,10 @@ same question on demand.
 ### 4. Nothing to place: the rules arrive by hook
 
 The plugin carries the session rules every Siegard skill assumes at `hooks/rules.md`, and its
-`hooks/hooks.json` places them into every session at start and into every agent at spawn. No
+`hooks/hooks.json` places them into every session at start and into every agent at spawn — in a
+project that declares `siegard.json` at its git toplevel, and nowhere else. A repository that
+never adopted Siegard receives nothing, even where the plugin is installed for every project you
+open, so until step 5 writes `siegard.json` a session runs without the rules. No
 `CLAUDE.md` is copied to the project root, and a project's own `CLAUDE.md` stays its own. The
 rules are short by design: they carry what binds a session when no skill is running — which
 route a change takes, and what is never hand-edited or invented — and nothing a skill or a

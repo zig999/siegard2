@@ -18,7 +18,8 @@ around. This script prints only what stands; deciding that an absence is a stop 
 whichever skill needed the field.
 
 One report precedes the fields: a root `CLAUDE.md` carrying the framework's rules. The rules
-reach every session and every agent through the plugin's own hooks, and nothing is placed at the
+reach every session and every agent of a project that declares `siegard.json` through the
+plugin's own hooks, and nothing is placed at the
 project root for them; a root file carrying the rules' marker line is a second copy of what the
 hooks already placed, loaded beside it in every session. This script prints one `rules:` line
 naming that file and the version its marker states — a report, never a refusal, because the
@@ -37,6 +38,12 @@ Tests are declared per target, in the scope parts a standard rule's scope uses, 
 line per target — `tests <target>: <scope>; <scope>`. `reaches()` here is the one reading of those
 parts for every script: a rule's scope and a declared test are matched by the same function, so
 a path one of them reaches is never read differently by the other.
+
+`toplevel_of()` here is the one answer to where a project's `siegard.json` sits, for every script
+and for the plugin's hooks. A hook runs at the start of every session and every agent, and one that
+fails stops them, so importing this module needs nothing beyond the standard library: jsonschema
+is imported where the file is validated, and its absence is this script's `cannot run` there,
+never a failure at import.
 
 Declared dependencies: jsonschema.
 
@@ -58,12 +65,6 @@ import sys
 from pathlib import Path
 
 CANNOT_RUN = 2
-
-try:
-    from jsonschema import Draft202012Validator
-except ImportError:  # pragma: no cover - exercised by the environment, not the suite
-    print("cannot run: jsonschema is required (pip install jsonschema)", file=sys.stderr)
-    raise SystemExit(CANNOT_RUN)
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 PROJECT_CONTRACT = PLUGIN_ROOT / "schemas" / "project.json"
@@ -101,7 +102,8 @@ def report_rules_copy(home: Path) -> None:
     if found is None:
         return
     print(f"rules: {rules} carries the Siegard {found.group(1)} rules, and the plugin's hooks "
-          f"already place the {version} rules in every session and every agent; remove the "
+          f"place the {version} rules in every session and every agent of a project that declares "
+          f"{PROJECT_FILE}; remove the "
           f"Siegard portion and keep anything the project added — a copy at the root is loaded "
           f"twice and updated never")
 
@@ -133,13 +135,15 @@ def spelled(scope: dict) -> str:
             + (", nested" if scope.get("nested") else ""))
 
 
-def toplevel_of(directory: Path) -> Path:
+def toplevel_of(directory: Path, timeout: float | None = None) -> Path:
     """Where the project file sits: the directory's git toplevel, or the directory itself
     where git does not hold it — deterministic either way, because the directory is a named
-    input and never the session's working directory."""
+    input and never the session's working directory. A caller that cannot wait names a
+    `timeout`, and a git that does not answer within it raises `subprocess.TimeoutExpired`:
+    not answering is not the same answer as not holding the directory."""
     try:
         probe = subprocess.run(["git", "-C", str(directory), "rev-parse", "--show-toplevel"],
-                               capture_output=True, text=True)
+                               capture_output=True, text=True, timeout=timeout)
     except OSError:
         # No git on this machine is the limit case of git not holding the directory, and the
         # answer is the same one: the directory itself.
@@ -186,6 +190,11 @@ def main() -> int:
         schema = json.loads(PROJECT_CONTRACT.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as broken:
         print(f"cannot run: {PROJECT_CONTRACT} does not parse: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+    try:
+        from jsonschema import Draft202012Validator
+    except ImportError:  # pragma: no cover - exercised by the environment, not the suite
+        print("cannot run: jsonschema is required (pip install jsonschema)", file=sys.stderr)
         return CANNOT_RUN
     problems = sorted(Draft202012Validator(schema).iter_errors(declared), key=str)
     if problems:

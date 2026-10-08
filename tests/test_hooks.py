@@ -31,9 +31,36 @@ def commands(event: str) -> list[str]:
     return [h["command"] for group in declared()[event] for h in group["hooks"]]
 
 
-def run(stdin: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, str(SCRIPT)], input=stdin,
+def run(stdin: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, str(SCRIPT)], input=stdin, cwd=cwd,
                           capture_output=True, text=True)
+
+
+def git_init(where: Path) -> None:
+    subprocess.run(["git", "init", "-q", str(where)], check=True, capture_output=True)
+
+
+@pytest.fixture
+def siegard_project(tmp_path: Path) -> Path:
+    """A repository that declares the framework: `siegard.json` at its git toplevel."""
+    project = tmp_path / "consumer"
+    project.mkdir()
+    git_init(project)
+    (project / "siegard.json").write_text('{"specification_root": "specs"}\n', encoding="utf-8")
+    return project
+
+
+@pytest.fixture
+def foreign_project(tmp_path: Path) -> Path:
+    """A repository that never adopted the framework: no `siegard.json` anywhere in it."""
+    project = tmp_path / "foreign"
+    (project / "src").mkdir(parents=True)
+    git_init(project)
+    return project
+
+
+def record(event: str, cwd: Path) -> str:
+    return json.dumps({"hook_event_name": event, "session_id": "x", "cwd": str(cwd)})
 
 
 def test_both_starts_are_declared_and_neither_is_narrowed():
@@ -73,22 +100,78 @@ def test_every_declared_hook_runs_a_script_the_plugin_ships():
             assert resolved.is_file(), f"{event} runs {resolved}, which the plugin does not hold"
 
 
-@pytest.mark.parametrize("event", EVENTS)
-def test_the_script_places_the_rules_verbatim_for_the_event_it_was_run_for(event):
-    done = run(json.dumps({"hook_event_name": event, "session_id": "x"}))
+def placed(done: subprocess.CompletedProcess, event: str) -> bool:
     assert done.returncode == 0, done.stderr
+    if not done.stdout:
+        return False
     out = json.loads(done.stdout)["hookSpecificOutput"]
     assert out["hookEventName"] == event
     assert out["additionalContext"] == RULES.read_text(encoding="utf-8")
+    return True
 
 
-def test_an_unreadable_or_foreign_event_record_still_places_the_rules():
+@pytest.mark.parametrize("event", EVENTS)
+def test_the_script_places_the_rules_verbatim_for_the_event_it_was_run_for(event, siegard_project):
+    assert placed(run(record(event, siegard_project)), event)
+
+
+def test_an_unreadable_or_foreign_event_record_still_places_the_rules(siegard_project):
+    """A record that names no working directory is read as the process's own, which is where the
+    harness runs the hook."""
     for stdin in ("", "not json", json.dumps({"hook_event_name": "PreToolUse"})):
-        done = run(stdin)
-        assert done.returncode == 0, done.stderr
-        out = json.loads(done.stdout)["hookSpecificOutput"]
-        assert out["hookEventName"] == EVENTS[0]
-        assert out["additionalContext"] == RULES.read_text(encoding="utf-8")
+        assert placed(run(stdin, cwd=siegard_project), EVENTS[0]), stdin
+
+
+@pytest.mark.parametrize("event", EVENTS)
+def test_a_project_that_declares_no_siegard_json_receives_nothing(event, foreign_project):
+    """The rules are this framework's, and a repository that never adopted it holds none of what
+    they govern — a plugin enabled for every project would otherwise hand them to all of them."""
+    assert not placed(run(record(event, foreign_project / "src")), event)
+    assert not placed(run(json.dumps({"hook_event_name": event}), cwd=foreign_project), event)
+
+
+@pytest.mark.parametrize("event", EVENTS)
+def test_a_context_started_below_the_toplevel_still_receives_the_rules(event, siegard_project):
+    below = siegard_project / "backend" / "src"
+    below.mkdir(parents=True)
+    assert placed(run(record(event, below)), event)
+
+
+def test_a_directory_git_does_not_hold_is_read_as_its_own_toplevel(tmp_path):
+    bare = tmp_path / "loose"
+    bare.mkdir()
+    assert not placed(run(record(EVENTS[0], bare)), EVENTS[0])
+    (bare / "siegard.json").write_text("{}\n", encoding="utf-8")
+    assert placed(run(record(EVENTS[0], bare)), EVENTS[0])
+
+
+def test_a_project_that_cannot_be_resolved_still_receives_the_rules(tmp_path):
+    """Withholding the rules from a Siegard project loses every rule silently; placing them where
+    they were not needed costs context. Where the question cannot be answered, the second wins."""
+    assert placed(run(record(EVENTS[1], tmp_path / "gone")), EVENTS[1])
+
+
+def test_the_toplevel_reader_is_importable_with_the_standard_library_alone():
+    """The hook imports `toplevel_of` at every start; an import that needed jsonschema would stop
+    every session on a machine without it."""
+    probe = (f"import sys; sys.modules['jsonschema'] = None; sys.path.insert(0, {str(SRC / 'bin')!r}); "
+             f"from project import PROJECT_FILE, toplevel_of; print(PROJECT_FILE)")
+    done = subprocess.run([sys.executable, "-B", "-c", probe], capture_output=True, text=True)
+    assert done.returncode == 0 and done.stdout.strip() == "siegard.json", done.stderr
+
+
+def test_a_git_that_does_not_answer_is_not_read_as_no_project(tmp_path):
+    """Not answering is not the same answer as not holding the directory: the caller that named a
+    timeout is told, and decides."""
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    (fake / "git").write_text("#!/bin/sh\nsleep 5\n", encoding="utf-8")
+    (fake / "git").chmod(0o755)
+    probe = (f"import os, subprocess, sys; os.environ['PATH'] = {str(fake)!r} + os.pathsep + os.environ['PATH']; "
+             f"sys.path.insert(0, {str(SRC / 'bin')!r}); from pathlib import Path; from project import toplevel_of\n"
+             f"try:\n    toplevel_of(Path({str(tmp_path)!r}), timeout=0.5)\nexcept subprocess.TimeoutExpired:\n    print('timed out')")
+    done = subprocess.run([sys.executable, "-B", "-c", probe], capture_output=True, text=True)
+    assert done.stdout.strip() == "timed out", done.stderr
 
 
 def test_the_script_never_fails_a_session_over_a_missing_file(tmp_path):

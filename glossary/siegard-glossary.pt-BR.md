@@ -6,7 +6,7 @@ Siegard**: nenhum conhecimento prévio do framework é pressuposto. Cada verbete
 significa, por que ele existe, em que momento do trabalho aparece, como funciona passo a passo e,
 sempre que possível, traz um exemplo.
 
-**Versão descrita.** Esta edição descreve o Siegard **5.18.0**. Ela amplia a tradução de
+**Versão descrita.** Esta edição descreve o Siegard **5.19.0**. Ela amplia a tradução de
 `glossary/siegard-glossary.md`, que ainda descreve a 4.21.3; os verbetes sobre levantamento
 (`/survey`), material de intenção, ledger, `/adopt-scope`, `/clarify-request`, o campo `tests`, as
 ondas de delegação e os agentes `domain-surveyor` e `test-intent-reader` ainda não têm par na
@@ -144,8 +144,8 @@ julgamento.**
 ### Hook
 Um gatilho do Claude Code que executa algo automaticamente em certos momentos (por exemplo, no
 início de cada sessão ou de cada subagente). O Siegard usa hooks para injetar suas regras de
-sessão (`hooks/rules.md`, ver §4) em toda sessão e em todo agente, sem que ninguém precise
-lembrar de carregá-las.
+sessão (`hooks/rules.md`, ver §4) em toda sessão e em todo agente de um projeto Siegard, sem que
+ninguém precise lembrar de carregá-las.
 
 ### Schema (contrato)
 **O que é.** Um arquivo JSON Schema em `schemas/` que define exatamente quais campos um arquivo
@@ -598,6 +598,15 @@ nenhum arquivo fica `uncertified`.
 ### O arquivo de regras (`hooks/rules.md`)
 **O que é.** O conjunto curto de regras de sessão que o Siegard injeta, por hook, em **toda
 sessão e em todo agente** de um projeto que usa o plugin. Nada é copiado para a raiz do projeto.
+**Só onde há `siegard.json`** (desde a 5.19.0). Antes de imprimir as regras, o hook procura o
+`siegard.json` no topo do git da pasta em que o contexto começou, com a mesma função que o
+`project.py` usa. Sem o arquivo, não injeta nada. Assim, um plugin instalado para todos os
+projetos da máquina não impõe as regras do Siegard (sem comentários no código, nenhum fato fora
+da especificação, commits restritos) a repositórios que nunca o adotaram. Uma consequência: até o
+`/siegard-config` escrever o arquivo, a sessão roda sem as regras. Se o hook não consegue
+responder (o git não responde a tempo, a pasta sumiu), ele injeta as regras: injetar onde não
+precisava custa contexto, e deixar de injetar num projeto Siegard perderia todas as regras em
+silêncio. Dentro de um projeto Siegard, as regras chegam a todo agente, de qualquer tipo.
 **Conteúdo principal.**
 - A especificação é a autoridade.
 - Qual **rota** cada tipo de mudança toma (verbete seguinte).
