@@ -81,3 +81,11 @@ precondition the report before it already held.
   `/adopt-scope` under 5.5.0 or later, so no orchestration log holds a `recommended:` line. The
   numerator is `telemetry.py`'s `recommendations` count by criterion; the denominator — handoffs
   that hand doors — is read from the transcript until telemetry counts it. Verdict pending.
+- 2026-10-08 — read over two `/deliver-scope` runs in the eternal consumer, `entity-edit-backend`
+  and `entity-edit-frontend` (sources: the two `siegard-delivery/*/orchestration.md` and sessions
+  `2c28fd42`, `d4d868ba`): five handoffs handed doors, zero `recommended:` lines. By the letter of
+  Validation item 3 that is 0/5, below two per ten; the reversal is not taken, because all five
+  handed doors R3 names — the ask or its scope, a contradiction, a finding's worth, a decision
+  about cost or standard — so R2 applied to none and stands unexercised. Verdict pending; the
+  criterion that reverses it is a handoff handing a door R2 decides — precondition unmet, rule
+  violated, already done, reading paid twice — with no `recommended:` line.

@@ -10,7 +10,9 @@ it was written against and refuses to invent where it cannot.
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,9 +29,10 @@ UNTIL = "2026-08-20T12:00:00Z"
 STAMP = "20260820T120000Z"
 
 
-def run(*args: str) -> subprocess.CompletedProcess:
+def run(*args: str, home: Path | None = None) -> subprocess.CompletedProcess:
+    env = dict(os.environ, HOME=str(home)) if home is not None else None
     return subprocess.run([sys.executable, "-B", str(TELEMETRY), *map(str, args)],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, env=env)
 
 
 def contract() -> Draft202012Validator:
@@ -220,16 +223,54 @@ def test_agents_are_summed_from_their_own_transcripts_and_repeats_are_marked(con
     assert first["duration_seconds"] == 268.0
     assert first["messages"] == 2 and first["tool_calls"] == 1
     assert first["repeats_earlier"] is False
-    # The second spawn has no meta file: null usage, a stated reason, and a repeat flag — the
-    # mechanical half of the rework question, never the judgment.
+    # The second spawn has no meta file: null usage and a stated reason. It shares the first's
+    # description and not its prompt, and a description is free text: not a repeat.
     assert second["usage"] is None
     assert "names tool use tu-agent-2" in second["unavailable"]
-    assert second["repeats_earlier"] is True
+    assert second["repeats_earlier"] is False
     totals = report["agent_totals"]
     assert totals["overall"]["invocations"] == 2
+    assert totals["overall"]["repeats"] == 0
     assert totals["overall"]["with_transcript"] == 1
     assert totals["overall"]["usage"]["output_tokens"] == 500
     assert totals["by_type"]["execution-contract-binder"]["duration_seconds"] == 268.0
+
+
+def test_a_repeat_is_the_same_prompt_handed_to_the_same_agent_type(consumer):
+    """A re-run hands the same prompt again, under whatever description the session composes
+    for it; the description is free text and decides nothing. Each row carries the prompt's
+    digest — never its text — and the totals count the rows handed a prompt already handed."""
+    session = consumer["transcripts"] / "s1.jsonl"
+    session.write_text(session.read_text(encoding="utf-8")
+                       + assistant("2026-08-20T10:45:00.000Z", {
+                           "type": "tool_use", "id": "tu-agent-3", "name": "Agent",
+                           "input": {"subagent_type": "execution-contract-binder",
+                                     "description": "Bind record-order (round 2)",
+                                     "prompt": "secret prompt text"}})
+                       + assistant("2026-08-20T10:46:00.000Z", {
+                           "type": "tool_use", "id": "tu-agent-4", "name": "Agent",
+                           "input": {"subagent_type": "test-author",
+                                     "description": "Bind record-order",
+                                     "prompt": "secret prompt text"}}),
+                       encoding="utf-8")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    rows = {a["tool_use_id"]: a for a in report["agents"]}
+    digest = hashlib.sha256("secret prompt text".encode("utf-8")).hexdigest()
+    assert rows["tu-agent-1"]["prompt_sha256"] == digest
+    assert rows["tu-agent-3"]["prompt_sha256"] == digest
+    assert rows["tu-agent-2"]["prompt_sha256"] == hashlib.sha256(b"again").hexdigest()
+    assert [rows[k]["repeats_earlier"] for k in ("tu-agent-1", "tu-agent-2", "tu-agent-3",
+                                                 "tu-agent-4")] == [False, False, True, False], \
+        "the same prompt again under another description repeats; the same prompt under " \
+        "another agent type does not"
+    totals = report["agent_totals"]
+    assert totals["by_type"]["execution-contract-binder"]["repeats"] == 1
+    assert totals["by_type"]["test-author"]["repeats"] == 0
+    assert totals["overall"]["repeats"] == 1
+    assert "1 repeating an earlier prompt" in done.stdout
+    assert "secret prompt text" not in json.dumps(report)
 
 
 def test_an_agent_spawned_by_an_agent_is_a_row_of_its_own_under_its_parent(consumer):
@@ -421,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/11"
+    assert report["contract_version"] == "siegard-telemetry/12"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -498,6 +539,23 @@ def test_since_last_continues_from_the_previous_report(consumer):
     assert report["window"]["since_resolved_from"].endswith(f"{STAMP}.json")
     [session] = report["harness"]["sessions"]
     assert session["human_turns_in_window"] == ["2026-08-20T13:00:00.000Z"]
+
+
+def test_since_last_reads_the_window_of_a_report_under_an_earlier_contract(consumer):
+    """`last` is the `until` of the newest report on disk, whatever contract it was written
+    under: an earlier report is read for its window and never held to the current schema."""
+    telemetry = consumer["home"] / "telemetry"
+    telemetry.mkdir()
+    (telemetry / "20260820T110000Z.json").write_text(json.dumps({
+        "contract_version": "siegard-telemetry/11",
+        "window": {"since": "2026-08-20T10:00:00.000Z", "until": "2026-08-20T11:00:00.000Z",
+                   "since_resolved_from": "named"}}), encoding="utf-8")
+    done = run(consumer["home"], "--since", "last", "--until", UNTIL,
+               "--transcripts", consumer["transcripts"])
+    assert done.returncode == 0, done.stdout + done.stderr
+    report = json.loads((telemetry / f"{STAMP}.json").read_text(encoding="utf-8"))
+    assert report["window"]["since"] == "2026-08-20T11:00:00.000Z"
+    assert report["window"]["since_resolved_from"].endswith("20260820T110000Z.json")
 
 
 def test_since_last_with_no_previous_report_cannot_run(consumer):
@@ -579,6 +637,80 @@ def test_the_probe_announces_a_worktree_sited_outside_the_tree(consumer):
     assert str(inside) not in done.stdout
 
 
+def linked_worktree(consumer: dict) -> Path:
+    home = consumer["home"]
+    worktree = home / ".claude" / "worktrees" / "x"
+    subprocess.run(["git", "-C", str(home), "worktree", "add", str(worktree)],
+                   check=True, capture_output=True)
+    return worktree
+
+
+def test_the_transcript_directory_is_keyed_by_the_main_tree_from_inside_a_worktree(consumer):
+    """The harness keeps a session that entered a linked worktree under the main tree's
+    directory, so the directory a report reads is derived from the main toplevel whichever tree
+    it is run from; outside any repository the directory itself is the key."""
+    import telemetry
+    home = consumer["home"]
+    worktree = linked_worktree(consumer)
+    assert telemetry.main_toplevel_of(worktree) == home
+    assert telemetry.main_toplevel_of(home) == home
+    assert telemetry.worktree_of(telemetry.toplevel_of(worktree), home) == str(worktree)
+    assert telemetry.worktree_of(home, home) is None
+    assert telemetry.transcript_root_for(home, None) == telemetry.transcript_root_for(
+        telemetry.main_toplevel_of(worktree), None)
+    plain = consumer["tmp"] / "plain"
+    plain.mkdir()
+    assert telemetry.main_toplevel_of(plain) == plain
+    assert telemetry.worktree_of(telemetry.toplevel_of(plain), telemetry.main_toplevel_of(plain)) \
+        is None
+
+
+def test_a_report_from_a_worktree_reads_only_the_sessions_that_reached_it(consumer):
+    """Under the main tree's harness directory sit the main tree's sessions and every linked
+    worktree's. A report run inside a worktree admits a session only where one of its working
+    directories reaches the worktree, and names the worktree; the main tree's report reads them
+    all and names none. The harness directory is the one `HOME` resolves to, so the fixture
+    plants it under a home of its own and the script is run with `--transcripts` unset."""
+    import telemetry
+    home = consumer["home"]
+    worktree = linked_worktree(consumer)
+    fake_home = consumer["tmp"] / "fakehome"
+    projects = fake_home / ".claude" / "projects"
+    encoded = projects / telemetry.transcript_root_for(home, None).name
+    encoded.mkdir(parents=True)
+    (encoded / "w1.jsonl").write_text(
+        line(type="user", timestamp="2026-08-20T10:50:00.000Z", sessionId="w1", cwd=str(home),
+             message={"role": "user", "content": "opened in the main tree"})
+        + line(type="user", timestamp="2026-08-20T10:51:00.000Z", sessionId="w1",
+               cwd=str(worktree), message={"role": "user", "content": "entered the worktree"}),
+        encoding="utf-8")
+    (encoded / "m1.jsonl").write_text(
+        line(type="user", timestamp="2026-08-20T10:52:00.000Z", sessionId="m1", cwd=str(home),
+             message={"role": "user", "content": "stayed in the main tree"}),
+        encoding="utf-8")
+
+    probe = run("--probe", worktree, "--since", SINCE, "--until", UNTIL, home=fake_home)
+    assert probe.returncode == 0, probe.stdout + probe.stderr
+    assert f"transcripts: {encoded} — readable" in probe.stdout
+    assert f"worktree: {worktree}" in probe.stdout
+    assert "worktree outside this tree" not in probe.stdout
+    assert "sessions overlapping the window: 1" in probe.stdout and "w1: " in probe.stdout
+
+    done = run(worktree, "--since", SINCE, "--until", UNTIL, home=fake_home)
+    assert done.returncode == 0, done.stdout + done.stderr
+    report = json.loads((worktree / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8"))
+    assert [e.message for e in contract().iter_errors(report)] == []
+    assert report["harness"]["transcript_root"] == str(encoded)
+    assert report["harness"]["worktree"] == str(worktree)
+    assert [s["id"] for s in report["harness"]["sessions"]] == ["w1"]
+
+    done = run(home, "--since", SINCE, "--until", UNTIL, home=fake_home)
+    assert done.returncode == 0, done.stdout + done.stderr
+    report = json.loads((home / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8"))
+    assert report["harness"]["worktree"] is None
+    assert [s["id"] for s in report["harness"]["sessions"]] == ["m1", "w1"]
+
+
 # ---------------------------------------------------------------- sibling directories
 
 
@@ -610,6 +742,7 @@ def test_a_session_opened_in_a_subdirectory_is_read_from_its_sibling_directory(c
     assert done.returncode == 0, done.stdout + done.stderr
     assert [s["id"] for s in report["harness"]["sessions"]] == ["s1", "s2"]
     assert report["harness"]["transcript_roots"] == [str(transcripts), str(sibling)]
+    assert report["harness"]["worktree"] is None
     assert "1 sibling directory read" in done.stdout
 
 
@@ -654,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/11"
+    assert report["contract_version"] == "siegard-telemetry/12"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}

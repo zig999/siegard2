@@ -52,9 +52,12 @@ That read is permitted on two conditions, and both are yours to meet before it h
    It writes nothing. It prints the transcript directory it would read, whether it is readable,
    which sessions overlap the window and how many human turns each holds — naming the sibling
    directory where a session was opened in a subdirectory of the project — what leaves those files
-   (agent types, descriptions, token counts, timestamps, and the command lines that invoked this
-   framework's scripts — no message text), and where the report would land — including whether
-   that stamp is already taken.
+   (agent types, descriptions, a digest of each agent's prompt, token counts, timestamps, and the
+   command lines that invoked this framework's scripts — no message text), and where the report
+   would land — including whether that stamp is already taken. The transcript directory is where
+   the harness keeps the project's transcripts, keyed by the main tree; a report run inside a
+   linked worktree reads the sessions whose working directories reach that worktree and names it
+   in `harness.worktree`.
 2. **Announce, verbatim.** Quote the probe's output to the human before the full run, so the read
    is stated rather than discovered. Where the probe reports the directory unavailable — absent,
    unreadable, or holding transcripts whose entries lack the keys the reader counts — say so
@@ -89,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/11
+contract_version: siegard-telemetry/12
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -135,12 +138,16 @@ What each section holds:
   launched to run a skill spawns that skill's agents from there — and its cost is its own: the
   parent's row is the orchestrating turns between its spawns and nothing of theirs, so a phase
   is attributed to the nested rows' types and never to the fork's. Then one row per type from
-  `agent_totals.by_type` with invocations, how many carried a transcript, summed duration and
-  tokens. Where `with_transcript` is below `invocations`, say the totals are a floor and list the
-  invocations without a transcript by their `unavailable` reason — an agent without one hides
-  whatever it spawned, and the floor is deeper than the count of missing rows says. For every
-  repeat, judge from the two descriptions and their timing whether it was rework (same input
-  set, same reason) or deliberate (the input set changed) — and mark that judgment as yours.
+  `agent_totals.by_type` with invocations, repeats, how many carried a transcript, summed
+  duration and tokens. Where `with_transcript` is below `invocations`, say the totals are a floor
+  and list the invocations without a transcript by their `unavailable` reason — an agent without
+  one hides whatever it spawned, and the floor is deeper than the count of missing rows says. A
+  repeat is the same prompt handed to the same agent type — `repeats_earlier` reads
+  `prompt_sha256`, never the description; a `siegard-telemetry/11` record's `repeats_earlier`
+  read the description and is not comparable. For every repeat, judge from the two rows' timing
+  and what the record holds between them whether it was rework (the first return was discarded)
+  or deliberate (a retry after an unavailable transcript, a second reading asked for) — and mark
+  that judgment as yours.
 - **4.** Every entry of `commands`: issued at, scripts, the command line, exit code where the
   harness marked one, `problems` where a validator counted, interrupted. Then every entry of
   `runs`: initiative, run, outcome, failed step, timeout, one line per step with its outcome, exit

@@ -86,32 +86,32 @@ stop. You need:
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with `fact:` and ends with the mapping's last line; no ``` line
+anywhere:
 
-```yaml
-fact: <the fact, exactly as handed>
-outcome: <stated | decided | contradicted>
-found: <where the material or a node's prose already states it>
-                             # required when stated, forbidden otherwise
-edits:                       # required for stated and decided, forbidden for contradicted
-  - path: <file under the specification root, existing or new>
-    text: |
-      <the file's full content afterwards>
-log:                         # required for decided, and for stated where `found` lies under intake/;
-                             # forbidden otherwise
-  node: <the identity of the node whose log the entry belongs in — its path without `.md`>
-  field: <the field it filled, dotted from the frontmatter root>
-  unstated: <what no node stated>
-  decided: <the value>       # decided only
-  why: <why that value>      # decided only
-  found: <the intake path and the sentence that states it>
-                             # stated only; never beside decided or why
-contradicts: <the node and the statement the fact cannot stand beside>
-                             # required when contradicted, forbidden otherwise
-noticed: <a second unstated fact met on the way, one sentence — omit when none>
-```
+    fact: <the fact, exactly as handed>
+    outcome: <stated | decided | contradicted>
+    found: <where the material or a node's prose already states it>
+                                 # required when stated, forbidden otherwise
+    edits:                       # required for stated and decided, forbidden for contradicted
+      - path: <file under the specification root, existing or new>
+        text: |
+          <the file's full content afterwards>
+    log:                         # required for decided, and for stated where `found` lies under intake/;
+                                 # forbidden otherwise
+      node: <the identity of the node whose log the entry belongs in — its path without `.md`>
+      field: <the field it filled, dotted from the frontmatter root>
+      unstated: <what no node stated>
+      decided: <the value>       # decided only
+      why: <why that value>      # decided only
+      found: <the intake path and the sentence that states it>
+                                 # stated only; never beside decided or why
+    contradicts: <the node and the statement the fact cannot stand beside>
+                                 # required when contradicted, forbidden otherwise
+    noticed: <a second unstated fact met on the way, one sentence — omit when none>
 
-Return the mapping as plain YAML text — the fence above shows the shape and is not part of
+Return the mapping as plain YAML text — the block above shows the shape and is not part of
 the return.
 
 The caller writes the edits verbatim, appends the log entry to the log beside the node it

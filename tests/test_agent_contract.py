@@ -123,12 +123,19 @@ def test_only_the_writers_write(agent):
 
 def test_an_agent_returning_a_yaml_mapping_is_told_not_to_fence_it(agent):
     """A script parses the reply, and a reply opening with a code fence is not YAML: the parse
-    refuses it whole and the delegation is paid for twice. The shape is shown inside a fence, and
-    the model mirrors the example unless the prompt says the fence is not the reply."""
+    refuses it whole and the delegation is paid for twice. The model mirrors the example it is
+    shown, so the shape is shown as an indented block and never inside a fence, and the prompt
+    says where the reply begins and ends."""
     if "One YAML mapping, nothing else" not in agent["body"]:
         pytest.skip("returns no YAML mapping")
-    assert "no code fence around it" in agent["body"], \
+    body = agent["body"]
+    assert "no code fence around it" in body, \
         f"{agent['stem']} returns a YAML mapping a script parses and never says not to fence it"
+    assert "ends with the mapping's last line; no ``` line anywhere" in " ".join(body.split()), \
+        f"{agent['stem']} never says where the reply begins and ends"
+    returned = body[body.index("## What you return"):]
+    assert "```yaml" not in returned, \
+        f"{agent['stem']} shows its return shape inside a fence, which is what the model copies"
 
 
 def test_the_agent_restates_no_node_vocabulary(agent):

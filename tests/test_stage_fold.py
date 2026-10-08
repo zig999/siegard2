@@ -72,6 +72,14 @@ def staged(consumer: Path, slug: str = "round", files: list[str] | None = None):
     return done, workspace
 
 
+def audited(consumer: Path, slug: str = "round"):
+    """Staged as an audit, so both files are judged and the wave holds two delegations."""
+    workspace = consumer / f"ws-{slug}"
+    done = run("--stage", consumer / "backend", consumer / "specs", slug, workspace,
+               FILE, SECOND, "--audit")
+    return done, workspace
+
+
 def manifest_of(workspace: Path) -> dict:
     return json.loads((workspace / "manifest.json").read_text(encoding="utf-8"))
 
@@ -584,6 +592,85 @@ def test_save_return_refuses_a_file_the_staging_never_asked_about(consumer):
                transcript)
     assert done.returncode == 2
     assert "neither a staged file nor a node staged for certification" in done.stderr
+
+
+def test_save_return_reports_what_the_wave_still_waits_for_from_disk(consumer):
+    """The one count of pending returns is read from the returns directory, by the names the
+    manifest's waves spell: the harness delivers several notifications in one turn and some inside
+    the turn that spawned the wave, so a tally the session keeps undercounts what arrived."""
+    _, workspace = audited(consumer)
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False)
+    transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"wave 1: 1 of 2 saved, 1 pending: {SECOND}" in done.stdout
+    reply = yaml.safe_dump(clean_return([NODE]), sort_keys=False)
+    transcript = transcript_of(consumer / "agent2.jsonl", [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", workspace, SECOND, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "wave 1: 2 of 2 saved, 0 pending" in done.stdout
+    assert "the fold will refuse it" not in done.stdout
+
+
+def test_save_return_counts_the_staging_where_the_manifest_cuts_no_waves(consumer):
+    _, workspace = audited(consumer)
+    manifest = manifest_of(workspace)
+    del manifest["waves"]
+    (workspace / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False)
+    transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"staging: 1 of 2 saved, 1 pending: {SECOND}" in done.stdout
+
+
+def test_save_return_says_when_the_fold_will_refuse_what_it_saved(consumer):
+    """Saved is the whole claim the pending count makes; a return the fold will refuse is saved,
+    counted, and named now — by the fold's own rule — while the delegation can still run again
+    inside its wave. The bytes stay as written."""
+    _, workspace = audited(consumer)
+    reply = "```yaml\n" + yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False) + "```\n"
+    transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "the fold will refuse it: the return does not parse" in done.stdout
+    assert "a delegation to run again with its prompt fixed" in done.stdout
+    assert f"wave 1: 1 of 2 saved, 1 pending: {SECOND}" in done.stdout
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == reply
+    reply = yaml.safe_dump(clean_return([NODE]), sort_keys=False)
+    transcript = transcript_of(consumer / "agent2.jsonl", [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert "the fold will refuse it: read: no entry for" in done.stdout
+
+
+def test_save_return_accepts_a_certification_by_the_name_the_wave_spells(consumer):
+    """The staging receipt and the manifest's waves name a certification `certify__<node>`; what
+    a receipt lists is what the save accepts, beside the bare node identity. The refusal it
+    foretells is the certification's own rule, never a file's."""
+    registry_deciding(consumer)
+    proof_at(consumer)
+    ask = certifying(consumer, {"node": NODE, "proof": [PROOF], "step": "lint"})
+    done = run("--stage", consumer / "backend", consumer / "specs", "round", consumer / "ws",
+               FILE, SECOND, "--certify", ask)
+    assert done.returncode == 0, done.stdout + done.stderr
+    reply = yaml.safe_dump(COVERED, sort_keys=False)
+    transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": reply}])
+    done = run("--save-return", consumer / "backend", consumer / "ws", f"certify__{NODE}",
+               transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    saved = (consumer / "siegard-reconcile" / "round.returns"
+             / ("certify__" + NODE.replace("/", "__") + ".yaml"))
+    assert saved.read_text(encoding="utf-8") == reply
+    assert "the fold will refuse it" not in done.stdout
+    assert f"wave 1: 1 of 3 saved, 2 pending: {SECOND}, {FILE}" in done.stdout
+    elsewhere = {"certified": [{"node": NODE, "state": "covered",
+                                "tests": [{"file": "tests/other.spec.ts"}]}]}
+    transcript = transcript_of(consumer / "agent2.jsonl",
+                               [{"type": "text", "text": yaml.safe_dump(elsewhere)}])
+    done = run("--save-return", consumer / "backend", consumer / "ws", NODE, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "replaced" in done.stdout and "the fold will refuse it" in done.stdout
 
 
 def test_a_missing_return_names_the_delegation_owed(consumer):

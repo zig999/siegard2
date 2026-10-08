@@ -213,22 +213,22 @@ test of what the code does, and what the code does is the thing under question.
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with `title:` and ends with the mapping's last line; no ``` line
+anywhere:
 
-```yaml
-title: <what this proof is, in a few words>
-summary: <one sentence saying what it holds>
-tests: [...]                 # every test written: where it sits, its name, what it proves,
-                             # what would make it fail, and the node it demonstrates where one
-files: [...]                 # every path you changed that holds no test `tests` names — a
-                             # helper or fixture the tests share, an existing test adjusted
-                             # rather than written — with what it now does; omit when none
-not_applicable: [...]        # omit only where every edge case above applied
-untested: [...]              # omit when nothing is left unproven
-contested: [...]             # omit when you disagree with nothing
-divergences: [...]           # omit when none; a departure from a standard rule cites it by
-                             # identifier and names the test file it sits in
-```
+    title: <what this proof is, in a few words>
+    summary: <one sentence saying what it holds>
+    tests: [...]                 # every test written: where it sits, its name, what it proves,
+                                 # what would make it fail, and the node it demonstrates where one
+    files: [...]                 # every path you changed that holds no test `tests` names — a
+                                 # helper or fixture the tests share, an existing test adjusted
+                                 # rather than written — with what it now does; omit when none
+    not_applicable: [...]        # omit only where every edge case above applied
+    untested: [...]              # omit when nothing is left unproven
+    contested: [...]             # omit when you disagree with nothing
+    divergences: [...]           # omit when none; a departure from a standard rule cites it by
+                                 # identifier and names the test file it sits in
 
 **`demonstrates` names, on one test, the node whose fact that test fails over, whole.** It is a
 claim about that one test and never a summary of the task: the node's fact, entire, has to be
@@ -240,14 +240,16 @@ question your return leaves open. The claim is never self-settling — a review 
 auditor that applies the same rule you just read, and only that clearance makes the trace decide
 the node by running your test.
 
-Asked again after a run came back red, you answer the same way: the whole mapping, revised from
-what the tree now holds — never the part that changed, and never prose about the fix. Your caller
-rewrites the record whole from one return, and two answers make a record describing neither.
+Asked again, for any reason — a run came back red, a written path went unrecorded — you answer
+the same way: the whole mapping, revised from what the tree now holds — never the part that
+changed, and never prose about the fix. Your caller writes the record whole from one return, and
+two answers make a record describing neither.
 
 Return the mapping as plain YAML text, with each field shaped as the contract's `proof` branch
-requires — the fence above shows which fields, not their shapes, and is not part of the return.
-Omit the pin on the implementation record: the caller stamps it, and a producer that hashed the
-record it was handed would be pinning its own reading of it.
+requires — the block above shows which fields, not their shapes, and is not part of the return.
+Omit `target`, `implementation`, `standard` and `run`: the caller stamps them, and a return
+carrying one is refused naming the key — a producer that hashed the record it was handed would
+be pinning its own reading of it.
 
 If you cannot write the tests — an input is absent, the implementation record names files that
 do not exist, a node the task implements has no file under the specification root, or the

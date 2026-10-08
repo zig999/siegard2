@@ -112,21 +112,21 @@ stop. You need:
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with `coverage:`, or `certified:` for a certification, and ends with
+the mapping's last line; no ``` line anywhere:
 
-```yaml
-coverage:
-  - criterion: <quoted exactly as the task states it>
-    state: <the contract's vocabulary; read it there>
-    tests: [...]             # every test bearing on it; omit when none does
-    why: <what is unexercised, or what is ambiguous; omit only where nothing is>
-unpaired:
-  - test: {file: <path from the target source root>, name: <the test's own name>}
-    asserts: <what it establishes, read off its assertions>
-```
+    coverage:
+      - criterion: <quoted exactly as the task states it>
+        state: <the contract's vocabulary; read it there>
+        tests: [...]             # every test bearing on it; omit when none does
+        why: <what is unexercised, or what is ambiguous; omit only where nothing is>
+    unpaired:
+      - test: {file: <path from the target source root>, name: <the test's own name>}
+        asserts: <what it establishes, read off its assertions>
 
 Return the mapping as plain YAML text, with each entry shaped as the contract's `coverageEntry`
-and `unpairedTest` definitions require — the fence above shows which fields, not their shapes,
+and `unpairedTest` definitions require — the block above shows which fields, not their shapes,
 and is not part of the return. Write `criterion`, `why` and `asserts` as a YAML block scalar
 (`>-` or a literal block), never a bare one: a criterion quoted exactly as the task states it may
 carry a colon, which a bare scalar cannot hold without breaking the parse.
@@ -137,17 +137,15 @@ says it was made and found nothing, and those are different answers to the calle
 
 Certifying a node, return this instead, and nothing else:
 
-```yaml
-certified:
-  - node: <the identity, as the pack names it>
-    state: <the same vocabulary; read it in the pack's return contract>
-    tests:                   # every test bearing on the fact, each a file the pack offered as proof
-      - file: <the path relative to the target source root; the pack names it absolute>
-        name: <the test's own name within the file; omit where the file holds one>
-    why: <what is unexercised, in the fact's own terms; omit only where the state is covered>
-    remainder: <testable | untestable; exactly where the state is partial or uncovered>
-    remainder_why: <the assertion that would close it, or what no finite test asserts>
-```
+    certified:
+      - node: <the identity, as the pack names it>
+        state: <the same vocabulary; read it in the pack's return contract>
+        tests:                   # every test bearing on the fact, each a file the pack offered as proof
+          - file: <the path relative to the target source root; the pack names it absolute>
+            name: <the test's own name within the file; omit where the file holds one>
+        why: <what is unexercised, in the fact's own terms; omit only where the state is covered>
+        remainder: <testable | untestable; exactly where the state is partial or uncovered>
+        remainder_why: <the assertion that would close it, or what no finite test asserts>
 
 One entry, for the one node you were handed. A test outside the offered proof is not yours to
 cite: the certification is of the tests the human named, and the binding will pin exactly those —

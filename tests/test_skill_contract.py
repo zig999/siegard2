@@ -469,6 +469,36 @@ def test_review_change_saves_each_return_before_it_folds():
     assert "--save-return" in text
 
 
+WAVED = ("review-change", "reconcile")
+
+
+@pytest.mark.parametrize("skill", WAVED)
+def test_a_wave_ends_on_the_save_s_receipt_and_never_on_a_count_kept_in_the_session(skill):
+    """The harness delivers several notifications in one turn and some inside the turn that
+    spawned the wave, so a tally the session keeps undercounts what arrived; the one signal is
+    what `--save-return` reads from the returns on disk, and the text says so in the agent's words
+    for the form of the reply too — the delegation prompt is where the form was shown to hold."""
+    text = (REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    flat = " ".join(text.split())
+    assert "A wave ends when `--save-return` reports `0 pending` for it, read from the returns " \
+           "on disk; a count of notifications kept in the session is never the signal" in flat, \
+        f"{skill} lets the session count notifications"
+    assert "ends with the mapping's last line; no ``` line anywhere" in flat, \
+        f"{skill} hands the delegation no form for its reply"
+    assert "whether the fold will refuse what was just saved" in flat, \
+        f"{skill} never says the save's receipt is to be read"
+
+
+def test_implement_task_writes_both_records_through_the_writer():
+    """A record composed by hand has pins and a shape that depend on the session; the writer
+    makes it a function of the return, the task file, the standard and the run."""
+    text = skill_text("implement-task")
+    assert "deliver.py --write-implementation" in text
+    assert "deliver.py --write-proof" in text
+    assert "--write-proof --replace" in text
+    assert "yaml.safe_dump" not in text, "the frontmatter is the writer's, never typed"
+
+
 def test_plan_work_spawns_the_decider_and_never_offers_it():
     """R13 decides an unstated fact and discloses it; a session that asks permission first has
     turned the one stop R13 removed back into a question with a default answer."""

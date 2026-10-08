@@ -33,6 +33,22 @@ The pin each record carries is the SHA-256 of its own task's file, so
 `sha256sum <work-root>/task/<epic>/<slug>.md` computes the same value by hand — a record answers
 one task, and that is what it is held to.
 
+**The two records a delivery writes are written here, from the producer's return.** A record the
+caller composes by hand is a record whose pins and shape depend on the session that typed it; the
+writer makes the record a function of the return, the task file, the standard and the run. The
+return is the delegation's final reply — read from its transcript, or from a file holding the
+same bytes — parsed as one YAML mapping, and what the invocation knows is stamped on it: the
+target by key, the pin of the task file on an implementation and of the implementation record on
+a proof, the standard's path and pin where one was named, and the run where one was captured. A
+return carrying a key the caller stamps is refused naming the key, because the producer answers
+for what it decided and the invocation answers for what it knows, and one value with two authors
+is one nobody can hold either to. The body is the writer's as well — `## What it is` from the
+`--what` lines, or the return's `summary`; `## Notes` from the `--note` lines, or the literal
+`None.` — and the record is validated as `--node` validates one, a proof held besides to the red
+suite attempts beside it, before a byte is written. An existing record is rewritten only under
+`--replace`, whole; an implementation rewritten under a proof that pinned the earlier text prints
+a receipt naming the proof, never a refusal, since rewriting that proof is the next step.
+
 **There is no status here.** What is delivered is what has a record, and the record's presence
 in git is the whole of that state — this script stores nothing about progress and no node
 carries a field for it. `--outstanding` answers the question a status field would have answered,
@@ -174,6 +190,24 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
                                                         run, so no other root is taken)
+        deliver.py --write-implementation <delivery-root> task/<epic>/<slug> --target <key> --task-file <file> [--run run/<name>] [--standard <at> --standard-file <file>] (--from <transcript> | --from-text <file>) [--note "..."]... [--what "..."]... [--replace]
+                                                        write implementation/<epic>/<slug>.md
+                                                        from the task-implementer's return —
+                                                        the final reply of the transcript, or
+                                                        the file's bytes — with the target, the
+                                                        task's pin, the standard's path and pin
+                                                        and the run stamped on; validated as
+                                                        --node validates it, and written only
+                                                        while sound. An existing record is
+                                                        refused without --replace; prints the
+                                                        path and the pin of the file written
+        deliver.py --write-proof <delivery-root> task/<epic>/<slug> --target <key> [--run run/<name>] [--standard <at> --standard-file <file>] (--from <transcript> | --from-text <file>) [--note "..."]... [--what "..."]... [--replace]
+                                                        write proof/<epic>/<slug>.md from the
+                                                        test-author's return the same way, with
+                                                        the pin of the implementation record
+                                                        beside it stamped on; refused while a
+                                                        red suite attempt is not named in the
+                                                        --note lines
         deliver.py --standard <file> [--against DIR] [--specification DIR]
                                                         validate one project standard on its own;
                                                         stands alone, needs no root. With a tree
@@ -1897,6 +1931,199 @@ def check_single(root: Path, named: str, validator, names: list[str]) -> int:
     return 0
 
 
+STAMPED = {"implementation": ("target", "task", "standard", "run"),
+           "proof": ("target", "implementation", "standard", "run")}
+WRITE_MODES = {"--write-implementation": "implementation", "--write-proof": "proof"}
+WRITE_VALUED = ("--target", "--task-file", "--run", "--standard", "--standard-file", "--from",
+                "--from-text")
+WRITE_REPEATED = ("--note", "--what")
+
+
+def return_text(transcript: str | None, text_file: str | None) -> tuple[str | None, str | None]:
+    """The producer's return, as bytes nobody reshaped: the final reply of its transcript, read
+    through the same reader every saved return goes through, or a file holding the same text.
+    Exactly one of the text and the problem is set."""
+    if text_file is not None:
+        path = Path(text_file)
+        if not path.is_file():
+            return None, f"{path} is not a file"
+        try:
+            return path.read_text(encoding="utf-8"), None
+        except (OSError, UnicodeDecodeError) as broken:
+            return None, f"{path} cannot be read: {broken}"
+    import trace
+    return trace.final_reply_of(Path(transcript))
+
+
+def record_body(what: list[str], notes: list[str]) -> str:
+    """The body every delivery node carries: the two headings, one sentence per line, and the
+    literal `None.` where a section has nothing to say."""
+    return (f"{HEADINGS[0]}\n" + "\n".join(what or ["None."]) + "\n\n"
+            + f"{HEADINGS[1]}\n" + "\n".join(notes or ["None."]) + "\n")
+
+
+def parse_write_args(args: list[str]) -> tuple[dict | None, str | None]:
+    """The writer's invocation, or the problem that says why it is not one."""
+    opts: dict = {"note": [], "what": [], "replace": False, "positional": []}
+    rest = list(args)
+    while rest:
+        flag = rest.pop(0)
+        if flag == "--replace":
+            opts["replace"] = True
+        elif flag in WRITE_VALUED or flag in WRITE_REPEATED:
+            if not rest:
+                return None, f"{flag} takes a value"
+            value = rest.pop(0)
+            key = flag[2:].replace("-", "_")
+            if flag in WRITE_REPEATED:
+                if not value.strip():
+                    return None, f"{flag} carries an empty line; a section holds sentences"
+                opts[key].append(value.strip())
+            elif key in opts:
+                return None, f"{flag} is given twice"
+            else:
+                opts[key] = value
+        elif flag.startswith("--"):
+            return None, f"{flag} is not an option of the writer"
+        else:
+            opts["positional"].append(flag)
+    if len(opts["positional"]) != 2:
+        return None, "expected <delivery-root> task/<epic>/<slug>"
+    if "target" not in opts:
+        return None, "--target names the key siegard.json declares the target under, and is required"
+    if ("from" in opts) == ("from_text" in opts):
+        return None, "exactly one of --from <transcript> and --from-text <file> names the return"
+    if ("standard" in opts) != ("standard_file" in opts):
+        return None, ("--standard names the registry's path relative to the target source root "
+                      "and --standard-file the file it is pinned from; both or neither")
+    return opts, None
+
+
+def write_record(kind: str, args: list[str]) -> int:
+    """`--write-implementation` and `--write-proof`: one record, from the producer's return and
+    what the invocation knows, validated before a byte is written. The return is parsed with the
+    loader every node's frontmatter is read with, so what this writes is what the validator will
+    read back."""
+    opts, trouble = parse_write_args(args)
+    if trouble is not None:
+        print(f"cannot run: {trouble}", file=sys.stderr)
+        return CANNOT_RUN
+    root = Path(opts["positional"][0])
+    if not root.is_dir():
+        print(f"cannot run: delivery root {root} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    tid = opts["positional"][1]
+    parts = tid.split("/")
+    nid = id_of(Path(kind, *parts[1:]).with_suffix(".md")) \
+        if len(parts) == 3 and parts[0] == "task" else None
+    if nid is None:
+        print(f"cannot run: {tid} is not task/<epic>/<slug>; the record's path is the task's, "
+              f"and this names which", file=sys.stderr)
+        return CANNOT_RUN
+    _, epic, slug = parts
+    if kind == "implementation":
+        if "task_file" not in opts:
+            print("cannot run: --task-file names the task's own file, which the record pins, "
+                  "and is required", file=sys.stderr)
+            return CANNOT_RUN
+        pinned_from = Path(opts["task_file"])
+        if not pinned_from.is_file():
+            print(f"cannot run: task file {pinned_from} does not exist", file=sys.stderr)
+            return CANNOT_RUN
+    else:
+        if "task_file" in opts:
+            print("cannot run: a proof pins the implementation record beside it, never the task; "
+                  "drop --task-file", file=sys.stderr)
+            return CANNOT_RUN
+        pinned_from = root / "implementation" / epic / f"{slug}.md"
+        if not pinned_from.is_file():
+            print(f"cannot run: {pinned_from} does not exist; a proof pins the implementation "
+                  f"record beside it, which is written first", file=sys.stderr)
+            return CANNOT_RUN
+    standard_file = None
+    if "standard" in opts:
+        standard_file = Path(opts["standard_file"])
+        if not standard_file.is_file():
+            print(f"cannot run: standard file {standard_file} does not exist", file=sys.stderr)
+            return CANNOT_RUN
+    path = root / kind / epic / f"{slug}.md"
+    replaced = path.is_file()
+    if replaced and not opts["replace"]:
+        print(f"cannot run: {path} exists; a record is rewritten whole, never amended, and "
+              f"--replace is what says this invocation rewrites it", file=sys.stderr)
+        return CANNOT_RUN
+    try:
+        validator = contract()
+        names = pass_names()
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as broken:
+        print(f"cannot run: {broken}", file=sys.stderr)
+        return CANNOT_RUN
+
+    text, problem = return_text(opts.get("from"), opts.get("from_text"))
+    if problem is not None:
+        print(f"cannot run: {problem}", file=sys.stderr)
+        return CANNOT_RUN
+    if text.lstrip().startswith("```"):
+        print(f"{nid}: the return opens with a code fence; a return is one YAML mapping and "
+              f"nothing else, and a fence is not stripped to find one — the delegation answers "
+              f"again")
+        return 1
+    try:
+        returned = spec.load_yaml(text)
+    except yaml.YAMLError as broken:
+        print(f"{nid}: the return does not parse: {broken}")
+        return 1
+    if not isinstance(returned, dict):
+        print(f"{nid}: the return is a {type(returned).__name__}, not a mapping")
+        return 1
+    stamped = [key for key in STAMPED[kind] if key in returned]
+    if stamped:
+        for key in stamped:
+            print(f"{nid}: the return carries `{key}`, which the caller stamps; the producer "
+                  f"answers for what it decided and the invocation for what it knows, and a value "
+                  f"with two authors is held to neither")
+        return 1
+
+    front: dict = {"target": opts["target"],
+                   "task" if kind == "implementation" else "implementation": pin_of(pinned_from)}
+    if standard_file is not None:
+        front["standard"] = {"at": opts["standard"], "pin": pin_of(standard_file)}
+    if "run" in opts:
+        front["run"] = opts["run"]
+    front.update(returned)
+    summary = returned.get("summary")
+    what = opts["what"] or ([summary.strip()] if isinstance(summary, str) and summary.strip()
+                            else [])
+    body = record_body(what, opts["note"])
+
+    problems = node_problems(front, kind, validator, names)
+    problems += body_problems(body)
+    problems += record_run_problems(nid, front, root)
+    if kind == "proof":
+        problems += red_run_problems(nid, body, root)
+    if problems:
+        for found in problems:
+            print(f"{nid}: {found}")
+        print(f"\n{len(problems)} problem(s); {path} was not written")
+        return 1
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False, allow_unicode=True)
+                    + "---\n" + body, encoding="utf-8")
+    pin = pin_of(path)
+    print(f"{'replaced' if replaced else 'wrote'} {path}")
+    print(f"  pin {pin}")
+    proof = root / "proof" / epic / f"{slug}.md"
+    if kind == "implementation" and proof.is_file():
+        pfront, _, _ = spec.parse_node(proof)
+        pinned = pfront.get("implementation") if isinstance(pfront, dict) else None
+        if pinned != pin:
+            print(f"  proof/{epic}/{slug} pins {pinned}, which this record no longer is; the "
+                  f"proof is rewritten whole with --write-proof --replace, under the same --note "
+                  f"lines, so that it pins the record as it now stands")
+    return 0
+
+
 def check_contract() -> Draft202012Validator:
     """The validator for a source check record. Held here rather than in a script of its own for
     the reason the reconciliation record is held in trace.py: a record has its validation where the
@@ -2691,6 +2918,15 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
+    for mode, kind in WRITE_MODES.items():
+        if mode in args:
+            # The writer's options are its own, and parsed as one invocation: a flag another
+            # mode shares — `--standard` — means something else here.
+            if sum(args.count(m) for m in WRITE_MODES) > 1:
+                print("cannot run: --write-implementation and --write-proof each write one "
+                      "record, and stand alone", file=sys.stderr)
+                return CANNOT_RUN
+            return write_record(kind, [a for a in args if a != mode])
     verify = "--check" in args
     args = [a for a in args if a != "--check"]
     report = "--outstanding" in args

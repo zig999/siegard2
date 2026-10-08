@@ -80,11 +80,12 @@ Neither repair is this invocation's to make — delivering never writes into the
 never into the specification root either.
 
 The pin the implementation record carries is the SHA-256 of the task's own file:
-`sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`. It pins the task
+`sha256:<hexdigest>`, computable as `sha256sum <work-root>/task/<epic>/<slug>.md`, and stamped by
+the writer step 4 runs rather than typed. It pins the task
 and not the plan's index, because a record answers one task and that is what it should be held to —
 and because pinning the index would make every record in the root stale whenever any unrelated task
 is added, which no entry point here is allowed to go and fix. The proof carries no task pin: what it
-pins is the implementation record itself, and step 3 says why.
+pins is the implementation record itself, and step 6 says why.
 
 ## Before anything: the tree
 
@@ -293,10 +294,11 @@ bindings a reading still decides on the file, and whether closing this one frees
 a person weighs.
 Steps 3 and 4 do not run: the implementation record is not touched, and the proof is rewritten
 whole — never amended — by a fresh test author reading the tree as it stands now, with the suite
-running and captured as ever. The pin the proof restamps is valid precisely because the
-implementation record did not move; what the validator refuses is the opposite direction, an
-implementation rewritten under a proof left behind. Two things hold the mode honest. Before
-anything is written, run
+running and captured as ever, and written through `--write-proof --replace` as step 6 states,
+every `--note` line it carries given again. The pin the writer restamps is valid precisely
+because the implementation record did not move; what the validator refuses is the opposite
+direction, an implementation rewritten under a proof left behind. Two things hold the mode
+honest. Before anything is written, run
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check --all <target-source-root>
@@ -323,9 +325,12 @@ and nothing in this delivery writes source. Before anything is written, the same
 the task is re-planned rather than delivered — and `trace.py --encodes <target-source-root>
 <each file>` must still list every node the task implements for them. Step 3 does not run. Step
 4 does, over the tree as it stands: the build is what shows the standing implementation still
-builds, and the record points at that run as any implementation record does. You write the
-implementation record yourself, from the plan and from the record the task's `sources` name,
-never from a reading of the source: `stands` exactly as the task lists it, `files` empty, one
+builds, and the record points at that run as any implementation record does. No producer is
+spawned for the record: you compose the return yourself, from the plan and from the record the
+task's `sources` name, never from a reading of the source — the same mapping the
+`task-implementer` would return, as plain YAML in a file — and write the record through
+`--write-implementation --from-text <that file>`, stamps and all, exactly as step 4 states.
+What the mapping holds: `stands` exactly as the task lists it, `files` empty, one
 criteria entry per criterion — `met: true`, its `how` saying that the implementation stands at
 those files and the proof below decides it — and one node answer per node the task implements,
 `how` quoting where the fact is held as the named record's reading states it, never
@@ -374,8 +379,9 @@ it afterwards — the validator refuses an implementation whose `files` does not
 said it would produce, so a task that claimed the artifact and did not write it is a refusal rather
 than a delivery.
 
-Then note the registry's own path, relative to the target source root, and the SHA-256 of its text
-as read now — `sha256sum <target-source-root>/<path>`. Nothing is copied: the record points at the
+Then note the registry's own path, relative to the target source root, and its absolute path:
+the writer each record goes through stamps the SHA-256 of its text as read when the record is
+written, `sha256sum <target-source-root>/<path>` by hand. Nothing is copied: the record points at the
 project's own file, the same way `files[].path` already points at code without a second copy of
 it. That pin is a citation of what this record read when it was written, not a standing guarantee
 — the project's registry is free to keep evolving, and this record stays held to the text it
@@ -504,28 +510,36 @@ Giving up is the stop. Report every run by path, what the last one printed, and 
 a record over a red run is refused by the validator anyway, and the point of stopping here is that
 it was never composed.
 
-Compose and write `implementation/<epic>/<slug>.md` — the same epic and slug as the task, because
-the path is the identity and nothing else names which task a record answers — from what the agent
-returned plus `target` — input 3's key, the root every path in the record is spelled from, which
-the validator resolves the record at and never the one an invocation happened to name — the pin
-stamped on `task`, and — where a standard was named — its own path, the pin of its text as read
-now, the build run that passed, and every dependency the agent added. The body is exactly two headings, in order:
-`## What it is`, then `## Notes`. One sentence per line; a section with nothing to say carries the
-literal line `None.` An inference or a departure worth a reader's eye goes in `## Notes` as well
-as in its field — the diff is the review, and what only the conversation held the reviewer never
-sees.
-
-Free prose — `how`, `why`, a departure's reasoning — meets a colon often enough that a plain
-scalar breaks the moment one appears in it. Emit the frontmatter with `python3 -c` calling
-`yaml.safe_dump` rather than typing it by hand, so a sentence's own colon is never read as a
-second mapping key; PyYAML is already a declared dependency of this framework's own tooling.
-
-Check the file on its own as soon as it is composed, so a composition error is caught at the file
-that made it:
+Write `implementation/<epic>/<slug>.md` through the writer, never by hand — the same epic and
+slug as the task, because the path is the identity and nothing else names which task a record
+answers:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-implementation <delivery-root> task/<epic>/<slug> --target <the target's key> --task-file <absolute path of work-root/task/<epic>/<slug>.md> --run run/<epic>-<slug>-build --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
 ```
+
+`<the delegation's transcript>` is the output file the harness names for the spawned agent: the
+return is read from its final reply, verbatim, never retyped from the notification that relays
+it. Where the step ran inline, the mapping is in a file and `--from-text <file>` names it. The
+record is a function of that return, the task file, the standard and the run: the writer stamps
+`target` — input 3's key, the root every path in the record is spelled from, which the
+validator resolves the record at and never the one an invocation happened to name — the pin of
+the task file on `task`, the registry's own path and the pin of its text as read now, and the
+build run that passed. Omit `--standard` and `--standard-file` where no standard was named, and
+`--run` where nothing ran. A return carrying any of those keys is refused naming the key: the
+producer answers for what it decided, and what the invocation knows is stamped here. Every
+dependency the agent added is in its return under `installed`, and the writer carries it
+through as returned.
+
+The body is the writer's as well, exactly two headings in order: `## What it is` from each
+`--what` line, defaulting to the return's `summary`; `## Notes` from each `--note` line,
+defaulting to the literal line `None.` One sentence per line. `--note` carries what a reader
+meeting the record is owed and no field holds: where this delivery built the substrate, the
+sentence the substrate paragraph above names — which steps did not run and why — so the record
+does not read as a project that builds. The writer validates the record as `--node` validates
+one before writing it and writes nothing while it finds a problem; a refusal is a composition
+error at the file that made it, corrected in the invocation or sent back to the producer, never
+worked around. It prints the path written and the pin of the file.
 
 Where the agent stopped instead of writing — an input absent, a node it implements missing, the
 specification silent on a fact the work needs — that is a successful stop and not a failure of
@@ -694,26 +708,36 @@ Where the registry declares no command at all, this step does not run, the tests
 and the report says so — the narrow answer rather than a clean one. A task that produced the
 substrate reaches neither this step nor the one before it, for the reason step 5 gives.
 
-Write `proof/<epic>/<slug>.md`, same epic and slug again, the same `target`, and check it the same way. Where a
-standard was named, stamp its own path, the pin of its text as read now, and the suite run that
-passed on this record too, exactly as the implementation carries its own — the rules about how a
-project writes its tests reach files no implementation ever lists, so a departure from one is the
-proof's to disclose and resolves against the pin the proof itself carries.
+Write `proof/<epic>/<slug>.md`, same epic and slug again, through the writer the same way:
 
-Stamp on it the SHA-256 of the implementation record you just wrote — `sha256sum <that file>`. It
-says which version of that record these tests were written against, and it is what makes a
-re-delivery honest: rewrite the implementation later and leave the proof alone, and the validator
-refuses the pair instead of letting tests stand that claim to prove criteria the source now
-satisfies some other way.
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-proof <delivery-root> task/<epic>/<slug> --target <the target's key> --run run/<epic>-<slug>-suite --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
+```
+
+The same `target`, and — where a standard was named — the same stamps: the registry's own path,
+the pin of its text as read now, and the suite run that passed on this record too, exactly as
+the implementation carries its own — the rules about how a project writes its tests reach files
+no implementation ever lists, so a departure from one is the proof's to disclose and resolves
+against the pin the proof itself carries. The writer reads `implementation/<epic>/<slug>.md`
+from disk and stamps its SHA-256 on `implementation` — `sha256sum <that file>` by hand — which
+says which version of that record these tests were written against, and is what makes a
+re-delivery honest: rewrite the implementation later and leave the proof alone, and the
+validator refuses the pair instead of letting tests stand that claim to prove criteria the
+source now satisfies some other way.
 
 A disagreement the author recorded is not settled here. It stays recorded: this invocation holds
 two producers precisely so that one cannot overrule the other, and resolving it now would discard
 the signal.
 
-Where earlier suite attempts failed before this one passed, `## Notes` names each red run by path
-with the cause its diagnosis returned, one sentence per run. The diagnosis otherwise lives only in
-the conversation, and a reader meeting three run directories beside one proof deserves the
-sentence that says why.
+What `--note` carries on a proof is every sentence an earlier paragraph says its `## Notes`
+names — the task whose delivery falsified an assertion, the record that left a remainder, the
+owning task, the assertion and the file this delivery moved — and, where earlier suite attempts
+failed before this one passed, each red run by path with the cause its diagnosis returned, one
+sentence per run. The diagnosis otherwise lives only in the conversation, and a reader meeting
+three run directories beside one proof deserves the sentence that says why; the writer refuses a
+proof whose notes name none of them, naming the runs, so a red attempt is never left unnamed by
+oversight. A proof rewritten whole — the proof-only re-delivery, or the restamp step 7 names —
+goes through `--write-proof --replace`, with every `--note` line given again.
 
 ### 7. Validate, and derive the delivery
 
@@ -732,9 +756,11 @@ Each path it prints is named where it belongs: a source path in the implementati
 test file in the proof's `tests`, or in its `files` where the path holds no test `tests` names —
 with the effect the producer that changed it states, that delegation re-entered to say it where
 its return did not. A path neither producer claims is reported as such and never reverted: what
-to do with a change nobody explains is a person's. Rerun until it exits 0. An implementation
-record rewritten here changes the hash the proof pinned, so the proof's `implementation` is
-stamped again from the record as it now stands.
+to do with a change nobody explains is a person's. Rerun until it exits 0. A record rewritten
+here goes through its writer again under `--replace`, from the producer's revised return. An
+implementation rewritten changes the pin the proof carries, and the writer prints a receipt
+saying so: the proof is then rewritten whole through `--write-proof --replace`, with the same
+`--note` lines, so its `implementation` is stamped again from the record as it now stands.
 
 Then run:
 

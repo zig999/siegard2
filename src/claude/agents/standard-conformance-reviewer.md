@@ -105,24 +105,24 @@ stop. You need:
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with `in_scope:` and ends with the mapping's last line; no ``` line
+anywhere:
 
-```yaml
-in_scope:                    # every rule decided by reading whose scope reaches a reviewed path
-  - <rule identifier>
-findings:                    # omit the key entirely when you found nothing
-  - file: <a path, exactly as the file set lists it>
-    where: <the line, or the construct, within that file>
-    cites: <the one rule this is against, by its identifier>
-    evidence: <quoted from the source>
-    cost: <the consequence here, in the terms a reader can weigh>
-    correction: <what would have to change; omit where you cannot say>
-looked_past: <one sentence naming what you saw and did not report because no rule in scope names
-             it — omit when there was nothing>
-```
+    in_scope:                    # every rule decided by reading whose scope reaches a reviewed path
+      - <rule identifier>
+    findings:                    # omit the key entirely when you found nothing
+      - file: <a path, exactly as the file set lists it>
+        where: <the line, or the construct, within that file>
+        cites: <the one rule this is against, by its identifier>
+        evidence: <quoted from the source>
+        cost: <the consequence here, in the terms a reader can weigh>
+        correction: <what would have to change; omit where you cannot say>
+    looked_past: <one sentence naming what you saw and did not report because no rule in scope names
+                 it — omit when there was nothing>
 
 Return the mapping as plain YAML text, with each finding shaped as the contract's `finding`
-definition requires — the fence above shows which fields, not their shapes, and is not part of
+definition requires — the block above shows which fields, not their shapes, and is not part of
 the return. Write `evidence` and `looked_past` as a YAML block scalar (`>-` or a literal block),
 never a bare one: source quoted verbatim routinely carries a colon, which a bare scalar cannot
 hold without breaking the parse. Omit `pass` on every finding: the caller knows which pass it

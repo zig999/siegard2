@@ -26,8 +26,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/11",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero."
+      "const": "siegard-telemetry/12",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it."
     },
     "project_root": {
       "type": "string",
@@ -72,18 +72,23 @@
     "harness": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["transcript_root", "transcript_roots", "readable", "reason", "sessions", "skill_totals"],
+      "required": ["transcript_root", "transcript_roots", "worktree", "readable", "reason", "sessions", "skill_totals"],
       "properties": {
         "transcript_roots": {
           "type": "array",
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 },
-          "description": "Every transcript directory a session in this report was read from: the project's own first, then any sibling directory — one named for a subdirectory of the project the harness was opened in — that held a session whose recorded working directory sits under the project. A sibling that merely shares the name's prefix, such as a neighbouring project, is never read."
+          "description": "Every transcript directory a session in this report was read from: the project's own first, then any sibling directory — one named for a subdirectory of the project the harness was opened in — that held a session whose recorded working directory sits under the tree the report is over. A sibling that merely shares the name's prefix, such as a neighbouring project, is never read."
         },
         "transcript_root": {
           "type": "string",
           "minLength": 1,
-          "description": "The directory the harness keeps this project's session transcripts in — its projects directory, one subdirectory per working directory the harness was opened in, named by that directory's path with every character outside [A-Za-z0-9] replaced by a hyphen. Read, never written; an internal format of the harness and not of this framework, which is why every read of it is held to a probe first and every failure to read it is a stated reason rather than an absent number."
+          "description": "The directory the harness keeps this project's session transcripts in — its projects directory, one subdirectory per working directory the harness was opened in, named by that directory's path with every character outside [A-Za-z0-9] replaced by a hyphen — keyed by the main tree's toplevel: a session that enters a linked worktree under the project keeps transcribing under the main tree's directory, so a report run inside such a worktree reads the same directory and names the worktree in `worktree`. Read, never written; an internal format of the harness and not of this framework, which is why every read of it is held to a probe first and every failure to read it is a stated reason rather than an absent number."
+        },
+        "worktree": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "description": "The toplevel of the linked git worktree the report was run inside, or null where it was run from the main tree. Where it is set, a session is in this report only if one of its recorded working directories sits under the worktree — the main tree's directory holds the main tree's sessions and every worktree's alike, and a report that read it whole would count them all as this worktree's."
         },
         "readable": { "type": "boolean" },
         "reason": { "type": ["string", "null"] },
@@ -222,10 +227,11 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["session", "tool_use_id", "agent_type", "description", "invoked_at", "agent_id",
-                     "model", "transcript", "first_timestamp", "last_timestamp", "duration_seconds",
-                     "messages", "tool_calls", "usage", "repeats_earlier", "unavailable",
-                     "spawn_depth", "parent_agent_id", "compactions"],
+        "required": ["session", "tool_use_id", "agent_type", "description", "prompt_sha256",
+                     "invoked_at", "agent_id", "model", "transcript", "first_timestamp",
+                     "last_timestamp", "duration_seconds", "messages", "tool_calls", "usage",
+                     "repeats_earlier", "unavailable", "spawn_depth", "parent_agent_id",
+                     "compactions"],
         "properties": {
           "session": { "type": "string" },
           "tool_use_id": { "type": "string" },
@@ -242,7 +248,15 @@
             "type": "string",
             "description": "The subagent type the skill spawned, as the harness recorded it — a shipped agent's name where a skill delegated to one, or a harness built-in."
           },
-          "description": { "type": "string" },
+          "description": {
+            "type": "string",
+            "description": "The description the spawning context gave the tool use — free text it composes, which is why a repeat is never read from it."
+          },
+          "prompt_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256, in hex, of the UTF-8 bytes of the prompt the tool use handed the agent — the empty string's where it carried none. A digest and never the text: two rows carrying one digest were handed one prompt, and that is what `repeats_earlier` reads."
+          },
           "invoked_at": { "$ref": "#/$defs/timestamp" },
           "agent_id": { "type": ["string", "null"] },
           "model": { "type": ["string", "null"] },
@@ -263,7 +277,7 @@
           },
           "repeats_earlier": {
             "type": "boolean",
-            "description": "True where an earlier invocation in this window spawned the same agent type under the same description. It is the mechanical half of the rework question: a repeat is a candidate for rework, and whether it was one is the reader's to judge from the two transcripts."
+            "description": "True where an earlier invocation in this window handed the same agent type the same prompt — the same `agent_type` and `prompt_sha256`, whatever the two descriptions say. It is the mechanical half of the rework question: a repeat is a candidate for rework, and whether it was one is the reader's to judge from the two transcripts and what lies between them."
           },
           "unavailable": { "type": ["string", "null"] }
         }
@@ -277,7 +291,8 @@
       "properties": {
         "by_type": { "type": "object", "additionalProperties": { "$ref": "#/$defs/total" } },
         "overall": { "$ref": "#/$defs/total" }
-      }
+      },
+      "description": "The rows of `agents` summed, per agent type and over all of them, in one shape."
     },
     "commands": {
       "type": "array",
@@ -728,9 +743,14 @@
     "total": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["invocations", "with_transcript", "duration_seconds", "usage"],
+      "required": ["invocations", "repeats", "with_transcript", "duration_seconds", "usage"],
       "properties": {
         "invocations": { "type": "integer", "minimum": 0 },
+        "repeats": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many of the invocations carry `repeats_earlier` — for each (agent type, prompt digest) handed n times, n − 1 of them, summed. The invocations that were a prompt handed again; whether each was rework is the reader's to judge."
+        },
         "with_transcript": {
           "type": "integer",
           "minimum": 0,

@@ -310,7 +310,12 @@ returns saved there are the evidence the record is folded from, and they outlive
 `--save-return` writes one there from the delegation's own transcript: the last assistant message,
 byte for byte, under the name the fold reads for the staged file. A notification relays that reply
 re-rendered for display — an entity-escaped `&gt;` reads as text inside a scalar and parses — so a
-return copied from what was shown can carry characters the delegation never wrote.
+return copied from what was shown can carry characters the delegation never wrote. The save then
+reports two things read from disk: whether the fold will refuse what was just saved, by the
+fold's own rule, while the delegation can still run again inside its wave; and what the wave
+still waits for, by name — the one count of pending returns, because the harness delivers
+several notifications in one turn and some inside the turn that spawned the wave, and a tally
+the session keeps undercounts what has arrived.
 
 `--audit` inverts that one omission, deliberately. Every report keyed by change has a blind spot:
 a binding over-broad from the day it was written never drifts, so nothing that watches for drift
@@ -3325,6 +3330,53 @@ def return_name(given: str) -> str:
     return given.replace("/", "__") + ".yaml"
 
 
+def certify_return_name(node_id: str) -> str:
+    """The filename a certification's return is saved under: the node's identity flattened like a
+    file's, behind the prefix that keeps it apart from any staged file's return."""
+    return CERTIFY_PREFIX + node_id.replace("/", "__") + ".yaml"
+
+
+def expected_returns(manifest: dict) -> dict[str, str]:
+    """Every return filename a staging waits for, each mapped to the delegation the manifest's
+    waves name it by — the staged file's path, or `certify__<node>` for a certification. The one
+    definition the save and the fold both read, so what one reports pending is what the other
+    refuses to fold without."""
+    expected = {return_name(given): given for given in manifest["files"]}
+    for entry in manifest.get("certify") or []:
+        expected[certify_return_name(entry["node"])] = f"{CERTIFY_PREFIX}{entry['node']}"
+    return expected
+
+
+def wave_of(manifest: dict) -> dict[str, int]:
+    """Which wave each delegation belongs to, by the name the manifest's waves spell."""
+    return {name: number for number, wave in enumerate(manifest.get("waves") or [], start=1)
+            for name in wave}
+
+
+def pending_receipt(manifest: dict, returns_dir: Path, delegation: str) -> str:
+    """What a staging still waits for, read from the returns on disk and never from a count kept
+    anywhere else — the harness delivers several notifications in one turn, and some inside the
+    turn that spawned the wave, so a tally kept by the session undercounts what has arrived. Where
+    the manifest cuts waves, the line is the wave's this delegation belongs to; where it cuts none,
+    it is the staging's. Saved is the whole claim: a return on disk the fold will refuse is saved,
+    and the fold is where it is refused."""
+    expected = expected_returns(manifest)
+    present = {p.name for p in returns_dir.iterdir()} if returns_dir.is_dir() else set()
+    waves = wave_of(manifest)
+    if delegation in waves:
+        number = waves[delegation]
+        members = [name for name, key in expected.items() if waves.get(key) == number]
+        label = f"wave {number}"
+    else:
+        members = list(expected)
+        label = "staging"
+    pending = [expected[name] for name in sorted(members) if name not in present]
+    saved = len(members) - len(pending)
+    if pending:
+        return f"{label}: {saved} of {len(members)} saved, {len(pending)} pending: {', '.join(pending)}"
+    return f"{label}: {saved} of {len(members)} saved, 0 pending"
+
+
 def open_owed(home: Path, corpus: tuple | None = None) -> set[tuple[str, str]]:
     """Every node/file pair the reconciliation corpus holds an open finding against — found by
     some record and cleared by none. A pair answered both ways is not here: a clearance in the
@@ -4040,11 +4092,16 @@ def save_return_from(target: Path, workspace: Path, given: str, transcript: Path
               file=sys.stderr)
         return CANNOT_RUN
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    certified = {entry["node"] for entry in manifest.get("certify") or []}
+    certified = {entry["node"]: entry for entry in manifest.get("certify") or []}
+    # A certification is named either by its node's identity or as the waves spell it,
+    # `certify__<node>`: the receipt lists the second, and what a receipt lists is what this accepts.
+    node_id = given[len(CERTIFY_PREFIX):] if given.startswith(CERTIFY_PREFIX) else given
+    ask = None
     if given in manifest["files"]:
-        name = return_name(given)
-    elif given in certified:
-        name = CERTIFY_PREFIX + given.replace("/", "__") + ".yaml"
+        name, delegation = return_name(given), given
+    elif node_id in certified:
+        name, delegation, ask = (certify_return_name(node_id), f"{CERTIFY_PREFIX}{node_id}",
+                                 certified[node_id])
     else:
         print(f"cannot run: {given} is neither a staged file nor a node staged for "
               f"certification in {workspace}; a return answers a question the staging asked",
@@ -4063,7 +4120,28 @@ def save_return_from(target: Path, workspace: Path, given: str, transcript: Path
     path.write_text(text, encoding="utf-8")
     print(f"{'replaced' if replaced else 'saved'} {path} — {len(text.encode('utf-8'))} byte(s) "
           f"of the delegation's final reply, verbatim")
+    # The fold's own reading, run now so a return it will refuse is known while the wave is
+    # still open and the delegation can run again with its prompt fixed; the bytes stay as
+    # written, and the fold is still where the refusal happens.
+    held = return_refusals(manifest, text, delegation, ask)
+    if held:
+        print(f"  the fold will refuse it: {'; '.join(held)} — a delegation to run again with "
+              f"its prompt fixed")
+    print(f"  {pending_receipt(manifest, returns_dir, delegation)}")
     return 0
+
+
+def return_refusals(manifest: dict, text: str, delegation: str, ask: dict | None) -> list[str]:
+    """Why the fold would refuse this return, by the rule the fold applies: a file's return is
+    held to the node set its delegation was handed, a certification's to its node and proof."""
+    try:
+        front = load_return(text)
+    except yaml.YAMLError as broken:
+        return [f"the return does not parse: {broken}"]
+    if ask is not None:
+        return certification_problems(front, ask["node"], ask["proof"])
+    staged_for = manifest["files"][delegation]
+    return return_problems(front, staged_for["nodes"] + staged_for.get("also", []), delegation)
 
 
 def return_problems(front, assigned: list[str], given: str) -> list[str]:
@@ -4293,8 +4371,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         return CANNOT_RUN
 
     expected = {return_name(given): given for given in manifest["files"]}
-    certify_expected = {CERTIFY_PREFIX + e["node"].replace("/", "__") + ".yaml": e
-                        for e in manifest.get("certify") or []}
+    certify_expected = {certify_return_name(e["node"]): e for e in manifest.get("certify") or []}
     # `run.py`'s own directory lives here too, because the runs a reconciliation captures are
     # evidence of the same kind as the returns and outlive the workspace the same way.
     stray = sorted(p.name for p in returns_dir.iterdir()
@@ -4307,13 +4384,12 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
 
     returns: dict[str, dict] = {}
     rerun: list[str] = []
-    wave_of = {name: number for number, wave in enumerate(manifest.get("waves") or [], start=1)
-               for name in wave}
+    waves = wave_of(manifest)
     for name, given in sorted(expected.items()):
         path = returns_dir / name
         if not path.is_file():
             rerun.append(f"{given}: no return at {path}"
-                         + (f" (wave {wave_of[given]} has not finished)" if given in wave_of
+                         + (f" (wave {waves[given]} has not finished)" if given in waves
                             else ""))
             continue
         try:
@@ -4335,7 +4411,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         if not path.is_file():
             key = f"{CERTIFY_PREFIX}{ask['node']}"
             rerun.append(f"certification of {ask['node']}: no return at {path}"
-                         + (f" (wave {wave_of[key]} has not finished)" if key in wave_of
+                         + (f" (wave {waves[key]} has not finished)" if key in waves
                             else ""))
             continue
         try:

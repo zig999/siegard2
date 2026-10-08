@@ -89,21 +89,21 @@ same thing.
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with `failures_counted:` and ends with the mapping's last line; no
+``` line anywhere:
 
-```yaml
-failures_counted: <how many failures the output reported>
-findings:                    # one per counted failure; a count of zero returns no mapping at all
-  - file: <the path the run's own output named; omit only where it named none>
-    where: <the test's name or the line within that file — or, with no file, the step of the run>
-    evidence: <the runner's own message, quoted>
-    cause: <the contract's vocabulary; read it there>
-    cost: <what this failure costs, in the terms a reader can weigh>
-    correction: <what would have to change>
-notes: <one sentence on what you diagnosed without — the file set, a node you could not read —
-       and, where a compilation error short-circuited the run, that the count is the compiler's
-       errors rather than the test lines below them; omit when there is neither>
-```
+    failures_counted: <how many failures the output reported>
+    findings:                    # one per counted failure; a count of zero returns no mapping at all
+      - file: <the path the run's own output named; omit only where it named none>
+        where: <the test's name or the line within that file — or, with no file, the step of the run>
+        evidence: <the runner's own message, quoted>
+        cause: <the contract's vocabulary; read it there>
+        cost: <what this failure costs, in the terms a reader can weigh>
+        correction: <what would have to change>
+    notes: <one sentence on what you diagnosed without — the file set, a node you could not read —
+           and, where a compilation error short-circuited the run, that the count is the compiler's
+           errors rather than the test lines below them; omit when there is neither>
 
 The `file` you record is the path the output named, and it is often not one the change touched — a
 test in another area, a consumer a signature broke, a file the compiler reached before the first
@@ -112,7 +112,7 @@ held to what the change modified: a run breaking something nobody edited is the 
 it can tell anybody, and it is the reason you read the run rather than the diff.
 
 Return the mapping as plain YAML text, with each finding shaped as the contract's `finding`
-definition requires — the fence above shows which fields, not their shapes, and is not part of
+definition requires — the block above shows which fields, not their shapes, and is not part of
 the return. Write `evidence` as a YAML block scalar (`>-` or a literal block), never a bare one:
 a runner's own message routinely carries a colon — a stack trace, a `file:line:col` prefix, a
 `Type: message` pair — which a bare scalar cannot hold without breaking the parse. Omit `pass`

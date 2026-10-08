@@ -2523,3 +2523,327 @@ def test_findings_are_counted_by_the_fields_the_record_carries(tmp_path: Path):
     refused = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
                               "--findings", str(not_a_review)], capture_output=True, text=True)
     assert refused.returncode == 2 and "reads a review record" in refused.stderr
+
+
+# ------------------------------------------------- the writers: records from a producer's return
+
+
+IMPLEMENTATION_RETURN = {
+    "title": "Record a placed order",
+    "summary": "The entry point that persists a valid order.",
+    "files": [{"path": "src/orders/place.ts",
+               "effect": "persists a submitted order and answers with its order_number"}],
+    "criteria": [{"criterion": "Submitting a valid order returns its order_number.",
+                  "met": True,
+                  "how": "place() returns the persisted order_number unchanged"}],
+    "nodes": [{"node": "domain/sales/order",
+               "encoded_at": ["src/orders/place.ts"],
+               "how": "the order's identity and attributes are the shape place() persists"}],
+    "inferences": [{"inferred": "an order with no line items is refused",
+                    "from": "the order's total is the sum over its lines"}],
+}
+
+PROOF_RETURN = {
+    "title": "Proof for recording a placed order",
+    "summary": "What proves the recorded order.",
+    "tests": [{"file": "tests/place.spec.ts",
+               "name": "returns the order_number for a valid submission",
+               "proves": "Submitting a valid order returns its order_number.",
+               "fails_when": "place() answers with anything but the stored order_number"}],
+}
+
+TASK = "task/checkout/record-order"
+
+
+def writer(*args) -> "subprocess.CompletedProcess":
+    import subprocess
+    import sys
+    return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                           *[str(a) for a in args]], capture_output=True, text=True)
+
+
+def transcript_of(path: Path, *assistant_blocks: list[dict]) -> Path:
+    """A delegation's transcript as the harness writes one: a user turn, then assistant turns."""
+    entries = [{"type": "user", "message": {"role": "user", "content": "write the source"}}]
+    entries += [{"type": "assistant", "message": {"role": "assistant", "content": blocks}}
+                for blocks in assistant_blocks]
+    path.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+    return path
+
+
+def reply_of(path: Path, mapping: dict) -> Path:
+    """A transcript whose final reply is the mapping as YAML, after a tool call it made earlier."""
+    return transcript_of(path, [{"type": "tool_use", "name": "Read", "input": {}}],
+                         [{"type": "text", "text": yaml.safe_dump(mapping, sort_keys=False)}])
+
+
+def pin_line(done) -> str:
+    return next(line.split()[1] for line in done.stdout.splitlines()
+                if line.strip().startswith("pin "))
+
+
+@pytest.fixture
+def planned(root, work, sound_plan, delivery, target):
+    """The fixture plan, derived, with an empty delivery root: what the writers meet on a first
+    delivery."""
+    derive_plan(work, root)
+    return work / "task/checkout/record-order.md"
+
+
+def test_the_implementation_writer_stamps_the_target_and_the_task_pin(
+        tmp_path, planned, delivery, work, root, target):
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             IMPLEMENTATION_RETURN))
+    assert done.returncode == 0, done.stdout + done.stderr
+    written = delivery / "implementation/checkout/record-order.md"
+    assert f"wrote {written}" in done.stdout
+    front = json_front(delivery, "implementation/checkout/record-order")
+    assert front["target"] == "app"
+    assert front["task"] == task_pin_of(work, TASK), "the pin is the task file's own bytes"
+    assert "standard" not in front and "run" not in front, \
+        "a project naming no standard and capturing no run writes a record saying neither"
+    assert front["inferences"] == IMPLEMENTATION_RETURN["inferences"], \
+        "the producer's fields pass through as returned"
+    body = written.read_text(encoding="utf-8").split("---\n", 2)[2]
+    assert body == ("## What it is\nThe entry point that persists a valid order.\n\n"
+                    "## Notes\nNone.\n"), "the body defaults to the summary and the literal None."
+    assert pin_line(done) == deliver.pin_of(written), "the pin printed is the file's own"
+    assert writer("--node", written, delivery).returncode == 0
+
+
+def test_the_pair_written_by_the_writers_holds_together_whole(tmp_path, planned, delivery, work,
+                                                              root, target):
+    assert writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             IMPLEMENTATION_RETURN)
+                  ).returncode == 0
+    done = writer("--write-proof", delivery, TASK, "--target", "app",
+                  "--from", reply_of(tmp_path / "b.jsonl", PROOF_RETURN))
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = json_front(delivery, "proof/checkout/record-order")
+    assert front["implementation"] == deliver.pin_of(
+        delivery / "implementation/checkout/record-order.md"), \
+        "the proof pins the implementation record as it stands on disk"
+    assert "task" not in front
+    assert pin_line(done) == deliver.pin_of(delivery / "proof/checkout/record-order.md")
+    assert problems_of(delivery, work, target, root, derived=True) == []
+
+
+def test_the_writers_stamp_the_standard_and_the_run_and_write_the_notes_given(
+        tmp_path, planned, delivery, work, root, target, write_standard, run_dir):
+    ref = write_standard()
+    run_dir("passed", "checkout-record-order-build", steps=("install", "lint"))
+    run_dir("passed", "checkout-record-order-suite")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--run", "run/checkout-record-order-build",
+                  "--standard", "standard.yaml", "--standard-file", target / "standard.yaml",
+                  "--what", "The entry point for a placed order.",
+                  "--note", "The install step ran first; nothing was added to the manifest.",
+                  "--note", "No rule was departed from.",
+                  "--from", reply_of(tmp_path / "a.jsonl", IMPLEMENTATION_RETURN))
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = json_front(delivery, "implementation/checkout/record-order")
+    assert front["standard"] == ref, "the standard is its path from the target and its pin"
+    assert front["run"] == "run/checkout-record-order-build"
+    body = (delivery / "implementation/checkout/record-order.md").read_text(
+        encoding="utf-8").split("---\n", 2)[2]
+    assert body == ("## What it is\nThe entry point for a placed order.\n\n"
+                    "## Notes\nThe install step ran first; nothing was added to the manifest.\n"
+                    "No rule was departed from.\n")
+    done = writer("--write-proof", delivery, TASK, "--target", "app",
+                  "--run", "run/checkout-record-order-suite",
+                  "--standard", "standard.yaml", "--standard-file", target / "standard.yaml",
+                  "--from-text", (tmp_path / "proof.yaml").write_text(
+                      yaml.safe_dump(PROOF_RETURN, sort_keys=False), encoding="utf-8")
+                  and tmp_path / "proof.yaml")
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = json_front(delivery, "proof/checkout/record-order")
+    assert front["standard"] == ref and front["run"] == "run/checkout-record-order-suite"
+    assert problems_of(delivery, work, target, root, derived=True) == []
+
+
+def test_the_writer_reads_a_file_s_bytes_as_the_return(tmp_path, planned, delivery, work, root,
+                                                       target):
+    given = tmp_path / "return.yaml"
+    given.write_text(yaml.safe_dump(IMPLEMENTATION_RETURN, sort_keys=False), encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert json_front(delivery, "implementation/checkout/record-order")["files"] == \
+        IMPLEMENTATION_RETURN["files"]
+
+
+def test_a_return_opening_with_a_fence_is_refused_and_nothing_is_written(tmp_path, planned,
+                                                                         delivery):
+    fenced = "```yaml\n" + yaml.safe_dump(IMPLEMENTATION_RETURN, sort_keys=False) + "```\n"
+    transcript = transcript_of(tmp_path / "a.jsonl", [{"type": "text", "text": fenced}])
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", transcript)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "the return opens with a code fence" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+    given = tmp_path / "return.yaml"
+    given.write_text(fenced, encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 1 and "opens with a code fence" in done.stdout
+
+
+def test_a_transcript_ending_in_a_tool_call_is_refused(tmp_path, planned, delivery):
+    transcript = transcript_of(tmp_path / "a.jsonl",
+                               [{"type": "text", "text": "reading"},
+                                {"type": "tool_use", "name": "Read", "input": {}}])
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", transcript)
+    assert done.returncode == 2
+    assert "has not answered yet" in done.stderr
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+@pytest.mark.parametrize("key,value", [("target", "app"), ("task", "sha256:" + "0" * 64),
+                                       ("run", "run/first"),
+                                       ("standard", {"at": "standard.yaml",
+                                                     "pin": "sha256:" + "0" * 64})])
+def test_a_return_carrying_a_key_the_caller_stamps_is_refused_naming_it(tmp_path, planned,
+                                                                        delivery, key, value):
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             {**IMPLEMENTATION_RETURN,
+                                                              key: value}))
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert f"the return carries `{key}`, which the caller stamps" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_proof_return_carrying_the_implementation_pin_is_refused(tmp_path, planned, delivery):
+    assert writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             IMPLEMENTATION_RETURN)
+                  ).returncode == 0
+    done = writer("--write-proof", delivery, TASK, "--target", "app",
+                  "--from", reply_of(tmp_path / "b.jsonl",
+                                     {**PROOF_RETURN, "implementation": "sha256:" + "0" * 64}))
+    assert done.returncode == 1
+    assert "the return carries `implementation`, which the caller stamps" in done.stdout
+
+
+def test_a_return_the_contract_refuses_writes_nothing(tmp_path, planned, delivery):
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             {**IMPLEMENTATION_RETURN,
+                                                              "status": "done"}))
+    assert done.returncode == 1
+    assert "Additional properties are not allowed ('status' was unexpected)" in done.stdout
+    assert "was not written" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_an_existing_record_is_refused_without_replace(tmp_path, planned, delivery):
+    transcript = reply_of(tmp_path / "a.jsonl", IMPLEMENTATION_RETURN)
+    first = writer("--write-implementation", delivery, TASK, "--target", "app",
+                   "--task-file", planned, "--from", transcript)
+    assert first.returncode == 0
+    again = writer("--write-implementation", delivery, TASK, "--target", "app",
+                   "--task-file", planned, "--from", transcript)
+    assert again.returncode == 2
+    assert "exists; a record is rewritten whole" in again.stderr
+    replaced = writer("--write-implementation", delivery, TASK, "--target", "app",
+                      "--task-file", planned, "--from", transcript, "--replace")
+    assert replaced.returncode == 0, replaced.stdout + replaced.stderr
+    assert "replaced " in replaced.stdout
+
+
+def test_a_proof_naming_no_red_suite_attempt_is_refused_naming_the_runs(tmp_path, planned,
+                                                                        delivery, run_dir):
+    assert writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             IMPLEMENTATION_RETURN)
+                  ).returncode == 0
+    run_dir("failed", "checkout-record-order-suite")
+    run_dir("passed", "checkout-record-order-suite-2")
+    transcript = reply_of(tmp_path / "b.jsonl", PROOF_RETURN)
+    done = writer("--write-proof", delivery, TASK, "--target", "app", "--from", transcript)
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "## Notes names none of run/checkout-record-order-suite, which ran this task's " \
+           "suite and did not pass" in done.stdout
+    assert not (delivery / "proof/checkout/record-order.md").exists()
+    done = writer("--write-proof", delivery, TASK, "--target", "app", "--from", transcript,
+                  "--note", "run/checkout-record-order-suite failed with cause code: place() "
+                            "answered the order's id, and the source was written again.")
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_proof_over_no_implementation_record_is_refused(tmp_path, planned, delivery):
+    done = writer("--write-proof", delivery, TASK, "--target", "app",
+                  "--from", reply_of(tmp_path / "b.jsonl", PROOF_RETURN))
+    assert done.returncode == 2
+    assert "a proof pins the implementation record beside it, which is written first" \
+        in done.stderr
+
+
+def test_a_record_over_a_red_run_is_refused_before_it_is_written(tmp_path, planned, delivery,
+                                                                 run_dir):
+    run_dir("failed", "checkout-record-order-build", steps=("install", "lint"))
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--run", "run/checkout-record-order-build",
+                  "--from", reply_of(tmp_path / "a.jsonl", IMPLEMENTATION_RETURN))
+    assert done.returncode == 1
+    assert "ended `failed` at the step `lint`, and this record was written anyway" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_replacing_the_implementation_receipts_the_proof_it_leaves_behind(tmp_path, planned,
+                                                                          delivery):
+    assert writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             IMPLEMENTATION_RETURN)
+                  ).returncode == 0
+    assert writer("--write-proof", delivery, TASK, "--target", "app",
+                  "--from", reply_of(tmp_path / "b.jsonl", PROOF_RETURN)).returncode == 0
+    old = json_front(delivery, "proof/checkout/record-order")["implementation"]
+    revised = {**IMPLEMENTATION_RETURN, "summary": "The entry point, revised."}
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--replace",
+                  "--from", reply_of(tmp_path / "c.jsonl", revised))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"proof/checkout/record-order pins {old}, which this record no longer is" \
+        in done.stdout
+    assert "--write-proof --replace" in done.stdout
+    assert writer("--write-proof", delivery, TASK, "--target", "app", "--replace",
+                  "--from", reply_of(tmp_path / "d.jsonl", PROOF_RETURN)).returncode == 0
+    same = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--replace",
+                  "--from", reply_of(tmp_path / "e.jsonl", revised))
+    assert same.returncode == 0 and "no longer is" not in same.stdout, \
+        "a rewrite to the same bytes leaves the restamped proof's pin standing"
+
+
+def test_the_writer_s_invocation_is_held_whole(tmp_path, planned, delivery):
+    transcript = reply_of(tmp_path / "a.jsonl", IMPLEMENTATION_RETURN)
+    given = tmp_path / "return.yaml"
+    given.write_text("title: t\n", encoding="utf-8")
+    cases = [
+        (("--write-implementation", delivery, TASK, "--task-file", planned,
+          "--from", transcript), "--target names the key"),
+        (("--write-implementation", delivery, TASK, "--target", "app",
+          "--from", transcript), "--task-file names the task's own file"),
+        (("--write-implementation", delivery, TASK, "--target", "app", "--task-file", planned),
+         "exactly one of --from"),
+        (("--write-implementation", delivery, TASK, "--target", "app", "--task-file", planned,
+          "--from", transcript, "--from-text", given), "exactly one of --from"),
+        (("--write-implementation", delivery, TASK, "--target", "app", "--task-file", planned,
+          "--from", transcript, "--standard", "standard.yaml"), "both or neither"),
+        (("--write-implementation", delivery, "checkout/record-order", "--target", "app",
+          "--task-file", planned, "--from", transcript), "is not task/<epic>/<slug>"),
+        (("--write-proof", delivery, TASK, "--target", "app", "--task-file", planned,
+          "--from", transcript), "drop --task-file"),
+        (("--write-implementation", delivery, TASK, "--target", "app", "--task-file", planned,
+          "--from", transcript, "--check"), "is not an option of the writer"),
+        (("--write-implementation", "--write-proof", delivery, TASK), "stand alone"),
+    ]
+    for args, said_what in cases:
+        done = writer(*args)
+        assert done.returncode == 2, (args, done.stdout, done.stderr)
+        assert said_what in done.stderr, (args, done.stderr)
+    assert not (delivery / "implementation").exists()

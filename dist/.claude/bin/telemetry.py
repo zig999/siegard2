@@ -19,13 +19,26 @@ agent an agent spawned lands there too, and is found by reading its parent's tra
 spawn the way the session's is read. That directory is the
 harness's, in an internal format this framework neither owns nor documents, and it holds every
 word of every conversation. Two rules follow. It is read only after `--probe` has said it can be,
-and the read is announced by whoever invokes it. And what leaves it is counts, names, timestamps
-and the command lines that invoked this framework's own scripts — never the text of a prompt, a
-reply or a tool's result. One directory the probe cannot promise: a session opened in a git
-worktree sited outside this project's own tree — the parallel-frontier route's `../wt-<task>` —
-transcribes under a harness directory this probe never lists. Where `git worktree list` names
-such worktrees at probe time, the probe says so and `--transcripts DIR` is the door; a worktree
-already removed left nothing to announce, so the receipt is honest only about what still exists.
+and the read is announced by whoever invokes it. And what leaves it is counts, names, timestamps,
+a digest of each agent's prompt and the command lines that invoked this framework's own scripts
+— never the text of a prompt, a reply or a tool's result. The harness keys that directory by the
+main tree: a session that enters a linked worktree under the project keeps transcribing under
+the main tree's directory, so the directory is derived from the main toplevel — the parent of
+`git rev-parse --git-common-dir` — whichever tree the report is run from. Run inside a linked
+worktree, the report names it in `harness.worktree` and admits a session only where one of its
+recorded working directories reaches that worktree; otherwise the main tree's sessions and every
+other worktree's would be counted as the worktree's. One directory the probe cannot promise: a
+session opened in a git worktree sited outside the main tree — the parallel-frontier route's
+`../wt-<task>` — transcribes under a harness directory this probe never lists. Where
+`git worktree list` names such worktrees at probe time, the probe says so and `--transcripts
+DIR` is the door; a worktree already removed left nothing to announce, so the receipt is honest
+only about what still exists.
+
+**A repeat is the same prompt handed to the same agent type.** Each spawn carries the SHA-256 of
+its prompt's UTF-8 bytes — a digest, never the text — and `repeats_earlier` is true where an
+earlier spawn in the window carried the same digest under the same type; `agent_totals` sums the
+repeats per type and overall. A description is free text the spawning session composes, and two
+spawns of one prompt under two descriptions are one prompt handed twice.
 
 **The window is named, never remembered.** `--since` is an instant, or `last`, which continues
 from the `until` of the newest report already in the telemetry root; `--until` defaults to now
@@ -127,6 +140,7 @@ Exit:   0 written, or probed
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -149,7 +163,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/11"
+CONTRACT = "siegard-telemetry/12"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -361,6 +375,20 @@ def toplevel_of(directory: Path) -> Path:
     return directory
 
 
+def main_toplevel_of(directory: Path) -> Path:
+    """The main tree's toplevel — the parent of the repository's common `.git` directory — which
+    is the toplevel itself outside a linked worktree, and `toplevel_of` where git answers nothing."""
+    probe = git(directory, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if probe is not None and probe.returncode == 0 and probe.stdout.strip():
+        return Path(probe.stdout.strip()).parent
+    return toplevel_of(directory)
+
+
+def worktree_of(home: Path, main: Path) -> str | None:
+    """The linked worktree the report runs inside, or null where `home` is the main tree."""
+    return str(home) if home != main else None
+
+
 # ----------------------------------------------------------------------- the framework
 
 
@@ -419,10 +447,11 @@ def framework_section() -> dict:
 # ------------------------------------------------------------------------ the harness
 
 
-def transcript_root_for(home: Path, override: str | None) -> Path:
+def transcript_root_for(main: Path, override: str | None) -> Path:
+    """The harness directory for the project, keyed by the main tree's toplevel."""
     if override:
         return Path(override)
-    return HARNESS_PROJECTS / re.sub(r"[^A-Za-z0-9]", "-", str(home))
+    return HARNESS_PROJECTS / re.sub(r"[^A-Za-z0-9]", "-", str(main))
 
 
 def under(home: Path, cwd: str) -> bool:
@@ -430,7 +459,7 @@ def under(home: Path, cwd: str) -> bool:
     return cwd == anchor or cwd.startswith(anchor + "/")
 
 
-def session_files(root: Path, home: Path) -> list[tuple[Path, Path]]:
+def session_files(root: Path, main: Path, worktree: str | None) -> list[tuple[Path, Path]]:
     """Every session transcript this project's work may sit in, as (transcript, its root).
 
     The harness names a transcript directory by the working directory the session opened in, so
@@ -438,9 +467,21 @@ def session_files(root: Path, home: Path) -> list[tuple[Path, Path]]:
     name and the project's own directory never holds it. Those siblings are read too — any
     directory whose name extends this one's by a hyphen — but a name is only a prefix, and
     `<project>-old` extends it the same way: a sibling's session is included only where some
-    `cwd` it recorded sits under this project's toplevel. The project's own directory is read
-    whole, since a session there that recorded no `cwd` is still this project's."""
-    files = [(path, root) for path in sorted(root.glob("*.jsonl"))]
+    `cwd` it recorded sits under the main tree's toplevel. The project's own directory is read
+    whole, since a session there that recorded no `cwd` is still this project's.
+
+    Inside a linked worktree the anchor is the worktree, and the project's own directory is read
+    under the same rule as a sibling: a session is the worktree's only where some `cwd` it
+    recorded sits under the worktree, since the main tree's directory holds the main tree's
+    sessions and every worktree's alike."""
+    anchor = Path(worktree) if worktree is not None else main
+
+    def reaches(path: Path) -> bool:
+        return any(isinstance(e.get("cwd"), str) and under(anchor, e["cwd"])
+                   for e in entries_of(path))
+
+    files = [(path, root) for path in sorted(root.glob("*.jsonl"))
+             if worktree is None or reaches(path)]
     parent = root.parent
     if not parent.is_dir():
         return files
@@ -448,8 +489,7 @@ def session_files(root: Path, home: Path) -> list[tuple[Path, Path]]:
         if sibling == root or not sibling.is_dir() or not sibling.name.startswith(root.name + "-"):
             continue
         for path in sorted(sibling.glob("*.jsonl")):
-            if any(isinstance(e.get("cwd"), str) and under(home, e["cwd"])
-                   for e in entries_of(path)):
+            if reaches(path):
                 files.append((path, sibling))
     return files
 
@@ -737,11 +777,19 @@ def compaction_of(entry: dict) -> dict:
             "pre_tokens": count("preTokens"), "post_tokens": count("postTokens")}
 
 
+def prompt_digest_of(payload: dict) -> str:
+    """SHA-256, hex, of the prompt's UTF-8 bytes — the empty string's where the tool use carried
+    none. A digest is what leaves the transcript; the prompt's text never does."""
+    prompt = payload.get("prompt")
+    return hashlib.sha256((prompt if isinstance(prompt, str) else "").encode("utf-8")).hexdigest()
+
+
 def spawn_of(block: dict, payload: dict, session_id: str, stamp: str | None) -> dict:
     return {
         "session": session_id, "tool_use_id": block["id"],
         "agent_type": agent_type_of(payload),
         "description": str(payload.get("description") or ""),
+        "prompt_sha256": prompt_digest_of(payload),
         "invoked_at": iso(instant_of(stamp)),
     }
 
@@ -822,16 +870,17 @@ def read_subagent(transcript: Path) -> dict:
             "tool_calls": tool_calls, "compactions": compactions, "usage": spent.total()}
 
 
-def harness_section(root: Path, home: Path, since: datetime,
+def harness_section(root: Path, main: Path, worktree: str | None, since: datetime,
                     until: datetime) -> tuple[dict, list, list]:
     readable, reason = probe_transcripts(root)
     harness = {"transcript_root": str(root), "transcript_roots": [str(root)],
-               "readable": readable, "reason": reason, "sessions": [], "skill_totals": {}}
+               "worktree": worktree, "readable": readable, "reason": reason, "sessions": [],
+               "skill_totals": {}}
     if not readable:
         return harness, [], []
     commands: list[dict] = []
     agents: list[dict] = []
-    for path, root in session_files(root, home):
+    for path, root in session_files(root, main, worktree):
         summary, session_commands, session_agents = read_session(path, since, until)
         if summary["entries_in_window"] == 0:
             continue
@@ -891,19 +940,21 @@ def harness_section(root: Path, home: Path, since: datetime,
     agents.sort(key=lambda a: (a["invoked_at"], a["tool_use_id"]))
     seen: set[tuple[str, str]] = set()
     for agent in agents:
-        key = (agent["agent_type"], agent["description"])
+        key = (agent["agent_type"], agent["prompt_sha256"])
         agent["repeats_earlier"] = key in seen
         seen.add(key)
     return harness, commands, agents
 
 
 def empty_total() -> dict:
-    return {"invocations": 0, "with_transcript": 0, "duration_seconds": 0.0,
+    return {"invocations": 0, "repeats": 0, "with_transcript": 0, "duration_seconds": 0.0,
             "usage": dict.fromkeys(USAGE_KEYS, 0)}
 
 
 def add_to(total: dict, agent: dict) -> None:
     total["invocations"] += 1
+    if agent["repeats_earlier"]:
+        total["repeats"] += 1
     if agent["usage"] is None:
         return
     total["with_transcript"] += 1
@@ -1629,8 +1680,9 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
     if since >= until:
         cannot_run(f"--since {iso(since)} is not before --until {iso(until)}")
 
-    harness, commands, agents = harness_section(transcript_root_for(home, transcripts), home,
-                                                since, until)
+    main = main_toplevel_of(project_root)
+    harness, commands, agents = harness_section(transcript_root_for(main, transcripts), main,
+                                                worktree_of(home, main), since, until)
     delivery_root = Path(roots["delivery_root"]) if isinstance(roots.get("delivery_root"),
                                                                str) else None
     work_root = Path(roots["work_root"]) if isinstance(roots.get("work_root"), str) else None
@@ -1679,6 +1731,7 @@ def receipt(report: dict, destination: Path) -> str:
            if len(report["harness"]["transcript_roots"]) > 1 else ""),
         f"agents: {totals['invocations']} spawned "
         f"({sum(1 for a in report['agents'] if a['parent_agent_id'])} of them by another agent), "
+        f"{totals['repeats']} repeating an earlier prompt, "
         f"{totals['with_transcript']} with a transcript, "
         f"{totals['usage']['output_tokens']} output tokens, {totals['duration_seconds']}s",
         f"sessions: {len(report['harness']['sessions'])} orchestrating, "
@@ -1737,7 +1790,9 @@ def main() -> int:
     if args.probe:
         roots = resolve_roots(project_root)
         home = toplevel_of(project_root)
-        transcript_root = transcript_root_for(home, args.transcripts)
+        main = main_toplevel_of(project_root)
+        worktree = worktree_of(home, main)
+        transcript_root = transcript_root_for(main, args.transcripts)
         readable, reason = probe_transcripts(transcript_root)
         until = parse_instant(args.until, "--until") if args.until else datetime.now(timezone.utc)
         telemetry_root = roots.get("telemetry_root")
@@ -1751,19 +1806,22 @@ def main() -> int:
         print(f"telemetry_root: {telemetry_root if isinstance(telemetry_root, str) else 'not declared'}")
         print(f"transcripts: {transcript_root} — "
               + ("readable" if readable else f"unavailable: {reason}"))
-        worktrees = git(home, "worktree", "list", "--porcelain")
+        if worktree is not None:
+            print(f"worktree: {worktree} — only the sessions whose working directories reach it "
+                  f"are read; the main tree is {main}")
+        worktrees = git(main, "worktree", "list", "--porcelain")
         if worktrees is not None and worktrees.returncode == 0:
             for line in worktrees.stdout.splitlines():
                 if not line.startswith("worktree "):
                     continue
                 path = line[len("worktree "):]
-                if path and not under(home, path):
+                if path and not under(main, path):
                     print(f"worktree outside this tree: {path} — sessions opened there "
                           f"transcribe under another harness directory this probe does not read; "
                           f"point --transcripts at it for that slice")
         if readable:
             overlapping = []
-            for path, root in session_files(transcript_root, home):
+            for path, root in session_files(transcript_root, main, worktree):
                 summary, _, _ = read_session(path, since, until)
                 if summary["entries_in_window"]:
                     overlapping.append((summary, root))
@@ -1774,9 +1832,10 @@ def main() -> int:
                       f"{len(summary['human_turns_in_window'])} human turns, working "
                       f"directories {', '.join(summary['working_directories']) or 'unrecorded'}"
                       f"{where}")
-        print("what leaves the transcripts: agent types, descriptions, token counts, timestamps, "
-              "the class of each short confirmation a person typed, and the command lines that "
-              "invoked this framework's scripts — no message text")
+        print("what leaves the transcripts: agent types, descriptions, a digest of each agent's "
+              "prompt, token counts, timestamps, the class of each short confirmation a person "
+              "typed, and the command lines that invoked this framework's scripts — no message "
+              "text")
         if isinstance(telemetry_root, str):
             destination = Path(telemetry_root) / f"{stamp_of(until)}.json"
             print(f"would write: {destination}"

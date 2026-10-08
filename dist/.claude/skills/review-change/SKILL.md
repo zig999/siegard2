@@ -387,7 +387,10 @@ runs next.
   task's criterion — and never a recommendation to remove one.
 - **conformance** — one `siegard:specification-conformance-reviewer` subagent **per file the staging
   manifest holds**, dispatched **by the waves the staging receipt lists**: one wave whole, in one
-  message, then every return of that wave saved before the next wave is spawned. The wave is
+  message, then every return of that wave saved before the next wave is spawned. A wave ends when
+  `--save-return` reports `0 pending` for it, read from the returns on disk; a count of
+  notifications kept in the session is never the signal, because notifications arrive several in
+  one turn, and some inside the turn that spawns the wave, attached to a launch's result. The wave is
   the harness's ceiling on delegations running at once, cut by `--stage` into a list rather than
   estimated here; a launch the harness refuses is a wave cut too wide, reported with `--stage
   --concurrency <fewer>` ready to run again, and never a judge dispatched a second time on its
@@ -401,7 +404,10 @@ runs next.
   to `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, which is both where a finding's own
   shape lives and the contract the whole return is held to. One contract, handed once: a second
   one pasted beside it would be a shape the fold never applies, and this pass's findings reach a
-  delivery node's `findings` only once this skill has stamped the pass onto each of them. Every
+  delivery node's `findings` only once this skill has stamped the pass onto each of them. And the
+  form of the reply, in the agent's own words: the reply begins with the first key the shape
+  lists that the answer carries, and ends with the mapping's last line; no ``` line anywhere.
+  Every
   path a delegation receives is absolute and already resolved, and the pack and the index
   go as paths, never as their text — one index serves the batch, and a prompt carrying it inline
   pays for it once per file. It returns where the source states a domain fact the specification
@@ -503,8 +509,11 @@ notification that relays it:
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-source-root> <workspace> <file> <transcript>
 ```
 
-`<file>` is the staged file's path as the manifest lists it; `<transcript>` is the output file
-the harness names for the spawned agent. Then:
+`<file>` is the staged file's path as the manifest lists it, or a certification as the wave
+names it, `certify__<node>`; `<transcript>` is the output file the harness names for the spawned
+agent. The save prints what the wave still waits for, and whether the fold will refuse what was
+just saved — a save whose receipt says so is the delegation to run again before the wave closes,
+never a return repaired. Then:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <workspace> \

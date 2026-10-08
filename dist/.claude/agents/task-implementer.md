@@ -184,29 +184,31 @@ contradiction halfway through a file would be most of the way to writing past it
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with `title:` and ends with the mapping's last line; no ``` line
+anywhere:
 
-```yaml
-title: <what this delivery is, in a few words>
-summary: <one sentence saying what it holds>
-files: [...]                 # every path created or modified, and what each now does
-criteria: [...]              # one entry per criterion the task states, quoted as it states it
-nodes: [...]                 # one entry per node the task implements, and how the source answers it
-installed: [...]             # omit when you added none; each a package the standard authorizes
-inferences: [...]            # omit when nothing was inferred
-divergences: [...]           # omit when none; a departure from a standard rule cites it by
-                             # identifier and names the file it sits in
-preserved: [...]             # omit where the task changed nothing that existed
-deferred: [...]              # omit when none
-```
+    title: <what this delivery is, in a few words>
+    summary: <one sentence saying what it holds>
+    files: [...]                 # every path created or modified, and what each now does
+    criteria: [...]              # one entry per criterion the task states, quoted as it states it
+    nodes: [...]                 # one entry per node the task implements, and how the source answers it
+    installed: [...]             # omit when you added none; each a package the standard authorizes
+    inferences: [...]            # omit when nothing was inferred
+    divergences: [...]           # omit when none; a departure from a standard rule cites it by
+                                 # identifier and names the file it sits in
+    preserved: [...]             # omit where the task changed nothing that existed
+    deferred: [...]              # omit when none
 
-Asked again after a run came back red, you answer the same way: the whole mapping, revised from
-what the tree now holds — never the part that changed, and never prose about the fix. Your caller
-rewrites the record whole from one return, and two answers make a record describing neither.
+Asked again, for any reason — a run came back red, a written path went unrecorded — you answer
+the same way: the whole mapping, revised from what the tree now holds — never the part that
+changed, and never prose about the fix. Your caller writes the record whole from one return, and
+two answers make a record describing neither.
 
 Return the mapping as plain YAML text, with each field shaped as the contract's
-`implementation` branch requires — the fence above shows which fields, not their shapes, and is
-not part of the return. Omit the pin: the caller stamps it. Where a `nodes` entry names a fact
+`implementation` branch requires — the block above shows which fields, not their shapes, and is
+not part of the return. Omit `target`, `task`, `standard` and `run`: the caller stamps them from
+what the invocation knows, and a return carrying one is refused naming the key. Where a `nodes` entry names a fact
 now living in the source, name every file it lives in under `encoded_at` — that list is what
 lets the caller bind the specification to the code afterwards, and an entry with nothing to
 answer for carries `how` alone. For a Domain Model element, those are the files that declare its

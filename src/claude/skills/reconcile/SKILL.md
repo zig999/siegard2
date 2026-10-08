@@ -244,7 +244,10 @@ and the bind restamps both.
 
 Spawn one `siegard:specification-conformance-reviewer` subagent per file the manifest holds nodes for,
 dispatched by the waves the staging receipt lists: one wave whole, in one message, then every
-return of that wave saved with `--save-return` before the next wave is spawned. The wave is the
+return of that wave saved with `--save-return` before the next wave is spawned. A wave ends when
+`--save-return` reports `0 pending` for it, read from the returns on disk; a count of
+notifications kept in the session is never the signal, because notifications arrive several in
+one turn, and some inside the turn that spawns the wave, attached to a launch's result. The wave is the
 harness's ceiling on delegations running at once, cut by `--stage` into a list rather than
 estimated here; a launch the harness refuses ran no judge and is a wave cut too wide — the
 report hands `--stage --concurrency <fewer>` ready to run again, and no judge is dispatched a
@@ -260,7 +263,9 @@ cannot open that node reports an absence where the true finding is a misattribut
 specification root; and the path to
 `${CLAUDE_PLUGIN_ROOT}/schemas/conformance-return.json`, which is both where a finding's own
 shape lives and the contract the whole return is held to by the fold below. One contract, handed
-once: a second one pasted beside it would be a shape the fold never applies.
+once: a second one pasted beside it would be a shape the fold never applies. And the form of the
+reply, in the agent's own words: the reply begins with the first key the shape lists that the
+answer carries, and ends with the mapping's last line; no ``` line anywhere.
 
 **On an audit, no candidate tier is passed, and the staging writes none.** The manifest carries an
 empty `candidates` and the workspace holds no index, so there is nothing to hand over and nothing
@@ -319,8 +324,11 @@ delegation's transcript — the output file the harness names for the spawned ag
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --save-return <target-root> <workspace> <file> <transcript>
 ```
 
-`<file>` is the staged file's path as the manifest lists it, or the node identity of a
-certification. Never retype a return from the notification that relays it: that text is
+`<file>` is the staged file's path as the manifest lists it, or a certification by its node
+identity or as the wave names it, `certify__<node>`. The save prints what the wave still waits
+for, and whether the fold will refuse what was just saved — a save whose receipt says so is the
+delegation to run again before the wave closes, never a return repaired. Never retype a return
+from the notification that relays it: that text is
 re-rendered for display, and an escaped character it carries parses as part of a scalar. A
 refusal says why: a delegation whose transcript ends in a tool call has not answered yet, and
 only one whose transcript cannot be read is saved by hand, under the same discipline. A spawned

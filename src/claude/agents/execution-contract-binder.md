@@ -125,27 +125,27 @@ stop. You need:
 ## What you return
 
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
-fence below shows the shape, and a reply that opens with one does not parse and is refused whole:
+indented block below shows the shape, and a reply that opens with a fence does not parse and is
+refused whole. The reply begins with the first key the shape lists that the answer carries and ends
+with the mapping's last line; no ``` line anywhere:
 
-```yaml
-implements:                    # every candidate that governs; omit the key only if none do
-  - <identity>
-notes:                        # omit when empty; where they land is the caller's rule
-  - note: <divergence or out-of-candidates need, stated so the caller can act>
-    class: <compound | blocking | unstated | underdetermined | remainder | advisory>
-    criterion: <the criterion verbatim>
-                             # required when class is compound, forbidden otherwise
-    conditions: [<each condition the criterion states, standalone>]
-                             # required when class is compound, forbidden otherwise
-    fact: <the fact no node states, phrased standalone — no reference to this task or its cut>
-                             # required when class is unstated, forbidden otherwise
-    passes: <the implementation that satisfies every criterion as written and the specification refuses>
-                             # required when class is underdetermined, forbidden otherwise
-    belongs: <the task or the act the unreached clause belongs to>
-                             # required when class is remainder, forbidden otherwise
-```
+    implements:                    # every candidate that governs; omit the key only if none do
+      - <identity>
+    notes:                        # omit when empty; where they land is the caller's rule
+      - note: <divergence or out-of-candidates need, stated so the caller can act>
+        class: <compound | blocking | unstated | underdetermined | remainder | advisory>
+        criterion: <the criterion verbatim>
+                                 # required when class is compound, forbidden otherwise
+        conditions: [<each condition the criterion states, standalone>]
+                                 # required when class is compound, forbidden otherwise
+        fact: <the fact no node states, phrased standalone — no reference to this task or its cut>
+                                 # required when class is unstated, forbidden otherwise
+        passes: <the implementation that satisfies every criterion as written and the specification refuses>
+                                 # required when class is underdetermined, forbidden otherwise
+        belongs: <the task or the act the unreached clause belongs to>
+                                 # required when class is remainder, forbidden otherwise
 
-Return the mapping as plain YAML text — the fence above shows the shape and is not part of
+Return the mapping as plain YAML text — the block above shows the shape and is not part of
 the return.
 
 The caller composes the task file with `implements` exactly as returned, and the plan
