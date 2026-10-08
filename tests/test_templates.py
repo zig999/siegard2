@@ -62,14 +62,14 @@ def test_the_template_declares_every_field_its_contract_requires(template, contr
         f"copied from it starts invalid"
 
 
-@pytest.mark.parametrize("template,shipped", [
-    ("agent.md", "src/claude/agents"),
-    ("skill.md", "src/claude/skills"),
+@pytest.mark.parametrize("template,shipped,pattern", [
+    ("agent.md", "src/claude/agents", "*.md"),
+    ("skill.md", "src/claude/skills", "*/SKILL.md"),
 ])
-def test_the_template_declares_what_every_shipped_artifact_declares(template, shipped):
+def test_the_template_declares_what_every_shipped_artifact_declares(template, shipped, pattern):
     """A field every shipped artifact carries and the template omits is a field the next artifact
     will be missing. `effort` was exactly that for both templates."""
-    paths = sorted((REPO / shipped).rglob("*.md"))
+    paths = sorted((REPO / shipped).glob(pattern))
     assert paths, f"{shipped} ships nothing; the guard lost its subject"
     universal = set.intersection(*(
         set(yaml.safe_load(FENCE.match(p.read_text(encoding="utf-8")).group(1)))

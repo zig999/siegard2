@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/clarified-request.json",
+  "title": "Clarified request",
+  "description": "The instruction /clarify-request hands the operator: one prompt, written as sections. Each section opens with its name in capitals and a colon at the start of a line; its content is the lines after it, bullets or plain, up to the next section. bin/clarify.py parses a prompt into one array of lines per section and holds it to this schema; the canonical order is the order `properties` declares, and a section out of that order is refused. A section with no content is refused: an empty section is a statement that nothing was decided, and absence says that. Only sections that carry execution-relevant content appear.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "MODE",
+    "TASK"
+  ],
+  "properties": {
+    "MODE": {
+      "$ref": "#/$defs/mode",
+      "description": "What the instruction authorizes, exactly one value. The mode is read from the operator's words and never raised: an analysis request is never promoted to a change, nor a plan to an implementation. A request stating both an analysis and a change takes the more permissive value its parts state. ANALYZE: investigate, explain, diagnose, review, compare, validate; no file of the project is modified, and a command that only observes (an existing test suite, a linter, a read-only query) is within it. PLAN: propose a solution or a plan; the project is not modified. IMPLEMENT: change the project within the clarified scope. IMPLEMENT_AND_VALIDATE: change the project and verify the change by tests, checks, build, lint or a run."
+    },
+    "TASK": {
+      "$ref": "#/$defs/lines",
+      "description": "The operation the instruction performs, one operational verb per line, in the operator's order. Names the target. A conversational verb is replaced by the operational one it means."
+    },
+    "CONTEXT": {
+      "$ref": "#/$defs/lines",
+      "description": "Only the facts that change what is executed: decisions made earlier, the state a reference points at. Never the conversation itself."
+    },
+    "OBJECTIVE": {
+      "$ref": "#/$defs/lines",
+      "description": "The end state, where TASK alone does not state the outcome."
+    },
+    "SCOPE": {
+      "$ref": "#/$defs/lines",
+      "description": "The boundary of what is affected: a module, files, an interface, a workflow."
+    },
+    "REQUIREMENTS": {
+      "$ref": "#/$defs/lines",
+      "description": "Conditions that must hold when done, one per line, each from the operator's words or a decision the operator took in the clarification."
+    },
+    "CONSTRAINTS": {
+      "$ref": "#/$defs/lines",
+      "description": "What must be preserved or must not happen, one per line, each stated by the operator, taken as a decision in the clarification, or the bound a read-only mode carries. A line that restates behavior the executor has by default is not a constraint."
+    },
+    "ASSUMPTIONS": {
+      "$ref": "#/$defs/lines",
+      "description": "A reading the clarification took without asking because it was reversible or settled by the project, and that changes what is executed. Each line names its basis: a path with a line, or the operator's own words. The operator reads this section to audit the prompt; a reading absent from it was not taken."
+    },
+    "DISCOVERY": {
+      "$ref": "#/$defs/lines",
+      "description": "Facts the executor resolves from the project before acting, so that nobody is asked what the project already answers."
+    },
+    "PROCESS": {
+      "$ref": "#/$defs/lines",
+      "description": "A required order of work, only where order changes the result."
+    },
+    "VALIDATION": {
+      "$ref": "#/$defs/lines",
+      "description": "How completion is verified."
+    },
+    "OUTPUT": {
+      "$ref": "#/$defs/lines",
+      "description": "What the executor returns, and in what shape."
+    }
+  },
+  "$defs": {
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "mode": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "enum": [
+          "ANALYZE",
+          "PLAN",
+          "IMPLEMENT",
+          "IMPLEMENT_AND_VALIDATE"
+        ]
+      }
+    }
+  },
+  "x-read-only-modes": {
+    "values": [
+      "ANALYZE",
+      "PLAN"
+    ],
+    "constraint-prefixes": [
+      "Do not modify the project",
+      "Do not modify code"
+    ],
+    "description": "A mode that authorizes no change carries the bound in CONSTRAINTS: at least one line beginning with one of the prefixes, each of which bounds the whole project. A line bounding less (`Do not modify the CSS file`) leaves the rest of the project authorized. A mode that authorizes a change carries none of them: the prompt is read by an executor that has no other way to learn the mode's meaning, and a bound contradicting the mode is a prompt it cannot follow."
+  }
+}

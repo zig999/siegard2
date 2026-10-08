@@ -62,6 +62,8 @@ SKILLS = {
                "delegates": ["domain-surveyor", "test-intent-reader"]},
     "adopt-scope": {"contract": "schemas/ledger.json", "validator": "bin/trace.py",
                     "delegates": []},
+    "clarify-request": {"contract": "schemas/clarified-request.json",
+                        "validator": "bin/clarify.py", "delegates": []},
 }
 
 
@@ -138,6 +140,10 @@ MODEL_MAY_REACH = {
     # The one read it makes outside the project is gated inside the skill, by a probe the
     # human sees before it happens, not by who may invoke it.
     "siegard-telemetry": True,
+    # Closed: the input is the person's own request, and only they can say it needs rewriting. A
+    # session that rewrote requests unasked would be deciding an input that was never its to
+    # assert, and would put its reading between the person and what they said.
+    "clarify-request": False,
 }
 
 
