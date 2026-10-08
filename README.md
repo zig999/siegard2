@@ -14,6 +14,20 @@ Siegard as a plugin and stays current.
 
 Run these inside a Claude Code session opened at the consumer project's root.
 
+### 0. Python on the machine
+
+The skills run the plugin's scripts with `python3`. Every script states its own dependencies in
+its `--help`; across them that is PyYAML and jsonschema, and `run.py` needs nothing beyond the
+standard library. Where PyYAML was built with libyaml the scripts read YAML through it, and
+otherwise through PyYAML's own scanner: the output is the same, the speed is not. Over a project
+whose `siegard-reconcile/` holds megabytes of records, `trace.py --owed` and `--convergence` — and
+so `/siegard:siegard-status` — answer in a second or two with libyaml and wait tens of seconds
+without it. This prints whether the interpreter has it:
+
+```sh
+python3 -c "import yaml; print(yaml.__with_libyaml__)"
+```
+
 ### 1. Add the marketplace (once per machine)
 
 ```
@@ -76,6 +90,22 @@ route a change takes, and what is never hand-edited or invented — and nothing 
 script states in its own file. `/plugin` lists the skills; each script's `--help` states what it
 does.
 
+Three of those rules shape how you work with a session, so expect them:
+
+- **A session commits only what your own words in that session authorized, and only what the
+  skill it invoked wrote.** Say "commit", or state the whole route end to end in your ask. A
+  summary of an earlier context is not an authorization: after a compaction, a resumed route asks
+  again before its next commit. Each commit is pathspec-scoped, one per invocation — never a
+  branch, a push, a stash or a rewrite.
+- **A question about where the project stands is answered from disk.** Ask it, and the session
+  runs `/siegard:siegard-status` (the whole project) or `/siegard:siegard-progress` (one
+  initiative) rather than recalling the conversation; the framework's version is `project.py`'s
+  answer.
+- **A report opens with what needs you, and a finding stops nothing.** Its first lines are what
+  must be done before a named step runs, what you alone decide, and what it suggests and why — in
+  plain words. A review's findings are evidence for you to route; only a stop the skill's own file
+  names ends a run.
+
 A project that placed an earlier release's rules at its root as `CLAUDE.md` hears about it: the
 first thing every skill runs is `project.py`, and where the root file carries a Siegard marker
 line it prints one `rules:` line asking for the Siegard portion to be removed, keeping anything
@@ -103,7 +133,11 @@ say; three of its fields are worth deciding before any work starts:
 - **`standard`, one registry per target.** `/siegard:siegard-standard` writes a target's registry
   from the project's own configuration; a project with more than one target declares `standard`
   keyed by target. This repository's `src/standards/` holds worked registries that do not ship —
-  read them in a clone, as with `tools/` below.
+  read them in a clone, as with `tools/` below. Every delivery record pins the registry it was
+  delivered under, and `deliver.py --outstanding` — so `/siegard:siegard-status`,
+  `/siegard:siegard-progress` and `/siegard:deliver-scope` — lists every record pinning none, or
+  another than the one `siegard.json` declares for its target. Declared late, a registry leaves
+  every record delivered before it on that list for good: a fact, never a refusal.
 - **`tests`, per target.** Declare which files are a target's tests before the first survey:
   a declared test is never read as source, and `--untraced` counts it `uncertified` until a
   certification names it.
@@ -116,6 +150,17 @@ say; three of its fields are worth deciding before any work starts:
 - `/siegard:siegard-status` runs with no `rules:` line — no copy of the rules sits at the root.
 - Skills are invoked as `/siegard:<name>`; the bare form (`/analyse`, `/plan-work`, …) also works
   where no other plugin claims the name.
+- Four skills are closed to the model and run only when you type them: `siegard-config`,
+  `siegard-standard`, `siegard-archive` and `clarify-request`. A skill that needs one of them
+  hands you the invocation ready to paste.
+
+`/siegard:clarify-request <your request>` is the one entry point that executes nothing. Given a
+request in your own words, it reads the project to settle what "this" or "the standard" points
+at, asks you only the decisions that are yours — at most twice — and hands back one instruction
+held to `schemas/clarified-request.json`: a mode (`ANALYZE`, `PLAN`, `OPERATE`, `IMPLEMENT`,
+`IMPLEMENT_AND_VALIDATE`), the task, and every reading it took without asking listed under
+`ASSUMPTIONS`. You then send that instruction, or say what to change. It does not rewrite a
+request that is already a skill invocation.
 
 ## Adopting an existing project
 
@@ -139,7 +184,10 @@ time, after steps 1–6 above:
    judgment (configuration, wiring) named as outside. Each file's judge reads the candidates that
    file's own facts reached; each cleared node is bound to the files that hold its fact; the
    first adoption writes `siegard-trace.json`. Tests you know assert a node's own condition may
-   be offered as certifications in the same run.
+   be offered as certifications in the same run. The judges run in waves of at most twenty, the
+   harness's ceiling on agents running at once, and a wave ends when `trace.py --save-return`
+   prints `0 pending` for it. A launch the harness refuses anyway is a wave cut too wide: the
+   report hands `trace.py --stage … --concurrency <fewer>` ready to run again.
 5. **Read what it hands back.** A candidate no file holds, a `contradicts` and an `unstated`
    finding all go back to `/siegard:analyse`. A `restates` finding is a comment saying a node's
    fact: remove every comment the file carries, not only the one cited, and reconcile the file
@@ -169,6 +217,15 @@ before, and the first review that reaches an unsurveyed file pays for it.
 After `/reload-plugins`, the skills, the rules and the hooks are the new version together: the
 rules travel inside the plugin, and the next session or agent start places the current ones.
 Nothing at the project root needs to change.
+
+A record already on disk is read as the contract it names. A reconciliation record keeps its
+`siegard-reconcile/<n>` and a telemetry report its `siegard-telemetry/<n>`; neither is rewritten
+to the newer shape, and a field a newer version adds is absent from an older record, which is not
+a count of zero. Where a newer version counts a figure differently, its schema says which earlier
+figures it is not comparable to: under `siegard-telemetry/12` a repeated agent is the same prompt
+handed to the same agent type, and an `/11` report's repeats — the same description — are not
+that count. A report run from inside a linked git worktree counts that worktree's sessions alone
+and names it under `harness.worktree`.
 
 ### Across a major
 
