@@ -683,11 +683,12 @@ def standard_of(nid: str | None, front: dict, target: Path,
                 validator) -> tuple[dict | None, str | None, list[str]]:
     """The standard a record read, from the project's own path in the target source root. The pin
     is a citation of what was read when the record was written — not a standing guarantee this
-    resolves: like a task's `implements`, it is never mechanically reverified against the file as
-    it stands today, so a project free to evolve its own registry cannot retroactively invalidate
-    every record written against an earlier version of it. A citation that no longer resolves is
-    reported on its own terms — the registry moved on, in a way this script does not diagnose
-    further."""
+    resolves: like a task's `implements`, it is never reverified to refuse the record, so a
+    project free to evolve its own registry cannot retroactively invalidate every record written
+    against an earlier version of it. The one thing comparing the pin to the file as it stands
+    decides is which steps the record owes a run of — `registry_moved`, read by
+    `owed_run_problems`. A citation that no longer resolves is reported on its own terms — the
+    registry moved on, in a way this script does not diagnose further."""
     declared = front.get("standard")
     if not isinstance(declared, dict) or not isinstance(declared.get("at"), str):
         return None, None, []  # the schema already reported the shape
@@ -718,6 +719,18 @@ def standard_of(nid: str | None, front: dict, target: Path,
                     f"that is spelled `{corrected}`"]
     data, found = load_standard(path, validator)
     return data, at, [f"{lead}{at}: {p}" for p in found]
+
+
+def registry_moved(front: dict, target: Path) -> bool:
+    """Whether the registry a record pins has changed since the record was written: the pin the
+    record carries is not the pin of the file as it stands. A record that pins nothing, or a
+    file that is not there, has not moved — the shape checks and `standard_of` report those."""
+    declared = front.get("standard")
+    if not isinstance(declared, dict) or not isinstance(declared.get("at"), str) \
+            or not isinstance(declared.get("pin"), str) or Path(declared["at"]).is_absolute():
+        return False
+    path = target / declared["at"]
+    return path.is_file() and pin_of(path) != declared["pin"]
 
 
 def target_roots(target: Path) -> tuple[dict[str, Path], str | None]:
@@ -812,7 +825,7 @@ def record_standard_problems(nid: str, front: dict, root: Path, target: Path, va
         return problems
     rules = rules_of(data)
     problems += installed_problems(nid, front, data, at)
-    problems += owed_run_problems(nid, front, data, at, root, tfront)
+    problems += owed_run_problems(nid, front, data, at, root, tfront, target)
 
     for index, entry in enumerate(listed(front, "divergences")):
         if not isinstance(entry, dict) or not isinstance(entry.get("cites"), str):
@@ -1024,7 +1037,7 @@ def owed_steps(front: dict, data: dict, tfront: dict) -> list[dict]:
 
 
 def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
-                      tfront: dict) -> list[str]:
+                      tfront: dict, target: Path) -> list[str]:
     """Whether a record captured the run its kind owes, and whether that run covered it — every
     owed step passed. A registry declaring how the project is installed and checked is a registry
     whose delivery could be run, and a delivery that could be run and was not is the state this
@@ -1035,9 +1048,18 @@ def owed_run_problems(nid: str, front: dict, data: dict, at: str, root: Path,
     same source nobody executed, declared executed. Nor is the step's name: a run whose `lint`
     passed under a command that is not the registry's `lint` decided nothing that rule states,
     and a run from another directory decided it over another tree. `held_run_problems` holds
-    those two, for a delivery's run and a review's alike."""
+    those two, for a delivery's run and a review's alike.
+
+    One record owes nothing here: one whose registry moved since it was written. The pin is a
+    citation of what the record read, and the steps that version declared are the steps the
+    record was held to; the file as it stands may declare more, and «a step declared after a
+    record was written is owed by the records written after it» (SPEC-007 R3). Holding the
+    earlier records to it would refuse every record of a project the moment it declares how it
+    is checked — the one declaration this arrangement exists to invite — and the project's only
+    way past the refusal would be to withdraw the declaration. `standards_held` names the
+    records that pin an earlier version, so the exemption is read and never silent."""
     owed = owed_steps(front, data, tfront)
-    if not owed:
+    if not owed or registry_moved(front, target):
         return []
 
     named = ", ".join(str(c.get("step")) for c in owed)
@@ -1207,12 +1229,14 @@ def review_run_problems(nid: str, front: dict, target: Path, validator, root: Pa
     every step the registry declares other than `prepare`: a green run that skipped one proved
     nothing about the rules that step decides. A red run is held to what it ran, because the step
     it failed at is where the run stopped, and the failures pass is what reads it. The commands
-    and the directory are `run_holding_problems`', for a review's run as for a delivery's."""
+    and the directory are `run_holding_problems`', for a review's run as for a delivery's. A
+    registry that moved since the review was written owes it nothing, as `owed_run_problems`
+    states for a delivery's record."""
     data, at, _ = standard_of(nid, front, target, validator)
     if data is None:
         return []  # review_standard_problems reports the registry that does not resolve
     owed = phase_steps([c for c in listed(data, "commands") if isinstance(c, dict)], "suite")
-    if not owed:
+    if not owed or registry_moved(front, target):
         return []
     named = ", ".join(str(c.get("step")) for c in owed)
     where = front.get("run")
@@ -2317,7 +2341,11 @@ def standards_held(nodes: dict[str, dict], target: Path) -> list[str]:
     exists to make visible, and so is a record that pins none where the project declares one — a
     statement and never a refusal, because an invocation may name another registry on purpose and
     a record written before a declaration changed is not wrong for having been written. The far
-    end is named: the first three records, so a reader can open them."""
+    end is named: the first three records, so a reader can open them. A record pinning the
+    declared registry at an earlier version is named too: the run it owes is the one that
+    version declared, which `owed_run_problems` does not hold it past, and a reader who finds no
+    refusal over a record that captured no run finds here why."""
+    roots, _ = target_roots(target)
     pinned: dict[tuple[str, str], int] = {}
     for node in nodes.values():
         declared = node["front"].get("standard")
@@ -2336,6 +2364,7 @@ def standards_held(nodes: dict[str, dict], target: Path) -> list[str]:
             continue
         none: list[str] = []
         other: dict[str, list[str]] = {}
+        earlier: list[str] = []
         for nid, node in sorted(nodes.items()):
             front = node["front"]
             if node["kind"] not in ("implementation", "proof", "review") \
@@ -2347,6 +2376,13 @@ def standards_held(nodes: dict[str, dict], target: Path) -> list[str]:
                 none.append(nid)
             elif at != declared_at:
                 other.setdefault(at, []).append(nid)
+            elif key in roots and registry_moved(front, roots[key]):
+                earlier.append(nid)
+        if earlier:
+            lines.append(f"target {key}: {len(earlier)} record(s) pin an earlier version of "
+                         f"{declared_at} ({said(earlier)}); each owes the run that version "
+                         f"declared, and a step declared since is owed by the records written "
+                         f"since")
         if none:
             lines.append(f"target {key}: {len(none)} record(s) pin no standard while siegard.json "
                          f"declares {declared_at} ({said(none)}); what they hold was not written "

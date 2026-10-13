@@ -1601,6 +1601,59 @@ def test_a_standard_that_declares_commands_is_owed_a_run(delivery, work, root, t
     said(problems_of(delivery, work, target, root), "captured no run")
 
 
+def without_commands() -> dict:
+    """The fixture registry before it declared how the project is checked: the same rules, none
+    of them decided by a tool, and no command."""
+    from conftest import STANDARD
+    earlier = {k: v for k, v in STANDARD.items() if k not in ("commands", "dependencies")}
+    earlier["rules"] = [r for r in STANDARD["rules"] if r["decided_by"] == "reading"]
+    return earlier
+
+
+def test_a_step_declared_after_the_record_was_written_is_not_owed_by_it(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    """SPEC-007 R3. A record pins the registry it read; a step the registry declares later is
+    owed by the records written later. Holding the earlier ones to it would refuse every record
+    of a project the moment it declares how it is checked, and the project's only way past the
+    refusal would be to withdraw the declaration."""
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["standard"] = write_standard(without_commands())
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    assert problems_of(delivery, work, target, root) == [], "no command declared, nothing owed"
+
+    write_standard()  # the registry gains install, lint and test; the record's pin stays
+    problems = problems_of(delivery, work, target, root)
+    assert not any("captured no run" in p for p in problems), problems
+
+
+def test_a_record_written_after_the_step_was_declared_still_owes_it(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    """The exemption is the pin's, not the registry's: a record pinning the registry as it stands
+    is held to every step it declares."""
+    write_standard(without_commands())
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["standard"] = write_standard()
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, target, root), "captured no run")
+
+
+def test_the_receipt_names_the_records_pinning_an_earlier_registry(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    """A record owed nothing because its registry moved is named, so the absence of a refusal
+    over a record that captured no run is read and never silent."""
+    front = json_front(delivery, "implementation/checkout/record-order")
+    front["standard"] = write_standard(without_commands())
+    write_delivery("implementation/checkout/record-order", front)
+    repin_proof(delivery, write_delivery)
+    write_standard()
+    report = declared_report(delivery, work, root, target, "standard.yaml")
+    assert ("target app: 1 record(s) pin an earlier version of standard.yaml "
+            "(implementation/checkout/record-order)") in report, report
+    assert "owes the run that version declared" in report
+
+
 def test_what_each_kind_owes_differs_by_when_it_is_written(delivery, work, root, target, sound_delivery,
                                                            write_delivery, write_standard,
                                                            run_dir):
@@ -2246,6 +2299,17 @@ def test_a_review_over_a_registry_declaring_commands_owes_a_run(delivery, work, 
     write_delivery("review/first", standard_review(work, root, write_standard()))
     said(problems_of(delivery, work, target, root),
          "declares the step(s) install, lint, test and this review captured no run")
+
+
+def test_a_review_written_before_the_registry_declared_its_steps_owes_no_run(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard):
+    """SPEC-007 R3 holds a review as it holds a delivery's record: the steps it is held to are
+    the ones the registry declared when the review was written."""
+    write_delivery("review/first", standard_review(work, root, write_standard(without_commands())))
+    assert problems_of(delivery, work, target, root) == []
+    write_standard()
+    problems = problems_of(delivery, work, target, root)
+    assert not any("captured no run" in p for p in problems), problems
 
 
 def test_a_review_records_its_green_run_and_the_failures_pass_says_it_passed(

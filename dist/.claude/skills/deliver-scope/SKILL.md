@@ -103,7 +103,7 @@ Two rules bind every step, and they are what this skill is:
 
   run fresh before each delivery, never a reading of the plan or a memory of the last run. A stop
   the script reports is this skill's stop. The lines it prints of records pinning no standard, or
-  another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — are relayed in the report below, verbatim, from the last run that printed them; they route nothing here.
+  another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — or an earlier version of it — «a step declared after a record was written is owed by the records written after it» (SPEC-007 R3) — are relayed in the report below, verbatim, from the last run that printed them; they route nothing here.
 
 The steps:
 

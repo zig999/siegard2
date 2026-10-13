@@ -47,7 +47,7 @@ one's output, so a round trip per command pays the wait once per command instead
    - `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root>/<slug> <work-root>/<slug> <target-source-root> <specification-root>`
 
    Quote every line that report prints of records pinning no standard, or another than the one
-   `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — as a fact, never as a step skipped.
+   `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — or an earlier version of it — «a step declared after a record was written is owed by the records written after it» (SPEC-007 R3) — as a fact, never as a step skipped.
 
    Where `targets` declares more than one key, run the second command once per target and say
    which one each answer is over: an initiative delivers into a target the plan does not record,

@@ -56,7 +56,7 @@ Everything below is read-only.
    record, and why. A task `plan.json` lists that this command never names is done — implemented,
    and its own proof stands; the command falls silent about it by design, so its absence from the
    output is itself the fact. Beside the tasks it also prints the records that pin no standard,
-   or another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — quote every such line beneath the table, as a fact about the records and never as a row's
+   or another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — or an earlier version of it — «a step declared after a record was written is owed by the records written after it» (SPEC-007 R3) — quote every such line beneath the table, as a fact about the records and never as a row's
    status: a record's standard is not a task's state, and the table derives nothing from it.
 
 ## Deriving each row
