@@ -158,8 +158,9 @@ The steps:
    `deliver-scope <slug>: measure`. A probe that cannot read is a line in the report, never a
    stop.
 
-**The orchestration log.** After each step, append one line to `orchestration.md` at the delivery
-root — what was invoked, the commit that followed by its hash, and the outcome, one sentence per
+**The orchestration log.** After each step, append one line to `orchestration.md` at the
+initiative's delivery root, `<delivery_root>/<slug>/` — never at `delivery_root` itself, where
+three initiatives' lines would read as one — what was invoked, the commit that followed by its hash, and the outcome, one sentence per
 line. It is a marker, never a node, exactly as `closure.md` is: no contract holds it, the
 validator keeps it by name at the delivery root the way `plan.py` keeps `closure.md` at the work
 root, and it is the one place the run's own decisions —
@@ -170,8 +171,11 @@ conversation that made them.
 
 Every stop below ends the run with the doors the stopping report already carried, relayed
 verbatim, and with the log's last line naming it — and, where that report recommended a door, one
-line after it, «`recommended: <door> — <criterion> — <deciding fact>`» (SPEC-006 R5), copied from
-the report and never composed here. None is worked around, and none is retried:
+line after it and on a line of its own, «`recommended: <door> — <criterion> — <deciding fact>`»
+(SPEC-006 R5): its door and deciding fact copied from the report, and its criterion the name the
+handoff's specification gives the ground the report stated in plain words — never a
+recommendation the report did not make.
+None is worked around, and none is retried:
 
 - a `BLOCKING, from the specification —` note standing on every task the set has left;
 - a specification silence — the `/analyse` invocation is the human's to take, always;
@@ -201,7 +205,8 @@ of which passes did not run; which nodes this run left decided by a test, which 
 were refused again and with what remainder, and — for any testable remainder over a node no task
 of this run implements — `trace.py --owed`'s closing invocation, relayed; the telemetry report the
 measure wrote, by path, or the line saying why it could not read; what ended the run, where it ended early, with the stopping report's
-doors verbatim and its recommendation where it made one; and what this skill never did — no `/analyse`, no repair of any finding, no step
+doors verbatim and its recommendation where it made one, and whether the report called it a
+judgment; and what this skill never did — no `/analyse`, no repair of any finding, no step
 beyond the route. «A finding stops nothing» (SPEC-006 R4): a finding the review relayed is
 reported, and what ended the run is a stop a step's own file names. Where this report says a
 step proceeded, it lists the `--outstanding` run and the checks the step ran, with their output

@@ -83,7 +83,11 @@ relays a report naming one door over the others writes it to the run's `orchestr
 line, «`recommended: <door> — <criterion> — <deciding fact>`» (SPEC-006 R5). Every such line under
 the delivery root is read, with the commit that landed it and the first commit after it touching
 that initiative's delivery or work root. Which door was then taken is never computed: the commit
-that followed is the evidence, and reading it is a person's. Each line is `derived` or `judged`
+that followed is the evidence, and reading it is a person's. A log an entry point left at the
+delivery root itself, rather than at an initiative's, is read too, each line under the initiative
+its landing commit's subject names. A `recommended:` that does not open its line is named among
+the lines that do not parse, never skipped: a recommendation nothing counts is the one the
+validation cannot read. Each line is `derived` or `judged`
 by the criterion it names — a fact on disk decided it, or a rung of the ladder where none did —
 because the two are read apart: a judged recommendation the person read as not taken is the
 reading that narrows the grant back to derived ones.
@@ -1502,6 +1506,17 @@ CRITERIA = DERIVED + JUDGED
 RECOMMENDED = re.compile(r"^recommended: (?P<door>.+?) — (?P<criterion>"
                          + "|".join(CRITERIA) + r") — (?P<fact>.+)$")
 UNCOMMITTED = "0" * 40
+RUN_SUBJECT = re.compile(r"^(?:deliver|adopt)-scope (?P<slug>\S+):")
+
+
+def run_named_by(home: Path, digest: str) -> str:
+    """The initiative a commit's subject names, as an orchestrating entry point writes it —
+    `deliver-scope <slug>: …` — or "" where it names none."""
+    shown = git(home, "log", "-1", "--format=%s", digest)
+    if shown is None or shown.returncode != 0:
+        return ""
+    match = RUN_SUBJECT.match(shown.stdout.strip())
+    return match.group("slug") if match else ""
 
 
 def landing_of(home: Path, log: Path) -> dict[int, tuple[str, datetime] | None]:
@@ -1545,26 +1560,31 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
     malformed: list[dict] = []
     logs = sorted(delivery_root.glob(f"*/{deliver.ORCHESTRATION_FILE}")) \
         if delivery_root is not None and delivery_root.is_dir() else []
+    if delivery_root is not None and (delivery_root / deliver.ORCHESTRATION_FILE).is_file():
+        logs.append(delivery_root / deliver.ORCHESTRATION_FILE)
     for log in logs:
-        slug = log.parent.name
+        at_root = log.parent == delivery_root
         try:
             text = log.read_text(encoding="utf-8")
         except OSError:
             continue
         landed = landing_of(home, log)
-        roots = [log.parent] + ([work_root / slug] if work_root is not None else [])
         for number, raw in enumerate(text.splitlines(), start=1):
             line = raw.strip()
             if line.startswith("- "):
                 line = line[2:].strip()
             line = line.strip("`").strip()
-            if not line.startswith("recommended:"):
+            if "recommended:" not in line:
                 continue
             landing = landed.get(number)
             if landing is not None and not (since <= landing[1] <= until):
                 continue
+            slug = (run_named_by(home, landing[0]) if landing else "") if at_root \
+                else log.parent.name
+            roots = ([delivery_root / slug] if slug else [log.parent]) \
+                + ([work_root / slug] if work_root is not None and slug else [])
             where = {"slug": slug, "log": str(log), "line": number}
-            match = RECOMMENDED.match(line)
+            match = RECOMMENDED.match(line) if line.startswith("recommended:") else None
             if match is None:
                 malformed.append({**where, "text": line})
                 continue

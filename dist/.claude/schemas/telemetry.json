@@ -581,7 +581,7 @@
               "text": { "type": "string" }
             }
           },
-          "description": "Every line opening `recommended:` that does not parse as door, criterion and fact — never counted, and named so the log that wrote it can be corrected."
+          "description": "Every line holding `recommended:` that does not parse as door, criterion and fact, or that carries it after other text — never counted, and named so the log that wrote it can be corrected. A line read from a log at the delivery root itself carries the initiative its landing commit names, or an empty slug where that commit names none."
         }
       },
       "description": "What the handoffs recorded as recommended, read from each `orchestration.md` under the delivery root. A recommendation made where no orchestration log exists is in its report alone and is not here."

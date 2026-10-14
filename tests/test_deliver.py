@@ -1623,6 +1623,7 @@ def test_a_step_declared_after_the_record_was_written_is_not_owed_by_it(
     assert problems_of(delivery, work, target, root) == [], "no command declared, nothing owed"
 
     write_standard()  # the registry gains install, lint and test; the record's pin stays
+    deliver._STANDARDS.clear()  # one invocation reads a registry once; this is a second one
     problems = problems_of(delivery, work, target, root)
     assert not any("captured no run" in p for p in problems), problems
 
@@ -1648,10 +1649,61 @@ def test_the_receipt_names_the_records_pinning_an_earlier_registry(
     write_delivery("implementation/checkout/record-order", front)
     repin_proof(delivery, write_delivery)
     write_standard()
+    deliver._STANDARDS.clear()
     report = declared_report(delivery, work, root, target, "standard.yaml")
     assert ("target app: 1 record(s) pin an earlier version of standard.yaml "
             "(implementation/checkout/record-order)") in report, report
     assert "owes the run that version declared" in report
+
+
+def with_lint(command: str) -> dict:
+    """The fixture registry with its `lint` step declared under another command."""
+    import copy
+    later = copy.deepcopy(STANDARD)
+    for step in later["commands"]:
+        if step["step"] == "lint":
+            step["command"] = command
+    return later
+
+
+def test_a_command_changed_after_the_record_was_written_is_not_held_against_its_run(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard, run_dir):
+    """SPEC-007 R3 over a command rather than a step. The plan is live, so a finding would be a
+    refusal, never a receipt."""
+    run_dir("passed", "build")
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    write_standard(with_lint("eslint ."))
+    deliver._STANDARDS.clear()
+    problems = problems_of(delivery, work, target, root)
+    assert not any("where the registry declares" in p for p in problems), problems
+
+
+def test_a_record_pinning_the_registry_as_it_stands_is_held_to_its_commands(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard, run_dir):
+    run_dir("passed", "build")
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(with_lint("eslint .")),
+                             run="run/build"))
+    repin_proof(delivery, write_delivery)
+    said(problems_of(delivery, work, target, root),
+         "run run/build step lint ran `true` where the registry declares `eslint .`")
+
+
+def test_a_moved_registry_still_holds_the_run_to_the_target(
+        delivery, work, root, target, sound_delivery, write_delivery, write_standard, run_dir,
+        tmp_path):
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    run_dir("passed", "build", cwd=elsewhere)
+    write_delivery("implementation/checkout/record-order",
+                   disclosed(delivery, work, write_standard(), run="run/build"))
+    repin_proof(delivery, write_delivery)
+    write_standard(with_lint("eslint ."))
+    deliver._STANDARDS.clear()
+    said(problems_of(delivery, work, target, root),
+         f"run run/build ran in {elsewhere}, not the target")
 
 
 def test_what_each_kind_owes_differs_by_when_it_is_written(delivery, work, root, target, sound_delivery,
@@ -2308,6 +2360,7 @@ def test_a_review_written_before_the_registry_declared_its_steps_owes_no_run(
     write_delivery("review/first", standard_review(work, root, write_standard(without_commands())))
     assert problems_of(delivery, work, target, root) == []
     write_standard()
+    deliver._STANDARDS.clear()
     problems = problems_of(delivery, work, target, root)
     assert not any("captured no run" in p for p in problems), problems
 

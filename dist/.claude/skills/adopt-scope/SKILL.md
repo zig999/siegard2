@@ -143,8 +143,11 @@ stop that ended it — survive the conversation that made them.
 
 Every stop below ends the run with the doors the stopping report already carried, relayed
 verbatim, and with the log's last line naming it — and, where that report recommended a door, one
-line after it, «`recommended: <door> — <criterion> — <deciding fact>`» (SPEC-006 R5), copied from
-the report and never composed here. None is worked around, and none is retried:
+line after it and on a line of its own, «`recommended: <door> — <criterion> — <deciding fact>`»
+(SPEC-006 R5): its door and deciding fact copied from the report, and its criterion the name the
+handoff's specification gives the ground the report stated in plain words — never a
+recommendation the report did not make.
+None is worked around, and none is retried:
 
 - a material file `--survey` refuses after the one re-delegation `/survey` makes;
 - a specification that does not hold together, or a ledger `--ledger` still refuses after the

@@ -1246,6 +1246,38 @@ def test_a_recommendation_landed_outside_the_window_is_not_counted(consumer):
     assert report["recommendations"]["emitted"] == 0
 
 
+def test_a_recommendation_after_other_text_is_named_and_never_counted(consumer):
+    """SPEC-006 Validation 2: a line that does not parse is named. A recommendation appended to a
+    step's own sentence is the one shape a log was found writing, and skipped it would be a
+    recommendation nothing counts."""
+    (consumer["home"] / "delivery/checkout/orchestration.md").write_text(
+        "deliver-scope checkout: stopped. recommended: /reconcile — precondition unmet — the note\n"
+        "the previous report recommended (in plain words) the corrective route\n",
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    recommendations = report["recommendations"]
+    assert recommendations["emitted"] == 0
+    assert [m["line"] for m in recommendations["malformed"]] == [1]
+
+
+def test_a_log_at_the_delivery_root_is_read_under_the_initiative_its_commit_names(consumer):
+    """A run that wrote its log at the delivery root itself, not at the initiative's, is still
+    read: the commit an orchestrating entry point makes names the initiative it ran."""
+    (consumer["home"] / "delivery/orchestration.md").write_text(
+        "recommended: /plan-work over checkout — already done — the note quoted\n",
+        encoding="utf-8")
+    landed = commit_at(consumer, "deliver-scope checkout: measure", "2026-08-20T11:10:00Z")
+    (consumer["home"] / "work/checkout/task/checkout/record-order.md").write_text(
+        "---\ntitle: t\nsummary: s\nobjective: o\ncriteria:\n- c\nimplements:\n- domain/x/a\n---\n"
+        "## What it is\nRe-planned.\n", encoding="utf-8")
+    followed = commit_at(consumer, "deliver-scope checkout: plan", "2026-08-20T11:20:00Z")
+    _, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    (line_,) = report["recommendations"]["lines"]
+    assert line_["slug"] == "checkout" and line_["landed_in"] == landed
+    assert line_["next_commit"]["hash"] == followed
+
+
 def test_no_orchestration_log_is_zero_recommendations_and_the_survey_root_is_never_read(consumer):
     survey = consumer["home"] / "siegard-survey/adopt/orchestration.md"
     survey.parent.mkdir(parents=True)

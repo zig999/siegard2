@@ -910,7 +910,7 @@ def ran_in_target(cwd: str, target: Path) -> bool:
 
 
 def held_run_problems(nid: str, where: str, owed: list[dict], at: str, root: Path,
-                      target: Path) -> list[str]:
+                      target: Path, moved: bool = False) -> list[str]:
     """One captured run against the registry's steps it owes: each step that passed did so under
     the command the registry declares for that name, and the whole run was in the target source
     root. Whether every owed step passed is the coverage check's, stated once there. A step the
@@ -921,13 +921,19 @@ def held_run_problems(nid: str, where: str, owed: list[dict], at: str, root: Pat
     exited 0, and the only thing that ties the two is the command string the runner wrote beside
     the outcome. A run from another directory is the same gap one level up: the registry's
     commands are stated against the target source root, and a step run from anywhere else
-    reports on a tree nobody delivered into."""
+    reports on a tree nobody delivered into.
+
+    A registry that `moved` since the record was written holds no command of it: «A record owes a
+    run of the steps the registry it pins declared, and nothing of a registry that moved since»
+    (SPEC-007 R3). The file as it stands is not the version the run was composed from, and no
+    other version is on disk to hold it to. The directory is held regardless — it is the
+    target's, and no registry moves it."""
     captured, _ = read_run(root / where / "run.json", where)
     if captured is None:
         return []  # record_run_problems and run_problems name the run that cannot be read
     passed = passed_steps_of(captured)
     found: list[str] = []
-    for command in owed:
+    for command in [] if moved else owed:
         name, declared = command.get("step"), command.get("command")
         step = passed.get(name)
         if step is None or not isinstance(declared, str):
@@ -975,7 +981,8 @@ def run_holding_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], ro
         else:
             continue
         if owed and (root / where / "run.json").is_file():
-            problems += held_run_problems(nid, where, owed, at, root, anchor)
+            problems += held_run_problems(nid, where, owed, at, root, anchor,
+                                          registry_moved(front, anchor))
     return problems
 
 

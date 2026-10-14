@@ -84,5 +84,5 @@ def test_the_run_ends_at_the_record_and_findings_are_never_acted_on():
 def test_the_orchestration_log_the_skill_names_is_the_one_the_validator_keeps():
     """The skill says the validator keeps `orchestration.md`; deliver.py is what keeps it. Two
     names for the marker, or a promise the code never held, is a run that ends at its own log."""
-    assert f"`{deliver.ORCHESTRATION_FILE}` at the delivery root" in SKILL
+    assert f"`{deliver.ORCHESTRATION_FILE}` at the initiative's delivery root, `<delivery_root>/<slug>/`" in SKILL
     assert "the validator keeps it" in SKILL
