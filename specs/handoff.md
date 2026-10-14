@@ -29,14 +29,21 @@ on 4 doors when asked: the 3 a fact decided held; the 1 over two readings was wr
 refused the corrective increment it led to. One `/plan-work` invocation ran only to stop at a
 precondition the report before it already held.
 
-Grounds for the form in R1, the last two sentences of R2, the last of R3 and R6: one consumer,
+Grounds for the form in R1, the excluded door and the judged ladder in R2, R3 as it now reads, and
+R6: one consumer,
 `newcatalog`, Siegard 5.19.0, four sessions read from their transcripts on 2026-10-13. Of 14
 handoffs that handed numbered doors, 8 said in so many words that no door was recommended or that
 the session had no preference, and 1 recommended one unasked; the person then asked which door
 was recommended 11 times, and answered 6 lists with a bare number. Of the 8, 2 handed a door its
 own entry point would have refused beside the one that remained, and 2 handed only doors every one
 of which a refusal or a rule excluded. The wording came from the skills' own sentences — "recommend
-neither", "no preference", "names none" — rendered into the session's language as written.
+neither", "no preference", "names none" — rendered into the session's language as written. Asked,
+the session recommended anyway, by judgment and unrecorded: of four such recommendations read
+across this consumer and the 2026-10-05 one, two held and two were wrong — one reverted two hours
+later, one over two readings of one piece of evidence that a binder then refused. The two wrong
+ones fell on a decision about cost and on two readings; the ladder takes the first and R3 keeps
+the second, with a contradiction and a finding's worth, where the blind decider of SPEC-001 R13
+and the reviewers' evidence-only returns already hold.
 
 ### Decided elsewhere, deliberately not restated here
 
@@ -53,8 +60,13 @@ neither", "no preference", "names none" — rendered into the session's language
 - **Door** — an act the handoff hands the person, an invocation ready to paste among them.
 - **Owed act** — a door without which a named step refuses to run; the handoff names that step.
 - **Offered act** — any other door.
-- **Criterion** — the closed reason a recommendation is made on, one of `precondition unmet`,
-  `rule violated`, `already done`, `reading paid twice`.
+- **Criterion** — the closed reason a recommendation is made on: for a derived recommendation one
+  of `precondition unmet`, `rule violated`, `already done`, `reading paid twice`; for a judged
+  one, a rung of the ladder — `keeps the route`, `serves the stated goal`, `can be undone`,
+  `costs less`.
+- **Derived recommendation** — one a fact on disk decides.
+- **Judged recommendation** — one no fact decides, made by the ladder over a choice of cost or of
+  reading the ask.
 
 ## Requirements
 
@@ -64,8 +76,8 @@ neither", "no preference", "names none" — rendered into the session's language
 
 ### What a handoff recommends
 
-- **R2** — A recommendation names the door, the criterion, the deciding fact and the reversing fact; without all four, none is named. The criterion is one of four and no other: `precondition unmet`, the door's own entry point refuses its inputs as the tree stands; `rule violated`, the door breaks a rule this framework states; `already done`, the door's work is already in the tree; `reading paid twice`, the same file read by two judgments, where of two readings over the same files the one owed once is named over the one paid twice — two invocations over different files are each paid once, and their order is a decision about cost. In the handoff the four are carried as sentences in the session's plain words — the door, why it, what on disk says so, what would change it — and the criterion's name is written as it reads here only in the log line R5 states; a label, a field name or the criterion's English name in the prose is the record showing through. The deciding fact and the reversing fact are each a fact on disk, named by path or quoted. A door excluded on one of the four grounds is said to be excluded, beside it and with its fact, and where one door remains it is the door recommended: a handoff that hands an excluded door as though it were open has failed to apply R2.
-- **R3** — No recommendation is made over the ask or its scope, over a scope and a specification that contradict, over two readings of one piece of evidence, over whether a finding matters or what route it deserves, or over a decision about cost. Each is the person's, and a handoff hands its doors and names none. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
+- **R2** — A recommendation names the door, the criterion, the deciding fact and the reversing fact; without all four, none is named. A derived recommendation's criterion is one of four and no other: `precondition unmet`, the door's own entry point refuses its inputs as the tree stands; `rule violated`, the door breaks a rule this framework states; `already done`, the door's work is already in the tree; `reading paid twice`, the same file read by two judgments, where of two readings over the same files the one owed once is named over the one paid twice — two invocations over different files are each paid once, and their order is a decision about cost. In the handoff the four are carried as sentences in the session's plain words — the door, why it, what on disk says so, what would change it — and the criterion's name is written as it reads here only in the log line R5 states; a label, a field name or the criterion's English name in the prose is the record showing through. The deciding fact and the reversing fact are each a fact on disk, named by path or quoted. A door excluded on one of the four grounds is said to be excluded, beside it and with its fact, and where one door remains it is the door recommended: a handoff that hands an excluded door as though it were open has failed to apply R2. Where no ground excludes a door and the choice left is one of cost or of reading the ask, the recommendation is judged: its criterion is the first rung of this ladder that separates the doors, and no other — `keeps the route`, the door holds to this framework's route, a step done by hand that this framework itself prescribes counting as the route; `serves the stated goal`, the door reaches a goal the ask or its intake states, quoted verbatim, and without the quotation this rung does not apply; `can be undone`, the door can be reversed where the other cannot; `costs less`, by a cost a command printed. Its deciding fact is the quotation or the printed figure, its reversing fact what would move the choice to another door, and the handoff says the recommendation is a judgment. One ladder serves every handoff; a skill applies it and never states another.
+- **R3** — No recommendation is made over a scope and a specification that contradict, over two readings of one piece of evidence, or over whether a finding matters or what route it deserves. Each is the person's, and a handoff hands its doors and names none. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
 
 ### What stops
 
@@ -74,7 +86,7 @@ neither", "no preference", "names none" — rendered into the session's language
 
 ### Where a recommendation is recorded
 
-- **R5** — An orchestrating entry point that relays a report carrying a recommendation writes it to the run's orchestration log as one line, `recommended: <door> — <criterion> — <deciding fact>`. A recommendation made where no orchestration log exists is in the report alone, and nothing counts it.
+- **R5** — An orchestrating entry point that relays a report carrying a recommendation writes it to the run's orchestration log as one line, `recommended: <door> — <criterion> — <deciding fact>`. A recommendation made where no orchestration log exists is in the report alone, and nothing counts it. The criterion's name says whether the recommendation was derived or judged; the line carries nothing else to say it.
 
 ## Validation required before acceptance
 
@@ -82,8 +94,14 @@ neither", "no preference", "names none" — rendered into the session's language
 2. Telemetry counts the `recommended:` lines of every orchestration log under the delivery root,
    by criterion, and names each line that does not parse; it computes nothing about which door
    was taken.
-3. A consumer initiative run under this specification is read for the lines it recorded: fewer
-   than two per ten handoffs that hand doors reverses R2, leaving R1, R3 and R4.
+3. A consumer initiative run under this specification is read for three things. Each handoff
+   that hands a door R2 excludes and carries no recommendation is a failure to apply R2, never
+   grounds to withdraw it. For each `recommended:` line a person reads its `next_commit` and
+   says whether that door was taken; judged recommendations read as not taken outnumbering
+   those read as taken narrows R2 back to derived recommendations alone. And telemetry's
+   `handoffs.questions` is reported beside each reading against its baseline — 7 questions after
+   26 reports on 2026-10-05, 11 asking for the recommendation after 14 handoffs that handed
+   doors on 2026-10-13 — and reverses nothing.
 
 ## Readings
 

@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.21.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.22.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -96,9 +96,12 @@ not. Three things hold that route:
   words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the
   criterion, the deciding fact and the reversing fact; without all four, none is named»
   (SPEC-006 R2): an option its own entry point would refuse, or that breaks a rule, is said to
-  be excluded, and the one that remains is recommended. The ask, a contradiction, two readings of
-  one piece of evidence, a finding's worth and a decision about cost are «the person's own
-  decision» (SPEC-006 R3): say so, what each option assumes is true and what would settle it.
+  be excluded, and the one that remains is recommended. Where nothing excludes one and the choice
+  is of cost or of reading the ask, recommend by judgment and say it is one: the option that
+  keeps this framework's route, then the one that reaches a goal the ask states, quoted, then
+  the one that can be undone, then the one that costs less as a command printed it. A
+  contradiction, two readings of one piece of evidence and a finding's worth are «the person's
+  own decision» (SPEC-006 R3): say so, what each option assumes is true and what would settle it.
   Where every option is excluded, «the opening says no door follows this framework's route»
   (SPEC-006 R6) and names the refusal or rule beside each.
   «A finding stops nothing» (SPEC-006 R4): a stop is named only where the skill's own file names

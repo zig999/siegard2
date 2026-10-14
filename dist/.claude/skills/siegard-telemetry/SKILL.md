@@ -92,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/12
+contract_version: siegard-telemetry/13
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -206,7 +206,9 @@ What each section holds:
   report, which is exactly the same question.
 
 - **13.** Every entry of `recommendations.lines`: initiative, log line, door, criterion, deciding
-  fact, the commit that landed it, and `next_commit` with its subject — and `by_criterion` whole.
+  fact, its kind, the commit that landed it, and `next_commit` with its subject — and
+  `by_criterion` and `by_kind` whole. A judged recommendation is read apart from a derived one:
+  whether judged ones were taken is the reading that keeps or narrows the grant.
   Whether the commit that followed took the door recommended is a reading, tagged `[judgment]`,
   never a count; a line no commit holds yet has no follower, said as such. Every entry of
   `recommendations.malformed` verbatim, as a log line nothing could count. A window whose
@@ -223,7 +225,10 @@ What each section holds:
   a count read without it is a floor. A confirmation after no question is a turn the framework's
   own stop cost; naming which stop is a reading of the session, tagged `[judgment]`, never a
   count. A window with none says zero; a `siegard-telemetry/9` record says nothing, which is
-  not zero.
+  not zero. Then `handoffs.questions`, the count and by skill: the questions the person put to
+  the sessions, the baseline a reading of handoffs is set beside. Which of them asked for the
+  recommendation a handoff withheld is a reading of the transcript, tagged `[judgment]`; a
+  `siegard-telemetry/12` record carries no count, which is not zero.
 
 - **15.** `handoffs.in_span_commits` whole: how many commits the sessions made after a Skill
   call and before the person's next turn; `by_authorization` — `typed`, `loop`, `summary`,

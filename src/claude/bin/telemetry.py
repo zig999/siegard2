@@ -83,7 +83,17 @@ relays a report naming one door over the others writes it to the run's `orchestr
 line, «`recommended: <door> — <criterion> — <deciding fact>`» (SPEC-006 R5). Every such line under
 the delivery root is read, with the commit that landed it and the first commit after it touching
 that initiative's delivery or work root. Which door was then taken is never computed: the commit
-that followed is the evidence, and reading it is a person's.
+that followed is the evidence, and reading it is a person's. Each line is `derived` or `judged`
+by the criterion it names — a fact on disk decided it, or a rung of the ladder where none did —
+because the two are read apart: a judged recommendation the person read as not taken is the
+reading that narrows the grant back to derived ones.
+
+**A question is counted, never read.** A human turn in the window holding a question mark is a
+question the person put to the session, with the skill it ran and the seconds since the
+assistant's last entry, and nothing of its text. Which of them asked for the recommendation a
+handoff withheld is a person's reading of the transcript, never this script's: a word list for
+that request, in any language, would be a classifier nobody measured. The count is the baseline
+a reading of handoffs is set beside, and it decides nothing.
 
 **A confirmation is counted, never quoted.** A handoff costs the person a turn whose whole
 content is permission: "commit", "go on", "2". Each human turn inside the window is read once, in
@@ -163,7 +173,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/12"
+CONTRACT = "siegard-telemetry/13"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -640,6 +650,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     compactions: list[dict] = []
     skill_calls: dict[str, int] = {}
     confirmations: list[dict] = []
+    questions: list[dict] = []
     short_turns = 0
     last_assistant_at: str | None = None
     last_assistant_text: str = ""
@@ -680,6 +691,11 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                 loop_armed = loop_armed or any(mark in typed for mark in LOOP_MARKS)
             if len(typed) <= SHORT_TURN:
                 short_turns += 1
+            if "?" in typed and not typed.startswith(CONTINUATION):
+                questions.append({
+                    "at": iso(instant_of(stamp)), "skill": skill or "none",
+                    "wait_seconds": seconds_between(last_assistant_at, stamp)
+                    if last_assistant_at is not None else None})
             kind = confirmation_class(typed)
             if kind is not None:
                 confirmations.append({
@@ -754,7 +770,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "entries_in_window": entries_in_window, "human_turns_in_window": sorted(human_turns),
         "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
         "skill_calls": dict(sorted(skill_calls.items())), "short_turns": short_turns,
-        "confirmations": confirmations, "commits": in_span_commits,
+        "confirmations": confirmations, "questions": questions, "commits": in_span_commits,
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -1480,7 +1496,9 @@ def scope_section(work_root: Path | None, delivery_root: Path | None, home: Path
 # ------------------------------------------------------------------- the recommendations
 
 
-CRITERIA = ("precondition unmet", "rule violated", "already done", "reading paid twice")
+DERIVED = ("precondition unmet", "rule violated", "already done", "reading paid twice")
+JUDGED = ("keeps the route", "serves the stated goal", "can be undone", "costs less")
+CRITERIA = DERIVED + JUDGED
 RECOMMENDED = re.compile(r"^recommended: (?P<door>.+?) — (?P<criterion>"
                          + "|".join(CRITERIA) + r") — (?P<fact>.+)$")
 UNCOMMITTED = "0" * 40
@@ -1551,14 +1569,17 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
                 malformed.append({**where, "text": line})
                 continue
             lines.append({**where, "door": match.group("door"),
-                          "criterion": match.group("criterion"), "fact": match.group("fact"),
+                          "criterion": match.group("criterion"),
+                          "kind": "derived" if match.group("criterion") in DERIVED else "judged",
+                          "fact": match.group("fact"),
                           "landed_in": landing[0] if landing else None,
                           "next_commit": next_commit_after(home, landing[0], roots, until)
                           if landing else None})
     by_criterion = {criterion: sum(1 for l in lines if l["criterion"] == criterion)
                     for criterion in CRITERIA}
-    return {"emitted": len(lines), "by_criterion": by_criterion, "lines": lines,
-            "malformed": malformed}
+    by_kind = {kind: sum(1 for l in lines if l["kind"] == kind) for kind in ("derived", "judged")}
+    return {"emitted": len(lines), "by_criterion": by_criterion, "by_kind": by_kind,
+            "lines": lines, "malformed": malformed}
 
 
 # ------------------------------------------------------------------------- the handoffs
@@ -1574,7 +1595,10 @@ def handoffs_section(harness: dict) -> dict:
     by_skill: dict[str, dict] = {}
     lines: list[dict] = []
     skill_calls = human_turns = short_turns = 0
+    asked: dict[str, int] = {}
     for session in harness["sessions"]:
+        for question in session["questions"]:
+            asked[question["skill"]] = asked.get(question["skill"], 0) + 1
         human_turns += len(session["human_turns_in_window"])
         short_turns += session["short_turns"]
         for name, count in session["skill_calls"].items():
@@ -1608,6 +1632,7 @@ def handoffs_section(harness: dict) -> dict:
     return {"skill_calls": skill_calls, "human_turns": human_turns, "short_turns": short_turns,
             "confirmations": confirmations, "unclassified_short": short_turns - confirmations,
             "by_class": by_class, "by_skill": dict(sorted(by_skill.items())), "lines": lines,
+            "questions": {"count": sum(asked.values()), "by_skill": dict(sorted(asked.items()))},
             "in_span_commits": in_span}
 
 
@@ -1748,6 +1773,9 @@ def receipt(report: dict, destination: Path) -> str:
         + f" (baseline: {report['decisions']['baseline']})",
         f"notes standing: {len(report['notes'])}",
         f"recommendations: {report['recommendations']['emitted']} recorded"
+        + (f" ({report['recommendations']['by_kind']['derived']} derived, "
+           f"{report['recommendations']['by_kind']['judged']} judged)"
+           if report['recommendations']['emitted'] else "")
         + (f", {len(report['recommendations']['malformed'])} line(s) that do not parse"
            if report['recommendations']['malformed'] else ""),
         f"handoffs: {report['handoffs']['confirmations']} confirmation(s) typed over "
@@ -1755,6 +1783,7 @@ def receipt(report: dict, destination: Path) -> str:
         + ", ".join(f"{name} {tally['count']} ({tally['unasked']} after no question, "
                     f"{tally['wait_seconds_total']}s waited)"
                     for name, tally in report["handoffs"]["by_class"].items())
+        + f"; {report['handoffs']['questions']['count']} question(s) asked"
         + f"; {report['handoffs']['unclassified_short']} short turn(s) unclassified",
         f"commits inside a skill's span: {report['handoffs']['in_span_commits']['count']} — "
         + ", ".join(f"{name} {n}" for name, n in

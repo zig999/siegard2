@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/12"
+    assert report["contract_version"] == "siegard-telemetry/13"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/12"
+    assert report["contract_version"] == "siegard-telemetry/13"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1196,7 +1196,10 @@ def test_a_recommendation_line_is_counted_with_what_landed_it_and_what_followed(
     recommendations = report["recommendations"]
     assert recommendations["emitted"] == 2
     assert recommendations["by_criterion"] == {"precondition unmet": 1, "rule violated": 1,
-                                               "already done": 0, "reading paid twice": 0}
+                                               "already done": 0, "reading paid twice": 0,
+                                               "keeps the route": 0, "serves the stated goal": 0,
+                                               "can be undone": 0, "costs less": 0}
+    assert recommendations["by_kind"] == {"derived": 2, "judged": 0}
     first, second = recommendations["lines"]
     assert (first["slug"], first["line"], first["door"]) == ("checkout", 2, "/plan-work over checkout")
     assert first["landed_in"] == landed
@@ -1204,7 +1207,25 @@ def test_a_recommendation_line_is_counted_with_what_landed_it_and_what_followed(
     assert first["next_commit"]["subject"] == "deliver-scope checkout: plan"
     assert second["criterion"] == "rule violated" and second["fact"] == "intake/proof.md"
     assert [m["line"] for m in recommendations["malformed"]] == [4]
-    assert "recommendations: 2 recorded, 1 line(s) that do not parse" in done.stdout
+    assert "recommendations: 2 recorded (2 derived, 0 judged), 1 line(s) that do not parse" \
+        in done.stdout
+
+
+def test_a_judged_recommendation_is_counted_apart_from_a_derived_one(consumer):
+    """SPEC-006 R2: a recommendation no fact decides names the rung of the ladder that separated
+    the doors, and is read apart — judged ones read as not taken are what narrows the grant."""
+    (consumer["home"] / "delivery/checkout/orchestration.md").write_text(
+        "recommended: keep the registry step — costs less — run/baseline-suite took 593 s\n"
+        "recommended: /plan-work corrective — serves the stated goal — intake/scope.md: "
+        "\"the suite must be green\"\n"
+        "recommended: /reconcile — already done — the note quoted\n", encoding="utf-8")
+    _, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    recommendations = report["recommendations"]
+    assert recommendations["by_kind"] == {"derived": 1, "judged": 2}
+    assert recommendations["by_criterion"]["costs less"] == 1
+    assert recommendations["by_criterion"]["serves the stated goal"] == 1
+    assert [l["kind"] for l in recommendations["lines"]] == ["judged", "judged", "derived"]
 
 
 def test_a_recommendation_no_commit_holds_yet_is_counted_with_no_follower(consumer):
@@ -1231,8 +1252,9 @@ def test_no_orchestration_log_is_zero_recommendations_and_the_survey_root_is_nev
     survey.write_text("recommended: /reconcile — already done — a note\n", encoding="utf-8")
     _, report = report_of(consumer)
     assert report["recommendations"] == {"emitted": 0, "by_criterion": {
-        "precondition unmet": 0, "rule violated": 0, "already done": 0, "reading paid twice": 0},
-        "lines": [], "malformed": []}
+        "precondition unmet": 0, "rule violated": 0, "already done": 0, "reading paid twice": 0,
+        "keeps the route": 0, "serves the stated goal": 0, "can be undone": 0, "costs less": 0},
+        "by_kind": {"derived": 0, "judged": 0}, "lines": [], "malformed": []}
 
 
 # ------------------------------------------------------------------------ the handoffs
@@ -1300,6 +1322,29 @@ def test_a_confirmation_is_attributed_to_the_skill_the_session_was_running(consu
     assert [c["skill"] for c in s5["confirmations"]] == ["implement-task"]
     assert report["handoffs"]["by_skill"]["implement-task"] == {"calls": 1, "confirmations": 1}
     assert report["handoffs"]["skill_calls"] == 1
+
+
+def test_a_question_is_counted_with_its_skill_and_wait_and_none_of_its_text(consumer):
+    """The baseline SPEC-006's validation reads handoffs beside: a turn holding a question
+    mark, in any language, counted under the skill it was put to, its words never kept."""
+    (consumer["transcripts"] / "s6.jsonl").write_text(
+        assistant("2026-08-20T10:30:00.000Z", {
+            "type": "tool_use", "id": "tu-skill", "name": "Skill",
+            "input": {"skill": "siegard:reconcile", "args": "x"}}, session="s6")
+        + user_result("2026-08-20T10:30:01.000Z", "tu-skill", "loaded")
+        + spoken("2026-08-20T10:40:00.000Z", "Two options remain.", session="s6")
+        + human("2026-08-20T10:41:00.000Z", "qual a opção mais recomendada?")
+        + spoken("2026-08-20T10:42:00.000Z", "The first.", session="s6")
+        + human("2026-08-20T10:43:00.000Z", "which one would you take?")
+        + human("2026-08-20T10:44:00.000Z", "siga"),
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    s6 = next(s for s in report["harness"]["sessions"] if s["id"] == "s6")
+    assert [(q["skill"], q["wait_seconds"]) for q in s6["questions"]] == [("reconcile", 60.0),
+                                                                          ("reconcile", 60.0)]
+    assert report["handoffs"]["questions"]["by_skill"]["reconcile"] == 2
+    assert "recomendada" not in json.dumps(report)
 
 
 def test_the_classifier_reads_a_commit_word_first_and_a_question_never(consumer):

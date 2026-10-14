@@ -190,19 +190,26 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
 
 ## Recommendation authority
 
-The framework recommends. Where a handoff hands more than one door and a fact on disk decides
-between them, it names the door — SPEC-006 R2 is the rule, and it was granted deliberately,
-after measurement showed the person choosing between doors the tree had already chosen.
+The framework recommends. Every handoff that hands more than one door names the one it
+recommends, or says why the choice is the person's alone — SPEC-006 R2 is the rule. It was
+granted deliberately, and widened after measurement showed the person asking for the
+recommendation after 11 of 14 handoffs that withheld it.
+
+A recommendation is one of two kinds, and the handoff says which. **Derived**, where a fact on
+disk decides — a door its own entry point refuses, a door that breaks a rule this framework
+states, a door whose work is already done, a reading paid twice. **Judged**, only where no fact
+decides and the choice is one of cost or of reading the ask — by the first rung of SPEC-006's
+one ladder that separates the doors.
 
 Three bounds hold it, and giving up any of them is a proposal, never a change:
 
-- **A recommendation is derived, never preferred.** It carries the criterion from the closed
-  list, the deciding fact and the fact that would reverse it; a door named without all four is
-  a preference wearing a derivation's clothes.
-- **The person's own questions are never recommended over.** The ask, a contradiction, two
-  readings of one piece of evidence, a finding's worth and a decision about cost — SPEC-006 R3
-  names them, and the reviewing agents stay evidence-only.
-- **A recommendation is never taken.** The door stays the person's; an orchestrator that took
-  one would be deciding, and `/deliver-scope` relays doors whole. What was recommended is
-  counted from the orchestration log; what was taken is a person's reading of the commit that
-  followed, and that count is the criterion that reverses this grant.
+- **A recommendation carries its reason and its reversal.** The door, why it, and the fact that
+  would change it; a judged one says it is a judgment, and a goal it serves is quoted from the
+  ask or its intake, never supplied.
+- **Three questions are never recommended over.** A contradiction between scope and
+  specification, two readings of one piece of evidence, and a finding's worth are the person's;
+  the handoff says what decides each side, and the reviewing agents stay evidence-only.
+- **A recommendation is never taken.** The door stays the person's; `/deliver-scope` relays
+  doors whole with the recommendation and its kind beside them. Whether a judged one was taken
+  is a person's reading of the commit that followed, and judged recommendations read as not
+  taken outnumbering those taken is the criterion that narrows this grant back to derived ones.
