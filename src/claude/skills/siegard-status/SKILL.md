@@ -125,8 +125,9 @@ one's output, so a round trip per command pays the wait once per command instead
      behavior or the node — is the one question the record does not answer: hand it in the
      opening as a pending decision with both doors, `/plan-work` for a corrective increment
      where the node is right and `/analyse` where the source is, and what stays as it is
-     if neither is taken — the pair stays under `reported` in `--owed` — and recommend
-     neither: «Each is the person's, and a handoff hands its doors and names none» (SPEC-006 R3).
+     if neither is taken — the pair stays under `reported` in `--owed` — and say it is «the
+     person's own decision» (SPEC-006 R3), what each door assumes is true, and what would
+     settle it.
 
    Then, for the same target, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --convergence
    <target-source-root> <specification-root> <work-root>` — every node of the specification in
@@ -174,7 +175,8 @@ one's output, so a round trip per command pays the wait once per command instead
    owed act opens with what it unblocks ("before `/plan-work` or `/deliver-scope` can run:
    commit or discard …"); an offered one with the fact that nothing waits on it ("you can
    also …, and nothing is blocked by it"); a pair the records answer both ways as the person's
-   own call, with both doors and no preference; and the close's recommendation as a suggestion
+   own decision, with both doors and what each assumes is true ("this one is yours: … if the
+   code is right, …; if the specification is right, …"); and the close's recommendation as a suggestion
    with its reason in a sentence ("I suggest …, because …; what would change this: …"), never
    as a criterion's name or a field's.
 5. **The session.** Last, and clearly fenced apart: what this conversation has done or is in

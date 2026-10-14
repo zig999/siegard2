@@ -29,6 +29,15 @@ on 4 doors when asked: the 3 a fact decided held; the 1 over two readings was wr
 refused the corrective increment it led to. One `/plan-work` invocation ran only to stop at a
 precondition the report before it already held.
 
+Grounds for the form in R1, the last two sentences of R2, the last of R3 and R6: one consumer,
+`newcatalog`, Siegard 5.19.0, four sessions read from their transcripts on 2026-10-13. Of 14
+handoffs that handed numbered doors, 8 said in so many words that no door was recommended or that
+the session had no preference, and 1 recommended one unasked; the person then asked which door
+was recommended 11 times, and answered 6 lists with a bare number. Of the 8, 2 handed a door its
+own entry point would have refused beside the one that remained, and 2 handed only doors every one
+of which a refusal or a rule excluded. The wording came from the skills' own sentences — "recommend
+neither", "no preference", "names none" — rendered into the session's language as written.
+
 ### Decided elsewhere, deliberately not restated here
 
 - What each skill reports and in which order — that skill's own file.
@@ -51,16 +60,17 @@ precondition the report before it already held.
 
 ### What the handoff opens with
 
-- **R1** — A handoff opens with what needs the person, and explains after. The opening holds, in this order, omitting a part that is empty: the state in one line; what this report withdraws from what the same invocation said earlier; each pending decision with its doors, what each door does, and what stays as it is if none is taken; each owed act with its invocation and the step it unblocks, kept apart from every offered one; neither list is ranked, and an order no command printed is a preference. Each item of the opening says what it is for the person, in the session's own plain words — what must be done before a named step runs, what may be done and nothing waits on, what only the person decides, what is suggested and why — and never in a word of this framework's: a reader who has never opened a skill's file reads the opening whole. Where the report recommends a door, the opening says so and why, before any explanation. The report then follows the order the skill's own file states, in the session's language, each framework term explained once where it first appears, and every command output, note and log entry quoted verbatim and untranslated.
+- **R1** — A handoff opens with what needs the person, and explains after. The opening holds, in this order, omitting a part that is empty: the state in one line; what this report withdraws from what the same invocation said earlier; each pending decision with its doors, what each door does, and what stays as it is if none is taken; each owed act with its invocation and the step it unblocks, kept apart from every offered one; neither list is ranked, and an order no command printed is a preference. Each item of the opening says what it is for the person, in the session's own plain words — what must be done before a named step runs, what may be done and nothing waits on, what only the person decides, what is suggested and why — and never in a word of this framework's: a reader who has never opened a skill's file reads the opening whole. Where the report recommends a door, the opening says so and why, before any explanation. The report then follows the order the skill's own file states, in the session's language, each framework term explained once where it first appears, and every command output, note and log entry quoted verbatim and untranslated. The opening's form is one block per pending decision and per owed act, in that order, each omitting a line that is empty: the door recommended, with why in one sentence and the fact that would change it, where R2 names one — otherwise that the choice is the person's own decision, and what would settle it; each other door, in the order a command printed it, with what it does and what it leaves as it is; what stays as it is if no door is taken, which for an owed act is the step that refuses to run; and last the invocation ready to paste, the one line where a skill's name appears. A cost or a risk is stated only as a command printed it.
 
 ### What a handoff recommends
 
-- **R2** — A recommendation names the door, the criterion, the deciding fact and the reversing fact; without all four, none is named. The criterion is one of four and no other: `precondition unmet`, the door's own entry point refuses its inputs as the tree stands; `rule violated`, the door breaks a rule this framework states; `already done`, the door's work is already in the tree; `reading paid twice`, the same file read by two judgments, where of two readings over the same files the one owed once is named over the one paid twice — two invocations over different files are each paid once, and their order is a decision about cost. In the handoff the four are carried as sentences in the session's plain words — the door, why it, what on disk says so, what would change it — and the criterion's name is written as it reads here only in the log line R5 states; a label, a field name or the criterion's English name in the prose is the record showing through. The deciding fact and the reversing fact are each a fact on disk, named by path or quoted.
-- **R3** — No recommendation is made over the ask or its scope, over a scope and a specification that contradict, over two readings of one piece of evidence, over whether a finding matters or what route it deserves, or over a decision about cost. Each is the person's, and a handoff hands its doors and names none.
+- **R2** — A recommendation names the door, the criterion, the deciding fact and the reversing fact; without all four, none is named. The criterion is one of four and no other: `precondition unmet`, the door's own entry point refuses its inputs as the tree stands; `rule violated`, the door breaks a rule this framework states; `already done`, the door's work is already in the tree; `reading paid twice`, the same file read by two judgments, where of two readings over the same files the one owed once is named over the one paid twice — two invocations over different files are each paid once, and their order is a decision about cost. In the handoff the four are carried as sentences in the session's plain words — the door, why it, what on disk says so, what would change it — and the criterion's name is written as it reads here only in the log line R5 states; a label, a field name or the criterion's English name in the prose is the record showing through. The deciding fact and the reversing fact are each a fact on disk, named by path or quoted. A door excluded on one of the four grounds is said to be excluded, beside it and with its fact, and where one door remains it is the door recommended: a handoff that hands an excluded door as though it were open has failed to apply R2.
+- **R3** — No recommendation is made over the ask or its scope, over a scope and a specification that contradict, over two readings of one piece of evidence, over whether a finding matters or what route it deserves, or over a decision about cost. Each is the person's, and a handoff hands its doors and names none. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
 
 ### What stops
 
 - **R4** — A finding stops nothing. A handoff names a stop only where the skill's own file names one, and names it as a stop. Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim.
+- **R6** — Where every door a handoff hands is excluded, by its entry point's refusal or by a rule this framework states, the opening says no door follows this framework's route, names for each door the refusal or the rule as a fact on disk, and recommends none; it names the route that recovers from work done outside the framework where one exists, and says what the person does then is outside this framework's route.
 
 ### Where a recommendation is recorded
 
@@ -89,3 +99,8 @@ precondition the report before it already held.
   about cost or standard — so R2 applied to none and stands unexercised. Verdict pending; the
   criterion that reverses it is a handoff handing a door R2 decides — precondition unmet, rule
   violated, already done, reading paid twice — with no `recommended:` line.
+- 2026-10-13 — read over `newcatalog`'s four sessions under 5.19.0 (grounds above): 14 handoffs
+  handed doors, 0 `recommended:` lines; none of the 14 was relayed by an orchestrating entry
+  point, so R5 counted nothing by design. 2 handed a door R2 excludes with no recommendation —
+  the failure the last sentence of R2 now names — and the reversal of item 3 is not taken over
+  them, because R2 not applied is not R2 failing. Verdict pending.

@@ -49,8 +49,9 @@ A recommendation is not a choice. The person's answer is the decision, and a rec
 the person did not select is not captured.
 
 Never recommend over the person's own questions: which of two readings of their words they meant,
-and whether an irreversible act should happen at all, are theirs, and the question says it
-recommends nothing there.
+and whether an irreversible act should happen at all, are theirs: the question offers those
+options with no `(Recommended)` label and says, in its own words, that the choice is theirs and
+what each option assumes.
 
 ## Capturing the answer
 

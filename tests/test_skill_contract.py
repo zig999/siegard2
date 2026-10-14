@@ -399,6 +399,57 @@ def test_every_skill_that_runs_outstanding_relays_the_records_pinning_no_standar
     assert "(SPEC-007 R1)" in text, f"{skill}: runs --outstanding and never cites SPEC-007 R1"
 
 
+WITHHELD = ("no preference", "without preference", "recommend neither", "recommends neither",
+            "recommends nothing", "nobody recommends", "choose neither", "doors and names none")
+QUOTED_SPAN = re.compile(r"«[^»]*»")
+
+
+def handoff_governing_files() -> list[Path]:
+    """Every shipped file whose prose a session or an agent reads as instructions: the skills
+    with their references, the agents, and the session rules."""
+    root = REPO / "src/claude"
+    return sorted([*root.glob("skills/**/*.md"), *root.glob("agents/*.md"),
+                   root / "hooks/rules.md"])
+
+
+def instruction_prose(path: Path) -> str:
+    """The file's prose, lower-cased and on one line, without the «…» quotations — the
+    citation test owns those, and a requirement's own words are not an instruction's."""
+    text = QUOTED_SPAN.sub(" ", path.read_text(encoding="utf-8"))
+    return re.sub(r"\s+", " ", text).lower()
+
+
+@pytest.mark.parametrize("path", handoff_governing_files(),
+                         ids=lambda p: p.relative_to(REPO / "src/claude").as_posix())
+def test_no_instruction_tells_a_handoff_to_say_it_withholds_a_recommendation(path):
+    """SPEC-006 R3: a choice that is the person's is said as the person's own decision, with
+    what each option assumes and what would settle it. An instruction phrased as an absence —
+    "recommend neither", "no preference" — is rendered into the session's language as written,
+    and the person reads an answer withheld rather than a decision handed to them."""
+    prose = instruction_prose(path)
+    said = [phrase for phrase in WITHHELD if phrase in prose]
+    assert not said, f"{path.name} tells a handoff to withhold, in words a session repeats: {said}"
+
+
+def test_every_file_citing_the_person_s_own_questions_says_how_to_hand_them():
+    """The ban above proves only that the old words are gone; this anchors on the words that
+    replaced them, so a later rewrite that drops them goes red rather than passing silently."""
+    citing = [p for p in handoff_governing_files() if "(SPEC-006 R3)" in p.read_text(encoding="utf-8")]
+    assert citing, "nothing cites SPEC-006 R3; the anchor lost its subject"
+    for path in citing:
+        text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+        assert "the person's own decision" in text, \
+            f"{path.name} cites SPEC-006 R3 and never says the choice is the person's own decision"
+        assert re.search(r"what each (?:door|option) assumes", text), \
+            f"{path.name} cites SPEC-006 R3 and never says what each option assumes"
+
+
+def test_the_session_rules_name_the_route_when_every_option_is_excluded():
+    """SPEC-006 R6 reaches every session through the rules, not through one skill's file."""
+    text = (REPO / "src/claude/hooks/rules.md").read_text(encoding="utf-8")
+    assert "(SPEC-006 R6)" in text
+
+
 PROCEEDING = ("review-change", "check-source", "deliver-scope")
 
 

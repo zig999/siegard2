@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.20.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.21.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -89,14 +89,21 @@ not. Three things hold that route:
   the skill and the slug — never `git add -A` without a pathspec, never a branch, a push, a
   stash or a rewrite. A skill's own refusal to commit is unchanged: the commit is the session's
   act after the skill returned, never the skill's.
-- **A report opens with what needs the person, and recommends only what a fact on disk
-  decides.** «A handoff opens with what needs the person, and explains after» (SPEC-006 R1).
-  «A recommendation names the door, the criterion, the deciding fact and the reversing fact;
-  without all four, none is named» (SPEC-006 R2). The ask, a contradiction, two readings of one
-  piece of evidence, a finding's worth and a decision about cost are the person's: a report hands
-  their doors and names none. «A finding stops nothing» (SPEC-006 R4): a stop is named only
-  where the skill's own file names one, and a report that says a step may proceed lists the
-  checks it ran and their output verbatim.
+- **A report opens with what needs the person, and recommends what a fact on disk decides.**
+  «A handoff opens with what needs the person, and explains after» (SPEC-006 R1): one block per
+  decision — the recommended option with why and what would change it, each other option with
+  what it does, what stays if none is taken, and the invocation ready to paste — in the person's
+  words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the
+  criterion, the deciding fact and the reversing fact; without all four, none is named»
+  (SPEC-006 R2): an option its own entry point would refuse, or that breaks a rule, is said to
+  be excluded, and the one that remains is recommended. The ask, a contradiction, two readings of
+  one piece of evidence, a finding's worth and a decision about cost are «the person's own
+  decision» (SPEC-006 R3): say so, what each option assumes is true and what would settle it.
+  Where every option is excluded, «the opening says no door follows this framework's route»
+  (SPEC-006 R6) and names the refusal or rule beside each.
+  «A finding stops nothing» (SPEC-006 R4): a stop is named only where the skill's own file names
+  one, and a report that says a step may proceed lists the checks it ran and their output
+  verbatim.
 - **A question about where the project stands is answered from disk, never from the
   conversation.** Which initiatives are live, what is delivered, what is outstanding, what is
   blocked, what drifted, what is uncommitted: `/siegard-status` over the project, or

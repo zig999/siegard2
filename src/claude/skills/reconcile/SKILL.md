@@ -586,11 +586,11 @@ existing goes in no file set: this skill reads files, and there is nothing to re
 --release <target-source-root> <path>` is what answers it, and the report names that invocation
 beside the remainder.
 
-Where it did not, there are two readings and **you choose neither.** The source may be right and the
-specification behind it, or the node may be right and the source wrong — that is a person's to
-settle, and a reviewer that settles it is a decision wearing a finding's clothes. Hand both, and say
-which finding each one answers: two readings of one piece of evidence are a door nobody
-recommends — «Each is the person's, and a handoff hands its doors and names none» (SPEC-006 R3).
+Where it did not, there are two readings, and **settling them is the person's own decision.** The
+source may be right and the specification behind it, or the node may be right and the source
+wrong — a reviewer that settles it is a decision wearing a finding's clothes. Hand both, and say
+which finding each one answers, what each door assumes is true, and what would settle it: two
+readings of one piece of evidence are «the person's own decision» (SPEC-006 R3).
 
 The first, where the fact the source now states belongs in the specification — the `/analyse`
 invocation ready to paste, naming the material (the finding's evidence, the file it was read in, and
@@ -630,7 +630,7 @@ invoked again over that file under a new slug, which is what hands a judge that 
 Where the note says so, that door is recommended as R2 states: the criterion is `already done`,
 since the fact is already in the file and only the binding is owed; the deciding fact is the note,
 quoted; the reversing fact is a note saying the file contradicts the node, which leaves the two
-readings and recommends neither. Said in plain words, as above.
+readings as the person's own decision. Said in plain words, as above.
 A finding left in the notes and not in the report is a finding nobody will act on.
 
 ## Adoption
