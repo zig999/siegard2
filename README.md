@@ -1,14 +1,84 @@
-# siegard-generator
+# Siegard
 
-This repository authors the Siegard framework under `src/claude/` and assembles it into
+Siegard is a framework for [Claude Code](https://claude.com/claude-code), shipped as a plugin. It
+keeps **one written specification of what a project decided** and makes the code answer to it:
+the specification is markdown a script validates, the work is planned and delivered against it,
+and a trace records which file holds which decision, so a change made outside the route is found
+and not trusted.
+
+```
+/analyse ──► SPECIFICATION (markdown nodes) ──► /plan-work ──► /implement-task ──► SOURCE + TESTS
+                       ▲                                                                │
+                       └──────────────── /review-change · /reconcile ◄─── trace ◄───────┘
+```
+
+## What it gives a project
+
+- **A specification that refuses what does not hold together.** Five classes of node — Domain
+  Model, Rule, Scenario, Contract, Architecture Constraint — recorded as markdown and checked by
+  `spec.py`. A node carries no status.
+- **A plan whose every task names the nodes it implements.** `/siegard:plan-work` cuts a stated
+  scope into tasks, and the plan is validated against the specification before any code is written.
+- **Delivery that proves itself.** `/siegard:implement-task` writes the source and the tests that
+  prove it, and runs the steps your own registry declares until the project builds and its suite
+  passes. Every execution is captured through `bin/run.py`; no agent holds a shell.
+- **Judgments made by a context that did not write the thing.** `/siegard:review-change` and
+  `/siegard:reconcile` delegate to separate agents and save what they return verbatim.
+- **A trace.** `siegard-trace.json` binds each node to the files that hold its fact, pinned with
+  SHA-256 digests. `trace.py --check` reports a file that changed without a rebind, and
+  `/siegard:reconcile` re-reads it.
+- **A way in for code that already exists.** `/siegard:survey`, `/siegard:analyse` and
+  `/siegard:reconcile` adopt source no delivery wrote, one context at a time.
+
+It is meant for Claude Code projects that want delivered code to stay traceable to a decision.
+It needs Claude Code and `python3` with PyYAML and jsonschema; it builds no application of its own.
+
+## An example: a hand fix
+
+During an incident someone added a guard to `src/billing/raise.ts` so an order cannot get two
+invoices, and committed it. The behavior is correct, and no specification node says it. CI runs
+the trace:
+
+```
+$ trace.py --check backend
+backend/src/billing/raise.ts: the file changed without a rebind — 1 binding(s): rules/sales/invoice-immutable
+```
+
+You hand the file to the reconcile route:
+
+```
+/siegard:reconcile  file set: src/billing/raise.ts   project root: .   slug: hand-fix-invoicing
+```
+
+A judge that did not write the change reads the file against `rules/sales/invoice-immutable` and
+returns a finding — `contradicts`: the guard states a cap no node holds. The skill records it and
+hands back two doors without choosing: the code is right and the specification is behind
+(`/siegard:analyse` with the finding as material, so a node gains "an order carries at most one
+invoice"), or the specification is right and the code is wrong (a corrective increment of
+`/siegard:plan-work`). Until a record clears the pair, `trace.py --owed backend` keeps listing it.
+The glossary walks the same case step by step in
+[One complete example: a hand fix](glossary/siegard-glossary/12-one-complete-example-a-hand-fix.md).
+
+## Where things are stated
+
+What each script and skill does is stated where it is enforced: a script's module docstring,
+printed by `--help`, and a skill's own `SKILL.md` under `src/claude/skills/`. The requirements
+the framework must meet are in `specs/`, the structure they require is in `schemas/`, and the
+[glossary](glossary/siegard-glossary.md) explains the vocabulary in plain words; where the
+glossary and a specification, a schema or code disagree, those win.
+
+- [`CHANGELOG.md`](CHANGELOG.md) — what each version changed.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to change this repository.
+- [`SECURITY.md`](SECURITY.md) — what the plugin runs, and how to report a vulnerability.
+- [`LICENSE`](LICENSE) — MIT.
+
+## About this repository
+
+This repository authors the framework under `src/claude/` and assembles it into
 `dist/.claude/`, which ships as a Claude Code plugin. The repository is also the plugin's
 marketplace: `.claude-plugin/marketplace.json` at this root is what a consumer adds once to
-install the framework and receive its versions.
-
-What the framework does, and how each script and skill works, is stated where it is enforced:
-each script's own module docstring, printed by `--help`, and each skill's own `SKILL.md` under
-`src/claude/skills/`. This page is the operational part only: how a consumer project installs
-Siegard as a plugin and stays current.
+install the framework and receive its versions. The rest of this page is the operational part:
+how a consumer project installs Siegard as a plugin and stays current.
 
 ## Installing Siegard in a consumer project
 
