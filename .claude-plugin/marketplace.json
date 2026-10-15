@@ -1,5 +1,6 @@
 {
   "name": "siegard-generator",
+  "description": "The storefront of the Siegard generator: it distributes one plugin, the Siegard framework, installed with /plugin install siegard@siegard-generator.",
   "owner": {
     "name": "Siegfried Kreutzfeld Neto",
     "email": "zig999@gmail.com"

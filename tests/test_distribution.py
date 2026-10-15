@@ -196,6 +196,13 @@ def test_the_marketplace_entry_is_the_plugin_that_ships(marketplace):
         "check reads it there"
 
 
+def test_the_manifest_author_is_the_marketplace_owner(marketplace):
+    manifest = json.loads((SRC / MANIFEST).read_text(encoding="utf-8"))
+    assert manifest["author"]["name"] == marketplace["owner"]["name"], \
+        "the plugin's author and the marketplace's owner name different people; one maintainer, " \
+        "two answers to who is responsible"
+
+
 # ------------------------------------------------ what the rules file may name
 
 CONSUMER_RULES = SRC / "hooks/rules.md"

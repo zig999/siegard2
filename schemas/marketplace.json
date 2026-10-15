@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/generator/marketplace.json",
   "title": "Claude Code plugin marketplace",
-  "description": "Contract for .claude-plugin/marketplace.json at this repository's root: the storefront a consumer adds once (`/plugin marketplace add <owner>/<repo>`) so that installing and updating the framework stops being a copy a person performs and starts being a version the harness checks for. Source, retrieved 2026-08-29 from https://code.claude.com/docs/en/plugin-marketplaces — the file sits at .claude-plugin/marketplace.json, `name`/`owner`/`plugins` are its required members, an entry's `source` may be a path relative to the marketplace's own root, and update checks read the version from the plugin's own manifest. What this record owns is fixed here: the storefront's identity and the one entry pointing at the assembled plugin. additionalProperties is false because this is a file Siegard authors rather than one it reads, and every optional member the harness would tolerate is a second home for a fact the plugin manifest already states.",
+  "description": "Contract for .claude-plugin/marketplace.json at this repository's root: the storefront a consumer adds once (`/plugin marketplace add <owner>/<repo>`) so that installing and updating the framework stops being a copy a person performs and starts being a version the harness checks for. Source, retrieved 2026-08-29 from https://code.claude.com/docs/en/plugin-marketplaces — the file sits at .claude-plugin/marketplace.json, `name`/`owner`/`plugins` are its required members and `description` is the one the validator asks for beside them, an entry's `source` may be a path relative to the marketplace's own root, and update checks read the version from the plugin's own manifest. What this record owns is fixed here: the storefront's identity and the one entry pointing at the assembled plugin. additionalProperties is false because this is a file Siegard authors rather than one it reads, and every optional member the harness would tolerate is a second home for a fact the plugin manifest already states.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "name",
+    "description",
     "owner",
     "plugins"
   ],
@@ -17,6 +18,12 @@
       "minLength": 1,
       "maxLength": 64,
       "description": "The marketplace identity, and the suffix a consumer installs under: `/plugin install <plugin>@<this name>`. Kebab-case because it appears verbatim in that invocation. It names the storefront, not the plugin — this repository is the generator, so the storefront carries the repository's name and the plugin keeps its own."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 400,
+      "description": "What the storefront offers, for a consumer who has added it and not yet chosen a plugin. It describes the storefront — what the repository distributes and how it is installed — and never restates the plugin entry's description, which has its own home."
     },
     "owner": {
       "type": "object",

@@ -2,11 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/generator/plugin.json",
   "title": "Claude Code plugin manifest",
-  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in the decision to distribute as a Claude Code plugin: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. What this record owns is fixed here: identity, description, version, and nothing the distribution already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and nothing here relies on behaviour absent from the documentation on the date above.",
+  "description": "Contract for src/claude/.claude-plugin/plugin.json, the framework's identity as the harness reads it. Source, retrieved 2026-07-31 and cited in full in the decision to distribute as a Claude Code plugin: https://code.claude.com/docs/en/plugins — the manifest lives at .claude-plugin/plugin.json, its `name` is the namespace every plugin skill is invoked under, and a plugin without `version` falls back to its commit SHA. What this record owns is fixed here: identity, author, description, version, and nothing the distribution already carries. additionalProperties is false because this is a file Siegard authors rather than one it reads — a typo here would ship a plugin the harness names differently, and nothing here relies on behaviour absent from the documentation on the date above.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "name",
+    "author",
     "description",
     "version"
   ],
@@ -17,6 +18,25 @@
       "minLength": 1,
       "maxLength": 64,
       "description": "The plugin identity, and the namespace the harness prepends to every skill it ships: a skill named `ingest-domain` is invoked as `/<name>:ingest-domain`. Kebab-case because it appears verbatim in that invocation. A skill therefore never carries the namespace in its own name: it is applied here, once, and a skill that repeated it would be invoked under it twice."
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Who answers for what the plugin does, shown beside it when a consumer browses or installs. The maintainer, equal to the marketplace's `owner.name` — the distribution suite pins the equality."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Where a consumer reaches the author: a page, not an address. Optional: an absent url is an author reached through the repository."
+        }
+      }
     },
     "description": {
       "type": "string",
