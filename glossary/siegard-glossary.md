@@ -3,9 +3,14 @@
 A plain-language guide to the words Siegard uses: what each one means, where you meet it, and
 what it looks like on disk or on the command line.
 
-It describes Siegard **4.21.3**. Where this page and a skill's `SKILL.md`, a script's `--help`
-or a schema under `schemas/` disagree, those files win: they are what actually runs. This page
-explains them; it does not replace them.
+It was last revised against Siegard **4.21.3**; the plugin has moved on since. Skills and
+agents added after that revision — among them `/survey`, `/adopt-scope`, `/clarify-request`,
+`domain-surveyor` and `test-intent-reader` — are not entries here: each is stated in its own
+`SKILL.md` or agent file, and the README's "Adopting an existing project" section walks the
+adoption route. The Portuguese edition, `siegard-glossary.pt-BR.md`, is the more recent: it
+describes 5.19.0. Where this page and a skill's `SKILL.md`, a script's `--help` or a schema under
+`schemas/` disagree, those files win: they are what actually runs. This page explains them; it
+does not replace them.
 
 ---
 
