@@ -240,9 +240,10 @@ right. It is one fact, and no pass here produces it: whether the link this frame
 plan is deleted still describes the code as it stands. Report the counts by class, and the route
 each class takes. `orphaned` is a binding to a specification node that no longer exists; no rebind
 can repair it, because a bind refuses a node the specification does not hold, and `trace.py --prune` is what
-clears it. `moved` is a binding to a node whose text moved since the bind; `/reconcile` over the
-bound files re-reads them against the node as it stands, and a delivery of a task implementing the
-node restamps it. `proof` is a binding a certified test
+clears it. `moved` is a binding to a node whose text moved since the bind, or a file of it last
+read against an earlier text; `/reconcile` over the bound files re-reads them against the node as
+it stands, and a delivery of a task implementing the node restamps only the files its record names
+— the node's other files stay `moved` until a reading reaches them. `proof` is a binding a certified test
 decides whose test's text changed since; a reconciliation that certifies the test as it now stands
 is what clears it, and the node is decided by reading until then. `code` is a file changed without a rebind,
 whatever wrote it — or a file the tree no longer holds, which `trace.py --release` is what answers.

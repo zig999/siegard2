@@ -93,8 +93,9 @@ def receipt(root: Path) -> str:
                          f"answers; /siegard-status lists them and hands the invocation ready")
         if counts[trace.MOVED]:
             lines.append(f"  {counts[trace.MOVED]} binding(s) carry `moved` drift: `/reconcile` "
-                         f"over the bound files re-reads them against the node as it stands, and "
-                         f"a delivery of a task implementing the node restamps it")
+                         f"over the bound files re-reads them against the node as it stands; a "
+                         f"delivery of a task implementing the node restamps only the files its "
+                         f"record names")
     for target in targets_of(root):
         try:
             if trace.tally_of(target) is None:

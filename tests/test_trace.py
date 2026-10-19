@@ -1370,7 +1370,10 @@ def test_a_bind_restamps_only_the_files_its_record_names(consumer):
     assert bind(consumer).returncode == 0
     node_file = consumer / "specs" / f"{NODE}.md"
     node_file.write_text(node_file.read_text(encoding="utf-8") + "\nMoved.\n", encoding="utf-8")
-    assert bind(consumer, file=other).returncode == 0
+    rebound = bind(consumer, file=other)
+    assert rebound.returncode == 0
+    assert (f"{NODE}: backend/{FILE} — carried forward from an earlier bind, and last read "
+            f"against an earlier text of the node") in rebound.stdout, "the act that made it says so"
     trace_file = json.loads((consumer / "siegard-trace.json").read_text(encoding="utf-8"))
     [entry] = [e for e in trace_file["bindings"] if e["node"] == NODE]
     stamped = {f["path"]: f["node_digest"] for f in entry["files"]}
@@ -1378,8 +1381,33 @@ def test_a_bind_restamps_only_the_files_its_record_names(consumer):
     assert stamped[f"backend/{FILE}"] != entry["digest"], "kept at the text it was read against"
     done = run("--check", consumer / "backend")
     assert done.returncode == 1, done.stdout
-    assert f"{NODE}: backend/{FILE} was stamped against" in done.stdout
+    assert (f"{NODE}: 1 file(s) stamped against an earlier text of the node; a later bind "
+            f"restamped the node on other files and nobody read these against it — `--all` "
+            f"lists them") in done.stdout
+    assert f"{NODE}: backend/{FILE} was stamped against" not in done.stdout
     assert "1 moved:" in done.stdout and "0 code" in done.stdout
+    done = run("--check", consumer / "backend", "--all")
+    assert f"{NODE}: backend/{FILE} was stamped against" in done.stdout
+    assert "1 file(s) stamped against an earlier text" not in done.stdout
+
+
+def test_a_file_moved_on_its_own_stays_in_the_set_while_a_live_task_implements_the_node(consumer):
+    """A delivery restamps only the files its record names, so a live task implementing the node
+    is no reason to keep a file the node carries at an earlier text out of the reconcile set."""
+    other = "src/orders/ship.ts"
+    (consumer / "backend" / other).write_text("export function ship() {}\n", encoding="utf-8")
+    assert bind(consumer).returncode == 0
+    moved_node(consumer)
+    assert bind(consumer, file=other).returncode == 0
+    planned(consumer)
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "work_root": "work"}) + "\n", encoding="utf-8")
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert done.returncode == 1
+    assert f"  {FILE}  (moved: {NODE})" in done.stdout
+    assert "left to a delivery" not in done.stdout
 
 
 def test_a_file_stamped_before_the_field_existed_reads_as_stamped_at_the_binding(consumer):
@@ -1548,11 +1576,32 @@ def test_a_file_of_a_node_a_live_task_implements_is_left_to_the_delivery(consume
     committed(consumer)
     done = run("--check", consumer / "backend", "--reconcile-set")
     assert done.returncode == 1
-    assert "left to a delivery — a live task implements the node" in done.stdout
+    assert ("left to a delivery — a live task not yet delivered implements the node, and its "
+            "delivery rebinds it") in done.stdout
     assert f"  {FILE}  ({NODE}; first task/cases/record-case)" in done.stdout
     assert "  nothing: no drift" in done.stdout
     (consumer / "work/first/closure.md").write_text("closed\n", encoding="utf-8")
     done = run("--check", consumer / "backend", "--reconcile-set")
+    assert "left to a delivery" not in done.stdout
+    assert f"  {FILE}  (moved: {NODE})" in done.stdout
+
+
+def test_a_file_of_a_node_whose_live_task_is_already_delivered_is_in_the_set(consumer):
+    """A task whose implementation record exists has restamped all its delivery ever will; the
+    node's moved files are a reading's again, never a delivery's still to come."""
+    bind(consumer)
+    committed(consumer)
+    planned(consumer)
+    (consumer / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "work_root": "work", "delivery_root": "delivery"}) + "\n", encoding="utf-8")
+    record = consumer / "delivery/first/implementation/cases/record-case.md"
+    record.parent.mkdir(parents=True)
+    record.write_text("---\n---\n", encoding="utf-8")
+    moved_node(consumer)
+    committed(consumer)
+    done = run("--check", consumer / "backend", "--reconcile-set")
+    assert done.returncode == 1
     assert "left to a delivery" not in done.stdout
     assert f"  {FILE}  (moved: {NODE})" in done.stdout
 

@@ -109,8 +109,8 @@ refuses a node the specification does not hold, and this script is the trace's o
 finding repeats on every run forever. A node whose text moved is `moved`, and a file that changed
 or vanished is `code`; both are true statements about real drift, and each has one route, stated
 in the class's own line: `/reconcile` over the bound files re-reads them against the node as it
-stands, a delivery of a task implementing the node restamps it, and a file gone from the tree is
-`--release`'s. A file is stamped against the node's text it was last read at, and a bind stamps only the files its
+stands, a delivery of a task implementing the node restamps the files its record names and no
+other, and a file gone from the tree is `--release`'s. A file is stamped against the node's text it was last read at, and a bind stamps only the files its
 record names: a node bound in two targets and rebound from one keeps the other's files at the
 earlier text, and each of those is `moved` on its own until something reads it. A binding a test decides whose test's text changed is `proof`:
 the certification was of that text, and until a judgment certifies the test as it now stands the
@@ -162,7 +162,9 @@ and a check over a traced target never loses a finding because a sibling target 
 not a change to what is bound — `--bind-record` still writes the link, `moved` still says the
 specification shifted under those files, `orphaned` still says the node is gone. And it is not
 silence: a receipt says how many findings were held back and `--all` lists them, which is what
-keeps a declaration a consumer can measure from becoming one it forgets it made.
+keeps a declaration a consumer can measure from becoming one it forgets it made. The per-file
+`moved` findings are folded the same way and for the same reason: one line per node, since one
+edit of a node bound to forty files is one reading owed, and `--all` lists every file.
 
 `--untraced` is the one report keyed by the tree rather than by the trace. Every other form reads
 what a binding holds, so code no delivery wrote and no reconciliation judged is in none of them:
@@ -493,8 +495,9 @@ CLASSES = {
               "and `--prune` is the only thing that clears them",
     MOVED: "bound to a node whose text moved since the bind, or a file stamped against an "
            "earlier text of a node a later bind restamped elsewhere; `/reconcile` over the bound "
-           "files re-reads them against the node as it stands, and a delivery of a task "
-           "implementing the node restamps it",
+           "files re-reads them against the node as it stands; a delivery of a task "
+           "implementing the node restamps only the files its record names, and the node's "
+           "other files stay `moved` until a reading reaches them",
     PROOF: "decided by a test whose text changed since it was certified — the binding is "
            "decided by reading again until a judgment certifies the test as it now stands",
     CODE: "bound to a file that changed or is gone; `/reconcile` over the files re-reads a file "
@@ -1132,13 +1135,15 @@ def stale_after(declared: dict, home: Path, acted: dict[str, str],
                 bound: set[str]) -> list[tuple[str, str, str]]:
     """The bindings this act left stale, found at the one moment both sides are in hand.
 
-    A bind restamps only the nodes it was handed. That leaves two kinds of binding asserting a
-    digest the tree no longer holds, both knowable right now and both silent afterwards until
-    somebody runs `--check`: another node's binding over a path this act just restamped — the
-    fresh digest is already in memory and differs — and a path a bound node carried forward from
-    an earlier bind whose file changed on its own. Only this act's neighborhood is read — the
-    bound nodes' own entries and the paths this act wrote, never the whole trace: a receipt that
-    restated every standing drift would bury the ones this act just made or met."""
+    A bind restamps only the nodes it was handed, and of those only the files its record names.
+    That leaves three kinds of binding asserting what the tree no longer holds, all knowable right
+    now and all silent afterwards until somebody runs `--check`: another node's binding over a
+    path this act just restamped — the fresh digest is already in memory and differs — a path a
+    bound node carried forward from an earlier bind whose file changed on its own, and a path a
+    bound node carried forward that was last read against an earlier text of the node. Only this
+    act's neighborhood is read — the bound nodes' own entries and the paths this act wrote, never
+    the whole trace: a receipt that restated every standing drift would bury the ones this act
+    just made or met."""
     stale = []
     for entry in declared["bindings"]:
         node = entry["node"]
@@ -1155,6 +1160,9 @@ def stale_after(declared: dict, home: Path, acted: dict[str, str],
                 elif spec.digest_of(source) != stored:
                     stale.append((node, path, "carried forward from an earlier bind, and the "
                                               "file has since changed"))
+                if stamped_against(entry, held) != entry["digest"]:
+                    stale.append((node, path, "carried forward from an earlier bind, and last "
+                                              "read against an earlier text of the node"))
     return sorted(stale)
 
 
@@ -1209,10 +1217,11 @@ def partitioned(findings: list[tuple[str, str, str | None, str]],
     return ([f for f in findings if not held_back(f)], [f for f in findings if held_back(f)])
 
 
-def work_root_of(home: Path) -> Path | None:
-    """The work root the project file declares, read as defensively as `freely_edited` reads its
-    field: a project file that does not parse or declares none leaves the reconcile set without
-    the list a live plan would have kept out of it, and says so on its own line."""
+def work_root_of(home: Path, field: str = "work_root") -> Path | None:
+    """The work root the project file declares — or the root another field names — read as
+    defensively as `freely_edited` reads its field: a project file that does not parse or
+    declares none leaves the reconcile set without the list a live plan would have kept out of
+    it, and says so on its own line."""
     declared_at = home / project.PROJECT_FILE
     if not declared_at.is_file():
         return None
@@ -1220,13 +1229,15 @@ def work_root_of(home: Path) -> Path | None:
         declared = json.loads(declared_at.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    named = declared.get("work_root") if isinstance(declared, dict) else None
+    named = declared.get(field) if isinstance(declared, dict) else None
     return home / named if isinstance(named, str) and named else None
 
 
-def live_implementers(work_root: Path | None) -> dict[str, list[str]]:
-    """Node -> every task of a live initiative that implements it, as `<slug> <task id>`. A
-    closed initiative implements nothing now, and a task's delivery is what restamps the node."""
+def live_implementers(work_root: Path | None,
+                      delivery_root: Path | None = None) -> dict[str, list[str]]:
+    """Node -> every task of a live initiative that implements it and is not yet delivered, as
+    `<slug> <task id>`. A closed initiative implements nothing now, and a task whose
+    implementation record exists has already restamped what its delivery will ever restamp."""
     held: dict[str, list[str]] = {}
     if work_root is None or not work_root.is_dir():
         return held
@@ -1236,6 +1247,10 @@ def live_implementers(work_root: Path | None) -> dict[str, list[str]]:
         nodes, _ = plan.collect(initiative, plan.contract())
         for nid, node in nodes.items():
             if not nid.startswith("task/"):
+                continue
+            if delivery_root is not None and (
+                    delivery_root / initiative.name / "implementation"
+                    / f"{nid.removeprefix('task/')}.md").is_file():
                 continue
             for ref in spec.listed(node.get("front") or {}, "implements"):
                 if isinstance(ref, str):
@@ -1276,9 +1291,9 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
 
     Three things are left out and said: a file bound to a node whose own file is uncommitted
     under the specification root — a bind stamps the digest on disk, and a digest of pending
-    text is a binding to a specification that may never exist; a file bound to a node a live
-    task implements — that task's delivery restamps it, and a reconciliation first pays the
-    reading twice; and a certified test that changed, which a certification the human offers
+    text is a binding to a specification that may never exist; a file bound to a node whose
+    entry moved and which a live task not yet delivered implements — that task's delivery
+    rebinds the node, and a reconciliation first pays the reading twice; and a certified test that changed, which a certification the human offers
     answers, never a reading owed. Any of the three the human still wants read is named to
     `/reconcile` by hand, which is why each is listed by path."""
     spec_relative = declared["specification"]
@@ -1288,7 +1303,7 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
     for entry in declared.get("bindings") or []:
         files_of[entry["node"]] = [f["path"] for f in entry.get("files") or []]
     pending = uncommitted_under(home, spec_root)
-    implementers = live_implementers(work_root_of(home))
+    implementers = live_implementers(work_root_of(home), work_root_of(home, "delivery_root"))
     roots = target_roots(home)
     declared_under = {key: root for key, root in roots.items() if under(root, [offset])}
     if len(declared_under) > 1 or (declared_under and set(declared_under.values()) != {offset}):
@@ -1320,7 +1335,10 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
                         continue
                     if node_pending(node_id):
                         retained.setdefault(path, set()).add(node_id)
-                    elif node_id in implementers:
+                    elif where is None and node_id in implementers:
+                        # Only a node whose entry moved is a delivery's to answer: a file the
+                        # node carries at an earlier text after a later bind is one no delivery
+                        # restamps unless its record names it, so it stays in the set.
                         planned.setdefault(path, set()).add(node_id)
                     else:
                         reasons.setdefault(path, set()).add(f"moved: {node_id}")
@@ -1354,8 +1372,8 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
             for path in sorted(retained):
                 lines.append(f"  {spelled(path)}  ({', '.join(sorted(retained[path]))})")
         if planned:
-            lines.append("left to a delivery — a live task implements the node, and its delivery "
-                         "restamps it; reconciling first reads the file twice:")
+            lines.append("left to a delivery — a live task not yet delivered implements the node, "
+                         "and its delivery rebinds it; reconciling first reads the file twice:")
             for path in sorted(planned):
                 tasks = sorted({t for n in planned[path] for t in implementers.get(n, [])})
                 lines.append(f"  {spelled(path)}  ({', '.join(sorted(planned[path]))}; "
@@ -1439,16 +1457,29 @@ def step_decided(findings: list[tuple[str, str, str | None, str]],
     return "\n".join(lines)
 
 
+def moved_files_report(findings: list[tuple[str, str, str | None, str]]) -> list[str]:
+    """The per-file `moved` findings, one line per node. A node edited once moves every file it
+    binds, so listed per file the class reads as many acts where it is one, and a hub node buries
+    every other line of the report; the reading owed is per node, and `--all` lists the files."""
+    by_node: dict[str, list[str]] = {}
+    for _, node_id, where, _ in findings:
+        by_node.setdefault(node_id, []).append(where)
+    return [f"{node_id}: {len(paths)} file(s) stamped against an earlier text of the node; a "
+            f"later bind restamped the node on other files and nobody read these against it — "
+            f"`--all` lists them" for node_id, paths in sorted(by_node.items())]
+
+
 def left_stale(stale: list[tuple[str, str, str]]) -> str:
     """The receipt for the bindings a bind left stale. A statement, never a warning, the same as
-    `released()`: nothing here is wrong yet — a bind restamps exactly the nodes it was handed,
-    and that is the contract — but each line below is a `code` drift finding on the next
-    `--check`, and this is the one moment the maker of the change is still holding it."""
-    lines = [f"  this act leaves {len(stale)} binding(s) stale — a bind restamps only the nodes "
-             f"it was handed:"]
+    `released()`: nothing here is wrong yet — a bind restamps exactly the files its record names
+    under the nodes it was handed, and that is the contract — but each line below is a `code` or
+    `moved` drift finding on the next `--check`, and this is the one moment the maker of the
+    change is still holding it."""
+    lines = [f"  this act leaves {len(stale)} binding(s) stale — a bind restamps only the files "
+             f"its record names under the nodes it was handed:"]
     lines += [f"    {node}: {path} — {why}" for node, path, why in stale]
-    lines.append("    each is a `code` drift finding on the next --check; a reconciliation over "
-                 "these paths is the route, whatever wrote the change")
+    lines.append("    each is a `code` or `moved` drift finding on the next --check; a "
+                 "reconciliation over these paths is the route, whatever wrote the change")
     return "\n".join(lines)
 
 
@@ -5769,8 +5800,12 @@ def main() -> int:
         # `code` alone is listed per file (code_report): its remedy is a reconciliation, which
         # is invoked over a file set, so its listing is keyed the way the remedy consumes it.
         for cls in (ORPHANED, MOVED, PROOF):
-            for finding in [f for f in listed if f[0] == cls]:
+            for finding in [f for f in listed if f[0] == cls and (show_all or not
+                                                                    (cls == MOVED and f[2]))]:
                 print(finding[3])
+            if cls == MOVED and not show_all:
+                for line in moved_files_report([f for f in listed if f[0] == MOVED and f[2]]):
+                    print(line)
         code_listed = [f for f in listed if f[0] == CODE]
         for line in code_report(code_listed):
             print(line)

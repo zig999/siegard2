@@ -84,8 +84,9 @@ one's output, so a round trip per command pays the wait once per command instead
    same trace file's every time: `orphaned` is cleared by `--prune` after a
    deliberate node removal, and where the report says git renamed the node, `--prune` follows the
    rename instead of dropping the binding; `moved` is answered by `/reconcile` over the bound
-   files, which re-reads them against the node as it stands, or by a delivery of a task
-   implementing the node, which restamps it; `code` is answered by `/reconcile`, and a bound file
+   files, which re-reads them against the node as it stands, or, for the files its record names
+   and no other, by a delivery of a task implementing the node; `code` is answered by
+   `/reconcile`, and a bound file
    the tree no longer holds by `trace.py --release` over that path; and `proof` — a binding a
    certified test decides whose test's text changed — by `/reconcile` with a certification of the
    test as it now stands, the binding being
