@@ -497,9 +497,12 @@ substitutes the whole entry, its receipt of what stopped being claimed is the on
 and a receipt nobody was there to read is the silent loss the union default exists to end.
 
 **Where a node carries a finding, that node is not bound, and the nodes that cleared still are.**
-The join is already structural and needs nothing from you: a node the judgment refused carries no
-`encoded_at`, and this form reads only nodes that do — so the invocation above writes exactly the
-cleared set however anyone runs it. Run it whether the judgment cleared everything or not, and run
+The join is already structural and needs nothing from you: a pair the judgment refused is under no
+`encoded_at`, and this form reads only the pairs that are — so the invocation above writes exactly
+the cleared set however anyone runs it. A node whose fact left part of its ground with nothing
+found against it is bound on the files that still hold it; the file read `nowhere` is a release
+the bind's receipt hands with its `--replace` invocation ready, and the report relays it as the
+person's decision. Run it whether the judgment cleared everything or not, and run
 it once.
 
 The bind also recomputes every `pairs_omitted` claim at this moment, both halves — the binding

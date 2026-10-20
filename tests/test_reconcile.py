@@ -57,7 +57,7 @@ def consumer(tmp_path: Path) -> Path:
 
 def record_of(nodes: list[dict], files: list[dict] | None = None, **rest) -> dict:
     front = {
-        "contract_version": "siegard-reconcile/9",
+        "contract_version": "siegard-reconcile/10",
         "title": "Hand correction to order placement",
         "summary": "place() answered with the row; corrected by hand and confirmed correct.",
         "target": "backend",
@@ -485,13 +485,14 @@ def test_a_file_with_no_frontmatter_is_not_a_record(consumer):
 
 def test_a_refused_node_may_not_carry_the_field_that_binds(write_record):
     """The one guard the whole route rests on. A node the conformance pass did not clear cannot
-    declare where it is encoded, so `--bind-record` — which reads that field and nothing else —
-    has nothing to reach. A prose rule asking a skill not to bind would be a rule the next
+    declare its whole ground encoded, so `--bind-record` — which reads that field and nothing
+    else — has no contested pair to reach; it binds the holders beside a file that stopped holding
+    the fact and nothing more. A prose rule asking a skill not to bind would be a rule the next
     invocation could simply not follow."""
     front = record_of([{**REFUSED, "encoded_at": [FILE]}])
     done = run("--reconciliation", write_record(front))
     assert done.returncode == 1
-    assert "encoded_at" in done.stdout
+    assert f"{NODE}: encoded_at names every file its observed_at does" in done.stdout
 
 
 def test_a_cleared_node_must_say_where_it_is_encoded(write_record):

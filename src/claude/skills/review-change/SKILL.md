@@ -533,12 +533,14 @@ holds, which nodes are marked `collateral` — and every rule it applies lives i
 tests, not here. **Never apply those rules by hand, and never edit what the fold wrote.** A
 refusal naming a delegation is a fresh delegation with the prompt fixed; a refusal about the
 premise is yours to fix. The bind then writes **whatever the judgment cleared, and never anything
-else**: a node the judgment refused carries no `encoded_at`, and the binding form reads only nodes
-that do — so the invocation above restamps exactly the cleared set, the delivery's own nodes at
+else**: a pair the judgment refused is under no `encoded_at`, and the binding form reads only the
+pairs that are — so the invocation above restamps exactly the cleared set, the delivery's own nodes at
 the digest their own bind already wrote and every other node's claim on these files at the
 content the delivery left. It never passes `--replace`. Read the bind's receipt and carry it into
-the report: it names the nodes it did not write, which is the one place the partial shape of the
-act is stated at the moment it happens.
+the report: it names the nodes it did not write and the releases it left owed — each a file read
+`nowhere` beside files that still hold the node, with the `--replace` invocation ready — which is
+the one place the partial shape of the act is stated at the moment it happens. A release is the
+person's decision, relayed as their own and never run here.
 
 This is the one place in this invocation that writes outside the delivery root — the
 reconciliation record and its returns under `siegard-reconcile/`, and `siegard-trace.json`, both

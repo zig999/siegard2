@@ -16,7 +16,9 @@ its record, and the report that counts a target's files.
 
 It decides where an adopted system's first specification comes from, what a binding of adopted
 source rests on, which files an adopted node is bound to, the states a tracked file is in, and
-when an adoption is complete.
+when an adoption is complete. One requirement, R10, reaches past adoption to the fold of every
+reconciliation: which pairs a judgment binds is one rule whether the source was adopted or
+delivered, and it is stated here beside R4 rather than in a second home.
 
 Grounds: a pilot over one context of a consumer backend in September 2026 — 15 source files, 69
 nodes written from a survey of the source alone — found every node held by at least one file and
@@ -84,6 +86,17 @@ constraints spent 26 judges on files the notes never cited while the notes named
 - **R4** — An adopted node binds the files whose judgment holds its fact and no others. A
   candidate no file of the set holds is reported and bound to nothing; a file the trace already
   binds it to must still hold it.
+
+- **R10** — A reconciliation binds each pair on its own file's judgment. Where a node's fact is
+  still held in some files bound to it and read nowhere in another, with nothing found against
+  the node, the files that hold it are bound, and the file that stopped holding it is a release a
+  person decides, never one a fold or a bind makes.
+
+  Grounds: an audit of two consumers on 2026-10-19 re-judged, blind, pairs a node-level fold had
+  left unbound because a sibling file read nowhere. A fresh judge failed 8 of 43 such pairs
+  against 25 of 65 pairs of nodes that had cleared whole, and a judge read twice disagreed with
+  itself on 2 of 35. Releasing the pair read nowhere was not settled: a fresh judge found the
+  fact held, in part, in 5 of 73 such pairs no reading had ever held.
 
 ### What the tree holds
 
@@ -163,7 +176,15 @@ constraints spent 26 judges on files the notes never cited while the notes named
    `test_a_governed_file_that_is_a_declared_test_is_refused`,
    `test_a_target_declaring_no_tests_refuses_intent_material`,
    `test_an_adoption_over_intent_material_routes_each_governed_file`).
-7. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
+7. For R10: a node whose fact is held in some bound files and read nowhere in another, with
+   nothing found against it, folds not cleared with the holders under `encoded_at` and binds
+   them alone; a finding against the node, or an unattributed finding on a file bound to it,
+   binds none of its files; the bind's receipt hands the release ready to run; and a record naming under
+   `encoded_at` a path its `observed_at` does not is refused — `tests/test_stage_fold.py` proves
+   each (`test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed`,
+   `test_a_finding_against_the_node_binds_none_of_its_files`,
+   `test_a_record_encoding_a_path_it_did_not_observe_is_refused`).
+8. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
    domain surveyor cite the requirement each step carries in «…», `tests/test_spec_citations.py`
    proves each quote is a substring of the requirement it names, and `tests/test_adopt_scope.py`
    holds the skill's R1, R6 and R8 sentences.

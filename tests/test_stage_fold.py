@@ -465,6 +465,103 @@ def test_a_fact_that_left_one_of_two_files_blocks_the_node_and_hands_the_release
     assert "collateral" not in entries[NODE], "a fact that left a file is substance, not collateral"
 
 
+def binding_of(consumer: Path, node: str) -> dict:
+    return next(e for e in json.loads((consumer / "siegard-trace.json").read_text(
+        encoding="utf-8"))["bindings"] if e["node"] == node)
+
+
+def file_digest(consumer: Path, given: str) -> str:
+    return "sha256:" + hashlib.sha256((consumer / "backend" / given).read_bytes()).hexdigest()
+
+
+def test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed(consumer):
+    """«A reconciliation binds each pair on its own file's judgment» (SPEC-005 R10): the file
+    that still holds the fact is bound, and the one read nowhere stays as it stood, its release
+    handed to a person with the invocation ready."""
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere. The file bills; it opens no case",
+        "evidence": "export function bill() {}"}]})
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+    assert front["contract_version"] == "siegard-reconcile/10"
+    [entry] = [e for e in front["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is False
+    assert entry["encoded_at"] == [FILE]
+    assert sorted(entry["observed_at"]) == sorted([FILE, SECOND])
+    gate = run("--reconciliation", record)
+    assert gate.returncode == 0, gate.stdout + gate.stderr
+
+    before = {f["path"]: f["digest"] for f in binding_of(consumer, NODE)["files"]}
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    after = {f["path"]: f["digest"] for f in binding_of(consumer, NODE)["files"]}
+    assert after[f"backend/{FILE}"] == file_digest(consumer, FILE), "the holder is bound"
+    assert after[f"backend/{SECOND}"] == before[f"backend/{SECOND}"], \
+        "the pair read nowhere stays as it stood until a person releases it"
+    assert "a release is owed, and it is a person's decision" in bound.stdout
+    assert (f"{NODE}: {SECOND} read `nowhere` — to release, run trace.py --bind "
+            f"{consumer / 'backend'} {consumer / 'specs'} {NODE} {FILE} --replace") in bound.stdout
+    assert f"node(s) of {record.name} the judgment did not clear" not in bound.stdout, \
+        "a node bound on its holders is not one this bind wrote none of"
+
+
+def test_a_finding_against_the_node_binds_none_of_its_files(consumer):
+    """R10 binds a holder only where nothing stands against the node: a contradiction in a
+    sibling, or an unattributed finding on a file bound to it, holds every pair as it stood."""
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, {
+        "read": [{"node": NODE, "held_at": "nowhere", "evidence": "export function bill() {}"}],
+        "findings": [{"file": SECOND, "where": "line 1", "evidence": "export function bill() {}",
+                      "cost": "a bill opens a case the node forbids", "kind": "contradicts",
+                      "node": NODE}]})
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = [e for e in yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+               ["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is False and "encoded_at" not in entry
+
+    taint_slug = "tainted"
+    staged(consumer, slug=taint_slug)
+    save_return(consumer, taint_slug, FILE, clean_return(
+        [NODE, OTHER], findings=[{"file": FILE, "where": "line 2", "evidence": "// drift",
+                                  "cost": "says a fact no node holds", "kind": "contradicts"}]))
+    save_return(consumer, taint_slug, SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere", "evidence": "export function bill() {}"}]})
+    done, record = folded(consumer, slug=taint_slug)
+    assert done.returncode == 0, done.stdout + done.stderr
+    [entry] = [e for e in yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+               ["nodes"] if e["node"] == NODE]
+    assert entry["conforms"] is False and "encoded_at" not in entry
+
+
+def test_a_record_encoding_a_path_it_did_not_observe_is_refused(consumer):
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere", "evidence": "export function bill() {}"}]})
+    _, record = folded(consumer)
+    text = record.read_text(encoding="utf-8")
+    front = yaml.safe_load(text.split("---\n")[1])
+    for entry in front["nodes"]:
+        if entry["node"] == NODE:
+            entry["observed_at"] = [SECOND]
+    record.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n"
+                      + text.split("---\n", 2)[2], encoding="utf-8")
+    gate = run("--reconciliation", record)
+    assert gate.returncode == 1
+    assert (f"{NODE}: encoded_at names {FILE}, which its observed_at does not") in gate.stdout
+
+
 def test_a_fact_held_nowhere_with_no_finding_binds_nothing_and_says_why(consumer):
     staged(consumer)
     front = clean_return([NODE])
@@ -884,7 +981,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/9"
+    assert front["contract_version"] == "siegard-reconcile/10"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -2164,7 +2261,7 @@ def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopti
     })
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
-    assert front["contract_version"] == "siegard-reconcile/9"
+    assert front["contract_version"] == "siegard-reconcile/10"
     assert front["adopted"] is True and front["outside"] == [KEPT_OUT]
     by_node = {entry["node"]: entry for entry in front["nodes"]}
     assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
@@ -2325,7 +2422,7 @@ def test_an_outside_path_nothing_tracks_and_nothing_holds_is_still_refused(adopt
 def test_outside_needs_adopted_in_the_contract():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
-    base = {"contract_version": "siegard-reconcile/9", "title": "t", "summary": "s",
+    base = {"contract_version": "siegard-reconcile/10", "title": "t", "summary": "s",
             "target": "backend", "files": [{"path": FILE, "change": "c"}],
             "nodes": [], "unbound": [FILE], "outside": [KEPT_OUT]}
     assert list(Draft202012Validator(schema).iter_errors(base))
@@ -2717,7 +2814,7 @@ def test_a_refused_certification_is_pinned_at_the_node_and_proof_digests_it_was_
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/9"
+    assert front["contract_version"] == "siegard-reconcile/10"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["read_at"] == {"node": manifest["node_digests"][NODE],
                                 "proof": manifest["certify"][0]["proof_digests"]}

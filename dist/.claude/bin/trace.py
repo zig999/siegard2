@@ -189,9 +189,11 @@ link nobody made while reading exactly like a complete one. A record naming no n
 is refused, and there is simply nothing to write.
 
 That refusal is over form — a node this specification does not hold, a file that is not there — and
-it is not the reconciliation route's per-node judgment. A reconciliation record answers node by
-node, and a node the judgment did not clear carries no `encoded_at`; the nodes that cleared are
-written and that one is not. Refusing the record over it would make a judgment that resolved
+it is not the reconciliation route's judgment. A reconciliation record answers node by node and
+binds pair by pair: a pair the judgment did not clear is under no `encoded_at`, and the pairs that
+cleared are written — a node whose fact left part of its ground with nothing found against it
+binds the files that still hold it, and the file read `nowhere` is a release the receipt hands a
+person. Refusing the record over it would make a judgment that resolved
 thirty-eight of forty nodes worth exactly as much as one that resolved none, and buy nothing for
 it: the two nodes it could not write stay precisely as they were, and what the next `--check`
 says about them depends on whether a binding held each pair — `--owed` is the form that says it
@@ -534,7 +536,13 @@ def stamped_against(entry: dict, held: dict) -> str | None:
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
                        "this pair over the file's content and the node's text as both stand, "
                        "and no finding stands open against it")
-RECORD_VERSION = "siegard-reconcile/9"
+RECORD_VERSION = "siegard-reconcile/10"
+# What a record says of a pair that stopped holding a fact other files of its node still hold. The
+# route is structural, not this text: an entry carrying both `encoded_at` and `observed_at` exists
+# only where nothing stands against the node, so each observed pair it does not encode is a release.
+RELEASE_OWED = ("the pair that stopped holding it is a release a person decides — `--bind ... "
+                "--replace` naming the files that still hold it — and never one a fold or a bind "
+                "makes")
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
@@ -1653,6 +1661,15 @@ def accounted(front: dict) -> list[str]:
             if path not in named:
                 problems.append(f"{node_id}: {where} names {path}, which this record's file set "
                                 f"does not; a reconciliation reaches only what the human scoped")
+        if not entry["conforms"] and entry.get("encoded_at"):
+            problems += [f"{node_id}: encoded_at names {path}, which its observed_at does not; a "
+                         f"node not cleared binds only pairs of the ground it was read on"
+                         for path in entry["encoded_at"] if path not in entry["observed_at"]]
+            if set(entry["observed_at"]) <= set(entry["encoded_at"]):
+                problems.append(f"{node_id}: encoded_at names every file its observed_at does; a "
+                                f"node not cleared binds the files that still hold its fact beside "
+                                f"one that stopped, and a node holding it everywhere it was read "
+                                f"is cleared or contested, never both")
     problems += [f"nodes: {node_id} appears {count} times; one entry per node"
                  for node_id, count in sorted(seen.items()) if count > 1]
 
@@ -1893,7 +1910,45 @@ def withheld(record: Path) -> list[str]:
         return []
     return sorted({entry["node"] for entry in front.get("nodes") or []
                    if isinstance(entry, dict) and isinstance(entry.get("node"), str)
-                   and entry.get("conforms") is False})
+                   and entry.get("conforms") is False and not entry.get("encoded_at")})
+
+
+def releases_owed(record: Path) -> list[tuple[str, list[str], list[str]]]:
+    """Every node a reconciliation bound on the files that still hold its fact while another file
+    it is bound to stopped holding it: the node, the holders, and the pairs a release is owed for.
+
+    The holders are bound because each pair rests on its own file's judgment. The rest is not
+    released here, and never by a fold: a file read `nowhere` may hold part of the fact a judge did
+    not count, and dropping the claim ends every later check's reach over that pair, so whether it
+    goes is a person's reading of the evidence the record quotes."""
+    front = as_reconciliation(record)
+    if front is None:
+        return []
+    owed = []
+    for entry in front.get("nodes") or []:
+        if not isinstance(entry, dict) or entry.get("conforms") is not False:
+            continue
+        holders = [p for p in entry.get("encoded_at") or [] if isinstance(p, str)]
+        if not holders:
+            continue
+        lost = [p for p in entry.get("observed_at") or [] if isinstance(p, str)
+                and p not in holders]
+        if lost:
+            owed.append((entry["node"], holders, lost))
+    return owed
+
+
+def release_receipt(owed: list[tuple[str, list[str], list[str]]], target: Path,
+                    spec_root: Path) -> str:
+    """The receipt for the releases a reconciliation's bind leaves owed, each ready to run."""
+    lines = [f"  {len(owed)} node(s) bound on the files that still hold their fact, each with a "
+             f"file that stopped holding it — a release is owed, and it is a person's decision:"]
+    for node, holders, lost in owed:
+        lines.append(f"    {node}: {', '.join(lost)} read `nowhere` — to release, run "
+                     f"trace.py --bind {target} {spec_root} {node} {' '.join(holders)} --replace")
+    lines.append("    until then each such pair stays as it stood and `--check` keeps reporting it "
+                 "as owed a release, not a reading")
+    return "\n".join(lines)
 
 
 def left_owed(held: list[str], record: Path) -> str:
@@ -1958,12 +2013,19 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
             if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
                 continue
             node, conforms = entry["node"], entry.get("conforms")
-            sink = cleared if conforms is True else found
-            for path in entry.get("encoded_at" if conforms is True else "observed_at") or []:
+            encoded = [p for p in entry.get("encoded_at") or [] if isinstance(p, str)]
+            for path in (encoded if conforms is True else
+                         [p for p in entry.get("observed_at") or [] if p not in encoded]):
                 if not isinstance(path, str):
                     continue
                 anchored = path if where == "." else f"{where}/{path}"
-                sink.setdefault((node, anchored), []).append(record.name)
+                (cleared if conforms is True else found).setdefault(
+                    (node, anchored), []).append(record.name)
+            if conforms is not True:
+                # A pair a node not cleared still encodes is one its own judgment cleared.
+                for path in encoded:
+                    anchored = path if where == "." else f"{where}/{path}"
+                    cleared.setdefault((node, anchored), []).append(record.name)
         # An adoption's unheld candidate was read on every file of its set and found neither held
         # nor contradicted there: a later reading of the pair that owes nothing, which closes an
         # earlier finding on it the way a clearance does.
@@ -4623,9 +4685,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             still = [given for given in bound_in if given in holders]
             if still:
                 parts.append(f"the fact left part of its ground: still held in "
-                             f"{', '.join(still)}, and {', '.join(lost)} is bound to this node "
-                             f"and no longer holds it — the pair that stopped holding it is "
-                             f"released by `--bind ... --replace`, never restamped here")
+                             f"{', '.join(holders)}, each pair of which is bound, and "
+                             f"{', '.join(lost)} is bound to this node and no longer holds it — "
+                             f"{RELEASE_OWED}")
             else:
                 parts.append(f"{', '.join(lost)} is bound to this node and no longer holds "
                              f"its fact")
@@ -4636,8 +4698,11 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         # Every file the trace binds the node to is named, holder or not: a bound pair the
         # record does not answer is one the bind cannot account for, and a holder left out
         # would reach no node of the record at all.
-        entries.append({"node": node, "conforms": False, "how": "\n".join(parts),
-                        "observed_at": sorted({given for given, _ in found} | set(bound_in))})
+        entry = {"node": node, "conforms": False, "how": "\n".join(parts),
+                 "observed_at": sorted({given for given, _ in found} | set(bound_in))}
+        if holders and lost and not found and not taint:
+            entry["encoded_at"] = holders
+        entries.append(entry)
     for node in sorted(batch_nodes - adopted):
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
@@ -4662,9 +4727,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                              f"{read_of[(given, node)]['evidence']}" for given in left)
             if holders:
                 parts.append(f"the fact left part of its ground: still held in "
-                             f"{', '.join(holders)}, and {said} — a binding asserts the file "
-                             f"answers for the node, so the pair that stopped holding it is "
-                             f"released by `--bind ... --replace`, never restamped here")
+                             f"{', '.join(holders)}, each pair of which is bound, and {said} — "
+                             f"{RELEASE_OWED}")
             else:
                 parts.append(f"no named file holds this fact now: {said}")
         if taint:
@@ -4677,6 +4741,11 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                  "observed_at": bound_in}
         if collateral:
             entry["collateral"] = True
+        if holders and left and not found and not taint:
+            # A pair is answered by its own file's judgment: a sibling that stopped holding the
+            # fact is that sibling's open pair, and blocking the holders on it would leave pairs
+            # a judgment cleared reported as drift by every later check.
+            entry["encoded_at"] = holders
         entries.append(entry)
 
     # The mechanical tier's own entries, written from the run and from nothing else. A node here
@@ -4846,7 +4915,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     if restated:
         front["restates"] = sorted(restated, key=lambda e: (e["file"], e["where"]))
     claimed = {path for entry in entries
-               for path in entry.get("encoded_at") or entry.get("observed_at") or []}
+               for path in (entry.get("encoded_at") or []) + (entry.get("observed_at") or [])}
     unbound_now = [given for given in manifest["unbound"] if given not in claimed]
     if unbound_now:
         front["unbound"] = unbound_now
@@ -4943,7 +5012,7 @@ def unaccounted(record: Path, declared: dict, nodes: dict[str, dict],
     # `--bind-record` writes by union, so the silent pair's stale claim would simply stand.
     answered_pairs = {(entry["node"], path) for entry in front.get("nodes") or []
                       if isinstance(entry, dict) and isinstance(entry.get("node"), str)
-                      for path in (entry.get("encoded_at") or entry.get("observed_at") or [])
+                      for path in ((entry.get("encoded_at") or []) + (entry.get("observed_at") or []))
                       if isinstance(path, str)}
     given_of = {(p if str(offset) == "." else (offset / p).as_posix()): p for p in named}
     problems = []
@@ -5205,6 +5274,9 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     owed = withheld(record)
     if owed:
         print(left_owed(owed, record))
+    releases = releases_owed(record)
+    if releases:
+        print(release_receipt(releases, target, spec_root))
     return 0
 
 
