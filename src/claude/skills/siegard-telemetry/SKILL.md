@@ -92,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/13
+contract_version: siegard-telemetry/14
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -189,8 +189,17 @@ What each section holds:
   its trigger, and the context's size either side — then `skill_totals[].compactions` per skill
   and every agent whose `compactions` is above zero. A compaction is an invocation that outgrew
   its window, and past it the session holds a paraphrase of what it read; a skill with none in
-  the window says zero, and a `siegard-telemetry/4` record says nothing, which is not zero. A total set
-  beside an earlier report's is compared only under one contract version: a `siegard-telemetry/2`
+  the window says zero, and a `siegard-telemetry/4` record says nothing, which is not zero. **Then the
+  context per call**, per session from `harness.sessions[].context`: its calls, the context they
+  read and the per-call mean, p50, p90 and max; then one table of the session replayed at each
+  window of `at_window` beside `as_run` — compactions, context read and commit re-authorizations
+  owed — every figure in tokens, never a price, which is the reader's to apply. Beside it,
+  `as_run.replayed` against the session's own reading and compactions, said as how far the
+  replay can be trusted: a replay that misses the session it replays is a replay no window can
+  be chosen by. Then `aftermath`: repeated spawns and reads per call within its window after a
+  compaction beside the rest of the session — the one sign in the record that a compaction lost
+  what the work needed. A `siegard-telemetry/13` record carries none of it, which is not zero.
+  A total set beside an earlier report's is compared only under one contract version: a `siegard-telemetry/2`
   total counted the session's direct spawns alone, and reads as a floor beside a later one.
 - **10.** Judgment, and only here: a step whose cost is out of proportion to what it decided, a
   repeat an earlier check would have spared, a stop that was unnecessary or one that was missing,

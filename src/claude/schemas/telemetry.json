@@ -26,8 +26,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/13",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero."
+      "const": "siegard-telemetry/14",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero. /14 reads each orchestrating session's context per call: what every call read, the floor its compactions left, the same session replayed at each auto-compact window with the compactions and commit re-authorizations each would have cost, the replay at the window the session ran under as the check on the replay itself, and what the calls following a compaction did again; a /13 report carries none of it, which is not a count of zero."
     },
     "project_root": {
       "type": "string",
@@ -118,8 +118,218 @@
             "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
                          "working_directories", "entries_in_window", "human_turns_in_window",
                          "usage", "by_skill", "compactions", "skill_calls", "short_turns",
-                         "confirmations", "questions", "commits"],
+                         "confirmations", "questions", "commits", "context"],
             "properties": {
+              "context": {
+                "type": "object",
+                "required": [
+                  "calls",
+                  "context_read",
+                  "per_call",
+                  "as_run",
+                  "floor",
+                  "at_window",
+                  "aftermath"
+                ],
+                "additionalProperties": false,
+                "description": "The orchestrating context's cost per call and what it would have cost compacting at each window `bin/telemetry.py` names in `CONTEXT_WINDOWS`, in tokens and never in a price, which differs by model and cache lifetime. A call's context is what it read — input, cache written and cache read. The replay adds each call's own growth, undoes the session's compactions and restarts at `floor` on each window's; it assumes growth does not depend on when the context was compacted, and `as_run.replayed` is the check on that assumption.",
+                "properties": {
+                  "calls": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "context_read": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "per_call": {
+                    "type": "object",
+                    "required": [
+                      "mean",
+                      "p50",
+                      "p90",
+                      "max"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "mean": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "p50": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "p90": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "max": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "as_run": {
+                    "type": "object",
+                    "required": [
+                      "compactions",
+                      "reauthorizations",
+                      "replayed"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "compactions": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "reauthorizations": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "replayed": {
+                        "oneOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "window",
+                              "compactions",
+                              "context_read",
+                              "reauthorizations"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "window": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "The auto-compact window replayed, in tokens."
+                              },
+                              "compactions": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "context_read": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "The context every call would have read, summed, in tokens."
+                              },
+                              "reauthorizations": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Cycles after a compaction holding a commit: each owes the person a re-authorization before that commit."
+                              }
+                            }
+                          }
+                        ],
+                        "description": "The replay at the median window this session's automatic compactions fired at; null where none fired. Its `context_read` and `compactions` beside the session's own are how far the replay can be trusted."
+                      }
+                    }
+                  },
+                  "floor": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Where a replayed compaction restarts the context: the median of this session's own `post_tokens`, or its first call's context where it made none."
+                  },
+                  "at_window": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "window",
+                        "compactions",
+                        "context_read",
+                        "reauthorizations"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "window": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "The auto-compact window replayed, in tokens."
+                        },
+                        "compactions": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "context_read": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "The context every call would have read, summed, in tokens."
+                        },
+                        "reauthorizations": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Cycles after a compaction holding a commit: each owes the person a re-authorization before that commit."
+                        }
+                      }
+                    }
+                  },
+                  "aftermath": {
+                    "type": "object",
+                    "required": [
+                      "after",
+                      "elsewhere"
+                    ],
+                    "additionalProperties": false,
+                    "description": "What the calls within `AFTERMATH_CALLS` of a compaction did again, beside the rest of the session: a compaction that lost what the work needed shows as repeats rising after it.",
+                    "properties": {
+                      "after": {
+                        "type": "object",
+                        "required": [
+                          "calls",
+                          "repeated_agents",
+                          "repeated_reads"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "calls": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "repeated_agents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Spawns whose prompt digest an earlier spawn of the session carried."
+                          },
+                          "repeated_reads": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Reads of a file the session had already read."
+                          }
+                        }
+                      },
+                      "elsewhere": {
+                        "type": "object",
+                        "required": [
+                          "calls",
+                          "repeated_agents",
+                          "repeated_reads"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "calls": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "repeated_agents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Spawns whose prompt digest an earlier spawn of the session carried."
+                          },
+                          "repeated_reads": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Reads of a file the session had already read."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
               "id": { "type": "string", "minLength": 1 },
               "path": { "type": "string", "minLength": 1 },
               "first_timestamp": { "type": ["string", "null"] },

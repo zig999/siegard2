@@ -177,7 +177,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/13"
+CONTRACT = "siegard-telemetry/14"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -267,7 +267,7 @@ class MessageUsage:
     def __init__(self) -> None:
         self.messages: dict[str, dict] = {}
 
-    def add(self, entry: dict, skill: str | None = None) -> None:
+    def add(self, entry: dict, skill: str | None = None) -> str:
         message = entry.get("message") or {}
         key = message.get("id") if isinstance(message.get("id"), str) \
             else f"entry:{len(self.messages)}"
@@ -280,6 +280,7 @@ class MessageUsage:
                 value = spent.get(name)
                 if isinstance(value, int) and value >= 0 and value > held["usage"][name]:
                     held["usage"][name] = value
+        return key
 
     def total(self) -> dict:
         usage = dict.fromkeys(USAGE_KEYS, 0)
@@ -661,6 +662,8 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     in_span_commits: list[dict] = []
     turns_since_skill = 0
     commit_word_typed = commit_word_in_summary = loop_armed = False
+    boundaries: list[int] = []
+    events: dict[str, list[tuple[str, str]]] = {}
     for entry in entries_of(path):
         stamp = entry.get("timestamp")
         if isinstance(stamp, str):
@@ -710,6 +713,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         if is_compaction(entry):
             compactions.append(dict(compaction_of(entry), at=iso(instant_of(stamp)),
                                     skill=skill or "none"))
+            boundaries.append(len(spent.messages))
         if entry.get("type") != "assistant":
             continue
         for block in blocks_of(entry):
@@ -724,11 +728,19 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                     skill = named
                     skill_calls[named] = skill_calls.get(named, 0) + 1
                     turns_since_skill = 0
-        spent.add(entry, skill)
+        call = spent.add(entry, skill)
         for block in blocks_of(entry):
             if block.get("type") != "tool_use" or not isinstance(block.get("id"), str):
                 continue
             payload = block.get("input") if isinstance(block.get("input"), dict) else {}
+            happened = events.setdefault(call, [])
+            if block.get("name") == "Agent":
+                happened.append(("agent", prompt_digest_of(payload)))
+            elif block.get("name") == "Read" and isinstance(payload.get("file_path"), str):
+                happened.append(("read", payload["file_path"]))
+            elif block.get("name") == "Bash" and isinstance(payload.get("command"), str) \
+                    and any(m.group(1) == "commit" for m in GIT_COMMIT.finditer(payload["command"])):
+                happened.append(("commit", ""))
             if block.get("name") == "Bash":
                 command = payload.get("command")
                 if isinstance(command, str) and skill and turns_since_skill == 0 \
@@ -775,6 +787,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
         "skill_calls": dict(sorted(skill_calls.items())), "short_turns": short_turns,
         "confirmations": confirmations, "questions": questions, "commits": in_span_commits,
+        "context": context_reading(spent, boundaries, events, compactions),
     }
     return summary, list(commands.values()), list(agents.values())
 
@@ -795,6 +808,107 @@ def compaction_of(entry: dict) -> dict:
     trigger = meta.get("trigger")
     return {"trigger": trigger if isinstance(trigger, str) else None,
             "pre_tokens": count("preTokens"), "post_tokens": count("postTokens")}
+
+
+# The auto-compact windows a session's context is replayed against. The harness accepts any window
+# from 100k to 1M tokens; these span it, and a report computes them for every session so a window
+# set in a project's settings can be held to the figure it was chosen by.
+CONTEXT_WINDOWS = (150_000, 250_000, 400_000, 600_000)
+# How many of the orchestrating context's calls after a compaction are read as its aftermath.
+AFTERMATH_CALLS = 30
+
+
+def percentile(values: list[int], share: float) -> int:
+    ordered = sorted(values)
+    return ordered[min(len(ordered) - 1, int(share * len(ordered)))] if ordered else 0
+
+
+def context_reading(spent: "MessageUsage", boundaries: list[int],
+                    events: dict[str, list[tuple[str, str]]], compactions: list[dict]) -> dict:
+    """What the orchestrating context cost per call, what it would have cost compacting at each
+    window of `CONTEXT_WINDOWS`, and what it did again in the calls that followed a compaction.
+
+    A call's context is everything it read — input, cache written and cache read — so the sum over
+    calls is the context the session paid to re-read, in tokens; a price is the reader's to apply,
+    since it differs by model and by cache lifetime. The replay is mechanical: each call adds what
+    it added in the session as it ran, a compaction the session made is undone, and a compaction
+    at a window restarts the context at the floor this session's own compactions left, or at its
+    first call's context where it made none; the replay itself starts where the session did. It assumes what a call adds does not depend on when
+    the context was compacted; at the window the session actually ran under, the replay should
+    give back what it read, and `as_run` beside each window is what to hold that to. A cycle that
+    follows a compaction and holds a commit owes the person a re-authorization before it, so each
+    window says how many it would have owed."""
+    keys = list(spent.messages)
+    contexts = []
+    for key in keys:
+        held = spent.messages[key]["usage"]
+        contexts.append(held["input_tokens"] + held["cache_creation_input_tokens"]
+                        + held["cache_read_input_tokens"])
+    starts = set(boundaries)
+    commits = {i for i, key in enumerate(keys)
+               if any(kind == "commit" for kind, _ in events.get(key, []))}
+    paid = [(i, c) for i, c in enumerate(contexts) if c > 0]
+    reading = {"calls": len(paid), "context_read": sum(c for _, c in paid),
+               "per_call": {"mean": round(sum(c for _, c in paid) / len(paid)) if paid else 0,
+                            "p50": percentile([c for _, c in paid], 0.5),
+                            "p90": percentile([c for _, c in paid], 0.9),
+                            "max": max((c for _, c in paid), default=0)}}
+
+    def owed(cycle_of: list[int]) -> int:
+        return len({cycle_of[i] for i in commits if cycle_of[i] > 0})
+
+    run_cycle, cycle = [], 0
+    for i in range(len(contexts)):
+        cycle += 1 if i in starts else 0
+        run_cycle.append(cycle)
+    reading["as_run"] = {"compactions": len(compactions), "reauthorizations": owed(run_cycle)}
+
+    left = [c["post_tokens"] for c in compactions if isinstance(c.get("post_tokens"), int)]
+    floor = percentile(left, 0.5) if left else (paid[0][1] if paid else 0)
+    growth, previous = [], None
+    for i, c in enumerate(contexts):
+        growth.append(0 if c == 0 or previous is None or i in starts else max(0, c - previous))
+        previous = c if c > 0 else previous
+    start = paid[0][1] if paid else 0
+
+    def replay(window: int) -> dict:
+        held, read, made, cycle_of, cycle = start, 0, 0, [], 0
+        for i, added in enumerate(growth):
+            held += added
+            if held > window:
+                held, made, cycle = floor + added, made + 1, cycle + 1
+            if contexts[i] > 0:
+                read += held
+            cycle_of.append(cycle)
+        return {"window": window, "compactions": made, "context_read": read,
+                "reauthorizations": owed(cycle_of)}
+
+    reading["floor"] = floor
+    reading["at_window"] = [replay(window) for window in CONTEXT_WINDOWS]
+    # The check on the replay itself: run at the window this session's automatic compactions
+    # fired at, it should give back the session's own count and reading.
+    fired = [c["pre_tokens"] for c in compactions
+             if c.get("trigger") == "auto" and isinstance(c.get("pre_tokens"), int)]
+    reading["as_run"]["replayed"] = replay(percentile(fired, 0.5)) if fired else None
+
+    seen: set[tuple[str, str]] = set()
+    since: int | None = None
+    aftermath = {"after": {"calls": 0, "repeated_agents": 0, "repeated_reads": 0},
+                 "elsewhere": {"calls": 0, "repeated_agents": 0, "repeated_reads": 0}}
+    for i, key in enumerate(keys):
+        if i in starts:
+            since = 0
+        zone = aftermath["after" if since is not None and since < AFTERMATH_CALLS else "elsewhere"]
+        zone["calls"] += 1
+        for kind, what in events.get(key, []):
+            if kind in ("agent", "read"):
+                if (kind, what) in seen:
+                    zone["repeated_agents" if kind == "agent" else "repeated_reads"] += 1
+                seen.add((kind, what))
+        if since is not None:
+            since += 1
+    reading["aftermath"] = aftermath
+    return reading
 
 
 def prompt_digest_of(payload: dict) -> str:

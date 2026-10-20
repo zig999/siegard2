@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/13"
+    assert report["contract_version"] == "siegard-telemetry/14"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/13"
+    assert report["contract_version"] == "siegard-telemetry/14"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1099,6 +1099,47 @@ def test_a_compaction_is_counted_under_the_skill_it_fell_in(consumer):
     assert totals["none"]["compactions"] == 1
     s1 = next(s for s in report["harness"]["sessions"] if s["id"] == "s1")
     assert s1["compactions"] == []
+
+
+def call(stamp: str, context: int, *blocks: dict) -> str:
+    return assistant(stamp, *blocks, session="s5",
+                     usage={"input_tokens": 0, "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": context, "output_tokens": 1})
+
+
+def test_the_context_is_read_per_call_and_replayed_at_each_window(consumer):
+    """Each call reads its whole context, so the sum over calls is what a session paid to re-read.
+    Replayed at a window, the context restarts at the floor the session's own compactions left,
+    and a cycle after a compaction holding a commit owes the person a re-authorization."""
+    commit = {"type": "tool_use", "id": "c1", "name": "Bash",
+              "input": {"command": "git commit -m x -- a"}}
+    spawn = {"type": "tool_use", "id": "g1", "name": "Agent",
+             "input": {"prompt": "judge a.ts", "subagent_type": "x"}}
+    entries = [call(f"2026-08-20T10:{i:02d}:00.000Z", 100_000 * (i + 1),
+                    *([commit] if i in (2, 6) else []), *([spawn] if i in (1, 5) else []))
+               for i in range(4)]
+    entries.append(compacted("2026-08-20T10:04:30.000Z", pre=400_000, post=50_000))
+    entries += [call(f"2026-08-20T10:{i:02d}:00.000Z", 50_000 + 100_000 * (i - 4),
+                     *([commit] if i == 6 else []), *([spawn] if i == 5 else []))
+                for i in range(4, 8)]
+    (consumer["transcripts"] / "s5.jsonl").write_text("".join(entries), encoding="utf-8")
+    _, report = report_of(consumer)
+    assert not list(contract().iter_errors(report))
+    context = next(s for s in report["harness"]["sessions"] if s["id"] == "s5")["context"]
+    assert context["calls"] == 8
+    assert context["context_read"] == sum(100_000 * (i + 1) for i in range(4)) + sum(
+        50_000 + 100_000 * k for k in range(4))
+    assert context["floor"] == 50_000
+    assert context["as_run"]["compactions"] == 1
+    assert context["as_run"]["reauthorizations"] == 1, "the commit after the compaction owes one"
+    assert context["as_run"]["replayed"]["compactions"] == 1
+    by_window = {w["window"]: w for w in context["at_window"]}
+    assert by_window[600_000]["compactions"] == 1, "the last call crosses 600k"
+    assert by_window[600_000]["reauthorizations"] == 0, "and no commit follows it"
+    assert by_window[150_000]["compactions"] > by_window[400_000]["compactions"]
+    assert by_window[150_000]["context_read"] < context["context_read"]
+    assert context["aftermath"]["after"]["repeated_agents"] == 1, \
+        "the prompt spawned before the compaction and again after it"
 
 
 def test_an_agent_s_own_compactions_are_counted_on_its_row(consumer):
