@@ -115,6 +115,9 @@ def deliver_in(worktree: Path, slug: str) -> None:
     source = worktree / "backend" / "src" / fname
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text("export {}\n", encoding="utf-8")
+    test = worktree / "backend" / "tests" / f"{slug}.spec.ts"
+    test.parent.mkdir(parents=True, exist_ok=True)
+    test.write_text("it('holds', () => {})\n", encoding="utf-8")
 
     root = worktree / "delivery" / "m1"
     write_node(root, f"implementation/checkout/{slug}", {

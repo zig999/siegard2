@@ -122,6 +122,8 @@ def test_the_chain_holds_from_an_absent_manifest_to_a_delivered_one(
     claimed = found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree)
     assert any("does not hold it" in p for p in claimed), claimed
     (tree / "package.json").write_text(json.dumps({"name": "x"}), encoding="utf-8")
+    (tree / "tests").mkdir()
+    (tree / "tests/place.spec.ts").write_text("it('places', () => {})\n", encoding="utf-8")
     nodes, found = deliver.collect(delivery, validator, names)
     assert found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, tree) == []
 

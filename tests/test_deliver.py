@@ -2561,6 +2561,38 @@ def test_the_six_findings_are_receipts_over_a_closed_plan(delivery, work, root, 
     assert checked.returncode == 0 and "a receipt, never a refusal" in checked.stdout
 
 
+def test_a_live_proof_naming_a_test_the_target_does_not_hold_is_refused(delivery, work, root,
+                                                                        target, sound_delivery):
+    """«A proof's `tests` name files its target source root holds while its plan is live»
+    (SPEC-004 R17): a test that moved is proved again, and the refusal names the path."""
+    (target / "tests/place.spec.ts").rename(target / "tests/moved.spec.ts")
+    found = problems_of(delivery, work, target, root)
+    said(found, f"proof/checkout/record-order: names 1 test file(s) {target} does not hold — "
+                f"tests/place.spec.ts; a proof answers the tests as they ran")
+    assert any("--write-proof --replace" in p for p in found)
+    (target / "tests/moved.spec.ts").rename(target / "tests/place.spec.ts")
+    assert problems_of(delivery, work, target, root) == []
+
+
+def test_a_closed_proof_naming_a_test_the_target_does_not_hold_is_a_receipt(delivery, work,
+                                                                            root, target,
+                                                                            sound_delivery):
+    import subprocess
+    import sys
+    (target / "tests/place.spec.ts").unlink()
+    derive_plan(work, root)
+    (work / deliver.plan.CLOSURE_FILE).write_text("Closed.\n", encoding="utf-8")
+    script = REPO / "src/claude/bin/deliver.py"
+    derived = subprocess.run([sys.executable, "-B", str(script), str(delivery), str(work),
+                              str(target)], capture_output=True, text=True)
+    assert derived.returncode == 0, derived.stdout + derived.stderr
+    checked = subprocess.run([sys.executable, "-B", str(script), "--check", str(delivery),
+                              str(work), str(target)], capture_output=True, text=True)
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+    assert ("proof/checkout/record-order: names 1 test file(s)" in checked.stdout
+            and "a receipt, never a refusal: the plan is closed" in checked.stdout), checked.stdout
+
+
 # ------------------------------------------------------------- findings counted by field
 
 

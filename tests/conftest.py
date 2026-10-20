@@ -182,6 +182,11 @@ def target(tmp_path: Path) -> Path:
     base = tmp_path / "target"
     base.mkdir()
     (base / "siegard.json").write_text(json.dumps({"targets": {"app": "."}}), encoding="utf-8")
+    # The test the sound delivery's proof names: SPEC-004 R17 holds a live proof to a tree that
+    # holds its tests.
+    (base / "tests").mkdir()
+    (base / "tests/place.spec.ts").write_text("it('places an order', () => {})\n",
+                                              encoding="utf-8")
     return base
 
 

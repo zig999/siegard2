@@ -118,6 +118,13 @@ left out — so the file set the review that followed was handed never held them
   change no review reads, and a test changed there is changed where nobody would see it. A
   delivery whose tree holds such a path is refused before it is validated, and the refusal names
   the path.
+- **R17** — A proof's `tests` name files its target source root holds while its plan is live. A
+  test that moved or went is proved again, by the proof written anew; over a closed plan the
+  record stands as written, and a test the tree no longer holds is reported, never refused.
+
+  Grounds: on 2026-10-19 one consumer's proofs named 381 test paths its tree no longer held, a
+  test directory having moved by hand, and `deliver.py --check` passed every delivery root that
+  held them; all 381 sat in closed plans. A second consumer held none.
 
 ## Validation required before acceptance
 
@@ -136,7 +143,13 @@ left out — so the file set the review that followed was handed never held them
    record names, admits a helper the proof's `files` names and a deleted path a record names, and
    never counts the framework's own roots as the delivery's change; `tests/test_unrecorded.py`
    proves each.
-5. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
+5. For R17: `bin/deliver.py --check` refuses a live plan's proof naming a test its target does
+   not hold, names the path, and hands the proof's rewrite; over a closed plan it prints the same
+   finding as a receipt and exits as it would without it; a proof whose tests the target holds
+   draws neither — `tests/test_deliver.py` proves each
+   (`test_a_live_proof_naming_a_test_the_target_does_not_hold_is_refused`,
+   `test_a_closed_proof_naming_a_test_the_target_does_not_hold_is_a_receipt`).
+6. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
 

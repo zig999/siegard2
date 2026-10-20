@@ -78,12 +78,13 @@ project's whole tree has no path within it to hold, and the check says nothing t
 **Over a closed plan, the checks that hold a record to what stands beside it are receipts.** A
 plan `closure.md` marks closed takes no further record — nothing delivers into it again — so a
 refusal there stops no writer and only hides the index of a finished initiative behind a fact
-nobody remains to settle. Six findings are receipted over a closed plan, printed with the index
+nobody remains to settle. Seven findings are receipted over a closed plan, printed with the index
 and refused over a live one: a run's step under a command the registry does not declare under
 that name, or a run from outside the target; a review naming no run over a registry declaring
 commands; a review's green run that skipped a step the registry declares; a review's file set
-narrower than what its tasks' records wrote; a dependency delivered and never proven; and a red
-suite attempt the proof's `## Notes` does not name. No delivery node carries a contract version
+narrower than what its tasks' records wrote; a dependency delivered and never proven; a red
+suite attempt the proof's `## Notes` does not name; and a proof naming a test its target no
+longer holds. No delivery node carries a contract version
 of its own, so the plan's closure is the one fact that separates a record nobody will write
 again from one being written now. Every other refusal holds over a closed plan as over a live
 one.
@@ -1731,6 +1732,8 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                                                          delivered, settled))
             else:
                 problems.extend(demonstrates_problems(nid, front, plan_nodes[task]["front"]))
+                if anchor is not None:
+                    held.extend(absent_test_problems(nid, front, anchor))
                 pair = f"implementation/{nid.split('/', 1)[1]}"
                 if pair not in nodes:
                     problems.append(f"{nid}: proves a task with no implementation record at "
@@ -1757,6 +1760,22 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
             problems.extend(review_reconciliation_problems(nid, front, target))
             held.extend(review_set_problems(nid, front, nodes))
     return problems + receipted(held, closed, receipts)
+
+
+def absent_test_problems(nid: str, front: dict, anchor: Path) -> list[str]:
+    """A proof's tests against the tree — «A proof's `tests` name files its target source root
+    holds while its plan is live» (SPEC-004 R17). One line per proof, every absent path in it: a
+    test directory moved by hand leaves hundreds, and a line per path buries the proofs they
+    belong to."""
+    absent = sorted({entry["file"] for entry in front.get("tests") or []
+                     if isinstance(entry, dict) and isinstance(entry.get("file"), str)
+                     and not Path(entry["file"]).is_absolute()
+                     and not (anchor / entry["file"]).is_file()})
+    if not absent:
+        return []
+    return [f"{nid}: names {len(absent)} test file(s) {anchor} does not hold — "
+            f"{', '.join(absent)}; a proof answers the tests as they ran, and a test that moved or "
+            f"went is proved again: the proof is written anew with --write-proof --replace"]
 
 
 def receipted(found: list[str], closed: bool, receipts: list[str] | None) -> list[str]:

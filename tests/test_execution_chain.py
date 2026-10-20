@@ -96,6 +96,8 @@ def test_the_chain_holds_from_an_empty_tree_to_a_delivery_that_ran(
     # 3. The implementer writes the manifest and adds the one package the registry admits. The
     #    skill then runs install and every step that is not the suite.
     (tree / "package.json").write_text(json.dumps({"name": "x"}), encoding="utf-8")
+    (tree / "tests").mkdir()
+    (tree / "tests/place.spec.ts").write_text("it('places', () => {})\n", encoding="utf-8")
     built = capture(delivery, tree, "checkout-record-order-build",
                     ("install", "true"), ("lint", "true"))
     assert built.returncode == 0, built.stdout + built.stderr
