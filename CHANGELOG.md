@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.25.0 — 2026-10-19
+
+A reconciliation binds each pair on its own file's judgment, and a file that stopped holding a fact its siblings still hold is a release a person decides. (`58cbb65`)
+
 ## 5.24.0 — 2026-10-19
 
 A delivery restamps only the files its record names, and the drift report says so. (`44a1800`)
