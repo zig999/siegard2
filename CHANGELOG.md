@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.28.0 — 2026-10-20
+
+A drifted pair a human-declared rewrite reproduces byte for byte from its pinned text, with every named step passing, is carried without a judge. (`2b9a8dc`)
+
 ## 5.27.0 — 2026-10-20
 
 Telemetry reads the orchestrating context per call and replays each session at every auto-compact window, with the re-authorizations each would owe. (`9460b63`)
