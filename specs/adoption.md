@@ -16,9 +16,10 @@ its record, and the report that counts a target's files.
 
 It decides where an adopted system's first specification comes from, what a binding of adopted
 source rests on, which files an adopted node is bound to, the states a tracked file is in, and
-when an adoption is complete. One requirement, R10, reaches past adoption to the fold of every
-reconciliation: which pairs a judgment binds is one rule whether the source was adopted or
-delivered, and it is stated here beside R4 rather than in a second home.
+when an adoption is complete. Two requirements reach past adoption to every reconciliation: R10,
+which pairs a judgment binds, and R11, which pairs a declared rewrite carries without one. Each is
+one rule whether the source was adopted or delivered, and is stated here beside R3 and R4, which
+say what a binding rests on, rather than in a second home.
 
 Grounds: a pilot over one context of a consumer backend in September 2026 — 15 source files, 69
 nodes written from a survey of the source alone — found every node held by at least one file and
@@ -97,6 +98,29 @@ constraints spent 26 judges on files the notes never cited while the notes named
   against 25 of 65 pairs of nodes that had cleared whole, and a judge read twice disagreed with
   itself on 2 of 35. Releasing the pair read nowhere was not settled: a fresh judge found the
   fact held, in part, in 5 of 73 such pairs no reading had ever held.
+
+- **R11** — A pair whose file changed by a rewrite the reconciliation declares is carried to the
+  file as it stands without a judgment, where the declared rewrite applied to the text the binding
+  pinned reproduces the current text exactly and every step the declaration names passed over that
+  tree. The rewrite and its claim to change no behavior are the declaration's; the reproduction and
+  the run are the evidence. A pair the rewrite does not reproduce, whose node moved, whose pinned
+  text the repository's history does not hold, or that an open finding stands against, is judged. A
+  carried pair is no reading: it clears no finding and closes none.
+
+  Grounds: on 2026-10-20 one consumer (productorder, HEAD 55b4e44) carried 347 `code` bindings over
+  144 files, all made by a single commit outside any task (21f9639, a build migration to NodeNext).
+  Recovering each pinned text from git and comparing: 143 files (346 bindings) differed only in
+  relative module specifiers, each resolving to the same module, and one declared rewrite — a `.js`
+  suffix on relative specifiers — reproduced all 143 byte for byte and 7 of the 8 certified tests
+  whose text had moved; `package.json` was the one real change. Staged with that rewrite, 236 of the
+  346 were carried and 110 stayed owed a judge, because an open finding in the consumer's own corpus
+  stood against each. A clone that staged only the 72 files whose every drifted pair was carried
+  bound 202 pairs with no judge, leaving 145 `code` bindings over 72 files where there had been 347
+  over 144, and 1 `proof` finding where there had been 9. The same rewrite reproduced none of the
+  other consumer's 193 drifted files whose pinned text git still held (newcatalog, HEAD c340af4),
+  whose drift is content its own deliveries changed. No existing route answered such a pair without
+  a judge: the omission needs identical bytes, the mechanical tier refuses a certification whose
+  test moved, and a raw bind is recorded by nothing.
 
 ### What the tree holds
 
@@ -184,7 +208,21 @@ constraints spent 26 judges on files the notes never cited while the notes named
    each (`test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed`,
    `test_a_finding_against_the_node_binds_none_of_its_files`,
    `test_a_record_encoding_a_path_it_did_not_observe_is_refused`).
-8. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
+8. For R11: a pair a declared rewrite reproduces is staged for no judge and binds once every
+   named step passed; a pair it does not reproduce, whose node moved, whose pinned text git does
+   not hold, or that an open finding stands against, is judged; a red step binds none of them; the
+   bind refuses a record whose rewrite no longer reproduces the file; a rewritten certified test
+   keeps its certification live; and a carried pair is neither a clearance nor a finding in the
+   corpus — `tests/test_stage_fold.py` proves each
+   (`test_a_declared_rewrite_carries_the_pairs_it_reproduces_without_a_judge`,
+   `test_a_pair_the_rewrite_does_not_reproduce_is_judged_and_named`,
+   `test_a_rewrite_carries_no_pair_whose_node_moved_or_that_owes_a_finding`,
+   `test_a_rewrite_whose_pinned_text_git_does_not_hold_carries_nothing`,
+   `test_a_red_step_carries_no_rewritten_pair`,
+   `test_the_bind_refuses_a_rewritten_pair_the_file_no_longer_reproduces`,
+   `test_a_rewritten_proof_keeps_its_certification_live`,
+   `test_a_rewritten_pair_is_neither_a_clearance_nor_a_finding_in_the_corpus`).
+9. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
    domain surveyor cite the requirement each step carries in «…», `tests/test_spec_citations.py`
    proves each quote is a substring of the requirement it names, and `tests/test_adopt_scope.py`
    holds the skill's R1, R6 and R8 sentences.

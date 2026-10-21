@@ -79,6 +79,11 @@ What this script does, and nobody else does any of it:
                                                                   the proof offered and the step
                                                                   that runs it, omitting no pair
                                                                   of a node being certified
+    trace.py --stage ... --rewrite <file>                         hand no judge a drifted pair the
+                                                                  file's declared rewrite
+                                                                  reproduces from the text its
+                                                                  binding pinned; a run of the
+                                                                  steps it names answers it
     trace.py --save-return <target-root> <workspace> <file> <transcript>
                                                                   save one delegation's final
                                                                   reply, verbatim, as the return
@@ -379,6 +384,23 @@ its proof is one nothing can ever answer for. The human's `--certify` may ride b
 claim no proof carries; one node certified from both is refused, the way one node certified twice
 in one file already is.
 
+`--stage --rewrite <file>` answers drift no reading needs to answer: a file that changed by a
+mechanical rewrite alone — a module specifier gaining a suffix, an import path following a move —
+and nothing else. The file declares the rewrite, a `pattern` and a `replacement` as Python's
+`re.sub` reads them, and the registry `steps` whose run answers for the rewritten tree. For each
+drifted pair the staging recovers the text the binding pinned from git — the commits that touched
+the path, newest first, until one holds bytes whose digest is the pin — and hands no judge a pair
+whose pinned text, rewritten, is the file as it stands, byte for byte. A pair whose node moved, that
+an open finding stands against, whose pinned text git does not hold, or that the rewrite does not
+reproduce is judged as without the declaration, and the staging says which and why. The framework
+knows no language and learns none here: that the rewrite changes no behavior is the declaration's
+claim, the reproduction and the run are its evidence, and a fold whose run did not pass every
+named step writes nothing. The record lists the carried pairs under `rewritten` with the commit
+each pinned text was read at; `--bind-record` recomputes every reproduction before it writes, keeps
+each carried file's `judged` as it stood, and restamps a carried node's certified tests where the
+same rewrite reproduced every one that moved. A carried pair was read by no judge, and `--owed`
+counts it as neither a clearance nor a finding.
+
 `--fold` writes the reconciliation record from the delegations' returns, mechanically. Every rule
 it applies is a fold over structured answers — a node conforms exactly where every delegation that
 read one of its files cleared it; a finding naming a node lands on that node wherever its own judge
@@ -420,7 +442,7 @@ Usage:  trace.py <target-root>
         trace.py --convergence <target-root> <spec-root> <work-root-parent> [--all]
         trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
                  [--audit | --review [--node <node> ...] [--demonstrated <proof-record> ...]]
-                 [--certify <certifications-file>]
+                 [--certify <certifications-file>] [--rewrite <rewrite-file>]
         trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
         trace.py --encodes --rank <target-root> [--all]
         trace.py --help
@@ -435,6 +457,7 @@ Exit:   0 sound / drift-free / bound / pruned / released / the record holds / no
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -536,7 +559,7 @@ def stamped_against(entry: dict, held: dict) -> str | None:
 CLEARED_BY_JUDGMENT = ("cleared by a judgment at these bytes: a reconciliation's judgment read "
                        "this pair over the file's content and the node's text as both stand, "
                        "and no finding stands open against it")
-RECORD_VERSION = "siegard-reconcile/10"
+RECORD_VERSION = "siegard-reconcile/11"
 # What a record says of a pair that stopped holding a fact other files of its node still hold. The
 # route is structural, not this text: an entry carrying both `encoded_at` and `observed_at` exists
 # only where nothing stands against the node, so each observed pair it does not encode is a release.
@@ -1707,6 +1730,32 @@ def accounted(front: dict) -> list[str]:
     for path in sorted(set(named) - claimed - set(unbound) - omitted_files):
         problems.append(f"files: {path} is named and no node accounts for it; a file the trace "
                         f"binds nothing to belongs under `unbound`, said rather than left out")
+
+    # A carried pair is still answered by its node's entry — which is what says whether it binds
+    # — and never by an omission as well: the rewrite stands where a judgment would, not beside one.
+    rewritten = front.get("rewritten") or {}
+    carried = [(pair["node"], pair["file"]) for pair in rewritten.get("pairs") or []]
+    every_answered = answered_pairs | {(entry["node"], path) for entry in front["nodes"]
+                                       for path in entry.get("encoded_at") or []}
+    omitted_pairs = {(entry["node"], entry["file"]) for entry in front.get("pairs_omitted") or []}
+    for node_id, path in sorted(set(carried)):
+        if carried.count((node_id, path)) > 1:
+            problems.append(f"rewritten: {node_id} over {path} is listed "
+                            f"{carried.count((node_id, path))} times; one entry per pair")
+        if path not in named:
+            problems.append(f"rewritten: {path} is not in this record's file set")
+        if (node_id, path) not in every_answered:
+            problems.append(f"rewritten: {node_id} over {path} is answered by no node entry; "
+                            f"whether a carried pair binds is said by its node's entry")
+        if (node_id, path) in omitted_pairs:
+            problems.append(f"rewritten: {node_id} over {path} is also under `pairs_omitted`; a "
+                            f"pair was carried or omitted, never both")
+    carried_nodes = {node_id for node_id, _ in carried}
+    for proof in rewritten.get("proofs") or []:
+        if proof["node"] not in carried_nodes:
+            problems.append(f"rewritten: the proof {proof['file']} is carried for "
+                            f"{proof['node']}, which carries no pair here; a certification is "
+                            f"carried with its node's pairs, never apart from them")
     return problems
 
 
@@ -2009,6 +2058,12 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
                               f"{project.PROJECT_FILE} does not declare — its paths are spelled "
                               f"from a root nothing here can resolve, so it is read by nothing")
             continue
+        # A pair the declared rewrite carried was read by no judge: it answers the conformance
+        # question neither way, so it is neither a clearance nor a finding here.
+        rewritten = front.get("rewritten")
+        carried = {(pair.get("node"), pair.get("file"))
+                   for pair in (rewritten.get("pairs") or [] if isinstance(rewritten, dict) else [])
+                   if isinstance(pair, dict)}
         for entry in front.get("nodes") or []:
             if not isinstance(entry, dict) or not isinstance(entry.get("node"), str):
                 continue
@@ -2016,7 +2071,7 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
             encoded = [p for p in entry.get("encoded_at") or [] if isinstance(p, str)]
             for path in (encoded if conforms is True else
                          [p for p in entry.get("observed_at") or [] if p not in encoded]):
-                if not isinstance(path, str):
+                if not isinstance(path, str) or (node, path) in carried:
                     continue
                 anchored = path if where == "." else f"{where}/{path}"
                 (cleared if conforms is True else found).setdefault(
@@ -2024,6 +2079,8 @@ def judged(home: Path) -> tuple[dict[tuple[str, str], list[str]],
             if conforms is not True:
                 # A pair a node not cleared still encodes is one its own judgment cleared.
                 for path in encoded:
+                    if (node, path) in carried:
+                        continue
                     anchored = path if where == "." else f"{where}/{path}"
                     cleared.setdefault((node, anchored), []).append(record.name)
         # An adoption's unheld candidate was read on every file of its set and found neither held
@@ -3517,6 +3574,105 @@ def certifications_of(path: Path) -> tuple[list[dict], list[str]]:
     return entries, problems
 
 
+REWRITE_FIELDS = ("pattern", "replacement", "steps")
+
+
+def rewrite_of(path: Path) -> tuple[dict | None, list[str]]:
+    """The rewrite a caller declares, read from its file: a `pattern` and a `replacement` as
+    Python's `re.sub` reads them, and the registry `steps` whose run answers for the rewritten
+    tree. Shape alone is decided here; whether each step is one the registry declares is the
+    staging's, which has the registry in hand.
+
+    The framework knows no language, and nothing here learns one. What the pattern rewrites and
+    why that changes no behavior is the declaration's claim, the way a premise's `summary` is;
+    what the staging adds is the evidence — the pinned text rewritten is the current text, byte
+    for byte — and the run adds that the rewritten tree still builds and passes."""
+    if not path.is_file():
+        return None, [f"{path} does not exist"]
+    try:
+        loaded = spec.load_yaml(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as broken:
+        return None, [f"{path} does not parse: {broken}"]
+    if not isinstance(loaded, dict):
+        return None, [f"{path} holds no mapping; a rewrite is a `pattern`, a `replacement` and "
+                      f"the `steps` whose run answers for the rewritten tree"]
+    problems = [f"{path}: `{key}` is no field of a rewrite, which is "
+                f"{', '.join(f'`{field}`' for field in REWRITE_FIELDS)} and nothing else"
+                for key in sorted(map(str, loaded)) if key not in REWRITE_FIELDS]
+    pattern, replacement, steps = (loaded.get(field) for field in REWRITE_FIELDS)
+    if isinstance(steps, str):
+        steps = [steps]
+    if not isinstance(pattern, str) or not pattern:
+        problems.append(f"{path}: `pattern` is a non-empty string, as Python's `re` reads it")
+    if not isinstance(replacement, str):
+        problems.append(f"{path}: `replacement` is a string, as `re.sub` reads it — empty is one")
+    if not isinstance(steps, list) or not steps \
+            or not all(isinstance(step, str) and step for step in steps):
+        problems.append(f"{path}: `steps` names one or more registry steps; a rewrite no run "
+                        f"answers for is a claim with no evidence that the tree still builds")
+    if problems:
+        return None, problems
+    try:
+        compiled = re.compile(pattern)
+        compiled.sub(replacement, "")
+    except re.error as broken:
+        return None, [f"{path}: the rewrite does not compile: {broken}"]
+    return {"pattern": pattern, "replacement": replacement,
+            "steps": list(dict.fromkeys(steps)), "compiled": compiled}, []
+
+
+def pinned_text(home: Path, stored: str, digest: str) -> tuple[str | None, bytes | None]:
+    """The commit whose tree holds `stored` at the bytes `digest` pins, and those bytes — or
+    nothing, where the history reachable from HEAD holds no such text.
+
+    The trace pins a digest and never a text, so the text a binding was stamped over is recovered
+    from git: the commits that touched the path, newest first, until one holds bytes whose digest
+    is the pin. A text bound and never committed, or committed under another path, is not found,
+    and a pair whose pinned text nobody can open is a pair nobody can show was rewritten."""
+    listed = subprocess.run(["git", "-C", str(home), "log", "--format=%H", "--", f"./{stored}"],
+                            capture_output=True, text=True)
+    if listed.returncode != 0:
+        return None, None
+    for commit in listed.stdout.split():
+        shown = subprocess.run(["git", "-C", str(home), "show", f"{commit}:./{stored}"],
+                               capture_output=True)
+        if shown.returncode == 0 and \
+                "sha256:" + hashlib.sha256(shown.stdout).hexdigest() == digest:
+            return commit, shown.stdout
+    return None, None
+
+
+def rewrites_to(rewrite: dict, old: bytes, new: bytes) -> bool:
+    """Whether the declared rewrite applied to `old` is `new`, byte for byte. Text that is not
+    UTF-8 is never rewritten: a pattern over characters says nothing about bytes it cannot read."""
+    try:
+        old_text, new_text = old.decode("utf-8"), new.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return rewrite["compiled"].sub(rewrite["replacement"], old_text) == new_text
+
+
+def reproduced(rewrite: dict, home: Path, stored: str, digest: str,
+               cache: dict[tuple[str, str], tuple[str | None, str | None]]
+               ) -> tuple[str | None, str | None]:
+    """The commit holding the text `digest` pins at `stored`, where the declared rewrite of that
+    text is the file as it stands — or, where it is not, why. Cached per pinned text, because
+    every node bound to a file was stamped over the same bytes as often as not."""
+    key = (stored, digest)
+    if key not in cache:
+        source = home / stored
+        commit, old = pinned_text(home, stored, digest)
+        if commit is None or old is None:
+            cache[key] = (None, "git holds no text of it at the digest the binding pinned")
+        elif not source.is_file():
+            cache[key] = (None, "the tree no longer holds it")
+        elif not rewrites_to(rewrite, old, source.read_bytes()):
+            cache[key] = (None, "the rewrite of its pinned text is not its text as it stands")
+        else:
+            cache[key] = (commit, None)
+    return cache[key]
+
+
 def demonstrated_certifications(records: list[Path], home: Path,
                                 offset: str) -> tuple[list[dict], list[str]]:
     """One certification per node the named proof records' tests claim to demonstrate: its proof
@@ -3566,7 +3722,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           also: list[str] | None = None, certify: Path | None = None,
           demonstrated: list[Path] | None = None, adopt: bool = False,
           outside: list[str] | None = None, ledger_path: Path | None = None,
-          concurrency: int = CONCURRENCY) -> int:
+          concurrency: int = CONCURRENCY, rewrite: Path | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -3621,7 +3777,18 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     named none. A file no fact names is not judged — its judge would answer for no node — and
     stays unbound. The candidate index lists every ledger node with the files it is read on, so a
     judge can still attribute a fact to a node another file's pack carries. Nodes given as
-    `--node` beside a ledger are read on every file, as without one."""
+    `--node` beside a ledger are read on every file, as without one.
+
+    With a declared rewrite, a drifted pair the rewrite reproduces is handed no judge: «A pair
+    whose file changed by a rewrite the reconciliation declares is carried to the file as it
+    stands without a judgment, where the declared rewrite applied to the text the binding pinned
+    reproduces the current text exactly and every step the declaration names passed over that
+    tree» (SPEC-005 R11). The guards come first and each sends the pair to a judge: a node whose
+    text moved was never read against the sentence that replaced it, a pair an open finding
+    stands against would carry the very text the finding was read in, and a node being certified
+    rides a fresh reading. A certified test of a carried node whose text moved is carried with it
+    where the same rewrite reproduces it — and where any one of the node's moved tests is not
+    reproduced, none is, and the certification stays as it stood."""
     also = list(dict.fromkeys(also or []))
     outside = list(dict.fromkeys(outside or []))
     per_file_ledger: dict[str, set[str]] = {}
@@ -3788,6 +3955,27 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             return CANNOT_RUN
     certify_nodes = {entry["node"] for entry in certify_entries}
 
+    # A declared rewrite is refused before anything is written where no run could answer it: a
+    # step the registry does not declare is one no run will ever pass.
+    declared_rewrite: dict | None = None
+    if rewrite is not None:
+        declared_rewrite, rewrite_problems = rewrite_of(rewrite)
+        if declared_rewrite is not None:
+            registry = registry_of(home, offset) or {}
+            steps = {c["step"] for c in registry.get("commands") or []
+                     if isinstance(c, dict) and isinstance(c.get("step"), str)}
+            rewrite_problems += [
+                f"{rewrite}: the registry declares no step `{step}`"
+                + (f"; it declares {', '.join(sorted(steps))}" if steps else
+                   "; the project declares no registry for this target, and the run that answers "
+                   "a rewrite is of steps the registry names")
+                for step in declared_rewrite["steps"] if step not in steps]
+        for problem in rewrite_problems:
+            print(f"cannot run: {problem}", file=sys.stderr)
+        if rewrite_problems:
+            return CANNOT_RUN
+    reproductions: dict[tuple[str, str], tuple[str | None, str | None]] = {}
+
     # What a run decides is not handed to a judge. A constraint some registry step decides and a
     # node a certified test decides are both answered by running that step over the tree, and a
     # reading of either re-decides mechanically what a run settles exactly — at a model's recall,
@@ -3834,12 +4022,16 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     orphaned: list[dict] = []
     mechanical: list[dict] = []
     answered_by_run: list[str] = []
+    rewritten: list[dict] = []
+    answered_by_rewrite: list[str] = []
+    not_reproduced: dict[str, list[str]] = {}
     for given in files:
         stored = stored_of[given]
         rows = sorted(index.get(stored) or [])
         assigned = []
         held_current = False
         held_mechanical = False
+        held_rewritten = False
         for node_id, pinned in rows:
             if node_id not in nodes:
                 orphaned.append({"node": node_id, "file": given})
@@ -3884,6 +4076,26 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 omitted.append({"node": node_id, "file": given, "reason": CLEARED_BY_JUDGMENT})
                 held_current = True
                 continue
+            # A drifted pair the declared rewrite reproduces from its pinned text is answered by
+            # the reproduction and the run, never by a judge — after the guards, each of which
+            # sends the pair to a judge and says why. Before the mechanical tier, because the run
+            # that answers a rewrite is owed whatever else decides the node.
+            if declared_rewrite is not None and pinned != current[stored]:
+                if pair_node_digest.get((node_id, stored)) != nodes[node_id]["digest"]:
+                    why = ("its node's text moved since the bind, and a rewrite of the file says "
+                           "nothing about the sentence that replaced it")
+                elif (node_id, stored) in owed_pairs:
+                    why = ("an open finding stands against the pair, and the rewritten text is "
+                           "the text it was found in")
+                elif node_id in certify_nodes:
+                    why = "its node is being certified, which rides a fresh reading"
+                else:
+                    commit, why = reproduced(declared_rewrite, home, stored, pinned, reproductions)
+                    if commit is not None:
+                        rewritten.append({"node": node_id, "file": given, "pinned_at": commit})
+                        held_rewritten = True
+                        continue
+                not_reproduced.setdefault(given, []).append(f"{node_id}: {why}")
             # After the omission guard and never before it: a pair nothing has to re-decide needs
             # no run either, and a tier that claimed it would make a caller capture a run to
             # answer a question the last bind already answered over these exact bytes.
@@ -3901,7 +4113,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         # owes the fact that no binding claims it: a file under `files` that no node accounts
         # for and no `unbound` names is a record the fold refuses to write. A file whose only
         # bindings are orphaned is unbound the same way — nothing standing claims it.
-        if not assigned and not held_current and not held_mechanical:
+        if not assigned and not held_current and not held_mechanical and not held_rewritten:
             unbound.append(given)
         if assigned or also or per_file_ledger.get(given):
             judged_files[given] = assigned
@@ -3911,6 +4123,35 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             # Not unbound and not judged: every pair this file carries is one a run answers, so
             # no judge is spawned for it and the record accounts for it through those nodes.
             answered_by_run.append(given)
+        elif held_rewritten:
+            answered_by_rewrite.append(given)
+
+    # A carried node's certified tests whose text moved, carried with it where the same rewrite
+    # reproduces every one of them. One test left unreproduced and the node's certification stays
+    # as it stood: a certification pins all its proof, and half a proof restamped is a claim
+    # about a test nobody showed was only rewritten.
+    rewritten_proofs: list[dict] = []
+    if declared_rewrite is not None and rewritten:
+        by_node = {entry["node"]: entry for entry in declared.get("bindings") or []
+                   if isinstance(entry, dict)}
+        for node_id in sorted({pair["node"] for pair in rewritten}):
+            entry = by_node.get(node_id) or {}
+            if entry.get("decided_by") != DECIDED_BY_TEST:
+                continue
+            moved_proof = [held for held in entry.get("proof") or []
+                           if isinstance(held, dict) and isinstance(held.get("path"), str)
+                           and (not (home / held["path"]).is_file()
+                                or spec.digest_of(home / held["path"]) != held.get("digest"))]
+            carried_proof: list[dict] | None = []
+            for held in moved_proof:
+                commit, _ = reproduced(declared_rewrite, home, held["path"], held["digest"],
+                                       reproductions)
+                spelled = from_target(held["path"], offset)
+                if commit is None or spelled is None:
+                    carried_proof = None
+                    break
+                carried_proof.append({"node": node_id, "file": spelled, "pinned_at": commit})
+            rewritten_proofs += carried_proof or []
 
     candidates: dict[str, list[str]] = {}
     for given, assigned in judged_files.items():
@@ -3973,6 +4214,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     # stated it — neither was asked about the sentence that replaces it, so a node edited before
     # the fold is one the run did not answer, exactly as an edited node is one no judge read.
     staged_nodes.update({entry["node"]: nodes[entry["node"]]["digest"] for entry in mechanical})
+    # A carried pair's node likewise: the reproduction carried a pair stamped against the node as
+    # it stands, and a node edited before the fold is one the carried claim was never about.
+    staged_nodes.update({entry["node"]: nodes[entry["node"]]["digest"] for entry in rewritten})
 
     # One certification pack per node, beside the file packs: the node's text with its source
     # named, the tests offered as its proof already resolved, and the contract the return is held
@@ -4047,6 +4291,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "orphaned": sorted(orphaned, key=lambda e: (e["file"], e["node"])),
                 "mechanical": mechanical,
                 "answered_by_run": sorted(answered_by_run),
+                "rewrite": ({field: declared_rewrite[field] for field in REWRITE_FIELDS}
+                            if declared_rewrite is not None else None),
+                "rewritten": sorted(rewritten, key=lambda e: (e["file"], e["node"])),
+                "rewritten_proofs": sorted(rewritten_proofs, key=lambda e: (e["node"], e["file"])),
+                "answered_by_rewrite": sorted(answered_by_rewrite),
+                "not_reproduced": {given: whys for given, whys in sorted(not_reproduced.items())},
                 "certify": [{"node": e["node"], "proof": e["proof"],
                              "proof_resolved": e["proof_resolved"],
                              "proof_digests": e["proof_digests"], "step": e["step"],
@@ -4115,9 +4365,32 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                   f"({'steps' if len(entry['steps']) > 1 else 'step'} "
                   f"{', '.join(f'`{s}`' for s in entry['steps'])}"
                   + (", and every one of them has to pass)" if len(entry['steps']) > 1 else ")"))
+    if declared_rewrite is not None:
+        carried_files = sorted({entry["file"] for entry in rewritten})
+        print(f"  the declared rewrite reproduces {len(rewritten)} pair(s) over "
+              f"{len(carried_files)} file(s) from the text each binding pinned — no judge is "
+              f"handed one, and each binds only where every step the declaration names passes "
+              f"({', '.join(f'`{s}`' for s in declared_rewrite['steps'])})"
+              + (f"; {len(rewritten_proofs)} certified test(s) of theirs are reproduced too, and "
+                 f"their certifications carried" if rewritten_proofs else ""))
+        if not rewritten:
+            print("  it reproduces no pair of this set: every drifted pair goes to a judge, and a "
+                  "declaration that matches nothing is worth reading again before the judges run")
+        if not_reproduced:
+            print(f"  {len(not_reproduced)} file(s) carry a drifted pair the rewrite does not "
+                  f"carry, and a judge reads each:")
+            for given, whys in not_reproduced.items():
+                print(f"    {given} — {'; '.join(whys)}")
+    run_steps = sorted({s for entry in mechanical for s in entry["steps"]}
+                       | (set(declared_rewrite["steps"])
+                          if declared_rewrite is not None and rewritten else set()))
+    if run_steps:
+        if not mechanical:
+            print(f"  run {', '.join(f'`{s}`' for s in run_steps)} into {returns_dir}, then "
+                  f"pass --run to the fold:")
         print(f"    python3 -B {Path(__file__).resolve().parent / 'run.py'} {returns_dir} "
               f"--run {slug} --cwd {target.resolve()} --timeout-seconds <the registry's bound> "
-              + " ".join(f'--step {s}="<the registry\'s command>"' for s in steps))
+              + " ".join(f'--step {s}="<the registry\'s command>"' for s in run_steps))
     if certify_entries:
         print(f"  {len(certify_entries)} certification(s) staged — one coverage-auditor "
               f"delegation each, over the node's pack and its proof; save each return verbatim at "
@@ -4408,7 +4681,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             else:
                 problems.append("premise: every `files` entry carries `path` and `change`")
     every_named = (set(manifest["files"]) | set(manifest["all_current"])
-                   | set(manifest["unbound"]) | set(manifest.get("answered_by_run") or []))
+                   | set(manifest["unbound"]) | set(manifest.get("answered_by_run") or [])
+                   | set(manifest.get("answered_by_rewrite") or []))
     if not problems:
         absent = sorted(every_named - set(named))
         stray = sorted(set(named) - every_named)
@@ -4532,13 +4806,18 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     # and binding what stands now on the strength of it would stamp a claim over bytes the run
     # never saw.
     tier = manifest.get("mechanical") or []
-    steps_named = {s for entry in tier for s in entry.get("steps") or []}
+    carried = manifest.get("rewritten") or []
+    rewrite_steps = list((manifest.get("rewrite") or {}).get("steps") or []) if carried else []
+    steps_named = {s for entry in tier for s in entry.get("steps") or []} | set(rewrite_steps)
     captured: dict | None = None
-    if tier:
+    if tier or carried:
         if run_dir is None:
-            print(f"cannot fold: {len(tier)} pair(s) are decided by a run and none was given; "
-                  f"capture {', '.join(sorted(steps_named))} with bin/run.py into "
-                  f"{returns_dir} and pass --run <its directory>")
+            subject = ([f"{len(tier)} pair(s) are decided by a run"] if tier else []) \
+                + ([f"{len(carried)} pair(s) are carried by a declared rewrite a run answers"]
+                   if carried else [])
+            print(f"cannot fold: {' and '.join(subject)} and none was given; capture "
+                  f"{', '.join(sorted(steps_named))} with bin/run.py into {returns_dir} and pass "
+                  f"--run <its directory>")
             return 1
         # The run must live under this reconciliation's own returns directory, and that is the
         # half of the content guard the digests cannot supply. `--stage` refuses a slug whose
@@ -4575,6 +4854,23 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             for problem in held:
                 print(f"cannot fold: {problem}")
             return 1
+        # A rewrite is carried only where its run passed: the reproduction says the text is the
+        # old text rewritten, and the run is the whole of the evidence that the rewritten tree
+        # still builds and passes. Red, the carried pairs are owed what every other drifted pair
+        # gets — a judge — and a fold cannot spawn one, so it writes nothing rather than a
+        # record that would bind them, or leave them reading as a finding no judge made.
+        if carried:
+            outcomes_now = step_outcomes(captured)
+            short = [step for step in rewrite_steps
+                     if outcomes_now.get(step, {}).get("outcome") != "passed"]
+            if short:
+                print(f"cannot fold: the declared rewrite's step(s) "
+                      f"{', '.join(f'`{s}`' for s in short)} did not pass in {captured.get('run')}"
+                      f", and {len(carried)} pair(s) are carried on that run alone. A rewrite is "
+                      f"carried only where every step it names passes; the route is a run that "
+                      f"passes, captured under a new name beside this one, or a fresh staging "
+                      f"under a new slug without the rewrite, which hands each pair a judge")
+                return 1
     elif run_dir is not None:
         print(f"cannot fold: --run was given and no pair of this staging is decided by a run; a "
               f"run nothing reads is evidence for a question nobody asked", file=sys.stderr)
@@ -4586,6 +4882,10 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     against: dict[str, list[tuple[str, dict]]] = {}
     out_of_scope: list[tuple[str, dict]] = []
     named_mechanical: list[tuple[str, dict]] = []
+    named_rewritten: list[tuple[str, dict]] = []
+    carried_by_node: dict[str, list[str]] = {}
+    for pair in carried:
+        carried_by_node.setdefault(pair["node"], []).append(pair["file"])
     tainted: dict[str, list[dict]] = {}
     unstated: list[dict] = []
     restated: list[dict] = []
@@ -4635,6 +4935,10 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 # the finding does not land on it; what it must not do is vanish behind a sentence
                 # saying no file here is bound to the node, which is the opposite of true.
                 named_mechanical.append((given, finding))
+            elif node in carried_by_node:
+                # The same for a node the declared rewrite carried: its judge read the file and
+                # not that node's text, and the reproduction is what answered the pair.
+                named_rewritten.append((given, finding))
             else:
                 out_of_scope.append((given, finding))
 
@@ -4703,6 +5007,16 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         if holders and lost and not found and not taint:
             entry["encoded_at"] = holders
         entries.append(entry)
+    outcomes = step_outcomes(captured) if captured is not None else {}
+    run_named = captured.get("run") if captured is not None else None
+
+    def carried_how(files_carried: list[str]) -> str:
+        """What answered a node's carried pairs, said beside whatever answered the rest."""
+        return (f"{', '.join(files_carried)}: carried by the declared rewrite — the text the "
+                f"binding pinned, rewritten, is the file as it stands, and {run_named} passed "
+                f"{', '.join(f'`{s}`' for s in rewrite_steps)}. No judge read "
+                f"{'this pair' if len(files_carried) == 1 else 'these pairs'}")
+
     for node in sorted(batch_nodes - adopted):
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
@@ -4710,11 +5024,16 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                    if not held_nowhere(read_of[(given, node)]["held_at"])]
         found = against.get(node) or []
         taint = [given for given in bound_in if given in tainted]
+        # A pair the declared rewrite carried holds the fact its binding was stamped over, so it
+        # sits among the holders, and a finding against the node holds it back like any other.
+        rewritten_here = sorted(carried_by_node.get(node) or [])
         if not found and not taint and holders == bound_in:
             how = "\n".join(f"{given}: held at {read_of[(given, node)]['held_at']} — "
                             f"{read_of[(given, node)]['evidence']}" for given in holders)
+            if rewritten_here:
+                how += "\n" + carried_how(rewritten_here)
             entries.append({"node": node, "conforms": True, "how": how,
-                            "encoded_at": holders})
+                            "encoded_at": sorted(holders + rewritten_here)})
             continue
         parts = []
         collateral = False
@@ -4722,12 +5041,13 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             parts += [f"{given}, {finding['where']}: {finding['evidence']} — {finding['cost']}"
                       for given, finding in found]
         left = [given for given in bound_in if given not in holders]
+        still_held = sorted(holders + rewritten_here)
         if left and not found:
             said = "; ".join(f"{given} read `{read_of[(given, node)]['held_at']}` — "
                              f"{read_of[(given, node)]['evidence']}" for given in left)
-            if holders:
+            if still_held:
                 parts.append(f"the fact left part of its ground: still held in "
-                             f"{', '.join(holders)}, each pair of which is bound, and {said} — "
+                             f"{', '.join(still_held)}, each pair of which is bound, and {said} — "
                              f"{RELEASE_OWED}")
             else:
                 parts.append(f"no named file holds this fact now: {said}")
@@ -4737,23 +5057,25 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                       f"holds every node of that file its judge was handed"
                       for given in taint for finding in tainted[given]]
             collateral = not found and holders == bound_in
+        if rewritten_here:
+            parts.append(carried_how(rewritten_here)
+                         + ("; bound beside the holders" if left and not found and not taint
+                            else "; held back with the node"))
         entry = {"node": node, "conforms": False, "how": "\n".join(parts),
-                 "observed_at": bound_in}
+                 "observed_at": sorted(bound_in + rewritten_here)}
         if collateral:
             entry["collateral"] = True
-        if holders and left and not found and not taint:
+        if still_held and left and not found and not taint:
             # A pair is answered by its own file's judgment: a sibling that stopped holding the
             # fact is that sibling's open pair, and blocking the holders on it would leave pairs
             # a judgment cleared reported as drift by every later check.
-            entry["encoded_at"] = holders
+            entry["encoded_at"] = still_held
         entries.append(entry)
 
     # The mechanical tier's own entries, written from the run and from nothing else. A node here
     # was handed no judge, so there is no reading to fold: what the step's outcome says is the
     # whole answer, and it is said per step because a run that stopped at a failure never
     # attempted what came after it.
-    outcomes = step_outcomes(captured) if captured is not None else {}
-    run_named = captured.get("run") if captured is not None else None
     by_run: dict[str, list[dict]] = {}
     for pair in tier:
         by_run.setdefault(pair["node"], []).append(pair)
@@ -4765,6 +5087,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         what = ("a certified test decides this node" if pairs[0]["decided_by"] == DECIDED_BY_TEST
                 else "a registry step decides this constraint")
         where = sorted(pair["file"] for pair in pairs)
+        rewritten_here = sorted(carried_by_node.get(node) or []) if node not in batch_nodes \
+            else []
+        beside = f"\n{carried_how(rewritten_here)}" if rewritten_here else ""
         ran = [(name, outcomes.get(name, {})) for name in step_names]
         short = [(name, o) for name, o in ran if o.get("outcome") != "passed"]
         said = ", ".join(f"`{name}` {o.get('outcome')}"
@@ -4776,8 +5101,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                 "node": node, "conforms": True,
                 "how": f"{what}, and every step the registry named for it passed over the tree as "
                        f"these files stand — {run_named}: {said}. No judge read this pair, and "
-                       f"the run is the whole of what answered it",
-                "encoded_at": where})
+                       f"the run is the whole of what answered it" + beside,
+                "encoded_at": sorted(where + rewritten_here)})
         else:
             entries.append({
                 "node": node, "conforms": False,
@@ -4785,8 +5110,15 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                        f"named for it did not pass — {run_named}: {said}. The run is the answer, "
                        f"and what each step printed is in the run's own log"
                        + ("; the constraint is answered only where every step the registry named "
-                          "for it passes" if len(step_names) > 1 else ""),
-                "observed_at": where})
+                          "for it passes" if len(step_names) > 1 else "") + beside,
+                "observed_at": sorted(where + rewritten_here)})
+
+    # A node every pair of which in this set the declared rewrite carried: the reproduction and
+    # the run are the whole of what answered it, and it binds the files they answered for.
+    for node in sorted(set(carried_by_node) - batch_nodes - set(by_run)):
+        entries.append({"node": node, "conforms": True,
+                        "how": carried_how(sorted(carried_by_node[node])),
+                        "encoded_at": sorted(carried_by_node[node])})
 
     # A certification lands on a node only where the auditor answered `covered` and the node's own
     # reading cleared it. Anything else is said in the notes and writes nothing: a certification
@@ -4853,6 +5185,17 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             f"than by a judge — a registry step decides the constraint, or a certified test "
             f"decides the node — with step(s) {', '.join(sorted(steps_named))}. No delegation read "
             f"them; the run's own log is the evidence, and it sits beside these returns.")
+    if carried:
+        rewritten_proofs = manifest.get("rewritten_proofs") or []
+        notes.append(
+            f"{len(carried)} pair(s) over {len({pair['file'] for pair in carried})} file(s) were "
+            f"carried by the declared rewrite rather than read by a judge: the text each binding "
+            f"pinned, recovered from git at the commit listed under `rewritten`, rewritten, is the "
+            f"file as it stands, and {run_named} passed "
+            f"{', '.join(f'`{s}`' for s in rewrite_steps)}. That the rewrite changes no behavior "
+            f"is the declaration's claim, not a judgment's"
+            + (f"; {len(rewritten_proofs)} certified test(s) of theirs were reproduced by the same "
+               f"rewrite, and their certifications are carried." if rewritten_proofs else "."))
     notes += certification_notes
     if manifest.get("audit"):
         notes.append("Staged as an audit: the source did not drift — every pair the trace held "
@@ -4886,6 +5229,13 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                      f"what answered the pair — so it does not land on the node. It is owed a "
                      f"reading of its own, and a reconciliation that names this file without the "
                      f"node in its mechanical tier is what gives it one.")
+    for given, finding in named_rewritten:
+        notes.append(f"A finding in {given} names {finding['node']}, which this set is bound to "
+                     f"and the declared rewrite carried rather than a judge: {finding['where']}: "
+                     f"{finding['evidence']} — {finding['cost']}. The judge that filed it was "
+                     f"handed the file and not that node's text, so it does not land on the node. "
+                     f"It is owed a reading of its own, and a reconciliation that names this file "
+                     f"without the rewrite is what gives it one.")
     for entry in manifest["orphaned"]:
         notes.append(f"{entry['node']} is bound to {entry['file']} and the specification no "
                      f"longer holds it; no judge was handed it, and --prune is its route.")
@@ -4925,6 +5275,13 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             front["outside"] = manifest["outside"]
         if unheld:
             front["unheld"] = unheld
+    if carried:
+        front["rewritten"] = {**{field: manifest["rewrite"][field] for field in REWRITE_FIELDS},
+                              "run": run_named,
+                              "pairs": [{"node": pair["node"], "file": pair["file"],
+                                         "pinned_at": pair["pinned_at"]} for pair in carried]}
+        if manifest.get("rewritten_proofs"):
+            front["rewritten"]["proofs"] = manifest["rewritten_proofs"]
     if manifest["omitted"]:
         front["pairs_omitted"] = manifest["omitted"]
     front["notes"] = "\n".join(notes)
@@ -4962,6 +5319,8 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     print(f"folded {record_out.name}: {cleared} node(s) cleared, {len(blocked)} not — "
           f"{marks} of those collateral, blocked only by an unattributed sibling finding — "
           f"{len(manifest['omitted'])} pair(s) omitted as current and unowed"
+          + (f"; {len(carried)} pair(s) carried by the declared rewrite, listed under `rewritten`"
+             if carried else "")
           + (f"; {len(unheld)} candidate(s) no file of the set holds, listed under `unheld`"
              if unheld else ""))
     print(f"  next: trace.py --reconciliation {record_out}")
@@ -5133,6 +5492,111 @@ def staged_problems(workspace: Path, target: Path,
     return problems, None
 
 
+def rewritten_of(record: Path, offset: str) -> tuple[dict | None, set[tuple[str, str]],
+                                                    dict[str, set[str]]]:
+    """A reconciliation record's `rewritten`, with its carried pairs and its carried proofs per
+    node — every path spelled as the trace stores it. Nothing where the record carries none."""
+    front = as_reconciliation(record)
+    rewritten = front.get("rewritten") if front is not None else None
+    if not isinstance(rewritten, dict):
+        return None, set(), {}
+
+    def stored(given: str) -> str:
+        return given if offset in (".", "") else f"{offset}/{given}"
+
+    pairs = {(pair["node"], stored(pair["file"])) for pair in rewritten.get("pairs") or []
+             if isinstance(pair, dict) and isinstance(pair.get("node"), str)
+             and isinstance(pair.get("file"), str)}
+    proofs: dict[str, set[str]] = {}
+    for proof in rewritten.get("proofs") or []:
+        if isinstance(proof, dict) and isinstance(proof.get("node"), str) \
+                and isinstance(proof.get("file"), str):
+            proofs.setdefault(proof["node"], set()).add(stored(proof["file"]))
+    return rewritten, pairs, proofs
+
+
+def rewrite_problems(rewritten: dict, declared: dict, home: Path, offset: str) -> list[str]:
+    """Every carried pair and carried proof whose reproduction no longer holds, recomputed now.
+
+    The record says which commit held each pinned text; this reads it again and asks the two
+    questions the staging asked — is it the text the binding pinned, and is the declared rewrite
+    of it the file as it stands. A file edited after the fold is one the rewrite no longer
+    reproduces, and a bind over it would stamp bytes nobody showed were only rewritten. A pin
+    already restamped to the bytes on disk is this same record bound once before, and holds."""
+    try:
+        compiled = re.compile(rewritten["pattern"])
+        compiled.sub(rewritten["replacement"], "")
+    except (re.error, KeyError, TypeError) as broken:
+        return [f"rewritten: the declared rewrite does not compile: {broken}"]
+    rewrite = {"compiled": compiled, "replacement": rewritten["replacement"]}
+    pins: dict[tuple[str, str], str] = {}
+    for entry in declared.get("bindings") or []:
+        for held in entry.get("files") or []:
+            pins[(entry["node"], held["path"])] = held["digest"]
+        for held in entry.get("proof") or []:
+            pins[(entry["node"], held["path"])] = held["digest"]
+    owed_pairs = open_owed(home)
+    problems = []
+    for kind, listed in (("pair", rewritten.get("pairs") or []),
+                         ("proof", rewritten.get("proofs") or [])):
+        for pair in listed:
+            node_id, given, commit = pair["node"], pair["file"], pair["pinned_at"]
+            at = given if offset in (".", "") else f"{offset}/{given}"
+            label = f"rewritten {kind} {node_id} over {given}"
+            pin = pins.get((node_id, at))
+            source = home / at
+            if kind == "pair" and (node_id, at) in owed_pairs:
+                problems.append(f"{label}: an open finding stands against the pair in the "
+                                f"reconciliation corpus, and the rewritten text is the text it "
+                                f"was found in; the pair is owed a judge")
+                continue
+            if pin is None:
+                problems.append(f"{label}: the trace pins no such {kind}, so there is no pinned "
+                                f"text the rewrite could have reproduced")
+                continue
+            if not source.is_file():
+                problems.append(f"{label}: the tree no longer holds the file")
+                continue
+            current = source.read_bytes()
+            shown = subprocess.run(["git", "-C", str(home), "show", f"{commit}:./{at}"],
+                                   capture_output=True)
+            if shown.returncode != 0:
+                problems.append(f"{label}: git holds no such file at {commit}")
+                continue
+            current_digest = "sha256:" + hashlib.sha256(current).hexdigest()
+            if pin != current_digest and \
+                    "sha256:" + hashlib.sha256(shown.stdout).hexdigest() != pin:
+                problems.append(f"{label}: the text at {commit} is not the text the binding "
+                                f"pinned, so its rewrite says nothing about what was stamped")
+            elif not rewrites_to(rewrite, shown.stdout, current):
+                problems.append(f"{label}: the declared rewrite of the text at {commit} is no "
+                                f"longer the file as it stands; the route is a fresh "
+                                f"invocation under a new slug, never a bind around it")
+    return problems
+
+
+def restamped_certification(declared: dict, node_id: str, home: Path,
+                            carried_proof: set[str]) -> tuple[dict | None, str | None]:
+    """The node's standing certification with each moved test restamped, where the declared rewrite
+    reproduced every one of them — and the receipt that says so. Nothing where a moved test is
+    one the rewrite did not reproduce: the certification then stays as it stood."""
+    existing = next((entry for entry in declared.get("bindings") or []
+                     if entry.get("node") == node_id), None)
+    if existing is None or existing.get("decided_by") != DECIDED_BY_TEST:
+        return None, None
+    moved = [held["path"] for held in existing.get("proof") or []
+             if not (home / held["path"]).is_file()
+             or spec.digest_of(home / held["path"]) != held["digest"]]
+    if not moved or not set(moved) <= carried_proof:
+        return None, None
+    proof = [{"path": held["path"], "digest": spec.digest_of(home / held["path"])}
+             for held in existing.get("proof") or []]
+    return ({"step": existing["step"], "proof": proof},
+            f"  {node_id} stays decided by step `{existing['step']}`: the declared rewrite "
+            f"reproduces {', '.join(moved)} from the text the certification pinned, and each "
+            f"test's digest is restamped")
+
+
 def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = False,
                 workspace: Path | None = None) -> int:
     """Every binding one implementation record states, written as one act.
@@ -5221,10 +5685,26 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     declared, refusal = opened(target, spec_root, home)
     if refusal is not None:
         refusals.append(refusal)
+    rewritten, carried_pairs, carried_proofs = rewritten_of(record, offset_of(target, home))
     if declared is not None:
         offset = Path(os.path.relpath(target.resolve(), home.resolve()))
         refusals += unaccounted(record, declared, nodes, offset)
         refusals += omitted_problems(record, declared, home, offset, nodes)
+        if rewritten is not None:
+            refusals += rewrite_problems(rewritten, declared, home, offset_of(target, home))
+            # A carried pair was read by no judge, so its file entry keeps the `judged` it held:
+            # the rewrite moved the bytes and nothing else, and a judgment over the pinned text
+            # is a judgment over this one rewritten — which is the declaration's whole claim.
+            judged_before = {(entry["node"], held["path"])
+                             for entry in declared.get("bindings") or []
+                             for held in entry.get("files") or [] if held.get(JUDGED) is True}
+            folded = [(node_id,
+                       [({**entry, JUDGED: True} if (node_id, entry["path"]) in judged_before
+                         else {k: v for k, v in entry.items() if k != JUDGED})
+                        if (node_id, entry["path"]) in carried_pairs else entry
+                        for entry in traced],
+                       certification)
+                      for node_id, traced, certification in folded]
     if refusals:
         for problem in refusals:
             print(f"cannot bind: {problem}")
@@ -5246,6 +5726,11 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
             fresh = False
         else:
             certification, let_go = carried_certification(declared, node_id, home)
+            if node_id in carried_proofs:
+                restamped, receipt = restamped_certification(declared, node_id, home,
+                                                             carried_proofs[node_id])
+                if restamped is not None:
+                    certification, let_go = restamped, receipt
             fresh = False
         count, dropped = fold(declared, node_id, nodes[node_id]["digest"], traced, replace,
                               certification)
@@ -5571,6 +6056,19 @@ def main() -> int:
             print("cannot run: --certify is given once; one file lists every certification",
                   file=sys.stderr)
             return CANNOT_RUN
+    rewrite: Path | None = None
+    if "--rewrite" in args:
+        at = args.index("--rewrite")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --rewrite takes the path of a YAML file declaring the rewrite — "
+                  "pattern, replacement, steps", file=sys.stderr)
+            return CANNOT_RUN
+        rewrite = Path(args[at + 1])
+        del args[at:at + 2]
+        if "--rewrite" in args:
+            print("cannot run: --rewrite is given once; one declaration says how the files "
+                  "changed", file=sys.stderr)
+            return CANNOT_RUN
     args = [a for a in args
             if a not in ("--check", "--all", "--bind", "--bind-record", "--replace", "--prune",
                          "--release", "--reconciliation", "--owed", "--encodes", "--stage",
@@ -5663,6 +6161,12 @@ def main() -> int:
         print("cannot run: --certify is a mode of --stage, and never of an audit; an audit "
               "re-examines standing claims over a tree nothing changed, and a certification is a "
               "claim about a test a delivery just wrote", file=sys.stderr)
+        return CANNOT_RUN
+    if rewrite is not None and (not do_stage or do_audit or do_review or do_adopt):
+        print("cannot run: --rewrite is a mode of --stage over drift, and never of an audit, a "
+              "review or an adoption; it carries a pair whose file changed by the declared "
+              "rewrite alone, and an audit re-reads what did not change, a review re-reads what "
+              "a delivery wrote, and an adoption binds what no binding pinned", file=sys.stderr)
         return CANNOT_RUN
 
     if do_survey:
@@ -5783,14 +6287,14 @@ def main() -> int:
             print("cannot run: expected --stage <target-root> <spec-root> <slug> "
                   "<workspace-dir> <file> [<file> ...] [--audit | --review [--node <node> ...] | "
                   "--adopt (--ledger <ledger.md> [<file> ...] | --node <node> ...) "
-                  "[--outside <file> ...]] [--certify <file>], every file spelled from the "
-                  "target source root; with --ledger the files default to the material's areas",
-                  file=sys.stderr)
+                  "[--outside <file> ...]] [--certify <file>] [--rewrite <file>], every file "
+                  "spelled from the target source root; with --ledger the files default to the "
+                  "material's areas", file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
                      do_review, also, certify, demonstrated, do_adopt, outside, ledger_given,
-                     concurrency)
+                     concurrency, rewrite)
 
     if do_save_return:
         if len(args) != 4 or any(a.startswith("--") for a in args):

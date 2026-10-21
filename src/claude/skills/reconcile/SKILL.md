@@ -50,6 +50,15 @@ holding. Where it holds, the bind writes the node as one a test decides, so a la
 files is answered by the step's run rather than by a fresh reading. Absent, nothing is certified
 and every binding stays decided by reading, which is every binding's default.
 
+A second optional input: **a rewrite** — the human's statement that the files changed by one
+mechanical rewrite and nothing else (a module specifier gaining a suffix, an import path following
+a move), and the registry steps whose run shows the rewritten tree still builds and passes. Named by
+the human, never composed here: you transcribe the rewrite they state into a `pattern` and a
+`replacement`, and the report shows that transcription beside what it carried. A rewrite read off a
+diff and proposed by you is a claim the human never made — the reproduction proves a text is the
+old text rewritten, never that the rewrite changes no behavior, and that claim is the human's alone.
+Absent, every drifted pair goes to a judge.
+
 And one mode, named by the human and never inferred: **adoption** — the file set is source no
 delivery wrote, and the invocation also names the **candidates**, the nodes `/analyse` wrote from
 material read from that source, which its report lists, and optionally the files kept **outside**
@@ -146,7 +155,8 @@ second home for it):
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
-    <slug> <workspace> <each named path> [--audit] [--certify <certifications file>]
+    <slug> <workspace> <each named path> [--audit] [--certify <certifications file>] \
+    [--rewrite <rewrite file>]
 ```
 
 This is the locate step, run by the one reader that cannot miss a binding. It computes every node
@@ -224,6 +234,20 @@ certification rides a fresh reading of the node against its file — and it writ
 **certification pack** per node beside the file packs: the node's text with its source named, the
 proof resolved to absolute paths, the step, and the return contract's path. The pack is the whole
 of what the auditor is handed.
+
+**Where the human stated a rewrite, write it into a small YAML file in the workspace and pass it as
+`--rewrite`** — `pattern` and `replacement` as Python's `re.sub` reads them, and `steps`, the
+registry steps the human named. «A pair whose file changed by a rewrite the reconciliation declares
+is carried to the file as it stands without a judgment, where the declared rewrite applied to the
+text the binding pinned reproduces the current text exactly and every step the declaration names
+passed over that tree» (SPEC-005 R11). The staging recovers each pinned text from git and hands no
+judge a pair the rewrite reproduces; every other drifted pair is judged as without it, and the
+receipt names each one with the reason — the node moved, an open finding stands against the pair,
+git holds no pinned text, or the rewrite does not reproduce it. A rewrite never rides an audit, a
+review or an adoption, and the staging refuses a step the registry does not declare. Where the
+receipt says the rewrite reproduces nothing, stop and show the human the transcription before any
+judge runs: either it says something other than what they stated, or the change was not that
+rewrite alone, and only they can say which.
 
 **A node written since the bind is in none of that.** The trace is what this step reads, and a node
 no delivery ever encoded has no entry in it — which is the ordinary state of every node `/analyse`
@@ -406,9 +430,10 @@ a bind rests on for as long as the code lives. The stop is to report and wait. S
 failed, too: a spend limit or a rate limit passes, and what the human does then is run it again
 rather than accept less.
 
-### 3b. Capture the run the mechanical tier is answered by
+### 3b. Capture the run the mechanical tier and the rewrite are answered by
 
-Where the staging separated nothing under `mechanical`, skip this step and say so in the report.
+Where the staging separated nothing under `mechanical` and carried nothing under `rewritten`, skip
+this step and say so in the report.
 
 Where it did, run the step(s) it named, once, into the returns directory beside the record —
 which is where the reconciliation's evidence already lives and outlives the workspace:
@@ -430,6 +455,13 @@ any other. Do not re-run to get a green, and do not repair the tree and run agai
 name — `bin/run.py` refuses a name it already holds, and a second attempt is a second name, which
 is what keeps both readable.
 
+A step the rewrite names is the one exception, and the fold is what holds it: a carried pair is
+answered by the run alone, so a red step there leaves it answered by nothing, and the fold writes
+no record. Report the step's own output and stop. Whether the tree is wrong, the run was flaky or
+the rewrite was not the whole change is the human's reading; the doors are a passing run captured
+under a new name beside this one, or a fresh staging under a new slug without the rewrite, which
+hands each pair a judge.
+
 ### 4. Fold
 
 Write the premise — the one part of the record that is the human's and no fold can compose. A
@@ -444,8 +476,9 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --fold <target-source-root> <works
     [--run siegard-reconcile/<slug>.returns/run/<slug>]
 ```
 
-`--run` is owed exactly where the staging separated a mechanical tier, and refused where it did
-not — a run nothing reads is evidence for a question nobody asked. The fold refuses it over
+`--run` is owed exactly where the staging separated a mechanical tier or carried a pair by the
+rewrite, and refused where it did neither — a run nothing reads is evidence for a question nobody
+asked. The fold refuses it over
 another tree, missing a step the tier names, or captured over content that has moved since the
 staging: the run proved the tree as it stood, and binding what stands now on the strength of it
 would stamp a claim over bytes the run never saw. That last refusal is the same stop the omission
@@ -509,7 +542,8 @@ The bind also recomputes every `pairs_omitted` claim at this moment, both halves
 still computes at the file's content, and the corpus holds nothing open against the pair — and a
 claim that stopped holding refuses the record whole: a file that moved between staging and
 binding broke the committed-tree premise this whole invocation rests on, and the route is a fresh
-invocation under a new slug, never a bind around the pair.
+invocation under a new slug, never a bind around the pair. It recomputes every reproduction under
+`rewritten` the same way, and the same refusal and route follow where one no longer holds.
 
 What that is not is a claim that the set is reconciled. A cleared node's binding rests on the
 judgment that cleared it and on nothing else in the record; a node with a finding against it stays
@@ -543,7 +577,10 @@ Say, in this order and in prose: the file set as given; what the staging held fo
 state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
 unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
 answered per node, with its evidence; which pairs a run answered instead of a judge, with the
-step and the run's own outcome per step; where the record, the returns and the run were written;
+step and the run's own outcome per step; which pairs the declared rewrite carried, how many over
+how many files, with the transcription verbatim beside the human's own words for it, and which
+drifted pairs it did not carry, with the reason the staging gave for each — a carried pair was
+read by no judge, and the report says so plainly; where the record, the returns and the run were written;
 what was bound and what was not; which nodes are decided by a test from here and which
 certifications did not hold, in the auditor's own words — and for each of those whether the
 remainder is testable, with the assertion the auditor named beside it and the file's own count of

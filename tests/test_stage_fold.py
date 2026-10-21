@@ -488,7 +488,7 @@ def test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed(cons
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/10"
+    assert front["contract_version"] == "siegard-reconcile/11"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is False
     assert entry["encoded_at"] == [FILE]
@@ -981,7 +981,7 @@ def test_fold_writes_a_certification_where_the_auditor_covered_and_the_node_clea
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/10"
+    assert front["contract_version"] == "siegard-reconcile/11"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["conforms"] is True
     assert entry["decided_by"] == "test" and entry["step"] == "lint" and entry["proof"] == [PROOF]
@@ -2261,7 +2261,7 @@ def test_the_fold_binds_each_adopted_node_to_the_files_that_hold_its_fact(adopti
     })
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
-    assert front["contract_version"] == "siegard-reconcile/10"
+    assert front["contract_version"] == "siegard-reconcile/11"
     assert front["adopted"] is True and front["outside"] == [KEPT_OUT]
     by_node = {entry["node"]: entry for entry in front["nodes"]}
     assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
@@ -2422,7 +2422,7 @@ def test_an_outside_path_nothing_tracks_and_nothing_holds_is_still_refused(adopt
 def test_outside_needs_adopted_in_the_contract():
     from jsonschema import Draft202012Validator
     schema = json.loads((REPO / "src/claude/schemas/reconciliation.json").read_text())
-    base = {"contract_version": "siegard-reconcile/10", "title": "t", "summary": "s",
+    base = {"contract_version": "siegard-reconcile/11", "title": "t", "summary": "s",
             "target": "backend", "files": [{"path": FILE, "change": "c"}],
             "nodes": [], "unbound": [FILE], "outside": [KEPT_OUT]}
     assert list(Draft202012Validator(schema).iter_errors(base))
@@ -2814,7 +2814,7 @@ def test_a_refused_certification_is_pinned_at_the_node_and_proof_digests_it_was_
     done, record = folded(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
     front = yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
-    assert front["contract_version"] == "siegard-reconcile/10"
+    assert front["contract_version"] == "siegard-reconcile/11"
     [entry] = [e for e in front["nodes"] if e["node"] == NODE]
     assert entry["read_at"] == {"node": manifest["node_digests"][NODE],
                                 "proof": manifest["certify"][0]["proof_digests"]}
@@ -2867,3 +2867,294 @@ def test_owed_kept_to_a_plan_lists_only_the_nodes_its_tasks_implement(consumer):
     assert f"  {NODE} [" in kept.stdout
     missing = run("--owed", consumer / "backend", "--plan", consumer / "work" / "nowhere")
     assert missing.returncode == 2 and "plan.py is what writes it" in missing.stderr
+
+
+# ---------------------------------------------------------------- --rewrite
+
+
+REWRITE = {"pattern": r"(from\s*'\.{1,2}/[^']*?)(?<!\.js)'", "replacement": r"\1.js'",
+           "steps": ["build"]}
+PINNED = {FILE: "import { a } from './a';\nexport function place() {}\n",
+          SECOND: "import { b } from '../b';\nexport function bill() {}\n"}
+PROOF_TEXT = "import { place } from '../src/orders/place';\ntest('place', () => place());\n"
+
+
+def git(consumer: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(consumer), "-c", "user.name=t", "-c", "user.email=t@t",
+                    *args], check=True, capture_output=True)
+
+
+def rewritten_by_hand(given: str) -> str:
+    return PINNED[given].replace("';", ".js';")
+
+
+@pytest.fixture
+def carried(tmp_path: Path) -> Path:
+    """A consumer whose bound files were committed at the text the trace pins and then changed
+    by one mechanical rewrite alone: a `.js` suffix on every relative module specifier. NODE is
+    bound to both files, OTHER to the first, and the registry declares the `build` step."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    spec_root = tmp_path / "specs"
+    shutil.copytree(FIXTURE, spec_root)
+    shutil.rmtree(spec_root / "projections", ignore_errors=True)
+    target = tmp_path / "backend"
+    (target / "src/orders").mkdir(parents=True)
+    for given, text in PINNED.items():
+        (target / given).write_text(text, encoding="utf-8")
+    (tmp_path / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "standard": {"backend": "standard.yaml"}}) + "\n", encoding="utf-8")
+    (tmp_path / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [], "commands": [{"step": "build", "command": "npm run build",
+                                   "timeout_seconds": 60},
+                                  {"step": "test", "command": "npm test",
+                                   "timeout_seconds": 60}]}), encoding="utf-8")
+    assert run("--bind", target, spec_root, NODE, FILE, SECOND).returncode == 0
+    assert run("--bind", target, spec_root, OTHER, FILE).returncode == 0
+    git(tmp_path, "add", "-A")
+    git(tmp_path, "commit", "-qm", "bound")
+    for given in PINNED:
+        (target / given).write_text(rewritten_by_hand(given), encoding="utf-8")
+    git(tmp_path, "commit", "-qam", "rewrite specifiers")
+    (tmp_path / "rewrite.yaml").write_text(yaml.safe_dump(REWRITE), encoding="utf-8")
+    return tmp_path
+
+
+def staged_rewrite(consumer: Path, slug: str = "round", *extra):
+    workspace = consumer / f"ws-{slug}"
+    done = run("--stage", consumer / "backend", consumer / "specs", slug, workspace, FILE, SECOND,
+               "--rewrite", consumer / "rewrite.yaml", *extra)
+    return done, workspace
+
+
+def build_run(consumer: Path, slug: str = "round", outcome: str = "passed",
+              name: str | None = None) -> Path:
+    where = consumer / "siegard-reconcile" / f"{slug}.returns" / "run" / (name or slug)
+    where.mkdir(parents=True, exist_ok=True)
+    (where / "run.json").write_text(json.dumps({
+        "contract_version": "siegard-run/2", "run": f"run/{name or slug}",
+        "cwd": str((consumer / "backend").resolve()), "timeout_seconds": 60,
+        "outcome": outcome, "failed_step": None if outcome == "passed" else "build",
+        "steps": [{"name": "build", "command": "npm run build", "outcome": outcome,
+                   "exit_code": 0 if outcome == "passed" else 1, "output": "build.log",
+                   "started_at": "2026-10-20T10:00:00Z", "ended_at": "2026-10-20T10:00:01Z"}],
+        "combined_output": "run.log"}), encoding="utf-8")
+    return where
+
+
+REWRITE_PREMISE = {"title": "Relative specifiers gain .js",
+                   "summary": "A build migration rewrote every relative module specifier; the "
+                              "human states no behavior changed.",
+                   "target": "backend",
+                   "files": [{"path": FILE, "change": "specifiers rewritten; no behavior change"},
+                             {"path": SECOND, "change": "specifiers rewritten; no behavior change"}]}
+
+
+def fold_rewrite(consumer: Path, where: Path | None, slug: str = "round",
+                 premise: dict | None = None):
+    record = consumer / "siegard-reconcile" / f"{slug}.md"
+    done = run("--fold", consumer / "backend", consumer / f"ws-{slug}",
+               premised(consumer, premise or REWRITE_PREMISE), record,
+               *(["--run", where] if where is not None else []))
+    return done, record
+
+
+def front_of(record: Path) -> dict:
+    return yaml.safe_load(record.read_text(encoding="utf-8").split("---\n")[1])
+
+
+def test_a_declared_rewrite_carries_the_pairs_it_reproduces_without_a_judge(carried):
+    done, workspace = staged_rewrite(carried)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["files"] == {}, "a pair the rewrite reproduces is handed no judge"
+    assert manifest["answered_by_rewrite"] == sorted([FILE, SECOND])
+    assert {(e["node"], e["file"]) for e in manifest["rewritten"]} == \
+        {(NODE, FILE), (OTHER, FILE), (NODE, SECOND)}
+    assert all(len(e["pinned_at"]) == 40 for e in manifest["rewritten"])
+    assert "the declared rewrite reproduces 3 pair(s) over 2 file(s)" in done.stdout
+    assert "--step build=" in done.stdout
+
+    folded_now, record = fold_rewrite(carried, build_run(carried))
+    assert folded_now.returncode == 0, folded_now.stdout + folded_now.stderr
+    front = front_of(record)
+    assert front["contract_version"] == "siegard-reconcile/11"
+    assert front["rewritten"]["pattern"] == REWRITE["pattern"]
+    assert front["rewritten"]["steps"] == ["build"]
+    assert front["rewritten"]["run"] == "run/round"
+    by_node = {entry["node"]: entry for entry in front["nodes"]}
+    assert by_node[NODE]["conforms"] is True and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
+    assert by_node[OTHER]["encoded_at"] == [FILE]
+    assert "carried by the declared rewrite" in by_node[NODE]["how"]
+    assert "No judge read" in by_node[NODE]["how"]
+    assert "not a judgment's" in front["notes"]
+    assert run("--reconciliation", record).returncode == 0
+    bound = run("--bind-record", carried / "backend", carried / "specs", record,
+                "--workspace", workspace)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert run("--check", carried / "backend").returncode == 0
+    assert "judged" not in binding_of(carried, NODE)["files"][0], \
+        "a carried pair keeps the `judged` it held, and a hand bind held none"
+
+
+def test_a_pair_the_rewrite_does_not_reproduce_is_judged_and_named(carried):
+    target = carried / "backend"
+    (target / SECOND).write_text(rewritten_by_hand(SECOND) + "export const cap = 1;\n",
+                                 encoding="utf-8")
+    done, workspace = staged_rewrite(carried)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert manifest["files"][SECOND]["nodes"] == [NODE]
+    assert {(e["node"], e["file"]) for e in manifest["rewritten"]} == {(NODE, FILE), (OTHER, FILE)}
+    assert f"{SECOND} — {NODE}: the rewrite of its pinned text is not its text as it stands" \
+        in done.stdout
+    save_return(carried, "round", SECOND, clean_return([NODE]))
+    folded_now, record = fold_rewrite(carried, build_run(carried))
+    assert folded_now.returncode == 0, folded_now.stdout + folded_now.stderr
+    by_node = {entry["node"]: entry for entry in front_of(record)["nodes"]}
+    assert by_node[NODE]["conforms"] is True
+    assert by_node[NODE]["encoded_at"] == sorted([FILE, SECOND]), \
+        "the carried pair sits among the holders the judge cleared"
+    assert run("--reconciliation", record).returncode == 0
+
+
+def test_a_rewrite_carries_no_pair_whose_node_moved_or_that_owes_a_finding(carried):
+    node_file = carried / "specs" / f"{OTHER}.md"
+    node_file.write_text(node_file.read_text(encoding="utf-8").replace(
+        "## Description", "## Description\n\nA sentence the bind never saw.\n"), encoding="utf-8")
+    record = carried / "siegard-reconcile" / "earlier.md"
+    record.parent.mkdir(exist_ok=True)
+    front = {"contract_version": "siegard-reconcile/3",
+             "title": "Earlier round", "summary": "found against and never cleared.",
+             "target": "backend",
+             "files": [{"path": SECOND, "change": "judged earlier"}],
+             "nodes": [{"node": NODE, "conforms": False,
+                        "how": "the file states a cap no node holds",
+                        "observed_at": [SECOND]}]}
+    record.write_text(f"---\n{yaml.safe_dump(front, sort_keys=False)}---\n", encoding="utf-8")
+    done, workspace = staged_rewrite(carried)
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(workspace)
+    assert {(e["node"], e["file"]) for e in manifest["rewritten"]} == {(NODE, FILE)}
+    assert manifest["files"][FILE]["nodes"] == [OTHER]
+    assert manifest["files"][SECOND]["nodes"] == [NODE]
+    assert "its node's text moved since the bind" in done.stdout
+    assert "an open finding stands against the pair" in done.stdout
+
+
+def test_a_rewrite_whose_pinned_text_git_does_not_hold_carries_nothing(tmp_path):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    spec_root = tmp_path / "specs"
+    shutil.copytree(FIXTURE, spec_root)
+    shutil.rmtree(spec_root / "projections", ignore_errors=True)
+    target = tmp_path / "backend"
+    (target / "src/orders").mkdir(parents=True)
+    (target / FILE).write_text(PINNED[FILE], encoding="utf-8")
+    (tmp_path / "siegard.json").write_text(json.dumps(
+        {"specification_root": "specs", "targets": {"backend": "backend"},
+         "standard": {"backend": "standard.yaml"}}) + "\n", encoding="utf-8")
+    (tmp_path / "standard.yaml").write_text(yaml.safe_dump({
+        "contract_version": "siegard-standard/1", "standard": "backend", "summary": "a test's",
+        "rules": [], "commands": [{"step": "build", "command": "npm run build",
+                                   "timeout_seconds": 60}]}), encoding="utf-8")
+    assert run("--bind", target, spec_root, NODE, FILE).returncode == 0
+    (target / FILE).write_text(rewritten_by_hand(FILE), encoding="utf-8")
+    (tmp_path / "rewrite.yaml").write_text(yaml.safe_dump(REWRITE), encoding="utf-8")
+    done = run("--stage", target, spec_root, "round", tmp_path / "ws-round", FILE,
+               "--rewrite", tmp_path / "rewrite.yaml")
+    assert done.returncode == 0, done.stdout + done.stderr
+    manifest = manifest_of(tmp_path / "ws-round")
+    assert manifest["rewritten"] == [] and manifest["files"][FILE]["nodes"] == [NODE]
+    assert "git holds no text of it at the digest the binding pinned" in done.stdout
+    assert "it reproduces no pair of this set" in done.stdout
+
+
+def test_a_red_step_carries_no_rewritten_pair(carried):
+    staged_rewrite(carried)
+    done, record = fold_rewrite(carried, build_run(carried, outcome="failed"))
+    assert done.returncode == 1
+    assert "the declared rewrite's step(s) `build` did not pass" in done.stdout
+    assert "without the rewrite, which hands each pair a judge" in done.stdout
+    assert not record.exists()
+    missing, _ = fold_rewrite(carried, None)
+    assert missing.returncode == 1
+    assert "3 pair(s) are carried by a declared rewrite a run answers and none was given" \
+        in missing.stdout
+    passed, record = fold_rewrite(carried, build_run(carried, name="round-again"))
+    assert passed.returncode == 0, passed.stdout + passed.stderr
+    assert front_of(record)["rewritten"]["run"] == "run/round-again"
+
+
+def test_the_bind_refuses_a_rewritten_pair_the_file_no_longer_reproduces(carried):
+    staged_rewrite(carried)
+    done, record = fold_rewrite(carried, build_run(carried))
+    assert done.returncode == 0, done.stdout + done.stderr
+    trace_before = (carried / "siegard-trace.json").read_text(encoding="utf-8")
+    (carried / "backend" / SECOND).write_text(rewritten_by_hand(SECOND) + "// edited\n",
+                                               encoding="utf-8")
+    bound = run("--bind-record", carried / "backend", carried / "specs", record)
+    assert bound.returncode == 1
+    assert f"rewritten pair {NODE} over {SECOND}: the declared rewrite of the text at" \
+        in bound.stdout
+    assert (carried / "siegard-trace.json").read_text(encoding="utf-8") == trace_before
+
+
+def test_a_rewritten_proof_keeps_its_certification_live(carried):
+    target = carried / "backend"
+    (target / "tests").mkdir()
+    (target / PROOF).write_text(PROOF_TEXT, encoding="utf-8")
+    git(carried, "add", "-A")
+    git(carried, "commit", "-qm", "the proof, before the rewrite")
+    declared = json.loads((carried / "siegard-trace.json").read_text(encoding="utf-8"))
+    for entry in declared["bindings"]:
+        if entry["node"] == NODE:
+            entry.update({"decided_by": "test", "step": "test",
+                          "proof": [{"path": f"backend/{PROOF}",
+                                     "digest": file_digest(carried, PROOF)}]})
+    (carried / "siegard-trace.json").write_text(json.dumps(declared, indent=2) + "\n",
+                                                encoding="utf-8")
+    (target / PROOF).write_text(PROOF_TEXT.replace("place';", "place.js';"), encoding="utf-8")
+    git(carried, "commit", "-qam", "the proof's specifiers rewritten")
+    assert "1 proof: decided by a test whose text changed" in run("--check", target).stdout
+    done, workspace = staged_rewrite(carried)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert manifest_of(workspace)["rewritten_proofs"][0]["file"] == PROOF
+    assert "1 certified test(s) of theirs are reproduced too" in done.stdout
+    folded_now, record = fold_rewrite(carried, build_run(carried))
+    assert folded_now.returncode == 0, folded_now.stdout + folded_now.stderr
+    assert front_of(record)["rewritten"]["proofs"][0]["node"] == NODE
+    bound = run("--bind-record", carried / "backend", carried / "specs", record,
+                "--workspace", workspace)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert f"{NODE} stays decided by step `test`" in bound.stdout
+    binding = binding_of(carried, NODE)
+    assert binding["decided_by"] == "test"
+    assert binding["proof"][0]["digest"] == file_digest(carried, PROOF)
+    assert run("--check", target).returncode == 0
+
+
+def test_a_rewritten_pair_is_neither_a_clearance_nor_a_finding_in_the_corpus(carried):
+    staged_rewrite(carried)
+    done, record = fold_rewrite(carried, build_run(carried))
+    assert done.returncode == 0, done.stdout + done.stderr
+    found, cleared, unreadable = trace.judged(carried)
+    assert unreadable == []
+    assert not any(record.name in names for names in found.values())
+    assert not any(record.name in names for names in cleared.values()), \
+        "a carried pair was read by no judge, and a clearance would close a later finding"
+
+
+def test_a_rewrite_names_registry_steps_and_rides_no_other_staging(carried):
+    (carried / "rewrite.yaml").write_text(yaml.safe_dump({**REWRITE, "steps": ["lint"]}),
+                                          encoding="utf-8")
+    done, _ = staged_rewrite(carried)
+    assert done.returncode == 2 and "the registry declares no step `lint`" in done.stderr
+    (carried / "rewrite.yaml").write_text(yaml.safe_dump({**REWRITE, "steps": []}),
+                                          encoding="utf-8")
+    done, _ = staged_rewrite(carried, "round-2")
+    assert done.returncode == 2 and "`steps` names one or more registry steps" in done.stderr
+    (carried / "rewrite.yaml").write_text(yaml.safe_dump(REWRITE), encoding="utf-8")
+    for mode in ("--audit", "--review"):
+        done, _ = staged_rewrite(carried, f"round{mode}", mode)
+        assert done.returncode == 2 and "--rewrite is a mode of --stage over drift" in done.stderr
