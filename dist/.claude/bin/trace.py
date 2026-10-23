@@ -4422,24 +4422,43 @@ def load_return(text: str):
     return yaml.load(text, Loader=ReturnLoader)
 
 
+HANDBACK_TOOL = "SubagentHandback"
+
+
 def final_reply_of(transcript: Path) -> tuple[str | None, str | None]:
-    """The text a delegation answered with, read from its own transcript: the last assistant
-    message, which must carry text and no tool call. A notification relays that text re-rendered
-    for display, so what it shows is not what the delegation wrote; the transcript is. The format
-    is the harness's and undocumented, read here the way the telemetry reads it, and a transcript
-    that does not hold the shape is refused rather than guessed at."""
+    """The text a delegation answered with, read from its own transcript. A delegation answers in
+    one of two forms. It hands back: a `SubagentHandback` call whose `message` the harness confirms
+    delivered (`success: true` on the call's result) — the last such call is the answer, and text
+    written after it never reached the caller. Or it ends: the last assistant message, which must
+    carry text and no tool call. A notification relays either re-rendered for display, so what it
+    shows is not what the delegation wrote; the transcript is. The format is the harness's and
+    undocumented, read here the way the telemetry reads it, and a transcript that does not hold
+    one of the two shapes is refused rather than guessed at."""
     if not transcript.is_file():
         return None, f"{transcript} is not a file"
-    last = None
+    last, handbacks, delivered = None, [], set()
     for entry in telemetry.entries_of(transcript):
         if entry.get("type") == "assistant" and isinstance(entry.get("message"), dict):
             last = entry
+            handbacks += [block for block in telemetry.blocks_of(entry)
+                          if block.get("type") == "tool_use" and block.get("name") == HANDBACK_TOOL]
+        elif entry.get("type") == "user":
+            result = entry.get("toolUseResult")
+            if isinstance(result, dict) and result.get("success") is True:
+                delivered |= {block.get("tool_use_id") for block in telemetry.blocks_of(entry)
+                              if block.get("type") == "tool_result"}
+    handed = [block for block in handbacks if block.get("id") in delivered]
+    if handed:
+        message = (handed[-1].get("input") or {}).get("message")
+        if not isinstance(message, str) or not message.strip():
+            return None, f"{transcript}'s delivered hand-back carries no text in `message`"
+        return message, None
     if last is None:
         return None, f"{transcript} holds no assistant message; it is not a delegation's transcript"
     blocks = telemetry.blocks_of(last)
     if any(block.get("type") == "tool_use" for block in blocks):
-        return None, (f"{transcript} ends in a tool call; the delegation has not answered yet, "
-                      f"so there is no return to save")
+        return None, (f"{transcript} ends in a tool call and holds no delivered hand-back; the "
+                      f"delegation has not answered yet, so there is no return to save")
     text = "".join(block["text"] for block in blocks
                    if block.get("type") == "text" and isinstance(block.get("text"), str))
     if not text.strip():

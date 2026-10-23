@@ -354,8 +354,10 @@ for, and whether the fold will refuse what was just saved — a save whose recei
 delegation to run again before the wave closes, never a return repaired. Never retype a return
 from the notification that relays it: that text is
 re-rendered for display, and an escaped character it carries parses as part of a scalar. A
-refusal says why: a delegation whose transcript ends in a tool call has not answered yet, and
-only one whose transcript cannot be read is saved by hand, under the same discipline. A spawned
+refusal says why: a delegation answers either by its final reply or by a hand-back the harness
+confirmed delivered, whose `message` is then the return; one whose transcript ends in any other
+tool call has not answered yet, and only one whose transcript cannot be read is saved by hand,
+under the same discipline. A spawned
 judge runs in the background and the harness delivers a notification when it answers; the
 session waits for that notification and nothing else — never a `sleep`, a scheduled wakeup, an
 agent listing or a message to the judge, each of which is a turn spent reading nothing — and

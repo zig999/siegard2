@@ -2839,6 +2839,26 @@ def test_a_return_opening_with_a_fence_is_refused_and_nothing_is_written(tmp_pat
     assert done.returncode == 1 and "opens with a code fence" in done.stdout
 
 
+def test_the_implementation_writer_reads_a_delivered_hand_back(tmp_path, planned, delivery):
+    """The writers read a return through the same reader a saved return goes through, so a
+    producer that answers by hand-back is written from the call's `message`."""
+    transcript = tmp_path / "a.jsonl"
+    entries = [{"type": "user", "message": {"role": "user", "content": "write the source"}},
+               {"type": "assistant", "message": {"role": "assistant", "content": [
+                   {"type": "tool_use", "id": "hand", "name": "SubagentHandback",
+                    "input": {"message": yaml.safe_dump(IMPLEMENTATION_RETURN,
+                                                        sort_keys=False)}}]}},
+               {"type": "user", "message": {"role": "user", "content": [
+                   {"type": "tool_result", "tool_use_id": "hand", "content": "delivered"}]},
+                "toolUseResult": {"success": True, "message": "Report delivered to your caller."}}]
+    transcript.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = json_front(delivery, "implementation/checkout/record-order")
+    assert front["inferences"] == IMPLEMENTATION_RETURN["inferences"]
+
+
 def test_a_transcript_ending_in_a_tool_call_is_refused(tmp_path, planned, delivery):
     transcript = transcript_of(tmp_path / "a.jsonl",
                                [{"type": "text", "text": "reading"},

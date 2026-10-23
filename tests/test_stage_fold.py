@@ -682,6 +682,93 @@ def test_save_return_refuses_a_delegation_that_has_not_answered(consumer):
                 / "src__orders__place.ts.yaml").exists()
 
 
+def handback_transcript(path: Path, *handbacks: tuple[str, bool | None],
+                        after: list[dict] | None = None) -> Path:
+    """A delegation's transcript as the harness writes a hand-back: each `(message, delivered)`
+    is a `SubagentHandback` call followed by its result — `success` as given, or no result at all
+    where `delivered` is None — and `after` is an assistant turn written once the calls were made."""
+    entries = [{"type": "user", "message": {"role": "user", "content": "judge the pack"}},
+               {"type": "assistant", "message": {"role": "assistant", "content": [
+                   {"type": "tool_use", "id": "read", "name": "Read", "input": {}}]}}]
+    for n, (message, delivered) in enumerate(handbacks):
+        entries.append({"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": f"hand-{n}", "name": "SubagentHandback",
+             "input": {"message": message}}]}})
+        if delivered is not None:
+            said = ("Report delivered to your caller." if delivered
+                    else "The report was not delivered.")
+            entries.append({"type": "user",
+                            "message": {"role": "user", "content": [
+                                {"type": "tool_result", "tool_use_id": f"hand-{n}",
+                                 "content": [{"type": "text", "text": json.dumps(
+                                     {"success": delivered, "message": said})}]}]},
+                            "toolUseResult": {"success": delivered, "message": said}})
+    if after is not None:
+        entries.append({"type": "assistant", "message": {"role": "assistant", "content": after}})
+    path.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+    return path
+
+
+def test_save_return_copies_a_delivered_hand_back_s_message_byte_for_byte(consumer):
+    """A delegation that hands back ends in the hand-back call: its answer is the call's
+    `message`, which the harness delivered to the caller, not a final text it never wrote."""
+    _, workspace = staged(consumer)
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False).replace(
+        "export function place() {}", "if (a < b && c) -> place()")
+    transcript = handback_transcript(consumer / "agent.jsonl", (reply, True))
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 0, done.stdout + done.stderr
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == reply
+    assert folded(consumer)[0].returncode == 0
+
+
+def test_save_return_reads_the_hand_back_and_never_the_text_written_after_it(consumer):
+    """Text a delegation writes after its delivered hand-back reached no caller; saving it would
+    put a sentence nobody asked for where the fold reads the judgment."""
+    _, workspace = staged(consumer)
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False)
+    transcript = handback_transcript(
+        consumer / "agent.jsonl", (reply, True),
+        after=[{"type": "text", "text": "I've sent the report to the calling agent."}])
+    assert run("--save-return", consumer / "backend", workspace, FILE,
+               transcript).returncode == 0
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == reply
+
+
+def test_save_return_reads_the_last_hand_back_the_harness_delivered(consumer):
+    _, workspace = staged(consumer)
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False)
+    transcript = handback_transcript(consumer / "agent.jsonl",
+                                     ("read: []", True), ("not yaml at all", False), (reply, True))
+    assert run("--save-return", consumer / "backend", workspace, FILE,
+               transcript).returncode == 0
+    saved = consumer / "siegard-reconcile" / "round.returns" / "src__orders__place.ts.yaml"
+    assert saved.read_text(encoding="utf-8") == reply
+
+
+@pytest.mark.parametrize("delivered", [False, None], ids=["refused", "unanswered"])
+def test_save_return_refuses_a_hand_back_the_harness_never_delivered(consumer, delivered):
+    _, workspace = staged(consumer)
+    reply = yaml.safe_dump(clean_return([NODE, OTHER]), sort_keys=False)
+    transcript = handback_transcript(consumer / "agent.jsonl", (reply, delivered))
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 2
+    assert "holds no delivered hand-back" in done.stderr
+    assert "has not answered yet" in done.stderr
+    assert not (consumer / "siegard-reconcile" / "round.returns"
+                / "src__orders__place.ts.yaml").exists()
+
+
+def test_save_return_refuses_a_delivered_hand_back_carrying_no_text(consumer):
+    _, workspace = staged(consumer)
+    transcript = handback_transcript(consumer / "agent.jsonl", ("  \n", True))
+    done = run("--save-return", consumer / "backend", workspace, FILE, transcript)
+    assert done.returncode == 2
+    assert "delivered hand-back carries no text in `message`" in done.stderr
+
+
 def test_save_return_refuses_a_file_the_staging_never_asked_about(consumer):
     _, workspace = staged(consumer)
     transcript = transcript_of(consumer / "agent.jsonl", [{"type": "text", "text": "read: []"}])

@@ -519,8 +519,8 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-implementation <delivery
 ```
 
 `<the delegation's transcript>` is the output file the harness names for the spawned agent: the
-return is read from its final reply, verbatim, never retyped from the notification that relays
-it. Where the step ran inline, the mapping is in a file and `--from-text <file>` names it. The
+return is read from its final reply — or from the `message` of a hand-back the harness confirmed
+delivered — verbatim, never retyped from the notification that relays it. Where the step ran inline, the mapping is in a file and `--from-text <file>` names it. The
 record is a function of that return, the task file, the standard and the run: the writer stamps
 `target` — input 3's key, the root every path in the record is spelled from, which the
 validator resolves the record at and never the one an invocation happened to name — the pin of
