@@ -171,7 +171,7 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
 
 ## Decision authority
 
-The framework decides. Where planning finds a fact no specification node states, the
+The framework decides. Where planning or a delivery finds a fact no specification node states, the
 specification gains the statement with a decided value rather than stopping for a person
 whose only move is to trigger the decision — SPEC-001 R13 is the rule, and it was granted
 deliberately, after measurement showed the stop guarded a species that never occurred.
@@ -207,9 +207,16 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   would change it; a judged one says it is a judgment, and a goal it serves is quoted from the
   ask or its intake, never supplied.
 - **Three questions are never recommended over.** A contradiction between scope and
-  specification, two readings of one piece of evidence, and a finding's worth are the person's;
+  specification, two readings of one piece of evidence, and a finding's worth are the person's
+  — a finding's worth decided by the person in advance where a goal condition states a
+  findings policy, and then applied by class, never judged;
   the handoff says what decides each side, and the reviewing agents stay evidence-only.
-- **A recommendation is never taken.** The door stays the person's; `/deliver-scope` relays
-  doors whole with the recommendation and its kind beside them. Whether a judged one was taken
-  is a person's reading of the commit that followed, and judged recommendations read as not
-  taken outnumbering those taken is the criterion that narrows this grant back to derived ones.
+- **A recommendation is taken only under a goal the person armed.** Outside one, the door stays
+  the person's, and `/deliver-scope` relays doors whole with the recommendation and its kind
+  beside them. Under a goal condition naming the route — the person's own words, which the
+  harness repeats after every compaction — a derived recommendation is taken, and a judged one
+  only as the door decider returned it, blind to the condition and within the budget the
+  condition states; each taken door is one `decided:` line in the run's orchestration log.
+  Whether a taken door held is a person's reading of the commit that followed: taken judged
+  doors read as reverted outnumbering those that held is the criterion that narrows the grant
+  back to derived ones, and a reverted derived one is a defect in the fact that decided it.
