@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.31.0 — 2026-10-25
+
+A goal reaches state B where a delivery stopped, re-planned tasks are owed again rather than refused, returns are read as their producers wrote them, and /siegard-goal takes a cited objective. (`f11221f`)
+
 ## 5.30.0 — 2026-10-25
 
 Under a goal, a door a fact decides is taken without the person, a judged one only by a door decider blind to the goal and within its budget, and the findings a policy names are corrected once. (`b65004e`)
