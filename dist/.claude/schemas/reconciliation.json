@@ -13,7 +13,14 @@
     "nodes"
   ],
   "additionalProperties": false,
-  "dependentRequired": { "outside": ["adopted"], "unheld": ["adopted"] },
+  "dependentRequired": {
+    "outside": [
+      "adopted"
+    ],
+    "unheld": [
+      "adopted"
+    ]
+  },
   "$defs": {
     "targetPath": {
       "type": "string",
@@ -33,12 +40,22 @@
     },
     "rewrittenPair": {
       "type": "object",
-      "required": ["node", "file", "pinned_at"],
+      "required": [
+        "node",
+        "file",
+        "pinned_at"
+      ],
       "additionalProperties": false,
       "properties": {
-        "node": { "$ref": "#/$defs/specNodeRef" },
-        "file": { "$ref": "#/$defs/targetPath" },
-        "pinned_at": { "$ref": "#/$defs/commit" }
+        "node": {
+          "$ref": "#/$defs/specNodeRef"
+        },
+        "file": {
+          "$ref": "#/$defs/targetPath"
+        },
+        "pinned_at": {
+          "$ref": "#/$defs/commit"
+        }
       }
     }
   },
@@ -56,6 +73,16 @@
       "type": "string",
       "minLength": 1,
       "description": "What changed in the source and why the human states it is correct. This is the premise the whole record rests on and it is a human's assertion, never the judgment's: the pass below decides whether the specification still holds, not whether the code is right."
+    },
+    "said": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The person's own words that asked for this reconciliation, quoted verbatim as they were typed — the premise's ground where a person asked for it. Absent from a record a review folded, which carries `delivered` instead, and from records written before the premise named its ground."
+    },
+    "delivered": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The review whose delivery wrote the files this record reconciles — the premise's ground where a review folded it. Absent from a record a person asked for, which carries `said` instead."
     },
     "target": {
       "type": "string",
@@ -291,18 +318,33 @@
           "read_at": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["node", "proof"],
+            "required": [
+              "node",
+              "proof"
+            ],
             "properties": {
-              "node": { "type": "string", "minLength": 1 },
+              "node": {
+                "type": "string",
+                "minLength": 1
+              },
               "proof": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["file", "digest"],
+                  "required": [
+                    "file",
+                    "digest"
+                  ],
                   "properties": {
-                    "file": { "type": "string", "minLength": 1 },
-                    "digest": { "type": "string", "minLength": 1 }
+                    "file": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "digest": {
+                      "type": "string",
+                      "minLength": 1
+                    }
                   }
                 }
               }
@@ -354,14 +396,32 @@
       "description": "Every place a judge read a comment or a docstring — prose no running system emits — restating a fact a node holds while code holds it too. Listed apart from the nodes because the pair conforms: none blocks a binding, and what each owes is the text's removal by the route that answers prose, with the file reconciled after. `trace.py --owed` lists them apart from what a bind is owed.",
       "items": {
         "type": "object",
-        "required": ["file", "where", "evidence", "cost"],
+        "required": [
+          "file",
+          "where",
+          "evidence",
+          "cost"
+        ],
         "additionalProperties": false,
         "properties": {
-          "file": { "$ref": "#/$defs/targetPath" },
-          "where": { "type": "string", "minLength": 1 },
-          "evidence": { "type": "string", "minLength": 1 },
-          "cost": { "type": "string", "minLength": 1 },
-          "node": { "$ref": "#/$defs/specNodeRef" }
+          "file": {
+            "$ref": "#/$defs/targetPath"
+          },
+          "where": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cost": {
+            "type": "string",
+            "minLength": 1
+          },
+          "node": {
+            "$ref": "#/$defs/specNodeRef"
+          }
         }
       }
     },
@@ -382,11 +442,19 @@
       "description": "An adoption's candidates that no file of the set holds and nothing was found against: every judge that read one answered `nowhere`. Listed apart from `nodes` because the answer is about the node and not about any pair — it claims no file and owes no reading; it is the analysis's to revisit, or the adoption of the files that do hold it. Only an adopted record carries it.",
       "items": {
         "type": "object",
-        "required": ["node", "how"],
+        "required": [
+          "node",
+          "how"
+        ],
         "additionalProperties": false,
         "properties": {
-          "node": { "$ref": "#/$defs/specNodeRef" },
-          "how": { "type": "string", "minLength": 1 }
+          "node": {
+            "$ref": "#/$defs/specNodeRef"
+          },
+          "how": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -401,7 +469,13 @@
     },
     "rewritten": {
       "type": "object",
-      "required": ["pattern", "replacement", "steps", "run", "pairs"],
+      "required": [
+        "pattern",
+        "replacement",
+        "steps",
+        "run",
+        "pairs"
+      ],
       "additionalProperties": false,
       "description": "The pairs a rewrite the human declared carries to the file as it stands, without a judgment — «A pair whose file changed by a rewrite the reconciliation declares is carried to the file as it stands without a judgment, where the declared rewrite applied to the text the binding pinned reproduces the current text exactly and every step the declaration names passed over that tree» (SPEC-005 R11). The rewrite and its claim to change no behavior are the human's, like `summary`; what this framework adds is the evidence: the text each binding pinned, recovered from git at `pinned_at` and run through the rewrite, equals the file's current bytes, and the run named here passed every step the declaration names. A pair listed here was read by no judge, so it is no reading in the corpus: `--owed` counts it neither as a clearance nor as a finding. Whether it binds is still said by its node's entry under `nodes`, where it sits under `encoded_at` or `observed_at` like any pair, and `--bind-record` recomputes every reproduction before it writes anything.",
       "properties": {
@@ -417,7 +491,10 @@
         "steps": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
           "description": "The registry steps the declaration names, by `commands[].step`; every one must have passed over the tree for any pair here to bind. The reproduction says the text is the old text rewritten; the run says the rewritten tree still builds and passes."
         },
         "run": {
@@ -428,13 +505,17 @@
         "pairs": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/rewrittenPair" },
+          "items": {
+            "$ref": "#/$defs/rewrittenPair"
+          },
           "description": "Every pair the rewrite reproduced, with the commit whose tree holds the text the binding pinned. A pair absent here was judged or omitted, never carried."
         },
         "proofs": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/rewrittenPair" },
+          "items": {
+            "$ref": "#/$defs/rewrittenPair"
+          },
           "description": "The certified tests of a carried node whose text moved, each reproduced by the same rewrite from the text the certification pinned. A node listed here keeps its certification live: `--bind-record` restamps each test's digest. A node one of whose moved tests the rewrite does not reproduce is listed nowhere here, and its certification stays as it stood — decided by reading until a judgment certifies the test as it now stands."
         }
       }

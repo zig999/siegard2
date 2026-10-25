@@ -100,6 +100,7 @@ def clean_return(nodes: list[str], **rest) -> dict:
 
 PREMISE = {"title": "Hand drift on order placement",
            "summary": "place() gained a line by hand; the human states the behavior is correct.",
+           "said": "reconcile it, the behavior is right",
            "target": "backend",
            "files": [{"path": FILE, "change": "carries a stray line; behavior unchanged"},
                      {"path": SECOND, "change": "unchanged; reconciled at its current content"}]}
@@ -883,6 +884,28 @@ def test_the_premise_accounts_for_every_staged_file_and_widens_nothing(consumer)
                 + [{"path": "src/orders/stray.ts", "change": "never staged"}])
     done, _ = folded(consumer, premise=wide)
     assert done.returncode == 1 and "never staged" in done.stdout
+
+
+def test_a_premise_no_one_vouched_for_cannot_fold(consumer):
+    """A premise rests on the person's own words, quoted, or on the review whose delivery wrote
+    the files — one of them, as a field. A summary that says "the person states" is not one."""
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    unvouched = {k: v for k, v in PREMISE.items() if k != "said"}
+    done, record = folded(consumer, premise=unvouched)
+    assert done.returncode == 1 and not record.exists()
+    assert "carries exactly one of `said`" in done.stdout
+    both = {**PREMISE, "delivered": "round-review"}
+    done, _ = folded(consumer, premise=both)
+    assert done.returncode == 1
+
+
+def test_the_record_carries_the_words_its_premise_rests_on(consumer):
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    done, record = folded(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "said: reconcile it, the behavior is right" in record.read_text(encoding="utf-8")
 
 
 def test_a_premise_naming_a_target_the_project_file_does_not_declare_cannot_fold(consumer):
@@ -2272,7 +2295,8 @@ def read_as(held: dict[str, str]) -> dict:
 ADOPT_PREMISE = {"title": "Adopt the orders module",
                  "summary": "Source no delivery wrote, read against the nodes an analysis wrote "
                             "from it; the source did not change.",
-                 "target": "backend",
+                 "said": "reconcile it, the behavior is right",
+           "target": "backend",
                  "files": [{"path": given, "change": "unchanged; adopted as it stands"}
                            for given in (FILE, SECOND, THIRD)]}
 
@@ -3033,7 +3057,8 @@ def build_run(consumer: Path, slug: str = "round", outcome: str = "passed",
 REWRITE_PREMISE = {"title": "Relative specifiers gain .js",
                    "summary": "A build migration rewrote every relative module specifier; the "
                               "human states no behavior changed.",
-                   "target": "backend",
+                   "said": "reconcile it, the behavior is right",
+           "target": "backend",
                    "files": [{"path": FILE, "change": "specifiers rewritten; no behavior change"},
                              {"path": SECOND, "change": "specifiers rewritten; no behavior change"}]}
 

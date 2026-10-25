@@ -23,9 +23,10 @@ follows with its output verbatim.» (SPEC-008 R1)
   line — «State B holds when the initiative's orchestration log, changed since the goal began,
   ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`,
   `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`,
-  `contradiction`, `budget`, and the measure, tree, commit and remote conditions of R2 hold.»
-  (SPEC-008 R3) — or the plugin's version changed since the goal began, or a commit since then
-  touched `siegard.json` or a standard it declares, which only the person authors.
+  `contradiction`, `budget`, `stands`, and the measure, commit and remote conditions of R2
+  hold» (SPEC-008 R3) — what the tree still holds is listed as left for the person — or the
+  plugin's version changed since the goal began, or a commit since then touched `siegard.json`
+  or a standard it declares, which only the person authors.
 - `not yet` — neither; the checks that failed say what is left.
 
 **`--compose` writes the condition, and refuses what the route would refuse first.** It checks
@@ -36,7 +37,10 @@ plugin's version and every change already pending outside those roots, and print
 the route, the authorization, the scope, and the `--state` invocation that answers it — «A goal
 condition names the route, the authorization, the scope and the invocation that answers its
 state, and states no rule: the rules are those of the plugin version the invocation pins.»
-(SPEC-008 R6). It never sets a goal: the condition is the person's once the person pastes it.
+(SPEC-008 R6). An objective in prose is written to `goal-<stamp>-<slug>.md` under the telemetry
+root, the one file this writes, and the condition names it by path and digest — one line the
+person pastes whole, whatever the objective's length. It never sets a goal: the condition is the
+person's once the person pastes it.
 
 Every root comes from `project.py`, run as a command, so `siegard.json` keeps its one reader. Every
 check runs the framework's own command and quotes what it printed; nothing is re-derived here.
@@ -46,7 +50,7 @@ spec.py, its siblings, and runs them and project.py as commands).
 
 Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]...
                                     answer state A, state B or not yet, then every check
-        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text>) [--target <key>] [--budget <n>] [--correct contradicts]
+        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file>) [--target <key>] [--budget <n>] [--correct contradicts]
                                     check what the route would refuse first, then print the goal
                                     condition to paste after /goal
         goal.py --help              print this text and stop
@@ -64,8 +68,10 @@ Exit:   0 state A or state B; a condition composed
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+from datetime import datetime, timezone
 import shlex
 import subprocess
 import sys
@@ -78,7 +84,9 @@ CANNOT_RUN = 2
 PLUGIN_MANIFEST = BIN.parent / ".claude-plugin" / "plugin.json"
 SKILLS = BIN.parent / "skills"
 STOP_CLASSES = ("blocking", "silence", "rebind", "producers", "gave-up", "infrastructure",
-                "project-file", "pending-change", "specification", "contradiction", "budget")
+                "project-file", "pending-change", "specification", "contradiction", "budget",
+                "stands")
+RECONCILED = ("siegard-trace.json", "siegard-reconcile/")
 CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")
 CONDITION_LIMIT = 4000
@@ -189,6 +197,15 @@ def after(fields: dict, later: str, earlier: str) -> bool:
     return code == 0
 
 
+def reconciliation_only(fields: dict, commit: str, line: str) -> bool:
+    """A `/reconcile` commit names its own record's slug, never the goal's, and touches the
+    trace and that record alone — the route a delivery's drift is answered by."""
+    if not re.match(r"^\S+ reconcile \S+: ", line):
+        return False
+    paths = git(fields["home"], "show", "--name-only", "--format=", commit).splitlines()
+    return bool(paths) and all(p == RECONCILED[0] or p.startswith(RECONCILED[1]) for p in paths)
+
+
 def review_tasks(record: Path) -> list[str]:
     import spec
     text = record.read_text(encoding="utf-8")
@@ -260,8 +277,9 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
     log = git(fields["home"], "log", "--format=%H %s", f"{since}..HEAD")
     skills = {p.name for p in SKILLS.iterdir() if p.is_dir()}
     foreign = [line for line in log.splitlines()
-               if not (m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}: ", line))
-               or m.group(1) not in skills]
+               if not ((m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}: ", line))
+                       and m.group(1) in skills)
+               and not reconciliation_only(fields, line.split()[0], line)]
     found["commits"] = (not foreign, log or "no commit since the goal began")
 
     authored = [fields["home"] / "siegard.json", *fields["standards"]]
@@ -289,7 +307,7 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
 def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
           untouched: list[str]) -> tuple[str, list[str]]:
     found, stop = checks(fields, slug, since, version, scope, untouched)
-    common = ("measure", "tree", "commits", "remote")
+    common = ("measure", "commits", "remote")
     if not found["version"][0]:
         first = "state B — the plugin's version changed since the goal began"
     elif not found["authored"][0]:
@@ -298,7 +316,8 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
     elif all(ok for ok, _ in found.values()):
         first = f"state A — {slug}: the scope is delivered, proven, reviewed and measured"
     elif stop and all(found[name][0] for name in common):
-        first = f"state B — {stop.removeprefix('- ')}"
+        first = f"state B — {stop.removeprefix('- ')}" + (
+            "" if found["tree"][0] else "; the uncommitted files below are left for the person")
     else:
         failed = [name for name, (ok, _) in found.items() if not ok]
         first = f"not yet — failing: {', '.join(failed)}" + (
@@ -362,14 +381,24 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
                   *[arg for ref in scope for arg in ("--scope", ref)],
                   "--since", since, "--version", version,
                   *[arg for path in untouched for arg in ("--untouched", path)]]
+    written = None
+    if objective:
+        # The objective travels by reference: a condition is one line the person pastes whole,
+        # and an objective inlined in it is what an evaluator reads instead of the state command.
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        written = fields["telemetry_root"] / f"goal-{stamp}-{slug}.md"
+        content = (objective.rstrip("\n") + "\n").encode("utf-8")
+        digest = hashlib.sha256(content).hexdigest()[:16]
+        said.append(f"objective: {relative(fields, written)} (sha256 {digest}), written here "
+                    f"verbatim; the measure commits it with the telemetry root")
     carried = (f"Scope: {', '.join(scope)}, with every task it depends on." if scope else
-               "Scope: the objective below, planned under this slug.")
-    condition = "\n".join(filter(None, [
+               f"Scope: the objective in {relative(fields, written)} (sha256 {digest}) — the "
+               f"person's own words, verbatim — planned under this slug.")
+    condition = " ".join(filter(None, [
         "Carry this scope end to end through /siegard:deliver-scope. This condition is the ask, "
         "in the person's words, for the whole route, and it authorizes for the whole goal — after "
         "every compaction too — the commits that skill defines.",
         f"Project: {project_root}. Target: {fields['target']}. Slug: {slug}. {carried}",
-        f"Objective, verbatim: {objective}" if objective else None,
         f"Budget: {budget} judged door(s), each taken only as the door decider returns it."
         if budget else "Budget: no judged door; a choice a fact does not decide ends the run.",
         f"Findings: correct {', '.join(correct)} by a corrective increment, once; report the rest."
@@ -383,6 +412,9 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     if len(condition) > CONDITION_LIMIT:
         return [f"the condition is {len(condition)} characters, and the harness refuses one "
                 f"over {CONDITION_LIMIT}; shorten the objective, or name its epic"], None
+    if written is not None:
+        written.parent.mkdir(parents=True, exist_ok=True)
+        written.write_bytes(content)
     return said, condition
 
 
@@ -420,6 +452,7 @@ def main() -> int:
         version = take(args, "--version")
         untouched = take(args, "--untouched", many=True)
         objective = take(args, "--objective")
+        objective_file = take(args, "--objective-file")
         budget_raw = take(args, "--budget")
         correct = take(args, "--correct", many=True)
     except Refused as refusal:
@@ -439,7 +472,7 @@ def main() -> int:
         return CANNOT_RUN
 
     if mode == "--state":
-        if not since or not version or objective or budget_raw or correct:
+        if not since or not version or objective or objective_file or budget_raw or correct:
             print("cannot run: --state takes --since and --version, and none of --objective, "
                   "--budget or --correct, which are the condition's", file=sys.stderr)
             return CANNOT_RUN
@@ -451,6 +484,19 @@ def main() -> int:
         print("\n".join([first, *body]))
         return 1 if first.startswith("not yet") else 0
 
+    if objective_file is not None:
+        if objective is not None:
+            print("cannot run: --objective and --objective-file name one objective twice",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            objective = Path(objective_file).read_text(encoding="utf-8")
+        except OSError as broken:
+            print(f"cannot run: {broken}", file=sys.stderr)
+            return CANNOT_RUN
+        if not objective.strip():
+            print(f"cannot run: {objective_file} is empty", file=sys.stderr)
+            return CANNOT_RUN
     if not budget_raw or budget_raw.isdigit():
         budget = int(budget_raw or 0)
     else:

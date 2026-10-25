@@ -1164,6 +1164,40 @@ def test_the_cli_derives_checks_and_reports(delivery, work, root, target, sound_
     assert "task/checkout/bill-order" in outstanding.stdout
 
 
+def test_a_task_re_planned_after_its_delivery_is_owed_again_never_a_refused_report(
+        delivery, work, root, target, sound_delivery):
+    """A re-bind or a reworded criterion moves the pin a delivered task's record holds. The
+    validation refuses the record, and the outstanding report says the task is owed a delivery
+    again — the next step of the route — instead of refusing every task with it."""
+    import subprocess
+    import sys
+    task = work / "task/checkout/record-order.md"
+    task.write_text(task.read_text(encoding="utf-8").replace(
+        "Persist a placed order.", "Persist a placed order, once."), encoding="utf-8")
+    derive_plan(work, root)
+
+    def invoke(*args):
+        return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                               *args, str(delivery), str(work), str(target), str(root)],
+                              capture_output=True, text=True)
+
+    assert invoke("--check").returncode == 1, "the moved pin is still a problem of the delivery"
+    outstanding = invoke("--outstanding")
+    assert outstanding.returncode == 0, outstanding.stdout + outstanding.stderr
+    assert ("task/checkout/record-order: its record answers the task before it changed: "
+            "deliver it again against the task as it stands") in outstanding.stdout
+    assert "deliverable now: task/checkout/record-order" in outstanding.stdout
+
+    task.write_text(task.read_text(encoding="utf-8").replace(
+        "## Notes\nNone.", "## Notes\nBLOCKING, from the specification — the scope bills an order twice, "
+        "and the specification bills it once."), encoding="utf-8")
+    derive_plan(work, root)
+    outstanding = invoke("--outstanding")
+    assert outstanding.returncode == 0, outstanding.stdout + outstanding.stderr
+    assert "1 standing BLOCKING note(s), which only a person settles" in outstanding.stdout, \
+        "a re-plan that leaves the task blocked is said as the stop it is, never as a refusal"
+
+
 def test_the_cli_refuses_a_plan_that_does_not_hold(delivery, work, root, target, sound_delivery):
     import subprocess
     import sys
@@ -2821,6 +2855,46 @@ def test_the_writer_reads_a_file_s_bytes_as_the_return(tmp_path, planned, delive
     assert done.returncode == 0, done.stdout + done.stderr
     assert json_front(delivery, "implementation/checkout/record-order")["files"] == \
         IMPLEMENTATION_RETURN["files"]
+
+
+def test_an_empty_list_in_a_return_is_read_as_absent_and_said(tmp_path, planned, delivery,
+                                                               work, root, target):
+    """A list with nothing in it states nothing; refusing it sends a delegation back over no
+    content, which is how returns came to be edited by hand to pass."""
+    assert writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from", reply_of(tmp_path / "a.jsonl",
+                                                             IMPLEMENTATION_RETURN)
+                  ).returncode == 0
+    done = writer("--write-proof", delivery, TASK, "--target", "app", "--from",
+                  reply_of(tmp_path / "b.jsonl", {**PROOF_RETURN, "divergences": [],
+                                                  "contested": []}))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "`contested: []` read as absent" in done.stdout
+    front = json_front(delivery, "proof/checkout/record-order")
+    assert "divergences" not in front and "contested" not in front
+
+
+def test_a_return_read_from_a_rendered_notification_is_refused(tmp_path, planned, delivery):
+    """The notification that relays a reply renders it, and `>` becomes `&gt;`; a record written
+    from that text names tests the suite does not hold."""
+    rendered = yaml.safe_dump(IMPLEMENTATION_RETURN, sort_keys=False).replace(
+        "persists", "persists &gt; ")
+    given = tmp_path / "rendered.yaml"
+    given.write_text(rendered, encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 1
+    assert "&gt;" in done.stdout and "Name the transcript with --from" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_return_that_does_not_parse_goes_back_to_its_producer(tmp_path, planned, delivery):
+    given = tmp_path / "broken.yaml"
+    given.write_text("title: a: b\n", encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 1
+    assert "never repaired by hand" in done.stdout
 
 
 def test_a_return_opening_with_a_fence_is_refused_and_nothing_is_written(tmp_path, planned,

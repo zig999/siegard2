@@ -498,7 +498,8 @@ so a reader never mistakes four passes for every pass.
 Write the premise — the one part of the reconciliation record that is the delivery's and no fold
 can compose. A small YAML file in the workspace, carrying `title`, `summary` (which tasks wrote
 these files, under which initiative, as the implementation records state it — never a finding of
-yours), `target`, and one `files` entry per path of the file set with its `change` line, taken
+yours), `delivered` (this review's own name: the delivery, not a person, is what the premise rests
+on), `target`, and one `files` entry per path of the file set with its `change` line, taken
 from the implementation records' own `files[].effect` where a record names the path and stated as
 "written by the delivery of <task>" where none does.
 

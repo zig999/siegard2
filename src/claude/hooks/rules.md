@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.30.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.31.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -87,7 +87,8 @@ not. Three things hold that route:
   compaction is re-authorized by the person before its next commit — a goal condition naming the
   route is that re-authorization, because the harness repeats the person's own words. Each
   commit is pathspec-scoped to the roots that invocation wrote, one per invocation, under a
-  message naming the skill and the slug — never `git add -A` without a pathspec, never a branch, a push, a
+    message naming the skill and the slug — a message naming `/deliver-scope` only from an
+  invocation of it that accepted the ask — never `git add -A` without a pathspec, never a branch, a push, a
   stash or a rewrite. A skill's own refusal to commit is unchanged: the commit is the session's
   act after the skill returned, never the skill's.
 - **A report opens with what needs the person, and recommends what a fact on disk decides.**

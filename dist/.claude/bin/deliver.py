@@ -1992,6 +1992,7 @@ def check_single(root: Path, named: str, validator, names: list[str]) -> int:
 STAMPED = {"implementation": ("target", "task", "standard", "run"),
            "proof": ("target", "implementation", "standard", "run")}
 WRITE_MODES = {"--write-implementation": "implementation", "--write-proof": "proof"}
+HTML_ENTITY = re.compile(r"&(?:gt|lt|amp|quot|#\d+);")
 WRITE_VALUED = ("--target", "--task-file", "--run", "--standard", "--standard-file", "--from",
                 "--from-text")
 WRITE_REPEATED = ("--note", "--what")
@@ -2126,14 +2127,27 @@ def write_record(kind: str, args: list[str]) -> int:
               f"nothing else, and a fence is not stripped to find one — the delegation answers "
               f"again")
         return 1
+    rendered = sorted(set(HTML_ENTITY.findall(text)))
+    if rendered:
+        print(f"{nid}: the return carries {', '.join(rendered)}, the escaping a notification "
+              f"applies when it renders a reply; it was read from the text that relays the "
+              f"delegation, not from the delegation's transcript. Name the transcript with "
+              f"--from, never a copy of the notification")
+        return 1
     try:
         returned = spec.load_yaml(text)
     except yaml.YAMLError as broken:
-        print(f"{nid}: the return does not parse: {broken}")
+        print(f"{nid}: the return does not parse: {broken}. The delegation answers again; a "
+              f"return is never repaired by hand, because the record is a function of it")
         return 1
     if not isinstance(returned, dict):
         print(f"{nid}: the return is a {type(returned).__name__}, not a mapping")
         return 1
+    emptied = sorted(key for key, value in returned.items() if value == [])
+    for key in emptied:
+        # A list with nothing in it states nothing, and the contract asks for an absent field
+        # rather than an empty one; refusing it would send a delegation back over no content.
+        del returned[key]
     stamped = [key for key in STAMPED[kind] if key in returned]
     if stamped:
         for key in stamped:
@@ -2171,6 +2185,8 @@ def write_record(kind: str, args: list[str]) -> int:
     pin = pin_of(path)
     print(f"{'replaced' if replaced else 'wrote'} {path}")
     print(f"  pin {pin}")
+    for key in emptied:
+        print(f"  `{key}: []` read as absent: an empty list states nothing")
     proof = root / "proof" / epic / f"{slug}.md"
     if kind == "implementation" and proof.is_file():
         pfront, _, _ = spec.parse_node(proof)
@@ -2486,8 +2502,27 @@ def scope_of(plan_nodes: dict[str, dict], named: list[str]) -> tuple[list[str], 
     return sorted(chosen), sorted(carried - chosen), problems
 
 
+REPIN_MARK = "the record answers a task that has since changed"
+
+
+def repinned_tasks(nodes: dict[str, dict], work: Path) -> set[str]:
+    """Tasks whose implementation record pins the task file as it no longer stands — a task
+    re-planned since it was delivered, by a re-bind or a reworded criterion. In the outstanding
+    report these are owed a delivery again, never a refusal of the whole report: the re-plan that
+    moved the pin is a step the route itself takes, and the answer to it is the next delivery."""
+    moved = set()
+    for nid, node in nodes.items():
+        if node["kind"] != "implementation":
+            continue
+        declared, actual = node["front"].get("task"), task_pin(work, task_of(nid))
+        if isinstance(declared, str) and actual is not None and declared != actual:
+            moved.add(task_of(nid))
+    return moved
+
+
 def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
-                       target: Path, scope: list[str] | None = None) -> str:
+                       target: Path, scope: list[str] | None = None,
+                       repinned: set[str] | None = None) -> str:
     """What the plan still holds and the delivery does not — derived from the records every
     time, which is why no field records it.
 
@@ -2510,11 +2545,12 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     handed over ready to open. A
     dependency is waited on until it is settled: delivered and proven, or delivered as the
     substrate alone."""
+    repinned = repinned or set()
     delivered = {task_of(nid) for nid, node in nodes.items()
-                 if node["kind"] == "implementation"}
-    proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"}
+                 if node["kind"] == "implementation"} - repinned
+    proven = {task_of(nid) for nid, node in nodes.items() if node["kind"] == "proof"} - repinned
     roots, _ = target_roots(target)
-    settled = settled_tasks(nodes, plan_nodes, roots, standard_contract())
+    settled = settled_tasks(nodes, plan_nodes, roots, standard_contract()) - repinned
     tasks = [tid for tid in sorted(plan_nodes) if plan_nodes[tid]["kind"] == "task"]
     absences = substrate_absences(plan_nodes, delivered, target)
 
@@ -2545,7 +2581,8 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
         # rather than assembled by eye out of the task file.
         underdetermined = plan.underdetermined_notes_of(notes)
         rebind = plan_nodes[tid].get("moved") or []
-        said = ["no record"]
+        said = ["its record answers the task before it changed: deliver it again against the "
+                "task as it stands" if tid in repinned else "no record"]
         if waits:
             said.append(f"waits on {', '.join(sorted(waits))}")
         for ref in rebind:
@@ -3264,6 +3301,16 @@ def main() -> int:
     nodes, problems = collect(root, validator, names, closed, receipts)
     problems += cross_problems(nodes, plan_nodes, work, names, root, target, standard, closed,
                                receipts)
+    repinned: set[str] = set()
+    if report:
+        # A record over a task re-planned since — its pin, its notes, the nodes it implements
+        # all moved with the plan — is owed a new delivery, and every refusal it draws says
+        # that one thing. The report lists the task to deliver again, and refuses only what
+        # the re-plan does not explain.
+        repinned = repinned_tasks(nodes, work)
+        stale = tuple(f"{kind}/{tid[len('task/'):]}:" for tid in repinned
+                      for kind in ("implementation", "proof"))
+        problems = [p for p in problems if REPIN_MARK not in p and not p.startswith(stale)]
     if problems:
         for problem in sorted(set(problems)):
             print(problem)
@@ -3279,7 +3326,7 @@ def main() -> int:
                 for problem in refused:
                     print(f"cannot run: {problem}", file=sys.stderr)
                 return CANNOT_RUN
-        print(outstanding_report(nodes, plan_nodes, target, scope))
+        print(outstanding_report(nodes, plan_nodes, target, scope, repinned))
         return 0
 
     delivery = derive(nodes, names)

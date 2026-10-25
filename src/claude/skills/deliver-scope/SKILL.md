@@ -20,8 +20,10 @@ A missing input is a stop, not a default:
    request that names one phase gets that entry point, not this one, and an intent read into a
    message that does not state it is a stop, exactly as the corrective increment in `/plan-work`
    is named and never inferred. A standing automation the human armed — a goal condition naming
-   this skill — is such a statement; this skill deciding on its own that a session "meant" the
-   whole route is not.
+   this skill — is such a statement; this skill deciding on its own that a session "meant" the whole route is not. Where such a
+   condition names its objective by a file and a digest, the file's text, read whole, is the
+   ask's objective; a file whose digest no longer matches is a stop, because the words are no
+   longer the ones the person armed.
 2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 3. **the target** — by the key `siegard.json`'s `targets` names it. Where `targets` declares
@@ -128,13 +130,16 @@ The steps:
    tree.
 3. **Deliver, one task per invocation.** Run `deliver.py --outstanding`; while the deliverable
    set is non-empty, take `/implement-task`'s invocation from the previous report's handoff,
-   fill the one open slot with one task from the set, and invoke. After each delivery that wrote
-   records, commit the delivery root, the target source root and the trace file in one commit —
+      fill the one open slot with one task from the set, and invoke. After each delivery that wrote
+   both its records — the implementation and the proof — commit the delivery root, the target
+   source root and the trace file in one commit —
    `deliver-scope <slug>: deliver <task>` — and append to the log below. A delivery that ends in
    a stop instead of records — a red build given up, a suite whose diagnosis only a person
    settles, a silence handed to `/analyse` — ends the loop, unless "Under a goal" below answers
    it: relay that report's own doors whole,
-   commit nothing further but the measure below, and go to it. A task whose delivery gave up is not
+   commit nothing further but the measure below, and go to it. A delivery that stopped is never
+   committed, whatever it left in the tree: what it wrote is the person's to read, keep or
+   discard. A task whose delivery gave up is not
    re-attempted in this run: the same invocation again is a decision about cost, and it is the
    human's.
 4. **Review.** When the deliverable set is empty, invoke `/review-change` from the last
@@ -253,7 +258,9 @@ None is worked around, and none is retried. Each carries its class, in backticks
 - under a goal, a fact the decided-fact route returns as one the specification contradicts —
   `contradiction`;
 - under a goal, a judged choice once the condition's budget of judged doors is spent —
-  `budget`.
+  `budget`;
+- a task whose `stands` files this run's own deliveries moved — the door is `/reconcile` over
+  those files, the person's to ask for — `stands`.
 
 The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
 stop ended closes its orchestration log with one stop line: its class names the stop from the
@@ -292,5 +299,9 @@ Then stop. The commit range is the review, and it belongs to a person.
 
 - Invoke `/analyse`, or write into the specification root — the gate is the point of the design.
 - Commit without a pathspec, sweep the tree, create a branch, push, stash, or rewrite history.
+- Carry this skill's steps, or commit under its name, outside an invocation of it that accepted
+  the ask. Where the ask is refused — a goal whose condition does not name this skill among
+  them — the report says what the condition lacks and that `/goal clear` and the composed
+  condition answer it, and the session carries nothing on by hand.
 - Override, soften or skip any stop an entry point raised — its rules bind its invocation whole,
   and this skill's only grant over a stop is to relay it.

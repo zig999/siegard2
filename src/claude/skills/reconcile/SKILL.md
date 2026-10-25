@@ -468,7 +468,10 @@ hands each pair a judge.
 
 Write the premise — the one part of the record that is the human's and no fold can compose. A
 small YAML file in the workspace, carrying `title`, `summary` (what changed and why the human
-states it is correct, as theirs — never restated as a finding of yours), `target`, and one
+states it is correct, as theirs — never restated as a finding of yours), `said` (the person's own
+words that asked for this reconciliation, quoted verbatim from their message — never a
+paraphrase, and never words they did not type; the fold refuses a premise without it), `target`,
+and one
 `files` entry per named file with its `change` line: what the file now does differently, not what
 was typed into it. Then:
 

@@ -4684,6 +4684,16 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     offset = offset_of(target, home)
     problems = [f"premise: `{field}` is missing" for field in
                 ("title", "summary", "target", "files") if field not in premise]
+    # Whose word the premise rests on is a field, never a sentence of the summary: a person's
+    # words, quoted as they were typed, or the review whose delivery wrote the files. A premise
+    # carrying neither is one nobody asserted, and a record built on it binds on no one's word.
+    vouched = [field for field in ("said", "delivered")
+               if isinstance(premise.get(field), str) and premise[field].strip()]
+    if len(vouched) != 1:
+        problems.append("premise: carries exactly one of `said` — the person's own words that "
+                        "asked for this reconciliation, quoted verbatim — or `delivered` — the "
+                        "review whose delivery wrote these files; a premise vouched for by "
+                        "neither, or by both, asserts nothing anyone said")
     if "target" in premise and isinstance(premise["target"], str) \
             and (home / project.PROJECT_FILE).is_file() \
             and premise["target"] not in target_roots(home):
@@ -5276,6 +5286,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
     front = {"contract_version": RECORD_VERSION,
              "title": premise["title"],
              "summary": premise["summary"],
+             **{field: premise[field] for field in ("said", "delivered") if field in premise},
              "target": premise["target"],
              "files": [{"path": path, "change": named[path]} for path in sorted(every_named)],
              "nodes": entries}

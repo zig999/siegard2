@@ -218,6 +218,32 @@ def test_a_stop_line_closing_the_log_with_the_measure_committed_is_state_b(proje
     assert result.returncode == 0
 
 
+def test_a_stop_that_left_files_is_state_b_and_lists_them_for_the_person(project):
+    log(project, "stop: producers — the diagnosis reads the test and the code apart")
+    commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
+    measure(project)
+    (project["home"] / "target" / "half-written.ts").write_text("export {}\n")
+    result = state(project)
+    assert first(result) == ("state B — stop: producers — the diagnosis reads the test and the "
+                             "code apart; the uncommitted files below are left for the person")
+    assert "target/half-written.ts" in result.stdout
+
+
+def test_a_reconciliation_touching_only_the_trace_and_its_record_is_on_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "siegard-trace.json").write_text("{}\n")
+    (home / "siegard-reconcile").mkdir()
+    (home / "siegard-reconcile" / "drift.md").write_text("record\n")
+    commit(home, "reconcile drift: rebind the reader", "siegard-trace.json", "siegard-reconcile")
+    measure(project)
+    assert "commits" not in failing(state(project))
+    (home / "notes.txt").write_text("x\n")
+    commit(home, "reconcile drift: and a note", "notes.txt")
+    assert "commits" in failing(state(project))
+
+
 def test_a_stop_line_whose_class_is_none_of_the_list_is_not_state_b(project):
     log(project, "stop: tired — nothing left to say")
     commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
@@ -285,6 +311,18 @@ def test_a_findings_policy_naming_a_kind_no_route_corrects_is_refused(project):
     assert "no route corrects it" in result.stderr
 
 
+def test_a_cited_objective_is_copied_whole_from_its_file(project, tmp_path):
+    cited = tmp_path / "cited.md"
+    cited.write_text("Parte 2: testes que faltam.\n\n  - item: com dois pontos\n",
+                     encoding="utf-8")
+    result = compose(project, "--objective-file", str(cited))
+    assert result.returncode == 0, result.stdout + result.stderr
+    (written,) = (project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md")
+    assert written.read_bytes() == cited.read_bytes()
+    both = compose(project, "--objective-file", str(cited), "--objective", "x")
+    assert both.returncode == 2
+
+
 def test_composing_over_a_pending_change_under_the_roots_is_refused(project):
     task = project["home"] / "plans" / SLUG / f"{TASK}.md"
     task.write_text(task.read_text() + "\n")
@@ -308,10 +346,16 @@ def test_composing_over_a_closed_slug_is_refused(project):
     assert "holds closure.md" in result.stdout
 
 
-def test_a_condition_over_the_harness_limit_is_refused(project):
-    result = compose(project, "--objective", "An order is billed once. " * 200)
-    assert result.returncode == 1
-    assert "the harness refuses one over 4000" in result.stdout
+def test_an_objective_travels_by_file_and_the_condition_stays_one_line_each(project):
+    objective = "An order is billed once.\n" * 200
+    result = compose(project, "--objective", objective)
+    assert result.returncode == 0, result.stdout + result.stderr
+    condition = result.stdout.split("paste after /goal:\n\n", 1)[1].strip()
+    assert len(condition) < 1500 and "An order is billed once." not in condition
+    assert "\n" not in condition, "a condition is one line the person pastes whole"
+    (written,) = (project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md")
+    assert written.read_text() == objective
+    assert f"Scope: the objective in telemetry/{written.name} (sha256 " in condition
 
 
 # ------------------------------------------------------------------- the stop classes (R3, R4)

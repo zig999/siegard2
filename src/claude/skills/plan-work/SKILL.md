@@ -568,7 +568,9 @@ same seven `/analyse` reads. Never the skeleton, never the note's
 own text, never a binder's reasoning: the decider is blind to the cut, and the blindness is
 what keeps the specification from being bent to fit tasks already written.
 
-What comes back is written, not judged. On `stated` or `decided`, write the edits verbatim at
+What comes back is written, not judged, and read from where the delegation answered: its
+transcript, or a return saved from it — never the text of the notification that relays it, which
+renders the reply rather than holding it. On `stated` or `decided`, write the edits verbatim at
 the paths they name, then append the returned log entry where the return carries one — every
 `decided`, and a `stated` whose fact was read under `intake/`, recorded as read so the
 specification root keeps the provenance of a node whose material lives in a work root —

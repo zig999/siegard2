@@ -321,8 +321,9 @@ says so** — the one case where the narrower route is read from the task rather
 invocation, and it is still the human's naming: `/plan-work` writes `stands` only in the proof
 increment, which only the human names. The implementation stands at the files `stands` lists,
 and nothing in this delivery writes source. Before anything is written, the same `trace.py
---check --all` holds every one of those files current — a moved one makes "stands" false, and
-the task is re-planned rather than delivered — and `trace.py --encodes <target-source-root>
+--check --all` holds every one of those files current — a moved one makes "stands" false, and the task is
+not delivered: the door is `/reconcile` over the files that moved, which the person asks for,
+and the report hands it with those files named — and `trace.py --encodes <target-source-root>
 <each file>` must still list every node the task implements for them. Step 3 does not run. Step
 4 does, over the tree as it stands: the build is what shows the standing implementation still
 builds, and the record points at that run as any implementation record does. No producer is

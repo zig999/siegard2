@@ -186,7 +186,9 @@ contradiction halfway through a file would be most of the way to writing past it
 One YAML mapping, nothing else — no commentary before or after, and no code fence around it: the
 indented block below shows the shape, and a reply that opens with a fence does not parse and is
 refused whole. The reply begins with `title:` and ends with the mapping's last line; no ``` line
-anywhere:
+anywhere. A value holding `: ` — a test name, a quoted line of code — is quoted, or written as a
+`>-` block, because unquoted it is read as a second key and the reply does not parse. A list with
+nothing to say is left out, never written as `[]`:
 
     title: <what this delivery is, in a few words>
     summary: <one sentence saying what it holds>
