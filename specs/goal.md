@@ -55,7 +55,7 @@ session that stopped while its subagents were still running. The harness refuses
 
 - **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
 - **R2** — State A holds when every task of the scope holds an implementation record and a proof record; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug; none of those commits is on a remote; and the plugin runs the version the goal began under.
-- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, and the measure, tree, commit and remote conditions of R2 hold. A plugin whose version changed since the goal began is state B on its own: the rules the goal ran under are no longer the ones that answer.
+- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, and the measure, tree, commit and remote conditions of R2 hold. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
 
 ### What a stopped run writes
 
@@ -64,7 +64,12 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal carries
 
 - **R5** — A scope restricted to an epic or a set of tasks carries with it every task of the same plan it depends on that holds no record, transitively, and the deliverable set within a scope is a script's answer.
-- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person; no skill sets a goal.
+- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person; no skill sets a goal. Where the person gives them, the condition states the budget of judged doors the run may take and the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers.
+
+### What a goal answers without a person
+
+- **R8** — Under a goal, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, and a task waiting on a re-bind by planning over its slug, each once per task, before the run resumes; a second time over one task is a stop.
+- **R9** — Under a goal whose findings policy names a finding's kind, each such finding of the run's review is answered by one corrective increment over the file it names, delivered and reviewed in the same run, once: what that review finds is reported and never corrected again.
 
 ### What is counted
 

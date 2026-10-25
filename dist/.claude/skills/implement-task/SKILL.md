@@ -545,9 +545,12 @@ Where the agent stopped instead of writing — an input absent, a node it implem
 specification silent on a fact the work needs — that is a successful stop and not a failure of
 this invocation: report what it said and write no record. A stop over a silence does not end with
 a bare report: the fact the agent named is an implementation-level silence the planning route
-never saw, and the report ends with the `/analyse` invocation filled with everything this
-invocation already knows — the project root, and the missing fact quoted whole as the question
-the material must answer — leaving to the human only the invoking. After the specification gains
+never saw, and the report ends with two invocations filled with everything this invocation
+already knows: `/analyse`, with the project root and the missing fact quoted whole as the
+question the material must answer; and `/plan-work`'s decided-fact increment, with the project
+root, the target, the slug, the task and the same fact. The first has the person's material
+state the fact; the second has it decided blind and disclosed in the node's log. Which is the
+person's — and under a goal the person armed, `/deliver-scope` takes the second. After the specification gains
 the statement, the task re-runs through the implement-against step, exactly as a settled blocking
 note does: the decided value can newly contradict a criterion as written, classing that is the
 binder's, and the re-bind is also what repairs the case where the fact lands in a node this

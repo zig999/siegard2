@@ -47,6 +47,7 @@ GRANTS = {
     "test-intent-reader": READS,
     "test-author": WRITES,
     "unstated-fact-decider": READS,
+    "door-decider": READS,
 }
 AGENTS = tuple(sorted(GRANTS))
 

@@ -22,9 +22,10 @@ follows with its output verbatim.» (SPEC-008 R1)
 - `state B` — the initiative's orchestration log, changed since the goal began, ends with a stop
   line — «State B holds when the initiative's orchestration log, changed since the goal began,
   ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`,
-  `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, and the
-  measure, tree, commit and remote conditions of R2 hold.» (SPEC-008 R3) — or the plugin's
-  version changed since the goal began.
+  `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`,
+  `contradiction`, `budget`, and the measure, tree, commit and remote conditions of R2 hold.»
+  (SPEC-008 R3) — or the plugin's version changed since the goal began, or a commit since then
+  touched `siegard.json` or a standard it declares, which only the person authors.
 - `not yet` — neither; the checks that failed say what is left.
 
 **`--compose` writes the condition, and refuses what the route would refuse first.** It checks
@@ -45,14 +46,17 @@ spec.py, its siblings, and runs them and project.py as commands).
 
 Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]...
                                     answer state A, state B or not yet, then every check
-        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text>) [--target <key>]
+        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text>) [--target <key>] [--budget <n>] [--correct contradicts]
                                     check what the route would refuse first, then print the goal
                                     condition to paste after /goal
         goal.py --help              print this text and stop
         A scope id is epic/<name> or task/<epic>/<name> of the slug's live plan; with no --scope,
         the scope is the whole plan. --target may be left out where siegard.json declares one
         target. --untouched names a path `git status --porcelain` may list without the goal
-        having failed it; --compose writes them from the tree as it stands.
+        having failed it; --compose writes them from the tree as it stands. --budget is how many
+        judged doors the run may take, each as the door decider returns it (none where left
+        out); --correct names the conformance findings the run answers by a corrective increment,
+        and `contradicts` is the one kind a route corrects.
 Exit:   0 state A or state B; a condition composed
         1 not yet; a composition refused, with every reason
         2 cannot run
@@ -74,7 +78,8 @@ CANNOT_RUN = 2
 PLUGIN_MANIFEST = BIN.parent / ".claude-plugin" / "plugin.json"
 SKILLS = BIN.parent / "skills"
 STOP_CLASSES = ("blocking", "silence", "rebind", "producers", "gave-up", "infrastructure",
-                "project-file", "pending-change", "specification")
+                "project-file", "pending-change", "specification", "contradiction", "budget")
+CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")
 CONDITION_LIMIT = 4000
 RECORDS_DONE = ("every task has a record, and every record its proof",
@@ -111,8 +116,12 @@ def resolve(project_root: Path, target: str | None) -> dict:
     code, out = script("project.py", str(project_root))
     if code != 0 or out.startswith("no project file"):
         raise Refused(f"project.py {project_root} did not resolve the project:\n{out}")
-    fields: dict = {"targets": {}}
+    fields: dict = {"targets": {}, "standards": []}
     for line in out.splitlines():
+        found = re.match(r"^standard(?: \S+)?: (.+)$", line)
+        if found and found.group(1) != "declared none":
+            fields["standards"].append(Path(found.group(1)))
+            continue
         found = re.match(r"^target (\S+): (.+)$", line)
         if found:
             fields["targets"][found.group(1)] = Path(found.group(2))
@@ -255,6 +264,12 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
                or m.group(1) not in skills]
     found["commits"] = (not foreign, log or "no commit since the goal began")
 
+    authored = [fields["home"] / "siegard.json", *fields["standards"]]
+    touched = git(fields["home"], "log", "--format=%h %s", f"{since}..HEAD", "--",
+                  *[relative(fields, path) for path in authored])
+    found["authored"] = (not touched, touched or "no commit since the goal began touches "
+                         "siegard.json or a standard it declares")
+
     shipped = [line.split()[0] for line in log.splitlines()
                if git(fields["home"], "branch", "-r", "--contains", line.split()[0])]
     found["remote"] = (not shipped, "on a remote: " + ", ".join(shipped) if shipped
@@ -277,6 +292,9 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
     common = ("measure", "tree", "commits", "remote")
     if not found["version"][0]:
         first = "state B — the plugin's version changed since the goal began"
+    elif not found["authored"][0]:
+        first = ("state B — a commit since the goal began touched siegard.json or a standard, "
+                 "which only the person authors")
     elif all(ok for ok, _ in found.values()):
         first = f"state A — {slug}: the scope is delivered, proven, reviewed and measured"
     elif stop and all(found[name][0] for name in common):
@@ -294,7 +312,8 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
 
 
 def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
-            objective: str | None) -> tuple[list[str], str | None]:
+            objective: str | None, budget: int = 0,
+            correct: list[str] | None = None) -> tuple[list[str], str | None]:
     delivery, work, target, specification = roots(fields, slug)
     said: list[str] = []
     refused: list[str] = []
@@ -351,6 +370,10 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
         "every compaction too — the commits that skill defines.",
         f"Project: {project_root}. Target: {fields['target']}. Slug: {slug}. {carried}",
         f"Objective, verbatim: {objective}" if objective else None,
+        f"Budget: {budget} judged door(s), each taken only as the door decider returns it."
+        if budget else "Budget: no judged door; a choice a fact does not decide ends the run.",
+        f"Findings: correct {', '.join(correct)} by a corrective increment, once; report the rest."
+        if correct else "Findings: report them all; correct none.",
         "Leave untouched — never edit, commit or discard: "
         + (", ".join(untouched) if untouched else "nothing") + ".",
         "The goal ends when this command prints `state A` or `state B` as its first line; both "
@@ -397,6 +420,8 @@ def main() -> int:
         version = take(args, "--version")
         untouched = take(args, "--untouched", many=True)
         objective = take(args, "--objective")
+        budget_raw = take(args, "--budget")
+        correct = take(args, "--correct", many=True)
     except Refused as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN
@@ -414,9 +439,9 @@ def main() -> int:
         return CANNOT_RUN
 
     if mode == "--state":
-        if not since or not version or objective:
-            print("cannot run: --state takes --since and --version, and no --objective",
-                  file=sys.stderr)
+        if not since or not version or objective or budget_raw or correct:
+            print("cannot run: --state takes --since and --version, and none of --objective, "
+                  "--budget or --correct, which are the condition's", file=sys.stderr)
             return CANNOT_RUN
         try:
             first, body = state(fields, slug, since, version, scope, untouched)
@@ -426,12 +451,23 @@ def main() -> int:
         print("\n".join([first, *body]))
         return 1 if first.startswith("not yet") else 0
 
+    if not budget_raw or budget_raw.isdigit():
+        budget = int(budget_raw or 0)
+    else:
+        print("cannot run: --budget takes a whole number of judged doors", file=sys.stderr)
+        return CANNOT_RUN
+    uncorrectable = sorted(set(correct) - set(CORRECTABLE))
+    if uncorrectable:
+        print(f"cannot run: --correct names {', '.join(uncorrectable)}; no route corrects it — "
+              f"only {', '.join(CORRECTABLE)}, which the corrective increment answers",
+              file=sys.stderr)
+        return CANNOT_RUN
     if since or version or untouched or bool(scope) == bool(objective):
         print("cannot run: --compose takes --scope or --objective, one of them, and pins "
               "--since, --version and --untouched itself", file=sys.stderr)
         return CANNOT_RUN
     try:
-        said, condition = compose(project_root, fields, slug, scope, objective)
+        said, condition = compose(project_root, fields, slug, scope, objective, budget, correct)
     except Refused as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN

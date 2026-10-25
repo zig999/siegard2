@@ -86,3 +86,17 @@ def test_the_orchestration_log_the_skill_names_is_the_one_the_validator_keeps():
     names for the marker, or a promise the code never held, is a run that ends at its own log."""
     assert f"`{deliver.ORCHESTRATION_FILE}` at the initiative's delivery root, `<delivery_root>/<slug>/`" in SKILL
     assert "the validator keeps it" in SKILL
+
+
+def test_under_a_goal_the_judgment_is_the_blind_deciders_and_the_reserved_questions_stay():
+    """SPEC-006 R7: a goal takes a derived door itself and a judged one only as the door decider
+    returned it; the decider never sees the condition, and the three questions R3 reserves are
+    never taken. A rewording that dropped any of the three would hand the judgment back to the
+    context the goal pushes toward ending."""
+    text = flat("src/claude/skills/deliver-scope/SKILL.md")
+    section = text.split("## Under a goal", 1)[1].split("## What ends the run", 1)[0]
+    assert "`decided: <door> — <criterion> — <deciding fact>`" in section
+    assert "`siegard:door-decider`" in section
+    assert "Never the conversation, never the attempts' story, never what ends the goal" in section
+    assert ("a contradiction, two readings of one piece of evidence, a finding's worth — is never "
+            "taken") in section

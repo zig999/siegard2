@@ -66,7 +66,9 @@ with its why, the project root, and the initiative's slug. The specification roo
 target source root play no part in closing (see "Closing the plan"). A corrective increment
 needs all four and one more the ordinary path never asks for: the file the wrong behavior lives
 in (see "The corrective increment"). A proof increment needs all four, with the facts it names as
-its scope (see "The proof increment").
+its scope (see "The proof increment"). A decided-fact increment needs all four and two more: the
+fact a delivery stopped over, as its stop quoted it, and the task that delivery was for (see "The
+decided-fact increment").
 
 ## Before anything: the specification
 
@@ -188,7 +190,10 @@ holding the file — and there is nothing to decompose: the increment is one tas
 genuinely more than one, this is a scope and the ordinary path is what it gets.
 
 **The scope under `intake/` is the human's and nothing else.** The behavior as they described
-it, the reproduction, and the file by path. Nothing you read in the source goes there — not the
+it, the reproduction, and the file by path. Where a goal's findings policy named the finding in
+advance, the invocation carries it from the review's record, and the intake holds three things
+from it: the node the finding names, as what the code must do; the file; and the record, by
+path — never the finding's account of what the code does. Nothing you read in the source goes there — not the
 line the defect lives on, not what the delivered code does around it, not why. The decider of
 step 4 reads that directory as the one place a fact may already be stated, and a description of
 the code there makes what the code does a stated fact, which is the direction this route exists
@@ -260,6 +265,43 @@ every other task: two producers, the standard applied, the run captured, and the
 the file. Say in the report that this was a corrective increment and which steps did not run, and
 carry the `--encodes` output the binder's candidates were seeded from verbatim, so a reader never
 mistakes a plan of one task for a scope that decomposed to one.
+
+## The decided-fact increment
+
+A fact no node states, found by a delivery rather than by planning: `/implement-task`'s
+implementer stopped over it, and the stop quoted it. It is the same silence step 4 settles, met
+later — «a delivery finding that no node states a fact the work needs» (SPEC-001 R13) — and it
+is settled the same way: decided by a context that never saw the task, disclosed in the node's
+log, never left standing as a stop for a person whose only move is to trigger the decision.
+
+**The invocation names it, and it is never inferred.** `/implement-task`'s report hands this
+invocation beside the `/analyse` one, filled with the fact and the task: two doors, and the
+choice between them is the person's — this one decides the fact blind and discloses it; the
+other has the person's own material state it. Under a goal the person armed, `/deliver-scope`
+takes this one.
+
+```
+situate → intake → step 4's settlement of the one fact → re-bind the task → validate → report → stop
+```
+
+**The scope under `intake/` is the fact as the stop quoted it, and the task's identity.** Nothing
+read in the source goes there, for the reason the corrective increment states: the intake is the
+one place the decider looks for a fact already stated, and a description of the code would make
+what the code does a stated fact.
+
+**The settlement is step 4's, for this fact alone.** Hold it to the cut — grep the specification
+root for its terms; a node that already states it means the task's candidates missed it, and the
+answer is the re-bind below, with no decider spawned. Otherwise spawn one
+`siegard:unstated-fact-decider` subagent, handed exactly what step 4 hands it: the fact, the
+impact set of the nodes the task implements, the intake paths and the specification schema
+paths — never the task. Write its return as step 4 writes one. A return of `contradicted` is a
+contradiction between the scope and the specification: write nothing, and stop with the node and
+its statement quoted, because only a person settles it.
+
+**Then the task is bound again,** by step 4's binder, so its `implements` and its notes see the
+specification as it now stands, and the task file is rewritten from that return — a re-bind,
+which `/implement-task` then delivers as a re-delivery. The survey and the decomposition do not
+run: the task exists.
 
 ## The proof increment
 

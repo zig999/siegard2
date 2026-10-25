@@ -33,7 +33,10 @@ and not trusted.
   condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it,
   `/siegard:deliver-scope` carries the scope, and the goal ends when `goal.py --state` reads
   `state A` (delivered, proven, reviewed, measured) or `state B` (stopped where only you move it)
-  from disk.
+  from disk. Under the goal, a door a fact decides is taken without you; a choice of cost is
+  taken only by a decider that never sees the goal, within the budget you give; and the
+  findings you name in advance are corrected once. A contradiction, two readings of one piece of
+  evidence and a finding's worth stay yours.
 
 It is meant for Claude Code projects that want delivered code to stay traceable to a decision.
 It needs Claude Code and `python3` with PyYAML and jsonschema; it builds no application of its own.

@@ -121,7 +121,8 @@ enforces mechanically.
 ### Facts surfaced after authoring
 
 - **R13** — An unstated fact surfaced after the specification is authored — a planning step
-  finding that no node states a fact an objective or a criterion needs — is decided by the same
+  finding that no node states a fact an objective or a criterion needs, or a delivery finding
+  that no node states a fact the work needs — is decided by the same
   discipline as R4 and disclosed in the node's log (R9, R10), never left standing as a stop for a
   person whose only move is to trigger the decision. Two bounds hold the route: the deciding
   context has not seen the work that surfaced the fact — a decision made by whoever cut the

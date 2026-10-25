@@ -132,7 +132,8 @@ The steps:
    records, commit the delivery root, the target source root and the trace file in one commit —
    `deliver-scope <slug>: deliver <task>` — and append to the log below. A delivery that ends in
    a stop instead of records — a red build given up, a suite whose diagnosis only a person
-   settles, a silence handed to `/analyse` — ends the loop: relay that report's own doors whole,
+   settles, a silence handed to `/analyse` — ends the loop, unless "Under a goal" below answers
+   it: relay that report's own doors whole,
    commit nothing further but the measure below, and go to it. A task whose delivery gave up is not
    re-attempted in this run: the same invocation again is a decision about cost, and it is the
    human's.
@@ -175,6 +176,56 @@ root, and it is the one place the run's own decisions —
 the slug derived, the target decided, the order taken, the stop that ended it — survive the
 conversation that made them.
 
+## Under a goal
+
+A goal condition naming this skill is the person's ask armed as a standing automation, and it
+changes what four stops do — nothing else: «Under a goal condition naming the orchestrating
+route, the orchestrating entry point takes the door a derived recommendation names where that
+door is an entry point the route invokes, and takes the door a judged choice leaves only as the
+door decider returned it, blind to the condition and while the condition's budget of judged doors
+is not spent.» (SPEC-006 R7) Every door taken is one line of the log, on its own,
+`decided: <door> — <criterion> — <deciding fact>`, and its commit names the run as every other
+does. A door the three reserved questions hold — a contradiction, two readings of one piece of
+evidence, a finding's worth — is never taken.
+
+- **A task waiting on a re-bind.** The door is the one `--outstanding` names: `/plan-work` over
+  the slug, the plan's ordinary evolution. Take it, commit the work root and the specification
+  root as `deliver-scope <slug>: rebind <task>`, and resume the loop — «a task waiting on a
+  re-bind by planning over its slug, each once per task, before the run resumes; a second time
+  over one task is a stop.» (SPEC-008 R8)
+- **A delivery that stopped over a fact no node states.** `/implement-task`'s report hands the
+  `/plan-work` invocation of the decided-fact route beside the `/analyse` one; take the first,
+  commit the work root and the specification root as `deliver-scope <slug>: decide <task>`, and
+  resume: the task re-delivers against the fact now stated. Once per task, as above. Where the
+  decider returns the fact as one the specification contradicts, that is a contradiction, and
+  the run stops on it.
+- **A derived recommendation.** Where a stopping report recommends a door on one of the four
+  derived grounds and that door is `/plan-work`, `/implement-task` or `/review-change`, take it,
+  with the criterion the report gave.
+- **A judged choice** — a delivery that gave up, an infrastructure failure the diagnosis read
+  twice, a certification refused again — while the condition's budget of judged doors is not
+  spent. Spawn a `siegard:door-decider` subagent, its judgment at
+  `${CLAUDE_PLUGIN_ROOT}/agents/door-decider.md`, handing it four things: the doors — the
+  invocation the stopping report handed to try again, and ending the run on this stop — each with
+  what it does and what it leaves; the facts each rests on, by path, the runs and the diagnoses
+  among them; the condition's scope line quoted, and nothing else of the condition; and the
+  budget left. Never the conversation, never the attempts' story, never what ends the goal. Save
+  its return as the subagent's own reply. `chosen` or `excluded` naming the door to try again:
+  take it, write the `decided:` line with the rung it named, and count one door of the budget.
+  Anything else — `reserved`, `none`, or the door that ends the run — is the stop it was. A
+  judged choice met with the budget spent is a stop of its own.
+- **A finding the condition's findings policy names.** After the review's commit, each finding
+  of the conformance pass whose kind the policy names is answered «by one corrective increment
+  over the file it names, delivered and reviewed in the same run, once» (SPEC-008 R9). The
+  review hands no invocation forward, so this is the one invocation this skill composes, and only
+  from the review's record: `/plan-work`'s corrective increment with the file the finding names,
+  the finding's own words as the wrong behavior, and the node it names. Commit the plan as
+  `deliver-scope <slug>: correct <file>`, deliver the corrective task as step 3 does, review the
+  corrective tasks once, and commit. What that review finds is reported, never corrected again.
+
+The taking is this skill's; the judgment never is. The decider is the one context that chooses a
+judged door, and it never sees the condition that ends the goal.
+
 ## What ends the run
 
 Every stop below ends the run with the doors the stopping report already carried, relayed
@@ -198,7 +249,11 @@ None is worked around, and none is retried. Each carries its class, in backticks
 - a field `siegard.json` does not declare, or a standard that resolves nowhere — `project-file`;
 - a pending change this skill did not make, anywhere the pathspec above reaches —
   `pending-change`;
-- a specification the gate above does not pass — `specification`.
+- a specification the gate above does not pass — `specification`;
+- under a goal, a fact the decided-fact route returns as one the specification contradicts —
+  `contradiction`;
+- under a goal, a judged choice once the condition's budget of judged doors is spent —
+  `budget`.
 
 The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
 stop ended closes its orchestration log with one stop line: its class names the stop from the

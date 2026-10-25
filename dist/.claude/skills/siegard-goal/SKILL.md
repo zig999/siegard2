@@ -30,6 +30,12 @@ A missing input is a stop, not a default:
 4. **the target** — by the key `siegard.json`'s `targets` names it; where it declares exactly one,
    that key, decided and disclosed.
 
+Two optional inputs, both the person's and never proposed here: **the budget** — how many judged
+doors the run may take, each only as the door decider returns it; none where the person names
+none, so a choice no fact decides ends the run — and **the findings policy** — which findings
+the run corrects by a corrective increment, once. `contradicts` is the one kind a route corrects;
+the script refuses another, and the refusal is the report.
+
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 Every root answers only from there; a field the file does not declare is a stop, and the report
 carries the `/siegard-config` invocation ready to paste — that skill is closed to model
@@ -47,7 +53,7 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 2. Compose:
 
    ```
-   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --compose <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective "<the objective, verbatim>")
+   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --compose <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective "<the objective, verbatim>") [--budget <n>] [--correct contradicts]
    ```
 
    The script checks what `/deliver-scope` would refuse before its first step — the

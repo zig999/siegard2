@@ -238,6 +238,15 @@ def test_a_plugin_whose_version_changed_is_state_b_on_its_own(project):
         "state B — the plugin's version changed")
 
 
+def test_a_commit_touching_the_project_file_is_state_b_on_its_own(project):
+    home = project["home"]
+    declared = json.loads((home / "siegard.json").read_text())
+    (home / "siegard.json").write_text(json.dumps({**declared, "edits_freely": ["app"]}))
+    commit(home, f"deliver-scope {SLUG}: widen the surface route", "siegard.json")
+    assert first(state(project)).startswith("state B — a commit since the goal began touched "
+                                            "siegard.json")
+
+
 # ---------------------------------------------------------------------- the condition (R6)
 
 
@@ -257,6 +266,23 @@ def test_a_composed_condition_names_the_route_the_scope_and_the_state_command(pr
     assert "goal.py --state" in command and f"--version {VERSION}" in command
     assert "--untouched notes.txt" in command and "--scope epic/checkout" in command
     assert len(condition) <= 4000
+
+
+def test_a_budget_and_a_findings_policy_are_stated_in_the_condition(project):
+    result = compose(project, "--scope", TASK, "--budget", "2", "--correct", "contradicts")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Budget: 2 judged door(s), each taken only as the door decider returns it." \
+        in result.stdout
+    assert "Findings: correct contradicts by a corrective increment, once" in result.stdout
+    plain = compose(project, "--scope", TASK).stdout
+    assert "Budget: no judged door; a choice a fact does not decide ends the run." in plain
+    assert "Findings: report them all; correct none." in plain
+
+
+def test_a_findings_policy_naming_a_kind_no_route_corrects_is_refused(project):
+    result = compose(project, "--scope", TASK, "--correct", "restates")
+    assert result.returncode == 2
+    assert "no route corrects it" in result.stderr
 
 
 def test_composing_over_a_pending_change_under_the_roots_is_refused(project):

@@ -77,12 +77,16 @@ and the reviewers' evidence-only returns already hold.
 ### What a handoff recommends
 
 - **R2** — A recommendation names the door, the criterion, the deciding fact and the reversing fact; without all four, none is named. A derived recommendation's criterion is one of four and no other: `precondition unmet`, the door's own entry point refuses its inputs as the tree stands; `rule violated`, the door breaks a rule this framework states; `already done`, the door's work is already in the tree; `reading paid twice`, the same file read by two judgments, where of two readings over the same files the one owed once is named over the one paid twice — two invocations over different files are each paid once, and their order is a decision about cost. In the handoff the four are carried as sentences in the session's plain words — the door, why it, what on disk says so, what would change it — and the criterion's name is written as it reads here only in the log line R5 states; a label, a field name or the criterion's English name in the prose is the record showing through. A derived recommendation's deciding fact and reversing fact are each a fact on disk, named by path or quoted. A door excluded on one of the four grounds is said to be excluded, beside it and with its fact, and where one door remains it is the door recommended: a handoff that hands an excluded door as though it were open has failed to apply R2. Where no ground excludes a door and the choice left is one of cost or of reading the ask, the recommendation is judged: its criterion is the first rung of this ladder that separates the doors, and no other — `keeps the route`, the door holds to this framework's route, a step done by hand that this framework itself prescribes counting as the route; `serves the stated goal`, the door reaches a goal the ask or its intake states, quoted verbatim, and without the quotation this rung does not apply; `can be undone`, the door can be reversed where the other cannot; `costs less`, by a cost a command printed. Its deciding fact is what the rung read — the step this framework prescribes, the quotation, what reverses the door, or the printed figure — its reversing fact what would move the choice to another door, and the handoff says the recommendation is a judgment. One ladder serves every handoff; a skill applies it and never states another.
-- **R3** — No recommendation is made over a scope and a specification that contradict, over two readings of one piece of evidence, or over whether a finding matters or what route it deserves. Each is the person's, and a handoff hands its doors and names none. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
+- **R3** — No recommendation is made over a scope and a specification that contradict, over two readings of one piece of evidence, or over whether a finding matters or what route it deserves. Each is the person's, and a handoff hands its doors and names none. A finding's worth the person decided in advance, as the findings policy a goal condition states, is applied by its class and never judged. It says so in the person's words: that the choice is the person's own decision, what each door assumes is true, and what on disk or in the person's own answer would settle it — never a bare absence of a recommendation, which reads as an answer withheld.
 
 ### What stops
 
 - **R4** — A finding stops nothing. A handoff names a stop only where the skill's own file names one, and names it as a stop. Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim.
 - **R6** — Where every door a handoff hands is excluded, by its entry point's refusal or by a rule this framework states, the opening says no door follows this framework's route, names for each door the refusal or the rule as a fact on disk, and recommends none; it names the route that recovers from work done outside the framework where one exists, and says what the person does then is outside this framework's route.
+
+### What a goal takes
+
+- **R7** — Under a goal condition naming the orchestrating route, the orchestrating entry point takes the door a derived recommendation names where that door is an entry point the route invokes, and takes the door a judged choice leaves only as the door decider returned it, blind to the condition and while the condition's budget of judged doors is not spent. Each door taken is one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3 reserves is never taken.
 
 ### Where a recommendation is recorded
 
@@ -94,14 +98,14 @@ and the reviewers' evidence-only returns already hold.
 2. Telemetry counts the `recommended:` lines of every orchestration log under the delivery
    root — each initiative's own, and one an orchestrating entry point left at the delivery root
    itself, read under the initiative its landing commit names — by criterion, and names each
-   line that does not parse, a `recommended:` that does not open its line among them; it
-   computes nothing about which door was taken.
+   line that does not parse, a `recommended:` that does not open its line among them;    it computes nothing about which door was taken. It counts the `decided:` lines R7 states the
+   same way, apart from the `recommended:` ones.
 3. A consumer initiative run under this specification is read for three things. Each handoff
    that hands a door R2 excludes and carries no recommendation is a failure to apply R2, never
    grounds to withdraw it. For each `recommended:` line a person reads its `next_commit` and
    says whether that door was taken; judged recommendations read as not taken outnumbering
    those read as taken narrows R2 back to derived recommendations alone. And telemetry's
-   `handoffs.questions` — every human turn in the window holding a `?`, a continuation summary
+      `handoffs.questions` — every human turn in the window holding a `?`, a continuation summary
    excepted and a paste counted as typed — is reported beside each reading against its baseline
    in its own unit, and reverses nothing: 17 in 56 human turns over the eternal session
    `0775f0fa` (2026-10-05T15:26:28Z..2026-10-06T13:54:56Z, Siegard 5.2.0); 15 in 62 over
@@ -114,6 +118,14 @@ and the reviewers' evidence-only returns already hold.
    is compared to them, never to the count.
 
 ## Readings
+
+- 2026-10-25 — grounds for R7: every human turn of 15 `/goal` sessions of `newcatalog`,
+  `productcatalog` and `productorder` (2026-10-13..25), one coder
+  (`temp/20261025-goal-autonomy/decisions.md` in the generator): where a handed choice carried a
+  recommendation, the person took it — derived 42/42, judged 49/56; of the 6 judged not taken,
+  3 were a closure, a push and a standard deviation, which no goal takes. The sessions took 19
+  reserved decisions themselves, 3 reversing their own refusal minutes earlier — the judgment R7
+  hands a decider blind to the condition.
 
 - 2026-10-07 — not yet read: no initiative has run end to end through `/deliver-scope` or
   `/adopt-scope` under 5.5.0 or later, so no orchestration log holds a `recommended:` line. The

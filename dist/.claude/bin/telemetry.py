@@ -177,7 +177,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/15"
+CONTRACT = "siegard-telemetry/16"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -1626,7 +1626,7 @@ def scope_section(work_root: Path | None, delivery_root: Path | None, home: Path
 DERIVED = ("precondition unmet", "rule violated", "already done", "reading paid twice")
 JUDGED = ("keeps the route", "serves the stated goal", "can be undone", "costs less")
 CRITERIA = DERIVED + JUDGED
-RECOMMENDED = re.compile(r"^recommended: (?P<door>.+?) — (?P<criterion>"
+RECOMMENDED = re.compile(r"^(?P<verb>recommended|decided): (?P<door>.+?) — (?P<criterion>"
                          + "|".join(CRITERIA) + r") — (?P<fact>.+)$")
 UNCOMMITTED = "0" * 40
 RUN_SUBJECT = re.compile(r"^(?:deliver|adopt)-scope (?P<slug>\S+):")
@@ -1697,7 +1697,7 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
             if line.startswith("- "):
                 line = line[2:].strip()
             line = line.strip("`").strip()
-            if "recommended:" not in line:
+            if "recommended:" not in line and "decided:" not in line:
                 continue
             landing = landed.get(number)
             if landing is not None and not (since <= landing[1] <= until):
@@ -1707,7 +1707,8 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
             roots = ([delivery_root / slug] if slug else [log.parent]) \
                 + ([work_root / slug] if work_root is not None and slug else [])
             where = {"slug": slug, "log": str(log), "line": number}
-            match = RECOMMENDED.match(line) if line.startswith("recommended:") else None
+            match = RECOMMENDED.match(line) \
+                if line.startswith(("recommended:", "decided:")) else None
             if match is None:
                 malformed.append({**where, "text": line})
                 continue
@@ -1715,14 +1716,19 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
                           "criterion": match.group("criterion"),
                           "kind": "derived" if match.group("criterion") in DERIVED else "judged",
                           "fact": match.group("fact"),
+                          # A `decided:` line is a door a goal took, not one handed over.
+                          "taken": match.group("verb") == "decided",
                           "landed_in": landing[0] if landing else None,
                           "next_commit": next_commit_after(home, landing[0], roots, until)
                           if landing else None})
-    by_criterion = {criterion: sum(1 for l in lines if l["criterion"] == criterion)
+    handed = [l for l in lines if not l["taken"]]
+    by_criterion = {criterion: sum(1 for l in handed if l["criterion"] == criterion)
                     for criterion in CRITERIA}
-    by_kind = {kind: sum(1 for l in lines if l["kind"] == kind) for kind in ("derived", "judged")}
-    return {"emitted": len(lines), "by_criterion": by_criterion, "by_kind": by_kind,
-            "lines": lines, "malformed": malformed}
+    by_kind = {kind: sum(1 for l in handed if l["kind"] == kind) for kind in ("derived", "judged")}
+    taken = {kind: sum(1 for l in lines if l["taken"] and l["kind"] == kind)
+             for kind in ("derived", "judged")}
+    return {"emitted": len(handed), "by_criterion": by_criterion, "by_kind": by_kind,
+            "taken": taken, "lines": lines, "malformed": malformed}
 
 
 # ------------------------------------------------------------------------- the handoffs
@@ -1937,6 +1943,9 @@ def receipt(report: dict, destination: Path) -> str:
         + (f" ({report['recommendations']['by_kind']['derived']} derived, "
            f"{report['recommendations']['by_kind']['judged']} judged)"
            if report['recommendations']['emitted'] else "")
+        + (f"; doors a goal took: {report['recommendations']['taken']['derived']} derived, "
+           f"{report['recommendations']['taken']['judged']} judged"
+           if any(report['recommendations']['taken'].values()) else "")
         + (f", {len(report['recommendations']['malformed'])} line(s) that do not parse"
            if report['recommendations']['malformed'] else ""),
         f"handoffs: {report['handoffs']['confirmations']} confirmation(s) typed over "

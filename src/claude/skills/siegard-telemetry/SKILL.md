@@ -92,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/15
+contract_version: siegard-telemetry/16
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -220,7 +220,11 @@ What each section holds:
   whether judged ones were taken is the reading that keeps or narrows the grant.
   Whether the commit that followed took the door recommended is a reading, tagged `[judgment]`,
   never a count; a line no commit holds yet has no follower, said as such. Every entry of
-  `recommendations.malformed` verbatim, as a log line nothing could count. A window whose
+  `recommendations.malformed` verbatim, as a log line nothing could count. Then
+  `recommendations.taken`: the doors a goal took by itself, `decided:` lines, by kind — never
+  counted among the recommendations handed over. Whether a taken door held is a person's reading
+  of the commit that followed, tagged `[judgment]`; a `siegard-telemetry/15` record carries no
+  count, which is not zero. A window whose
   orchestration logs hold none says zero; a `siegard-telemetry/8` record says nothing, which is
   not zero.
 

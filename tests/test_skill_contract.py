@@ -33,7 +33,7 @@ SKILLS = {
     "siegard-config": {"contract": "schemas/project.json", "validator": "bin/project.py",
                        "delegates": []},
     "deliver-scope": {"contract": "schemas/plan.json", "validator": "bin/deliver.py",
-                      "delegates": []},
+                      "delegates": ["door-decider"]},
     "plan-work": {"contract": "schemas/plan-node.json", "validator": "bin/plan.py",
                   "delegates": ["codebase-surveyor", "backlog-decomposer",
                                 "execution-contract-binder", "unstated-fact-decider"]},

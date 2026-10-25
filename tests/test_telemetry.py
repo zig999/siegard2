@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/15"
+    assert report["contract_version"] == "siegard-telemetry/16"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/15"
+    assert report["contract_version"] == "siegard-telemetry/16"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1269,6 +1269,22 @@ def test_a_judged_recommendation_is_counted_apart_from_a_derived_one(consumer):
     assert [l["kind"] for l in recommendations["lines"]] == ["judged", "judged", "derived"]
 
 
+def test_a_door_a_goal_took_is_counted_apart_from_one_handed_over(consumer):
+    """SPEC-006 R7 and Validation 2: a `decided:` line is a door a goal took by itself; it is
+    counted by kind under `taken`, never among the recommendations handed to a person."""
+    (consumer["home"] / "delivery/checkout/orchestration.md").write_text(
+        "recommended: /reconcile — already done — the note quoted\n"
+        "decided: /plan-work over checkout — precondition unmet — waits on a re-bind\n"
+        "decided: /implement-task again — serves the stated goal — the scope: \"bill once\"\n",
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    recommendations = report["recommendations"]
+    assert recommendations["emitted"] == 1
+    assert recommendations["taken"] == {"derived": 1, "judged": 1}
+    assert [l["taken"] for l in recommendations["lines"]] == [False, True, True]
+
+
 def test_a_recommendation_no_commit_holds_yet_is_counted_with_no_follower(consumer):
     (consumer["home"] / "delivery/checkout/orchestration.md").write_text(
         "recommended: /reconcile over the remainder — reading paid twice — the bind's receipt\n",
@@ -1327,7 +1343,8 @@ def test_no_orchestration_log_is_zero_recommendations_and_the_survey_root_is_nev
     assert report["recommendations"] == {"emitted": 0, "by_criterion": {
         "precondition unmet": 0, "rule violated": 0, "already done": 0, "reading paid twice": 0,
         "keeps the route": 0, "serves the stated goal": 0, "can be undone": 0, "costs less": 0},
-        "by_kind": {"derived": 0, "judged": 0}, "lines": [], "malformed": []}
+        "by_kind": {"derived": 0, "judged": 0}, "taken": {"derived": 0, "judged": 0},
+        "lines": [], "malformed": []}
 
 
 # ------------------------------------------------------------------------ the handoffs
