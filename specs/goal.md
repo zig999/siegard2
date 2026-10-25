@@ -1,0 +1,87 @@
+---
+id: "SPEC-008"
+title: The goal
+status: proposed
+contract_version: spec/1
+---
+
+# The goal
+
+## Scope
+
+This specification fixes what a goal the person arms over `/deliver-scope` ends on, and how that
+end is read. It binds `/deliver-scope`, the script that answers a goal's state, the script and the
+skill that compose a goal's condition, and telemetry's count of the harness's evaluations.
+
+A goal is the harness's own mechanism: a condition the person sets once, that the harness
+repeats whenever the session tries to stop, and that a model reading the transcript judges met or
+not. This specification decides what the condition says, what decides that it is met, and what
+ends a run that cannot be carried further without a person — so that a goal always ends, in one
+of two states, each read from disk.
+
+Grounds: every `/goal` session of three consumers (`newcatalog`, `productcatalog`,
+`productorder`) between 2026-10-13 and 2026-10-25, Siegard 5.18.0–5.28.1, read from their
+transcripts on 2026-10-25 — 15 sessions. The harness recorded 467 evaluations judging the
+condition not met and 10 judging it met; six sessions never ended met. Read session by session,
+each park had one of four causes: a decision this framework reserves to a person — a finding's
+worth, a plan's closure, a standing BLOCKING note, `--bind --replace`, a skill closed to the
+model — which the condition demanded and the session could not take; an environment the run could
+not have, such as a container engine or production data; a condition the evaluator could never
+read as met — an order of steps, "follow the standards", an item that did not exist; and a
+session that stopped while its subagents were still running. The harness refuses a condition longer than
+4,000 characters, and the conditions written by hand restated rules the skills already hold.
+
+### Decided elsewhere, deliberately not restated here
+
+- What stops a run, and what each stop hands the person — `/deliver-scope`'s own file.
+- What a handoff opens with and recommends — `specs/handoff.md` (SPEC-006).
+- What authorizes a commit — this repository's `CLAUDE.md` and the session rules.
+
+## Definitions
+
+- **Goal** — a condition the person sets through the harness, repeated by it whenever the
+  session tries to stop, until a model reading the transcript judges it met.
+- **Goal condition** — the text of a goal.
+- **Scope** — what a goal carries: an initiative's whole plan, one epic of a live plan, or a set
+  of tasks of a live plan.
+- **Stop line** — the last line of a stopped run's orchestration log: `stop: <class> — <fact>`.
+- **State A** — the scope is delivered, proven, reviewed and measured.
+- **State B** — the run stopped where only a person moves it, and what it did is committed and
+  measured.
+
+## Requirements
+
+### What a goal ends on
+
+- **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
+- **R2** — State A holds when every task of the scope holds an implementation record and a proof record; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug; none of those commits is on a remote; and the plugin runs the version the goal began under.
+- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, and the measure, tree, commit and remote conditions of R2 hold. A plugin whose version changed since the goal began is state B on its own: the rules the goal ran under are no longer the ones that answer.
+
+### What a stopped run writes
+
+- **R4** — A run a stop ended closes its orchestration log with one stop line: its class names the stop from the list R3 holds, and its fact is the stopping report's own words. Every stop the orchestrating skill's file names carries exactly one class.
+
+### What a goal carries
+
+- **R5** — A scope restricted to an epic or a set of tasks carries with it every task of the same plan it depends on that holds no record, transitively, and the deliverable set within a scope is a script's answer.
+- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person; no skill sets a goal.
+
+### What is counted
+
+- **R7** — Telemetry counts the goal evaluations the harness recorded in each session of its window, those judging the condition met and those judging it not met.
+
+## Validation required before acceptance
+
+1. Tests hold `goal.py --state` to R2 and R3 over fixture repositories: one answering each state,
+   and one per condition of R2 failing alone.
+2. A test holds the stop list of `/deliver-scope`'s file to R3's classes, one class per stop.
+3. A test holds `deliver.py --outstanding --scope` to R5: an epic, a task set, a dependency
+   outside the scope, and an id the plan does not hold.
+4. A consumer goal composed under this specification is read for the evaluations telemetry
+   counts (R7). The baseline is the grounds' 467 judged not met over 15 goals; a goal composed by
+   `goal.py --compose` that the harness judged not met more than once while `--state` answered
+   `state A` or `state B` is a defect in what the condition says, never grounds to widen it.
+
+## Readings
+
+- 2026-10-25 — not yet read: no goal has been composed under this specification.

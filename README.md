@@ -29,6 +29,11 @@ and not trusted.
   `/siegard:reconcile` re-reads it.
 - **A way in for code that already exists.** `/siegard:survey`, `/siegard:analyse` and
   `/siegard:reconcile` adopt source no delivery wrote, one context at a time.
+- **A scope carried with nobody asked along the way.** `/siegard:siegard-goal` composes the
+  condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it,
+  `/siegard:deliver-scope` carries the scope, and the goal ends when `goal.py --state` reads
+  `state A` (delivered, proven, reviewed, measured) or `state B` (stopped where only you move it)
+  from disk.
 
 It is meant for Claude Code projects that want delivered code to stay traceable to a decision.
 It needs Claude Code and `python3` with PyYAML and jsonschema; it builds no application of its own.

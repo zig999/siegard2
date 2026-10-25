@@ -177,7 +177,7 @@ import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/14"
+CONTRACT = "siegard-telemetry/15"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -656,6 +656,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     skill_calls: dict[str, int] = {}
     confirmations: list[dict] = []
     questions: list[dict] = []
+    goal_evaluations: list[dict] = []
     short_turns = 0
     last_assistant_at: str | None = None
     last_assistant_text: str = ""
@@ -710,6 +711,13 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                     "after_question": asks(last_assistant_text),
                     "wait_seconds": seconds_between(last_assistant_at, stamp)
                     if last_assistant_at is not None else None})
+        verdict = entry.get("attachment") if entry.get("type") == "attachment" else None
+        if isinstance(verdict, dict) and verdict.get("type") == "goal_status" \
+                and not verdict.get("sentinel"):
+            # The harness's own reading of a goal condition: one per attempt to stop. A
+            # sentinel marks the goal being set or reset, never an evaluation.
+            goal_evaluations.append({"at": iso(instant_of(stamp)),
+                                     "met": verdict.get("met") is True})
         if is_compaction(entry):
             compactions.append(dict(compaction_of(entry), at=iso(instant_of(stamp)),
                                     skill=skill or "none"))
@@ -787,6 +795,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
         "skill_calls": dict(sorted(skill_calls.items())), "short_turns": short_turns,
         "confirmations": confirmations, "questions": questions, "commits": in_span_commits,
+        "goal_evaluations": goal_evaluations,
         "context": context_reading(spent, boundaries, events, compactions),
     }
     return summary, list(commands.values()), list(agents.values())
@@ -1767,7 +1776,25 @@ def handoffs_section(harness: dict) -> dict:
             "confirmations": confirmations, "unclassified_short": short_turns - confirmations,
             "by_class": by_class, "by_skill": dict(sorted(by_skill.items())), "lines": lines,
             "questions": {"count": sum(asked.values()), "by_skill": dict(sorted(asked.items()))},
-            "in_span_commits": in_span}
+            "in_span_commits": in_span,
+            "goal_evaluations": goal_evaluations_of(harness)}
+
+
+def goal_evaluations_of(harness: dict) -> dict:
+    """How often the harness judged a goal condition, and how often it judged it met — «Telemetry
+    counts the goal evaluations the harness recorded in each session of its window, those judging
+    the condition met and those judging it not met.» (SPEC-008 R7). A goal judged not met is a
+    session told to keep going; many of them over one goal are a condition nothing could read
+    as met."""
+    by_session = {}
+    for session in harness["sessions"]:
+        seen = session.get("goal_evaluations") or []
+        if seen:
+            by_session[session["id"]] = {"met": sum(1 for e in seen if e["met"]),
+                                         "not_met": sum(1 for e in seen if not e["met"])}
+    return {"met": sum(s["met"] for s in by_session.values()),
+            "not_met": sum(s["not_met"] for s in by_session.values()),
+            "by_session": dict(sorted(by_session.items()))}
 
 
 # --------------------------------------------------------------------------- the whole
@@ -1919,6 +1946,9 @@ def receipt(report: dict, destination: Path) -> str:
                     for name, tally in report["handoffs"]["by_class"].items())
         + f"; {report['handoffs']['questions']['count']} question(s) asked"
         + f"; {report['handoffs']['unclassified_short']} short turn(s) unclassified",
+        f"goal evaluations: {report['handoffs']['goal_evaluations']['met']} met, "
+        f"{report['handoffs']['goal_evaluations']['not_met']} not met, over "
+        f"{len(report['handoffs']['goal_evaluations']['by_session'])} session(s)",
         f"commits inside a skill's span: {report['handoffs']['in_span_commits']['count']} — "
         + ", ".join(f"{name} {n}" for name, n in
                     report["handoffs"]["in_span_commits"]["by_authorization"].items())

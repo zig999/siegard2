@@ -31,6 +31,12 @@ A missing input is a stop, not a default:
    A slug whose work root holds `closure.md` is a stop: a closed plan is history, and a new
    scope names a new slug. A slug whose work root already holds a live plan is a resume, not an
    error: this skill continues from the deliverable set as it stands, and the report says so.
+5. **the scope's reach** — the whole plan, unless the ask names an epic, `epic/<name>`, or tasks,
+   `task/<epic>/<name>`, of the slug's live plan. Named, the run carries those tasks and every
+   task they depend on: «A scope restricted to an epic or a set of tasks carries with it every
+   task of the same plan it depends on that holds no record, transitively» (SPEC-008 R5). An id
+   the plan does not hold is a stop, and so is a reach named over a slug with no live plan — a
+   new plan is planned from prose, never from ids.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 Every root and the standard answer only from there, exactly as they do for every entry point this
@@ -98,17 +104,19 @@ Two rules bind every step, and they are what this skill is:
   is deliverable now, and in what order:
 
   ```
-  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <target-source-root> <specification-root>
+  python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <target-source-root> <specification-root> [--scope <id>]...
   ```
 
-  run fresh before each delivery, never a reading of the plan or a memory of the last run. A stop
+  with one `--scope` per id the reach names, and none where it is the whole plan — run fresh
+  before each delivery, never a reading of the plan or a memory of the last run. A stop
   the script reports is this skill's stop. The lines it prints of records pinning no standard, or
   another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — or an earlier version of it — «a step declared after a record was written is owed by the records written after it» (SPEC-007 R3) — are relayed in the report below, verbatim, from the last run that printed them; they route nothing here.
 
 The steps:
 
-1. **Plan.** Invoke `/plan-work` with the ask as the scope, the project root, the target and the
-   slug. On a populated work root, this is that skill's ordinary evolution of the plan it holds;
+1. **Plan.** Where the ask names a reach, the plan already holds it: skip to the loop, and commit
+   nothing here. Otherwise invoke `/plan-work` with the ask as the scope, the project root, the
+   target and the slug. On a populated work root, this is that skill's ordinary evolution of the plan it holds;
    on a resume where the plan already answers the ask, skip to the loop — `--outstanding` is what
    says whether anything is left to plan against. A task `/plan-work` reports as carrying a
    `BLOCKING, from the specification —` note is not yet this skill's problem to stop on: the loop
@@ -170,21 +178,32 @@ conversation that made them.
 ## What ends the run
 
 Every stop below ends the run with the doors the stopping report already carried, relayed
-verbatim, and with the log's last line naming it — and, where that report recommended a door, one
-line after it and on a line of its own, «`recommended: <door> — <criterion> — <deciding fact>`»
+verbatim, and with the log naming it — where that report recommended a door, on a line of its
+own, «`recommended: <door> — <criterion> — <deciding fact>`»
 (SPEC-006 R5): its door and deciding fact copied from the report, and its criterion the name the
 handoff's specification gives the ground the report stated in plain words — never a
 recommendation the report did not make.
-None is worked around, and none is retried:
+None is worked around, and none is retried. Each carries its class, in backticks after it:
 
-- a `BLOCKING, from the specification —` note standing on every task the set has left;
-- a specification silence — the `/analyse` invocation is the human's to take, always;
+- a `BLOCKING, from the specification —` note standing on every task the set has left —
+  `blocking`;
+- a specification silence — the `/analyse` invocation is the human's to take, always —
+  `silence`;
 - a task `deliver.py --outstanding` lists as waiting on a re-bind — a node it implements moved
-  since the plan was derived, and the door is `/plan-work` over the slug, never a derivation;
-- a suite whose diagnosis names a disagreement between the two producers;
-- a delivery that gave up, or an infrastructure failure the diagnosis read twice;
-- a field `siegard.json` does not declare, or a standard that resolves nowhere;
-- a pending change this skill did not make, anywhere the pathspec above reaches.
+  since the plan was derived, and the door is `/plan-work` over the slug, never a derivation —
+  `rebind`;
+- a suite whose diagnosis names a disagreement between the two producers — `producers`;
+- a delivery that gave up — `gave-up`;
+- an infrastructure failure the diagnosis read twice — `infrastructure`;
+- a field `siegard.json` does not declare, or a standard that resolves nowhere — `project-file`;
+- a pending change this skill did not make, anywhere the pathspec above reaches —
+  `pending-change`;
+- a specification the gate above does not pass — `specification`.
+
+The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
+stop ended closes its orchestration log with one stop line: its class names the stop from the
+list R3 holds, and its fact is the stopping report's own words.» (SPEC-008 R4) A goal's state is
+read from that line, so nothing is appended after it — the measure's commit carries it.
 
 A stop ends the route, never the measure: step 6 runs after it, and its commit is the one that
 follows a stop.

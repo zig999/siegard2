@@ -183,10 +183,18 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         delivery.json
         deliver.py --check <delivery-root> <work-root> <target-source-root> [<specification-root>]
                                                         validate and compare; write nothing
-        deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>]
+        deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>] [--scope <id>]...
                                                         validate, then print every task with no
                                                         record, what each waits on, and the set
-                                                        deliverable now; write nothing
+                                                        deliverable now; write nothing. Each
+                                                        --scope names an epic/<name> or a
+                                                        task/<epic>/<name> of the plan, and the
+                                                        report answers only those tasks and every
+                                                        task they depend on, transitively — «A
+                                                        scope restricted to an epic or a set of
+                                                        tasks carries with it every task of the
+                                                        same plan it depends on that holds no
+                                                        record, transitively» (SPEC-008 R5)
         deliver.py --node <file> <delivery-root>
                                                         validate one file (cross-node checks,
                                                         plan checks and standard checks do not
@@ -2446,8 +2454,40 @@ def substrate_absences(plan_nodes: dict[str, dict], delivered: set[str],
     return absences
 
 
+def scope_of(plan_nodes: dict[str, dict], named: list[str]) -> tuple[list[str], list[str],
+                                                                     list[str]]:
+    """The tasks a restricted scope carries: those it names, and every task of the same plan
+    they depend on, transitively. An epic names the tasks filed under it. The dependencies are
+    returned apart because a goal that names an epic and delivers a task outside it says so, and
+    an id the plan does not hold is a refusal, never an empty scope: a scope that reaches nothing
+    reports every task of it delivered."""
+    tasks = {tid for tid, node in plan_nodes.items() if node["kind"] == "task"}
+    problems: list[str] = []
+    chosen: set[str] = set()
+    for ref in named:
+        if ref.startswith("epic/"):
+            under = {tid for tid in tasks if tid.split("/")[1] == ref[len("epic/"):]}
+            if ref not in plan_nodes and not under:
+                problems.append(f"{ref} is no epic of this plan")
+            chosen |= under
+        elif ref in tasks:
+            chosen.add(ref)
+        else:
+            problems.append(f"{ref} is no task of this plan; a scope names epic/<name> or "
+                            f"task/<epic>/<name>")
+    carried = set(chosen)
+    pending = sorted(chosen)
+    while pending:
+        tid = pending.pop()
+        for dep in listed(plan_nodes[tid]["front"], "depends_on"):
+            if isinstance(dep, str) and dep in tasks and dep not in carried:
+                carried.add(dep)
+                pending.append(dep)
+    return sorted(chosen), sorted(carried - chosen), problems
+
+
 def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
-                       target: Path) -> str:
+                       target: Path, scope: list[str] | None = None) -> str:
     """What the plan still holds and the delivery does not — derived from the records every
     time, which is why no field records it.
 
@@ -2480,6 +2520,14 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
 
     lines: list[str] = []
     ready: list[str] = []
+    heading: list[str] = []
+    if scope is not None:
+        chosen, carried, _ = scope_of(plan_nodes, scope)
+        tasks = [tid for tid in tasks if tid in chosen or tid in carried]
+        absences = {tid: found for tid, found in absences.items() if tid in tasks}
+        heading.append(f"scope: {', '.join(scope)} — {len(chosen)} task(s)"
+                       + (f", and {len(carried)} it depends on: {', '.join(carried)}"
+                          if carried else ""))
     for tid in tasks:
         front = plan_nodes[tid]["front"]
         if tid in delivered:
@@ -2523,8 +2571,9 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
             ready = [tid for tid in ready if tid in absences]
         lines.append(deliverable_line(ready, bool(absences)))
     if not lines:
-        lines = ["every task has a record, and every record its proof"]
-    return "\n".join(lines + standards_held(nodes, target))
+        lines = ["every task has a record, and every record its proof" if scope is None else
+                 "every task in the scope has a record, and every record its proof"]
+    return "\n".join(heading + lines + standards_held(nodes, target))
 
 
 def deliverable_line(ready: list[str], barred: bool) -> str:
@@ -2993,6 +3042,19 @@ def main() -> int:
     args = [a for a in args if a != "--check"]
     report = "--outstanding" in args
     args = [a for a in args if a != "--outstanding"]
+    scope: list[str] | None = None
+    while "--scope" in args:
+        at = args.index("--scope")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --scope takes an epic/<name> or a task/<epic>/<name>",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        scope = (scope or []) + [args[at + 1]]
+        del args[at:at + 2]
+    if scope is not None and not report:
+        print("cannot run: --scope restricts the outstanding report, and only --outstanding "
+              "prints one", file=sys.stderr)
+        return CANNOT_RUN
     single = None
     if "--node" in args:
         at = args.index("--node")
@@ -3211,7 +3273,13 @@ def main() -> int:
         return 1
 
     if report:
-        print(outstanding_report(nodes, plan_nodes, target))
+        if scope is not None:
+            refused = scope_of(plan_nodes, scope)[2]
+            if refused:
+                for problem in refused:
+                    print(f"cannot run: {problem}", file=sys.stderr)
+                return CANNOT_RUN
+        print(outstanding_report(nodes, plan_nodes, target, scope))
         return 0
 
     delivery = derive(nodes, names)

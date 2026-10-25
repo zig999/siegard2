@@ -26,7 +26,7 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/14",
+      "const": "siegard-telemetry/15",
       "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero. /14 reads each orchestrating session's context per call: what every call read, the floor its compactions left, the same session replayed at each auto-compact window with the compactions and commit re-authorizations each would have cost, the replay at the window the session ran under as the check on the replay itself, and what the calls following a compaction did again; a /13 report carries none of it, which is not a count of zero."
     },
     "project_root": {
@@ -37,10 +37,18 @@
     "window": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["since", "until", "since_resolved_from"],
+      "required": [
+        "since",
+        "until",
+        "since_resolved_from"
+      ],
       "properties": {
-        "since": { "$ref": "#/$defs/timestamp" },
-        "until": { "$ref": "#/$defs/timestamp" },
+        "since": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "until": {
+          "$ref": "#/$defs/timestamp"
+        },
         "since_resolved_from": {
           "type": "string",
           "minLength": 1,
@@ -49,35 +57,72 @@
       },
       "description": "The stretch of wall-clock time this report covers, both bounds UTC. Everything below is filtered to it: a transcript entry, a run step, a commit or a decision outside it is not in this report."
     },
-    "generated_at": { "$ref": "#/$defs/timestamp" },
+    "generated_at": {
+      "$ref": "#/$defs/timestamp"
+    },
     "framework": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["plugin_root", "version", "contracts", "agents", "skills"],
+      "required": [
+        "plugin_root",
+        "version",
+        "contracts",
+        "agents",
+        "skills"
+      ],
       "properties": {
-        "plugin_root": { "type": "string", "minLength": 1 },
+        "plugin_root": {
+          "type": "string",
+          "minLength": 1
+        },
         "version": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "The installed framework's version, read from its plugin manifest. Null where the manifest is absent or names none — and a report over a framework that cannot say which version it is measures a framework nobody can resolve to what ran."
         },
         "contracts": {
           "type": "object",
-          "additionalProperties": { "type": "string" },
+          "additionalProperties": {
+            "type": "string"
+          },
           "description": "Every `contract_version` constant the installed schemas declare, keyed by schema file — so a figure here can be read against the exact contract the artifacts it counts were written under."
         },
-        "agents": { "type": "array", "items": { "$ref": "#/$defs/configured" } },
-        "skills": { "type": "array", "items": { "$ref": "#/$defs/configured" } }
+        "agents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/configured"
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/configured"
+          }
+        }
       }
     },
     "harness": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["transcript_root", "transcript_roots", "worktree", "readable", "reason", "sessions", "skill_totals"],
+      "required": [
+        "transcript_root",
+        "transcript_roots",
+        "worktree",
+        "readable",
+        "reason",
+        "sessions",
+        "skill_totals"
+      ],
       "properties": {
         "transcript_roots": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "minLength": 1 },
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
           "description": "Every transcript directory a session in this report was read from: the project's own first, then any sibling directory — one named for a subdirectory of the project the harness was opened in — that held a session whose recorded working directory sits under the tree the report is over. A sibling that merely shares the name's prefix, such as a neighbouring project, is never read."
         },
         "transcript_root": {
@@ -86,21 +131,44 @@
           "description": "The directory the harness keeps this project's session transcripts in — its projects directory, one subdirectory per working directory the harness was opened in, named by that directory's path with every character outside [A-Za-z0-9] replaced by a hyphen — keyed by the main tree's toplevel: a session that enters a linked worktree under the project keeps transcribing under the main tree's directory, so a report run inside such a worktree reads the same directory and names the worktree in `worktree`. Read, never written; an internal format of the harness and not of this framework, which is why every read of it is held to a probe first and every failure to read it is a stated reason rather than an absent number."
         },
         "worktree": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1,
           "description": "The toplevel of the linked git worktree the report was run inside, or null where it was run from the main tree. Where it is set, a session is in this report only if one of its recorded working directories sits under the worktree — the main tree's directory holds the main tree's sessions and every worktree's alike, and a report that read it whole would count them all as this worktree's."
         },
-        "readable": { "type": "boolean" },
-        "reason": { "type": ["string", "null"] },
+        "readable": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "skill_totals": {
           "type": "object",
           "additionalProperties": {
             "type": "object",
-            "required": ["turns", "sessions", "usage", "compactions"],
+            "required": [
+              "turns",
+              "sessions",
+              "usage",
+              "compactions"
+            ],
             "properties": {
-              "turns": { "type": "integer", "minimum": 0 },
-              "sessions": { "type": "integer", "minimum": 0 },
-              "usage": { "$ref": "#/$defs/usage" },
+              "turns": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sessions": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "usage": {
+                "$ref": "#/$defs/usage"
+              },
               "compactions": {
                 "type": "integer",
                 "minimum": 0,
@@ -115,10 +183,26 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "path", "first_timestamp", "last_timestamp", "harness_versions",
-                         "working_directories", "entries_in_window", "human_turns_in_window",
-                         "usage", "by_skill", "compactions", "skill_calls", "short_turns",
-                         "confirmations", "questions", "commits", "context"],
+            "required": [
+              "id",
+              "path",
+              "first_timestamp",
+              "last_timestamp",
+              "harness_versions",
+              "working_directories",
+              "entries_in_window",
+              "human_turns_in_window",
+              "usage",
+              "by_skill",
+              "compactions",
+              "skill_calls",
+              "short_turns",
+              "confirmations",
+              "questions",
+              "commits",
+              "context",
+              "goal_evaluations"
+            ],
             "properties": {
               "context": {
                 "type": "object",
@@ -330,26 +414,65 @@
                   }
                 }
               },
-              "id": { "type": "string", "minLength": 1 },
-              "path": { "type": "string", "minLength": 1 },
-              "first_timestamp": { "type": ["string", "null"] },
-              "last_timestamp": { "type": ["string", "null"] },
-              "harness_versions": { "type": "array", "items": { "type": "string" } },
-              "working_directories": { "type": "array", "items": { "type": "string" } },
-              "entries_in_window": { "type": "integer", "minimum": 0 },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "first_timestamp": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "last_timestamp": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "harness_versions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "working_directories": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "entries_in_window": {
+                "type": "integer",
+                "minimum": 0
+              },
               "human_turns_in_window": {
                 "type": "array",
-                "items": { "$ref": "#/$defs/timestamp" },
+                "items": {
+                  "$ref": "#/$defs/timestamp"
+                },
                 "description": "When a person typed, inside the window — the timestamps of every turn that was a human's message rather than a tool's result. What was typed is not here: a telemetry report counts, it does not quote a conversation. A user-role entry the harness wrote — a background task's completion notice, a local command's echo, a reminder it injects — is not a person typing and is not counted; a paste a person made is."
               },
               "by_skill": {
                 "type": "object",
                 "additionalProperties": {
                   "type": "object",
-                  "required": ["turns", "usage"],
+                  "required": [
+                    "turns",
+                    "usage"
+                  ],
                   "properties": {
-                    "turns": { "type": "integer", "minimum": 0 },
-                    "usage": { "$ref": "#/$defs/usage" }
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "usage": {
+                      "$ref": "#/$defs/usage"
+                    }
                   }
                 },
                 "description": "This session's own turns and tokens by the skill it was running, keyed by the skill's bare name — `none` before the first Skill call. A Skill call names the span from itself to the next; the person's own turns inside that span count toward it, so every figure here is a ceiling per skill and is read as one."
@@ -359,27 +482,53 @@
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["at", "skill", "trigger", "pre_tokens", "post_tokens"],
+                  "required": [
+                    "at",
+                    "skill",
+                    "trigger",
+                    "pre_tokens",
+                    "post_tokens"
+                  ],
                   "properties": {
-                    "at": { "$ref": "#/$defs/timestamp" },
+                    "at": {
+                      "$ref": "#/$defs/timestamp"
+                    },
                     "skill": {
                       "type": "string",
                       "minLength": 1,
                       "description": "The skill the session was running when its context was compacted, by the same span `by_skill` counts — `none` before the first Skill call."
                     },
                     "trigger": {
-                      "type": ["string", "null"],
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "description": "What the harness recorded as the cause: `auto` where the context reached its window, `manual` where a person asked for it."
                     },
-                    "pre_tokens": { "type": ["integer", "null"], "minimum": 0 },
-                    "post_tokens": { "type": ["integer", "null"], "minimum": 0 }
+                    "pre_tokens": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "post_tokens": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
                   }
                 },
                 "description": "Every compaction the harness recorded in this session inside the window. A compaction replaces the context with a summary of it: from there on, what the session holds of its earlier reading is a paraphrase, and an invocation that reaches one has outgrown the window it runs in. Counted so that a change to what a skill loads or how much one invocation carries answers to a count rather than to a guess."
               },
               "skill_calls": {
                 "type": "object",
-                "additionalProperties": { "type": "integer", "minimum": 1 },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 1
+                },
                 "description": "How many times this session invoked each skill through the harness's Skill tool inside the window, keyed by the skill's bare name. The denominator a confirmation count is read per: a session that invoked five entry points and typed five go-aheads paid one turn per invocation."
               },
               "short_turns": {
@@ -392,11 +541,26 @@
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["at", "skill", "wait_seconds"],
+                  "required": [
+                    "at",
+                    "skill",
+                    "wait_seconds"
+                  ],
                   "properties": {
-                    "at": { "$ref": "#/$defs/timestamp" },
-                    "skill": { "type": "string", "minLength": 1 },
-                    "wait_seconds": { "type": ["number", "null"], "minimum": 0 }
+                    "at": {
+                      "$ref": "#/$defs/timestamp"
+                    },
+                    "skill": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "wait_seconds": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
                   }
                 },
                 "description": "Every human turn in the window holding a question mark — when, under which skill, and the seconds since the assistant's last entry — and none of its text. Which of them asked for a recommendation is a person's reading of the transcript."
@@ -406,11 +570,23 @@
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["at", "class", "skill", "after_question", "wait_seconds"],
+                  "required": [
+                    "at",
+                    "class",
+                    "skill",
+                    "after_question",
+                    "wait_seconds"
+                  ],
                   "properties": {
-                    "at": { "$ref": "#/$defs/timestamp" },
+                    "at": {
+                      "$ref": "#/$defs/timestamp"
+                    },
                     "class": {
-                      "enum": ["commit_authorization", "go_ahead", "choice_by_label"],
+                      "enum": [
+                        "commit_authorization",
+                        "go_ahead",
+                        "choice_by_label"
+                      ],
                       "description": "What the turn was: a short turn naming a commit or a push; one of the go-ahead words the script lists; a bare label picking one offered door. A turn ending in a question mark is none of these."
                     },
                     "skill": {
@@ -423,7 +599,10 @@
                       "description": "Whether the assistant's last text before this turn closed on a question — its final paragraph holds a question mark. False is a confirmation the person typed after a message that asked for nothing: a turn a stop cost, not one a question asked for."
                     },
                     "wait_seconds": {
-                      "type": ["number", "null"],
+                      "type": [
+                        "number",
+                        "null"
+                      ],
                       "minimum": 0,
                       "description": "Seconds from the assistant's last entry to this turn — how long the work stood still for the permission; null where no assistant entry preceded it in this transcript."
                     }
@@ -433,12 +612,34 @@
               },
               "commits": {
                 "type": "array",
-                "items": { "$ref": "#/$defs/inSpanCommit" },
+                "items": {
+                  "$ref": "#/$defs/inSpanCommit"
+                },
                 "description": "Every `git commit` or `git push` this session ran after a Skill call and before the person's next turn, inside the window — the session's own act, with the skill whose span it fell in and what the session had to go on. The command's text is not here."
               },
               "usage": {
                 "$ref": "#/$defs/usage",
                 "description": "The tokens this session's own turns spent inside the window — never a subagent's, which `agent_totals` already carries. A report reading `agent_totals` alone sees roughly half of what a task with several delegations actually cost: the orchestrating turns between them are the other half, and this is where they are counted."
+              },
+              "goal_evaluations": {
+                "type": "array",
+                "description": "Every evaluation the harness recorded of a goal condition in this session, inside the window: when, and whether it judged the condition met. A goal being set or reset is not an evaluation and is not listed.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "at",
+                    "met"
+                  ],
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "met": {
+                      "type": "boolean"
+                    }
+                  }
+                }
               }
             }
           },
@@ -451,21 +652,45 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["session", "tool_use_id", "agent_type", "description", "prompt_sha256",
-                     "invoked_at", "agent_id", "model", "transcript", "first_timestamp",
-                     "last_timestamp", "duration_seconds", "messages", "tool_calls", "usage",
-                     "repeats_earlier", "unavailable", "spawn_depth", "parent_agent_id",
-                     "compactions"],
+        "required": [
+          "session",
+          "tool_use_id",
+          "agent_type",
+          "description",
+          "prompt_sha256",
+          "invoked_at",
+          "agent_id",
+          "model",
+          "transcript",
+          "first_timestamp",
+          "last_timestamp",
+          "duration_seconds",
+          "messages",
+          "tool_calls",
+          "usage",
+          "repeats_earlier",
+          "unavailable",
+          "spawn_depth",
+          "parent_agent_id",
+          "compactions"
+        ],
         "properties": {
-          "session": { "type": "string" },
-          "tool_use_id": { "type": "string" },
+          "session": {
+            "type": "string"
+          },
+          "tool_use_id": {
+            "type": "string"
+          },
           "spawn_depth": {
             "type": "integer",
             "minimum": 1,
             "description": "How many spawns separate this agent from the session: 1 where the session spawned it, 2 where an agent the session spawned did, and so on. An agent's `usage` is its own turns alone at every depth — a parent's row does not carry its children's, the way a session's `usage` does not carry its agents' — so the rows at every depth sum without overlap."
           },
           "parent_agent_id": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "The `agent_id` of the agent whose transcript holds this spawn, or null where the session's does. What a row's parent was is what tells a reader which context invoked a skill: a fork that spawned this framework's agents is a parent row here, and its own cost is the orchestrating turns between them."
           },
           "agent_type": {
@@ -481,29 +706,89 @@
             "pattern": "^[0-9a-f]{64}$",
             "description": "SHA-256, in hex, of the UTF-8 bytes of the prompt the tool use handed the agent — the empty string's where it carried none. A digest and never the text: two rows carrying one digest were handed one prompt, and that is what `repeats_earlier` reads."
           },
-          "invoked_at": { "$ref": "#/$defs/timestamp" },
-          "agent_id": { "type": ["string", "null"] },
-          "model": { "type": ["string", "null"] },
-          "transcript": { "type": ["string", "null"] },
-          "first_timestamp": { "type": ["string", "null"] },
-          "last_timestamp": { "type": ["string", "null"] },
-          "duration_seconds": { "type": ["number", "null"], "minimum": 0 },
-          "messages": { "type": ["integer", "null"], "minimum": 0 },
-          "tool_calls": { "type": ["integer", "null"], "minimum": 0 },
+          "invoked_at": {
+            "$ref": "#/$defs/timestamp"
+          },
+          "agent_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "transcript": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "first_timestamp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_timestamp": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duration_seconds": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "messages": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "tool_calls": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
           "compactions": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "minimum": 0,
             "description": "How many times the harness compacted this agent's own context. Null where the transcript was not found. An agent is handed what it needs and returns; one that compacts read past what it was handed."
           },
           "usage": {
-            "oneOf": [ { "$ref": "#/$defs/usage" }, { "type": "null" } ],
+            "oneOf": [
+              {
+                "$ref": "#/$defs/usage"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "description": "Token usage summed over every assistant message in the agent's own transcript. Null where the transcript was not found — then `unavailable` says so."
           },
           "repeats_earlier": {
             "type": "boolean",
             "description": "True where an earlier invocation in this window handed the same agent type the same prompt — the same `agent_type` and `prompt_sha256`, whatever the two descriptions say. It is the mechanical half of the rework question: a repeat is a candidate for rework, and whether it was one is the reader's to judge from the two transcripts and what lies between them."
           },
-          "unavailable": { "type": ["string", "null"] }
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "description": "Every subagent the harness spawned inside the window, at every depth, in the order it was spawned — the session's own spawns, read from its transcript, and each agent's spawns, read from that agent's transcript once it was found. An agent whose transcript was not found hides whatever it spawned, and its `unavailable` says so."
@@ -511,10 +796,20 @@
     "agent_totals": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["by_type", "overall"],
+      "required": [
+        "by_type",
+        "overall"
+      ],
       "properties": {
-        "by_type": { "type": "object", "additionalProperties": { "$ref": "#/$defs/total" } },
-        "overall": { "$ref": "#/$defs/total" }
+        "by_type": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/total"
+          }
+        },
+        "overall": {
+          "$ref": "#/$defs/total"
+        }
       },
       "description": "The rows of `agents` summed, per agent type and over all of them, in one shape."
     },
@@ -523,30 +818,65 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["session", "tool_use_id", "issued_at", "scripts", "command", "exit_code",
-                     "exit_marker", "problems", "interrupted", "unavailable"],
+        "required": [
+          "session",
+          "tool_use_id",
+          "issued_at",
+          "scripts",
+          "command",
+          "exit_code",
+          "exit_marker",
+          "problems",
+          "interrupted",
+          "unavailable"
+        ],
         "properties": {
-          "session": { "type": "string" },
-          "tool_use_id": { "type": "string" },
-          "issued_at": { "$ref": "#/$defs/timestamp" },
+          "session": {
+            "type": "string"
+          },
+          "tool_use_id": {
+            "type": "string"
+          },
+          "issued_at": {
+            "$ref": "#/$defs/timestamp"
+          },
           "scripts": {
             "type": "array",
             "minItems": 1,
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Which of this framework's scripts the command line invoked, by file name."
           },
-          "command": { "type": "string" },
+          "command": {
+            "type": "string"
+          },
           "exit_code": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "The exit status where the harness recorded one. The harness marks a non-zero exit at the head of the tool's result and marks nothing for zero, so a null here with `exit_marker` false is a command that exited zero or whose result was never recorded — the two are told apart by `unavailable`."
           },
-          "exit_marker": { "type": "boolean" },
+          "exit_marker": {
+            "type": "boolean"
+          },
           "problems": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "The count a validator's `N problem(s)` line reported, where the result carried one."
           },
-          "interrupted": { "type": "boolean" },
-          "unavailable": { "type": ["string", "null"] }
+          "interrupted": {
+            "type": "boolean"
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "description": "Every shell command inside the window that invoked one of this framework's scripts, with what it exited and what its validator counted."
@@ -556,29 +886,85 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["initiative", "run", "path", "outcome", "failed_step", "timeout_seconds",
-                     "started_at", "ended_at", "steps"],
+        "required": [
+          "initiative",
+          "run",
+          "path",
+          "outcome",
+          "failed_step",
+          "timeout_seconds",
+          "started_at",
+          "ended_at",
+          "steps"
+        ],
         "properties": {
-          "initiative": { "type": "string" },
-          "run": { "type": "string" },
-          "path": { "type": "string" },
-          "outcome": { "type": "string" },
-          "failed_step": { "type": ["string", "null"] },
-          "timeout_seconds": { "type": "integer" },
-          "started_at": { "type": ["string", "null"] },
-          "ended_at": { "type": ["string", "null"] },
+          "initiative": {
+            "type": "string"
+          },
+          "run": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "failed_step": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timeout_seconds": {
+            "type": "integer"
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ended_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "steps": {
             "type": "array",
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["name", "command", "outcome", "exit_code", "duration_seconds"],
+              "required": [
+                "name",
+                "command",
+                "outcome",
+                "exit_code",
+                "duration_seconds"
+              ],
               "properties": {
-                "name": { "type": "string" },
-                "command": { "type": "string" },
-                "outcome": { "type": "string" },
-                "exit_code": { "type": ["integer", "null"] },
-                "duration_seconds": { "type": ["number", "null"] }
+                "name": {
+                  "type": "string"
+                },
+                "command": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "exit_code": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "duration_seconds": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
               }
             }
           }
@@ -589,44 +975,92 @@
     "repository": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["commits", "uncommitted", "unavailable"],
+      "required": [
+        "commits",
+        "uncommitted",
+        "unavailable"
+      ],
       "properties": {
         "commits": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["hash", "timestamp", "subject", "files_by_root"],
+            "required": [
+              "hash",
+              "timestamp",
+              "subject",
+              "files_by_root"
+            ],
             "properties": {
-              "hash": { "type": "string" },
-              "timestamp": { "type": "string" },
-              "subject": { "type": "string" },
+              "hash": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
               "files_by_root": {
                 "type": "object",
-                "additionalProperties": { "type": "array", "items": { "type": "string" } }
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
         },
-        "uncommitted": { "type": "array", "items": { "type": "string" } },
-        "unavailable": { "type": ["string", "null"] }
+        "uncommitted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unavailable": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "decisions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["log", "baseline", "total_now", "added", "outcomes"],
+      "required": [
+        "log",
+        "baseline",
+        "total_now",
+        "added",
+        "outcomes"
+      ],
       "properties": {
         "log": {
-          "type": ["array", "null"],
+          "type": [
+            "array",
+            "null"
+          ],
           "description": "Every decision log read — one `<slug>.log.md` beside each node — with what each was compared against to find what the window added: the commit that last touched that log before `since`, or the reason no such baseline exists, in which case every current entry of that log is listed and the reader knows why. Null where no specification root is declared.",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["path", "baseline"],
+            "required": [
+              "path",
+              "baseline"
+            ],
             "properties": {
-              "path": { "type": "string", "minLength": 1 },
-              "baseline": { "type": "string", "minLength": 1 }
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "baseline": {
+                "type": "string",
+                "minLength": 1
+              }
             }
           }
         },
@@ -634,11 +1068,18 @@
           "type": "string",
           "description": "The summary beside `log`: how many logs were read and how many had a commit before `since`, or the one reason the whole section is absent."
         },
-        "total_now": { "type": ["integer", "null"] },
+        "total_now": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "retired": {
           "type": "array",
           "description": "The decision-log entries the window added that retire a field — a field, or the node itself, that left the specification, and where its fact went. Listed apart from `added` because a retirement decides nothing and is followed to no field.",
-          "items": { "type": "object" }
+          "items": {
+            "type": "object"
+          }
         },
         "added": {
           "type": "array",
@@ -658,13 +1099,28 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["initiative", "node", "class", "text", "live"],
+        "required": [
+          "initiative",
+          "node",
+          "class",
+          "text",
+          "live"
+        ],
         "properties": {
-          "initiative": { "type": "string" },
-          "node": { "type": "string" },
-          "class": { "type": "string" },
+          "initiative": {
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string"
+          },
           "text": {
-            "type": ["string", "object"],
+            "type": [
+              "string",
+              "object"
+            ],
             "description": "The note verbatim — a classified `## Notes` entry as its opening spells it, or an epic's `uncovered` entry whole."
           },
           "live": {
@@ -678,23 +1134,46 @@
     "scope": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["initiatives"],
+      "required": [
+        "initiatives"
+      ],
       "properties": {
         "initiatives": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["slug", "live", "tasks", "tasks_with_implementation_record",
-                         "implementation_records_committed_in_window"],
+            "required": [
+              "slug",
+              "live",
+              "tasks",
+              "tasks_with_implementation_record",
+              "implementation_records_committed_in_window"
+            ],
             "properties": {
-              "slug": { "type": "string" },
-              "live": { "type": "boolean" },
-              "tasks": { "type": ["integer", "null"] },
-              "tasks_with_implementation_record": { "type": ["integer", "null"] },
+              "slug": {
+                "type": "string"
+              },
+              "live": {
+                "type": "boolean"
+              },
+              "tasks": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "tasks_with_implementation_record": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
               "implementation_records_committed_in_window": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -705,7 +1184,13 @@
     "recommendations": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["emitted", "by_criterion", "by_kind", "lines", "malformed"],
+      "required": [
+        "emitted",
+        "by_criterion",
+        "by_kind",
+        "lines",
+        "malformed"
+      ],
       "properties": {
         "emitted": {
           "type": "integer",
@@ -715,27 +1200,68 @@
         "by_criterion": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["precondition unmet", "rule violated", "already done", "reading paid twice",
-                       "keeps the route", "serves the stated goal", "can be undone", "costs less"],
+          "required": [
+            "precondition unmet",
+            "rule violated",
+            "already done",
+            "reading paid twice",
+            "keeps the route",
+            "serves the stated goal",
+            "can be undone",
+            "costs less"
+          ],
           "properties": {
-            "precondition unmet": { "type": "integer", "minimum": 0 },
-            "rule violated": { "type": "integer", "minimum": 0 },
-            "already done": { "type": "integer", "minimum": 0 },
-            "reading paid twice": { "type": "integer", "minimum": 0 },
-            "keeps the route": { "type": "integer", "minimum": 0 },
-            "serves the stated goal": { "type": "integer", "minimum": 0 },
-            "can be undone": { "type": "integer", "minimum": 0 },
-            "costs less": { "type": "integer", "minimum": 0 }
+            "precondition unmet": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "rule violated": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "already done": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "reading paid twice": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "keeps the route": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "serves the stated goal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "can be undone": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "costs less": {
+              "type": "integer",
+              "minimum": 0
+            }
           },
           "description": "The same lines by the criterion each names — four a fact on disk decides, four rungs of the judged ladder where none does, and no other."
         },
         "by_kind": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["derived", "judged"],
+          "required": [
+            "derived",
+            "judged"
+          ],
           "properties": {
-            "derived": { "type": "integer", "minimum": 0 },
-            "judged": { "type": "integer", "minimum": 0 }
+            "derived": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "judged": {
+              "type": "integer",
+              "minimum": 0
+            }
           },
           "description": "The same lines by kind: `derived` where the criterion is one a fact on disk decides, `judged` where it is a rung of the ladder. Judged recommendations a person reads as not taken outnumbering those read as taken is the reading that narrows the grant back to derived ones."
         },
@@ -744,32 +1270,82 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["slug", "log", "line", "door", "criterion", "kind", "fact", "landed_in",
-                         "next_commit"],
+            "required": [
+              "slug",
+              "log",
+              "line",
+              "door",
+              "criterion",
+              "kind",
+              "fact",
+              "landed_in",
+              "next_commit"
+            ],
             "properties": {
-              "slug": { "type": "string" },
-              "log": { "type": "string" },
-              "line": { "type": "integer", "minimum": 1 },
-              "door": { "type": "string" },
-              "criterion": { "enum": ["precondition unmet", "rule violated", "already done", "reading paid twice",
-                                      "keeps the route", "serves the stated goal", "can be undone", "costs less"] },
-              "kind": { "enum": ["derived", "judged"] },
-              "fact": { "type": "string" },
+              "slug": {
+                "type": "string"
+              },
+              "log": {
+                "type": "string"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "door": {
+                "type": "string"
+              },
+              "criterion": {
+                "enum": [
+                  "precondition unmet",
+                  "rule violated",
+                  "already done",
+                  "reading paid twice",
+                  "keeps the route",
+                  "serves the stated goal",
+                  "can be undone",
+                  "costs less"
+                ]
+              },
+              "kind": {
+                "enum": [
+                  "derived",
+                  "judged"
+                ]
+              },
+              "fact": {
+                "type": "string"
+              },
               "landed_in": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "The commit that wrote the line; null where no commit holds it yet."
               },
               "next_commit": {
                 "oneOf": [
-                  { "type": "null" },
+                  {
+                    "type": "null"
+                  },
                   {
                     "type": "object",
                     "additionalProperties": false,
-                    "required": ["hash", "timestamp", "subject"],
+                    "required": [
+                      "hash",
+                      "timestamp",
+                      "subject"
+                    ],
                     "properties": {
-                      "hash": { "type": "string" },
-                      "timestamp": { "type": "string" },
-                      "subject": { "type": "string" }
+                      "hash": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "string"
+                      },
+                      "subject": {
+                        "type": "string"
+                      }
                     }
                   }
                 ],
@@ -783,12 +1359,26 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["slug", "log", "line", "text"],
+            "required": [
+              "slug",
+              "log",
+              "line",
+              "text"
+            ],
             "properties": {
-              "slug": { "type": "string" },
-              "log": { "type": "string" },
-              "line": { "type": "integer", "minimum": 1 },
-              "text": { "type": "string" }
+              "slug": {
+                "type": "string"
+              },
+              "log": {
+                "type": "string"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "text": {
+                "type": "string"
+              }
             }
           },
           "description": "Every line holding `recommended:` that does not parse as door, criterion and fact, or that carries it after other text — never counted, and named so the log that wrote it can be corrected. A line read from a log at the delivery root itself carries the initiative its landing commit names, or an empty slug where that commit names none."
@@ -799,13 +1389,35 @@
     "handoffs": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["skill_calls", "human_turns", "short_turns", "confirmations",
-                   "unclassified_short", "by_class", "by_skill", "lines", "questions"],
+      "required": [
+        "skill_calls",
+        "human_turns",
+        "short_turns",
+        "confirmations",
+        "unclassified_short",
+        "by_class",
+        "by_skill",
+        "lines",
+        "questions",
+        "goal_evaluations"
+      ],
       "properties": {
-        "skill_calls": { "type": "integer", "minimum": 0 },
-        "human_turns": { "type": "integer", "minimum": 0 },
-        "short_turns": { "type": "integer", "minimum": 0 },
-        "confirmations": { "type": "integer", "minimum": 0 },
+        "skill_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "human_turns": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "short_turns": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confirmations": {
+          "type": "integer",
+          "minimum": 0
+        },
         "unclassified_short": {
           "type": "integer",
           "minimum": 0,
@@ -814,21 +1426,43 @@
         "questions": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["count", "by_skill"],
+          "required": [
+            "count",
+            "by_skill"
+          ],
           "properties": {
-            "count": { "type": "integer", "minimum": 0 },
-            "by_skill": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "by_skill": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
           },
           "description": "The questions the person put to the window's sessions, summed from `harness.sessions[].questions`: the baseline a reading of handoffs is set beside. It decides nothing."
         },
         "by_class": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["commit_authorization", "go_ahead", "choice_by_label"],
+          "required": [
+            "commit_authorization",
+            "go_ahead",
+            "choice_by_label"
+          ],
           "properties": {
-            "commit_authorization": { "$ref": "#/$defs/confirmationTally" },
-            "go_ahead": { "$ref": "#/$defs/confirmationTally" },
-            "choice_by_label": { "$ref": "#/$defs/confirmationTally" }
+            "commit_authorization": {
+              "$ref": "#/$defs/confirmationTally"
+            },
+            "go_ahead": {
+              "$ref": "#/$defs/confirmationTally"
+            },
+            "choice_by_label": {
+              "$ref": "#/$defs/confirmationTally"
+            }
           }
         },
         "by_skill": {
@@ -836,10 +1470,19 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["calls", "confirmations"],
+            "required": [
+              "calls",
+              "confirmations"
+            ],
             "properties": {
-              "calls": { "type": "integer", "minimum": 0 },
-              "confirmations": { "type": "integer", "minimum": 0 }
+              "calls": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confirmations": {
+                "type": "integer",
+                "minimum": 0
+              }
             }
           },
           "description": "Per skill: how many times the sessions invoked it, and how many confirmations the person typed while it was the running span. The two beside each other are what a change to a skill's stops answers to."
@@ -849,14 +1492,43 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["session", "at", "class", "skill", "after_question", "wait_seconds"],
+            "required": [
+              "session",
+              "at",
+              "class",
+              "skill",
+              "after_question",
+              "wait_seconds"
+            ],
             "properties": {
-              "session": { "type": "string", "minLength": 1 },
-              "at": { "$ref": "#/$defs/timestamp" },
-              "class": { "enum": ["commit_authorization", "go_ahead", "choice_by_label"] },
-              "skill": { "type": "string", "minLength": 1 },
-              "after_question": { "type": "boolean" },
-              "wait_seconds": { "type": ["number", "null"], "minimum": 0 }
+              "session": {
+                "type": "string",
+                "minLength": 1
+              },
+              "at": {
+                "$ref": "#/$defs/timestamp"
+              },
+              "class": {
+                "enum": [
+                  "commit_authorization",
+                  "go_ahead",
+                  "choice_by_label"
+                ]
+              },
+              "skill": {
+                "type": "string",
+                "minLength": 1
+              },
+              "after_question": {
+                "type": "boolean"
+              },
+              "wait_seconds": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              }
             }
           },
           "description": "Every confirmation across the window's sessions, in order — the far end of each wait is a row a reader opens by its session and timestamp."
@@ -864,44 +1536,147 @@
         "in_span_commits": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["count", "by_authorization", "by_skill", "pathspec", "push", "lines"],
+          "required": [
+            "count",
+            "by_authorization",
+            "by_skill",
+            "pathspec",
+            "push",
+            "lines"
+          ],
           "properties": {
-            "count": { "type": "integer", "minimum": 0 },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
             "by_authorization": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["typed", "loop", "summary", "none"],
+              "required": [
+                "typed",
+                "loop",
+                "summary",
+                "none"
+              ],
               "properties": {
-                "typed": { "type": "integer", "minimum": 0 },
-                "loop": { "type": "integer", "minimum": 0 },
-                "summary": { "type": "integer", "minimum": 0 },
-                "none": { "type": "integer", "minimum": 0 }
+                "typed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "loop": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "summary": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "none": {
+                  "type": "integer",
+                  "minimum": 0
+                }
               }
             },
             "by_skill": {
               "type": "object",
-              "additionalProperties": { "type": "integer", "minimum": 0 }
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
             },
-            "pathspec": { "type": "integer", "minimum": 0 },
-            "push": { "type": "integer", "minimum": 0 },
+            "pathspec": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "push": {
+              "type": "integer",
+              "minimum": 0
+            },
             "lines": {
               "type": "array",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["session", "at", "skill", "push", "pathspec", "authorized_by"],
+                "required": [
+                  "session",
+                  "at",
+                  "skill",
+                  "push",
+                  "pathspec",
+                  "authorized_by"
+                ],
                 "properties": {
-                  "session": { "type": "string", "minLength": 1 },
-                  "at": { "$ref": "#/$defs/timestamp" },
-                  "skill": { "type": "string", "minLength": 1 },
-                  "push": { "type": "boolean" },
-                  "pathspec": { "type": "boolean" },
-                  "authorized_by": { "enum": ["typed", "loop", "summary", "none"] }
+                  "session": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "at": {
+                    "$ref": "#/$defs/timestamp"
+                  },
+                  "skill": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "push": {
+                    "type": "boolean"
+                  },
+                  "pathspec": {
+                    "type": "boolean"
+                  },
+                  "authorized_by": {
+                    "enum": [
+                      "typed",
+                      "loop",
+                      "summary",
+                      "none"
+                    ]
+                  }
                 }
               }
             }
           },
           "description": "The commits the sessions made inside a skill's span, summed from `harness.sessions[].commits`: how many, what authorized each as the session could read it, under which skill, how many named a pathspec, how many pushed. `summary` and `none` are the counts the session rule exists to bring to zero; `pathspec` is read against `count`."
+        },
+        "goal_evaluations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "met",
+            "not_met",
+            "by_session"
+          ],
+          "description": "The goal evaluations every session recorded, summed, and per session that recorded any. Many evaluations judging one goal not met are a condition nothing could read as met.",
+          "properties": {
+            "met": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "not_met": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "by_session": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "met",
+                  "not_met"
+                ],
+                "properties": {
+                  "met": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "not_met": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "description": "The confirmations the window's sessions cost the person, summed from `harness.sessions[].confirmations` and set beside the Skill calls those sessions made. A confirmation after a message that asked nothing is a turn a stop of this framework's cost; one after a question is a turn a question asked for. No text and no judgment: a class, a wait, a flag."
@@ -911,16 +1686,34 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["section", "source", "unavailable"],
+        "required": [
+          "section",
+          "source",
+          "unavailable"
+        ],
         "properties": {
-          "section": { "type": "string" },
-          "source": { "type": ["string", "null"] },
-          "unavailable": { "type": ["string", "null"] }
+          "section": {
+            "type": "string"
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "description": "One entry per section above: where it was read from, or why it could not be. A report is complete when no entry carries a reason; the prose report's closing verdict is computed from this list and from nothing else."
     },
-    "written_to": { "type": "string" }
+    "written_to": {
+      "type": "string"
+    }
   },
   "$defs": {
     "timestamp": {
@@ -930,21 +1723,37 @@
     "inSpanCommit": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["at", "skill", "push", "pathspec", "authorized_by"],
+      "required": [
+        "at",
+        "skill",
+        "push",
+        "pathspec",
+        "authorized_by"
+      ],
       "properties": {
-        "at": { "$ref": "#/$defs/timestamp" },
+        "at": {
+          "$ref": "#/$defs/timestamp"
+        },
         "skill": {
           "type": "string",
           "minLength": 1,
           "description": "The skill whose span the commit fell in — the last Skill call before it, with no human turn between."
         },
-        "push": { "type": "boolean", "description": "Whether the command pushed." },
+        "push": {
+          "type": "boolean",
+          "description": "Whether the command pushed."
+        },
         "pathspec": {
           "type": "boolean",
           "description": "Whether the command named what it committed: a ` -- ` separator, or an add that is not `-A`, `--all`, `-a` or `.`, and no `commit -a`."
         },
         "authorized_by": {
-          "enum": ["typed", "loop", "summary", "none"],
+          "enum": [
+            "typed",
+            "loop",
+            "summary",
+            "none"
+          ],
           "description": "What the session had to go on, by the same word match the confirmations use, read over the whole session up to the commit: `typed`, a commit word in a message the person typed; `loop`, an autonomous loop the person armed; `summary`, a commit word only in the continuation summary the harness wrote after a compaction; `none`, nothing."
         }
       }
@@ -952,17 +1761,31 @@
     "confirmationTally": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["count", "unasked", "wait_seconds_total", "wait_seconds_max"],
+      "required": [
+        "count",
+        "unasked",
+        "wait_seconds_total",
+        "wait_seconds_max"
+      ],
       "properties": {
-        "count": { "type": "integer", "minimum": 0 },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "unasked": {
           "type": "integer",
           "minimum": 0,
           "description": "How many of `count` came after a message whose closing paragraph asked nothing."
         },
-        "wait_seconds_total": { "type": "number", "minimum": 0 },
+        "wait_seconds_total": {
+          "type": "number",
+          "minimum": 0
+        },
         "wait_seconds_max": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "minimum": 0,
           "description": "The longest single wait of the class — the far end, which `lines` locates by session and timestamp; null where no wait was measurable."
         }
@@ -971,32 +1794,73 @@
     "configured": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "effort", "model"],
+      "required": [
+        "name",
+        "effort",
+        "model"
+      ],
       "properties": {
-        "name": { "type": "string" },
-        "effort": { "type": ["string", "null"] },
-        "model": { "type": ["string", "null"] }
+        "name": {
+          "type": "string"
+        },
+        "effort": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "description": "How one shipped agent or skill was configured at the moment of the report, read from its frontmatter: the effort it overrides the session to, and the model it pins, or null where it inherits."
     },
     "usage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
-                   "output_tokens"],
+      "required": [
+        "input_tokens",
+        "cache_creation_input_tokens",
+        "cache_read_input_tokens",
+        "output_tokens"
+      ],
       "properties": {
-        "input_tokens": { "type": "integer", "minimum": 0 },
-        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
-        "cache_read_input_tokens": { "type": "integer", "minimum": 0 },
-        "output_tokens": { "type": "integer", "minimum": 0 }
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_creation_input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_read_input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "total": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["invocations", "repeats", "with_transcript", "duration_seconds", "usage"],
+      "required": [
+        "invocations",
+        "repeats",
+        "with_transcript",
+        "duration_seconds",
+        "usage"
+      ],
       "properties": {
-        "invocations": { "type": "integer", "minimum": 0 },
+        "invocations": {
+          "type": "integer",
+          "minimum": 0
+        },
         "repeats": {
           "type": "integer",
           "minimum": 0,
@@ -1007,8 +1871,13 @@
           "minimum": 0,
           "description": "How many of the invocations the usage and duration below actually sum over. Where it is below `invocations`, the totals are a floor, and the report says so."
         },
-        "duration_seconds": { "type": "number", "minimum": 0 },
-        "usage": { "$ref": "#/$defs/usage" }
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "usage": {
+          "$ref": "#/$defs/usage"
+        }
       }
     }
   }

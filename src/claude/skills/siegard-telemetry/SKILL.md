@@ -92,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/14
+contract_version: siegard-telemetry/15
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -251,6 +251,11 @@ What each section holds:
   without a pathspec is one the rule forbids; whether a given commit was wanted is a reading,
   tagged `[judgment]`. A
   window with none says zero; a `siegard-telemetry/10` record says nothing, which is not zero.
+  Then `handoffs.goal_evaluations`: met, not met, and `by_session`. An evaluation is the
+  harness judging a goal condition once, when the session tried to stop; many judging one goal
+  not met are a condition nothing could read as met, and which clause kept it unmet is a reading
+  of the evaluator's reasons in the transcript, tagged `[judgment]`. A window with none says
+  zero; a `siegard-telemetry/14` record carries no count, which is not zero.
 
 ### Provenance tags
 

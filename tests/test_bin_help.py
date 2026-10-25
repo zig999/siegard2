@@ -36,7 +36,7 @@ def test_every_shipped_command_is_covered_here():
     # The parametrisation reads the directory, so a script added later is held to this without
     # anyone remembering to list it. This asserts the directory is not empty and not surprising —
     # a glob that silently matched nothing would make every test below vacuously green.
-    assert len(COMMANDS) == 8, COMMANDS
+    assert len(COMMANDS) == 9, COMMANDS
 
 
 @pytest.mark.parametrize("name", COMMANDS)

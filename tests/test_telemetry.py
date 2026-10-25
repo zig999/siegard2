@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/14"
+    assert report["contract_version"] == "siegard-telemetry/15"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/14"
+    assert report["contract_version"] == "siegard-telemetry/15"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1418,6 +1418,26 @@ def test_a_question_is_counted_with_its_skill_and_wait_and_none_of_its_text(cons
                                                                           ("reconcile", 60.0)]
     assert report["handoffs"]["questions"]["by_skill"]["reconcile"] == 2
     assert "recomendada" not in json.dumps(report)
+
+
+def test_goal_evaluations_are_counted_met_and_not_met_and_a_reset_is_none(consumer):
+    """SPEC-008 R7: every evaluation the harness recorded of a goal condition is counted, met
+    and not met, per session; the sentinel the harness writes when a goal is set is not one."""
+    def verdict(stamp: str, met: bool, **extra) -> str:
+        return line(type="attachment", timestamp=stamp, sessionId="s7", cwd="/consumer",
+                    attachment={"type": "goal_status", "met": met, "condition": "c", **extra})
+    (consumer["transcripts"] / "s7.jsonl").write_text(
+        spoken("2026-08-20T10:30:00.000Z", "Starting.", session="s7")
+        + verdict("2026-08-20T10:30:01.000Z", False, sentinel=True)
+        + verdict("2026-08-20T10:40:00.000Z", False, reason="not yet")
+        + verdict("2026-08-20T10:41:00.000Z", False, reason="still not")
+        + verdict("2026-08-20T10:42:00.000Z", True, reason="met"),
+        encoding="utf-8")
+    _, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    s7 = next(s for s in report["harness"]["sessions"] if s["id"] == "s7")
+    assert [e["met"] for e in s7["goal_evaluations"]] == [False, False, True]
+    assert report["handoffs"]["goal_evaluations"]["by_session"]["s7"] == {"met": 1, "not_met": 2}
 
 
 def test_the_classifier_reads_a_commit_word_first_and_a_question_never(consumer):
