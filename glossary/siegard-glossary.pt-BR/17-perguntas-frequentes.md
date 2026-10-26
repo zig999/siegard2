@@ -54,8 +54,10 @@ contou "faltam 3" quando os vinte já tinham voltado espera por nada.
 **Tenho um pedido vago. Mando direto ou passo pelo `/clarify-request`?**
 Se o projeto já responde tudo o que o pedido deixa em aberto, as duas formas dão o mesmo
 resultado. O `/clarify-request` vale quando o pedido se apoia em referências ("isso", "o
-standard") ou deixa um ato irreversível implícito: ele devolve uma instrução com as suposições à
-vista, e você decide se executa. Ele não executa nada.
+standard", "o plano acima") ou deixa um ato irreversível implícito: ele devolve uma instrução com
+as suposições à vista. Se a instrução só lê ou planeja, ele já a executa no mesmo turno, só lendo,
+e o resultado vem logo abaixo; se ela age (roda um comando, chama algo, muda o projeto), você
+decide se executa.
 
 **Um slug já usado foi recusado. Posso reaproveitar?**
 Não. Escolha outro. O registro existente pode ser a justificativa de vínculos ainda em vigor, e

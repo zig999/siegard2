@@ -21,6 +21,8 @@ SKILL = REPO / "src/claude/skills/clarify-request"
 CONTRACT = json.loads((REPO / "src/claude/schemas/clarified-request.json").read_text("utf-8"))
 FENCE = re.compile(r"^<!-- instruction -->\n```\n(.*?)^```", re.S | re.M)
 VALID = "MODE: ANALYZE\nTASK: Validate the module.\nCONSTRAINTS:\n- Do not modify code.\n"
+READ_ONLY = CONTRACT["x-read-only-modes"]["values"]
+IN_TURN = CONTRACT["x-executes-in-turn"]
 
 
 def problems(text: str) -> list[str]:
@@ -76,6 +78,39 @@ def test_a_mode_that_authorizes_a_change_needs_no_bound():
 def run(*args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
     return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/clarify.py"), *args],
                           input=stdin, capture_output=True, text=True)
+
+
+@pytest.mark.parametrize("mode,verdict", [
+    ("ANALYZE", "in-turn"), ("PLAN", "in-turn"), ("OPERATE", "hand-over"),
+    ("IMPLEMENT", "hand-over"), ("IMPLEMENT_AND_VALIDATE", "hand-over"),
+])
+def test_the_mode_alone_decides_whether_the_instruction_is_carried_out_in_turn(mode, verdict):
+    bound = "CONSTRAINTS:\n- Do not modify the project.\n" if mode in READ_ONLY else ""
+    text = f"MODE: {mode}\nTASK: Do the thing.\n{bound}"
+    assert problems(text) == []
+    assert clarify.handoff(text, CONTRACT) == verdict
+    assert run("-", stdin=text).stdout.strip() == verdict
+
+
+def test_a_mode_carried_out_in_turn_changes_nothing():
+    """In-turn execution skips the person's reading of the instruction, which is only cheap where
+    nothing acts: every such mode is one that changes no file, and OPERATE — which changes no file
+    but calls something with an effect — is not one of them."""
+    in_turn = set(IN_TURN["values"])
+    assert in_turn and in_turn <= set(READ_ONLY)
+    assert "OPERATE" not in in_turn
+
+
+def test_the_tools_of_an_in_turn_execution_are_the_ones_the_skill_already_holds():
+    """The execution runs inside the skill's turn: a tool the frontmatter withholds could not be
+    used, and one it does not pre-approve would stop the turn on a permission prompt."""
+    import yaml
+    front = yaml.safe_load(re.match(r"^---\n(.*?)\n---\n", (SKILL / "SKILL.md").read_text("utf-8"),
+                                    re.S).group(1))
+    granted = set(front["allowed-tools"].split())
+    withheld = set(front["disallowed-tools"].split())
+    for tool in IN_TURN["tools"]:
+        assert tool in granted and tool not in withheld, tool
 
 
 def test_the_command_reads_standard_input_and_exits_by_the_verdict():

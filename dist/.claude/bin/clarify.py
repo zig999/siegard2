@@ -8,6 +8,11 @@ order, nothing precedes the first, `MODE` and `TASK` are present, a mode that au
 carries a constraint bounding the whole project, and a mode that authorizes one carries none.
 Whether the instruction preserves what the operator meant is not decidable here and is not checked.
 
+Which instructions the skill carries out in the same turn is decided here too, from the mode alone:
+a well-formed instruction whose mode the contract lists under `x-executes-in-turn` prints
+`in-turn`, any other prints `hand-over`. Whether its execution needs more than the tools that list
+names is a reading of the instruction, and stays the skill's.
+
 A section opens with its name in capitals and a colon at the start of a line; text after the colon
 is the section's first line. The instruction is held without a code fence around it. A leading
 `- ` on a line is dropped. A line starting a section the contract does not name is refused rather
@@ -18,7 +23,7 @@ Declared dependencies: jsonschema.
 Usage:  clarify.py <file>    hold the instruction in <file> to the contract
         clarify.py -         hold the instruction read from standard input
         clarify.py --help    print this text and stop
-Exit:   0 well-formed: nothing printed
+Exit:   0 well-formed: one line, `in-turn` or `hand-over`
         1 the instruction does not hold: one problem per line
         2 cannot run
 """
@@ -88,6 +93,12 @@ def check(text: str, contract: dict) -> list[str]:
     return problems
 
 
+def handoff(text: str, contract: dict) -> str:
+    """`in-turn` where the contract carries the instruction's mode out in the same turn, else `hand-over`."""
+    mode = parse(text)[0].get("MODE", [None])[0]
+    return "in-turn" if mode in contract["x-executes-in-turn"]["values"] else "hand-over"
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -109,7 +120,10 @@ def main() -> int:
     problems = check(text, contract)
     for problem in problems:
         print(problem)
-    return 1 if problems else 0
+    if problems:
+        return 1
+    print(handoff(text, contract))
+    return 0
 
 
 if __name__ == "__main__":

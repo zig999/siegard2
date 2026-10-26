@@ -1,6 +1,6 @@
 ---
 name: clarify-request
-description: Rewrites a person's natural-language request as one precise instruction for Claude Code, without executing it — resolves what the project already answers by reading it, asks the person only the decisions that are theirs, and keeps their intent, mode and scope exactly. Use when a request is vague, conversational, underspecified or leans on references like "this", "the standard" or "what we decided", and the person wants it made executable before anything runs. Not for executing the request, not for planning or specifying work (that is /plan-work and /analyse), not for a request that is already an invocation of a skill, and not for one that is already a single precise operation.
+description: Rewrites a person's natural-language request as one precise instruction for Claude Code — resolves what the conversation and the project already answer by reading them, asks the person only the decisions that are theirs, and keeps their intent, mode and scope exactly — and carries out in the same turn, by reading only, an instruction that only reads or plans; one that acts is handed over unexecuted. Use when a request is vague, conversational, underspecified or leans on references like "this", "the plan above" or "what we decided", and the person wants it made precise before anything acts on it. Not for planning or specifying work (that is /plan-work and /analyse), not for a request that is already an invocation of a skill, and not for one that is already a single precise operation.
 argument-hint: "<the request, in the person's own words>"
 disable-model-invocation: true
 allowed-tools: Read Grep Glob AskUserQuestion Bash(python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/clarify.py *)
@@ -8,9 +8,10 @@ disallowed-tools: Write Edit NotebookEdit
 effort: high
 ---
 
-You turn one request into one instruction, and you stop. Nothing the request asks for is done
-here: no file is written, no command but the validator is run, and the instruction you hand over is
-the person's to execute or refuse.
+You turn one request into one instruction. Where the contract carries its mode out in the same
+turn, you then carry it out by reading; every other instruction you hand over, and stop. No file is
+written here and no command but the validator is run, and an instruction that acts — on the project
+or outside it — is the person's to execute or refuse.
 
 The one rule everything below serves: **clarify what the person means; never complete what they
 did not decide.** An instruction that is clearer than the request and also larger has crossed from
@@ -32,7 +33,8 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 ## Read the contract
 
 Read `${CLAUDE_PLUGIN_ROOT}/schemas/clarified-request.json`. It is the single home of which
-sections an instruction may carry, in what order, what each means, and what each mode authorizes.
+sections an instruction may carry, in what order, what each means, what each mode authorizes, and
+which modes are carried out in the same turn and through which tools.
 Do not work from memory of it and do not restate it: the validator applies the file, not what you
 remember. Read `${CLAUDE_PLUGIN_ROOT}/skills/clarify-request/references/blocking.md` when step 4
 finds something that may be a blocking decision, and
@@ -87,13 +89,27 @@ instruction of the session.
    `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/clarify.py - <<'EOF'`, the instruction, `EOF`. That form is
    what the grant covers; a pipe, a redirect or a `cd` before it is another command and is not
    pre-approved. A refusal from the validator is a defect in the instruction: correct it and run
-   it again. An instruction that was never validated is not handed over.
-7. **Hand it over, and stop.** The final message holds the instruction in one fenced block, the
-   fence carrying no language label, and nothing else around it — no preamble, no summary of what
-   changed, no justification, no question. The turn ends there, on purpose: what the person says
-   next is a new message, and nothing of this skill — its withheld tools, its effort — reaches the
-   work that follows. The person executes the instruction as they would any message of their own,
-   or states what to change, and the work returns to the earliest step that correction touches.
+   it again. An instruction that was never validated is not handed over. A well-formed one makes it
+   print one line, `in-turn` or `hand-over`, and step 7 follows it.
+7. **Hand it over.** The message holds the instruction in one fenced block, the fence carrying
+   no language label, with no preamble, no summary of what changed, no justification and no
+   question. Where the validator printed `hand-over`, or the instruction's execution needs more
+   than the tools the contract lists for the turn, nothing follows the block and the turn ends
+   there, on purpose: what the person says next is a new message, and nothing of this skill — its
+   withheld tools, its effort — reaches the work that follows. The person executes the
+   instruction as they would any message of their own, or states what to change, and the work
+   returns to the earliest step that correction touches. Where it printed `in-turn`, step 8
+   follows the block in the same message.
+8. **Carry it out, by reading.** Execute the instruction as written, through the tools the
+   contract lists for the turn and no other: no shell command is run, not even one that only
+   reads — `cat`, `ls` or `grep` through a shell is a command, and the tools listed already read,
+   search and list — nothing is sent or queried, no skill is invoked, and what the instruction does
+   not say is not done. Its OUTPUT, where it has one, is the shape of
+   the result. A decision the reading meets that the instruction does not settle is named in the
+   result as the person's, never taken, and nothing is asked here. The result follows the block
+   and the turn ends with it. The readings listed under ASSUMPTIONS stand above the result; where
+   one is wrong, the person states what to change and the work returns to the earliest step that
+   correction touches.
 
 ## What the instruction may contain
 

@@ -237,15 +237,17 @@ say; three of its fields are worth deciding before any work starts:
   `siegard-standard`, `siegard-archive` and `clarify-request`. A skill that needs one of them
   hands you the invocation ready to paste.
 
-`/siegard:clarify-request <your request>` is the one entry point that executes nothing. Given a
+`/siegard:clarify-request <your request>` makes a request precise before anything acts on it. Given a
 request in your own words, it reads the conversation and the project to settle what "this", "the
 standard" or "the plan above" points at — an earlier message entering quoted and named as yours or
 the assistant's, a recommendation you never took staying an option — asks you only the decisions
 that are yours — at most twice — and hands back one instruction
 held to `schemas/clarified-request.json`: a mode (`ANALYZE`, `PLAN`, `OPERATE`, `IMPLEMENT`,
 `IMPLEMENT_AND_VALIDATE`), the task, and every reading it took without asking listed under
-`ASSUMPTIONS`. You then send that instruction, or say what to change. It does not rewrite a
-request that is already a skill invocation.
+`ASSUMPTIONS`. An instruction that only reads or plans (`ANALYZE`, `PLAN`) it then carries out in
+the same turn, by reading only, the result following the instruction; any other — one that runs a
+command, calls something or changes the project — you send yourself, or say what to change. It
+does not rewrite a request that is already a skill invocation.
 
 ## Adopting an existing project
 

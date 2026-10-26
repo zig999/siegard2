@@ -71,14 +71,16 @@ entrada: em todas as quatro, só a pessoa.
 ### `/clarify-request` — reescrever um pedido como uma instrução validada
 **O que é.** Desde a 5.16.0, uma skill que recebe um pedido em linguagem natural ("olha essa
 implementação e vê se segue o standard que a gente definiu") e o devolve como **uma única
-instrução precisa** para o Claude Code, **sem executá-la**. Ela lê o projeto para resolver
+instrução precisa** para o Claude Code. Desde a 5.34.0, uma instrução que só lê ou planeja
+(`ANALYZE`, `PLAN`) é executada no mesmo turno, só por leitura; as demais são entregues **sem
+execução**. Ela lê o projeto para resolver
 referências ("isso", "o standard", "o que decidimos"), pergunta à pessoa só as decisões que são
 dela, e mantém exatamente a intenção, o modo e o escopo do pedido.
 **Por que existe.** Um pedido vago é executado com palpites, e os palpites não aparecem em lugar
 nenhum. A regra que a skill serve é uma só: **esclarecer o que a pessoa quis dizer, nunca
 completar o que ela não decidiu**. Uma instrução mais clara que o pedido e também maior que ele
 passou de esclarecer para decidir.
-**O que ela nunca faz.** Não escreve arquivo nenhum (`Write`, `Edit` e `NotebookEdit` ficam
+**O que ela nunca faz.** Não escreve arquivo nenhum, nem quando executa a instrução (`Write`, `Edit` e `NotebookEdit` ficam
 bloqueados enquanto ela roda) e não roda comando nenhum além do validador. Não reescreve um pedido
 que já é a invocação de uma skill (`/nome …`): essas skills leem as palavras da própria pessoa, e
 algumas tomam essas palavras como autorização. Também não serve para planejar nem especificar
@@ -101,10 +103,19 @@ trabalho (isso é `/plan-work` e `/analyse`).
    instrução, nunca um palpite.
 6. **Escrever a instrução e validá-la** com `clarify.py`. Uma instrução nunca validada não é
    entregue.
-7. **Entregar e parar** — a mensagem final contém só a instrução, num bloco cercado **sem rótulo
-   de linguagem**, e nada mais. O turno termina ali de propósito: nada desta skill (as ferramentas
-   bloqueadas, o esforço de raciocínio) chega ao trabalho que vem depois. A pessoa executa a
-   instrução como executaria uma mensagem própria, ou diz o que mudar.
+7. **Entregar** — a mensagem contém a instrução num bloco cercado **sem rótulo de linguagem**, sem
+   preâmbulo nem justificativa. Quando o validador imprime `hand-over` (modos `OPERATE`,
+   `IMPLEMENT`, `IMPLEMENT_AND_VALIDATE`), ou quando executar exigiria mais que leitura (rodar um
+   comando, chamar algo, consultar por um conector), nada vem depois do bloco e o turno termina ali
+   de propósito: nada desta skill (as ferramentas bloqueadas, o esforço de raciocínio) chega ao
+   trabalho que vem depois. A pessoa executa a instrução como executaria uma mensagem própria, ou
+   diz o que mudar.
+8. **Executar, só lendo** (desde a 5.34.0) — quando o validador imprime `in-turn` (`ANALYZE`,
+   `PLAN`), a skill executa a instrução no mesmo turno, só com `Read`, `Grep` e `Glob`: nada é
+   rodado, enviado ou consultado, nenhuma skill é invocada, e o que a instrução não diz não é
+   feito. Uma decisão que a leitura encontra e a instrução não resolve aparece no resultado como
+   da pessoa. As suposições ficam no topo, acima do resultado; se uma estiver errada, a pessoa diz
+   o que mudar e invoca de novo.
 
 **O teste do bloqueante.** Uma incerteza só é bloqueante quando valem as três condições:
 **divergência** (duas leituras plausíveis levam a resultados materialmente diferentes — regra de
@@ -171,8 +182,10 @@ clarify.py -              # confere a instrução lida da entrada padrão
 
 Recusa uma seção que o contrato não nomeia, uma seção vazia, uma fora da ordem, texto antes da
 primeira seção, a falta de `MODE` ou `TASK`, um modo de leitura sem o limite sobre o projeto
-inteiro e um modo de mudança com esse limite. Saída `0` = bem formada, `1` = um problema por
-linha, `2` = não pôde rodar. Se a instrução preserva o que a pessoa quis dizer não é decidível por
+inteiro e um modo de mudança com esse limite. Saída `0` = bem formada, com uma linha dizendo se a
+skill executa a instrução no mesmo turno (`in-turn`) ou a entrega (`hand-over`), decidida só pelo
+modo e pela lista `x-executes-in-turn` do contrato; `1` = um problema por linha, `2` = não pôde
+rodar. Se a instrução preserva o que a pessoa quis dizer não é decidível por
 script, e não é verificado.
 
 ### `/siegard-standard`

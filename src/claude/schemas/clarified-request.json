@@ -94,5 +94,17 @@
       "Do not modify code"
     ],
     "description": "A mode that authorizes no change to the project's files carries the bound in CONSTRAINTS: at least one line beginning with one of the prefixes, each of which bounds the whole project. A line bounding less (`Do not modify the CSS file`) leaves the rest of the project authorized. A mode that authorizes a change to them carries none of them: the prompt is read by an executor that has no other way to learn the mode's meaning, and a bound contradicting the mode is a prompt it cannot follow."
+  },
+  "x-executes-in-turn": {
+    "values": [
+      "ANALYZE",
+      "PLAN"
+    ],
+    "tools": [
+      "Read",
+      "Grep",
+      "Glob"
+    ],
+    "description": "The modes whose instruction /clarify-request carries out in the same turn it hands the instruction over, through the tools listed and no other. What such a mode asks for is a reading or a proposal: a reading taken wrongly costs a second invocation and changes nothing. Every other mode is handed over and the turn ends there: OPERATE acts outside the project's files and the modes that change the project change it, so each acts on the operator's audit of the instruction and never before it. An instruction of one of these modes whose execution needs more than the tools listed — a command, a request, a query through a connector — is handed over as the other modes are. bin/clarify.py reads the mode against this list and prints which of the two the instruction takes."
   }
 }
