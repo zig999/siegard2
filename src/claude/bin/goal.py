@@ -343,11 +343,21 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     said: list[str] = []
     refused: list[str] = []
 
-    code, out = script("spec.py", str(specification))
-    if code == 0 and "specification sound" in out:
-        said.append(f"specification: {out.splitlines()[-1]}")
+    if not specification.is_dir():
+        refused.append(
+            f"the specification root {relative(fields, specification)} does not exist yet — "
+            "/deliver-scope's gate reads it before its first step. Where material states the "
+            "domain, /analyse over that material writes it, and the root is committed before the "
+            "goal; where the objective is all the material there is, the root created holding "
+            "only a .gitkeep and committed passes the gate, and composing again with --specify "
+            "runs /analyse over the objective before the plan")
     else:
-        refused.append(f"the specification is not sound — /deliver-scope stops on it first:\n{out}")
+        code, out = script("spec.py", str(specification))
+        if code == 0 and "specification sound" in out:
+            said.append(f"specification: {out.splitlines()[-1]}")
+        else:
+            refused.append("the specification is not sound — /deliver-scope stops on it first, "
+                           f"and spec.py names what to correct:\n{out}")
 
     pending = git(fields["home"], "status", "--porcelain", "--untracked-files=all", "--",
                   *[relative(fields, p) for p in (specification, work, delivery, target)])

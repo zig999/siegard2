@@ -340,6 +340,19 @@ def test_composing_over_a_pending_change_under_the_roots_is_refused(project):
         in result.stdout
 
 
+def test_a_specification_root_not_yet_created_is_refused_naming_both_ways_to_create_it(project):
+    settings = project["home"] / "siegard.json"
+    fields = json.loads(settings.read_text(encoding="utf-8"))
+    fields["specification_root"] = "not-yet"
+    settings.write_text(json.dumps(fields), encoding="utf-8")
+    commit(project["home"], "point the specification root at a directory not created yet")
+    result = compose(project, "--objective", "Orders are billed once.")
+    assert result.returncode == 1
+    assert "the specification root not-yet does not exist yet" in result.stdout
+    assert "/analyse over that material" in result.stdout and "--specify" in result.stdout
+    assert "not sound" not in result.stdout
+
+
 def test_composing_over_an_id_the_plan_does_not_hold_is_refused(project):
     result = compose(project, "--scope", "epic/nothing")
     assert result.returncode == 1

@@ -94,7 +94,9 @@ the script printed under `checked:`, verbatim. Last, the condition the script pr
 unedited, in one fenced block preceded by `/goal `, so that copying the block arms it.
 
 Where the script refused, the report opens instead with each reason and what resolves it, ready
-to paste where it is a command, and no condition.
+to paste where it is a command, and no condition. What resolves a reason is what the script
+printed beside it, never a route described here: another entry point's requirements are stated
+in its own file, and a summary of them written here is a second copy that drifts from it.
 
 Nothing follows the block. Never invite an edit of the objective after it: an objective the
 person wants changed is a new invocation of this skill.
