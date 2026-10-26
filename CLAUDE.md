@@ -160,8 +160,11 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   `/adopt-scope` is the one that invokes `/analyse`, because writing the specification from
   adopted source is its route, and the specification it commits is disclosed by its ledger, its
   decision log and its report rather than reviewed before the commit; the gate `/deliver-scope`
-  keeps over `/analyse` stands for every delivery. Every other skill's refusal to commit stands;
-  a third committer, or a commit outside these bounds, is a proposal, never a change.
+  keeps over `/analyse` stands for every delivery but one a goal condition arms with a prose
+  objective and asks to specify: there `/deliver-scope` invokes `/analyse` once, before the plan,
+  over the objective verbatim, and commits the specification apart, disclosed by its decision
+  log and report rather than reviewed before the commit. Every other skill's refusal to commit
+  stands; a third committer, or a commit outside these bounds, is a proposal, never a change.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —
@@ -186,7 +189,10 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   and disagreement is an ordinary change. A decided fact with no log entry is invention.
 - **A contradiction is never decided.** A node stating the opposite turns the route back
   into the standing stop — the scope and the specification disagreeing is the one thing
-  only a person settles, and the only thing left that stops a task.
+  only a person settles, and the only thing left that stops a task. A contradiction the
+  person's own words state is not one: where a goal condition's objective states the fact a
+  node contradicts, the objective is `/analyse`'s material and the node changes as any analysed
+  change does, before the plan reads it.
 
 ## Recommendation authority
 
