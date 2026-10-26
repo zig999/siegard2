@@ -200,6 +200,7 @@ ROUTES = {
     HAND_EDIT: "a commit no framework skill wrote — a person changed the artifact directly",
 }
 ROUTE_PREFIX = re.compile(r"^deliver-scope [^\s:]+:")
+GOAL_ANALYSE = re.compile(r"^deliver-scope [^\s:]+: analyse\b")
 CORRECTION_WORDS = re.compile(r"corrective|hotfix|\bfix\b|abandon|revert", re.I)
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TELEMETRY_CONTRACT = PLUGIN_ROOT / "schemas" / "telemetry.json"
@@ -1466,7 +1467,10 @@ def outcome_of(entry: dict, home: Path, spec_relative: str, specification_root: 
         shown = git(home, "show", f"{commit}:{path_then}")
         held = entries_in(shown.stdout) if shown and shown.returncode == 0 else []
         if wanted in {json.dumps(e, sort_keys=True) for e in held}:
-            landed = {"commit": commit, "at": at}
+            subject = git(home, "show", "-s", "--format=%s", commit)
+            landed = {"commit": commit, "at": at,
+                      "subject": subject.stdout.strip() if subject and subject.returncode == 0
+                      else None}
             node_then = path_then[:-len(LOG_SUFFIX)] + ".md"
             break
     if landed is None:
@@ -1528,7 +1532,13 @@ def outcomes_of(added: list[dict]) -> dict:
     """The tally beside the entries: how many decisions stand, how many were revised and by which
     route. Counts and the vocabulary — never a share: what a reader acts on is the list of the
     revised ones, each with its commit, and the one line that says which routes are a person
-    disagreeing."""
+    disagreeing.
+
+    The decisions a goal's own `/analyse` landed are tallied apart, by the same states — «Under a
+    goal whose condition asks to specify a prose objective, the orchestrating entry point invokes
+    `/analyse` once, before the plan, over the objective as the person armed it, and commits the
+    specification root apart.» (SPEC-008 R10) — because their revision rate beside the rest is
+    the reading that keeps that leave or narrows it."""
     states = {state: 0 for state in OUTCOME_STATES}
     routes = {route: 0 for route in ROUTES}
     for entry in added:
@@ -1536,7 +1546,14 @@ def outcomes_of(added: list[dict]) -> dict:
         states[outcome.get("state", UNLOCATED)] += 1
         if outcome.get("state") == REVISED and outcome.get("revised_by"):
             routes[outcome["revised_by"][0]["route"]] += 1
+    specified = {state: 0 for state in OUTCOME_STATES}
+    for entry in added:
+        outcome = entry.get("outcome") or {}
+        subject = (outcome.get("landed") or {}).get("subject") or ""
+        if GOAL_ANALYSE.match(subject):
+            specified[outcome.get("state", UNLOCATED)] += 1
     return {"states": states, "first_revision_by_route": routes,
+            "goal_specified": specified,
             "state_meanings": OUTCOME_STATES, "route_meanings": ROUTES}
 
 

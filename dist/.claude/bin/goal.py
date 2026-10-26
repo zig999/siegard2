@@ -23,7 +23,8 @@ follows with its output verbatim.» (SPEC-008 R1)
   line — «State B holds when the initiative's orchestration log, changed since the goal began,
   ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`,
   `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`,
-  `contradiction`, `budget`, `stands`, and the measure, commit and remote conditions of R2
+  `contradiction`, `budget`, `stands`, `analyse`, and the measure, commit and remote
+  conditions of R2
   hold» (SPEC-008 R3) — what the tree still holds is listed as left for the person — or the
   plugin's version changed since the goal began, or a commit since then touched `siegard.json`
   or a standard it declares, which only the person authors.
@@ -50,7 +51,7 @@ spec.py, its siblings, and runs them and project.py as commands).
 
 Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]...
                                     answer state A, state B or not yet, then every check
-        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file>) [--target <key>] [--budget <n>] [--correct contradicts]
+        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file>) [--target <key>] [--budget <n>] [--correct contradicts] [--specify]
                                     check what the route would refuse first, then print the goal
                                     condition to paste after /goal
         goal.py --help              print this text and stop
@@ -60,7 +61,11 @@ Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version 
         having failed it; --compose writes them from the tree as it stands. --budget is how many
         judged doors the run may take, each as the door decider returns it (none where left
         out); --correct names the conformance findings the run answers by a corrective increment,
-        and `contradicts` is the one kind a route corrects.
+        and `contradicts` is the one kind a route corrects. --specify, over an objective alone,
+        asks /deliver-scope to run /analyse once over it before the plan — «Under a goal whose
+        condition asks to specify a prose objective, the orchestrating entry point invokes
+        `/analyse` once, before the plan, over the objective as the person armed it, and commits
+        the specification root apart.» (SPEC-008 R10)
 Exit:   0 state A or state B; a condition composed
         1 not yet; a composition refused, with every reason
         2 cannot run
@@ -85,7 +90,7 @@ PLUGIN_MANIFEST = BIN.parent / ".claude-plugin" / "plugin.json"
 SKILLS = BIN.parent / "skills"
 STOP_CLASSES = ("blocking", "silence", "rebind", "producers", "gave-up", "infrastructure",
                 "project-file", "pending-change", "specification", "contradiction", "budget",
-                "stands")
+                "stands", "analyse")
 RECONCILED = ("siegard-trace.json", "siegard-reconcile/")
 CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")
@@ -332,7 +337,8 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
 
 def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
             objective: str | None, budget: int = 0,
-            correct: list[str] | None = None) -> tuple[list[str], str | None]:
+            correct: list[str] | None = None,
+            specify: bool = False) -> tuple[list[str], str | None]:
     delivery, work, target, specification = roots(fields, slug)
     said: list[str] = []
     refused: list[str] = []
@@ -399,6 +405,8 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
         "in the person's words, for the whole route, and it authorizes for the whole goal — after "
         "every compaction too — the commits that skill defines.",
         f"Project: {project_root}. Target: {fields['target']}. Slug: {slug}. {carried}",
+        "Specify: run /analyse once over the objective, before the plan, and commit the "
+        "specification apart; I review it after the goal." if specify else None,
         f"Budget: {budget} judged door(s), each taken only as the door decider returns it."
         if budget else "Budget: no judged door; a choice a fact does not decide ends the run.",
         f"Findings: correct {', '.join(correct)} by a corrective increment, once; report the rest."
@@ -455,6 +463,9 @@ def main() -> int:
         objective_file = take(args, "--objective-file")
         budget_raw = take(args, "--budget")
         correct = take(args, "--correct", many=True)
+        specify = "--specify" in args
+        if specify:
+            args.remove("--specify")
     except Refused as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN
@@ -472,7 +483,8 @@ def main() -> int:
         return CANNOT_RUN
 
     if mode == "--state":
-        if not since or not version or objective or objective_file or budget_raw or correct:
+        if not since or not version or objective or objective_file or budget_raw or correct \
+                or specify:
             print("cannot run: --state takes --since and --version, and none of --objective, "
                   "--budget or --correct, which are the condition's", file=sys.stderr)
             return CANNOT_RUN
@@ -508,12 +520,17 @@ def main() -> int:
               f"only {', '.join(CORRECTABLE)}, which the corrective increment answers",
               file=sys.stderr)
         return CANNOT_RUN
+    if specify and not objective:
+        print("cannot run: --specify asks /analyse over a prose objective, and a scope of epics "
+              "or tasks is already planned", file=sys.stderr)
+        return CANNOT_RUN
     if since or version or untouched or bool(scope) == bool(objective):
         print("cannot run: --compose takes --scope or --objective, one of them, and pins "
               "--since, --version and --untouched itself", file=sys.stderr)
         return CANNOT_RUN
     try:
-        said, condition = compose(project_root, fields, slug, scope, objective, budget, correct)
+        said, condition = compose(project_root, fields, slug, scope, objective, budget, correct,
+                                  specify)
     except Refused as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN

@@ -1,6 +1,6 @@
 ---
 name: deliver-scope
-description: Carries one stated scope end to end through the entry points — /plan-work, /implement-task over each deliverable task, /review-change — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a human settles. Use only where the human's own message states that the whole route is wanted — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), and never for /analyse — the specification is authored, reviewed and committed by a person before this skill runs.
+description: Carries one stated scope end to end through the entry points — /plan-work, /implement-task over each deliverable task, /review-change — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a human settles. Use only where the human's own message states that the whole route is wanted — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), and never for /analyse — the specification is authored, reviewed and committed by a person before this skill runs, except once, before the plan, under a goal whose condition asks to specify its objective.
 effort: medium
 ---
 
@@ -62,7 +62,9 @@ specification turns out not to state mid-route — the implementer's stop over a
 run, and the `/analyse` invocation that stop already hands over is relayed to the human verbatim.
 The one writer this run admits into the specification root is `/plan-work`'s own decided-fact
 route, which runs inside that skill's invocation under its own discipline and its own decision
-log, exactly as it does when a human invokes it.
+log, exactly as it does when a human invokes it — and, under a goal whose condition asks to
+specify a prose objective, `/analyse` once, before the plan and never to unblock a stop, as
+"Under a goal" below states.
 
 ## Before anything: the tree, and the branch
 
@@ -87,7 +89,8 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 ## The order
 
 ```
-gate → plan → commit → [deliver → commit, per task] → review → commit
+gate → [analyse → commit, under a goal that asks to specify] → plan → commit
+     → [deliver → commit, per task] → review → commit
      → [prove → commit, per task left testable] → review → commit → measure → commit
      → report → stop
 ```
@@ -193,6 +196,19 @@ is not spent.» (SPEC-006 R7) Every door taken is one line of the log, on its ow
 does. A door the three reserved questions hold — a contradiction, two readings of one piece of
 evidence, a finding's worth — is never taken.
 
+- **An objective the condition asks to specify.** Before the plan, and once: «Under a goal whose
+  condition asks to specify a prose objective, the orchestrating entry point invokes `/analyse`
+  once, before the plan, over the objective as the person armed it, and commits the
+  specification root apart.» (SPEC-008 R10) The material is the objective file's text, read whole
+  after its digest is checked against the condition; the project root is the condition's. A
+  report opening `stop: no-fact —` or `stop: no-change —` is nothing to specify: write the line to
+  the log and plan. Any other stop of `/analyse` ends the run. Where it wrote, run the gate above
+  again — `spec.py` over the specification root — and commit the specification root alone as
+  `deliver-scope <slug>: analyse`; then plan with the same objective as the scope. The report
+  carries what `/analyse`'s own report states for a reviewer: the decided fields per node, the
+  nodes written, what the increment may have put delivered code in breach of, and the
+  reconciliation candidates it named — the person reviews this specification after the goal,
+  not before.
 - **A task waiting on a re-bind.** The door is the one `--outstanding` names: `/plan-work` over
   the slug, the plan's ordinary evolution. Take it, commit the work root and the specification
   root as `deliver-scope <slug>: rebind <task>`, and resume the loop — «a task waiting on a
@@ -260,7 +276,9 @@ None is worked around, and none is retried. Each carries its class, in backticks
 - under a goal, a judged choice once the condition's budget of judged doors is spent —
   `budget`;
 - a task whose `stands` files this run's own deliveries moved — the door is `/reconcile` over
-  those files, the person's to ask for — `stands`.
+  those files, the person's to ask for — `stands`;
+- under a goal that asks to specify, a stop of `/analyse` other than one over material that states
+  no fact or names nodes and changes none — `analyse`.
 
 The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
 stop ended closes its orchestration log with one stop line: its class names the stop from the
@@ -297,7 +315,8 @@ Then stop. The commit range is the review, and it belongs to a person.
 
 ## What you never do
 
-- Invoke `/analyse`, or write into the specification root — the gate is the point of the design.
+- Invoke `/analyse`, or write into the specification root — the gate is the point of the design —
+  outside the one invocation "Under a goal" names, before the plan.
 - Commit without a pathspec, sweep the tree, create a branch, push, stash, or rewrite history.
 - Carry this skill's steps, or commit under its name, outside an invocation of it that accepted
   the ask. Where the ask is refused — a goal whose condition does not name this skill among

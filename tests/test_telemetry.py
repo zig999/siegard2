@@ -896,6 +896,22 @@ def test_a_delivery_naming_no_correction_is_the_framework_revising_itself(consum
         "corrective": 0, "framework": 1, "hand-edit": 0}
 
 
+def test_decisions_a_goals_own_analyse_landed_are_tallied_apart(consumer):
+    """SPEC-008 R10's reversal reads the decisions a goal's `/analyse` landed beside the rest."""
+    home = consumer["home"]
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])
+    decided(home, "domain/x/c", "whether the total is decimal", "total is carried as decimal")
+    committed(home, "deliver-scope pricing: analyse", "2026-08-20T11:10:00Z")
+    node_at(home, "domain/x/c.md", [{"name": "total", "type": "money", "required": True}])
+    committed(home, "deliver-scope corrective-total: plan", "2026-08-20T11:40:00Z")
+    _, report = report_of(consumer)
+    assert [e.message for e in contract().iter_errors(report)] == []
+    outcome = next(e["outcome"] for e in report["decisions"]["added"]
+                   if e["unstated"] == "whether the total is decimal")
+    assert outcome["landed"]["subject"] == "deliver-scope pricing: analyse"
+    assert report["decisions"]["outcomes"]["goal_specified"]["revised"] == 1
+
+
 def test_a_commit_no_skill_wrote_is_a_hand_edit(consumer):
     home = consumer["home"]
     node_at(home, "domain/x/c.md", [{"name": "total", "type": "decimal", "required": True}])

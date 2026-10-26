@@ -25,7 +25,9 @@ plain words what the material would have to state for each class the analysis wo
 decided alone, and names nothing it would have decided. It is a stop over an input and never a
 question about the content: the floor is owed to material, a floor produced from none is invention
 with a log, and supplying the material is a new invocation. Over a populated root the same holds of
-material that names nodes and states no change about them.
+material that names nodes and states no change about them. Either stop opens its report with one
+line of its own, so an orchestrating route reads it without reading prose — «`stop: no-fact — <what
+the material would have to state>` or `stop: no-change — <the nodes it names>`» (SPEC-008 R10).
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` — this is the specification
 root's only source. `specification_root` answers only from here: naming a specification root in

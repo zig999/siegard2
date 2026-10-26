@@ -36,7 +36,9 @@ and not trusted.
   from disk. Under the goal, a door a fact decides is taken without you; a choice of cost is
   taken only by a decider that never sees the goal, within the budget you give; and the
   findings you name in advance are corrected once. A contradiction, two readings of one piece of
-  evidence and a finding's worth stay yours.
+  evidence and a finding's worth stay yours. With `--specify`, a goal over an objective runs
+  `/analyse` on it once before planning and commits that specification apart, for you to review
+  after the goal.
 
 It is meant for Claude Code projects that want delivered code to stay traceable to a decision.
 It needs Claude Code and `python3` with PyYAML and jsonschema; it builds no application of its own.

@@ -100,3 +100,17 @@ def test_under_a_goal_the_judgment_is_the_blind_deciders_and_the_reserved_questi
     assert "Never the conversation, never the attempts' story, never what ends the goal" in section
     assert ("a contradiction, two readings of one piece of evidence, a finding's worth — is never "
             "taken") in section
+
+
+def test_the_one_analyse_a_goal_may_ask_for_is_bounded():
+    """SPEC-008 R10: under a goal that asks to specify, /analyse runs once, before the plan,
+    over the objective as the person armed it — never to unblock a stop, and its two stops over
+    no fact and no change read from a line, not from prose."""
+    text = flat("src/claude/skills/deliver-scope/SKILL.md")
+    assert "never invokes `/analyse`" in text
+    assert "`/analyse` once, before the plan and never to unblock a stop" in text
+    section = text.split("## Under a goal", 1)[1].split("## What ends the run", 1)[0]
+    assert "`stop: no-fact —` or `stop: no-change —` is nothing to specify" in section
+    assert "`deliver-scope <slug>: analyse`" in section
+    analyse = flat("src/claude/skills/analyse/SKILL.md")
+    assert "`stop: no-fact — <what the material would have to state>`" in analyse

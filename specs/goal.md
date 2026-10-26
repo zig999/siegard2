@@ -55,7 +55,7 @@ session that stopped while its subagents were still running. The harness refuses
 
 - **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
 - **R2** — State A holds when every task of the scope holds an implementation record and a proof record; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
-- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, `stands`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
+- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, `stands`, `analyse`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
 
 ### What a stopped run writes
 
@@ -70,6 +70,8 @@ session that stopped while its subagents were still running. The harness refuses
 
 - **R8** — Under a goal, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, and a task waiting on a re-bind by planning over its slug, each once per task, before the run resumes; a second time over one task is a stop.
 - **R9** — Under a goal whose findings policy names a finding's kind, each such finding of the run's review is answered by one corrective increment over the file it names, delivered and reviewed in the same run, once: what that review finds is reported and never corrected again.
+
+- **R10** — Under a goal whose condition asks to specify a prose objective, the orchestrating entry point invokes `/analyse` once, before the plan, over the objective as the person armed it, and commits the specification root apart. A stop of `/analyse` over material that states no fact, or that names nodes and changes none, is nothing to specify, and the plan follows; every other stop of it ends the run. Each of those two stops is printed as one line of its own, `stop: no-fact — <what the material would have to state>` or `stop: no-change — <the nodes it names>`.
 
 ### What is counted
 
@@ -88,5 +90,12 @@ session that stopped while its subagents were still running. The harness refuses
    `state A` or `state B` is a defect in what the condition says, never grounds to widen it.
 
 ## Readings
+
+- 2026-10-26 — grounds for R10, read before it had run: `/analyse`-origin decisions were revised
+  31 of 162 times (19%, eternal, read 2026-10-07), and the person's review before a
+  specification commit took a median 1.7 minutes over 108 consumer transcripts (2026-10-06) — the
+  gate R10 removes was mostly nominal. Its reversal: decisions landed by a goal's `analyse`
+  commit revised at a higher rate than `/analyse`'s outside a goal narrow the goal back to a
+  closed specification.
 
 - 2026-10-25 — not yet read: no goal has been composed under this specification.

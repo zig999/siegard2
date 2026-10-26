@@ -45,6 +45,14 @@ none, so a choice no fact decides ends the run — and **the findings policy** �
 the run corrects by a corrective increment, once. `contradicts` is the one kind a route corrects;
 the script refuses another, and the refusal is the report.
 
+A third, the person's alone and only over an objective: **to specify** — `/deliver-scope` runs
+`/analyse` once over the objective before the plan, decides what the specification does not state
+and commits it apart, and the person reviews that specification after the goal rather than
+before. Where the objective changes a fact of the business — a status, a refusal, what the system
+tells someone, who may see what — and the person has not asked for it, the report says the goal
+will stop at the first fact the specification does not hold, and that `--specify` is the
+person's to add; it is never added for them.
+
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
 Every root answers only from there; a field the file does not declare is a stop, and the report
 carries the `/siegard-config` invocation ready to paste — that skill is closed to model
@@ -62,7 +70,7 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 2. Compose:
 
    ```
-   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --compose <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective "<the objective, verbatim>" | --objective-file <the citation's copy>) [--budget <n>] [--correct contradicts]
+   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --compose <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective "<the objective, verbatim>" | --objective-file <the citation's copy>) [--budget <n>] [--correct contradicts] [--specify]
    ```
 
    The script checks what `/deliver-scope` would refuse before its first step — the

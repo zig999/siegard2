@@ -323,6 +323,14 @@ def test_a_cited_objective_is_copied_whole_from_its_file(project, tmp_path):
     assert both.returncode == 2
 
 
+def test_to_specify_is_the_persons_and_only_over_an_objective(project):
+    result = compose(project, "--objective", "An order is billed once.", "--specify")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Specify: run /analyse once over the objective, before the plan" in result.stdout
+    assert "Specify:" not in compose(project, "--objective", "An order is billed once.").stdout
+    assert compose(project, "--scope", TASK, "--specify").returncode == 2
+
+
 def test_composing_over_a_pending_change_under_the_roots_is_refused(project):
     task = project["home"] / "plans" / SLUG / f"{TASK}.md"
     task.write_text(task.read_text() + "\n")
