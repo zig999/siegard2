@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.34.1 — 2026-10-26
+
+A goal over a project with no specification root yet is refused naming both ways to create it, and /siegard-goal relays the resolution the script printed. (`799afe2`)
+
 ## 5.34.0 — 2026-10-26
 
 /clarify-request carries out an instruction that only reads or plans in the same turn, by reading only; one that acts is still handed over unexecuted. (`ffbc0cb`)
