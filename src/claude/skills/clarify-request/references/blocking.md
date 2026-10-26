@@ -8,7 +8,8 @@ An uncertainty is a **blocking** only if all three hold:
    outcomes along at least one of: business behavior, data model, public interface, scope,
    security, compatibility, a destructive or irreversible act, the mode itself.
 2. **Not settled.** After step 3 neither the conversation nor the project settles it, and no
-   decision the person already stated does.
+   decision the person already stated does. A recommendation the assistant made settles nothing
+   the person's words did not take.
 3. **Costly to guess.** A wrong guess is not cheap to undo — the executor would build on it, or
    it would touch something that cannot be restored.
 

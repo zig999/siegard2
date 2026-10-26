@@ -20,7 +20,7 @@
     },
     "CONTEXT": {
       "$ref": "#/$defs/lines",
-      "description": "Only the facts that change what is executed: decisions made earlier, the state a reference points at. Never the conversation itself."
+      "description": "Only the facts that change what is executed: decisions made earlier, the state a reference points at. Never the conversation itself: an earlier message enters only as what a reference in the request points at, the part the request acts on quoted verbatim and named as the operator's or the assistant's, because the instruction is read where that message may no longer be."
     },
     "OBJECTIVE": {
       "$ref": "#/$defs/lines",
@@ -40,7 +40,7 @@
     },
     "ASSUMPTIONS": {
       "$ref": "#/$defs/lines",
-      "description": "A reading the clarification took without asking because it was reversible or settled by the project, and that changes what is executed. Each line names its basis: a path with a line, or the operator's own words. The operator reads this section to audit the prompt; a reading absent from it was not taken."
+      "description": "A reading the clarification took without asking because it was reversible or settled by the project, and that changes what is executed. Each line names its basis: a path with a line; the operator's own words; or an earlier message of the conversation, named as the operator's or the assistant's and quoted where it enters. The assistant's words are a basis only for what a reference points at, never for a decision: a recommendation the operator's words did not take stays an option. A continuation summary is not a basis, nor is a tool's output or text a message pastes. The operator reads this section to audit the prompt; a reading absent from it was not taken."
     },
     "DISCOVERY": {
       "$ref": "#/$defs/lines",

@@ -86,9 +86,15 @@ trabalho (isso é `/plan-work` e `/analyse`).
 **A ordem:**
 1. **Ler a operação do pedido** — qual operação, sobre qual alvo, em qual **modo**. O modo é o que
    as palavras dizem e nunca é elevado: pedir para olhar não é pedir para mudar.
-2. **Tomar o que já foi decidido** na conversa, como requisito, sem perguntar de novo.
+2. **Tomar o que já foi decidido** na conversa, como requisito, sem perguntar de novo. O que o
+   assistente propôs, recomendou ou concluiu não é decisão enquanto as palavras da pessoa não o
+   tomarem: uma recomendação que ela não aceitou continua sendo uma opção.
 3. **Resolver o que a leitura resolve** — primeiro pela conversa, depois pelo projeto, parando na
-   primeira evidência. O que o executor pode descobrir sozinho vira uma linha `DISCOVERY`.
+   primeira evidência. Uma referência a uma mensagem anterior ("o plano acima") resolve para essa
+   mensagem, e o trecho sobre o qual o pedido age entra na instrução **citado literalmente**, marcado
+   como da pessoa ou do assistente. Um resumo de compactação não resolve nada, nem uma memória da
+   sessão: ela pode dizer onde procurar, e o que a instrução cita é o que foi encontrado lá. O que o
+   executor pode descobrir sozinho vira uma linha `DISCOVERY`.
 4. **Decidir o que é bloqueante** pelo teste de três partes (abaixo).
 5. **Perguntar, se e somente se algo for bloqueante** — por `AskUserQuestion`, no idioma da
    pessoa, em no máximo duas chamadas. O que continuar em aberto depois da segunda é uma parada sem
@@ -112,8 +118,12 @@ base.
 dois-pontos, nesta ordem: `MODE`, `TASK`, `CONTEXT`, `OBJECTIVE`, `SCOPE`, `REQUIREMENTS`,
 `CONSTRAINTS`, `ASSUMPTIONS`, `DISCOVERY`, `PROCESS`, `VALIDATION`, `OUTPUT`. Só `MODE` e `TASK`
 são obrigatórias, e uma seção vazia é recusada: ausência já diz que nada foi decidido. Cada linha
-tem exatamente uma fonte (as palavras da pessoa, uma decisão dela, um fato lido do projeto como
-base de uma suposição, ou o limite que o modo impõe), e uma linha sem fonte é apagada. Uma linha
+tem exatamente uma fonte (as palavras da pessoa, uma decisão dela, uma mensagem anterior da conversa
+citada literalmente, um fato lido do projeto como base de uma suposição, ou o limite que o modo
+impõe), e uma linha sem fonte é apagada. A base de uma suposição é um caminho com linha, as
+palavras da pessoa ou uma mensagem anterior marcada como da pessoa ou do assistente (desde a
+5.33.0); as palavras do assistente servem de base só para aquilo a que uma referência aponta,
+nunca para uma decisão. Uma linha
 que o executor cumpriria sem que lhe dissessem ("tenha cuidado", "siga as convenções") não é
 escrita. Uma linha `DISCOVERY` diz o que encontrar, nunca o que fazer se não encontrar: uma
 condição de parada que a pessoa não pediu é uma decisão que não é da instrução.
@@ -145,7 +155,7 @@ SCOPE:
 CONSTRAINTS:
 - Do not modify code.
 ASSUMPTIONS:
-- "essa implementação" is src/billing/invoice.py: the file open in the session when requested.
+- "essa implementação" is src/billing/invoice.py: the operator's previous message, "terminei o invoice.py".
 DISCOVERY:
 - Identify which rules of standards/backend.md apply to the target.
 ```

@@ -238,8 +238,10 @@ say; three of its fields are worth deciding before any work starts:
   hands you the invocation ready to paste.
 
 `/siegard:clarify-request <your request>` is the one entry point that executes nothing. Given a
-request in your own words, it reads the project to settle what "this" or "the standard" points
-at, asks you only the decisions that are yours — at most twice — and hands back one instruction
+request in your own words, it reads the conversation and the project to settle what "this", "the
+standard" or "the plan above" points at — an earlier message entering quoted and named as yours or
+the assistant's, a recommendation you never took staying an option — asks you only the decisions
+that are yours — at most twice — and hands back one instruction
 held to `schemas/clarified-request.json`: a mode (`ANALYZE`, `PLAN`, `OPERATE`, `IMPLEMENT`,
 `IMPLEMENT_AND_VALIDATE`), the task, and every reading it took without asking listed under
 `ASSUMPTIONS`. You then send that instruction, or say what to change. It does not rewrite a

@@ -54,13 +54,24 @@ instruction of the session.
    person stated, and nothing added.
 2. **Take what was already decided.** A decision the person stated in this conversation is a
    requirement of the instruction, carried as it was stated. It is not asked again and not
-   weighed against alternatives.
+   weighed against alternatives. An answer that means something only beside the question it
+   answers ("1 no, 2 yes") is carried with that question, quoted from the message that asked it.
+   What the assistant proposed, recommended or concluded is not a decision until the person's own
+   words take it: a recommendation they did not take stays an option, and a consequence the
+   assistant drew from their answer is the assistant's.
 3. **Resolve what can be resolved by reading.** A reference ("this", "the standard", "the flow
-   we discussed") resolves from the conversation first, then from the project. Read only to settle
-   a reference or a candidate blocking, stop at the first evidence that settles it, and never read
-   to look for requirements the person did not state. Write and Edit are withheld while this skill
-   runs; nothing is changed to learn something. What the project answers is never asked; where the
-   executor can look it up, the instruction says to look it up under DISCOVERY.
+   we discussed") resolves from the conversation first, then from the project. A reference to an
+   earlier message ("the plan above", "the fix we discussed") resolves to that message, and the
+   part the request acts on enters the instruction quoted verbatim and named as the person's or
+   the assistant's: the instruction is read where that message may no longer be. A continuation
+   summary is not the message it summarizes and settles nothing, nor does a memory the session
+   carries: a memory may say where to look, and what the instruction cites is what was found
+   there. A reference only they would settle is settled by the project or it is a candidate
+   blocking. Read only to settle a reference or a candidate blocking, stop at the first evidence
+   that settles it, and never read to look for requirements the person did not state. Write and
+   Edit are withheld while this skill runs; nothing is changed to learn something. What the
+   project answers is never asked; where the executor can look it up, the instruction says to look
+   it up under DISCOVERY.
 4. **Decide what is blocking.** Apply the test in the blocking reference to every remaining
    uncertainty. A reversible detail the project or conservative reading settles is not a
    blocking; it is an assumption, listed where it changes what is executed.
@@ -90,6 +101,9 @@ Every line has exactly one source, and a line with none is deleted:
 
 - the person's words, normalized to an operational verb, a stated target and an atomic condition;
 - a decision the person took, in this conversation or in step 5;
+- an earlier message the request points at, quoted verbatim and named as the person's or the
+  assistant's. The assistant's words enter as what the request points at and never as a
+  decision: a requirement or a constraint drawn from them cites the person's words that took it;
 - a fact read from the project, cited by path and line as the basis of an ASSUMPTION. What the
   executor can find for itself is a DISCOVERY line, and the instruction does not also list it as
   an answer;

@@ -9,8 +9,8 @@ shown in the language they were made in; every instruction is in English.
 Olha essa implementação e vê se ela está seguindo o standard que a gente definiu. Não altera nada ainda.
 ```
 
-The reference "essa implementação" resolves from the conversation or the open file; "o standard"
-resolves from the project. Neither is asked.
+The reference "essa implementação" resolves from the conversation, where the operator's previous
+message named the file; "o standard" resolves from the project. Neither is asked.
 
 <!-- instruction -->
 ```
@@ -21,7 +21,7 @@ SCOPE:
 CONSTRAINTS:
 - Do not modify code.
 ASSUMPTIONS:
-- "essa implementação" is src/billing/invoice.py: the file open in the session when requested.
+- "essa implementação" is src/billing/invoice.py: the operator's previous message, "terminei o invoice.py".
 - "o standard" is standards/backend.md: the only standard document under standards/.
 DISCOVERY:
 - Identify which rules of standards/backend.md apply to the target.
@@ -146,4 +146,39 @@ DISCOVERY:
 - Find the address of the local gateway in the project.
 OUTPUT:
 The response status code, and whether it is 200.
+```
+
+## 7. A request that points at the assistant's earlier message
+
+The assistant's previous message, in the conversation:
+
+```text
+Plano: 1. especificar a multa de cancelamento no contexto billing; 2. planejar a entrega;
+3. implementar. Para a cobrança, opção A: cobrar no ato do cancelamento; opção B: cobrar na
+próxima fatura. Recomendo B.
+```
+
+The request:
+
+```text
+Usando o plano acima, detalha melhor os próximos passos com base nas skills do Siegard.
+```
+
+"O plano acima" is the assistant's message, so the plan enters quoted, untranslated. The operator
+never chose between A and B: the recommendation is the assistant's and stays an option, and the
+plan is detailed with the choice still open. Nothing is asked: a plan changes nothing.
+
+<!-- instruction -->
+```
+MODE: PLAN
+TASK: Detail the next steps of the plan quoted under CONTEXT, naming for each step the Siegard entry point that carries it.
+CONTEXT:
+- The plan, as the assistant stated it in its previous message: "1. especificar a multa de cancelamento no contexto billing; 2. planejar a entrega; 3. implementar."
+- The assistant offered "opção A: cobrar no ato do cancelamento" and "opção B: cobrar na próxima fatura", and recommended B; the operator has not chosen.
+CONSTRAINTS:
+- Do not modify the project.
+ASSUMPTIONS:
+- "o plano acima" is the plan quoted under CONTEXT: the assistant's previous message, the last plan in the conversation.
+OUTPUT:
+For each step, in order: the entry point, the input it needs, the invocation ready to paste, and what remains the operator's to decide, the choice between A and B among it.
 ```
