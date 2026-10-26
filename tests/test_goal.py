@@ -340,6 +340,24 @@ def test_composing_over_a_pending_change_under_the_roots_is_refused(project):
         in result.stdout
 
 
+def test_composing_over_a_pending_trace_or_reconciliation_record_is_refused(project):
+    home = project["home"]
+    (home / "siegard-trace.json").write_text("{}\n", encoding="utf-8")
+    result = compose(project, "--scope", TASK)
+    assert result.returncode == 1
+    assert "the trace or siegard-reconcile/ holds a change pending" in result.stdout
+    assert "siegard-trace.json" in result.stdout
+    commit(home, "reconcile drift: bind", "siegard-trace.json")
+    record = home / "siegard-reconcile" / "drift.md"
+    record.parent.mkdir()
+    record.write_text("---\n---\n", encoding="utf-8")
+    result = compose(project, "--scope", TASK)
+    assert result.returncode == 1
+    assert "siegard-reconcile/drift.md" in result.stdout
+    record.unlink()
+    assert compose(project, "--scope", TASK).returncode == 0
+
+
 def test_a_specification_root_not_yet_created_is_refused_naming_both_ways_to_create_it(project):
     settings = project["home"] / "siegard.json"
     fields = json.loads(settings.read_text(encoding="utf-8"))

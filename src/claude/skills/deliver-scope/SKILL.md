@@ -69,8 +69,11 @@ specify a prose objective, `/analyse` once, before the plan and never to unblock
 ## Before anything: the tree, and the branch
 
 Before any step, `git status --porcelain -- <work-root> <delivery-root> <target-source-root>
-<specification-root>` must print nothing: a pending change this skill did not make is somebody's
-work in progress, and committing it under a run's message would bury it. Output is a stop.
+<specification-root>` must print nothing, and neither may `git status --porcelain --
+siegard-trace.json siegard-reconcile` at the target's git toplevel — the trace and the
+reconciliation records sit there, outside every root, and every delivery commit carries the trace
+and the review commit both: a pending change this skill did not make is somebody's work in
+progress, and committing it under a run's message would bury it. Output is a stop.
 
 This skill commits where `HEAD` already points and never creates a branch, never pushes, never
 stashes: starting the run on a branch cut for it is the human's act, offered in the report's

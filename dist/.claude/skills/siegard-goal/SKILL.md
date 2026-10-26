@@ -74,7 +74,8 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
    ```
 
    The script checks what `/deliver-scope` would refuse before its first step — the
-   specification, changes pending under the roots the route writes, a closed slug, an id the plan
+   specification, changes pending under the roots the route writes or in the trace and
+   `siegard-reconcile/` it commits, a closed slug, an id the plan
    does not hold — and pins where `HEAD` stands, the plugin's version and every change already
    pending elsewhere, which the goal leaves untouched. A refusal is the report: every reason it
    printed, verbatim, each with what resolves it.

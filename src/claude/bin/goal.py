@@ -32,7 +32,8 @@ follows with its output verbatim.» (SPEC-008 R1)
 
 **`--compose` writes the condition, and refuses what the route would refuse first.** It checks
 that the specification is sound, that nothing is pending under the specification, work, delivery
-or target root (the first stop `/deliver-scope` raises), that the slug names no closed plan, and
+or target root, nor in the trace or `siegard-reconcile/` beside it — paths the route commits
+(the first stop `/deliver-scope` raises), that the slug names no closed plan, and
 that every scope id names an epic or a task of the live plan. It pins where `HEAD` stands, the
 plugin's version and every change already pending outside those roots, and prints the condition:
 the route, the authorization, the scope, and the `--state` invocation that answers it — «A goal
@@ -365,6 +366,14 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
         refused.append("changes are pending under the specification, work, delivery or target "
                        "root — /deliver-scope stops on a change it did not make; commit or "
                        f"discard them first:\n{pending}")
+    import project
+    top = project.toplevel_of(target) if target.is_dir() else fields["home"]
+    reconciled = git(top, "status", "--porcelain", "--untracked-files=all", "--", *RECONCILED)
+    if reconciled:
+        refused.append("the trace or siegard-reconcile/ holds a change pending — every delivery "
+                       "commits the trace and the review commits both, so /deliver-scope stops "
+                       "on a change it did not make there too, and a goal leaving it untouched "
+                       "could never reach state A; commit or discard it first:\n" + reconciled)
 
     if (work / "closure.md").is_file():
         refused.append(f"{relative(fields, work)} holds closure.md: a closed plan is history, and "
