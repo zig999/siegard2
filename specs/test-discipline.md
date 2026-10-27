@@ -37,7 +37,8 @@ left out — so the file set the review that followed was handed never held them
   `trace.json` and `bin/trace.py`.
 - How a project arranges its tests — file placement, naming, stand-ins, levels, table-driven
   cases — the project's own standard under `standard.json`, never this framework.
-- What a task's criteria are and how a plan writes them — the plan-work skill and its decomposer.
+- What a task's criteria are and how a plan words them — the plan-work skill and its decomposer;
+  which task a proof belongs to is R18 and R19.
 
 ## Definitions
 
@@ -126,6 +127,22 @@ left out — so the file set the review that followed was handed never held them
   test directory having moved by hand, and `deliver.py --check` passed every delivery root that
   held them; all 381 sat in closed plans. A second consumer held none.
 
+### Where a proof is cut
+
+- **R18** — A task writes source, or its implementation already stands. A task that writes no source carries `stands`, and every file it names is bound in the trace, before the task is written, to every node the task implements. A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
+- **R19** — A node whose fact already stands in source the trace does not bind to it gets no proof task. The plan reports the reconciliation that would bind it, over the files that hold it, and the proof waits for that binding.
+
+  Grounds: on 2026-10-26 three successive plans of one consumer cut proof-only tasks in the
+  ordinary decomposition, and none could be delivered — the record writer accepts a task that
+  writes no source only with `stands`, and `stands` confirms only bindings the trace already
+  holds. Two plans named files whose bindings did not cover the task's nodes, one of them a node
+  the same run had just created (7 of 7 tasks, then 1 of 1); the third cut a proof of a
+  constraint sibling tasks of the same plan implemented, and carried no `stands` at all. Each was
+  refused at delivery, after the plan was committed; a goal over the third ended there. A
+  plan-shape rule for the third form — a task whose nodes its dependencies all implement — fires
+  on 96 tasks across five consumers, 94 of which wrote source, so R18's second sentence is held by
+  the decomposer's judgment and not by a validator.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -149,7 +166,11 @@ left out — so the file set the review that followed was handed never held them
    draws neither — `tests/test_deliver.py` proves each
    (`test_a_live_proof_naming_a_test_the_target_does_not_hold_is_refused`,
    `test_a_closed_proof_naming_a_test_the_target_does_not_hold_is_a_receipt`).
-6. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
+6. For R18 and R19: `/plan-work` holds every task carrying `stands` to `trace.py --encodes`
+   before it writes it, and states both requirements in the words above; the backlog decomposer
+   states R18's last sentence; `tests/test_spec_citations.py` proves each quote is a substring of
+   the requirement it names.
+7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
 

@@ -685,6 +685,25 @@ new covers. The third persists, and is recorded on its own line immediately afte
 because the validator refuses a task whose `## Notes` names a specification node outside its
 epic's covers with no such line naming that node, and a refused plan derives no plan.json.
 
+**A skeleton carrying `stands` is held to the trace before it is written**, once the binder has
+returned its `implements` — «every file it names is bound in the trace, before the task is
+written, to every node the task implements» (SPEC-004 R18):
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <each file stands names>
+```
+
+A file the command cannot read — a path spelled from the repository rather than from the target
+source root among them — or a node the task implements that the output does not list for those
+files, sends the skeleton back to the decomposer once, with the output verbatim: where a task of
+this plan writes the source that holds the fact, the proof becomes a criterion of that task, and
+the skeleton goes; where the source already holds it and the trace does not bind it, no task is
+cut for it — «The plan reports the reconciliation that would bind it, over the files that hold
+it, and the proof waits for that binding.» (SPEC-004 R19) — and the report hands `/reconcile`
+over those files as the person's door. A skeleton that comes back carrying the same unconfirmed
+`stands` is not written; the report names it with the output. A task is refused at delivery for
+exactly this, after the plan was committed, and a goal over the plan ends there.
+
 Each task file is checked on its own as soon as it is composed — a composition error is
 caught at the file that made it, never discovered at the end:
 

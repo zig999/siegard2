@@ -54,6 +54,13 @@ And around the tasks:
 - **A prohibition's complement asserts only non-refusal.** Where the governing statement
   forbids, the passing case is that this rule does not refuse — never success or acceptance,
   which the specification may still deny for reasons of its own.
+- **A task writes source, or its implementation already stands.** «A fact the plan's own
+  deliveries will write into source is proven by the task that writes it, as that task's
+  criterion, never by a task of its own.» (SPEC-004 R18) A task cut to prove what a sibling
+  writes writes no source and has no file to name as where its implementation stands, so no
+  delivery can record it: the proof is a criterion of the sibling. `stands` is for source the
+  inventory shows holding the fact today, named by path relative to the target source root —
+  never for source this plan will write.
 - **Dependencies record what a task builds on, never when it runs.** Any schedule satisfying
   the edges is equally valid. A cycle is a decomposition error you resolve by re-cutting —
   never return one.

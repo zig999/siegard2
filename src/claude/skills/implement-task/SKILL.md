@@ -318,8 +318,9 @@ conversation would otherwise hold.
 
 **A task carrying `stands` is delivered the same way from its first delivery, because its plan
 says so** — the one case where the narrower route is read from the task rather than from the
-invocation, and it is still the human's naming: `/plan-work` writes `stands` only in the proof
-increment, which only the human names. The implementation stands at the files `stands` lists,
+invocation: `/plan-work` writes `stands` only over files the trace already binds to every node
+the task implements, in the proof increment the human names or in an ordinary decomposition
+alike. The implementation stands at the files `stands` lists,
 and nothing in this delivery writes source. Before anything is written, the same `trace.py
 --check --all` holds every one of those files current — a moved one makes "stands" false, and the task is
 not delivered: the door is `/reconcile` over the files that moved, which the person asks for,
