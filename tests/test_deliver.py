@@ -2874,6 +2874,23 @@ def test_an_empty_list_in_a_return_is_read_as_absent_and_said(tmp_path, planned,
     assert "divergences" not in front and "contested" not in front
 
 
+def test_a_record_that_stands_keeps_the_empty_file_list_its_contract_requires(
+        tmp_path, planned, delivery, work, root, target):
+    """`files` is required on an implementation and holds nothing where it carries `stands`; the
+    empty list is that statement, so it is not read as absent."""
+    standing = {**IMPLEMENTATION_RETURN, "stands": ["src/orders/place.ts"], "files": [],
+                "nodes": [{"node": "domain/sales/order",
+                           "how": "the order's identity is the shape place() persists"}]}
+    given = tmp_path / "return.yaml"
+    given.write_text(yaml.safe_dump(standing, sort_keys=False), encoding="utf-8")
+    done = writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", given)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "read as absent" not in done.stdout
+    front = json_front(delivery, "implementation/checkout/record-order")
+    assert front["files"] == [] and front["stands"] == ["src/orders/place.ts"]
+
+
 def test_a_return_read_from_a_rendered_notification_is_refused(tmp_path, planned, delivery):
     """The notification that relays a reply renders it, and `>` becomes `&gt;`; a record written
     from that text names tests the suite does not hold."""

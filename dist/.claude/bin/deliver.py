@@ -2143,10 +2143,12 @@ def write_record(kind: str, args: list[str]) -> int:
     if not isinstance(returned, dict):
         print(f"{nid}: the return is a {type(returned).__name__}, not a mapping")
         return 1
-    emptied = sorted(key for key, value in returned.items() if value == [])
+    kept = {"files"} if kind == "implementation" and "stands" in returned else set()
+    emptied = sorted(key for key, value in returned.items() if value == [] and key not in kept)
     for key in emptied:
         # A list with nothing in it states nothing, and the contract asks for an absent field
         # rather than an empty one; refusing it would send a delegation back over no content.
+        # An implementation that stands is the exception: its contract requires `files`, empty.
         del returned[key]
     stamped = [key for key in STAMPED[kind] if key in returned]
     if stamped:
