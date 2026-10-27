@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.35.0 — 2026-10-27
+
+A task writes source, or carries `stands` over files the trace already binds to every node it implements; /plan-work confirms `stands` with `trace.py --encodes` before writing a task, and a proof of what a sibling task writes is that sibling's criterion (SPEC-004 R18, R19). (`a8c117b`)
+
 ## 5.34.2 — 2026-10-26
 
 A goal is refused while the trace or `siegard-reconcile/` holds a pending change, and /deliver-scope's precondition holds both, since the route commits them. (`de76fa5`)
