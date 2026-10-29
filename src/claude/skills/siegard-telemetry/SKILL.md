@@ -247,7 +247,7 @@ What each section holds:
   call and before the person's next turn; `by_authorization` — `typed`, `loop`, `summary`,
   `none` — and `by_skill`; how many carried a pathspec and how many pushed; then every entry of
   `lines`. Say plainly what each class is: `typed` is a commit word the person typed earlier in
-  the session, `loop` an autonomous loop they armed, `summary` a word only in the continuation
+  the session, `loop` an autonomous loop or a goal they armed, `summary` a word only in the continuation
   summary the harness wrote after a compaction, `none` no commit word anywhere. An ask stating
   the whole route end to end, which the session rule also accepts as authorization, is not a
   word the script reads, so a `none` is opened and read before it is counted against a session.

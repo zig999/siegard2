@@ -663,7 +663,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     last_assistant_text: str = ""
     in_span_commits: list[dict] = []
     turns_since_skill = 0
-    commit_word_typed = commit_word_in_summary = loop_armed = False
+    commit_word_typed = commit_word_in_summary = loop_armed = goal_armed = False
     boundaries: list[int] = []
     events: dict[str, list[tuple[str, str]]] = {}
     for entry in entries_of(path):
@@ -686,6 +686,12 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                                if b.get("type") == "text" and isinstance(b.get("text"), str))
             if spoken.strip():
                 last_assistant_text = spoken
+        status = entry.get("attachment") if entry.get("type") == "attachment" else None
+        if isinstance(status, dict) and status.get("type") == "goal_status":
+            # The harness's own record of a goal: a sentinel arms one (not met) or clears it (met),
+            # and an evaluation judging it met ends it. The person's /goal reaches no typed text.
+            if status.get("sentinel") or status.get("met") is True:
+                goal_armed = status.get("met") is not True
         if not in_window(entry, since, until):
             continue
         entries_in_window += 1
@@ -758,7 +764,8 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                         "at": iso(instant_of(stamp)), "skill": skill,
                         "push": "push" in {m.group(1) for m in GIT_COMMIT.finditer(command)},
                         "pathspec": pathspec_scoped(command),
-                        "authorized_by": "typed" if commit_word_typed else "loop" if loop_armed
+                        "authorized_by": "typed" if commit_word_typed
+                        else "loop" if loop_armed or goal_armed
                         else "summary" if commit_word_in_summary else "none"})
                 if isinstance(command, str) and SCRIPT_CALL.search(command):
                     commands[block["id"]] = {

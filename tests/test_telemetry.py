@@ -1557,6 +1557,33 @@ def test_a_commit_inside_a_skill_span_is_counted_with_what_authorized_it(consume
     assert "commits inside a skill's span: 4 — typed 1, loop 1, summary 1, none 1; 3 pathspec-scoped, 1 pushed" in done.stdout
 
 
+def test_a_commit_under_an_armed_goal_is_counted_as_the_loop_until_the_goal_is_cleared(consumer):
+    """A goal reaches the session as the harness's own status, never as typed text — the slash
+    command's blocks are stripped — so the sentinel that arms it is what authorizes, held until
+    a sentinel clears it or an evaluation judges it met."""
+    def status(stamp: str, met: bool, **extra) -> str:
+        return line(type="attachment", timestamp=stamp, sessionId="s9", cwd="/consumer",
+                    attachment={"type": "goal_status", "met": met, "condition": "c", **extra})
+    (consumer["transcripts"] / "s9.jsonl").write_text(
+        human("2026-08-20T10:30:00.000Z",
+              "<command-name>/goal</command-name> <command-args>Carry this scope</command-args>")
+        + status("2026-08-20T10:30:00.500Z", False, sentinel=True)
+        + skill_call("2026-08-20T10:31:00.000Z", "tu-s9a", "siegard:deliver-scope", "s9")
+        + git_call("2026-08-20T10:32:00.000Z", "tu-g9a", "git commit -m 'a' -- work", "s9")
+        + status("2026-08-20T10:33:00.000Z", False, sentinel=True)
+        + human("2026-08-20T10:34:00.000Z", "e agora")
+        + status("2026-08-20T10:35:00.000Z", True, sentinel=True)
+        + skill_call("2026-08-20T10:36:00.000Z", "tu-s9b", "siegard:plan-work", "s9")
+        + git_call("2026-08-20T10:37:00.000Z", "tu-g9b", "git commit -m 'b' -- work", "s9"),
+        encoding="utf-8")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    s9 = next(s for s in report["harness"]["sessions"] if s["id"] == "s9")
+    assert [(c["skill"], c["authorized_by"]) for c in s9["commits"]] == [
+        ("deliver-scope", "loop"), ("plan-work", "none")]
+
+
 def test_pathspec_scoping_is_read_from_the_command_alone():
     import telemetry
     assert telemetry.pathspec_scoped("git add -A -- work && git commit -m x") is True

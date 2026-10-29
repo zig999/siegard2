@@ -56,7 +56,7 @@
       "items": {
         "$ref": "#/$defs/criterionEntry"
       },
-      "description": "One entry per criterion of the task, quoting the criterion as the task states it. The validator holds the totality in both directions \u2014 every criterion answered, nothing answered that the task does not state \u2014 because a record listing only the criteria it satisfied cannot be read as complete. An entry saying a criterion is unmet is an ordinary, reviewable answer; it is not a status, and nothing downstream reads it as one."
+      "description": "One entry per criterion of the task, quoting the criterion as the task states it. The validator holds the totality in both directions \u2014 every criterion answered, nothing answered that the task does not state \u2014 because a record listing only the criteria it satisfied cannot be read as complete. An entry saying a criterion is unmet is an ordinary, reviewable answer and never a stop: the record is written and the delivery goes on. A goal's state reads it \u2014 «A scope that holds every condition of R2 but one — an implementation record of it records a criterion unmet — is state B, each such criterion named beside its task: the record says the source does not satisfy the criterion, and state A would say the scope is delivered.» (SPEC-008 R12)"
     },
     "nodes": {
       "type": "array",
@@ -627,7 +627,8 @@
           "description": "The criterion as the task states it, quoted rather than paraphrased \u2014 the validator pairs the two by their text, and a restatement is a pairing nobody can check."
         },
         "met": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the written source satisfies the criterion, as the source reads: true where it does, false where it does not or cannot \u2014 a criterion that needs a file, a repository or a fact this delivery did not write. It never says the criterion was seen to hold: what a run or a test demonstrates is the proof's to state and the review's coverage to read, so a criterion no command of this delivery executed is true when the source reads as satisfying it, and false only when the source does not."
         },
         "how": {
           "type": "string",

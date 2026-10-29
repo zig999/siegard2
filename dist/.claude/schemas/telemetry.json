@@ -1779,7 +1779,7 @@
             "summary",
             "none"
           ],
-          "description": "What the session had to go on, by the same word match the confirmations use, read over the whole session up to the commit: `typed`, a commit word in a message the person typed; `loop`, an autonomous loop the person armed; `summary`, a commit word only in the continuation summary the harness wrote after a compaction; `none`, nothing."
+          "description": "What the session had to go on, by the same word match the confirmations use, read over the whole session up to the commit: `typed`, a commit word in a message the person typed; `loop`, an autonomous loop or a goal the person armed, the goal read from the harness's own goal status and held until a goal is cleared or judged met; `summary`, a commit word only in the continuation summary the harness wrote after a compaction; `none`, nothing."
         }
       }
     },

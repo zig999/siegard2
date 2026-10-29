@@ -165,7 +165,13 @@ The steps:
    taking it is inside the ask: carrying the scope end to end is carrying its nodes to the proof
    the specification prefers. «A finite test is preferred to a reading, and to a registry
    step's decision, wherever one exists» (SPEC-004 R10). Fill those slots from the record, one
-   re-delivery per task, commit each as `deliver-scope <slug>: prove <task>`, then invoke
+   re-delivery per task, commit each as `deliver-scope <slug>: prove <task>`, one after the other:
+   each is its own `/implement-task` invocation, run to its end and committed before the next
+   begins — never test authors spawned side by side over one tree, and never one suite run
+   standing for several tasks. A suite is one run over the whole tree, so a red re-delivery beside
+   green ones holds them all, and the clean-tree stop each invocation opens with is what keeps
+   them apart: a re-delivery that stops red leaves its files for the person, every one already
+   committed stands, and those not yet begun are relayed as not reached. Then invoke
    `/review-change` once more over exactly those tasks and commit it as `deliver-scope <slug>:
    review again`. This step runs once per run: a certification refused again is relayed with
    its new remainder, and a third attempt is the human's decision about cost. A remainder over a
