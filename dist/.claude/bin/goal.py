@@ -14,7 +14,8 @@ follows with its output verbatim.» (SPEC-008 R1)
 
 - `state A` — every task of the scope is delivered, proven and reviewed, and the run is measured
   and committed: the records (`deliver.py --outstanding`, restricted to the
-  scope where one is named), a review record naming each task whose records changed since the
+  scope where one is named), no implementation record of the scope recording a criterion unmet,
+  a review record naming each task whose records changed since the
   goal began and committed after them, `deliver.py --check`, `plan.py --check`, `spec.py`, a
   commit under the telemetry root after the last record and review, a tree holding only the
   changes the condition declared untouched, every commit since the goal began naming a skill and
@@ -27,8 +28,21 @@ follows with its output verbatim.» (SPEC-008 R1)
   conditions of R2
   hold» (SPEC-008 R3) — what the tree still holds is listed as left for the person — or the
   plugin's version changed since the goal began, or a commit since then touched `siegard.json`
-  or a standard it declares, which only the person authors.
+  or a standard it declares, which only the person authors — or a commit since then names no
+  skill and the slug: «A commit since the goal began that names no skill and the slug, and is no
+  reconciliation R2 admits, is state B on its own: the route never rewrites history, so that
+  commit stands until a person reads it, and a goal waiting for it to disappear never ends.»
+  (SPEC-008 R11) — or the scope holds everything state A asks but criteria recorded unmet: «A
+  scope that holds every condition of R2 but one — an implementation record of it records a
+  criterion unmet — is state B, each such criterion named beside its task: the record says the
+  source does not satisfy the criterion, and state A would say the scope is delivered.»
+  (SPEC-008 R12)
 - `not yet` — neither; the checks that failed say what is left.
+
+Whatever the state, the `criteria` check also names what the reviews left unproven: «The answer
+names every criterion that a review committed since the goal began, naming a task of the scope,
+left other than covered, beside that review; the list fails no check, because a criterion no
+suite reaches is a reading for a person, not a state.» (SPEC-008 R13)
 
 **`--compose` writes the condition, and refuses what the route would refuse first.** It checks
 that the specification is sound, that nothing is pending under the specification, work, delivery
@@ -212,13 +226,49 @@ def reconciliation_only(fields: dict, commit: str, line: str) -> bool:
     return bool(paths) and all(p == RECONCILED[0] or p.startswith(RECONCILED[1]) for p in paths)
 
 
-def review_tasks(record: Path) -> list[str]:
+def front_of(record: Path) -> dict:
     import spec
     text = record.read_text(encoding="utf-8")
     if not text.startswith("---"):
-        return []
-    front = spec.load_yaml(text.split("---", 2)[1]) or {}
-    return [t for t in spec.listed(front, "tasks") if isinstance(t, str)]
+        return {}
+    front = spec.load_yaml(text.split("---", 2)[1])
+    return front if isinstance(front, dict) else {}
+
+
+def entries(front: dict, field: str) -> list[dict]:
+    import spec
+    return [e for e in spec.listed(front, field)
+            if isinstance(e, dict) and isinstance(e.get("criterion"), str)]
+
+
+def review_tasks(record: Path) -> list[str]:
+    import spec
+    return [t for t in spec.listed(front_of(record), "tasks") if isinstance(t, str)]
+
+
+def criteria_answer(fields: dict, since: str, delivery: Path, tasks: list[str],
+                    named: dict[Path, list[str]]) -> tuple[bool, str]:
+    """The criteria the scope's implementation records say are unmet, which fail the check, and
+    the criteria this goal's reviews of the scope left other than covered, which it names and
+    never fails on."""
+    unmet = []
+    for tid in tasks:
+        record = delivery / "implementation" / f"{tid[len('task/'):]}.md"
+        if record.is_file():
+            unmet += [f"  {tid}: {e['criterion']}" for e in entries(front_of(record), "criteria")
+                      if e.get("met") is False]
+    lines = ([f"{len(unmet)} criterion(s) recorded unmet:", *unmet] if unmet else
+             ["no implementation record of the scope records a criterion unmet"])
+    scope = set(tasks)
+    for path in sorted(named):
+        if not scope & set(named[path]) or last_commit(fields, since, path) is None:
+            continue
+        left = [f"  {e.get('state')}: {e['criterion']}" for e in entries(front_of(path), "coverage")
+                if e.get("state") != "covered"]
+        if left:
+            lines += [f"{relative(fields, path)} left {len(left)} criterion(s) other than "
+                      f"covered:", *left]
+    return not unmet, "\n".join(lines)
 
 
 def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
@@ -256,8 +306,10 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
                            "every task whose records changed since the goal began is named by a "
                            "review committed after them" if not unreviewed else
                            "no review committed after the records names: " + ", ".join(unreviewed))
+        found["criteria"] = criteria_answer(fields, since, delivery, tasks, named)
     except Refused as refusal:
         found["review"] = (False, str(refusal))
+        found["criteria"] = (False, str(refusal))
 
     code, out = script("deliver.py", "--check", str(delivery), str(work), str(target),
                        *([] if closed else [str(specification)]))
@@ -286,7 +338,8 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
                if not ((m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}: ", line))
                        and m.group(1) in skills)
                and not reconciliation_only(fields, line.split()[0], line)]
-    found["commits"] = (not foreign, log or "no commit since the goal began")
+    found["commits"] = (not foreign, "naming no skill and the slug:\n" + "\n".join(foreign)
+                        if foreign else log or "no commit since the goal began")
 
     authored = [fields["home"] / "siegard.json", *fields["standards"]]
     touched = git(fields["home"], "log", "--format=%h %s", f"{since}..HEAD", "--",
@@ -319,11 +372,17 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
     elif not found["authored"][0]:
         first = ("state B — a commit since the goal began touched siegard.json or a standard, "
                  "which only the person authors")
+    elif not found["commits"][0]:
+        first = ("state B — a commit since the goal began names no skill and the slug, which the "
+                 "route never rewrites")
     elif all(ok for ok, _ in found.values()):
         first = f"state A — {slug}: the scope is delivered, proven, reviewed and measured"
     elif stop and all(found[name][0] for name in common):
         first = f"state B — {stop.removeprefix('- ')}" + (
             "" if found["tree"][0] else "; the uncommitted files below are left for the person")
+    elif all(ok for name, (ok, _) in found.items() if name != "criteria"):
+        first = (f"state B — {slug}: the scope is delivered, reviewed and measured, and its "
+                 f"records name criteria unmet")
     else:
         failed = [name for name, (ok, _) in found.items() if not ok]
         first = f"not yet — failing: {', '.join(failed)}" + (

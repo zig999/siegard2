@@ -54,8 +54,11 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal ends on
 
 - **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
-- **R2** — State A holds when every task of the scope holds an implementation record and a proof record; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
+- **R2** — State A holds when every task of the scope holds an implementation record and a proof record; no implementation record of the scope records a criterion unmet; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
 - **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, `stands`, `analyse`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
+- **R11** — A commit since the goal began that names no skill and the slug, and is no reconciliation R2 admits, is state B on its own: the route never rewrites history, so that commit stands until a person reads it, and a goal waiting for it to disappear never ends.
+- **R12** — A scope that holds every condition of R2 but one — an implementation record of it records a criterion unmet — is state B, each such criterion named beside its task: the record says the source does not satisfy the criterion, and state A would say the scope is delivered.
+- **R13** — The answer names every criterion that a review committed since the goal began, naming a task of the scope, left other than covered, beside that review; the list fails no check, because a criterion no suite reaches is a reading for a person, not a state.
 
 ### What a stopped run writes
 
@@ -79,8 +82,10 @@ session that stopped while its subagents were still running. The harness refuses
 
 ## Validation required before acceptance
 
-1. Tests hold `goal.py --state` to R2 and R3 over fixture repositories: one answering each state,
-   and one per condition of R2 failing alone.
+1. Tests hold `goal.py --state` to R2, R3, R11, R12 and R13 over fixture repositories: one
+   answering each state, one per condition of R2 failing alone, a foreign commit answering state
+   B, a criterion recorded unmet answering state B with the criterion named, and a criterion a
+   review left uncovered named under state A.
 2. A test holds the stop list of `/deliver-scope`'s file to R3's classes, one class per stop.
 3. A test holds `deliver.py --outstanding --scope` to R5: an epic, a task set, a dependency
    outside the scope, and an id the plan does not hold.
@@ -90,6 +95,19 @@ session that stopped while its subagents were still running. The harness refuses
    `state A` or `state B` is a defect in what the condition says, never grounds to widen it.
 
 ## Readings
+
+- 2026-10-28 — grounds for R11–R13, read from `salese2e`'s transcript and repository under
+  Siegard 5.35.1. R11: the person committed `aa7b89c` from another session inside the first
+  goal's window; `commits` failed for good, neither state could be reached, the harness judged
+  the condition not met 12 times in 67 seconds and paused the goal after 9 consecutive blocks, and
+  the person cleared it by hand. R12: the walking-skeleton delivery held 7 criteria recorded unmet
+  in two implementation records — six of `fictitious-module-entry`, each needing a repository no
+  task writes — and R2 as it then stood would have answered state A over them. R13: the second goal
+  ended state A over a review leaving one criterion partial, and the walking-skeleton review left
+  59 criteria uncovered or partial, the exit criterion of the phase among them, with no line of the
+  state's answer saying so. Reversal for R12: a run that ends state B on criteria recorded unmet
+  which a later delivery of the same task meets without a person is a route the goal should take
+  itself, and narrows R12 to what that route cannot answer.
 
 - 2026-10-26 — grounds for R10, read before it had run: `/analyse`-origin decisions were revised
   31 of 162 times (19%, eternal, read 2026-10-07), and the person's review before a

@@ -178,13 +178,85 @@ def test_a_change_left_in_the_tree_is_not_yet_unless_the_condition_declared_it(p
     assert first(state(project, "--untouched", "notes.txt")).startswith("state A")
 
 
-def test_a_commit_naming_no_skill_and_the_slug_is_not_yet(project):
+def test_a_commit_naming_no_skill_and_the_slug_is_state_b_on_its_own(project):
     deliver(project)
     review(project)
     (project["home"] / "notes.txt").write_text("x\n")
-    commit(project["home"], "tidy up", "notes.txt")
+    foreign = commit(project["home"], "tidy up", "notes.txt")
     measure(project)
-    assert failing(state(project)) == {"commits"}
+    result = state(project)
+    assert failing(result) == {"commits"}
+    assert first(result) == ("state B — a commit since the goal began names no skill and the "
+                             "slug, which the route never rewrites")
+    assert result.returncode == 0
+    assert f"  {foreign} tidy up" in result.stdout
+
+
+def test_a_foreign_commit_ends_the_goal_before_the_route_has_delivered(project):
+    (project["home"] / "notes.txt").write_text("x\n")
+    commit(project["home"], "the person's own edit", "notes.txt")
+    result = state(project)
+    assert first(result).startswith("state B — a commit since the goal began names no skill")
+    assert "records" in failing(result)
+
+
+def unmet(project: dict) -> None:
+    """The held implementation record says its criterion is unmet, and the proof is re-pinned to
+    it, so the delivery still checks against its sources."""
+    import hashlib
+    held = project["held"]
+    record = held / "implementation/checkout/record-order.md"
+    before = "sha256:" + hashlib.sha256(record.read_bytes()).hexdigest()
+    text = record.read_text(encoding="utf-8")
+    assert "met: true" in text
+    record.write_text(text.replace("met: true", "met: false", 1), encoding="utf-8")
+    after = "sha256:" + hashlib.sha256(record.read_bytes()).hexdigest()
+    proof = held / "proof/checkout/record-order.md"
+    proof.write_text(proof.read_text(encoding="utf-8").replace(before, after), encoding="utf-8")
+
+
+def test_a_criterion_recorded_unmet_is_state_b_with_the_criterion_named(project):
+    unmet(project)
+    deliver(project)
+    review(project)
+    measure(project)
+    result = state(project)
+    assert failing(result) == {"criteria"}, result.stdout
+    assert first(result) == (f"state B — {SLUG}: the scope is delivered, reviewed and measured, "
+                             f"and its records name criteria unmet")
+    assert result.returncode == 0
+    assert (f"    {TASK}: Submitting a valid order returns its order_number."
+            in result.stdout.splitlines())
+
+
+def test_a_criterion_recorded_unmet_with_work_left_is_not_yet(project):
+    unmet(project)
+    deliver(project)
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("not yet")
+    assert failing(result) == {"review", "criteria"}
+
+
+def test_a_criterion_a_review_left_uncovered_is_named_and_fails_nothing(project):
+    deliver(project)
+    home = project["home"]
+    path = home / "deliveries" / SLUG / "review" / "first.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    left = {**REVIEW, "coverage": [{"criterion": "Submitting a valid order returns its "
+                                                 "order_number.",
+                                    "state": "partial",
+                                    "why": "no test submits an order the store refuses"}]}
+    path.write_text("---\n" + yaml.safe_dump(left, sort_keys=False) + "---\n## What it is\n"
+                    "Prose for a reader.\n\n## Notes\nNone.\n", encoding="utf-8")
+    derive_delivery(home)
+    commit(home, f"deliver-scope {SLUG}: review", "deliveries")
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("state A"), result.stdout
+    lines = result.stdout.splitlines()
+    assert f"  deliveries/{SLUG}/review/first.md left 1 criterion(s) other than covered:" in lines
+    assert "    partial: Submitting a valid order returns its order_number." in lines
 
 
 def test_a_commit_already_on_a_remote_is_not_yet(project, tmp_path_factory):
