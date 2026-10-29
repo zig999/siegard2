@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.36.0 — 2026-10-29
+
+A goal ends in state B on a commit that names no skill and the slug, and state A never stands over a criterion an implementation record says is unmet — the scope is state B with each named — while the criteria this goal's reviews left uncovered are listed beside the state (SPEC-008 R11–R13). (`8ef3d74`)
+
 ## 5.35.1 — 2026-10-27
 
 `deliver.py --write-implementation` keeps `files: []` on an implementation carrying `stands`, which its contract requires; every other empty list is still read as absent. (`c68ae9d`)
