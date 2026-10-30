@@ -477,7 +477,8 @@ where `--encodes` confirms them — «every file it names is bound in the trace,
 written, to every node the task implements» (SPEC-004 R18); the second is `/reconcile` over those
 files, and the plan would refuse them. Report the stop with the output verbatim and both doors
 ready to paste, the one the output decides as the recommended and its kind derived, as step 9's
-bullet on a stop that hands more than one door says. Taking either is the person's.
+bullet on a stop that hands more than one door says. Taking either is the person's. The
+orchestrating skill logs this stop as `already-met` wherever it does not take the door itself.
 
 **A re-delivery whose task's own files already hold the fact is not that stop.** «A re-delivery
 of a task whose own earlier implementation record names every file that holds the fact is not
@@ -545,6 +546,18 @@ here.
 Giving up is the stop. Report every run by path, what the last one printed, and write no record:
 a record over a red run is refused by the validator anyway, and the point of stopping here is that
 it was never composed.
+
+**A red no change to this task's own files can answer is a stop of its own, and never a retry.**
+Two shapes, and the first is read from the tree rather than from anyone's account of it: after the
+implementer returns, `git status --porcelain -- <target-source-root>` printing nothing means this
+delivery changed nothing under the target, so a red build is the tree's own — it was red before
+this invocation began, and no return of this task's producer can turn it green. The second is
+read from the producer: the fix a diagnosis or the run names lies only in files no record of this
+task names — another task's, or no task's — and the implementer says so rather than writing
+there. Either way, write no record, report the run by path with the files the fix would touch,
+and hand `/plan-work` over this slug as the door — a corrective increment or an ordinary one, the
+person's to choose. The orchestrating skill logs it as `outside-task`; trying the same delivery
+again pays the run again and answers nothing.
 
 Write `implementation/<epic>/<slug>.md` through the writer, never by hand — the same epic and
 slug as the task, because the path is the identity and nothing else names which task a record
@@ -703,7 +716,9 @@ somebody else's. A file in that set takes the first `test` exit; any other file 
 
 `code` — the source is wrong: the fix goes back to the `task-implementer` with the findings, that
 delegation re-entered rather than respawned, and the suite runs again under
-`<epic>-<slug>-suite-2`, with the first run keeping its name. `build` — nothing ran, because a
+`<epic>-<slug>-suite-2`, with the first run keeping its name. Where the implementer returns that
+the fix lies only in files no record of this task names, the red is the stop step 4 names for a
+red no change to this task's own files can answer. `build` — nothing ran, because a
 compile the suite step performed itself failed, and every failure the output lists after it
 describes a binary nobody built. No registry owes a step that compiles
 before the suite, so this is the same red as a typecheck step's, arriving one step later instead

@@ -55,14 +55,24 @@ session that stopped while its subagents were still running. The harness refuses
 
 - **R1** — A goal's state is a script's answer, read from disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran follows with its output verbatim.
 - **R2** — State A holds when every task of the scope holds an implementation record and a proof record, or an implementation record of the substrate alone, which owes no proof; no implementation record of the scope records a criterion unmet; every task of the scope whose records changed since the goal began is named by a review record committed after them; the delivery and the plan check against their sources; the specification is sound; a measure is committed after the last record and the last review; the tree holds no change but those the condition declared untouched; every commit since the goal began names a skill and the slug, or is a reconciliation that touches only the trace and its own record; none of those commits is on a remote; and the plugin runs the version the goal began under.
-- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, `stands`, `analyse`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
+- **R3** — State B holds when the initiative's orchestration log, changed since the goal began, ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`, `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`, `contradiction`, `budget`, `stands`, `analyse`, `outside-task`, `already-met`, `unclassified`, and the measure, commit and remote conditions of R2 hold; what the tree still holds is reported as left for the person, because a delivery that stopped leaves its files for a person to read. A plugin whose version changed since the goal began is state B on its own, and so is a commit since the goal began that touches the project file or a standard it declares: the rules the goal ran under are no longer the ones that answer, or what only the person authors changed under a goal.
 - **R11** — A commit since the goal began that names no skill and the slug, and is no reconciliation R2 admits, is state B on its own: the route never rewrites history, so that commit stands until a person reads it, and a goal waiting for it to disappear never ends.
 - **R12** — A scope that holds every condition of R2 but one — an implementation record of it records a criterion unmet — is state B, each such criterion named beside its task: the record says the source does not satisfy the criterion, and state A would say the scope is delivered.
 - **R13** — The answer names every criterion that a review committed since the goal began, naming a task of the scope, left other than covered, beside that review; the list fails no check, because a criterion no suite reaches is a reading for a person, not a state.
 
 ### What a stopped run writes
 
-- **R4** — A run a stop ended closes its orchestration log with one stop line: its class names the stop from the list R3 holds, and its fact is the stopping report's own words. Every stop the orchestrating skill's file names carries exactly one class.
+- **R4** — A run a stop ended closes its orchestration log with one stop line: its class names the stop from the list R3 holds, and its fact is the stopping report's own words. Every stop the orchestrating skill's file names carries exactly one class. A stop no other class names carries `unclassified`, and its fact is the whole of what a person reads.
+
+  Grounds: the 19 stop lines the sales consumers' orchestration logs held on 2026-10-30, read
+  against their own facts. Seven carried `gave-up`, and one of those was a delivery that gave up;
+  two were a red whose fix lay in files the task does not write — another task's, or none's — two
+  a task whose implementer found every criterion already met by source the task never wrote, and
+  two framework defects since corrected. Two more carried `unclassified`, outside the list: a
+  build red over a tree the delivery had not changed, and a fix that needed another task's file.
+  Under a goal, `gave-up` is a judged choice the door decider may answer by trying the same
+  delivery again, which a fix outside the task cannot reward; and a class outside the list left
+  the goal without state B, though only a person could move the run.
 
 ### What a goal carries
 

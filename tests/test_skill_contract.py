@@ -672,6 +672,25 @@ def test_the_proof_is_skipped_only_for_the_task_the_validator_names_the_substrat
                         .read_text(encoding="utf-8").split())
     assert "`implemented as the substrate alone, which owes no proof` → `done`" in progress
 
+
+def test_a_red_the_tasks_own_files_cannot_answer_ends_the_run_without_a_retry():
+    """A build red over a tree the delivery left unchanged is the tree's own, read from git; a fix
+    that lies only in another task's files is the producer's to say. Neither is a judged choice:
+    trying the same delivery again cannot reward it."""
+    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
+                     .read_text(encoding="utf-8").split())
+    assert "**A red no change to this task's own files can answer is a stop of its own, and " \
+           "never a retry.**" in skill
+    assert "`git status --porcelain -- <target-source-root>` printing nothing" in skill
+    assert "logs it as `outside-task`" in skill and "logs this stop as `already-met`" in skill
+    orchestrator = " ".join((REPO / "src/claude/skills/deliver-scope/SKILL.md")
+                            .read_text(encoding="utf-8").split())
+    judged = orchestrator.split("- **A judged choice**", 1)[1].split("- **A finding", 1)[0]
+    assert "ends the run as `outside-task`" in judged
+    agent = " ".join((REPO / "src/claude/agents/task-implementer.md")
+                     .read_text(encoding="utf-8").split())
+    assert "the fix a red run asks for lies only in files this task's records do not name" in agent
+
 def test_a_review_is_validated_as_the_review_being_written():
     """«The review being written is held to its tasks as they stand, and refused where it falls
     short» (SPEC-004 R22): step 5 names it with `--review`, and every earlier review is

@@ -25,8 +25,8 @@ follows with its output verbatim.» (SPEC-008 R1)
   line — «State B holds when the initiative's orchestration log, changed since the goal began,
   ends with a stop line whose class is one of `blocking`, `silence`, `rebind`, `producers`,
   `gave-up`, `infrastructure`, `project-file`, `pending-change`, `specification`,
-  `contradiction`, `budget`, `stands`, `analyse`, and the measure, commit and remote
-  conditions of R2
+  `contradiction`, `budget`, `stands`, `analyse`, `outside-task`, `already-met`,
+  `unclassified`, and the measure, commit and remote conditions of R2
   hold» (SPEC-008 R3) — what the tree still holds is listed as left for the person — or the
   plugin's version changed since the goal began, or a commit since then touched `siegard.json`
   or a standard it declares, which only the person authors — or a commit since then names no
@@ -106,7 +106,7 @@ PLUGIN_MANIFEST = BIN.parent / ".claude-plugin" / "plugin.json"
 SKILLS = BIN.parent / "skills"
 STOP_CLASSES = ("blocking", "silence", "rebind", "producers", "gave-up", "infrastructure",
                 "project-file", "pending-change", "specification", "contradiction", "budget",
-                "stands", "analyse")
+                "stands", "analyse", "outside-task", "already-met", "unclassified")
 RECONCILED = ("siegard-trace.json", "siegard-reconcile/")
 CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")

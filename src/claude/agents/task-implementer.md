@@ -222,8 +222,10 @@ shape — «An element is held in a file that declares its shape» (SPEC-003 §D
 not every file that uses it.
 
 If you cannot write the source — an input is absent, a node it implements does not exist, its
-notes carry a blocking entry, or the specification is silent on a fact the work needs — say so
-plainly in one sentence, leave the tree as you found it, and return no mapping. Source written
+notes carry a blocking entry, the specification is silent on a fact the work needs, or the fix a
+red run asks for lies only in files this task's records do not name, another task's or no task's
+— say so plainly in one sentence, naming those files where it is the last, leave the tree as you
+found it, and return no mapping. Source written
 and then abandoned halfway is worse than none: where you have already written files and must
 stop, say which ones, so the caller reports a failure over a tree somebody has to look at.
 

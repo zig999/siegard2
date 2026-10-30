@@ -239,7 +239,8 @@ evidence, a finding's worth — is never taken.
   with the criterion the report gave.
 - **A judged choice** — a delivery that gave up, an infrastructure failure the diagnosis read
   twice, a certification refused again — while the condition's budget of judged doors is not
-  spent. Spawn a `siegard:door-decider` subagent, its judgment at
+  spent. A red no change to the task's own files can answer is never one: trying the same
+  delivery again cannot reward it, and it ends the run as `outside-task`. Spawn a `siegard:door-decider` subagent, its judgment at
   `${CLAUDE_PLUGIN_ROOT}/agents/door-decider.md`, handing it four things: the doors — the
   invocation the stopping report handed to try again, and ending the run on this stop — each with
   what it does and what it leaves; the facts each rests on, by path, the runs and the diagnoses
@@ -279,7 +280,8 @@ None is worked around, and none is retried. Each carries its class, in backticks
   since the plan was derived, and the door is `/plan-work` over the slug, never a derivation —
   `rebind`;
 - a suite whose diagnosis names a disagreement between the two producers — `producers`;
-- a delivery that gave up — `gave-up`;
+- a delivery that gave up, a red the task's own files could still answer and its producer
+  did not — `gave-up`;
 - an infrastructure failure the diagnosis read twice — `infrastructure`;
 - a field `siegard.json` does not declare, or a standard that resolves nowhere — `project-file`;
 - a pending change this skill did not make, anywhere the pathspec above reaches —
@@ -292,7 +294,15 @@ None is worked around, and none is retried. Each carries its class, in backticks
 - a task whose `stands` files this run's own deliveries moved — the door is `/reconcile` over
   those files, the person's to ask for — `stands`;
 - under a goal that asks to specify, a stop of `/analyse` other than one over material that states
-  no fact or names nodes and changes none — `analyse`.
+  no fact or names nodes and changes none — `analyse`;
+- a red no change to the task's own files can answer — a build red over a tree the delivery
+  left unchanged, or a fix the report places in files no record of the task names, another
+  task's or none's — the door is `/plan-work` over the slug, the person's, and never trying the
+  same delivery again — `outside-task`;
+- a delivery whose implementer found every criterion already met by source the task never wrote,
+  where the door the trace decides is not one this run takes — `already-met`;
+- a stop no class above names — its fact the stopping report's own words, which is the whole of
+  what a person reads — `unclassified`.
 
 The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
 stop ended closes its orchestration log with one stop line: its class names the stop from the

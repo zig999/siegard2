@@ -328,6 +328,22 @@ def test_a_stop_line_closing_the_log_with_the_measure_committed_is_state_b(proje
     assert result.returncode == 0
 
 
+
+@pytest.mark.parametrize("line", [
+    "stop: outside-task — the build is red over a tree the delivery left unchanged",
+    "stop: already-met — every criterion stands in src/orders/place.ts, which no node binds",
+    "stop: unclassified — no class of the list fits the fact this line states",
+])
+def test_a_stop_of_the_new_classes_is_state_b(project, line):
+    """«A stop no other class names carries `unclassified`, and its fact is the whole of what a
+    person reads» (SPEC-008 R4). A red no change to the task's files answers, a task found
+    already met, and a stop no class names all end the goal where only a person moves it."""
+    log(project, line)
+    commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
+    measure(project)
+    result = state(project)
+    assert first(result) == f"state B — {line}", result.stdout
+
 def test_a_stop_that_left_files_is_state_b_and_lists_them_for_the_person(project):
     log(project, "stop: producers — the diagnosis reads the test and the code apart")
     commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
