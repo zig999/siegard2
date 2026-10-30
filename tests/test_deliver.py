@@ -23,10 +23,12 @@ REPO = Path(__file__).resolve().parent.parent
 
 
 def problems_of(delivery: Path, work: Path, target: Path, root: Path,
-                derived: bool = False) -> list[str]:
+                derived: bool = False, reviewing: set[str] | None = None) -> list[str]:
     """Everything the validator would report over this delivery, in one list. The plan is
     derived first, as a planning run leaves it, unless the test already derived it — `derived`
-    — and moved something since."""
+    — and moved something since. Every review the delivery holds is validated as the review
+    being written, as `--review` names it, unless `reviewing` names which — the empty set is
+    the delivery read with every review as history."""
     validator = deliver.contract()
     names = deliver.pass_names()
     if not derived:
@@ -34,7 +36,10 @@ def problems_of(delivery: Path, work: Path, target: Path, root: Path,
     plan_nodes, plan_problems = deliver.load_plan(work, root)
     assert plan_problems == [], f"the fixture plan does not hold together: {plan_problems}"
     nodes, found = deliver.collect(delivery, validator, names)
-    return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, target)
+    if reviewing is None:
+        reviewing = {nid for nid, node in nodes.items() if node["kind"] == "review"}
+    return found + deliver.cross_problems(nodes, plan_nodes, work, names, delivery, target,
+                                          reviewing=reviewing)
 
 
 def said(problems: list[str], fragment: str) -> None:
@@ -2481,6 +2486,110 @@ def test_a_review_over_fewer_files_than_its_tasks_records_wrote(delivery, work, 
          "proof/checkout/record-order says it wrote in `tests`")
 
 
+
+def owed_review_lines(delivery: Path, work: Path, target: Path, root: Path) -> list[str]:
+    validator = deliver.contract()
+    nodes, _ = deliver.collect(delivery, validator, deliver.pass_names())
+    plan_nodes, _ = deliver.load_plan(work, root)
+    report = deliver.outstanding_report(nodes, plan_nodes, target)
+    return [line for line in report.splitlines() if "owed a review" in line]
+
+
+def test_a_review_written_before_its_task_wrote_another_file_is_owed_never_refused(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """«a task some review names and none answers as it stands is owed a review, and a review
+    written before the task or its records changed is never refused for it» (SPEC-004 R22). A
+    proof-only re-delivery writes a helper after the first review; the delivery holds together,
+    the outstanding report names the review owed, and the second review that lists the helper
+    settles it — while the first stays refused wherever it is the review being written."""
+    write_delivery("review/first", review_front(work, root))
+    proof = json_front(delivery, "proof/checkout/record-order")
+    proof["files"] = [{"path": "tests/support/orders.ts", "effect": "builds a submitted order"}]
+    write_delivery("proof/checkout/record-order", proof)
+
+    assert problems_of(delivery, work, target, root, reviewing=set()) == []
+    said(problems_of(delivery, work, target, root, derived=True),
+         "review/first: `reviewed` does not list tests/support/orders.ts, which "
+         "proof/checkout/record-order says it wrote in `files`")
+    assert owed_review_lines(delivery, work, target, root) == [
+        "task/checkout/record-order: owed a review — no review answers it as it stands: "
+        "review/first does not list tests/support/orders.ts, which proof/checkout/record-order "
+        "names"]
+
+    write_delivery("review/again", review_front(work, root, reviewed=[
+        "src/orders/place.ts", "tests/place.spec.ts", "tests/support/orders.ts"]))
+    assert problems_of(delivery, work, target, root, reviewing=set()) == []
+    assert problems_of(delivery, work, target, root, derived=True,
+                       reviewing={"review/again"}) == []
+    assert owed_review_lines(delivery, work, target, root) == [], \
+        "one review answering the task as it stands is the whole of what the task is owed"
+
+
+def test_a_review_over_criteria_its_task_no_longer_states_is_owed_never_refused(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery):
+    """A re-plan rewords a reviewed task's criterion and the task is delivered again against it:
+    the review answered the words it was handed, and is history. The task is owed a review, and
+    the review being written is held to the criterion as it now reads."""
+    write_delivery("review/first", review_front(work, root))
+    reworded = "Submitting a valid order returns its order_number, once."
+    task = json_front(work, "task/checkout/record-order")
+    task["criteria"] = [reworded]
+    write_plan("task/checkout/record-order", task)
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    record["criteria"][0]["criterion"] = reworded
+    write_delivery("implementation/checkout/record-order", record)
+    proof = json_front(delivery, "proof/checkout/record-order")
+    proof["tests"][0]["proves"] = reworded
+    write_delivery("proof/checkout/record-order", proof)
+    repin_proof(delivery, write_delivery)
+
+    assert problems_of(delivery, work, target, root, reviewing=set()) == []
+    found = problems_of(delivery, work, target, root, derived=True)
+    said(found, f"review/first: the review names a task stating the criterion `{reworded}`, and "
+                f"coverage answers for no such criterion")
+    said(found, "review/first: coverage answers for `Submitting a valid order returns its "
+                "order_number.`, which no task this review names states")
+    assert owed_review_lines(delivery, work, target, root) == [
+        f"task/checkout/record-order: owed a review — no review answers it as it stands: "
+        f"review/first answers no criterion `{reworded}`"]
+
+
+def test_the_cli_holds_the_review_it_names_and_admits_the_rest(delivery, work, root, target,
+                                                               sound_delivery, write_delivery):
+    """`--review` names the review being written; without it every review is history, and with
+    it the named one is held to its tasks as they stand. A name the delivery does not hold, or
+    one beside the outstanding report, cannot run."""
+    import subprocess
+    import sys
+    write_delivery("review/first", review_front(work, root, reviewed=["src/orders/place.ts"],
+                                                unpaired=[]))
+    derive_plan(work, root)
+
+    def invoke(*args):
+        return subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/deliver.py"),
+                               *args, str(delivery), str(work), str(target), str(root)],
+                              capture_output=True, text=True)
+
+    written = invoke()
+    assert written.returncode == 0, written.stdout + written.stderr
+    assert invoke("--check").returncode == 0, invoke("--check").stdout
+    held = invoke("--check", "--review", "first")
+    assert held.returncode == 1
+    assert "review/first: `reviewed` does not list tests/place.spec.ts" in held.stdout
+    absent = invoke("--check", "--review", "second")
+    assert absent.returncode == 2 and "--review names review/second" in absent.stderr
+    beside = invoke("--outstanding", "--review", "first")
+    assert beside.returncode == 2 and "--review holds the review being written" in beside.stderr
+    outstanding = invoke("--outstanding", "--scope", "task/checkout/record-order")
+    assert outstanding.returncode == 0, outstanding.stdout + outstanding.stderr
+    assert ("task/checkout/record-order: owed a review — no review answers it as it stands: "
+            "review/first does not list tests/place.spec.ts, which proof/checkout/record-order "
+            "names") in outstanding.stdout
+    assert "every task in the scope has a record, and every record its proof" \
+        in outstanding.stdout.splitlines(), \
+        "an owed review bars no delivery, and the line a goal reads still stands"
+
 def dependent(work: Path, write_delivery) -> None:
     write_delivery("implementation/checkout/bill-order", {
         "title": "Bill", "summary": "Raise the bill.",
@@ -2568,7 +2677,8 @@ def test_the_six_findings_are_receipts_over_a_closed_plan(delivery, work, root, 
                                                           sound_delivery, write_delivery,
                                                           run_dir):
     """A closed plan takes no further record, so a refusal there stops no writer. The finding is
-    printed as a receipt and the exit stays what it was; a live plan is refused."""
+    printed as a receipt and the exit stays what it was; a live plan is refused. The review's
+    file set is held where `--review` names it as the review being written."""
     import subprocess
     import sys
     run_dir("failed", "checkout-record-order-suite")
@@ -2576,21 +2686,21 @@ def test_the_six_findings_are_receipts_over_a_closed_plan(delivery, work, root, 
                                                 unpaired=[]))
     script = REPO / "src/claude/bin/deliver.py"
     derive_plan(work, root)
-    live = subprocess.run([sys.executable, "-B", str(script), str(delivery), str(work),
+    live = subprocess.run([sys.executable, "-B", str(script), "--review", "first", str(delivery), str(work),
                            str(target), str(root)], capture_output=True, text=True)
     assert live.returncode == 1
     assert "## Notes names none of run/checkout-record-order-suite" in live.stdout
     assert "`reviewed` does not list tests/place.spec.ts" in live.stdout
 
     (work / deliver.plan.CLOSURE_FILE).write_text("Closed.\n", encoding="utf-8")
-    closed = subprocess.run([sys.executable, "-B", str(script), str(delivery), str(work),
+    closed = subprocess.run([sys.executable, "-B", str(script), "--review", "first", str(delivery), str(work),
                              str(target)], capture_output=True, text=True)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert closed.stdout.count("a receipt, never a refusal: the plan is closed") == 2, \
         closed.stdout
     assert "## Notes names none of run/checkout-record-order-suite" in closed.stdout
     assert "`reviewed` does not list tests/place.spec.ts" in closed.stdout
-    checked = subprocess.run([sys.executable, "-B", str(script), "--check", str(delivery),
+    checked = subprocess.run([sys.executable, "-B", str(script), "--check", "--review", "first", str(delivery),
                               str(work), str(target)], capture_output=True, text=True)
     assert checked.returncode == 0 and "a receipt, never a refusal" in checked.stdout
 

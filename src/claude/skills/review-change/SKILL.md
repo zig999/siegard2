@@ -46,7 +46,8 @@ A missing input is a stop, not a default:
 6. **this review's own name** — what `review/<review-name>.md` under the delivery root is called,
    the name its captured run takes, and the slug of the reconciliation record its conformance pass
    writes at `siegard-reconcile/<review-name>.md`, at the target's git toplevel. Named by the
-   human; where the invocation names none, it is the initiative's slug. A name already taken in
+   human, or by `/deliver-scope` under the rule its own file states; where the invocation names
+   none, it is the initiative's slug. A name already taken in
    any of the three places is a stop and not a suffix: `bin/run.py` refuses a run under a name
    that exists, `trace.py --stage` refuses a reconciliation slug that exists, and the record
    beside either is a judgment somebody acted on — a second review of one initiative names itself,
@@ -124,7 +125,11 @@ Neither repair is this invocation's: a plan is fixed through `/plan-work`, a rec
 
 A review carries no pin. It answers to the criteria its tasks state today, and the coverage pass is
 held to exactly those — so a task that changed since is a criterion the review did not answer for,
-which reads better than a hash nobody can compare by eye.
+which reads better than a hash nobody can compare by eye. That holds the review being written, and
+`--review` in step 5 is what holds it; an earlier review over a task that changed since is never
+refused for it — «a task some review names and none answers as it stands is owed a review, and a
+review written before the task or its records changed is never refused for it» (SPEC-004 R22) —
+so the check above is no stop on the review that answers the change.
 
 Before any write, `git status --porcelain -- <delivery-root>` must print nothing: the review's
 own diff is its own review, and the pathspec is the point — a pending change elsewhere in the
@@ -603,13 +608,14 @@ python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --node <file> <delivery-root>
 ### 5. Validate, and derive the delivery
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py <delivery-root> <work-root> <target-source-root> <specification-root>
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --review <review-name> <delivery-root> <work-root> <target-source-root> <specification-root>
 ```
 
 This validates the review against the contract, runs the checks that need the plan — every task
 named is a delivered task of this plan, the coverage pass answers for every criterion of them and
-for nothing else, the failures counted match the findings recorded, the run it points at exists,
-every finding of a pass that scans the file set sits in a file that set lists — and, where the
+for nothing else, `reviewed` lists every file their records name, the failures counted match the
+findings recorded, the run it points at exists, every finding of a pass that scans the file set
+sits in a file that set lists — and, where the
 standard pass ran, the checks that need the registry, read fresh from its own path: it holds
 together, and every citation names a rule it declares, leaves to a reading rather than to a tool,
 and whose scope reaches the file the finding names. Then it derives `delivery.json`. **Never write

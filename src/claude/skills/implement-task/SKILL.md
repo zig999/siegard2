@@ -440,6 +440,8 @@ authorized packages:   <each package the registry authorizes, by name — omit w
 produces:              <each path the task's `produces` declares — omit where it declares none>
 reference:             <each path the task's `reference` declares, resolved against the work
                         root — omit where it declares none>
+earlier record:        <absolute path of the implementation record this re-delivery replaces —
+                        omit on a first delivery>
 
 You write no file under the delivery root: return the record's content as text.
 ```
@@ -476,6 +478,17 @@ written, to every node the task implements» (SPEC-004 R18); the second is `/rec
 files, and the plan would refuse them. Report the stop with the output verbatim and both doors
 ready to paste, the one the output decides as the recommended and its kind derived, as step 9's
 bullet on a stop that hands more than one door says. Taking either is the person's.
+
+**A re-delivery whose task's own files already hold the fact is not that stop.** «A re-delivery
+of a task whose own earlier implementation record names every file that holds the fact is not
+the stop R20 states: the record is written again over those files, answering the task as it
+stands.» (SPEC-004 R21) That is the re-delivery a re-plan leaves owed — a re-bind that widened
+what the task implements, a criterion that reads differently and is already met — and the
+`earlier record` line is what lets the implementer see it: a return naming those files, each
+with what it does now and every node answered as it stands, is written through
+`--write-implementation --replace` like any re-delivery, and the proof follows it whole. A
+return that finds the fact in a file the earlier record does not name is the stop above, and
+step 7 refuses the record that names one anyway.
 
 **Every path the returned record names is relative to the target source root** — the directory
 the registry's commands run from — never to the repository around it. `produces` is held to
@@ -782,7 +795,12 @@ Each path it prints is named where it belongs: a source path in the implementati
 test file in the proof's `tests`, or in its `files` where the path holds no test `tests` names —
 with the effect the producer that changed it states, that delegation re-entered to say it where
 its return did not. A path neither producer claims is reported as such and never reverted: what
-to do with a change nobody explains is a person's. Rerun until it exits 0. A record rewritten
+to do with a change nobody explains is a person's. On a re-delivery it prints `uncarried:`
+beside an unchanged path the implementation names that the record it replaces did not — «A
+re-delivery names a file the tree did not change only where the record it replaces named it»
+(SPEC-004 R21) — and that path is source the task never wrote: the return goes back to the
+implementer, and where the fact holds only there, the stop above is the answer. Rerun until it
+exits 0. A record rewritten
 here goes through its writer again under `--replace`, from the producer's revised return. An
 implementation rewritten changes the pin the proof carries, and the writer prints a receipt
 saying so: the proof is then rewritten whole through `--write-proof --replace`, with the same

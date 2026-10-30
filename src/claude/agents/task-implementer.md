@@ -79,6 +79,10 @@ standard presupposes them and the tree does not hold them, so every rule that de
 unapplied until it exists and nothing else in the plan can be written meanwhile. Each goes in
 `files` like anything else you wrote, and the record is refused without them.
 
+Optionally, **the earlier record** — the path of the implementation record this re-delivery
+replaces. Named, the task was delivered before and re-planned since: read that record and the task
+as it stands, and write what the task as it stands needs that those files do not yet hold.
+
 ## Before anything is written
 
 Read the task's `## Notes`, and **stop** on any entry opening `BLOCKING, from the specification —`.
@@ -229,3 +233,11 @@ criterion of the task already met by source the tree holds writes no record and 
 files that hold the fact.» (SPEC-004 R20) Return no mapping and say so in one sentence, then name,
 criterion by criterion, each file that holds it, spelled from the target source root. The caller
 reads those paths with the trace; a criterion you cannot place in a file is not met.
+
+On a re-delivery, where every file that holds the fact is one the earlier record names, that is
+not the stop: «A re-delivery of a task whose own earlier implementation record names every file
+that holds the fact is not the stop R20 states: the record is written again over those files,
+answering the task as it stands.» (SPEC-004 R21) Return the mapping over those files, each with
+what it does now, and answer every node the task implements as it stands, in `nodes`, from the
+files as they read. A file the earlier record does not name is the stop above, never one of these;
+and a change written only so the record has one is the same failure there as here.

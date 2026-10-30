@@ -81,13 +81,24 @@ refusal there stops no writer and only hides the index of a finished initiative 
 nobody remains to settle. Seven findings are receipted over a closed plan, printed with the index
 and refused over a live one: a run's step under a command the registry does not declare under
 that name, or a run from outside the target; a review naming no run over a registry declaring
-commands; a review's green run that skipped a step the registry declares; a review's file set
-narrower than what its tasks' records wrote; a dependency delivered and never proven; a red
-suite attempt the proof's `## Notes` does not name; and a proof naming a test its target no
-longer holds. No delivery node carries a contract version
+commands; a review's green run that skipped a step the registry declares; the file set of the
+review `--review` names narrower than what its tasks' records wrote; a dependency delivered and
+never proven; a red suite attempt the proof's `## Notes` does not name; and a proof naming a
+test its target no longer holds. No delivery node carries a contract version
 of its own, so the plan's closure is the one fact that separates a record nobody will write
 again from one being written now. Every other refusal holds over a closed plan as over a live
 one.
+
+**A review answers for its tasks as they stood when it was written.** It carries no pin, and
+nothing rewrites it: a record rewritten after it — a re-delivery writing a file it was never
+handed — or a criterion reworded after it leaves it answering a change that no longer stands.
+That is the next review's to answer, never a refusal of this one: «a task some review names and
+none answers as it stands is owed a review, and a review written before the task or its records
+changed is never refused for it» (SPEC-004 R22). `--outstanding` names each task some review
+names and none answers — every file its records name listed, every criterion it states answered
+where the coverage pass ran — with what each review falls short of. The review being written is
+the one held to its tasks as they stand: `--review <name>` names it, and its file set and its
+coverage are refused where they fall short of what the records and the plan hold now.
 
 **A deliverable set holding more than one task may be delivered in parallel, one git worktree
 each — and this script is where that is said, because reading this report is where somebody
@@ -183,6 +194,11 @@ Usage:  deliver.py <delivery-root> <work-root> <target-source-root> [<specificat
                                                         delivery.json
         deliver.py --check <delivery-root> <work-root> <target-source-root> [<specification-root>]
                                                         validate and compare; write nothing
+        deliver.py [--check] --review <review-name> <delivery-root> <work-root> <target-source-root> [<specification-root>]
+                                                        the same, with review/<review-name> — the
+                                                        review being written — held besides to
+                                                        every file its tasks' records name and
+                                                        every criterion its tasks state
         deliver.py --outstanding <delivery-root> <work-root> <target-source-root> [<specification-root>] [--scope <id>]...
                                                         validate, then print every task with no
                                                         record, what each waits on, and the set
@@ -306,6 +322,7 @@ import os
 import re
 import functools
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -1593,8 +1610,8 @@ def implementation_problems(nid: str, front: dict, task: dict, work: Path,
 
 def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict],
                          delivered: set[str], names: list[str], root: Path) -> list[str]:
-    """One review against the plan and the delivery: the tasks it names are delivered tasks, the
-    coverage pass answers for every criterion of them, and the run it read exists."""
+    """One review against the plan and the delivery: the tasks it names are delivered tasks, and
+    the run it read exists."""
     problems: list[str] = []
     tasks = [t for t in listed(front, "tasks") if isinstance(t, str)]
 
@@ -1607,6 +1624,19 @@ def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict],
                             f"record answers; a review of a task nothing delivered has no "
                             f"subject")
 
+    problems.extend(run_problems(nid, front, root, names))
+    return problems
+
+
+def review_coverage_problems(nid: str, front: dict, plan_nodes: dict[str, dict],
+                             names: list[str]) -> list[str]:
+    """The review being written against the criteria its tasks state: the coverage pass answers
+    for every one of them and for nothing else. Held only where `--review` names the review —
+    «The review being written is held to its tasks as they stand, and refused where it falls
+    short» (SPEC-004 R22) — because a review written before a criterion was reworded answered the
+    words it was handed, and `--outstanding` names the task it no longer answers."""
+    problems: list[str] = []
+    tasks = [t for t in listed(front, "tasks") if isinstance(t, str)]
     if "coverage" in ran_passes(front, names) and tasks:
         stated = [c for target in tasks if target in plan_nodes
                   for c in listed(plan_nodes[target]["front"], "criteria")
@@ -1622,8 +1652,6 @@ def review_plan_problems(nid: str, front: dict, plan_nodes: dict[str, dict],
                 problems.append(f"{nid}: coverage answers for `{criterion}`, which no task "
                                 f"this review names states; the criterion is quoted as the "
                                 f"task states it")
-
-    problems.extend(run_problems(nid, front, root, names))
     return problems
 
 
@@ -1700,10 +1728,14 @@ def demonstrates_problems(nid: str, front: dict, task: dict) -> list[str]:
 def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Path,
                    names: list[str], root: Path, target: Path,
                    standard: Draft202012Validator | None = None, closed: bool = False,
-                   receipts: list[str] | None = None) -> list[str]:
+                   receipts: list[str] | None = None,
+                   reviewing: set[str] | None = None) -> list[str]:
     """The rules that need to see more than one node at once — or the plan, or the project's own
     standard, read fresh from the target source root. Over a closed plan the findings the module
-    docstring receipts land in `receipts` instead of being returned, worded as what they are."""
+    docstring receipts land in `receipts` instead of being returned, worded as what they are.
+    `reviewing` holds the review ids `--review` named: only those are held to their tasks' file
+    sets and criteria as they stand."""
+    reviewing = reviewing or set()
     problems: list[str] = []
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"}
@@ -1766,7 +1798,9 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
                                 f"its citations and the run it owes are unchecked until "
                                 f"`target` does")
             problems.extend(review_reconciliation_problems(nid, front, target))
-            held.extend(review_set_problems(nid, front, nodes))
+            if nid in reviewing:
+                problems.extend(review_coverage_problems(nid, front, plan_nodes, names))
+                held.extend(review_set_problems(nid, front, nodes))
     return problems + receipted(held, closed, receipts)
 
 
@@ -1801,36 +1835,82 @@ def receipted(found: list[str], closed: bool, receipts: list[str] | None) -> lis
 
 
 def review_set_problems(nid: str, front: dict, nodes: dict[str, dict]) -> list[str]:
-    """The review's file set against the records of the tasks it answers: every path an
-    implementation or a proof of those tasks says it wrote is in `reviewed`. The set is the
-    caller's to state and never the review's to discover, and this is what holds the statement
-    to the records: a review over fewer files than the tasks wrote is a review that skipped part
-    of the change, and every pass it ran was clean over a set nobody delivered."""
+    """The review being written, its file set against the records of the tasks it answers: every
+    path an implementation or a proof of those tasks says it wrote is in `reviewed`. The set is
+    the caller's to state and never the review's to discover, and this is what holds the
+    statement to the records: a review over fewer files than the tasks wrote is a review that
+    skipped part of the change, and every pass it ran was clean over a set nobody delivered.
+    Held only where `--review` names the review: a record rewritten after a review was written
+    names files that review was never handed, and the task is owed the next review, which
+    `--outstanding` names, rather than the earlier one a refusal."""
     reviewed = {p for p in listed(front, "reviewed") if isinstance(p, str)}
     problems: list[str] = []
     for task in listed(front, "tasks"):
         if not isinstance(task, str) or not task.startswith("task/"):
             continue
-        for kind in PAIRED:
-            record = f"{kind}/{task[len('task/'):]}"
-            if record not in nodes:
-                continue
-            written, field = wrote(nodes[record]["front"])
-            missing = sorted(written - reviewed)
-            if missing:
+        for record, missing, field in review_set_shortfalls(task, reviewed, nodes):
+            if field == "stands":
+                problems.append(f"{nid}: `reviewed` does not list {', '.join(missing)}, where "
+                                f"{record} says the implementation stands; the proof of a task "
+                                f"whose implementation already stood is certified against that "
+                                f"file, and a review that did not read it certified nothing")
+            else:
                 problems.append(f"{nid}: `reviewed` does not list {', '.join(missing)}, which "
                                 f"{record} says it wrote in `{field}`; a review answers for a "
                                 f"task over every file its records wrote, and one over fewer "
                                 f"was clean over a change nobody delivered")
-            standing = {p for p in listed(nodes[record]["front"], "stands")
-                        if isinstance(p, str)}
-            unread = sorted(standing - reviewed)
-            if unread:
-                problems.append(f"{nid}: `reviewed` does not list {', '.join(unread)}, where "
-                                f"{record} says the implementation stands; the proof of a task "
-                                f"whose implementation already stood is certified against that "
-                                f"file, and a review that did not read it certified nothing")
     return problems
+
+
+def review_set_shortfalls(task: str, reviewed: set[str],
+                          nodes: dict[str, dict]) -> list[tuple[str, list[str], str]]:
+    """Each record of `task` naming a path `reviewed` lacks: the record, the paths, and the field
+    that names them — `stands` for an implementation that already stood."""
+    found: list[tuple[str, list[str], str]] = []
+    for kind in PAIRED:
+        record = f"{kind}/{task[len('task/'):]}"
+        if record not in nodes:
+            continue
+        written, field = wrote(nodes[record]["front"])
+        missing = sorted(written - reviewed)
+        if missing:
+            found.append((record, missing, field))
+        standing = {p for p in listed(nodes[record]["front"], "stands") if isinstance(p, str)}
+        unread = sorted(standing - reviewed)
+        if unread:
+            found.append((record, unread, "stands"))
+    return found
+
+
+def reviews_owed(nodes: dict[str, dict], plan_nodes: dict[str, dict],
+                 names: list[str]) -> dict[str, list[str]]:
+    """Every task some review names and none answers as it stands, with what each review naming
+    it falls short of — «a task some review names and none answers as it stands is owed a review,
+    and a review written before the task or its records changed is never refused for it»
+    (SPEC-004 R22). A review answers a task as it stands where it lists every file the task's
+    records name and, where its coverage pass ran, answers every criterion the task states."""
+    shortfalls: dict[str, list[str]] = {}
+    answered: set[str] = set()
+    for rid in sorted(n for n, node in nodes.items() if node["kind"] == "review"):
+        front = nodes[rid]["front"]
+        reviewed = {p for p in listed(front, "reviewed") if isinstance(p, str)}
+        audited = texts(listed(front, "coverage"), "criterion") \
+            if "coverage" in ran_passes(front, names) else None
+        for task in listed(front, "tasks"):
+            if not isinstance(task, str) or task not in plan_nodes \
+                    or plan_nodes[task]["kind"] != "task":
+                continue
+            said = [f"{rid} does not list {', '.join(missing)}, which {record} names"
+                    for record, missing, _ in review_set_shortfalls(task, reviewed, nodes)]
+            if audited is not None:
+                said += [f"{rid} answers no criterion `{criterion}`"
+                         for criterion in listed(plan_nodes[task]["front"], "criteria")
+                         if isinstance(criterion, str) and criterion not in audited]
+            if said:
+                shortfalls.setdefault(task, []).extend(said)
+            else:
+                answered.add(task)
+    return {task: said for task, said in shortfalls.items() if task not in answered}
 
 
 def collect(root: Path, validator, names: list[str], closed: bool = False,
@@ -2612,6 +2692,11 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     if not lines:
         lines = ["every task has a record, and every record its proof" if scope is None else
                  "every task in the scope has a record, and every record its proof"]
+    # A task owed a delivery again is owed its review after that delivery, so only a task whose
+    # records stand is named here; the line bars nothing, and the done line above ignores it.
+    owed = reviews_owed(nodes, plan_nodes, pass_names())
+    lines += [f"{tid}: owed a review — no review answers it as it stands: {'; '.join(said)}"
+              for tid, said in sorted(owed.items()) if tid in tasks and tid in delivered]
     return "\n".join(heading + lines + standards_held(nodes, target))
 
 
@@ -2795,7 +2880,14 @@ def unrecorded(target: str, named: list[str]) -> int:
     The tree is the witness, and it is a sound one only because the delivering invocation starts
     from a tree its own pathspec holds clean: what git shows changed under the target is what
     this delivery did. A record names a path under its own target's root, the same anchor every
-    other check resolves it at, so a record over another target names nothing here."""
+    other check resolves it at, so a record over another target names nothing here.
+
+    The other direction is held on a re-delivery alone. An implementation record that replaces
+    one `HEAD` holds may name a file the tree did not change only where the record it replaces
+    named it — «A re-delivery names a file the tree did not change only where the record it
+    replaces named it» (SPEC-004 R21): those are the files the task already wrote, and any other
+    unchanged file is source the task never wrote, whose stop is R20's. A first delivery is not
+    held to it here."""
     import trace
 
     target_root = Path(target)
@@ -2811,6 +2903,7 @@ def unrecorded(target: str, named: list[str]) -> int:
         print(f"cannot run: {trouble}", file=sys.stderr)
         return CANNOT_RUN
     recorded: set[Path] = set()
+    carried: list[tuple[Path, Path, list[str]]] = []
     for each in named:
         path = Path(each)
         if not path.is_file():
@@ -2827,6 +2920,8 @@ def unrecorded(target: str, named: list[str]) -> int:
             return CANNOT_RUN
         written, _ = wrote(front)
         recorded |= {(anchor / p).resolve() for p in written}
+        if path.resolve().parent.parent.name == "implementation":
+            carried.append((path, anchor, sorted(written)))
     home = project.toplevel_of(target_root)
     changed, failed = trace.changed_paths(home, None)
     if failed is not None:
@@ -2843,6 +2938,16 @@ def unrecorded(target: str, named: list[str]) -> int:
             continue
         if where not in recorded:
             missing.append(where.relative_to(base).as_posix())
+    touched = {(home / spelled).resolve() for spelled in changed}
+    uncarried: list[str] = []
+    for path, anchor, written in carried:
+        earlier = replaced_files(path)
+        if earlier is None:
+            continue
+        uncarried += [f"{path}: names {p}, which the tree did not change and the record it "
+                      f"replaces did not name"
+                      for p in written
+                      if (anchor / p).resolve() not in touched and p not in earlier]
     if missing:
         for path in missing:
             print(f"unrecorded: {path}")
@@ -2851,9 +2956,44 @@ def unrecorded(target: str, named: list[str]) -> int:
               f"the proof's `tests`, or its `files` where the path holds no test `tests` names — "
               f"each with what the producer that changed it says it now does.")
         return 1
+    if uncarried:
+        for line in uncarried:
+            print(f"uncarried: {line}")
+        print(f"\n{len(uncarried)} unchanged path(s) a re-delivery names that the record it "
+              f"replaces did not. A re-delivery carries only the files its task already wrote; "
+              f"source the task never wrote that already holds the fact is a stop — «A delivery "
+              f"whose implementer finds every criterion of the task already met by source the "
+              f"tree holds writes no record and stops, naming the files that hold the fact» "
+              f"(SPEC-004 R20) — and its door is the one `trace.py --encodes` decides over "
+              f"those files.")
+        return 1
     print(f"every path this tree changed under {target_root} is named by the "
           f"{len(named)} record(s) given")
     return 0
+
+
+def replaced_files(record: Path) -> set[str] | None:
+    """The paths the implementation record at `HEAD` names, where the record at this path
+    replaces one: None on a first delivery, where `HEAD` holds no record here, and wherever git
+    cannot answer — the check this feeds is a re-delivery's, and an unknown predecessor names
+    none."""
+    home = project.toplevel_of(record.parent)
+    spelled =record.resolve().relative_to(home.resolve()).as_posix()
+    try:
+        shown = subprocess.run(["git", "-C", str(home), "show", f"HEAD:{spelled}"],
+                               capture_output=True, text=True)
+    except OSError:
+        return None
+    if shown.returncode != 0:
+        return None
+    match = spec.FENCE.match(shown.stdout)
+    try:
+        front = spec.load_yaml("\n" + match.group(1)) if match else None
+    except yaml.YAMLError:
+        return None
+    if not isinstance(front, dict):
+        return None
+    return wrote(front)[0]
 
 
 def check_standard(named: str, against: str | None = None,
@@ -3234,6 +3374,20 @@ def main() -> int:
     if report and (verify or single is not None):
         print("cannot run: --outstanding stands alone", file=sys.stderr)
         return CANNOT_RUN
+    reviewing: set[str] = set()
+    while "--review" in args:
+        at = args.index("--review")
+        if at + 1 >= len(args) or args[at + 1].startswith("--"):
+            print("cannot run: --review takes the name of the review being written",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        reviewing.add(f"review/{args[at + 1]}")
+        del args[at:at + 2]
+    if reviewing and (report or single is not None):
+        print("cannot run: --review holds the review being written to its tasks as they stand, "
+              "over the whole delivery; the outstanding report names what every review leaves "
+              "owed, and --node opens one file", file=sys.stderr)
+        return CANNOT_RUN
 
     if single is not None:
         if verify or len(args) != 1 or any(a.startswith("--") for a in args):
@@ -3253,7 +3407,7 @@ def main() -> int:
             return CANNOT_RUN
         return check_single(root, single, validator, names)
     if len(args) not in (3, 4) or any(a.startswith("--") for a in args):
-        print("cannot run: expected [--check | --outstanding] "
+        print("cannot run: expected [--check [--review <name>] | --outstanding] "
               "<delivery-root> <work-root> <target-source-root> [<specification-root>], "
               "or --standard <file>, or --contract <branch>, on its own", file=sys.stderr)
         return CANNOT_RUN
@@ -3301,8 +3455,13 @@ def main() -> int:
         return CANNOT_RUN
     receipts: list[str] = []
     nodes, problems = collect(root, validator, names, closed, receipts)
+    absent = sorted(rid for rid in reviewing if rid not in nodes)
+    if absent:
+        print(f"cannot run: --review names {', '.join(absent)}, which {root} does not hold; it "
+              f"names the review being written, after its record is", file=sys.stderr)
+        return CANNOT_RUN
     problems += cross_problems(nodes, plan_nodes, work, names, root, target, standard, closed,
-                               receipts)
+                               receipts, reviewing)
     repinned: set[str] = set()
     if report:
         # A record over a task re-planned since — its pin, its notes, the nodes it implements

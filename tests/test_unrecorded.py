@@ -164,3 +164,55 @@ def test_a_tree_with_no_commit_cannot_run(tmp_path):
     done = run(home / "src", impl)
     assert done.returncode == 2
     assert "no commit" in done.stderr
+
+
+def committed_record(home: Path, **front) -> Path:
+    """An implementation record an earlier delivery wrote and committed — the record a
+    re-delivery replaces."""
+    path = record(home, "implementation", **front)
+    git(home, "add", "-A")
+    git(home, "commit", "-qm", "first delivery")
+    return path
+
+
+def test_a_re_delivery_carries_the_files_its_task_already_wrote(consumer):
+    """«A re-delivery names a file the tree did not change only where the record it replaces
+    named it» (SPEC-004 R21): the task's own files, unchanged, answer the task as it stands."""
+    committed_record(consumer, files=[{"path": "orders/place.ts", "effect": "places"}])
+    impl = record(consumer, "implementation",
+                  files=[{"path": "orders/place.ts", "effect": "places, and answers the node "
+                                                        "the re-bind added"}])
+    done = run(consumer / "src", impl)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_re_delivery_naming_an_unchanged_file_its_task_never_wrote_is_refused(consumer):
+    """An unchanged file the replaced record did not name is source the task never wrote; the
+    fact standing there is R20's stop, not this re-delivery's to claim."""
+    committed_record(consumer, files=[{"path": "orders/place.ts", "effect": "places"}])
+    impl = record(consumer, "implementation",
+                  files=[{"path": "orders/place.ts", "effect": "places"},
+                         {"path": "orders/legacy.ts", "effect": "already answers the node"}])
+    done = run(consumer / "src", impl)
+    assert done.returncode == 1
+    assert ("uncarried: " in done.stdout
+            and "names orders/legacy.ts, which the tree did not change and the record it "
+                "replaces did not name" in done.stdout), done.stdout
+    assert "orders/place.ts, which the tree did not change" not in done.stdout
+
+
+def test_a_re_delivery_naming_a_file_it_changed_is_held_as_any_delivery(consumer):
+    committed_record(consumer, files=[{"path": "orders/place.ts", "effect": "places"}])
+    put(consumer / "src" / "orders" / "legacy.ts", "rewritten\n")
+    impl = record(consumer, "implementation",
+                  files=[{"path": "orders/place.ts", "effect": "places"},
+                         {"path": "orders/legacy.ts", "effect": "rewritten for the node"}])
+    assert run(consumer / "src", impl).returncode == 0
+
+
+def test_a_first_delivery_is_not_held_to_a_record_it_replaces(consumer):
+    """No record at `HEAD` is a first delivery: the check is a re-delivery's alone, and a first
+    delivery stays held to R16 and nothing more here."""
+    impl = record(consumer, "implementation",
+                  files=[{"path": "orders/legacy.ts", "effect": "named, unchanged"}])
+    assert run(consumer / "src", impl).returncode == 0

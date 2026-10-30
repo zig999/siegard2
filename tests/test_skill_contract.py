@@ -637,3 +637,42 @@ def test_a_return_that_writes_nothing_is_a_stop_whose_door_the_trace_decides():
     agent = (REPO / "src/claude/agents/task-implementer.md").read_text(encoding="utf-8")
     assert "already met by source the tree holds" in agent
     assert "return no mapping" in agent.lower()
+
+
+def test_a_re_delivery_hands_the_record_it_replaces_and_carries_its_files():
+    """A re-plan that changed no criterion leaves a delivered task's files holding the fact; the
+    re-delivery writes its record again over them instead of stopping on R20. The implementer is
+    handed the record it replaces, and `--unrecorded` is what holds the carried files to it."""
+    skill = (REPO / "src/claude/skills/implement-task/SKILL.md").read_text(encoding="utf-8")
+    flat = " ".join(skill.split())
+    assert "earlier record: <absolute path of the implementation record this re-delivery " \
+           "replaces" in flat
+    assert "SPEC-004 R21" in flat
+    assert "`uncarried:`" in flat
+    agent = " ".join((REPO / "src/claude/agents/task-implementer.md")
+                     .read_text(encoding="utf-8").split())
+    assert "**the earlier record**" in agent
+    assert "is not the stop R20 states" in agent
+
+
+def test_a_review_is_validated_as_the_review_being_written():
+    """«The review being written is held to its tasks as they stand, and refused where it falls
+    short» (SPEC-004 R22): step 5 names it with `--review`, and every earlier review is
+    history."""
+    skill = (REPO / "src/claude/skills/review-change/SKILL.md").read_text(encoding="utf-8")
+    step = skill.split("### 5. Validate, and derive the delivery", 1)[1].split("### 6.", 1)[0]
+    assert "deliver.py --review <review-name> <delivery-root>" in step
+    assert "SPEC-004 R22" in skill
+
+
+def test_deliver_scope_names_every_review_it_invokes():
+    """A review name already taken stops `/review-change` invoked bare; the orchestrator names
+    its reviews by one rule — the slug, or the least free `-N` — so no run improvises a suffix
+    and none stops on a name nobody had a reason to choose."""
+    skill = " ".join((REPO / "src/claude/skills/deliver-scope/SKILL.md")
+                     .read_text(encoding="utf-8").split())
+    assert "`<slug>-<N>` for the least `N` from 2 that frees all four" in skill
+    assert "named by step 4's rule" in skill
+    review = " ".join((REPO / "src/claude/skills/review-change/SKILL.md")
+                      .read_text(encoding="utf-8").split())
+    assert "or by `/deliver-scope` under the rule its own file states" in review

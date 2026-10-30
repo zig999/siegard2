@@ -151,6 +151,30 @@ left out — so the file set the review that followed was handed never held them
   on 96 tasks across five consumers, 94 of which wrote source, so R18's second sentence is held by
   the decomposer's judgment and not by a validator.
 
+- **R21** — A re-delivery of a task whose own earlier implementation record names every file that holds the fact is not the stop R20 states: the record is written again over those files, answering the task as it stands. A re-delivery names a file the tree did not change only where the record it replaces named it.
+
+  Grounds: on 2026-10-30 one consumer re-bound eight delivered tasks whose implemented nodes had
+  moved; the re-bind widened what each task implements and changed no criterion, so `deliver.py
+  --check` refused all eight records (50 problems) for answering nodes they never read. The
+  implementer of each re-delivery finds every criterion met by the files its own first delivery
+  wrote, and R20 then stopped it; over three of the eight, `trace.py --encodes` bound 5, 5 and 10
+  of the task's nodes to nothing, so the door R20 hands was `/reconcile`, then the plan carrying
+  `stands`, then the delivery again — for a task whose files were already its own.
+
+### What a review answers for
+
+- **R22** — A review answers for its tasks as they stood when it was written. A task is reviewed as it stands where a review naming it lists every file the task's records name and, where its coverage pass ran, answers every criterion the task states; a task some review names and none answers as it stands is owed a review, and a review written before the task or its records changed is never refused for it. The review being written is held to its tasks as they stand, and refused where it falls short.
+
+  Grounds: a review carries no pin, and every review was held, for as long as its plan was live,
+  to the records and criteria of today. On 2026-10-29 one consumer's proof-only re-delivery wrote a
+  helper after the first review of its task; the second review listed it, and the first was
+  refused from then on — `deliver.py --check` failed, `/review-change` refuses to run over a
+  delivery that fails it, and `--outstanding` refused to derive. On 2026-10-20 another consumer's
+  re-plan reworded the criteria of reviewed tasks; its one review drew 17 refusals no later
+  review could clear, and the person closed the plan to carry the work into a new initiative.
+  Across seven consumers on 2026-10-30, these were the only two plans whose reviews drew either
+  refusal.
+
 ## Validation required before acceptance
 
 1. The test author's judgment states R1 to R12 and cites each in the words above; the coverage
@@ -181,6 +205,14 @@ left out — so the file set the review that followed was handed never held them
    For R20: `/implement-task` runs `trace.py --encodes` over the files a no-write return names
    and hands the door that output decides, and the task implementer returns that case without a
    record — `tests/test_skill_contract.py` proves both.
+   For R21: `bin/deliver.py --unrecorded` refuses a re-delivered implementation naming a file the
+   tree did not change that the record it replaces did not name, and admits one the record it
+   replaces named; `/implement-task` hands the implementer the record a re-delivery replaces —
+   `tests/test_unrecorded.py` and `tests/test_skill_contract.py` prove each.
+   For R22: `bin/deliver.py --check` admits a review that lists fewer files than its tasks'
+   records now name, or answers criteria its tasks no longer state, and refuses it under `--review`
+   naming it; `--outstanding` names a task some review names and none answers as it stands, and
+   no task one review answers — `tests/test_deliver.py` proves each.
 7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.

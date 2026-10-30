@@ -150,7 +150,12 @@ The steps:
    human's.
 4. **Review.** When the deliverable set is empty, invoke `/review-change` from the last
    delivery's handoff: the tasks being every task this run delivered, the file set being the
-   union of the paths their reports named. The review is done when its record is written — the
+   union of the paths their reports named, and the review's name the one this skill gives it:
+   the slug where `review/<slug>.md` and `run/<slug>` under the delivery root and
+   `siegard-reconcile/<slug>.md` and `siegard-reconcile/<slug>.returns/` at the target's git
+   toplevel are all free, and otherwise `<slug>-<N>` for the least `N` from 2 that frees all
+   four — read with `ls`, stated in the invocation and in the report, never a name already taken
+   and never a suffix of any other form. The review is done when its record is written — the
    findings are relayed whole in the report, opened by the counts that review's own report
    opens with, and never acted on here: which route a finding deserves, or whether it deserves
    one, is the decision that skill deliberately does not make, and this skill inherits the same
@@ -172,8 +177,8 @@ The steps:
    green ones holds them all, and the clean-tree stop each invocation opens with is what keeps
    them apart: a re-delivery that stops red leaves its files for the person, every one already
    committed stands, and those not yet begun are relayed as not reached. Then invoke
-   `/review-change` once more over exactly those tasks and commit it as `deliver-scope <slug>:
-   review again`. This step runs once per run: a certification refused again is relayed with
+   `/review-change` once more over exactly those tasks, named by step 4's rule, and commit it as
+   `deliver-scope <slug>: review again`. This step runs once per run: a certification refused again is relayed with
    its new remainder, and a third attempt is the human's decision about cost. A remainder over a
    node no task of this run implements is not this run's; the report hands it on as `trace.py
    --owed` does.
