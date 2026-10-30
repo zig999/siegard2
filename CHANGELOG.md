@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.38.0 — 2026-10-30
+
+Only the substrate alone — a task declaring `produces` that wrote nothing a rule of its standard reaches — goes without a proof; /implement-task reads that from `deliver.py --outstanding`, and a substrate task that also wrote a file a rule reaches proves like any other (SPEC-004 R23). `--outstanding` names the substrate alone apart and counts it delivered, so a goal over it reaches state A (SPEC-008 R2). (`eaee176`)
+
 ## 5.37.0 — 2026-10-30
 
 A review answers for its tasks as they stood when it was written: `deliver.py` holds only the review `--review` names to its tasks' files and criteria as they stand, and `--outstanding` names a task no review answers as owed one, never a refusal (SPEC-004 R22); a re-delivery writes its record again over the files its task already wrote, `--unrecorded` refusing an unchanged file the replaced record did not name (SPEC-004 R21); /deliver-scope names each review it invokes, the slug or the least free `-N`. (`627b7b3`)
