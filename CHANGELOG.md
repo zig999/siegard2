@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.36.3 — 2026-10-30
+
+The drift hook exits 0 on a machine missing PyYAML or jsonschema, stays silent outside a project that declares `siegard.json`, and inside one says in a single line — as `systemMessage` and as context — that the count was not taken and what to install. (`d3ba462`)
+
 ## 5.36.2 — 2026-10-30
 
 A delivery whose implementer finds every criterion already met writes no record and stops, naming the files that hold the fact; /implement-task runs `trace.py --encodes` over them and hands the door it decides — the plan carrying `stands`, or `/reconcile` (SPEC-004 R20). (`1dbcb46`)
