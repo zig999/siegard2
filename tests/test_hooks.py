@@ -152,8 +152,8 @@ def test_a_project_that_cannot_be_resolved_still_receives_the_rules(tmp_path):
 
 
 def test_the_toplevel_reader_is_importable_with_the_standard_library_alone():
-    """The hook imports `toplevel_of` at every start; an import that needed jsonschema would stop
-    every session on a machine without it."""
+    """The hook imports `toplevel_of` at every start; an import that needed jsonschema would turn
+    every session on a machine without it into one that starts on a hook error."""
     probe = (f"import sys; sys.modules['jsonschema'] = None; sys.path.insert(0, {str(SRC / 'bin')!r}); "
              f"from project import PROJECT_FILE, toplevel_of; print(PROJECT_FILE)")
     done = subprocess.run([sys.executable, "-B", "-c", probe], capture_output=True, text=True)
@@ -175,7 +175,8 @@ def test_a_git_that_does_not_answer_is_not_read_as_no_project(tmp_path):
 
 
 def test_the_script_never_fails_a_session_over_a_missing_file(tmp_path):
-    """A hook that exits non-zero stops the session; a missing rules file is the distribution's
+    """A hook that exits non-zero starts the session on a hook error the session itself never
+    reads; a missing rules file is the distribution's
     defect, reported by the distribution suite, never by stopping every consumer."""
     copy = tmp_path / "rules.py"
     copy.write_bytes(SCRIPT.read_bytes())
@@ -288,8 +289,9 @@ def test_a_node_owed_a_test_is_counted_at_the_start_of_the_session(traced):
 
 
 def test_the_drift_hook_never_fails_a_session(traced):
-    """A hook that exits non-zero stops every session of every project holding the plugin. An
-    unreadable trace is the drift report's to refuse properly, where somebody asked it."""
+    """A hook that exits non-zero starts every session of every project holding the plugin on a
+    hook error. An unreadable trace is the drift report's to refuse properly, where somebody
+    asked it."""
     (traced / "siegard-trace.json").write_text("{ not json", encoding="utf-8")
     for stdin in ("", "not json", json.dumps({"hook_event_name": "SessionStart",
                                               "cwd": str(traced)})):
@@ -297,6 +299,47 @@ def test_the_drift_hook_never_fails_a_session(traced):
                               capture_output=True, text=True)
         assert done.returncode == 0, done.stderr
         assert done.stdout == "", done.stdout
+
+
+def drift_without(cwd: Path, *modules: str) -> subprocess.CompletedProcess:
+    """The hook run by a `python3` that cannot import the named modules, the way a machine
+    without the validators runs it."""
+    blocked = "".join(f"sys.modules[{name!r}] = None; " for name in modules)
+    probe = (f"import runpy, sys; {blocked}sys.argv = [{str(DRIFT)!r}]; "
+             f"runpy.run_path({str(DRIFT)!r}, run_name='__main__')")
+    record = json.dumps({"hook_event_name": "SessionStart", "cwd": str(cwd)})
+    return subprocess.run([sys.executable, "-B", "-c", probe], input=record,
+                          capture_output=True, text=True)
+
+
+@pytest.mark.parametrize("modules, named", [
+    (("yaml", "jsonschema"), "PyYAML and jsonschema"),
+    (("yaml",), "PyYAML"),
+    (("jsonschema",), "jsonschema"),
+])
+def test_a_declared_project_on_a_machine_without_the_validators_is_told_the_count_was_not_taken(
+        traced, modules, named):
+    """A session starting with no count reads as one starting with no drift. Where the count
+    could not be taken, the person and the session are both told why, in one line, and the
+    session still starts."""
+    done = drift_without(traced, *modules)
+    assert done.returncode == 0, done.stderr
+    assert done.stderr == "", done.stderr
+    said = json.loads(done.stdout)
+    line = said["hookSpecificOutput"]["additionalContext"]
+    assert said["systemMessage"] == line
+    assert "\n" not in line
+    assert "did not count the drift" in line and f"need {named}," in line, line
+    assert f"pip install {named.lower().replace(' and ', ' ')})" in line, line
+
+
+def test_an_undeclared_project_on_a_machine_without_the_validators_hears_nothing(tmp_path):
+    """The plugin's scripts are no undeclared project's to run, so their absence is not that
+    project's news."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    done = drift_without(tmp_path, "yaml", "jsonschema")
+    assert done.returncode == 0, done.stderr
+    assert done.stdout == "" and done.stderr == "", done.stdout + done.stderr
 
 
 def test_a_subagent_start_record_is_not_answered(traced):
