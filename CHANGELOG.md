@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.37.0 — 2026-10-30
+
+A review answers for its tasks as they stood when it was written: `deliver.py` holds only the review `--review` names to its tasks' files and criteria as they stand, and `--outstanding` names a task no review answers as owed one, never a refusal (SPEC-004 R22); a re-delivery writes its record again over the files its task already wrote, `--unrecorded` refusing an unchanged file the replaced record did not name (SPEC-004 R21); /deliver-scope names each review it invokes, the slug or the least free `-N`. (`627b7b3`)
+
 ## 5.36.3 — 2026-10-30
 
 The drift hook exits 0 on a machine missing PyYAML or jsonschema, stays silent outside a project that declares `siegard.json`, and inside one says in a single line — as `systemMessage` and as context — that the count was not taken and what to install. (`d3ba462`)
