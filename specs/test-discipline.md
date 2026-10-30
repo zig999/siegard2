@@ -161,6 +161,17 @@ left out — so the file set the review that followed was handed never held them
   of the task's nodes to nothing, so the door R20 hands was `/reconcile`, then the plan carrying
   `stands`, then the delivery again — for a task whose files were already its own.
 
+- **R23** — A task delivered as the substrate alone — it declares `produces`, and nothing it wrote is a file a rule of its standard reaches — owes no proof. Every other task owes one, a task that built the substrate and also wrote a file a rule reaches included.
+
+  Grounds: `/implement-task` wrote no proof for any task that produced the substrate, while the
+  validator exempted only the substrate alone from the proof a dependent needs. On 2026-10-30,
+  across seven consumers, four substrate tasks held an implementation record and no proof; two
+  of them had written test files the standard's rules reach and implemented 3 and 5
+  specification nodes. No route returns to a delivered task, so neither proof was ever written:
+  one plan was closed over it, and a goal over the other ended in state B with every other task
+  of its scope delivered — while the full suite of its last review ran that task's 9 test files
+  green.
+
 ### What a review answers for
 
 - **R22** — A review answers for its tasks as they stood when it was written. A task is reviewed as it stands where a review naming it lists every file the task's records name and, where its coverage pass ran, answers every criterion the task states; a task some review names and none answers as it stands is owed a review, and a review written before the task or its records changed is never refused for it. The review being written is held to its tasks as they stand, and refused where it falls short.
@@ -213,6 +224,10 @@ left out — so the file set the review that followed was handed never held them
    records now name, or answers criteria its tasks no longer state, and refuses it under `--review`
    naming it; `--outstanding` names a task some review names and none answers as it stands, and
    no task one review answers — `tests/test_deliver.py` proves each.
+   For R23: `bin/deliver.py --outstanding` names a task delivered as the substrate alone apart
+   from a task implemented and unproven, and counts it delivered; `/implement-task` writes no proof
+   only for a task that report names so — `tests/test_deliver.py` and `tests/test_skill_contract.py`
+   prove each.
 7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.

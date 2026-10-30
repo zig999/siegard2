@@ -655,6 +655,23 @@ def test_a_re_delivery_hands_the_record_it_replaces_and_carries_its_files():
     assert "is not the stop R20 states" in agent
 
 
+
+def test_the_proof_is_skipped_only_for_the_task_the_validator_names_the_substrate_alone():
+    """«Every other task owes one, a task that built the substrate and also wrote a file a rule
+    reaches included» (SPEC-004 R23). Step 5 reads which task that is from `--outstanding`, the
+    same test the validator applies, never from what the task built; and the progress table reads
+    the line as delivered."""
+    skill = (REPO / "src/claude/skills/implement-task/SKILL.md").read_text(encoding="utf-8")
+    step = " ".join(skill.split("### 5. Prove", 1)[1].split("Spawn a `siegard:test-author`", 1)[0]
+                    .split())
+    assert "--scope task/<epic>/<slug>" in step and "deliver.py --outstanding" in step
+    assert "`implemented as the substrate alone, which owes no proof`" in step
+    assert "SPEC-004 R23" in step
+    assert "A task that produced the substrate has nothing to prove" not in skill
+    progress = " ".join((REPO / "src/claude/skills/siegard-progress/SKILL.md")
+                        .read_text(encoding="utf-8").split())
+    assert "`implemented as the substrate alone, which owes no proof` → `done`" in progress
+
 def test_a_review_is_validated_as_the_review_being_written():
     """«The review being written is held to its tasks as they stand, and refused where it falls
     short» (SPEC-004 R22): step 5 names it with `--review`, and every earlier review is

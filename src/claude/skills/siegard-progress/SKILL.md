@@ -67,6 +67,8 @@ For every task `plan.json` holds, sorted in `plan.json`'s own order:
   and proven" — stated once here, since the command that would have said otherwise said nothing.
 - **Named with `implemented, and no proof record holds it up` → `implemented, unproven`.**
   Detail: that clause, verbatim.
+- **Named with `implemented as the substrate alone, which owes no proof` → `done`.** Detail:
+  that clause, verbatim — the substrate alone is delivered, and no proof is owed for it.
 - **Named with `no record` and a standing `BLOCKING, from the specification —` entry →
   `blocked`.** Detail: the joined reason clause verbatim; quote every
   `BLOCKING, from the specification —` entry whole beneath the table, keyed to its task — only a

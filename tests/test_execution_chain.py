@@ -262,7 +262,8 @@ def test_a_check_with_nothing_to_check_is_not_what_the_substrate_owes(
     assert problems_of(delivery, work, tree, root) == []
     derive_plan(work, root)
     outstanding = invoke(DELIVER_PY, "--outstanding", delivery, work, tree, root)
-    assert "implemented, and no proof record holds it up" in outstanding.stdout, outstanding.stdout
+    assert "implemented as the substrate alone, which owes no proof" in outstanding.stdout, \
+        outstanding.stdout
 
 
 def test_a_record_pointing_at_a_fraction_of_the_steps_is_refused(

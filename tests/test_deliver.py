@@ -1077,6 +1077,43 @@ def test_an_implementation_without_its_proof_is_reported(delivery, work, root, t
     assert "no proof record holds it up" in deliver.outstanding_report(nodes, plan_nodes, target)
 
 
+
+def test_only_the_substrate_alone_is_counted_delivered_without_a_proof(
+        delivery, work, root, target, sound_delivery, write_plan, write_delivery, write_standard):
+    """«A task delivered as the substrate alone — it declares `produces`, and nothing it wrote is
+    a file a rule of its standard reaches — owes no proof. Every other task owes one, a task that
+    built the substrate and also wrote a file a rule reaches included.» (SPEC-004 R23) The same
+    task, the same `produces`: the record that wrote the manifest alone is the substrate and the
+    report counts it delivered; the one that also wrote source a rule reaches is named unproven."""
+    task = json_front(work, "task/checkout/record-order")
+    task["produces"] = ["package.json"]
+    write_plan("task/checkout/record-order", task)
+    (target / "package.json").write_text("{}\n", encoding="utf-8")
+    record = json_front(delivery, "implementation/checkout/record-order")
+    record["task"] = task_pin_of(work, "task/checkout/record-order")
+    record["standard"] = write_standard()
+    (delivery / "proof/checkout/record-order.md").unlink()
+    derive_plan(work, root)
+    plan_nodes, _ = deliver.load_plan(work, root)
+
+    def report(files: list[str]) -> list[str]:
+        record["files"] = [{"path": path, "effect": "written"} for path in files]
+        write_delivery("implementation/checkout/record-order", record)
+        nodes, _ = deliver.collect(delivery, deliver.contract(), deliver.pass_names())
+        return deliver.outstanding_report(nodes, plan_nodes, target,
+                                          ["task/checkout/record-order"]).splitlines()
+
+    alone = report(["package.json"])
+    assert "task/checkout/record-order: implemented as the substrate alone, which owes no proof" \
+        in alone, alone
+    assert "every task in the scope has a record, and every record its proof" in alone, alone
+
+    beside = report(["package.json", "src/orders/place.ts"])
+    assert any(line.startswith("task/checkout/record-order: implemented, and no proof record "
+                               "holds it up") for line in beside), beside
+    assert not any("substrate alone" in line for line in beside), beside
+    assert "every task in the scope has a record, and every record its proof" not in beside
+
 def test_a_standing_blocking_note_is_named_where_a_caller_chooses(delivery, work, root, target,
                                                                  sound_delivery, write_plan):
     """The one refusal the plan's index cannot hold, said where a caller picks a task rather than

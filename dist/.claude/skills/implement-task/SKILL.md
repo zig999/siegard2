@@ -595,13 +595,25 @@ which files exist, and leave them for a person to look at rather than tidying th
 
 ### 5. Prove
 
-**A task that produced the substrate has nothing to prove, and no proof record is written.** There
-is no source for a test to reach, and a proof requires at least one test precisely because a test
-that cannot be said to fail for a stated reason is one nobody can evaluate — over an empty tree
-every entry would be that. So this step and the next do not run, and `deliver.py --outstanding`
-reports the task as implemented with no proof holding it up, which is exactly true. Say so in the
-report and go to step 8. Composing a proof anyway would be the one thing worse than the absence: a
-record asserting that tests hold up a task, written where no test could exist.
+**A task delivered as the substrate alone has nothing to prove, and no proof record is written.**
+«A task delivered as the substrate alone — it declares `produces`, and nothing it wrote is a file a
+rule of its standard reaches — owes no proof.» (SPEC-004 R23) There is no source for a test to
+reach, and a proof requires at least one test precisely because a test that cannot be said to fail
+for a stated reason is one nobody can evaluate — over an empty tree every entry would be that.
+Whether this task is that one is the validator's answer, never this invocation's reading of what
+the task built:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <target-source-root> <specification-root> --scope task/<epic>/<slug>
+```
+
+Where it names the task `implemented as the substrate alone, which owes no proof`, this step and
+the next do not run: say so in the report and go to step 8. Composing a proof anyway would be the
+one thing worse than the absence — a record asserting that tests hold up a task, written where no
+test could exist. Anywhere else the task proves like any other, a task that built the substrate and
+also wrote a file a rule reaches included: «Every other task owes one, a task that built the
+substrate and also wrote a file a rule reaches included.» (SPEC-004 R23) Its tests are files the
+suite runs, and a record with no proof beside them is a task nobody can hold up.
 
 Spawn a `siegard:test-author` subagent — its judgment lives at
 `${CLAUDE_PLUGIN_ROOT}/agents/test-author.md` — and hand it this, filled:
@@ -744,8 +756,8 @@ rather than pious is that the runs are on disk: four attempts leave four logs, a
 changed between them is in the diff beside them.
 
 Where the registry declares no command at all, this step does not run, the tests stand unexecuted,
-and the report says so — the narrow answer rather than a clean one. A task that produced the
-substrate reaches neither this step nor the one before it, for the reason step 5 gives.
+and the report says so — the narrow answer rather than a clean one. A task delivered as the
+substrate alone reaches neither this step nor the one before it, for the reason step 5 gives.
 
 Write `proof/<epic>/<slug>.md`, same epic and slug again, through the writer the same way:
 

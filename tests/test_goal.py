@@ -152,6 +152,44 @@ def test_a_scope_delivered_reviewed_and_measured_is_state_a(project):
     assert failing(result) == set()
 
 
+
+def substrate_alone(project: dict) -> None:
+    """The scope's one task re-planned, before the goal began, as the one that builds the
+    substrate, and its delivery held back as such: the implementation writes the artifact the
+    task produces and nothing a rule reaches, and no proof is written beside it."""
+    import hashlib
+    home = project["home"]
+    task = home / "plans" / SLUG / "task" / "checkout" / "record-order.md"
+    _, front, body = task.read_text(encoding="utf-8").split("---\n", 2)
+    data = yaml.safe_load(front)
+    data["produces"] = ["package.json"]
+    task.write_text("---\n" + yaml.safe_dump(data, sort_keys=False) + "---\n" + body,
+                    encoding="utf-8")
+    derive_plan(home / "plans" / SLUG, home / "specification")
+    (home / "target" / "package.json").write_text("{}\n", encoding="utf-8")
+    project["since"] = commit(home, "the project before the goal, its substrate task planned")
+    record = project["held"] / "implementation" / "checkout" / "record-order.md"
+    _, front, body = record.read_text(encoding="utf-8").split("---\n", 2)
+    data = yaml.safe_load(front)
+    data["task"] = "sha256:" + hashlib.sha256(task.read_bytes()).hexdigest()
+    data["files"] = [{"path": "package.json", "effect": "declares the build and the suite"}]
+    record.write_text("---\n" + yaml.safe_dump(data, sort_keys=False) + "---\n" + body,
+                      encoding="utf-8")
+    (project["held"] / "proof" / "checkout" / "record-order.md").unlink()
+
+
+def test_a_scope_whose_task_is_the_substrate_alone_reaches_state_a_without_a_proof(project):
+    """«State A holds when every task of the scope holds an implementation record and a proof
+    record, or an implementation record of the substrate alone, which owes no proof» (SPEC-008
+    R2). A plan whose first task builds the substrate would otherwise end every goal in state B."""
+    substrate_alone(project)
+    deliver(project)
+    review(project)
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("state A"), result.stdout
+    assert "implemented as the substrate alone, which owes no proof" in result.stdout
+
 def test_records_no_review_names_after_them_are_not_yet(project):
     deliver(project)
     measure(project)

@@ -12,7 +12,8 @@ line is the answer.
 disk and git alone: its first line is `state A`, `state B` or `not yet`, and every check it ran
 follows with its output verbatim.» (SPEC-008 R1)
 
-- `state A` — every task of the scope is delivered, proven and reviewed, and the run is measured
+- `state A` — every task of the scope is delivered, proven — or delivered as the substrate alone,
+  which owes no proof — and reviewed, and the run is measured
   and committed: the records (`deliver.py --outstanding`, restricted to the
   scope where one is named), no implementation record of the scope recording a criterion unmet,
   a review record naming each task whose records changed since the

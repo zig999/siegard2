@@ -2626,7 +2626,9 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     validated — and the skill about to write one is where the entry is quoted and both doors
     handed over ready to open. A
     dependency is waited on until it is settled: delivered and proven, or delivered as the
-    substrate alone."""
+    substrate alone. That one is named apart and counted delivered — «A task delivered as the
+    substrate alone — it declares `produces`, and nothing it wrote is a file a rule of its standard
+    reaches — owes no proof» (SPEC-004 R23) — so the line a goal reads stands over it."""
     repinned = repinned or set()
     delivered = {task_of(nid) for nid, node in nodes.items()
                  if node["kind"] == "implementation"} - repinned
@@ -2636,7 +2638,10 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     tasks = [tid for tid in sorted(plan_nodes) if plan_nodes[tid]["kind"] == "task"]
     absences = substrate_absences(plan_nodes, delivered, target)
 
+    # The substrate alone is the one unproven task counted delivered; every other is named.
+    alone = settled - proven
     lines: list[str] = []
+    substrate: list[str] = []
     ready: list[str] = []
     heading: list[str] = []
     if scope is not None:
@@ -2649,7 +2654,9 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     for tid in tasks:
         front = plan_nodes[tid]["front"]
         if tid in delivered:
-            if tid not in proven:
+            if tid in alone:
+                substrate.append(f"{tid}: implemented as the substrate alone, which owes no proof")
+            elif tid not in proven:
                 lines.append(f"{tid}: implemented, and no proof record holds it up"
                              + ("" if tid in settled else
                                 "; nothing that builds on it is deliverable until one does"))
@@ -2692,6 +2699,7 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     if not lines:
         lines = ["every task has a record, and every record its proof" if scope is None else
                  "every task in the scope has a record, and every record its proof"]
+    lines += substrate
     # A task owed a delivery again is owed its review after that delivery, so only a task whose
     # records stand is named here; the line bars nothing, and the done line above ignores it.
     owed = reviews_owed(nodes, plan_nodes, pass_names())
