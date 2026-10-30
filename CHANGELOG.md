@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.36.2 — 2026-10-30
+
+A delivery whose implementer finds every criterion already met writes no record and stops, naming the files that hold the fact; /implement-task runs `trace.py --encodes` over them and hands the door it decides — the plan carrying `stands`, or `/reconcile` (SPEC-004 R20). (`1dbcb46`)
+
 ## 5.36.1 — 2026-10-29
 
 `met` in an implementation record says whether the written source satisfies the criterion as it reads — demonstrating it is the proof's and the review's — and the criteria description cites the goal's reading of an unmet one (SPEC-008 R12); telemetry counts a commit under an armed goal as `loop`; /deliver-scope runs and commits each proof-only re-delivery before the next. (`8a27dde`)
