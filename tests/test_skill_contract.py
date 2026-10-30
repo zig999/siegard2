@@ -620,3 +620,20 @@ def test_a_proof_task_is_bound_against_the_nodes_that_name_its_node():
     assert "every node that names it" in increment
     assert "the one node as its whole candidate set" not in increment
     assert "BLOCKING, from the specification" in increment
+
+
+def test_a_return_that_writes_nothing_is_a_stop_whose_door_the_trace_decides():
+    """An implementer that finds the criteria already met returns no record, and the record
+    writer admits a task writing no source only with `stands`. What the delivery hands then is
+    the trace's answer over the files the return names: a plan carrying `stands` where every
+    node is bound to them, the reconciliation where one is not."""
+    skill = (REPO / "src/claude/skills/implement-task/SKILL.md").read_text(encoding="utf-8")
+    stop = skill.split("A return that writes nothing because the work already stands", 1)[1]
+    stop = " ".join(stop.split("**Every path the returned record names", 1)[0].split())
+    assert "trace.py --encodes <target-source-root> <each file named>" in stop
+    assert "`/plan-work` over this slug" in stop
+    assert "`/reconcile` over those files" in stop
+    assert "SPEC-004 R20" in stop
+    agent = (REPO / "src/claude/agents/task-implementer.md").read_text(encoding="utf-8")
+    assert "already met by source the tree holds" in agent
+    assert "return no mapping" in agent.lower()

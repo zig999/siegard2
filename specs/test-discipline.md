@@ -131,6 +131,14 @@ left out — so the file set the review that followed was handed never held them
 
 - **R18** — A task writes source, or its implementation already stands. A task that writes no source carries `stands`, and every file it names is bound in the trace, before the task is written, to every node the task implements. A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
 - **R19** — A node whose fact already stands in source the trace does not bind to it gets no proof task. The plan reports the reconciliation that would bind it, over the files that hold it, and the proof waits for that binding.
+- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no record and stops, naming the files that hold the fact. Where the trace binds every node the task implements to those files, the door is the plan over this slug carrying `stands` over them; where it does not, the door is the reconciliation over them, and the plan waits for that binding.
+
+  Grounds: on 2026-10-30, reading every `orchestration.md` under the delivery roots of the sales consumers
+  for a line naming a task whose implementer found the criteria met and wrote no file, 20 tasks in 5
+  plans of two consumers stopped with `files` empty and no `stands` (13 of them in one plan); the estimator is that
+  line match, so a stop logged in other words is not counted. The record writer refuses such a
+  return, and nothing stated what the delivery then hands: each orchestration chose its own door,
+  withdrawing the task from the plan in some and planning it again with `stands` in others.
 
   Grounds: on 2026-10-26 three successive plans of one consumer cut proof-only tasks in the
   ordinary decomposition, and none could be delivered — the record writer accepts a task that
@@ -170,6 +178,9 @@ left out — so the file set the review that followed was handed never held them
    before it writes it, and states both requirements in the words above; the backlog decomposer
    states R18's last sentence; `tests/test_spec_citations.py` proves each quote is a substring of
    the requirement it names.
+   For R20: `/implement-task` runs `trace.py --encodes` over the files a no-write return names
+   and hands the door that output decides, and the task implementer returns that case without a
+   record — `tests/test_skill_contract.py` proves both.
 7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.

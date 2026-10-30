@@ -456,6 +456,27 @@ field exists to remove. **`authorized packages` is a whole list or an absent lin
 selection: what it admits is what a human approved, and narrowing it here is this invocation
 deciding a manifest.
 
+**A return that writes nothing because the work already stands is a stop with its door, never an
+improvisation.** The tree is as it was found and the delivery root gains nothing: the record
+writer admits a task that writes no source only with `stands`, and `stands` is `/plan-work`'s.
+«A delivery whose implementer finds every criterion of the task already met by source the tree
+holds writes no record and stops, naming the files that hold the fact.» (SPEC-004 R20) Over the
+files the return names:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --encodes <target-source-root> <each file named>
+```
+
+The output decides the door: «Where the trace binds every node the task implements to those
+files, the door is the plan over this slug carrying `stands` over them; where it does not, the
+door is the reconciliation over them, and the plan waits for that binding.» (SPEC-004 R20) The
+first is `/plan-work` over this slug naming the task and those files, which writes `stands` only
+where `--encodes` confirms them — «every file it names is bound in the trace, before the task is
+written, to every node the task implements» (SPEC-004 R18); the second is `/reconcile` over those
+files, and the plan would refuse them. Report the stop with the output verbatim and both doors
+ready to paste, the one the output decides as the recommended and its kind derived, as step 9's
+bullet on a stop that hands more than one door says. Taking either is the person's.
+
 **Every path the returned record names is relative to the target source root** — the directory
 the registry's commands run from — never to the repository around it. `produces` is held to
 `files` by spelling, and a registry scope reaches a file only under the same anchor, so a record

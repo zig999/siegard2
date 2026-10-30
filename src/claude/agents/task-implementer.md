@@ -222,3 +222,10 @@ notes carry a blocking entry, or the specification is silent on a fact the work 
 plainly in one sentence, leave the tree as you found it, and return no mapping. Source written
 and then abandoned halfway is worse than none: where you have already written files and must
 stop, say which ones, so the caller reports a failure over a tree somebody has to look at.
+
+If every criterion is already met by source the tree holds, you have nothing to write, and
+inventing a change to have a record is the failure: «A delivery whose implementer finds every
+criterion of the task already met by source the tree holds writes no record and stops, naming the
+files that hold the fact.» (SPEC-004 R20) Return no mapping and say so in one sentence, then name,
+criterion by criterion, each file that holds it, spelled from the target source root. The caller
+reads those paths with the trace; a criterion you cannot place in a file is not met.
