@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.39.0 — 2026-10-30
+
+Three stop classes end a goal in state B: `outside-task` — a red no change to the task's own files can answer, a build red over a tree the delivery left unchanged or a fix in another task's files, never a judged retry; `already-met` — the R20 stop where the run does not take the trace's door; and `unclassified` — any stop no other class names (SPEC-008 R3, R4). (`d4f7691`)
+
 ## 5.38.0 — 2026-10-30
 
 Only the substrate alone — a task declaring `produces` that wrote nothing a rule of its standard reaches — goes without a proof; /implement-task reads that from `deliver.py --outstanding`, and a substrate task that also wrote a file a rule reaches proves like any other (SPEC-004 R23). `--outstanding` names the substrate alone apart and counts it delivered, so a goal over it reaches state A (SPEC-008 R2). (`eaee176`)
