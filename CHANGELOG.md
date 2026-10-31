@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.42.0 — 2026-10-31
+
+A release of a pair a reconciliation read `nowhere` drops that pair alone: `trace.py --release <target> <file>... --node <node>` leaves every other file of the node at the stamp it had and refuses a pair no record reads `nowhere`, and a bind hands that invocation ready whether or not another file of the set still holds the fact, where it handed a `--replace` that also dropped every file outside the reconciled set (SPEC-005 R10). (`13def1d`)
+
 ## 5.41.0 — 2026-10-31
 
 A reconciliation commit naming its slug with nothing after it stays on a goal's route, and one touching another reconciliation's record leaves it: `goal.py --state` reads R2's "its own record" as the record under the slug the message names, and a commit naming the skill and the slug alone is on the route (SPEC-008 R2, R11). A run that resumes an initiative whose orchestration log closes on a stop line appends after it and never removes it (SPEC-008 R4). (`a2e6540`)
