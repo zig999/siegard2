@@ -370,6 +370,70 @@ def test_a_reconciliation_touching_only_the_trace_and_its_record_is_on_the_route
     assert "commits" in failing(state(project))
 
 
+def test_a_reconciliation_naming_its_slug_with_nothing_after_it_is_on_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "siegard-trace.json").write_text("{}\n")
+    (home / "siegard-reconcile" / "drift.returns").mkdir(parents=True)
+    (home / "siegard-reconcile" / "drift.md").write_text("record\n")
+    (home / "siegard-reconcile" / "drift.returns" / "a.yaml").write_text("read: []\n")
+    commit(home, "reconcile drift", "siegard-trace.json", "siegard-reconcile")
+    measure(project)
+    assert "commits" not in failing(state(project))
+
+
+def test_a_reconciliation_touching_another_reconciliations_record_is_off_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "siegard-reconcile").mkdir()
+    (home / "siegard-reconcile" / "earlier.md").write_text("record\n")
+    commit(home, "reconcile drift: rewrite an earlier record", "siegard-reconcile")
+    measure(project)
+    result = state(project)
+    assert "commits" in failing(result)
+    assert "reconcile drift: rewrite an earlier record" in result.stdout
+
+
+def test_a_commit_naming_the_skill_and_the_slug_alone_is_on_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "deliveries" / SLUG / "orchestration.md").write_text("- a line\n")
+    commit(home, f"deliver-scope {SLUG}", "deliveries")
+    measure(project)
+    assert "commits" not in failing(state(project))
+
+
+def test_a_commit_naming_a_slug_the_goals_slug_begins_is_off_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "deliveries" / SLUG / "orchestration.md").write_text("- a line\n")
+    commit(home, f"deliver-scope {SLUG}-other: log", "deliveries")
+    measure(project)
+    assert "commits" in failing(state(project))
+
+
+def test_a_run_resumed_after_a_stop_keeps_the_stop_line_and_ends_on_its_own(project):
+    """A resume appends after the stop that ended the earlier run: the stop stays the record of
+    that run, and the state is read from the line the resumed run ends on."""
+    deliver(project)
+    log(project, "stop: silence — the reviewer returned nothing")
+    commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
+    measure(project)
+    assert first(state(project)).startswith("state B — stop: silence")
+    log(project, "- Resumed on the person's own words.")
+    review(project)
+    (project["home"] / "telemetry" / "resumed.json").write_text("{}\n", encoding="utf-8")
+    measure(project)
+    result = state(project)
+    assert first(result).startswith("state A"), result.stdout
+    assert "stop: silence" in (project["home"] / "deliveries" / SLUG
+                                   / "orchestration.md").read_text(encoding="utf-8")
+
+
 def test_a_stop_line_whose_class_is_none_of_the_list_is_not_state_b(project):
     log(project, "stop: tired — nothing left to say")
     commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")

@@ -309,7 +309,11 @@ None is worked around, and none is retried. Each carries its class, in backticks
 The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
 stop ended closes its orchestration log with one stop line: its class names the stop from the
 list R3 holds, and its fact is the stopping report's own words.» (SPEC-008 R4) A goal's state is
-read from that line, so nothing is appended after it — the measure's commit carries it.
+read from that line, so nothing is appended after it — the measure's commit carries it. A resume
+of the slug leaves that line where it stands, appends its first line after it, and commits that
+line with its first step: «A run that resumes an initiative whose log closes on a stop line
+appends its lines after it and never removes it: the stop stays the record of the run it ended,
+and the state is read from the line the resumed run ends on.» (SPEC-008 R4)
 
 A stop ends the route, never the measure: step 6 runs after it, and its commit is the one that
 follows a stop.

@@ -62,7 +62,7 @@ session that stopped while its subagents were still running. The harness refuses
 
 ### What a stopped run writes
 
-- **R4** — A run a stop ended closes its orchestration log with one stop line: its class names the stop from the list R3 holds, and its fact is the stopping report's own words. Every stop the orchestrating skill's file names carries exactly one class. A stop no other class names carries `unclassified`, and its fact is the whole of what a person reads.
+- **R4** — A run a stop ended closes its orchestration log with one stop line: its class names the stop from the list R3 holds, and its fact is the stopping report's own words. Every stop the orchestrating skill's file names carries exactly one class. A stop no other class names carries `unclassified`, and its fact is the whole of what a person reads. A run that resumes an initiative whose log closes on a stop line appends its lines after it and never removes it: the stop stays the record of the run it ended, and the state is read from the line the resumed run ends on.
 
   Grounds: the 19 stop lines the sales consumers' orchestration logs held on 2026-10-30, read
   against their own facts. Seven carried `gave-up`, and one of those was a delivery that gave up;
@@ -94,8 +94,11 @@ session that stopped while its subagents were still running. The harness refuses
 
 1. Tests hold `goal.py --state` to R2, R3, R11, R12 and R13 over fixture repositories: one
    answering each state, one per condition of R2 failing alone, a foreign commit answering state
-   B, a criterion recorded unmet answering state B with the criterion named, and a criterion a
-   review left uncovered named under state A.
+   B, a criterion recorded unmet answering state B with the criterion named, a criterion a
+   review left uncovered named under state A, a commit naming the skill and the slug with
+   nothing after them and a reconciliation naming its slug alone both on the route, a
+   reconciliation touching another reconciliation's record off it, and a run resumed after a
+   stop line answering from the line it ends on.
 2. A test holds the stop list of `/deliver-scope`'s file to R3's classes, one class per stop.
 3. A test holds `deliver.py --outstanding --scope` to R5: an epic, a task set, a dependency
    outside the scope, and an id the plan does not hold.
@@ -105,6 +108,25 @@ session that stopped while its subagents were still running. The harness refuses
    `state A` or `state B` is a defect in what the condition says, never grounds to widen it.
 
 ## Readings
+
+- 2026-10-31 — read from `salese2e`'s transcript and repository under Siegard 5.40.0, over the
+  goal `prova-recusas-registro-pedidos` (armed 15:14Z, `--since 65a7394`). R11 as `goal.py` read
+  it: the goal ended state B on `commits` alone, over `d041459 reconcile
+  adocao-precedencia-endereco-pedidos`, which touches `siegard-trace.json` and its own record and
+  nothing else — a reconciliation R2 admits, under the message form the consumer rules state,
+  "naming the skill and the slug". The script demanded a colon after the slug, which no artifact
+  states; 4 of the 36 reconciliation commits in the sales consumers carry none. Run over the
+  commit the goal ended on, the corrected script answers `commits: pass`, and the goal would
+  have ended state A at its first review. The script now reads "its own record" as R2 writes it:
+  the record under the slug the message names. Of those 36 commits, none touches another
+  reconciliation's record. Grounds for R4's last sentence: each of this initiative's 4 resumes
+  removed the stop line that ended the run before it, with `sed -i '/^stop:/d'`, and 7 stop lines
+  were removed outright across `salese2e`, `productorder` and `productcatalog` — the 19 stop
+  lines R4's grounds read were a count after those removals. The orchestrating skill's file said
+  nothing is appended after the stop line and said nothing of a resume; the state was read from
+  the last line, so appending after it already sufficed. Reversal: a stop line removed under the
+  version that states this is a removal no prose prevents, and the state script gains the check
+  that reports it.
 
 - 2026-10-28 — grounds for R11–R13, read from `salese2e`'s transcript and repository under
   Siegard 5.35.1. R11: the person committed `aa7b89c` from another session inside the first

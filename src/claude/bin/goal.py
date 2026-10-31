@@ -221,10 +221,13 @@ def after(fields: dict, later: str, earlier: str) -> bool:
 def reconciliation_only(fields: dict, commit: str, line: str) -> bool:
     """A `/reconcile` commit names its own record's slug, never the goal's, and touches the
     trace and that record alone — the route a delivery's drift is answered by."""
-    if not re.match(r"^\S+ reconcile \S+: ", line):
+    named = re.match(r"^\S+ reconcile ([^\s:]+)(?::|$)", line)
+    if not named:
         return False
+    record = RECONCILED[1] + named.group(1)
     paths = git(fields["home"], "show", "--name-only", "--format=", commit).splitlines()
-    return bool(paths) and all(p == RECONCILED[0] or p.startswith(RECONCILED[1]) for p in paths)
+    return bool(paths) and all(p in (RECONCILED[0], f"{record}.md")
+                               or p.startswith(f"{record}.returns/") for p in paths)
 
 
 def front_of(record: Path) -> dict:
@@ -336,7 +339,7 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
     log = git(fields["home"], "log", "--format=%H %s", f"{since}..HEAD")
     skills = {p.name for p in SKILLS.iterdir() if p.is_dir()}
     foreign = [line for line in log.splitlines()
-               if not ((m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}: ", line))
+               if not ((m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}(?::|$)", line))
                        and m.group(1) in skills)
                and not reconciliation_only(fields, line.split()[0], line)]
     found["commits"] = (not foreign, "naming no skill and the slug:\n" + "\n".join(foreign)
