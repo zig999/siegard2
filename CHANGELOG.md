@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.41.0 — 2026-10-31
+
+A reconciliation commit naming its slug with nothing after it stays on a goal's route, and one touching another reconciliation's record leaves it: `goal.py --state` reads R2's "its own record" as the record under the slug the message names, and a commit naming the skill and the slug alone is on the route (SPEC-008 R2, R11). A run that resumes an initiative whose orchestration log closes on a stop line appends after it and never removes it (SPEC-008 R4). (`a2e6540`)
+
 ## 5.40.0 — 2026-10-31
 
 A build red whose fix lies only in files the project declares as its tests goes to the test author before the implementation record is written, instead of stopping the delivery: `project.py --declared-tests` says which paths are tests, the implementer keeps its source, the proof is written ahead of the record, and the record is written over the build that then passes (SPEC-004 R24). A rule a step other than the suite decides must hold over a tree without the task's tests, and one requiring a test to exist names the suite step; `deliver.py --standard --against` names the rules this reaches and refuses none (SPEC-007 R4). (`5b52196`)
