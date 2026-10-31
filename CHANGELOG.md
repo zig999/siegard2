@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.40.0 — 2026-10-31
+
+A build red whose fix lies only in files the project declares as its tests goes to the test author before the implementation record is written, instead of stopping the delivery: `project.py --declared-tests` says which paths are tests, the implementer keeps its source, the proof is written ahead of the record, and the record is written over the build that then passes (SPEC-004 R24). A rule a step other than the suite decides must hold over a tree without the task's tests, and one requiring a test to exist names the suite step; `deliver.py --standard --against` names the rules this reaches and refuses none (SPEC-007 R4). (`5b52196`)
+
 ## 5.39.0 — 2026-10-30
 
 Three stop classes end a goal in state B: `outside-task` — a red no change to the task's own files can answer, a build red over a tree the delivery left unchanged or a fix in another task's files, never a judged retry; `already-met` — the R20 stop where the run does not take the trace's door; and `unclassified` — any stop no other class names (SPEC-008 R3, R4). (`d4f7691`)
