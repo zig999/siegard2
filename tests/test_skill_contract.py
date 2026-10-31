@@ -691,6 +691,43 @@ def test_a_red_the_tasks_own_files_cannot_answer_ends_the_run_without_a_retry():
                      .read_text(encoding="utf-8").split())
     assert "the fix a red run asks for lies only in files this task's records do not name" in agent
 
+
+def test_a_build_red_only_a_test_can_answer_goes_to_the_test_author_before_the_record():
+    """«A build red whose fix lies only in files the project declares as its tests is answered by
+    the delivery's test author, before the implementation record is written» (SPEC-004 R24). The
+    implementer writes no test and the record is written only over a green build, so without this
+    route such a red had no producer: which paths are tests is `project.py`'s match, the proof runs
+    ahead of the record with the implementer's return in its place, and the stop keeps only what
+    no producer of this delivery can answer."""
+    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
+                     .read_text(encoding="utf-8").split())
+    build = skill.split("### 4. Build", 1)[1].split("### 5. Prove", 1)[0]
+    assert "**A red only a test can answer is the test author's, and it is answered before the " \
+           "record.**" in build
+    assert "bin/project.py <project-root> --declared-tests <the target's key>" in build
+    assert "Step 5 runs now, ahead of the record" in build
+    assert "the record is written over that run" in build
+    assert build.index("A red only a test can answer") \
+        < build.index("A red no change to this task's own files can answer")
+    assert "not a test the target declares, which the shape above hands the test author" in build
+    prove = skill.split("### 5. Prove", 1)[1].split("### 6. Suite", 1)[0]
+    assert "red build:" in prove
+    assert "unless step 4 runs this step ahead of the record" in prove
+    author = " ".join((REPO / "src/claude/agents/test-author.md").read_text(encoding="utf-8")
+                      .split())
+    supplied = author.split("## What the caller supplies", 1)[1].split("## The obligations", 1)[0]
+    assert "**the red build**" in supplied
+    assert "Read the return as you would read the record." in supplied
+    assert "never trimmed, never narrowed until it compiles" in supplied
+    implementer = " ".join((REPO / "src/claude/agents/task-implementer.md")
+                           .read_text(encoding="utf-8").split())
+    assert "A red whose fix lies only in tests is not that" in implementer
+    assert "keep the source you wrote" in implementer
+    orchestrator = " ".join((REPO / "src/claude/skills/deliver-scope/SKILL.md")
+                            .read_text(encoding="utf-8").split())
+    assert "A fix that lies only in tests the target declares is not this stop" in orchestrator
+
+
 def test_a_review_is_validated_as_the_review_being_written():
     """«The review being written is held to its tasks as they stand, and refused where it falls
     short» (SPEC-004 R22): step 5 names it with `--review`, and every earlier review is

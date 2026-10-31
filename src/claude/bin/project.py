@@ -39,6 +39,13 @@ line per target — `tests <target>: <scope>; <scope>`. `reaches()` here is the 
 parts for every script: a rule's scope and a declared test are matched by the same function, so
 a path one of them reaches is never read differently by the other.
 
+`--declared-tests` answers one question about those scopes for a caller holding paths: which of
+them are tests the target declares. A build red whose fix lies only in such files is the test
+author's to answer — «A build red whose fix lies only in files the project declares as its tests
+is answered by the delivery's test author, before the implementation record is written»
+(SPEC-004 R24) — and which files those are is this match, never a session's reading of a
+directory name. A target that declares no tests answers that no path is one.
+
 `toplevel_of()` here is the one answer to where a project's `siegard.json` sits, for every script
 and for the plugin's hooks. A hook runs at the start of every session and every agent, and one that
 fails stops them, so importing this module needs nothing beyond the standard library: jsonschema
@@ -50,6 +57,10 @@ Declared dependencies: jsonschema.
 Usage:  project.py <project-root>    resolve siegard.json for the tree holding <project-root> —
                                      the file sits at that directory's git toplevel, or at the
                                      directory itself where git does not hold it
+        project.py <project-root> --declared-tests <target> <path> [<path> ...]
+                                     the same file, held to the same contract, then one line per
+                                     path — spelled from that target's source root — saying
+                                     whether it is a test the target declares
         project.py --help            print this text and stop
 Exit:   0 resolved: every field siegard.json declares, or no file at all, each said in one line
         1 the file does not hold together, or names a standard that does not exist
@@ -129,6 +140,28 @@ def reaches(scope, path: str) -> bool:
     return bool(scope.get("nested")) or "/" not in path[len(prefix):]
 
 
+def scopes_meet(one, other) -> bool:
+    """Whether some path could be reached by both scopes: their directories nest one inside the
+    other as far as each reaches, and one ending is the tail of the other. Read in the same parts
+    `reaches()` reads, for the same reason."""
+    if not isinstance(one, dict) or not isinstance(other, dict):
+        return False
+    parts = []
+    for scope in (one, other):
+        under, suffix = scope.get("under"), scope.get("suffix")
+        if not isinstance(under, str) or not isinstance(suffix, str):
+            return False
+        under = under.strip("/")
+        parts.append(("" if under == "." else under, suffix, bool(scope.get("nested"))))
+    (a, a_end, a_deep), (b, b_end, b_deep) = parts
+    if not (a_end.endswith(b_end) or b_end.endswith(a_end)):
+        return False
+    if a == b:
+        return True
+    return (a_deep and (a == "" or b.startswith(f"{a}/"))) or \
+        (b_deep and (b == "" or a.startswith(f"{b}/")))
+
+
 def spelled(scope: dict) -> str:
     """One scope as `project.py` prints it, in the parts it is declared in."""
     return (f"under {scope.get('under')}, suffix {scope.get('suffix')}"
@@ -153,6 +186,27 @@ def toplevel_of(directory: Path, timeout: float | None = None) -> Path:
     return directory
 
 
+def declared_tests(declared: dict, key: str, paths: list[str]) -> int:
+    """One line per path saying whether the target's declared tests reach it, then the count. A
+    query: it refuses nothing it answers, and a target declaring no tests is an answer — no path
+    is one — rather than a refusal, because the caller's route turns on the answer either way."""
+    if key not in (declared.get("targets") or {}):
+        print(f"cannot run: {key} is not a target {PROJECT_FILE} declares", file=sys.stderr)
+        return CANNOT_RUN
+    scopes = [s for s in (declared.get("tests") or {}).get(key) or [] if isinstance(s, dict)]
+    if not scopes:
+        print(f"tests {key}: declared none, so no named path is a test this target declares")
+        return 0
+    held = 0
+    for path in paths:
+        test = any(reaches(scope, path) for scope in scopes)
+        held += test
+        print(f"{'declared test' if test else 'not a declared test'}: {path}")
+    print(f"{held} of {len(paths)} named path(s) are tests {key} declares "
+          f"({'; '.join(spelled(scope) for scope in scopes)})")
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     if "--help" in args:
@@ -160,6 +214,22 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
+    asked: tuple[str, list[str]] | None = None
+    if "--declared-tests" in args:
+        at = args.index("--declared-tests")
+        if at != 1 or len(args) < 4 or any(a.startswith("--") for a in args[2:]):
+            print("cannot run: expected <project-root> --declared-tests <target> <path> "
+                  "[<path> ...]", file=sys.stderr)
+            return CANNOT_RUN
+        asked = (args[2], args[3:])
+        args = args[:1]
+        spelled_elsewhere = [p for p in asked[1]
+                             if Path(p).is_absolute() or ".." in Path(p).parts]
+        if spelled_elsewhere:
+            print(f"cannot run: {', '.join(spelled_elsewhere)} — every path is spelled from the "
+                  f"target's source root, the anchor a declared test's scope is stated against",
+                  file=sys.stderr)
+            return CANNOT_RUN
     if len(args) != 1 or args[0].startswith("--"):
         print("cannot run: expected <project-root>", file=sys.stderr)
         return CANNOT_RUN
@@ -269,6 +339,9 @@ def main() -> int:
               + "".join(f"  Standard for {name}: <registry path, or null>\n"
                         for name in sorted(targets)))
         return 1
+
+    if asked is not None:
+        return declared_tests(declared, *asked)
 
     for name, path in standards:
         label = "standard" if name is None else f"standard {name}"

@@ -405,3 +405,48 @@ def test_no_tests_declared_prints_no_tests_line(consumer):
     done = run(consumer / "backend")
     assert done.returncode == 0, done.stdout + done.stderr
     assert not [line for line in done.stdout.splitlines() if line.startswith("tests ")]
+
+
+# ------------------------------------ which named paths are declared tests (SPEC-004 R24)
+
+def declaring(consumer: Path, **extra) -> None:
+    declare(consumer, {"targets": {"backend": "backend"}, **extra})
+
+
+def test_declared_tests_says_which_named_paths_are_tests(consumer):
+    """«A build red whose fix lies only in files the project declares as its tests is answered by
+    the delivery's test author, before the implementation record is written» (SPEC-004 R24): which
+    paths those are is this match, never a reading of a directory's name."""
+    declaring(consumer, tests={"backend": [{"under": "tests", "suffix": ".ts", "nested": True}]})
+    done = run(consumer, "--declared-tests", "backend", "tests/contract/party/individual.test.ts",
+               "src/modules/party/individual/individual.routes.ts", "tests/fixture.json")
+    assert done.returncode == 0, done.stderr
+    assert "declared test: tests/contract/party/individual.test.ts" in done.stdout
+    assert "not a declared test: src/modules/party/individual/individual.routes.ts" in done.stdout
+    assert "not a declared test: tests/fixture.json" in done.stdout
+    assert "1 of 3 named path(s) are tests backend declares" in done.stdout
+    assert "target backend:" not in done.stdout, "the query prints its answer, not the fields"
+
+
+def test_a_target_declaring_no_tests_answers_that_none_is_one(consumer):
+    declaring(consumer)
+    done = run(consumer, "--declared-tests", "backend", "tests/a.test.ts")
+    assert done.returncode == 0, done.stderr
+    assert "tests backend: declared none" in done.stdout
+    assert "declared test: tests/a.test.ts" not in done.stdout
+
+
+@pytest.mark.parametrize("args", [
+    ("--declared-tests", "frontend", "tests/a.test.ts"),
+    ("--declared-tests", "backend", "/abs/tests/a.test.ts"),
+    ("--declared-tests", "backend", "../tests/a.test.ts"),
+    ("--declared-tests", "backend"),
+])
+def test_declared_tests_cannot_run_over_what_it_cannot_answer(consumer, args):
+    declaring(consumer, tests={"backend": [{"under": "tests", "suffix": ".ts", "nested": True}]})
+    assert run(consumer, *args).returncode == 2
+
+
+def test_declared_tests_still_holds_the_file_to_its_contract(consumer):
+    declare(consumer, {"targets": {"backend": "backend"}, "tests": {"frontend": []}})
+    assert run(consumer, "--declared-tests", "backend", "tests/a.test.ts").returncode == 1

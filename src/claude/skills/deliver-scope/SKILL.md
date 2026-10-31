@@ -298,7 +298,9 @@ None is worked around, and none is retried. Each carries its class, in backticks
 - a red no change to the task's own files can answer — a build red over a tree the delivery
   left unchanged, or a fix the report places in files no record of the task names, another
   task's or none's — the door is `/plan-work` over the slug, the person's, and never trying the
-  same delivery again — `outside-task`;
+  same delivery again. A fix that lies only in tests the target declares is not this stop:
+  `/implement-task` hands it to its test author before the record, and only the test of another
+  task whose files this delivery shares none of comes back here — `outside-task`;
 - a delivery whose implementer found every criterion already met by source the task never wrote,
   where the door the trace decides is not one this run takes — `already-met`;
 - a stop no class above names — its fact the stopping report's own words, which is the whole of

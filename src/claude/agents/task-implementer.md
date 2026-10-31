@@ -225,7 +225,12 @@ If you cannot write the source — an input is absent, a node it implements does
 notes carry a blocking entry, the specification is silent on a fact the work needs, or the fix a
 red run asks for lies only in files this task's records do not name, another task's or no task's
 — say so plainly in one sentence, naming those files where it is the last, leave the tree as you
-found it, and return no mapping. Source written
+found it, and return no mapping. A red whose fix lies only in tests is not that: the tests are
+the test author's to write, so keep the source you wrote and say so in one sentence naming every
+test file the fix lies in; asked again for the mapping, return it whole over the source you kept,
+exactly as over a green run — «A build red whose fix
+lies only in files the project declares as its tests is answered by the delivery's test author,
+before the implementation record is written» (SPEC-004 R24). Source written
 and then abandoned halfway is worse than none: where you have already written files and must
 stop, say which ones, so the caller reports a failure over a tree somebody has to look at.
 

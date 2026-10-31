@@ -172,6 +172,22 @@ left out — so the file set the review that followed was handed never held them
   of its scope delivered — while the full suite of its last review ran that task's 9 test files
   green.
 
+### Who answers a red build
+
+- **R24** — A build red whose fix lies only in files the project declares as its tests is answered by the delivery's test author, before the implementation record is written: the implementer writes no test, and the record cites the build that passed once the test author answered. A test the proof of another task names is answered here only where this delivery's files include one that task's implementation record names; otherwise the red is a stop.
+
+  Grounds: the build runs every step of the registry but the suite, the record is written only
+  over a build that passed, and the test author was handed that record — so a red only a test
+  could answer had no producer. On 2026-10-31, reading the build runs under the delivery roots
+  of the consumer trees on one workstation (each `-build` run's `run.json` and the log of its
+  failed step, for a test named missing or failing to compile), 68 were red and 2 were that red.
+  One consumer's layout check requires a contract test for every routes file; its first task
+  writing one stopped at the build as `outside-task`, handing `/plan-work`, which no re-plan
+  answers, since every task writing a routes file meets the same build. Another consumer's
+  typecheck reached an earlier task's test whose call the delivery's source legitimately
+  changed; the session handed the test author a red build and no record, outside any stated
+  route. A red worded otherwise in its log is not counted.
+
 ### What a review answers for
 
 - **R22** — A review answers for its tasks as they stood when it was written. A task is reviewed as it stands where a review naming it lists every file the task's records name and, where its coverage pass ran, answers every criterion the task states; a task some review names and none answers as it stands is owed a review, and a review written before the task or its records changed is never refused for it. The review being written is held to its tasks as they stand, and refused where it falls short.
@@ -228,6 +244,11 @@ left out — so the file set the review that followed was handed never held them
    from a task implemented and unproven, and counts it delivered; `/implement-task` writes no proof
    only for a task that report names so — `tests/test_deliver.py` and `tests/test_skill_contract.py`
    prove each.
+   For R24: `bin/project.py --declared-tests` says which paths a red's fix names are tests the
+   target declares; `/implement-task` hands the red to the test author only where every path is
+   one, with the implementer's return in the record's place, and the test author takes that
+   return — `tests/test_project.py`, `tests/test_skill_contract.py` and
+   `tests/test_agent_contract.py` prove each.
 7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.

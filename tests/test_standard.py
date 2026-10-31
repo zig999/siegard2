@@ -701,3 +701,77 @@ def test_reading_is_unchanged_by_reach_existing(target, write_standard):
          str(target / ref["at"]), "--reading", "--for", "src/a.ts"], capture_output=True, text=True)
     assert out.returncode == 0
     assert json.loads(out.stdout)
+
+
+# ------------------------------------ which rules run before a task's tests exist (SPEC-007 R4)
+
+@pytest.mark.parametrize("one, other, expected", [
+    ({"under": "tests", "suffix": ".ts", "nested": True},
+     {"under": "tests/contract", "suffix": ".ts", "nested": True}, True),
+    ({"under": "tests/contract", "suffix": ".ts"},
+     {"under": "tests", "suffix": ".ts", "nested": True}, True),
+    ({"under": "tests", "suffix": ".ts"},
+     {"under": "tests/contract", "suffix": ".ts"}, False),
+    ({"under": "src", "suffix": ".ts", "nested": True},
+     {"under": "tests", "suffix": ".ts", "nested": True}, False),
+    ({"under": "tests", "suffix": ".json", "nested": True},
+     {"under": "tests", "suffix": ".ts", "nested": True}, False),
+    ({"under": "tests", "suffix": ".test.ts", "nested": True},
+     {"under": "tests", "suffix": ".ts", "nested": True}, True),
+    ({"under": ".", "suffix": ".ts", "nested": True},
+     {"under": "tests", "suffix": ".ts", "nested": True}, True),
+])
+def test_two_scopes_meet_where_some_path_is_reached_by_both(one, other, expected):
+    assert project.scopes_meet(one, other) is expected
+    assert project.scopes_meet(other, one) is expected
+
+
+def declaring_tests(tmp_path: Path, rules: list[dict]) -> tuple[Path, Path]:
+    """A git toplevel declaring its tests under `tests`, a target beneath it, and a registry."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    (tmp_path / "backend").mkdir()
+    (tmp_path / "siegard.json").write_text(json.dumps({
+        "targets": {"backend": "backend"},
+        "tests": {"backend": [{"under": "tests", "suffix": ".ts", "nested": True}]}}),
+        encoding="utf-8")
+    return broken(tmp_path, base(rules=rules)), tmp_path / "backend"
+
+
+def tool_rule(rule_id: str, tool: str, *scopes: dict) -> dict:
+    return {"id": rule_id, "statement": "A condition a step decides.",
+            "because": "A departure goes unseen.", "decided_by": "tool", "tool": tool,
+            "applies_to": list(scopes)}
+
+
+def test_a_rule_a_build_step_decides_over_the_tests_is_named_and_refused_nowhere(tmp_path):
+    """«A rule decided by a step other than the one whose role is `suite` holds over a tree that
+    holds no test of the task being delivered» (SPEC-007 R4). Whether a rule requires a test to
+    exist is a reading — a scope cannot say — so the check names the rules whose scope meets the
+    declared tests and exits as it would without them."""
+    registry, target = declaring_tests(tmp_path, [
+        tool_rule("TST-07", "lint", {"under": "src/modules", "suffix": ".routes.ts", "nested": True},
+                  {"under": "tests/contract", "suffix": ".ts", "nested": True}),
+        tool_rule("PRH-01", "lint", {"under": "src", "suffix": ".ts", "nested": True}),
+        tool_rule("STK-11", "test", {"under": "tests", "suffix": ".ts", "nested": True}),
+        tool_rule("STK-16", "lint", {"under": "tests", "suffix": ".json", "nested": True})])
+    done = invoke("--standard", str(registry), "--against", str(target))
+    assert done.returncode == 0, done.stdout + done.stderr
+    line = next(l for l in done.stdout.splitlines() if "a step other than the suite" in l)
+    assert "1 rule(s)" in line and "TST-07" in line
+    for absent in ("PRH-01", "STK-11", "STK-16"):
+        assert absent not in line, line
+    assert "«a rule that requires a test file to exist names the `suite` step» (SPEC-007 R4)" \
+        in line
+
+
+def test_a_project_declaring_no_tests_draws_no_line(tmp_path):
+    """Nothing says which files are tests, so nothing is said about which rules reach them."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    (tmp_path / "backend").mkdir()
+    (tmp_path / "siegard.json").write_text(json.dumps({"targets": {"backend": "backend"}}),
+                                           encoding="utf-8")
+    registry = broken(tmp_path, base(rules=[
+        tool_rule("PRH-01", "lint", {"under": "tests", "suffix": ".ts", "nested": True})]))
+    done = invoke("--standard", str(registry), "--against", str(tmp_path / "backend"))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "a step other than the suite" not in done.stdout

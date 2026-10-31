@@ -3004,6 +3004,33 @@ def replaced_files(record: Path) -> set[str] | None:
     return wrote(front)[0]
 
 
+def rules_before_tests(data: dict, tree: Path) -> str | None:
+    """The rules a step other than the suite decides whose scope meets the tests the target's
+    project declares, as one line — or None where the project declares none or no rule meets them.
+    Such a step runs at the build too, before the task's tests exist, so each of these rules must
+    hold over a tree holding none of them. Whether one instead requires a test to exist is a
+    reading — the scope of a rule about a test's name and of one about a test's existence are the
+    same parts — so this names them and refuses nothing: the registry's author is the reader."""
+    import trace
+    home = project.toplevel_of(tree)
+    scopes = trace.test_scopes_of(home, trace.offset_of(tree, home))
+    if not scopes:
+        return None
+    suite = {c.get("step") for c in listed(data, "commands")
+             if isinstance(c, dict) and c.get("role") == "suite"}
+    named = sorted(str(r.get("id")) for r in listed(data, "rules")
+                   if isinstance(r, dict) and r.get("decided_by") == "tool"
+                   and r.get("tool") not in suite
+                   and any(project.scopes_meet(scope, test)
+                           for scope in listed(r, "applies_to") for test in scopes))
+    if not named:
+        return None
+    return (f"  {len(named)} rule(s) a step other than the suite decides reach the tests this "
+            f"target declares, and run at the build, before a task's tests exist: "
+            f"{', '.join(named)}. Each holds over a tree that holds none of them — «a rule that "
+            f"requires a test file to exist names the `suite` step» (SPEC-007 R4)")
+
+
 def check_standard(named: str, against: str | None = None,
                    specification: str | None = None) -> int:
     """Validate one project standard on its own, so a consumer can hold a registry to its contract
@@ -3119,6 +3146,9 @@ def check_standard(named: str, against: str | None = None,
     if not tree.is_dir():
         print(f"cannot run: {tree} is not a directory", file=sys.stderr)
         return CANNOT_RUN
+    before_tests = rules_before_tests(data, tree)
+    if before_tests:
+        print(before_tests)
     if not presupposed:
         print(f"  it presupposes nothing, so {tree} holds everything it needs to")
         return 1 if unresolved else 0
