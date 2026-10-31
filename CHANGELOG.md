@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.43.0 — 2026-10-31
+
+A goal armed through the framework ends on a script's answer: `goal.py --arm` records it on the person's word, the plugin's `Stop` hook answers each stop from `goal.py --state` — `state A` or `state B` ends it, `not yet` blocks with the failing checks, a fourth identical `not yet` ends it paused (SPEC-008 R14). A handoff that hands a decision is rendered by `bin/handoff.py --render` from a record, and a free-text one is held to what is decidable by `--check`; telemetry reports `handoff_form` (SPEC-006 R8, `siegard-telemetry/17`). `bin/door.py --check` decides whether a door's own entry point refuses its inputs before the door is handed (SPEC-006 R9). A go-ahead naming the next step covers the one commit that step needs, and a derived recommendation is taken where the person's message says to proceed. A judge answers the nodes it only read beside a file's bindings by bare identity, a 49–54% cut of saved return characters (SPEC-005 R12). `bin/progress.py` prints a one-line progress for the status line (SPEC-009). Grounds: 251 handoffs and 2,683 subagent runs read from four consumers, 2026-10-27..31. (`00affae`)
+
 ## 5.42.0 — 2026-10-31
 
 A release of a pair a reconciliation read `nowhere` drops that pair alone: `trace.py --release <target> <file>... --node <node>` leaves every other file of the node at the stamp it had and refuses a pair no record reads `nowhere`, and a bind hands that invocation ready whether or not another file of the set still holds the fact, where it handed a `--replace` that also dropped every file outside the reconciled set (SPEC-005 R10). (`13def1d`)
