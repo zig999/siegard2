@@ -652,3 +652,171 @@ def test_a_scope_outside_the_outstanding_report_is_refused(project):
                              "--scope", TASK], capture_output=True, text=True)
     assert result.returncode == 2
     assert "only --outstanding prints one" in result.stderr
+
+
+# ------------------------------------------------------------------ the armed goal (R14)
+
+
+HOOK = REPO / "src/claude/hooks/goal_stop.py"
+
+
+def arm(project: dict, *extra: str) -> subprocess.CompletedProcess:
+    return run("--arm", str(project["home"]), "--slug", SLUG, *(extra or ("--scope", TASK)))
+
+
+def armed(project: dict) -> Path:
+    return project["home"] / ".git" / "siegard" / "goal.json"
+
+
+def ended(project: dict) -> list[dict]:
+    log = project["home"] / ".git" / "siegard" / "goals-ended.jsonl"
+    if not log.is_file():
+        return []
+    return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+
+
+def stop(project: dict, session: str = "one", **more) -> subprocess.CompletedProcess:
+    event = {"hook_event_name": "Stop", "cwd": str(project["home"]), "session_id": session,
+             "stop_hook_active": False, "transcript_path": "/nowhere.jsonl", **more}
+    done = subprocess.run([sys.executable, "-B", str(HOOK)], input=json.dumps(event),
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    return done
+
+
+def test_arming_records_the_composed_condition_outside_the_tree(project):
+    result = arm(project)
+    assert result.returncode == 0, result.stdout + result.stderr
+    record = json.loads(armed(project).read_text(encoding="utf-8"))
+    assert record["contract"] == "goal-armed/1"
+    assert record["slug"] == SLUG and record["target"] == "app" and record["scope"] == [TASK]
+    assert project["since"].startswith(record["since"]) and record["version"] == VERSION
+    assert record["session_id"] is None and record["blocks"] == 0 and record["last_state"] is None
+    assert "/siegard:deliver-scope" in record["condition"]
+    assert git(project["home"], "status", "--porcelain") == "", \
+        "the armed record is never in the tree the state reads"
+
+
+def test_arming_is_refused_where_composing_is_and_writes_nothing(project):
+    task = project["home"] / "plans" / SLUG / f"{TASK}.md"
+    task.write_text(task.read_text() + "\n")
+    result = arm(project)
+    assert result.returncode == 1
+    assert "nothing was armed" in result.stdout
+    assert "changes are pending under the specification, work, delivery or target root" \
+        in result.stdout
+    assert not armed(project).exists()
+
+
+def test_a_second_arming_in_the_same_project_is_refused(project):
+    assert arm(project).returncode == 0
+    again = arm(project, "--scope", "epic/checkout")
+    assert again.returncode == 1
+    assert "a goal is armed already in this project" in again.stdout and "--disarm" in again.stdout
+    assert json.loads(armed(project).read_text())["scope"] == [TASK]
+
+
+def test_disarming_ends_the_record_into_the_ended_log(project):
+    assert arm(project).returncode == 0
+    done = run("--disarm", str(project["home"]))
+    assert done.returncode == 0 and done.stdout.startswith(f"disarmed: {SLUG}"), done.stdout
+    assert not armed(project).exists()
+    assert [e["ended"] for e in ended(project)] == ["disarmed"]
+    assert run("--disarm", str(project["home"])).stdout.strip() == \
+        "no goal is armed in this project"
+
+
+def test_arming_names_the_objective_file_compose_wrote_rather_than_writing_another(project):
+    composed = compose(project, "--objective", "An order is billed once.")
+    assert composed.returncode == 0, composed.stdout + composed.stderr
+    (written,) = (project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md")
+    result = arm(project, "--objective-file", str(written))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert list((project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md")) == [written]
+    record = json.loads(armed(project).read_text())
+    assert record["objective"] == f"telemetry/{written.name}"
+    assert f"telemetry/{written.name}" not in record["untouched"]
+
+
+def test_the_hook_is_silent_where_no_goal_is_armed(project):
+    done = stop(project)
+    assert done.stdout == "" and done.stderr == ""
+
+
+def test_a_scope_delivered_ends_the_armed_goal_in_state_a_and_lets_the_session_stop(project):
+    assert arm(project).returncode == 0
+    deliver(project)
+    review(project)
+    measure(project)
+    said = json.loads(stop(project).stdout)
+    assert "decision" not in said
+    assert said["systemMessage"].startswith(f"Siegard ended the armed goal {SLUG}: state A — ")
+    assert "\n" not in said["systemMessage"]
+    assert not armed(project).exists()
+    assert [e["ended"] for e in ended(project)] == ["state A"]
+
+
+def test_a_stop_line_ends_the_armed_goal_in_state_b_and_says_the_stop(project):
+    assert arm(project).returncode == 0
+    log(project, "stop: gave-up — the build stayed red after three attempts")
+    commit(project["home"], f"deliver-scope {SLUG}: log the stop", "deliveries")
+    measure(project)
+    said = json.loads(stop(project).stdout)
+    assert "decision" not in said
+    assert said["systemMessage"] == (f"Siegard ended the armed goal {SLUG}: state B — stop: "
+                                     f"gave-up — the build stayed red after three attempts")
+    assert not armed(project).exists()
+    assert [e["ended"] for e in ended(project)] == ["state B"]
+
+
+def test_not_yet_blocks_with_the_failing_checks_first_and_counts(project):
+    assert arm(project).returncode == 0
+    said = json.loads(stop(project).stdout)
+    assert said["decision"] == "block"
+    lines = said["reason"].splitlines()
+    assert lines[0].startswith("not yet — failing: ") and "records" in lines[0]
+    assert "check records: FAIL" in lines and "check version: pass" not in lines
+    record = json.loads(armed(project).read_text())
+    assert said["reason"].endswith(record["condition"])
+    assert record["blocks"] == 1 and record["session_id"] == "one" and record["last_state"]
+
+
+def test_the_fourth_identical_not_yet_lets_the_session_stop_and_pauses_the_goal(project):
+    assert arm(project).returncode == 0
+    for count in (1, 2, 3):
+        assert json.loads(stop(project).stdout)["decision"] == "block"
+        assert json.loads(armed(project).read_text())["blocks"] == count
+    said = json.loads(stop(project).stdout)
+    assert "decision" not in said
+    assert said["systemMessage"].startswith(f"Siegard paused the armed goal {SLUG}: 3 "
+                                            f"consecutive stops")
+    assert not armed(project).exists()
+    assert [e["ended"] for e in ended(project)] == ["paused"]
+
+
+def test_a_not_yet_that_changed_starts_the_count_again(project):
+    assert arm(project).returncode == 0
+    stop(project)
+    stop(project)
+    (project["home"] / "notes.txt").write_text("work in progress\n")
+    assert json.loads(stop(project).stdout)["decision"] == "block"
+    assert json.loads(armed(project).read_text())["blocks"] == 1
+
+
+def test_another_sessions_stop_and_a_stop_awaiting_background_work_are_left_alone(project):
+    assert arm(project).returncode == 0
+    stop(project, session="one")
+    assert stop(project, session="two").stdout == ""
+    waiting = stop(project, session="one",
+                   background_tasks=[{"id": "a", "type": "subagent", "status": "running"}])
+    assert waiting.stdout == ""
+    assert json.loads(armed(project).read_text())["blocks"] == 1
+
+
+def test_a_state_the_hook_cannot_compute_lets_the_session_stop_and_keeps_the_goal(project):
+    assert arm(project).returncode == 0
+    record = json.loads(armed(project).read_text())
+    armed(project).write_text(json.dumps({**record, "target": "nowhere"}))
+    said = json.loads(stop(project).stdout)
+    assert "decision" not in said and "could not read the state" in said["systemMessage"]
+    assert armed(project).exists()

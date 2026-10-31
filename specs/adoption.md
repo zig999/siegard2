@@ -16,10 +16,11 @@ its record, and the report that counts a target's files.
 
 It decides where an adopted system's first specification comes from, what a binding of adopted
 source rests on, which files an adopted node is bound to, the states a tracked file is in, and
-when an adoption is complete. Two requirements reach past adoption to every reconciliation: R10,
-which pairs a judgment binds, and R11, which pairs a declared rewrite carries without one. Each is
-one rule whether the source was adopted or delivered, and is stated here beside R3 and R4, which
-say what a binding rests on, rather than in a second home.
+when an adoption is complete. Three requirements reach past adoption to every reconciliation: R10,
+which pairs a judgment binds, R11, which pairs a declared rewrite carries without one, and R12,
+what a judgment returns for each node it was handed. Each is one rule whether the source was
+adopted or delivered, and is stated here beside R3 and R4, which say what a binding rests on,
+rather than in a second home.
 
 Grounds: a pilot over one context of a consumer backend in September 2026 — 15 source files, 69
 nodes written from a survey of the source alone — found every node held by at least one file and
@@ -134,6 +135,28 @@ constraints spent 26 judges on files the notes never cited while the notes named
   a judge: the omission needs identical bytes, the mechanical tier refuses a certification whose
   test moved, and a raw bind is recorded by nothing.
 
+- **R12** — A judgment answers for every node it was handed, each once. A node bound to the file
+  it read is answered with where its fact is held, or nowhere, and with what was read to say so.
+  A node read beside the file's bindings that the file does not hold is answered by its identity
+  alone: no record quotes that reading and no release rests on it.
+
+  Grounds: read on 2026-10-31 over the saved returns of four consumers (`salese2e`,
+  `productorder`, `productcatalog`, `partymgmt`) — 4,625 file returns, 44.7M characters, every
+  `.returns/` directory whose record parses. Of 200,860 `read` entries, 187,199 answered
+  `nowhere` (93.2%) and made 73.3% of the characters. Classified by whether the pair appears
+  under the record's `encoded_at` or `observed_at` for that node — the only places the fold
+  writes a pair, and the pairs `--release` reads — 3,190 were bound pairs (2.0% of the
+  characters) and 184,009 were pairs read beside the bindings (71.3%), whose `held_at` and
+  `evidence` the fold reads only to count where a candidate was judged and a review reads not
+  at all. 4,228 of the returns were a review's. Carried as a list of identities, those entries
+  shrink the returns by 49.3% (each entry's YAML serialization less one list line, summed: 22.06M
+  characters; median 3,309 of a median 7,229 per return) to 54.4% (each whole return serialized
+  before and after with one dumper). The returns are what the session that spawned the judges
+  receives as notifications: over 10 consumer sessions in four days the reviewer ran 1,139 times,
+  its returns a median 13.7k characters and 60% of all subagent return text (17.5M of 28.9M), and
+  one session alone received 662 of them, 8.2M characters, in a project that compacted 19 times —
+  figures as the evaluation that asked for this change reported them, not re-read here.
+
 ### What the tree holds
 
 - **R5** — Every tracked file under a target is in exactly one state: bound — a binding names it,
@@ -240,7 +263,17 @@ constraints spent 26 judges on files the notes never cited while the notes named
    `test_the_bind_refuses_a_rewritten_pair_the_file_no_longer_reproduces`,
    `test_a_rewritten_proof_keeps_its_certification_live`,
    `test_a_rewritten_pair_is_neither_a_clearance_nor_a_finding_in_the_corpus`).
-9. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
+9. For R12: a node the pack marks read beside the file's bindings and the return names under
+   `nowhere` folds as a `read` entry answering `nowhere` folds — never a holder, still counted
+   where the node was judged — a bound node named there refuses the return, a node answered in
+   both `read` and `nowhere` refuses it, and a return answering every node in `read` still folds
+   — `tests/test_stage_fold.py` proves each
+   (`test_a_node_read_beside_and_named_nowhere_folds_as_a_read_nowhere`,
+   `test_a_plan_node_named_nowhere_folds_a_review_as_a_read_nowhere_does`,
+   `test_a_bound_node_named_nowhere_is_a_delegation_to_run_again`,
+   `test_a_node_answered_in_read_and_in_nowhere_is_refused`,
+   `test_the_pack_marks_every_node_read_beside_the_files_bindings`).
+10. For R1 and R2, which no validator decides: the adopt-scope, survey and analyse skills and the
    domain surveyor cite the requirement each step carries in «…», `tests/test_spec_citations.py`
    proves each quote is a substring of the requirement it names, and `tests/test_adopt_scope.py`
    holds the skill's R1, R6 and R8 sentences.

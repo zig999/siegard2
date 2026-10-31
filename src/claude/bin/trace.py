@@ -4272,9 +4272,12 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         read_also = [node_id for node_id in also + sorted(per_file_ledger.get(given, set()))
                      if node_id not in assigned]
         read_also = list(dict.fromkeys(read_also))
+        if read_also:
+            lines.append("#   (beside): read beside this file's bindings — one the file does "
+                         "not hold is named under `nowhere`, by identity alone")
         for node_id in assigned + read_also:
             source = spec_root / f"{node_id}.md"
-            lines += [f"\n=== {node_id}",
+            lines += [f"\n=== {node_id}" + (" (beside)" if node_id in read_also else ""),
                       f"source: {source}",
                       f"digest: {nodes[node_id]['digest']}",
                       "---",
@@ -4603,14 +4606,16 @@ def return_refusals(manifest: dict, text: str, delegation: str, ask: dict | None
     if ask is not None:
         return certification_problems(front, ask["node"], ask["proof"])
     staged_for = manifest["files"][delegation]
-    return return_problems(front, staged_for["nodes"] + staged_for.get("also", []), delegation)
+    return return_problems(front, staged_for["nodes"], staged_for.get("also", []), delegation)
 
 
-def return_problems(front, assigned: list[str], given: str) -> list[str]:
+def return_problems(front, bound: list[str], beside: list[str], given: str) -> list[str]:
     """Every way one delegation's saved return fails its contract or its assignment. The schema
-    holds the shape; this holds the relation the schema cannot see — that `read` answers for
-    exactly the node set the delegation was handed, since a return short one node reads exactly
-    like a complete one and the fold would clear the missing node by silence."""
+    holds the shape; this holds the relation the schema cannot see — that `read` and `nowhere`
+    together answer for exactly the node set the delegation was handed, since a return short one
+    node reads exactly like a complete one and the fold would clear the missing node by silence;
+    and that `nowhere` names only nodes read beside the file's bindings, since a bound pair read
+    nowhere is quoted into the record a release is decided from, and a bare name quotes nothing."""
     if not isinstance(front, dict):
         return ["the return is not a mapping"]
     schema = json.loads(RETURN_CONTRACT.read_text(encoding="utf-8"))
@@ -4618,10 +4623,17 @@ def return_problems(front, assigned: list[str], given: str) -> list[str]:
                 for error in Draft202012Validator(schema).iter_errors(front)]
     if problems:
         return problems
-    answered = [entry["node"] for entry in front["read"]]
+    assigned = bound + beside
+    absent = front.get("nowhere") or []
+    answered = [entry["node"] for entry in front["read"]] + absent
     problems += [f"read: {node} appears {answered.count(node)} times; a delegation answers once, "
                  f"and two answers for one node void each other"
                  for node in sorted(set(answered)) if answered.count(node) > 1]
+    held_bare = sorted(node for node in set(absent) if node in bound)
+    if held_bare:
+        problems.append(f"nowhere: {', '.join(held_bare)} is bound to {given}; a bound node read "
+                        f"nowhere is answered in `read`, with what was looked at quoted, because "
+                        f"a release of the pair is decided from that quote")
     missing = sorted(set(assigned) - set(answered))
     extra = sorted(set(answered) - set(assigned))
     if missing:
@@ -4871,7 +4883,7 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
             rerun.append(f"{given}: the return does not parse: {broken}")
             continue
         staged_for = manifest["files"][given]
-        held = return_problems(front, staged_for["nodes"] + staged_for.get("also", []), given)
+        held = return_problems(front, staged_for["nodes"], staged_for.get("also", []), given)
         if held:
             rerun += [f"{given}: {problem}" for problem in held]
             continue
@@ -5058,6 +5070,11 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
 
     read_of = {(given, entry["node"]): entry
                for given, front in returns.items() for entry in front["read"]}
+    # A node read beside a file's bindings and answered by name alone is `nowhere` on that file:
+    # it counts where the file was judged and never where the fact is held. No pair it names is
+    # bound, so nothing below quotes it — the return contract refuses a bound node named there.
+    named_nowhere = {(given, node)
+                     for given, front in returns.items() for node in front.get("nowhere") or []}
 
     entries = []
     unheld: list[dict] = []
@@ -5067,9 +5084,10 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
         # «An adopted node binds the files whose judgment holds its fact and no others» (SPEC-005 R4).
         bound_in = sorted(given for given, meta in manifest["files"].items()
                           if node in meta["nodes"])
-        judged_in = sorted(given for given in manifest["files"] if (given, node) in read_of)
-        holders = [given for given in judged_in
-                   if not held_nowhere(read_of[(given, node)]["held_at"])]
+        judged_in = sorted(given for given in manifest["files"]
+                           if (given, node) in read_of or (given, node) in named_nowhere)
+        holders = [given for given in judged_in if (given, node) in read_of
+                   and not held_nowhere(read_of[(given, node)]["held_at"])]
         found = against.get(node) or []
         taint = [given for given in bound_in if given in tainted]
         lost = [given for given in bound_in if given not in holders]

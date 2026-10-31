@@ -59,6 +59,19 @@ root, the one file this writes, and the condition names it by path and digest �
 person pastes whole, whatever the objective's length. It never sets a goal: the condition is the
 person's once the person pastes it.
 
+**`--arm` records the same condition as the framework's own goal, and `--disarm` ends it.** It
+runs every check `--compose` runs and refuses where they refuse, refuses a project that already
+holds an armed goal, and writes one record — `siegard/goal.json` under the repository's git
+directory, never in the tree the state reads. The plugin's `Stop` hook then answers each stop of
+the session from `--state`'s own computation over that record: «A goal the person arms through
+the framework ends on the state script's answer at the session's stop, never on a model's
+reading: `state A` or `state B` ends the goal and lets the session stop, `not yet` blocks the
+stop with the checks that failed, and a fourth consecutive `not yet` whose whole answer repeats
+the last ends the goal paused.» (SPEC-008 R14) Arming is the person's act: it runs only on the
+person's own word to arm, which no script can read, so the skill that invokes it holds that
+condition. An `--objective-file` naming the file an earlier `--compose` wrote for the slug is
+named as it stands rather than written again.
+
 Every root comes from `project.py`, run as a command, so `siegard.json` keeps its one reader. Every
 check runs the framework's own command and quotes what it printed; nothing is re-derived here.
 
@@ -70,6 +83,11 @@ Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version 
         goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file>) [--target <key>] [--budget <n>] [--correct contradicts] [--specify]
                                     check what the route would refuse first, then print the goal
                                     condition to paste after /goal
+        goal.py --arm <project-root> (the arguments --compose takes)
+                                    check as --compose does, then record the condition armed for
+                                    the Stop hook to answer
+        goal.py --disarm <project-root>
+                                    end the armed goal, if one is
         goal.py --help              print this text and stop
         A scope id is epic/<name> or task/<epic>/<name> of the slug's live plan; with no --scope,
         the scope is the whole plan. --target may be left out where siegard.json declares one
@@ -82,8 +100,8 @@ Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version 
         condition asks to specify a prose objective, the orchestrating entry point invokes
         `/analyse` once, before the plan, over the objective as the person armed it, and commits
         the specification root apart.» (SPEC-008 R10)
-Exit:   0 state A or state B; a condition composed
-        1 not yet; a composition refused, with every reason
+Exit:   0 state A or state B; a condition composed or armed; a goal disarmed, or none armed
+        1 not yet; a composition or an arming refused, with every reason
         2 cannot run
 """
 
@@ -111,6 +129,11 @@ RECONCILED = ("siegard-trace.json", "siegard-reconcile/")
 CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")
 CONDITION_LIMIT = 4000
+ARMED_DIR = "siegard"
+ARMED_FILE = "goal.json"
+ENDED_FILE = "goals-ended.jsonl"
+ARMED_CONTRACT = "goal-armed/1"
+PAUSE_AFTER = 3
 RECORDS_DONE = ("every task has a record, and every record its proof",
                 "every task in the scope has a record, and every record its proof")
 
@@ -402,7 +425,10 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
 def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
             objective: str | None, budget: int = 0,
             correct: list[str] | None = None,
-            specify: bool = False) -> tuple[list[str], str | None]:
+            specify: bool = False,
+            kept: Path | None = None) -> tuple[list[str], str | None, dict]:
+    """The condition, and what it pins. `kept` is an objective file this script already wrote
+    under the telemetry root for this slug: it is named as it stands rather than written again."""
     delivery, work, target, specification = roots(fields, slug)
     said: list[str] = []
     refused: list[str] = []
@@ -454,13 +480,14 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
             except Refused as refusal:
                 refused.append(str(refusal))
     if refused:
-        return refused, None
+        return refused, None, {}
 
     since = git(fields["home"], "rev-parse", "--short=12", "HEAD")
     branch = git(fields["home"], "branch", "--show-current") or "a detached HEAD"
     version = plugin_version()
     status = git(fields["home"], "status", "--porcelain", "--untracked-files=all")
-    untouched = [line[3:] for line in status.splitlines() if line.strip()]
+    untouched = [line[3:] for line in status.splitlines() if line.strip()
+                 and (kept is None or line[3:] != relative(fields, kept))]
     said += [f"HEAD: {since} on {branch}", f"plugin: {version}",
              f"untouched: {', '.join(untouched) if untouched else 'nothing'}"]
 
@@ -470,15 +497,21 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
                   "--since", since, "--version", version,
                   *[arg for path in untouched for arg in ("--untouched", path)]]
     written = None
+    digest = None
     if objective:
         # The objective travels by reference: a condition is one line the person pastes whole,
         # and an objective inlined in it is what an evaluator reads instead of the state command.
-        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        written = fields["telemetry_root"] / f"goal-{stamp}-{slug}.md"
-        content = (objective.rstrip("\n") + "\n").encode("utf-8")
+        if kept is not None:
+            written = kept
+            content = kept.read_bytes()
+        else:
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            written = fields["telemetry_root"] / f"goal-{stamp}-{slug}.md"
+            content = (objective.rstrip("\n") + "\n").encode("utf-8")
         digest = hashlib.sha256(content).hexdigest()[:16]
-        said.append(f"objective: {relative(fields, written)} (sha256 {digest}), written here "
-                    f"verbatim; the measure commits it with the telemetry root")
+        said.append(f"objective: {relative(fields, written)} (sha256 {digest}), "
+                    + ("named as it stands" if kept is not None else "written here verbatim")
+                    + "; the measure commits it with the telemetry root")
     carried = (f"Scope: {', '.join(scope)}, with every task it depends on." if scope else
                f"Scope: the objective in {relative(fields, written)} (sha256 {digest}) — the "
                f"person's own words, verbatim — planned under this slug.")
@@ -501,11 +534,113 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     ]))
     if len(condition) > CONDITION_LIMIT:
         return [f"the condition is {len(condition)} characters, and the harness refuses one "
-                f"over {CONDITION_LIMIT}; shorten the objective, or name its epic"], None
-    if written is not None:
+                f"over {CONDITION_LIMIT}; shorten the objective, or name its epic"], None, {}
+    if written is not None and kept is None:
         written.parent.mkdir(parents=True, exist_ok=True)
         written.write_bytes(content)
+    pinned = {"since": since, "version": version, "untouched": untouched,
+              "objective": relative(fields, written) if written is not None else None,
+              "objective_sha256": digest}
+    return said, condition, pinned
+
+
+def armed_path(home: Path) -> Path:
+    """Where a project's armed goal is recorded: inside the repository's git directory, shared by
+    every worktree of it and never in the tree — the tree is what the state reads, and the
+    measure commits the telemetry root whole."""
+    common = Path(git(home, "rev-parse", "--git-common-dir"))
+    return (common if common.is_absolute() else home / common) / ARMED_DIR / ARMED_FILE
+
+
+def read_armed(path: Path) -> dict | None:
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return record if isinstance(record, dict) else None
+
+
+def write_armed(path: Path, record: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    held = path.with_suffix(".tmp")
+    held.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    held.replace(path)
+
+
+def end_armed(path: Path, record: dict, ended: str, reason: str) -> None:
+    """The armed record leaves its place and is appended, ended, to the log beside it."""
+    done = {**record, "ended": ended, "reason": reason,
+            "ended_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    with (path.parent / ENDED_FILE).open("a", encoding="utf-8") as log:
+        log.write(json.dumps(done) + "\n")
+    path.unlink(missing_ok=True)
+
+
+def arm(project_root: Path, fields: dict, slug: str, scope: list[str], objective: str | None,
+        budget: int, correct: list[str], specify: bool,
+        kept: Path | None) -> tuple[list[str], str | None]:
+    """Compose the condition under every check `--compose` runs, and record it armed."""
+    path = armed_path(fields["home"])
+    if path.exists():
+        held = read_armed(path) or {}
+        return [f"a goal is armed already in this project — {held.get('slug', 'unreadable')}, "
+                f"armed at {held.get('armed_at', 'unknown')}, recorded at {path}; a project "
+                f"holds one armed goal, and `goal.py --disarm {project_root}` ends it"], None
+    said, condition, pinned = compose(project_root, fields, slug, scope, objective, budget,
+                                      correct, specify, kept)
+    if condition is None:
+        return said, None
+    record = {"contract": ARMED_CONTRACT, "project_root": str(project_root), "slug": slug,
+              "target": fields["target"], "scope": scope, **pinned, "condition": condition,
+              "armed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "session_id": None, "blocks": 0, "last_state": None}
+    write_armed(path, record)
+    said.append(f"armed: {path}")
     return said, condition
+
+
+def disarm(home: Path, reason: str) -> str:
+    path = armed_path(home)
+    if not path.exists():
+        return "no goal is armed in this project"
+    record = read_armed(path) or {}
+    end_armed(path, record, "disarmed", reason)
+    return f"disarmed: {record.get('slug', 'an unreadable record')}, armed at " \
+           f"{record.get('armed_at', 'unknown')}"
+
+
+def answer_stop(record: dict, path: Path) -> tuple[str, str]:
+    """What a stop of the session the armed goal is bound to is answered with: `ended`,
+    `paused` or `block`, and the text that says it. The state is `state()`'s own, over the
+    record's pins; a `not yet` whose whole answer repeats the last one `PAUSE_AFTER` times in a
+    row ends the goal paused, because the session answered each of those blocks with nothing a
+    check could see."""
+    project_root = Path(record["project_root"])
+    fields = resolve(project_root, record["target"])
+    first, body = state(fields, record["slug"], record["since"], record["version"],
+                        list(record.get("scope") or []), list(record.get("untouched") or []))
+    if not first.startswith("not yet"):
+        end_armed(path, record, first.split(" — ", 1)[0], first)
+        return "ended", f"Siegard ended the armed goal {record['slug']}: {first}"
+    digest = hashlib.sha256("\n".join([first, *body]).encode("utf-8")).hexdigest()[:16]
+    blocks = int(record.get("blocks") or 0)
+    if digest == record.get("last_state") and blocks >= PAUSE_AFTER:
+        reason = (f"{blocks} consecutive stops were answered `not yet` with nothing a check "
+                  f"could see changed; the last answer: {first}")
+        end_armed(path, record, "paused", reason)
+        return "paused", (f"Siegard paused the armed goal {record['slug']}: {reason}. It is "
+                          f"disarmed; /siegard-goal arms it again")
+    record = {**record, "blocks": blocks + 1 if digest == record.get("last_state") else 1,
+              "last_state": digest}
+    write_armed(path, record)
+    failed, keep = [], False
+    for line in body:
+        if line.startswith("check "):
+            keep = line.endswith(": FAIL")
+        if keep:
+            failed.append(line)
+    return "block", "\n".join([first, *failed, "",
+                               "The goal the person armed, repeated:", record["condition"]])
 
 
 def take(args: list[str], flag: str, many: bool = False):
@@ -528,12 +663,24 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
-    modes = [m for m in ("--state", "--compose") if m in args]
+    modes = [m for m in ("--state", "--compose", "--arm", "--disarm") if m in args]
     if len(modes) != 1:
-        print("cannot run: expected --state or --compose, one of them", file=sys.stderr)
+        print("cannot run: expected --state, --compose, --arm or --disarm, one of them",
+              file=sys.stderr)
         return CANNOT_RUN
     mode = modes[0]
     args.remove(mode)
+    if mode == "--disarm":
+        if len(args) != 1 or args[0].startswith("--") or not Path(args[0]).is_dir():
+            print("cannot run: --disarm takes <project-root> alone", file=sys.stderr)
+            return CANNOT_RUN
+        try:
+            home = Path(git(Path(args[0]).resolve(), "rev-parse", "--show-toplevel"))
+            print(disarm(home, "disarmed by goal.py --disarm"))
+        except (Refused, OSError) as refusal:
+            print(f"cannot run: {refusal}", file=sys.stderr)
+            return CANNOT_RUN
+        return 0
     try:
         slug = take(args, "--slug")
         target = take(args, "--target")
@@ -610,19 +757,34 @@ def main() -> int:
         print("cannot run: --compose takes --scope or --objective, one of them, and pins "
               "--since, --version and --untouched itself", file=sys.stderr)
         return CANNOT_RUN
+    kept = None
+    if objective_file is not None:
+        named = Path(objective_file).resolve()
+        if named.parent == fields["telemetry_root"].resolve() \
+                and re.fullmatch(rf"goal-\d{{8}}T\d{{6}}Z-{re.escape(slug)}\.md", named.name):
+            kept = named
     try:
-        said, condition = compose(project_root, fields, slug, scope, objective, budget, correct,
-                                  specify)
+        if mode == "--arm":
+            said, condition = arm(project_root, fields, slug, scope, objective, budget, correct,
+                                  specify, kept)
+        else:
+            said, condition, _ = compose(project_root, fields, slug, scope, objective, budget,
+                                         correct, specify, kept)
     except Refused as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
         return CANNOT_RUN
     if condition is None:
-        print("refused — the route would stop before its first step:")
+        print("refused — " + ("nothing was armed:" if mode == "--arm" else
+                              "the route would stop before its first step:"))
         print("\n".join(f"- {line}" for line in said))
         return 1
     print("checked:")
     print("\n".join(f"- {line}" for line in said))
-    print("\ncondition — paste after /goal:\n")
+    if mode == "--arm":
+        print("\ngoal armed — the next stop of this session is answered by the state command, "
+              "and the condition below is repeated with every `not yet`:\n")
+    else:
+        print("\ncondition — paste after /goal:\n")
     print(condition)
     return 0
 

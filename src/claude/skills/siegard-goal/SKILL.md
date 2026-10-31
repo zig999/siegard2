@@ -1,6 +1,6 @@
 ---
 name: siegard-goal
-description: Use when a person wants one scope — an objective in prose, an epic, or a set of tasks of a live plan — carried end to end with nobody asked anything along the way. Composes the condition of a Claude Code goal that drives /deliver-scope over that scope, after checking everything the route would refuse before its first step, and prints it for the person to paste after /goal. The goal it composes ends when a script reads state A (delivered, proven, reviewed, measured) or state B (stopped where only a person moves it) from disk, so it always ends. It writes only the objective, verbatim, to a file the condition names, and never arms a goal itself — pasting the condition is the person's act and the authorization the route needs. Not for delivering anything now (that is /deliver-scope), and not for watching a run (that is /siegard-progress).
+description: Use when a person wants one scope — an objective in prose, an epic, or a set of tasks of a live plan — carried end to end with nobody asked anything along the way. Composes the condition of a Claude Code goal that drives /deliver-scope over that scope, after checking everything the route would refuse before its first step, and prints it for the person to paste after /goal. The goal it composes ends when a script reads state A (delivered, proven, reviewed, measured) or state B (stopped where only a person moves it) from disk, so it always ends. It writes only the objective, verbatim, to a file the condition names, and arms a goal only on the person's own word to arm it — then through the framework, whose Stop hook answers each stop from the state script — or leaves the condition for the person to paste after /goal; either is the person's act and the authorization the route needs. Not for delivering anything now (that is /deliver-scope), and not for watching a run (that is /siegard-progress).
 argument-hint: "[objective in prose | epic/<name> | task/<epic>/<name> ...]"
 effort: low
 ---
@@ -80,13 +80,35 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
    pending elsewhere, which the goal leaves untouched. A refusal is the report: every reason it
    printed, verbatim, each with what resolves it.
 3. Report, and stop.
+4. **Arm, only on the person's own word.** Where a later message of the person's says, in their
+   own words, to arm this goal through the framework — not a paste of `/goal`, not a yes to
+   something else — run, with exactly the arguments step 2 ran, and, for an objective, with
+   `--objective-file` naming the file step 2 wrote:
+
+   ```
+   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --arm <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective-file <the file step 2 wrote>) [--budget <n>] [--correct contradicts] [--specify]
+   ```
+
+   The script runs every check step 2 ran again, refuses a project that already holds an armed
+   goal, and records the condition for the plugin's `Stop` hook: «A goal the person arms through
+   the framework ends on the state script's answer at the session's stop, never on a model's
+   reading: `state A` or `state B` ends the goal and lets the session stop, `not yet` blocks the
+   stop with the checks that failed, and a fourth consecutive `not yet` whose whole answer
+   repeats the last ends the goal paused.» (SPEC-008 R14) Report what it printed, verbatim, and
+   end the turn: the stop that ends it is the hook's first answer, and the condition it repeats
+   is the ask `/deliver-scope` runs under. A refusal is the report, with what resolves it.
 
 ## Report, and stop
 
 Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1) states.
-The one decision is the person's: whether to arm the goal, by pasting the block that closes this
-report — whole, because `/goal` with anything else, the objective alone among them, names no
-route and `/deliver-scope` refuses it. Then, in the session's own words, what the goal will do:
+The one decision is the person's: whether to arm the goal, and how — recommended, by judgment
+because the two hold the same route, through the framework: they say so in their own words and
+step 4 runs, and the end is the state command's answer at every stop rather than an evaluator's
+reading of the session; or through the harness, by pasting the block that closes this report —
+whole, because `/goal` with anything else, the objective alone among them, names no route and
+`/deliver-scope` refuses it. What would change it: a project whose sessions run without this
+plugin's hooks, where only the harness's goal answers a stop. Then, in the session's own words,
+what the goal will do:
 carry the scope through `/deliver-scope`, commit each step that skill defines, and end when the
 state command answers `state A` or `state B`, both of which end it. Where the objective was a
 citation, the file the script wrote, whole: what the person arms is that text, and they read it
@@ -104,9 +126,10 @@ person wants changed is a new invocation of this skill.
 
 ## What you never do
 
-- Arm a goal, or run `/deliver-scope` — the condition becomes an ask only when the person pastes
+- Arm a goal but by step 4, on the person's own word to arm it; paste `/goal` for them; or run
+  `/deliver-scope` — the condition becomes an ask only when the person pastes it or says to arm
   it.
 - Edit, shorten or add to the condition the script printed: a rule written into it is a second
   copy of one a skill already holds, and the evaluator reads it as something to verify.
-- Write, commit or change any file but the one the script writes: the objective, verbatim, under
-  the telemetry root, which the condition names by path and digest.
+- Write, commit or change any file but the ones the script writes: the objective, verbatim, under
+  the telemetry root, which the condition names by path and digest, and the armed record.

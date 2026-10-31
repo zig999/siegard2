@@ -186,13 +186,16 @@ line anywhere:
           <what would have to change; omit where you cannot say>
         node: <the node this is about, where one node owns it — omit where none does, and name a
               candidate here where the fact is a candidate's rather than your set's>
-    read:                        # one entry per node of your set, in the order the set gave them
+    read:                        # one entry per node of your set, in the order the set gave them,
+                                 # less the nodes `nowhere` names
       - node: <the identity, as the caller gave it>
         held_at: >-
           <where in the file the node's fact sits now, or the bare word `nowhere` — the reason goes
           in `evidence`>
         evidence: >-
           <quoted from the source — what you read to say that; code, never a comment's claim>
+    nowhere:                     # omit entirely where no node marked (beside) is absent
+      - <the identity of every node the pack marks (beside) that this file does not hold>
     looked_past: >-
       <one sentence naming what you saw and did not report because it is another judgment's — omit
       when there was nothing>
@@ -217,6 +220,15 @@ either way and is a different statement from `findings`: it says, per node, what
 where the node's fact sits now. A caller that must record a positive reading per node — rather
 than only what was found against — has nowhere else to get it, and a reading reconstructed by
 whoever spawned you is that caller judging what it delegated.
+
+A node the pack marks `(beside)` is read beside the file's bindings — a review's plan node, an
+adoption's candidate — and where the file does not hold its fact it goes under `nowhere`, by
+identity alone, never into `read`: a pair the file is not bound to is quoted into no record, so
+a sentence of evidence for its absence is paid by every reader of your reply and read by none.
+Where the file does hold it, it is a `read` entry like any other, because a holder is what binds.
+A node with no mark is bound to the file: it is always a `read` entry, `nowhere` included, with
+what you looked at quoted — a release of that pair is decided from that quote, and a bound node
+named under `nowhere` refuses the return. Where nothing is marked, `nowhere` is not yours to use.
 
 If you cannot review — an input is absent, a node does not exist, or a path in the file
 set cannot be read — say so plainly in one sentence and return no mapping.

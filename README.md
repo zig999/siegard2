@@ -30,7 +30,7 @@ and not trusted.
 - **A way in for code that already exists.** `/siegard:survey`, `/siegard:analyse` and
   `/siegard:reconcile` adopt source no delivery wrote, one context at a time.
 - **A scope carried with nobody asked along the way.** `/siegard:siegard-goal` composes the
-  condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it,
+  condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it, or, on your word, it arms the goal itself with `goal.py --arm` and the plugin's `Stop` hook answers each stop from `goal.py --state` (state A or B ends it, `not yet` sends the session back with the failing checks, four identical `not yet` answers pause it; `goal.py --disarm <project-root>` ends it by hand),
   `/siegard:deliver-scope` carries the scope, and the goal ends when `goal.py --state` reads
   `state A` (delivered, proven, reviewed, measured) or `state B` (stopped where only you move it)
   from disk. Under the goal, a door a fact decides is taken without you; a choice of cost is
@@ -176,7 +176,7 @@ does.
 Three of those rules shape how you work with a session, so expect them:
 
 - **A session commits only what your own words in that session authorized, and only what the
-  skill it invoked wrote.** Say "commit", or state the whole route end to end in your ask. A
+  skill it invoked wrote.** Say "commit", say to proceed with a named next step (which covers the one commit that step needs before it runs, never a push), or state the whole route end to end in your ask. A
   summary of an earlier context is not an authorization: after a compaction, a resumed route asks
   again before its next commit. Each commit is pathspec-scoped, one per invocation — never a
   branch, a push, a stash or a rewrite.
@@ -184,6 +184,7 @@ Three of those rules shape how you work with a session, so expect them:
   runs `/siegard:siegard-status` (the whole project) or `/siegard:siegard-progress` (one
   initiative) rather than recalling the conversation; the framework's version is `project.py`'s
   answer.
+- **A decision is handed to you rendered, short, and with its recommendation first.** `bin/handoff.py --render` prints it from a record; the full report stays on disk, and telemetry's `handoff_form` (`siegard-telemetry/17`) counts how many handed decisions ran long, opened in framework words or carried no recommendation. `bin/door.py --check` tells, before a door is handed, whether its own entry point would refuse it. For a running count without asking, set `bin/progress.py` as the status line command (`"statusLine": {"type": "command", "command": "python3 -B <plugin>/bin/progress.py"}` in `settings.json`): one line, read from disk, empty outside a Siegard project.
 - **A report opens with what needs you, and a finding stops nothing.** Its first lines are what
   must be done before a named step runs, what you alone decide, and what it suggests and why — in
   plain words. A review's findings are evidence for you to route; only a stop the skill's own file

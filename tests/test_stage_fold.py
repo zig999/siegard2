@@ -2677,6 +2677,94 @@ def test_nowhere_with_a_reason_after_it_is_still_nowhere(adopting):
     assert sorted(e["node"] for e in front["unheld"]) == sorted([OTHER, RULE])
 
 
+def named_nowhere(held: dict[str, str]) -> dict:
+    """A return answering every candidate held `nowhere` by identity alone (SPEC-005 R12)."""
+    front = read_as({node: where for node, where in held.items() if where != "nowhere"})
+    front["nowhere"] = [node for node, where in held.items() if where == "nowhere"]
+    return front
+
+
+def test_a_node_read_beside_and_named_nowhere_folds_as_a_read_nowhere(adopting):
+    """SPEC-005 R12: a candidate the file does not hold, named by identity alone, folds exactly as
+    the same answer written as a `read` entry — never a holder, and still counted where it was
+    judged, so the unheld candidate is read on every file and the file holding none is unbound."""
+    adopt_staged(adopting)
+    answers = {FILE: {NODE: "line 1", OTHER: "line 1", RULE: "nowhere"},
+               SECOND: {NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"},
+               THIRD: {NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}}
+    done, record = adopted_record(adopting, {given: named_nowhere(held)
+                                             for given, held in answers.items()})
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    by_node = {entry["node"]: entry for entry in front["nodes"]}
+    assert by_node[NODE]["conforms"] and by_node[NODE]["encoded_at"] == sorted([FILE, SECOND])
+    assert by_node[OTHER]["conforms"] and by_node[OTHER]["encoded_at"] == [FILE]
+    assert front["unheld"] == [{"node": RULE, "how": "read on 3 file(s), and every judge "
+                                                   "answered `nowhere`: no file of the set "
+                                                   "holds this fact"}]
+    assert front["unbound"] == [THIRD]
+    assert run("--reconciliation", record).returncode == 0
+    adopt_staged(adopting, slug="written-out")
+    _, written_out = adopted_record(adopting, {given: read_as(held)
+                                               for given, held in answers.items()},
+                                    slug="written-out")
+    def answered(path: Path) -> tuple:
+        said = yaml.safe_load(path.read_text(encoding="utf-8").split("---")[1])
+        return said["nodes"], said["unheld"], said["unbound"]
+    assert answered(record) == answered(written_out), \
+        "the bare identity and the `read` entry are one answer, and fold to one record"
+
+
+def test_a_plan_node_named_nowhere_folds_a_review_as_a_read_nowhere_does(consumer):
+    third = "domain/troubleshooting/hypothesis"
+    _, workspace = review_staged(consumer, "--node", third)
+    save_return(consumer, "first-review", FILE, clean_return([NODE, OTHER], nowhere=[third]))
+    save_return(consumer, "first-review", SECOND, clean_return([NODE], nowhere=[third]))
+    record = consumer / "siegard-reconcile" / "first-review.md"
+    done = run("--fold", consumer / "backend", workspace, premised(consumer), record)
+    assert done.returncode == 0, done.stdout + done.stderr
+    front = yaml.safe_load(record.read_text(encoding="utf-8").split("---")[1])
+    assert third not in {entry["node"] for entry in front["nodes"]}
+    assert all(entry["conforms"] for entry in front["nodes"])
+
+
+def test_a_bound_node_named_nowhere_is_a_delegation_to_run_again(consumer):
+    """A bound pair read nowhere is quoted into the record a release is decided from; a bare name
+    quotes nothing, so the return is refused rather than folded around."""
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE], nowhere=[OTHER]))
+    done, record = folded(consumer)
+    assert done.returncode == 1
+    assert f"nowhere: {OTHER} is bound to {FILE}" in done.stdout and "run again" in done.stdout
+    assert not record.exists()
+
+
+def test_a_node_answered_in_read_and_in_nowhere_is_refused(adopting):
+    adopt_staged(adopting)
+    twice = read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"})
+    twice["nowhere"] = [RULE]
+    done, record = adopted_record(adopting, {
+        FILE: twice,
+        SECOND: named_nowhere({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: named_nowhere({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 1
+    assert f"read: {RULE} appears 2 times" in done.stdout
+    assert not record.exists()
+
+
+def test_the_pack_marks_every_node_read_beside_the_files_bindings(consumer):
+    third = "domain/troubleshooting/hypothesis"
+    _, workspace = review_staged(consumer, "--node", third)
+    pack = Path(manifest_of(workspace)["files"][FILE]["pack"]).read_text(encoding="utf-8")
+    headers = [line for line in pack.splitlines() if line.startswith("=== ")]
+    assert headers == [f"=== {NODE}", f"=== {OTHER}", f"=== {third} (beside)"]
+    assert "named under `nowhere`, by identity alone" in pack
+    _, workspace = staged(consumer)
+    plain = Path(manifest_of(workspace)["files"][FILE]["pack"]).read_text(encoding="utf-8")
+    assert "(beside)" not in plain, "a pack with nothing read beside offers no bare answer"
+
+
 def test_a_later_adoption_that_finds_a_candidate_unheld_closes_its_earlier_finding(adopting):
     adopt_staged(adopting, slug="first")
     contradicted = read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"})

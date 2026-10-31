@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/16"
+    assert report["contract_version"] == "siegard-telemetry/17"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/16"
+    assert report["contract_version"] == "siegard-telemetry/17"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1493,6 +1493,87 @@ def test_the_handoffs_section_names_the_transcripts_as_its_source(consumer):
     report = json.loads((consumer["home"] / "telemetry" / f"{STAMP}.json").read_text(encoding="utf-8")) \
         if done.returncode == 0 else None
     assert report is None or report["handoffs"]["confirmations"] == 0
+
+
+# ---------------------------------------------------------------------- the handoff form
+
+HANDOFF_FIXTURES = REPO / "tests/fixtures/handoff"
+
+
+def handoff_text(name: str) -> str:
+    return (HANDOFF_FIXTURES / name).read_text(encoding="utf-8")
+
+
+def test_every_message_a_person_answered_is_read_by_the_definition_check_holds(consumer):
+    """SPEC-006 Validation item 4: the message a person answered — the last text before their
+    turn — is read once, by `handoff.py`'s own `reading`, and leaves as its form and never its
+    words. A turn with no new message before it reads nothing; a continuation summary is not a
+    person answering."""
+    import handoff
+    long_pt = handoff_text("pt-long-jargon-late-decision.md")
+    clean = handoff_text("en-clean-decision.md")
+    status = handoff_text("pt-long-status-answer.md")
+    (consumer["transcripts"] / "s8.jsonl").write_text(
+        assistant("2026-08-20T10:29:00.000Z", {
+            "type": "tool_use", "id": "tu-skill", "name": "Skill",
+            "input": {"skill": "siegard:reconcile", "args": "x"}}, session="s8")
+        + user_result("2026-08-20T10:29:01.000Z", "tu-skill", "loaded")
+        + spoken("2026-08-20T10:30:00.000Z", long_pt, session="s8")
+        + human("2026-08-20T10:31:00.000Z", "a")
+        + spoken("2026-08-20T10:40:00.000Z", clean, session="s8")
+        + human("2026-08-20T10:41:00.000Z", "This session is being continued from a summary")
+        + human("2026-08-20T10:41:30.000Z", "b")
+        + spoken("2026-08-20T10:42:00.000Z", "Working on it.", session="s8")
+        + spoken("2026-08-20T10:43:00.000Z", status, session="s8")
+        + human("2026-08-20T10:44:00.000Z", "ok")
+        + human("2026-08-20T10:45:00.000Z", "and?"),
+        encoding="utf-8")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    s8 = next(s for s in report["harness"]["sessions"] if s["id"] == "s8")
+    contract_of_handoff = handoff.load_contract()
+    expected = []
+    for text in (long_pt, clean, status):
+        read = handoff.reading(text, contract_of_handoff)
+        expected.append({key: read[key] for key in (
+            "characters", "hands_decision", "jargon_in_opening", "recommendation_word",
+            "decision_word_share")})
+    assert [{k: v for k, v in f.items() if k not in ("at", "skill")} for f in s8["handoff_form"]] \
+        == expected
+    assert [f["at"] for f in s8["handoff_form"]] == [
+        "2026-08-20T10:30:00.000Z", "2026-08-20T10:40:00.000Z", "2026-08-20T10:43:00.000Z"]
+    assert {f["skill"] for f in s8["handoff_form"]} == {"reconcile"}
+    form = report["handoff_form"]
+    assert form["messages"] == 3 and form["hands_decision"] == 2
+    assert form["over_ceiling"] == 1 and form["jargon_in_opening"] == 1
+    assert form["recommendation_word"] == 2 and form["no_decision_word"] == 1
+    shares = sorted(e["decision_word_share"] for e in expected if e["decision_word_share"] is not None)
+    assert form["decision_word_share_median"] == round(sum(shares) / 2, 3)
+    assert form["longest"] == {"session": "s8", "at": "2026-08-20T10:30:00.000Z",
+                               "characters": len(long_pt)}
+    assert form["latest_decision_word"]["at"] == "2026-08-20T10:30:00.000Z"
+    assert form["ceilings"] == {"message": contract_of_handoff["x-ceilings"]["message"],
+                                "opening": contract_of_handoff["x-ceilings"]["opening"]}
+    dumped = json.dumps(report)
+    assert "Recomendo" not in dumped and "refusing an empty order" not in dumped
+    assert "handoff form: 3 message(s) answered, 2 handing a decision (1 over 1500 characters)" \
+        in done.stdout
+    row = next(p for p in report["provenance"] if p["section"] == "handoff_form")
+    assert row["source"] == str(consumer["transcripts"]) and row["unavailable"] is None
+
+
+def test_a_window_where_nobody_answered_reads_no_form_and_names_no_far_end(consumer):
+    _, report = report_of(consumer)
+    form = report["handoff_form"]
+    assert form["messages"] == 0 and form["decision_word_share_median"] is None
+    assert form["longest"] is None and form["latest_decision_word"] is None
+
+
+def test_telemetry_asks_is_the_handoff_definition():
+    import handoff
+    import telemetry
+    assert telemetry.asks is handoff.asks
 
 
 # ------------------------------------------------------------- commits inside a span

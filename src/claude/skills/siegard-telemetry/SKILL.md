@@ -92,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/16
+contract_version: siegard-telemetry/17
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -260,6 +260,12 @@ What each section holds:
   not met are a condition nothing could read as met, and which clause kept it unmet is a reading
   of the evaluator's reasons in the transcript, tagged `[judgment]`. A window with none says
   zero; a `siegard-telemetry/14` record carries no count, which is not zero.
+  Then `handoff_form`: of the messages a person answered, how many handed a decision, how many of
+  those ran over `ceilings.message`, how many carried a framework term in the first
+  `ceilings.opening` characters, how many carried a word of recommendation and how many no decision
+  word, and `decision_word_share_median`. Name `longest` and `latest_decision_word` by session and
+  instant, as the far end a reader opens. Which of them a person found hard to read is a reading,
+  tagged `[judgment]`. A `siegard-telemetry/16` record carries no count, which is not zero.
 
 ### Provenance tags
 

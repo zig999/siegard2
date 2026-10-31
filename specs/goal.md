@@ -11,13 +11,16 @@ contract_version: spec/1
 
 This specification fixes what a goal the person arms over `/deliver-scope` ends on, and how that
 end is read. It binds `/deliver-scope`, the script that answers a goal's state, the script and the
-skill that compose a goal's condition, and telemetry's count of the harness's evaluations.
+skill that compose a goal's condition and arm it, the plugin's `Stop` hook, and telemetry's count
+of the harness's evaluations.
 
 A goal is the harness's own mechanism: a condition the person sets once, that the harness
 repeats whenever the session tries to stop, and that a model reading the transcript judges met or
 not. This specification decides what the condition says, what decides that it is met, and what
 ends a run that cannot be carried further without a person — so that a goal always ends, in one
-of two states, each read from disk.
+of two states, each read from disk. It also fixes the framework's own goal: the same condition,
+armed by the person through the framework, whose end is that script's answer at the session's
+stop rather than a model's reading (R14).
 
 Grounds: every `/goal` session of three consumers (`newcatalog`, `productcatalog`,
 `productorder`) between 2026-10-13 and 2026-10-25, Siegard 5.18.0–5.28.1, read from their
@@ -42,6 +45,8 @@ session that stopped while its subagents were still running. The harness refuses
 - **Goal** — a condition the person sets through the harness, repeated by it whenever the
   session tries to stop, until a model reading the transcript judges it met.
 - **Goal condition** — the text of a goal.
+- **Armed goal** — a goal condition recorded by `goal.py --arm` for the plugin's `Stop` hook to
+  answer, instead of the harness's evaluator.
 - **Scope** — what a goal carries: an initiative's whole plan, one epic of a live plan, or a set
   of tasks of a live plan.
 - **Stop line** — the last line of a stopped run's orchestration log: `stop: <class> — <fact>`.
@@ -77,7 +82,11 @@ session that stopped while its subagents were still running. The harness refuses
 ### What a goal carries
 
 - **R5** — A scope restricted to an epic or a set of tasks carries with it every task of the same plan it depends on that holds no record, transitively, and the deliverable set within a scope is a script's answer.
-- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person; no skill sets a goal. An objective in prose is written to a file under the telemetry root and named in the condition by path and digest, so the condition is one line whatever the objective's length; an objective the person cites — text already in the conversation they point at and adopt — is copied whole into that file, never cut to fit the route, and the evaluator reads the state command rather than the objective. Where the person gives them, the condition states the budget of judged doors the run may take and the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers.
+- **R6** — A goal condition names the route, the authorization, the scope and the invocation that answers its state, and states no rule: the rules are those of the plugin version the invocation pins. The condition is composed by a script that checks, before any goal is armed, what the first step of the route would refuse, and it is armed by the person: through the harness by pasting it after `/goal`, which no skill does for them, or through the framework by `goal.py --arm`, which a skill runs only on the person's own word to arm. An objective in prose is written to a file under the telemetry root and named in the condition by path and digest, so the condition is one line whatever the objective's length; an objective the person cites — text already in the conversation they point at and adopt — is copied whole into that file, never cut to fit the route, and the evaluator reads the state command rather than the objective. Where the person gives them, the condition states the budget of judged doors the run may take and the findings policy, and a policy names only findings a route corrects: conformance findings of kind `contradicts`, which the corrective increment answers.
+
+### How an armed goal ends
+
+- **R14** — A goal the person arms through the framework ends on the state script's answer at the session's stop, never on a model's reading: `state A` or `state B` ends the goal and lets the session stop, `not yet` blocks the stop with the checks that failed, and a fourth consecutive `not yet` whose whole answer repeats the last ends the goal paused. `goal.py --arm` arms it only where `--compose`'s checks pass and the project holds no armed goal, and a skill runs it only on the person's own word to arm; it records `siegard/goal.json` under the repository's git directory — never in the tree the state reads — holding `contract` (`goal-armed/1`), `project_root`, `slug`, `target`, `scope`, `since`, `version`, `untouched`, `objective` and `objective_sha256` (null without an objective), `condition`, `armed_at`, `session_id` (null until the first stop binds it), `blocks` and `last_state` (the digest of the last `not yet` answer, whole). The plugin's `Stop` hook answers only the session the record is bound to, in a project that declares `siegard.json`, and is silent anywhere else. `state A` or `state B` ends the record and prints one `systemMessage` line carrying the state's first line, the stop line among it under state B; `not yet` prints `{"decision": "block", "reason": …}` whose reason is the state's first line, every failing check with its output verbatim, and the condition repeated; a stop while the session holds background work in flight is allowed and not counted. An ended record — `state A`, `state B`, `paused`, or `disarmed` by `goal.py --disarm` — is appended to `siegard/goals-ended.jsonl` beside it with `ended`, `reason` and `ended_at`. A state the hook cannot compute allows the stop and leaves the goal armed. What the person reads first when the goal ended with nothing delivered is SPEC-006's.
 
 ### What a goal answers without a person
 
@@ -106,8 +115,39 @@ session that stopped while its subagents were still running. The harness refuses
    counts (R7). The baseline is the grounds' 467 judged not met over 15 goals; a goal composed by
    `goal.py --compose` that the harness judged not met more than once while `--state` answered
    `state A` or `state B` is a defect in what the condition says, never grounds to widen it.
+5. Tests hold `goal.py --arm` and `--disarm` to R14 over the fixture repositories: an arming
+   refused where `--compose`'s checks refuse, writing nothing; a second arming in the same project
+   refused; a disarming that ends the record into the ended log.
+6. Tests hold the `Stop` hook to R14 by running it as the harness does, an event on stdin: silent
+   in a project without `siegard.json`; silent with no armed goal; silent for another session's
+   stop; `state A` ending the goal and allowing the stop; `state B` ending it with a
+   `systemMessage` carrying the stop line; `not yet` blocking with the failing checks first and
+   counting; the fourth identical `not yet` allowing the stop and ending the goal `paused`; a stop
+   with background work in flight allowed and uncounted; a malformed event exiting 0 with nothing
+   printed; and `hooks.json` declaring the hook on `Stop`.
 
 ## Readings
+
+- 2026-10-31 — grounds for R14, and R6's amendment, read from the transcripts of four consumer
+  projects over the four days before it: the harness's `/goal` evaluator judged a stop
+  not met 119 times, 95 of them after `goal.py --state` had already printed `state B` in the same
+  session — a terminal state R3 defines — and every one of those 95 was answered by another stop
+  and no work. Eight goals were paused by the harness after nine consecutive blocks and needed the
+  person to send a message to go on. Validation item 4 already named this a defect in what the
+  condition says; no wording of the condition removed it, because the evaluator is a reading and
+  R1 makes the answer a script's. R14 takes the reading out for a goal armed through the
+  framework: the stop is answered by `--state`'s own computation, and a loop the harness would cut
+  at nine is ended at four and said. The record lives in the git directory because the measure
+  commits the telemetry root whole and the `tree` check reads everything else. The harness
+  `/goal` path stays the person's alternative. Read without a live run: the hook's protocol —
+  `decision: "block"` with `reason`, `systemMessage`, `session_id`, `cwd`, `background_tasks` on
+  `Stop`, and a cap of eight consecutive continuations reset by a tool call — is the harness's
+  published hooks reference as read on this date, not yet observed from a consumer session.
+  Reversal: the hook releasing a stop at `state B` while a run could have delivered without a
+  person — a state B whose stop class R8 or R9 answers by itself under the armed condition — is a
+  release that ended a goal early, and the hook gains the route that answers that class before it
+  ends; a paused end the person resumes by re-arming, with the run then reaching `state A` without
+  a change the person made, narrows the pause bound.
 
 - 2026-10-31 — read from `salese2e`'s transcript and repository under Siegard 5.40.0, over the
   goal `prova-recusas-registro-pedidos` (armed 15:14Z, `--since 65a7394`). R11 as `goal.py` read

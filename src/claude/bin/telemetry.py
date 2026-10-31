@@ -112,6 +112,17 @@ word list is this script's and is finite: a short turn it does not match is coun
 longer turn is a message, never a confirmation. `handoffs` sums these across sessions, beside
 the Skill calls the sessions made, which is the denominator a confirmation count is read per.
 
+**A handoff's form is measured by the definition it is held to.** Every assistant message a
+person answered — the last text the session wrote before a human turn in the window — is read
+once by `handoff.py`'s own `reading`, the function `handoff.py --check` runs, so «A handoff
+written as free text is held by `bin/handoff.py --check` to what is decidable without the
+record» (SPEC-006 R8) and is measured by nothing else. What leaves is its length, whether it
+hands a decision, the names of the closed list's terms its opening carries, whether it carries a
+word of recommendation, and where its first decision word sits as a share of its prose — never
+its words. `handoff_form` sums them and names the longest message and the one whose first
+decision word sits latest, by session and instant, so a reader opens the far end of the
+distribution; it refuses nothing and ranks nothing against a threshold of its own.
+
 **A commit the session made inside a skill's span is counted with what authorized it.** A `git
 commit` or `git push` the session ran after a Skill call and before the person's next turn is
 the session's own act — the skill refused it, the person did not type for it just then — and
@@ -134,7 +145,8 @@ being `until` in UTC to the second, and a stamp that already exists is a refusal
 overwritten. The prose report `/siegard-telemetry` writes sits beside it under the same stem.
 
 Declared dependencies: PyYAML, jsonschema (this script also imports spec.py and plan.py, its
-siblings, for the node reading they already hold). It runs `project.py` for the roots rather than
+siblings, for the node reading they already hold, and handoff.py for the reading of a handoff's
+form). It runs `project.py` for the roots rather than
 reading `siegard.json` itself: that file has one reader.
 
 Usage:  telemetry.py <project-root> --since <ISO-8601|last> [--until <ISO-8601>]
@@ -154,10 +166,12 @@ Exit:   0 written, or probed
 from __future__ import annotations
 
 import argparse
+import functools
 import hashlib
 import json
 import os
 import re
+import statistics
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -173,11 +187,12 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
     raise SystemExit(2)
 
 import deliver
+import handoff
 import plan
 import spec
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/16"
+CONTRACT = "siegard-telemetry/17"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -622,9 +637,20 @@ def confirmation_class(text: str) -> str | None:
     return None
 
 
-def asks(text: str) -> bool:
-    """Whether the assistant's message closed on a question: its final paragraph holds one."""
-    return "?" in text.strip().rsplit("\n\n", 1)[-1]
+asks = handoff.asks
+
+
+@functools.lru_cache(maxsize=1)
+def handoff_contract() -> dict:
+    return handoff.load_contract()
+
+
+def handoff_form_of(text: str) -> dict:
+    """What `handoff.py --check` reads of one message a person answered, without its offset:
+    the share is the position a reader compares across messages of different lengths."""
+    read = handoff.reading(text, handoff_contract())
+    return {key: read[key] for key in ("characters", "hands_decision", "jargon_in_opening",
+                                       "recommendation_word", "decision_word_share")}
 
 
 def pathspec_scoped(command: str) -> bool:
@@ -661,6 +687,8 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
     short_turns = 0
     last_assistant_at: str | None = None
     last_assistant_text: str = ""
+    answered: tuple[str, str] | None = None
+    handoff_form: list[dict] = []
     in_span_commits: list[dict] = []
     turns_since_skill = 0
     commit_word_typed = commit_word_in_summary = loop_armed = goal_armed = False
@@ -686,6 +714,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
                                if b.get("type") == "text" and isinstance(b.get("text"), str))
             if spoken.strip():
                 last_assistant_text = spoken
+                answered = (spoken, stamp) if isinstance(stamp, str) else None
         status = entry.get("attachment") if entry.get("type") == "attachment" else None
         if isinstance(status, dict) and status.get("type") == "goal_status":
             # The harness's own record of a goal: a sentinel arms one (not met) or clears it (met),
@@ -704,6 +733,10 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
             else:
                 commit_word_typed = commit_word_typed or bool(COMMIT_WORDS.search(typed))
                 loop_armed = loop_armed or any(mark in typed for mark in LOOP_MARKS)
+            if answered is not None and not typed.startswith(CONTINUATION):
+                handoff_form.append({"at": iso(instant_of(answered[1])), "skill": skill or "none",
+                                     **handoff_form_of(answered[0])})
+                answered = None
             if len(typed) <= SHORT_TURN:
                 short_turns += 1
             if "?" in typed and not typed.startswith(CONTINUATION):
@@ -803,7 +836,7 @@ def read_session(path: Path, since: datetime, until: datetime) -> tuple[dict, li
         "usage": spent.total(), "by_skill": spent.by_skill(), "compactions": compactions,
         "skill_calls": dict(sorted(skill_calls.items())), "short_turns": short_turns,
         "confirmations": confirmations, "questions": questions, "commits": in_span_commits,
-        "goal_evaluations": goal_evaluations,
+        "goal_evaluations": goal_evaluations, "handoff_form": handoff_form,
         "context": context_reading(spent, boundaries, events, compactions),
     }
     return summary, list(commands.values()), list(agents.values())
@@ -1810,6 +1843,34 @@ def handoffs_section(harness: dict) -> dict:
             "goal_evaluations": goal_evaluations_of(harness)}
 
 
+def handoff_form_section(harness: dict) -> dict:
+    """The form of every message a person answered, summed across sessions, with the far end
+    of each distribution named by session and instant. Every figure is `handoff.py`'s reading;
+    the ceilings are the schema's, carried so a reader sets the counts beside them."""
+    ceilings = handoff_contract()["x-ceilings"]
+    rows = [{"session": s["id"], **form} for s in harness["sessions"] for form in s["handoff_form"]]
+    deciding = [r for r in rows if r["hands_decision"]]
+    shares = [r["decision_word_share"] for r in rows if r["decision_word_share"] is not None]
+    longest = max(rows, key=lambda r: (r["characters"], r["at"]), default=None)
+    latest = max((r for r in rows if r["decision_word_share"] is not None),
+                 key=lambda r: (r["decision_word_share"], r["at"]), default=None)
+    median = round(statistics.median(shares), 3) if shares else None
+    return {
+        "ceilings": {"message": ceilings["message"], "opening": ceilings["opening"]},
+        "messages": len(rows),
+        "hands_decision": len(deciding),
+        "over_ceiling": sum(1 for r in deciding if r["characters"] > ceilings["message"]),
+        "jargon_in_opening": sum(1 for r in rows if r["jargon_in_opening"]),
+        "recommendation_word": sum(1 for r in rows if r["recommendation_word"]),
+        "no_decision_word": sum(1 for r in rows if r["decision_word_share"] is None),
+        "decision_word_share_median": median,
+        "longest": {"session": longest["session"], "at": longest["at"],
+                    "characters": longest["characters"]} if longest else None,
+        "latest_decision_word": {"session": latest["session"], "at": latest["at"],
+                                 "share": latest["decision_word_share"]} if latest else None,
+    }
+
+
 def goal_evaluations_of(harness: dict) -> dict:
     """How often the harness judged a goal condition, and how often it judged it met — «Telemetry
     counts the goal evaluations the harness recorded in each session of its window, those judging
@@ -1860,6 +1921,7 @@ def provenance_of(roots: dict[str, object], harness: dict, repository: dict,
         entry("agents", transcript_source, transcript_reason),
         entry("commands", transcript_source, transcript_reason),
         entry("handoffs", transcript_source, transcript_reason),
+        entry("handoff_form", transcript_source, transcript_reason),
     ]
     for key, section in (("delivery_root", "runs"), ("work_root", "notes"),
                          ("work_root", "scope"), ("delivery_root", "recommendations")):
@@ -1923,6 +1985,7 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
         "scope": scope_section(work_root, delivery_root, home, repository["commits"]),
         "recommendations": recommendations_section(delivery_root, work_root, home, since, until),
         "handoffs": handoffs_section(harness),
+        "handoff_form": handoff_form_section(harness),
         "provenance": provenance_of(roots, harness, repository, decisions),
     }
     return report, telemetry_dir, telemetry_dir / f"{stamp_of(until)}.json"
@@ -1987,6 +2050,21 @@ def receipt(report: dict, destination: Path) -> str:
                     report["handoffs"]["in_span_commits"]["by_authorization"].items())
         + f"; {report['handoffs']['in_span_commits']['pathspec']} pathspec-scoped, "
         f"{report['handoffs']['in_span_commits']['push']} pushed",
+        f"handoff form: {report['handoff_form']['messages']} message(s) answered, "
+        f"{report['handoff_form']['hands_decision']} handing a decision "
+        f"({report['handoff_form']['over_ceiling']} over "
+        f"{report['handoff_form']['ceilings']['message']} characters); "
+        f"{report['handoff_form']['jargon_in_opening']} with a framework term in the first "
+        f"{report['handoff_form']['ceilings']['opening']}, "
+        f"{report['handoff_form']['recommendation_word']} with a word of recommendation, "
+        f"{report['handoff_form']['no_decision_word']} with no decision word; first decision "
+        f"word at a median "
+        + (f"{report['handoff_form']['decision_word_share_median']:.0%} of the text"
+           if report['handoff_form']['decision_word_share_median'] is not None else "of nothing")
+        + (f"; longest {report['handoff_form']['longest']['characters']} characters "
+           f"({report['handoff_form']['longest']['session']} at "
+           f"{report['handoff_form']['longest']['at']})"
+           if report['handoff_form']['longest'] else ""),
     ]
     missing = [p for p in report["provenance"] if p["unavailable"]]
     lines.append("unavailable: " + ("; ".join(f"{p['section']} — {p['unavailable']}"
@@ -2012,6 +2090,8 @@ def main() -> int:
         cannot_run(f"{PROJECT_PY} is missing; the roots cannot be resolved without it")
     if not TELEMETRY_CONTRACT.is_file():
         cannot_run(f"{TELEMETRY_CONTRACT} is missing; nothing can be validated without it")
+    if not handoff.CONTRACT.is_file():
+        cannot_run(f"{handoff.CONTRACT} is missing; a handoff's form cannot be read without it")
 
     if args.probe:
         roots = resolve_roots(project_root)
@@ -2060,8 +2140,9 @@ def main() -> int:
                       f"{where}")
         print("what leaves the transcripts: agent types, descriptions, a digest of each agent's "
               "prompt, token counts, timestamps, the class of each short confirmation a person "
-              "typed, and the command lines that invoked this framework's scripts — no message "
-              "text")
+              "typed, the form of each message a person answered — its length, flags and the "
+              "names of the framework terms its opening carried — and the command lines that "
+              "invoked this framework's scripts — no message text")
         if isinstance(telemetry_root, str):
             destination = Path(telemetry_root) / f"{stamp_of(until)}.json"
             print(f"would write: {destination}"

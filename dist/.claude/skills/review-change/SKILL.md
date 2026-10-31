@@ -426,8 +426,8 @@ runs next.
   and the pass is the union of what they return. **Save each return verbatim the moment it
   arrives**, at `siegard-reconcile/<review-name>.returns/<the file's path with every '/' as
   '__'>.yaml` — a copy and nothing else, never reshaped, trimmed or repaired: the returns are the
-  evidence the record is folded from and they outlive this session. The fold admits the four keys
-  `conformance-return.json` names and refuses a fifth; what a delegation says outside them belongs
+  evidence the record is folded from and they outlive this session. The fold admits the five keys
+  `conformance-return.json` names and refuses a sixth; what a delegation says outside them belongs
   in your report, never in the file the fold reads. A delegation answers once: where a return is
   unusable, the correction is a fresh delegation with the prompt fixed, never a follow-up to the
   one that already answered.

@@ -1,5 +1,5 @@
 {
-  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start.",
+  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start; answers every stop of a session whose project holds a goal armed by `bin/goal.py --arm` from that goal's state.",
   "hooks": {
     "SessionStart": [
       {
@@ -13,6 +13,13 @@
       {
         "hooks": [
           {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/rules.py\""}
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/goal_stop.py\"", "timeout": 600}
         ]
       }
     ]

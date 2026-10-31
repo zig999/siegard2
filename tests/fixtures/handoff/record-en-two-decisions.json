@@ -1,0 +1,35 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "en",
+  "state": "The order screen is delivered and its tests pass; two choices are left before it ships.",
+  "withdraws": "The earlier note that the discount was wrong no longer holds: it was read from an old file.",
+  "decisions": [
+    {
+      "ask": "Should an empty order be refused at checkout?",
+      "recommended": {
+        "door": "Refuse it, with the message the rule already holds",
+        "why": "The checkout rule states that an order needs at least one item",
+        "reverses_if": "a product owner says an empty order is a valid draft",
+        "reply_word": "a"
+      },
+      "others": [
+        {"reply_word": "b", "what_it_does": "Accept it, and change the rule first"}
+      ],
+      "if_none": "The screen stays delivered and nothing ships",
+      "invocation": "/plan-work checkout"
+    },
+    {
+      "ask": "Record the delivery before the next one starts?",
+      "recommended": {
+        "door": "Record it now",
+        "why": "Every test passed and nothing changed since",
+        "reverses_if": "a test is added to the screen first",
+        "reply_word": "c"
+      },
+      "others": [],
+      "if_none": "The next delivery refuses to start"
+    }
+  ],
+  "report": "full-report.txt"
+}

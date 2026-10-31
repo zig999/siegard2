@@ -1,0 +1,2 @@
+The pending items, the commit hashes, the measurements and the command output live here, never in
+the handoff's opening.

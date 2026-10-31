@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siegard.dev/schemas/handoff.json",
+  "title": "Siegard handoff record",
+  "description": "What a handoff is made from: the record an agent fills and `bin/handoff.py --render` turns into the message a person reads. The record holds the opening and nothing else — the state, what needs the person, the door recommended and why, the other doors, what stays as it is if none is taken — and points at the full report on disk for the pending items, commit hashes, measurements and command output, which never enter the opening. The prose is the agent's, in the person's language, and is never translated; the few fixed words the rendering adds are this schema's, per language, under `x-labels`. What this schema cannot express — the ceilings, the closed list of framework terms, a reply word used twice — `bin/handoff.py` decides, reading the numbers and the list from here: one home for each.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "language",
+    "state"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "siegard-handoff/1",
+      "description": "Which contract this record was written against."
+    },
+    "kind": {
+      "enum": [
+        "decision",
+        "report"
+      ],
+      "description": "`decision`: the handoff hands the person at least one decision or owed act, and the opening is held to the ceilings. `report`: a status answer or a design conversation — nothing waits on the person, nothing stops, and the body has no ceiling."
+    },
+    "language": {
+      "enum": [
+        "en",
+        "pt-BR"
+      ],
+      "description": "The language the person writes in, and the one every prose field of this record is written in. It selects the fixed words under `x-labels`; a language that table does not hold is a change to this schema, never a translation by the script."
+    },
+    "state": {
+      "$ref": "#/$defs/line",
+      "description": "Where things stand, in one line of the person's plain words."
+    },
+    "withdraws": {
+      "$ref": "#/$defs/line",
+      "description": "What this handoff withdraws from what the same invocation said earlier, in one line; absent where it withdraws nothing."
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/decision"
+      },
+      "description": "One block per pending decision and per owed act, decisions first. An owed act is a decision whose door is the act and whose `if_none` is the step that refuses to run without it."
+    },
+    "report": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]+$",
+      "description": "The path of the full report on disk — the pending items, hashes, measurements and command output the opening leaves out. `--render` refuses a path that names no file."
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kind `report` only: the answer itself, inline, where it is not written to a file. No ceiling."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "decision"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "decisions"
+        ],
+        "not": {
+          "required": [
+            "body"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "report"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "decisions"
+          ]
+        },
+        "oneOf": [
+          {
+            "required": [
+              "report"
+            ]
+          },
+          {
+            "required": [
+              "body"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "line": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\n]+$"
+    },
+    "replyWord": {
+      "type": "string",
+      "pattern": "^[\\w-]{1,24}$",
+      "description": "What the person types to take the door: a letter, a number or a short word, unique across the whole handoff, so one reply never names two doors."
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ask",
+        "others",
+        "if_none"
+      ],
+      "properties": {
+        "ask": {
+          "$ref": "#/$defs/line",
+          "description": "What the person is asked to decide, or must do before a named step runs."
+        },
+        "recommended": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "door",
+            "why",
+            "reverses_if",
+            "reply_word"
+          ],
+          "properties": {
+            "door": {
+              "$ref": "#/$defs/line",
+              "description": "What the recommended door does, in plain words."
+            },
+            "why": {
+              "$ref": "#/$defs/line",
+              "description": "Why this door, in one sentence: what on disk says so, or — for a judgment — that it is one and what it weighed."
+            },
+            "reverses_if": {
+              "$ref": "#/$defs/line",
+              "description": "The fact that would change the recommendation, written as the clause that follows the language's `x-labels` `reverses_if` — `a product owner says an empty order is a valid draft`."
+            },
+            "reply_word": {
+              "$ref": "#/$defs/replyWord"
+            }
+          }
+        },
+        "settles": {
+          "$ref": "#/$defs/line",
+          "description": "Where the choice is the person's own: what each door assumes is true and what on disk or in the person's own answer would settle it."
+        },
+        "others": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reply_word",
+              "what_it_does"
+            ],
+            "properties": {
+              "reply_word": {
+                "$ref": "#/$defs/replyWord"
+              },
+              "what_it_does": {
+                "$ref": "#/$defs/line",
+                "description": "What the door does and what it leaves as it is; for an excluded door, the refusal or the rule that excludes it."
+              }
+            }
+          },
+          "description": "Every other door, in the order a command printed it — never ranked."
+        },
+        "if_none": {
+          "$ref": "#/$defs/line",
+          "description": "What stays as it is if no door is taken; for an owed act, the step that refuses to run."
+        },
+        "invocation": {
+          "$ref": "#/$defs/line",
+          "description": "The line ready to paste — the one place a skill's name or a command appears, rendered apart and left out of the ceilings and the term list."
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "recommended"
+          ],
+          "not": {
+            "required": [
+              "settles"
+            ]
+          }
+        },
+        {
+          "required": [
+            "settles"
+          ],
+          "not": {
+            "required": [
+              "recommended"
+            ]
+          },
+          "properties": {
+            "others": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    }
+  },
+  "x-ceilings": {
+    "state": 200,
+    "block": 600,
+    "message": 1500,
+    "opening": 450,
+    "description": "Characters. `state`: the state line. `block`: one decision's block as rendered, its line ready to paste aside. `message`: the whole message that hands a decision, rendered or free text. `opening`: the span at the start of any handoff that carries no term of `x-jargon`, and where a handoff that hands a decision carries a word of `x-decision-words`."
+  },
+  "x-jargon": {
+    "terms": [
+      "binder",
+      "criterion",
+      "decider",
+      "decisor",
+      "door",
+      "doors",
+      "juiz",
+      "juízes",
+      "nowhere",
+      "offered",
+      "owed",
+      "pathspec",
+      "re-bind",
+      "rebind",
+      "slug",
+      "stands",
+      "substrate",
+      "unstated"
+    ],
+    "patterns": {
+      "state A or B": "\\b(?:state|estado) [AB]\\b",
+      "a script name": "\\b[\\w-]+\\.py\\b",
+      "a command flag": "(?<![\\w-])--[a-z][\\w-]*"
+    },
+    "description": "The closed list of this framework's words a person never reads in a handoff's opening. A term matches as a whole word, case aside; a pattern matches as written. A hit names the term, or the pattern's name, never the text around it. The list is this schema's alone: a word added or removed is a change here."
+  },
+  "x-decision-words": {
+    "recommendation": [
+      "recommend",
+      "recomend",
+      "suggest",
+      "suger",
+      "sugir",
+      "sugest"
+    ],
+    "own": [
+      "decid",
+      "decis",
+      "choose",
+      "escolh"
+    ],
+    "description": "Stems matched at the start of a word, case aside, in English and Portuguese. `recommendation`: a word that names a door over the others. `own`: a word that hands the person their own decision. Either is a decision word; the first one in a handoff is where its decision begins. Every label under `x-labels` that marks a recommendation or the person's own decision carries one of these."
+  },
+  "x-hands-a-decision": {
+    "description": "Read from free text, where no record says so: a handoff hands a decision where its final paragraph holds a question mark, where a line outside a code fence opens with a slash and a letter — an invocation handed to paste — or where it carries a decision word anywhere."
+  },
+  "x-labels": {
+    "en": {
+      "recommended": "Recommended",
+      "reverses_if": "It would change if",
+      "own": "Your decision",
+      "if_none": "If none is taken",
+      "report": "Full report"
+    },
+    "pt-BR": {
+      "recommended": "Recomendado",
+      "reverses_if": "Mudaria se",
+      "own": "Decisão sua",
+      "if_none": "Se nenhuma for tomada",
+      "report": "Relatório completo"
+    },
+    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path. Every other word is the record's."
+  },
+  "examples": [
+    {
+      "contract_version": "siegard-handoff/1",
+      "kind": "decision",
+      "language": "en",
+      "state": "The order screen is delivered and its tests pass; one choice is left before it ships.",
+      "decisions": [
+        {
+          "ask": "Should an empty order be refused at checkout?",
+          "recommended": {
+            "door": "Refuse it, with the message the specification already holds",
+            "why": "The checkout rule states that an order needs at least one item.",
+            "reverses_if": "a product owner says an empty order is a valid draft",
+            "reply_word": "a"
+          },
+          "others": [
+            {
+              "reply_word": "b",
+              "what_it_does": "Accept it, and leave the rule to be changed first"
+            }
+          ],
+          "if_none": "The screen stays delivered and nothing ships.",
+          "invocation": "/plan-work checkout"
+        }
+      ],
+      "report": "delivery/checkout/report.md"
+    }
+  ]
+}

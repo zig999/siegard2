@@ -92,9 +92,16 @@ and the reviewers' evidence-only returns already hold.
 
 - **R5** — An orchestrating entry point that relays a report carrying a recommendation writes it to the run's orchestration log as one line, `recommended: <door> — <criterion> — <deciding fact>`. A recommendation made where no orchestration log exists is in the report alone, and nothing counts it. The criterion's name says whether the recommendation was derived or judged; the line carries nothing else to say it.
 
+### What a handoff is made from
+
+- **R8** — A handoff that hands a person a decision is rendered by `bin/handoff.py --render` from a record, never composed as free text. The record carries `kind`, `language`, `state` in one line, and `withdraws` where the handoff withdraws what the same invocation said earlier; kind `decision` carries `decisions` — an owed act among them, its door the act and its `if_none` the step that refuses to run — each with its `ask`, either the door `recommended` — its `door`, `why`, `reverses_if` and `reply_word` — or, where R3 or R6 leaves the choice to the person, `settles`, what would settle it, then the `others`, each with its `reply_word` and `what_it_does`, `if_none`, what stays as it is if no door is taken, and optionally the `invocation` ready to paste; and `report`, where one exists, is the path of the full report on disk, which holds the pending items, commit hashes, measurements and command output the opening does not. The rendered handoff holds its state within 200 characters, each decision's block within 600 and the whole message within 1500; carries no term of the closed list `schemas/handoff.json` holds outside the line ready to paste; gives every door a reply word no other door in the handoff uses; and is written in the language the record names, whose few fixed words the schema holds and whose prose the script never translates. A status answer or a design conversation is kind `report`, not a stop: `state` and either the `report` path or an inline `body`, with no ceiling. A handoff written as free text is held by `bin/handoff.py --check` to what is decidable without the record: no term of that list in its first 450 characters, and, where it hands a decision, a length within 1500 characters and a word of recommendation or of the person's own decision within those 450.
+
+- **R9** — Whether a door's own entry point refuses its inputs as the tree stands is a script's answer, `bin/door.py --check`, read from disk and git alone: its first line is `accepts` or `refuses`, each refusal follows with its fact, and a refusal the entry point's file states that no script decides is listed as not decided, never answered. A door the check refuses is excluded on `precondition unmet`, its deciding fact the `refused:` line; a door it accepts is not thereby recommended.
+
 ## Validation required before acceptance
 
 1. Every skill whose file states a report cites R1 beside it.
+   A test holds `bin/door.py --check` to R9 over fixture repositories: one door accepted and one refused for each cause it decides, and every refusal an entry point's file states that no script decides listed as `not decided`.
 2. Telemetry counts the `recommended:` lines of every orchestration log under the delivery
    root — each initiative's own, and one an orchestrating entry point left at the delivery root
    itself, read under the initiative its landing commit names — by criterion, and names each
@@ -116,8 +123,28 @@ and the reviewers' evidence-only returns already hold.
    26 reports on 2026-10-05, 11 asking for the recommendation after 14 handoffs that handed
    doors on 2026-10-13 — are a person's, read from the transcript; a later reading in that unit
    is compared to them, never to the count.
+4. Telemetry reads every assistant message that precedes a human turn in its window with the
+   functions `bin/handoff.py --check` runs — one definition — and counts how many there are, how
+   many hand a decision, how many of those exceed the message ceiling, how many carry a term of
+   the closed list in their first 450 characters, how many carry a word of recommendation, and
+   the median position of the first decision word as a share of the text; it names the longest
+   message and the one whose first decision word sits latest, by session and instant, so a reader
+   can open them, and refuses nothing. Each reading is set beside the baseline of 2026-10-31
+   below, in its own unit; a later reading where the four proportions have not moved toward the
+   ceiling under R8 is grounds to read why the record is not being filled, never to raise the
+   ceiling.
 
 ## Readings
+
+- 2026-10-31 — baseline for R8: 251 handoffs read from the session transcripts of four consumers
+  under Siegard 5.34–5.42, over four days. 62% were longer than 1500 characters; 33% carried a
+  framework term — state A/B, stands, nowhere, binder, decisor, juiz, pathspec, rebind,
+  `--replace`, a `*.py` script name, unstated, substrate — inside their first 450 characters; the
+  median first decision word sat at 39% of the text; 42% carried no word of recommendation or
+  decision at all. Some mixed English into a Portuguese session, which no script decides; the same
+  pending-items block repeated across consecutive handoffs, and commit hashes and measurement
+  lines padded the body. R1 and R2 held these by prompt alone through three measured rounds; R8
+  moves the opening into a record a script renders, and Validation item 4 is the measurement.
 
 - 2026-10-25 — grounds for R7: every human turn of 15 `/goal` sessions of `newcatalog`,
   `productcatalog` and `productorder` (2026-10-13..25), one coder

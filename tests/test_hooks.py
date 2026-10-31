@@ -65,9 +65,10 @@ def record(event: str, cwd: Path) -> str:
 
 def test_both_starts_are_declared_and_neither_is_narrowed():
     hooks = declared()
-    assert sorted(hooks) == sorted(EVENTS), \
-        f"hooks.json declares {sorted(hooks)}; the rules must reach the session and every agent"
-    for event in EVENTS:
+    assert sorted(hooks) == sorted((*EVENTS, "Stop")), \
+        f"hooks.json declares {sorted(hooks)}; the rules must reach the session and every agent, " \
+        f"and an armed goal's stop is answered on Stop"
+    for event in hooks:
         for group in hooks[event]:
             assert "matcher" not in group, \
                 f"{event} carries a matcher; the rules hold for every {event}, not a subset"
@@ -93,7 +94,7 @@ def test_both_starts_run_the_one_script_over_the_one_file():
 def test_every_declared_hook_runs_a_script_the_plugin_ships():
     """A hook naming a path the distribution does not hold is every session printing an error at
     its start, and the harness reporting it is the only thing that would say so."""
-    for event in EVENTS:
+    for event in declared():
         for command in commands(event):
             assert "${CLAUDE_PLUGIN_ROOT}/hooks/" in command, command
             resolved = Path(command.split('"')[1].replace("${CLAUDE_PLUGIN_ROOT}", str(SRC)))
@@ -358,3 +359,40 @@ def test_the_receipt_names_the_route_for_a_node_that_moved(traced):
     said = context_of(drift_run(traced))
     assert "1 moved" in said, said
     assert "`/reconcile` over the bound files" in said and "delivery" in said, said
+
+
+# ------------------------------------------------------- the stop of an armed goal (SPEC-008 R14)
+
+GOAL_STOP = HOOKS / "goal_stop.py"
+
+
+def goal_stop(stdin: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-B", str(GOAL_STOP)], input=stdin, cwd=cwd,
+                          capture_output=True, text=True)
+
+
+def test_the_stop_runs_the_goal_hook_alone_and_unnarrowed():
+    """`Stop` takes no matcher, and an armed goal is answered at every stop of its session; the
+    rules and the drift are the starts' to place, never a stop's."""
+    assert commands("Stop") == ['python3 "${CLAUDE_PLUGIN_ROOT}/hooks/goal_stop.py"']
+    assert all("matcher" not in group for group in declared()["Stop"])
+    assert os.access(GOAL_STOP, os.X_OK), f"{GOAL_STOP} is not executable"
+
+
+def test_the_goal_hook_is_silent_in_a_project_without_siegard_json(foreign_project):
+    done = goal_stop(json.dumps({"hook_event_name": "Stop", "cwd": str(foreign_project),
+                                 "session_id": "x", "stop_hook_active": False}))
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == ""
+
+
+def test_the_goal_hook_is_silent_where_no_goal_is_armed(siegard_project):
+    done = goal_stop(json.dumps({"hook_event_name": "Stop", "cwd": str(siegard_project)}))
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == ""
+
+
+@pytest.mark.parametrize("stdin", ["", "not json", "[1, 2]", "{\"cwd\": 3}",
+                                   json.dumps({"hook_event_name": "Stop", "cwd": "/gone/away"}),
+                                   json.dumps({"hook_event_name": "SessionStart"})])
+def test_a_malformed_stop_event_exits_zero_and_prints_nothing(stdin, siegard_project):
+    done = goal_stop(stdin, cwd=siegard_project)
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == "", done

@@ -377,10 +377,10 @@ whether the **remainder** — what the offered tests leave unexercised — is on
 assert, with the assertion named, or one no finite test closes; the fold carries that onto the
 node's entry, and `trace.py --owed` lists the testable ones as the work a test closes.
 
-**Verbatim is literal, and the fold enforces it against four keys.** `conformance-return.json`
-admits `findings`, `read`, `looked_past` and `candidates_opened`, and nothing else at any depth.
-A fifth key — a `notes` holding a delegation's closing paragraph, a summary line written for a
-human, anything the four do not have a home for — refuses that return at `--fold`, and the fold
+**Verbatim is literal, and the fold enforces it against five keys.** `conformance-return.json`
+admits `findings`, `read`, `nowhere`, `looked_past` and `candidates_opened`, and nothing else at
+any depth. A sixth key — a `notes` holding a delegation's closing paragraph, a summary line written
+for a human, anything the five do not have a home for — refuses that return at `--fold`, and the fold
 refuses whole: every saved return is re-read and re-written before it runs at all, which is the
 whole batch's transcription paid twice for one field nobody needed. What a delegation says outside
 those keys belongs in your report to the human, never in the file the fold reads. Where a return

@@ -1,0 +1,19 @@
+{
+  "contract_version": "siegard-handoff/1",
+  "kind": "decision",
+  "language": "pt-BR",
+  "state": "A busca de clientes está entregue; o texto do pedido e a regra de ordenação dizem coisas diferentes.",
+  "decisions": [
+    {
+      "ask": "Os resultados da busca devem ignorar acentos ao ordenar?",
+      "settles": "A primeira assume que o pedido vale sobre a regra, a segunda o contrário; a sua resposta, ou uma frase do responsável pelo produto, resolve.",
+      "others": [
+        {"reply_word": "1", "what_it_does": "Ignorar acentos, mudando a regra de ordenação antes"},
+        {"reply_word": "2", "what_it_does": "Manter a regra como está e corrigir o texto do pedido"}
+      ],
+      "if_none": "A busca fica entregue como está e a ordenação continua sensível a acentos.",
+      "invocation": "/analyse clientes"
+    }
+  ],
+  "report": "full-report.txt"
+}

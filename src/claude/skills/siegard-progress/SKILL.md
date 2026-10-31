@@ -87,6 +87,10 @@ Where `targets` declares more than one key, repeat this whole derivation and tab
 target — the substrate-wait detail is target-specific — each one headed with the target's own
 name.
 
+Between asks, `${CLAUDE_PLUGIN_ROOT}/bin/progress.py` set as the harness's status line command prints
+one line per redraw — slug, tasks delivered, phase, last orchestration line — read from disk with no
+model; the table below remains the reading that validates.
+
 ## The report
 
 Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)

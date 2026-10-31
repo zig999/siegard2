@@ -71,8 +71,7 @@
     },
     "read": {
       "type": "array",
-      "minItems": 1,
-      "description": "One entry per node of the delegation's own set, in the order the set gave them — exactly that set, never a subset and never a candidate. It is a different statement from `findings`: per node, what was read and where the node's fact sits now. The fold writes a cleared node's `how` from this and from nothing else.",
+      "description": "One entry per node of the delegation's own set, in the order the set gave them — exactly that set, never a subset and never a candidate, less the nodes `nowhere` names. It is a different statement from `findings`: per node, what was read and where the node's fact sits now. The fold writes a cleared node's `how` from this and from nothing else, and a bound pair read `nowhere` is quoted from it into the record a release is decided from. `read` and `nowhere` together answer for the whole set, each node once; empty only where `nowhere` names every node of it.",
       "items": {
         "type": "object",
         "required": [
@@ -96,6 +95,14 @@
             "description": "Quoted from the source — what was read to say that; code, never a comment's claim. Where `held_at` is `nowhere`, this quotes what was looked at."
           }
         }
+      }
+    },
+    "nowhere": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "The nodes of the set read beside the file's bindings — a review's plan nodes, an adoption's candidates; the pack marks each `(beside)` — that the file does not hold, by identity alone. Each is answered `nowhere` exactly as a `read` entry is, with no `held_at` sentence and no evidence: a pair the file is not bound to is quoted into no record and released by no one, so what was looked at to say so has no reader. A node the file is bound to is never named here — a release rests on the evidence its `nowhere` quotes. Omitted where no such node is absent; a `read` entry answering such a node is still accepted.",
+      "items": {
+        "$ref": "#/$defs/specNodeRef"
       }
     },
     "looked_past": {
@@ -140,6 +147,19 @@
         }
       ],
       "candidates_opened": [
+        "rules/sales/invoice-immutable"
+      ]
+    },
+    {
+      "read": [
+        {
+          "node": "domain/sales/order",
+          "held_at": "the return statement of place(), line 41",
+          "evidence": "return persisted.order_number"
+        }
+      ],
+      "nowhere": [
+        "domain/sales/invoice",
         "rules/sales/invoice-immutable"
       ]
     }

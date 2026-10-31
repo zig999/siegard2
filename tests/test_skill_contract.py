@@ -126,8 +126,8 @@ MODEL_MAY_REACH = {
     # extra input (the initiative) is inferred exactly as /siegard-status infers the project
     # root — named when ambiguous, never asserted by the session.
     "siegard-progress": True,
-    # It writes nothing and arms nothing: the condition it prints becomes a goal only when the
-    # person pastes it, so a session may reach for it when asked to carry a scope unattended.
+    # It arms a goal only on the person's own word to arm it, a gate inside the skill as
+    # /deliver-scope's is; a session may reach for it when asked to carry a scope unattended.
     "siegard-goal": True,
     # Removal is the one act whose want only the human can state — the same criterion that
     # closes /siegard-config: a session that "tidied up" on its own would be deciding an input

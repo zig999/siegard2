@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.42.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.43.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -82,8 +82,10 @@ not. Three things hold that route:
   what it was handed is done or stopped, it returns; what comes next is the invoking context's
   to decide.
 - **A session commits only what the person's own words in this session authorized, and only
-  what the skill it invoked wrote.** A commit word, or an ask stating the whole route end to end,
-  is the authorization; a summary of an earlier context is not, and a route resumed after a
+  what the skill it invoked wrote.** A commit word, a go-ahead that names the next step, or an ask
+  stating the whole route end to end, is the authorization; a go-ahead covers the one
+  pathspec-scoped commit of what the previous invocation wrote that the next step's entry point
+  needs before it runs, and never a push; a summary of an earlier context is not, and a route resumed after a
   compaction is re-authorized by the person before its next commit — a goal condition naming the
   route is that re-authorization, because the harness repeats the person's own words. Each
   commit is pathspec-scoped to the roots that invocation wrote, one per invocation, under a
@@ -98,7 +100,13 @@ not. Three things hold that route:
   words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the
   criterion, the deciding fact and the reversing fact; without all four, none is named»
   (SPEC-006 R2): an option its own entry point would refuse, or that breaks a rule, is said to
-  be excluded, and the one that remains is recommended. Where nothing excludes one and the choice
+  be excluded, and the one that remains is recommended. Before handing `/implement-task`,
+  `/plan-work`, `/review-change`, `/deliver-scope` or `/reconcile` as an option, run
+  `bin/door.py --check <skill> --project <project-root>` with the inputs the option carries:
+  «Whether a door's own entry point refuses its inputs as the tree stands is a script's answer»
+  (SPEC-006 R9), a first line `refuses` excludes the option and its `refused:` line is the fact
+  named beside it, and a `not decided:` line is never read as accepted. Where the person's own
+  message says to proceed and one option remains, take it. Where nothing excludes one and the choice
   is of cost or of reading the ask, recommend by judgment and say it is one: the option that
   keeps this framework's route, then the one that reaches a goal the ask states, quoted, then
   the one that can be undone, then the one that costs less as a command printed it. A
@@ -109,6 +117,17 @@ not. Three things hold that route:
   «A finding stops nothing» (SPEC-006 R4): a stop is named only where the skill's own file names
   one, and a report that says a step may proceed lists the checks it ran and their output
   verbatim.
+- **A handoff that hands a decision is rendered, never composed.** «A handoff that hands a person
+  a decision is rendered by `bin/handoff.py --render` from a record, never composed as free text»
+  (SPEC-006 R8): write the full report to disk first, fill the record `schemas/handoff.json`
+  states with its path in `report`, and hand the person what the script prints. Answer a refusal
+  by rewriting the field it names. A status answer or a design conversation is kind `report`,
+  with `state` and a `body` or the report's path.
+- **Under a goal armed by `goal.py --arm`, a `not yet` from the Stop hook is answered with the
+  route's next step.** «A goal the person arms through the framework ends on the state script's
+  answer at the session's stop, never on a model's reading» (SPEC-008 R14): never another stop
+  and no work; never run `goal.py --arm` but on the person's own word to arm, and never run
+  `goal.py --disarm` unasked.
 - **A question about where the project stands is answered from disk, never from the
   conversation.** Which initiatives are live, what is delivered, what is outstanding, what is
   blocked, what drifted, what is uncommitted: `/siegard-status` over the project, or

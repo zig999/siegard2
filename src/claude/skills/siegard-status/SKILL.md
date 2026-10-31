@@ -235,7 +235,10 @@ In this order, every line naming its source:
   already named in the opening, since «Where the report recommends a door, the opening says so
   and why, before any explanation» (SPEC-006 R1). Ready is a
   statement about the tree, never about worth: it is the invocation whose inputs this report
-  already holds and whose preconditions the tree already meets. Where the report named more
+  already holds and whose preconditions the tree already meets. Run
+  `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/door.py --check <skill> --project <project-root>` over the door
+  the close names, with its inputs: ready is its `accepts`, and a `refuses` is the door named excluded
+  beside its `refused:` line. Where the report named more
   than one door over the same files, the close names the reading that is owed once over the
   reading that would be paid twice, and says which fact of this report decides it — a close a
   reader has to ask the reason for was a preference wearing a derivation's clothes. It is a
