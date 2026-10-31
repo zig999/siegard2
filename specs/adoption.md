@@ -91,13 +91,25 @@ constraints spent 26 judges on files the notes never cited while the notes named
 - **R10** — A reconciliation binds each pair on its own file's judgment. Where a node's fact is
   still held in some files bound to it and read nowhere in another, with nothing found against
   the node, the files that hold it are bound, and the file that stopped holding it is a release a
-  person decides, never one a fold or a bind makes.
+  person decides, never one a fold or a bind makes. That release drops the pair alone, and so does
+  the release of a pair read nowhere where no file of the set holds the fact: every other file
+  bound to the node keeps the stamp it had, and a pair no record reads nowhere is never released.
 
   Grounds: an audit of two consumers on 2026-10-19 re-judged, blind, pairs a node-level fold had
   left unbound because a sibling file read nowhere. A fresh judge failed 8 of 43 such pairs
   against 25 of 65 pairs of nodes that had cleared whole, and a judge read twice disagreed with
   itself on 2 of 35. Releasing the pair read nowhere was not settled: a fresh judge found the
   fact held, in part, in 5 of 73 such pairs no reading had ever held.
+
+  Grounds for the release dropping the pair alone, read on 2026-10-31 over five consumers
+  (`salese2e`, `productorder`, `productcatalog`, `partymgmt`, `eternal`): of 1,266 stale pairs, 541
+  had a last reading `nowhere` made after the file's last change, and nothing but a release
+  clears them. The receipt then handed `--bind ... --replace` naming the holders, which writes the
+  entry in full: of 284 entries still owed a release, 188 would also have dropped files of the node
+  outside the reconciled set, read by nobody there — a median of 3 to 7 per node, 140 at most —
+  and run in a clone it dropped one such file beside the pair. Where no file of the set held the
+  fact, the bind handed no release at all, and 731 such entries were still bound; one session
+  built the release by hand and dropped four files the person had not been asked about.
 
 - **R11** — A pair whose file changed by a rewrite the reconciliation declares is carried to the
   file as it stands without a judgment, where the declared rewrite applied to the text the binding
@@ -203,9 +215,15 @@ constraints spent 26 judges on files the notes never cited while the notes named
 7. For R10: a node whose fact is held in some bound files and read nowhere in another, with
    nothing found against it, folds not cleared with the holders under `encoded_at` and binds
    them alone; a finding against the node, or an unattributed finding on a file bound to it,
-   binds none of its files; the bind's receipt hands the release ready to run; and a record naming under
-   `encoded_at` a path its `observed_at` does not is refused — `tests/test_stage_fold.py` proves
-   each (`test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed`,
+   binds none of its files; the bind's receipt hands the release ready to run, over the pair read
+   nowhere and nothing else, whether or not another file of the set holds the fact, and running it
+   leaves a file bound outside the set at the stamp it had; a release of a pair no record reads
+   nowhere is refused whole; and a record naming under `encoded_at` a path its `observed_at` does
+   not is refused — `tests/test_stage_fold.py` proves each
+   (`test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed`,
+   `test_the_handed_release_drops_the_pair_read_nowhere_and_no_file_outside_the_set`,
+   `test_a_node_no_file_of_the_set_holds_is_handed_its_release_too`,
+   `test_a_pair_no_record_reads_nowhere_is_never_released`,
    `test_a_finding_against_the_node_binds_none_of_its_files`,
    `test_a_record_encoding_a_path_it_did_not_observe_is_refused`).
 8. For R11: a pair a declared rewrite reproduces is staged for no judge and binds once every

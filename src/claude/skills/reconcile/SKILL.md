@@ -191,7 +191,7 @@ re-examine standing claims is the one trigger there is. The staging then hands e
 judge, the premise's `summary` says the source did not change and the claims are what is being
 re-read, and everything downstream runs unmodified — a claim confirmed is restamped with the
 record justifying it, a fact held nowhere blocks its node and the report hands the
-`--bind ... --replace` release ready to paste, and a finding nobody acts on stays in the corpus
+`--release ... --node` release ready to paste, and a finding nobody acts on stays in the corpus
 where `--owed` repeats it. `trace.py --encodes --rank <target-source-root>` is where an audit's
 candidate set comes from — the two accretion counts, as facts; the file set is still the human's
 to name. An audit is never chosen by this skill: invoked without the word, a reconciliation
@@ -539,8 +539,12 @@ The join is already structural and needs nothing from you: a pair the judgment r
 `encoded_at`, and this form reads only the pairs that are — so the invocation above writes exactly
 the cleared set however anyone runs it. A node whose fact left part of its ground with nothing
 found against it is bound on the files that still hold it; the file read `nowhere` is a release
-the bind's receipt hands with its `--replace` invocation ready, and the report relays it as the
-person's decision. Run it whether the judgment cleared everything or not, and run
+the bind's receipt hands with its `--release ... --node` invocation ready, and the report relays
+it as the person's decision: «That release drops the pair alone, and so does the release of a pair
+read nowhere where no file of the set holds the fact: every other file bound to the node keeps the
+stamp it had, and a pair no record reads nowhere is never released.» (SPEC-005 R10) A release
+built any other way — a `--replace` naming the files to keep — is the loss that invocation
+exists to prevent. Run it whether the judgment cleared everything or not, and run
 it once.
 
 The bind also recomputes every `pairs_omitted` claim at this moment, both halves — the binding

@@ -27,6 +27,9 @@ What this script does, and nobody else does any of it:
                                                                   following a node git renamed
     trace.py --release <target-root> <file> ...                   drop a file the tree no longer
                                                                   holds from every binding naming it
+    trace.py --release <target-root> <file> ... --node <node>     drop only those files from one
+                                                                  node's binding, each a pair a
+                                                                  reconciliation read `nowhere`
     trace.py --reconciliation <record>                            hold a reconciliation to its
                                                                   contract before it is bound
     trace.py --owed <target-root> [--all] [--plan <work-root>]    what the reconciliations found
@@ -148,6 +151,13 @@ refuses a path the tree still holds: a file that exists is reconciled, never rel
 only thing releasing it would buy is a clean report over a link somebody deleted by hand. And it
 refuses the whole call before writing any of it, so a release of three paths of which one still
 stands is no release at all.
+
+`--release ... --node <node>` is the release a person decides over a pair a reconciliation read
+`nowhere`, the file still in the tree: it drops exactly the named files from that one node's
+binding, leaves every other file of the node at the stamp it had, and refuses the whole call
+where a pair is not the node's or no record reads it `nowhere`. `--replace` cannot stand in for
+it — it writes the entry in full and stamps every file it names at the content it reads now, so
+naming the rest restamps files nobody read and leaving them off drops them unread.
 
 The `code` class has the same arithmetic inside itself, and the listing answers it the same way.
 One file bound by sixteen nodes drifts sixteen findings the day it changes once — one shared
@@ -332,7 +342,7 @@ ever re-examines it, and the claim stands for as long as the file does. An audit
 re-judgment of exactly those pairs — the human names a file set whose bindings did not move, and
 the staging hands every standing claim to a judge, omitting nothing. Everything downstream is the
 ordinary pipeline: a claim the judge confirms is restamped with a record justifying it, a fact
-held nowhere blocks its node and hands the `--bind --replace` release ready to run, and a finding
+held nowhere blocks its node and hands the `--release ... --node` release ready to run, and a finding
 nobody acts on stays in the corpus where `--owed` repeats it. `--rank` is where an audit's file
 set comes from: the two accretion counts, files by bindings held and nodes by files bound, stated
 as facts — which of them is worth a judge is a person's reading.
@@ -434,7 +444,7 @@ Usage:  trace.py <target-root>
         trace.py --bind-record <target-root> <spec-root> <reconciliation-record>
                  [--workspace <workspace-dir>] [--replace]
         trace.py --prune <target-root>
-        trace.py --release <target-root> <file> [<file> ...]
+        trace.py --release <target-root> <file> [<file> ...] [--node <node>]
         trace.py --reconciliation <reconciliation-record>
         trace.py --owed <target-root> [--all] [--plan <work-root>]
         trace.py --encodes <target-root> <file> [<file> ...]
@@ -563,9 +573,8 @@ RECORD_VERSION = "siegard-reconcile/11"
 # What a record says of a pair that stopped holding a fact other files of its node still hold. The
 # route is structural, not this text: an entry carrying both `encoded_at` and `observed_at` exists
 # only where nothing stands against the node, so each observed pair it does not encode is a release.
-RELEASE_OWED = ("the pair that stopped holding it is a release a person decides — `--bind ... "
-                "--replace` naming the files that still hold it — and never one a fold or a bind "
-                "makes")
+RELEASE_OWED = ("the pair that stopped holding it is a release a person decides — `--release ... "
+                "--node` naming that pair alone — and never one a fold or a bind makes")
 TESTABLE = "testable"
 CERTIFY_PREFIX = "certify__"
 CERTIFICATION_CONTRACT = PLUGIN_ROOT / "schemas" / "certification-return.json"
@@ -1126,6 +1135,11 @@ def released(node_id: str, dropped: list[str], act: str = "--replace") -> str:
     where the entry before this write survives if it survives anywhere, which is git — stated as
     a direction rather than a guarantee, because a trace that was never committed has no earlier
     state to return to."""
+    if act == "--node":
+        return (f"  --release released {len(dropped)} pair(s) a reconciliation read `nowhere`; "
+                f"{node_id} no longer claims {', '.join(dropped)}, and every other file it is "
+                f"bound to keeps the stamp it had. The link those pairs held is gone from here, "
+                f"and the last committed trace is where it survives if anywhere")
     if act == "--release":
         return (f"  --release released {len(dropped)} path(s) the tree no longer holds; "
                 f"{node_id} no longer claims {', '.join(dropped)}. The link those paths held is "
@@ -1962,9 +1976,53 @@ def withheld(record: Path) -> list[str]:
                    and entry.get("conforms") is False and not entry.get("encoded_at")})
 
 
+def read_nowhere(path: str, how: str) -> bool:
+    """Whether a record entry's `how` says its judge read this file `nowhere` for the node. The
+    fold writes each such pair as `<file> read `<held_at>``, and `held_nowhere()` is what decides
+    the judge's answer from the first word of it."""
+    said = re.search(rf"(?:^|[\s;:,]){re.escape(path)} read `([^`]*)", how)
+    return said is not None and held_nowhere(said.group(1))
+
+
+def nowhere_readings(home: Path) -> dict[tuple[str, str], list[str]]:
+    """Every node/file pair a reconciliation record reads `nowhere`, spelled from this file's own
+    directory, with the records that say so.
+
+    Read from the corpus the way `judged()` reads it, and narrower: a finding against a pair says
+    the file states something the node does not, which a correction answers, while a `nowhere`
+    says the file does not carry the node's fact at all — the one answer a release rests on. No
+    chronology is computed, for `judged()`'s reason; a pair also cleared elsewhere is disclosed by
+    the release, never resolved here."""
+    readings: dict[tuple[str, str], list[str]] = {}
+    directory = home / RECONCILE_DIR
+    if not directory.is_dir():
+        return readings
+    roots = target_roots(home)
+    for record in sorted(directory.glob("*.md")):
+        front, _ = reconciliation_or_reason(record)
+        if front is None:
+            continue
+        named = front.get("target")
+        where = roots.get(named) if isinstance(named, str) else None
+        if where is None:
+            continue
+        for entry in front.get("nodes") or []:
+            if (not isinstance(entry, dict) or not isinstance(entry.get("node"), str)
+                    or entry.get("conforms") is True):
+                continue
+            encoded = [p for p in entry.get("encoded_at") or [] if isinstance(p, str)]
+            how = str(entry.get("how") or "")
+            for path in entry.get("observed_at") or []:
+                if isinstance(path, str) and path not in encoded and read_nowhere(path, how):
+                    anchored = path if where == "." else f"{where}/{path}"
+                    readings.setdefault((entry["node"], anchored), []).append(record.name)
+    return readings
+
+
 def releases_owed(record: Path) -> list[tuple[str, list[str], list[str]]]:
-    """Every node a reconciliation bound on the files that still hold its fact while another file
-    it is bound to stopped holding it: the node, the holders, and the pairs a release is owed for.
+    """Every node a reconciliation left with a file it is bound to that its judge read `nowhere`:
+    the node, the files that still hold its fact — none, where no file of the set does — and the
+    pairs a release is owed for.
 
     The holders are bound because each pair rests on its own file's judgment. The rest is not
     released here, and never by a fold: a file read `nowhere` may hold part of the fact a judge did
@@ -1978,25 +2036,44 @@ def releases_owed(record: Path) -> list[tuple[str, list[str], list[str]]]:
         if not isinstance(entry, dict) or entry.get("conforms") is not False:
             continue
         holders = [p for p in entry.get("encoded_at") or [] if isinstance(p, str)]
-        if not holders:
-            continue
+        how = str(entry.get("how") or "")
         lost = [p for p in entry.get("observed_at") or [] if isinstance(p, str)
-                and p not in holders]
+                and p not in holders and read_nowhere(p, how)]
         if lost:
             owed.append((entry["node"], holders, lost))
     return owed
 
 
 def release_receipt(owed: list[tuple[str, list[str], list[str]]], target: Path,
-                    spec_root: Path) -> str:
-    """The receipt for the releases a reconciliation's bind leaves owed, each ready to run."""
-    lines = [f"  {len(owed)} node(s) bound on the files that still hold their fact, each with a "
-             f"file that stopped holding it — a release is owed, and it is a person's decision:"]
+                    declared: dict) -> str | None:
+    """The receipt for the releases a reconciliation's bind leaves owed, each ready to run, over
+    the pairs the trace still binds — a pair nothing binds has no claim to release.
+
+    The invocation names the pairs read `nowhere` and nothing else: `--release ... --node` drops
+    exactly those and leaves every other file of the node at the stamp it had, where a `--replace`
+    naming the holders would also drop every file of the node outside this record's set, read by
+    nobody here."""
+    offset = offset_of(target, home_of(target))
+    bound = {entry["node"]: {f["path"] for f in entry.get("files") or []}
+             for entry in declared.get("bindings") or []}
+    standing = []
     for node, holders, lost in owed:
-        lines.append(f"    {node}: {', '.join(lost)} read `nowhere` — to release, run "
-                     f"trace.py --bind {target} {spec_root} {node} {' '.join(holders)} --replace")
-    lines.append("    until then each such pair stays as it stood and `--check` keeps reporting it "
-                 "as owed a release, not a reading")
+        claimed = [p for p in lost
+                   if (p if offset == "." else (PurePosixPath(offset) / p).as_posix())
+                   in bound.get(node, set())]
+        if claimed:
+            standing.append((node, holders, claimed))
+    if not standing:
+        return None
+    lines = [f"  {len(standing)} node(s) still bound to a file the judgment read `nowhere` — a "
+             f"release is owed, and it is a person's decision:"]
+    for node, holders, lost in standing:
+        held = (f"still held in {', '.join(holders)}" if holders
+                else "no file of the set holds it")
+        lines.append(f"    {node}: {', '.join(lost)} read `nowhere`, {held} — to release those "
+                     f"pairs alone, run trace.py --release {target} {' '.join(lost)} --node {node}")
+    lines.append("    until then each such pair stays as it stood, and `--owed` keeps the "
+                 "record's reading of it")
     return "\n".join(lines)
 
 
@@ -5789,9 +5866,9 @@ def bind_record(target: Path, spec_root: Path, record: Path, replace: bool = Fal
     owed = withheld(record)
     if owed:
         print(left_owed(owed, record))
-    releases = releases_owed(record)
+    releases = release_receipt(releases_owed(record), target, declared)
     if releases:
-        print(release_receipt(releases, target, spec_root))
+        print(releases)
     return 0
 
 
@@ -5964,6 +6041,83 @@ def release(target: Path, files: list[str]) -> int:
     for receipt in receipts:
         print(receipt)
     print(f"\n{len(gone)} path(s) released at {path}; {len(kept)} binding(s) remain.")
+    return 0
+
+
+def release_pairs(target: Path, node_id: str, files: list[str]) -> int:
+    """Drop the named files from one node's binding, each a pair some reconciliation record read
+    `nowhere`, and leave every other file of the node at the stamp it had.
+
+    The release a person decides over a pair the judgment says does not carry the node's fact:
+    «That release drops the pair alone, and so does the release of a pair read nowhere where no
+    file of the set holds the fact: every other file bound to the node keeps the stamp it had,
+    and a pair no record reads nowhere is never released.» (SPEC-005 R10) `--replace` cannot be
+    that release: it writes the entry in full and stamps
+    every file it names at the content it reads now, so naming the rest would restamp files nobody
+    read and leaving them off would drop them unread. A pair no record reads `nowhere` has no
+    judgment to rest on, and the whole call is refused before anything is written."""
+    if not target.is_dir():
+        print(f"cannot run: {target} is not a directory", file=sys.stderr)
+        return CANNOT_RUN
+    path = trace_path(target)
+    declared = load(target)
+    if declared is None:
+        print(f"cannot release: {path} does not exist; nothing has been bound")
+        return 1
+    problems = problems_of(declared)
+    if problems:
+        for problem in problems:
+            print(f"{path}: {problem}")
+        return 1
+    entry = next((e for e in declared["bindings"] if e.get("node") == node_id), None)
+    if entry is None:
+        print(f"cannot release: no binding holds {node_id}; `--encodes` says what a file is "
+              f"bound to")
+        return 1
+
+    home = home_of(target)
+    offset = offset_of(target, home)
+    claimed = {file_entry["path"] for file_entry in entry.get("files") or []}
+    readings = nowhere_readings(home)
+    chosen: list[str] = []
+    refused: list[str] = []
+    for given in files:
+        anchored = given if offset == "." else (PurePosixPath(offset) / given).as_posix()
+        stored = given if given in claimed else anchored if anchored in claimed else None
+        if stored is None:
+            refused.append(f"{given}: {node_id} is not bound to it — a path is spelled as the "
+                           f"trace stores it, from {home}, or from {target}, the target source "
+                           f"root")
+        elif (node_id, stored) not in readings:
+            refused.append(f"{stored}: no reconciliation record reads it `nowhere` for "
+                           f"{node_id}; a pair is released on a judgment that the file does not "
+                           f"carry the node's fact, and `/reconcile` over the file is what reads it")
+        elif stored not in chosen:
+            chosen.append(stored)
+    for said in refused:
+        print(f"cannot release: {said}")
+    if refused:
+        return 1
+
+    _, cleared, _ = judged(home)
+    entry["files"] = [f for f in entry["files"] if f["path"] not in chosen]
+    receipts = [released(node_id, sorted(chosen), act="--node")]
+    for stored in sorted(chosen):
+        receipts.append(f"    {stored}: read `nowhere` in "
+                        f"{', '.join(readings[(node_id, stored)])}")
+        if (node_id, stored) in cleared:
+            receipts.append(f"    {stored}: also cleared in "
+                            f"{', '.join(cleared[(node_id, stored)])} — the records answer it "
+                            f"both ways, and this release is the reading the person chose")
+    if not entry["files"]:
+        declared["bindings"] = [e for e in declared["bindings"] if e is not entry]
+        receipts.append(emptied(node_id))
+    if write_trace(target, declared, act="release") != 0:
+        return 1
+    for receipt in receipts:
+        print(receipt)
+    print(f"\n{len(chosen)} pair(s) released at {path}; {len(declared['bindings'])} binding(s) "
+          f"remain.")
     return 0
 
 
@@ -6175,9 +6329,9 @@ def main() -> int:
         print("cannot run: --demonstrated is a mode of --stage --review; a proof's claim is "
               "settled by the review that reads the proof, and by nothing else", file=sys.stderr)
         return CANNOT_RUN
-    if also and not (do_review or do_adopt):
-        print("cannot run: --node is a mode of --stage --review or --stage --adopt; a "
-              "reconciliation's node set is the trace's alone", file=sys.stderr)
+    if also and not (do_review or do_adopt or do_release):
+        print("cannot run: --node is a mode of --stage --review, --stage --adopt or --release; "
+              "a reconciliation's node set is the trace's alone", file=sys.stderr)
         return CANNOT_RUN
     if captured_run is not None and not do_fold:
         print("cannot run: --run is a mode of --fold; it names the run that answers the "
@@ -6249,6 +6403,12 @@ def main() -> int:
                   "spelled as the trace stores it or from the target source root",
                   file=sys.stderr)
             return CANNOT_RUN
+        if len(also) > 1:
+            print("cannot run: --release takes one --node; a release of pairs is one node's",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        if also:
+            return release_pairs(Path(args[0]), also[0], args[1:])
         return release(Path(args[0]), args[1:])
 
     if do_owed:

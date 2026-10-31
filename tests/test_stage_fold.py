@@ -461,7 +461,7 @@ def test_a_fact_that_left_one_of_two_files_blocks_the_node_and_hands_the_release
                                            .split("---")[1])["nodes"]}
     assert entries[NODE]["conforms"] is False
     assert sorted(entries[NODE]["observed_at"]) == [SECOND, FILE]
-    assert "--replace" in entries[NODE]["how"], \
+    assert "`--release ... --node` naming that pair alone" in entries[NODE]["how"], \
         "the pair that stopped holding the fact has exactly one exit, and the record names it"
     assert "collateral" not in entries[NODE], "a fact that left a file is substance, not collateral"
 
@@ -505,10 +505,90 @@ def test_a_sibling_read_nowhere_leaves_the_holders_bound_and_a_release_owed(cons
     assert after[f"backend/{SECOND}"] == before[f"backend/{SECOND}"], \
         "the pair read nowhere stays as it stood until a person releases it"
     assert "a release is owed, and it is a person's decision" in bound.stdout
-    assert (f"{NODE}: {SECOND} read `nowhere` — to release, run trace.py --bind "
-            f"{consumer / 'backend'} {consumer / 'specs'} {NODE} {FILE} --replace") in bound.stdout
+    assert (f"{NODE}: {SECOND} read `nowhere`, still held in {FILE} — to release those pairs "
+            f"alone, run trace.py --release {consumer / 'backend'} {SECOND} --node {NODE}") \
+        in bound.stdout
     assert f"node(s) of {record.name} the judgment did not clear" not in bound.stdout, \
         "a node bound on its holders is not one this bind wrote none of"
+
+
+UNREAD = "src/orders/refund.ts"
+
+
+def bound_outside_the_set(consumer: Path) -> str:
+    """NODE bound to a third file no reconciliation of these tests reads, and its stamp."""
+    (consumer / "backend" / UNREAD).write_text("export function refund() {}\n", encoding="utf-8")
+    assert run("--bind", consumer / "backend", consumer / "specs", NODE, UNREAD).returncode == 0
+    return {f["path"]: f for f in binding_of(consumer, NODE)["files"]}[f"backend/{UNREAD}"]
+
+
+def test_the_handed_release_drops_the_pair_read_nowhere_and_no_file_outside_the_set(consumer):
+    """«the file that stopped holding it is a release a person decides» (SPEC-005 R10): the
+    invocation the receipt hands drops that pair alone — a file the node is bound to outside the
+    reconciled set keeps its binding and the stamp it had, and the holder stays bound."""
+    third = bound_outside_the_set(consumer)
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, clean_return([NODE, OTHER]))
+    save_return(consumer, "round", SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere. The file bills; it opens no case",
+        "evidence": "export function bill() {}"}]})
+    _, record = folded(consumer)
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    other = binding_of(consumer, OTHER)
+    released = run("--release", consumer / "backend", SECOND, "--node", NODE)
+    assert released.returncode == 0, released.stdout + released.stderr
+    files = {f["path"]: f for f in binding_of(consumer, NODE)["files"]}
+    assert sorted(files) == [f"backend/{FILE}", f"backend/{UNREAD}"]
+    assert files[f"backend/{UNREAD}"] == third, "a file nobody read keeps the stamp it had"
+    assert f"read `nowhere` in {record.name}" in released.stdout
+    assert binding_of(consumer, OTHER) == other, "another node's binding is not this release's"
+
+
+def test_a_node_no_file_of_the_set_holds_is_handed_its_release_too(consumer):
+    """A node read `nowhere` on every file of the set binds none of them, and the bind hands the
+    release of each pair it still claims rather than leaving it as it stood with no door."""
+    bound_outside_the_set(consumer)
+    with (consumer / "backend" / SECOND).open("a", encoding="utf-8") as drifted:
+        drifted.write("// drift too\n")
+    staged(consumer)
+    save_return(consumer, "round", FILE, {"read": [
+        {"node": NODE, "held_at": "nowhere. The file places; it opens no case",
+         "evidence": "export function place() {}"},
+        {"node": OTHER, "held_at": "the declaration, line 1",
+         "evidence": "export function place() {}"}]})
+    save_return(consumer, "round", SECOND, {"read": [{
+        "node": NODE, "held_at": "nowhere. The file bills; it opens no case",
+        "evidence": "export function bill() {}"}]})
+    _, record = folded(consumer)
+    bound = run("--bind-record", consumer / "backend", consumer / "specs", record)
+    assert bound.returncode == 0, bound.stdout + bound.stderr
+    assert (f"{NODE}: {SECOND}, {FILE} read `nowhere`, no file of the set holds it — to release "
+            f"those pairs alone, run trace.py --release {consumer / 'backend'} {SECOND} {FILE} "
+            f"--node {NODE}") in bound.stdout
+    released = run("--release", consumer / "backend", FILE, SECOND, "--node", NODE)
+    assert released.returncode == 0, released.stdout + released.stderr
+    assert [f["path"] for f in binding_of(consumer, NODE)["files"]] == [f"backend/{UNREAD}"]
+
+
+def test_a_pair_no_record_reads_nowhere_is_never_released(consumer):
+    """A release rests on a judgment that the file does not carry the node's fact: with no
+    record reading the pair `nowhere`, or a file the node is not bound to, the whole call is
+    refused and the trace is left as it was."""
+    trace_file = consumer / "siegard-trace.json"
+    before = trace_file.read_text(encoding="utf-8")
+    refused = run("--release", consumer / "backend", SECOND, "--node", NODE)
+    assert refused.returncode == 1
+    assert f"backend/{SECOND}: no reconciliation record reads it `nowhere` for {NODE}" \
+        in refused.stdout
+    refused = run("--release", consumer / "backend", SECOND, "--node", OTHER)
+    assert refused.returncode == 1
+    assert f"{SECOND}: {OTHER} is not bound to it" in refused.stdout
+    assert trace_file.read_text(encoding="utf-8") == before
+    twice = run("--release", consumer / "backend", SECOND, "--node", NODE, "--node", OTHER)
+    assert twice.returncode != 0 and "--release takes one --node" in twice.stderr
 
 
 def test_a_finding_against_the_node_binds_none_of_its_files(consumer):
