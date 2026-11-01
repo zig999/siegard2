@@ -275,8 +275,8 @@ None is worked around, and none is retried. Each carries its class, in backticks
 
 - a `BLOCKING, from the specification —` note standing on every task the set has left —
   `blocking`;
-- a specification silence — the `/analyse` invocation is the human's to take, always —
-  `silence`;
+- a specification silence outside a goal — the report hands the `/analyse` invocation beside
+  `/plan-work`'s decided-fact route, and which one is taken is the person's — `silence`;
 - a task `deliver.py --outstanding` lists as waiting on a re-bind — a node it implements moved
   since the plan was derived, and the door is `/plan-work` over the slug, never a derivation —
   `rebind`;

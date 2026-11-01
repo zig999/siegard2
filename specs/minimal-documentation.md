@@ -12,7 +12,8 @@ contract_version: spec/1
 This specification fixes what the analyse step must always produce: the smallest artifact set
 sufficient for a reader to comprehend the system the material describes, with every artifact
 complete — no open markers, no provenance meta-fields — and every decision the analysis made on
-the material's behalf disclosed in one place a human can review afterward.
+the material's behalf disclosed beside the node it concerns, where a human can review it
+afterward.
 
 It decides the floor (what every analysis owes), the ceiling (what no analysis may add), the
 decide-and-disclose discipline that replaces in-artifact gaps, and which halves the validator
@@ -22,7 +23,8 @@ enforces mechanically.
 
 - The shape of each normative class and its vocabularies — the metamodel and its schemas.
 - The Domain Model file convention — `specs/domain-model-files.md` (SPEC-002).
-- How the analysis reads material and evolves a standing model — the analyse skill.
+- How the analysis reads material and evolves a standing model — a procedure, applied by the
+  analyse skill; what it owes is stated here, and nothing of it is normative there alone.
 
 ## Definitions
 
@@ -33,8 +35,9 @@ enforces mechanically.
 - **Floor** — the artifacts every analysis owes because some comprehension question has no other
   home.
 - **Ceiling** — the rule that an artifact answering no comprehension question does not exist.
-- **Decision log** — the single, append-only record of every fact the analysis decided rather
-  than read from the material.
+- **Decision log** — a node's append-only record, `<slug>.log.md` beside it, of each fact
+  decided for it rather than read from the material, each fact a planning step read for it from
+  material outside the specification root, and each field retired from it (R9).
 
 ## Requirements
 
@@ -43,8 +46,8 @@ enforces mechanically.
 - **R1** — Every analysis produces at least one context, complete: strategic classification and
   every structural fact its elements require. Nothing is left as an open question inside an
   artifact.
-- **R2** — Every context holds at least one definition: a linguistic boundary with no language
-  is not comprehensible.
+- **R2** — Every context holds at least one element: a linguistic boundary with no language is
+  not comprehensible.
 - **R3** — Every recurring term of the material surfaces in the specification exactly once, as
   the name of the element it means. There is no alias mechanism: where the material uses two
   words for one thing, the analysis picks the one that best carries the term and the other
@@ -53,7 +56,10 @@ enforces mechanically.
   noun phrase restated across nodes is one definition kept in as many places as it appears.
 - **R4** — What the material does not state, the analysis decides. The artifact carries the
   decided value like any other — no placeholder, no `unknown`, no gap marker — and the decision
-  is appended to the decision log. An artifact field left undecided is a floor violation.
+  is appended to the decision log. An artifact field left undecided is a floor violation. A fact
+  decided once, and still unstated by the material, is decided the same way again: an analysis
+  over a standing model reads the decided value from the node and its log rather than deciding it
+  anew.
 
 ### Ceiling — what no analysis adds
 
@@ -132,7 +138,10 @@ enforces mechanically.
   state is read, not decided, and earns no log entry. A fact the supplied material states is read,
   not decided, and is recorded as read (R9): the analysis reads material to author every node,
   and an entry per node would restate the specification, but a node the specification gains
-  after authoring has the log as its only index, and a work root is not kept.
+  after authoring has the log as its only index, and a work root is not kept. Where a delivery
+  hands the material route (`/analyse`) beside the decided-fact route, the choice between them is
+  the person's outside a goal, because either is a door no fact decides; under a goal SPEC-008 R8
+  takes the decision.
 
 ### What the material must hold
 
@@ -158,7 +167,7 @@ enforces mechanically.
 
 ## Validation required before acceptance
 
-1. The validator rejects a specification with a context holding no definition, an unreachable
+1. The validator rejects a specification with a context holding no element, an unreachable
    element, any provenance meta-field, a decision log beside no node whose last entry retires
    nothing, a log entry whose field the node does not declare, or a log carrying text after its
    fence — a fixture proves each.

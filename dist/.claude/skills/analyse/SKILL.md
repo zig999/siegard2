@@ -259,11 +259,12 @@ that decides what goes in it:
   refused — that answer lands in the api's `answers`, and the condition a refusal answers stays
   the Rule's, named there by identity: «A Rule states the condition and never the answer»
   (SPEC-003 §Contract), so a status or an error value never enters a rule's statement. A
-  `capability` is the system's own promise to its users and lives only
-  under `contracts/system/`. `direction` (`published` | `consumed`) is required on the first
-  three; a consumed contract names the published one it depends on, and a third-party system
-  is an upstream capability named by what it supplies, never the vendor's name written into the
-  specification. A consumed contract's payload says how the boundary is crossed: the upstream's
+  `capability` is «a promise made at the system's boundary» (SPEC-003 §Contract) — this
+  system's to its users, or a third party's this system consumes — and lives only under
+  `contracts/system/`. `direction` (`published` | `consumed`) is required on the first
+  three; a consumed contract names the published one it depends on, in another context, and «A
+  third-party system is a `capability` named by what it supplies, never by the vendor»
+  (SPEC-003 §Contract): the contract consuming it names that capability as its `upstream`. A consumed contract's payload says how the boundary is crossed: the upstream's
   own element adopts that model, an element of the consuming context translates it, and the
   context map reads the difference from the payload alone — declare it nowhere else.
 - **An architecture constraint limits the solution, never the domain.** An integration
@@ -284,8 +285,8 @@ that decides what goes in it:
   from, the column a value is carried in, the coded values that column holds, the topic a
   subscribed event arrives on. Nothing downstream chose those and nothing downstream can change
   them — they are what the outside world is, and they are as much a fact about it as the payload
-  of an event. So a Contract whose `direction` is `consumed` may name them, and only such a
-  contract may: it is the class whose whole subject is a boundary this system does not own.
+  of an event. So «a Contract whose `direction` is `consumed` may name them, and only such a
+  contract may» (SPEC-003 §Contract): it is the class whose whole subject is a boundary this system does not own.
   Leaving them out does not keep them out of the system — it sends them into the code as facts no
   node holds, which is the finding a conformance pass reports as the most expensive one there is,
   and which is then discovered file by file forever. A published surface is the opposite case and

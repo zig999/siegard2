@@ -792,3 +792,26 @@ def test_no_artifact_hands_a_staging_sweep(path):
                          ids=lambda p: str(p.relative_to(REPO / "src/claude")))
 def test_no_shipped_text_carries_a_doubled_comma(path):
     assert ",," not in path.read_text(encoding="utf-8"), f"{path.name} carries ',,'"
+
+
+def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_shape_the_two_records_show():
+    """«A test the proof of another task names is answered here only where this delivery's files
+    include one that task's implementation record names; otherwise the red is a stop» (SPEC-004
+    R24), and «A suite red on a test the proof of an earlier task names is answered by this
+    delivery only where its files include one that task's implementation record names» (SPEC-004
+    R25): the build hands the red to the stop, the suite reads the shape from the two records, and
+    the proof-only re-delivery is the person's and checks the tree before it writes."""
+    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
+                     .read_text(encoding="utf-8").split())
+    build = skill.split("### 4. Build", 1)[1].split("### 5. Prove", 1)[0]
+    assert "the stop below, naming the test and the task whose proof names it" in build
+    suite = skill.split("### 6. Suite", 1)[1].split("### 7.", 1)[0]
+    assert "`test`, on a test an earlier task owns" in suite
+    assert "read from the two implementation records, never from the assertion's wording" in suite
+    assert "**Where none is**" in suite and "**Where one is**" in suite
+    assert "the proof-only re-delivery the re-delivery paragraph names" in suite
+    assert "rewrites it whole — never trimmed, never narrowed" in suite
+    assert "it joins this proof's `tests`" in suite
+    redelivery = skill.split("One narrower re-delivery exists, and only the human names it", 1)[1]
+    assert "Steps 3 and 4 do not run: the implementation record is not touched" in redelivery
+    assert "trace.py --check --all <target-source-root>" in redelivery

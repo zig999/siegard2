@@ -70,12 +70,15 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   - `policy` — `constrains` may cross aggregates or contexts and `consistency`
     (`immediate` | `eventual`) is then required; immediate across an aggregate boundary is a
     validation error — that demand is a boundary redrawn, not a rule.
-  - `state-machine` — anchored to one `aggregate-root` and its status `enumeration`; carries
-    `initial`, `terminal`, `transitions`, `rejections`; the validator checks totality over the
-    set: every pairing of a non-terminal state with a mentioned trigger is a transition or a
-    rejection, and an undecided pairing is a decision to make and log, never silence.
-- **Structure** — `statement` (one falsifiable condition) is required; `expression` optional.
-  A rule carries no examples: a concrete case is a Scenario anchored to the rule.
+  - `state-machine` — anchored to one `aggregate-root` and its status `enumeration`, and an
+    aggregate root is the subject of at most one; carries `initial` and `transitions`, and
+    `terminal` and `rejections` where it has them; the validator checks totality over the set:
+    every pairing of a non-terminal state with a mentioned trigger is a transition or a
+    rejection, and an undecided pairing is a decision to make and log, never silence. A
+    terminal state accepts no trigger: no transition and no rejection leaves it.
+- **Structure** — `statement` (one falsifiable condition) is required; `expression` is optional
+  on an `invariant` and a `policy`, and a `state-machine` carries none — its transitions are the
+  form a consumer evaluates. A rule carries no examples: a concrete case is a Scenario anchored to the rule.
 - **One condition is one sentence.** The sentence count is the half of "one falsifiable
   condition" the validator decides; whether one sentence carries one condition is judgment, read
   off `--shape` naming the far end of the class. A second sentence is refused, with no escape
@@ -102,13 +105,23 @@ R8); a fact the material does not state is decided and disclosed in the node's d
 
 - **Subtypes** — `domain-event` (named in the past tense; `payload` required), `command`
   (`payload` required; may be refused, `refusal` optionally naming the value-object it
-  surfaces), `api` (`operations` required), `capability` (the system's promise to its users;
-  lives only in the reserved `system` namespace).
+  surfaces), `api` (`operations` required), `capability` (a promise made at the system's
+  boundary — this system's to its users, or a third party's this system consumes; lives only in
+  the reserved `system` namespace).
 - **Direction** — `direction: published | consumed` is required on `domain-event`, `command`
-  and `api`; `consumed` requires `upstream` naming the published contract it depends on. A
-  `capability` is always published.
-- **Payloads** reference Domain Model elements. A third-party system is an upstream contract
-  named by the capability it supplies; the vendor is implementation.
+  and `api`; `consumed` requires `upstream` naming the published contract it depends on, in
+  another context — a context does not consume its own contract. A `capability` is always
+  published.
+- **Payloads** reference Domain Model elements. A third-party system is a `capability` named by
+  what it supplies, never by the vendor, and a contract consuming it names that capability as
+  its `upstream`; the vendor is implementation.
+- **What an upstream imposes** — a technical artifact is implementation because this system's
+  implementation chose it and is free to unpick it. An artifact an upstream system imposes is
+  not: the object a consumed api is read from, the column a value is carried in, the coded values
+  that column holds, the topic a subscribed event arrives on. Nothing downstream chose those or
+  can change them, so a Contract whose `direction` is `consumed` may name them, and only such a
+  contract may. A published surface keeps the line: the route, the table and the column it chose
+  stay implementation.
 - **Answers** — an `api` may declare `answers`: per operation, what it answers when it accepts
   and what each of its refusals answers. An answer is what a caller of the boundary reads, so it
   is the Contract's, published or consumed. The condition a refusal answers is a Rule's, named by
@@ -171,8 +184,8 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   context, kebab-case slugs, no type in filenames (SPEC-002 R1–R3 generalized). Moving a class
   to inline storage is a change to this specification, never a per-model choice.
 - **R5** — A decision log sits beside the node it discloses, `<slug>.log.md` in that node's
-  directory (SPEC-001 R9): present where a decision was made, absent where none was, and moving
-  with its node. It is non-normative: it constrains nothing; it discloses.
+  directory; what it holds and when it exists are SPEC-001 R9's. It is non-normative: it
+  constrains nothing; it discloses.
 
 ## Projections
 
@@ -203,7 +216,7 @@ R8); a fact the material does not state is decided and disclosed in the node's d
   `_context.md`, its relationships in the context-map projection.
 - **Technical artifacts** — DTOs, repositories, controllers, ORM mappings, tables, topics,
   adapters: they emerge from implementation or derive from constraints, and no class admits
-  them.
+  them — save what an upstream imposes, which a consumed Contract names (§Contract).
 - **Provenance machinery** — intake mapping, `sources`, `rationale`, proposals and
   ratification rounds: replaced by the decision log (SPEC-001).
 
@@ -222,7 +235,7 @@ layer → Architecture Constraint.
 2. Every projection in R6 generates deterministically from the fixture: two runs produce
    identical output, and removing any contributing fact changes it.
 3. SPEC-001 and SPEC-002 stay consistent with this specification; where they disagree, this
-   one wins and the change updates both.
+   one wins, save over what §Decided elsewhere assigns to them, and the change updates both.
 4. A rule declaring both `statement` and `expression` states the precedence in one place: the
    schema's own `expression` description says `statement` governs, and a fixture proves an
    `expression` carrying an obligation no reading of its `statement` holds is a defect a reviewer

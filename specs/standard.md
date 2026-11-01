@@ -48,9 +48,6 @@ never a requirement that one does; nothing said which step such a rule may name.
 
 - What a rule is, and the split between a rule a reading decides and one a tool decides —
   `schemas/standard.json`.
-- That a pin is a citation of what a record read and is never reverified to refuse the record —
-  `bin/deliver.py`'s `standard_of`. The one thing comparing it to the file as it stands decides
-  is R3 here.
 - That a review's findings are evidence and its report is not a verdict — `specs/handoff.md`
   (SPEC-006 R4).
 
@@ -64,8 +61,8 @@ never a requirement that one does; nothing said which step such a rule may name.
 ## Requirements
 
 - **R1** — A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.
-- **R2** — A review reports the paths of its file set that no rule of the standard reaches, apart from the rules that do.
-- **R3** — A record owes a run of the steps the registry it pins declared, and nothing of a registry that moved since: a step declared after a record was written is owed by the records written after it, and a record pinning an earlier version of the registry its target declares is reported beside the outstanding tasks.
+- **R2** — A review reports the paths of its file set that no rule of the standard reaches, apart from the rules that do. A check of source against the standard reports them the same way.
+- **R3** — A record owes a run of the steps the registry it pins declared, and nothing of a registry that moved since: a step declared after a record was written is owed by the records written after it, and a record pinning an earlier version of the registry its target declares is reported beside the outstanding tasks. A pin is a citation of what the record read, and it is never compared with the registry as it stands to refuse the record.
 - **R4** — A rule decided by a step other than the one whose role is `suite` holds over a tree that holds no test of the task being delivered; a rule that requires a test file to exist names the `suite` step.
 
 ## Validation required before acceptance

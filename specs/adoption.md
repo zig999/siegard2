@@ -39,7 +39,7 @@ constraints spent 26 judges on files the notes never cited while the notes named
 ### Decided elsewhere, deliberately not restated here
 
 - What a specification holds, how material becomes nodes, and what is decided and disclosed —
-  `specs/minimal-documentation.md` (SPEC-001) and the analyse skill.
+  `specs/minimal-documentation.md` (SPEC-001), applied by the analyse skill.
 - What an upstream system imposes that a consumed contract may name —
   `specs/metamodel.md` (SPEC-003 §Contract).
 - How a test becomes a binding's decider — `specs/test-discipline.md` (SPEC-004).
@@ -163,7 +163,9 @@ constraints spent 26 judges on files the notes never cited while the notes named
   as a file it encodes or as the proof a certification pinned; holds-nothing — an adoption judged
   it and bound none of its candidates to it; outside — an adoption kept it out of the judgment;
   uncertified — the target's test scope holds it and no certification names it; unsurveyed —
-  none of these. The states are computed from the trace, the reconciliation corpus and the
+  none of these. A file more than one of these describes is in the first of them, in that order:
+  what a record judged is read before what a declaration or an exclusion says, and no record is
+  rewritten. The states are computed from the trace, the reconciliation corpus and the
   project file, and the report refuses nothing. A tracked file is every entry git tracks under the
   target, a submodule included; a submodule holds no content of the repository, so outside is the
   one state an adoption can move it to.
@@ -200,8 +202,11 @@ constraints spent 26 judges on files the notes never cited while the notes named
 2. For R5: `trace.py --untraced` puts every tracked file in exactly one of the five states, a
    certification's proof counts as bound, a declared test no certification names counts as
    uncertified and that line is absent where no test is declared, and a submodule is kept outside
-   and never handed to a survey — `tests/test_stage_fold.py` and `tests/test_trace.py` prove each
+   and never handed to a survey, and a file two states describe is in the first — 
+   `tests/test_stage_fold.py` and `tests/test_trace.py` prove each
    (`test_untraced_tells_the_four_states_apart_after_an_adoption`,
+   `test_a_file_one_adoption_kept_outside_and_another_judged_holds_nothing`,
+   `test_a_test_an_earlier_adoption_judged_stays_holds_nothing_once_tests_are_declared`,
    `test_untraced_counts_a_certification_s_proof_as_bound`,
    `test_untraced_counts_a_declared_test_no_certification_names_as_uncertified`,
    `test_untraced_prints_no_uncertified_line_where_no_tests_are_declared`,
@@ -264,7 +269,7 @@ constraints spent 26 judges on files the notes never cited while the notes named
    `test_a_rewritten_proof_keeps_its_certification_live`,
    `test_a_rewritten_pair_is_neither_a_clearance_nor_a_finding_in_the_corpus`).
 9. For R12: a node the pack marks read beside the file's bindings and the return names under
-   `nowhere` folds as a `read` entry answering `nowhere` folds — never a holder, still counted
+   `nowhere` folds as a `read` entry answering `nowhere` does — never a holder, still counted
    where the node was judged — a bound node named there refuses the return, a node answered in
    both `read` and `nowhere` refuses it, and a return answering every node in `read` still folds
    — `tests/test_stage_fold.py` proves each

@@ -18,7 +18,8 @@ their inputs.
 It decides the obligation set, the necessity and stopping rules, the partition of inputs, the
 preference for a test over a reading wherever a finite test decides a fact, that no test a
 delivery changes goes unnamed by its records, and which halves the validator enforces
-mechanically.
+mechanically. It also decides where a proof is cut (R18–R21, R23), who answers a red build or a
+red suite (R24, R25), and what a review answers for (R22).
 
 Grounds: measured over 483 proof records and 95 reviews of two consumer projects in September
 2026, the share of criteria a coverage audit found covered rose from 60% at one test per
@@ -103,8 +104,10 @@ left out — so the file set the review that followed was handed never held them
 
 ### Coverage
 
-- **R14** — Coverage is stated per obligation, never as a figure: the state of each obligation is
-  named, and no percentage, line or branch measure stands in for it.
+- **R14** — Coverage is stated per obligation, never as a figure: the state of each criterion a
+  review answers for, and of each node fact a certification reads, is named, and no percentage,
+  line or branch measure stands in for it. An `UNDERDETERMINED` note is owed evidence by the test
+  author and holds no coverage state of its own.
 - **R15** — The coverage audit names every test in the set that no criterion it was handed
   derives, with what the test asserts. It is R1 and R4 read from the evidence side: a test with no
   obligation is a proof of something nobody stated. It is a reading and never a verdict — a test
@@ -131,14 +134,6 @@ left out — so the file set the review that followed was handed never held them
 
 - **R18** — A task writes source, or its implementation already stands. A task that writes no source carries `stands`, and every file it names is bound in the trace, before the task is written, to every node the task implements. A fact the plan's own deliveries will write into source is proven by the task that writes it, as that task's criterion, never by a task of its own.
 - **R19** — A node whose fact already stands in source the trace does not bind to it gets no proof task. The plan reports the reconciliation that would bind it, over the files that hold it, and the proof waits for that binding.
-- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no record and stops, naming the files that hold the fact. Where the trace binds every node the task implements to those files, the door is the plan over this slug carrying `stands` over them; where it does not, the door is the reconciliation over them, and the plan waits for that binding.
-
-  Grounds: on 2026-10-30, reading every `orchestration.md` under the delivery roots of the sales consumers
-  for a line naming a task whose implementer found the criteria met and wrote no file, 20 tasks in 5
-  plans of two consumers stopped with `files` empty and no `stands` (13 of them in one plan); the estimator is that
-  line match, so a stop logged in other words is not counted. The record writer refuses such a
-  return, and nothing stated what the delivery then hands: each orchestration chose its own door,
-  withdrawing the task from the plan in some and planning it again with `stands` in others.
 
   Grounds: on 2026-10-26 three successive plans of one consumer cut proof-only tasks in the
   ordinary decomposition, and none could be delivered — the record writer accepts a task that
@@ -150,6 +145,15 @@ left out — so the file set the review that followed was handed never held them
   plan-shape rule for the third form — a task whose nodes its dependencies all implement — fires
   on 96 tasks across five consumers, 94 of which wrote source, so R18's second sentence is held by
   the decomposer's judgment and not by a validator.
+
+- **R20** — A delivery whose implementer finds every criterion of the task already met by source the tree holds writes no record and stops, naming the files that hold the fact. Where the trace binds every node the task implements to those files, the door is the plan over this slug carrying `stands` over them; where it does not, the door is the reconciliation over them, and the plan waits for that binding.
+
+  Grounds: on 2026-10-30, reading every `orchestration.md` under the delivery roots of the sales consumers
+  for a line naming a task whose implementer found the criteria met and wrote no file, 20 tasks in 5
+  plans of two consumers stopped with `files` empty and no `stands` (13 of them in one plan); the estimator is that
+  line match, so a stop logged in other words is not counted. The record writer refuses such a
+  return, and nothing stated what the delivery then hands: each orchestration chose its own door,
+  withdrawing the task from the plan in some and planning it again with `stands` in others.
 
 - **R21** — A re-delivery of a task whose own earlier implementation record names every file that holds the fact is not the stop R20 states: the record is written again over those files, answering the task as it stands. A re-delivery names a file the tree did not change only where the record it replaces named it.
 
@@ -187,6 +191,12 @@ left out — so the file set the review that followed was handed never held them
   typecheck reached an earlier task's test whose call the delivery's source legitimately
   changed; the session handed the test author a red build and no record, outside any stated
   route. A red worded otherwise in its log is not counted.
+
+- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names: the test author rewrites the test whole and it joins this delivery's proof. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record, and which runs only while `trace.py --check --all` finds no drift on that task's files.
+
+  Grounds: stated in `/implement-task` since the proof-only re-delivery shipped (9a2a3df) and in
+  no specification until the audit of 2026-11-01 found the route with no requirement to hold it;
+  it is the suite-time counterpart of R24's second sentence, and no measurement reopens it.
 
 ### What a review answers for
 
@@ -229,28 +239,35 @@ left out — so the file set the review that followed was handed never held them
    before it writes it, and states both requirements in the words above; the backlog decomposer
    states R18's last sentence; `tests/test_spec_citations.py` proves each quote is a substring of
    the requirement it names.
-   For R20: `/implement-task` runs `trace.py --encodes` over the files a no-write return names
+7. For R20: `/implement-task` runs `trace.py --encodes` over the files a no-write return names
    and hands the door that output decides, and the task implementer returns that case without a
    record — `tests/test_skill_contract.py` proves both.
-   For R21: `bin/deliver.py --unrecorded` refuses a re-delivered implementation naming a file the
+8. For R21: `bin/deliver.py --unrecorded` refuses a re-delivered implementation naming a file the
    tree did not change that the record it replaces did not name, and admits one the record it
    replaces named; `/implement-task` hands the implementer the record a re-delivery replaces —
    `tests/test_unrecorded.py` and `tests/test_skill_contract.py` prove each.
-   For R22: `bin/deliver.py --check` admits a review that lists fewer files than its tasks'
+9. For R22: `bin/deliver.py --check` admits a review that lists fewer files than its tasks'
    records now name, or answers criteria its tasks no longer state, and refuses it under `--review`
    naming it; `--outstanding` names a task some review names and none answers as it stands, and
    no task one review answers — `tests/test_deliver.py` proves each.
-   For R23: `bin/deliver.py --outstanding` names a task delivered as the substrate alone apart
-   from a task implemented and unproven, and counts it delivered; `/implement-task` writes no proof
-   only for a task that report names so — `tests/test_deliver.py` and `tests/test_skill_contract.py`
-   prove each.
-   For R24: `bin/project.py --declared-tests` says which paths a red's fix names are tests the
-   target declares; `/implement-task` hands the red to the test author only where every path is
-   one, with the implementer's return in the record's place, and the test author takes that
-   return — `tests/test_project.py` and `tests/test_skill_contract.py` prove each.
-7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
-   criterion, covered share per review, and the count of nodes decided by a test. A covered share
-   that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
+10. For R23: `bin/deliver.py --outstanding` names a task delivered as the substrate alone apart
+    from a task implemented and unproven, and counts it delivered; `/implement-task` writes no
+    proof only for a task that report names so — `tests/test_deliver.py` and
+    `tests/test_skill_contract.py` prove each.
+11. For R24: `bin/project.py --declared-tests` says which paths a red's fix names are tests the
+    target declares; `/implement-task` hands the red to the test author only where every path is
+    one, with the implementer's return in the record's place, and the test author takes that
+    return; a declared test another task's proof names is answered only where this delivery's
+    files include one that task's record names, and is otherwise the stop —
+    `tests/test_project.py` and `tests/test_skill_contract.py` prove each.
+12. For R25: `/implement-task`'s suite step reads which shape a red on an earlier task's test
+    took from the two implementation records, rewrites the test where a file is shared, and
+    otherwise hands the proof-only re-delivery, which only a person names and which runs
+    `trace.py --check --all` before anything is written — `tests/test_skill_contract.py` proves
+    each.
+13. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
+    criterion, covered share per review, and the count of nodes decided by a test. A covered share
+    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
 
 ## Readings
 

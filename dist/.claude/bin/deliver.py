@@ -709,7 +709,8 @@ def standard_of(nid: str | None, front: dict, target: Path,
                 validator) -> tuple[dict | None, str | None, list[str]]:
     """The standard a record read, from the project's own path in the target source root. The pin
     is a citation of what was read when the record was written — not a standing guarantee this
-    resolves: like a task's `implements`, it is never reverified to refuse the record, so a
+    resolves: «A pin is a citation of what the record read, and it is never compared with the
+    registry as it stands to refuse the record» (SPEC-007 R3), like a task's `implements`, so a
     project free to evolve its own registry cannot retroactively invalidate every record written
     against an earlier version of it. The one thing comparing the pin to the file as it stands
     decides is which steps the record owes a run of — `registry_moved`, read by

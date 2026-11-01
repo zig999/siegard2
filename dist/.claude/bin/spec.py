@@ -714,6 +714,9 @@ def cross_problems(nodes: dict[str, dict], root: Path,
         if not any(n["context"] == context for n in elements.values()):
             problems.append(f"domain/{context}: holds no element — «a linguistic boundary "
                             f"with no language is not comprehensible» (SPEC-001 R2)")
+    if nodes and not contexts:
+        problems.append(f"the specification holds {len(nodes)} file(s) and no context — "
+                        f"«Every analysis produces at least one context» (SPEC-001 R1)")
     for identity, node in sorted(nodes.items()):
         if node["cls"] in ("rule", "scenario", "contract") and node["context"] != SYSTEM \
                 and node["context"] not in contexts:
@@ -834,7 +837,7 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                                     f"only — a capability «lives only in the reserved system namespace» "
                                     f"(SPEC-003 §Contract)")
             if node["context"] != SYSTEM and front.get("type") == "capability":
-                problems.append(f"{identity}: a capability is «the system's promise to its users» "
+                problems.append(f"{identity}: a capability is «a promise made at the system's boundary» "
                                     f"(SPEC-003 §Contract), and lives only under contracts/{SYSTEM}/")
             for field in ("payload", "refusal"):
                 if isinstance(front.get(field), str):
@@ -849,10 +852,10 @@ def cross_problems(nodes: dict[str, dict], root: Path,
                 if upstream is not None:
                     # A capability declares no `direction` field at all (contract.json's
                     # capability branch admits only `type` and `display`) because it is always
-                    # published — «A capability is always published» (SPEC-003 §Contract). Demanding the field here would
-                    # make a third-party integration impossible to model as SKILL.md's own prose
-                    # requires ("a third-party system is an upstream capability"), so its absence
-                    # on a capability target counts as published, not as unset.
+                    # published — «A capability is always published» (SPEC-003 §Contract) — and
+                    # a contract consuming a third party names that party's capability as its
+                    # upstream, «named by what it supplies» (SPEC-003 §Contract). Its absent
+                    # direction counts as published, not as unset.
                     is_published = upstream["front"].get("type") == "capability" \
                         or upstream["front"].get("direction") == "published"
                     if not is_published:

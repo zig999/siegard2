@@ -3023,6 +3023,33 @@ def test_a_test_an_earlier_adoption_judged_stays_holds_nothing_once_tests_are_de
     assert "  0 uncertified:" in done.stdout
 
 
+def test_a_file_one_adoption_kept_outside_and_another_judged_holds_nothing(adopting):
+    """«a file more than one of these describes is in the first of them» (SPEC-005 R5): judged
+    by one adoption and kept outside by another, a file holds nothing — the judgment is read
+    before the exclusion, and neither record is rewritten."""
+    staged_done, _ = adopt_staged(adopting, "--outside", KEPT_OUT)
+    assert staged_done.returncode == 0, staged_done.stdout + staged_done.stderr
+    done, record = adopted_record(adopting, {
+        FILE: read_as({NODE: "line 1", OTHER: "line 1", RULE: "nowhere"}),
+        SECOND: read_as({NODE: "line 1", OTHER: "nowhere", RULE: "nowhere"}),
+        THIRD: read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}),
+    })
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run("--bind-record", adopting / "backend", adopting / "specs", record).returncode == 0
+    staged_done, _ = adopt_staged(adopting, slug="adopt-config", files=[KEPT_OUT])
+    assert staged_done.returncode == 0, staged_done.stdout + staged_done.stderr
+    save_return(adopting, "adopt-config", KEPT_OUT,
+                read_as({NODE: "nowhere", OTHER: "nowhere", RULE: "nowhere"}))
+    premise = dict(ADOPT_PREMISE, files=[{"path": KEPT_OUT,
+                                          "change": "unchanged; adopted as it stands"}])
+    done, _ = folded(adopting, "adopt-config", premise)
+    assert done.returncode == 0, done.stdout + done.stderr
+    done = run("--untraced", adopting / "backend", "--all")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"holds-nothing:\n  backend/{KEPT_OUT}\n  backend/{THIRD}" in done.stdout
+    assert f"outside:\n  backend/{KEPT_OUT}" not in done.stdout
+
+
 # ---------------------------------------------------------------- the waves
 
 

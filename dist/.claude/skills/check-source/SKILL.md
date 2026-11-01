@@ -191,7 +191,7 @@ Report, in this order:
   half of one;
 - the paths of the file set no rule reaches, from `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py
   --standard <the project's registry> --reach --for <every path of the file set, one --for each>`,
-  apart from the rules that do — «A review reports the paths of its file set that no rule of the standard reaches, apart from the rules that do.» (SPEC-007 R2) — a fact about the registry and never a finding;
+  apart from the rules that do — «A check of source against the standard reports them the same way.» (SPEC-007 R2) — a fact about the registry and never a finding;
 - every file that could not be read;
 - what this invocation does not do at all: it does not judge the specification — whether the source
   states a fact no node holds is `/reconcile`'s question over a bound file set, and `/review-change`'s

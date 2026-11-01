@@ -366,6 +366,21 @@ def test_a_second_state_machine_for_one_subject_is_refused(spec_root):
 # -------------------------------------------------------- contracts (SPEC-003)
 
 
+def test_nodes_with_no_context_are_refused_and_an_empty_root_is_not(spec_root, tmp_path):
+    """«Every analysis produces at least one context» (SPEC-001 R1): a root holding nodes and no
+    context is no analysis's output; an empty root is a project not yet analysed."""
+    for each in ("domain", "rules", "scenarios", "constraints"):
+        shutil.rmtree(spec_root / each, ignore_errors=True)
+    for each in (spec_root / "contracts").iterdir():
+        if each.name != "system":
+            shutil.rmtree(each)
+    assert any((spec_root / "contracts" / "system").glob("*.md"))
+    assert hits(problems_of(spec_root), "and no context")
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert not hits(problems_of(empty), "and no context")
+
+
 def test_the_system_namespace_is_reserved_for_capabilities(spec_root):
     rewrite(spec_root, "contracts/system/troubleshoot-customer-problem.md",
             lambda f: f.update(type="domain-event", direction="published",

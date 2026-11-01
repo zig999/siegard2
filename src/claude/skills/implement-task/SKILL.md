@@ -767,7 +767,9 @@ call to make, and the report's business is to make that call fast, not to make i
 `test`, on a test an earlier task owns — what broke it is not a regression but
 this delivery's own legitimate files, and which of two shapes it took is read from the two
 implementation records, never from the assertion's wording: whether a path this delivery's
-`files` names is one the owning task's `files` names too. **Where none is**, the old assertion
+`files` names is one the owning task's `files` names too — «A suite red on a test the proof of an
+earlier task names is answered by this delivery only where its files include one that task's
+implementation record names» (SPEC-004 R25). **Where none is**, the old assertion
 claimed more than its task's criteria establish, totality over ground the two tasks share, and
 this delivery falsified the excess beside it. That test is not edited from here, whatever the
 temptation: the way out is the proof-only re-delivery the re-delivery paragraph names, over the
