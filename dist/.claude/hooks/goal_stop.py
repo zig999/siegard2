@@ -18,14 +18,19 @@ repeats the last ends the goal paused.» (SPEC-008 R14)
   nothing a check could see, so the stop is allowed, the record is ended `paused`, and the line
   says so.
 
+Where the project holds no armed goal, the stop is handed to `hooks/handoff_stop.py`, which holds
+the message the session stopped on to what `bin/handoff.py --check` decides. This is the one
+`Stop` hook so that an armed goal and that check never both answer the same stop: the armed goal
+answers its stops, and the check reads only the stops of a project where none is armed.
+
 The goal binds to the first session whose stop reaches it; another session's stop is left alone.
 A stop while the session still has background work in flight is left alone too, uncounted: the
 session is waiting to be woken, and blocking it would ask for work it is already waiting on.
 
 It never fails a session and never traps one. Every path out exits 0. Silent in a project that
-declares no `siegard.json` and in one that holds no armed goal. Where the state cannot be computed
-— a validator missing, a project file that no longer resolves — the stop is allowed and the goal
-left armed, said in one line: a hook that blocked on its own failure would hold the session on a
+declares no `siegard.json`; in one that holds no armed goal, silent but for the check above.
+Where the state cannot be computed — a validator missing, a project file that no longer resolves
+— the stop is allowed and the goal left armed, said in one line: a hook that blocked on its own failure would hold the session on a
 reason the session cannot repair.
 """
 from __future__ import annotations
@@ -43,6 +48,16 @@ GIT_TIMEOUT_SECONDS = 10
 
 def said(line: str) -> int:
     print(json.dumps({"systemMessage": line}))
+    return 0
+
+
+def handed_on(record: dict, siegard_dir: Path) -> int:
+    """The stop of a project with no armed goal, answered by the handoff check."""
+    sys.path.insert(0, str(HOOKS))
+    import handoff_stop
+    answer = handoff_stop.answer(record, siegard_dir)
+    if answer is not None:
+        print(json.dumps(answer))
     return 0
 
 
@@ -69,7 +84,7 @@ def main() -> int:
             import goal
         path = goal.armed_path(home)
         if not path.exists():
-            return 0
+            return handed_on(record, path.parent)
         armed = goal.read_armed(path)
     except (Exception, SystemExit):
         return 0

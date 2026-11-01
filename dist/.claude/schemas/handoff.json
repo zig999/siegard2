@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/handoff.json",
   "title": "Siegard handoff record",
-  "description": "What a handoff is made from: the record an agent fills and `bin/handoff.py --render` turns into the message a person reads. The record holds the opening and nothing else — the state, what needs the person, the door recommended and why, the other doors, what stays as it is if none is taken — and points at the full report on disk for the pending items, commit hashes, measurements and command output, which never enter the opening. The prose is the agent's, in the person's language, and is never translated; the few fixed words the rendering adds are this schema's, per language, under `x-labels`. What this schema cannot express — the ceilings, the closed list of framework terms, a reply word used twice — `bin/handoff.py` decides, reading the numbers and the list from here: one home for each.",
+  "description": "What a handoff is made from: the record an agent fills and `bin/handoff.py --render` turns into the message a person reads. The record holds the opening and nothing else — the state, what needs the person, the door recommended and why, the other doors, what stays as it is if none is taken — and points at the full report on disk for the pending items, commit hashes, measurements and command output, which never enter the opening. `bin/handoff.py --prepare` writes the skeleton: the state a script printed, with `state_from` naming it, each door the skill's own report hands with what its entry point's check answered, and the report's path; the agent fills the rest. The prose is the agent's, in the person's language, and is never translated; the few fixed words the rendering adds are this schema's, per language, under `x-labels`. What this schema cannot express — the ceilings, the closed list of framework terms, a reply word used twice, a state that no longer matches its script — `bin/handoff.py` decides, reading the numbers and the list from here: one home for each.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -32,7 +32,35 @@
     },
     "state": {
       "$ref": "#/$defs/line",
-      "description": "Where things stand, in one line of the person's plain words."
+      "description": "Where things stand, in one line. Where `state_from` is present it is that script's line, verbatim and cut to `x-ceilings.state`, written by `--prepare` and never by the agent; otherwise the person's plain words."
+    },
+    "state_from": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "script",
+        "project"
+      ],
+      "properties": {
+        "script": {
+          "enum": [
+            "goal.py",
+            "progress.py"
+          ],
+          "description": "`goal.py`: the first line of `goal.py --state` over the goal armed through the framework. `progress.py`: the segment it prints for `slug`, else its whole line, else `x-labels`' `quiet` for a project with nothing live."
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The project root the script was run over, absolute."
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "description": "`progress.py` only: the initiative whose segment is the state."
+        }
+      },
+      "description": "Which script the state is the line of, and the inputs it was read with. Required of kind `decision`: `--render` runs it again and refuses a `state` that differs from what it prints then."
     },
     "withdraws": {
       "$ref": "#/$defs/line",
@@ -55,7 +83,7 @@
     "body": {
       "type": "string",
       "minLength": 1,
-      "description": "Kind `report` only: the answer itself, inline, where it is not written to a file. No ceiling."
+      "description": "Kind `report` only: the answer itself, inline, where it is not written to a file, or the short answer above the full one a `report` path names. No ceiling."
     }
   },
   "allOf": [
@@ -69,7 +97,8 @@
       },
       "then": {
         "required": [
-          "decisions"
+          "decisions",
+          "state_from"
         ],
         "not": {
           "required": [
@@ -92,7 +121,7 @@
             "decisions"
           ]
         },
-        "oneOf": [
+        "anyOf": [
           {
             "required": [
               "report"
@@ -111,7 +140,7 @@
     "line": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[^\\n]+$"
+      "pattern": "^[^\\n]*\\S[^\\n]*$"
     },
     "replyWord": {
       "type": "string",
@@ -155,6 +184,12 @@
             },
             "reply_word": {
               "$ref": "#/$defs/replyWord"
+            },
+            "entry": {
+              "$ref": "#/$defs/entry"
+            },
+            "check": {
+              "$ref": "#/$defs/check"
             }
           }
         },
@@ -178,6 +213,12 @@
               "what_it_does": {
                 "$ref": "#/$defs/line",
                 "description": "What the door does and what it leaves as it is; for an excluded door, the refusal or the rule that excludes it."
+              },
+              "entry": {
+                "$ref": "#/$defs/entry"
+              },
+              "check": {
+                "$ref": "#/$defs/check"
               }
             }
           },
@@ -219,6 +260,41 @@
           }
         }
       ]
+    },
+    "entry": {
+      "type": "string",
+      "pattern": "^/[a-z][\\w-]*$",
+      "description": "The skill a door invokes, as its slash command — written by `--prepare` and carried unchanged wherever the agent places the door."
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "answer"
+      ],
+      "properties": {
+        "answer": {
+          "enum": [
+            "accepts",
+            "refuses",
+            "not checked"
+          ],
+          "description": "`door.py --check`'s first line, or `not checked` where no script decides the door's refusals or an input it takes was not named."
+        },
+        "refused": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Each `refused:` fact the check printed, verbatim — the fact an excluded door is named beside."
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "For `not checked`: why no check ran."
+        }
+      },
+      "description": "What the door's own entry point answered as the tree stood when `--prepare` ran, carried unchanged. A door whose answer is `refuses` is excluded: `--render` refuses it as `recommended`, and a door it accepts is not thereby recommended."
     }
   },
   "x-ceilings": {
@@ -238,23 +314,74 @@
       "doors",
       "juiz",
       "juízes",
-      "nowhere",
-      "offered",
-      "owed",
       "pathspec",
       "re-bind",
       "rebind",
       "slug",
-      "stands",
       "substrate",
       "unstated"
+    ],
+    "english_terms": [
+      "nowhere",
+      "offered",
+      "owed",
+      "stands"
+    ],
+    "phrases": [
+      "offered act",
+      "offered acts",
+      "owed act",
+      "owed acts",
+      "owed a route",
+      "read nowhere"
     ],
     "patterns": {
       "state A or B": "\\b(?:state|estado) [AB]\\b",
       "a script name": "\\b[\\w-]+\\.py\\b",
       "a command flag": "(?<![\\w-])--[a-z][\\w-]*"
     },
-    "description": "The closed list of this framework's words a person never reads in a handoff's opening. A term matches as a whole word, case aside; a pattern matches as written. A hit names the term, or the pattern's name, never the text around it. The list is this schema's alone: a word added or removed is a change here."
+    "english_markers": [
+      "the",
+      "and",
+      "is",
+      "are",
+      "of",
+      "to",
+      "it",
+      "that",
+      "this",
+      "with",
+      "for",
+      "not",
+      "be",
+      "was",
+      "has",
+      "what",
+      "which"
+    ],
+    "other_markers": [
+      "de",
+      "que",
+      "não",
+      "uma",
+      "um",
+      "para",
+      "com",
+      "está",
+      "é",
+      "os",
+      "as",
+      "do",
+      "da",
+      "em",
+      "no",
+      "na",
+      "por",
+      "mas",
+      "foi",
+      "ficou"
+    ],
+    "description": "The closed list of this framework's words a person never reads in a handoff's opening. A term of `terms` matches as a whole word, case aside. A term of `english_terms` is also a plain English word: it matches backticked anywhere, and as a whole word only in text that is not English — the record's `language`, or, for free text, text whose words of `english_markers` do not outnumber its words of `other_markers`. A phrase of `phrases` matches as written, case and spacing aside, in any language. A pattern matches as written. A hit names the term, the phrase or the pattern's name, never the text around it. The list is this schema's alone: a word added or removed is a change here."
   },
   "x-decision-words": {
     "recommendation": [
@@ -282,23 +409,30 @@
       "reverses_if": "It would change if",
       "own": "Your decision",
       "if_none": "If none is taken",
-      "report": "Full report"
+      "report": "Full report",
+      "quiet": "No initiative is in progress in this project."
     },
     "pt-BR": {
       "recommended": "Recomendado",
       "reverses_if": "Mudaria se",
       "own": "Decisão sua",
       "if_none": "Se nenhuma for tomada",
-      "report": "Relatório completo"
+      "report": "Relatório completo",
+      "quiet": "Nenhuma iniciativa em andamento neste projeto."
     },
-    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path. Every other word is the record's."
+    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path; and `quiet`, the state `--prepare` writes where `progress.py` prints nothing. Every other word is the record's."
   },
   "examples": [
     {
       "contract_version": "siegard-handoff/1",
       "kind": "decision",
       "language": "en",
-      "state": "The order screen is delivered and its tests pass; one choice is left before it ships.",
+      "state": "checkout · task 2/2 delivered · phase review · last: implement-task task/checkout/refuse-empty — accepted",
+      "state_from": {
+        "script": "progress.py",
+        "project": "/work/shop",
+        "slug": "checkout"
+      },
       "decisions": [
         {
           "ask": "Should an empty order be refused at checkout?",
@@ -311,7 +445,12 @@
           "others": [
             {
               "reply_word": "b",
-              "what_it_does": "Accept it, and leave the rule to be changed first"
+              "what_it_does": "Accept it, and leave the rule to be changed first",
+              "entry": "/plan-work",
+              "check": {
+                "answer": "accepts",
+                "refused": []
+              }
             }
           ],
           "if_none": "The screen stays delivered and nothing ships.",

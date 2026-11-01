@@ -7,6 +7,9 @@ recommendation under pending items, hashes and measurements; an English one aski
 without recommending any; a long status answer that hands nothing — and the shapes R8 asks for.
 No consumer's text is copied. Each message fixture is named with what it is, and the expected
 violations are the prefixes `--check` prints: `opening`, `length`, `decision`.
+
+`--prepare` and the state `--render` reads again (SPEC-006 R10) are held over the committed
+consumer repository `test_door.py` builds, so a door's mark is what `door.py --check` answers there.
 """
 from __future__ import annotations
 
@@ -51,8 +54,14 @@ def kinds(problems: list[str]) -> set[str]:
     return {problem.split(":", 1)[0] for problem in problems}
 
 
-def rendered(data: dict) -> tuple[str | None, list[str]]:
-    return handoff.render(data, CONTRACT, FIXTURES)
+def echo(data: dict):
+    """A `state_from` reader that answers what the record already holds: the rendering is under
+    test, and the script's line is pinned by the tests over fixture repositories below."""
+    return lambda source, language, contract: data.get("state")
+
+
+def rendered(data: dict, state_of=None) -> tuple[str | None, list[str]]:
+    return handoff.render(data, CONTRACT, FIXTURES, state_of or echo(data))
 
 
 # ------------------------------------------------------------------ the specification
@@ -164,7 +173,7 @@ def test_a_record_renders_and_what_it_renders_holds(name):
 
 def test_the_rendering_opens_with_the_state_and_the_recommendation_first():
     message, _ = rendered(record("record-en-two-decisions.json"))
-    assert message.startswith("The order screen is delivered")
+    assert message.startswith("```\ncheckout · task 2/2 delivered · phase review")
     first = message.index("1. Should an empty order")
     assert message.index("**Recommended** `a`: Refuse it") > first
     assert "needs at least one item. It would change if a product owner says" in message
@@ -183,12 +192,18 @@ def test_a_choice_that_is_the_person_s_renders_in_their_language():
     assert "Recommended" not in message and "Full report" not in message
 
 
-def test_the_command_renders_from_a_file_and_from_standard_input():
-    data = (FIXTURES / "record-en-two-decisions.json").read_text(encoding="utf-8")
-    from_file = run("--render", str(FIXTURES / "record-en-two-decisions.json"), cwd=FIXTURES)
-    from_stdin = run("--render", "-", stdin=data, cwd=FIXTURES)
+def test_the_command_renders_from_a_file_and_from_standard_input(tmp_path):
+    """A directory no project file declares prints no progress line, so the state the script
+    answers there is the fixed words for a project with nothing live."""
+    data = record("record-en-two-decisions.json")
+    data["state"] = CONTRACT["x-labels"]["en"]["quiet"]
+    data["state_from"] = {"script": "progress.py", "project": str(tmp_path)}
+    path = tmp_path / "record.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    from_file = run("--render", str(path), cwd=FIXTURES)
+    from_stdin = run("--render", "-", stdin=json.dumps(data), cwd=FIXTURES)
     assert from_file.returncode == 0 and from_stdin.returncode == 0, from_file.stdout
-    assert from_file.stdout == from_stdin.stdout == rendered(json.loads(data))[0]
+    assert from_file.stdout == from_stdin.stdout == rendered(data)[0]
 
 
 def refusal(mutate) -> list[str]:
@@ -279,7 +294,8 @@ def test_a_report_kind_carries_a_body_or_a_path_and_no_decision():
 
 def test_the_command_refuses_with_one_line_per_problem_and_exit_one(tmp_path):
     data = record("record-en-two-decisions.json")
-    data["state"] = "The binder is done"
+    data["state"] = "The order screen is done"
+    data["state_from"] = {"script": "progress.py", "project": str(tmp_path)}
     data["report"] = "missing.txt"
     path = tmp_path / "r.json"
     path.write_text(json.dumps(data), encoding="utf-8")
@@ -297,3 +313,306 @@ def test_arguments_it_cannot_read_cannot_run(args):
 def test_a_record_that_is_not_json_cannot_run():
     done = run("--render", "-", stdin="{not json")
     assert done.returncode == handoff.CANNOT_RUN and "not JSON" in done.stderr
+
+
+# ------------------------------------------------------------ the state is a script's (R10)
+
+
+def test_a_decision_with_no_state_from_is_refused():
+    problems = refusal(lambda d: d.pop("state_from"))
+    assert any("'state_from' is a required property" in p for p in problems)
+
+
+def test_a_state_that_differs_from_what_its_script_prints_now_is_refused():
+    data = record("record-en-two-decisions.json")
+    message, problems = rendered(data, lambda source, language, contract: "checkout · phase plan")
+    assert message is None
+    assert any(p.startswith("state: differs from what progress.py prints now") for p in problems)
+    assert any("run handoff.py --prepare again" in p for p in problems)
+
+
+def test_a_state_a_script_printed_is_quoted_and_not_read_for_the_term_list():
+    data = record("record-en-two-decisions.json")
+    data["state"] = "state B — stop: stands — the bound file moved; see trace.py --check"
+    message, problems = rendered(data)
+    assert problems == [], problems
+    assert message.startswith(f"```\n{data['state']}\n```\n")
+    assert handoff.violations(handoff.reading(message, CONTRACT), CONTRACT) == []
+
+
+def test_a_state_the_agent_wrote_is_read_for_the_term_list():
+    data = record("record-pt-status.json")
+    data["state"] = "O binder terminou; nada espera por você."
+    message, problems = rendered(data)
+    assert message is None and any(p.startswith("state: carries binder") for p in problems)
+
+
+@pytest.mark.parametrize("key", ["why", "reverses_if"])
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_a_recommendation_with_an_empty_why_or_reversal_is_refused(key, blank):
+    problems = refusal(lambda d: d["decisions"][0]["recommended"].update({key: blank}))
+    assert any(p.startswith(f"decisions/0/recommended/{key}: empty") for p in problems), problems
+
+
+def test_a_door_its_entry_point_refuses_is_never_recommended():
+    def refused(d):
+        d["decisions"][0]["recommended"]["entry"] = "/implement-task"
+        d["decisions"][0]["recommended"]["check"] = {
+            "answer": "refuses", "refused": ["plans/s/closure.md exists — the plan is history"]}
+    problems = refusal(refused)
+    assert any(p.startswith("decisions/0/recommended: /implement-task is refused") and
+               "closure.md exists" in p for p in problems), problems
+
+
+def test_a_door_its_entry_point_refuses_may_be_handed_excluded():
+    data = record("record-en-two-decisions.json")
+    data["decisions"][0]["others"][0].update(entry="/implement-task", check={
+        "answer": "refuses", "refused": ["plans/s/closure.md exists — the plan is history"]})
+    assert rendered(data)[1] == []
+
+
+# --------------------------------------------------------- the narrowed list of terms
+
+
+ENGLISH_WORDS = ("stands", "nowhere", "owed", "offered")
+
+
+@pytest.mark.parametrize("word", ENGLISH_WORDS)
+def test_a_plain_english_word_is_no_term_in_english_prose(word):
+    text = f"The rule {word} as it is, and the screen is ready for the person to read."
+    assert handoff.jargon_in(text, CONTRACT) == []
+    assert handoff.jargon_in(text, CONTRACT, "en") == []
+
+
+@pytest.mark.parametrize("word", ENGLISH_WORDS)
+def test_a_backticked_framework_word_is_a_term_in_any_language(word):
+    text = f"The task carries `{word}` and the screen is ready."
+    assert handoff.jargon_in(text, CONTRACT) == [(word, f"`{word}`")]
+    assert handoff.jargon_in(text, CONTRACT, "en") == [(word, f"`{word}`")]
+
+
+@pytest.mark.parametrize("word", ENGLISH_WORDS)
+def test_a_framework_word_in_portuguese_prose_is_still_a_term(word):
+    text = f"A tarefa ficou em {word} e não há nada para fazer com ela."
+    assert [name for name, _ in handoff.jargon_in(text, CONTRACT)] == [word]
+    assert [name for name, _ in handoff.jargon_in(text, CONTRACT, "pt-BR")] == [word]
+
+
+def test_a_framework_phrase_is_a_term_in_english_prose():
+    text = "The owed act is a commit, and the offered acts can wait; the pair is read nowhere."
+    names = [name for name, _ in handoff.jargon_in(text, CONTRACT)]
+    assert {"owed act", "offered acts", "read nowhere"} <= set(names)
+
+
+def test_the_portuguese_baseline_fixture_still_carries_every_term_it_carried():
+    """Narrowing the list for English prose never loosens what the check reads in Portuguese."""
+    text = (FIXTURES / "pt-long-jargon-late-decision.md").read_text(encoding="utf-8")
+    read = handoff.reading(text + "\nA linha stands ficou nowhere, owed e offered.\n", CONTRACT)
+    assert read["jargon_in_opening"]
+    names = [name for name, _ in handoff.jargon_in(handoff.prose_of(text) + " stands nowhere "
+                                                   "owed offered", CONTRACT)]
+    assert set(ENGLISH_WORDS) <= set(names)
+
+
+def test_a_record_in_english_may_say_stands_and_one_in_portuguese_may_not():
+    data = record("record-en-two-decisions.json")
+    data["decisions"][1]["recommended"]["why"] = "Every test passed and the rule stands"
+    assert rendered(data)[1] == []
+    data = record("record-pt-own-decision.json")
+    data["decisions"][0]["if_none"] = "A busca fica como stands."
+    assert any("carries stands" in p for p in rendered(data)[1])
+
+
+# ------------------------------------------------------- --prepare over fixture repositories
+
+
+from test_door import RECORDED, READY, SLUG, commit, project  # noqa: E402,F401
+
+PREPARED_SKILLS = ("deliver-scope", "plan-work", "implement-task", "review-change", "reconcile",
+                   "analyse", "siegard-goal", "siegard-status")
+
+
+def prepare(home: Path, skill: str, *extra: str) -> dict:
+    done = run("--prepare", "--skill", skill, "--project", str(home), *extra)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return json.loads(done.stdout)
+
+
+def doors_of(prepared: dict) -> dict[str, dict]:
+    return {door["entry"]: door["check"] for decision in prepared.get("decisions", [])
+            for door in decision["others"]}
+
+
+def test_every_door_a_report_hands_ready_to_paste_is_named_from_its_own_file():
+    assert handoff.next_doors("plan-work") == ["implement-task"]
+    assert sorted(handoff.next_doors("implement-task")) == ["reconcile", "review-change"]
+    assert sorted(handoff.next_doors("analyse")) == ["plan-work", "reconcile"]
+    assert sorted(handoff.next_doors("reconcile")) == ["analyse", "plan-work"]
+    assert handoff.next_doors("siegard-status") == ["reconcile"]
+    assert handoff.next_doors("review-change") == []
+
+
+def test_the_state_is_progress_s_segment_for_the_slug(project):
+    import progress
+    prepared = prepare(project, "plan-work", "--slug", SLUG)
+    line = progress.line_of(project)
+    assert prepared["state"] == handoff.cut(line, CONTRACT) and prepared["state"].startswith(f"{SLUG} · ")
+    assert prepared["state_from"] == {"script": "progress.py", "project": str(project),
+                                      "slug": SLUG}
+
+
+def test_with_no_slug_the_state_is_the_project_s_line(project):
+    import progress
+    prepared = prepare(project, "siegard-status")
+    assert prepared["state"] == handoff.cut(progress.line_of(project), CONTRACT)
+    assert "slug" not in prepared["state_from"]
+
+
+def test_with_nothing_live_the_state_is_the_fixed_words_in_the_record_s_language(tmp_path):
+    prepared = prepare(tmp_path, "siegard-status", "--language", "pt-BR")
+    assert prepared["state"] == CONTRACT["x-labels"]["pt-BR"]["quiet"]
+    assert prepared["language"] == "pt-BR" and "report" not in prepared
+
+
+def arm(home: Path) -> dict:
+    import goal
+    record = {"contract": goal.ARMED_CONTRACT, "project_root": str(home), "slug": SLUG,
+              "target": "app", "scope": [], "since": commit_of(home), "version": goal.plugin_version(),
+              "untouched": [], "objective": None, "objective_sha256": None, "condition": "c",
+              "armed_at": "2026-10-31T00:00:00Z", "session_id": None, "blocks": 0,
+              "last_state": None}
+    goal.write_armed(goal.armed_path(home), record)
+    return record
+
+
+def commit_of(home: Path) -> str:
+    return subprocess.run(["git", "-C", str(home), "rev-parse", "HEAD"], capture_output=True,
+                          text=True, check=True).stdout.strip()
+
+
+def test_under_an_armed_goal_the_state_is_the_goal_s_first_line(project):
+    import goal
+    armed = arm(project)
+    prepared = prepare(project, "implement-task", "--slug", SLUG)
+    fields = goal.resolve(project, "app")
+    first, _ = goal.state(fields, SLUG, armed["since"], armed["version"], [], [])
+    assert prepared["state_from"] == {"script": "goal.py", "project": str(project)}
+    assert prepared["state"] == handoff.cut(first, CONTRACT)
+    assert prepared["state"].startswith(("state A", "state B", "not yet"))
+
+
+def test_each_door_is_marked_with_what_its_entry_point_answers(project):
+    prepared = prepare(project, "implement-task", "--slug", SLUG)
+    doors = doors_of(prepared)
+    assert doors["/review-change"] == {"answer": "accepts", "refused": []}
+    assert doors["/reconcile"]["answer"] == "not checked"
+    assert "recommended" not in prepared["decisions"][0]
+    assert all(door["reply_word"] == "" and door["what_it_does"] == ""
+               for door in prepared["decisions"][0]["others"])
+    assert doors_of(prepare(project, "plan-work", "--slug", SLUG))["/implement-task"]["answer"] \
+        == "accepts"
+
+
+def test_a_door_its_entry_point_refuses_is_marked_with_its_fact(project):
+    (project / "deliveries" / SLUG / "run").mkdir()
+    (project / "deliveries" / SLUG / "run/x.log").write_text("x\n", encoding="utf-8")
+    check = doors_of(prepare(project, "implement-task", "--slug", SLUG))["/review-change"]
+    assert check["answer"] == "refuses"
+    assert any(fact.startswith("git status --porcelain") for fact in check["refused"])
+    check = doors_of(prepare(project, "plan-work", "--slug", SLUG))["/implement-task"]
+    assert check["answer"] == "refuses"
+
+
+def test_a_door_no_script_decides_is_never_marked_accepted(project):
+    doors = doors_of(prepare(project, "reconcile", "--slug", SLUG))
+    assert doors["/analyse"]["answer"] == "not checked" and doors["/analyse"]["why"]
+    assert doors["/plan-work"]["answer"] == "accepts"
+
+
+def test_a_skill_whose_report_hands_no_door_prepares_a_report(project):
+    prepared = prepare(project, "siegard-goal")
+    assert prepared["kind"] == "report" and "decisions" not in prepared
+
+
+def test_the_skeleton_fails_the_schema_only_on_what_the_model_fills(project):
+    from jsonschema import Draft202012Validator
+    prepared = prepare(project, "implement-task", "--slug", SLUG)
+    report = Path(prepared["report"])
+    assert report.parent == project / ".git" / "siegard" / "handoff" and report.parent.is_dir()
+    assert report.name.endswith("-implement-task.md")
+    paths = {"/".join(map(str, e.absolute_path))
+             for e in Draft202012Validator(CONTRACT).iter_errors(prepared)}
+    fillable = {"decisions/0", "decisions/0/ask", "decisions/0/if_none"} | {
+        f"decisions/0/others/{i}/{key}" for i in range(2) for key in ("reply_word", "what_it_does")}
+    assert paths and paths <= fillable, paths
+
+
+def test_a_filled_skeleton_renders_and_a_moved_state_refuses_it(project):
+    prepared = prepare(project, "implement-task", "--slug", SLUG)
+    decision = prepared["decisions"][0]
+    review, reconcile = sorted(decision["others"], key=lambda d: d["entry"] != "/review-change")
+    decision.update(ask="Review the task just delivered?", if_none="The delivery waits unreviewed.",
+                    recommended={"entry": review["entry"], "check": review["check"],
+                                 "reply_word": "a", "door": "Review it now",
+                                 "why": "The check over the review accepts the tree as it stands",
+                                 "reverses_if": "a file under the delivery changes first"},
+                    others=[{**reconcile, "reply_word": "b",
+                             "what_it_does": "Re-check the moved files alone, without a review"}])
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    path = project / ".git" / "record.json"
+    path.write_text(json.dumps(prepared), encoding="utf-8")
+    done = run("--render", str(path))
+    assert done.returncode == 0, done.stdout
+    assert done.stdout.startswith(f"```\n{prepared['state']}\n```")
+    log = project / "deliveries" / SLUG / "orchestration.md"
+    log.write_text("- implement-task task/checkout/bill-order — accepted\n", encoding="utf-8")
+    done = run("--render", str(path))
+    assert done.returncode == 1 and done.stdout.startswith("state: differs from what progress.py")
+
+
+@pytest.mark.parametrize("args", [["--prepare"], ["--prepare", "--skill", "plan-work"],
+                                  ["--prepare", "--skill", "no-such-skill", "--project", "."],
+                                  ["--prepare", "--skill", "plan-work", "--project", ".",
+                                   "--language", "fr"]])
+def test_prepare_refuses_arguments_it_cannot_read(args):
+    done = run(*args)
+    assert done.returncode == handoff.CANNOT_RUN and done.stderr.startswith("cannot run:")
+
+
+@pytest.mark.parametrize("skill", PREPARED_SKILLS)
+def test_every_skill_that_reports_through_the_record_names_prepare_and_render(skill):
+    text = re.sub(r"\s+", " ", (REPO / "src/claude/skills" / skill / "SKILL.md")
+                  .read_text(encoding="utf-8"))
+    assert "handoff.py --prepare --skill" in text, f"{skill} never runs --prepare"
+    assert "handoff.py --render" in text, f"{skill} never hands what --render prints"
+    assert "(SPEC-006 R10)" in text, f"{skill} never cites SPEC-006 R10"
+
+
+def save_report(path: Path, text: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, "-B", str(SCRIPT), "--save-report", str(path)],
+                          input=text, capture_output=True, text=True)
+
+
+def test_save_report_writes_the_report_under_the_handoff_directory(tmp_path):
+    path = tmp_path / ".git" / "siegard" / "handoff" / "20261031T000000Z-plan-work.md"
+    done = save_report(path, "the full report")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert path.read_text(encoding="utf-8") == "the full report\n"
+    assert done.stdout.strip() == str(path.resolve())
+
+
+def test_save_report_refuses_a_path_outside_the_handoff_directory_and_writes_nothing(tmp_path):
+    path = tmp_path / "notes.md"
+    done = save_report(path, "the full report")
+    assert done.returncode == 1 and done.stdout.startswith("refused:")
+    assert not path.exists()
+
+
+def test_save_report_refuses_a_report_already_written_and_an_empty_one(tmp_path):
+    path = tmp_path / ".git" / "siegard" / "handoff" / "20261031T000000Z-plan-work.md"
+    assert save_report(path, "first").returncode == 0
+    again = save_report(path, "second")
+    assert again.returncode == 1 and "already written" in again.stdout
+    assert path.read_text(encoding="utf-8") == "first\n"
+    empty = save_report(path.with_name("other.md"), "  \n")
+    assert empty.returncode == 1 and "empty" in empty.stdout

@@ -49,6 +49,20 @@ write:
   trace file; the record's path `siegard-reconcile/<slug>.md` free; the named files, the
   specification root and the trace committed.
 
+**One act is checked beside the doors: `commit`**, the commit a session is about to make of an
+initiative's delivery. «A run whose orchestration log closes on a stop line commits nothing after
+it but the measure: the telemetry root, and the log that carries the stop line.» (SPEC-008 R18)
+The log is read as it stands on disk — its last line that is not blank, matched against the stop
+line `goal.py` reads a goal's state from — and a commit is held to that by the paths it names with
+`--file`, spelled from the project root; with none named, the commit is read as one of the
+delivery, which a stop line refuses. The runs are read as `deliver.py` reads them, `run.json`
+under `run/` at the initiative's delivery root: «A captured run that ended other than `passed`,
+that git does not hold, and that no record under the initiative's delivery root names, is refused
+to a commit that reaches that delivery root» (SPEC-008 R18) — a red attempt a record names beside
+its retry is the delivery's own evidence, and one no record names is a red nothing answered.
+Whether the person's words authorize the commit at all is no file's answer: it is listed as not
+decided, and `ask.py --read` prints the ask recorded verbatim.
+
 Every root comes from `project.py`, run as a command, so `siegard.json` keeps its one reader.
 
 Declared dependencies: PyYAML, jsonschema (this script imports goal.py, deliver.py and plan.py,
@@ -68,6 +82,11 @@ Usage:  door.py --check <skill> [--project <dir>] [--target <key>] [--slug <slug
                                     at least one is required. --standard names the registry where
                                     the invocation would, and wins over siegard.json as it does
                                     there
+        door.py --check commit [--project <dir>] [--slug <slug>] [--file <path>]...
+                                    decide whether a commit of the slug's delivery is refused as
+                                    the tree stands: a log closing on a stop line, or a red run no
+                                    record names. --slug is inferred where one initiative is live.
+                                    --file is the commit's pathspec, spelled from the project root
         door.py --help              print this text and stop
 Exit:   0 accepts
         1 refuses, with every refusal
@@ -86,19 +105,23 @@ BIN = Path(__file__).resolve().parent
 sys.path.insert(0, str(BIN))
 
 CANNOT_RUN = 2
-DOORS = ("implement-task", "plan-work", "review-change", "deliver-scope", "reconcile")
+DOORS = ("implement-task", "plan-work", "review-change", "deliver-scope", "reconcile", "commit")
 ROOTS = {
     "implement-task": ("specification_root", "work_root", "delivery_root"),
     "plan-work": ("specification_root", "work_root"),
     "review-change": ("specification_root", "work_root", "delivery_root"),
     "deliver-scope": ("specification_root", "work_root", "delivery_root", "telemetry_root"),
     "reconcile": ("specification_root",),
+    "commit": ("work_root", "delivery_root", "telemetry_root"),
 }
 STANDARD_HELD = ("implement-task", "plan-work", "review-change", "deliver-scope")
 NAMED_SLUG = ("plan-work", "deliver-scope", "reconcile")
 CLOSURE_FILE = "closure.md"
 TRACE_FILE = "siegard-trace.json"
 RECONCILE_DIR = "siegard-reconcile"
+LOG_FILE = "orchestration.md"
+RUN_DIR = "run"
+RECORD_DIRS = ("implementation", "proof", "review")
 
 NOT_DECIDED = {
     "implement-task": [
@@ -125,6 +148,12 @@ NOT_DECIDED = {
         "certifications and a rewrite are the person's statements; each proof a certification "
         "names must be committed too",
         "adoption is a mode the person names, and begins without a trace file",
+    ],
+    "commit": [
+        "whether the person's own words in this session authorize this commit — `ask.py --read` "
+        "prints the ask recorded verbatim, and what its words cover is the session rules' reading",
+        "that the pathspec holds only what the invoked skill wrote — the skill's own report names "
+        "what it wrote",
     ],
 }
 
@@ -502,6 +531,73 @@ def door_reconcile(fields: dict, target: str, slug: str, args: dict, answer: Ans
                answer)
 
 
+def named_by_a_record(delivery: Path, name: str) -> bool:
+    """Whether a record under the initiative's delivery root — an implementation, a proof or a
+    review — names the run, by its directory or by its `run/` path alike, as a proof's notes name
+    a red attempt. The orchestration log is a marker, never a record, and is not read."""
+    pattern = re.compile(rf"(?<![\w-]){re.escape(name)}(?![\w-])")
+    return any(pattern.search(path.read_text(encoding="utf-8", errors="replace"))
+               for kind in RECORD_DIRS if (delivery / kind).is_dir()
+               for path in (delivery / kind).rglob("*.md"))
+
+
+def under(path: Path, root: Path) -> bool:
+    return path == root or root in path.parents
+
+
+def door_commit(fields: dict, slug: str, args: dict, answer: Answer) -> None:
+    import deliver
+    import goal
+    delivery = fields["delivery_root"].resolve() / slug
+    telemetry = fields["telemetry_root"].resolve()
+    log = delivery / LOG_FILE
+    named = [(fields["home"] / path).resolve() for path in args["file"]]
+
+    lines = [line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()] \
+        if log.is_file() else []
+    matched = goal.STOP_LINE.match(lines[-1]) if lines else None
+    if matched and matched.group(1) in goal.STOP_CLASSES:
+        beyond = [path for path in named if path != log and not under(path, telemetry)]
+        if not named:
+            answer.refuse(f"{log} closes on a stop line, and no --file names the commit — after a "
+                          f"stop nothing of the delivery is committed but the measure: the "
+                          f"telemetry root {telemetry} and the log itself", lines[-1])
+        elif beyond:
+            answer.refuse(f"{log} closes on a stop line, and the commit names paths outside the "
+                          f"telemetry root {telemetry} and the log — after a stop the measure "
+                          f"alone is committed, and the delivery's files are left for the person",
+                          "\n".join([lines[-1], *(str(path) for path in beyond)]))
+        else:
+            answer.checked.append(f"{log} closes on a stop line, and every path named lies under "
+                                  f"the telemetry root or is the log — the measure")
+    elif lines:
+        answer.checked.append(f"{log} does not close on a stop line: {lines[-1]}")
+    else:
+        answer.checked.append(f"{log} holds no line — no run of /deliver-scope wrote one")
+
+    runs = delivery / RUN_DIR
+    if named and not any(under(path, delivery) or under(delivery, path) for path in named):
+        answer.checked.append(f"no path named reaches {delivery}, so no run under it is read")
+        return
+    red = []
+    for directory in sorted(runs.iterdir()) if runs.is_dir() else []:
+        record = directory / "run.json"
+        if not record.is_file() or not pending([directory]):
+            continue
+        captured, unreadable = deliver.read_run(record, f"{RUN_DIR}/{directory.name}")
+        outcome = None if captured is None else captured.get("outcome")
+        if outcome != "passed" and not named_by_a_record(delivery, directory.name):
+            red.append(f"{RUN_DIR}/{directory.name}: " + (
+                unreadable or f"ended `{outcome}` at the step `{captured.get('failed_step')}`"))
+    if red:
+        answer.refuse(f"{runs} holds a red run git does not hold and no record under {delivery} "
+                      f"names — the delivery did not answer it, and committing it commits a red "
+                      f"as delivered", "\n".join(red))
+    else:
+        answer.checked.append(f"every run under {runs} git does not hold passed, or a record "
+                              f"names it")
+
+
 CHECKS = {
     "implement-task": door_implement_task,
     "plan-work": door_plan_work,
@@ -518,9 +614,16 @@ def check(door: str, project_root: Path, args: dict) -> Answer:
         answer.refuse(unresolved, out)
         return answer
     missing = [name for name in ROOTS[door] if name not in fields]
-    if missing or not fields["targets"]:
+    if missing or (not fields["targets"] and door != "commit"):
         answer.refuse(f"siegard.json declares no {', '.join(missing or ['targets'])} — the entry "
                       f"point stops on it; /siegard-config declares it")
+        return answer
+
+    if door == "commit":
+        slug = slug_of(fields, args, answer)
+        if slug is not None:
+            fields["home"] = toplevel(project_root) or project_root
+            door_commit(fields, slug, args, answer)
         return answer
 
     target = args["target"]
@@ -537,18 +640,23 @@ def check(door: str, project_root: Path, args: dict) -> Answer:
                       f"({', '.join(sorted(fields['targets']))})")
         return answer
 
-    slug = args["slug"]
-    if slug is None:
-        live = live_initiatives(fields["work_root"])
-        if len(live) != 1:
-            answer.refuse(f"no slug named, and {fields['work_root']} holds {len(live)} live "
-                          f"initiative(s){': ' + ', '.join(live) if live else ''} — name one")
-            return answer
-        slug = live[0]
-        answer.decided.append(f"slug {slug} — the one live initiative under "
-                              f"{fields['work_root']}")
-    CHECKS[door](fields, target, slug, args, answer)
+    slug = slug_of(fields, args, answer)
+    if slug is not None:
+        CHECKS[door](fields, target, slug, args, answer)
     return answer
+
+
+def slug_of(fields: dict, args: dict, answer: Answer) -> str | None:
+    """The slug named, or the one live initiative, or None with the refusal said."""
+    if args["slug"] is not None:
+        return args["slug"]
+    live = live_initiatives(fields["work_root"])
+    if len(live) != 1:
+        answer.refuse(f"no slug named, and {fields['work_root']} holds {len(live)} live "
+                      f"initiative(s){': ' + ', '.join(live) if live else ''} — name one")
+        return None
+    answer.decided.append(f"slug {live[0]} — the one live initiative under {fields['work_root']}")
+    return live[0]
 
 
 def take(args: list[str], flag: str, many: bool = False):
@@ -604,7 +712,9 @@ def main() -> int:
     unused = [flag for flag, doors in (("task", ("implement-task", "review-change")),
                                        ("name", ("review-change",)),
                                        ("scope", ("deliver-scope",)),
-                                       ("file", ("reconcile",)))
+                                       ("file", ("reconcile", "commit")),
+                                       ("target", DOORS[:-1]),
+                                       ("standard", DOORS[:-1]))
               if given[flag] and door not in doors]
     if unused:
         print(f"cannot run: {door} takes no --{', --'.join(unused)}", file=sys.stderr)

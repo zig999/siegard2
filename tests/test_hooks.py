@@ -373,7 +373,9 @@ def goal_stop(stdin: str, cwd: Path | None = None) -> subprocess.CompletedProces
 
 def test_the_stop_runs_the_goal_hook_alone_and_unnarrowed():
     """`Stop` takes no matcher, and an armed goal is answered at every stop of its session; the
-    rules and the drift are the starts' to place, never a stop's."""
+    rules and the drift are the starts' to place, never a stop's. The handoff check of a project
+    holding no armed goal runs inside this one hook, never beside it: two hooks on one stop run
+    in parallel, and one could read the goal armed in the instant the other ends it."""
     assert commands("Stop") == ['python3 "${CLAUDE_PLUGIN_ROOT}/hooks/goal_stop.py"']
     assert all("matcher" not in group for group in declared()["Stop"])
     assert os.access(GOAL_STOP, os.X_OK), f"{GOAL_STOP} is not executable"
@@ -396,3 +398,191 @@ def test_the_goal_hook_is_silent_where_no_goal_is_armed(siegard_project):
 def test_a_malformed_stop_event_exits_zero_and_prints_nothing(stdin, siegard_project):
     done = goal_stop(stdin, cwd=siegard_project)
     assert done.returncode == 0 and done.stdout == "" and done.stderr == "", done
+
+
+# --------------------------------------- the stop no armed goal answers (SPEC-008 R15)
+
+HANDOFF_FIXTURES = REPO / "tests/fixtures/handoff"
+VIOLATING = (HANDOFF_FIXTURES / "pt-long-jargon-late-decision.md").read_text(encoding="utf-8")
+CLEAN = (HANDOFF_FIXTURES / "en-clean-decision.md").read_text(encoding="utf-8")
+
+
+def siegard_dir(project: Path) -> Path:
+    common = subprocess.run(["git", "-C", str(project), "rev-parse", "--path-format=absolute",
+                             "--git-common-dir"], check=True, capture_output=True,
+                            text=True).stdout.strip()
+    return Path(common) / "siegard"
+
+
+def checks(project: Path) -> list[dict]:
+    log = siegard_dir(project) / "handoff-checks.jsonl"
+    if not log.is_file():
+        return []
+    return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+
+
+def stopped(project: Path, message: str, session: str = "s1", mode: str | None = None,
+            **more) -> subprocess.CompletedProcess:
+    env = {k: v for k, v in os.environ.items() if k != "SIEGARD_HANDOFF_STOP"}
+    if mode is not None:
+        env["SIEGARD_HANDOFF_STOP"] = mode
+    event = {"hook_event_name": "Stop", "cwd": str(project), "session_id": session,
+             "stop_hook_active": False, "last_assistant_message": message, **more}
+    return subprocess.run([sys.executable, "-B", str(GOAL_STOP)], input=json.dumps(event),
+                          capture_output=True, text=True, env=env)
+
+
+def test_a_violating_handoff_is_recorded_and_the_stop_allowed_by_default(siegard_project):
+    done = stopped(siegard_project, VIOLATING)
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == "", done
+    [entry] = checks(siegard_project)
+    assert entry["session_id"] == "s1" and entry["mode"] == "measure"
+    assert entry["characters"] == len(VIOLATING) and entry["hands_decision"] is True
+    assert entry["kinds"] == ["decision", "length", "opening"]
+    assert len(entry["violations"]) == 3 and entry["blocked"] is False
+    assert entry["released"] is False
+    assert "Recomendo" not in json.dumps(entry), "the message's words never leave it"
+
+
+def test_every_value_but_enforce_reads_as_measure(siegard_project):
+    for mode in ("", "MEASURE", "block", "on"):
+        assert stopped(siegard_project, VIOLATING, mode=mode).stdout == ""
+    assert [e["mode"] for e in checks(siegard_project)] == ["measure"] * 4
+
+
+def test_a_message_that_hands_no_decision_is_not_recorded(siegard_project):
+    done = stopped(siegard_project, "Done. The three files are written and the suite is green.")
+    assert done.returncode == 0 and done.stdout == ""
+    assert checks(siegard_project) == []
+
+
+def test_a_clean_handoff_is_recorded_with_no_violation(siegard_project):
+    assert stopped(siegard_project, CLEAN, mode="enforce").stdout == ""
+    [entry] = checks(siegard_project)
+    assert entry["violations"] == [] and entry["kinds"] == [] and entry["blocked"] is False
+
+
+def test_enforce_blocks_once_and_releases_the_next_stop_of_the_session(siegard_project):
+    first = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert first.returncode == 0, first.stderr
+    said = json.loads(first.stdout)
+    assert said["decision"] == "block"
+    assert "length: " in said["reason"] and "decision: " in said["reason"]
+    other = stopped(siegard_project, VIOLATING, session="s2", mode="enforce")
+    assert json.loads(other.stdout)["decision"] == "block", "the release is the session's own"
+    second = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert second.returncode == 0 and second.stdout == "", second.stdout
+    entries = checks(siegard_project)
+    assert [(e["session_id"], e["blocked"], e["released"]) for e in entries] == [
+        ("s1", True, False), ("s2", True, False), ("s1", False, True)]
+    assert entries[2]["violations"], "the released stop is still measured"
+    third = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert json.loads(third.stdout)["decision"] == "block", \
+        "a release answers one block; the stop after it is read afresh"
+
+
+def test_a_release_is_recorded_even_where_the_next_message_hands_no_decision(siegard_project):
+    stopped(siegard_project, VIOLATING, mode="enforce")
+    assert stopped(siegard_project, "Rewritten in the report.", mode="enforce").stdout == ""
+    last = checks(siegard_project)[-1]
+    assert last["released"] is True and last["hands_decision"] is False
+    assert last["violations"] == []
+
+
+def test_a_stop_awaiting_background_work_is_not_read(siegard_project):
+    done = stopped(siegard_project, VIOLATING, mode="enforce", background_tasks=[{"id": "b1"}])
+    assert done.returncode == 0 and done.stdout == ""
+    assert checks(siegard_project) == []
+
+
+def test_a_project_holding_an_armed_goal_is_answered_by_the_goal_alone(siegard_project):
+    held = siegard_dir(siegard_project)
+    held.mkdir(parents=True)
+    (held / "goal.json").write_text("{ not json", encoding="utf-8")
+    done = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert done.returncode == 0
+    assert "decision" not in json.loads(done.stdout), done.stdout
+    assert checks(siegard_project) == []
+
+
+def test_a_project_without_siegard_json_is_not_read(foreign_project):
+    done = stopped(foreign_project, VIOLATING, mode="enforce")
+    assert done.returncode == 0 and done.stdout == ""
+    assert checks(foreign_project) == []
+
+
+def test_a_log_that_cannot_be_written_allows_the_stop_silently(siegard_project):
+    held = siegard_dir(siegard_project)
+    held.mkdir(parents=True)
+    (held / "handoff-checks.jsonl").mkdir()
+    done = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert done.returncode == 0 and done.stdout == "" and done.stderr == "", done
+
+
+@pytest.mark.parametrize("message", [None, 7, ""])
+def test_a_stop_without_a_message_is_not_read(siegard_project, message):
+    event = {"hook_event_name": "Stop", "cwd": str(siegard_project), "session_id": "s1"}
+    if message is not None:
+        event["last_assistant_message"] = message
+    done = goal_stop(json.dumps(event))
+    assert done.returncode == 0 and done.stdout == ""
+    assert checks(siegard_project) == []
+
+
+# -------------------------------------- the version an armed goal began under (SPEC-008 R16)
+
+def plugin_version() -> str:
+    return json.loads((SRC / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"]
+
+
+def armed_under(project: Path, version: object) -> None:
+    held = siegard_dir(project)
+    held.mkdir(parents=True, exist_ok=True)
+    (held / "goal.json").write_text(json.dumps({"contract": "goal-armed/1", "slug": "orders",
+                                                "version": version}), encoding="utf-8")
+
+
+def test_a_goal_armed_under_another_version_is_said_at_the_start(siegard_project):
+    armed_under(siegard_project, "0.0.1")
+    done = drift_run(siegard_project)
+    assert done.returncode == 0, done.stderr
+    said = json.loads(done.stdout)
+    line = said["systemMessage"]
+    assert "\n" not in line
+    assert f"Siegard {plugin_version()} is loaded" in line and "began under 0.0.1" in line
+    assert "orders" in line and "state B" in line
+    assert said["hookSpecificOutput"]["additionalContext"] == line
+
+
+@pytest.mark.parametrize("version", ["same", None, 3, ""])
+def test_a_goal_under_the_same_or_an_unreadable_version_says_nothing(siegard_project, version):
+    armed_under(siegard_project, plugin_version() if version == "same" else version)
+    done = drift_run(siegard_project)
+    assert done.returncode == 0 and done.stdout == "", done.stdout
+
+
+def test_no_armed_goal_or_an_unreadable_record_says_nothing_of_the_version(siegard_project):
+    assert drift_run(siegard_project).stdout == ""
+    held = siegard_dir(siegard_project)
+    held.mkdir(parents=True)
+    (held / "goal.json").write_text("{ not json", encoding="utf-8")
+    assert drift_run(siegard_project).stdout == ""
+
+
+def test_the_version_line_stands_beside_the_drift_receipt(traced):
+    armed_under(traced, "0.0.1")
+    path = traced / "backend" / FILE
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    said = json.loads(drift_run(traced).stdout)
+    context = said["hookSpecificOutput"]["additionalContext"]
+    assert context.startswith(said["systemMessage"] + "\n\n")
+    assert "1 drift finding(s)" in context
+
+
+def test_the_version_line_is_said_on_a_machine_without_the_validators(siegard_project):
+    """The version is read with the standard library alone, so a machine that cannot count the
+    drift is still told the goal will not end where it began."""
+    armed_under(siegard_project, "0.0.1")
+    said = json.loads(drift_without(siegard_project, "yaml", "jsonschema").stdout)
+    assert said["systemMessage"].startswith(f"Siegard {plugin_version()} is loaded")
+    assert "did not count the drift" in said["systemMessage"]

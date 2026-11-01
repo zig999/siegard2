@@ -2,7 +2,8 @@
   "contract_version": "siegard-handoff/1",
   "kind": "decision",
   "language": "pt-BR",
-  "state": "A busca de clientes está entregue; o texto do pedido e a regra de ordenação dizem coisas diferentes.",
+  "state": "clientes · task 1/2 delivered · phase delivery",
+  "state_from": {"script": "progress.py", "project": "/fixture/shop", "slug": "clientes"},
   "decisions": [
     {
       "ask": "Os resultados da busca devem ignorar acentos ao ordenar?",

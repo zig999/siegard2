@@ -32,6 +32,16 @@ machine whose `python3` lacks the validators. There no count is taken, and a ses
 with no count reads as a session starting with no drift. It is said once, in one line, on both
 channels — to the person as a `systemMessage`, to the session as context — and only where the
 project is declared, because the plugin's scripts are no other project's to run.
+
+The same start says one more thing the session would otherwise learn only at its first stop: «At
+a session's start in a project that declares `siegard.json` and holds an armed goal, the plugin's
+`SessionStart` hook prints one line, to the person and to the session, when the plugin version
+loaded differs from the armed goal's `version`, and nothing when they are equal or either cannot
+be read; it never blocks.» (SPEC-008 R16) The goal's state reads a changed version as state B on
+its own, so a session that starts under another version starts on a goal that ends at its next
+stop, and is told before it works toward it. The armed goal is the one record of the version an
+initiative runs under; it is read with the standard library alone, before and apart from the
+validators.
 """
 from __future__ import annotations
 
@@ -72,13 +82,36 @@ def missing_validators() -> list[str]:
     return []
 
 
-def unchecked(missing: list[str]) -> dict:
+def unchecked(missing: list[str]) -> str:
     lacks = " and ".join(missing)
     install = " ".join(name.lower() for name in missing)
-    said = (f"Siegard did not count the drift this project carries: the plugin's scripts need "
+    return (f"Siegard did not count the drift this project carries: the plugin's scripts need "
             f"{lacks}, which the `python3` its hooks run lacks (pip install {install}).")
-    return {"systemMessage": said,
-            "hookSpecificOutput": {"hookEventName": EVENT, "additionalContext": said}}
+
+
+def version_line(root: Path) -> str:
+    """One line where the plugin loaded is not the version the armed goal began under; empty
+    where no goal is armed, where the two agree, or where either cannot be read."""
+    try:
+        sys.path.insert(0, str(PLUGIN_ROOT / "bin"))
+        from project import toplevel_of
+        with contextlib.redirect_stderr(io.StringIO()):
+            import goal
+        home = toplevel_of(root, timeout=GIT_TIMEOUT_SECONDS)
+        path = goal.armed_path(home)
+        if not path.is_file():
+            return ""
+        armed = goal.read_armed(path) or {}
+        began, loaded = armed.get("version"), goal.plugin_version()
+    except (Exception, SystemExit):
+        return ""
+    if not isinstance(began, str) or not began or not isinstance(loaded, str) or not loaded \
+            or began == loaded:
+        return ""
+    return (f"Siegard {loaded} is loaded, and the armed goal {armed.get('slug', '')} began under "
+            f"{began}: its state answers state B at the next stop, because the rules it ran under "
+            f"are no longer the ones that answer; `goal.py --disarm` ends it and /siegard-goal "
+            f"arms it again under {loaded}.")
 
 
 def targets_of(root: Path) -> list[Path]:
@@ -174,20 +207,32 @@ def main() -> int:
         return 0
     where = record.get("cwd")
     root = Path(where) if isinstance(where, str) and where else Path.cwd()
+    told: list[str] = []
+    context: list[str] = []
     try:
         if not root.is_dir() or not declares_a_project(root):
             return 0
+        version = version_line(root)
+        if version:
+            told.append(version)
+            context.append(version)
         missing = missing_validators()
         if missing:
-            print(json.dumps(unchecked(missing)))
-            return 0
-        said = receipt(root)
+            told.append(unchecked(missing))
+            context.append(told[-1])
+        else:
+            said = receipt(root)
+            if said:
+                context.append(said)
     except (Exception, SystemExit):
+        pass
+    if not context:
         return 0
-    if not said:
-        return 0
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": EVENT,
-                                             "additionalContext": said}}))
+    out: dict = {"hookSpecificOutput": {"hookEventName": EVENT,
+                                        "additionalContext": "\n\n".join(context)}}
+    if told:
+        out = {"systemMessage": "\n".join(told), **out}
+    print(json.dumps(out))
     return 0
 
 

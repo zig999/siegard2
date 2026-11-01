@@ -11,8 +11,10 @@ contract_version: spec/1
 
 This specification fixes what a goal the person arms over `/deliver-scope` ends on, and how that
 end is read. It binds `/deliver-scope`, the script that answers a goal's state, the script and the
-skill that compose a goal's condition and arm it, the plugin's `Stop` hook, and telemetry's count
-of the harness's evaluations.
+skill that compose a goal's condition and arm it, the plugin's `Stop` hook — over a stop no armed
+goal answers as well, where it holds the message the session stopped on to SPEC-006's check — the
+plugin's `SessionStart` line on the version an armed goal began under, and telemetry's count of
+the harness's evaluations and of the stops that check read.
 
 A goal is the harness's own mechanism: a condition the person sets once, that the harness
 repeats whenever the session tries to stop, and that a model reading the transcript judges met or
@@ -38,7 +40,12 @@ session that stopped while its subagents were still running. The harness refuses
 
 - What stops a run, and what each stop hands the person — `/deliver-scope`'s own file.
 - What a handoff opens with and recommends — `specs/handoff.md` (SPEC-006).
-- What authorizes a commit — this repository's `CLAUDE.md` and the session rules.
+- What authorizes a commit — this repository's `CLAUDE.md` and the session rules; how the
+  person's authorizing words are recorded so a resumed route reads them — `specs/carried-words.md`
+  (SPEC-010). What a stopped run may still commit is R18's.
+- What a handoff written as free text is held to, and the functions that decide it —
+  `specs/handoff.md` (SPEC-006 R8); R15 decides only when the `Stop` hook runs them and what it
+  records.
 
 ## Definitions
 
@@ -88,6 +95,14 @@ session that stopped while its subagents were still running. The harness refuses
 
 - **R14** — A goal the person arms through the framework ends on the state script's answer at the session's stop, never on a model's reading: `state A` or `state B` ends the goal and lets the session stop, `not yet` blocks the stop with the checks that failed, and a fourth consecutive `not yet` whose whole answer repeats the last ends the goal paused. `goal.py --arm` arms it only where `--compose`'s checks pass and the project holds no armed goal, and a skill runs it only on the person's own word to arm; it records `siegard/goal.json` under the repository's git directory — never in the tree the state reads — holding `contract` (`goal-armed/1`), `project_root`, `slug`, `target`, `scope`, `since`, `version`, `untouched`, `objective` and `objective_sha256` (null without an objective), `condition`, `armed_at`, `session_id` (null until the first stop binds it), `blocks` and `last_state` (the digest of the last `not yet` answer, whole). The plugin's `Stop` hook answers only the session the record is bound to, in a project that declares `siegard.json`, and is silent anywhere else. `state A` or `state B` ends the record and prints one `systemMessage` line carrying the state's first line, the stop line among it under state B; `not yet` prints `{"decision": "block", "reason": …}` whose reason is the state's first line, every failing check with its output verbatim, and the condition repeated; a stop while the session holds background work in flight is allowed and not counted. An ended record — `state A`, `state B`, `paused`, or `disarmed` by `goal.py --disarm` — is appended to `siegard/goals-ended.jsonl` beside it with `ended`, `reason` and `ended_at`. A state the hook cannot compute allows the stop and leaves the goal armed. What the person reads first when the goal ended with nothing delivered is SPEC-006's.
 
+### What a stop no armed goal answers holds
+
+- **R15** — Where no goal is armed in a project that declares `siegard.json`, the plugin's `Stop` hook reads the event's `last_assistant_message` and, where `bin/handoff.py`'s own reading says it hands a decision, appends one line to `siegard/handoff-checks.jsonl` under the repository's git directory — never in the tree the state reads — holding `at`, `session_id`, `characters`, `hands_decision`, `mode`, `violations` as `handoff.py --check` prints them, `kinds`, `blocked` and `released`. The mode is the environment variable `SIEGARD_HANDOFF_STOP`, which a project declares in the harness's own settings: `measure` is the default and the reading of every value but `enforce`, and under it the hook never blocks; under `enforce` a stop whose message violates is blocked once, `{"decision": "block", "reason": …}` with the violations as the reason, and the next stop of the same session is allowed whatever its message holds and recorded `released`. A stop while the session holds background work in flight is not read, a stop of a project holding an armed goal is R14's alone, and every failure allows the stop and prints nothing.
+
+### What a session starts on
+
+- **R16** — At a session's start in a project that declares `siegard.json` and holds an armed goal, the plugin's `SessionStart` hook prints one line, to the person and to the session, when the plugin version loaded differs from the armed goal's `version`, and nothing when they are equal or either cannot be read; it never blocks.
+
 ### What a goal answers without a person
 
 - **R8** — Under a goal, a delivery that stopped over a fact no node states is answered by planning's decided-fact route, and a task waiting on a re-bind by planning over its slug, each once per task, before the run resumes; a second time over one task is a stop.
@@ -98,6 +113,14 @@ session that stopped while its subagents were still running. The harness refuses
 ### What is counted
 
 - **R7** — Telemetry counts the goal evaluations the harness recorded in each session of its window, those judging the condition met and those judging it not met.
+- **R17** — Telemetry reads `siegard/handoff-checks.jsonl` beside the transcript-derived form of the handoffs and counts, over the lines inside its window, the stops checked, those violating, each violation kind, those blocked and those released, and names the longest message checked by session and instant; a log that does not exist is reported unavailable with its path, never as a count of zero, and a line that does not parse is counted apart.
+
+- **R18** — A run whose orchestration log closes on a stop line commits nothing after it but the measure: the telemetry root, and the log that carries the stop line. A captured run that ended other than `passed`, that git does not hold, and that no record under the initiative's delivery root names, is refused to a commit that reaches that delivery root: a red attempt a record names is the delivery's own evidence, and one no record names is a red nothing answered. Whether a commit breaks either is `bin/door.py --check commit`'s answer, read from the log and the runs as they stand on disk before the commit is made, over the paths the commit names; a commit that names none is read as one of the delivery. Whether the person's words authorize the commit is no file's answer, and the check lists it as not decided.
+
+  Grounds, as the maintainer relayed them on 2026-10-31 and not yet read from a transcript here:
+  a session committed a delivery whose orchestration log said the suite was red and that nothing
+  of the delivery was committed. The log's stop line was already the record that the run ended;
+  nothing read it before the commit.
 
 ## Validation required before acceptance
 
@@ -125,8 +148,55 @@ session that stopped while its subagents were still running. The harness refuses
    counting; the fourth identical `not yet` allowing the stop and ending the goal `paused`; a stop
    with background work in flight allowed and uncounted; a malformed event exiting 0 with nothing
    printed; and `hooks.json` declaring the hook on `Stop`.
+7. Tests hold the `Stop` hook to R15 by running it as the harness does: with no goal armed, a
+   message handing a decision and violating appends one line and allows the stop under
+   `measure`; one that hands no decision appends nothing; under `enforce` the first violating
+   stop is blocked with the violations as the reason and the next stop of the same session is
+   allowed and recorded `released`; a stop with background work in flight appends nothing; a
+   project holding an armed goal appends nothing; a log that cannot be written allows the stop
+   with nothing printed.
+8. Tests hold the `SessionStart` hook to R16: one line on both channels where the armed goal's
+   `version` differs from the plugin's; nothing where they agree, where no goal is armed, or
+   where the record does not parse.
+9. A test holds telemetry to R17 over a fixture log: lines inside and outside the window, a line
+   that does not parse, every violation kind, a block and its release, and a project with no log
+   reported unavailable.
+10. Tests hold `door.py --check commit` to R18 over the fixture repositories: a log closing on a
+   stop line refusing a commit naming no path and one naming the delivery, and accepting one
+   naming only the telemetry root and the log; a red run uncommitted and named by no record
+   refused; the same run named by a record, or committed, accepted; a commit naming no path
+   under the delivery root reading no run; and the authorization listed as not decided.
 
 ## Readings
+
+- 2026-10-31 — grounds for R15–R17, read before any of them had run in a consumer. SPEC-006's
+  baseline of the same date read 251 handoffs over four consumers: 62% over 1500 characters, 33%
+  carrying a framework term in their first 450, 42% with no word of recommendation or decision;
+  R8 moves the opening into a rendered record, and telemetry measures it only after the fact,
+  from transcripts, when a person runs it. The `Stop` hook reads the message as it is handed, so
+  the count accrues at every stop rather than at every telemetry run. Measured live the same day
+  with `claude -p --plugin-dir dist/.claude`, CLI 2.1.316: the harness honoured a plugin `Stop`
+  hook's `{"decision": "block", "reason": …}` — the session received the reason as hook feedback
+  and resumed work — and a stop allowed with a `systemMessage` reached the session as an
+  informational event; `last_assistant_message` on `Stop` is the harness's published hooks
+  reference as read on this date, and `background_tasks` was not exercised. The mode is an
+  environment variable rather than a key of `siegard.json` because `schemas/project.json` admits
+  no property it does not list and the project file holds what entry points resolve — roots, the
+  standard, the tests — while the mode is a harness setting the harness's own `env` already
+  declares per project. The check is `goal_stop.py`'s path where no goal is armed rather than a
+  second `Stop` hook, because the harness runs a stop's hooks in parallel: a second hook reading
+  whether a goal is armed could read it in the instant the first ends it, and block the stop the
+  armed goal just released. R16 reads only the armed goal: no delivery record — implementation,
+  proof or review — carries the plugin version it was written under, and the armed goal's
+  `version` is the one persisted record of the version an initiative runs under. Reversal for
+  the default: a week of `siegard/handoff-checks.jsonl` under `measure` across the consumers,
+  read with R17's counts, where the share of checked stops violating has not fallen and a person
+  reading the violating lines — the far end named first — judges at most one in ten a false
+  positive, switches the default to `enforce`; a false-positive share above that narrows what
+  `--check` decides before anything is enforced. The figure is this reading's, for a person to
+  apply, and no script applies it. Reversal for R16: a version line at a start whose next stop
+  answered other than state B is a defect in the line, and it is withdrawn until the state and
+  the line read the version the same way.
 
 - 2026-10-31 — grounds for R14, and R6's amendment, read from the transcripts of four consumer
   projects over the four days before it: the harness's `/goal` evaluator judged a stop

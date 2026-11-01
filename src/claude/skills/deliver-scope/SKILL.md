@@ -321,10 +321,18 @@ follows a stop.
 
 ## Report, and stop
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill deliver-scope --project
+<project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>` — where a
+step stopped the run, `--skill` names that step instead, so the doors it marks are the ones that
+step's report hands. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the
+fields the skeleton left empty — the stopping report's recommendation and doors among them,
+carried — and hand the person exactly what `handoff.py --render` prints over the record: the
+opening «A handoff opens with what needs the person, and explains after» (SPEC-006 R1) states.
+A refusal is answered by rewriting the field it names; a state it says has moved, by running
+`--prepare` again and carrying its `state` and `state_from` whole.
 
-Report, in this order: where `HEAD` stood when the run began; every commit this run made, by hash
+Report, in this order, in the file: where `HEAD` stood when the run began; every commit this run made, by hash
 and message, and the `git log` range that holds them, because the range is the review and it
 belongs to a person; every input this skill decided rather than was told — the slug derived, the
 target decided, the order taken — each disclosed; every step invoked with its outcome, and the

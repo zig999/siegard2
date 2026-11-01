@@ -2,7 +2,8 @@
   "contract_version": "siegard-handoff/1",
   "kind": "decision",
   "language": "en",
-  "state": "The order screen is delivered and its tests pass; two choices are left before it ships.",
+  "state": "checkout · task 2/2 delivered · phase review · last: implement-task task/checkout/refuse-empty — accepted",
+  "state_from": {"script": "progress.py", "project": "/fixture/shop", "slug": "checkout"},
   "withdraws": "The earlier note that the discount was wrong no longer holds: it was read from an old file.",
   "decisions": [
     {

@@ -749,10 +749,18 @@ passing to make a check go green.
 
 ### 6. Report, and stop
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill plan-work --project
+<project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
+full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the fields the skeleton left empty,
+and hand the person exactly what `handoff.py --render` prints over the record: the opening «A
+handoff opens with what needs the person, and explains after» (SPEC-006 R1) states. The door it
+marks is the `/implement-task` one this report hands, already checked: a `refuses` is said
+excluded beside its `refused:` fact, never recommended. A refusal is answered by rewriting the
+field it names; a state it says has moved, by running `--prepare` again and carrying its
+`state` and `state_from` whole.
 
-Report, in this order:
+Report, in this order, in the file:
 
 - every node written, by identifier — on a populated root, created, changed and removed
   listed apart;
@@ -842,7 +850,8 @@ the specification root nor the target source root.
   written is no obstacle — each task's `implements` now stands as the historical record of
   which nodes the work addressed. Without a specification root the derivation drops each
   `implements` edge's anchor, and the closure diff shows it.
-- Report the closure, opened as «A handoff opens with what needs the person» (SPEC-006 R1)
+- Report the closure, handed as step 6 hands its report — `--prepare`, the full report on disk,
+  what `--render` prints — opened as «A handoff opens with what needs the person» (SPEC-006 R1)
   states; right after the opening, **what this closure leaves standing** — the three counts
   above, each with the command that printed it, never a verdict on whether the work was
   complete — and then offer the `/plan-work` invocation that opens the successor

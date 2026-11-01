@@ -165,6 +165,10 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   over the objective verbatim, and commits the specification apart, disclosed by its decision
   log and report rather than reviewed before the commit. Every other skill's refusal to commit
   stands; a third committer, or a commit outside these bounds, is a proposal, never a change.
+  A session's own commit, made after a skill returned, is no third committer: it commits what
+  that invocation wrote, pathspec-scoped, one per invocation, under the person's own words in
+  that session — a commit word, a go-ahead naming the next step, or an ask `bin/ask.py` recorded
+  verbatim — and never a push, a branch or a rewrite.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —

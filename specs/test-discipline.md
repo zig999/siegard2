@@ -260,3 +260,36 @@ left out — so the file set the review that followed was handed never held them
   section over proof and review records (tests per criterion as a histogram, coverage states per
   review, bindings decided by a test) and on consumer deliveries made after it ships. Verdict
   pending.
+- 2026-10-31 — the delegation returns of a delivery and of its plan, read for characters no
+  consumer reads, by the method SPEC-005 R12 was cut by; nothing was cut. Returns: the last
+  assistant text of every subagent transcript under the five `sales*` consumers' Claude Code
+  project directories (2026-10-10..31): `execution-contract-binder` 3,193 runs, 16.3M characters;
+  `test-author` 1,072 runs, 13.1M; `task-implementer` 1,050 runs, 11.6M. Shares are of each
+  parsed return's top-level fields, each serialized alone by one `yaml.safe_dump`, summed.
+  Binder: `notes` 93.8% (`note` 66.6%, `passes` 14.5%, `belongs` 6.0%, `fact` 2.5%), `implements`
+  6.2%; by class, underdetermined 39.3%, remainder 21.1%, advisory 20.8%, unstated 7.9%,
+  blocking 2.8%, compound 0.9%. Test author: `tests` 56.6% (`proves` 21.0%, `fails_when` 15.5%,
+  `name` 11.6%), `untested` 24.6%, `not_applicable` 10.8%. Implementer: `criteria` 32.5% (`how`
+  18.5%), `nodes` 21.6% (`how` 13.8%), `inferences` 15.9%, `files` 14.6% (`effect` 12.0%),
+  `deferred` 7.0%, `preserved` 4.8%. Readers, from code: `deliver.py --write-implementation` and
+  `--write-proof` write the return whole as the record's frontmatter (`front.update(returned)`),
+  dropping only empty lists — so the records under four consumers' delivery roots (725
+  implementation records, 7.65M characters; 719 proofs, 8.57M) carry the same shares to within a
+  point; `plan-work` transcribes `implements` into the task and every note but `compound` into its
+  `## Notes` under its class's opening, with `passes` and `belongs` beside it (772 task files hold
+  3.15M characters of notes: UNDERDETERMINED 44.0%, ADVISORY 22.1%, REMAINDER 20.4%), hands
+  `compound`'s `criterion` and `conditions` to the decomposer and `unstated`'s `fact` to the
+  decider. Scripts read, of the records: `criteria[].criterion` and `met`, `nodes[].node` and
+  `encoded_at`, `files[].path`, `tests[].file` and `demonstrates`, `divergences`' `cites`,
+  `file` and `from`, `installed`, `stands`, `title`, `summary`; of the task notes, the BLOCKING and
+  UNDERDETERMINED openings. What no script reads — the `how`s, `effect`s, `inferences`,
+  `deferred`, `preserved`, `proves`, `fails_when`, `not_applicable`, `untested`, `contested`, the
+  REMAINDER and ADVISORY notes — sits in a persisted record a later step is handed whole: the test
+  author reads the implementation record (R4 names its inferences), the task implementer and
+  test author read the task file's `## Notes`, `/review-change` situates on the records'
+  inferences, departures, `untested` and `contested`, `/implement-task`'s report lists each, and
+  `git diff` over every one is the person's review. R12's cut was of entries quoted into no
+  record; by that criterion the share here is 0%, and a cut would be a cut from the records. What
+  reopens this: a field a record carries that no step is handed and no person reads in a review.
+  The measured lever is elsewhere: over the four consumers whose work roots were read, the binder
+  ran 1,856 times for 772 task files on disk, a ratio this reading did not break down by cause.

@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/17"
+    assert report["contract_version"] == "siegard-telemetry/18"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/17"
+    assert report["contract_version"] == "siegard-telemetry/18"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1568,6 +1568,70 @@ def test_a_window_where_nobody_answered_reads_no_form_and_names_no_far_end(consu
     form = report["handoff_form"]
     assert form["messages"] == 0 and form["decision_word_share_median"] is None
     assert form["longest"] is None and form["latest_decision_word"] is None
+
+
+def stop_log(home: Path) -> Path:
+    common = subprocess.run(["git", "-C", str(home), "rev-parse", "--path-format=absolute",
+                             "--git-common-dir"], check=True, capture_output=True,
+                            text=True).stdout.strip()
+    return Path(common) / "siegard" / "handoff-checks.jsonl"
+
+
+def checked(at: str, session: str = "s1", characters: int = 900, kinds: list | None = None,
+            hands: bool = True, blocked: bool = False, released: bool = False,
+            mode: str = "measure") -> str:
+    kinds = kinds or []
+    return json.dumps({"at": at, "session_id": session, "characters": characters,
+                       "hands_decision": hands, "mode": mode,
+                       "violations": [f"{k}: words" for k in kinds], "kinds": kinds,
+                       "blocked": blocked, "released": released}) + "\n"
+
+
+def test_the_stop_hooks_log_is_counted_beside_the_transcript_form(consumer):
+    """SPEC-008 R17: what the `Stop` hook checked inside the window, read from the log it
+    appends to; the line before the window and the one after it are not this window's, and a
+    line that does not parse is counted apart and never read."""
+    log = stop_log(consumer["home"])
+    log.parent.mkdir(parents=True)
+    log.write_text(
+        checked("2026-08-20T09:59:59Z", characters=9000, kinds=["length"])
+        + checked("2026-08-20T10:05:00Z", kinds=["opening"])
+        + checked("2026-08-20T10:10:00Z", characters=2100, kinds=["length", "decision"],
+                  blocked=True, mode="enforce")
+        + checked("2026-08-20T10:11:00Z", characters=300, hands=False, released=True,
+                  mode="enforce")
+        + checked("2026-08-20T10:20:00Z", session="s2", characters=700)
+        + "{ not json\n"
+        + json.dumps({"session_id": "s1"}) + "\n"
+        + checked("2026-08-20T12:00:00Z", characters=9000, kinds=["opening"]),
+        encoding="utf-8")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    stops = report["handoff_form"]["stop_checks"]
+    assert stops["source"] == str(log) and stops["unavailable"] is None
+    assert stops["checked"] == 3 and stops["violating"] == 2
+    assert stops["by_kind"] == {"opening": 1, "length": 1, "decision": 1, "other": 0}
+    assert stops["blocked"] == 1 and stops["released"] == 1 and stops["malformed"] == 2
+    assert stops["by_mode"] == {"enforce": 2, "measure": 2}
+    assert stops["longest"] == {"session": "s1", "at": "2026-08-20T10:10:00.000Z",
+                                "characters": 2100, "violations": 2}
+    assert "stop checks: 3 stop(s) handing a decision checked, 2 violating" in done.stdout
+
+
+def test_a_project_whose_stop_hook_logged_nothing_is_unavailable_not_zero(consumer):
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    stops = report["handoff_form"]["stop_checks"]
+    assert stops["unavailable"].endswith("does not exist: the `Stop` hook has checked no stop here")
+    assert stops["checked"] == 0 and stops["longest"] is None
+    assert "stop checks: unavailable" in done.stdout
+
+
+def test_telemetry_reads_the_log_where_the_hook_writes_it():
+    import telemetry
+    assert Path(telemetry.handoff_stop.__file__).resolve() == \
+        (REPO / "src/claude/hooks/handoff_stop.py").resolve()
 
 
 def test_telemetry_asks_is_the_handoff_definition():

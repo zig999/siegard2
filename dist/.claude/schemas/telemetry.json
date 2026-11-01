@@ -27,8 +27,8 @@
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/17",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero. /14 reads each orchestrating session's context per call: what every call read, the floor its compactions left, the same session replayed at each auto-compact window with the compactions and commit re-authorizations each would have cost, the replay at the window the session ran under as the check on the replay itself, and what the calls following a compaction did again; a /13 report carries none of it, which is not a count of zero. siegard-telemetry/17 adds `handoff_form`, and on every session `handoff_form`: the form of every assistant message a person answered, read by the function `handoff.py --check` runs — its length, whether it hands a decision, the names of the closed list's terms its opening carries, whether it carries a word of recommendation and where its first decision word sits — never its text. A /16 report carries none, which is not a count of zero."
+      "const": "siegard-telemetry/18",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero. /14 reads each orchestrating session's context per call: what every call read, the floor its compactions left, the same session replayed at each auto-compact window with the compactions and commit re-authorizations each would have cost, the replay at the window the session ran under as the check on the replay itself, and what the calls following a compaction did again; a /13 report carries none of it, which is not a count of zero. siegard-telemetry/17 adds `handoff_form`, and on every session `handoff_form`: the form of every assistant message a person answered, read by the function `handoff.py --check` runs — its length, whether it hands a decision, the names of the closed list's terms its opening carries, whether it carries a word of recommendation and where its first decision word sits — never its text. A /16 report carries none, which is not a count of zero. siegard-telemetry/18 adds `handoff_form.stop_checks`: the stops the plugin's `Stop` hook held to `handoff.py --check`, read from the log it appends to under the repository's git directory. A /17 report carries none, which is not a count of zero."
     },
     "project_root": {
       "type": "string",
@@ -1728,7 +1728,8 @@
         "no_decision_word",
         "decision_word_share_median",
         "longest",
-        "latest_decision_word"
+        "latest_decision_word",
+        "stop_checks"
       ],
       "properties": {
         "ceilings": {
@@ -1836,9 +1837,133 @@
             }
           },
           "description": "The message whose first decision word sat latest in its prose; null where none carried one."
+        },
+        "stop_checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "unavailable",
+            "checked",
+            "violating",
+            "by_kind",
+            "blocked",
+            "released",
+            "malformed",
+            "by_mode",
+            "longest"
+          ],
+          "properties": {
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The log read: `siegard/handoff-checks.jsonl` under the repository's git directory, where the plugin's `Stop` hook appends one line per stop it checked."
+            },
+            "unavailable": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Why the log could not be read — it does not exist, or git named no directory for it — and every count is then zero because nothing was read, never because nothing was checked; null where it was read."
+            },
+            "checked": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Lines inside the window whose message handed a decision, and so was held to `handoff.py --check`."
+            },
+            "violating": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of the checked lines, those carrying at least one violation."
+            },
+            "by_kind": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "opening",
+                "length",
+                "decision",
+                "other"
+              ],
+              "properties": {
+                "opening": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "decision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "other": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "description": "Checked lines carrying each kind of violation — the word `handoff.py --check` opens the line with; a line carrying two kinds counts under both."
+            },
+            "blocked": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Lines whose stop the hook blocked, under the `enforce` mode alone."
+            },
+            "released": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Lines whose stop the hook allowed because the same session's stop before it was blocked; one is recorded whether or not its message handed a decision."
+            },
+            "malformed": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Lines of the log that do not parse or carry no instant; counted apart and never read."
+            },
+            "by_mode": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "description": "Lines inside the window by the mode they were recorded under."
+            },
+            "longest": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": false,
+              "required": [
+                "session",
+                "at",
+                "characters",
+                "violations"
+              ],
+              "properties": {
+                "session": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "at": {
+                  "$ref": "#/$defs/timestamp"
+                },
+                "characters": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "violations": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "description": "The longest checked message, by session and instant — the far end a reader opens in that session's transcript; null where none was checked."
+            }
+          },
+          "description": "The stops the plugin's `Stop` hook held to `handoff.py --check` in a project with no armed goal, counted from the log it appends to rather than from transcripts: read beside the counts above, which a person's next turn defines, these are every message a session stopped on that handed a decision. It refuses nothing and judges nothing."
         }
       },
-      "description": "The form of the messages the window's sessions handed a person, summed from `harness.sessions[].handoff_form`: how many, how many handed a decision and how many of those ran over the message ceiling, how many opened on a framework term, how many carried a word of recommendation or none of decision, and where the first decision word sat — with the longest message and the one whose first decision word sat latest named by session and instant, the far end a reader opens. It refuses nothing and judges nothing."
+      "description": "The form of the messages the window's sessions handed a person, summed from `harness.sessions[].handoff_form`: how many, how many handed a decision and how many of those ran over the message ceiling, how many opened on a framework term, how many carried a word of recommendation or none of decision, and where the first decision word sat — with the longest message and the one whose first decision word sat latest named by session and instant, the far end a reader opens — and `stop_checks`, what the `Stop` hook's own log counted over the same window. It refuses nothing and judges nothing."
     },
     "provenance": {
       "type": "array",

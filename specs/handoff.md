@@ -47,6 +47,8 @@ and the reviewers' evidence-only returns already hold.
 
 ### Decided elsewhere, deliberately not restated here
 
+- When the plugin's Stop hook runs `--check` over the message a session stops on, what it records,
+  and when it blocks — `specs/goal.md` (SPEC-008 R15).
 - What each skill reports and in which order — that skill's own file.
 - What stops a skill — that skill's own file; a contradiction between scope and specification
   is a stop only a person settles — `specs/minimal-documentation.md` (SPEC-001 R13).
@@ -94,9 +96,11 @@ and the reviewers' evidence-only returns already hold.
 
 ### What a handoff is made from
 
-- **R8** — A handoff that hands a person a decision is rendered by `bin/handoff.py --render` from a record, never composed as free text. The record carries `kind`, `language`, `state` in one line, and `withdraws` where the handoff withdraws what the same invocation said earlier; kind `decision` carries `decisions` — an owed act among them, its door the act and its `if_none` the step that refuses to run — each with its `ask`, either the door `recommended` — its `door`, `why`, `reverses_if` and `reply_word` — or, where R3 or R6 leaves the choice to the person, `settles`, what would settle it, then the `others`, each with its `reply_word` and `what_it_does`, `if_none`, what stays as it is if no door is taken, and optionally the `invocation` ready to paste; and `report`, where one exists, is the path of the full report on disk, which holds the pending items, commit hashes, measurements and command output the opening does not. The rendered handoff holds its state within 200 characters, each decision's block within 600 and the whole message within 1500; carries no term of the closed list `schemas/handoff.json` holds outside the line ready to paste; gives every door a reply word no other door in the handoff uses; and is written in the language the record names, whose few fixed words the schema holds and whose prose the script never translates. A status answer or a design conversation is kind `report`, not a stop: `state` and either the `report` path or an inline `body`, with no ceiling. A handoff written as free text is held by `bin/handoff.py --check` to what is decidable without the record: no term of that list in its first 450 characters, and, where it hands a decision, a length within 1500 characters and a word of recommendation or of the person's own decision within those 450.
+- **R8** — A handoff that hands a person a decision is rendered by `bin/handoff.py --render` from a record, never composed as free text. The record carries `kind`, `language`, `state` in one line, and `withdraws` where the handoff withdraws what the same invocation said earlier; kind `decision` carries `decisions` — an owed act among them, its door the act and its `if_none` the step that refuses to run — each with its `ask`, either the door `recommended` — its `door`, `why`, `reverses_if` and `reply_word` — or, where R3 or R6 leaves the choice to the person, `settles`, what would settle it, then the `others`, each with its `reply_word` and `what_it_does`, `if_none`, what stays as it is if no door is taken, and optionally the `invocation` ready to paste; and `report`, where one exists, is the path of the full report on disk, which holds the pending items, commit hashes, measurements and command output the opening does not. The rendered handoff holds its state within 200 characters, each decision's block within 600 and the whole message within 1500; carries no term of the closed list `schemas/handoff.json` holds outside the line ready to paste and a state R10 reads from a script; gives every door a reply word no other door in the handoff uses; and is written in the language the record names, whose few fixed words the schema holds and whose prose the script never translates. A status answer or a design conversation is kind `report`, not a stop: `state` and the `report` path, an inline `body`, or both, with no ceiling. A handoff written as free text is held by `bin/handoff.py --check` to what is decidable without the record: no term of that list in its first 450 characters, and, where it hands a decision, a length within 1500 characters and a word of recommendation or of the person's own decision within those 450.
 
 - **R9** — Whether a door's own entry point refuses its inputs as the tree stands is a script's answer, `bin/door.py --check`, read from disk and git alone: its first line is `accepts` or `refuses`, each refusal follows with its fact, and a refusal the entry point's file states that no script decides is listed as not decided, never answered. A door the check refuses is excluded on `precondition unmet`, its deciding fact the `refused:` line; a door it accepts is not thereby recommended.
+
+- **R10** — The state a handoff opens with is a script's line, never the session's. `bin/handoff.py --prepare` prints the record's skeleton for the skill and the inputs it names, with `state` written and `state_from` naming the script it is the line of: the first line `goal.py --state` answers where a goal is armed through the framework, else the segment `progress.py` prints for the initiative named, else the line it prints for the project, else the fixed words the schema holds for a project with nothing live — quoted as the script printed it, cut to the state ceiling, never translated and never read for the closed list of terms. The skeleton's doors are the invocations the skill's own report names ready to paste, each marked with the first line `bin/door.py --check` prints for it and its `refused:` facts, or as not checked where no script decides that door or an input it takes is not named; none is marked recommended, and the report's path lies outside the tree every entry point holds to `git status`. A record of kind `decision` carries `state_from`, and `--render` refuses it where `state` differs from what that script prints when it renders, where its door recommended is one the check refuses, and where a recommendation's `why` or `reverses_if` is empty.
 
 ## Validation required before acceptance
 
@@ -133,8 +137,36 @@ and the reviewers' evidence-only returns already hold.
    below, in its own unit; a later reading where the four proportions have not moved toward the
    ceiling under R8 is grounds to read why the record is not being filled, never to raise the
    ceiling.
+5. A test holds `bin/handoff.py --prepare` to R10 over fixture repositories: the state is the
+   goal's first line where a goal is armed, the initiative's progress segment where a slug is
+   named, the project's line where none is, and the fixed words where nothing is live; a door
+   the check accepts and one it refuses are each marked with that answer and the refused fact,
+   a door no script decides is marked not checked, and none is marked recommended; the skeleton
+   fails the schema only on the fields the model fills. The same test holds `--render` refusing
+   a decision record without `state_from`, one whose state differs from what the script prints
+   now, one recommending a door the check refuses, and one whose `why` or `reverses_if` is
+   empty; and every skill named in `bin/handoff.py`'s use — `deliver-scope`, `plan-work`,
+   `implement-task`, `review-change`, `reconcile`, `analyse`, `siegard-goal`, `siegard-status` —
+   names `--prepare` and `--render` beside its report and cites R10.
+6. The closed list holds a framework word that is also plain English — `stands`, `nowhere`,
+   `owed`, `offered` — as a term only backticked or inside a framework phrase in English prose,
+   and as a whole word in prose of any other language; a test holds both halves, and the
+   Portuguese fixture that carried those words still carries them.
 
 ## Readings
+
+- 2026-10-31 — grounds for R10 and the narrowed list: the handoffs read for the R8 baseline
+  wrote their state line in the session's own words, and it was wrong more than once — "no next
+  phase" where one existed, "nothing pending" where disk held pending work, a success mark set
+  before the check that would have shown it — and recommended doors their own entry point
+  refused. R8's record existed, but no skill produced it: only the session rules asked for it, so
+  a session that wrote free text changed nothing. R10 moves the state and the doors' marks into
+  the skeleton a script writes, and every skill that reports runs it. The same reading found
+  `stands`, `nowhere`, `owed` and `offered` hit as framework terms in English prose where they
+  were plain English; the list keeps them as terms backticked, inside a framework phrase, or in
+  prose of another language, where a word of English in a session that is not English is the
+  framework showing through. The four figures of the 2026-10-31 baseline were read under the
+  wider list; a later reading under this one is compared to them knowing that.
 
 - 2026-10-31 — baseline for R8: 251 handoffs read from the session transcripts of four consumers
   under Siegard 5.34–5.42, over four days. 62% were longer than 1500 characters; 33% carried a

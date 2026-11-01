@@ -31,9 +31,9 @@ SPECS = REPO / "specs"
 SRC = REPO / "src"  # claude/ ships as the plugin, consumer/ ships to the consumer's root
 MIN_WORDS = 3
 
-CITATION = re.compile(r"\((SPEC-00\d)(?: (R\d+)| §([^)]+?))?\)")
-TOKEN = re.compile(r"SPEC-00\d")
-QUOTED = re.compile(r"«([^»]*)»\s*\((SPEC-00\d)(?: (R\d+)| §([^)]+?))?\)")
+CITATION = re.compile(r"\((SPEC-\d{3})(?: (R\d+)| §([^)]+?))?\)")
+TOKEN = re.compile(r"SPEC-\d{3}")
+QUOTED = re.compile(r"«([^»]*)»\s*\((SPEC-\d{3})(?: (R\d+)| §([^)]+?))?\)")
 REQUIREMENT = re.compile(r"^- \*\*(R\d+)\*\* — (.*?)(?=\n- \*\*R|\n\n|\n#|\Z)", re.S | re.M)
 HEADING = re.compile(r"^(#{2,3}) (.+?)\s*$", re.M)
 PLACEHOLDER = re.compile(r"\{[^}]*\}")

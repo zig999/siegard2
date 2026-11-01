@@ -459,3 +459,97 @@ def test_reconcile_refuses_a_target_not_under_git(tmp_path, root, target):
     (target / "siegard.json").unlink()
     declare(home)
     refuses(door(home, "reconcile", "--slug", "r", "--file", "src/x.ts"), "is not under git")
+
+
+# ---------------------------------------------------------------- commit (SPEC-008 R18)
+
+
+STOP = "stop: outside-task — the suite stayed red; nothing of this delivery committed"
+RED_RUN = "checkout-bill-order-suite"
+
+
+def stop_the_log(home: Path) -> Path:
+    log = home / "deliveries" / SLUG / "orchestration.md"
+    log.write_text("- /plan-work — 1a2b3c — planned\n" + STOP + "\n\n", encoding="utf-8")
+    return log
+
+
+def red_run(home: Path, name: str = RED_RUN) -> Path:
+    run = home / "deliveries" / SLUG / "run" / name
+    run.mkdir(parents=True)
+    (run / "run.json").write_text(json.dumps({"outcome": "failed", "failed_step": "test"}),
+                                  encoding="utf-8")
+    return run
+
+
+def test_commit_accepts_a_delivery_with_no_stop_and_no_red_run(project):
+    result = door(project, "commit")
+    accepts(result)
+    assert f"decided: slug {SLUG} — the one live initiative" in result.stdout
+    assert "holds no line" in result.stdout
+    assert "not decided: whether the person's own words" in result.stdout, \
+        "the authorization is a reading, listed and never answered"
+
+
+def test_commit_refuses_a_log_closing_on_a_stop_line(project):
+    stop_the_log(project)
+    out = refuses(door(project, "commit", "--slug", SLUG), "closes on a stop line")
+    assert STOP in out
+    refuses(door(project, "commit", "--slug", SLUG, "--file", f"deliveries/{SLUG}/implementation"),
+            "names paths outside the telemetry root")
+
+
+def test_commit_accepts_the_measure_after_a_stop_line(project):
+    log = stop_the_log(project)
+    (project / "telemetry").mkdir()
+    accepts(door(project, "commit", "--slug", SLUG, "--file", "telemetry",
+                 "--file", str(log.relative_to(project))))
+
+
+def test_commit_reads_the_log_after_a_resume(project):
+    log = stop_the_log(project)
+    with log.open("a", encoding="utf-8") as appended:
+        appended.write("- resumed — /implement-task over task/checkout/bill-order\n")
+    result = door(project, "commit", "--slug", SLUG)
+    accepts(result)
+    assert "does not close on a stop line" in result.stdout
+
+
+def test_commit_refuses_a_red_run_uncommitted_and_named_by_no_record(project):
+    red_run(project)
+    out = refuses(door(project, "commit", "--slug", SLUG), "holds a red run")
+    assert f"run/{RED_RUN}: ended `failed` at the step `test`" in out
+
+
+def test_commit_accepts_a_red_run_a_record_names(project):
+    red_run(project)
+    review = project / "deliveries" / SLUG / "review" / "r.md"
+    review.parent.mkdir(exist_ok=True)
+    review.write_text(f"The diagnosis read run/{RED_RUN}.\n", encoding="utf-8")
+    accepts(door(project, "commit", "--slug", SLUG))
+
+
+def test_commit_does_not_read_a_retry_as_naming_the_red_run(project):
+    red_run(project)
+    proof = project / "deliveries" / SLUG / "review" / "r.md"
+    proof.parent.mkdir(exist_ok=True)
+    proof.write_text(f"The suite passed at run/{RED_RUN}-2.\n", encoding="utf-8")
+    refuses(door(project, "commit", "--slug", SLUG), "holds a red run")
+
+
+def test_commit_accepts_a_red_run_already_committed(project):
+    red_run(project)
+    commit(project)
+    accepts(door(project, "commit", "--slug", SLUG))
+
+
+def test_commit_reads_no_run_for_a_pathspec_outside_the_delivery_root(project):
+    red_run(project)
+    result = door(project, "commit", "--slug", SLUG, "--file", "target")
+    accepts(result)
+    assert "so no run under it is read" in result.stdout
+
+
+def test_commit_takes_no_target_and_no_standard(project):
+    assert door(project, "commit", "--target", "app").returncode == 2
+    assert door(project, "commit", "--standard", "x.json").returncode == 2

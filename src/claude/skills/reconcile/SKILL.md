@@ -579,10 +579,20 @@ changed. The fold already said which certifications did not hold and why, in the
 
 ### 6. Report
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill reconcile --project
+<project-root> --target <target> --language <en or pt-BR, the session's>` — with `--slug` only
+where a live initiative's slug is what the `/plan-work` door carries, never this
+reconciliation's own. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the
+fields the skeleton left empty, and hand the person exactly what `handoff.py --render` prints
+over the record: the opening «A handoff opens with what needs the person, and explains after»
+(SPEC-006 R1) states. The doors it marks are the `/analyse` and `/plan-work` ones this report
+hands, each with what its entry point answered or why nothing checked it: a `refuses` is said
+excluded beside its `refused:` fact, never recommended. A refusal is answered by rewriting the
+field it names; a state it says has moved, by running `--prepare` again and carrying its
+`state` and `state_from` whole.
 
-Say, in this order and in prose: the file set as given; what the staging held for each file, by
+Say, in this order and in prose, in the file: the file set as given; what the staging held for each file, by
 state — judged, nothing left to judge, unbound — and how many pairs it omitted as current and
 unowed; the shape the judgment ran in — how many delegations, one per file; what the judgment
 answered per node, with its evidence; which pairs a run answered instead of a judge, with the

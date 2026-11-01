@@ -100,7 +100,16 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 
 ## Report, and stop
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1) states.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill siegard-goal --project
+<project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`, write
+the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill the record as one decision of kind
+`decision` — the condition, prefixed `/goal `, as its line ready to paste — and hand the person
+exactly what `handoff.py --render` prints: the opening «A handoff opens with what needs the
+person, and explains after» (SPEC-006 R1) states. A refusal is answered by rewriting the field
+it names; a state it says has moved, by running `--prepare` again and carrying its `state` and
+`state_from` whole. Where the goal was armed in this invocation, the state `--prepare` printed is
+the armed goal's own first line.
 The one decision is the person's: whether to arm the goal, and how — recommended, by judgment
 because the two hold the same route, through the framework: they say so in their own words and
 step 4 runs, and the end is the state command's answer at every stop rather than an evaluator's

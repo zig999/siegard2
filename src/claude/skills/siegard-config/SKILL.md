@@ -1,13 +1,15 @@
 ---
 name: siegard-config
-description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, which targets a person edits without a task, and where each target's tests sit — so every other skill reads them from one place instead of retyping them per invocation. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
+description: Writes or updates siegard.json — the project's own declaration of its specification root, its target source roots, its work and delivery root containers, its telemetry root, its standard, which targets a person edits without a task, and where each target's tests sit — so every other skill reads them from one place instead of retyping them per invocation; and, where the human asks for it, sets the project's status line to the progress line. Use when a human wants to declare, add or change what a project's siegard.json holds, including at the start of a new initiative when work_root or delivery_root's meaning changes, or to set or remove the progress status line. Not for anything the file itself governs — it never authors a specification, a plan, a delivery, or a standard's content.
 disable-model-invocation: true
 effort: low
 ---
 
 You write one file — `siegard.json` — from what the human tells you, and you stop. One
 invocation, one write: it may create the file or update the fields the human names, and it never
-touches a field the human did not name.
+touches a field the human did not name. The one other write is the status line, and only where the
+human asks for it in this invocation: one key in the project's local Claude Code settings, written
+by a script, never by you.
 
 ## Required inputs
 
@@ -24,13 +26,15 @@ A missing input is a stop, not a default:
    (where `/siegard-telemetry` lands its reports — the one root nothing else reads), or
    `edits_freely` (the targets whose source a person changes without a task, by their keys in
    `targets`), or one or more `tests` entries (a target's key in `targets` and, for it, the
-   scopes its tests sit in — each an `under`, a `suffix` and whether it is `nested`). An
-   invocation naming none has nothing to write, and is a stop.
+   scopes its tests sit in — each an `under`, a `suffix` and whether it is `nested`) — or the
+   status line, set or removed. An invocation naming none has nothing to write, and is a stop. An
+   invocation naming only the status line writes no field: it goes straight to step 5 of the order
+   below, and needs `siegard.json` to exist already.
 
 ## Before anything: the tree
 
 The review is `git diff` over the project root, and a diff only says what this invocation did
-when it starts clean. Before any write, `git status --porcelain -- <project-root>/siegard.json`
+when it starts clean. Before any write of `siegard.json`, `git status --porcelain -- <project-root>/siegard.json`
 must print nothing. Output is a stop: report what is pending and go no further — committing,
 discarding, or overriding is the human's decision, never this skill's. A project root not under
 git control is the same stop: without git there is no review.
@@ -48,7 +52,7 @@ the plugin root is the directory that holds `schemas/` and `bin/` side by side.
 ## The order
 
 ```
-read → merge → write → validate → report → stop
+read → merge → write → validate → status line, where asked → report → stop
 ```
 
 ### 1. Read
@@ -121,7 +125,32 @@ together and the fix is not a form correction, undo the write — restore what s
 remove the file if step 1 found none — and report the problem instead of leaving a broken
 declaration on disk.
 
-### 5. Report, and stop
+### 5. The status line, where the human asked for it
+
+Only where the human asked, in this invocation, to set or to remove the status line — never
+offered as a default, never inferred from a field being declared. «The status line is set only
+where the person asks for it, in the project's `.claude/settings.local.json`, as the command
+`python3 -B` over the absolute path of the `bin/progress.py` that wrote it» (SPEC-009 R5). Run:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/progress.py --install <project-root>
+```
+
+or, to remove it, the same with `--uninstall`. The script writes its own resolved path, so the
+entry names the plugin directory this session loaded; you compose no path and edit no settings
+file yourself. The settings file is the local one because the path is this machine's — committed
+to `.claude/settings.json` it would name a file no other machine holds — and because a status line
+is the person's own, not the team's. The script merges: every other key of the file stands, an
+existing `statusLine` it did not write is refused and left as it stands, and one it wrote earlier
+is replaced. A refusal is reported verbatim and stops this step only: removing the person's own
+status line is theirs to do.
+
+The plugin's cache directory is named by version, so after a plugin update the entry still names
+the earlier version's script. «Where the plugin version loaded for the project is not the one the
+line runs from, the line says so, naming both, and names the re-run that moves it» (SPEC-009 R6):
+running this step again is that re-run. The line is drawn by a session started after the write.
+
+### 6. Report, and stop
 
 Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
 states; what follows is the report that opening sits above.
@@ -131,7 +160,10 @@ Report, in this order:
 - whether this created the file or updated an existing one;
 - every field this invocation declared or changed, by name, with its new value;
 - every field the file already held that this invocation left untouched;
-- the validator's final output, verbatim.
+- the validator's final output, verbatim;
+- where step 5 ran, the script's output verbatim — the file, the entry, the plugin version it
+  points at and the command that removes it. That file is untracked, so this report is its only
+  review.
 
 Then stop. `git diff` over `siegard.json` is the review, and it belongs to a person.
 
@@ -148,3 +180,5 @@ Then stop. `git diff` over `siegard.json` is the review, and it belongs to a per
   stack, and the neighbouring one is the wrong answer, not a default.
 - Commit, stash, or otherwise change the consumer's git state — a dirty tree is reported, and
   what to do with it is the human's call.
+- Set the status line unasked, write it into a settings file other than through `progress.py`,
+  or replace a `statusLine` the script refused.

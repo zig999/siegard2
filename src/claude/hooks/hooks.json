@@ -1,5 +1,5 @@
 {
-  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start; answers every stop of a session whose project holds a goal armed by `bin/goal.py --arm` from that goal's state.",
+  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start; answers every stop of a session whose project holds a goal armed by `bin/goal.py --arm` from that goal's state, and, in a project that holds none, holds the message a session stops on to what `bin/handoff.py --check` decides — measured by default, and blocked once with the next stop allowed only where `SIEGARD_HANDOFF_STOP` is `enforce`.",
   "hooks": {
     "SessionStart": [
       {

@@ -1,6 +1,6 @@
 ---
 name: siegard-status
-description: Use whenever a person asks how the work stands, whether any initiative is open or can be closed, what is left, what is blocked, what changed lately, what the framework's version is, or what to do next — every such question is answered by running this, never from what the conversation remembers. Derives the current status of a Siegard project from disk — which initiatives are live, what is delivered and what is outstanding, what each remaining task waits on, standing BLOCKING notes, trace drift by class, decisions recently disclosed on the human's behalf, and what the working tree holds uncommitted — by running the framework's own read-only commands and citing a source for every claim. The report speaks the session's language, in a friendly voice a non-expert can follow; command output stays quoted verbatim. It writes nothing and decides nothing; a status is recomputed every time, never remembered.
+description: Use whenever a person asks how the work stands, whether any initiative is open or can be closed, what is left, what is blocked, what changed lately, what the framework's version is, or what to do next — every such question is answered by running this, never from what the conversation remembers. Derives the current status of a Siegard project from disk — which initiatives are live, what is delivered and what is outstanding, what each remaining task waits on, standing BLOCKING notes, trace drift by class, decisions recently disclosed on the human's behalf, and what the working tree holds uncommitted — by running the framework's own read-only commands and citing a source for every claim. The report speaks the session's language, in a friendly voice a non-expert can follow; command output stays quoted verbatim. It writes nothing in the tree and decides nothing; a status is recomputed every time, never remembered.
 effort: low
 ---
 
@@ -208,18 +208,34 @@ quoted verbatim and untranslated» (SPEC-006 R1) is one of the rules it is voice
 
 ## The report
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill siegard-status --project
+<project-root> --language <en or pt-BR, the session's>`, write the full status below through
+`bin/handoff.py --save-report <path>`, to the path its `report` names, and hand the person exactly what `handoff.py --render` prints over the
+record. A refusal is answered by rewriting the field it names; a state it says has moved, by
+running `--prepare` again and carrying its `state` and `state_from` whole.
 
-In this order, every line naming its source:
+**What the person reads is the short form: at most 8 lines as rendered.** The record is kind
+`report`, its `state` the line `--prepare` printed — what is live, by the progress script — and
+its `report` the path the full status was written to; its `body` holds at most four lines, in
+the session's plain words and in this order: what was built, as the task and node counts the
+scripts printed — delivered X of Y tasks per live initiative from `deliver.py --outstanding`,
+the node counts from `spec.py`; what is live beyond the state line, where it says more; and what
+needs the person — each owed act and each decision that is the person's own, named in a clause —
+with, last, the one invocation the close recommends and why in a sentence. A figure no command
+printed never enters it. The opening «A handoff opens with what needs the person, and explains
+after» (SPEC-006 R1) states is that short form; every block, door and quotation the sections
+above call for is the full status on disk, which the short form points at and never repeats.
+
+The full status, in this order, every line naming its source:
 
 - per live initiative: delivered X of Y tasks; deliverable now; what each remaining task waits
   on; standing BLOCKING notes, quoted whole; and what `review/` under its delivery root holds.
   Closed initiatives by name only;
 - the specification: sound or not (validator output verbatim), node counts, and the last five
   disclosed decisions — node and field, what was decided, why;
-- the trace: findings by class with each class's route, and the ready `/reconcile` invocation
-  where `code` drift stands, with what that set does not answer alone — the files a review
+- the trace: findings by class with each class's route, and the `/reconcile` invocation ready
+  to paste where `code` drift stands, with what that set does not answer alone — the files a review
   yet to run would reach, and the pairs a record already judged; then, kept apart from those
   counts, what `--convergence` holds —
   every node of the specification in one of its states, by class, and its `files under` line —

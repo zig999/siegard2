@@ -121,7 +121,12 @@ hands a decision, the names of the closed list's terms its opening carries, whet
 word of recommendation, and where its first decision word sits as a share of its prose — never
 its words. `handoff_form` sums them and names the longest message and the one whose first
 decision word sits latest, by session and instant, so a reader opens the far end of the
-distribution; it refuses nothing and ranks nothing against a threshold of its own.
+distribution; it refuses nothing and ranks nothing against a threshold of its own. Beside them,
+`handoff_form.stop_checks` is what the plugin's `Stop` hook counted with the same functions at
+every stop of a project holding no armed goal, read from the log it appends to under the
+repository's git directory: the stops checked, those violating and by which kind, those blocked
+and released, and the longest message checked, by session and instant. A log that is not there
+is said under `unavailable`, never read as nothing checked.
 
 **A commit the session made inside a skill's span is counted with what authorized it.** A `git
 commit` or `git push` the session ran after a Skill call and before the person's next turn is
@@ -187,12 +192,16 @@ except ImportError:  # pragma: no cover - exercised by the environment, not the 
     raise SystemExit(2)
 
 import deliver
+import goal
 import handoff
 import plan
 import spec
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "hooks"))
+import handoff_stop
+
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/17"
+CONTRACT = "siegard-telemetry/18"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -1843,10 +1852,92 @@ def handoffs_section(harness: dict) -> dict:
             "goal_evaluations": goal_evaluations_of(harness)}
 
 
-def handoff_form_section(harness: dict) -> dict:
+def stop_checks_path(home: Path) -> Path | None:
+    """Where the `Stop` hook's log sits: the hook's own definition of the place, under the
+    repository's common git directory; None where git names none."""
+    probe = git(home, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if probe is None or probe.returncode != 0 or not probe.stdout.strip():
+        return None
+    return handoff_stop.checks_path(Path(probe.stdout.strip()) / goal.ARMED_DIR)
+
+
+def stop_checks_of(home: Path, since: datetime, until: datetime) -> dict:
+    """What the `Stop` hook's log counted inside the window — «Telemetry reads
+    `siegard/handoff-checks.jsonl` beside the transcript-derived form of the handoffs and counts,
+    over the lines inside its window, the stops checked, those violating, each violation kind,
+    those blocked and those released, and names the longest message checked by session and
+    instant» (SPEC-008 R17). A log that is not there is said, never read as nothing checked."""
+    path = stop_checks_path(home)
+    kinds = ("opening", "length", "decision", "other")
+    found = {"source": str(path) if path else handoff_stop.CHECKS_FILE, "unavailable": None,
+             "checked": 0, "violating": 0, "by_kind": dict.fromkeys(kinds, 0), "blocked": 0,
+             "released": 0, "malformed": 0, "by_mode": {}, "longest": None}
+    if path is None:
+        found["unavailable"] = "git names no common directory for this project"
+        return found
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        found["unavailable"] = f"{path} does not exist: the `Stop` hook has checked no stop here"
+        return found
+    except OSError as broken:
+        found["unavailable"] = f"{path} is unreadable: {broken}"
+        return found
+    longest = None
+    for raw in lines:
+        if not raw.strip():
+            continue
+        try:
+            entry = json.loads(raw)
+        except ValueError:
+            entry = None
+        moment = instant_of(entry.get("at")) if isinstance(entry, dict) else None
+        if moment is None or not isinstance(entry.get("session_id"), str) \
+                or not entry["session_id"]:
+            found["malformed"] += 1
+            continue
+        if not since <= moment < until:
+            continue
+        mode = entry.get("mode") if isinstance(entry.get("mode"), str) else "unknown"
+        found["by_mode"][mode] = found["by_mode"].get(mode, 0) + 1
+        found["blocked"] += bool(entry.get("blocked"))
+        found["released"] += bool(entry.get("released"))
+        if not entry.get("hands_decision", True):
+            continue
+        found["checked"] += 1
+        violations = entry.get("violations") if isinstance(entry.get("violations"), list) else []
+        found["violating"] += bool(violations)
+        for kind in {k if k in kinds else "other"
+                     for k in (entry.get("kinds") if isinstance(entry.get("kinds"), list) else [])}:
+            found["by_kind"][kind] += 1
+        characters = entry.get("characters") if isinstance(entry.get("characters"), int) else 0
+        row = {"session": entry["session_id"], "at": iso(moment), "characters": characters,
+               "violations": len(violations)}
+        if longest is None or (characters, row["at"]) > (longest["characters"], longest["at"]):
+            longest = row
+    found["by_mode"] = dict(sorted(found["by_mode"].items()))
+    found["longest"] = longest
+    return found
+
+
+def stop_checks_line(checks: dict) -> str:
+    if checks["unavailable"]:
+        return f"stop checks: unavailable — {checks['unavailable']}"
+    far = checks["longest"]
+    return (f"stop checks: {checks['checked']} stop(s) handing a decision checked, "
+            f"{checks['violating']} violating — "
+            + ", ".join(f"{kind} {n}" for kind, n in checks["by_kind"].items())
+            + f"; {checks['blocked']} blocked, {checks['released']} released"
+            + (f"; {checks['malformed']} line(s) that do not parse" if checks["malformed"] else "")
+            + (f"; longest {far['characters']} characters ({far['session']} at {far['at']}, "
+               f"{far['violations']} violation(s))" if far else ""))
+
+
+def handoff_form_section(harness: dict, home: Path, since: datetime, until: datetime) -> dict:
     """The form of every message a person answered, summed across sessions, with the far end
-    of each distribution named by session and instant. Every figure is `handoff.py`'s reading;
-    the ceilings are the schema's, carried so a reader sets the counts beside them."""
+    of each distribution named by session and instant, and beside it what the `Stop` hook's own
+    log counted over the same window. Every figure is `handoff.py`'s reading; the ceilings are
+    the schema's, carried so a reader sets the counts beside them."""
     ceilings = handoff_contract()["x-ceilings"]
     rows = [{"session": s["id"], **form} for s in harness["sessions"] for form in s["handoff_form"]]
     deciding = [r for r in rows if r["hands_decision"]]
@@ -1868,6 +1959,7 @@ def handoff_form_section(harness: dict) -> dict:
                     "characters": longest["characters"]} if longest else None,
         "latest_decision_word": {"session": latest["session"], "at": latest["at"],
                                  "share": latest["decision_word_share"]} if latest else None,
+        "stop_checks": stop_checks_of(home, since, until),
     }
 
 
@@ -1985,7 +2077,7 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
         "scope": scope_section(work_root, delivery_root, home, repository["commits"]),
         "recommendations": recommendations_section(delivery_root, work_root, home, since, until),
         "handoffs": handoffs_section(harness),
-        "handoff_form": handoff_form_section(harness),
+        "handoff_form": handoff_form_section(harness, home, since, until),
         "provenance": provenance_of(roots, harness, repository, decisions),
     }
     return report, telemetry_dir, telemetry_dir / f"{stamp_of(until)}.json"
@@ -2065,6 +2157,7 @@ def receipt(report: dict, destination: Path) -> str:
            f"({report['handoff_form']['longest']['session']} at "
            f"{report['handoff_form']['longest']['at']})"
            if report['handoff_form']['longest'] else ""),
+        stop_checks_line(report["handoff_form"]["stop_checks"]),
     ]
     missing = [p for p in report["provenance"] if p["unavailable"]]
     lines.append("unavailable: " + ("; ".join(f"{p['section']} — {p['unavailable']}"

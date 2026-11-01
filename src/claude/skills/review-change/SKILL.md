@@ -630,10 +630,19 @@ make coverage look better, and a pass that did not run is never recorded as havi
 
 ### 6. Report, and stop
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill review-change --project
+<project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
+full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the fields the skeleton left empty,
+and hand the person exactly what `handoff.py --render` prints over the record: the opening «A
+handoff opens with what needs the person, and explains after» (SPEC-006 R1) states. This report
+hands no invocation, so the skeleton marks no door; the findings' grouping line goes in the
+record, and where a finding's route is handed as a decision it is «the person's own decision»
+(SPEC-006 R3), with what each door assumes is true and what would settle it. A refusal is
+answered by rewriting the field it names; a state it says has moved, by running `--prepare`
+again and carrying its `state` and `state_from` whole.
 
-Report, in this order:
+Report, in this order, in the file:
 
 - the findings as counts before any one of them, exactly as this prints them:
 
