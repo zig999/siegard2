@@ -627,10 +627,6 @@ def human_text_of(entry: dict) -> str | None:
     return text or None
 
 
-def is_human_turn(entry: dict) -> bool:
-    return human_text_of(entry) is not None
-
-
 def confirmation_class(text: str) -> str | None:
     """Which confirmation a short human turn is, or None where it is not one. A turn that asks
     something is never a confirmation, whatever words it uses; a commit word is read first, so

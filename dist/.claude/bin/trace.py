@@ -41,7 +41,8 @@ What this script does, and nobody else does any of it:
                                                                   that plan implements, read from
                                                                   its plan.json
     trace.py --encodes <target-root> <file> ...                   which nodes each file is bound to
-    trace.py --convergence <target-root> <spec-root> <work-root>  every node of the specification
+    trace.py --convergence <target-root> <spec-root> <work-root> [--all]
+                                                                  every node of the specification
                                                                   in one state, across the trace
                                                                   and every initiative, with the
                                                                   judged side kept apart
@@ -95,6 +96,9 @@ What this script does, and nobody else does any of it:
                                                                   staged for certification)
     trace.py --fold <target-root> <workspace> <premise> <record>  fold the delegations' returns
                                                                   into the reconciliation record
+    trace.py --fold ... --run <run-dir>                           the same, the mechanical tier
+                                                                  answered by the run bin/run.py
+                                                                  wrote
     trace.py --encodes --rank <target-root> [--all]               the accretion axes: files by
                                                                   bindings held, nodes by files
                                                                   bound
@@ -128,7 +132,7 @@ reconciliation's. Only the first is `--prune`'s, and `--prune` touches only it:
 dropping a binding whose file moved would discard the one record of which node that code answers
 to, which is the whole of what this file keeps.
 
-Left unpruned, the orphaned class is what makes the other two unreadable. A tree carrying eighty
+Left unpruned, the orphaned class is what makes the others unreadable. A tree carrying eighty
 stale entries reports eighty-three findings the day three files drift, and nobody reads the three:
 the report a caller stops reading is a report that says nothing, however true every line of it is.
 
@@ -440,6 +444,7 @@ siblings under bin/).
 
 Usage:  trace.py <target-root>
         trace.py --check <target-root> [--all]
+        trace.py --check <target-root> --reconcile-set
         trace.py --bind <target-root> <spec-root> <node> <file> [<file> ...] [--replace]
         trace.py --bind-record <target-root> <spec-root> <implementation-record> [--replace]
         trace.py --bind-record <target-root> <spec-root> <reconciliation-record>
@@ -450,12 +455,19 @@ Usage:  trace.py <target-root>
         trace.py --owed <target-root> [--all] [--plan <work-root>]
         trace.py --encodes <target-root> <file> [<file> ...]
         trace.py --encodes --changed <target-root> [<ref>]
-        trace.py --convergence <target-root> <spec-root> <work-root-parent> [--all]
+        trace.py --convergence <target-root> <spec-root> <work-root> [--all]
         trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
-                 [--audit | --review [--node <node> ...] [--demonstrated <proof-record> ...]]
+                 [--audit | --review [--node <node> ...] [--demonstrated <proof-record> ...]
+                  | --adopt (--node <node> ... [--outside <file> ...] | --ledger <ledger.md>)]
                  [--certify <certifications-file>] [--rewrite <rewrite-file>]
-        trace.py --fold <target-root> <workspace-dir> <premise-file> <record>
+                 [--concurrency <n>]
+        trace.py --save-return <target-root> <workspace-dir> <file> <transcript>
+        trace.py --fold <target-root> <workspace-dir> <premise-file> <record> [--run <run-dir>]
         trace.py --encodes --rank <target-root> [--all]
+        trace.py --untraced <target-root> [--all]
+        trace.py --area <target-root> <path-or-dir> [<path-or-dir> ...]
+        trace.py --survey <material.md> [<material.md> ...]
+        trace.py --ledger <ledger.md> <spec-root>
         trace.py --help
                 print this text and stop
 Exit:   0 sound / drift-free / bound / pruned / released / the record holds / nothing is owed /
@@ -501,7 +513,6 @@ TRACE_FILE = "siegard-trace.json"
 RECONCILE_DIR = "siegard-reconcile"
 MANIFEST_FILE = "manifest.json"
 RUN_DIR = "run"
-NOWHERE = "nowhere"
 # The harness's own ceiling on delegations running at once, read from the refusal it prints past
 # it; `--concurrency` overrides it where a harness sets another. Not this framework's number.
 CONCURRENCY = 20
@@ -3297,7 +3308,9 @@ def adopted_ground(home: Path) -> tuple[set[str], set[str], list[str]]:
 def untraced_of(target: Path, declared: dict | None) -> tuple[dict | None, str | None]:
     """The tracked files under the target in exactly one state each — «Every tracked file under
     a target is in exactly one state» (SPEC-005 R5): bound; judged by an adoption that bound
-    none of its candidates to it; kept outside an adoption's judgment; or unsurveyed. A binding
+    none of its candidates to it; kept outside an adoption's judgment; a test the target declares
+    that nothing judged, uncertified; or unsurveyed — and a file more than one of these describes
+    is in the first of them, in that order. A binding
     names a file either as one it encodes or as the proof a certification pinned, and both are
     bound: the trace pins the proof's digest and reports its drift the way it does the files'."""
     home = home_of(target)

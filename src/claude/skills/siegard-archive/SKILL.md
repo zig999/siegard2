@@ -81,7 +81,9 @@ states; what follows is the report that opening sits above.
 - the git acts, ready to paste and in this order — both the human's, never this skill's:
   1. `git tag -a archive/<date> -m "last tree holding: <slugs>"` — the tree was clean, so
      HEAD is the pre-removal state, and the tag is what makes recovery one command;
-  2. `git add -A && git commit` — the removal itself, reviewed as a diff like any other;
+  2. the removal itself, pathspec-scoped to the pairs archived, reviewed as a diff like any
+     other:
+     `git add -A -- <work-root>/<slug> <delivery-root>/<slug>... && git commit -m "siegard-archive: <slugs>"`;
 - the recovery line, both halves of the pair the removal kept whole:
   `git checkout archive/<date> -- <work-root>/<slug> <delivery-root>/<slug>` brings any of it
   back;
@@ -100,3 +102,5 @@ Then stop. The diff — deletions and all — is the review, and it belongs to a
   finished.
 - Repair what a criterion refused — a stale index, a broken record, a dirty tree are reported,
   and fixing them belongs to the entry points that own them.
+- Commit, stage, tag, or otherwise change the consumer's git state — the git acts are handed,
+  ready to paste, and both are the person's.

@@ -86,7 +86,7 @@ never a requirement that one does; nothing said which step such a rule may name.
    suite decides whose scope reaches the tests the target declares, and refuses none of them:
    whether a rule requires a test to exist or constrains a test that exists is a reading, and a
    scope cannot say which — 1 of the 25 above was the first — so the report states R4 beside the
-   names and the registry's author reads them. `tests/test_deliver.py` proves the report and that
+   names and the registry's author reads them. `tests/test_standard.py` proves the report and that
    it refuses nothing. The criterion that reverses the report into a refusal: a mechanical
    discriminator between the two kinds that agrees with a reading on every rule of the
    registries above.

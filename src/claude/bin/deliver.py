@@ -1039,7 +1039,7 @@ def phase_steps(commands: list[dict], phase: str) -> list[dict]:
     because nothing reads a package before the install made it real, and the suite last and only
     in the suite phase, because it is held back until the tests exist. `setup` is the install
     alone — the whole of what runs before an implementer is spawned, and the whole of what a task
-    declaring `produces` ever runs. One selection with two readers, on purpose: `check_standard`
+    `substrate_only` holds ever runs. One selection with two readers, on purpose: `check_standard`
     prints each phase composed for `bin/run.py`, and `owed_run_problems` holds the captured run
     to the same list — what a caller was handed to run and what the validator says was owed
     cannot drift apart while both are this function. `prepare` carries neither reader: it runs
@@ -3104,8 +3104,9 @@ def check_standard(named: str, against: str | None = None,
             args = " ".join("--step " + shlex.quote(f"{c.get('step')}={c.get('command')}")
                             for c in steps)
             print(f"    {phase}: --timeout-seconds {largest} {args}")
-        print("    a task declaring `produces` runs the setup line where build is named and "
-              "nothing at the suite — the substrate exemption, stated once here")
+        print("    a task declaring `produces` whose written files no rule reaches runs the setup "
+              "line where build is named and nothing at the suite — the substrate exemption, "
+              "stated once here; one that wrote a file a rule reaches runs every line")
     else:
         print("  it declares no command: nothing runs on its own, and a review says which rules "
               "went unanswered")

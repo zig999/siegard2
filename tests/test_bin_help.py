@@ -66,3 +66,34 @@ def test_help_answers_before_the_arguments_are_judged(name):
     # Read on stderr, not stdout: every refusal this framework prints goes there, and the
     # docstring being printed carries the words "cannot run" in its own Exit: block.
     assert result.stderr == "", f"{name} refused the arguments instead of answering: {result.stderr}"
+
+
+@pytest.mark.parametrize("name,args", [
+    ("goal.py", ("--compose", ".", "--slug", "a", "--slug", "b")),
+    ("handoff.py", ("--prepare", "--slug", "a", "--slug", "b")),
+    ("door.py", ("--check", "commit", "--project", ".", "--slug", "a", "--slug", "b")),
+    ("ask.py", ("--read", ".", "--path", "a", "--path", "b")),
+    ("relay.py", ("--to", "a", "--to", "b")),
+])
+def test_a_single_value_flag_named_twice_is_refused(name, args):
+    """One value per single-value flag: a second one is refused, never silently left behind for
+    the parse to read as something else."""
+    done = run(name, *args)
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "is named twice" in done.stderr
+
+
+def test_trace_usage_names_every_flag_its_parse_reads():
+    """One synopsis a person reads: a flag the parse reads and the usage block omits is a form
+    nobody finds without opening the source. Git's own flags, which the script passes through,
+    are not this script's."""
+    import re
+    source = (BIN / "trace.py").read_text(encoding="utf-8")
+    doc = docstring_of("trace.py")
+    usage = doc.split("Usage:", 1)[1].split("Exit:", 1)[0]
+    code = source.split('"""', 2)[2]
+    git_flags = {"--exclude-standard", "--name-only", "--name-status", "--others",
+                 "--porcelain", "--verify", "--help"}
+    missing = sorted(f for f in set(re.findall(r'"(--[a-z][a-z-]*)"', code)) - git_flags
+                     if f not in usage)
+    assert not missing, f"trace.py's usage block omits {missing}"

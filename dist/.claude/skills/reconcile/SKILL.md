@@ -583,7 +583,7 @@ changed. The fold already said which certifications did not hold and why, in the
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill reconcile --project
 <project-root> --target <target> --language <en or pt-BR, the session's>` — with `--slug` only
 where a live initiative's slug is what the `/plan-work` door carries, never this
-reconciliation's own. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the
+reconciliation's own. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the
 fields the skeleton left empty, and hand the person exactly what `handoff.py --render` prints
 over the record: the opening «A handoff opens with what needs the person, and explains after»
 (SPEC-006 R1) states. The doors it marks are the `/analyse` and `/plan-work` ones this report
@@ -751,3 +751,5 @@ The same order, with four differences, each held by the scripts rather than by t
   says nothing about coverage, about the project's standard, or about whether anything was proven —
   those are `/review-change`'s, over a delivery, and a reconciliation that reported them would be
   reviewing a change nobody delivered.
+- **It never commits.** The trace, the record and the returns it wrote are the person's to commit,
+  or `/adopt-scope`'s over an adoption it carries.

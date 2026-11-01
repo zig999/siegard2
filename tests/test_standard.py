@@ -491,8 +491,11 @@ def test_the_subcommand_composes_each_phase_for_the_runner():
                          ("suite", install + middle + suite)):
         assert line(phase, steps) in done.stdout, \
             f"the {phase} phase does not print composed in the order it runs"
-    assert "a task declaring `produces` runs the setup line" in done.stdout, \
+    assert "a task declaring `produces` whose written files no rule reaches runs the setup line" \
+        in done.stdout, \
         "the substrate exemption is stated beside the lines it bends"
+    assert "one that wrote a file a rule reaches runs every line" in done.stdout, \
+        "the exemption names the task it does not cover"
 
 
 def test_a_registry_with_no_install_role_composes_an_empty_setup(tmp_path):

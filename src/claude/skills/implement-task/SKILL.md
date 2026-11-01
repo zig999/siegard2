@@ -308,7 +308,7 @@ over the target: the implementation's files are
 bound with digests, and one that moved since the bind is exactly what makes "the implementation
 stands" false — that drift is a stop. Where what moved it is a later task's own delivery over
 that file, the answer is not this task's at all: the test is that delivery's to rewrite, under
-step 7's second `test` exit; anywhere else, the answer is a full re-delivery. **`--all` is what
+step 6's second `test` exit; anywhere else, the answer is a full re-delivery. **`--all` is what
 makes this mode's premise checkable at all**, and it is the one place in this framework that
 needs it: a project may declare a target freely edited, and an ordinary check then holds that
 class back as noise a reader cannot act on — but here it is the whole question, so this call asks
@@ -515,8 +515,11 @@ check listed as deciding a constraint, the red is that constraint's: name it bes
 the run goes back to the producer and again in the report, so a reader meets the node the tree
 broke and not only the file.
 
-**One task runs less than that, and it is the same task and the same field as at the situate step:
-one declaring `produces`.** It runs the step whose role is `install`, and no other. What every other
+**One task runs less than that: one declaring `produces`, the same field as at the situate step,
+whose written files no rule reaches.** `deliver.py --standard <registry> --reach --for <each file
+the implementer wrote>` answers it — `reached by no rule: N of N`. Such a task runs the
+step whose role is `install`, and no other; one that wrote a file a rule reaches runs the whole
+build phase above. What every other
 step decides is a rule over a file; a delivery that wrote the substrate wrote no such file, so a
 check run here decides nothing — and whether it says so by failing or by exiting 0 is the stack's
 accident rather than this delivery's evidence. That is the sharper half: a green step over an empty
@@ -591,7 +594,7 @@ slug as the task, because the path is the identity and nothing else names which 
 answers:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-implementation <delivery-root> task/<epic>/<slug> --target <the target's key> --task-file <absolute path of work-root/task/<epic>/<slug>.md> --run run/<epic>-<slug>-build --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-implementation <delivery-root> task/<epic>/<slug> --target <the target's key> --task-file <absolute path of work-root/task/<epic>/<slug>.md> --run run/<the build run that passed> --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
 ```
 
 `<the delegation's transcript>` is the output file the harness names for the spawned agent: the
@@ -660,7 +663,7 @@ Spawn a `siegard:test-author` subagent — its judgment lives at
 
 ```
 task file:             <absolute path of work-root/task/<epic>/<slug>.md>
-implementation record: <absolute path of the record step 3 wrote — or, where step 4 runs this
+implementation record: <absolute path of the record step 4 wrote — or, where step 4 runs this
                         step ahead of the record, the implementer's transcript, whose final
                         reply the record will be written from>
 red build:             <the build run's absolute path and each path its fix lies in — omit
@@ -808,7 +811,7 @@ substrate alone reaches neither this step nor the one before it, for the reason 
 Write `proof/<epic>/<slug>.md`, same epic and slug again, through the writer the same way:
 
 ```
-python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-proof <delivery-root> task/<epic>/<slug> --target <the target's key> --run run/<epic>-<slug>-suite --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --write-proof <delivery-root> task/<epic>/<slug> --target <the target's key> --run run/<the suite run that passed> --standard <the registry's path relative to the target source root> --standard-file <absolute path of the registry> --from <the delegation's transcript> [--what "…"]... [--note "…"]...
 ```
 
 The same `target`, and — where a standard was named — the same stamps: the registry's own path,
@@ -934,7 +937,7 @@ a `--check` finding nobody was going to run.
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill implement-task --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
-full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the fields the skeleton left empty,
+full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the fields the skeleton left empty,
 and hand the person exactly what `handoff.py --render` prints over the record: the opening «A
 handoff opens with what needs the person, and explains after» (SPEC-006 R1) states. The doors it
 marks are the `/review-change` and `/reconcile` ones this report hands, each with what its entry

@@ -325,7 +325,7 @@ follows a stop.
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill deliver-scope --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>` — where a
 step stopped the run, `--skill` names that step instead, so the doors it marks are the ones that
-step's report hands. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the
+step's report hands. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the
 fields the skeleton left empty — the stopping report's recommendation and doors among them,
 carried — and hand the person exactly what `handoff.py --render` prints over the record: the
 opening «A handoff opens with what needs the person, and explains after» (SPEC-006 R1) states.

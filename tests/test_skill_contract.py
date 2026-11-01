@@ -749,3 +749,46 @@ def test_deliver_scope_names_every_review_it_invokes():
     review = " ".join((REPO / "src/claude/skills/review-change/SKILL.md")
                       .read_text(encoding="utf-8").split())
     assert "or by `/deliver-scope` under the rule its own file states" in review
+
+
+COMMITTERS = {"deliver-scope", "adopt-scope"}
+NEVER = re.compile(r"^## What (?:you|this) never do(?:es)?\n(.*?)(?=^## |\Z)", re.S | re.M)
+
+
+@pytest.mark.parametrize("path", sorted((REPO / "src/claude/skills").glob("*/SKILL.md")),
+                         ids=lambda p: p.parent.name)
+def test_every_skill_but_the_two_committers_states_it_never_commits(path):
+    """Only `/deliver-scope` and `/adopt-scope` commit; every other skill's refusal stands in its
+    own never-list, or its tools hold no shell that could run git."""
+    if path.parent.name in COMMITTERS:
+        return
+    text = path.read_text(encoding="utf-8")
+    fence = FENCE.match(text)
+    tools = fence.group(1) if fence else ""
+    tools_line = next((line for line in tools.splitlines() if line.startswith("allowed-tools:")),
+                      "")
+    if "Bash" in tools_line and "Bash(" in tools_line and "Bash(git" not in tools_line \
+            and not re.search(r"\bBash\b(?!\()", tools_line):
+        return
+    section = NEVER.search(text)
+    assert section and re.search(r"\bcommit", section.group(1), re.I), \
+        f"{path.parent.name} states no refusal to commit in its never-list"
+
+
+@pytest.mark.parametrize("path", sorted((REPO / "src/claude").rglob("*.md")),
+                         ids=lambda p: str(p.relative_to(REPO / "src/claude")))
+def test_no_artifact_hands_a_staging_sweep(path):
+    """«never `git add -A` without a pathspec» — the session rules forbid the sweep, so no skill
+    hands one to paste."""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        for found in re.finditer(r"git add (?:-A|--all|\.)(?P<rest>[^`]*)", line):
+            assert found.group("rest").startswith(" -- ") or "never" in line, \
+                f"{path.name} hands a staging sweep: {line.strip()}"
+
+
+@pytest.mark.parametrize("path", sorted(p for p in (REPO / "src/claude").rglob("*")
+                                        if p.suffix in (".md", ".py", ".json", ".yaml")
+                                        and "__pycache__" not in p.parts),
+                         ids=lambda p: str(p.relative_to(REPO / "src/claude")))
+def test_no_shipped_text_carries_a_doubled_comma(path):
+    assert ",," not in path.read_text(encoding="utf-8"), f"{path.name} carries ',,'"

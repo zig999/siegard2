@@ -4,11 +4,16 @@
 
 Siegard executes. Knowing what it runs and where its limits sit is the first part of judging it.
 
-- **Hooks.** The plugin's `hooks/hooks.json` runs two scripts, `hooks/rules.py` and
-  `hooks/drift.py`, at session start, and `hooks/rules.py` again when an agent is spawned. They place
-  context only in a project that declares `siegard.json` at its git toplevel and print nothing
+- **Hooks.** The plugin's `hooks/hooks.json` runs `hooks/rules.py` and `hooks/drift.py` at session
+  start, `hooks/rules.py` again when an agent is spawned, and `hooks/goal_stop.py` at every stop.
+  They act only in a project that declares `siegard.json` at its git toplevel and print nothing
   elsewhere, even where the plugin is enabled for every project you open; `drift.py` reads the
-  project's trace with `trace.py --check` and never fails a session.
+  project's trace with `trace.py --check` and never fails a session. The stop hook can block a
+  stop: where a goal armed by `bin/goal.py --arm` holds, it answers from that goal's state; where
+  none does, it holds the stopping message to `bin/handoff.py --check` (`hooks/handoff_stop.py`),
+  blocking once only where `SIEGARD_HANDOFF_STOP` is `enforce`. It writes only under the
+  repository's git directory (`siegard/`), never in the working tree, and every failure of its own
+  allows the stop.
 - **Skills run commands the project's own registry declares.** A skill installs what a project's
   standard authorizes and runs the steps it declares, so a delivery hands over a project that
   installs and builds. This repository composes no command and authorizes no package: every
@@ -21,7 +26,15 @@ Siegard executes. Knowing what it runs and where its limits sit is the first par
   files; every other agent returns content and the calling skill writes it.
 - **Commits are bounded.** Only `/deliver-scope` and `/adopt-scope` commit, pathspec-scoped, one
   per step, never a branch, a push or a rewrite, and only under an ask the person's own words
-  state end to end.
+  state end to end. Outside them, a session commits what the skill it invoked wrote, one
+  pathspec-scoped commit per invocation, only under the person's own words in that session — a
+  commit word, a go-ahead naming the next step, a goal condition naming the route, or an ask
+  `bin/ask.py` recorded verbatim — and, after a run's log closes on a stop line, nothing but the
+  measure `bin/door.py --check commit` accepts.
+- **Text crosses projects only through a file the origin keeps.** `bin/relay.py --to` writes a
+  message for a sibling project under this project's own telemetry root and never into the
+  sibling; the receiving session reads it through `relay.py --confirm`, which refuses outside the
+  sibling or over text whose digest does not match.
 - **Network.** No script under `bin/` or `hooks/` imports a networking module. The commands a
   project's registry declares may use the network; that is the registry's.
 

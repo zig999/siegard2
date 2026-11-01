@@ -22,8 +22,8 @@ A missing input is a stop, not a default:
       - a **citation**: the person points at text already in this conversation — "parts 2 and 3
      above", "the scope you wrote" — and adopts it as theirs. Pointing is the person's act, and
      the text pointed at becomes the objective: copied character for character, as the
-     conversation holds it, into a file of its own, and handed to the script with
-     `--objective-file`. A pointer that does not name one span of text without doubt — "the
+     conversation holds it, and handed to the script on stdin with `--objective-file -`, so no
+     file but the one the script writes exists. A pointer that does not name one span of text without doubt — "the
      parts above" over a message holding several — is a stop that quotes each candidate and asks
      which. Where the text pointed at holds a part this route does not carry — a fact the
      specification does not state yet, which `/analyse` takes before any goal; an edit to the
@@ -70,7 +70,7 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 2. Compose:
 
    ```
-   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --compose <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective "<the objective, verbatim>" | --objective-file <the citation's copy>) [--budget <n>] [--correct contradicts] [--specify]
+   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --compose <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective "<the objective, verbatim>" | --objective-file - <<'OBJECTIVE' … the citation, verbatim … OBJECTIVE) [--budget <n>] [--correct contradicts] [--specify]
    ```
 
    The script checks what `/deliver-scope` would refuse before its first step — the
@@ -83,10 +83,10 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 4. **Arm, only on the person's own word.** Where a later message of the person's says, in their
    own words, to arm this goal through the framework — not a paste of `/goal`, not a yes to
    something else — run, with exactly the arguments step 2 ran, and, for an objective, with
-   `--objective-file` naming the file step 2 wrote:
+   `--objective-file` naming the file step 2's `objective:` line names:
 
    ```
-   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --arm <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective-file <the file step 2 wrote>) [--budget <n>] [--correct contradicts] [--specify]
+   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/goal.py --arm <project-root> --slug <slug> [--target <key>] (--scope <id> [--scope <id>]... | --objective-file <the file step 2's objective: line names>) [--budget <n>] [--correct contradicts] [--specify]
    ```
 
    The script runs every check step 2 ran again, refuses a project that already holds an armed
@@ -103,7 +103,7 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill siegard-goal --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`, write
-the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill the record as one decision of kind
+the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill the record as one decision of kind
 `decision` — the condition, prefixed `/goal `, as its line ready to paste — and hand the person
 exactly what `handoff.py --render` prints: the opening «A handoff opens with what needs the
 person, and explains after» (SPEC-006 R1) states. A refusal is answered by rewriting the field

@@ -30,8 +30,8 @@ session is waiting to be woken, and blocking it would ask for work it is already
 It never fails a session and never traps one. Every path out exits 0. Silent in a project that
 declares no `siegard.json`; in one that holds no armed goal, silent but for the check above.
 Where the state cannot be computed — a validator missing, a project file that no longer resolves
-— the stop is allowed and the goal left armed, said in one line: a hook that blocked on its own failure would hold the session on a
-reason the session cannot repair.
+— the stop is allowed and the goal left armed, said in one line: a hook that blocked on its own
+failure would hold the session on a reason the session cannot repair.
 """
 from __future__ import annotations
 

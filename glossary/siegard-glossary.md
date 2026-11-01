@@ -5,7 +5,7 @@ what it looks like on disk or on the command line.
 
 It was last revised against Siegard **4.21.3**; the plugin has moved on since. Skills and
 agents added after that revision — among them `/survey`, `/adopt-scope`, `/clarify-request`,
-`domain-surveyor` and `test-intent-reader` — are not entries here: each is stated in its own
+`domain-surveyor`, `test-intent-reader` and `door-decider` — are not entries here: each is stated in its own
 `SKILL.md` or agent file, and the README's "Adopting an existing project" section walks the
 adoption route. Section 9 alone also carries the helpers 5.43.0 and 5.44.0 added: the armed
 goal, the handoff record, the door check, the recorded ask, the relay and the progress line. The

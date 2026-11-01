@@ -112,3 +112,4 @@ One table per target (one table total where `targets` names exactly one), in thi
 - Report a percentage, a "nearly done," a health grade, or any figure no command printed.
 - Choose the next task, settle a BLOCKING note, or judge which target matters more — the table
   hands rows and takes none of them.
+- Commit, stash, or otherwise change the consumer's git state.

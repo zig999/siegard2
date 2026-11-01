@@ -1,7 +1,7 @@
 # Windows/WSL download metadata
 *:Zone.Identifier
 
-# Per-maintainer instructions, never shared (see .claude/rules/claude-code-authoring.md)
+# Per-maintainer instructions, never shared
 CLAUDE.local.md
 .claude/settings.local.json
 
@@ -10,7 +10,6 @@ __pycache__/
 
 # Working material, never committed
 temp/
-__pycache__/
 .pytest_cache/
 
 # Concatenated distribution written by tools/export_dist.py

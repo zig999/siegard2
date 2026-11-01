@@ -247,8 +247,7 @@ left out — so the file set the review that followed was handed never held them
    For R24: `bin/project.py --declared-tests` says which paths a red's fix names are tests the
    target declares; `/implement-task` hands the red to the test author only where every path is
    one, with the implementer's return in the record's place, and the test author takes that
-   return — `tests/test_project.py`, `tests/test_skill_contract.py` and
-   `tests/test_agent_contract.py` prove each.
+   return — `tests/test_project.py` and `tests/test_skill_contract.py` prove each.
 7. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
    criterion, covered share per review, and the count of nodes decided by a test. A covered share
    that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.

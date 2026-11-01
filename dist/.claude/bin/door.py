@@ -668,6 +668,8 @@ def take(args: list[str], flag: str, many: bool = False):
         values.append(args[at + 1])
         del args[at:at + 2]
         if not many:
+            if flag in args:
+                raise CannotRun(f"{flag} is named twice")
             break
     return values if many else (values[0] if values else None)
 

@@ -70,7 +70,8 @@ stop with the checks that failed, and a fourth consecutive `not yet` whose whole
 the last ends the goal paused.» (SPEC-008 R14) Arming is the person's act: it runs only on the
 person's own word to arm, which no script can read, so the skill that invokes it holds that
 condition. An `--objective-file` naming the file an earlier `--compose` wrote for the slug is
-named as it stands rather than written again.
+named as it stands rather than written again; `--objective-file -` reads the objective from stdin,
+byte for byte, so a caller holding the text writes no file of its own.
 
 Every root comes from `project.py`, run as a command, so `siegard.json` keeps its one reader. Every
 check runs the framework's own command and quotes what it printed; nothing is re-derived here.
@@ -80,7 +81,7 @@ spec.py, its siblings, and runs them and project.py as commands).
 
 Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]...
                                     answer state A, state B or not yet, then every check
-        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file>) [--target <key>] [--budget <n>] [--correct contradicts] [--specify]
+        goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file|->) [--target <key>] [--budget <n>] [--correct contradicts] [--specify]
                                     check what the route would refuse first, then print the goal
                                     condition to paste after /goal
         goal.py --arm <project-root> (the arguments --compose takes)
@@ -244,7 +245,7 @@ def after(fields: dict, later: str, earlier: str) -> bool:
 def reconciliation_only(fields: dict, commit: str, line: str) -> bool:
     """A `/reconcile` commit names its own record's slug, never the goal's, and touches the
     trace and that record alone — the route a delivery's drift is answered by."""
-    named = re.match(r"^\S+ reconcile ([^\s:]+)(?::|$)", line)
+    named = re.match(r"^\S+ reconcile ([^\s:]+)(?=[:\s]|$)", line)
     if not named:
         return False
     record = RECONCILED[1] + named.group(1)
@@ -362,7 +363,7 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
     log = git(fields["home"], "log", "--format=%H %s", f"{since}..HEAD")
     skills = {p.name for p in SKILLS.iterdir() if p.is_dir()}
     foreign = [line for line in log.splitlines()
-               if not ((m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}(?::|$)", line))
+               if not ((m := re.match(rf"^\S+ ([a-z-]+) {re.escape(slug)}(?=[:\s]|$)", line))
                        and m.group(1) in skills)
                and not reconciliation_only(fields, line.split()[0], line)]
     found["commits"] = (not foreign, "naming no skill and the slug:\n" + "\n".join(foreign)
@@ -652,6 +653,8 @@ def take(args: list[str], flag: str, many: bool = False):
         values.append(args[at + 1])
         del args[at:at + 2]
         if not many:
+            if flag in args:
+                raise Refused(f"{flag} is named twice")
             break
     return values if many else (values[0] if values else None)
 
@@ -731,12 +734,14 @@ def main() -> int:
                   file=sys.stderr)
             return CANNOT_RUN
         try:
-            objective = Path(objective_file).read_text(encoding="utf-8")
-        except OSError as broken:
+            objective = (sys.stdin.buffer.read().decode("utf-8") if objective_file == "-"
+                         else Path(objective_file).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError) as broken:
             print(f"cannot run: {broken}", file=sys.stderr)
             return CANNOT_RUN
         if not objective.strip():
-            print(f"cannot run: {objective_file} is empty", file=sys.stderr)
+            print(f"cannot run: {'stdin' if objective_file == '-' else objective_file} is empty",
+                  file=sys.stderr)
             return CANNOT_RUN
     if not budget_raw or budget_raw.isdigit():
         budget = int(budget_raw or 0)

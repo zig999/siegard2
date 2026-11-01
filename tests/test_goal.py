@@ -406,6 +406,28 @@ def test_a_commit_naming_the_skill_and_the_slug_alone_is_on_the_route(project):
     assert "commits" not in failing(state(project))
 
 
+def test_a_commit_naming_the_skill_and_the_slug_then_a_word_is_on_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "deliveries" / SLUG / "orchestration.md").write_text("- a line\n")
+    commit(home, f"deliver-scope {SLUG} task/x", "deliveries")
+    measure(project)
+    assert "commits" not in failing(state(project))
+
+
+def test_a_reconciliation_naming_its_slug_then_a_word_is_on_the_route(project):
+    deliver(project)
+    review(project)
+    home = project["home"]
+    (home / "siegard-trace.json").write_text("{}\n")
+    (home / "siegard-reconcile").mkdir()
+    (home / "siegard-reconcile" / "drift.md").write_text("record\n")
+    commit(home, "reconcile drift — rebind the reader", "siegard-trace.json", "siegard-reconcile")
+    measure(project)
+    assert "commits" not in failing(state(project))
+
+
 def test_a_commit_naming_a_slug_the_goals_slug_begins_is_off_the_route(project):
     deliver(project)
     review(project)
@@ -511,6 +533,21 @@ def test_a_cited_objective_is_copied_whole_from_its_file(project, tmp_path):
     assert written.read_bytes() == cited.read_bytes()
     both = compose(project, "--objective-file", str(cited), "--objective", "x")
     assert both.returncode == 2
+
+
+def test_a_cited_objective_is_copied_whole_from_stdin(project):
+    cited = "Parte 2: testes que faltam.\n\n  - item: com dois pontos\n"
+    result = subprocess.run([sys.executable, "-B", str(BIN / "goal.py"), "--compose",
+                             str(project["home"]), "--slug", SLUG, "--objective-file", "-"],
+                            input=cited.encode("utf-8"), capture_output=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    (written,) = (project["home"] / "telemetry").glob(f"goal-*-{SLUG}.md")
+    assert written.read_bytes() == cited.encode("utf-8")
+    empty = subprocess.run([sys.executable, "-B", str(BIN / "goal.py"), "--compose",
+                            str(project["home"]), "--slug", SLUG, "--objective-file", "-"],
+                           input=b"  \n", capture_output=True, text=False)
+    assert empty.returncode == 2
+    assert b"stdin is empty" in empty.stderr
 
 
 def test_to_specify_is_the_persons_and_only_over_an_objective(project):

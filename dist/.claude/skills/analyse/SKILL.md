@@ -505,7 +505,7 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill analyse --project
 <project-root> --language <en or pt-BR, the session's>` — no slug, which is the human's to name
-for the plan. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the fields
+for the plan. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the fields
 the skeleton left empty, and hand the person exactly what `handoff.py --render` prints over the
 record: the opening «A handoff opens with what needs the person, and explains after»
 (SPEC-006 R1) states. The doors it marks are the `/plan-work` and `/reconcile` ones this report hands, each

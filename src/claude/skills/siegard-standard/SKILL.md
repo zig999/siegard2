@@ -131,6 +131,8 @@ still incomplete carries that into the report as fact, not as a defect of the fi
 - **Invoke itself.** This skill decides no domain fact and reviews nothing, but it shapes what every
   later review holds the project to — the same reason `/siegard-config` is closed to model
   invocation applies here without exception.
+- **Commit the standard.** `git diff` over its path is the person's review, and the commit after
+  it is the person's too.
 
 ## Report, and stop
 

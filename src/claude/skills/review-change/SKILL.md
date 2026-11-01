@@ -143,7 +143,7 @@ what a diff looks like.
 `${CLAUDE_PLUGIN_ROOT}/schemas/delivery-node.json` is the single home of what a delivery node
 may and must declare —
 including which passes a review answers for, what each state and each cause means, and what a
-finding carries. It is also 46 KB, and three of the four passes below need only a slice of it —
+finding carries. It is also large, and three of the four passes below need only a slice of it —
 the conformance pass is the exception, and it answers to a contract of its own named further
 down. Run:
 
@@ -633,7 +633,7 @@ make coverage look better, and a pass that did not run is never recorded as havi
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill review-change --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
-full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the fields the skeleton left empty,
+full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the fields the skeleton left empty,
 and hand the person exactly what `handoff.py --render` prints over the record: the opening «A
 handoff opens with what needs the person, and explains after» (SPEC-006 R1) states. This report
 hands no invocation, so the skeleton marks no door; the findings' grouping line goes in the

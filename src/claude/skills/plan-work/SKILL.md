@@ -752,7 +752,7 @@ passing to make a check go green.
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill plan-work --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`. Write the
-full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names,, fill only the fields the skeleton left empty,
+full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the fields the skeleton left empty,
 and hand the person exactly what `handoff.py --render` prints over the record: the opening «A
 handoff opens with what needs the person, and explains after» (SPEC-006 R1) states. The door it
 marks is the `/implement-task` one this report hands, already checked: a `refuses` is said

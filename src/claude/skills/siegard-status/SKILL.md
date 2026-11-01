@@ -279,3 +279,4 @@ The full status, in this order, every line naming its source:
   contracts refused.
 - Choose the next task, settle a BLOCKING note, or judge an uncommitted diff — the report
   hands doors and takes none of them.
+- Commit, stash, or otherwise change the consumer's git state.

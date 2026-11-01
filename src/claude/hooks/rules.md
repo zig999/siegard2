@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.45.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.45.1. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -98,8 +98,7 @@ not. Three things hold that route:
   committing what a delivery wrote, run `bin/door.py --check commit --project <project-root>
   --slug <slug> --file <path>...`; a first line `refuses` stops the commit: «A run whose
   orchestration log closes on a stop line commits nothing after it but the measure: the telemetry
-  root, and the log that carries the stop line.» (SPEC-008 R18) The commit is the session's act
-  after the skill returned, never the skill's.
+  root, and the log that carries the stop line.» (SPEC-008 R18)
 - **A report opens with what needs the person, and recommends what a fact on disk decides.**
   «A handoff opens with what needs the person, and explains after» (SPEC-006 R1), in the person's
   words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the
