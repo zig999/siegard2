@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.45.0 — 2026-11-01
+
+A report's short form is held as a decision's opening is (SPEC-006 R11): `bin/handoff.py --render` reads a `body` above a report path whole for the closed list of terms, and a body with no path over its first 450 characters; the list gains the drift classes `moved`, `proof` and `orphaned` and the Portuguese "ato devido" and "leitura devida"; and a body that recommends without the words that open the reversing fact is refused. `trace.py --check --reconcile-set` prints a `free slug:` no reconciliation holds yet, and `/siegard-status` hands the `/reconcile` invocation with it instead of asking the person for a name. (`b4105b2`)
+
 ## 5.44.1 — 2026-11-01
 
 The session rules say where the framework's version is read — the marker line that opens them — instead of naming a script that prints none; the handoff and commit rules lose a reason, a layout `--render` already produces and a repeated clause, and the file goes from 12,291 to 11,946 bytes. `tests/test_rules_health.py` holds the file to the rules `CLAUDE.md` now states for it: its size pinned as a ratchet under 200 lines, each bullet opening with its rule in bold, and every script, flag and schema it names shipping. In this repository, the suite runs in parallel under pytest-xdist, and both glossaries gain the armed goal, the handoff record, the door check, the recorded ask, the relay and the progress line. (`410d326`)
