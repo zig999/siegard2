@@ -58,6 +58,68 @@ evidência, sem veredito, severidade ou ranking.
 parada quando o `SKILL.md` da skill o chama assim. Quando diz que um passo pode seguir, lista as
 verificações que rodou, com a saída de cada uma.
 
+**Renderizado, nunca redigido** (desde a 5.43.0 e a 5.44.0). Um handoff que entrega uma decisão
+sai de um **registro** (`schemas/handoff.json`), não de texto livre:
+
+```sh
+handoff.py --prepare --skill <skill> --project <project-root>   # esqueleto: estado + portas verificadas
+handoff.py --save-report <caminho>                              # relatório completo, lido da entrada padrão
+handoff.py --render <registro>                                  # a mensagem que você lê
+handoff.py --check <mensagem>                                   # confere uma mensagem já escrita
+```
+
+O `--prepare` escreve a linha de estado a partir de um script (o goal armado, senão o
+`progress.py`), e cada porta já vem com a resposta do `door.py`. A sessão só preenche os campos
+vazios. O `--render` recusa um registro cujo estado mudou, uma porta recomendada que foi recusada,
+prosa com jargão do framework e texto acima dos limites de tamanho. O relatório completo fica em
+`siegard/handoff/`, dentro do diretório do git, fora de toda raiz que o `git status` confere. O
+hook `Stop` mede cada handoff (`handoff-checks.jsonl`); com `SIEGARD_HANDOFF_STOP=enforce`, ele
+bloqueia um handoff fora do contrato.
+
+### Verificação de porta (`door.py`)
+Diz se a skill de uma porta recusaria as entradas dela do jeito que a árvore está agora:
+
+```sh
+door.py --check <skill> --project <project-root> [entradas…]
+door.py --check commit --project <project-root> --slug <slug> --file <caminho>...
+```
+
+A primeira linha é `accepts` ou `refuses`. Depois vêm as linhas `refused:` (cada recusa, com a
+saída do comando que a decidiu), `checked:`, `decided:` e `not decided:`, que nunca é lida como
+aceite. Uma porta recusada aparece como excluída, nunca recomendada. Quando sobra uma porta só e
+a mensagem da pessoa diz para seguir, a sessão a toma. A verificação `commit` recusa um commit
+depois de uma execução cujo log fechou numa linha de parada, exceto o da medição.
+
+### Goal armado (`goal.py --arm`)
+Um *goal* é uma condição que a sessão persegue até ela valer. Armado pelo framework (desde a
+5.43.0), ele termina na resposta de um script, não na leitura de um modelo: o hook `Stop` do plugin
+roda o `goal.py --state` a cada parada. `state A` (concluído) ou `state B` (parado para a pessoa)
+encerra o goal. `not yet` bloqueia a parada com as verificações que falharam, e a sessão responde
+com o próximo passo da rota. O quarto `not yet` idêntico seguido pausa o goal.
+
+```sh
+goal.py --arm <project-root> --slug <slug> [--scope <id>]... | --objective <texto>
+goal.py --disarm <project-root>
+```
+
+Só se arma por palavra da própria pessoa, e o `--disarm` só roda quando ela pede. O registro fica
+em `siegard/goal.json`, dentro do diretório do git, nunca na árvore.
+
+### Pedido gravado (`ask.py`)
+Uma compactação guarda um resumo do que a pessoa disse, nunca as palavras dela. `ask.py --record
+<project-root> --text-file -` copia, byte a byte, as palavras que autorizam uma rota para
+`ask-<carimbo>.md` na raiz de telemetria, com um digest. `ask.py --read <project-root>` as
+imprime de volta, literalmente. Assim, uma rota retomada depois de uma compactação lê a
+autorização nas palavras da pessoa, não num resumo. Gravar não amplia nada: o que o pedido
+autoriza continua sendo lido das palavras dele.
+
+### Relay (`relay.py`)
+Texto destinado à sessão de outro projeto. `relay.py --to <raiz-do-irmão> --from <project-root>
+--text-file -` grava o texto na raiz de telemetria **deste** projeto, nunca no repositório do irmão,
+e imprime uma linha `confirm:`. A sessão do irmão roda essa linha primeiro: ela recusa (`refuses`),
+sem mostrar o texto, quando a sessão está no projeto errado, roda outra versão do plugin ou o
+texto não bate com o digest.
+
 ### `/siegard-config`
 Escreve ou atualiza o `siegard.json` a partir do que a pessoa diz. É o único que escreve esse
 arquivo.
@@ -229,6 +291,14 @@ O que mudou depois da 5.6.0:
 Uma tabela compacta das tarefas de uma iniciativa (status derivado + porquê), feita para rodar
 repetidamente (por exemplo, com `/loop`). Desde a 5.14.0 repassa as linhas do `--outstanding`
 sobre registros que não fixam o standard declarado.
+
+### Linha de progresso (`progress.py`)
+Desde a 5.43.0, uma linha por iniciativa ativa, lida do disco sem nenhum modelo:
+`<slug> · task 3/7 delivered · phase delivery · last: <linha do log>`. A fase é a primeira que vale
+entre `plan`, `delivery`, `proof`, `review` e `reviewed`. Ela diz quais registros existem, nunca o
+que é devido. Aparece na linha de status do Claude Code quando a pessoa pede ao `/siegard-config`,
+que roda `progress.py --install`. Esse comando escreve o `.claude/settings.local.json` do projeto,
+que fica fora do controle de versão; `--uninstall` remove a entrada.
 
 ### `/siegard-archive`
 Remove da árvore de trabalho iniciativas **fechadas** (as pastas de work e delivery), depois de

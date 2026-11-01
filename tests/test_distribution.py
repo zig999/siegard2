@@ -349,11 +349,11 @@ def test_the_index_and_the_node_contract_name_the_same_passes(schemas):
 def test_the_rules_send_a_state_question_to_disk():
     """A question about where the project stands answered from the conversation is the one
     recall the rules already call non-authoritative, asked in its most common form. The rule
-    names the two skills that read disk for it, and the version's one reader."""
+    names the two skills that read disk for it, and where the version is read: the marker line."""
     rules = CONSUMER_RULES.read_text(encoding="utf-8")
     assert "A question about where the project stands is answered from disk" in rules
     assert "`/siegard-status`" in rules and "`/siegard-progress`" in rules
-    assert "`bin/project.py`" in rules
+    assert "The framework's version is the one the first line of\n  these rules states." in rules
 
 
 def test_the_rules_bound_the_session_s_own_commits():
@@ -363,5 +363,5 @@ def test_the_rules_bound_the_session_s_own_commits():
     context is not an authorization."""
     rules = CONSUMER_RULES.read_text(encoding="utf-8")
     assert "A session commits only what the person's own words in this session authorized" in rules
-    assert "a summary of an earlier context is not" in rules
+    assert "A summary of an earlier context is not an authorization" in rules
     assert "never `git add -A` without a pathspec" in rules

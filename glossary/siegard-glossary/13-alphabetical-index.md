@@ -10,6 +10,7 @@
 | advisory (note) | 4 |
 | aggregate-root | 3 |
 | anchor | 4 |
+| `ask.py`, recorded ask | 9 |
 | audit, `--audit` | 8 |
 | bind, `--bind`, `--bind-record` | 7, 8 |
 | binding | 7 |
@@ -58,6 +59,7 @@
 | `depends_on` | 4 |
 | digest | 3 |
 | divergences | 5 |
+| `door.py`, door check | 9 |
 | drift | 7 |
 | `edits_freely` | 2 |
 | emitted-text findings (informal) | 11 |
@@ -71,6 +73,8 @@
 | floor / ceiling | 3 |
 | `--fold` | 8 |
 | git toplevel | 2 |
+| goal, armed goal, `goal.py --arm` | 9 |
+| `handoff.py`, handoff record | 9 |
 | `held_at` | 8 |
 | `holds-nothing` / `outside` / `unsurveyed` | 7 |
 | `how` | 5, 8 |
@@ -103,6 +107,7 @@
 | pin | 3 |
 | premise | 8 |
 | `presupposes`, `produces`, substrate | 5 |
+| `progress.py`, progress line | 9 |
 | `project.py` | 9 |
 | projection | 3 |
 | `proof` (drift) | 7 |
@@ -116,6 +121,7 @@
 | reconciliation record | 8 |
 | `--reconciliation` | 8 |
 | refold (informal) | 11 |
+| `relay.py`, relay | 9 |
 | `--release` | 7 |
 | remainder (note) | 4 |
 | `remainder` `testable`/`untestable` | 8 |

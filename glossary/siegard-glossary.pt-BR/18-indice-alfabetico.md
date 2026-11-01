@@ -15,6 +15,7 @@
 | `/analyse` | 5 |
 | `answers` (api) | 5 |
 | `--area` | 11 |
+| `ask.py`, pedido gravado | 12 |
 | árvore limpa | 1 |
 | auditoria, `--audit` | 10 |
 | bind, `--bind`, `--bind-record` | 9, 10 |
@@ -76,6 +77,7 @@
 | digest, SHA-256 | 1, 5 |
 | divergences | 7 |
 | `domain-surveyor` | 11, 13 |
+| `door.py`, verificação de porta | 12 |
 | drift | 9 |
 | duas grafias de um caminho | 4 |
 | `edits_freely` | 4 |
@@ -92,6 +94,8 @@
 | `--findings` | 8 |
 | `--fold` (dobra) | 10 |
 | frontmatter, YAML | 1 |
+| goal armado, `goal.py --arm` | 12 |
+| `handoff.py`, registro de handoff | 12 |
 | `handoffs` (telemetria) | 12 |
 | `held_at` | 10 |
 | holds-nothing / outside / uncertified / unsurveyed / bound | 9 |
@@ -110,6 +114,7 @@
 | `kind` | 10 |
 | ledger, `--ledger` | 11 |
 | linha de fato | 11 |
+| linha de progresso, `progress.py` | 12 |
 | `looked_past` | 10 |
 | manifest (`manifest.json`) | 10 |
 | material | 5 |
@@ -166,6 +171,7 @@
 | `--reconciliation` | 10 |
 | regra de comentários | 4 |
 | regra do juiz separado | 2 |
+| `relay.py`, relay | 12 |
 | `--release` | 9 |
 | remainder (nota) | 6 |
 | `remainder` `testable` / `untestable` | 10 |

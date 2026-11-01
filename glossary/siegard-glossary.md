@@ -7,7 +7,9 @@ It was last revised against Siegard **4.21.3**; the plugin has moved on since. S
 agents added after that revision — among them `/survey`, `/adopt-scope`, `/clarify-request`,
 `domain-surveyor` and `test-intent-reader` — are not entries here: each is stated in its own
 `SKILL.md` or agent file, and the README's "Adopting an existing project" section walks the
-adoption route. The Portuguese edition, `siegard-glossary.pt-BR.md`, is the more recent: it
+adoption route. Section 9 alone also carries the helpers 5.43.0 and 5.44.0 added: the armed
+goal, the handoff record, the door check, the recorded ask, the relay and the progress line. The
+Portuguese edition, `siegard-glossary.pt-BR.md`, is the more recent: it
 describes 5.19.0. Where this page and a skill's `SKILL.md`, a script's `--help` or a schema under
 `schemas/` disagree, those files win: they are what actually runs. This page explains them; it
 does not replace them.

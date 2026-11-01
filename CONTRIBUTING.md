@@ -48,9 +48,11 @@ English document governs. Identifiers the framework defines are never translated
 python3 -m pytest
 ```
 
-The suite takes about five minutes and must be green before a change lands. A test anchored on
+The suite runs in parallel across every core (`pytest.ini` sets `-n auto`), takes about five
+minutes that way, and must be green before a change lands; `python3 -m pytest -n 0` runs it in
+one process, for a debugger or a test that prints. A test anchored on
 words a change rewrote is re-anchored on the new words, never loosened. Install the dependencies
-first: PyYAML and jsonschema, plus pytest.
+first: PyYAML and jsonschema, plus pytest and pytest-xdist.
 
 ## A change that ships
 

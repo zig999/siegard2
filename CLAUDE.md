@@ -98,6 +98,39 @@ specification says about what happened is not quotable: the `«…»` a distribu
 beside a citation is the requirement's statement, and it crosses into `src/` as shipped text — a
 history sentence is a substring the test accepts and a history the distribution then carries.
 
+## The session rules
+
+`src/claude/hooks/rules.md` is the one text the plugin places in every session and every agent of
+a consumer project, at start and again after every compaction. Every line is paid in thousands of
+contexts and competes for the attention the others need. Anthropic's guidance for instruction
+files holds here: a target under 200 lines, headers and bullets over dense paragraphs, specific
+instructions over general ones, and no two instructions that contradict
+(code.claude.com/docs/en/memory). These rules apply it:
+
+- **A rule enters only if it binds every context, whatever skill runs.** What binds one skill
+  lives in that skill's file; what a script or a hook can decide lives there, and the rules name
+  at most the command. A change that adds to the file says in its commit message why the rule's
+  home is not a skill, a script or a hook, read from that home's record.
+- **Each bullet opens with its rule in one bold sentence, then says what to do.** Directive only:
+  the prohibition and the instruction, no why, no history, no measurement. A bullet that needs a
+  paragraph of conditions is a skill's text written in the wrong place.
+- **The file's size is a ratchet, never a drift.** `tests/test_rules_health.py` pins the line and
+  character counts the file holds. A change that grows it raises the pin in the same change, and
+  its commit message says what the growth bought and what was removed or weighed for removal; a
+  change that shrinks it lowers the pin. No pin rises past the guidance's 200 lines.
+- **Every name the file uses resolves to what ships.** A skill, a script, a flag, a schema or a
+  key that ships nowhere fails the test. A statement of what a command prints is checked against
+  what it prints when the rule is written. A change that renames, removes or changes the output of
+  something the rules name updates the rules in the same change.
+- **The rules never disagree with a specification, a skill or this file.** Where they do, the
+  earlier source in the authority order wins, and the change that finds it corrects the rules.
+- **A release that touches the file reads it whole once more** against the rules above. The test
+  reports each bullet's length and names the longest, so the reading starts there; it refuses
+  nothing on a length no rule states.
+- **Loading is verified, not assumed.** `tests/test_hooks.py` holds that the hooks place the file
+  verbatim; a release that changes the hooks reads one consumer transcript for the marker line
+  before it is done.
+
 ## Change size
 
 A change is **minor** when it alters no specification, no schema, no contract version, and no generated

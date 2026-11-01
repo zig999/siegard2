@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.44.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.44.1. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -84,27 +84,24 @@ not. Three things hold that route:
 - **A session commits only what the person's own words in this session authorized, and only
   what the skill it invoked wrote.** A commit word, a go-ahead that names the next step, or an ask
   stating the whole route end to end, is the authorization; a go-ahead covers the one
-  pathspec-scoped commit of what the previous invocation wrote that the next step's entry point
-  needs before it runs, and never a push; a summary of an earlier context is not, and a route resumed after a
-  compaction is re-authorized before its next commit by the person, by a goal condition naming the
-  route, or by the ask `bin/ask.py --read <project-root>` prints: «A route resumed after a
-  compaction reads its authorization from a recorded ask, printed by `ask.py --read`, in place of a
-  summary of an earlier context» (SPEC-010 R3). Record the person's authorizing words with
-  `bin/ask.py --record <project-root> --text-file -` in the turn they are given, whole; never
-  record words the person did not write, never a summary of them. Each
-  commit is pathspec-scoped to the roots that invocation wrote, one per invocation, under a
-    message naming the skill and the slug — a message naming `/deliver-scope` only from an
-  invocation of it that accepted the ask — never `git add -A` without a pathspec, never a branch, a push, a
-  stash or a rewrite. Before committing what a delivery wrote, run `bin/door.py --check commit
-  --project <project-root> --slug <slug> --file <path>...` over the commit's pathspec; a first
-  line `refuses` stops the commit: «A run whose orchestration log closes on a stop line commits
-  nothing after it but the measure: the telemetry root, and the log that carries the stop line.»
-  (SPEC-008 R18) A skill's own refusal to commit is unchanged: the commit is the session's act
+  pathspec-scoped commit of what the previous invocation wrote that the next step needs before it
+  runs, and never a push. A summary of an earlier context is not an authorization: a route resumed
+  after a compaction is re-authorized before its next commit by the person, by a goal condition
+  naming the route, or by the ask `bin/ask.py --read <project-root>` prints — «A route resumed
+  after a compaction reads its authorization from a recorded ask, printed by `ask.py --read`, in
+  place of a summary of an earlier context» (SPEC-010 R3). Record the person's authorizing words
+  with `bin/ask.py --record <project-root> --text-file -` in the turn they are given, whole, and
+  never words the person did not write. Each commit is pathspec-scoped to the roots that
+  invocation wrote, one per invocation, under a message naming the skill and the slug — a message
+  naming `/deliver-scope` only from an invocation of it that accepted the ask —
+  never `git add -A` without a pathspec, never a branch, a push, a stash or a rewrite. Before
+  committing what a delivery wrote, run `bin/door.py --check commit --project <project-root>
+  --slug <slug> --file <path>...`; a first line `refuses` stops the commit: «A run whose
+  orchestration log closes on a stop line commits nothing after it but the measure: the telemetry
+  root, and the log that carries the stop line.» (SPEC-008 R18) The commit is the session's act
   after the skill returned, never the skill's.
 - **A report opens with what needs the person, and recommends what a fact on disk decides.**
-  «A handoff opens with what needs the person, and explains after» (SPEC-006 R1): one block per
-  decision — the recommended option with why and what would change it, each other option with
-  what it does, what stays if none is taken, and the invocation ready to paste — in the person's
+  «A handoff opens with what needs the person, and explains after» (SPEC-006 R1), in the person's
   words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the
   criterion, the deciding fact and the reversing fact; without all four, none is named»
   (SPEC-006 R2): an option its own entry point would refuse, or that breaks a rule, is said to
@@ -130,9 +127,9 @@ not. Three things hold that route:
   (SPEC-006 R8), and «The state a handoff opens with is a script's line, never the session's»
   (SPEC-006 R10): run `bin/handoff.py --prepare --skill <skill> --project <project-root>` with the
   slug and target the report carries, write the full report with `bin/handoff.py --save-report
-  <path>` to the path its `report` names — never with a file tool, which asks the person before
-  writing under the git directory — fill only the fields it left empty, never `state`,
-  `state_from`, a door's `entry` or `check`, and hand the person what `--render` prints. A door
+  <path>` to the path its `report` names, never with a file tool; fill only the fields it left
+  empty, never `state`, `state_from`, a door's `entry` or `check`, and hand the person what
+  `--render` prints. A door
   marked `refuses` is said excluded beside its fact, never recommended. Answer a refusal by
   rewriting the field it names; a moved state, by running `--prepare` again. A status answer or a
   design conversation is kind `report`, with `state` and a `body`, the report's path, or both.
@@ -149,5 +146,5 @@ not. Three things hold that route:
 - **A question about where the project stands is answered from disk, never from the
   conversation.** Which initiatives are live, what is delivered, what is outstanding, what is
   blocked, what drifted, what is uncommitted: `/siegard-status` over the project, or
-  `/siegard-progress` over one initiative. The framework's version is `bin/project.py`'s
-  answer. A state recalled from earlier in the session is a guess that reads as a fact.
+  `/siegard-progress` over one initiative. The framework's version is the one the first line of
+  these rules states. A state recalled from earlier in the session is a guess that reads as a fact.

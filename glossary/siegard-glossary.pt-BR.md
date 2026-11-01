@@ -10,7 +10,9 @@ sempre que possível, traz um exemplo.
 `glossary/siegard-glossary.md`, que ainda descreve a 4.21.3; os verbetes sobre levantamento
 (`/survey`), material de intenção, ledger, `/adopt-scope`, `/clarify-request`, o campo `tests`, as
 ondas de delegação e os agentes `domain-surveyor` e `test-intent-reader` ainda não têm par na
-versão inglesa. Onde as duas
+versão inglesa. O capítulo 12 também traz os auxiliares da 5.43.0 e da 5.44.0: o goal armado, o
+handoff renderizado, a verificação de porta, o pedido gravado, o relay e a linha de progresso. Onde
+as duas
 versões divergirem, vale a inglesa, conforme a regra do repositório para traduções.
 
 **Precedência.** Este glossário explica; ele não governa. Onde ele divergir do `SKILL.md` de uma
