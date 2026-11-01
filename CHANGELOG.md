@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.48.0 — 2026-11-01
+
+A goal is armed through the framework only by the person's own invocation of `/siegard-goal` opening with `--arm`: the skill is closed to the model's invocation, so its scope, objective and word to arm are the person's, and a later message asking to arm is answered with the invocation to paste (SPEC-008 R6, R14). Over a citation, `--arm` composes and the person arms after reading the file the script wrote. The skill's report is the report `handoff.py --prepare` prepares, followed by the two ways to arm, each fenced and ready to paste. (`c1c6e49`)
+
 ## 5.47.1 — 2026-11-01
 
 The decision-log schema says what a log holds: decisions, facts a planning step read from material outside the specification root, and retirements — not decisions alone. (`2f27c72`)
