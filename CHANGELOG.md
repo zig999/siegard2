@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.45.1 — 2026-11-01
+
+A task declaring `produces` runs the install alone only where `deliver.py --standard --reach` says no rule reaches what it wrote, as the validator already held; `/implement-task`, `phase_steps` and the registry check's printed line now say so. `goal.py` reads a commit naming the skill and the slug followed by a space as on the route, and `--objective-file -` reads the objective from stdin. `/siegard-archive` hands a pathspec-scoped add, every skill but `/deliver-scope` and `/adopt-scope` states it never commits, and the session rules lose a sentence that contradicted the first; a single-value flag named twice is refused by every script that parses one, and `trace.py`'s usage names every form it reads. (`2044676`)
+
 ## 5.45.0 — 2026-11-01
 
 A report's short form is held as a decision's opening is (SPEC-006 R11): `bin/handoff.py --render` reads a `body` above a report path whole for the closed list of terms, and a body with no path over its first 450 characters; the list gains the drift classes `moved`, `proof` and `orphaned` and the Portuguese "ato devido" and "leitura devida"; and a body that recommends without the words that open the reversing fact is refused. `trace.py --check --reconcile-set` prints a `free slug:` no reconciliation holds yet, and `/siegard-status` hands the `/reconcile` invocation with it instead of asking the person for a name. (`b4105b2`)
