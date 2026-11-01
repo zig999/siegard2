@@ -29,7 +29,9 @@ follows with its output verbatim.» (SPEC-008 R1)
   `unclassified`, and the measure, commit and remote conditions of R2
   hold» (SPEC-008 R3) — what the tree still holds is listed as left for the person — or the
   plugin's version changed since the goal began, or a commit since then touched `siegard.json`
-  or a standard it declares, which only the person authors — or a commit since then names no
+  or a standard it declares, which only the person authors — or the run took more judged doors
+  than the condition's budget: «A run that took more judged doors since the goal began than the
+  condition's budget is state B on its own» (SPEC-008 R3) — or a commit since then names no
   skill and the slug: «A commit since the goal began that names no skill and the slug, and is no
   reconciliation R2 admits, is state B on its own: the route never rewrites history, so that
   commit stands until a person reads it, and a goal waiting for it to disappear never ends.»
@@ -79,7 +81,7 @@ check runs the framework's own command and quotes what it printed; nothing is re
 Declared dependencies: PyYAML, jsonschema (this script also imports deliver.py, plan.py and
 spec.py, its siblings, and runs them and project.py as commands).
 
-Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]...
+Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version <version> [--target <key>] [--scope <id>]... [--untouched <path>]... [--budget <n>]
                                     answer state A, state B or not yet, then every check
         goal.py --compose <project-root> --slug <slug> (--scope <id>... | --objective <text> | --objective-file <file|->) [--target <key>] [--budget <n>] [--correct contradicts] [--specify]
                                     check what the route would refuse first, then print the goal
@@ -95,7 +97,9 @@ Usage:  goal.py --state <project-root> --slug <slug> --since <commit> --version 
         target. --untouched names a path `git status --porcelain` may list without the goal
         having failed it; --compose writes them from the tree as it stands. --budget is how many
         judged doors the run may take, each as the door decider returns it (none where left
-        out); --correct names the conformance findings the run answers by a corrective increment,
+        out); --compose pins it into the state command, and --state then counts the judged
+        `decided:` lines the log gained since the goal began against it — a state command with
+        no --budget counts nothing; --correct names the conformance findings the run answers by a corrective increment,
         and `contradicts` is the one kind a route corrects. --specify, over an objective alone,
         asks /deliver-scope to run /analyse once over it before the plan — «Under a goal whose
         condition asks to specify a prose objective, the orchestrating entry point invokes
@@ -129,6 +133,8 @@ STOP_CLASSES = ("blocking", "silence", "rebind", "producers", "gave-up", "infras
 RECONCILED = ("siegard-trace.json", "siegard-reconcile/")
 CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")
+JUDGED = ("keeps the route", "serves the stated goal", "can be undone", "costs less")
+TAKEN_JUDGED = re.compile(r"^(?:- )?`?decided: .+? — (?:" + "|".join(JUDGED) + r") — ")
 CONDITION_LIMIT = 4000
 ARMED_DIR = "siegard"
 ARMED_FILE = "goal.json"
@@ -299,8 +305,26 @@ def criteria_answer(fields: dict, since: str, delivery: Path, tasks: list[str],
     return not unmet, "\n".join(lines)
 
 
+def judged_taken(fields: dict, since: str, log_file: Path) -> int:
+    """The judged doors the run took since the goal began: `decided:` lines whose criterion is a
+    rung of the ladder, in the log as committed at HEAD and not in it at `since`."""
+    at = relative(fields, log_file)
+    now = git(fields["home"], "show", f"HEAD:{at}") if log_file.is_file() else ""
+    before = subprocess.run(["git", "-C", str(fields["home"]), "show", f"{since}:{at}"],
+                            capture_output=True, text=True).stdout
+    earlier = [line.strip() for line in before.splitlines()]
+    taken = 0
+    for line in (line.strip() for line in now.splitlines()):
+        if line in earlier:
+            earlier.remove(line)
+        elif TAKEN_JUDGED.match(line):
+            taken += 1
+    return taken
+
+
 def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
-           untouched: list[str]) -> tuple[dict[str, tuple[bool, str]], str | None]:
+           untouched: list[str],
+           budget: int | None = None) -> tuple[dict[str, tuple[bool, str]], str | None]:
     delivery, work, target, specification = roots(fields, slug)
     closed = (work / "closure.md").is_file()
     found: dict[str, tuple[bool, str]] = {}
@@ -380,8 +404,13 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
     found["remote"] = (not shipped, "on a remote: " + ", ".join(shipped) if shipped
                        else "no commit since the goal began is on a remote")
 
-    stop = None
     log_file = delivery / "orchestration.md"
+    if budget is not None:
+        taken = judged_taken(fields, since, log_file)
+        found["budget"] = (taken <= budget, f"{taken} judged door(s) taken since the goal began; "
+                                            f"the condition's budget is {budget}")
+
+    stop = None
     if log_file.is_file() and last_commit(fields, since, log_file):
         committed = git(fields["home"], "show", f"HEAD:{relative(fields, log_file)}")
         lines = [line for line in committed.splitlines() if line.strip()]
@@ -392,8 +421,8 @@ def checks(fields: dict, slug: str, since: str, version: str, scope: list[str],
 
 
 def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
-          untouched: list[str]) -> tuple[str, list[str]]:
-    found, stop = checks(fields, slug, since, version, scope, untouched)
+          untouched: list[str], budget: int | None = None) -> tuple[str, list[str]]:
+    found, stop = checks(fields, slug, since, version, scope, untouched, budget)
     common = ("measure", "commits", "remote")
     if not found["version"][0]:
         first = "state B — the plugin's version changed since the goal began"
@@ -403,6 +432,8 @@ def state(fields: dict, slug: str, since: str, version: str, scope: list[str],
     elif not found["commits"][0]:
         first = ("state B — a commit since the goal began names no skill and the slug, which the "
                  "route never rewrites")
+    elif "budget" in found and not found["budget"][0]:
+        first = f"state B — {found['budget'][1]}, which the person did not grant"
     elif all(ok for ok, _ in found.values()):
         first = f"state A — {slug}: the scope is delivered, proven, reviewed and measured"
     elif stop and all(found[name][0] for name in common):
@@ -495,7 +526,7 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     invocation = ["python3", "-B", str(BIN / "goal.py"), "--state", str(project_root),
                   "--target", fields["target"], "--slug", slug,
                   *[arg for ref in scope for arg in ("--scope", ref)],
-                  "--since", since, "--version", version,
+                  "--since", since, "--version", version, "--budget", str(budget),
                   *[arg for path in untouched for arg in ("--untouched", path)]]
     written = None
     digest = None
@@ -539,7 +570,7 @@ def compose(project_root: Path, fields: dict, slug: str, scope: list[str],
     if written is not None and kept is None:
         written.parent.mkdir(parents=True, exist_ok=True)
         written.write_bytes(content)
-    pinned = {"since": since, "version": version, "untouched": untouched,
+    pinned = {"since": since, "version": version, "untouched": untouched, "budget": budget,
               "objective": relative(fields, written) if written is not None else None,
               "objective_sha256": digest}
     return said, condition, pinned
@@ -618,8 +649,11 @@ def answer_stop(record: dict, path: Path) -> tuple[str, str]:
     check could see."""
     project_root = Path(record["project_root"])
     fields = resolve(project_root, record["target"])
+    budget = record.get("budget")
     first, body = state(fields, record["slug"], record["since"], record["version"],
-                        list(record.get("scope") or []), list(record.get("untouched") or []))
+                        list(record.get("scope") or []), list(record.get("untouched") or []),
+                        budget if isinstance(budget, int) and not isinstance(budget, bool)
+                        else None)
     if not first.startswith("not yet"):
         end_armed(path, record, first.split(" — ", 1)[0], first)
         return "ended", f"Siegard ended the armed goal {record['slug']}: {first}"
@@ -715,13 +749,15 @@ def main() -> int:
         return CANNOT_RUN
 
     if mode == "--state":
-        if not since or not version or objective or objective_file or budget_raw or correct \
-                or specify:
-            print("cannot run: --state takes --since and --version, and none of --objective, "
-                  "--budget or --correct, which are the condition's", file=sys.stderr)
+        if not since or not version or objective or objective_file or correct or specify \
+                or (budget_raw and not budget_raw.isdigit()):
+            print("cannot run: --state takes --since and --version, a whole --budget where the "
+                  "condition pinned one, and none of --objective or --correct, which are the "
+                  "condition's", file=sys.stderr)
             return CANNOT_RUN
         try:
-            first, body = state(fields, slug, since, version, scope, untouched)
+            first, body = state(fields, slug, since, version, scope, untouched,
+                                int(budget_raw) if budget_raw else None)
         except Refused as refusal:
             print(f"cannot run: {refusal}", file=sys.stderr)
             return CANNOT_RUN

@@ -21,14 +21,15 @@
     "notes",
     "scope",
     "recommendations",
+    "proofs",
     "handoffs",
     "handoff_form",
     "provenance"
   ],
   "properties": {
     "contract_version": {
-      "const": "siegard-telemetry/18",
-      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero. /14 reads each orchestrating session's context per call: what every call read, the floor its compactions left, the same session replayed at each auto-compact window with the compactions and commit re-authorizations each would have cost, the replay at the window the session ran under as the check on the replay itself, and what the calls following a compaction did again; a /13 report carries none of it, which is not a count of zero. siegard-telemetry/17 adds `handoff_form`, and on every session `handoff_form`: the form of every assistant message a person answered, read by the function `handoff.py --check` runs — its length, whether it hands a decision, the names of the closed list's terms its opening carries, whether it carries a word of recommendation and where its first decision word sits — never its text. A /16 report carries none, which is not a count of zero. siegard-telemetry/18 adds `handoff_form.stop_checks`: the stops the plugin's `Stop` hook held to `handoff.py --check`, read from the log it appends to under the repository's git directory. A /17 report carries none, which is not a count of zero."
+      "const": "siegard-telemetry/19",
+      "description": "Which contract this report was written against. siegard-telemetry/1 carried no `usage` on a session's own entry in `harness.sessions` — `agent_totals` was the whole of what a report counted. siegard-telemetry/2 counted only the agents a session spawned directly: an agent spawned by another agent had a transcript on disk and no row here, so `agent_totals` under /2 is a floor over any window where a skill ran inside a spawned context, and is not comparable to a /3 total over the same window. An earlier report is still the count it was when it was written, read by tolerant readers, and never rewritten to match. siegard-telemetry/4 adds `outcome` to every decision the window added and `outcomes` beside them — whether the field a decision filled still reads as its landing commit wrote it, and by which route it was changed where it does not — and attributes each session's own usage to the skill it was running, under `harness.sessions[].by_skill` and `harness.skill_totals`. A /3 report carries neither and is read as it was. siegard-telemetry/5 counts the compactions the harness recorded — every one in a session, with the skill it fell under, and a count per agent and per skill; a /4 report carries none, which is not a count of zero. siegard-telemetry/6 counts each assistant message once: the harness writes a message received in several content blocks as several entries, each carrying the message's `usage`, and a /5 or earlier report summed it per entry — its input and cache figures are multiplied by the number of blocks per message, and its `turns` and `messages` count entries. A /5 report is the count it was, read as such, and never rewritten; a figure from it is not comparable to a /6 figure over the same window. siegard-telemetry/7 lists the decision-log entries that retire a location under `decisions.retired`, apart from `added`: a retirement decides nothing, and a /6 report followed it to its field as a decision whose node was gone. siegard-telemetry/8 reads the decision log as one file beside each node, `<slug>.log.md`: `decisions.log` lists every log read with its own baseline, each added entry carries the node it sits beside as `node`, and a decision's landing commit is the first commit of its own log whose entries contain it — never a search of a log's history for the entry's text, which a /7 report did and which found nothing for an entry whose text wrapped across lines; `unlocated` under /8 means the entry is in no commit yet. A field spelled through a list of mappings by name — `attributes.<name>.type`, the way a node names an attribute — is read to the item of that name; `unreadable` is left for a path that reaches no item or two. siegard-telemetry/9 adds `recommendations`: every `recommended:` line an orchestration log under the delivery root holds, with the commit that landed it and the first commit after it touching that initiative's roots. A /8 report carries none, which is not a count of zero. siegard-telemetry/10 adds `handoffs`, and on every session `skill_calls`, `short_turns` and `confirmations`: each short human turn that was a confirmation — a commit authorization, a go-ahead, a choice by label — as a class with the skill it answered under, the seconds it waited and whether the message it answered asked anything; never its text. A /9 report carries none, which is not a count of zero. siegard-telemetry/11 adds `handoffs.in_span_commits` and on every session `commits`: each `git commit` or `git push` the session ran after a Skill call and before the person's next turn, with the skill, whether it carried a pathspec, whether it pushed and what authorized it as the session could read it — `typed`, `loop`, `summary` or `none`; and marks each entry of `notes` with `live`, whether the plan it stands in is still open. A /10 report carries none, which is not a count of zero. siegard-telemetry/12 carries `prompt_sha256` on every agent and `repeats` in every total, keys `repeats_earlier` on it, names the linked worktree a report runs inside as `harness.worktree` and keys `transcript_root` by the main tree: under /12 a repeat is the same prompt handed to the same agent type, and an /11 report's `repeats_earlier` — the same description under the same type — is not comparable to it. siegard-telemetry/13 marks every `recommended:` line `derived` or `judged` by the criterion it names, counts them under `by_kind`, admits the four judged criteria beside the four derived ones, and counts under `harness.sessions[].questions` and `handoffs.questions` every human turn holding a question mark, with its skill and wait and none of its text. A /12 report carries neither, which is not a count of zero. /14 reads each orchestrating session's context per call: what every call read, the floor its compactions left, the same session replayed at each auto-compact window with the compactions and commit re-authorizations each would have cost, the replay at the window the session ran under as the check on the replay itself, and what the calls following a compaction did again; a /13 report carries none of it, which is not a count of zero. siegard-telemetry/17 adds `handoff_form`, and on every session `handoff_form`: the form of every assistant message a person answered, read by the function `handoff.py --check` runs — its length, whether it hands a decision, the names of the closed list's terms its opening carries, whether it carries a word of recommendation and where its first decision word sits — never its text. A /16 report carries none, which is not a count of zero. siegard-telemetry/18 adds `handoff_form.stop_checks`: the stops the plugin's `Stop` hook held to `handoff.py --check`, read from the log it appends to under the repository's git directory. A /17 report carries none, which is not a count of zero. siegard-telemetry/19 adds `proofs`: the reviews whose last commit falls in the window, the state of every criterion their coverage pass named, how many tests each names, the review naming the most for one criterion, and the bindings a test decides in the project's trace. An /18 report carries none, which is not a count of zero."
     },
     "project_root": {
       "type": "string",
@@ -1419,6 +1420,132 @@
         }
       },
       "description": "What the handoffs recorded as recommended, read from each `orchestration.md` under the delivery root. A recommendation made where no orchestration log exists is in its report alone and is not here."
+    },
+    "proofs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviews",
+        "without_coverage",
+        "states",
+        "tests_per_criterion",
+        "heaviest",
+        "decided_by_test"
+      ],
+      "description": "What the test discipline's grounding measurement reads, from the records alone, refusing nothing: «Over the next consumer deliveries the measurement in the scope above is repeated: tests per criterion, covered share per review, and the count of nodes decided by a test» (SPEC-004 §Validation required before acceptance).",
+      "properties": {
+        "reviews": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Review records under the delivery root whose last commit falls in the window."
+        },
+        "without_coverage": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Of those, the reviews whose coverage pass did not run: no `coverage` list."
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "covered",
+            "partial",
+            "uncovered",
+            "unauditable"
+          ],
+          "properties": {
+            "covered": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "partial": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "uncovered": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unauditable": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "description": "Criteria by the state the coverage pass named."
+        },
+        "tests_per_criterion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "0",
+            "1",
+            "2",
+            "3+"
+          ],
+          "properties": {
+            "0": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "2": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "3+": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "description": "Criteria by how many tests their entry names."
+        },
+        "heaviest": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "review",
+                "criterion",
+                "tests"
+              ],
+              "properties": {
+                "review": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "criterion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "tests": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          ],
+          "description": "The review naming the most tests for one criterion — the far end of the distribution, named so a reader can open it; `criterion` is the entry's index in its `coverage`."
+        },
+        "decided_by_test": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ],
+          "description": "Bindings of the project's `siegard-trace.json` carrying `decided_by: test`; null where no trace is read."
+        }
+      }
     },
     "handoffs": {
       "type": "object",

@@ -462,7 +462,7 @@ def test_a_retirement_is_listed_apart_and_never_followed_as_a_decision(consumer)
                         "HOME": str(consumer["tmp"])})
     done, report = report_of(consumer)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert report["contract_version"] == "siegard-telemetry/18"
+    assert report["contract_version"] == "siegard-telemetry/19"
     assert [e.get("unstated") for e in report["decisions"]["added"]] == ["second"]
     assert [e["retired"] for e in report["decisions"]["retired"]] == [
         "held nowhere; the element left the specification"]
@@ -787,7 +787,7 @@ def test_a_message_transcribed_as_several_entries_is_counted_once(consumer):
                              60, isSidechain=True, agentId="a1"),
                      encoding="utf-8")
     _, report = report_of(consumer)
-    assert report["contract_version"] == "siegard-telemetry/18"
+    assert report["contract_version"] == "siegard-telemetry/19"
     assert report["harness"]["sessions"][0]["usage"] == {
         "input_tokens": 57, "cache_creation_input_tokens": 100,
         "cache_read_input_tokens": 1000, "output_tokens": 53}
@@ -1234,6 +1234,24 @@ def commit_at(consumer: dict, message: str, when: str) -> str:
                           text=True, check=True).stdout.strip()
 
 
+def test_an_adoption_log_s_recommendation_is_counted_under_its_slug(consumer):
+    """/adopt-scope keeps its orchestration log under `siegard-survey/<slug>/`, beside no
+    delivery root; its `recommended:` lines are counted as an orchestrating entry point's are."""
+    log = consumer["home"] / "siegard-survey/orders/orchestration.md"
+    log.parent.mkdir(parents=True)
+    log.write_text("survey — stopped.\n"
+                   "recommended: /survey over orders — precondition unmet — "
+                   "siegard-survey/orders/backend.md is refused by trace.py --survey\n",
+                   encoding="utf-8")
+    commit_at(consumer, "adopt-scope orders: survey", "2026-08-20T11:10:00Z")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    (line,) = report["recommendations"]["lines"]
+    assert (line["slug"], line["line"], line["door"]) == ("orders", 2, "/survey over orders")
+    assert line["log"].endswith("siegard-survey/orders/orchestration.md")
+
+
 def test_a_recommendation_line_is_counted_with_what_landed_it_and_what_followed(consumer):
     log = consumer["home"] / "delivery/checkout/orchestration.md"
     log.write_text(
@@ -1241,7 +1259,9 @@ def test_a_recommendation_line_is_counted_with_what_landed_it_and_what_followed(
         "recommended: /plan-work over checkout — precondition unmet — siegard-reconcile/ holds "
         "no record with `remainder: testable` for domain/x/a\n"
         "- `recommended: /analyse over domain/x/a — rule violated — intake/proof.md`\n"
-        "recommended: the second door because I prefer it\n", encoding="utf-8")
+        "recommended: the second door because I prefer it\n"
+        "- step 3 quoted door.py: not decided: the slug — /plan-work names it\n",
+        encoding="utf-8")
     landed = commit_at(consumer, "deliver-scope checkout: log", "2026-08-20T11:10:00Z")
     (consumer["home"] / "work/checkout/task/checkout/record-order.md").write_text(
         "---\ntitle: t\nsummary: s\nobjective: o\ncriteria:\n- c\nimplements:\n- domain/x/a\n---\n"
@@ -1351,16 +1371,47 @@ def test_a_log_at_the_delivery_root_is_read_under_the_initiative_its_commit_name
     assert line_["next_commit"]["hash"] == followed
 
 
-def test_no_orchestration_log_is_zero_recommendations_and_the_survey_root_is_never_read(consumer):
-    survey = consumer["home"] / "siegard-survey/adopt/orchestration.md"
-    survey.parent.mkdir(parents=True)
-    survey.write_text("recommended: /reconcile — already done — a note\n", encoding="utf-8")
+def test_no_orchestration_log_is_zero_recommendations(consumer):
     _, report = report_of(consumer)
     assert report["recommendations"] == {"emitted": 0, "by_criterion": {
         "precondition unmet": 0, "rule violated": 0, "already done": 0, "reading paid twice": 0,
         "keeps the route": 0, "serves the stated goal": 0, "can be undone": 0, "costs less": 0},
         "by_kind": {"derived": 0, "judged": 0}, "taken": {"derived": 0, "judged": 0},
         "lines": [], "malformed": []}
+
+
+# --------------------------------------------------------------------------- the proofs
+
+
+def test_proofs_count_criteria_by_state_and_tests_and_the_bindings_a_test_decides(consumer):
+    """«tests per criterion, covered share per review, and the count of nodes decided by a test»
+    (SPEC-004 validation 13), read from the records: no share computed, the far end named."""
+    review = consumer["home"] / "delivery/checkout/review/first.md"
+    review.parent.mkdir(parents=True, exist_ok=True)
+    review.write_text(yaml.safe_dump({"coverage": [
+        {"criterion": "a", "state": "covered", "tests": [{"path": "t/a.test.ts"},
+                                                         {"path": "t/b.test.ts"}]},
+        {"criterion": "b", "state": "uncovered"},
+        {"criterion": "c", "state": "covered", "tests": [{"path": "t/a.test.ts"},
+                                                         {"path": "t/b.test.ts"},
+                                                         {"path": "t/c.test.ts"}]}]},
+        sort_keys=False).join(["---\n", "---\n## What it is\nA review.\n"]), encoding="utf-8")
+    (consumer["home"] / "delivery/checkout/review/bare.md").write_text(
+        "---\ntitle: t\n---\n## What it is\nNo coverage pass.\n", encoding="utf-8")
+    (consumer["home"] / "siegard-trace.json").write_text(json.dumps({"bindings": [
+        {"node": "domain/x/a", "decided_by": "test"}, {"node": "domain/x/b"}]}), encoding="utf-8")
+    commit_at(consumer, "deliver-scope checkout: review", "2026-08-20T11:10:00Z")
+    done, report = report_of(consumer)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert [e.message for e in contract().iter_errors(report)] == []
+    proofs = report["proofs"]
+    assert proofs["reviews"] == 2 and proofs["without_coverage"] == 1
+    assert proofs["states"] == {"covered": 2, "partial": 0, "uncovered": 1, "unauditable": 0}
+    assert proofs["tests_per_criterion"] == {"0": 1, "1": 0, "2": 1, "3+": 1}
+    assert proofs["heaviest"] == {"review": "delivery/checkout/review/first.md", "criterion": 2,
+                                  "tests": 3}
+    assert proofs["decided_by_test"] == 1
+    assert "proofs: 2 review(s) in the window" in done.stdout
 
 
 # ------------------------------------------------------------------------ the handoffs

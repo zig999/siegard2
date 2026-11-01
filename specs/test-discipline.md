@@ -276,6 +276,10 @@ left out — so the file set the review that followed was handed never held them
   section over proof and review records (tests per criterion as a histogram, coverage states per
   review, bindings decided by a test) and on consumer deliveries made after it ships. Verdict
   pending.
+- 2026-11-01 — the measurer ships: telemetry's `proofs` (`siegard-telemetry/19`) counts, over the
+  reviews whose last commit falls in its window, the criteria by state and by how many tests each
+  names, names the review naming the most, and counts the bindings a test decides. The reading
+  above now waits only on consumer deliveries made after it ships.
 - 2026-10-31 — the delegation returns of a delivery and of its plan, read for characters no
   consumer reads, by the method SPEC-005 R12 was cut by; nothing was cut. Returns: the last
   assistant text of every subagent transcript under the five `sales*` consumers' Claude Code

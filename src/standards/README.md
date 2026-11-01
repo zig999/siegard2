@@ -95,7 +95,7 @@ standard checked: src/standards/backend-node-service.yaml declares 59 rule(s) �
   what a step exits 0 over is the command exiting 0. […]
 
 standard checked: src/standards/frontend-typescript.yaml declares 63 rule(s) — 30 decided by reading, 33 by a tool
-  pin sha256:d0e0a8f0…43b2f332
+  pin sha256:fabb98e6…f5f0ecf7
   the rules a tool decides run as step(s) a11y (2 rule(s)), lint (21 rule(s)), secret-scan (1 rule(s)), style (8 rule(s)), typecheck (1 rule(s)); a review reads only the 30 decided by reading
   what a step exits 0 over is the command exiting 0. […]
 ```

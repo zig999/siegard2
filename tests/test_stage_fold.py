@@ -1934,13 +1934,33 @@ def test_a_context_descriptor_is_refused_as_a_plan_node(consumer):
 def test_review_and_node_are_modes_of_stage_and_exclude_audit(consumer):
     done = run("--check", consumer / "backend", "--review")
     assert done.returncode == 2 and "--review is a mode of --stage" in done.stderr
-    done, _ = staged(consumer, slug="plain-with-node")
-    done = run("--stage", consumer / "backend", consumer / "specs", "with-node",
-               consumer / "ws-with-node", FILE, "--node", NODE)
-    assert done.returncode == 2 and "--node is a mode of --stage --review" in done.stderr
+    done = run("--check", consumer / "backend", "--node", NODE)
+    assert done.returncode == 2 and "--node is a mode of --stage or --release" in done.stderr
+    done = run("--stage", consumer / "backend", consumer / "specs", "audit-with-node",
+               consumer / "ws-audit-with-node", FILE, "--audit", "--node", NODE)
+    assert done.returncode == 2 and "never of an audit" in done.stderr
     done = run("--stage", consumer / "backend", consumer / "specs", "both",
                consumer / "ws-both", FILE, "--review", "--audit")
     assert done.returncode == 2 and "two stagings" in done.stderr
+
+
+def test_nodes_named_on_an_ordinary_staging_join_the_candidate_index_and_bind_nowhere(consumer):
+    """A node written since the bind is a candidate the person names: the staging records it,
+    with its digest, and the candidate index lists it apart from the bound ones; no pack holds it,
+    so no judge answers for it and no fold binds it."""
+    named = "rules/troubleshooting/alert-opens-case"
+    done = run("--stage", consumer / "backend", consumer / "specs", "with-node",
+               consumer / "ws-with-node", FILE, "--node", named)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "1 node(s) named as written since the bind join the candidate index" in done.stdout
+    manifest = manifest_of(consumer / "ws-with-node")
+    assert list(manifest["named"]) == [named] and manifest["named"][named]
+    assert all(named not in meta["nodes"] + meta["also"] for meta in manifest["files"].values())
+    index = (consumer / "ws-with-node" / "candidates.txt").read_text(encoding="utf-8")
+    assert f"{named} — named by the caller as written since the bind" in index
+    unknown = run("--stage", consumer / "backend", consumer / "specs", "unknown-node",
+                  consumer / "ws-unknown-node", FILE, "--node", "rules/troubleshooting/nothing")
+    assert unknown.returncode == 2 and "holds no node" in unknown.stderr
 
 
 # ------------------------------------------------------ judged, and the review's omission

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Places the drift a project is carrying into the session that is starting.
 
-Detection already exists and is mechanical: `bin/trace.py --check` recomputes every binding's
-digests and says which have moved. What it never had was a trigger. It runs when a person invokes
-`/siegard-status` or `/reconcile`, so a tree accumulates drift between the moments somebody
-thinks to look, and the reading that would have caught it is the reading nobody ran. A count
-placed at the start of the session is the trigger: the session, and every agent that later edits
+Detection is mechanical: `bin/trace.py --check` recomputes every binding's digests and says which
+have moved. Run only when a person invokes `/siegard-status` or `/reconcile`, it leaves a tree to
+accumulate drift between the moments somebody thinks to look. A count placed at the start of the
+session is the trigger: the session, and every agent that later edits
 in it, begins holding what the tree already owes.
 
 The same trigger carries the other thing the trace owes and no drift report shows: nodes a
@@ -39,7 +38,10 @@ a session's start in a project that declares `siegard.json` and holds an armed g
 loaded differs from the armed goal's `version`, and nothing when they are equal or either cannot
 be read; it never blocks.» (SPEC-008 R16) The goal's state reads a changed version as state B on
 its own, so a session that starts under another version starts on a goal that ends at its next
-stop, and is told before it works toward it. The armed goal is the one record of the version an
+stop, and is told before it works toward it. «It also prints one line when the armed goal is
+bound to a session other than the one starting» (SPEC-008 R16): a goal whose session is gone
+answers nobody's stops, and the person learns it at the start rather than never. The armed goal
+is the one record of the version an
 initiative runs under; it is read with the standard library alone, before and apart from the
 validators.
 """
@@ -112,6 +114,32 @@ def version_line(root: Path) -> str:
             f"{began}: its state answers state B at the next stop, because the rules it ran under "
             f"are no longer the ones that answer; `goal.py --disarm` ends it and /siegard-goal "
             f"arms it again under {loaded}.")
+
+
+def bound_line(root: Path, session: object) -> str:
+    """One line where the armed goal answers the stops of a session other than the one
+    starting; empty where none is armed, where it is bound to this session or to none yet, or
+    where the record cannot be read."""
+    if not isinstance(session, str) or not session:
+        return ""
+    try:
+        sys.path.insert(0, str(PLUGIN_ROOT / "bin"))
+        from project import toplevel_of
+        with contextlib.redirect_stderr(io.StringIO()):
+            import goal
+        home = toplevel_of(root, timeout=GIT_TIMEOUT_SECONDS)
+        path = goal.armed_path(home)
+        if not path.is_file():
+            return ""
+        armed = goal.read_armed(path) or {}
+    except (Exception, SystemExit):
+        return ""
+    bound = armed.get("session_id")
+    if not isinstance(bound, str) or not bound or bound == session:
+        return ""
+    return (f"Siegard: the armed goal {armed.get('slug', '')}, armed at "
+            f"{armed.get('armed_at', 'an unrecorded time')}, answers the stops of another session "
+            f"({bound}), not this one's; where that session is gone, `goal.py --disarm` ends it.")
 
 
 def targets_of(root: Path) -> list[Path]:
@@ -212,10 +240,10 @@ def main() -> int:
     try:
         if not root.is_dir() or not declares_a_project(root):
             return 0
-        version = version_line(root)
-        if version:
-            told.append(version)
-            context.append(version)
+        for line in (version_line(root), bound_line(root, record.get("session_id"))):
+            if line:
+                told.append(line)
+                context.append(line)
         missing = missing_validators()
         if missing:
             told.append(unchecked(missing))

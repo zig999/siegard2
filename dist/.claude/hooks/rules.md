@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.46.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.47.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -87,7 +87,8 @@ not. Three things hold that route:
   pathspec-scoped commit of what the previous invocation wrote that the next step needs before it
   runs, and never a push. A summary of an earlier context is not an authorization: a route resumed
   after a compaction is re-authorized before its next commit by the person, by a goal condition
-  naming the route, or by the ask `bin/ask.py --read <project-root>` prints — «A route resumed
+  naming the route, or by the ask `bin/ask.py --read` prints, run as the `read:` line its
+  `--record` printed — «A route resumed
   after a compaction reads its authorization from a recorded ask, printed by `ask.py --read`, in
   place of a summary of an earlier context» (SPEC-010 R3). Record the person's authorizing words
   with `bin/ask.py --record <project-root> --text-file -` in the turn they are given, whole, and
@@ -110,7 +111,9 @@ not. Three things hold that route:
   «Whether a door's own entry point refuses its inputs as the tree stands is a script's answer»
   (SPEC-006 R9), a first line `refuses` excludes the option and its `refused:` line is the fact
   named beside it, and a `not decided:` line is never read as accepted. Where the person's own
-  message says to proceed and one option remains, take it. Where nothing excludes one and the choice
+  message says to proceed and one option remains, take it, and write `decided: <door> —
+  <criterion> — <deciding fact>` in the run's orchestration log, or else in the next commit's
+  body. Where nothing excludes one and the choice
   is of cost or of reading the ask, recommend by judgment and say it is one: the option that
   keeps this framework's route, then the one that reaches a goal the ask states, quoted, then
   the one that can be undone, then the one that costs less as a command printed it. A

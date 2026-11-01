@@ -52,7 +52,8 @@ def said(line: str) -> int:
 
 
 def handed_on(record: dict, siegard_dir: Path) -> int:
-    """The stop of a project with no armed goal, answered by the handoff check."""
+    """A stop no armed goal answers — none is armed, or it is bound to another session — held
+    to the handoff check."""
     sys.path.insert(0, str(HOOKS))
     import handoff_stop
     answer = handoff_stop.answer(record, siegard_dir)
@@ -95,7 +96,7 @@ def main() -> int:
     if isinstance(session, str) and session:
         bound = armed.get("session_id")
         if bound and bound != session:
-            return 0
+            return handed_on(record, path.parent)
         if not bound:
             armed["session_id"] = session
     waiting = record.get("background_tasks")

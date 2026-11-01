@@ -74,6 +74,10 @@ What this script does, and nobody else does any of it:
                                                                   the candidates the ledger landed
                                                                   its own facts in; the file set
                                                                   defaults to the material's areas
+    trace.py --stage ... --node <node> ...                        name nodes written since the bind:
+                                                                  they join the candidate index,
+                                                                  recorded with their digests, and
+                                                                  bind nowhere; never an audit's
     trace.py --stage ... --concurrency <n>                        cut the delegations into waves
                                                                   of at most n, in the manifest
                                                                   and the receipt; the default is
@@ -457,7 +461,7 @@ Usage:  trace.py <target-root>
         trace.py --encodes --changed <target-root> [<ref>]
         trace.py --convergence <target-root> <spec-root> <work-root> [--all]
         trace.py --stage <target-root> <spec-root> <slug> <workspace-dir> <file> [<file> ...]
-                 [--audit | --review [--node <node> ...] [--demonstrated <proof-record> ...]
+                 [--audit | [--node <node> ...] | --review [--node <node> ...] [--demonstrated <proof-record> ...]
                   | --adopt (--node <node> ... [--outside <file> ...] | --ledger <ledger.md>)]
                  [--certify <certifications-file>] [--rewrite <rewrite-file>]
                  [--concurrency <n>]
@@ -3829,7 +3833,8 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
           also: list[str] | None = None, certify: Path | None = None,
           demonstrated: list[Path] | None = None, adopt: bool = False,
           outside: list[str] | None = None, ledger_path: Path | None = None,
-          concurrency: int = CONCURRENCY, rewrite: Path | None = None) -> int:
+          concurrency: int = CONCURRENCY, rewrite: Path | None = None,
+          named: list[str] | None = None) -> int:
     """Prepare a reconciliation's workspace: the node set per file, one node pack per file, the
     batch's candidate index, and every pair whose re-judgment would buy a second reading of text
     that did not move. Everything here is computed from the trace, the specification and the
@@ -3897,6 +3902,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     where the same rewrite reproduces it — and where any one of the node's moved tests is not
     reproduced, none is, and the certification stays as it stood."""
     also = list(dict.fromkeys(also or []))
+    named = list(dict.fromkeys(named or []))
     outside = list(dict.fromkeys(outside or []))
     per_file_ledger: dict[str, set[str]] = {}
     if ledger_path is not None:
@@ -3944,7 +3950,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
     nodes, status = sound_specification(spec_root)
     if nodes is None:
         return status
-    unknown = [node_id for node_id in sorted(adopted_all) if node_id not in nodes]
+    unknown = [node_id for node_id in sorted(adopted_all | set(named)) if node_id not in nodes]
     if unknown:
         print(f"cannot run: {spec_root} holds no node {', '.join(unknown)}; a --node is read on "
               f"every file as the specification states it, and one the specification does not "
@@ -4377,6 +4383,10 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
             if node_id not in candidates:
                 lines.append(f"{node_id} — a candidate of this adoption, read against: "
                              f"{', '.join(sorted(read_on[node_id]))}")
+        for node_id in named:
+            if node_id not in candidates:
+                lines.append(f"{node_id} — named by the caller as written since the bind; bound "
+                             f"nowhere, read where a fact needs it")
         (workspace / "candidates.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     mechanical = sorted(mechanical, key=lambda e: (e["file"], e["node"]))
@@ -4389,6 +4399,7 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                 "review": review,
                 "adopt": adopt,
                 "also": also,
+                "named": {node_id: nodes[node_id]["digest"] for node_id in named},
                 "ledger": str(ledger_path) if ledger_path is not None else None,
                 "outside": sorted(outside),
                 "specification_root": str(spec_root),
@@ -4436,7 +4447,9 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
                  f"file(s) kept outside the judgment")
     else:
         shape = (f"{len(omitted)} pair(s) omittable — the binding is current and nothing is "
-                 f"owed on them")
+                 f"owed on them"
+                 + (f"; {len(named)} node(s) named as written since the bind join the candidate "
+                    f"index" if named else ""))
     judged_unbound = [given for given in unbound if given in judged_files]
     judged_over = "the candidates" if adopt else "the plan's nodes"
     print(f"staged {slug}: {len(judged_files)} file(s) to judge over {to_judge} node(s); "
@@ -5369,6 +5382,9 @@ def fold_returns(target: Path, workspace: Path, premise_path: Path, record_out: 
                         f"and answered for, and bound from nowhere here — a binding this record "
                         f"writes is one the trace already held."
                         if read_also else "."))
+    if manifest.get("named"):
+        notes.append(f"Node(s) named as written since the bind joined the candidate index and were "
+                     f"bound from nowhere here: {', '.join(manifest['named'])}.")
     if isinstance(premise.get("notes"), str) and premise["notes"].strip():
         notes.insert(0, premise["notes"].strip())
     for given, finding in out_of_scope:
@@ -6377,9 +6393,10 @@ def main() -> int:
         print("cannot run: --demonstrated is a mode of --stage --review; a proof's claim is "
               "settled by the review that reads the proof, and by nothing else", file=sys.stderr)
         return CANNOT_RUN
-    if also and not (do_review or do_adopt or do_release):
-        print("cannot run: --node is a mode of --stage --review, --stage --adopt or --release; "
-              "a reconciliation's node set is the trace's alone", file=sys.stderr)
+    if also and not (do_stage or do_release) or also and do_audit:
+        print("cannot run: --node is a mode of --stage or --release, and never of an audit; an "
+              "audit stages no candidate index, and a reconciliation's node set is the trace's "
+              "alone", file=sys.stderr)
         return CANNOT_RUN
     if captured_run is not None and not do_fold:
         print("cannot run: --run is a mode of --fold; it names the run that answers the "
@@ -6530,9 +6547,10 @@ def main() -> int:
                   "material's areas", file=sys.stderr)
             return CANNOT_RUN
         target, spec_root, slug, workspace, *files = args
+        ordinary = not (do_review or do_adopt)
         return stage(Path(target), Path(spec_root), slug, Path(workspace), files, do_audit,
-                     do_review, also, certify, demonstrated, do_adopt, outside, ledger_given,
-                     concurrency, rewrite)
+                     do_review, [] if ordinary else also, certify, demonstrated, do_adopt,
+                     outside, ledger_given, concurrency, rewrite, also if ordinary else [])
 
     if do_save_return:
         if len(args) != 4 or any(a.startswith("--") for a in args):

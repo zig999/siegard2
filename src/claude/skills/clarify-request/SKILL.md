@@ -83,7 +83,8 @@ instruction of the session.
    open after the second call is not guessed: say what is decided, name what is not, and stop
    without an instruction — the person invokes again with that decision stated. Where
    `AskUserQuestion` is unavailable, print the same questions as text — each with its options,
-   consequence and recommendation — and stop the same way.
+   consequence and recommendation, and what would change the recommendation — and stop the same
+   way.
 6. **Write the instruction.** Then validate it, without any code fence around it, in exactly
    this form, the instruction as a here-document and the path absolute:
    `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/clarify.py - <<'EOF'`, the instruction, `EOF`. That form is

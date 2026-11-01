@@ -406,9 +406,9 @@ def contract_branches(schema: dict) -> list[str]:
 def sliceable() -> list[Path]:
     """The contracts this script slices, in the order a refusal offers them: what a delivery
     records, and what the project's own registry declares. Both are this script's to validate, so
-    both are its to print — a registry is the artifact a human authors by hand, and until this
-    printed it the only home of what `commands[]` or a rule may declare was a file under the
-    plugin's own `schemas/`, which a person with the question had to know was there."""
+    both are its to print — a registry is the artifact a human authors by hand, and what
+    `commands[]` or a rule may declare is otherwise held only in a file under the plugin's own
+    `schemas/`, which a person with the question would have to know was there."""
     return [DELIVERY_CONTRACT, STANDARD_CONTRACT]
 
 

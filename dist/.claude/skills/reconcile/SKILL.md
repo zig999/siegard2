@@ -156,7 +156,7 @@ second home for it):
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --stage <target-source-root> <specification-root> \
     <slug> <workspace> <each named path> [--audit] [--certify <certifications file>] \
-    [--rewrite <rewrite file>]
+    [--rewrite <rewrite file>] [--node <each node the human named as written since the bind>]
 ```
 
 This is the locate step, run by the one reader that cannot miss a binding. It computes every node
@@ -256,7 +256,10 @@ expects rather than an exception to it. Such a node cannot be cleared here and c
 it was never delivered, and binding it is a delivery's act. What it can be is a **candidate**. Where
 the human names nodes written since this source was last bound — `/analyse` ends by listing exactly
 those identities — they join the candidate tier the judgment is passed, so a fact one of them now
-holds is attributed to it instead of reported as held by nothing. Named, never discovered, and by
+holds is attributed to it instead of reported as held by nothing. Name each to the staging with
+`--node <node>`: it lands in the candidate index beside the bound nodes, the manifest records it
+with its digest, and the record's notes name it — what the judges were offered is then on disk,
+never only in this conversation. Named, never discovered, and by
 the same person who named the file set: a reconciliation that went looking for its own candidates
 chose part of its own scope after all.
 
@@ -280,8 +283,8 @@ second time on this invocation's own account — its judgment lives at
 a file set of exactly its one file — the resolved path its pack header names, the spelling a
 finding echoes being the header's own; as the node set, its node pack's path from the manifest —
 the pack is the set, whole, each node's text with its source named; as candidates, the path to
-the workspace's candidate index — together with the identities of any node the human named as
-written since the bind — which it may consult where its file states a fact its own nodes do not
+the workspace's candidate index — which holds any node the human named as written since the
+bind — which it may consult where its file states a fact its own nodes do not
 settle: a fact one file states can be governed by a node another file carries, and a judge who
 cannot open that node reports an absence where the true finding is a misattribution; the
 specification root; and the path to
@@ -322,8 +325,8 @@ one costs a fresh delegation over the whole file.
 
 **A judgment answers two questions, and `kind` is which one a finding answers.** Whether the
 source still states what a node holds is one; whether it states a fact **no** node holds is the
-other, and a record that folded both into one boolean per node made the second land on whichever
-node shared the file with it. `contradicts` is the pair's: a node governs the fact and the source
+other, and one boolean per node would land the second on whichever node shared the file with
+it. `contradicts` is the pair's: a node governs the fact and the source
 disagrees with it or became a second home for it, so the node does not bind and a rebind is what
 closes it. `unstated` is the specification's: no node holds the fact at all, the route is
 `/analyse`, **no rebind can ever close it**, and so it blocks no binding a node's own reading

@@ -29,6 +29,14 @@ PATTERNS = [
     r"measured over",
     r"arrived with",
     r"\b\d[\d,]* of \d[\d,]*\b",
+    r"used to (?:leave|carry|be|hold|say)",
+    r"the previous shape",
+    r"what it never had",
+    r"this one replaced",
+    r"survive the redesign",
+    r"until this printed",
+    r"an earlier framework",
+    r"\b(?:salese2e|newcatalog|servicedeskn1|productcatalog|productorder|partymgmt)\b",
 ]
 HISTORY = [re.compile(p.replace(" ", r"\s+"), re.I) for p in PATTERNS]
 EXCEPTIONS: list[str] = []
@@ -37,7 +45,7 @@ EXCEPTIONS: list[str] = []
 def distributed() -> list[tuple[Path, str]]:
     out = []
     for path in sorted(SRC.rglob("*")):
-        if path.suffix in (".py", ".json", ".md") and path.is_file():
+        if path.suffix in (".py", ".json", ".md", ".yaml") and path.is_file():
             out.append((path, path.read_text(encoding="utf-8")))
     return out
 

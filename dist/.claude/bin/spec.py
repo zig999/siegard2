@@ -604,7 +604,7 @@ def element_refs(node: dict) -> list[tuple[str, str, str]]:
 
 
 def state_machine_problems(identity: str, node: dict, nodes: dict[str, dict]) -> list[str]:
-    """Anchors, state coherence, and totality — the check that must survive the redesign."""
+    """Anchors, state coherence, and totality."""
     problems: list[str] = []
     front = node["front"]
     status = nodes.get(front.get("status", ""))
@@ -640,7 +640,8 @@ def state_machine_problems(identity: str, node: dict, nodes: dict[str, dict]) ->
 
     # A terminal state "accepts no further trigger" — its own contract's words, and the whole of
     # what exempts it from the totality check below. A transition leaving one contradicts the
-    # declaration that exempted it, and the projected diagram drew both `S --> [*]` and `S --> T`.
+    # declaration that exempted it, and the projected diagram would draw both `S --> [*]` and
+    # `S --> T`.
     for index, transition in enumerate(transitions):
         if transition.get("from") in terminal:
             problems.append(f"{identity}: transitions[{index}].from names `"

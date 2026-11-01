@@ -15,9 +15,9 @@ claim.
 
 The discipline is the one this framework holds over its own state, applied to the account of the
 work: **a number you cannot point at a file for is not in the report.** Conversation history is
-non-authoritative here in the strongest sense. The token totals the previous shape of this report
-carried were recalled from tool results; after one context compression they were guesses that
-read as counts. That is what `telemetry.py` replaces.
+non-authoritative here in the strongest sense: a total recalled from tool results is, after one
+context compression, a guess that reads as a count, so every figure here is one `telemetry.py`
+printed.
 
 ## Required inputs
 
@@ -92,7 +92,7 @@ numbered as written — a reader comparing two reports compares two of one shape
 
 ```
 ---
-contract_version: siegard-telemetry/18
+contract_version: siegard-telemetry/19
 project_root: <from the record>
 window: { since, until, since_resolved_from }
 framework_version: <framework.version, or "unknown">
@@ -115,6 +115,7 @@ complete: true | false
 ## 13. Recommendations recorded
 ## 14. Confirmations typed
 ## 15. Commits inside a skill's span
+## 16. Proofs
 ```
 
 What each section holds:
@@ -260,6 +261,11 @@ What each section holds:
   not met are a condition nothing could read as met, and which clause kept it unmet is a reading
   of the evaluator's reasons in the transcript, tagged `[judgment]`. A window with none says
   zero; a `siegard-telemetry/14` record carries no count, which is not zero.
+- **16.** `proofs` whole: the reviews in the window and how many ran no coverage pass, the
+  criteria by state, the criteria by how many tests their entry names, the review `heaviest`
+  names — open it — and the bindings a test decides. No share and no threshold is computed here;
+  whether the covered share moved is a person's reading, tagged `[judgment]`. A
+  `siegard-telemetry/18` record carries none, which is not zero.
   Then `handoff_form`: of the messages a person answered, how many handed a decision, how many of
   those ran over `ceilings.message`, how many carried a framework term in the first
   `ceilings.opening` characters, how many carried a word of recommendation and how many no decision

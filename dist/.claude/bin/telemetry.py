@@ -201,7 +201,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "hooks"))
 import handoff_stop
 
 CANNOT_RUN = 2
-CONTRACT = "siegard-telemetry/18"
+CONTRACT = "siegard-telemetry/19"
+SURVEY_ROOT = "siegard-survey"
 STANDS, REVISED, NODE_GONE, UNREADABLE, UNLOCATED = ("stands", "revised", "node-gone",
                                                      "unreadable", "unlocated")
 OUTCOME_STATES = {
@@ -1747,8 +1748,12 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
         if delivery_root is not None and delivery_root.is_dir() else []
     if delivery_root is not None and (delivery_root / deliver.ORCHESTRATION_FILE).is_file():
         logs.append(delivery_root / deliver.ORCHESTRATION_FILE)
+    surveyed = home / SURVEY_ROOT
+    adoptions = sorted(surveyed.glob(f"*/{deliver.ORCHESTRATION_FILE}")) if surveyed.is_dir() else []
+    logs += adoptions
     for log in logs:
         at_root = log.parent == delivery_root
+        adoption = log in adoptions
         try:
             text = log.read_text(encoding="utf-8")
         except OSError:
@@ -1759,15 +1764,15 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
             if line.startswith("- "):
                 line = line[2:].strip()
             line = line.strip("`").strip()
-            if "recommended:" not in line and "decided:" not in line:
+            if "recommended:" not in line and "decided:" not in line.replace("not decided:", ""):
                 continue
             landing = landed.get(number)
             if landing is not None and not (since <= landing[1] <= until):
                 continue
             slug = (run_named_by(home, landing[0]) if landing else "") if at_root \
                 else log.parent.name
-            roots = ([delivery_root / slug] if slug else [log.parent]) \
-                + ([work_root / slug] if work_root is not None and slug else [])
+            roots = [log.parent] if adoption or not slug else \
+                [delivery_root / slug] + ([work_root / slug] if work_root is not None else [])
             where = {"slug": slug, "log": str(log), "line": number}
             match = RECOMMENDED.match(line) \
                 if line.startswith(("recommended:", "decided:")) else None
@@ -1791,6 +1796,60 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
              for kind in ("derived", "judged")}
     return {"emitted": len(handed), "by_criterion": by_criterion, "by_kind": by_kind,
             "taken": taken, "lines": lines, "malformed": malformed}
+
+
+# --------------------------------------------------------------------------- the proofs
+
+
+COVERAGE_STATES = ("covered", "partial", "uncovered", "unauditable")
+TEST_BUCKETS = ("0", "1", "2", "3+")
+
+
+def proofs_section(delivery_root: Path | None, home: Path, since: datetime,
+                   until: datetime) -> dict:
+    """What the test discipline's grounding measurement reads, from the records alone: every review whose
+    last commit falls in the window, the state of each criterion its coverage pass named and how
+    many tests each names, and the bindings a test decides in the project's trace. It refuses
+    nothing and sets no threshold; the review naming the most tests for one criterion is named so
+    a reader can open it."""
+    reviews = sorted(delivery_root.glob("*/review/*.md")) \
+        if delivery_root is not None and delivery_root.is_dir() else []
+    read, without = 0, 0
+    states = dict.fromkeys(COVERAGE_STATES, 0)
+    per_criterion = dict.fromkeys(TEST_BUCKETS, 0)
+    heaviest: dict | None = None
+    for review in reviews:
+        stamp = git(home, "log", "-1", "--format=%aI", "--", str(review))
+        if stamp is None or stamp.returncode != 0 or not stamp.stdout.strip():
+            continue
+        landed = datetime.fromisoformat(stamp.stdout.strip())
+        if not (since <= landed <= until):
+            continue
+        read += 1
+        coverage = frontmatter_of(review).get("coverage")
+        if not isinstance(coverage, list):
+            without += 1
+            continue
+        for at, entry in enumerate(coverage):
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("state") in states:
+                states[entry["state"]] += 1
+            tests = entry.get("tests") if isinstance(entry.get("tests"), list) else []
+            per_criterion[str(len(tests)) if len(tests) < 3 else "3+"] += 1
+            if heaviest is None or len(tests) > heaviest["tests"]:
+                heaviest = {"review": str(review.relative_to(home)) if review.is_relative_to(home)
+                            else str(review), "criterion": at, "tests": len(tests)}
+    trace_file = home / "siegard-trace.json"
+    try:
+        bindings = json.loads(trace_file.read_text(encoding="utf-8")).get("bindings") or []
+    except (OSError, ValueError, AttributeError):
+        bindings = None
+    decided = None if bindings is None else sum(
+        1 for entry in bindings if isinstance(entry, dict) and entry.get("decided_by") == "test")
+    return {"reviews": read, "without_coverage": without, "states": states,
+            "tests_per_criterion": per_criterion, "heaviest": heaviest,
+            "decided_by_test": decided}
 
 
 # ------------------------------------------------------------------------- the handoffs
@@ -2072,6 +2131,7 @@ def build(project_root: Path, since_raw: str, until_raw: str | None,
         "notes": notes_section(work_root),
         "scope": scope_section(work_root, delivery_root, home, repository["commits"]),
         "recommendations": recommendations_section(delivery_root, work_root, home, since, until),
+        "proofs": proofs_section(delivery_root, home, since, until),
         "handoffs": handoffs_section(harness),
         "handoff_form": handoff_form_section(harness, home, since, until),
         "provenance": provenance_of(roots, harness, repository, decisions),
@@ -2123,6 +2183,14 @@ def receipt(report: dict, destination: Path) -> str:
            if any(report['recommendations']['taken'].values()) else "")
         + (f", {len(report['recommendations']['malformed'])} line(s) that do not parse"
            if report['recommendations']['malformed'] else ""),
+        f"proofs: {report['proofs']['reviews']} review(s) in the window, criteria "
+        + ", ".join(f"{count} {state}" for state, count in report['proofs']['states'].items())
+        + "; tests per criterion "
+        + ", ".join(f"{bucket}: {count}"
+                    for bucket, count in report['proofs']['tests_per_criterion'].items())
+        + "; bindings a test decides: "
+        + (str(report['proofs']['decided_by_test'])
+           if report['proofs']['decided_by_test'] is not None else "no trace read"),
         f"handoffs: {report['handoffs']['confirmations']} confirmation(s) typed over "
         f"{report['handoffs']['skill_calls']} Skill call(s) — "
         + ", ".join(f"{name} {tally['count']} ({tally['unasked']} after no question, "

@@ -466,8 +466,8 @@ def test_a_record_in_english_may_say_stands_and_one_in_portuguese_may_not():
 
 from test_door import RECORDED, READY, SLUG, commit, project  # noqa: E402,F401
 
-PREPARED_SKILLS = ("deliver-scope", "plan-work", "implement-task", "review-change", "reconcile",
-                   "analyse", "siegard-goal", "siegard-status")
+PREPARED_SKILLS = ("deliver-scope", "adopt-scope", "plan-work", "implement-task", "review-change",
+                   "reconcile", "analyse", "siegard-goal", "siegard-status")
 
 
 def prepare(home: Path, skill: str, *extra: str) -> dict:

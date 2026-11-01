@@ -88,7 +88,7 @@ and the reviewers' evidence-only returns already hold.
 
 ### What a goal takes
 
-- **R7** — Under a goal condition naming the orchestrating route, the orchestrating entry point takes the door a derived recommendation names where that door is an entry point the route invokes, and takes the door a judged choice leaves only as the door decider returned it, blind to the condition and while the condition's budget of judged doors is not spent. Each door taken is one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3 reserves is never taken.
+- **R7** — Under a goal condition naming the orchestrating route, the orchestrating entry point takes the door a derived recommendation names where that door is an entry point the route invokes, and takes the door a judged choice leaves only as the door decider returned it, blind to the condition and while the condition's budget of judged doors is not spent. Each door taken is one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3 reserves is never taken. Outside a goal, a session takes a derived recommendation only where the person's own message says to proceed, `bin/door.py --check` accepts the door and every other door is excluded, and the door taken is recorded the same way: one `decided:` line in the orchestration log of the run it continues where one exists, and otherwise in the body of the commit that follows it.
 
 ### Where a recommendation is recorded
 
@@ -111,7 +111,9 @@ and the reviewers' evidence-only returns already hold.
 2. Telemetry counts the `recommended:` lines of every orchestration log under the delivery
    root — each initiative's own, and one an orchestrating entry point left at the delivery root
    itself, read under the initiative its landing commit names — by criterion, and names each
-   line that does not parse, a `recommended:` that does not open its line among them;    it computes nothing about which door was taken. It counts the `decided:` lines R7 states the
+   line that does not parse, a `recommended:` that does not open its line among them — and the
+   log `/adopt-scope` keeps under `siegard-survey/<slug>/`, read under that slug; it computes
+   nothing about which door was taken. It counts the `decided:` lines R7 states the
    same way, apart from the `recommended:` ones.
 3. A consumer initiative run under this specification is read for three things. Each handoff
    that hands a door R2 excludes and carries no recommendation is a failure to apply R2, never
@@ -147,7 +149,7 @@ and the reviewers' evidence-only returns already hold.
    fails the schema only on the fields the model fills. The same test holds `--render` refusing
    a decision record without `state_from`, one whose state differs from what the script prints
    now, one recommending a door the check refuses, and one whose `why` or `reverses_if` is
-   empty; and every skill named in `bin/handoff.py`'s use — `deliver-scope`, `plan-work`,
+   empty; and every skill named in `bin/handoff.py`'s use — `deliver-scope`, `adopt-scope`, `plan-work`,
    `implement-task`, `review-change`, `reconcile`, `analyse`, `siegard-goal`, `siegard-status` —
    names `--prepare` and `--render` beside its report and cites R10.
 6. The closed list holds a framework word that is also plain English — `stands`, `nowhere`,
@@ -228,3 +230,6 @@ and the reviewers' evidence-only returns already hold.
   being written: the orchestrator runs in the session that wrote the report, and wrote a valid
   one. Open: `/adopt-scope` writes its log at `siegard-survey/<slug>/`, which telemetry does not
   read; R5 binds it, and under the reading that constrains more its lines are owed a count.
+- 2026-11-01 — the open item above is closed: telemetry reads `siegard-survey/*/orchestration.md`
+  beside the delivery root's logs, and `/adopt-scope` hands its report through `--prepare` and
+  `--render` (R10, validation 5).

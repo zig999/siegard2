@@ -16,19 +16,16 @@
 # applying `no-explicit-any` to a five-hundred-line file has strictly worse recall than tsc and
 # costs more.
 #
-# The split moved once, deliberately, and the reasoning is worth keeping because it is the
-# reasoning any project adopting `edits_freely` will have to repeat. This registry used to leave
-# contrast and touch-target size as readings, on the grounds that deciding them needs a rendered
-# page and a registry should not claim a tool decides what nothing here runs. That was right
-# while every change arrived through a task, because a reading still ran on every one of them.
-# It stops being right on a target where a person edits the source directly: there a reading is
-# scheduled by nothing, and a colour or a spacing change -- exactly what breaks those two rules
-# -- reaches production having been read by no one. So the answer was not to relax the rule but
-# to pay for the step: `a11y` renders the pages and axe decides both, and `playwright.config.ts`
-# is presupposed because a touch-target rule decided at a desktop width decides nothing.
+# Two readings are paid for with a step here, and the reasoning is the one any project adopting
+# `edits_freely` repeats. Contrast and touch-target size need a rendered page to decide. A reading
+# runs on every change that arrives through a task, but on a target where a person edits the
+# source directly a reading is scheduled by nothing, and a colour or a spacing change -- exactly
+# what breaks those two rules -- reaches production read by no one. So the step is paid for:
+# `a11y` renders the pages and axe decides both, and `playwright.config.ts` is presupposed
+# because a touch-target rule decided at a desktop width decides nothing.
 #
-# Eight rules moved that way. Two of them were split rather than converted, because a tool
-# decided part of each and the rest was judgment: ACC-01 keeps the reachable-and-activatable
+# Eight rules are decided by a step for that reason. Two others are split, because a tool
+# decides part of each and the rest is judgment: ACC-01 keeps the reachable-and-activatable
 # half a linter sees and hands Escape-dismisses-and-returns-focus to ACC-11, and SEC-02 keeps the
 # evaluates-a-string constructs and hands the built-from-input address to SEC-05. A rule half
 # decided by a step is worse than one nobody automated -- the step exits 0 over the half it never
@@ -40,7 +37,7 @@
 # arrangement, and belongs here.
 #
 # This sample names its stack -- React and TypeScript, built by Vite, tested by Vitest -- and
-# that is a change from a registry that named only roles. It is not decoration. Two of the rules
+# that is not decoration. Two of the rules
 # below could not be written at all until the bundler was known: ENV-01 exists because Vite's
 # browser bundle has no process.env in it, and ENV-02 because Vite inlines every VITE_-prefixed
 # variable into a file every visitor downloads. Naming a stack is what lets a registry hold the
@@ -49,9 +46,7 @@
 # says it. The tool appears where a tool belongs: in `dependencies`, in `commands`, and in the
 # `presupposes` entry for the configuration those steps read.
 #
-# The VIS rules and ACC-12 came from an earlier framework this one replaced, which carried about
-# twenty visual rules as prose in an agent's prompt, each with a severity attached and none of
-# them citable. Six survived the crossing, and the filter was one question asked of every rule:
+# The VIS rules and ACC-12 are the visual rules that pass one question asked of every candidate:
 # does a stylesheet carry the fact needed to decide it? Line-height, font-size, easing values,
 # transition targets, background-clip and the reduced-motion query are all declared values, so a
 # ruleset decides them exactly. Axis sharing, baseline alignment, padding proportional to a

@@ -505,6 +505,20 @@ def test_a_project_holding_an_armed_goal_is_answered_by_the_goal_alone(siegard_p
     assert checks(siegard_project) == []
 
 
+def test_another_sessions_stop_is_held_to_the_handoff_check_beside_an_armed_goal(siegard_project):
+    """«a stop R14 answers is R14's alone — a stop of another session, where the armed goal is
+    bound to one, is read here» (SPEC-008 R15)."""
+    held = siegard_dir(siegard_project)
+    held.mkdir(parents=True)
+    (held / "goal.json").write_text(json.dumps({"contract": "goal-armed/1", "slug": "orders",
+                                                "session_id": "elsewhere"}), encoding="utf-8")
+    done = stopped(siegard_project, VIOLATING, mode="enforce")
+    assert done.returncode == 0
+    assert json.loads(done.stdout)["decision"] == "block", done.stdout
+    assert len(checks(siegard_project)) == 1
+    assert (held / "goal.json").is_file(), "the goal another session holds stays armed"
+
+
 def test_a_project_without_siegard_json_is_not_read(foreign_project):
     done = stopped(foreign_project, VIOLATING, mode="enforce")
     assert done.returncode == 0 and done.stdout == ""
@@ -567,6 +581,30 @@ def test_no_armed_goal_or_an_unreadable_record_says_nothing_of_the_version(siega
     held.mkdir(parents=True)
     (held / "goal.json").write_text("{ not json", encoding="utf-8")
     assert drift_run(siegard_project).stdout == ""
+
+
+def test_a_goal_bound_to_another_session_is_said_at_the_start(siegard_project):
+    """«It also prints one line when the armed goal is bound to a session other than the one
+    starting» (SPEC-008 R16) — and nothing to the session it is bound to, or before any is."""
+    held = siegard_dir(siegard_project)
+    held.mkdir(parents=True)
+    record = {"contract": "goal-armed/1", "slug": "orders", "version": plugin_version(),
+              "armed_at": "2026-11-01T10:00:00Z", "session_id": "elsewhere"}
+    (held / "goal.json").write_text(json.dumps(record), encoding="utf-8")
+
+    def started(session: str) -> subprocess.CompletedProcess:
+        event = {"hook_event_name": "SessionStart", "cwd": str(siegard_project),
+                 "session_id": session}
+        return subprocess.run([sys.executable, "-B", str(DRIFT)], input=json.dumps(event),
+                              capture_output=True, text=True)
+
+    said = json.loads(started("here").stdout)
+    line = said["systemMessage"]
+    assert "\n" not in line and "orders" in line and "2026-11-01T10:00:00Z" in line
+    assert "goal.py --disarm" in line and "elsewhere" in line
+    assert started("elsewhere").stdout == ""
+    (held / "goal.json").write_text(json.dumps({**record, "session_id": None}), encoding="utf-8")
+    assert started("here").stdout == ""
 
 
 def test_the_version_line_stands_beside_the_drift_receipt(traced):

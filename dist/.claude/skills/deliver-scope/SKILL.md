@@ -24,7 +24,11 @@ A missing input is a stop, not a default:
    `goal.py --arm`, armed on the person's own word; this skill deciding on its own that a session "meant" the whole route is not. Where such a
    condition names its objective by a file and a digest, the file's text, read whole, is the
    ask's objective; a file whose digest no longer matches is a stop, because the words are no
-   longer the ones the person armed.
+   longer the ones the person armed. A route resumed after a compaction reads the ask from what
+   `ask.py --read` prints, run as the `read:` line `ask.py --record` printed names it — path and
+   digest — in place of a summary: «A route resumed after a compaction reads its authorization
+   from a recorded ask, printed by `ask.py --read`, in place of a summary of an earlier context»
+   (SPEC-010 R3).
 2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 3. **the target** — by the key `siegard.json`'s `targets` names it. Where `targets` declares
@@ -249,6 +253,8 @@ evidence, a finding's worth — is never taken.
   budget left. Never the conversation, never the attempts' story, never what ends the goal. Save
   its return as the subagent's own reply. `chosen` or `excluded` naming the door to try again:
   take it, write the `decided:` line with the rung it named, and count one door of the budget.
+  The budget left is read, never remembered: the condition's state command prints `check budget`,
+  the judged `decided:` lines the log gained since the goal began against the budget it pins.
   Anything else — `reserved`, `none`, or the door that ends the run — is the stop it was. A
   judged choice met with the budget spent is a stop of its own.
 - **A finding the condition's findings policy names.** After the review's commit, each finding

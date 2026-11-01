@@ -216,6 +216,32 @@ def test_a_change_left_in_the_tree_is_not_yet_unless_the_condition_declared_it(p
     assert first(state(project, "--untouched", "notes.txt")).startswith("state A")
 
 
+def test_judged_doors_past_the_budget_are_state_b_and_within_it_are_not(project):
+    """«A run that took more judged doors since the goal began than the condition's budget is
+    state B on its own» (SPEC-008 R3): counted from the `decided:` lines the log gained, a
+    derived one and a door.py `not decided:` quote never among them."""
+    deliver(project)
+    review(project)
+    log(project, f"- /review-change over {TASK}: recorded.",
+        "decided: /plan-work over checkout — costs less — telemetry printed 2 runs against 5",
+        "decided: /implement-task — precondition unmet — the plan holds the task",
+        "- door.py said: not decided: the slug")
+    measure(project)
+    assert first(state(project, "--budget", "1")).startswith("state A")
+    assert "check budget: pass" in state(project, "--budget", "1").stdout
+    over = state(project, "--budget", "0")
+    assert failing(over) == {"budget"}
+    assert first(over) == ("state B — 1 judged door(s) taken since the goal began; the "
+                           "condition's budget is 0, which the person did not grant")
+    assert "check budget" not in state(project).stdout, "a state command with no budget counts none"
+
+
+def test_the_composed_state_command_carries_the_budget(project):
+    result = compose(project, "--scope", TASK, "--budget", "2")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "--budget 2" in result.stdout.split("paste after /goal:\n\n", 1)[1]
+
+
 def test_a_commit_naming_no_skill_and_the_slug_is_state_b_on_its_own(project):
     deliver(project)
     review(project)

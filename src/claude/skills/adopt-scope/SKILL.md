@@ -27,9 +27,9 @@ A missing input is a stop, not a default:
    exactly one key and the ask names none, that key is the target: decided and disclosed, never
    asked.
 4. **the slug** — the context's name under `siegard-survey/` and `siegard-reconcile/`, named in
-   the ask or derived from the context's name and disclosed. A slug whose reconciliation record
-   already exists is a resume: this skill continues from the step whose commit the log below
-   does not hold, and the report says so.
+   the ask or derived from the context's name and disclosed. A slug whose orchestration log,
+   `siegard-survey/<slug>/orchestration.md`, already exists is a resume: this skill continues
+   from the step whose commit the log does not hold, and the report says so.
 5. **the areas** — each a short name and the files it holds, in the ask's own words, spelled
    from the target source root as paths or directories. They are `/survey`'s own input, handed
    through unchanged; this skill never widens, narrows or cuts an area. What leaves an area is
@@ -128,8 +128,8 @@ The steps:
 6. **Commit the adoption**: `siegard-trace.json`, `siegard-reconcile` and
    `siegard-survey/<slug>`, under `adopt-scope <slug>: adopt`.
 7. **Measure.** Run `telemetry.py --probe --since <the instant step 1 began>` over the project
-   root; announce the read as that script requires; run it. Commit `siegard-telemetry` under
-   `adopt-scope <slug>: measure`. A probe that cannot read is a line in the report, never a stop.
+   root; announce the read as that script requires; run it. Commit the telemetry root `project.py`
+   answers under `adopt-scope <slug>: measure`. A probe that cannot read is a line in the report, never a stop.
 
 **The orchestration log.** After each step, append one line to `orchestration.md` at
 `siegard-survey/<slug>/` — what was invoked, the commit that followed by its hash, and the
@@ -164,8 +164,15 @@ the report is where a person reads it.
 
 ## Report, and stop
 
-Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+«The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
+`python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill adopt-scope --project
+<project-root> --target <target> --language <en or pt-BR, the session's>` — where a step stopped
+the run, `--skill` names that step instead, so the doors it marks are the ones that step's report
+hands. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its
+`report` names, and fill only the fields the skeleton left empty — the stopping report's
+recommendation and doors among them, carried — and hand the person exactly what
+`handoff.py --render` prints over the record: the opening «A handoff opens with what needs the
+person, and explains after» (SPEC-006 R1) states.
 
 Report, in this order: where `HEAD` stood when the run began; every commit this run made, by hash
 and message, and the `git log` range that holds them, because the range is the review and it

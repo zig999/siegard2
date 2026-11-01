@@ -104,19 +104,21 @@ plugin root is the directory that holds `schemas/` and `bin/` side by side.
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill siegard-goal --project
 <project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>`, write
 the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill the record as one decision of kind
-`decision` — the condition, prefixed `/goal `, as its line ready to paste — and hand the person
+`decision` — the condition, prefixed `/goal `, as its line ready to paste, and `settles` rather
+than `recommended`, since the choice below is the person's — and hand the person
 exactly what `handoff.py --render` prints: the opening «A handoff opens with what needs the
 person, and explains after» (SPEC-006 R1) states. A refusal is answered by rewriting the field
 it names; a state it says has moved, by running `--prepare` again and carrying its `state` and
 `state_from` whole. Where the goal was armed in this invocation, the state `--prepare` printed is
 the armed goal's own first line.
-The one decision is the person's: whether to arm the goal, and how — recommended, by judgment
-because the two hold the same route, through the framework: they say so in their own words and
-step 4 runs, and the end is the state command's answer at every stop rather than an evaluator's
-reading of the session; or through the harness, by pasting the block that closes this report —
-whole, because `/goal` with anything else, the objective alone among them, names no route and
-`/deliver-scope` refuses it. What would change it: a project whose sessions run without this
-plugin's hooks, where only the harness's goal answers a stop. Then, in the session's own words,
+The one decision is the person's: whether to arm the goal, and how. No rung of the ladder
+separates the two doors — both hold the same route, both can be ended, and no command printed a
+cost — so none is recommended, and the report says the choice is the person's and what each
+assumes. Through the framework: they say so in their own words and step 4 runs, and the end is
+the state command's answer at every stop rather than an evaluator's reading of the session; it
+assumes this session runs with this plugin's hooks. Or through the harness, by pasting the block
+that closes this report — whole, because `/goal` with anything else, the objective alone among
+them, names no route and `/deliver-scope` refuses it; it assumes nothing beyond the paste. Then, in the session's own words,
 what the goal will do:
 carry the scope through `/deliver-scope`, commit each step that skill defines, and end when the
 state command answers `state A` or `state B`, both of which end it. Where the objective was a
