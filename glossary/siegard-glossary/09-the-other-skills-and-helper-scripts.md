@@ -50,7 +50,8 @@ goal.py --arm <project-root> --slug <slug> [--scope <id>]... | --objective <text
 goal.py --disarm <project-root>
 ```
 
-Arming happens only on the person's own word. The record is `siegard/goal.json` under the git
+Only `/siegard:siegard-goal` runs it, and only where your invocation opens with `--arm`: the skill
+is closed to the model, so no session arms a goal on its reading of a message. The record is `siegard/goal.json` under the git
 directory, never in the tree.
 
 ### Handoff record (`handoff.py`)

@@ -853,6 +853,8 @@ def test_the_fourth_identical_not_yet_lets_the_session_stop_and_pauses_the_goal(
     assert "decision" not in said
     assert said["systemMessage"].startswith(f"Siegard paused the armed goal {SLUG}: 3 "
                                             f"consecutive stops")
+    assert said["systemMessage"].endswith(
+        "It is disarmed; `/siegard:siegard-goal --arm` over the same scope arms it again")
     assert not armed(project).exists()
     assert [e["ended"] for e in ended(project)] == ["paused"]
 
@@ -883,3 +885,34 @@ def test_a_state_the_hook_cannot_compute_lets_the_session_stop_and_keeps_the_goa
     said = json.loads(stop(project).stdout)
     assert "decision" not in said and "could not read the state" in said["systemMessage"]
     assert armed(project).exists()
+
+
+# ------------------------------------------------------------- who arms a goal (R6)
+
+SKILLS_DIR = REPO / "src/claude/skills"
+GOAL_SKILL = (SKILLS_DIR / "siegard-goal" / "SKILL.md").read_text(encoding="utf-8")
+
+
+def test_the_goal_skill_is_closed_to_the_model_so_its_arguments_are_the_persons():
+    front = yaml.safe_load(GOAL_SKILL.split("---", 2)[1])
+    assert front["disable-model-invocation"] is True
+    assert front["argument-hint"].startswith("[--arm]")
+
+
+def test_the_goal_skill_arms_only_on_a_first_argument_and_never_over_a_citation():
+    flat = " ".join(GOAL_SKILL.split())
+    assert "**To arm** is the invocation's first argument, `--arm`, and nothing else" in flat
+    assert "A later message asking to arm is answered with the invocation to paste" in flat
+    assert "Over a citation, `--arm` composes and does not arm" in flat
+    assert "`/siegard:siegard-goal --arm <project-root> --slug <slug> --target <target>`" in flat
+
+
+def test_no_other_shipped_skill_nor_the_session_rules_runs_goal_arm():
+    runs = re.compile(r"bin/goal\.py --arm")
+    others = [path for path in (*SKILLS_DIR.glob("*/SKILL.md"),
+                                *(REPO / "src/claude/agents").glob("*.md"))
+              if path.parent.name != "siegard-goal" and runs.search(path.read_text("utf-8"))]
+    assert others == []
+    rules = " ".join((REPO / "src/claude/hooks/rules.md").read_text("utf-8").split())
+    assert "never run `goal.py --arm` outside `/siegard-goal --arm`" in rules
+

@@ -112,8 +112,8 @@ def version_line(root: Path) -> str:
         return ""
     return (f"Siegard {loaded} is loaded, and the armed goal {armed.get('slug', '')} began under "
             f"{began}: its state answers state B at the next stop, because the rules it ran under "
-            f"are no longer the ones that answer; `goal.py --disarm` ends it and /siegard-goal "
-            f"arms it again under {loaded}.")
+            f"are no longer the ones that answer; `goal.py --disarm` ends it and "
+            f"`/siegard:siegard-goal --arm` over the same scope arms it again under {loaded}.")
 
 
 def bound_line(root: Path, session: object) -> str:

@@ -69,9 +69,9 @@ the session from `--state`'s own computation over that record: «A goal the pers
 the framework ends on the state script's answer at the session's stop, never on a model's
 reading: `state A` or `state B` ends the goal and lets the session stop, `not yet` blocks the
 stop with the checks that failed, and a fourth consecutive `not yet` whose whole answer repeats
-the last ends the goal paused.» (SPEC-008 R14) Arming is the person's act: it runs only on the
-person's own word to arm, which no script can read, so the skill that invokes it holds that
-condition. An `--objective-file` naming the file an earlier `--compose` wrote for the slug is
+the last ends the goal paused.» (SPEC-008 R14) Arming is the person's act: only `/siegard-goal`
+runs this, where the person's invocation opens with `--arm` — the skill is closed to the model's
+invocation, so its arguments are the person's own words, which no script can read. An `--objective-file` naming the file an earlier `--compose` wrote for the slug is
 named as it stands rather than written again; `--objective-file -` reads the objective from stdin,
 byte for byte, so a caller holding the text writes no file of its own.
 
@@ -664,7 +664,7 @@ def answer_stop(record: dict, path: Path) -> tuple[str, str]:
                   f"could see changed; the last answer: {first}")
         end_armed(path, record, "paused", reason)
         return "paused", (f"Siegard paused the armed goal {record['slug']}: {reason}. It is "
-                          f"disarmed; /siegard-goal arms it again")
+                          f"disarmed; `/siegard:siegard-goal --arm` over the same scope arms it again")
     record = {**record, "blocks": blocks + 1 if digest == record.get("last_state") else 1,
               "last_state": digest}
     write_armed(path, record)

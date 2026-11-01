@@ -102,7 +102,9 @@ goal.py --arm <project-root> --slug <slug> [--scope <id>]... | --objective <text
 goal.py --disarm <project-root>
 ```
 
-Só se arma por palavra da própria pessoa, e o `--disarm` só roda quando ela pede. O registro fica
+Só a `/siegard:siegard-goal` o roda, e só quando a invocação da pessoa começa com `--arm`: a skill
+é fechada ao modelo, então nenhuma sessão arma um goal pela leitura de uma mensagem. O `--disarm`
+só roda quando a pessoa pede. O registro fica
 em `siegard/goal.json`, dentro do diretório do git, nunca na árvore.
 
 ### Pedido gravado (`ask.py`)

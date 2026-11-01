@@ -21,7 +21,7 @@ A missing input is a stop, not a default:
    message that does not state it is a stop, exactly as the corrective increment in `/plan-work`
    is named and never inferred. A standing automation the human armed — a goal condition naming
    this skill — is such a statement, and so is a condition the plugin's `Stop` hook repeats from a goal armed by
-   `goal.py --arm`, armed on the person's own word; this skill deciding on its own that a session "meant" the whole route is not. Where such a
+   `goal.py --arm`, which only the person's own invocation of `/siegard-goal --arm` runs; this skill deciding on its own that a session "meant" the whole route is not. Where such a
    condition names its objective by a file and a digest, the file's text, read whole, is the
    ask's objective; a file whose digest no longer matches is a stop, because the words are no
    longer the ones the person armed. A route resumed after a compaction reads the ask from what

@@ -30,7 +30,7 @@ and not trusted.
 - **A way in for code that already exists.** `/siegard:survey`, `/siegard:analyse` and
   `/siegard:reconcile` adopt source no delivery wrote, one context at a time.
 - **A scope carried with nobody asked along the way.** `/siegard:siegard-goal` composes the
-  condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it, or, on your word, it arms the goal itself with `goal.py --arm` and the plugin's `Stop` hook answers each stop from `goal.py --state` (state A or B ends it, `not yet` sends the session back with the failing checks, four identical `not yet` answers pause it; `goal.py --disarm <project-root>` ends it by hand),
+  condition of a Claude Code `/goal` over an objective, an epic or a set of tasks; you paste it after `/goal`, or invoke `/siegard:siegard-goal --arm` with the same scope and it arms the goal itself with `goal.py --arm` and the plugin's `Stop` hook answers each stop from `goal.py --state` (state A or B ends it, `not yet` sends the session back with the failing checks, four identical `not yet` answers pause it; `goal.py --disarm <project-root>` ends it by hand),
   `/siegard:deliver-scope` carries the scope, and the goal ends when `goal.py --state` reads
   `state A` (delivered, proven, reviewed, measured) or `state B` (stopped where only you move it)
   from disk. Under the goal, a door a fact decides is taken without you; a choice of cost is

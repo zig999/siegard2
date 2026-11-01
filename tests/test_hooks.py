@@ -564,6 +564,7 @@ def test_a_goal_armed_under_another_version_is_said_at_the_start(siegard_project
     line = said["systemMessage"]
     assert "\n" not in line
     assert f"Siegard {plugin_version()} is loaded" in line and "began under 0.0.1" in line
+    assert "`/siegard:siegard-goal --arm` over the same scope arms it again" in line
     assert "orders" in line and "state B" in line
     assert said["hookSpecificOutput"]["additionalContext"] == line
 

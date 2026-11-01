@@ -572,6 +572,24 @@ def test_a_skill_whose_report_hands_no_door_prepares_a_report(project):
     assert prepared["kind"] == "report" and "decisions" not in prepared
 
 
+def test_the_goal_report_followed_by_its_two_lines_to_paste_passes_the_check(project):
+    """SPEC-008 R6: the two ways to arm follow the rendered report, each fenced, and a condition
+    as long as a consumer's leaves the handoff within what `--check` decides."""
+    prepared = prepare(project, "siegard-goal", "--language", "pt-BR")
+    Path(prepared["report"]).write_text("full\n", encoding="utf-8")
+    prepared["body"] = ("O goal leva o escopo do começo ao fim, faz um commit por passo e termina "
+                        "quando o estado lido do disco disser que acabou ou que parou para você.")
+    message, problems = handoff.render(prepared, CONTRACT, project)
+    assert problems == [], problems
+    condition = "Carry this scope end to end through /siegard:deliver-scope. " + "x" * 1200
+    text = (message + "\nAs duas formas levam à mesma rota, as duas podem ser encerradas e nenhum "
+            "comando mediu custo; pelo framework, o fim é a resposta do script a cada parada e "
+            "pressupõe os hooks deste plugin nesta sessão; pelo harness, basta colar.\n\n"
+            "```\n/siegard:siegard-goal --arm /p --slug s --target backend --scope epic/e\n```\n\n"
+            f"```\n/goal {condition}\n```\n")
+    assert handoff.violations(handoff.reading(text, CONTRACT), CONTRACT) == []
+
+
 def test_the_skeleton_fails_the_schema_only_on_what_the_model_fills(project):
     from jsonschema import Draft202012Validator
     prepared = prepare(project, "implement-task", "--slug", SLUG)

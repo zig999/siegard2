@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.47.1. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.48.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -138,7 +138,7 @@ not. Three things hold that route:
 - **Under a goal armed by `goal.py --arm`, a `not yet` from the Stop hook is answered with the
   route's next step.** «A goal the person arms through the framework ends on the state script's
   answer at the session's stop, never on a model's reading» (SPEC-008 R14): never another stop
-  and no work; never run `goal.py --arm` but on the person's own word to arm, and never run
+  and no work; never run `goal.py --arm` outside `/siegard-goal --arm`, and never run
   `goal.py --disarm` unasked.
 - **Text for another project's session is relayed, never pasted.** Write it with `bin/relay.py
   --to <sibling-project-root> --from <project-root> --text-file -` and hand the person the

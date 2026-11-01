@@ -126,9 +126,11 @@ MODEL_MAY_REACH = {
     # extra input (the initiative) is inferred exactly as /siegard-status infers the project
     # root — named when ambiguous, never asserted by the session.
     "siegard-progress": True,
-    # It arms a goal only on the person's own word to arm it, a gate inside the skill as
-    # /deliver-scope's is; a session may reach for it when asked to carry a scope unattended.
-    "siegard-goal": True,
+    # Closed: the scope, the objective and the word to arm are the person's own, and a session
+    # that invoked it would hand the skill an objective in the session's words — a paraphrase is
+    # an ask nobody made — and could write `--arm` itself. Closed, every argument is typed by the
+    # person, and `--arm` as the first one is a word no session reads into a message (SPEC-008 R6).
+    "siegard-goal": False,
     # Removal is the one act whose want only the human can state — the same criterion that
     # closes /siegard-config: a session that "tidied up" on its own would be deciding an input
     # that was never its to assert.
@@ -209,7 +211,9 @@ def test_every_delegate_is_cited_and_exists(repo, case):
             f"{case['name']} delegates to {name}, which src/claude/agents does not hold"
 
 
-SPAWNED = re.compile(r"siegard:([a-z][a-z-]*)")
+# A slash before it is a skill invoked as the person types it, `/siegard:<skill>`, not an agent
+# spawned.
+SPAWNED = re.compile(r"(?<!/)siegard:([a-z][a-z-]*)")
 
 
 def test_every_spawned_agent_is_a_declared_delegate(case):
