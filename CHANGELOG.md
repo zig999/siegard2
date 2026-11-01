@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.46.0 — 2026-11-01
+
+The specification states what the skills and the validator already held. SPEC-003 admits what an upstream imposes into a consumed Contract, defines a `capability` as a promise made at the system's boundary — a third party's included, named as an upstream — and states the state-machine and same-context rules `rule.json` and `spec.py` enforced. SPEC-001 defines the decision log per node and says the choice between `/analyse` and the decided-fact route is the person's outside a goal; `spec.py` refuses a root holding nodes and no context. SPEC-004 gains R25, the suite-time route for a red on an earlier task's test; SPEC-005 R5 states the precedence between adoption states; SPEC-007 R3 states that a pin never refuses a record. (`f6dd0b7`)
+
 ## 5.45.1 — 2026-11-01
 
 A task declaring `produces` runs the install alone only where `deliver.py --standard --reach` says no rule reaches what it wrote, as the validator already held; `/implement-task`, `phase_steps` and the registry check's printed line now say so. `goal.py` reads a commit naming the skill and the slug followed by a space as on the route, and `--objective-file -` reads the objective from stdin. `/siegard-archive` hands a pathspec-scoped add, every skill but `/deliver-scope` and `/adopt-scope` states it never commits, and the session rules lose a sentence that contradicted the first; a single-value flag named twice is refused by every script that parses one, and `trace.py`'s usage names every form it reads. (`2044676`)
