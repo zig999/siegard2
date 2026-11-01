@@ -83,7 +83,7 @@
     "body": {
       "type": "string",
       "minLength": 1,
-      "description": "Kind `report` only: the answer itself, inline, where it is not written to a file, or the short answer above the full one a `report` path names. No ceiling."
+      "description": "Kind `report` only: the answer itself, inline, where it is not written to a file, or the short answer above the full one a `report` path names. No ceiling. Above a `report` path it is the short form and carries no term of `x-jargon`; with no path, its first `x-ceilings.opening` characters carry none. A body that recommends carries the words `x-labels` opens the reversing fact with, followed by that fact."
     }
   },
   "allOf": [
@@ -322,9 +322,12 @@
       "unstated"
     ],
     "english_terms": [
+      "moved",
       "nowhere",
       "offered",
+      "orphaned",
       "owed",
+      "proof",
       "stands"
     ],
     "phrases": [
@@ -333,7 +336,11 @@
       "owed act",
       "owed acts",
       "owed a route",
-      "read nowhere"
+      "read nowhere",
+      "ato devido",
+      "atos devidos",
+      "leitura devida",
+      "leituras devidas"
     ],
     "patterns": {
       "state A or B": "\\b(?:state|estado) [AB]\\b",

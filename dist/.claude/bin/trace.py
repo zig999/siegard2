@@ -16,7 +16,8 @@ What this script does, and nobody else does any of it:
     trace.py --check <target-root> [--all]                        the same, then report drift
     trace.py --check <target-root> --reconcile-set                the same, then the file set one
                                                                   /reconcile over this target
-                                                                  reads, and what it leaves out
+                                                                  reads, a slug no reconciliation
+                                                                  holds yet, and what it leaves out
     trace.py --bind <target-root> <spec-root> <node> <file> ...    write or extend one binding
     trace.py --bind-record <target-root> <spec-root> <record>     every binding that record states
     trace.py --bind-record ... --workspace <dir>                  the same, refusing a file or a
@@ -1312,6 +1313,21 @@ def uncommitted_under(home: Path, root: Path) -> set[str]:
     return {line[3:].strip() for line in done.stdout.splitlines() if len(line) > 3}
 
 
+def free_slug(home: Path, label: str | None) -> str:
+    """A slug no reconciliation holds yet: `reconcile-<UTC date>`, the target key after it where
+    the set is one of several, and the first `-<n>` from 2 that frees it. The staging refuses a
+    slug whose record or returns directory exists; a name printed free by the same test is a door
+    handed whole, and a person asked for a name the tree already decides is a stop for nothing."""
+    from datetime import datetime, timezone
+    base = f"reconcile-{datetime.now(timezone.utc):%Y%m%d}" + (f"-{label}" if label else "")
+    taken = home / RECONCILE_DIR
+    slug, n = base, 1
+    while (taken / f"{slug}.md").exists() or (taken / f"{slug}.returns").exists():
+        n += 1
+        slug = f"{base}-{n}"
+    return slug
+
+
 def reconcile_set_report(declared: dict, home: Path, target: Path,
                          listed: list[tuple[str, str, str | None, str]],
                          held: list[tuple[str, str, str | None, str]]) -> list[str]:
@@ -1408,6 +1424,7 @@ def reconcile_set_report(declared: dict, home: Path, target: Path,
             for path in sorted(reasons):
                 lines.append(f"  {spelled(path)}  ({', '.join(sorted(reasons[path]))})")
             lines.append(f"  {len(reasons)} file(s)")
+            lines.append(f"  free slug: {free_slug(home, label)}")
         else:
             lines.append("  nothing: no drift this target holds is a reconciliation's to read")
         if retained:

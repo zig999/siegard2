@@ -93,8 +93,9 @@ one's output, so a round trip per command pays the wait once per command instead
    decided by reading until then. Where the reconcile set is not empty, the report carries the
    `/reconcile` invocation ready to paste — the project root filled in, the target named by its
    `targets` key wherever the project declares more than one, the file set being exactly the
-   paths the set lists, already spelled from the target source root, and a slug slot left for
-   the human to name, since `/reconcile` requires one and refuses a slug already taken. The set
+   paths the set lists, already spelled from the target source root, and the slug its `free
+   slug:` line printed, which no reconciliation holds yet — never a slot for the person to name.
+   The set
    is the script's composition and never yours: a `code` finding is listed per file and a
    `moved` one per node, and a set composed by hand from the two answers wrongly in ways nothing
    catches. With it, the two sentences that make the door real rather than decorative: it runs
@@ -222,9 +223,12 @@ the session's plain words and in this order: what was built, as the task and nod
 scripts printed — delivered X of Y tasks per live initiative from `deliver.py --outstanding`,
 the node counts from `spec.py`; what is live beyond the state line, where it says more; and what
 needs the person — each owed act and each decision that is the person's own, named in a clause —
-with, last, the one invocation the close recommends and why in a sentence. A figure no command
-printed never enters it. The opening «A handoff opens with what needs the person, and explains
-after» (SPEC-006 R1) states is that short form; every block, door and quotation the sections
+with, last, the one invocation the close recommends, why in a sentence, and the fact that would
+change it after the words `x-labels` holds for `reverses_if` in the session's language. A figure no
+command printed never enters it, nor a drift class's name: the body says what a person would
+reread and why, and `--render` refuses a term of `x-jargon` anywhere in it. The opening «A
+handoff opens with what needs the person, and explains after» (SPEC-006 R1) states is that short
+form; every block, door and quotation the sections
 above call for is the full status on disk, which the short form points at and never repeats.
 
 The full status, in this order, every line naming its source:

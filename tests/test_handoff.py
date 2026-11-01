@@ -292,6 +292,44 @@ def test_a_report_kind_carries_a_body_or_a_path_and_no_decision():
     assert rendered(data)[0] is None
 
 
+PADDING = "A iniciativa de pedidos tem a tela principal entregue e falta a parte de devoluções. " * 6
+
+
+def test_a_short_form_above_a_report_path_is_read_whole_for_the_term_list():
+    """«Where kind `report` carries a `report` path, its `body` is the short form above the full
+    report, and `bin/handoff.py --render` refuses it where it carries a term of the closed list
+    anywhere» (SPEC-006 R11)."""
+    data = record("record-pt-status.json")
+    data["report"] = "full-report.txt"
+    data["body"] = PADDING + "Falta apenas você escolher o slug."
+    assert any(p.startswith("body: carries slug") for p in rendered(data)[1])
+
+
+def test_a_body_with_no_path_is_read_over_its_opening_span():
+    data = record("record-pt-status.json")
+    data["body"] = PADDING + "O slug fica para depois."
+    assert rendered(data)[1] == []
+    data["body"] = "O slug fica para depois. " + PADDING
+    assert any(p.startswith("body: carries slug") for p in rendered(data)[1])
+
+
+@pytest.mark.parametrize("words", ["13 moved, 4 proof", "uma leitura devida", "um orphaned"])
+def test_drift_class_names_and_owed_in_portuguese_are_terms(words):
+    data = record("record-pt-status.json")
+    data["body"] = f"O vínculo tem {words} a reler."
+    assert any(p.startswith("body: carries") for p in rendered(data)[1]), words
+
+
+def test_a_body_that_recommends_carries_the_fact_that_would_change_it():
+    """«A body that recommends carries the fixed words the schema holds for the reversing fact
+    in the record's language, followed by that fact, or `--render` refuses it» (SPEC-006 R11)."""
+    data = record("record-pt-status.json")
+    data["body"] = "Sugiro reler os 58 arquivos agora, porque cada um é lido uma vez só."
+    assert any(p.startswith("body: recommends without") for p in rendered(data)[1])
+    data["body"] += " Mudaria se um commit novo tocasse esses arquivos."
+    assert rendered(data)[1] == []
+
+
 def test_the_command_refuses_with_one_line_per_problem_and_exit_one(tmp_path):
     data = record("record-en-two-decisions.json")
     data["state"] = "The order screen is done"

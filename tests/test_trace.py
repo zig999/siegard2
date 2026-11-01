@@ -3,6 +3,7 @@ produced, once, and reports drift once either side moves without the other."""
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -1549,6 +1550,26 @@ def test_the_reconcile_set_is_the_code_and_moved_files_of_this_target_spelled_fr
     assert "  src/alerts.ts  (moved: domain/monitoring/alert)" in done.stdout
     assert "  2 file(s)" in done.stdout
     assert "retained" not in done.stdout and "left to a delivery" not in done.stdout
+
+
+def test_the_reconcile_set_names_a_slug_no_reconciliation_holds(consumer):
+    """«A door a report hands is handed whole: where its entry point requires a name the tree
+    decides is free, the script that composes the door prints one» (SPEC-006 R11) — by the test
+    the staging refuses a taken slug with, its record and its returns directory."""
+    bind(consumer)
+    committed(consumer)
+    drifted(consumer)
+    committed(consumer)
+    first = re.search(r"(?m)^  free slug: (\S+)$",
+                      run("--check", consumer / "backend", "--reconcile-set").stdout)
+    assert first and re.fullmatch(r"reconcile-\d{8}", first.group(1)), first
+    records = consumer / "siegard-reconcile"
+    (records / f"{first.group(1)}.returns").mkdir(parents=True)
+    second = run("--check", consumer / "backend", "--reconcile-set").stdout
+    assert f"  free slug: {first.group(1)}-2" in second
+    (records / f"{first.group(1)}-2.md").write_text("taken\n", encoding="utf-8")
+    assert f"  free slug: {first.group(1)}-3" in run(
+        "--check", consumer / "backend", "--reconcile-set").stdout
 
 
 def test_a_file_of_a_node_pending_in_the_working_tree_is_retained_from_the_set(consumer):

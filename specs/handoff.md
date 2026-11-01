@@ -102,6 +102,8 @@ and the reviewers' evidence-only returns already hold.
 
 - **R10** — The state a handoff opens with is a script's line, never the session's. `bin/handoff.py --prepare` prints the record's skeleton for the skill and the inputs it names, with `state` written and `state_from` naming the script it is the line of: the first line `goal.py --state` answers where a goal is armed through the framework, else the segment `progress.py` prints for the initiative named, else the line it prints for the project, else the fixed words the schema holds for a project with nothing live — quoted as the script printed it, cut to the state ceiling, never translated and never read for the closed list of terms. The skeleton's doors are the invocations the skill's own report names ready to paste, each marked with the first line `bin/door.py --check` prints for it and its `refused:` facts, or as not checked where no script decides that door or an input it takes is not named; none is marked recommended, and the report's path lies outside the tree every entry point holds to `git status`. A record of kind `decision` carries `state_from`, and `--render` refuses it where `state` differs from what that script prints when it renders, where its door recommended is one the check refuses, and where a recommendation's `why` or `reverses_if` is empty.
 
+- **R11** — A report's short form is held as an opening is. Where kind `report` carries a `report` path, its `body` is the short form above the full report, and `bin/handoff.py --render` refuses it where it carries a term of the closed list anywhere; where it carries no path, its first 450 characters are held so. A body that recommends carries the fixed words the schema holds for the reversing fact in the record's language, followed by that fact, or `--render` refuses it. A door a report hands is handed whole: where its entry point requires a name the tree decides is free, the script that composes the door prints one, and the report never asks the person for it.
+
 ## Validation required before acceptance
 
 1. Every skill whose file states a report cites R1 beside it.
@@ -153,7 +155,21 @@ and the reviewers' evidence-only returns already hold.
    and as a whole word in prose of any other language; a test holds both halves, and the
    Portuguese fixture that carried those words still carries them.
 
+7. A test holds `bin/handoff.py --render` to R11: a report body above a path that carries a
+   term of the closed list past its first 450 characters is refused, a body with no path that
+   carries one only past them renders, and a body that recommends without the reversing words
+   of its language is refused; and a test holds `bin/trace.py --check --reconcile-set` printing a
+   `free slug:` line that names no record or returns directory under `siegard-reconcile/`.
+
 ## Readings
+
+- 2026-11-01 — grounds for R11: the first `/siegard-status` short form rendered under 5.44.0 in
+  `salese2e` passed `--render` while carrying "slug", the drift class names "moved", "proof"
+  and "code", and "a leitura devida" — `owed` translated — and closed on "falta apenas você
+  escolher o slug" with no fact that would change the suggestion. `--render` read the state and
+  the decisions' prose for the list but never the body, the list held the class names nowhere,
+  and the status skill left the slug a slot for the person. `code` stays off the list: it is also
+  the plain word in "Claude Code".
 
 - 2026-10-31 — grounds for R10 and the narrowed list: the handoffs read for the R8 baseline
   wrote their state line in the session's own words, and it was wrong more than once — "no next

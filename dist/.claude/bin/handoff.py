@@ -12,9 +12,11 @@ never reads a label in a language they did not write in.
 What the schema cannot express is decided here, from numbers and lists the schema holds: the
 state within `x-ceilings.state` characters, each decision's block within `x-ceilings.block` with
 its line ready to paste aside, the whole message within `x-ceilings.message`; no term of
-`x-jargon` in any prose field; a reply word no other door in the handoff uses; a report path that
-names a file. A record that fails any of them is refused with one line per failure, and nothing is
-printed for the person to read.
+`x-jargon` in any prose field — a `body` above a `report` path read whole, as the short form it
+is, and a body with no path read over its opening span; a body that recommends carrying the
+words `x-labels` opens the reversing fact with; a reply word no other door in the handoff uses; a
+report path that names a file. A record that fails any of them is refused with one line per
+failure, and nothing is printed for the person to read.
 
 **`--prepare` writes what the session must not.** «The state a handoff opens with is a script's
 line, never the session's» (SPEC-006 R10). It prints the record's skeleton as JSON: `state`
@@ -318,8 +320,8 @@ def check_door(name: str, project: Path, slug: str | None, target: str | None,
                 "why": f"no script decides what /{name} refuses; its own file states it"}
     if name == "reconcile":
         return {"answer": "not checked",
-                "why": "/reconcile takes a slug and a file set only the person names"
-                       + ("" if files else ", and none was named")}
+                "why": "/reconcile reads the file set and free slug `trace.py --reconcile-set` "
+                       "prints, and no script here decides what it refuses"}
     if name in door.NAMED_SLUG and not slug:
         return {"answer": "not checked", "why": f"/{name} takes a slug, and none was named"}
     args = {"target": target, "slug": slug, "task": [], "name": None, "scope": [], "file": files,
@@ -387,10 +389,15 @@ def block_of(number: int, decision: dict, labels: dict) -> tuple[str, str | None
     return "\n".join(lines), decision.get("invocation")
 
 
-def prose_fields(record: dict) -> list[tuple[str, str]]:
+def prose_fields(record: dict, opening: int) -> list[tuple[str, str]]:
     """Every field of the record a person reads as prose, by where it sits; the line ready to
-    paste, the report's path, and a state a script printed are not the record's prose."""
+    paste, the report's path, and a state a script printed are not the record's prose. A `body`
+    above a `report` path is the short form and is read whole; a body that is the answer itself
+    is read over its opening span, as free text is."""
     fields = [] if "state_from" in record else [("state", record["state"])]
+    if "body" in record:
+        fields.append(("body", record["body"] if "report" in record
+                       else record["body"][:opening]))
     if "withdraws" in record:
         fields.append(("withdraws", record["withdraws"]))
     for at, decision in enumerate(record.get("decisions", [])):
@@ -446,10 +453,16 @@ def render(record: object, contract: dict, base: Path, state_of=state_now
             problems.append(f"state: differs from what {record['state_from']['script']} prints "
                             f"now ({now!r}); the state is the script's line — run "
                             f"handoff.py --prepare again and carry its state")
-    for where, text in prose_fields(record):
+    for where, text in prose_fields(record, ceilings["opening"]):
         for name, matched in jargon_in(text, contract, record["language"]):
             problems.append(f"{where}: carries {name} ({matched!r}), a word of this framework a "
                             f"person never reads in a handoff")
+    body = record.get("body", "")
+    if decision_word_at(body, contract, ("recommendation",)) is not None \
+            and labels["reverses_if"].casefold() not in body.casefold():
+        problems.append(f"body: recommends without the fact that would change it — say it after "
+                        f"{labels['reverses_if']!r}: «without all four, none is named» "
+                        f"(SPEC-006 R2)")
     seen: dict[str, str] = {}
     for at, decision in enumerate(record.get("decisions", [])):
         chosen = decision.get("recommended")
