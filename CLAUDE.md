@@ -27,6 +27,10 @@ Write every artifact in this repository in English (en-US): source, generated di
 schemas, tests, fixtures, and commit messages. Conversation with a maintainer may use any
 language; committed content may not, with one exception.
 
+Data a mechanism reads in another language — a marker word, a fixed word a record's language
+selects, a fixture or an example quoting a person's words verbatim — is not prose, and stays in
+that language.
+
 Explanatory material — a manual, a glossary, a README, a guide — may be written in another
 language. It explains and never governs: it states no requirement, and where it disagrees with a
 specification, a schema or code, those win. Its reserved terms stay in English, always: every
@@ -85,7 +89,7 @@ standing fact where it calibrates the agent executing it; the evidence that prod
 lives in this repository's commits, session records and proposals, which the distribution does
 not carry.
 
-Justification has one placement per artifact class. `src/consumer/CLAUDE.md` states rules
+Justification has one placement per artifact class. `src/claude/hooks/rules.md` states rules
 directively — the prohibition and the operative instruction, no why. Skills, agents, scripts and
 schemas may carry the timeless why, never the history. A change grounded in a measurement cites
 it in the commit message.
@@ -137,7 +141,8 @@ A change is **minor** when it alters no specification, no schema, no contract ve
 output — a typo, a comment, a clarification that narrows nothing, a test for behavior already specified.
 It runs the validation for the area it touches and stops there.
 
-When unclear, treat the change as ordinary and say so.
+A change that is not minor is ordinary: it runs the whole suite, and one that touches `src/` is a
+release. When unclear, treat the change as ordinary and say so.
 
 ## Determinism and state
 
@@ -200,8 +205,8 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   stands; a third committer, or a commit outside these bounds, is a proposal, never a change.
   A session's own commit, made after a skill returned, is no third committer: it commits what
   that invocation wrote, pathspec-scoped, one per invocation, under the person's own words in
-  that session — a commit word, a go-ahead naming the next step, or an ask `bin/ask.py` recorded
-  verbatim — and never a push, a branch or a rewrite.
+  that session — a commit word, a go-ahead naming the next step, a goal condition naming the
+  route, or an ask `bin/ask.py` recorded verbatim — and never a push, a branch or a rewrite.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —
@@ -226,8 +231,8 @@ Three bounds hold it, and giving up any of them is a proposal, never a change:
   and disagreement is an ordinary change. A decided fact with no log entry is invention.
 - **A contradiction is never decided.** A node stating the opposite turns the route back
   into the standing stop — the scope and the specification disagreeing is the one thing
-  only a person settles, and the only thing left that stops a task. A contradiction the
-  person's own words state is not one: where a goal condition's objective states the fact a
+  only a person settles, and the only fact planning or a delivery finds that stops a task. A
+  contradiction the person's own words state is not one: where a goal condition's objective states the fact a
   node contradicts, the objective is `/analyse`'s material and the node changes as any analysed
   change does, before the plan reads it.
 
