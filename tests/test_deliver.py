@@ -2543,6 +2543,8 @@ def test_a_review_written_before_its_task_wrote_another_file_is_owed_never_refus
     proof = json_front(delivery, "proof/checkout/record-order")
     proof["files"] = [{"path": "tests/support/orders.ts", "effect": "builds a submitted order"}]
     write_delivery("proof/checkout/record-order", proof)
+    (target / "tests/support").mkdir(parents=True, exist_ok=True)
+    (target / "tests/support/orders.ts").write_text("export const order = {};\n", encoding="utf-8")
 
     assert problems_of(delivery, work, target, root, reviewing=set()) == []
     said(problems_of(delivery, work, target, root, derived=True),
@@ -2560,6 +2562,32 @@ def test_a_review_written_before_its_task_wrote_another_file_is_owed_never_refus
                        reviewing={"review/again"}) == []
     assert owed_review_lines(delivery, work, target, root) == [], \
         "one review answering the task as it stands is the whole of what the task is owed"
+
+
+def test_a_path_deleted_or_outside_the_target_is_no_file_a_review_owes(
+        delivery, work, root, target, sound_delivery, write_delivery):
+    """«A path the records name that the target source root no longer holds — a file the delivery
+    deleted — or that lies outside that root has no bytes a review reads: no review is held to
+    list it, and the review's report names it as not read.» (SPEC-004 R22) The record names both
+    as R16 asks; the review lists what the root holds, and neither `--review` nor `--outstanding`
+    holds it to more — while a file the root does hold, left out, is still refused."""
+    implementation = json_front(delivery, "implementation/checkout/record-order")
+    implementation["files"] = [*implementation["files"],
+                               {"path": "src/orders/legacy.ts", "effect": "deleted"},
+                               {"path": "../CLAUDE.md", "effect": "names Node 24"}]
+    write_delivery("implementation/checkout/record-order", implementation)
+    repin_proof(delivery, write_delivery)
+    assert not (target / "src/orders/legacy.ts").exists()
+    write_delivery("review/first", review_front(work, root))
+
+    assert problems_of(delivery, work, target, root, reviewing={"review/first"}) == []
+    assert owed_review_lines(delivery, work, target, root) == []
+
+    (target / "src/orders").mkdir(parents=True, exist_ok=True)
+    (target / "src/orders/legacy.ts").write_text("export {};\n", encoding="utf-8")
+    said(problems_of(delivery, work, target, root, derived=True, reviewing={"review/first"}),
+         "review/first: `reviewed` does not list src/orders/legacy.ts, which "
+         "implementation/checkout/record-order says it wrote in `files`")
 
 
 def test_a_review_over_criteria_its_task_no_longer_states_is_owed_never_refused(

@@ -32,7 +32,12 @@ A missing input is a stop, not a default:
    records say they wrote is in it, and so is every path an implementation record says the
    implementation `stands` at — a task whose implementation already stood wrote only its proof,
    and the node that proof demonstrates is certified against the standing file, which a review
-   that did not read it cannot clear. A review over fewer is refused.
+   that did not read it cannot clear. A review over fewer is refused. A path a record names that
+   the target source root no longer holds — a file the delivery deleted — or that lies outside
+   that root is not in the set: «A path the records name that the target source root no longer
+   holds — a file the delivery deleted — or that lies outside that root has no bytes a review
+   reads: no review is held to list it, and the review's report names it as not read.»
+   (SPEC-004 R22)
 3. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
    named, its absence is a stop.
 4. **the target** — which of the project's target source roots this change reaches, by the key
@@ -659,6 +664,8 @@ Report, in this order, in the file:
 - every finding, grouped by pass, each with its evidence and what it costs;
 - **which passes did not run, and which input was missing** — this line is not optional, and it is
   what separates a clean review from a narrow one;
+- every path the tasks' records name that the file set does not hold because the target source
+  root no longer holds it or it lies outside that root, each said as not read;
 - every criterion the coverage pass did not find covered, and what is unexercised in each;
 - every test that pass found bearing on no criterion, and what each asserts — a fact about what
   this plan's criteria reach, handed as a reading and never as a verdict;
@@ -729,8 +736,9 @@ to a person.
 - Fix, edit or rewrite any source or test you reviewed — you hold no grant to, and a reviewer that
   could edit what it flagged leaves nothing for anyone to disagree with.
 - Discover the file set, widen it, or narrow it to the paths that happened to be readable. A path
-  that cannot be read stops its pass and is reported; a pass over the readable subset would report
-  clean over files nobody read.
+  the root holds that cannot be read stops its pass and is reported; a pass over the readable
+  subset would report clean over files nobody read. A deleted path, or one outside the root, was
+  never in the set, and leaving it out narrows nothing.
 - Run anything but the runner this framework ships, and never rerun it to get a different result:
   a second run is a second name, and the first one's evidence stays on disk.
 - Show the standard pass what an implementation record disclosed. A record may name the very rules

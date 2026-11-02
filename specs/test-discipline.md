@@ -200,7 +200,7 @@ left out — so the file set the review that followed was handed never held them
 
 ### What a review answers for
 
-- **R22** — A review answers for its tasks as they stood when it was written. A task is reviewed as it stands where a review naming it lists every file the task's records name and, where its coverage pass ran, answers every criterion the task states; a task some review names and none answers as it stands is owed a review, and a review written before the task or its records changed is never refused for it. The review being written is held to its tasks as they stand, and refused where it falls short.
+- **R22** — A review answers for its tasks as they stood when it was written. A task is reviewed as it stands where a review naming it lists every file the task's records name that its target source root holds and, where its coverage pass ran, answers every criterion the task states; a task some review names and none answers as it stands is owed a review, and a review written before the task or its records changed is never refused for it. The review being written is held to its tasks as they stand, and refused where it falls short. A path the records name that the target source root no longer holds — a file the delivery deleted — or that lies outside that root has no bytes a review reads: no review is held to list it, and the review's report names it as not read.
 
   Grounds: a review carries no pin, and every review was held, for as long as its plan was live,
   to the records and criteria of today. On 2026-10-29 one consumer's proof-only re-delivery wrote a
@@ -211,6 +211,12 @@ left out — so the file set the review that followed was handed never held them
   review could clear, and the person closed the plan to carry the work into a new initiative.
   Across seven consumers on 2026-10-30, these were the only two plans whose reviews drew either
   refusal.
+  On 2026-11-02 a third consumer's goal ended in state B on the review alone: one task deleted
+  seven files, as R16 requires its record to name, and another changed the repository's own
+  `CLAUDE.md`, outside the target; `--stage` reads neither, `/review-change` handed 113 of the 121
+  paths, and `--review` refused the record for the 8 it could not read. A deleted path holds
+  nothing a judge opens and a path outside the target answers to no standard of it, so the
+  review is held to what the root holds and says what it did not read.
 
 ## Validation required before acceptance
 
@@ -249,7 +255,9 @@ left out — so the file set the review that followed was handed never held them
 9. For R22: `bin/deliver.py --check` admits a review that lists fewer files than its tasks'
    records now name, or answers criteria its tasks no longer state, and refuses it under `--review`
    naming it; `--outstanding` names a task some review names and none answers as it stands, and
-   no task one review answers — `tests/test_deliver.py` proves each.
+   no task one review answers; and neither holds a review to list a path the records name that
+   the target source root no longer holds or that lies outside it — `tests/test_deliver.py`
+   proves each.
 10. For R23: `bin/deliver.py --outstanding` names a task delivered as the substrate alone apart
     from a task implemented and unproven, and counts it delivered; `/implement-task` writes no
     proof only for a task that report names so — `tests/test_deliver.py` and

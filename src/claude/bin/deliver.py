@@ -1801,7 +1801,7 @@ def cross_problems(nodes: dict[str, dict], plan_nodes: dict[str, dict], work: Pa
             problems.extend(review_reconciliation_problems(nid, front, target))
             if nid in reviewing:
                 problems.extend(review_coverage_problems(nid, front, plan_nodes, names))
-                held.extend(review_set_problems(nid, front, nodes))
+                held.extend(review_set_problems(nid, front, nodes, anchor))
     return problems + receipted(held, closed, receipts)
 
 
@@ -1835,9 +1835,11 @@ def receipted(found: list[str], closed: bool, receipts: list[str] | None) -> lis
     return []
 
 
-def review_set_problems(nid: str, front: dict, nodes: dict[str, dict]) -> list[str]:
+def review_set_problems(nid: str, front: dict, nodes: dict[str, dict],
+                        anchor: Path | None = None) -> list[str]:
     """The review being written, its file set against the records of the tasks it answers: every
-    path an implementation or a proof of those tasks says it wrote is in `reviewed`. The set is
+    path an implementation or a proof of those tasks says it wrote, and the review's target source
+    root holds, is in `reviewed`. The set is
     the caller's to state and never the review's to discover, and this is what holds the
     statement to the records: a review over fewer files than the tasks wrote is a review that
     skipped part of the change, and every pass it ran was clean over a set nobody delivered.
@@ -1849,7 +1851,7 @@ def review_set_problems(nid: str, front: dict, nodes: dict[str, dict]) -> list[s
     for task in listed(front, "tasks"):
         if not isinstance(task, str) or not task.startswith("task/"):
             continue
-        for record, missing, field in review_set_shortfalls(task, reviewed, nodes):
+        for record, missing, field in review_set_shortfalls(task, reviewed, nodes, anchor):
             if field == "stands":
                 problems.append(f"{nid}: `reviewed` does not list {', '.join(missing)}, where "
                                 f"{record} says the implementation stands; the proof of a task "
@@ -1863,37 +1865,57 @@ def review_set_problems(nid: str, front: dict, nodes: dict[str, dict]) -> list[s
     return problems
 
 
-def review_set_shortfalls(task: str, reviewed: set[str],
-                          nodes: dict[str, dict]) -> list[tuple[str, list[str], str]]:
+def review_set_shortfalls(task: str, reviewed: set[str], nodes: dict[str, dict],
+                          anchor: Path | None = None) -> list[tuple[str, list[str], str]]:
     """Each record of `task` naming a path `reviewed` lacks: the record, the paths, and the field
-    that names them — `stands` for an implementation that already stood."""
+    that names them — `stands` for an implementation that already stood. Under a resolved
+    `anchor`, a path the root no longer holds or that lies outside it is no shortfall: «A path
+    the records name that the target source root no longer holds — a file the delivery deleted —
+    or that lies outside that root has no bytes a review reads» (SPEC-004 R22)."""
     found: list[tuple[str, list[str], str]] = []
     for kind in PAIRED:
         record = f"{kind}/{task[len('task/'):]}"
         if record not in nodes:
             continue
         written, field = wrote(nodes[record]["front"])
-        missing = sorted(written - reviewed)
+        missing = readable(sorted(written - reviewed), anchor)
         if missing:
             found.append((record, missing, field))
         standing = {p for p in listed(nodes[record]["front"], "stands") if isinstance(p, str)}
-        unread = sorted(standing - reviewed)
+        unread = readable(sorted(standing - reviewed), anchor)
         if unread:
             found.append((record, unread, "stands"))
     return found
 
 
+def readable(paths: list[str], anchor: Path | None) -> list[str]:
+    """The paths a review can read under `anchor`: a file the root holds. Without a resolved
+    root every path is kept, so an unresolved target never narrows what a review owes."""
+    if anchor is None:
+        return paths
+    root = anchor.resolve()
+    kept = []
+    for path in paths:
+        where = (anchor / path).resolve()
+        if where.is_relative_to(root) and where.is_file():
+            kept.append(path)
+    return kept
+
+
 def reviews_owed(nodes: dict[str, dict], plan_nodes: dict[str, dict],
-                 names: list[str]) -> dict[str, list[str]]:
+                 names: list[str], roots: dict[str, Path] | None = None) -> dict[str, list[str]]:
     """Every task some review names and none answers as it stands, with what each review naming
     it falls short of — «a task some review names and none answers as it stands is owed a review,
     and a review written before the task or its records changed is never refused for it»
     (SPEC-004 R22). A review answers a task as it stands where it lists every file the task's
-    records name and, where its coverage pass ran, answers every criterion the task states."""
+    records name that its target source root holds and, where its coverage pass ran, answers
+    every criterion the task states."""
+    roots = roots or {}
     shortfalls: dict[str, list[str]] = {}
     answered: set[str] = set()
     for rid in sorted(n for n, node in nodes.items() if node["kind"] == "review"):
         front = nodes[rid]["front"]
+        anchor = roots.get(front["target"]) if isinstance(front.get("target"), str) else None
         reviewed = {p for p in listed(front, "reviewed") if isinstance(p, str)}
         audited = texts(listed(front, "coverage"), "criterion") \
             if "coverage" in ran_passes(front, names) else None
@@ -1902,7 +1924,8 @@ def reviews_owed(nodes: dict[str, dict], plan_nodes: dict[str, dict],
                     or plan_nodes[task]["kind"] != "task":
                 continue
             said = [f"{rid} does not list {', '.join(missing)}, which {record} names"
-                    for record, missing, _ in review_set_shortfalls(task, reviewed, nodes)]
+                    for record, missing, _ in review_set_shortfalls(task, reviewed, nodes,
+                                                                     anchor)]
             if audited is not None:
                 said += [f"{rid} answers no criterion `{criterion}`"
                          for criterion in listed(plan_nodes[task]["front"], "criteria")
@@ -2703,7 +2726,7 @@ def outstanding_report(nodes: dict[str, dict], plan_nodes: dict[str, dict],
     lines += substrate
     # A task owed a delivery again is owed its review after that delivery, so only a task whose
     # records stand is named here; the line bars nothing, and the done line above ignores it.
-    owed = reviews_owed(nodes, plan_nodes, pass_names())
+    owed = reviews_owed(nodes, plan_nodes, pass_names(), target_roots(target)[0])
     lines += [f"{tid}: owed a review — no review answers it as it stands: {'; '.join(said)}"
               for tid, said in sorted(owed.items()) if tid in tasks and tid in delivered]
     return "\n".join(heading + lines + standards_held(nodes, target))
