@@ -907,6 +907,32 @@ def test_the_goal_skill_arms_only_on_a_first_argument_and_never_over_a_citation(
     assert "`/siegard:siegard-goal --arm <project-root> --slug <slug> --target <target>`" in flat
 
 
+def test_the_goal_skill_reads_an_unnamed_root_from_the_working_directory_and_names_it_after():
+    """The skill is the person's alone to invoke, so the directory they typed it in is theirs as
+    much as any argument; every line it hands to paste still names the root."""
+    flat = " ".join(GOAL_SKILL.split())
+    assert "the git toplevel of the session's working directory, disclosed" in flat
+    assert "`git rev-parse --show-toplevel` over the session's working directory" in flat
+    assert "A toplevel holding no `siegard.json` is a stop" in flat
+    assert "Every line this skill hands to paste names the root explicitly" in flat
+
+
+def test_the_goal_skill_hands_an_objective_on_stdin_and_one_scope_form_only():
+    flat = " ".join(GOAL_SKILL.split())
+    assert "An objective or a citation always travels on stdin" in flat
+    assert "--objective-file - <<'OBJECTIVE'" in GOAL_SKILL
+    assert '--objective "' not in GOAL_SKILL, "a quoted argument is a shell that can alter it"
+    assert "**The scope is exactly one** of: scope ids; an objective file; an objective." in flat
+
+
+def test_the_goal_skill_states_the_handoff_of_every_outcome():
+    for outcome in ("**Armed.**", "**Composed.**", "**Refused.**", "**Stopped before the script.**"):
+        assert outcome in GOAL_SKILL, outcome
+    flat = " ".join(GOAL_SKILL.split())
+    assert "`/siegard:siegard-progress <project-root> <slug>`" in flat
+    assert "bin/goal.py --disarm <project-root>`" in flat
+
+
 def test_no_other_shipped_skill_nor_the_session_rules_runs_goal_arm():
     runs = re.compile(r"bin/goal\.py --arm")
     others = [path for path in (*SKILLS_DIR.glob("*/SKILL.md"),

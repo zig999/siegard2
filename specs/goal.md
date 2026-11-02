@@ -167,9 +167,11 @@ session that stopped while its subagents were still running. The harness refuses
    refused; the same run named by a record, or committed, accepted; a commit naming no path
    under the delivery root reading no run; and the authorization listed as not decided.
 11. Tests hold `/siegard-goal` to R6: its file closed to the model's invocation, arming only
-   where the invocation opens with `--arm` and never over a citation; no other shipped skill and
-   not the session rules running `goal.py --arm`; and the handoff it renders, followed by the two
-   lines it hands to paste, passing `handoff.py --check`.
+   where the invocation opens with `--arm` and never over a citation, a root the invocation does
+   not name read as the git toplevel of the session's working directory, and an objective handed
+   to the script on stdin; no other shipped skill and not the session rules running
+   `goal.py --arm`; and the handoff it renders, followed by the two lines it hands to paste,
+   passing `handoff.py --check`.
 
 ## Readings
 
