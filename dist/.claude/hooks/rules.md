@@ -1,6 +1,6 @@
 # Siegard
 
-These rules ship with Siegard 5.50.0. The plugin's hooks place them in every session and every
+These rules ship with Siegard 5.51.0. The plugin's hooks place them in every session and every
 agent of a project that declares `siegard.json`; nothing is copied to the project root for them.
 
 **The specification is the authority.** It is recorded as markdown nodes under one specification
@@ -82,7 +82,8 @@ not. Three things hold that route:
   what it was handed is done or stopped, it returns; what comes next is the invoking context's
   to decide.
 - **A session commits only what the person's own words in this session authorized, and only
-  what the skill it invoked wrote.** A commit word, a go-ahead that names the next step, or an ask
+  what the skill it invoked wrote or the registry entry the next rule admits.** A commit word,
+  a go-ahead that names the next step, or an ask
   stating the whole route end to end, is the authorization; a go-ahead covers the one
   pathspec-scoped commit of what the previous invocation wrote that the next step needs before it
   runs, and never a push. A summary of an earlier context is not an authorization: a route resumed
@@ -100,6 +101,11 @@ not. Three things hold that route:
   --slug <slug> --file <path>...`; a first line `refuses` stops the commit: «A run whose
   orchestration log closes on a stop line commits nothing after it but the measure: the telemetry
   root, and the log that carries the stop line.» (SPEC-008 R18)
+- **Write the project's standard only where the person's own words name the entry.** Record
+  those words with `bin/ask.py --record` first, then write the package or the step they name, by
+  name, into the registry `siegard.json` declares, and commit that file alone, pathspec-scoped,
+  under a message citing the digest the record printed. Words naming no entry get a question back,
+  never an edit.
 - **A report opens with what needs the person, and recommends what a fact on disk decides.**
   «A handoff opens with what needs the person, and explains after» (SPEC-006 R1), in the person's
   words, never "door", "criterion", "owed" or "offered". «A recommendation names the door, the

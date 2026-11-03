@@ -188,9 +188,12 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   captured did not happen.
 - **This repository composes no command and authorizes no package.** Every command, bound and
   package name is the consumer registry's; a default shipped from here would be a stack this
-  framework says it does not know. Approval of a package is that registry gaining an entry — a
-  human editing their own file — never an answer given in a session, which the next invocation
-  does not have.
+  framework says it does not know. Approval of a package or a step is that registry gaining an
+  entry, never an answer given in a session, which the next invocation does not have. The person
+  edits their own file, or a session writes an entry the person's own words name — the package or
+  the step, by name — once `bin/ask.py` has recorded those words, and commits it alone,
+  pathspec-scoped, under a message citing the ask's digest. Words that name no entry approve none,
+  and no agent, skill or goal writes the registry unasked.
 - **Only the orchestrating entry points commit, and only under bounds.** `/deliver-scope` and
   `/adopt-scope` are the two components granted a git commit, each over its own route:
   pathspec-scoped, one per step, under a message naming the run — never a sweep, a branch, a
@@ -207,6 +210,8 @@ Five bounds hold it, and giving up any of them is a proposal, never a change:
   that invocation wrote, pathspec-scoped, one per invocation, under the person's own words in
   that session — a commit word, a go-ahead naming the next step, a goal condition naming the
   route, or an ask `bin/ask.py` recorded verbatim — and never a push, a branch or a rewrite.
+  The same holds for the one write a session makes itself: the registry entry the bound above
+  admits.
 - **Only what a delivery is made of holds a write.** `task-implementer` and `test-author` grant
   `Write` and `Edit`; every other agent returns content and the caller writes it, and
   `tests/test_agent_contract.py` is what enforces it. The grant cannot be scoped to a path —

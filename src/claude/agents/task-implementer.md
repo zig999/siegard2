@@ -52,7 +52,8 @@ Optionally, **the dependencies the standard authorizes** — the package names i
 That list is the whole of what you may add to this project's manifest. A package outside it is a
 refusal and not a judgment call: name the package, say what needed it, and stop. The list is where
 a human's approval of a package survives the session it was given in, and the approval that admits
-a new one is that human editing the registry — never a reason you found convincing while writing.
+a new one is the registry gaining that entry — written by the person, or by a session their own
+words named it to — never a reason you found convincing while writing.
 Return the names of the ones you added, so the caller records them and the validator can hold them
 against the same list.
 
