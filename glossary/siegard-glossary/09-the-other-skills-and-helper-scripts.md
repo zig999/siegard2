@@ -22,10 +22,16 @@ work. It cites a command for every claim.
 A compact table of one initiative's tasks (status + why), made to be run repeatedly (e.g. with
 `/loop`).
 
-### `/siegard-archive`
-Removes **closed** initiatives (work + delivery) from the working tree, after checking them
-mechanically. It never touches the project file, the trace, the specification, the decision log
-or the reconciliation records, and never commits — it hands you the git commands.
+### `/siegard-archive` and `archive.py`
+Removes **closed** initiatives (work + delivery) from the working tree, after `archive.py` checks
+them mechanically: closed, committed, still valid as history. It never touches the project file,
+the trace, the specification, the decision log or the reconciliation records, and never commits —
+it hands you the git commands.
+
+```sh
+archive.py --check <project-root> --all          # which would leave, and why the others would not
+archive.py --remove <project-root> <slug>...     # remove the eligible pairs; print the git acts
+```
 
 ### `/siegard-telemetry` and `telemetry.py`
 Writes a report of **how** a stretch of work happened (agents, cost in tokens and time, refusals,

@@ -302,11 +302,16 @@ que é devido. Aparece na linha de status do Claude Code quando a pessoa pede ao
 que roda `progress.py --install`. Esse comando escreve o `.claude/settings.local.json` do projeto,
 que fica fora do controle de versão; `--uninstall` remove a entrada.
 
-### `/siegard-archive`
-Remove da árvore de trabalho iniciativas **fechadas** (as pastas de work e delivery), depois de
-verificá-las mecanicamente. Nunca toca no arquivo do projeto, no trace, na especificação, no
-decision log nem nos registros de reconciliação, e nunca faz commit: entrega os comandos git para a
-pessoa.
+### `/siegard-archive` e `archive.py`
+Remove da árvore de trabalho iniciativas **fechadas** (as pastas de work e delivery), depois de o
+`archive.py` verificá-las mecanicamente: fechadas, commitadas e ainda válidas como histórico. Nunca
+toca no arquivo do projeto, no trace, na especificação, no decision log nem nos registros de
+reconciliação, e nunca faz commit: entrega os comandos git para a pessoa.
+
+```sh
+archive.py --check <project-root> --all          # quais sairiam, e por que as outras não
+archive.py --remove <project-root> <slug>...     # remove os pares elegíveis; imprime os atos de git
+```
 
 ### `/siegard-telemetry` e `telemetry.py`
 Escreve um relatório de **como** um trecho de trabalho aconteceu (agentes disparados, custo em

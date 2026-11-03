@@ -51,7 +51,7 @@ SKILLS = {
                          "delegates": []},
     "siegard-goal": {"contract": "schemas/plan.json", "validator": "bin/goal.py",
                      "delegates": []},
-    "siegard-archive": {"contract": "schemas/plan.json", "validator": "bin/plan.py",
+    "siegard-archive": {"contract": "schemas/plan.json", "validator": "bin/archive.py",
                         "delegates": []},
     "siegard-standard": {"contract": "schemas/standard.json", "validator": "bin/deliver.py",
                          "delegates": []},

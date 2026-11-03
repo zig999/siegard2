@@ -1,22 +1,20 @@
 ---
 name: siegard-archive
-description: Removes closed initiatives from the working tree so their history survives only in git — verifies each candidate mechanically (the human's closure marker present, the pair's tree clean and committed, the closed plan and its delivery still validating) and removes work and delivery together and whole, touching nothing that carries understanding — the project file, the trace, the specification with its decision log, and the reconciliation records all stay. It never commits, tags or stages anything; the report hands the git commands ready, in order, and the git acts are the human's. Use when the human asks to archive closed initiatives, prune delivered history from the branch, or keep the working tree lean. Not for live initiatives, and not for deleting anything else.
+description: Removes closed initiatives from the working tree so their history survives only in git — `bin/archive.py` decides each candidate mechanically (closed, committed, still valid as history) and removes work and delivery together and whole, touching nothing that carries understanding — the project file, the trace, the specification with its decision log, and the reconciliation records all stay. It never commits, tags or stages anything; the report hands the git commands ready, in order, and the git acts are the human's. Use when the human asks to archive closed initiatives, prune delivered history from the branch, or keep the working tree lean. Not for live initiatives, and not for deleting anything else.
 disable-model-invocation: true
 effort: low
 ---
 
-You remove closed history from the working tree, so it survives only in git, and you stop. One
-invocation, one archiving act — and the act is a working-tree change like any other skill's:
+You run one script that removes closed history from the working tree, so it survives only in git,
+and you stop. One invocation, one archiving act — a working-tree change like any other skill's:
 the human reviews it and the human commits it.
 
-The boundary this skill exists to hold: the framework keeps **understanding** in the
-specification (with the decision logs beside its nodes), `siegard-trace.json`, `siegard-reconcile/` and the code
-itself, and keeps **evidence** — plans, delivery records, proofs, captured runs, reviews — in
-the work and delivery roots. Evidence may leave the tree, because git history holds it; nothing
-that carries understanding ever does. The reconciliation records in particular live beside the
-trace *because* what they justify outlives every plan and delivery root — a bind resting on a
-judgment held nowhere is exactly what they exist to prevent, and archiving them would create
-it.
+The framework keeps **understanding** in the specification (with the decision logs beside its
+nodes), `siegard-trace.json`, `siegard-reconcile/` and the code itself, and keeps **evidence** —
+plans, delivery records, proofs, captured runs, reviews — in the work and delivery roots. Evidence
+may leave the tree, because git history holds it; nothing that carries understanding ever does.
+The reconciliation records live beside the trace because what they justify outlives every plan
+and delivery root, and archiving them would leave binds resting on judgments held nowhere.
 
 ## Required inputs
 
@@ -27,80 +25,55 @@ A missing input is a stop, not a default:
 2. **the scope** — which initiatives, by slug, or the literal ask to archive everything closed.
    Never inferred: removal is the one act whose want only the human can state, which is also
    why this skill is closed to model invocation.
-3. **the target** — which of the project's target source roots the initiatives delivered into,
-   by the key `siegard.json`'s `targets` names it. Where `targets` declares exactly one key and
-   the invocation names none, that key is the target: decided and disclosed, never asked.
 
-Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything
-else. `work_root`, `delivery_root`, `targets` and `specification_root` answer only from here,
-and where the file does not declare one, that is a stop — the report carries the
-`/siegard-config` invocation ready to paste.
+Optionally, **the target** — a key of `siegard.json`'s `targets`. Each delivery is checked
+against the targets its own records name, so the target is asked for only where a delivery's
+records name none and the project declares more than one; the script's report says so, and the
+human names it for the next invocation.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not,
-the plugin root is the directory that holds `schemas/` and `bin/` side by side — in a vendored
-install, the `.claude/` directory this skill's tree sits under.
-
-## The criteria
-
-Per initiative, in order; the first that fails skips that initiative — reported with the
-criterion that failed, repaired by nothing here — and the rest still proceed:
-
-1. **Closed.** `closure.md` present at `work_root/<slug>`. A live initiative is never eligible,
-   whatever the ask says: closing is its own act, through `/plan-work`, and archiving is not a
-   way to end work.
-2. **Committed.** `git status --porcelain -- <work-root>/<slug> <delivery-root>/<slug>` prints
-   nothing. A clean pair is what makes "removed" mean "recoverable": the history about to leave
-   the tree is already in a commit. A pair not under git control fails here for the same
-   reason — without git there is no archive, only deletion.
-3. **Valid history.** `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check <work-root>/<slug>`
-   — a closed plan validates without the specification, and its index, held to
-   `${CLAUDE_PLUGIN_ROOT}/schemas/plan.json`, still matches the files — and
-   `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --check <delivery-root>/<slug>
-   <work-root>/<slug> <target-source-root>` over the pair. Corrupted history is not archived:
-   it is reported, whole, while it is still in front of somebody.
-4. **The pair, whole.** `work_root/<slug>` and `delivery_root/<slug>` leave together and
-   entire, never one without the other and never partially — the runs inside a delivery are
-   required fields of its records, so a delivery stripped of them is records that no longer
-   validate, and a delivery removed under a kept live plan is a plan whose every task reads as
-   undelivered again. Where one side does not exist on disk, say so and archive what does.
+the plugin root is the directory that holds `schemas/` and `bin/` side by side.
 
 ## The act
 
-Remove the eligible directories from the working tree. Nothing else: no commit, no tag, no
-staging, no touch on `siegard.json`, `siegard-trace.json`, the specification root, the
-decision logs beside its nodes, or `siegard-reconcile/` — and nothing outside the named pairs, however
-archivable it looks.
+Run, once:
+
+```
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/archive.py --remove <project-root> (--all | <slug>...) [--target <key>]
+```
+
+`--all` is the ask to archive everything closed; slugs are the ask to archive those. Where the
+human asked only what would leave, run `--check` in place of `--remove`: it changes nothing.
+
+The script is where the criteria live — closed, committed with nothing git ignores or does not
+track inside the pair, valid as history under `bin/plan.py --check` (the closed plan held to
+`${CLAUDE_PLUGIN_ROOT}/schemas/plan.json`) and `bin/deliver.py --check`, and removed as a whole
+pair. Its `--help` states them; read it there, never restate it from memory. It reads every
+criterion again on `--remove`, removes only the pairs that pass, and runs no git command that
+writes.
+
+A skipped initiative is not yours to repair. Where the script names what answers it — a
+derivation of an index never derived, or a `--target` — hand that line on as printed; where it
+says nothing here repairs it, the entry point that owns the problem does, and you name the
+problem as the script printed it.
 
 ## Report, and stop
 
 Open as «A handoff opens with what needs the person, and explains after» (SPEC-006 R1)
-states; what follows is the report that opening sits above.
+states; what follows is the report that opening sits above. What needs the person is the two git
+acts, and any initiative skipped with the line that answers it.
 
-- per initiative archived: the two directories removed, with file counts;
-- per initiative skipped: which criterion failed, verbatim where a command said it;
-- the git acts, ready to paste and in this order — both the human's, never this skill's:
-  1. `git tag -a archive/<date> -m "last tree holding: <slugs>"` — the tree was clean, so
-     HEAD is the pre-removal state, and the tag is what makes recovery one command;
-  2. the removal itself, pathspec-scoped to the pairs archived, reviewed as a diff like any
-     other:
-     `git add -A -- <work-root>/<slug> <delivery-root>/<slug>... && git commit -m "siegard-archive: <slugs>"`;
-- the recovery line, both halves of the pair the removal kept whole:
-  `git checkout archive/<date> -- <work-root>/<slug> <delivery-root>/<slug>` brings any of it
-  back;
-- one honesty line: a clean tree proves the history is committed, not that it is pushed — in a
-  repository with no remote, git is the only copy;
-- what still answers from what remains: run
-  `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py <specification-root>` and
-  `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check <target-source-root>` and report both
-  verbatim — the understanding stayed, and these two are the proof.
+Relay the script's output whole and in its order: each initiative eligible or skipped with its
+criterion, the pairs removed, the git acts — the tag on the commit the removal starts from, then
+the removal's own commit, pathspec-scoped to the pairs removed — the line that brings any pair
+back, whether `HEAD` sits on a remote branch, and what still answers from what remains. The git
+acts are the human's, ready to paste; the diff, deletions and all, is the review.
 
-Then stop. The diff — deletions and all — is the review, and it belongs to a person.
+Then stop.
 
 ## What you never do
 
-- Infer the scope, widen it, or archive anything the ask did not reach because it looked
-  finished.
-- Repair what a criterion refused — a stale index, a broken record, a dirty tree are reported,
-  and fixing them belongs to the entry points that own them.
-- Commit, stage, tag, or otherwise change the consumer's git state — the git acts are handed,
-  ready to paste, and both are the person's.
+- Infer the scope, widen it, or name a slug the ask did not reach because it looked finished.
+- Remove, move or edit anything yourself — the script removes, and only what passed.
+- Repair what a criterion refused, or run the derivation a skipped initiative's line names.
+- Commit, stage, tag, or otherwise change the consumer's git state.
