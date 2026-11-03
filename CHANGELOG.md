@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.51.0 — 2026-11-03
+
+A session writes a project's standard only where the person's own words name the entry — the package or the step, by name — after `bin/ask.py --record` holds those words, and commits that file alone under a message citing the ask's digest; words naming no entry get a question back. `CLAUDE.md`'s execution bound, the session rules and `task-implementer` now state the same route. (`5a05624`)
+
 ## 5.50.0 — 2026-11-02
 
 `/siegard-goal` takes the project root from the git toplevel of the session's working directory when the invocation names none, reads its arguments by one table with exactly one scope form, hands an objective to the script on stdin, and hands each outcome — armed, composed, refused, stopped — in one shape, with the lines that follow and end an armed run. (`9792e82`)
