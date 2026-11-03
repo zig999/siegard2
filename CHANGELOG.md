@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.52.0 — 2026-11-03
+
+`/siegard-archive` runs `bin/archive.py`, which holds its criteria: `--check` reports each closed initiative eligible or skipped with the criterion and what answers it, and changes nothing; `--remove` checks again, removes only the pairs that pass, and prints the tag and the commit for the person. A pair holding a file git ignores or does not track is not committed, each delivery is checked against the targets its own records name, and an index never derived is answered by the derivation the report names. (`66a4f6f`)
+
 ## 5.51.0 — 2026-11-03
 
 A session writes a project's standard only where the person's own words name the entry — the package or the step, by name — after `bin/ask.py --record` holds those words, and commits that file alone under a message citing the ask's digest; words naming no entry get a question back. `CLAUDE.md`'s execution bound, the session rules and `task-implementer` now state the same route. (`5a05624`)
