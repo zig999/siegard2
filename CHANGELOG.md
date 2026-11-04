@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.53.0 — 2026-11-04
+
+A task carrying `stands`, and a proof-only re-delivery, stop only where a binding of a node the task implements is absent or out of date on its files; another node's binding out of date there is named in the record's notes and left to the review that follows, which reads every reviewed file against every node bound to it (SPEC-004 R25, R26). `deliver.py --write-implementation` refuses a `stands` record over an out-of-date binding of the task's own nodes. (`fdc3ca8`)
+
 ## 5.52.0 — 2026-11-03
 
 `/siegard-archive` runs `bin/archive.py`, which holds its criteria: `--check` reports each closed initiative eligible or skipped with the criterion and what answers it, and changes nothing; `--remove` checks again, removes only the pairs that pass, and prints the tag and the commit for the person. A pair holding a file git ignores or does not track is not committed, each delivery is checked against the targets its own records name, and an index never derived is answered by the derivation the report names. (`66a4f6f`)
