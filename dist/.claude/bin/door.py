@@ -126,8 +126,9 @@ RECORD_DIRS = ("implementation", "proof", "review")
 NOT_DECIDED = {
     "implement-task": [
         "a request naming several tasks is a stop — the request's words, which no file holds",
-        "a proof-only re-delivery, or a task carrying `stands`: a bound file moved since the bind "
-        "is a stop, read by `trace.py --check --all` over the files the mode names",
+        "a proof-only re-delivery, or a task carrying `stands`: a binding of a node the task "
+        "implements out of date on a file the mode names is a stop, read by `trace.py --check "
+        "--all`; another node's is not",
     ],
     "plan-work": [
         "the scope — what the human wants developed, in prose — is a required input no file holds",

@@ -18,7 +18,7 @@ their inputs.
 It decides the obligation set, the necessity and stopping rules, the partition of inputs, the
 preference for a test over a reading wherever a finite test decides a fact, that no test a
 delivery changes goes unnamed by its records, and which halves the validator enforces
-mechanically. It also decides where a proof is cut (R18–R21, R23), who answers a red build or a
+mechanically. It also decides where a proof is cut (R18–R21, R23), when an implementation that stands still stands (R26), who answers a red build or a
 red suite (R24, R25), and what a review answers for (R22).
 
 Grounds: measured over 483 proof records and 95 reviews of two consumer projects in September
@@ -192,11 +192,34 @@ left out — so the file set the review that followed was handed never held them
   changed; the session handed the test author a red build and no record, outside any stated
   route. A red worded otherwise in its log is not counted.
 
-- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names: the test author rewrites the test whole and it joins this delivery's proof. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record, and which runs only while `trace.py --check --all` finds no drift on that task's files.
+- **R25** — A suite red on a test the proof of an earlier task names is answered by this delivery only where its files include one that task's implementation record names: the test author rewrites the test whole and it joins this delivery's proof. Otherwise the test is not edited here: the answer is a proof-only re-delivery of the owning task, which only a person names, which rewrites the proof and never the implementation record, and which runs only while every binding of a node that task implements to a file its implementation record names is current. A binding of another node to one of those files does not close it: the review that follows reads that binding, as it does for a task carrying `stands` (R26).
 
   Grounds: stated in `/implement-task` since the proof-only re-delivery shipped (9a2a3df) and in
   no specification until the audit of 2026-11-01 found the route with no requirement to hold it;
   it is the suite-time counterpart of R24's second sentence, and no measurement reopens it.
+
+  The last sentence read any drift on the owning task's files as closing the route, whichever
+  node it named, until R26 decided the same question for `stands`. On 2026-11-04, reading the
+  trace at the commits of the two orchestration logs that recorded the route closed by drift (a
+  file digest or a node digest out of date against each binding), the route was closed over four
+  tasks: three had a binding of their own nodes out of date on a named file, and one —
+  carrying a testable remainder — only other nodes' bindings, so the same question gets the
+  same answer on both routes.
+
+- **R26** — A task carrying `stands` is delivered only while every binding of a node the task implements to a file `stands` names is current: a binding the trace does not hold, a file changed since the binding was written, or a node whose text moved since the file was read against it makes the implementation not stand, and the record writer refuses the record. A binding of a node the task does not implement to one of those files is never that refusal: the review that follows reads each `stands` file against every node the trace binds to it.
+
+  Grounds: `/implement-task` held every `stands` file to `trace.py --check --all` and read any
+  finding on it as "stands" false, whichever node the finding named — a reading inherited from
+  the proof-only re-delivery, whose files are the task's own (R25), and decided nowhere for
+  `stands`. On 2026-11-04, reading the trace at the commit that wrote each `stands` in the four
+  consumer trees that carry one (sha256 of each named file at that commit against each binding's
+  digest; file digests only, so a moved node is not counted), 23 tasks carried `stands` since R18
+  shipped: none had a binding of its own nodes out of date, and 8 had another node's binding to
+  a `stands` file out of date. Of those, one plan stopped — and resumed only after the person had
+  the file released from three other nodes' bindings, dropping 11 more drifted files from them —
+  and four deliveries proceeded, one disclosing it in its notes. Since 3.37.0 the review's
+  conformance pass reads every file it reviews against every node the trace binds to it and
+  restamps what that judgment clears, and a review of a `stands` task lists the `stands` files.
 
 ### What a review answers for
 
@@ -271,9 +294,15 @@ left out — so the file set the review that followed was handed never held them
 12. For R25: `/implement-task`'s suite step reads which shape a red on an earlier task's test
     took from the two implementation records, rewrites the test where a file is shared, and
     otherwise hands the proof-only re-delivery, which only a person names and which runs
-    `trace.py --check --all` before anything is written — `tests/test_skill_contract.py` proves
+    `trace.py --check --all` before anything is written and reads the findings naming a node the
+    owning task implements — `tests/test_skill_contract.py` proves
     each.
-13. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
+13. For R26: `bin/deliver.py --write-implementation` refuses a record carrying `stands` where a
+    node the task implements has no binding to a `stands` file, or one whose file changed or whose
+    node moved since it was written, and writes it where only a node the task does not implement
+    has a binding out of date on one; `/implement-task` states the requirement in the words above
+    — `tests/test_deliver.py` and `tests/test_spec_citations.py` prove each.
+14. Over the next consumer deliveries the measurement in the scope above is repeated: tests per
     criterion, covered share per review, and the count of nodes decided by a test. A covered share
     that falls below the two-tests-per-criterion figure recorded there is what reopens R5 to R8.
 

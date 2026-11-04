@@ -324,7 +324,7 @@ import functools
 import shlex
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 CANNOT_RUN = 2
 
@@ -2162,6 +2162,66 @@ def parse_write_args(args: list[str]) -> tuple[dict | None, str | None]:
     return opts, None
 
 
+def stands_binding_problems(nid: str, front: dict, task_file: Path, root: Path) -> list[str]:
+    """Whether an implementation that stands still stands, read from the trace at the moment its
+    record is written — «a binding the trace does not hold, a file changed since the binding was
+    written, or a node whose text moved since the file was read against it makes the
+    implementation not stand» (SPEC-004 R26).
+
+    Only the nodes the task implements are read. Another node's binding out of date on the same
+    file says nothing about this task's: «A binding of a node the task does not implement to one
+    of those files is never that refusal: the review that follows reads each `stands` file against
+    every node the trace binds to it.» (SPEC-004 R26) Drift itself is `trace.py`'s to compute, and
+    is computed there, so the two never answer the question differently.
+
+    Held at write time and never by `--check`: a record that stood when it was written stays sound
+    when a later change moves its file, as every other record here does."""
+    stands = [p for p in listed(front, "stands") if isinstance(p, str)]
+    if not stands:
+        return []
+    roots, trouble = target_roots(root)
+    if trouble is not None:
+        return [trouble]
+    target, problems = anchor_of(nid, front, roots)
+    if target is None:
+        return [said.removeprefix(f"{nid}: ") for said in problems]
+    task_front = spec.parse_node(task_file)[0]
+    implements = [n for n in listed(task_front if isinstance(task_front, dict) else {},
+                                    "implements") if isinstance(n, str)]
+    import trace
+    home = project.toplevel_of(target)
+    offset = PurePosixPath(trace.offset_of(target, home))
+    anchored = {(offset / p).as_posix(): p for p in stands}
+    declared = trace.load(target)
+    bound: dict[str, set[str]] = {}
+    for entry in (declared or {}).get("bindings") or []:
+        bound.setdefault(entry.get("node"), set()).update(
+            held["path"] for held in entry.get("files") or []
+            if isinstance(held, dict) and isinstance(held.get("path"), str))
+    found = [f"the trace binds {node} to no file `stands` names ({spelled}); the "
+             f"implementation stands only where the trace holds that binding, and "
+             f"/reconcile over the file is what writes it"
+             for node in implements for path, spelled in anchored.items()
+             if path not in bound.get(node, set())]
+    if declared is None or found:
+        return found
+    findings, refusals = trace.drift_of(declared, home)
+    if refusals:
+        return [f"whether the implementation stands cannot be read: {said}"
+                for said in refusals]
+    for cls, node, where, why in findings:
+        if node not in implements or cls == trace.PROOF:
+            continue
+        if where is not None and where not in anchored:
+            continue
+        on = f" on {anchored[where]}" if where is not None else ""
+        found.append(f"{cls} drift on {node}{on} — {why}; the implementation does not "
+                     f"stand until /reconcile over "
+                     f"{', '.join(sorted(anchored.values())) if where is None else anchored[where]} "
+                     f"reads it again")
+    return found
+
+
 def write_record(kind: str, args: list[str]) -> int:
     """`--write-implementation` and `--write-proof`: one record, from the producer's return and
     what the invocation knows, validated before a byte is written. The return is parsed with the
@@ -2279,6 +2339,8 @@ def write_record(kind: str, args: list[str]) -> int:
     problems += record_run_problems(nid, front, root)
     if kind == "proof":
         problems += red_run_problems(nid, body, root)
+    elif not problems:
+        problems += stands_binding_problems(nid, front, pinned_from, root)
     if problems:
         for found in problems:
             print(f"{nid}: {found}")

@@ -819,3 +819,19 @@ def test_a_red_on_an_earlier_tasks_test_is_answered_by_the_shape_the_two_records
     redelivery = skill.split("One narrower re-delivery exists, and only the human names it", 1)[1]
     assert "Steps 3 and 4 do not run: the implementation record is not touched" in redelivery
     assert "trace.py --check --all <target-source-root>" in redelivery
+    assert "read the findings that name a node the task implements" in redelivery
+    assert "A finding that names any other node on those files is not this task's" in redelivery
+
+
+def test_only_the_tasks_own_bindings_decide_whether_an_implementation_stands():
+    """«A binding of a node the task does not implement to one of those files is never that
+    refusal: the review that follows reads each `stands` file against every node the trace binds
+    to it.» (SPEC-004 R26) — the skill reads the findings for the task's own nodes, says another
+    node's in the record's notes, and names the writer that holds the same reading."""
+    skill = " ".join((REPO / "src/claude/skills/implement-task/SKILL.md")
+                     .read_text(encoding="utf-8").split())
+    standing = skill.split("**A task carrying `stands` is delivered the same way", 1)[1]
+    standing = standing.split("Step 3 does not run.", 1)[0]
+    assert "is read for the findings that name a node the task implements" in standing
+    assert "A finding that names any other node on those files is not this task's" in standing
+    assert "`--write-implementation` holds the same reading over the trace" in standing

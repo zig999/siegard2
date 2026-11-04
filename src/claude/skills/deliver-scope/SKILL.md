@@ -298,8 +298,9 @@ None is worked around, and none is retried. Each carries its class, in backticks
   `contradiction`;
 - under a goal, a judged choice once the condition's budget of judged doors is spent —
   `budget`;
-- a task whose `stands` files this run's own deliveries moved — the door is `/reconcile` over
-  those files, the person's to ask for — `stands`;
+- a task carrying `stands` whose own nodes' bindings to those files this run's own deliveries
+  left out of date — the door is `/reconcile` over those files, the person's to ask for —
+  `stands`;
 - under a goal that asks to specify, a stop of `/analyse` other than one over material that states
   no fact or names nodes and changes none — `analyse`;
 - a red no change to the task's own files can answer — a build red over a tree the delivery

@@ -3049,21 +3049,99 @@ def test_an_empty_list_in_a_return_is_read_as_absent_and_said(tmp_path, planned,
     assert "divergences" not in front and "contested" not in front
 
 
+STANDING_FILE = "src/orders/place.ts"
+
+
+def bind_standing(target: Path, root: Path, node: str) -> None:
+    """Bind one node to the standing file through the trace's own writer."""
+    import subprocess
+    import sys
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/trace.py"), "--bind",
+                           str(target), str(root), node, STANDING_FILE],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+@pytest.fixture
+def standing(tmp_path, target) -> Path:
+    """A return for an implementation that stands at the standing file, and that file — in one
+    repository holding the delivery root and the target, as a consumer's does, so the writer
+    resolves the target's key from the project file at its toplevel."""
+    import subprocess
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, capture_output=True)
+    (tmp_path / "siegard.json").write_text(json.dumps({"targets": {"app": "target"}}),
+                                           encoding="utf-8")
+    source = target / STANDING_FILE
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("export const place = () => 1\n", encoding="utf-8")
+    mapping = {**IMPLEMENTATION_RETURN, "stands": [STANDING_FILE], "files": [],
+               "nodes": [{"node": "domain/sales/order",
+                          "how": "the order's identity is the shape place() persists"}]}
+    given = tmp_path / "return.yaml"
+    given.write_text(yaml.safe_dump(mapping, sort_keys=False), encoding="utf-8")
+    return given
+
+
+def write_standing(delivery, planned, standing) -> "subprocess.CompletedProcess":
+    return writer("--write-implementation", delivery, TASK, "--target", "app",
+                  "--task-file", planned, "--from-text", standing)
+
+
 def test_a_record_that_stands_keeps_the_empty_file_list_its_contract_requires(
-        tmp_path, planned, delivery, work, root, target):
+        planned, delivery, work, root, target, standing):
     """`files` is required on an implementation and holds nothing where it carries `stands`; the
     empty list is that statement, so it is not read as absent."""
-    standing = {**IMPLEMENTATION_RETURN, "stands": ["src/orders/place.ts"], "files": [],
-                "nodes": [{"node": "domain/sales/order",
-                           "how": "the order's identity is the shape place() persists"}]}
-    given = tmp_path / "return.yaml"
-    given.write_text(yaml.safe_dump(standing, sort_keys=False), encoding="utf-8")
-    done = writer("--write-implementation", delivery, TASK, "--target", "app",
-                  "--task-file", planned, "--from-text", given)
+    bind_standing(target, root, "domain/sales/order")
+    done = write_standing(delivery, planned, standing)
     assert done.returncode == 0, done.stdout + done.stderr
     assert "read as absent" not in done.stdout
     front = json_front(delivery, "implementation/checkout/record-order")
-    assert front["files"] == [] and front["stands"] == ["src/orders/place.ts"]
+    assert front["files"] == [] and front["stands"] == [STANDING_FILE]
+
+
+def test_a_record_that_stands_where_the_trace_binds_its_node_to_nothing_is_refused(
+        planned, delivery, work, root, target, standing):
+    """«a binding the trace does not hold ... makes the implementation not stand» (SPEC-004
+    R26)."""
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert (f"the trace binds domain/sales/order to no file `stands` names ({STANDING_FILE})"
+            in done.stdout)
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_record_that_stands_over_a_file_changed_since_its_node_was_bound_is_refused(
+        planned, delivery, work, root, target, standing):
+    bind_standing(target, root, "domain/sales/order")
+    (target / STANDING_FILE).write_text("export const place = () => 2\n", encoding="utf-8")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert "code drift on domain/sales/order on src/orders/place.ts" in done.stdout
+    assert f"/reconcile over {STANDING_FILE}" in done.stdout
+    assert not (delivery / "implementation/checkout/record-order.md").exists()
+
+
+def test_a_record_that_stands_over_a_node_moved_since_the_file_was_read_is_refused(
+        planned, delivery, work, root, target, standing):
+    bind_standing(target, root, "domain/sales/order")
+    node = root / "domain/sales/order.md"
+    node.write_text(node.read_text(encoding="utf-8").replace(
+        "Prose for a reader.", "Prose restated for a reader.", 1), encoding="utf-8")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 1
+    assert "moved drift on domain/sales/order" in done.stdout
+
+
+def test_a_record_that_stands_is_written_where_only_another_nodes_binding_is_out_of_date(
+        planned, delivery, work, root, target, standing):
+    """«A binding of a node the task does not implement to one of those files is never that
+    refusal» (SPEC-004 R26): the review that follows reads that binding."""
+    bind_standing(target, root, "domain/sales/invoice")
+    (target / STANDING_FILE).write_text("export const place = () => 2\n", encoding="utf-8")
+    bind_standing(target, root, "domain/sales/order")
+    done = write_standing(delivery, planned, standing)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert (delivery / "implementation/checkout/record-order.md").is_file()
 
 
 def test_a_return_read_from_a_rendered_notification_is_refused(tmp_path, planned, delivery):

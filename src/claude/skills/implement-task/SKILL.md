@@ -304,11 +304,16 @@ honest. Before anything is written, run
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --check --all <target-source-root>
 ```
 
-over the target: the implementation's files are
-bound with digests, and one that moved since the bind is exactly what makes "the implementation
-stands" false — that drift is a stop. Where what moved it is a later task's own delivery over
+over the target, and read the findings that name a node the task implements — on a file its
+implementation record names, or the node alone: the implementation's files are bound with
+digests, and one of those bindings out of date is exactly what makes "the implementation stands"
+false — that drift is a stop. Where what moved it is a later task's own delivery over
 that file, the answer is not this task's at all: the test is that delivery's to rewrite, under
-step 6's second `test` exit; anywhere else, the answer is a full re-delivery. **`--all` is what
+step 6's second `test` exit; anywhere else, the answer is a full re-delivery. A finding that names
+any other node on those files is not this task's — «A binding of another node to one of those
+files does not close it: the review that follows reads that binding, as it does for a task
+carrying `stands` (R26).» (SPEC-004 R25) — so the delivery proceeds and the proof's `## Notes`
+names each such node and file, one `--note` line apiece. **`--all` is what
 makes this mode's premise checkable at all**, and it is the one place in this framework that
 needs it: a project may declare a target freely edited, and an ordinary check then holds that
 class back as noise a reader cannot act on — but here it is the whole question, so this call asks
@@ -321,11 +326,20 @@ says so** — the one case where the narrower route is read from the task rather
 invocation: `/plan-work` writes `stands` only over files the trace already binds to every node
 the task implements, in the proof increment the human names or in an ordinary decomposition
 alike. The implementation stands at the files `stands` lists,
-and nothing in this delivery writes source. Before anything is written, the same `trace.py
---check --all` holds every one of those files current — a moved one makes "stands" false, and the task is
-not delivered: the door is `/reconcile` over the files that moved, which the person asks for,
-and the report hands it with those files named — and `trace.py --encodes <target-source-root>
-<each file>` must still list every node the task implements for them. Step 3 does not run. Step
+and nothing in this delivery writes source. Before anything is written, `trace.py --encodes
+<target-source-root> <each file>` must still list every node the task implements for them, and
+the same `trace.py --check --all` is read for the findings that name a node the task implements —
+on one of those files, or the node alone: «a binding the trace does not hold, a file changed
+since the binding was written, or a node whose text moved since the file was read against it
+makes the implementation not stand» (SPEC-004 R26). Any one of them and the task is not
+delivered: the door is `/reconcile` over the files those findings name, which the person asks
+for, and the report hands it with those files named. A finding that names any other node on
+those files is not this task's — «A binding of a node the task does not implement to one of
+those files is never that refusal: the review that follows reads each `stands` file against
+every node the trace binds to it.» (SPEC-004 R26) — so the delivery proceeds and the record's
+`## Notes` names each such node and file, one `--note` line apiece. `--write-implementation`
+holds the same reading over the trace and refuses the record where a binding of the task's own
+nodes is out of date or absent. Step 3 does not run. Step
 4 does, over the tree as it stands: the build is what shows the standing implementation still
 builds, and the record points at that run as any implementation record does. No producer is
 spawned for the record: you compose the return yourself, from the plan and from the record the
