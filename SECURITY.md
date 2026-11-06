@@ -13,7 +13,10 @@ Siegard executes. Knowing what it runs and where its limits sit is the first par
   none does, it holds the stopping message to `bin/handoff.py --check` (`hooks/handoff_stop.py`),
   blocking once only where `SIEGARD_HANDOFF_STOP` is `enforce`. It writes only under the
   repository's git directory (`siegard/`), never in the working tree, and every failure of its own
-  allows the stop.
+  allows the stop. `hooks/commit_check.py` runs before every Bash command and reads only a
+  `git commit`: it can refuse that commit where it adds to an orchestration log a `decided:` or
+  `recommended:` line out of form, or a judged `decided:` line no armed goal granted. It writes
+  nothing, and every failure of its own lets the commit go ahead.
 - **Skills run commands the project's own registry declares.** A skill installs what a project's
   standard authorizes and runs the steps it declares, so a delivery hands over a project that
   installs and builds. This repository composes no command and authorizes no package: every

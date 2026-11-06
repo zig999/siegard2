@@ -212,7 +212,10 @@ door is an entry point the route invokes, and takes the door a judged choice lea
 door decider returned it, blind to the condition and while the condition's budget of judged doors
 is not spent.» (SPEC-006 R7) Every door taken is one line of the log, on its own,
 `decided: <door> — <criterion> — <deciding fact>`, and its commit names the run as every other
-does. A door the three reserved questions hold — a contradiction, two readings of one piece of
+does. The plugin's `PreToolUse` hook refuses a commit that adds a line opening with `decided:` or
+`recommended:` out of that form, or a judged `decided:` line where no goal armed through the
+framework names this initiative: a choice no fact decides, outside such a goal, is handed to the
+person and never written as taken, whatever the conversation said. A door the three reserved questions hold — a contradiction, two readings of one piece of
 evidence, a finding's worth — is never taken.
 
 - **An objective the condition asks to specify.** Before the plan, and once: «Under a goal whose

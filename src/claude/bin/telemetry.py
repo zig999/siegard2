@@ -1686,11 +1686,9 @@ def scope_section(work_root: Path | None, delivery_root: Path | None, home: Path
 # ------------------------------------------------------------------- the recommendations
 
 
-DERIVED = ("precondition unmet", "rule violated", "already done", "reading paid twice")
-JUDGED = ("keeps the route", "serves the stated goal", "can be undone", "costs less")
-CRITERIA = DERIVED + JUDGED
-RECOMMENDED = re.compile(r"^(?P<verb>recommended|decided): (?P<door>.+?) — (?P<criterion>"
-                         + "|".join(CRITERIA) + r") — (?P<fact>.+)$")
+DERIVED = goal.DERIVED
+CRITERIA = goal.CRITERIA
+RECOMMENDED = goal.DOOR_LINE
 UNCOMMITTED = "0" * 40
 RUN_SUBJECT = re.compile(r"^(?:deliver|adopt)-scope (?P<slug>\S+):")
 
@@ -1760,10 +1758,7 @@ def recommendations_section(delivery_root: Path | None, work_root: Path | None, 
             continue
         landed = landing_of(home, log)
         for number, raw in enumerate(text.splitlines(), start=1):
-            line = raw.strip()
-            if line.startswith("- "):
-                line = line[2:].strip()
-            line = line.strip("`").strip()
+            line = goal.log_line(raw)
             if "recommended:" not in line and "decided:" not in line.replace("not decided:", ""):
                 continue
             landing = landed.get(number)

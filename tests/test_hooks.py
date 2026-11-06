@@ -65,13 +65,17 @@ def record(event: str, cwd: Path) -> str:
 
 def test_both_starts_are_declared_and_neither_is_narrowed():
     hooks = declared()
-    assert sorted(hooks) == sorted((*EVENTS, "Stop")), \
+    assert sorted(hooks) == sorted((*EVENTS, "Stop", "PreToolUse")), \
         f"hooks.json declares {sorted(hooks)}; the rules must reach the session and every agent, " \
-        f"and an armed goal's stop is answered on Stop"
+        f"an armed goal's stop is answered on Stop, and a commit is read before Bash runs it"
     for event in hooks:
         for group in hooks[event]:
-            assert "matcher" not in group, \
-                f"{event} carries a matcher; the rules hold for every {event}, not a subset"
+            if event == "PreToolUse":
+                assert group.get("matcher") == "Bash", \
+                    f"PreToolUse matches {group.get('matcher')!r}; only a Bash command commits"
+            else:
+                assert "matcher" not in group, \
+                    f"{event} carries a matcher; the rules hold for every {event}, not a subset"
 
 
 def test_both_starts_run_the_one_script_over_the_one_file():

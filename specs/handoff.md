@@ -90,6 +90,8 @@ and the reviewers' evidence-only returns already hold.
 
 - **R7** — Under a goal condition naming the orchestrating route, the orchestrating entry point takes the door a derived recommendation names where that door is an entry point the route invokes, and takes the door a judged choice leaves only as the door decider returned it, blind to the condition and while the condition's budget of judged doors is not spent. Each door taken is one line of the run's orchestration log, `decided: <door> — <criterion> — <deciding fact>`, and a door R3 reserves is never taken. Outside a goal, a session takes a derived recommendation only where the person's own message says to proceed, `bin/door.py --check` accepts the door and every other door is excluded, and the door taken is recorded the same way: one `decided:` line in the orchestration log of the run it continues where one exists, and otherwise in the body of the commit that follows it.
 
+- **R12** — A `git commit` a session runs in a project that declares `siegard.json` is refused by the plugin's `PreToolUse` hook where a line it adds to an orchestration log opens with `decided:` or `recommended:` and is not of the form R5 and R7 state with a criterion R2 names, or opens with `decided:` over a judged criterion while no goal armed through the framework names that log's initiative. A line the commit adds is one the log holds on disk, read past an opening `- ` and its backticks, beyond what the log holds at `HEAD`, and a log `HEAD` does not hold is read whole; the commit reaches a log the index holds changed, a log a path the command names is or holds, and every changed log where the command stages or commits all that is tracked. The refusal names each line and the form it misses, and is said to the session; where the hook cannot read the command, the project or a log, the commit goes ahead.
+
 ### Where a recommendation is recorded
 
 - **R5** — An orchestrating entry point that relays a report carrying a recommendation writes it to the run's orchestration log as one line, `recommended: <door> — <criterion> — <deciding fact>`. A recommendation made where no orchestration log exists is in the report alone, and nothing counts it. The criterion's name says whether the recommendation was derived or judged; the line carries nothing else to say it.
@@ -163,7 +165,30 @@ and the reviewers' evidence-only returns already hold.
    of its language is refused; and a test holds `bin/trace.py --check --reconcile-set` printing a
    `free slug:` line that names no record or returns directory under `siegard-reconcile/`.
 
+8. A test holds the `PreToolUse` hook to R12 over fixture repositories: a commit adding a
+   `decided:` or `recommended:` line that does not parse is refused with the line named; one
+   adding a judged `decided:` line is refused where no goal is armed and where the goal armed
+   names another initiative, and goes ahead where it names that log's; a derived `decided:` line
+   and a log line opening with neither word go ahead; a line already at `HEAD` is never read; a
+   log the commit does not reach is never read; and a project without `siegard.json`, a command
+   that is no commit, a tool other than Bash and an event record that does not parse are all
+   allowed in silence.
+
 ## Readings
+
+- 2026-11-05 — grounds for R12, read from the four sales consumers' transcripts and trees over
+  2026-11-01T23:00Z..2026-11-05T23:46Z (Siegard 5.47.1–5.53.0): 416 commits, and
+  `bin/door.py --check commit`, which the session rules ask before every commit of a delivery,
+  ran in none; `bin/ask.py --record` ran 5 times and `bin/handoff.py --render` 8 times over 413
+  handoffs. Of 16 `decided:` and `recommended:` lines the window's orchestration logs gained,
+  telemetry parsed 1. In `salese2e`'s `incorporar-partymgmt-jornadas` (session `ffe58671`), after
+  the person wrote that the session could decide "nas próximas cinco paradas", the session wrote
+  three lines `decided: … (delegated decision N of the second 5)` with no goal armed, the third
+  stopping before the proof-only rounds on cost — which `/deliver-scope` states is inside the
+  ask — and later answered the person that the stop was its own and its reason weak. None of the
+  three carried a criterion R2 names, so `goal.py`'s budget would not have counted them under a
+  goal either. A rule only a session applies was not applied; the hook applies it at the one act
+  every run performs.
 
 - 2026-11-01 — grounds for R11: the first `/siegard-status` short form rendered under 5.44.0 in
   `salese2e` passed `--render` while carrying "slug", the drift class names "moved", "proof"

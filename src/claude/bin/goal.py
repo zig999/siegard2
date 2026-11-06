@@ -133,7 +133,12 @@ STOP_CLASSES = ("blocking", "silence", "rebind", "producers", "gave-up", "infras
 RECONCILED = ("siegard-trace.json", "siegard-reconcile/")
 CORRECTABLE = ("contradicts",)
 STOP_LINE = re.compile(r"^(?:- )?stop: (\S+) — (.+)$")
+DERIVED = ("precondition unmet", "rule violated", "already done", "reading paid twice")
 JUDGED = ("keeps the route", "serves the stated goal", "can be undone", "costs less")
+CRITERIA = DERIVED + JUDGED
+DOOR_LINE = re.compile(r"^(?P<verb>recommended|decided): (?P<door>.+?) — (?P<criterion>"
+                       + "|".join(CRITERIA) + r") — (?P<fact>.+)$")
+DOOR_VERBS = ("recommended:", "decided:")
 TAKEN_JUDGED = re.compile(r"^(?:- )?`?decided: .+? — (?:" + "|".join(JUDGED) + r") — ")
 CONDITION_LIMIT = 4000
 ARMED_DIR = "siegard"
@@ -303,6 +308,14 @@ def criteria_answer(fields: dict, since: str, delivery: Path, tasks: list[str],
             lines += [f"{relative(fields, path)} left {len(left)} criterion(s) other than "
                       f"covered:", *left]
     return not unmet, "\n".join(lines)
+
+
+def log_line(raw: str) -> str:
+    """An orchestration log's line as its form is read: past an opening `- ` and backticks."""
+    line = raw.strip()
+    if line.startswith("- "):
+        line = line[2:].strip()
+    return line.strip("`").strip()
 
 
 def judged_taken(fields: dict, since: str, log_file: Path) -> int:

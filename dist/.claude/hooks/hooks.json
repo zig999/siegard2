@@ -1,5 +1,5 @@
 {
-  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start; answers every stop of a session whose project holds a goal armed by `bin/goal.py --arm` from that goal's state, and, in a project that holds none, holds the message a session stops on to what `bin/handoff.py --check` decides — measured by default, and blocked once with the next stop allowed only where `SIEGARD_HANDOFF_STOP` is `enforce`.",
+  "description": "Places the framework's session rules, `hooks/rules.md`, into every session at start and into every subagent at spawn of a project that declares `siegard.json`, and the drift a project is already carrying into every session at start; answers every stop of a session whose project holds a goal armed by `bin/goal.py --arm` from that goal's state, and, in a project that holds none, holds the message a session stops on to what `bin/handoff.py --check` decides — measured by default, and blocked once with the next stop allowed only where `SIEGARD_HANDOFF_STOP` is `enforce`; and refuses a commit that adds to an orchestration log a `decided:` or `recommended:` line out of the form the handoff states, or a judged `decided:` line no armed goal granted.",
   "hooks": {
     "SessionStart": [
       {
@@ -20,6 +20,14 @@
       {
         "hooks": [
           {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/goal_stop.py\"", "timeout": 600}
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/commit_check.py\""}
         ]
       }
     ]
