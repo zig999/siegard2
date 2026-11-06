@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.54.0 — 2026-11-05
+
+A commit that adds to an orchestration log a `decided:` or `recommended:` line out of the form the handoff states, or a judged `decided:` line where no goal armed through the framework names that initiative, is refused by the plugin's new `PreToolUse` hook, `hooks/commit_check.py` (SPEC-006 R12). The door line's form and its eight criteria live once, in `bin/goal.py`. (`391a7d3`)
+
 ## 5.53.0 — 2026-11-04
 
 A task carrying `stands`, and a proof-only re-delivery, stop only where a binding of a node the task implements is absent or out of date on its files; another node's binding out of date there is named in the record's notes and left to the review that follows, which reads every reviewed file against every node bound to it (SPEC-004 R25, R26). `deliver.py --write-implementation` refuses a `stands` record over an out-of-date binding of the task's own nodes. (`fdc3ca8`)
