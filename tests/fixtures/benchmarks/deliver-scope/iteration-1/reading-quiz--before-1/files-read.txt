@@ -1,0 +1,3 @@
+/tmp/dsb/runs/reading-quiz--before-1/prompt.txt
+/tmp/ds-before/skills/deliver-scope/SKILL.md
+/tmp/ds-before/agents/door-decider.md

@@ -1,0 +1,5 @@
+/tmp/dsb/runs/compaction-resume--before-2/prompt.txt
+/tmp/dsb/runs/compaction-resume--before-2/p.skill-after-compaction.md
+/tmp/dsb/runs/compaction-resume--before-2/p/delivery/lending/orchestration.md
+/tmp/dsb/runs/compaction-resume--before-2/p/delivery/lending/review/lending.md
+/tmp/dsb/runs/compaction-resume--before-2/p/siegard.json

@@ -1,0 +1,5 @@
+/tmp/dsb/runs2/compaction-resume--before-1/prompt.txt
+/tmp/dsb/runs2/compaction-resume--before-1/p.skill-after-compaction.md
+/tmp/dsb/runs2/compaction-resume--before-1/p/delivery/lending/orchestration.md
+/tmp/dsb/runs2/compaction-resume--before-1/p/telemetry/ask-20261107T180826Z.md (via ask.py --read)
+/tmp/dsb/runs2/compaction-resume--before-1/p/delivery/lending/review/lending.md

@@ -1,0 +1,19 @@
+git log --oneline -5 — exit 0
+git status --porcelain — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/ask.py --read /tmp/dsb/runs2/compaction-resume--shipped-2/p --path /tmp/dsb/runs2/compaction-resume--shipped-2/p/telemetry/ask-20261107T180827Z.md --sha256 38f9a15bc91f4f7b — exit 0
+git diff delivery/lending/orchestration.md — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/telemetry.py --help — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/telemetry.py --probe /tmp/dsb/runs2/compaction-resume--shipped-2/p --since 2026-11-07T12:00:00Z — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/telemetry.py /tmp/dsb/runs2/compaction-resume--shipped-2/p --since 2026-11-07T12:00:00Z — exit 0
+git status --porcelain — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill deliver-scope --project /tmp/dsb/runs2/compaction-resume--shipped-2/p --slug lending --target app --language pt-BR — exit 0
+git add -- telemetry delivery/lending/orchestration.md — exit 0
+git commit -m "deliver-scope lending: measure" -- telemetry delivery/lending/orchestration.md — exit 0
+git log --oneline -4 — exit 0
+git status --porcelain — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/deliver.py --outstanding delivery/lending work/lending app spec --scope epic/fees — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --prepare --skill deliver-scope --project /tmp/dsb/runs2/compaction-resume--shipped-2/p --slug lending --target app --language pt-BR — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --help — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --save-report /tmp/dsb/runs2/compaction-resume--shipped-2/p/.git/siegard/handoff/20261107T180914Z-deliver-scope.md — exit 0
+python3 -B /home/siegfriedneto/projects/siegard2/src/claude/bin/handoff.py --render /tmp/dsb/runs2/compaction-resume--shipped-2/out/record.json — exit 0
+git status --porcelain — exit 0

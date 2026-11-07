@@ -674,3 +674,153 @@ def test_the_5_67_0_reconcile_carries_a_resumed_reconciliation_to_its_handoff_an
     assert len([g for g in quiz if g["arm"].startswith("shipped:")]) >= 2
     for grading in quiz:
         assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+
+
+# ---------------------------------------------------------------- the deliver-scope benchmark
+# tests/fixtures/benchmarks/deliver-scope: the implement-task benchmark's fixture project, a
+# telemetry root declared, committed as the seed; the ask names the reach epic/fees, so the plan
+# step plans nothing. The skill commits, so each record carries every commit the run added above
+# the seed. Graded by tools/bench_deliver_scope.py and recomputed here from each record.
+
+import bench_deliver_scope  # noqa: E402
+
+DELIVER = BENCH / "deliver-scope"
+
+
+def deliver_runs() -> list[Path]:
+    return sorted(p for it in sorted(DELIVER.glob("iteration-*"))
+                  for p in it.iterdir() if (p / "grading.json").is_file())
+
+
+def deliver_runs_of(iteration: str, case_name: str, arm: str) -> list[dict]:
+    return [grading_of(p) for p in sorted((DELIVER / iteration).iterdir())
+            if (p / "grading.json").is_file() and grading_of(p)["case"] == case_name
+            and grading_of(p)["arm"].startswith(arm)]
+
+
+def test_every_deliver_scope_case_names_only_checks_the_grader_knows(tmp_path):
+    names = sorted(p.parent.name for p in (DELIVER / "cases").glob("*/case.json"))
+    assert names == ["compaction-resume", "full-deliver", "reading-quiz"]
+    for name in names:
+        project = tmp_path / name
+        bench_deliver_scope.setup(name, project, bench_deliver_scope.SKILL)
+        bench_deliver_scope.checks(name, project)
+
+
+def test_the_deliver_scope_fixture_holds_one_undelivered_task_under_the_reach(tmp_path):
+    """The seed is clean, its specification and plan check, it declares every root the skill
+    reads, and `--outstanding` over the reach lists the one task as deliverable once the
+    initiative's delivery root exists."""
+    project = tmp_path / "full-deliver"
+    bench_deliver_scope.setup("full-deliver", project, bench_deliver_scope.SKILL)
+    bins = REPO / "src/claude/bin"
+
+    def run(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run([sys.executable, "-B", *args], capture_output=True, text=True,
+                              cwd=project)
+    assert run(str(bins / "spec.py"), "spec").returncode == 0
+    assert run(str(bins / "plan.py"), "--check", "work/lending", "spec").returncode == 0
+    declared = run(str(bins / "project.py"), ".").stdout
+    for root in ("specification_root:", "work_root:", "delivery_root:", "telemetry_root:",
+                 "standard:"):
+        assert root in declared, declared
+    (project / "delivery/lending").mkdir(parents=True)
+    done = run(str(bins / "deliver.py"), "--outstanding", "delivery/lending", "work/lending",
+               "app", "spec", "--scope", "epic/fees")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "task/fees/compute-late-fee" in done.stdout
+    (project / "delivery/lending").rmdir()
+    status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True,
+                            cwd=project)
+    assert status.stdout == ""
+
+
+def test_the_resumed_deliver_scope_case_starts_where_step_4_ends(tmp_path):
+    """The delivery and the review committed under the run's name, both validating, the review's
+    log line left uncommitted: what is left is step 5, which has nothing to prove, the measure and
+    the report."""
+    project = tmp_path / "compaction-resume"
+    bench_deliver_scope.setup("compaction-resume", project, bench_deliver_scope.SKILL)
+    bins = REPO / "src/claude/bin"
+    for args in (("--check", "delivery/lending", "work/lending", "app", "spec"),
+                 ("--review", "lending", "delivery/lending", "work/lending", "app", "spec")):
+        done = subprocess.run([sys.executable, "-B", str(bins / "deliver.py"), *args],
+                              capture_output=True, text=True, cwd=project)
+        assert done.returncode == 0, done.stdout + done.stderr
+    commits = bench_deliver_scope.commits_above_seed(project)
+    assert [k["subject"] for k in commits] == [
+        "deliver-scope lending: deliver task/fees/compute-late-fee", "deliver-scope lending: review"]
+    status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True,
+                            cwd=project)
+    assert sorted(status.stdout.splitlines()) == [" M delivery/lending/orchestration.md",
+                                                  "?? telemetry/"]
+    (asked,) = (project / "telemetry").glob("ask-*.md")
+    assert asked.read_text(encoding="utf-8") == bench_deliver_scope.ASK
+    read = (project.parent / "compaction-resume.ask-read.txt").read_text(encoding="utf-8")
+    assert read.startswith("read: ") and str(asked) in read
+    review = bench_deliver_scope.front(project / bench_deliver_scope.REVIEW_RECORD)
+    assert "certifications" not in review or not review["certifications"]
+    held = (project.parent / "compaction-resume.skill-after-compaction.md").read_text(
+        encoding="utf-8")
+    assert "telemetry.py --probe" in held
+
+
+@pytest.mark.parametrize("run", [str(p.relative_to(DELIVER)) for p in deliver_runs()])
+def test_each_deliver_scope_run_grades_as_recomputed_from_its_record(run):
+    record = DELIVER / run
+    grading = grading_of(record)
+    assert grading["arm"].split(":")[0] in ("shipped", "before", "draft"), \
+        f"{run}: arm {grading['arm']!r}"
+    recomputed = {e["text"]: e["passed"]
+                  for e in bench_deliver_scope.checks(grading["case"], record)}
+    for expectation in grading["expectations"]:
+        assert recomputed[expectation["text"]] == expectation["passed"], \
+            f"{run}: '{expectation['text']}' was recorded {expectation['passed']} and recomputes otherwise"
+
+
+def latest_deliver_iteration_of(case_name: str) -> str:
+    held = [it for it in sorted(DELIVER.glob("iteration-*"), key=lambda p: int(p.name.split("-")[1]))
+            if any(grading_of(p)["case"] == case_name for p in it.iterdir()
+                   if (p / "grading.json").is_file())]
+    assert held, f"no iteration records {case_name}"
+    return held[-1].name
+
+
+@pytest.mark.parametrize("case_name", sorted(p.parent.name for p in
+                                             (DELIVER / "cases").glob("*/case.json")))
+def test_the_latest_deliver_scope_iteration_of_each_case_passes_with_the_shipped_skill(case_name):
+    """Iteration 2 re-runs only the resumed case, whose setup gained the recorded ask; each case
+    is held to the latest iteration that recorded it."""
+    shipped = deliver_runs_of(latest_deliver_iteration_of(case_name), case_name, "shipped:")
+    assert shipped, f"{case_name}: no run of the shipped skill in its latest iteration"
+    for grading in shipped:
+        failed = [e["text"] for e in grading["expectations"] if not e["passed"]]
+        assert not failed, f"{grading['run']}: {failed}"
+
+
+def test_the_deliver_scope_reading_quiz_has_one_answer_per_question_spread_over_the_letters():
+    questions = bench_deliver_scope.case("reading-quiz")["questions"]
+    assert [q["id"] for q in questions] == list(range(1, 19))
+    keys = {bench_deliver_scope.quiz_options(q)[1] for q in questions}
+    assert keys == set("abcd")
+
+
+def test_the_5_68_0_deliver_scope_carries_a_resumed_run_to_its_handoff_and_reads_as_well():
+    """Iteration 2 resumes after step 4 holding the first 20,000 characters, the ask recorded:
+    every 5.67.0 run left a mechanical expectation unmet and every 5.68.0 run met all of them.
+    Iteration 1's quiz runs of both arms answered every question as the text decides; the quiz
+    does not separate the arms on cost, so it is held as no regression only."""
+    before = deliver_runs_of("iteration-2", "compaction-resume", "before:")
+    shipped = deliver_runs_of("iteration-2", "compaction-resume", "shipped:")
+    assert len(before) >= 2 and len(shipped) >= 2
+    for grading in before:
+        mechanical = [e for e in grading["expectations"] if e["text"].startswith("mechanical:")]
+        assert any(not e["passed"] for e in mechanical), \
+            f"{grading['run']} ran the old skill and met every mechanical expectation"
+    for grading in shipped:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+    quiz = deliver_runs_of("iteration-1", "reading-quiz", "")
+    assert len([g for g in quiz if g["arm"].startswith("before:")]) >= 2
+    assert len([g for g in quiz if g["arm"].startswith("shipped:")]) >= 2
+    for grading in quiz:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]

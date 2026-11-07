@@ -1,0 +1,89 @@
+{
+ "run": "full-deliver",
+ "case": "full-deliver",
+ "arm": "shipped: 5.68.0 (candidate over f013ce2)",
+ "subagent_tokens": 175271,
+ "seconds": 342.2,
+ "expectations": [
+  {
+   "text": "mechanical: deliver.py --check accepts the recorded delivery",
+   "passed": true,
+   "evidence": "delivery checked: delivery/lending/delivery.json matches 3 node(s)"
+  },
+  {
+   "text": "mechanical: deliver.py --review lending accepts the recorded review",
+   "passed": true,
+   "evidence": "  1 implementation, 1 proof, 1 review; 1 of 1 task(s) hold a record; 0 criterion(s) recorded unmet; 0 recorded unproven; 0 finding(s)"
+  },
+  {
+   "text": "mechanical: the review is named lending, the slug, by step 4's rule",
+   "passed": true,
+   "evidence": "['lending.md']; reconciliation None"
+  },
+  {
+   "text": "mechanical: one commit 'deliver-scope lending: deliver task/fees/compute-late-fee' with a pathspec inside delivery/, app/, siegard-trace.json",
+   "passed": true,
+   "evidence": "1 commit(s); outside: []"
+  },
+  {
+   "text": "mechanical: one commit 'deliver-scope lending: review' with a pathspec inside delivery/, siegard-reconcile/, siegard-trace.json",
+   "passed": true,
+   "evidence": "1 commit(s); outside: []"
+  },
+  {
+   "text": "mechanical: the measure is committed where the probe wrote, and only there",
+   "passed": true,
+   "evidence": "written ['telemetry/20261107T180947Z.json']; measure commits 1"
+  },
+  {
+   "text": "mechanical: every commit the run added opens 'deliver-scope lending: '",
+   "passed": true,
+   "evidence": "3 commit(s); off: []"
+  },
+  {
+   "text": "mechanical: every commit names paths inside the declared roots",
+   "passed": true,
+   "evidence": "outside: []"
+  },
+  {
+   "text": "mechanical: the run created no branch and no remote",
+   "passed": true,
+   "evidence": "branches ['main'], remotes []"
+  },
+  {
+   "text": "mechanical: delivery/lending/orchestration.md holds a line per step naming implement-task,review-change",
+   "passed": true,
+   "evidence": "6 line(s); missing []"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "reported: commands.txt shows deliver\\.py[^\\n]*--outstanding",
+   "passed": true,
+   "evidence": "deliver.py --outstanding"
+  },
+  {
+   "text": "reported: commands.txt shows telemetry\\.py[^\\n]*--probe",
+   "passed": true,
+   "evidence": "telemetry.py --probe"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--save-report",
+   "passed": true,
+   "evidence": "handoff.py --save-report"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--render",
+   "passed": true,
+   "evidence": "handoff.py --render"
+  },
+  {
+   "text": "reported: the run wrote nothing outside the declared roots",
+   "passed": true,
+   "evidence": "outside: []"
+  }
+ ]
+}

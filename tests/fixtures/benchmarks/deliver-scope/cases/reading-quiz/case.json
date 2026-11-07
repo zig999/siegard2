@@ -1,0 +1,187 @@
+{
+ "name": "reading-quiz",
+ "kind": "quiz",
+ "what": "A reader holding only the skill, its references and the one agent it spawns answers what the text requires at its densest points. Each wrong option differs from the right one in one detail; the options are shuffled per question by its id.",
+ "questions": [
+  {
+   "id": 1,
+   "q": "Which ask authorizes `/deliver-scope` to carry a scope end to end?",
+   "options": [
+    "The person's own words stating that the whole route is wanted, quoted verbatim, or a goal condition the person armed naming this skill",
+    "The person's own words stating that the whole route is wanted, paraphrased in the report, or a goal condition the person armed naming this skill",
+    "Any message naming the scope's tasks, from which the wish for the whole route is inferred, or a goal condition the person armed naming this skill",
+    "The person's own words stating that the whole route is wanted, quoted verbatim; a goal condition never counts"
+   ]
+  },
+  {
+   "id": 2,
+   "q": "A route resumes after a compaction. Where does it read the ask from?",
+   "options": [
+    "From what `ask.py --read` prints, run as the `read:` line `ask.py --record` printed names it, by path and digest",
+    "From the compaction summary's account of the ask",
+    "From what `ask.py --read` prints, run over the newest recorded ask, whatever its digest",
+    "From running `ask.py --record` again over the conversation"
+   ]
+  },
+  {
+   "id": 3,
+   "q": "How does the skill obtain the `/implement-task` invocation it runs?",
+   "options": [
+    "It takes the previous report's handoff verbatim and fills only the slots its authorization covers, the task with the script's answer",
+    "It composes the invocation from the task file the plan holds",
+    "It takes the previous report's handoff verbatim and edits any field it judges wrong",
+    "It takes the previous report's handoff verbatim and fills the task slot from its memory of the last `--outstanding` run"
+   ]
+  },
+  {
+   "id": 4,
+   "q": "What decides which task is delivered next, and in what order?",
+   "options": [
+    "`deliver.py --outstanding`, run fresh before each delivery",
+    "`deliver.py --outstanding`, run once when the loop begins",
+    "A reading of the plan's index, `plan.json`",
+    "`deliver.py --outstanding`, run fresh before each delivery, with the order read from `plan.json`"
+   ]
+  },
+  {
+   "id": 5,
+   "q": "A delivery wrote both its records. What does the commit that follows take, under which message?",
+   "options": [
+    "The delivery root, the target source root and the trace file, as `deliver-scope <slug>: deliver <task>`",
+    "The delivery root, the target source root, the trace file and the work root, as `deliver-scope <slug>: deliver <task>`",
+    "The delivery root, the target source root and the trace file, as `deliver-scope <slug>: deliver`",
+    "Every change in the tree, as `deliver-scope <slug>: deliver <task>`"
+   ]
+  },
+  {
+   "id": 6,
+   "q": "Under the delivery root, `review/lending.md` exists; `run/lending`, `siegard-reconcile/lending.md` and `siegard-reconcile/lending.returns/` are free. What is the review of slug `lending` named?",
+   "options": [
+    "`lending-2`",
+    "`lending-1`",
+    "`lending`, because three of the four names are free",
+    "`lending-review`"
+   ]
+  },
+  {
+   "id": 7,
+   "q": "Outside a goal, the review records two conformance findings. What does the skill do with them?",
+   "options": [
+    "Relays them whole in the report, opened by the counts the review's own report opens with, and never acts on them",
+    "Relays them whole in the report and opens one corrective increment for each",
+    "Relays only the counts the review's own report opens with",
+    "Relays them whole in the report and stops the run on them"
+   ]
+  },
+  {
+   "id": 8,
+   "q": "The review refused a certification, `remainder: testable`, over a node a task of this run implements. What follows?",
+   "options": [
+    "One proof-only re-delivery per task through `/implement-task`, each committed as `deliver-scope <slug>: prove <task>` before the next begins, then `/review-change` once more over exactly those tasks, committed as `review again`",
+    "One proof-only re-delivery per task through `/implement-task`, the test-authors spawned side by side over one tree, then `/review-change` once more over exactly those tasks, committed as `review again`",
+    "One proof-only re-delivery per task through `/implement-task`, each committed as `deliver-scope <slug>: prove <task>` before the next begins, then `/review-change` once more over every task of the plan, committed as `review again`",
+    "Nothing: the remainder is relayed to the person, whose decision a re-delivery is"
+   ]
+  },
+  {
+   "id": 9,
+   "q": "After step 5's second review, the certification is refused again. What happens?",
+   "options": [
+    "It is relayed with its new remainder; a third attempt is the person's decision about cost",
+    "Step 5 runs once more, since the remainder changed",
+    "It is relayed with its new remainder, and the run ends on the stop class `gave-up`",
+    "It is relayed with its new remainder, and the skill spawns the door decider outside a goal"
+   ]
+  },
+  {
+   "id": 10,
+   "q": "A delivery stopped on a red build. What still runs before the report?",
+   "options": [
+    "The measure, step 6, whose commit is the one that follows the stop",
+    "Nothing: a stop ends the route and the measure with it",
+    "The review over the tasks delivered so far, then the measure",
+    "The measure, step 6, left uncommitted because a stop commits nothing further"
+   ]
+  },
+  {
+   "id": 11,
+   "q": "`telemetry.py --probe` says it cannot read the transcripts. What is that?",
+   "options": [
+    "A line in the report, never a stop",
+    "A stop of class `infrastructure`",
+    "A line in the report, and the measure commit carries an empty telemetry file",
+    "A stop of class `unclassified`"
+   ]
+  },
+  {
+   "id": 12,
+   "q": "Where does the orchestration log live, and what is it?",
+   "options": [
+    "`orchestration.md` at the initiative's delivery root, `<delivery_root>/<slug>/`: a marker, never a node, one line per step",
+    "`orchestration.md` at `delivery_root` itself: a marker, never a node, one line per step",
+    "`orchestration.md` at the initiative's delivery root, `<delivery_root>/<slug>/`: a node `deliver.py` validates against a contract, one line per step",
+    "`orchestration.md` at the initiative's work root, beside `closure.md`: a marker, never a node, one line per step"
+   ]
+  },
+  {
+   "id": 13,
+   "q": "Under a goal, the run takes a door. What does the log gain?",
+   "options": [
+    "One line of its own, `decided: <door> — <criterion> — <deciding fact>`",
+    "One line of its own, `recommended: <door> — <criterion> — <deciding fact>`",
+    "One line of its own, `decided: <door> — <criterion> — <deciding fact>`, only where the door was judged",
+    "Nothing: the commit message records the door"
+   ]
+  },
+  {
+   "id": 14,
+   "q": "When may `/deliver-scope` invoke `/analyse`?",
+   "options": [
+    "Only under a goal whose condition asks to specify a prose objective: once, before the plan, and never to unblock a stop",
+    "Under any goal, whenever a delivery stops over a specification silence",
+    "Outside a goal too, whenever the ask states a prose objective: once, before the plan, and never to unblock a stop",
+    "Under a goal whose condition asks to specify a prose objective: once before the plan, and once more after a delivery's silence"
+   ]
+  },
+  {
+   "id": 15,
+   "q": "Under a goal, a judged choice is handed to a `siegard:door-decider` subagent. What does it receive?",
+   "options": [
+    "The doors, the facts each rests on by path, the condition's scope line quoted, and the budget left — never the conversation, the attempts' story or what ends the goal",
+    "The doors, the facts each rests on by path, the whole goal condition quoted, and the budget left",
+    "The doors, the facts each rests on by path, the condition's scope line quoted, the budget left, and the attempts' story",
+    "The doors, the facts each rests on by path, and the condition's scope line quoted — never the budget left"
+   ]
+  },
+  {
+   "id": 16,
+   "q": "Under a goal whose findings policy names the kind of a conformance finding the review recorded, what follows?",
+   "options": [
+    "One corrective increment over the file the finding names, planned, delivered and reviewed in the same run, once; what that review finds is reported, never corrected again",
+    "One corrective increment over the file the finding names, planned, delivered and reviewed in the same run, repeated until the review finds nothing",
+    "One corrective increment over the node the finding names, planned, delivered and reviewed in the same run, once; what that review finds is reported, never corrected again",
+    "Nothing in the run: the finding is relayed, and the policy only orders the report"
+   ]
+  },
+  {
+   "id": 17,
+   "q": "A build is red over a tree the delivery left unchanged. Which class does the stop carry?",
+   "options": [
+    "`outside-task`",
+    "`gave-up`",
+    "`infrastructure`",
+    "`unclassified`"
+   ]
+  },
+  {
+   "id": 18,
+   "q": "Outside a goal, a delivery stopped and its report recommended one of its doors. What does `/deliver-scope` hand the person?",
+   "options": [
+    "The stopping report's doors verbatim, its recommendation and whether that report called it a judgment; the skill takes no door",
+    "The stopping report's doors verbatim and its recommendation, and the skill takes the recommended door",
+    "The stopping report's doors verbatim, with a recommendation of its own over them",
+    "The stopping report's doors verbatim, without the recommendation the report made"
+   ]
+  }
+ ]
+}

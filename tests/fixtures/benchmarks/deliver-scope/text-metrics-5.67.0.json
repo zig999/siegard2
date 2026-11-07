@@ -1,0 +1,20 @@
+{
+ "files": 2,
+ "chars": 34403,
+ "skill_chars": 29189,
+ "sentences": 180,
+ "sentence_words_median": 23,
+ "sentence_words_p90": 53,
+ "sentence_words_max": 219,
+ "sentences_over_60_words": 9,
+ "prose_lines_over_100": 13,
+ "synonyms": {
+  "the person": 0,
+  "subagent": 0,
+  "test-author": 0
+ },
+ "description_chars": {
+  "skill": 759,
+  "door-decider": 671
+ }
+}

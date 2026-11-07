@@ -1,0 +1,50 @@
+{
+ "commits": [
+  {
+   "hash": "fef70a4",
+   "subject": "deliver-scope lending: deliver task/fees/compute-late-fee",
+   "files": [
+    "app/lending/fees.py",
+    "app/tests/test_fees.py",
+    "delivery/lending/delivery.json",
+    "delivery/lending/implementation/fees/compute-late-fee.md",
+    "delivery/lending/orchestration.md",
+    "delivery/lending/proof/fees/compute-late-fee.md",
+    "delivery/lending/run/fees-compute-late-fee-build/build.log",
+    "delivery/lending/run/fees-compute-late-fee-build/run.json",
+    "delivery/lending/run/fees-compute-late-fee-build/run.log",
+    "delivery/lending/run/fees-compute-late-fee-suite/build.log",
+    "delivery/lending/run/fees-compute-late-fee-suite/run.json",
+    "delivery/lending/run/fees-compute-late-fee-suite/run.log",
+    "delivery/lending/run/fees-compute-late-fee-suite/test.log",
+    "siegard-trace.json"
+   ]
+  },
+  {
+   "hash": "49151f8",
+   "subject": "deliver-scope lending: review",
+   "files": [
+    "delivery/lending/delivery.json",
+    "delivery/lending/orchestration.md",
+    "delivery/lending/review/lending.md",
+    "delivery/lending/run/lending/build.log",
+    "delivery/lending/run/lending/run.json",
+    "delivery/lending/run/lending/run.log",
+    "delivery/lending/run/lending/test.log"
+   ]
+  },
+  {
+   "hash": "9e9aec4",
+   "subject": "deliver-scope lending: measure",
+   "files": [
+    "delivery/lending/orchestration.md",
+    "telemetry/20261107T175754Z.json"
+   ]
+  }
+ ],
+ "branches": [
+  "main"
+ ],
+ "remotes": [],
+ "changed_outside_roots": []
+}

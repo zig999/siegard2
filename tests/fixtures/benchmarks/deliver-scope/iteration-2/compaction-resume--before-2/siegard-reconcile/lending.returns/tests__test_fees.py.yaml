@@ -1,0 +1,6 @@
+read: []
+nowhere:
+  - rules/lending/late-fee-per-overdue-day
+looked_past: >-
+  The assertions "late_fee_cents(returned_loan(DUE_ON)) == 0" and "fee - previous == 100" exercise the
+  rule rather than declare it; whether they prove the criteria is the coverage pass's judgment.

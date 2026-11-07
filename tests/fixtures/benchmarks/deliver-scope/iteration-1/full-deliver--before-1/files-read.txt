@@ -1,0 +1,55 @@
+/tmp/dsb/runs/full-deliver--before-1/prompt.txt
+/tmp/ds-before/skills/deliver-scope/SKILL.md
+/tmp/dsb/runs/full-deliver--before-1/p/siegard.json
+/tmp/ds-before/schemas/plan.json
+/tmp/ds-before/bin/door.py (lines 345-365, after a grep over skills/ and bin/ for the absent-delivery-root case)
+/tmp/ds-before/skills/implement-task/SKILL.md
+/tmp/ds-before/skills/implement-task/references/standard.md
+/tmp/ds-before/skills/implement-task/references/delegation.md
+/tmp/dsb/runs/full-deliver--before-1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/dsb/runs/full-deliver--before-1/p/work/lending/plan.json
+/tmp/dsb/runs/full-deliver--before-1/p/work/lending/inventory/lending-app.md
+/tmp/dsb/runs/full-deliver--before-1/p/work/lending/epic/fees.md
+/tmp/ds-before/agents/task-implementer.md
+/tmp/dsb/runs/full-deliver--before-1/out/.contract-implementation.txt (deliver.py --contract implementation output)
+/tmp/dsb/runs/full-deliver--before-1/p/app/standard.yaml
+/tmp/dsb/runs/full-deliver--before-1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/dsb/runs/full-deliver--before-1/p/app/lending/loans.py
+/tmp/dsb/runs/full-deliver--before-1/p/app/lending/__init__.py
+/tmp/dsb/runs/full-deliver--before-1/p/app/tests/conftest.py
+/tmp/dsb/runs/full-deliver--before-1/p/app/tests/test_loans.py
+/tmp/dsb/runs/full-deliver--before-1/p/app/.gitignore
+/tmp/dsb/runs/full-deliver--before-1/p/spec/domain/lending/loan.md
+/tmp/dsb/runs/full-deliver--before-1/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/ds-before/skills/implement-task/references/records.md
+/tmp/ds-before/agents/test-author.md
+/tmp/dsb/runs/full-deliver--before-1/out/.contract-proof.txt (deliver.py --contract proof output)
+/tmp/dsb/runs/full-deliver--before-1/p/delivery/lending/run/fees-compute-late-fee-suite/run.log
+/tmp/ds-before/skills/implement-task/references/finish.md
+/tmp/ds-before/skills/implement-task/references/report.md
+/tmp/ds-before/bin/handoff.py (--help text)
+/tmp/ds-before/schemas/handoff.json
+/tmp/ds-before/skills/review-change/SKILL.md
+/tmp/ds-before/skills/review-change/references/standard.md
+/tmp/ds-before/skills/review-change/references/trace.md
+/tmp/ds-before/skills/review-change/references/staging.md
+/tmp/ds-before/skills/review-change/references/passes.md
+/tmp/ds-before/agents/coverage-auditor.md
+/tmp/dsb/runs/full-deliver--before-1/scratch/rc-coverageEntry.txt (deliver.py --contract coverageEntry output)
+/tmp/dsb/runs/full-deliver--before-1/scratch/rc-unpairedTest.txt (deliver.py --contract unpairedTest output)
+/tmp/tmp.rVhoXJWVS9/packs/certify__rules__lending__late-fee-per-overdue-day.md
+/tmp/tmp.rVhoXJWVS9/packs/lending__fees.py.md
+/tmp/tmp.rVhoXJWVS9/packs/tests__test_fees.py.md
+/tmp/tmp.rVhoXJWVS9/candidates.txt
+/tmp/tmp.rVhoXJWVS9/manifest.json
+/tmp/ds-before/agents/specification-conformance-reviewer.md
+/tmp/ds-before/schemas/conformance-return.json
+/tmp/ds-before/schemas/certification-return.json
+/tmp/dsb/runs/full-deliver--before-1/p/spec (grep over rule, domain and scenario nodes for fee/unreturned/overdue)
+/tmp/ds-before/skills/review-change/references/fold-and-bind.md
+/tmp/ds-before/skills/review-change/references/compose.md
+/tmp/dsb/runs/full-deliver--before-1/scratch/rc-review.txt (deliver.py --contract review output)
+/tmp/ds-before/agents/standard-conformance-reviewer.md
+/tmp/ds-before/skills/review-change/references/report.md
+/tmp/ds-before/bin/telemetry.py (--help text)
+/tmp/dsb/runs/full-deliver--before-1/p/delivery/lending/orchestration.md

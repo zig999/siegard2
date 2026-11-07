@@ -1,381 +1,265 @@
 ---
 name: deliver-scope
-description: Carries one stated scope end to end through the entry points — /plan-work, /implement-task over each deliverable task, /review-change — committing between steps with a pathspec, recording each step in an orchestration log, and stopping at everything only a person settles. Use only where the person's own message states that the whole route is wanted — an end-to-end ask quoted verbatim, or a standing automation whose condition names this skill. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), and never for /analyse — the specification is authored, reviewed and committed by a person before this skill runs, except once, before the plan, under a goal whose condition asks to specify its objective.
+description: Use when the person's own message states that one scope is to be carried end to end — an end-to-end ask quoted verbatim, or a goal condition the person armed naming this skill. Carries the scope through /plan-work, /implement-task over each deliverable task and /review-change, committing each step with a pathspec, logging each step, and stopping at everything only a person settles. An intent inferred from anything less is a stop. Not for a single phase (invoke that entry point directly), and never for /analyse, except once, before the plan, under a goal whose condition asks to specify its objective.
 effort: medium
 ---
 
-You carry one stated scope through the route — plan, deliveries, review — committing between
-steps, and you stop. One invocation, one scope delivered. This skill owns no judgment of its own:
-every judgment belongs to the entry point that holds it, invoked whole, and every routing decision
-is a script's answer. What this skill adds is only the taking of the handoffs the reports already
-carry, and the commits between them — the two acts that were the person's, delegated once, in the
-ask.
+You carry one stated scope through the route — plan, deliveries, review — committing between steps,
+and you stop. One invocation, one scope delivered. You own no judgment: every judgment belongs to
+the entry point that holds it, invoked whole. What you add is the taking of the handoffs the reports
+already carry, and the commits between them — the two acts the person handed over in the ask.
+
+## Progress checklist
+
+Copy this checklist into your working notes and tick each step as it closes. Where a step's section
+is no longer in your context, read `${CLAUDE_PLUGIN_ROOT}/skills/deliver-scope/SKILL.md` again
+before acting on it. `references/` is the directory beside that file: read a reference when its step
+is reached, before acting on it.
+
+```
+- [ ] Inputs: ask quoted verbatim, project root, target, slug, reach; else one stop naming all
+- [ ] Root: bin/project.py <project-root>, or --here where none is named
+- [ ] Gate: spec.py over a committed specification root; /analyse only under a goal that asks
+      to specify: references/goal.md
+- [ ] Tree: git status --porcelain over the roots, siegard-trace.json and siegard-reconcile
+      prints nothing; note HEAD
+- [ ] Contract: read schemas/plan.json
+- [ ] 1 Plan: skipped where the ask names a reach; else /plan-work
+- [ ] 2 Commit the plan
+- [ ] 3 Deliver: --outstanding, then /implement-task, per task; commit each; a stop:
+      references/stops.md; under a goal: references/goal.md
+- [ ] 4 Review: /review-change under the name the rule gives; commit
+- [ ] 5 Prove what the review left testable, once: references/prove.md
+- [ ] 6 Measure: telemetry.py --probe; commit; after a stop too
+- [ ] Log: a line per step in <delivery_root>/<slug>/orchestration.md; the stop line:
+      references/stops.md
+- [ ] Report: handoff.py --prepare; references/report.md; --save-report, --render; stop
+```
+
+## Terms
+
+- **You** — the session that runs the skill.
+- **The person** — whoever invoked the skill and decides what only a person decides.
+- **Subagent** — an agent the skill spawns. The one here is `door-decider`, under a goal.
+- **Stop** — the invocation ends: nothing more is written, and the report says why.
+- **Refusal** — a script's non-zero exit naming what it refused.
+- **Door** — an invocation of another entry point that the report hands the person, filled with
+  everything known and ready to paste.
 
 ## Required inputs
 
 A missing input is a stop, not a default:
 
-1. **the ask** — the person's own words stating that this scope is to be carried end to end,
-   quoted verbatim. The authorization is the statement itself, and it is never inferred: a
-   request that names one phase gets that entry point, not this one, and an intent read into a
-   message that does not state it is a stop, exactly as the corrective increment in `/plan-work`
-   is named and never inferred. A standing automation the person armed — a goal condition naming
-   this skill — is such a statement, and so is a condition the plugin's `Stop` hook repeats from a goal armed by
-   `goal.py --arm`, which only the person's own invocation of `/siegard-goal --arm` runs; this skill deciding on its own that a session "meant" the whole route is not. Where such a
-   condition names its objective by a file and a digest, the file's text, read whole, is the
-   ask's objective; a file whose digest no longer matches is a stop, because the words are no
-   longer the ones the person armed. A route resumed after a compaction reads the ask from what
-   `ask.py --read` prints, run as the `read:` line `ask.py --record` printed names it — path and
-   digest — in place of a summary: «A route resumed after a compaction reads its authorization
-   from a recorded ask, printed by `ask.py --read`, in place of a summary of an earlier context»
-   (SPEC-010 R3).
+1. **the ask** — the person's own words stating that this scope is to be carried end to end, quoted
+   verbatim. It is never inferred: a request that names one phase gets that entry point, not this
+   one, and an intent read into a message that does not state it is a stop.
+   - A goal condition naming this skill is such a statement, and so is a condition the plugin's
+     `Stop` hook repeats from a goal armed by `goal.py --arm`, which only the person's own
+     invocation of `/siegard-goal --arm` runs. You deciding that a message "meant" the whole route
+     is not.
+   - Where such a condition names its objective by a file and a digest, the file's text, read whole,
+     is the ask's objective. A file whose digest no longer matches is a stop: the words are no
+     longer the ones the person armed.
+   - A route resumed after a compaction reads the ask from what `ask.py --read` prints, run as the
+     `read:` line `ask.py --record` printed names it — path and digest — in place of a summary: «A
+     route resumed after a compaction reads its authorization from a recorded ask, printed by
+     `ask.py --read`, in place of a summary of an earlier context» (SPEC-010 R3).
 2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
    names none, the project root is the git toplevel of the session's working directory, as
    `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
    (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
    below, and its `project_root:` line is the root. Its refusal is a stop.
-3. **the target** — by the key `siegard.json`'s `targets` names it. Where `targets` declares
-   exactly one key and the ask names none, that key is the target: decided and disclosed, never
-   asked.
-4. **the initiative's slug** — named in the ask, or derived from it and disclosed in the report.
-   A slug whose work root holds `closure.md` is a stop: a closed plan is history, and a new
-   scope names a new slug. A slug whose work root already holds a live plan is a resume, not an
-   error: this skill continues from the deliverable set as it stands, and the report says so.
+3. **the target** — by the key `siegard.json`'s `targets` names it. Where `targets` declares exactly
+   one key and the ask names none, that key is the target: decided and disclosed, never asked.
+4. **the initiative's slug** — named in the ask, or derived from it and disclosed in the report. A
+   slug whose work root holds `closure.md` is a stop: a closed plan is history, and a new scope
+   names a new slug. A slug whose work root holds a live plan is a resume: continue from the
+   deliverable set as it stands, and the report says so.
 5. **the scope's reach** — the whole plan, unless the ask names an epic, `epic/<name>`, or tasks,
-   `task/<epic>/<name>`, of the slug's live plan. Named, the run carries those tasks and every
-   task they depend on: «A scope restricted to an epic or a set of tasks carries with it every
-   task of the same plan it depends on that holds no record, transitively» (SPEC-008 R5). An id
-   the plan does not hold is a stop, and so is a reach named over a slug with no live plan — a
-   new plan is planned from prose, never from ids.
+   `task/<epic>/<name>`, of the slug's live plan. Named, the run carries those tasks and every task
+   they depend on: «A scope restricted to an epic or a set of tasks carries with it every task of
+   the same plan it depends on that holds no record, transitively» (SPEC-008 R5). An id the plan
+   does not hold is a stop, and so is a reach named over a slug with no live plan — a new plan is
+   planned from prose, never from ids.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything else.
-Every root and the standard answer only from there, exactly as they do for every entry point this
-skill invokes; a field the file does not declare is a stop, and the report carries the
-`/siegard-config` invocation ready to paste — that skill is closed to model invocation, so the
-paste is the person's.
+Every root and the standard answer only from there. A field the file does not declare is a stop, and
+the report carries the `/siegard-config` invocation ready to paste; that skill is closed to model
+invocation.
 
-Absent inputs stop once, together, so the person answers once — never a question at a time.
+Absent inputs stop once, together, so the person answers once.
 
-## Before anything: the specification gate
+## Before anything: the gate, the tree and the branch
 
-This skill begins where the specification ends, and that boundary is the one gate the whole
-arrangement keeps for a person. Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py
-<specification-root>`, and hold the specification root to `git status --porcelain`: anything but
-a clean pass over a committed root is a stop. A specification still uncommitted is a specification
-nobody reviewed, and carrying work over it would build the route on the one diff this skill exists
-to leave in a person's hands.
+**The specification gate.** Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py <specification-root>`,
+and hold the specification root to `git status --porcelain`: anything but a clean pass over a
+committed root is a stop. An uncommitted specification is one nobody reviewed.
 
-**This skill never invokes `/analyse`.** Not to open the run, not to unblock it: a fact the
+**This skill never invokes `/analyse`** — not to open the run, not to unblock it. A fact the
 specification turns out not to state mid-route — the implementer's stop over a silence — ends the
-run, and the `/analyse` invocation that stop already hands over is relayed to the person verbatim.
-The one writer this run admits into the specification root is `/plan-work`'s own decided-fact
-route, which runs inside that skill's invocation under its own discipline and its own decision
-log, exactly as it does when a person invokes it — and, under a goal whose condition asks to
-specify a prose objective, `/analyse` once, before the plan and never to unblock a stop, as
-"Under a goal" below states.
+run, and the `/analyse` invocation that stop hands over is relayed to the person verbatim. The one
+writer the run admits into the specification root is `/plan-work`'s own decided-fact route, inside
+that skill's invocation and under its own decision log. The one exception is a goal whose condition
+asks to specify a prose objective: `/analyse` once, before the plan and never to unblock a stop —
+read `references/goal.md` before the plan.
 
-## Before anything: the tree, and the branch
+**The tree.** Before any step,
+`git status --porcelain -- <work-root> <delivery-root> <target-source-root> <specification-root>`
+must print nothing, and neither may `git status --porcelain -- siegard-trace.json siegard-reconcile`
+at the target's git toplevel. Output is a stop: a pending change you did not make is somebody's work
+in progress.
 
-Before any step, `git status --porcelain -- <work-root> <delivery-root> <target-source-root>
-<specification-root>` must print nothing, and neither may `git status --porcelain --
-siegard-trace.json siegard-reconcile` at the target's git toplevel — the trace and the
-reconciliation records sit there, outside every root, and every delivery commit carries the trace
-and the review commit both: a pending change this skill did not make is somebody's work in
-progress, and committing it under a run's message would bury it. Output is a stop.
-
-This skill commits where `HEAD` already points and never creates a branch, never pushes, never
-stashes: starting the run on a branch cut for it is the person's act, offered in the report's
-opening line, which names where `HEAD` stood when the run began.
+**The branch.** Commit where `HEAD` already points. This skill never creates a branch, never pushes,
+never stashes: a branch cut for the run is the person's act, offered in the report's opening line,
+which names where `HEAD` stood when the run began.
 
 ## Read the contract
 
-Read `${CLAUDE_PLUGIN_ROOT}/schemas/plan.json` — the contract of the index this skill reads to
-follow the plan's shape — and take every remaining answer from `bin/deliver.py`, whose
-`--outstanding` run below is the only reading of the plan this skill makes. Do not re-derive
-either from memory.
+Read `${CLAUDE_PLUGIN_ROOT}/schemas/plan.json`, and take every remaining answer from
+`bin/deliver.py`, whose `--outstanding` run below is the only reading of the plan you make. Do not
+re-derive either from memory.
 
 `${CLAUDE_PLUGIN_ROOT}` is set where this skill runs as an installed plugin. Where it is not, the
 plugin root is the directory that holds `schemas/` and `bin/` side by side.
 
-## The order
+## The two rules
 
-```
-gate → [analyse → commit, under a goal that asks to specify] → plan → commit
-     → [deliver → commit, per task] → review → commit
-     → [prove → commit, per task left testable] → review → commit → measure → commit
-     → report → stop
-```
+Two rules bind every step:
 
-Two rules bind every step, and they are what this skill is:
-
-- **Paste, never compose.** Each entry point's report ends with the next invocation ready to
-  paste; this skill takes that handoff verbatim and fills only the slots its authorization
-  covers — the scope with the ask, the task with the script's answer, the file set and the names
-  with what the report itself carried. It never composes an invocation a report did not hand
-  over, and it never edits one beyond its slots. The handoff lives in conversation, and
-  conversation is not state — what makes the paste safe is the receiving skill, which rereads
-  every root from disk and stops on anything the handoff got wrong; this skill relies on those
-  stops rather than on its own memory of what a report said.
-- **Every routing decision is a script's answer.** Which tasks remain, what each waits on, what
-  is deliverable now, and in what order:
+- **Paste, never compose.** Each entry point's report ends with the next invocation ready to paste.
+  Take that handoff verbatim and fill only the slots the ask covers — the scope with the ask, the
+  task with the script's answer, the file set and the names with what the report carried. This skill
+  never composes an invocation a report did not hand over, and never edits one beyond its slots. The
+  receiving skill rereads every root from disk and stops on anything the handoff got wrong; rely on
+  those stops, never on your memory of what a report said.
+- **Every routing decision is a script's answer.** Which tasks remain, what each waits on, what is
+  deliverable now, and in what order:
 
   ```
   python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding <delivery-root> <work-root> <target-source-root> <specification-root> [--scope <id>]...
   ```
 
-  with one `--scope` per id the reach names, and none where it is the whole plan — run fresh
-  before each delivery, never a reading of the plan or a memory of the last run. A stop
-  the script reports is this skill's stop. The lines it prints of records pinning no standard, or
-  another than the one `siegard.json` declares for their target — «A delivery record that pins no standard, or a standard other than the one its target declares, is reported beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — or an earlier version of it — «a step declared after a record was written is owed by the records written after it» (SPEC-007 R3) — are relayed in the report below, verbatim, from the last run that printed them; they route nothing here.
+  One `--scope` per id the reach names, none where it is the whole plan. Run it fresh before each
+  delivery, never a reading of the plan or a memory of the last run. A stop it reports is your stop.
+  Relay in the report, verbatim and from the last run that printed them, the lines it prints of
+  records pinning no standard or another than `siegard.json` declares for their target — «A delivery
+  record that pins no standard, or a standard other than the one its target declares, is reported
+  beside the outstanding tasks and refused nowhere.» (SPEC-007 R1) — or an earlier version of it —
+  «a step declared after a record was written is owed by the records written after it»
+  (SPEC-007 R3). They route nothing here.
 
-The steps:
+Every commit this skill makes names its paths; none sweeps the tree. Each message is
+`deliver-scope <slug>: <step>`, as each step below names it.
 
-1. **Plan.** Where the ask names a reach, the plan already holds it: skip to the loop, and commit
-   nothing here. Otherwise invoke `/plan-work` with the ask as the scope, the project root, the
-   target and the slug. On a populated work root, this is that skill's ordinary evolution of the plan it holds;
-   on a resume where the plan already answers the ask, skip to the loop — `--outstanding` is what
-   says whether anything is left to plan against. A task `/plan-work` reports as carrying a
-   `BLOCKING, from the specification —` note is not yet this skill's problem to stop on: the loop
-   below delivers the deliverable set, and stops where the set is exhausted while such a note
-   still stands.
-2. **Commit the plan**: the work root and the specification root in one commit — the decided-fact
-   route writes into both, and the two diffs are one increment — under the message
-   `deliver-scope <slug>: plan`. Every commit this skill makes names its paths; none sweeps the
-   tree.
-3. **Deliver, one task per invocation.** Run `deliver.py --outstanding`; while the deliverable
-   set is non-empty, take `/implement-task`'s invocation from the previous report's handoff,
-      fill the one open slot with one task from the set, and invoke. After each delivery that wrote
-   both its records — the implementation and the proof — commit the delivery root, the target
-   source root and the trace file in one commit —
-   `deliver-scope <slug>: deliver <task>` — and append to the log below. A delivery that ends in
-   a stop instead of records — a red build given up, a suite whose diagnosis only a person
-   settles, a silence handed to `/analyse` — ends the loop, unless "Under a goal" below answers
-   it: relay that report's own doors whole,
-   commit nothing further but the measure below, and go to it. A delivery that stopped is never
-   committed, whatever it left in the tree: what it wrote is the person's to read, keep or
-   discard. A task whose delivery gave up is not
-   re-attempted in this run: the same invocation again is a decision about cost, and it is the
-   person's.
-4. **Review.** When the deliverable set is empty, invoke `/review-change` from the last
-   delivery's handoff: the tasks being every task this run delivered, the file set being the
-   union of the paths their reports named, and the review's name the one this skill gives it:
-   the slug where `review/<slug>.md` and `run/<slug>` under the delivery root and
-   `siegard-reconcile/<slug>.md` and `siegard-reconcile/<slug>.returns/` at the target's git
-   toplevel are all free, and otherwise `<slug>-<N>` for the least `N` from 2 that frees all
-   four — read with `ls`, stated in the invocation and in the report, never a name already taken
-   and never a suffix of any other form. The review is done when its record is written — the
-   findings are relayed whole in the report, opened by the counts that review's own report
-   opens with, and never acted on here: which route a finding deserves, or whether it deserves
-   one, is the decision that skill deliberately does not make, and this skill inherits the same
-   restraint. Repairing anything a finding names is a new ask.
-   Commit the delivery root, the trace file and `siegard-reconcile/` — the review's conformance
-   pass writes its record and returns there and restamps the trace — in one commit,
-   `deliver-scope <slug>: review`.
-5. **Close what the review left testable, once.** A certification the review refused over a node
-   one of this run's own tasks implements, with `remainder: testable`, is the handoff that
-   review's report names — the proof-only re-delivery of `/implement-task` over that task,
-   handed the node, the assertion and the proof file, all read from the review's record — and
-   taking it is inside the ask: carrying the scope end to end is carrying its nodes to the proof
-   the specification prefers. «A finite test is preferred to a reading, and to a registry
-   step's decision, wherever one exists» (SPEC-004 R10). Fill those slots from the record, one
-   re-delivery per task, commit each as `deliver-scope <slug>: prove <task>`, one after the other:
-   each is its own `/implement-task` invocation, run to its end and committed before the next
-   begins — never test-authors spawned side by side over one tree, and never one suite run
-   standing for several tasks. A suite is one run over the whole tree, so a red re-delivery beside
-   green ones holds them all, and the clean-tree stop each invocation opens with is what keeps
-   them apart: a re-delivery that stops red leaves its files for the person, every one already
-   committed stands, and those not yet begun are relayed as not reached. Then invoke
-   `/review-change` once more over exactly those tasks, named by step 4's rule, and commit it as
-   `deliver-scope <slug>: review again`. This step runs once per run: a certification refused again is relayed with
-   its new remainder, and a third attempt is the person's decision about cost. A remainder over a
-   node no task of this run implements is not this run's; the report hands it on as `trace.py
-   --owed` does.
-6. **Measure**, at the end of every run, the one a stop ended included: what an ended run cost is
-   the half of its record a person cannot reconstruct once the harness drops its transcripts. Run
-   `telemetry.py --probe --since <the instant step 1 began>` over the project root; announce the
-   read as that script requires; run it. Commit the telemetry root `project.py` answers under
-   `deliver-scope <slug>: measure`. A probe that cannot read is a line in the report, never a
-   stop.
+### 1. Plan
 
-**The orchestration log.** After each step, append one line to `orchestration.md` at the
-initiative's delivery root, `<delivery_root>/<slug>/` — never at `delivery_root` itself, where
-three initiatives' lines would read as one — what was invoked, the commit that followed by its hash, and the outcome, one sentence per
-line. It is a marker, never a node, exactly as `closure.md` is: no contract holds it, the
-validator keeps it by name at the delivery root the way `plan.py` keeps `closure.md` at the work
-root, and it is the one place the run's own decisions —
-the slug derived, the target decided, the order taken, the stop that ended it — survive the
-conversation that made them.
+Where the ask names a reach, the plan already holds it: skip to step 3, and commit nothing here.
+Otherwise invoke `/plan-work` with the ask as the scope, the project root, the target and the slug.
+On a resume where the plan already answers the ask, skip to step 3 — `--outstanding` says whether
+anything is left to plan against. A task `/plan-work` reports with a
+`BLOCKING, from the specification —` note is not yet a stop: step 3 delivers the deliverable set,
+and stops where the set is exhausted while such a note still stands.
 
-## Under a goal
+### 2. Commit the plan
 
-A goal condition naming this skill is the person's ask armed as a standing automation, and it
-changes what four stops do — nothing else: «Under a goal condition naming the orchestrating
-route, the orchestrating entry point takes the door a derived recommendation names where that
-door is an entry point the route invokes, and takes the door a judged choice leaves only as the
-door decider returned it, blind to the condition and while the condition's budget of judged doors
-is not spent.» (SPEC-006 R7) Every door taken is one line of the log, on its own,
-`decided: <door> — <criterion> — <deciding fact>`, and its commit names the run as every other
-does. The plugin's `PreToolUse` hook refuses a commit that adds a line opening with `decided:` or
-`recommended:` out of that form, or a judged `decided:` line where no goal armed through the
-framework names this initiative: a choice no fact decides, outside such a goal, is handed to the
-person and never written as taken, whatever the conversation said. A door the three reserved questions hold — a contradiction, two readings of one piece of
-evidence, a finding's worth — is never taken.
+Commit the work root and the specification root in one commit, `deliver-scope <slug>: plan` — the
+decided-fact route writes into both.
 
-- **An objective the condition asks to specify.** Before the plan, and once: «Under a goal whose
-  condition asks to specify a prose objective, the orchestrating entry point invokes `/analyse`
-  once, before the plan, over the objective as the person armed it, and commits the
-  specification root apart.» (SPEC-008 R10) The material is the objective file's text, read whole
-  after its digest is checked against the condition; the project root is the condition's. A
-  report opening `stop: no-fact —` or `stop: no-change —` is nothing to specify: write the line to
-  the log and plan. Any other stop of `/analyse` ends the run. Where it wrote, run the gate above
-  again — `spec.py` over the specification root — and commit the specification root, with the
-  ledger `/analyse` answered beside the objective and nothing else, as
-  `deliver-scope <slug>: analyse` — «That commit takes the ledger the analysis answered beside the
-  objective with it» (SPEC-008 R10), because a ledger left untracked is a tree the goal's state
-  never reads as clean; then plan with the same objective as the scope. The report
-  carries what `/analyse`'s own report states for a reviewer: the decided fields per node, the
-  nodes written, what the increment may have put delivered code in breach of, and the
-  reconciliation candidates it named — the person reviews this specification after the goal,
-  not before.
-- **A task waiting on a re-bind.** The door is the one `--outstanding` names: `/plan-work` over
-  the slug, the plan's ordinary evolution. Take it, commit the work root and the specification
-  root as `deliver-scope <slug>: rebind <task>`, and resume the loop — «a task waiting on a
-  re-bind by planning over its slug, each once per task, before the run resumes; a second time
-  over one task is a stop.» (SPEC-008 R8)
-- **A delivery that stopped over a fact no node states.** `/implement-task`'s report hands the
-  `/plan-work` invocation of the decided-fact route beside the `/analyse` one; take the first,
-  commit the work root and the specification root as `deliver-scope <slug>: decide <task>`, and
-  resume: the task re-delivers against the fact now stated. Once per task, as above. Where the
-  decider returns the fact as one the specification contradicts, that is a contradiction, and
-  the run stops on it.
-- **A derived recommendation.** Where a stopping report recommends a door on one of the four
-  derived grounds and that door is `/plan-work`, `/implement-task` or `/review-change`, take it,
-  with the criterion the report gave.
-- **A judged choice** — a delivery that gave up, an infrastructure failure the diagnosis read
-  twice, a certification refused again — while the condition's budget of judged doors is not
-  spent. A red no change to the task's own files can answer is never one: trying the same
-  delivery again cannot reward it, and it ends the run as `outside-task`. Spawn a `siegard:door-decider` subagent, its judgment at
-  `${CLAUDE_PLUGIN_ROOT}/agents/door-decider.md`, handing it four things: the doors — the
-  invocation the stopping report handed to try again, and ending the run on this stop — each with
-  what it does and what it leaves; the facts each rests on, by path, the runs and the diagnoses
-  among them; the condition's scope line quoted, and nothing else of the condition; and the
-  budget left. Never the conversation, never the attempts' story, never what ends the goal. Save
-  its return as the subagent's own reply. `chosen` or `excluded` naming the door to try again:
-  take it, write the `decided:` line with the rung it named, and count one door of the budget.
-  The budget left is read, never remembered: the condition's state command prints `check budget`,
-  the judged `decided:` lines the log gained since the goal began against the budget it pins.
-  Anything else — `reserved`, `none`, or the door that ends the run — is the stop it was. A
-  judged choice met with the budget spent is a stop of its own.
-- **A finding the condition's findings policy names.** After the review's commit, each finding
-  of the conformance pass whose kind the policy names is answered «by one corrective increment
-  over the file it names, delivered and reviewed in the same run, once» (SPEC-008 R9). The
-  review hands no invocation forward, so this is the one invocation this skill composes, and only
-  from the review's record: `/plan-work`'s corrective increment with the file the finding names,
-  the finding's own words as the wrong behavior, and the node it names. Commit the plan as
-  `deliver-scope <slug>: correct <file>`, deliver the corrective task as step 3 does, review the
-  corrective tasks once, and commit. What that review finds is reported, never corrected again.
+### 3. Deliver, one task per invocation
 
-The taking is this skill's; the judgment never is. The decider is the one context that chooses a
-judged door, and it never sees the condition that ends the goal.
+Run `deliver.py --outstanding`. While the deliverable set is non-empty, take `/implement-task`'s
+invocation from the previous report's handoff, fill the one open slot with one task from the set,
+and invoke. After each delivery that wrote both its records — the implementation and the proof —
+commit the delivery root, the target source root and the trace file in one commit,
+`deliver-scope <slug>: deliver <task>`, and append the step's line to the log.
 
-## What ends the run
+A delivery that ends in a stop instead of records ends the loop, unless `references/goal.md` answers
+it under a goal. Read `references/stops.md`: relay that report's own doors whole, commit nothing
+further but the measure, and go to step 6. A delivery that stopped is never committed, whatever it
+left in the tree: what it wrote is the person's to read, keep or discard. A task whose delivery gave
+up is not re-attempted in this run: the same invocation again is the person's decision about cost.
 
-Every stop below ends the run with the doors the stopping report already carried, relayed
-verbatim, and with the log naming it — where that report recommended a door, on a line of its
-own, «`recommended: <door> — <criterion> — <deciding fact>`»
-(SPEC-006 R5): its door and deciding fact copied from the report, and its criterion the name the
-handoff's specification gives the ground the report stated in plain words — never a
-recommendation the report did not make.
-None is worked around, and none is retried. Each carries its class, in backticks after it:
+### 4. Review
 
-- a `BLOCKING, from the specification —` note standing on every task the set has left —
-  `blocking`;
-- a specification silence outside a goal — the report hands the `/analyse` invocation beside
-  `/plan-work`'s decided-fact route, and which one is taken is the person's — `silence`;
-- a task `deliver.py --outstanding` lists as waiting on a re-bind — a node it implements moved
-  since the plan was derived, and the door is `/plan-work` over the slug, never a derivation —
-  `rebind`;
-- a suite whose diagnosis names a disagreement between the two producers — `producers`;
-- a delivery that gave up, a red the task's own files could still answer and its producer
-  did not — `gave-up`;
-- an infrastructure failure the diagnosis read twice — `infrastructure`;
-- a field `siegard.json` does not declare, or a standard that resolves nowhere — `project-file`;
-- a pending change this skill did not make, anywhere the pathspec above reaches —
-  `pending-change`;
-- a specification the gate above does not pass — `specification`;
-- under a goal, a fact the decided-fact route returns as one the specification contradicts —
-  `contradiction`;
-- under a goal, a judged choice once the condition's budget of judged doors is spent —
-  `budget`;
-- a task carrying `stands` whose own nodes' bindings to those files this run's own deliveries
-  left out of date — the door is `/reconcile` over those files, the person's to ask for —
-  `stands`;
-- under a goal that asks to specify, a stop of `/analyse` other than one over material that states
-  no fact or names nodes and changes none — `analyse`;
-- a red no change to the task's own files can answer — a build red over a tree the delivery
-  left unchanged, or a fix the report places in files no record of the task names, another
-  task's or none's — the door is `/plan-work` over the slug, the person's, and never trying the
-  same delivery again. A fix that lies only in tests the target declares is not this stop:
-  `/implement-task` hands it to its test-author before the record, and only the test of another
-  task whose files this delivery shares none of comes back here — `outside-task`;
-- a delivery whose implementer found every criterion already met by source the task never wrote,
-  where the door the trace decides is not one this run takes — `already-met`;
-- a stop no class above names — its fact the stopping report's own words, which is the whole of
-  what a person reads — `unclassified`.
+When the deliverable set is empty, invoke `/review-change` from the last delivery's handoff: the
+tasks are every task this run delivered, the file set is the union of the paths their reports named,
+and the review's name is the one you give it:
 
-The log then closes on the stop, one line of its own after every other, `stop: <class> — <fact>`: «A run a
-stop ended closes its orchestration log with one stop line: its class names the stop from the
-list R3 holds, and its fact is the stopping report's own words.» (SPEC-008 R4) A goal's state is
-read from that line, so nothing is appended after it — the measure's commit carries it. A resume
-of the slug leaves that line where it stands, appends its first line after it, and commits that
-line with its first step: «A run that resumes an initiative whose log closes on a stop line
-appends its lines after it and never removes it: the stop stays the record of the run it ended,
-and the state is read from the line the resumed run ends on.» (SPEC-008 R4)
+- the slug, where `review/<slug>.md` and `run/<slug>` under the delivery root and
+  `siegard-reconcile/<slug>.md` and `siegard-reconcile/<slug>.returns/` at the target's git toplevel
+  are all free;
+- otherwise `<slug>-<N>` for the least `N` from 2 that frees all four.
+
+Read the four with `ls`, and state the name in the invocation and in the report — never a name
+already taken, and never a suffix of any other form.
+
+The review is done when its record is written. Its findings are relayed whole in the report, opened
+by the counts that review's own report opens with, and never acted on here: which route a finding
+deserves, or whether it deserves one, is the decision that skill does not make, and neither do you.
+Repairing anything a finding names is a new ask.
+
+Commit the delivery root, the trace file and `siegard-reconcile/`, where the review's conformance
+pass writes, in one commit, `deliver-scope <slug>: review`.
+
+### 5. Close what the review left testable, once
+
+Where the review refused a certification over a node one of this run's own tasks implements, with
+`remainder: testable`, read `references/prove.md`: a proof-only re-delivery per task, then one
+review again. This step runs once per run. Where no certification was refused, go to step 6.
+
+### 6. Measure
+
+At the end of every run, the one a stop ended included: what a run cost is lost once the harness
+drops its transcripts. Run `telemetry.py --probe --since <the instant step 1 began>` over the
+project root; announce the read as that script requires; run it. Commit the telemetry root
+`project.py` answers under `deliver-scope <slug>: measure`. A probe that cannot read is a line in
+the report, never a stop.
 
 A stop ends the route, never the measure: step 6 runs after it, and its commit is the one that
 follows a stop.
+
+## The orchestration log
+
+After each step, append one line to `orchestration.md` at the initiative's delivery root,
+`<delivery_root>/<slug>/` — never at `delivery_root` itself, where three initiatives' lines would
+read as one: what was invoked, the commit that followed by its hash, and the outcome, one sentence
+per line. It is a marker, never a node: no contract holds it, and the validator keeps it by name at
+the delivery root as `plan.py` keeps `closure.md` at the work root. The run's own decisions — the
+slug derived, the target decided, the order taken, the stop that ended it — are written there.
+
+A run a stop ended closes the log with one stop line, and under a goal each door taken is one
+`decided:` line: `references/stops.md` and `references/goal.md` give both forms.
 
 ## Report, and stop
 
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill deliver-scope --project
-<project-root> --slug <slug> --target <target> --language <en or pt-BR, the session's>` — where a
-step stopped the run, `--skill` names that step instead, so the doors it marks are the ones that
-step's report hands. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the
-fields the skeleton left empty — the stopping report's recommendation and doors among them,
-carried — and hand the person exactly what `handoff.py --render` prints over the record: the
-opening «A handoff opens with what needs the person, and explains after» (SPEC-006 R1) states.
-A refusal is answered by rewriting the field it names; a state it says has moved, by running
-`--prepare` again and carrying its `state` and `state_from` whole.
+<project-root> --slug <slug> --target <target> --language <en or pt-BR, as you converse>` — where
+a step stopped the run, `--skill` names that step instead, so the doors it marks are the ones that
+step's report hands. Then read `references/report.md`: what the report holds, in order.
 
-Report, in this order, in the file: where `HEAD` stood when the run began; every commit this run made, by hash
-and message, and the `git log` range that holds them, because the range is the review and it
-belongs to a person; every input this skill decided rather than was told — the slug derived, the
-target decided, the order taken — each disclosed; every step invoked with its outcome, and the
-path of `orchestration.md`; every line the last `deliver.py --outstanding` printed of records
-pinning no standard or another than their target declares, verbatim and as a fact; the review's
-findings, relayed whole, with that report's own account
-of which passes did not run; which nodes this run left decided by a test, which certifications
-were refused again and with what remainder, and — for any testable remainder over a node no task
-of this run implements — `trace.py --owed`'s closing invocation, relayed; the telemetry report the
-measure wrote, by path, or the line saying why it could not read; what ended the run, where it ended early, with the stopping report's
-doors verbatim and its recommendation where it made one, and whether the report called it a
-judgment; and what this skill never did — no `/analyse`, no repair of any finding, no step
-beyond the route. «A finding stops nothing» (SPEC-006 R4): a finding the review relayed is
-reported, and what ended the run is a stop a step's own file names. Where this report says a
-step proceeded, it lists the `--outstanding` run and the checks the step ran, with their output
-verbatim — «Where a handoff says a step may proceed, it lists the checks it ran and their output verbatim» (SPEC-006 R4).
+Write it through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill
+only the fields the skeleton left empty — the stopping report's recommendation and doors among them,
+carried. Hand the person exactly what `handoff.py --render` prints over the record: «A handoff opens
+with what needs the person, and explains after» (SPEC-006 R1). A refusal is answered by rewriting
+the field it names; a state it says has moved, by running `--prepare` again and carrying its `state`
+and `state_from` whole.
 
-Then stop. The commit range is the review, and it belongs to a person.
+«A finding stops nothing» (SPEC-006 R4): a finding the review relayed is reported, and what ended
+the run is a stop a step's own file names. Where the report says a step proceeded, it lists the
+`--outstanding` run and the checks the step ran, with their output verbatim — «Where a handoff says
+a step may proceed, it lists the checks it ran and their output verbatim» (SPEC-006 R4).
+
+Then stop. The commit range is the review, and it belongs to the person.
 
 ## What you never do
 
-- Invoke `/analyse`, or write into the specification root — the gate is the point of the design —
-  outside the one invocation "Under a goal" names, before the plan.
+- Invoke `/analyse`, or write into the specification root, outside the one invocation
+  `references/goal.md` names, before the plan.
 - Commit without a pathspec, sweep the tree, create a branch, push, stash, or rewrite history.
-- Carry this skill's steps, or commit under its name, outside an invocation of it that accepted
-  the ask. Where the ask is refused — a goal whose condition does not name this skill among
-  them — the report says what the condition lacks and that `/goal clear` and the composed
-  condition answer it, and the session carries nothing on by hand.
-- Override, soften or skip any stop an entry point raised — its rules bind its invocation whole,
-  and this skill's only grant over a stop is to relay it.
+- Carry this skill's steps, or commit under its name, outside an invocation of it that accepted the
+  ask. Where the ask is refused — a goal whose condition does not name this skill — the report says
+  what the condition lacks and that `/goal clear` and the composed condition answer it, and you
+  carry nothing on by hand.
+- Override, soften or skip any stop an entry point raised — its rules bind its invocation whole, and
+  your only grant over a stop is to relay it.

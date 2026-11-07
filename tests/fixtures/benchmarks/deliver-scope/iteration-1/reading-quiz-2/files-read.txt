@@ -1,0 +1,7 @@
+/tmp/dsb/runs/reading-quiz--shipped-2/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/references/goal.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/references/prove.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/references/stops.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/door-decider.md

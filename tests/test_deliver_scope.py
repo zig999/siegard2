@@ -92,9 +92,10 @@ def test_under_a_goal_the_judgment_is_the_blind_deciders_and_the_reserved_questi
     """SPEC-006 R7: a goal takes a derived door itself and a judged one only as the door decider
     returned it; the decider never sees the condition, and the three questions R3 reserves are
     never taken. A rewording that dropped any of the three would hand the judgment back to the
-    context the goal pushes toward ending."""
-    text = flat("src/claude/skills/deliver-scope/SKILL.md")
-    section = text.split("## Under a goal", 1)[1].split("## What ends the run", 1)[0]
+    context the goal pushes toward ending. The goal's branches live in references/goal.md, which
+    the skill names at the gate and at step 3."""
+    assert "references/goal.md" in SKILL
+    section = flat("src/claude/skills/deliver-scope/references/goal.md")
     assert "`decided: <door> — <criterion> — <deciding fact>`" in section
     assert "`siegard:door-decider`" in section
     assert "Never the conversation, never the attempts' story, never what ends the goal" in section
@@ -109,7 +110,8 @@ def test_the_one_analyse_a_goal_may_ask_for_is_bounded():
     text = flat("src/claude/skills/deliver-scope/SKILL.md")
     assert "never invokes `/analyse`" in text
     assert "`/analyse` once, before the plan and never to unblock a stop" in text
-    section = text.split("## Under a goal", 1)[1].split("## What ends the run", 1)[0]
+    assert "references/goal.md" in text
+    section = flat("src/claude/skills/deliver-scope/references/goal.md")
     assert "`stop: no-fact —` or `stop: no-change —` is nothing to specify" in section
     assert "`deliver-scope <slug>: analyse`" in section
     analyse = flat("src/claude/skills/analyse/SKILL.md")

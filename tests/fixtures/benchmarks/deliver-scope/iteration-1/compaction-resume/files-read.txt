@@ -1,0 +1,8 @@
+/tmp/dsb/runs/compaction-resume--shipped-1/prompt.txt
+/tmp/dsb/runs/compaction-resume--shipped-1/p.skill-after-compaction.md
+/tmp/dsb/runs/compaction-resume--shipped-1/p/siegard.json
+/tmp/dsb/runs/compaction-resume--shipped-1/p/delivery/lending/orchestration.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/references/report.md
+/tmp/dsb/runs/compaction-resume--shipped-1/p/delivery/lending/review/lending.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json
+/tmp/dsb/runs/compaction-resume--shipped-1/p/siegard-reconcile/lending.md

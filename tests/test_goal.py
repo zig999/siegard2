@@ -654,8 +654,10 @@ def test_an_objective_travels_by_file_and_the_condition_stays_one_line_each(proj
 
 
 def stop_classes_of_the_skill() -> list[str]:
-    text = (REPO / "src/claude/skills/deliver-scope/SKILL.md").read_text(encoding="utf-8")
-    section = text.split("## What ends the run", 1)[1].split("\nThe log then closes", 1)[0]
+    skill = (REPO / "src/claude/skills/deliver-scope/SKILL.md").read_text(encoding="utf-8")
+    assert "references/stops.md" in skill, "the skill no longer names the list of its stops"
+    text = (REPO / "src/claude/skills/deliver-scope/references/stops.md").read_text(encoding="utf-8")
+    section = text.split("# What ends the run", 1)[1].split("\nThe log then closes", 1)[0]
     bullets = re.split(r"\n- ", section)[1:]
     return [re.findall(r"`([a-z-]+)`[;.]?\s*$", bullet.strip())[-1] for bullet in bullets]
 

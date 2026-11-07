@@ -1,0 +1,77 @@
+python3 -B bin/project.py /tmp/dsb/runs/full-deliver--shipped-1/p — exit 0
+git log --oneline (p) — exit 0
+git rev-parse HEAD — exit 0
+git branch --show-current — exit 0
+python3 -B bin/spec.py p/spec — exit 0
+git status --porcelain -- spec — exit 0 (empty)
+git status --porcelain -- work delivery app spec — exit 0 (empty)
+git status --porcelain -- siegard-trace.json siegard-reconcile — exit 0 (empty)
+git rev-parse --show-toplevel — exit 0
+python3 -B bin/deliver.py --outstanding p/delivery p/work p/app p/spec --scope epic/fees — exit 2 (delivery root is not a directory)
+python3 -B bin/deliver.py --outstanding p/delivery p/work p/app p/spec --scope epic/fees — exit 2 (plan paths compute to no identity: project-level roots)
+python3 -B bin/deliver.py --outstanding p/delivery/lending p/work/lending p/app p/spec --scope epic/fees — exit 0
+git status --porcelain -- delivery/lending app work/lending/task/fees/compute-late-fee.md — exit 0 (printed ?? delivery/lending/, the deliver-scope log)
+git status --porcelain -- delivery/lending app work/lending/task/fees/compute-late-fee.md — exit 0 (empty, after moving the log out)
+python3 -B bin/plan.py --check p/work/lending p/spec — exit 0
+python3 -B bin/deliver.py --contract implementation — exit 0
+python3 -B bin/deliver.py --contract proof — exit 0
+python3 -B bin/deliver.py --contract finding — exit 0
+python3 -B bin/deliver.py --outstanding p/delivery/lending p/work/lending p/app p/spec — exit 0
+python3 -B bin/deliver.py --standard p/app/standard.yaml --against p/app --specification p/spec — exit 0
+python3 -B bin/run.py p/delivery/lending --run fees-compute-late-fee-build --cwd p/app --excerpt 40 --timeout-seconds 60 --step 'build=python3 -m compileall -q lending' — exit 0
+git status --porcelain — exit 0
+python3 -B bin/deliver.py --write-implementation p/delivery/lending task/fees/compute-late-fee --target app --task-file … --run run/fees-compute-late-fee-build --standard standard.yaml --standard-file … --from-text out/impl-return.yaml --note … — exit 0
+python3 -B bin/run.py p/delivery/lending --run fees-compute-late-fee-suite --cwd p/app --excerpt 40 --timeout-seconds 120 --step 'build=…' --step 'test=python3 -m pytest -q tests' — exit 0
+python3 -B bin/deliver.py --write-proof p/delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file … --from-text out/proof-return.yaml --note … — exit 0
+python3 -B bin/deliver.py --unrecorded p/app <implementation record> <proof record> — exit 0
+python3 -B bin/deliver.py p/delivery/lending p/work/lending p/app p/spec — exit 0
+python3 -B bin/trace.py --bind-record p/app p/spec <implementation record> — exit 0
+git status --porcelain — exit 0
+python3 -B bin/handoff.py --prepare --skill implement-task --project p --slug lending --target app --language pt-BR — exit 0
+python3 -B bin/handoff.py --help — exit 0
+python3 -B bin/handoff.py --save-report p/.git/siegard/handoff/20261107T180742Z-implement-task.md — exit 0
+git add -- delivery/lending app siegard-trace.json — exit 0
+git commit -m "deliver-scope lending: deliver task/fees/compute-late-fee" -- delivery/lending app siegard-trace.json — exit 0
+git log --oneline -1 — exit 0
+git status --porcelain — exit 0
+git show --stat HEAD — exit 0
+python3 -B bin/deliver.py --outstanding p/delivery/lending p/work/lending p/app p/spec --scope epic/fees — exit 0
+python3 -B bin/project.py p — exit 0
+python3 -B bin/plan.py --check p/work/lending p/spec — exit 0
+python3 -B bin/deliver.py --check p/delivery/lending p/work/lending p/app p/spec — exit 0
+git status --porcelain -- delivery/lending — exit 0 (empty)
+python3 -B bin/deliver.py --contract coverageEntry — exit 0
+python3 -B bin/deliver.py --contract unpairedTest — exit 0
+python3 -B bin/deliver.py --contract finding — exit 0
+python3 -B bin/deliver.py --standard p/app/standard.yaml --against p/app --specification p/spec — exit 0
+python3 -B bin/trace.py --check p/app — exit 0
+python3 -B bin/trace.py --stage p/app p/spec lending /tmp/dsb-review-ws.1qXz lending/fees.py tests/test_fees.py --review --node rules/lending/late-fee-per-overdue-day --demonstrated <proof record> — exit 0
+python3 -B bin/run.py p/delivery/lending --run lending --cwd p/app --timeout-seconds 120 --step 'build=…' --step 'test=…' — exit 0
+git status --porcelain — exit 0
+python3 -B bin/deliver.py --contract review — exit 0
+python3 -B bin/deliver.py --standard p/app/standard.yaml --reading --for lending/fees.py --for tests/test_fees.py — exit 0
+python3 -B bin/deliver.py --node p/delivery/lending/review/lending.md p/delivery/lending — exit 0
+python3 -B bin/deliver.py --review lending p/delivery/lending p/work/lending p/app p/spec — exit 0
+python3 -B bin/handoff.py --prepare --skill review-change --project p --slug lending --target app --language pt-BR — exit 0
+python3 -B bin/deliver.py --findings p/delivery/lending — exit 2 (path form wrong)
+python3 -B bin/deliver.py --findings p/delivery/lending/review/lending.md — exit 0
+python3 -B bin/deliver.py --standard p/app/standard.yaml --reach --for lending/fees.py --for tests/test_fees.py — exit 0
+python3 -B bin/handoff.py --save-report p/.git/siegard/handoff/20261107T180919Z-review-change.md — exit 0
+git status --porcelain — exit 0
+git add -- delivery/lending siegard-trace.json — exit 0
+git commit -m "deliver-scope lending: review" -- delivery/lending siegard-trace.json — exit 0
+git log --oneline -1 — exit 0
+git status --porcelain — exit 0
+python3 -B bin/telemetry.py --help — exit 0
+python3 -B bin/telemetry.py --probe --since 2026-11-07T18:05:40Z p — exit 0
+python3 -B bin/telemetry.py --since 2026-11-07T18:05:40Z p — exit 0
+git status --porcelain — exit 0
+git add -- telemetry — exit 0
+git commit -m "deliver-scope lending: measure" -- telemetry — exit 0
+git rev-parse --short HEAD — exit 0
+git status --porcelain — exit 0
+python3 -B bin/handoff.py --prepare --skill deliver-scope --project p --slug lending --target app --language pt-BR — exit 0
+python3 -B bin/handoff.py --prepare --skill deliver-scope --project p --slug lending --target app --language pt-BR (to file) — exit 0
+python3 -B bin/handoff.py --render out/handoff-record.json — exit 1 (report path names no file yet)
+python3 -B bin/handoff.py --save-report p/.git/siegard/handoff/20261107T180958Z-deliver-scope.md — exit 0
+python3 -B bin/handoff.py --render out/handoff-record.json — exit 0

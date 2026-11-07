@@ -1,0 +1,964 @@
+{
+  "contract_version": "siegard-telemetry/19",
+  "project_root": "/tmp/dsb/runs2/compaction-resume--shipped-2/p",
+  "window": {
+    "since": "2026-11-07T12:00:00.000Z",
+    "until": "2026-11-07T18:08:53.368Z",
+    "since_resolved_from": "named"
+  },
+  "generated_at": "2026-11-07T18:08:53.568Z",
+  "framework": {
+    "plugin_root": "/home/siegfriedneto/projects/siegard2/src/claude",
+    "version": "5.68.0",
+    "contracts": {
+      "check.json": "siegard-check/1",
+      "delivery.json": "siegard-delivery/2",
+      "handoff.json": "siegard-handoff/1",
+      "intent.json": "siegard-intent/1",
+      "ledger.json": "siegard-ledger/1",
+      "plan.json": "siegard-plan/3",
+      "reconciliation.json": "siegard-reconcile/11",
+      "run.json": "siegard-run/2",
+      "standard.json": "siegard-standard/1",
+      "survey.json": "siegard-survey/1",
+      "telemetry.json": "siegard-telemetry/19"
+    },
+    "agents": [
+      {
+        "name": "backlog-decomposer",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "codebase-surveyor",
+        "effort": "medium",
+        "model": "sonnet"
+      },
+      {
+        "name": "coverage-auditor",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "domain-surveyor",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "door-decider",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "execution-contract-binder",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "failure-diagnostician",
+        "effort": "medium",
+        "model": "sonnet"
+      },
+      {
+        "name": "specification-conformance-reviewer",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "standard-conformance-reviewer",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "task-implementer",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "test-author",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "test-intent-reader",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "unstated-fact-decider",
+        "effort": "high",
+        "model": "opus"
+      }
+    ],
+    "skills": [
+      {
+        "name": "adopt-scope",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "analyse",
+        "effort": "xhigh",
+        "model": null
+      },
+      {
+        "name": "check-source",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "clarify-request",
+        "effort": "high",
+        "model": null
+      },
+      {
+        "name": "deliver-scope",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "implement-task",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "plan-work",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "reconcile",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "review-change",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "siegard-archive",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-config",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-goal",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-progress",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-standard",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "siegard-status",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-telemetry",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "survey",
+        "effort": "medium",
+        "model": null
+      }
+    ]
+  },
+  "harness": {
+    "transcript_root": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p",
+    "transcript_roots": [
+      "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p"
+    ],
+    "worktree": null,
+    "readable": false,
+    "reason": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p is not a directory",
+    "sessions": [],
+    "skill_totals": {}
+  },
+  "agents": [],
+  "agent_totals": {
+    "by_type": {},
+    "overall": {
+      "invocations": 0,
+      "repeats": 0,
+      "with_transcript": 0,
+      "duration_seconds": 0.0,
+      "usage": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0
+      }
+    }
+  },
+  "commands": [],
+  "runs": [
+    {
+      "initiative": "lending",
+      "run": "fees-compute-late-fee-build",
+      "path": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery/lending/run/fees-compute-late-fee-build/run.json",
+      "outcome": "passed",
+      "failed_step": null,
+      "timeout_seconds": 60,
+      "started_at": "2026-11-07T14:57:44.518+00:00",
+      "ended_at": "2026-11-07T14:57:44.580+00:00",
+      "steps": [
+        {
+          "name": "build",
+          "command": "python3 -m compileall -q lending",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.062
+        }
+      ]
+    },
+    {
+      "initiative": "lending",
+      "run": "fees-compute-late-fee-suite",
+      "path": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery/lending/run/fees-compute-late-fee-suite/run.json",
+      "outcome": "passed",
+      "failed_step": null,
+      "timeout_seconds": 120,
+      "started_at": "2026-11-07T14:58:37.648+00:00",
+      "ended_at": "2026-11-07T14:58:37.954+00:00",
+      "steps": [
+        {
+          "name": "build",
+          "command": "python3 -m compileall -q lending",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.036
+        },
+        {
+          "name": "test",
+          "command": "python3 -m pytest -q tests",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.269
+        }
+      ]
+    },
+    {
+      "initiative": "lending",
+      "run": "lending",
+      "path": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery/lending/run/lending/run.json",
+      "outcome": "passed",
+      "failed_step": null,
+      "timeout_seconds": 120,
+      "started_at": "2026-11-07T17:02:40.059+00:00",
+      "ended_at": "2026-11-07T17:02:40.330+00:00",
+      "steps": [
+        {
+          "name": "build",
+          "command": "python3 -m compileall -q lending",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.041
+        },
+        {
+          "name": "test",
+          "command": "python3 -m pytest -q tests",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.23
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "commits": [
+      {
+        "hash": "13a0ddebede296836381c98c1515f9395a295694",
+        "timestamp": "2026-11-07T15:08:27-03:00",
+        "subject": "deliver-scope lending: review",
+        "files_by_root": {
+          "delivery_root": [
+            "delivery/lending/delivery.json",
+            "delivery/lending/orchestration.md",
+            "delivery/lending/review/lending.md",
+            "delivery/lending/run/lending/build.log",
+            "delivery/lending/run/lending/run.json",
+            "delivery/lending/run/lending/run.log",
+            "delivery/lending/run/lending/test.log"
+          ],
+          "other": [
+            "siegard-reconcile/lending.md",
+            "siegard-reconcile/lending.returns/lending__fees.py.yaml",
+            "siegard-reconcile/lending.returns/tests__test_fees.py.yaml",
+            "siegard-trace.json"
+          ]
+        }
+      },
+      {
+        "hash": "ebd8ea3c03d04ae983773a4841a1a44eb34e7a52",
+        "timestamp": "2026-11-07T15:08:27-03:00",
+        "subject": "deliver-scope lending: deliver task/fees/compute-late-fee",
+        "files_by_root": {
+          "delivery_root": [
+            "delivery/lending/delivery.json",
+            "delivery/lending/implementation/fees/compute-late-fee.md",
+            "delivery/lending/orchestration.md",
+            "delivery/lending/proof/fees/compute-late-fee.md",
+            "delivery/lending/run/fees-compute-late-fee-build/build.log",
+            "delivery/lending/run/fees-compute-late-fee-build/run.json",
+            "delivery/lending/run/fees-compute-late-fee-build/run.log",
+            "delivery/lending/run/fees-compute-late-fee-suite/build.log",
+            "delivery/lending/run/fees-compute-late-fee-suite/run.json",
+            "delivery/lending/run/fees-compute-late-fee-suite/run.log",
+            "delivery/lending/run/fees-compute-late-fee-suite/test.log"
+          ],
+          "other": [
+            "siegard-trace.json"
+          ],
+          "target app": [
+            "app/lending/fees.py",
+            "app/tests/test_fees.py"
+          ]
+        }
+      },
+      {
+        "hash": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+        "timestamp": "2026-11-07T15:08:27-03:00",
+        "subject": "seed",
+        "files_by_root": {
+          "other": [
+            "siegard.json"
+          ],
+          "specification_root": [
+            "spec/domain/lending/_context.log.md",
+            "spec/domain/lending/_context.md",
+            "spec/domain/lending/book.md",
+            "spec/domain/lending/copy.log.md",
+            "spec/domain/lending/copy.md",
+            "spec/domain/lending/loan.log.md",
+            "spec/domain/lending/loan.md",
+            "spec/domain/lending/member.log.md",
+            "spec/domain/lending/member.md",
+            "spec/domain/lending/reservation.log.md",
+            "spec/domain/lending/reservation.md",
+            "spec/rules/lending/late-fee-per-overdue-day.log.md",
+            "spec/rules/lending/late-fee-per-overdue-day.md",
+            "spec/rules/lending/loan-due-fourteen-days-after-borrowing.md",
+            "spec/rules/lending/loan-renewed-at-most-once.md",
+            "spec/rules/lending/member-holds-at-most-three-loans.md",
+            "spec/rules/lending/overdue-member-cannot-borrow.md",
+            "spec/rules/lending/renewal-extends-due-date-fourteen-days.md",
+            "spec/rules/lending/reserved-copy-blocks-renewal.log.md",
+            "spec/rules/lending/reserved-copy-blocks-renewal.md",
+            "spec/rules/lending/reserved-copy-held-three-days.md",
+            "spec/rules/lending/returned-reserved-copy-notifies-reserver.log.md",
+            "spec/rules/lending/returned-reserved-copy-notifies-reserver.md",
+            "spec/scenarios/lending/overdue-member-refused-new-loan.md"
+          ],
+          "target app": [
+            "app/.gitignore",
+            "app/lending/__init__.py",
+            "app/lending/loans.py",
+            "app/standard.yaml",
+            "app/tests/conftest.py",
+            "app/tests/test_loans.py"
+          ],
+          "work_root": [
+            "work/lending/epic/fees.md",
+            "work/lending/inventory/lending-app.md",
+            "work/lending/plan.json",
+            "work/lending/task/fees/compute-late-fee.md"
+          ]
+        }
+      }
+    ],
+    "uncommitted": [
+      "delivery/lending/orchestration.md",
+      "telemetry/"
+    ],
+    "unavailable": null
+  },
+  "decisions": {
+    "log": [
+      {
+        "path": "spec/domain/lending/_context.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/domain/lending/_context.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/domain/lending/copy.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/domain/lending/copy.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/domain/lending/loan.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/domain/lending/loan.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/domain/lending/member.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/domain/lending/member.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/domain/lending/reservation.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/domain/lending/reservation.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/rules/lending/late-fee-per-overdue-day.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/rules/lending/late-fee-per-overdue-day.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/rules/lending/reserved-copy-blocks-renewal.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/rules/lending/reserved-copy-blocks-renewal.log.md; every current entry is listed"
+      },
+      {
+        "path": "spec/rules/lending/returned-reserved-copy-notifies-reserver.log.md",
+        "baseline": "no commit before 2026-11-07T12:00:00.000Z holds spec/rules/lending/returned-reserved-copy-notifies-reserver.log.md; every current entry is listed"
+      }
+    ],
+    "baseline": "8 log(s) read, 0 with a commit before 2026-11-07T12:00:00.000Z; each log's own baseline is under `log`",
+    "total_now": 15,
+    "added": [
+      {
+        "field": "strategic",
+        "unstated": "The material does not say whether lending is where the library differs or a solved problem.",
+        "decided": "core",
+        "why": "Controlling loans to members is the whole of what the material asks the system to do.",
+        "node": "domain/lending/_context",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": "core",
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.code",
+        "unstated": "The material says each copy is lent separately but states nothing that tells two copies of one title apart.",
+        "decided": "code: string, required",
+        "why": "Copies of the same title are otherwise identical, and a loan and a reservation must name exactly one of them.",
+        "node": "domain/lending/copy",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "code",
+            "type": "string",
+            "required": true
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "relationships.reservation.cardinality",
+        "unstated": "The material speaks of 'the member who reserved' a copy and does not say whether several members may reserve one copy at once.",
+        "decided": "0..1",
+        "why": "The material always names a single reserving member per copy and states no queue.",
+        "node": "domain/lending/copy",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "unreadable",
+          "value_now": null,
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "aggregate",
+        "unstated": "The material does not say which aggregate owns a loan.",
+        "decided": "member",
+        "why": "Both limits on borrowing are counted over one member's loans.",
+        "node": "domain/lending/loan",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": "member",
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.renewed",
+        "unstated": "The material says a loan may be renewed once but not how a loan records that it was.",
+        "decided": "renewed: boolean, required",
+        "why": "With at most one renewal allowed, whether it happened is the only fact the limit reads.",
+        "node": "domain/lending/loan",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "renewed",
+            "type": "boolean",
+            "required": true
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.returned_on",
+        "unstated": "The material speaks of returning a copy but names no return date.",
+        "decided": "returned_on: date, optional",
+        "why": "The overdue block, the late fee and the reservation's three days are all counted from the day the copy came back.",
+        "node": "domain/lending/loan",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "returned_on",
+            "type": "date"
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.late_fee",
+        "unstated": "The material asks whether the late fee is charged per day or as a fixed amount and does not say where the fee is recorded.",
+        "decided": "late_fee: decimal, optional, an amount in BRL",
+        "why": "The fee is owed for one overdue loan, so the loan is what carries it.",
+        "node": "domain/lending/loan",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "late_fee",
+            "type": "decimal"
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.name",
+        "unstated": "The material names members (Ana) but states no attribute a member carries.",
+        "decided": "name: string, required",
+        "why": "The material identifies its one member by name, so a member without a name could not be told apart in the domain's own terms.",
+        "node": "domain/lending/member",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "name",
+            "type": "string",
+            "required": true
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "relationships.loan.type",
+        "unstated": "The material does not say where the consistency boundary of a loan lies.",
+        "decided": "composition: a member's loans live inside the member aggregate",
+        "why": "The three-loan limit and the overdue block both decide a borrowing from the member's other loans at the moment of borrowing, which only one aggregate can hold immediately.",
+        "node": "domain/lending/member",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "unreadable",
+          "value_now": null,
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "aggregate",
+        "unstated": "The material does not say which aggregate owns a reservation.",
+        "decided": "copy",
+        "why": "A reservation blocks a renewal and is triggered by a return of one copy, whatever member holds it.",
+        "node": "domain/lending/reservation",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": "copy",
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.pickup_deadline",
+        "unstated": "The material gives the reserving member three days to pick the copy up but names no field for that limit.",
+        "decided": "pickup_deadline: date, optional, set when the copy is returned",
+        "why": "The three days start only at the return, so the deadline does not exist while the copy is still lent.",
+        "node": "domain/lending/reservation",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "pickup_deadline",
+            "type": "date"
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "attributes.reserved_on",
+        "unstated": "The material does not say when a reservation was made or whether that is recorded.",
+        "decided": "reserved_on: date, required",
+        "why": "Whether a reservation exists at the time of a renewal is what the renewal rule reads, and a dated reservation answers it.",
+        "node": "domain/lending/reservation",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": {
+            "name": "reserved_on",
+            "type": "date",
+            "required": true
+          },
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "statement",
+        "unstated": "The material asks whether the late fee is charged per day of delay or as a fixed amount, and the board recommends BRL 1.00 per day.",
+        "decided": "BRL 1.00 per calendar day between the due date and the return, following the board's recommendation",
+        "why": "The board is the body the material names as recommending, and nothing in the material argues for a fixed amount.",
+        "node": "rules/lending/late-fee-per-overdue-day",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": "A loan returned after its due date MUST carry a late fee of BRL 1.00 for each calendar day between its due date and its return.",
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "consistency",
+        "unstated": "The material does not say how promptly a new reservation must stop a renewal.",
+        "decided": "eventual",
+        "why": "The loan sits in the member's aggregate and the reservation in the copy's, so the renewal reads the reservation as last recorded.",
+        "node": "rules/lending/reserved-copy-blocks-renewal",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": "eventual",
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      },
+      {
+        "field": "consistency",
+        "unstated": "The material does not say how promptly the reserving member is notified after the return.",
+        "decided": "eventual",
+        "why": "The return is recorded in the borrower's aggregate and the reservation in the copy's, and a notice delivered shortly after the return meets what the material asks.",
+        "node": "rules/lending/returned-reserved-copy-notifies-reserver",
+        "outcome": {
+          "landed": {
+            "commit": "07e5d8c7395af368f0dff9e55b43b1356239c80f",
+            "at": "2026-11-07T15:08:27-03:00",
+            "subject": "seed"
+          },
+          "state": "stands",
+          "value_now": "eventual",
+          "revised_by": [],
+          "days_to_first_revision": null
+        }
+      }
+    ],
+    "retired": [],
+    "outcomes": {
+      "states": {
+        "stands": 13,
+        "revised": 0,
+        "node-gone": 0,
+        "unreadable": 2,
+        "unlocated": 0
+      },
+      "first_revision_by_route": {
+        "corrective": 0,
+        "framework": 0,
+        "hand-edit": 0
+      },
+      "goal_specified": {
+        "stands": 0,
+        "revised": 0,
+        "node-gone": 0,
+        "unreadable": 0,
+        "unlocated": 0
+      },
+      "state_meanings": {
+        "stands": "the field the decision filled reads today as it read in the commit that landed it",
+        "revised": "the field changed after the decision landed; `revised_by` says by which commits and which route, and only `corrective` and `hand-edit` are a person disagreeing",
+        "node-gone": "the node the decision located is no longer in the specification",
+        "unreadable": "the located field could not be read at the landing commit — the log names a field the node did not hold when the entry was written",
+        "unlocated": "no commit of the node's log contains this entry: it stands in the working tree only, or the log was rewritten rather than appended to"
+      },
+      "route_meanings": {
+        "corrective": "a /deliver-scope commit whose slug names a correction — corrective, hotfix, fix, abandon or revert — read as behavior contradicting the decision and a person routing the correction; the reading rests on the slug's words",
+        "framework": "a /deliver-scope commit whose slug names no correction — the framework re-authoring the field",
+        "hand-edit": "a commit no framework skill wrote — a person changed the artifact directly"
+      }
+    }
+  },
+  "notes": [],
+  "scope": {
+    "initiatives": [
+      {
+        "slug": "lending",
+        "live": true,
+        "tasks": 1,
+        "tasks_with_implementation_record": 1,
+        "implementation_records_committed_in_window": [
+          "delivery/lending/implementation/fees/compute-late-fee.md"
+        ]
+      }
+    ]
+  },
+  "recommendations": {
+    "emitted": 0,
+    "by_criterion": {
+      "precondition unmet": 0,
+      "rule violated": 0,
+      "already done": 0,
+      "reading paid twice": 0,
+      "keeps the route": 0,
+      "serves the stated goal": 0,
+      "can be undone": 0,
+      "costs less": 0
+    },
+    "by_kind": {
+      "derived": 0,
+      "judged": 0
+    },
+    "taken": {
+      "derived": 0,
+      "judged": 0
+    },
+    "lines": [],
+    "malformed": []
+  },
+  "proofs": {
+    "reviews": 1,
+    "without_coverage": 0,
+    "states": {
+      "covered": 1,
+      "partial": 1,
+      "uncovered": 0,
+      "unauditable": 0
+    },
+    "tests_per_criterion": {
+      "0": 0,
+      "1": 1,
+      "2": 1,
+      "3+": 0
+    },
+    "heaviest": {
+      "review": "delivery/lending/review/lending.md",
+      "criterion": 0,
+      "tests": 2
+    },
+    "decided_by_test": 0
+  },
+  "handoffs": {
+    "skill_calls": 0,
+    "human_turns": 0,
+    "short_turns": 0,
+    "confirmations": 0,
+    "unclassified_short": 0,
+    "by_class": {
+      "commit_authorization": {
+        "count": 0,
+        "unasked": 0,
+        "wait_seconds_total": 0.0,
+        "wait_seconds_max": null
+      },
+      "go_ahead": {
+        "count": 0,
+        "unasked": 0,
+        "wait_seconds_total": 0.0,
+        "wait_seconds_max": null
+      },
+      "choice_by_label": {
+        "count": 0,
+        "unasked": 0,
+        "wait_seconds_total": 0.0,
+        "wait_seconds_max": null
+      }
+    },
+    "by_skill": {},
+    "lines": [],
+    "questions": {
+      "count": 0,
+      "by_skill": {}
+    },
+    "in_span_commits": {
+      "count": 0,
+      "by_authorization": {
+        "typed": 0,
+        "loop": 0,
+        "summary": 0,
+        "none": 0
+      },
+      "by_skill": {},
+      "pathspec": 0,
+      "push": 0,
+      "lines": []
+    },
+    "goal_evaluations": {
+      "met": 0,
+      "not_met": 0,
+      "by_session": {}
+    }
+  },
+  "handoff_form": {
+    "ceilings": {
+      "message": 1500,
+      "opening": 450
+    },
+    "messages": 0,
+    "hands_decision": 0,
+    "over_ceiling": 0,
+    "jargon_in_opening": 0,
+    "recommendation_word": 0,
+    "no_decision_word": 0,
+    "decision_word_share_median": null,
+    "longest": null,
+    "latest_decision_word": null,
+    "stop_checks": {
+      "source": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/.git/siegard/handoff-checks.jsonl",
+      "unavailable": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/.git/siegard/handoff-checks.jsonl does not exist: the `Stop` hook has checked no stop here",
+      "checked": 0,
+      "violating": 0,
+      "by_kind": {
+        "opening": 0,
+        "length": 0,
+        "decision": 0,
+        "other": 0
+      },
+      "blocked": 0,
+      "released": 0,
+      "malformed": 0,
+      "by_mode": {},
+      "longest": null
+    }
+  },
+  "provenance": [
+    {
+      "section": "framework",
+      "source": "/home/siegfriedneto/projects/siegard2/src/claude",
+      "unavailable": null
+    },
+    {
+      "section": "harness",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p is not a directory"
+    },
+    {
+      "section": "agents",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p is not a directory"
+    },
+    {
+      "section": "commands",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p is not a directory"
+    },
+    {
+      "section": "handoffs",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p is not a directory"
+    },
+    {
+      "section": "handoff_form",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs2-compaction-resume--shipped-2-p is not a directory"
+    },
+    {
+      "section": "runs",
+      "source": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery",
+      "unavailable": null
+    },
+    {
+      "section": "notes",
+      "source": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/work",
+      "unavailable": null
+    },
+    {
+      "section": "scope",
+      "source": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/work",
+      "unavailable": null
+    },
+    {
+      "section": "recommendations",
+      "source": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery",
+      "unavailable": null
+    },
+    {
+      "section": "repository",
+      "source": "git",
+      "unavailable": null
+    },
+    {
+      "section": "decisions",
+      "source": "8 decision log(s) beside the specification's nodes",
+      "unavailable": null
+    }
+  ],
+  "written_to": "/tmp/dsb/runs2/compaction-resume--shipped-2/p/telemetry/20261107T180853Z.json"
+}

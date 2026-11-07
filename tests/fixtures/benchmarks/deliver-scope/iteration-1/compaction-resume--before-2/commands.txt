@@ -1,0 +1,11 @@
+git log --oneline -5 — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --help — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --probe --since 2026-11-07T12:00:00Z /tmp/dsb/runs/compaction-resume--before-2/p — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --since 2026-11-07T12:00:00Z /tmp/dsb/runs/compaction-resume--before-2/p — exit 0
+git status --porcelain — exit 0
+git add -- telemetry delivery/lending/orchestration.md — exit 0
+git commit -q -m "deliver-scope lending: measure" -- telemetry delivery/lending/orchestration.md — exit 0
+git log --oneline -4 — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery/lending work/lending app spec --scope epic/fees — exit 0

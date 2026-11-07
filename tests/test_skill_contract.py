@@ -666,7 +666,8 @@ def test_the_ledger_is_committed_with_the_specification_it_accounts_for():
             "specification the analysis wrote takes the ledger with it, and no ledger is left "
             "untracked") in analyse
     assert "commits the ledger in the same commit, by path" in analyse
-    deliver = unwrapped(skill_text("deliver-scope"))
+    assert "references/goal.md" in skill_text("deliver-scope")
+    deliver = unwrapped(skill_corpus("deliver-scope"))
     assert ("That commit takes the ledger the analysis answered beside the objective with it"
             ) in deliver
     assert "commit the specification root alone" not in deliver
@@ -754,9 +755,9 @@ def test_a_red_the_tasks_own_files_cannot_answer_ends_the_run_without_a_retry():
            "never a retry.**" in skill
     assert "`git status --porcelain -- <target-source-root>` printing nothing" in skill
     assert "logs it as `outside-task`" in skill and "logs this stop as `already-met`" in skill
-    orchestrator = " ".join((REPO / "src/claude/skills/deliver-scope/SKILL.md")
-                            .read_text(encoding="utf-8").split())
-    judged = orchestrator.split("- **A judged choice**", 1)[1].split("- **A finding", 1)[0]
+    assert "references/goal.md" in skill_text("deliver-scope")
+    orchestrator = reference_text("deliver-scope", "goal")
+    judged = orchestrator.split("## A judged choice", 1)[1].split("## A finding", 1)[0]
     assert "ends the run as `outside-task`" in judged
     agent = " ".join((REPO / "src/claude/agents/task-implementer.md")
                      .read_text(encoding="utf-8").split())
@@ -795,8 +796,8 @@ def test_a_build_red_only_a_test_can_answer_goes_to_the_test_author_before_the_r
                            .read_text(encoding="utf-8").split())
     assert "A red whose fix lies only in tests is not that" in implementer
     assert "keep the source you wrote" in implementer
-    orchestrator = " ".join((REPO / "src/claude/skills/deliver-scope/SKILL.md")
-                            .read_text(encoding="utf-8").split())
+    assert "references/stops.md" in skill_text("deliver-scope")
+    orchestrator = reference_text("deliver-scope", "stops")
     assert "A fix that lies only in tests the target declares is not this stop" in orchestrator
 
 
@@ -814,10 +815,10 @@ def test_deliver_scope_names_every_review_it_invokes():
     """A review name already taken stops `/review-change` invoked bare; the orchestrator names
     its reviews by one rule — the slug, or the least free `-N` — so no run improvises a suffix
     and none stops on a name nobody had a reason to choose."""
-    skill = " ".join((REPO / "src/claude/skills/deliver-scope/SKILL.md")
-                     .read_text(encoding="utf-8").split())
+    skill = unwrapped(skill_text("deliver-scope"))
     assert "`<slug>-<N>` for the least `N` from 2 that frees all four" in skill
-    assert "named by step 4's rule" in skill
+    assert "references/prove.md" in skill
+    assert "named by step 4's rule" in reference_text("deliver-scope", "prove")
     review = " ".join((REPO / "src/claude/skills/review-change/SKILL.md")
                       .read_text(encoding="utf-8").split())
     assert "or by `/deliver-scope` under the rule its own file states" in review
@@ -951,10 +952,11 @@ CITING_FILES = sorted([*(REPO / "src/claude/skills/analyse").rglob("*.md"),
                        *(REPO / "src/claude/skills/implement-task").rglob("*.md"),
                        *(REPO / "src/claude/skills/review-change").rglob("*.md"),
                        *(REPO / "src/claude/skills/reconcile").rglob("*.md"),
+                       *(REPO / "src/claude/skills/deliver-scope").rglob("*.md"),
                        *(REPO / "src/claude/agents" / f"{name}.md" for name in
                          ("task-implementer", "test-author", "failure-diagnostician",
                           "coverage-auditor", "specification-conformance-reviewer",
-                          "standard-conformance-reviewer"))])
+                          "standard-conformance-reviewer", "door-decider"))])
 
 
 @pytest.mark.parametrize("path", CITING_FILES,
@@ -1005,7 +1007,7 @@ def test_every_project_root_input_states_how_an_unnamed_root_resolves(name):
 # ~5k tokens, which the benchmarks hold as 20,000 characters.
 
 COMPACTION_CUT = 20_000
-SIZED = ("analyse", "implement-task", "plan-work", "review-change", "reconcile")
+SIZED = ("analyse", "implement-task", "plan-work", "review-change", "reconcile", "deliver-scope")
 REFERENCED = sorted(p.parent.name for p in (REPO / "src/claude/skills").glob("*/references"))
 
 
@@ -1036,7 +1038,8 @@ def test_a_reference_over_100_lines_opens_with_its_contents(path):
     assert re.search(r"^## Contents", head, re.M), f"{path.name} runs past 100 lines with no contents"
 
 
-CHECKLISTED = {"implement-task": 9, "plan-work": 6, "review-change": 6, "reconcile": 6}
+CHECKLISTED = {"implement-task": 9, "plan-work": 6, "review-change": 6, "reconcile": 6,
+               "deliver-scope": 6}
 
 
 @pytest.mark.parametrize("skill", sorted(CHECKLISTED))
@@ -1081,6 +1084,26 @@ def test_the_reconcile_skill_survives_a_compaction_whole():
     the checklist naming each reference."""
     assert len(skill_text("reconcile")) <= COMPACTION_CUT, \
         f"reconcile's SKILL.md is {len(skill_text('reconcile'))} characters, past the cut"
+
+
+def test_the_deliver_scope_skill_survives_a_compaction_whole():
+    """At 5.67.0 the cut fell inside "Under a goal" and every later section was lost — what ends
+    the run, the log's stop line and the report's handoff among them; the rewrite keeps SKILL.md
+    inside the 20,000 characters a compaction re-attaches, so a resumed run holds every step, the
+    measure and the handoff, and the checklist naming each reference."""
+    text = skill_text("deliver-scope")
+    assert len(text) <= COMPACTION_CUT, \
+        f"deliver-scope's SKILL.md is {len(text)} characters, past the cut"
+    held = unwrapped(text)
+    for kept in ("handoff.py --prepare --skill deliver-scope", "--save-report",
+                 "handoff.py --render", "(SPEC-006 R10)", "(SPEC-006 R1)",
+                 "telemetry.py --probe --since <the instant step 1 began>",
+                 "A stop ends the route, never the measure", "references/report.md",
+                 "references/stops.md", "references/goal.md", "references/prove.md"):
+        assert kept in held, f"deliver-scope's SKILL.md lost {kept!r}"
+    report = (REPO / "src/claude/skills/deliver-scope/references/report.md").read_text(
+        encoding="utf-8")
+    assert report.startswith("# The report\n")
 
 
 def test_the_reconcile_skill_keeps_its_handoff_and_bind_in_skill_md():

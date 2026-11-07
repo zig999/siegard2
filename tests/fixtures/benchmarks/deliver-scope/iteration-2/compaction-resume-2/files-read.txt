@@ -1,0 +1,7 @@
+/tmp/dsb/runs2/compaction-resume--shipped-2/prompt.txt
+/tmp/dsb/runs2/compaction-resume--shipped-2/p.skill-after-compaction.md
+/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery/lending/orchestration.md
+/tmp/dsb/runs2/compaction-resume--shipped-2/p/delivery/lending/review/lending.md
+/tmp/dsb/runs2/compaction-resume--shipped-2/p/siegard.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/deliver-scope/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json

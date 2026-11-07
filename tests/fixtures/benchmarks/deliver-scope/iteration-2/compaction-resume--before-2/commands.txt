@@ -1,0 +1,12 @@
+python3 -B /tmp/ds-before/bin/ask.py --read /tmp/dsb/runs2/compaction-resume--before-2/p --path /tmp/dsb/runs2/compaction-resume--before-2/p/telemetry/ask-20261107T180826Z.md --sha256 38f9a15bc91f4f7b — exit 0
+git status --porcelain — exit 0
+git log --oneline -5 — exit 0
+git diff delivery/lending/orchestration.md — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --help — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery/lending work/lending app spec --scope epic/fees — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --probe /tmp/dsb/runs2/compaction-resume--before-2/p --since 2026-11-07T12:00:00Z — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py /tmp/dsb/runs2/compaction-resume--before-2/p --since 2026-11-07T12:00:00Z — exit 0
+git add -- telemetry delivery/lending/orchestration.md — exit 0
+git commit -m "deliver-scope lending: measure" -- telemetry delivery/lending/orchestration.md — exit 0
+git status --porcelain — exit 0
+git log --oneline -4 — exit 0

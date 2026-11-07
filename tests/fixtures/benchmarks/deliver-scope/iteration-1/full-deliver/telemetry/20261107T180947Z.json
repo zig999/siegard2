@@ -1,0 +1,607 @@
+{
+  "contract_version": "siegard-telemetry/19",
+  "project_root": "/tmp/dsb/runs/full-deliver--shipped-1/p",
+  "window": {
+    "since": "2026-11-07T18:05:40.000Z",
+    "until": "2026-11-07T18:09:47.432Z",
+    "since_resolved_from": "named"
+  },
+  "generated_at": "2026-11-07T18:09:47.477Z",
+  "framework": {
+    "plugin_root": "/home/siegfriedneto/projects/siegard2/src/claude",
+    "version": "5.68.0",
+    "contracts": {
+      "check.json": "siegard-check/1",
+      "delivery.json": "siegard-delivery/2",
+      "handoff.json": "siegard-handoff/1",
+      "intent.json": "siegard-intent/1",
+      "ledger.json": "siegard-ledger/1",
+      "plan.json": "siegard-plan/3",
+      "reconciliation.json": "siegard-reconcile/11",
+      "run.json": "siegard-run/2",
+      "standard.json": "siegard-standard/1",
+      "survey.json": "siegard-survey/1",
+      "telemetry.json": "siegard-telemetry/19"
+    },
+    "agents": [
+      {
+        "name": "backlog-decomposer",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "codebase-surveyor",
+        "effort": "medium",
+        "model": "sonnet"
+      },
+      {
+        "name": "coverage-auditor",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "domain-surveyor",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "door-decider",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "execution-contract-binder",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "failure-diagnostician",
+        "effort": "medium",
+        "model": "sonnet"
+      },
+      {
+        "name": "specification-conformance-reviewer",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "standard-conformance-reviewer",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "task-implementer",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "test-author",
+        "effort": "high",
+        "model": "sonnet"
+      },
+      {
+        "name": "test-intent-reader",
+        "effort": "high",
+        "model": "opus"
+      },
+      {
+        "name": "unstated-fact-decider",
+        "effort": "high",
+        "model": "opus"
+      }
+    ],
+    "skills": [
+      {
+        "name": "adopt-scope",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "analyse",
+        "effort": "xhigh",
+        "model": null
+      },
+      {
+        "name": "check-source",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "clarify-request",
+        "effort": "high",
+        "model": null
+      },
+      {
+        "name": "deliver-scope",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "implement-task",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "plan-work",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "reconcile",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "review-change",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "siegard-archive",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-config",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-goal",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-progress",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-standard",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "siegard-status",
+        "effort": "low",
+        "model": null
+      },
+      {
+        "name": "siegard-telemetry",
+        "effort": "medium",
+        "model": null
+      },
+      {
+        "name": "survey",
+        "effort": "medium",
+        "model": null
+      }
+    ]
+  },
+  "harness": {
+    "transcript_root": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p",
+    "transcript_roots": [
+      "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p"
+    ],
+    "worktree": null,
+    "readable": false,
+    "reason": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p is not a directory",
+    "sessions": [],
+    "skill_totals": {}
+  },
+  "agents": [],
+  "agent_totals": {
+    "by_type": {},
+    "overall": {
+      "invocations": 0,
+      "repeats": 0,
+      "with_transcript": 0,
+      "duration_seconds": 0.0,
+      "usage": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0
+      }
+    }
+  },
+  "commands": [],
+  "runs": [
+    {
+      "initiative": "lending",
+      "run": "fees-compute-late-fee-build",
+      "path": "/tmp/dsb/runs/full-deliver--shipped-1/p/delivery/lending/run/fees-compute-late-fee-build/run.json",
+      "outcome": "passed",
+      "failed_step": null,
+      "timeout_seconds": 60,
+      "started_at": "2026-11-07T18:06:52.812+00:00",
+      "ended_at": "2026-11-07T18:06:52.856+00:00",
+      "steps": [
+        {
+          "name": "build",
+          "command": "python3 -m compileall -q lending",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.044
+        }
+      ]
+    },
+    {
+      "initiative": "lending",
+      "run": "fees-compute-late-fee-suite",
+      "path": "/tmp/dsb/runs/full-deliver--shipped-1/p/delivery/lending/run/fees-compute-late-fee-suite/run.json",
+      "outcome": "passed",
+      "failed_step": null,
+      "timeout_seconds": 120,
+      "started_at": "2026-11-07T18:07:20.073+00:00",
+      "ended_at": "2026-11-07T18:07:20.354+00:00",
+      "steps": [
+        {
+          "name": "build",
+          "command": "python3 -m compileall -q lending",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.035
+        },
+        {
+          "name": "test",
+          "command": "python3 -m pytest -q tests",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.245
+        }
+      ]
+    },
+    {
+      "initiative": "lending",
+      "run": "lending",
+      "path": "/tmp/dsb/runs/full-deliver--shipped-1/p/delivery/lending/run/lending/run.json",
+      "outcome": "passed",
+      "failed_step": null,
+      "timeout_seconds": 120,
+      "started_at": "2026-11-07T18:08:26.362+00:00",
+      "ended_at": "2026-11-07T18:08:26.809+00:00",
+      "steps": [
+        {
+          "name": "build",
+          "command": "python3 -m compileall -q lending",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.043
+        },
+        {
+          "name": "test",
+          "command": "python3 -m pytest -q tests",
+          "outcome": "passed",
+          "exit_code": 0,
+          "duration_seconds": 0.404
+        }
+      ]
+    }
+  ],
+  "repository": {
+    "commits": [
+      {
+        "hash": "85c0f4da3f8f355f34b3ffc2964ec23eb1e3bc9d",
+        "timestamp": "2026-11-07T15:09:36-03:00",
+        "subject": "deliver-scope lending: review",
+        "files_by_root": {
+          "delivery_root": [
+            "delivery/lending/delivery.json",
+            "delivery/lending/review/lending.md",
+            "delivery/lending/run/lending/build.log",
+            "delivery/lending/run/lending/run.json",
+            "delivery/lending/run/lending/run.log",
+            "delivery/lending/run/lending/test.log"
+          ]
+        }
+      },
+      {
+        "hash": "c807125c845c58d5c83d6c5ece51f10f96682a3b",
+        "timestamp": "2026-11-07T15:08:05-03:00",
+        "subject": "deliver-scope lending: deliver task/fees/compute-late-fee",
+        "files_by_root": {
+          "delivery_root": [
+            "delivery/lending/delivery.json",
+            "delivery/lending/implementation/fees/compute-late-fee.md",
+            "delivery/lending/proof/fees/compute-late-fee.md",
+            "delivery/lending/run/fees-compute-late-fee-build/build.log",
+            "delivery/lending/run/fees-compute-late-fee-build/run.json",
+            "delivery/lending/run/fees-compute-late-fee-build/run.log",
+            "delivery/lending/run/fees-compute-late-fee-suite/build.log",
+            "delivery/lending/run/fees-compute-late-fee-suite/run.json",
+            "delivery/lending/run/fees-compute-late-fee-suite/run.log",
+            "delivery/lending/run/fees-compute-late-fee-suite/test.log"
+          ],
+          "other": [
+            "siegard-trace.json"
+          ],
+          "target app": [
+            "app/lending/fees.py",
+            "app/tests/test_fees.py"
+          ]
+        }
+      }
+    ],
+    "uncommitted": [],
+    "unavailable": null
+  },
+  "decisions": {
+    "log": [
+      {
+        "path": "spec/domain/lending/_context.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/domain/lending/copy.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/domain/lending/loan.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/domain/lending/member.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/domain/lending/reservation.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/rules/lending/late-fee-per-overdue-day.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/rules/lending/reserved-copy-blocks-renewal.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      },
+      {
+        "path": "spec/rules/lending/returned-reserved-copy-notifies-reserver.log.md",
+        "baseline": "commit 5bd8f64ff27fca6ae399a06e94a17b37d483c707"
+      }
+    ],
+    "baseline": "8 log(s) read, 8 with a commit before 2026-11-07T18:05:40.000Z; each log's own baseline is under `log`",
+    "total_now": 15,
+    "added": [],
+    "retired": [],
+    "outcomes": {
+      "states": {
+        "stands": 0,
+        "revised": 0,
+        "node-gone": 0,
+        "unreadable": 0,
+        "unlocated": 0
+      },
+      "first_revision_by_route": {
+        "corrective": 0,
+        "framework": 0,
+        "hand-edit": 0
+      },
+      "goal_specified": {
+        "stands": 0,
+        "revised": 0,
+        "node-gone": 0,
+        "unreadable": 0,
+        "unlocated": 0
+      },
+      "state_meanings": {
+        "stands": "the field the decision filled reads today as it read in the commit that landed it",
+        "revised": "the field changed after the decision landed; `revised_by` says by which commits and which route, and only `corrective` and `hand-edit` are a person disagreeing",
+        "node-gone": "the node the decision located is no longer in the specification",
+        "unreadable": "the located field could not be read at the landing commit — the log names a field the node did not hold when the entry was written",
+        "unlocated": "no commit of the node's log contains this entry: it stands in the working tree only, or the log was rewritten rather than appended to"
+      },
+      "route_meanings": {
+        "corrective": "a /deliver-scope commit whose slug names a correction — corrective, hotfix, fix, abandon or revert — read as behavior contradicting the decision and a person routing the correction; the reading rests on the slug's words",
+        "framework": "a /deliver-scope commit whose slug names no correction — the framework re-authoring the field",
+        "hand-edit": "a commit no framework skill wrote — a person changed the artifact directly"
+      }
+    }
+  },
+  "notes": [],
+  "scope": {
+    "initiatives": [
+      {
+        "slug": "lending",
+        "live": true,
+        "tasks": 1,
+        "tasks_with_implementation_record": 1,
+        "implementation_records_committed_in_window": [
+          "delivery/lending/implementation/fees/compute-late-fee.md"
+        ]
+      }
+    ]
+  },
+  "recommendations": {
+    "emitted": 0,
+    "by_criterion": {
+      "precondition unmet": 0,
+      "rule violated": 0,
+      "already done": 0,
+      "reading paid twice": 0,
+      "keeps the route": 0,
+      "serves the stated goal": 0,
+      "can be undone": 0,
+      "costs less": 0
+    },
+    "by_kind": {
+      "derived": 0,
+      "judged": 0
+    },
+    "taken": {
+      "derived": 0,
+      "judged": 0
+    },
+    "lines": [],
+    "malformed": []
+  },
+  "proofs": {
+    "reviews": 1,
+    "without_coverage": 0,
+    "states": {
+      "covered": 2,
+      "partial": 0,
+      "uncovered": 0,
+      "unauditable": 0
+    },
+    "tests_per_criterion": {
+      "0": 0,
+      "1": 0,
+      "2": 2,
+      "3+": 0
+    },
+    "heaviest": {
+      "review": "delivery/lending/review/lending.md",
+      "criterion": 0,
+      "tests": 2
+    },
+    "decided_by_test": 0
+  },
+  "handoffs": {
+    "skill_calls": 0,
+    "human_turns": 0,
+    "short_turns": 0,
+    "confirmations": 0,
+    "unclassified_short": 0,
+    "by_class": {
+      "commit_authorization": {
+        "count": 0,
+        "unasked": 0,
+        "wait_seconds_total": 0.0,
+        "wait_seconds_max": null
+      },
+      "go_ahead": {
+        "count": 0,
+        "unasked": 0,
+        "wait_seconds_total": 0.0,
+        "wait_seconds_max": null
+      },
+      "choice_by_label": {
+        "count": 0,
+        "unasked": 0,
+        "wait_seconds_total": 0.0,
+        "wait_seconds_max": null
+      }
+    },
+    "by_skill": {},
+    "lines": [],
+    "questions": {
+      "count": 0,
+      "by_skill": {}
+    },
+    "in_span_commits": {
+      "count": 0,
+      "by_authorization": {
+        "typed": 0,
+        "loop": 0,
+        "summary": 0,
+        "none": 0
+      },
+      "by_skill": {},
+      "pathspec": 0,
+      "push": 0,
+      "lines": []
+    },
+    "goal_evaluations": {
+      "met": 0,
+      "not_met": 0,
+      "by_session": {}
+    }
+  },
+  "handoff_form": {
+    "ceilings": {
+      "message": 1500,
+      "opening": 450
+    },
+    "messages": 0,
+    "hands_decision": 0,
+    "over_ceiling": 0,
+    "jargon_in_opening": 0,
+    "recommendation_word": 0,
+    "no_decision_word": 0,
+    "decision_word_share_median": null,
+    "longest": null,
+    "latest_decision_word": null,
+    "stop_checks": {
+      "source": "/tmp/dsb/runs/full-deliver--shipped-1/p/.git/siegard/handoff-checks.jsonl",
+      "unavailable": "/tmp/dsb/runs/full-deliver--shipped-1/p/.git/siegard/handoff-checks.jsonl does not exist: the `Stop` hook has checked no stop here",
+      "checked": 0,
+      "violating": 0,
+      "by_kind": {
+        "opening": 0,
+        "length": 0,
+        "decision": 0,
+        "other": 0
+      },
+      "blocked": 0,
+      "released": 0,
+      "malformed": 0,
+      "by_mode": {},
+      "longest": null
+    }
+  },
+  "provenance": [
+    {
+      "section": "framework",
+      "source": "/home/siegfriedneto/projects/siegard2/src/claude",
+      "unavailable": null
+    },
+    {
+      "section": "harness",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p is not a directory"
+    },
+    {
+      "section": "agents",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p is not a directory"
+    },
+    {
+      "section": "commands",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p is not a directory"
+    },
+    {
+      "section": "handoffs",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p is not a directory"
+    },
+    {
+      "section": "handoff_form",
+      "source": null,
+      "unavailable": "/home/siegfriedneto/.claude/projects/-tmp-dsb-runs-full-deliver--shipped-1-p is not a directory"
+    },
+    {
+      "section": "runs",
+      "source": "/tmp/dsb/runs/full-deliver--shipped-1/p/delivery",
+      "unavailable": null
+    },
+    {
+      "section": "notes",
+      "source": "/tmp/dsb/runs/full-deliver--shipped-1/p/work",
+      "unavailable": null
+    },
+    {
+      "section": "scope",
+      "source": "/tmp/dsb/runs/full-deliver--shipped-1/p/work",
+      "unavailable": null
+    },
+    {
+      "section": "recommendations",
+      "source": "/tmp/dsb/runs/full-deliver--shipped-1/p/delivery",
+      "unavailable": null
+    },
+    {
+      "section": "repository",
+      "source": "git",
+      "unavailable": null
+    },
+    {
+      "section": "decisions",
+      "source": "8 decision log(s) beside the specification's nodes",
+      "unavailable": null
+    }
+  ],
+  "written_to": "/tmp/dsb/runs/full-deliver--shipped-1/p/telemetry/20261107T180947Z.json"
+}

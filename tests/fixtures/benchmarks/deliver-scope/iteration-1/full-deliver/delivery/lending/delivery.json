@@ -1,0 +1,58 @@
+{
+  "contract_version": "siegard-delivery/2",
+  "nodes": [
+    {
+      "id": "implementation/fees/compute-late-fee",
+      "kind": "implementation",
+      "file": "implementation/fees/compute-late-fee.md",
+      "title": "Late fee of a returned loan",
+      "summary": "A function that answers, in integer cents, the late fee a returned loan carries for each calendar day past its due date.",
+      "task": "task/fees/compute-late-fee"
+    },
+    {
+      "id": "proof/fees/compute-late-fee",
+      "kind": "proof",
+      "file": "proof/fees/compute-late-fee.md",
+      "title": "Proof of the late fee of a returned loan",
+      "summary": "Four tests holding late_fee_cents to a zero fee on or before the due date and 100 cents per calendar day after it.",
+      "task": "task/fees/compute-late-fee"
+    },
+    {
+      "id": "review/lending",
+      "kind": "review",
+      "file": "review/lending.md",
+      "title": "Review of the late-fee delivery",
+      "summary": "The coverage and standard readings of task/fees/compute-late-fee over lending/fees.py and tests/test_fees.py, with the conformance pass not run.",
+      "ran": [
+        "coverage",
+        "standard"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "implementation/fees/compute-late-fee",
+      "to": "rules/lending/late-fee-per-overdue-day",
+      "kind": "encodes",
+      "at": "nodes[0]"
+    },
+    {
+      "from": "implementation/fees/compute-late-fee",
+      "to": "task/fees/compute-late-fee",
+      "kind": "implements",
+      "at": "the path"
+    },
+    {
+      "from": "proof/fees/compute-late-fee",
+      "to": "implementation/fees/compute-late-fee",
+      "kind": "proves",
+      "at": "the path"
+    },
+    {
+      "from": "review/lending",
+      "to": "task/fees/compute-late-fee",
+      "kind": "reviews",
+      "at": "tasks[0]"
+    }
+  ]
+}

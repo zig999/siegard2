@@ -272,3 +272,80 @@ def test_the_reconcile_terms_are_schemas_terms_json_s_and_each_is_used_outside_i
         assert said == means[term.lower()], f"{term}: {said!r} is not terms.json's means"
         assert re.search(rf"\b{re.escape(term.lower())}\b", rest.lower()), \
             f"{term} is never used outside ## Terms"
+
+
+# ---------------------------------------------------------------- deliver-scope, rewritten at 5.68.0
+# Its one agent, door-decider, gained a description in the form the other agents carry and lost a
+# paragraph of justification; it enters the measure as the context a judged choice reads.
+DELIVER_AGENTS = ("door-decider",)
+DELIVER_BASELINE = REPO / "tests/fixtures/benchmarks/deliver-scope/text-metrics-5.67.0.json"
+DELIVER_PINS = {
+    "chars": 34_360,
+    "skill_chars": 16_700,
+    "sentence_words_median": 19,
+    "sentence_words_p90": 35,
+    "sentences_over_60_words": 3,
+    "prose_lines_over_100": 0,
+}
+DELIVER_DESCRIPTION_PIN = 606
+
+
+def deliver_current() -> dict:
+    return text_metrics.measure(text_metrics.files_of(REPO / "src/claude", "deliver-scope",
+                                                      DELIVER_AGENTS))
+
+
+def deliver_baseline() -> dict:
+    return json.loads(DELIVER_BASELINE.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("measure", ["chars", "skill_chars", "sentence_words_median",
+                                     "sentence_words_p90", "sentence_words_max",
+                                     "sentences_over_60_words", "prose_lines_over_100"])
+def test_the_deliver_scope_rewrite_is_strictly_better_than_5_67_0(measure):
+    before, now = deliver_baseline()[measure], deliver_current()[measure]
+    assert now < before, f"deliver-scope {measure}: {now} is not below 5.67.0's {before}"
+
+
+@pytest.mark.parametrize("name", ["skill", "door-decider"])
+def test_every_deliver_scope_description_is_shorter_than_5_67_0_and_under_its_pin(name):
+    before = deliver_baseline()["description_chars"][name]
+    now = deliver_current()["description_chars"][name]
+    assert now < before, f"deliver-scope {name}: description {now} chars is not below {before}"
+    assert now <= DELIVER_DESCRIPTION_PIN, \
+        f"deliver-scope {name}: description {now} passes {DELIVER_DESCRIPTION_PIN}"
+
+
+@pytest.mark.parametrize("measure", sorted(DELIVER_PINS))
+def test_no_deliver_scope_measure_grows_past_its_pin(measure):
+    now = deliver_current()[measure]
+    assert now <= DELIVER_PINS[measure], \
+        f"deliver-scope {measure} grew to {now}, past its pin {DELIVER_PINS[measure]}: raise " \
+        f"the pin in the same change and say in the commit what the growth bought"
+
+
+def test_the_deliver_scope_skill_names_its_trigger_first():
+    import yaml
+    text = (REPO / "src/claude/skills/deliver-scope/SKILL.md").read_text(encoding="utf-8")
+    description = yaml.safe_load(text.split("---", 2)[1])["description"]
+    assert description.startswith("Use when ") and ": " not in description
+
+
+def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outside_its_section():
+    """`## Terms` defines each term by schemas/terms.json's `means`, verbatim, and names no term
+    the skill and its references never use elsewhere."""
+    import re
+    means = {c["term"].lower(): c["means"] for c in
+             json.loads((REPO / "schemas/terms.json").read_text(encoding="utf-8"))["concepts"]}
+    folder = REPO / "src/claude/skills/deliver-scope"
+    skill = (folder / "SKILL.md").read_text(encoding="utf-8")
+    section = skill.split("## Terms\n", 1)[1].split("\n## ", 1)[0]
+    rest = skill.replace(section, "") + "".join(
+        p.read_text(encoding="utf-8") for p in sorted(folder.glob("references/*.md")))
+    entries = re.findall(r"^- \*\*(.+?)\*\* — (.+?)\.(?: |$)", section, re.M)
+    assert entries, "deliver-scope's ## Terms holds no entry"
+    for term, said in entries:
+        assert term.lower() in means, f"{term} is not a term schemas/terms.json lists"
+        assert said == means[term.lower()], f"{term}: {said!r} is not terms.json's means"
+        assert re.search(rf"\b{re.escape(term.lower())}\b", rest.lower()), \
+            f"{term} is never used outside ## Terms"

@@ -1,0 +1,4 @@
+{"name": "compaction-resume",
+ "what": "The session resumes after a compaction holding only the first 20,000 characters of the skill; steps 1-4 are done and committed — the plan skipped over the reach, the delivery and the review each committed under the run's name, the review's log line not yet committed, and the ask recorded by `ask.py --record` as the session rules have it recorded in the turn it was given. Step 5 has nothing to prove. Do the measure, the log's line for it, and the saved, rendered handoff still run?",
+ "record_ask": true, "resume_after_step": "4", "truncate_chars": 20000,
+ "checks": ["delivery_sound", "review_sound", "measure_committed", "commits_named", "commits_inside_roots", "no_branch_no_remote", "log_lines:implement-task,review-change,telemetry", "handoff_saved", "reported:probe", "reported:prepare", "reported:save_report", "reported:render", "writes_only_its_roots"]}

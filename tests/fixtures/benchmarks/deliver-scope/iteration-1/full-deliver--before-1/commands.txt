@@ -1,0 +1,81 @@
+python3 -B /tmp/ds-before/bin/project.py /tmp/dsb/runs/full-deliver--before-1/p — exit 0
+git log --oneline (HEAD 0d2b957) — exit 0
+git rev-parse HEAD — exit 0
+git branch --show-current — exit 0
+python3 -B /tmp/ds-before/bin/spec.py spec — exit 0
+git status --porcelain -- spec — exit 0 (empty)
+git status --porcelain -- work delivery app spec — exit 0 (empty)
+git status --porcelain -- siegard-trace.json siegard-reconcile — exit 0 (empty)
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery work app spec --scope epic/fees — exit 2 (cannot run: delivery root delivery is not a directory)
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery/lending work/lending app spec --scope epic/fees — exit 0
+python3 -B /tmp/ds-before/bin/plan.py --check work/lending spec — exit 0
+git status --porcelain -- delivery/lending app work/lending/task/fees/compute-late-fee.md — exit 0 (empty)
+python3 -B /tmp/ds-before/bin/deliver.py --contract implementation — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --contract proof — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --contract finding — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery/lending work/lending app spec — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --standard app/standard.yaml --against app --specification spec — exit 0
+python3 -B /tmp/ds-before/bin/run.py delivery/lending --run fees-compute-late-fee-build --cwd app --excerpt 40 --timeout-seconds 60 --step 'build=python3 -m compileall -q lending' — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --write-implementation delivery/lending task/fees/compute-late-fee --target app --task-file .../work/lending/task/fees/compute-late-fee.md --run run/fees-compute-late-fee-build --standard standard.yaml --standard-file .../app/standard.yaml --from-text .../scratch/implementer-return.yaml — exit 0
+python3 -B /tmp/ds-before/bin/run.py delivery/lending --run fees-compute-late-fee-suite --cwd app --excerpt 40 --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests' — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --write-proof delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file .../app/standard.yaml --from-text .../scratch/test-author-return.yaml — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py delivery/lending work/lending app spec — exit 0
+python3 -B /tmp/ds-before/bin/trace.py --bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --prepare --skill implement-task --project /tmp/dsb/runs/full-deliver--before-1/p --slug lending --target app --language pt-BR — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --help — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --save-report .../.git/siegard/handoff/20261107T175454Z-implement-task.md — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --render .../scratch/it-record.json — exit 0
+git add -- delivery/lending app siegard-trace.json — exit 0
+git status --porcelain — exit 0
+git commit -q -m "deliver-scope lending: deliver task/fees/compute-late-fee" -- delivery/lending app siegard-trace.json — exit 0 (fef70a4)
+git log --oneline -1 — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery/lending work/lending app spec --scope epic/fees — exit 0
+git diff -- delivery/lending/orchestration.md — exit 0
+git restore -- delivery/lending/orchestration.md — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/project.py /tmp/dsb/runs/full-deliver--before-1/p — exit 0
+python3 -B /tmp/ds-before/bin/plan.py --check work/lending spec — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --check delivery/lending work/lending app spec — exit 0
+git status --porcelain -- delivery/lending — exit 0 (empty)
+python3 -B /tmp/ds-before/bin/deliver.py --contract coverageEntry — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --contract unpairedTest — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --contract finding — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --standard app/standard.yaml --against app --specification spec — exit 0
+python3 -B /tmp/ds-before/bin/trace.py --check app — exit 0
+python3 -B /tmp/ds-before/bin/trace.py --stage app spec lending /tmp/tmp.rVhoXJWVS9 lending/fees.py tests/test_fees.py --review --node rules/lending/late-fee-per-overdue-day --demonstrated delivery/lending/proof/fees/compute-late-fee.md — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/run.py delivery/lending --run lending --cwd app --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests' — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --standard app/standard.yaml --reading --for lending/fees.py --for tests/test_fees.py — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --contract review — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --node delivery/lending/review/lending.md delivery/lending — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --review lending delivery/lending work/lending app spec — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --findings delivery/lending lending — exit 2 (cannot run: --findings stands alone, with the review record)
+python3 -B /tmp/ds-before/bin/handoff.py --prepare --skill review-change --project /tmp/dsb/runs/full-deliver--before-1/p --slug lending --target app --language pt-BR — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --findings delivery/lending/review/lending.md — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --standard app/standard.yaml --reach --for lending/fees.py --for tests/test_fees.py — exit 0
+python3 -B /tmp/ds-before/bin/trace.py --check app — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --save-report .../.git/siegard/handoff/20261107T175710Z-review-change.md — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --render .../scratch/rc-record.json — exit 1 (body: carries juiz)
+python3 -B /tmp/ds-before/bin/handoff.py --render .../scratch/rc-record.json — exit 0
+git add -- delivery/lending siegard-trace.json — exit 0
+git status --porcelain — exit 0
+git commit -q -m "deliver-scope lending: review" -- delivery/lending siegard-trace.json — exit 0 (49151f8)
+git log --oneline -3 — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --help — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py --probe /tmp/dsb/runs/full-deliver--before-1/p --since 2026-11-07T17:53:39Z — exit 0
+python3 -B /tmp/ds-before/bin/telemetry.py /tmp/dsb/runs/full-deliver--before-1/p --since 2026-11-07T17:53:39Z — exit 0
+git status --porcelain — exit 0
+git add -- telemetry delivery/lending/orchestration.md — exit 0
+git commit -q -m "deliver-scope lending: measure" -- telemetry delivery/lending/orchestration.md — exit 0 (9e9aec4)
+git log --oneline 0d2b957..HEAD — exit 0
+git status --porcelain — exit 0
+python3 -B /tmp/ds-before/bin/deliver.py --outstanding delivery/lending work/lending app spec --scope epic/fees — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --prepare --skill deliver-scope --project /tmp/dsb/runs/full-deliver--before-1/p --slug lending --target app --language pt-BR — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --save-report .../.git/siegard/handoff/20261107T175805Z-deliver-scope.md — exit 0
+python3 -B /tmp/ds-before/bin/handoff.py --render .../scratch/ds-record.json — exit 0
