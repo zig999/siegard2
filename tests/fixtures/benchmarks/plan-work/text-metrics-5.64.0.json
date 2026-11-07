@@ -1,0 +1,23 @@
+{
+ "files": 5,
+ "chars": 93449,
+ "skill_chars": 61944,
+ "sentences": 513,
+ "sentence_words_median": 24,
+ "sentence_words_p90": 50,
+ "sentence_words_max": 163,
+ "sentences_over_60_words": 22,
+ "prose_lines_over_100": 6,
+ "synonyms": {
+  "the person": 0,
+  "subagent": 0,
+  "test-author": 0
+ },
+ "description_chars": {
+  "skill": 980,
+  "backlog-decomposer": 416,
+  "codebase-surveyor": 383,
+  "execution-contract-binder": 519,
+  "unstated-fact-decider": 625
+ }
+}

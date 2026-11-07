@@ -1,0 +1,3 @@
+{"name": "first-plan",
+ "what": "The ordinary route over an empty work root: the renewal scope over the lending specification, the full skill in context. Does a sound plan land, covering the scope, with its handoff?",
+ "checks": ["plan_sound", "tasks_written", "scope_covered", "inventory_written", "intake_holds_scope", "handoff_saved", "report_hands:/implement-task", "report_offers_outstanding", "reported:digest", "reported:impact", "reported:derive_with_standard", "reported:render", "no_commit", "writes_only_its_roots"]}

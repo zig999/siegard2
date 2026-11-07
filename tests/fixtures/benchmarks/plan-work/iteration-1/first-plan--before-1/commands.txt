@@ -1,0 +1,24 @@
+python3 -B /tmp/pwbench/arm-564/bin/project.py /tmp/pwbench/runs/first-plan-prior1/p	0
+python3 -B /tmp/pwbench/arm-564/bin/spec.py spec	0
+python3 -B /tmp/pwbench/arm-564/bin/spec.py --digest spec	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --unplanned work spec	0
+python3 -B /tmp/pwbench/arm-564/bin/spec.py --impact rules/lending/loan-due-fourteen-days-after-borrowing,rules/lending/loan-renewed-at-most-once,rules/lending/renewal-extends-due-date-fourteen-days,rules/lending/reserved-copy-blocks-renewal,domain/lending/loan spec	0
+python3 -B /tmp/pwbench/arm-564/bin/deliver.py --standard app/standard.yaml --against app --specification spec	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --contract inventory	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --node inventory/lending-service.md /tmp/pwbench/runs/first-plan-prior1/p/work/lending	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --contract epic	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --contract task --without implements	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --contract task --fields implements	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --node epic/loan-renewal.md /tmp/pwbench/runs/first-plan-prior1/p/work/lending	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --node task/loan-renewal/due-date-on-borrowing.md /tmp/pwbench/runs/first-plan-prior1/p/work/lending	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --node task/loan-renewal/renew-loan.md /tmp/pwbench/runs/first-plan-prior1/p/work/lending	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --node task/loan-renewal/reserved-copy-refuses-renewal.md /tmp/pwbench/runs/first-plan-prior1/p/work/lending	0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --check work/lending spec	1
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --standard app/standard.yaml --against app work/lending spec	0
+python3 -B /tmp/pwbench/arm-564/bin/handoff.py --prepare --skill plan-work --project /tmp/pwbench/runs/first-plan-prior1/p --slug lending --target app --language pt-BR	0
+python3 -B /tmp/pwbench/arm-564/bin/handoff.py --help	0
+python3 -B /tmp/pwbench/arm-564/bin/deliver.py --outstanding delivery work/lending app spec	2
+python3 -B /tmp/pwbench/arm-564/bin/handoff.py --save-report /tmp/pwbench/runs/first-plan-prior1/p/.git/siegard/handoff/20261107T161614Z-plan-work.md	0
+python3 -B /tmp/pwbench/arm-564/bin/handoff.py --render /tmp/pwbench/runs/first-plan-prior1/out/record.json	1
+python3 -B /tmp/pwbench/arm-564/bin/handoff.py --render /tmp/pwbench/runs/first-plan-prior1/out/record.json	0
+python3 -B /tmp/pwbench/arm-564/bin/handoff.py --render /tmp/pwbench/runs/first-plan-prior1/out/record.json	0

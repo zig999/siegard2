@@ -1,0 +1,49 @@
+{
+ "run": "compaction-resume--before-1",
+ "case": "compaction-resume",
+ "arm": "before: 5.64.0 (5a4317a)",
+ "subagent_tokens": 49374,
+ "seconds": 61.8,
+ "expectations": [
+  {
+   "text": "mechanical: plan.py --check over the recorded plan exits 0",
+   "passed": true,
+   "evidence": "plan checked: /tmp/tmp41x1p5ki/work/plan.json matches 4 node(s)"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": false,
+   "evidence": "nothing under .git/siegard/handoff/"
+  },
+  {
+   "text": "mechanical: the report hands /implement-task",
+   "passed": true,
+   "evidence": "/implement-task"
+  },
+  {
+   "text": "mechanical: the handoff offers deliver.py --outstanding for the task slot",
+   "passed": false,
+   "evidence": ""
+  },
+  {
+   "text": "reported: commands.txt shows plan\\.py[^\\n]*--standard[^\\n]*--against",
+   "passed": true,
+   "evidence": "plan.py --standard app/standard.yaml --against"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--render",
+   "passed": false,
+   "evidence": ""
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  },
+  {
+   "text": "reported: the run wrote nothing outside the work root and the specification",
+   "passed": true,
+   "evidence": "outside: []"
+  }
+ ]
+}

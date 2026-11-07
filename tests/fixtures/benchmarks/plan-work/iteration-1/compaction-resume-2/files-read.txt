@@ -1,0 +1,12 @@
+/tmp/pwbench/runs/compaction-resume-new2/prompt.txt
+/tmp/pwbench/runs/compaction-resume-new2/p.skill-after-compaction.md
+/tmp/pwbench/runs/compaction-resume-new2/p/siegard.json
+/tmp/pwbench/runs/compaction-resume-new2/p/work/lending/intake/scope.md
+/tmp/pwbench/runs/compaction-resume-new2/p/work/lending/inventory/lending-app.md
+/tmp/pwbench/runs/compaction-resume-new2/p/work/lending/epic/renewals.md
+/tmp/pwbench/runs/compaction-resume-new2/p/work/lending/task/renewals/compute-due-date.md
+/tmp/pwbench/runs/compaction-resume-new2/p/work/lending/task/renewals/renew-loan.md
+/tmp/pwbench/runs/compaction-resume-new2/p/app/standard.yaml
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/implement-task/SKILL.md (first 12 lines)

@@ -1,0 +1,79 @@
+{
+ "run": "first-plan",
+ "case": "first-plan",
+ "arm": "shipped: 5.65.0 (candidate over 5a4317a)",
+ "subagent_tokens": 95875,
+ "seconds": 209.9,
+ "expectations": [
+  {
+   "text": "mechanical: plan.py --check over the recorded plan exits 0",
+   "passed": true,
+   "evidence": "plan checked: /tmp/tmp9dj7c2fk/work/plan.json matches 6 node(s)"
+  },
+  {
+   "text": "mechanical: the plan holds tasks, each implementing a node or saying why",
+   "passed": true,
+   "evidence": "4/4"
+  },
+  {
+   "text": "mechanical: every rule the scope names is covered by an epic",
+   "passed": true,
+   "evidence": "8 covered"
+  },
+  {
+   "text": "mechanical: an inventory node is written",
+   "passed": true,
+   "evidence": "1"
+  },
+  {
+   "text": "mechanical: the scope is persisted under intake/",
+   "passed": true,
+   "evidence": "1"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "mechanical: the report hands /implement-task",
+   "passed": true,
+   "evidence": "/implement-task"
+  },
+  {
+   "text": "mechanical: the handoff offers deliver.py --outstanding for the task slot",
+   "passed": true,
+   "evidence": "present"
+  },
+  {
+   "text": "reported: commands.txt shows spec\\.py[^\\n]*--digest",
+   "passed": true,
+   "evidence": "spec.py --digest"
+  },
+  {
+   "text": "reported: commands.txt shows spec\\.py[^\\n]*--impact",
+   "passed": true,
+   "evidence": "spec.py --impact"
+  },
+  {
+   "text": "reported: commands.txt shows plan\\.py[^\\n]*--standard[^\\n]*--against",
+   "passed": true,
+   "evidence": "plan.py --standard /tmp/pwbench/runs/first-plan-new1/p/app/standard.yaml --against"
+  },
+  {
+   "text": "reported: commands.txt shows handoff\\.py[^\\n]*--render",
+   "passed": true,
+   "evidence": "handoff.py --render"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  },
+  {
+   "text": "reported: the run wrote nothing outside the work root and the specification",
+   "passed": true,
+   "evidence": "outside: []"
+  }
+ ]
+}

@@ -1,0 +1,1 @@
+Members renew their loans. A loan is due fourteen calendar days after the copy was borrowed. A member may renew a loan once, and a renewal moves the due date fourteen calendar days later. A loan cannot be renewed while its copy holds a reservation.

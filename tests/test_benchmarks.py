@@ -361,3 +361,90 @@ def test_the_5_62_0_rewrite_reads_as_well_for_less():
     for case_name in ("first-delivery", "compaction-resume"):
         for grading in runs_of("iteration-2", case_name, "shipped:"):
             assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+
+
+# ---------------------------------------------------------------- /plan-work: cases
+# Plans over the implement-task benchmark's fixture project, its plan removed; graded by
+# tools/bench_plan_work.py and recomputed here from each record.
+
+import bench_plan_work  # noqa: E402
+
+PLAN = BENCH / "plan-work"
+
+
+def plan_runs() -> list[Path]:
+    return sorted(p for it in sorted(PLAN.glob("iteration-*"))
+                  for p in it.iterdir() if (p / "grading.json").is_file())
+
+
+def plan_runs_of(iteration: str, case_name: str, arm: str) -> list[dict]:
+    return [grading_of(p) for p in sorted((PLAN / iteration).iterdir())
+            if (p / "grading.json").is_file() and grading_of(p)["case"] == case_name
+            and grading_of(p)["arm"].startswith(arm)]
+
+
+def test_every_plan_work_case_names_only_checks_the_grader_knows(tmp_path):
+    names = sorted(p.parent.name for p in (PLAN / "cases").glob("*/case.json"))
+    assert names == ["compaction-resume", "first-plan", "reading-quiz"]
+    for name in names:
+        project = tmp_path / name
+        bench_plan_work.setup(name, project, bench_plan_work.SKILL)
+        bench_plan_work.checks(name, project)
+
+
+def test_the_resumed_plan_work_case_starts_where_step_4_ends(tmp_path):
+    """The pre-written work root validates and derives: what is left is steps 5 and 6."""
+    project = tmp_path / "compaction-resume"
+    bench_plan_work.setup("compaction-resume", project, bench_plan_work.SKILL)
+    work = project / "work" / bench_plan_work.SLUG
+    assert not (work / "plan.json").exists()
+    done = subprocess.run([sys.executable, "-B", str(REPO / "src/claude/bin/plan.py"),
+                           str(work), str(project / "spec")], capture_output=True, text=True)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+@pytest.mark.parametrize("run", [str(p.relative_to(PLAN)) for p in plan_runs()])
+def test_each_plan_work_run_grades_as_recomputed_from_its_record(run):
+    record = PLAN / run
+    grading = grading_of(record)
+    assert grading["arm"].split(":")[0] in ("shipped", "before"), f"{run}: arm {grading['arm']!r}"
+    recomputed = {e["text"]: e["passed"] for e in bench_plan_work.checks(grading["case"], record)}
+    for expectation in grading["expectations"]:
+        assert recomputed[expectation["text"]] == expectation["passed"], \
+            f"{run}: '{expectation['text']}' was recorded {expectation['passed']} and recomputes otherwise"
+
+
+def test_the_latest_plan_work_iteration_passes_every_expectation_with_the_shipped_skill():
+    latest = max(PLAN.glob("iteration-*"), key=lambda p: int(p.name.split("-")[1]), default=None)
+    assert latest, "no iteration is recorded"
+    shipped = [p for p in latest.iterdir() if (p / "grading.json").is_file()
+               and grading_of(p)["arm"].startswith("shipped:")]
+    assert sorted({grading_of(p)["case"] for p in shipped}) == \
+        sorted(p.parent.name for p in (PLAN / "cases").glob("*/case.json")), \
+        f"{latest.name} does not run the shipped skill over every case"
+    for record in shipped:
+        failed = [e["text"] for e in grading_of(record)["expectations"] if not e["passed"]]
+        assert not failed, f"{record.name}: {failed}"
+
+
+def test_the_5_65_0_plan_work_carries_a_resumed_plan_to_its_handoff_and_reads_for_less():
+    """Iteration 1 compares the 5.65.0 rewrite with the 5.64.0 text. Resumed after step 4 holding
+    the first 20,000 characters, every 5.64.0 run left a mechanical expectation unmet and every
+    5.65.0 run met all of them. Every quiz run of both arms answered every question as the text
+    decides, and the rewrite's quiz runs read for fewer tokens than every 5.64.0 run."""
+    before = plan_runs_of("iteration-1", "compaction-resume", "before:")
+    shipped = plan_runs_of("iteration-1", "compaction-resume", "shipped:")
+    assert len(before) >= 2 and len(shipped) >= 2
+    for grading in before:
+        mechanical = [e for e in grading["expectations"] if e["text"].startswith("mechanical:")]
+        assert any(not e["passed"] for e in mechanical), \
+            f"{grading['run']} ran the old skill and met every mechanical expectation"
+    for grading in shipped:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+    quiz_before = plan_runs_of("iteration-1", "reading-quiz", "before:")
+    quiz_shipped = plan_runs_of("iteration-1", "reading-quiz", "shipped:")
+    assert len(quiz_before) >= 2 and len(quiz_shipped) >= 2
+    for grading in quiz_before + quiz_shipped:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+    assert max(g["subagent_tokens"] for g in quiz_shipped) < \
+        min(g["subagent_tokens"] for g in quiz_before)

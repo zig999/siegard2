@@ -1,0 +1,4 @@
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --help	exit 0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --standard app/standard.yaml --against app work/lending spec	exit 0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --check work/lending spec	exit 0
+python3 -B /tmp/pwbench/arm-564/bin/plan.py --notes work/lending	exit 0

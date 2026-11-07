@@ -1,6 +1,6 @@
 {
  "src/claude/agents/backlog-decomposer.md": {
-  "the caller": 5
+  "the caller": 4
  },
  "src/claude/agents/codebase-surveyor.md": {
   "the caller": 3
@@ -15,7 +15,7 @@
   "the caller": 2
  },
  "src/claude/agents/execution-contract-binder.md": {
-  "the caller": 8
+  "the caller": 5
  },
  "src/claude/agents/failure-diagnostician.md": {
   "the caller": 1
@@ -36,7 +36,7 @@
   "the caller": 3
  },
  "src/claude/agents/unstated-fact-decider.md": {
-  "the caller": 3
+  "the caller": 2
  },
  "src/claude/bin/ask.py": {
   "the session": 1
@@ -130,7 +130,19 @@
  },
  "src/claude/skills/plan-work/SKILL.md": {
   "the session": 1,
-  "this invocation": 11
+  "this invocation": 2
+ },
+ "src/claude/skills/plan-work/references/decided-fact.md": {
+  "this invocation": 1
+ },
+ "src/claude/skills/plan-work/references/notes.md": {
+  "this invocation": 1
+ },
+ "src/claude/skills/plan-work/references/proof.md": {
+  "this invocation": 2
+ },
+ "src/claude/skills/plan-work/references/unstated.md": {
+  "this invocation": 3
  },
  "src/claude/skills/reconcile/SKILL.md": {
   "the session": 1,

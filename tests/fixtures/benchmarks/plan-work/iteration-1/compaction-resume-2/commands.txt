@@ -1,0 +1,10 @@
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check work/lending spec	exit 1
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --standard app/standard.yaml --against app work/lending spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill plan-work --project /tmp/pwbench/runs/compaction-resume-new2/p --slug lending --target app --language pt-BR	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact rules/lending/loan-due-fourteen-days-after-borrowing,rules/lending/loan-renewed-at-most-once,rules/lending/renewal-extends-due-date-fourteen-days,rules/lending/reserved-copy-blocks-renewal spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard app/standard.yaml --against app --specification spec	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --help	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --save-report /tmp/pwbench/runs/compaction-resume-new2/p/.git/siegard/handoff/20261107T162009Z-plan-work.md	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render record.json	exit 1
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render record.json	exit 0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render record.json	exit 0

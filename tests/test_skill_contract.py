@@ -577,7 +577,8 @@ def test_implement_task_writes_both_records_through_the_writer():
 def test_plan_work_spawns_the_decider_and_never_offers_it():
     """R13 decides an unstated fact and discloses it; a session that asks permission first has
     turned the one stop R13 removed back into a question with a default answer."""
-    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
+    assert "references/unstated.md" in skill_text("plan-work")
+    text = reference_text("plan-work", "unstated")
     assert "The decider is spawned, never offered" in text
     assert "(SPEC-001 R13)" in text
 
@@ -586,8 +587,8 @@ def test_a_closure_reads_what_it_leaves_standing_before_the_marker_is_written():
     """Closing is the human's act and stays one; what it closes over is three counts a script
     prints — findings nobody routed, nodes still owed a test, notes still standing — never a
     verdict, and never a stop."""
-    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
-    closing = text.split("## Closing the plan", 1)[1]
+    assert "references/closing.md" in skill_text("plan-work")
+    closing = reference_text("plan-work", "closing")
     assert "what this closure leaves standing" in closing
     for command in ("deliver.py --findings", "trace.py --owed", "--plan <work-root>",
                     "plan.py --notes"):
@@ -676,8 +677,8 @@ def test_a_proof_task_is_bound_against_the_nodes_that_name_its_node():
     """An auditor's assertion can contradict a contract that answers the same case; a binder
     handed the one node alone cannot see it, and the contradiction then surfaces as a red test
     after a delivery was paid for. The neighbours come from `spec.py --impact`, read."""
-    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
-    increment = text.split("## The proof increment", 1)[1].split("### 1. Situate", 1)[0]
+    assert "references/proof.md" in skill_text("plan-work")
+    increment = reference_text("plan-work", "proof")
     assert "spec.py --impact" in increment
     assert "every node that names it" in increment
     assert "the one node as its whole candidate set" not in increment
@@ -993,7 +994,7 @@ def test_every_project_root_input_states_how_an_unnamed_root_resolves(name):
 # ~5k tokens, which the benchmarks hold as 20,000 characters.
 
 COMPACTION_CUT = 20_000
-SIZED = ("analyse", "implement-task")
+SIZED = ("analyse", "implement-task", "plan-work")
 REFERENCED = sorted(p.parent.name for p in (REPO / "src/claude/skills").glob("*/references"))
 
 
@@ -1024,18 +1025,30 @@ def test_a_reference_over_100_lines_opens_with_its_contents(path):
     assert re.search(r"^## Contents", head, re.M), f"{path.name} runs past 100 lines with no contents"
 
 
-def test_the_implement_task_checklist_survives_the_compaction_cut():
+CHECKLISTED = {"implement-task": 9, "plan-work": 6}
+
+
+@pytest.mark.parametrize("skill", sorted(CHECKLISTED))
+def test_the_checklist_survives_the_compaction_cut(skill):
     """What a resumed session holds of the skill is its first 20,000 characters. The checklist
     must sit inside them, tell the session to read the skill again, name every step, and name
     every reference at the step that reads it — so a session past the cut still reaches each."""
-    held = skill_text("implement-task")[:COMPACTION_CUT]
+    held = skill_text(skill)[:COMPACTION_CUT]
     assert "## Progress checklist" in held
     checklist = held.split("## Progress checklist", 1)[1].split("\n## ", 1)[0]
-    assert "read `${CLAUDE_PLUGIN_ROOT}/skills/implement-task/SKILL.md` again" in unwrapped(checklist)
-    steps = re.findall(r"^### (\d+)\. ", skill_text("implement-task"), re.M)
-    assert steps == [str(n) for n in range(1, 10)], steps
+    assert f"read `${{CLAUDE_PLUGIN_ROOT}}/skills/{skill}/SKILL.md` again" in unwrapped(checklist)
+    steps = re.findall(r"^### (\d+)\. ", skill_text(skill), re.M)
+    assert steps == [str(n) for n in range(1, CHECKLISTED[skill] + 1)], steps
     for step in steps:
         assert re.search(rf"^- \[ \] {step} ", checklist, re.M), f"the checklist skips step {step}"
-    folder = REPO / "src/claude/skills/implement-task/references"
+    folder = REPO / "src/claude/skills" / skill / "references"
     for path in sorted(folder.glob("*.md")):
         assert f"references/{path.name}" in checklist, f"the checklist never names {path.name}"
+
+
+def test_the_plan_work_skill_survives_a_compaction_whole():
+    """At 5.64.0 the cut fell inside the corrective increment and every numbered step was lost;
+    the rewrite keeps SKILL.md inside the 20,000 characters a compaction re-attaches, so a resumed
+    session holds every step and the checklist that names each reference."""
+    assert len(skill_text("plan-work")) <= COMPACTION_CUT, \
+        f"plan-work's SKILL.md is {len(skill_text('plan-work'))} characters, past the cut"

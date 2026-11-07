@@ -1,0 +1,204 @@
+{
+  "contract_version": "siegard-plan/3",
+  "nodes": [
+    {
+      "id": "epic/loan-renewal",
+      "kind": "epic",
+      "file": "epic/loan-renewal.md",
+      "title": "Loan renewal",
+      "summary": "Everything a member needs to renew a loan: the due date a loan starts with, the renewal that moves it, the once-only limit and the reservation block."
+    },
+    {
+      "id": "inventory/lending-loans-module",
+      "kind": "inventory",
+      "file": "inventory/lending-loans-module.md",
+      "title": "Lending loans module",
+      "summary": "The area the renewal scope lands in: one dataclass module for loans under lending/, with a pytest suite under tests/."
+    },
+    {
+      "id": "task/loan-renewal/loan-due-date",
+      "kind": "task",
+      "file": "task/loan-renewal/loan-due-date.md",
+      "title": "Due date set at borrowing",
+      "summary": "The due date a loan starts with, counted from the day its copy was borrowed.",
+      "epic": "loan-renewal"
+    },
+    {
+      "id": "task/loan-renewal/refuse-second-renewal",
+      "kind": "task",
+      "file": "task/loan-renewal/refuse-second-renewal.md",
+      "title": "Refuse a second renewal",
+      "summary": "The once-only limit on renewing a loan.",
+      "epic": "loan-renewal"
+    },
+    {
+      "id": "task/loan-renewal/renew-loan",
+      "kind": "task",
+      "file": "task/loan-renewal/renew-loan.md",
+      "title": "Renew a loan",
+      "summary": "The renewal that moves a loan's due date fourteen calendar days later and records that the loan was renewed.",
+      "epic": "loan-renewal"
+    },
+    {
+      "id": "task/loan-renewal/reservation-blocks-renewal",
+      "kind": "task",
+      "file": "task/loan-renewal/reservation-blocks-renewal.md",
+      "title": "Reserved copy blocks renewal",
+      "summary": "The refusal of a renewal while the loan's copy holds a reservation.",
+      "epic": "loan-renewal"
+    }
+  ],
+  "edges": [
+    {
+      "from": "epic/loan-renewal",
+      "to": "domain/lending/loan",
+      "kind": "covers",
+      "at": "covers[0]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "domain/lending/member",
+      "kind": "covers",
+      "at": "covers[1]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "domain/lending/copy",
+      "kind": "covers",
+      "at": "covers[2]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "domain/lending/reservation",
+      "kind": "covers",
+      "at": "covers[3]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "rules/lending/loan-due-fourteen-days-after-borrowing",
+      "kind": "covers",
+      "at": "covers[4]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "rules/lending/renewal-extends-due-date-fourteen-days",
+      "kind": "covers",
+      "at": "covers[5]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "rules/lending/loan-renewed-at-most-once",
+      "kind": "covers",
+      "at": "covers[6]"
+    },
+    {
+      "from": "epic/loan-renewal",
+      "to": "rules/lending/reserved-copy-blocks-renewal",
+      "kind": "covers",
+      "at": "covers[7]"
+    },
+    {
+      "from": "task/loan-renewal/loan-due-date",
+      "to": "domain/lending/loan",
+      "kind": "implements",
+      "at": "implements[0]",
+      "digest": "sha256:dab75228ef823cf61d3bdd664be7afaf2fe48dcc87db767153a1adfa71e1d0dd"
+    },
+    {
+      "from": "task/loan-renewal/loan-due-date",
+      "to": "rules/lending/loan-due-fourteen-days-after-borrowing",
+      "kind": "implements",
+      "at": "implements[1]",
+      "digest": "sha256:ea63f0eb150db4bc43d70d53a961284ab7cb5df2d6fd657eb36588d5500ef729"
+    },
+    {
+      "from": "task/loan-renewal/refuse-second-renewal",
+      "to": "task/loan-renewal/renew-loan",
+      "kind": "depends_on",
+      "at": "depends_on[0]"
+    },
+    {
+      "from": "task/loan-renewal/refuse-second-renewal",
+      "to": "domain/lending/loan",
+      "kind": "implements",
+      "at": "implements[0]",
+      "digest": "sha256:dab75228ef823cf61d3bdd664be7afaf2fe48dcc87db767153a1adfa71e1d0dd"
+    },
+    {
+      "from": "task/loan-renewal/refuse-second-renewal",
+      "to": "domain/lending/member",
+      "kind": "implements",
+      "at": "implements[1]",
+      "digest": "sha256:c4ef75c1d77457b53d7a6b54139222f3105da87f7962d3cc064571ddab30412e"
+    },
+    {
+      "from": "task/loan-renewal/refuse-second-renewal",
+      "to": "rules/lending/loan-renewed-at-most-once",
+      "kind": "implements",
+      "at": "implements[2]",
+      "digest": "sha256:e781e825925e6b439f463ac3bcaa0d9701e4561ce2e54cc346487ea8e17d8fde"
+    },
+    {
+      "from": "task/loan-renewal/renew-loan",
+      "to": "domain/lending/loan",
+      "kind": "implements",
+      "at": "implements[0]",
+      "digest": "sha256:dab75228ef823cf61d3bdd664be7afaf2fe48dcc87db767153a1adfa71e1d0dd"
+    },
+    {
+      "from": "task/loan-renewal/renew-loan",
+      "to": "domain/lending/member",
+      "kind": "implements",
+      "at": "implements[1]",
+      "digest": "sha256:c4ef75c1d77457b53d7a6b54139222f3105da87f7962d3cc064571ddab30412e"
+    },
+    {
+      "from": "task/loan-renewal/renew-loan",
+      "to": "rules/lending/renewal-extends-due-date-fourteen-days",
+      "kind": "implements",
+      "at": "implements[2]",
+      "digest": "sha256:524a19d07d9ce7480ff3ae0e04d5bb9ca600829e644c68b923edf0dd153b982b"
+    },
+    {
+      "from": "task/loan-renewal/reservation-blocks-renewal",
+      "to": "task/loan-renewal/renew-loan",
+      "kind": "depends_on",
+      "at": "depends_on[0]"
+    },
+    {
+      "from": "task/loan-renewal/reservation-blocks-renewal",
+      "to": "domain/lending/copy",
+      "kind": "implements",
+      "at": "implements[0]",
+      "digest": "sha256:0e413546103bbbeda63825f12ba521375beb2dbc6b39501b02ba1869c39b6edd"
+    },
+    {
+      "from": "task/loan-renewal/reservation-blocks-renewal",
+      "to": "domain/lending/loan",
+      "kind": "implements",
+      "at": "implements[1]",
+      "digest": "sha256:dab75228ef823cf61d3bdd664be7afaf2fe48dcc87db767153a1adfa71e1d0dd"
+    },
+    {
+      "from": "task/loan-renewal/reservation-blocks-renewal",
+      "to": "domain/lending/member",
+      "kind": "implements",
+      "at": "implements[2]",
+      "digest": "sha256:c4ef75c1d77457b53d7a6b54139222f3105da87f7962d3cc064571ddab30412e"
+    },
+    {
+      "from": "task/loan-renewal/reservation-blocks-renewal",
+      "to": "domain/lending/reservation",
+      "kind": "implements",
+      "at": "implements[3]",
+      "digest": "sha256:7dedc9ff10218b5d700fb3d656b336b48c4af2e36146b3d4d99d5301a18f9185"
+    },
+    {
+      "from": "task/loan-renewal/reservation-blocks-renewal",
+      "to": "rules/lending/reserved-copy-blocks-renewal",
+      "kind": "implements",
+      "at": "implements[4]",
+      "digest": "sha256:58d4890dc2314a451fe384fab22e8447ceaa483544dae37b70341c58b7479ad9"
+    }
+  ]
+}

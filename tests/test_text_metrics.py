@@ -90,3 +90,56 @@ def test_no_measure_grows_past_its_pin(measure):
     assert now <= PINS[measure], \
         f"{measure} grew to {now}, past its pin {PINS[measure]}: raise the pin in the same change " \
         f"and say in the commit what the growth bought"
+
+
+# ---------------------------------------------------------------- plan-work, rewritten at 5.65.0
+PLAN_AGENTS = ("backlog-decomposer", "codebase-surveyor", "execution-contract-binder",
+               "unstated-fact-decider")
+PLAN_BASELINE = REPO / "tests/fixtures/benchmarks/plan-work/text-metrics-5.64.0.json"
+PLAN_PINS = {
+    "chars": 73_000,
+    "skill_chars": 19_500,
+    "sentence_words_median": 17,
+    "sentence_words_p90": 35,
+    "sentences_over_60_words": 3,
+    "prose_lines_over_100": 0,
+}
+PLAN_DESCRIPTION_PIN = 561
+
+
+def plan_current() -> dict:
+    return text_metrics.measure(text_metrics.files_of(REPO / "src/claude", "plan-work", PLAN_AGENTS))
+
+
+def plan_baseline() -> dict:
+    return json.loads(PLAN_BASELINE.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("measure", ["chars", "skill_chars", "sentence_words_median",
+                                     "sentence_words_p90", "sentence_words_max",
+                                     "sentences_over_60_words", "prose_lines_over_100"])
+def test_the_plan_work_rewrite_is_strictly_better_than_5_64_0(measure):
+    before, now = plan_baseline()[measure], plan_current()[measure]
+    assert now < before, f"plan-work {measure}: {now} is not below 5.64.0's {before}"
+
+
+@pytest.mark.parametrize("name", ["skill", *PLAN_AGENTS])
+def test_every_plan_work_description_is_shorter_than_5_64_0_and_under_its_pin(name):
+    before = plan_baseline()["description_chars"][name]
+    now = plan_current()["description_chars"][name]
+    assert now < before, f"{name}: description {now} chars is not below 5.64.0's {before}"
+    assert now <= PLAN_DESCRIPTION_PIN, f"{name}: description {now} passes {PLAN_DESCRIPTION_PIN}"
+
+
+@pytest.mark.parametrize("measure", sorted(PLAN_PINS))
+def test_no_plan_work_measure_grows_past_its_pin(measure):
+    now = plan_current()[measure]
+    assert now <= PLAN_PINS[measure], \
+        f"plan-work {measure} grew to {now}, past its pin {PLAN_PINS[measure]}: raise the pin in " \
+        f"the same change and say in the commit what the growth bought"
+
+
+def test_the_plan_work_skill_names_its_trigger_first():
+    import yaml
+    text = (REPO / "src/claude/skills/plan-work/SKILL.md").read_text(encoding="utf-8")
+    assert yaml.safe_load(text.split("---", 2)[1])["description"].startswith("Use when ")

@@ -1,0 +1,11 @@
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --check work/lending spec  exit=1 (STALE: plan.json never derived)
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/plan.py --standard app/standard.yaml --against app work/lending spec  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill plan-work --project /tmp/pwbench/runs/compaction-resume-new1/p --slug lending --target app --language pt-BR  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --digest spec  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --help  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/spec.py --impact rules/lending/loan-due-fourteen-days-after-borrowing,rules/lending/loan-renewed-at-most-once,rules/lending/renewal-extends-due-date-fourteen-days,rules/lending/reserved-copy-blocks-renewal spec  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --standard app/standard.yaml --against app --specification spec  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/deliver.py --outstanding /tmp/pwbench/runs/compaction-resume-new1/p/delivery/lending /tmp/pwbench/runs/compaction-resume-new1/p/work/lending /tmp/pwbench/runs/compaction-resume-new1/p/app /tmp/pwbench/runs/compaction-resume-new1/p/spec  exit=2 (delivery root not a directory)
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/door.py --help  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --save-report /tmp/pwbench/runs/compaction-resume-new1/p/.git/siegard/handoff/20261107T162006Z-plan-work.md  exit=0
+python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --render /tmp/pwbench/runs/compaction-resume-new1/p/../out/record.json  exit=0 (run twice)

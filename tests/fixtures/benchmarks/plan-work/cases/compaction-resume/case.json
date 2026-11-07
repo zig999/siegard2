@@ -1,0 +1,4 @@
+{"name": "compaction-resume",
+ "what": "The session resumes after a compaction holding only the first ~5k tokens of the skill (20,000 characters); steps 1-4 are done and the plan's nodes sit uncommitted, no plan.json. Does the rest of the route still run?",
+ "resume_after_step": 4, "truncate_chars": 20000,
+ "checks": ["plan_sound", "handoff_saved", "report_hands:/implement-task", "report_offers_outstanding", "reported:derive_with_standard", "reported:render", "no_commit", "writes_only_its_roots"]}

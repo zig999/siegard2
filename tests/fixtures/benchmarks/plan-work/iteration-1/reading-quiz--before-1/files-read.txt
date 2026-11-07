@@ -1,0 +1,6 @@
+/tmp/pwbench/runs/reading-quiz-prior1/prompt.txt
+/tmp/pwbench/arm-564/skills/plan-work/SKILL.md
+/tmp/pwbench/arm-564/agents/backlog-decomposer.md
+/tmp/pwbench/arm-564/agents/codebase-surveyor.md
+/tmp/pwbench/arm-564/agents/execution-contract-binder.md
+/tmp/pwbench/arm-564/agents/unstated-fact-decider.md

@@ -1,0 +1,14 @@
+/tmp/pwbench/runs/reading-quiz-new2/prompt.txt
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/SKILL.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/closing.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/corrective.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/decided-fact.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/notes.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/proof.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/report.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/standard.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/references/unstated.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/backlog-decomposer.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/codebase-surveyor.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/execution-contract-binder.md
+/home/siegfriedneto/projects/siegard2/src/claude/agents/unstated-fact-decider.md

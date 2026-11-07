@@ -1,0 +1,187 @@
+{
+ "name": "reading-quiz",
+ "kind": "quiz",
+ "what": "A reader holding only the skill, its references and its four agents answers what the text requires at its densest points. Each wrong option differs from the right one in one detail; the options are shuffled per question by its id.",
+ "questions": [
+  {
+   "id": 1,
+   "q": "When may a step that spawns a subagent run inline instead?",
+   "options": [
+    "Only after a spawn was attempted and failed, with the failure carried verbatim in the report beside the step",
+    "Whenever the session judges it cannot spawn subagents, saying so in the report",
+    "After a spawn was attempted and failed, the report saying only that the step ran inline",
+    "Only for the codebase-surveyor; the binder always runs in its own context"
+   ]
+  },
+  {
+   "id": 2,
+   "q": "What of a task skeleton is the execution-contract-binder handed?",
+   "options": [
+    "Its title, summary, objective and criteria — never its rationale, its dependencies or its body",
+    "The whole skeleton, rationale included, so it sees why the task was cut",
+    "Its title, objective, criteria and dependencies",
+    "Its objective and criteria alone"
+   ]
+  },
+  {
+   "id": 3,
+   "q": "How are the binders of one plan spawned, and what re-runs when a note grows an epic's covers?",
+   "options": [
+    "All together; where one grows the epic's covers, every skeleton under that epic runs through the binder again",
+    "All together; where one grows the epic's covers, only that skeleton runs through the binder again",
+    "One after another, so each binder sees the covers the last one left",
+    "One per epic, over all of that epic's skeletons at once"
+   ]
+  },
+  {
+   "id": 4,
+   "q": "A binder returns an `unstated` note whose fact no node outside the candidates states. What is spawned, and with what?",
+   "options": [
+    "One unstated-fact-decider per fact, handed the fact, the impact-set paths with their decision logs, the intake paths and the specification schema paths — never the skeleton",
+    "One unstated-fact-decider per fact, handed the fact, the impact-set paths and the skeleton the note came from",
+    "One unstated-fact-decider per skeleton, handed every fact its binder named",
+    "Nothing: the fact is put to the person as a question"
+   ]
+  },
+  {
+   "id": 5,
+   "q": "The unstated-fact-decider returns `contradicted`. What happens?",
+   "options": [
+    "The note takes the blocking route, and the report says the decider refused it and why",
+    "The return's edits are written as for `decided`",
+    "A second decider is spawned for the same fact",
+    "The skeleton goes back to the decomposer to be re-cut"
+   ]
+  },
+  {
+   "id": 6,
+   "q": "A re-bind returns an `unstated` note over a fact this invocation already decided, and the node that decision filled already sits inside that skeleton's candidates. What happens?",
+   "options": [
+    "Stop: it is a disagreement only a person settles",
+    "A second decider is spawned for the fact",
+    "The epic's covers grows to the decided node and the step re-runs",
+    "The note is dropped, since the fact is now stated"
+   ]
+  },
+  {
+   "id": 7,
+   "q": "A binder returns a `compound` note. What happens to it?",
+   "options": [
+    "It is never written to a task: the skeleton goes back to the decomposer once, and a second compound note over the re-cut skeleton is written into the report with both readings while the skeleton proceeds as last cut",
+    "It is written to the task's ## Notes and the task proceeds",
+    "You rewrite the criterion into single conditions and re-run the binder",
+    "The skeleton goes back to the decomposer until no compound note returns"
+   ]
+  },
+  {
+   "id": 8,
+   "q": "A `blocking` note's blocked statement came from the scope, not from a cut the decomposer decided. What happens?",
+   "options": [
+    "The task is written with the note, and the report names it as a conflict only the person settles",
+    "The skeleton goes back to the decomposer to be re-cut",
+    "The task is not written until the person answers",
+    "An unstated-fact-decider is spawned for it"
+   ]
+  },
+  {
+   "id": 9,
+   "q": "A note names a specification node outside its epic's covers, and the decision is to let the task stand as it is. What is written?",
+   "options": [
+    "The line `Decision, beyond the covers — stand: <why>` immediately after the note in `## Notes`",
+    "The node added to the epic's `uncovered` with the why",
+    "Nothing beyond the note itself",
+    "The line `Decision, beyond the covers — stand: <why>` in the epic's `## Notes`"
+   ]
+  },
+  {
+   "id": 10,
+   "q": "How is a plan node's frontmatter written?",
+   "options": [
+    "By `python3 -c` calling `yaml.safe_dump`, never typed by hand",
+    "Typed by hand, quoting any value that holds a colon",
+    "By `plan.py --node`, which writes it from the return",
+    "Typed by hand, then checked by `plan.py --node`"
+   ]
+  },
+  {
+   "id": 11,
+   "q": "The person supplied a mockup of a screen. Where does it go, and which tasks name it?",
+   "options": [
+    "Under `intake/layout/`, and only the tasks that build what it shows name it in `reference`",
+    "Under `intake/` beside the scope, and every task of the epic names it in `reference`",
+    "Under `intake/layout/`, and every task of the epic names it in `reference`",
+    "Under `intake/layout/`, and the decomposer chooses which tasks name it"
+   ]
+  },
+  {
+   "id": 12,
+   "q": "In a corrective increment, which steps of the ordinary route do not run?",
+   "options": [
+    "The survey and the decomposition; the binder runs per task as always",
+    "The survey, the decomposition and the binder",
+    "The survey alone",
+    "None: the ordinary route runs at full size"
+   ]
+  },
+  {
+   "id": 13,
+   "q": "In a corrective increment, which epic does the task go under, and what does it cover?",
+   "options": [
+    "A new epic of its own, covering the `implements` the binder returned plus any node the person named for the correction",
+    "The delivered epic of the task that wrote the file, its covers grown",
+    "A new epic covering every node the trace says the file encodes",
+    "A new epic covering only the nodes the person named"
+   ]
+  },
+  {
+   "id": 14,
+   "q": "In a proof increment, what is the binder's candidate set for a fact?",
+   "options": [
+    "The node and every node that names it, read from `spec.py --impact`",
+    "The node alone",
+    "Every node the named file encodes, read from `trace.py --encodes`",
+    "The epic's covers less its uncovered"
+   ]
+  },
+  {
+   "id": 15,
+   "q": "When closing a plan, what is done with the findings, the owed tests and the standing notes?",
+   "options": [
+    "Three commands print them and the report quotes them whole; none is a stop, and the derivation runs without a specification root",
+    "Three commands print them; any non-zero count stops the closure",
+    "They are written into closure.md, and the derivation runs with the specification root",
+    "They are not read: closing touches nothing but the marker"
+   ]
+  },
+  {
+   "id": 16,
+   "q": "What does the /implement-task handoff do with the task slot?",
+   "options": [
+    "Leaves it open and offers `deliver.py --outstanding`, every root resolved, as where the deliverable set is read",
+    "Fills it with the first task the plan can deliver",
+    "Leaves it open and lists the deliverable tasks as the plan stands",
+    "Leaves it open with nothing offered in its place"
+   ]
+  },
+  {
+   "id": 17,
+   "q": "At situate, `plan.py --check` prints a `MOVED` line for a task. What happens?",
+   "options": [
+    "The task joins the impact set and goes through step 4's binder; a derivation never clears the line",
+    "A derivation run clears it before anything relies on the plan",
+    "It is a stop reported verbatim",
+    "It is reported and otherwise ignored, since the task is not in scope"
+   ]
+  },
+  {
+   "id": 18,
+   "q": "Which `constraints/` nodes are candidates at situate?",
+   "options": [
+    "Every one, whatever the grep returned",
+    "Only those the scope's vocabulary grep found",
+    "Only those whose scope is the system",
+    "None: a constraint reaches the binder through its context"
+   ]
+  }
+ ]
+}
