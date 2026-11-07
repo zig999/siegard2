@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.65.0 — 2026-11-07
+
+The plan-work skill opens with a progress checklist, fits whole inside what a compaction re-attaches, and keeps its modes and routes in eight references; it and its four agents name each concept once and read 22% shorter. A resumed planning session now hands its report through the handoff record. (`4997252`)
+
 ## 5.64.0 — 2026-11-07
 
 A skill's `## Terms` defines each term by the one sentence `schemas/terms.json` holds for it, verbatim, and a test refuses any other wording; the text metrics read their synonyms from the same file. (`18fad2a`)
