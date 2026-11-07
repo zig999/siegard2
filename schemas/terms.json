@@ -1,5 +1,5 @@
 {
-  "description": "The words this repository's shipped instructions use for one concept each. A concept has one preferred term; `forbidden` lists the variants that never name anything else, which no file of `clean` may carry; `counted` lists variants that are sometimes the concept and sometimes a plain use (the session's language, the agent's caller), which are counted and held by a ratchet rather than banned. A count is read over prose: frontmatter, fenced blocks, «…» quotations (a requirement's own words) and inline code (a file or identifier's name) are removed first, and a variant matches as whole words, case-insensitively. `scope` is every file whose prose a session or an agent reads as instructions, including what a script prints and what a schema's descriptions say, since both reach an agent. tests/test_terms.py holds the clean files at zero and every other file at the count tests/fixtures/term-counts.json pins; tools/term_counts.py prints and rewrites those pins. A skill whose SKILL.md defines terms under `## Terms` defines only concepts listed here.",
+  "description": "The words this repository's shipped instructions use for one concept each. A concept has one preferred term; `forbidden` lists the variants that never name anything else, which no file of `clean` may carry; `counted` lists variants that are sometimes the concept and sometimes a plain use (the session's language, the agent's caller), which are counted and held by a ratchet rather than banned. A count is read over prose: frontmatter, fenced blocks, «…» quotations (a requirement's own words) and inline code (a file or identifier's name) are removed first, and a variant matches as whole words, case-insensitively. `scope` is every file whose prose a session or an agent reads as instructions, including what a script prints and what a schema's descriptions say, since both reach an agent. tests/test_terms.py holds the clean files at zero and every other file at the count tests/fixtures/term-counts.json pins; tools/term_counts.py prints and rewrites those pins. `means` is a concept's one definition: a skill that defines terms under `## Terms` gives each its own item, `- **<Term>** — <means>.`, the sentence verbatim, followed by any sentences on how that skill uses the term.",
   "scope": [
     "src/claude/skills/*/SKILL.md",
     "src/claude/skills/*/references/*.md",
@@ -26,7 +26,7 @@
     },
     {
       "term": "subagent",
-      "means": "an agent a skill spawns",
+      "means": "an agent the skill spawns",
       "forbidden": [
         "delegation",
         "delegations"
@@ -51,7 +51,7 @@
     },
     {
       "term": "you",
-      "means": "the session that runs a skill, addressed by the skill's text",
+      "means": "the session that runs the skill",
       "forbidden": [],
       "counted": [
         "the session",
@@ -62,7 +62,7 @@
     },
     {
       "term": "producer",
-      "means": "a subagent that writes what a delivery is made of: task-implementer or test-author",
+      "means": "a subagent that writes what a delivery is made of — `task-implementer` the source, `test-author` the tests",
       "forbidden": [],
       "counted": [],
       "clean": []
@@ -90,7 +90,7 @@
     },
     {
       "term": "door",
-      "means": "an invocation of another entry point, filled and ready to paste, that a report hands the person",
+      "means": "an invocation of another entry point that the report hands the person, filled with everything known and ready to paste",
       "forbidden": [],
       "counted": [],
       "clean": []

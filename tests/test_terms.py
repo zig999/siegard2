@@ -7,7 +7,9 @@ over each file's prose. Three holds:
 - a `forbidden` variant never appears in a concept's `clean` files;
 - every other count equals its pin in tests/fixtures/term-counts.json — a ratchet: a file cleaned
   lowers its pin (`python3 tools/term_counts.py --write`), a file that gains a variant is red;
-- a skill's `## Terms` defines only concepts schemas/terms.json lists, and uses each one again.
+- a skill's `## Terms` defines only concepts schemas/terms.json lists, one per item, opens each
+  definition with the concept's `means` verbatim — the one definition, as a «…» citation carries
+  a requirement's own sentence — and uses each term again.
 """
 from __future__ import annotations
 
@@ -26,7 +28,8 @@ import term_counts  # noqa: E402
 TERMS = term_counts.terms()
 CONCEPTS = TERMS["concepts"]
 INFLECTIONS = ("", "s", "ed", "ing")
-DEFINED = re.compile(r"^- \*\*([^*]+)\*\*|\*\*(The [a-z-]+)\*\*", re.M)
+ITEM = re.compile(r"^- (.*?)(?=^- |\Z)", re.S | re.M)
+DEFINITION = re.compile(r"\*\*([^*]+)\*\* — (.*)", re.S)
 
 
 def test_every_concept_is_stated_whole():
@@ -106,19 +109,47 @@ def test_some_skill_defines_its_terms():
     assert "implement-task" in SKILLS_WITH_TERMS, "the guard below lost its subject"
 
 
+def definitions(section: str) -> list[tuple[str, str]]:
+    """Each `## Terms` item as (the bold term, what follows the dash), whitespace collapsed; an
+    item that does not take that form comes back with an empty term."""
+    out = []
+    for item in ITEM.findall(section):
+        item = " ".join(item.split())
+        match = DEFINITION.fullmatch(item)
+        out.append((match.group(1), match.group(2)) if match else ("", item))
+    return out
+
+
 @pytest.mark.parametrize("skill", SKILLS_WITH_TERMS)
-def test_a_skill_defines_only_listed_concepts_and_uses_each(skill):
+def test_a_skill_defines_each_term_by_its_one_definition(skill):
+    """A definition is the concept's `means`, verbatim, as the item's first sentence; what follows
+    says how this skill uses the term, never what it means. Changing a `means` reddens every skill
+    that carries it until the skill follows."""
+    section = terms_section((REPO / "src/claude/skills" / skill / "SKILL.md").read_text(encoding="utf-8"))
+    items = definitions(section)
+    assert items, f"{skill}'s ## Terms defines nothing"
+    for name, body in items:
+        assert name, f"{skill}: a ## Terms item is not `- **<Term>** — <definition>`: {body[:80]}"
+        concept = concept_of(name)
+        assert concept, f"{skill} defines '{name}', which schemas/terms.json does not list"
+        means = " ".join(concept["means"].split())
+        assert body == means + "." or body.startswith(means + ". "), \
+            f"{skill} defines '{name}' as {body[:len(means) + 20]!r}; schemas/terms.json's one " \
+            f"definition is {means!r}"
+    names = [concept_of(n)["term"] for n, _ in items]
+    assert len(names) == len(set(names)), f"{skill} defines a term twice: {names}"
+
+
+@pytest.mark.parametrize("skill", SKILLS_WITH_TERMS)
+def test_a_skill_uses_each_term_it_defines(skill):
     folder = REPO / "src/claude/skills" / skill
     text = (folder / "SKILL.md").read_text(encoding="utf-8")
     section = terms_section(text)
-    defined = [a or b for a, b in DEFINED.findall(section)]
-    assert defined, f"{skill}'s ## Terms defines nothing"
     rest = text.replace(section, "") + "".join(
         p.read_text(encoding="utf-8") for p in sorted(folder.glob("references/*.md")))
     rest = term_counts.prose(rest)
-    for name in defined:
+    for name, _ in definitions(section):
         concept = concept_of(name)
-        assert concept, f"{skill} defines '{name}', which schemas/terms.json does not list"
         used = sum(term_counts.count(rest, concept["term"] + ending) for ending in INFLECTIONS)
         assert used or concept["term"] == "you", \
             f"{skill} defines '{name}' and never uses '{concept['term']}' outside ## Terms"

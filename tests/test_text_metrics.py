@@ -60,9 +60,11 @@ def test_the_rewrite_is_strictly_better_than_5_61_0(measure):
 
 @pytest.mark.parametrize("concept", sorted(text_metrics.SYNONYMS))
 def test_one_concept_carries_one_name(concept):
-    """5.61.0 called the decider `the human` 28 times beside `the person`, and a spawned agent a
-    `delegation` 18 times beside `subagent`."""
-    assert baseline()["synonyms"][concept] > 0, "the baseline lost the drift this test exists for"
+    """The synonyms are schemas/terms.json's `forbidden` variants. 5.61.0 called the decider
+    `the human` 21 times beside `the person`, a spawned agent a `delegation` 17 times beside
+    `subagent`, and the test-author agent `test author` 8 times, quotations left out."""
+    assert baseline()["synonyms"].get(concept, 0) > 0, \
+        "the baseline lost the drift this test exists for"
     assert current()["synonyms"][concept] == 0, \
         f"a synonym of '{concept}' is back: {text_metrics.SYNONYMS[concept]}"
 

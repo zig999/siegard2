@@ -9,8 +9,8 @@ recorded beside the implement-task benchmark, so a change that grows a measure i
 
 Prose is the file minus its frontmatter, its fenced blocks and its «…» quotations — a quotation
 is a requirement's own words, which this text may not change. Line width is read on the file's own
-lines outside fenced and indented blocks and tables; a synonym is counted outside inline code,
-where a name such as a file's is not the word.
+lines outside fenced and indented blocks and tables. Synonyms are schemas/terms.json's
+`forbidden` variants, counted by tools/term_counts.py — one list and one count for both.
 
 Usage:
     python3 tools/text_metrics.py <plugin-root> [<skill>] [--agents a,b,c]
@@ -26,12 +26,12 @@ from pathlib import Path
 FENCE = re.compile(r"```.*?```", re.S)
 FRONT = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 QUOTE = re.compile(r"«[^»]*»")
-INLINE_CODE = re.compile(r"`[^`\n]*`")
 SENTENCE_END = re.compile(r"(?<=[.;:!?])\s+(?=[A-Z`*«(\[])")
-SYNONYMS = {
-    "the person": ("the human", "a human", "human's"),
-    "subagent": ("delegation",),
-}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import term_counts  # noqa: E402
+
+SYNONYMS = {c["term"]: tuple(c["forbidden"]) for c in term_counts.terms()["concepts"]
+            if c["forbidden"]}
 
 
 def files_of(plugin: Path, skill: str, agents: tuple[str, ...]) -> list[Path]:
@@ -89,8 +89,8 @@ def measure(paths: list[Path]) -> dict:
     texts = {p: p.read_text(encoding="utf-8") for p in paths}
     words = [n for t in texts.values() for n in sentences(t)]
     wide = sum(1 for t in texts.values() for line in prose_lines(t) if len(line) > 100)
-    lowered = {p: INLINE_CODE.sub("", prose(t)).lower() for p, t in texts.items()}
-    synonyms = {name: sum(lowered[p].count(s) for p in paths for s in banned)
+    read = {p: term_counts.prose(t) for p, t in texts.items()}
+    synonyms = {name: sum(term_counts.count(read[p], v) for p in paths for v in banned)
                 for name, banned in SYNONYMS.items()}
     return {
         "files": len(paths),

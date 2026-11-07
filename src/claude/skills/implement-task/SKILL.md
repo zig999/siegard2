@@ -36,17 +36,18 @@ its step is reached, before acting on it.
 
 ## Terms
 
-- **You** run this skill: the session that executes every step below.
-- **Subagent** — an agent you spawn. **The producers** are the two that write what a delivery is
-  made of: `task-implementer` writes the source and `test-author` the tests. The
-  `failure-diagnostician` reads a red suite and writes nothing.
+- **You** — the session that runs the skill. Every step below is yours.
+- **Subagent** — an agent the skill spawns.
+- **Producer** — a subagent that writes what a delivery is made of — `task-implementer` the
+  source, `test-author` the tests. The `failure-diagnostician` reads a red suite and writes
+  nothing.
 - **Re-enter** — send a subagent that has returned a new message in its own context, instead of
   spawning a fresh one. `references/delegation.md` says when.
-- **Stop** — you end the invocation: nothing more is written, and the report says why.
+- **Stop** — the invocation ends: nothing more is written, and the report says why.
 - **Refusal** — a script's non-zero exit naming what it refused. Quote it verbatim; never work
   around it.
 - **Door** — an invocation of another entry point that the report hands the person, filled with
-  everything you know and ready to paste. Taking it is the person's.
+  everything known and ready to paste. Taking it is the person's.
 
 ## Required inputs
 

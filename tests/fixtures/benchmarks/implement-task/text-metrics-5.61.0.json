@@ -9,8 +9,9 @@
  "sentences_over_60_words": 34,
  "prose_lines_over_100": 30,
  "synonyms": {
-  "the person": 28,
-  "subagent": 18
+  "the person": 21,
+  "subagent": 17,
+  "test-author": 8
  },
  "description_chars": {
   "skill": 844,
