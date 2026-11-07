@@ -183,7 +183,9 @@ constraints spent 26 judges on files the notes never cited while the notes named
 - **R8** — Every fact line of the material lands in a node or is left out with a stated reason,
   recorded per line in a ledger beside the material and outside the specification root. A line
   with neither is a fact the analysis dropped, and the ledger is refused. The ledger discloses
-  where each fact went; it holds no fact, and no node carries it.
+  where each fact went; it holds no fact, and no node carries it. An adoption reads a ledger only
+  where all its material is survey or intent material and no line of it is left open, and refuses
+  any other ledger (SPEC-001 R16).
 - **R9** — Every fact line of intent material names a test the material read and a file of the
   source it governs, and a line that names no test or no governed file is refused. An adoption
   over its ledger hands each governed file the nodes its facts landed in; a test is never a file
@@ -229,7 +231,11 @@ constraints spent 26 judges on files the notes never cited while the notes named
    (`test_a_fact_line_with_no_entry_refuses_the_ledger`, `test_an_entry_at_no_fact_line_is_refused`,
    `test_a_node_the_specification_does_not_hold_is_refused`,
    `test_an_entry_naming_both_a_node_and_a_reason_is_refused_by_the_contract`,
-   `test_a_complete_ledger_is_sound_and_prints_the_candidates_per_file`).
+   `test_a_complete_ledger_is_sound_and_prints_the_candidates_per_file`). An adoption staged over
+   a ledger holding an open line, or material that is not survey or intent material, is refused —
+   `tests/test_stage_fold.py` proves each
+   (`test_an_adoption_refuses_a_ledger_with_an_open_line`,
+   `test_an_adoption_refuses_a_ledger_over_prose_material`).
 6. For R9: a fact line naming no test or no governed file is refused by line, a listed test the
    scope does not declare and a governed file that is a declared test are refused, a target
    declaring no tests refuses intent material, and an adoption over the ledger hands each

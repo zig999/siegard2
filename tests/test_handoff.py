@@ -626,6 +626,56 @@ def test_a_filled_skeleton_renders_and_a_moved_state_refuses_it(project):
     assert done.returncode == 1 and done.stdout.startswith("state: differs from what progress.py")
 
 
+def write_ledger(home: Path, entries: list[dict]) -> Path:
+    """A material ledger as /analyse answers it; `--prepare` reads only how many lines it leaves
+    open, so the material it names need not exist here."""
+    path = home / "ledger.md"
+    front = {"contract_version": "siegard-ledger/1", "material": ["agenda.md"], "entries": entries}
+    path.write_text("---\n" + json.dumps(front) + "\n---\n", encoding="utf-8")
+    return path
+
+
+def test_a_ledger_with_open_lines_leads_the_state_and_hands_the_analysis_back(tmp_path):
+    """SPEC-001 R16 and SPEC-006 R10: the count of open lines leads the state, before the
+    script's line, and the skill itself is a door beside the others."""
+    ledger = write_ledger(tmp_path, [{"at": "agenda.md:3", "node": "rules/a/b"},
+                                     {"at": "agenda.md:3", "open": "the rest"},
+                                     {"at": "agenda.md:5", "open": "all of it"}])
+    prepared = prepare(tmp_path, "analyse", "--ledger", str(ledger), "--language", "pt-BR")
+    quiet = CONTRACT["x-labels"]["pt-BR"]["quiet"]
+    assert prepared["state"] == f"2 linha(s) do material ainda em aberto · {quiet}"
+    assert prepared["state_from"]["ledger"] == str(ledger.resolve())
+    doors = [door["entry"] for door in prepared["decisions"][0]["others"]]
+    assert doors[0] == "/analyse" and "/plan-work" in doors
+    assert doors_of(prepared)["/analyse"]["answer"] == "not checked"
+
+
+def test_a_ledger_with_no_open_line_changes_nothing(tmp_path):
+    ledger = write_ledger(tmp_path, [{"at": "agenda.md:3", "node": "rules/a/b"}])
+    prepared = prepare(tmp_path, "analyse", "--ledger", str(ledger))
+    assert prepared["state"] == CONTRACT["x-labels"]["en"]["quiet"]
+    assert "/analyse" not in doors_of(prepared)
+
+
+def test_a_record_whose_open_count_moved_is_refused_at_render(tmp_path):
+    ledger = write_ledger(tmp_path, [{"at": "agenda.md:5", "open": "all of it"}])
+    prepared = prepare(tmp_path, "analyse", "--ledger", str(ledger))
+    assert prepared["state"].startswith("1 line(s) of the material still open · ")
+    write_ledger(tmp_path, [{"at": "agenda.md:5", "node": "rules/a/b"}])
+    now = handoff.state_now(prepared["state_from"], "en", CONTRACT)
+    assert now == CONTRACT["x-labels"]["en"]["quiet"] != prepared["state"]
+    data = record("record-en-two-decisions.json")
+    data.update(state=prepared["state"], state_from=prepared["state_from"])
+    _, problems = rendered(data, handoff.state_now)
+    assert any(p.startswith("state: differs from what progress.py prints now") for p in problems)
+
+
+def test_prepare_refuses_a_ledger_that_is_no_file(tmp_path):
+    done = run("--prepare", "--skill", "analyse", "--project", str(tmp_path),
+               "--ledger", str(tmp_path / "missing.md"))
+    assert done.returncode == handoff.CANNOT_RUN and "is no ledger file" in done.stderr
+
+
 @pytest.mark.parametrize("args", [["--prepare"], ["--prepare", "--skill", "plan-work"],
                                   ["--prepare", "--skill", "no-such-skill", "--project", "."],
                                   ["--prepare", "--skill", "plan-work", "--project", ".",

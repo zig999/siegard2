@@ -116,7 +116,9 @@ What this script does, and nobody else does any of it:
                                                                   fact lines per heading
     trace.py --ledger <ledger.md> <spec-root>                     hold a material ledger to the
                                                                   material it accounts for and the
-                                                                  nodes it names; print the file
+                                                                  nodes it names; print the lines
+                                                                  still open, the reasons lines
+                                                                  were left out by count, the file
                                                                   set and candidates per file
 
 Drift is reported in four classes, because a caller can act on each differently and could act on
@@ -3052,6 +3054,98 @@ def read_material(path: Path) -> tuple[dict | None, list[dict], list[str]]:
     return front, facts, []
 
 
+MATERIAL_CONTRACT_PREFIX = "siegard-"
+PROSE_HEADING = re.compile(r" {0,3}#{1,6}(\s|$)")
+PROSE_RULE = re.compile(r" {0,3}([-*_])( *\1){2,} *$")
+PROSE_BOLD = re.compile(r" {0,3}(\*\*|__)\S")
+PROSE_LIST = re.compile(r"([-*+]|\d{1,9}[.)])(\s|$)")
+PROSE_TABLE_SEPARATOR = re.compile(r"\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")
+PROSE_FENCE = re.compile(r" {0,3}(`{3,}|~{3,})")
+
+
+def declares_material_contract(path: Path) -> bool:
+    """Whether the file opens with frontmatter naming a Siegard contract — survey, intent, or one
+    this reader does not know, which `read_material` then refuses rather than reading as prose."""
+    text, _ = spec.read_node(path)
+    match = spec.FENCE.match(text or "")
+    if not match:
+        return False
+    try:
+        front = spec.load_yaml(match.group(1)) or {}
+    except yaml.YAMLError:
+        return False
+    version = front.get("contract_version") if isinstance(front, dict) else None
+    return isinstance(version, str) and version.startswith(MATERIAL_CONTRACT_PREFIX)
+
+
+def prose_item_lines(text: str) -> list[tuple[int, str]]:
+    """The item lines of material that declares no Siegard material contract — «a line opening
+    with bold text, a list item opening at the line's start, a table body row, or the first line
+    of any other paragraph, outside frontmatter, code fences and headings» (SPEC-001 R16) — each
+    with its number in the file. A table's header row, the row its separator follows, is no body
+    row; a thematic break and an HTML comment are no paragraph."""
+    lines = text.split("\n")
+    first = 0
+    match = spec.FENCE.match(text)
+    if match:
+        first = match.group(0).count("\n")
+    items: list[tuple[int, str]] = []
+    fence: str | None = None
+    comment = False
+    previous = "boundary"
+    for index in range(first, len(lines)):
+        line = lines[index]
+        stripped = line.strip()
+        if fence is not None:
+            if stripped.startswith(fence):
+                fence = None
+                previous = "boundary"
+            continue
+        if comment:
+            if "-->" in line:
+                comment = False
+                previous = "boundary"
+            continue
+        opened = PROSE_FENCE.match(line)
+        if opened:
+            fence = opened.group(1)[0] * 3
+            previous = "boundary"
+            continue
+        if stripped.startswith("<!--"):
+            comment = "-->" not in stripped
+            previous = "boundary"
+            continue
+        if not stripped or PROSE_HEADING.match(line) or PROSE_RULE.match(line):
+            previous = "boundary"
+            continue
+        if stripped.startswith("|"):
+            following = lines[index + 1].strip() if index + 1 < len(lines) else ""
+            separator = PROSE_TABLE_SEPARATOR.match(stripped)
+            header = following.startswith("|") and PROSE_TABLE_SEPARATOR.match(following)
+            if not separator and not header:
+                items.append((index + 1, stripped))
+            previous = "boundary"
+            continue
+        if PROSE_BOLD.match(line) or PROSE_LIST.match(line) or previous == "boundary":
+            items.append((index + 1, stripped))
+        previous = "paragraph"
+    return items
+
+
+def read_prose(path: Path) -> tuple[dict | None, list[dict], list[str]]:
+    """One file of material that declares no Siegard material contract, read as `read_material`
+    reads survey material: every item line, with its number in the file. Prose names no area, so
+    no fact carries files and an adoption has nothing to judge from it."""
+    if not path.is_file():
+        return None, [], [f"{path} does not exist"]
+    text, unreadable = spec.read_node(path)
+    if text is None:
+        return None, [], [f"{path}: {unreadable}"]
+    facts = [{"at": f"{path.name}:{number}", "line": number, "text": line, "files": [],
+              "heading": None} for number, line in prose_item_lines(text)]
+    return {"prose": True, "files": []}, facts, []
+
+
 def survey(paths: list[Path]) -> int:
     """Hold material to its contract, file by file, and count what each holds: fact lines per
     heading, and the files of the area no fact names — on intent material also the tests no fact
@@ -3145,11 +3239,27 @@ def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[
         return None, {}, problems
     surveys: dict[str, list[dict]] = {}
     fronts: dict[str, dict] = {}
+    digests = front.get("digests") or {}
     for relative in front["material"]:
-        material_front, facts, held = read_material(ledger.parent / relative)
+        path = ledger.parent / relative
+        prose = path.is_file() and not declares_material_contract(path)
+        reader = read_prose if prose else read_material
+        material_front, facts, held = reader(path)
         if material_front is None:
             problems += held
             continue
+        recorded = digests.get(relative)
+        if recorded is not None or prose:
+            now = spec.digest_of(path)
+            if recorded is None:
+                problems.append(f"digests: {relative} has none — «The ledger records the sha256 "
+                                f"digest of every such file» (SPEC-001 R16); as it stands now it "
+                                f"is {now}")
+            elif recorded != now:
+                problems.append(f"digests: {relative} is {now} now, not {recorded} — «a ledger "
+                                f"whose digest no longer matches its file is refused, because its "
+                                f"line numbers no longer locate the items» (SPEC-001 R16); answer "
+                                f"the ledger again over the material as it stands")
         for fact in facts:
             fact["at"] = f"{relative}:{fact['line']}"
         surveys[relative] = facts
@@ -3158,6 +3268,17 @@ def read_ledger(ledger: Path) -> tuple[dict | None, dict[str, list[dict]], list[
         return None, {}, problems
     front["_surveys"] = fronts
     return front, surveys, []
+
+
+def open_lines(ledger: Path) -> int | None:
+    """How many lines of the material the ledger leaves open — the count «leads the state the
+    analysis's handoff opens with» (SPEC-001 R16) — read from its frontmatter alone; None where
+    the ledger cannot be read as one."""
+    front, _ = frontmatter_of(ledger)
+    if not isinstance(front, dict) or not isinstance(front.get("entries"), list):
+        return None
+    return len({entry.get("at") for entry in front["entries"]
+                if isinstance(entry, dict) and "open" in entry})
 
 
 def ledger_candidates(front: dict, surveys: dict[str, list[dict]]) -> dict[str, set[str]]:
@@ -3182,11 +3303,16 @@ def ledger_candidates(front: dict, surveys: dict[str, list[dict]]) -> dict[str, 
 def ledger(path: Path, spec_root: Path) -> int:
     """Hold a ledger to the material it accounts for and to the specification it names.
 
-    «Every fact line of the material lands in a node or is left out with a stated reason»
-    (SPEC-005 R8). Every fact line has at least one entry; every entry names a fact line; every
-    node named is one the specification holds. Refused whole otherwise: a ledger short one fact
-    reads exactly like a complete one, and the fact it is short is the one the analysis dropped.
-    Sound, it prints what an adoption reads from it — the file set, and the candidates per file."""
+    «Every item line of a material file the analysis is given lands in a node, is left out with a
+    stated reason, or is left open with what remains to answer» (SPEC-001 R16); on survey and
+    intent material those lines are its fact lines, and «Every fact line of the material lands in
+    a node or is left out with a stated reason» (SPEC-005 R8). Every line has at least one
+    entry; every entry names a line; every node named is one the specification holds; every file
+    that declares no material contract carries its digest, matching. Refused whole otherwise: a
+    ledger short one line reads exactly like a complete one, and the line it is short is the one
+    the analysis dropped. Sound, it prints the lines still open, the reasons lines were left out
+    grouped by count, and what an adoption reads from it — the file set, and the candidates per
+    file."""
     if not spec_root.is_dir():
         print(f"cannot run: {spec_root} is not a directory", file=sys.stderr)
         return CANNOT_RUN
@@ -3199,11 +3325,17 @@ def ledger(path: Path, spec_root: Path) -> int:
     if nodes is None:
         return status
     by_at = {fact["at"]: fact for facts in surveys.values() for fact in facts}
+    prose = {relative for relative, held in front["_surveys"].items() if held.get("prose")}
     landed: dict[str, list[dict]] = {}
     for index, entry in enumerate(front["entries"]):
         if entry["at"] not in by_at:
-            problems.append(f"entries[{index}]: {entry['at']} is no fact line of the material — "
-                            f"a top-level bullet under {', '.join(FACT_HEADINGS)}")
+            if entry["at"].rsplit(":", 1)[0] in prose:
+                problems.append(f"entries[{index}]: {entry['at']} is no item line of the material "
+                                f"— a line opening with bold text, a list item at the line's "
+                                f"start, a table body row or the first line of a paragraph")
+            else:
+                problems.append(f"entries[{index}]: {entry['at']} is no fact line of the material "
+                                f"— a top-level bullet under {', '.join(FACT_HEADINGS)}")
             continue
         node = entry.get("node")
         if node is not None and node not in nodes:
@@ -3214,20 +3346,46 @@ def ledger(path: Path, spec_root: Path) -> int:
     dropped = [fact for facts in surveys.values() for fact in facts if fact["at"] not in landed]
     for fact in dropped:
         problems.append(f"{fact['at']}: no entry — «Every fact line of the material lands in a "
-                        f"node or is left out with a stated reason» (SPEC-005 R8): {fact['text'][:90]}")
+                        f"node or is left out with a stated reason» (SPEC-005 R8): {fact['text'][:90]}"
+                        if fact["at"].rsplit(":", 1)[0] not in prose else
+                        f"{fact['at']}: no entry — «Every item line of a material file the analysis "
+                        f"is given lands in a node, is left out with a stated reason, or is left open "
+                        f"with what remains to answer» (SPEC-001 R16): {fact['text'][:90]}")
     if problems:
         for problem in problems:
             print(f"{path}: {problem}")
         print(f"\n{len(problems)} problem(s); a fact with no entry is a fact the analysis "
-              f"dropped — land it in a node, or say why none holds it.")
+              f"dropped — land it in a node, say why none holds it, or say what remains open.")
         return 1
     facts_total = sum(len(f) for f in surveys.values())
     in_nodes = sum(1 for at, entries in landed.items() if any("node" in e for e in entries))
-    outside = facts_total - in_nodes
+    still_open = sorted((at for at, entries in landed.items() if any("open" in e for e in entries)),
+                        key=lambda at: (at.rsplit(":", 1)[0], int(at.rsplit(":", 1)[1])))
+    outside = sum(1 for at, entries in landed.items()
+                  if all("outside" in e for e in entries))
     per_file = ledger_candidates(front, surveys)
     every_node = sorted({e["node"] for e in front["entries"] if "node" in e})
     print(f"ledger sound: {facts_total} fact line(s) over {len(surveys)} material file(s) — "
-          f"{in_nodes} landed in {len(every_node)} node(s), {outside} left out with a reason")
+          f"{in_nodes} landed in {len(every_node)} node(s), {outside} left out with a reason, "
+          f"{len(still_open)} open")
+    if still_open:
+        print(f"  open: {len(still_open)} line(s) the analysis has not answered yet — «so an "
+              f"analysis with lines open is never handed as complete» (SPEC-001 R16):")
+        for at in still_open:
+            remains = "; ".join(e["open"] for e in landed[at] if "open" in e)
+            print(f"    {at}: {remains[:160]}")
+    reasons: dict[str, int] = {}
+    for entries in landed.values():
+        for entry in entries:
+            if "outside" in entry:
+                reasons[entry["outside"]] = reasons.get(entry["outside"], 0) + 1
+    if reasons:
+        print(f"  left out, by reason ({len(reasons)} distinct, largest first):")
+        for reason, count in sorted(reasons.items(), key=lambda item: (-item[1], item[0])):
+            print(f"    {count} × {reason[:160]}")
+    if len(prose) == len(surveys):
+        print(f"  candidates, all: {' '.join(every_node)}")
+        return 0
     print(f"  file set: {len(per_file)} file(s) the material read; candidates per file:")
     for given in sorted(per_file):
         print(f"    {given}: {len(per_file[given])}")
@@ -3910,6 +4068,15 @@ def stage(target: Path, spec_root: Path, slug: str, workspace: Path,
         if ledger_front is None:
             for problem in ledger_problems:
                 print(f"cannot run: {ledger_path}: {problem}", file=sys.stderr)
+            return CANNOT_RUN
+        prose = sorted(r for r, held in ledger_front["_surveys"].items() if held.get("prose"))
+        still_open = sorted({e["at"] for e in ledger_front["entries"] if "open" in e})
+        if prose or still_open:
+            print(f"cannot run: {ledger_path}: «An adoption reads a ledger only where all its "
+                  f"material is survey or intent material and no line of it is left open» "
+                  f"(SPEC-005 R8)"
+                  + (f"; not survey or intent material: {', '.join(prose)}" if prose else "")
+                  + (f"; open: {', '.join(still_open)}" if still_open else ""), file=sys.stderr)
             return CANNOT_RUN
         per_file_ledger = ledger_candidates(ledger_front, surveys)
         if not files:

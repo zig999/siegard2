@@ -621,6 +621,18 @@ def test_a_thing_the_material_only_asks_about_is_one_it_names():
     assert sentence in unstated
 
 
+def test_every_line_of_material_given_as_a_file_is_owed_a_ledger_entry():
+    """SPEC-001 R16: the ledger is owed over every material file, not only survey and intent
+    material; an open line is never outside, and the handoff names the ledger so its open count
+    leads the state."""
+    text = unwrapped(skill_text("analyse"))
+    assert ("Every item line of a material file the analysis is given lands in a node, is left out "
+            "with a stated reason, or is left open with what remains to answer") in text
+    assert "A question the material asks and this increment does not decide is open, never outside" \
+        in text
+    assert "--prepare --skill analyse --project <project-root> --ledger <ledger.md>" in text
+
+
 def test_the_analysis_reports_how_many_fields_it_decided_per_node():
     """The count is the one line a reviewer reads before any node; it opens the report's body
     beside every node written, read from `--shape --of` and never composed."""

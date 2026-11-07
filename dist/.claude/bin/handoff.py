@@ -24,8 +24,11 @@ already written, and `state_from` naming where it was read — the first line of
 over the goal armed through the framework (`siegard/goal.json` under the repository's git common
 directory), else the segment `progress.py` prints for the initiative named, else the line it
 prints for the project, else the fixed words `x-labels` holds for a project with nothing live.
-The line is cut to `x-ceilings.state`. Its doors are the invocations the skill's own report names
-ready to paste — the marker "`/<skill>` invocation ready to paste" inside the file's report
+Given `--ledger`, a material ledger the skill answered, the count of the lines it leaves open
+leads that line under `x-labels`' `open_lines` — «the count of open lines leads the state the
+analysis's handoff opens with, beside a door back to the analysis» (SPEC-001 R16) — and the skill
+itself is the first door. The line is cut to `x-ceilings.state`. Its doors are the invocations
+the skill's own report names ready to paste — the marker "`/<skill>` invocation ready to paste" inside the file's report
 section — each under `others`, none recommended, each carrying `entry` and the `check` that
 `door.py --check` answered for it: its first line and its `refused:` facts, or `not checked` with
 why, where no script decides that door or an input it takes is not named here. `report` is a path
@@ -56,7 +59,7 @@ is not decidable from the text and is not checked. `telemetry.py` imports `readi
 Declared dependencies: jsonschema; PyYAML for `--prepare` and for a `state_from` naming `goal.py`
 (this script imports goal.py, progress.py and door.py, its siblings, only there).
 
-Usage:  handoff.py --prepare --skill <name> --project <root> [--slug <slug>] [--target <key>] [--file <path>]... [--language <en|pt-BR>]
+Usage:  handoff.py --prepare --skill <name> --project <root> [--slug <slug>] [--target <key>] [--file <path>]... [--ledger <ledger.md>] [--language <en|pt-BR>]
                                              print the record's skeleton: the state a script
                                              printed, the skill's next doors each checked, the
                                              report's path. --file is the file set a door that
@@ -268,21 +271,38 @@ def progress_line(project: Path, slug: str | None, language: str, contract: dict
     return line or contract["x-labels"][language]["quiet"]
 
 
+def open_count(ledger: str | None) -> int:
+    """The lines of the material a ledger leaves open, as `trace.py` reads them; none named, none
+    open. A ledger that cannot be read is no count the state can carry, and counts none."""
+    if not ledger:
+        return 0
+    import trace
+    return trace.open_lines(Path(ledger)) or 0
+
+
 def state_now(source: dict, language: str, contract: dict) -> str:
-    """The line `state_from` names, as its script prints it now, cut to the state ceiling."""
+    """The line `state_from` names, as its script prints it now, cut to the state ceiling — led by
+    the count of lines a material ledger it names leaves open: «the count of open lines leads the
+    state the analysis's handoff opens with» (SPEC-001 R16)."""
     project = Path(source["project"])
     if source["script"] == "goal.py":
         line = goal_line(project)
     else:
         line = progress_line(project, source.get("slug"), language, contract)
+    count = open_count(source.get("ledger"))
+    if count:
+        line = contract["x-labels"][language]["open_lines"].format(n=count) + " · " + line
     return cut(line, contract)
 
 
-def state_source(project: Path, slug: str | None) -> dict:
-    """Which script the state is read from: the armed goal where one is, else progress."""
+def state_source(project: Path, slug: str | None, ledger: str | None = None) -> dict:
+    """Which script the state is read from: the armed goal where one is, else progress; and the
+    material ledger whose open lines lead it, where the skill names one."""
+    held = {"ledger": str(Path(ledger).resolve())} if ledger else {}
     if armed_goal(project) is not None:
-        return {"script": "goal.py", "project": str(project)}
-    return {"script": "progress.py", "project": str(project), **({"slug": slug} if slug else {})}
+        return {"script": "goal.py", "project": str(project), **held}
+    return {"script": "progress.py", "project": str(project), **({"slug": slug} if slug else {}),
+            **held}
 
 
 # ------------------------------------------------------------------ the doors, checked
@@ -347,12 +367,17 @@ def report_path(project: Path, skill: str) -> Path | None:
 
 
 def prepare(skill: str, project: Path, slug: str | None, target: str | None, files: list[str],
-            language: str, contract: dict) -> dict:
-    """The record's skeleton: what scripts decide written, what only the model writes empty."""
-    source = state_source(project, slug)
+            language: str, contract: dict, ledger: str | None = None) -> dict:
+    """The record's skeleton: what scripts decide written, what only the model writes empty. A
+    ledger leaving lines open hands the skill itself as the first door — «beside a door back to
+    the analysis, so an analysis with lines open is never handed as complete» (SPEC-001 R16)."""
+    source = state_source(project, slug, ledger)
+    names = next_doors(skill)
+    if open_count(source.get("ledger")):
+        names = [skill] + names
     doors = [{"reply_word": "", "what_it_does": "", "entry": f"/{name}",
               "check": check_door(name, project, slug, target, files)}
-             for name in next_doors(skill)]
+             for name in names]
     record: dict = {"contract_version": contract["properties"]["contract_version"]["const"],
                     "kind": "decision" if doors else "report", "language": language,
                     "state": state_now(source, language, contract), "state_from": source}
@@ -534,6 +559,7 @@ def main_prepare(args: list[str], contract: dict) -> int:
         slug = take(args, "--slug")
         target = take(args, "--target")
         files = take(args, "--file", many=True)
+        ledger = take(args, "--ledger")
         language = take(args, "--language") or "en"
     except CannotRun as refusal:
         print(f"cannot run: {refusal}", file=sys.stderr)
@@ -554,7 +580,10 @@ def main_prepare(args: list[str], contract: dict) -> int:
     if not root.is_dir():
         print(f"cannot run: {root} is not a directory", file=sys.stderr)
         return CANNOT_RUN
-    record = prepare(skill, root, slug, target, files, language, contract)
+    if ledger and not Path(ledger).is_file():
+        print(f"cannot run: {ledger} is no ledger file", file=sys.stderr)
+        return CANNOT_RUN
+    record = prepare(skill, root, slug, target, files, language, contract, ledger)
     print(json.dumps(record, indent=2, ensure_ascii=False))
     return 0
 

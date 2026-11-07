@@ -58,6 +58,11 @@
           "type": "string",
           "minLength": 1,
           "description": "`progress.py` only: the initiative whose segment is the state."
+        },
+        "ledger": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A material ledger the skill answered, absolute. Where it leaves lines open, «the count of open lines leads the state the analysis's handoff opens with, beside a door back to the analysis» (SPEC-001 R16): the state is `x-labels`' `open_lines` with the count `trace.py` reads, then ` · ` and the script's line."
         }
       },
       "description": "Which script the state is the line of, and the inputs it was read with. Required of kind `decision`: `--render` runs it again and refuses a `state` that differs from what it prints then."
@@ -417,7 +422,8 @@
       "own": "Your decision",
       "if_none": "If none is taken",
       "report": "Full report",
-      "quiet": "No initiative is in progress in this project."
+      "quiet": "No initiative is in progress in this project.",
+    "open_lines": "{n} line(s) of the material still open"
     },
     "pt-BR": {
       "recommended": "Recomendado",
@@ -425,9 +431,10 @@
       "own": "Decisão sua",
       "if_none": "Se nenhuma for tomada",
       "report": "Relatório completo",
-      "quiet": "Nenhuma iniciativa em andamento neste projeto."
+      "quiet": "Nenhuma iniciativa em andamento neste projeto.",
+    "open_lines": "{n} linha(s) do material ainda em aberto"
     },
-    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path; and `quiet`, the state `--prepare` writes where `progress.py` prints nothing. Every other word is the record's."
+    "description": "The fixed words `--render` adds, per language: the mark of the recommended door, the words that open the fact reversing it, the mark of a choice that is the person's own, of what stays if none is taken, and of the report's path; and `quiet`, the state `--prepare` writes where `progress.py` prints nothing. Every other word is the record's. `open_lines` is the count that leads the state where `state_from` names a material ledger leaving lines open, `{n}` the count `trace.py` reads from it."
   },
   "examples": [
     {

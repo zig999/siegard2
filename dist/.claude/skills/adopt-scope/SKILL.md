@@ -151,7 +151,9 @@ None is worked around, and none is retried:
 
 - a material file `--survey` refuses after the one re-delegation `/survey` makes;
 - a specification that does not hold together, or a ledger `--ledger` still refuses after the
-  analysis answered every fact line it could;
+  analysis answered every fact line it could, or one that still leaves a line open — «An
+  adoption reads a ledger only where all its material is survey or intent material and no line
+  of it is left open» (SPEC-005 R8);
 - a judge's return the fold refuses after the one re-delegation `/reconcile` makes, a record
   `--reconciliation` refuses, or a bind refused;
 - a field `siegard.json` does not declare;

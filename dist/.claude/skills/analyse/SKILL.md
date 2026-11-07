@@ -447,29 +447,66 @@ answer:
 Each is yours to fix now, in this invocation. What you leave standing, say so in the report and
 say why — a number carried into the report unexamined is a measurement nobody acted on.
 
-### 4b. Where the material is a survey or intent material: the ledger
+### 4b. The ledger: where every line of the material went
 
-Material whose frontmatter declares `siegard-survey/1` was read from source no delivery wrote;
-material declaring `siegard-intent/1` was read from the target's declared tests, each fact beside
-the source file it governs. Either way its fact lines — the top-level bullets under `## Facts`, `## Answers`, `## Vocabularies` and
-`## Upstream artifacts` — are each owed an answer: «Every fact line of the material lands in a
-node or is left out with a stated reason» (SPEC-005 R8). Read
-`${CLAUDE_PLUGIN_ROOT}/schemas/ledger.json` and write `ledger.md` beside the material — never
-under the specification root — with one entry per fact line: `at` as `<material file>:<line>`,
-and `node` naming the node whose fields now hold the fact, or `outside` saying why none does —
-implementation knowledge, a fact another increment owns, a behavior the material observed and did
-not decide. A fact that lands in several nodes takes one entry per node. Then run:
+Every material file you were given is owed a ledger: «Every item line of a material file the
+analysis is given lands in a node, is left out with a stated reason, or is left open with what
+remains to answer» (SPEC-001 R16). A file the material only cites is a source you consult, never
+material; material given only in the conversation has no lines and owes none, and the report says
+the material was not a file.
+
+Which lines are owed is not yours to choose. On material whose frontmatter declares
+`siegard-survey/1` — read from source no delivery wrote — or `siegard-intent/1` — read from the
+target's declared tests, each fact beside the source file it governs — they are its fact lines,
+the top-level bullets under `## Facts`, `## Answers`, `## Vocabularies` and
+`## Upstream artifacts`: «Every fact line of the material lands in a node or is left out with a
+stated reason» (SPEC-005 R8). On any other material `trace.py` enumerates them: every line opening
+with bold text, every list item at the line's start, every table body row and the first line of
+every other paragraph, outside frontmatter, code fences and headings. A context paragraph is
+owed an entry too; its answer is `outside`, saying it states no fact.
+
+Read `${CLAUDE_PLUGIN_ROOT}/schemas/ledger.json` and write `ledger.md` beside the material — never
+under the specification root — with one entry per line: `at` as `<material file>:<line>`, and
+one of three answers.
+
+- `node`, naming the node whose fields now hold the line's fact. A line that lands in several
+  nodes takes one entry per node.
+- `outside`, saying why no node holds it — implementation knowledge, a fact another context or
+  system owns, a behavior the material observed and did not decide, a line that states no fact.
+- `open`, saying what of the line remains to answer. A question the material asks and this
+  increment does not decide is open, never outside: a later increment of this analysis answers
+  it. «A line answered in part lands in the nodes that answer it and is left open for the rest»
+  (SPEC-001 R16) — where a line asks several things and the nodes answer some, the entry naming
+  the nodes stands beside one `open` entry naming what none of them answers. A node that answers
+  part of a line is the one place a ledger can look complete and is not; read each line you land
+  against everything it asks before writing `node` alone.
+
+A file that declares no Siegard material contract carries its digest under `digests`, keyed as
+`material` spells it: «The ledger records the sha256 digest of every such file» (SPEC-001 R16).
+`trace.py --ledger` prints the digest it reads where it is missing; the material is edited
+between increments only with the ledger answered again, because a changed digest is refused.
+Then run:
 
 ```
 python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/trace.py --ledger <ledger.md> <specification-root>
 ```
 
-A refusal names each fact line with no entry. Each is a fact you read and did not write, and the
-answer is one of two: give it the field, rule, scenario or answer it is owed — then rerun step 4
-— or state why no node holds it. Never an entry naming a node that does not hold the fact: the
-ledger is what an adoption reads to hand each file's judge its candidates, and a wrong entry
-sends a judge to the wrong node. Sound, the command prints the file set the material read and
-the candidates per file; both go into the report and the handoff below.
+A refusal names each line with no entry. Each is a line you read and did not answer, and the
+answer is one of three: give it the field, rule, scenario or answer it is owed — then rerun step
+4 — state why no node holds it, or leave it open saying what remains. Never an entry naming a node
+that does not hold the fact: the ledger is what an adoption reads to hand each file's judge its
+candidates, and a wrong entry sends a judge to the wrong node.
+
+Sound, the command prints the lines still open and the reasons lines were left out, grouped and
+counted, largest first. Read the largest group before reporting: one reason carrying most of the
+material is a reason doing the work an answer should, and each line under it is reread against
+it. On survey or intent material it also prints the file set the material read and the
+candidates per file; all of it goes into the report and the handoff below. An adoption reads a
+ledger only where no line of it is open, so over survey or intent material an open line is one
+more increment of this analysis before `/reconcile` can take it.
+
+A later invocation over the same material answers the same ledger: it reads the open lines first,
+answers them, and leaves every other entry as it stands unless the line's node changed.
 
 ### 5. Cross-check: obligations that share a subject
 
@@ -512,12 +549,16 @@ Recording a decision moves frontmatter: rerun the validation of step 4 before re
 
 «The state a handoff opens with is a script's line, never the session's» (SPEC-006 R10). Run
 `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/handoff.py --prepare --skill analyse --project
-<project-root> --language <en or pt-BR, the session's>` — no slug, which is the human's to name
-for the plan. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the fields
+<project-root> --ledger <ledger.md> --language <en or pt-BR, the session's>` — `--ledger` naming
+the ledger step 4b answered, left off only where the material was not a file, and no slug, which
+is the human's to name for the plan. Write the full report below through `bin/handoff.py --save-report <path>`, to the path its `report` names, and fill only the fields
 the skeleton left empty, and hand the person exactly what `handoff.py --render` prints over the
 record: the opening «A handoff opens with what needs the person, and explains after»
 (SPEC-006 R1) states. The doors it marks are the `/plan-work` and `/reconcile` ones this report hands, each
-with what its entry point answered or why nothing checked it. A refusal is answered by rewriting
+with what its entry point answered or why nothing checked it — and, where the ledger leaves lines
+open, `/analyse` itself first, under a state that opens with their count: «so an analysis with
+lines open is never handed as complete» (SPEC-001 R16). Say what remains open and which
+increment answers it; never say the analysis, or the material, is done while the count stands. A refusal is answered by rewriting
 the field it names; a state it says has moved, by running `--prepare` again and carrying its
 `state` and `state_from` whole.
 
@@ -533,9 +574,10 @@ Report, in this order, in the file:
   logs are the whole of what lets them: nothing else in the artifacts marks a decided fact
   apart from a stated one;
 - every tension the cross-check step found without a case to decide, named as a watch item;
-- where the material was a survey or intent material: `--ledger`'s output verbatim — how many
-  fact lines landed in nodes and how many were left out, and the reasons given, grouped — so a
-  reviewer sees what the analysis chose not to hold before an adoption reads it;
+- `--ledger`'s output verbatim — how many lines landed in nodes, how many were left out and why,
+  grouped, and every line still open with what remains — so a reviewer sees what the analysis
+  chose not to hold, and what it has not answered yet, before anything reads the specification as
+  whole; or, where the material was not a file, that it was not;
 - **what this increment may have put the delivered code in breach of, said plainly.** This step
   never reads the target, deliberately — so a node written here can state an obligation the code
   already violates, and nothing in this invocation could have noticed. Say so: the decisions of

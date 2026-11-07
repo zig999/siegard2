@@ -155,6 +155,21 @@ enforces mechanically.
   populated root, where material that names nodes and states no change about them is material that
   states nothing. It is never a question about the material's content: what the stop names is the
   input that was absent, and supplying it is a new invocation.
+- **R16** — Every item line of a material file the analysis is given lands in a node, is left out
+  with a stated reason, or is left open with what remains to answer, recorded per line in a ledger
+  beside the material and outside the specification root. Of material that declares no Siegard
+  material contract, an item line is a line opening with bold text, a list item opening at the
+  line's start, a table body row, or the first line of any other paragraph, outside frontmatter,
+  code fences and headings; survey and intent material keep their fact lines (SPEC-005 R8). A line
+  answered in part lands in the nodes that answer it and is left open for the rest. The ledger
+  records the sha256 digest of every such file, and a ledger whose digest no longer matches its
+  file is refused, because its line numbers no longer locate the items. A line with no entry is
+  refused; an open line is not, and the count of open lines leads the state the analysis's handoff
+  opens with, beside a door back to the analysis, so an analysis with lines open is never handed
+  as complete. The reasons lines were left out are reported grouped and counted, largest first,
+  and none is refused for its count. Material given only in conversation has no lines and owes no
+  ledger, and the report says the material was not a file. A file the material only cites is a
+  source the analysis consults, never material, and owes no ledger.
 
 ### Language
 
@@ -226,3 +241,12 @@ enforces mechanically.
    same test holds the skill's sentence. For a thing the material names only as a question, an
    option or a proposal: the analyse skill and the decision-log schema state that the material
    names it, and the same test holds both.
+9. For R16: over material declaring no Siegard contract, `bin/trace.py --ledger` reads every
+   bold-led line, list item at the line's start, table body row and first paragraph line as an
+   item line and nothing under a fence, a heading or the frontmatter; refuses a line with no
+   entry, a ledger with no digest of the file and a digest that no longer matches; accepts a line
+   both landed and open; and prints the open lines and the reasons grouped by count —
+   `tests/test_ledger.py` proves each. `bin/handoff.py --prepare` given a ledger with open lines
+   leads its state with their count and hands the analysis as a door, and `--render` refuses the
+   record once the count changed — `tests/test_handoff.py` proves it. The analyse skill states the
+   requirement, and `tests/test_skill_contract.py` holds its sentence.

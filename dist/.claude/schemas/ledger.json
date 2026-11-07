@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siegard.dev/schemas/ledger.json",
   "title": "Siegard material ledger",
-  "description": "The frontmatter of `ledger.md` beside survey or intent material: where every fact line of the material went. «Every fact line of the material lands in a node or is left out with a stated reason» (SPEC-005 R8). One entry per fact line, keyed by the material file and the line's number; a line with no entry is a fact the analysis dropped, and `bin/trace.py --ledger` refuses the ledger. It is disclosure, not a second home: the fact lives in the node the entry names, and an entry names a node or a reason, never both. It sits beside the material, outside the specification root, so «Artifacts carry no provenance meta-fields» (SPEC-001 R8). `--stage --adopt --ledger` reads it to hand each file's judge the nodes its own facts landed in.",
+  "description": "The frontmatter of `ledger.md` beside the material an analysis read: where every item line of it went. «Every item line of a material file the analysis is given lands in a node, is left out with a stated reason, or is left open with what remains to answer» (SPEC-001 R16). On survey and intent material the item lines are its fact lines — «Every fact line of the material lands in a node or is left out with a stated reason» (SPEC-005 R8); on material that declares no Siegard material contract, `bin/trace.py` enumerates them. One entry per line, keyed by the material file and the line's number; a line with no entry is a fact the analysis dropped, and `bin/trace.py --ledger` refuses the ledger. It is disclosure, not a second home: the fact lives in the node the entry names, and an entry names a node, a reason or what remains open, never two. It sits beside the material, outside the specification root, so «Artifacts carry no provenance meta-fields» (SPEC-001 R8). `--stage --adopt --ledger` reads it to hand each file's judge the nodes its own facts landed in, and reads it only where every material is survey or intent material and no line is open.",
   "type": "object",
   "required": ["contract_version", "material", "entries"],
   "additionalProperties": false,
@@ -13,7 +13,18 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 },
-      "description": "Every material file this ledger accounts for — survey material or intent material, each read against its own contract — by path relative to the ledger's own directory. A fact line of a file not listed here is unaccounted for."
+      "description": "Every material file this ledger accounts for — survey material and intent material, each read against its own contract, or material that declares no Siegard material contract, whose item lines `bin/trace.py` enumerates — by path relative to the ledger's own directory. A line of a file not listed here is unaccounted for."
+    },
+    "digests": {
+      "type": "object",
+      "propertyNames": {
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      },
+      "description": "The digest of each material file as it stood when the ledger was answered — `sha256:` and the hex of its exact bytes, computable by hand as `sha256sum` — keyed by the path `material` spells. Required of every file that declares no Siegard material contract and checked wherever given: «a ledger whose digest no longer matches its file is refused, because its line numbers no longer locate the items» (SPEC-001 R16)."
     },
     "entries": {
       "type": "array",
@@ -21,7 +32,7 @@
         "type": "object",
         "required": ["at"],
         "additionalProperties": false,
-        "oneOf": [ { "required": ["node"] }, { "required": ["outside"] } ],
+        "oneOf": [ { "required": ["node"] }, { "required": ["outside"] }, { "required": ["open"] } ],
         "properties": {
           "at": {
             "type": "string",
@@ -36,7 +47,12 @@
           "outside": {
             "type": "string",
             "minLength": 1,
-            "description": "Why no node holds this fact: implementation knowledge, a fact another increment owns, a behavior the material observed and did not decide. One claim a reviewer can reject."
+            "description": "Why no node holds this line: implementation knowledge, a fact another context or system owns, a behavior the material observed and did not decide, or a line that states no fact. One claim a reviewer can reject. A line this analysis has not yet answered is `open`, never `outside`."
+          },
+          "open": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What of this line remains to answer, and that a later increment of the analysis answers it. «A line answered in part lands in the nodes that answer it and is left open for the rest» (SPEC-001 R16): beside entries naming nodes, it says which part none of them answers."
           }
         }
       }

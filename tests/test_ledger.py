@@ -198,3 +198,154 @@ def test_a_ledger_still_reads_material_held_before_tests_were_declared(surveyed)
     ledger = ledger_at(surveyed, full_entries(surveyed))
     done = run("--ledger", ledger, surveyed / "specs")
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+# ------------------------------------------------- material that declares no contract (SPEC-001 R16)
+
+
+AGENDA = """---
+title: Orders agenda
+---
+
+# Orders: what the analysis decides
+
+This agenda lists what is open.
+It continues here, on the paragraph's second line.
+
+## Items
+
+**A1. Who opens a case.**
+An operator opens it; decide whether a customer may.
+
+**A2. Billing.** Decide the rounding.
+**A3.** Decide the currency.
+
+- Cases carry a status.
+  - indented detail, part of the item above
+- Evidence is attached to a case.
+
+1. A numbered item.
+
+| Neighbour | Relation |
+|---|---|
+| billing | reads cases |
+
+```
+**not an item** inside a fence
+- nor this
+```
+
+<!-- a comment
+**nor this** -->
+
+---
+"""
+
+
+def item_lines() -> dict[str, int]:
+    found = {}
+    for number, line in enumerate(AGENDA.split("\n"), start=1):
+        for key in ("This agenda", "**A1.", "**A2.", "**A3.", "- Cases carry", "- Evidence is",
+                    "1. A numbered", "| billing"):
+            if line.startswith(key):
+                found[key] = number
+    return found
+
+
+@pytest.fixture
+def agenda(tmp_path: Path) -> Path:
+    spec_root = tmp_path / "specs"
+    shutil.copytree(FIXTURE, spec_root)
+    shutil.rmtree(spec_root / "projections", ignore_errors=True)
+    (tmp_path / "agenda.md").write_text(AGENDA, encoding="utf-8")
+    return tmp_path
+
+
+def agenda_ledger(agenda: Path, entries: list[dict], digest: str | None = "now") -> Path:
+    front: dict = {"contract_version": "siegard-ledger/1", "material": ["agenda.md"]}
+    if digest == "now":
+        front["digests"] = {"agenda.md": trace.spec.digest_of(agenda / "agenda.md")}
+    elif digest is not None:
+        front["digests"] = {"agenda.md": digest}
+    front["entries"] = entries
+    path = agenda / "ledger.md"
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+    return path
+
+
+def agenda_entries() -> list[dict]:
+    at = item_lines()
+    return [{"at": f"agenda.md:{at['This agenda']}", "outside": "states no fact"},
+            {"at": f"agenda.md:{at['**A1.']}", "node": NODE},
+            {"at": f"agenda.md:{at['**A1.']}", "open": "whether a customer may open one"},
+            {"at": f"agenda.md:{at['**A2.']}", "open": "the rounding"},
+            {"at": f"agenda.md:{at['**A3.']}", "outside": "implementation knowledge"},
+            {"at": f"agenda.md:{at['- Cases carry']}", "node": NODE},
+            {"at": f"agenda.md:{at['- Evidence is']}", "node": RULE},
+            {"at": f"agenda.md:{at['1. A numbered']}", "outside": "states no fact"},
+            {"at": f"agenda.md:{at['| billing']}", "outside": "a fact another context owns"}]
+
+
+def test_prose_item_lines_are_bold_led_list_table_and_paragraph_openings():
+    """Bold-led lines count one by one even inside a paragraph; a heading, a table's header and
+    separator, a nested item, a paragraph's second line, a fence, a comment and a thematic break
+    are no item line."""
+    numbers = [number for number, _ in trace.prose_item_lines(AGENDA)]
+    assert numbers == sorted(item_lines().values())
+
+
+def test_a_ledger_over_prose_is_sound_with_lines_open_and_prints_them(agenda):
+    done = run("--ledger", agenda_ledger(agenda, agenda_entries()), agenda / "specs")
+    assert done.returncode == 0, done.stdout + done.stderr
+    at = item_lines()
+    assert ("ledger sound: 8 fact line(s) over 1 material file(s) — 3 landed in 2 node(s), "
+            "4 left out with a reason, 2 open") in done.stdout
+    assert f"agenda.md:{at['**A1.']}: whether a customer may open one" in done.stdout
+    assert f"agenda.md:{at['**A2.']}: the rounding" in done.stdout
+    assert "2 × states no fact" in done.stdout.split("left out, by reason")[1].split("\n")[1]
+    assert "file set" not in done.stdout
+
+
+def test_a_prose_line_with_no_entry_is_refused_under_r16(agenda):
+    entries = [e for e in agenda_entries() if "A numbered" not in str(e)
+               and e["at"] != f"agenda.md:{item_lines()['1. A numbered']}"]
+    done = run("--ledger", agenda_ledger(agenda, entries), agenda / "specs")
+    assert done.returncode == 1
+    assert "no entry — «Every item line of a material file the analysis is given" in done.stdout
+    assert "A numbered item" in done.stdout
+
+
+def test_an_entry_at_no_prose_item_line_is_refused(agenda):
+    entries = agenda_entries() + [{"at": "agenda.md:2", "outside": "frontmatter"}]
+    done = run("--ledger", agenda_ledger(agenda, entries), agenda / "specs")
+    assert done.returncode == 1 and "agenda.md:2 is no item line of the material" in done.stdout
+
+
+def test_a_prose_ledger_without_a_digest_is_refused_and_told_the_digest(agenda):
+    done = run("--ledger", agenda_ledger(agenda, agenda_entries(), digest=None), agenda / "specs")
+    assert done.returncode == 2
+    assert f"as it stands now it is {trace.spec.digest_of(agenda / 'agenda.md')}" in done.stderr
+
+
+def test_a_prose_ledger_whose_material_changed_is_refused(agenda):
+    ledger = agenda_ledger(agenda, agenda_entries())
+    (agenda / "agenda.md").write_text(AGENDA.replace("This agenda", "\nThis agenda"),
+                                      encoding="utf-8")
+    done = run("--ledger", ledger, agenda / "specs")
+    assert done.returncode == 2 and "no longer locate the items" in done.stderr
+
+
+def test_a_survey_ledger_needs_no_digest_but_a_wrong_one_is_refused(surveyed):
+    """Survey and intent material keep their contract; a digest given over them is still held."""
+    front_entries = full_entries(surveyed)
+    path = ledger_at(surveyed, front_entries)
+    front = yaml.safe_load(path.read_text(encoding="utf-8").split("---")[1])
+    front["digests"] = {"orders.md": "sha256:" + "0" * 64}
+    path.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+    done = run("--ledger", path, surveyed / "specs")
+    assert done.returncode == 2 and "no longer locate the items" in done.stderr
+
+
+def test_open_lines_counts_each_open_line_once(agenda):
+    assert trace.open_lines(agenda_ledger(agenda, agenda_entries())) == 2
+    assert trace.open_lines(agenda / "nowhere.md") is None

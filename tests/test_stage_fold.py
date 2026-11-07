@@ -2974,6 +2974,36 @@ def test_ledger_with_stage_is_a_mode_of_adopt(adopting):
     assert done.returncode == 2 and "is a mode of --adopt" in done.stderr
 
 
+def test_an_adoption_refuses_a_ledger_with_an_open_line(adopting):
+    """SPEC-005 R8: an open line is a fact the analysis has not answered yet, so no judge is
+    handed its candidates until it is."""
+    ledger = ledgered(adopting)
+    front = yaml.safe_load(ledger.read_text(encoding="utf-8").split("---")[1])
+    front["entries"].append({"at": front["entries"][0]["at"], "open": "who may open a case"})
+    ledger.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+    done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x",
+               "--adopt", "--ledger", ledger)
+    assert done.returncode == 2
+    assert "no line of it is left open" in done.stderr and "open: orders.md:" in done.stderr
+
+
+def test_an_adoption_refuses_a_ledger_over_prose_material(adopting):
+    """SPEC-005 R8: prose names no area, so an adoption over it would judge nothing and say so
+    nowhere."""
+    ledger = ledgered(adopting)
+    agenda = ledger.parent / "agenda.md"
+    agenda.write_text("Cases are opened by an operator.\n", encoding="utf-8")
+    front = yaml.safe_load(ledger.read_text(encoding="utf-8").split("---")[1])
+    front["material"].append("agenda.md")
+    front["digests"] = {"agenda.md": trace.spec.digest_of(agenda)}
+    front["entries"].append({"at": "agenda.md:1", "node": NODE})
+    ledger.write_text("---\n" + yaml.safe_dump(front, sort_keys=False) + "---\n", encoding="utf-8")
+    done = run("--stage", adopting / "backend", adopting / "specs", "x", adopting / "ws-x",
+               "--adopt", "--ledger", ledger)
+    assert done.returncode == 2
+    assert "not survey or intent material: agenda.md" in done.stderr
+
+
 def test_a_pair_stamped_against_an_earlier_node_text_is_never_omitted(consumer):
     """The omission guard reads the pair's own stamp, not the entry's: a file a later bind left
     at the node's earlier text is owed a judge even while the entry's digest is current."""
