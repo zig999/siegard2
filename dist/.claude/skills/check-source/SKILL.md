@@ -24,8 +24,11 @@ other half's owner.
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
-   named, its absence is a stop.
+1. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+   names none, the project root is the git toplevel of the session's working directory, as
+   `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
+   (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
+   below, and its `project_root:` line is the root. Its refusal is a stop.
 2. **the target** — which of the project's target source roots these files sit under, by the key
    `siegard.json`'s `targets` names it. Where `targets` declares exactly one key and the
    invocation names none, that key is the target: a set of one holds no choice, so it is decided

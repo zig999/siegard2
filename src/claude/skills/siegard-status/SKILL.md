@@ -13,8 +13,11 @@ command or file it came from.
 
 ## Required inputs
 
-One: **the project root** — where `siegard.json` lives. Named by the human; inferred rather
-than named, its absence is a stop.
+One: **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+names none, the project root is the git toplevel of the session's working directory, as
+`bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
+(SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
+below, and its `project_root:` line is the root. Its refusal is a stop.
 
 Run `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py <project-root>` once, before anything
 else — the one reader of `siegard.json`, held to `${CLAUDE_PLUGIN_ROOT}/schemas/project.json`.

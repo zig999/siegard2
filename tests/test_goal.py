@@ -912,7 +912,7 @@ def test_the_goal_skill_reads_an_unnamed_root_from_the_working_directory_and_nam
     much as any argument; every line it hands to paste still names the root."""
     flat = " ".join(GOAL_SKILL.split())
     assert "the git toplevel of the session's working directory, disclosed" in flat
-    assert "`git rev-parse --show-toplevel` over the session's working directory" in flat
+    assert "what `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py --here` prints as `project_root:`" in flat
     assert "A toplevel holding no `siegard.json` is a stop" in flat
     assert "Every line this skill hands to paste names the root explicitly" in flat
 

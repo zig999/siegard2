@@ -21,8 +21,11 @@ A missing input is a stop, not a default:
    message that does not state it is a stop. A standing automation the human armed — a goal
    condition naming this skill — is such a statement; this skill deciding on its own that a
    session "meant" the whole route is not.
-2. **the project root** — where `siegard.json` lives. Named by the human; inferred rather than
-   named, its absence is a stop.
+2. **the project root** — where `siegard.json` lives, named by the human. «Where the invocation
+   names none, the project root is the git toplevel of the session's working directory, as
+   `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
+   (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
+   below, and its `project_root:` line is the root. Its refusal is a stop.
 3. **the target** — by the key `siegard.json`'s `targets` names it. Where `targets` declares
    exactly one key and the ask names none, that key is the target: decided and disclosed, never
    asked.

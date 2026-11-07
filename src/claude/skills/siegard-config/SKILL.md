@@ -15,8 +15,13 @@ by a script, never by you.
 
 A missing input is a stop, not a default:
 
-1. **the project root** — where `siegard.json` lives, or will. Named by the human; inferred
-   rather than named, its absence is a stop.
+1. **the project root** — where `siegard.json` lives, or will, named by the human. «Where the
+   invocation names none, the project root is the git toplevel of the session's working
+   directory, as `bin/project.py --here` resolves it, and only where that toplevel holds
+   `siegard.json`» (SPEC-010 R6): there, `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py --here`
+   runs before anything else, and its `project_root:` line is the root. Its refusal is a stop,
+   and creating the file takes a named root — «`siegard.json` is never created under a root the
+   invocation did not name» (SPEC-010 R6).
 2. **at least one field to declare** — any of `specification_root`, one or more `targets`
    entries (a name and a path each), `work_root`, `delivery_root`, one or more `standard`
    entries (a target's key in `targets` and, for it, a registry's path or `null` to declare

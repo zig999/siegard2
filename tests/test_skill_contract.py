@@ -933,3 +933,30 @@ def test_no_analyse_citation_splits_the_clause_it_stands_in(path):
     split = [m.group(0)[-80:] for m in CLAUSE_SPLIT.finditer(text)
              if m.group("after").split()[0].strip("`") not in JOINS]
     assert not split, f"{path.name}: a citation splits its clause: {split}"
+
+
+ROOT_INPUT = re.compile(r"\*\*the project root\*\* — (.*?)(?=\n(?:\d+\. |\n))", re.S)
+R6 = ("«Where the invocation names none, the project root is the git toplevel of the session's "
+      "working directory, as `bin/project.py --here` resolves it, and only where that toplevel "
+      "holds `siegard.json`» (SPEC-010 R6)")
+
+
+def root_input_skills() -> list[str]:
+    return sorted(p.parent.name for p in (REPO / "src/claude/skills").glob("*/SKILL.md")
+                  if ROOT_INPUT.search(p.read_text(encoding="utf-8").split("## Required inputs", 1)[-1]))
+
+
+def test_the_skills_that_take_a_project_root_are_found():
+    """The guard below needs subjects: every skill whose inputs list the project root."""
+    assert len(root_input_skills()) >= 15
+
+
+@pytest.mark.parametrize("name", root_input_skills())
+def test_every_project_root_input_states_how_an_unnamed_root_resolves(name):
+    """SPEC-010 R6: a root the invocation does not name is read by `project.py --here`, and the
+    input that lists the project root says so in the requirement's words, never in a sentence a
+    session can read either way."""
+    text = skill_text(name).split("## Required inputs", 1)[-1]
+    held = re.sub(r"\s+", " ", ROOT_INPUT.search(text).group(1))
+    assert R6 in held, f"{name}: the project-root input does not quote SPEC-010 R6"
+    assert "`project_root:`" in held, f"{name}: the input does not say which line names the root"

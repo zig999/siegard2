@@ -42,9 +42,12 @@ place — inside an objective, after the scope, in a later message — arms noth
 asking to arm is answered with the invocation to paste that the composing report handed, never by
 running `goal.py --arm`.
 
-**The project root** where none is named is `git rev-parse --show-toplevel` over the session's
-working directory: the person opened the session there and typed the invocation in it, so the
-directory is their choice as much as any argument. A toplevel holding no `siegard.json` is a stop.
+**The project root** where none is named is what `python3 -B ${CLAUDE_PLUGIN_ROOT}/bin/project.py
+--here` prints as `project_root:` — «Where the invocation names none, the project root is the git
+toplevel of the session's working directory, as `bin/project.py --here` resolves it, and only
+where that toplevel holds `siegard.json`» (SPEC-010 R6). The person opened the session there and
+typed the invocation in it, so the directory is their choice as much as any argument. A toplevel
+holding no `siegard.json` is a stop: `--here` refuses it.
 Every line this skill hands to paste names the root explicitly, so it arms the same project from
 any directory.
 

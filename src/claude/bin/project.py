@@ -46,6 +46,13 @@ is answered by the delivery's test author, before the implementation record is w
 (SPEC-004 R24) — and which files those are is this match, never a session's reading of a
 directory name. A target that declares no tests answers that no path is one.
 
+`--here` is the one reading of a project root no invocation named — «Where the invocation names
+none, the project root is the git toplevel of the session's working directory, as
+`bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
+(SPEC-010 R6). The person chose that directory by opening the session in it; a toplevel that
+declares no project is not one they chose, so this mode refuses where the named form would
+report the file absent, and nothing is ever created under a root nobody named.
+
 `toplevel_of()` here is the one answer to where a project's `siegard.json` sits, for every script
 and for the plugin's hooks. A hook runs at the start of every session and every agent, and one that
 fails stops them, so importing this module needs nothing beyond the standard library: jsonschema
@@ -57,6 +64,11 @@ Declared dependencies: jsonschema.
 Usage:  project.py <project-root>    resolve siegard.json for the tree holding <project-root> —
                                      the file sits at that directory's git toplevel, or at the
                                      directory itself where git does not hold it
+        project.py --here            no project root named: resolve siegard.json at the git
+                                     toplevel of the working directory, printing that toplevel
+                                     first as `project_root: <path>`; a working directory git
+                                     does not hold, or a toplevel holding no siegard.json, is
+                                     `cannot run` and prints no field
         project.py <project-root> --declared-tests <target> <path> [<path> ...]
                                      the same file, held to the same contract, then one line per
                                      path — spelled from that target's source root — saying
@@ -168,22 +180,27 @@ def spelled(scope: dict) -> str:
             + (", nested" if scope.get("nested") else ""))
 
 
-def toplevel_of(directory: Path, timeout: float | None = None) -> Path:
-    """Where the project file sits: the directory's git toplevel, or the directory itself
-    where git does not hold it — deterministic either way, because the directory is a named
-    input and never the session's working directory. A caller that cannot wait names a
-    `timeout`, and a git that does not answer within it raises `subprocess.TimeoutExpired`:
-    not answering is not the same answer as not holding the directory."""
+def git_toplevel(directory: Path, timeout: float | None = None) -> Path | None:
+    """The directory's git toplevel, or None where git does not hold it. A caller that cannot
+    wait names a `timeout`, and a git that does not answer within it raises
+    `subprocess.TimeoutExpired`: not answering is not the same answer as not holding the
+    directory."""
     try:
         probe = subprocess.run(["git", "-C", str(directory), "rev-parse", "--show-toplevel"],
                                capture_output=True, text=True, timeout=timeout)
     except OSError:
-        # No git on this machine is the limit case of git not holding the directory, and the
-        # answer is the same one: the directory itself.
-        return directory
+        # No git on this machine is the limit case of git not holding the directory.
+        return None
     if probe.returncode == 0 and probe.stdout.strip():
         return Path(probe.stdout.strip())
-    return directory
+    return None
+
+
+def toplevel_of(directory: Path, timeout: float | None = None) -> Path:
+    """Where the project file sits: the directory's git toplevel, or the directory itself
+    where git does not hold it — deterministic either way, because the directory is a named
+    input; `--here` is the one reading that starts from the session's working directory."""
+    return git_toplevel(directory, timeout) or directory
 
 
 def declared_tests(declared: dict, key: str, paths: list[str]) -> int:
@@ -214,6 +231,24 @@ def main() -> int:
         # so `--help` prints that rather than a second copy of it that could drift.
         print(__doc__.strip())
         return 0
+    if "--here" in args:
+        if args != ["--here"]:
+            print("cannot run: --here takes nothing beside it; a named project root is resolved "
+                  "as `project.py <project-root>`", file=sys.stderr)
+            return CANNOT_RUN
+        here = Path.cwd()
+        home = git_toplevel(here)
+        if home is None:
+            print(f"cannot run: no project root was named, and git does not hold the working "
+                  f"directory {here}; name the project root", file=sys.stderr)
+            return CANNOT_RUN
+        if not (home / PROJECT_FILE).is_file():
+            print(f"cannot run: no project root was named, and {home}, the git toplevel of the "
+                  f"working directory, holds no {PROJECT_FILE}; name the project root",
+                  file=sys.stderr)
+            return CANNOT_RUN
+        print(f"project_root: {home}")
+        args = [str(home)]
     asked: tuple[str, list[str]] | None = None
     if "--declared-tests" in args:
         at = args.index("--declared-tests")

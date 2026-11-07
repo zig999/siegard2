@@ -450,3 +450,44 @@ def test_declared_tests_cannot_run_over_what_it_cannot_answer(consumer, args):
 def test_declared_tests_still_holds_the_file_to_its_contract(consumer):
     declare(consumer, {"targets": {"backend": "backend"}, "tests": {"frontend": []}})
     assert run(consumer, "--declared-tests", "backend", "tests/a.test.ts").returncode == 1
+
+
+def run_here(directory: Path, *args) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, str(PROJECT_PY), "--here", *map(str, args)],
+                          capture_output=True, text=True, cwd=directory)
+
+
+def test_here_resolves_the_working_directorys_toplevel_and_names_it_first(consumer):
+    """SPEC-010 R6: a root no invocation names is the git toplevel of the working directory."""
+    declare(consumer, {"specification_root": "spec", "targets": {"backend": "backend"}})
+    done = run_here(consumer / "backend")
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert lines[0] == f"project_root: {consumer.resolve()}"
+    assert f"specification_root: {consumer.resolve() / 'spec'}" in lines
+    assert f"target backend: {consumer.resolve() / 'backend'}" in lines
+
+
+def test_here_refuses_a_toplevel_holding_no_project_file(consumer):
+    """SPEC-010 R6: an unnamed root holding no siegard.json is a stop, never an empty answer."""
+    done = run_here(consumer / "backend")
+    assert done.returncode == project.CANNOT_RUN
+    assert done.stdout == ""
+    assert "no project root was named" in done.stderr
+    assert "siegard.json" in done.stderr
+
+
+def test_here_refuses_a_working_directory_git_does_not_hold(tmp_path):
+    (tmp_path / "siegard.json").write_text("{}", encoding="utf-8")
+    done = run_here(tmp_path)
+    assert done.returncode == project.CANNOT_RUN
+    assert done.stdout == ""
+    assert "git does not hold" in done.stderr
+
+
+@pytest.mark.parametrize("extra", [["."], ["--declared-tests", "backend", "a.py"]])
+def test_here_takes_nothing_beside_it(consumer, extra):
+    declare(consumer, {})
+    done = run_here(consumer, *extra)
+    assert done.returncode == project.CANNOT_RUN
+    assert done.stdout == ""

@@ -17,7 +17,7 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/analyse/SKILL.md` again before acting on it.
 
 ```
 - [ ] Inputs: material and project root present, else one stop naming all that is missing
-- [ ] Root: bin/project.py <project-root> declares specification_root, else stop
+- [ ] Root: bin/project.py <project-root>, or --here where none is named, declares specification_root, else stop
 - [ ] Tree: git status --porcelain -- <specification-root> prints nothing, else stop
 - [ ] Contract: read the seven schemas under schemas/spec/
 - [ ] 1 Situate (populated root): spec.py, spec.py --digest, constraints/, spec.py --impact
@@ -34,8 +34,11 @@ read `${CLAUDE_PLUGIN_ROOT}/skills/analyse/SKILL.md` again before acting on it.
 A missing input is a stop, not a default:
 
 1. **the material** — what the person supplied, in prose, plus any files it references.
-2. **the project root** — where `siegard.json` lives. Named by the person; a root you would have to
-   infer is an absent one, and its absence is a stop.
+2. **the project root** — where `siegard.json` lives, named by the person. «Where the invocation
+   names none, the project root is the git toplevel of the session's working directory, as
+   `bin/project.py --here` resolves it, and only where that toplevel holds `siegard.json`»
+   (SPEC-010 R6): there, `project.py --here` runs in place of the `project.py <project-root>` run
+   below, and its `project_root:` line is the root. Its refusal is a stop.
 
 Material that is present but states nothing counts as the first input absent. «Material that states no fact any
 of the five classes admits is an absent input, never a specification to decide» (SPEC-001 R15): a
