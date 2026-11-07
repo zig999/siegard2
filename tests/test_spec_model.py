@@ -6,6 +6,7 @@ SPEC-003's acceptance demands; the projections' determinism closes its second de
 """
 from __future__ import annotations
 
+import re
 import json
 import shutil
 import subprocess
@@ -1345,6 +1346,23 @@ def test_shape_counts_the_fields_a_log_decided_per_node(spec_root):
     done = run_node("--shape", str(spec_root))
     at = done.stdout.index("decided fields per node — 0 node(s)")
     assert "(none)" in done.stdout[at:at + 400]
+
+
+def test_shape_counts_a_scoped_node_no_log_decided_at_zero(spec_root):
+    """The analyse report carries, beside every node it wrote, the count `--shape --of` printed;
+    a node the material described whole has no log, and a section listing only nodes that carry a
+    decision left the report a node with no count to quote. Scoped, it is listed at zero and
+    marked; unscoped it stays out, and no total moves."""
+    at_large = run_node("--shape", str(spec_root)).stdout
+    done = run_node("--shape", "--of", "domain/troubleshooting/case", str(spec_root))
+    assert done.returncode == 0, done.stderr
+    at = done.stdout.index("decided fields per node — 2 node(s) carry a decision, 2 decided")
+    section = done.stdout[at:done.stdout.index("\n\n", at)]
+    assert re.search(r"^>   0 decided / +\d+ declared  domain/troubleshooting/case$", section, re.M), \
+        "a scoped node no log decided anything over has no count to quote"
+    at = at_large.index("decided fields per node")
+    assert "domain/troubleshooting/case\n" not in at_large[at:at_large.index("\n\n", at)] + "\n", \
+        "an unscoped node with no log is listed"
 
 
 def test_shape_shows_a_scoped_node_past_the_cut(spec_root):

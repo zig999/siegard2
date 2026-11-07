@@ -1406,7 +1406,11 @@ def print_shape(nodes: dict[str, dict], root: Path, problems: list[str],
     for fields, identity in cut(carrying, lambda row: (row[1],)):
         print(f"{mark(identity)} {len(fields):>3} decided / "
               f"{read[identity]['declared_leaves']:>3} declared  {identity}")
-    if not carrying:
+    undecided = sorted(identity for identity in named - {identity for _, identity in carrying}
+                       if identity in read and read[identity]["cls"] != "log")
+    for identity in undecided:
+        print(f">   0 decided / {read[identity]['declared_leaves']:>3} declared  {identity}")
+    if not carrying and not undecided:
         print("  (none)")
 
     redecided = sorted((identity, field, count) for identity in logs

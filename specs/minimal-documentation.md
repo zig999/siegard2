@@ -230,7 +230,8 @@ enforces mechanically.
    distribution at all. Beside those sections, as a reading rather than a finding, `--shape`
    counts how many of each node's declared fields its log decided, ranked with the far end named
    and the scoped node shown past the cut — the one line that tells a reviewer which node the
-   material barely described (R4, R8). It reports a count over the sound fixture, because the
+   material barely described (R4, R8). A scoped node no log decided anything over is listed at
+   zero, so every node an analysis wrote has a count its report can quote. It reports a count over the sound fixture, because the
    fixture's own disclosed decisions are what it counts, and a fixture test proves the count, that
    a read entry and a retirement are not counted, and that a scoped node is marked.
 7. Every distributed artifact citing a requirement of this specification carries a sentence
