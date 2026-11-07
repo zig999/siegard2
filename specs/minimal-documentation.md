@@ -110,7 +110,9 @@ enforces mechanically.
   does not keep. A node the material does not name is disclosed by the entry over the field its
   class requires — `type` for an element, a rule or a contract, `strategic` for a context,
   `subject` for a scenario, `statement` for a constraint — whose `unstated` says the material
-  names no such thing; a node beside no such entry is one the material described.
+  names no such thing; a node beside no such entry is one the material described. Material that
+  names a thing only as a question to decide, an option or a proposal names it, and the entry
+  deciding it says in `unstated` what the material asked or proposed.
 - **R10** — The log is disclosure, never a gate: the analysis decides and proceeds, and no
   entry blocks delivery. A human reviews the logs after the fact; disagreement is an ordinary
   change to the artifact, not a ratification protocol. Where no such review is made, a decision
@@ -221,4 +223,6 @@ enforces mechanically.
    input and never as a question about the material's content, and `tests/test_skill_contract.py`
    holds the sentence. For the disclosure R9 adds over a node the material does not name: the
    analyse skill and the unstated-fact decider each state it beside the entry they write, and the
-   same test holds the skill's sentence.
+   same test holds the skill's sentence. For a thing the material names only as a question, an
+   option or a proposal: the analyse skill and the decision-log schema state that the material
+   names it, and the same test holds both.

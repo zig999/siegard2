@@ -606,6 +606,21 @@ def test_the_analysis_discloses_a_node_the_material_does_not_name():
         assert "(SPEC-001 R9)" in text
 
 
+def test_a_thing_the_material_only_asks_about_is_one_it_names():
+    """SPEC-001 R9: a question, an option or a proposal in the material names the thing it asks
+    about, so the node answering it is not disclosed as one the material never named, and its
+    entry says what the material asked or proposed. The skill that writes the entry and the schema
+    that holds `unstated` both state it."""
+    sentence = ("Material that names a thing only as a question to decide, an option or a proposal "
+                "names it, and the entry deciding it says in `unstated` what the material asked or "
+                "proposed")
+    assert sentence in unwrapped(skill_text("analyse"))
+    schema = json.loads((REPO / "src/claude/schemas/spec/decision-log.json")
+                        .read_text(encoding="utf-8"))
+    unstated = schema["$defs"]["entry"]["properties"]["unstated"]["description"]
+    assert sentence in unstated
+
+
 def test_the_analysis_reports_how_many_fields_it_decided_per_node():
     """The count is the one line a reviewer reads before any node; it opens the report's body
     beside every node written, read from `--shape --of` and never composed."""

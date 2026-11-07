@@ -49,7 +49,7 @@
         "unstated": {
           "type": "string",
           "minLength": 1,
-          "description": "What the material left unsaid."
+          "description": "What the material left unsaid. Where the material asked about the fact, offered options or proposed a value, this says what it asked or proposed: «Material that names a thing only as a question to decide, an option or a proposal names it, and the entry deciding it says in `unstated` what the material asked or proposed» (SPEC-001 R9)."
         },
         "decided": {
           "type": "string",

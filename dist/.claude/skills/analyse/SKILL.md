@@ -165,6 +165,13 @@ limit the solution. Two rules bind the analysis:
   names no such thing and `why` saying what in the material made the node necessary, so the count
   step 4 reads and the reviewer who opens the log both see the node as introduced rather than
   described.
+  A question is not silence. «Material that names a thing only as a question to decide, an option
+  or a proposal names it, and the entry deciding it says in `unstated` what the material asked or
+  proposed» (SPEC-001 R9): a line of the material that asks which value a fact takes, lists the
+  candidates or recommends one names the node that answers it. Its entries say what the item asked and what it recommended,
+  and whether the value decided follows the recommendation — so a reviewer tells a recommendation
+  taken from a value the analysis chose alone, and never reads "names no such thing" over
+  something the material put to it.
   **And it is decided here, in this context** — which is the one place this route reads
   differently from planning's, where the same class of fact goes to the `unstated-fact-decider`
   and is never shown the task that surfaced it. The blindness there is blindness to *the cut*: a
