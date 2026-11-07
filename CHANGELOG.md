@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.68.0 — 2026-11-07
+
+The deliver-scope skill opens with a progress checklist, fits whole inside what a compaction re-attaches, and keeps its branches in four references; its sentences run shorter, its description names the trigger first, and the door-decider's description takes the form the other agents carry. A resumed run now hands its report through the handoff record. (`2c9c710`)
+
 ## 5.67.0 — 2026-11-07
 
 The reconcile skill opens with a progress checklist, fits whole inside what a compaction re-attaches, and keeps its branches in eight references; its sentences run shorter and its description names the trigger first. A resumed reconciliation now hands its report through the handoff record. (`9a02a4c`)
