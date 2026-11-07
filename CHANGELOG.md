@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.58.0 — 2026-11-07
+
+The analyse skill opens with a progress checklist naming each step's command and file, and tells the session to read the skill again where a step's section is no longer in context; the ledger step joins the order line. Deciding by class, reading `--shape` and the ledger's line rules move verbatim into `skills/analyse/references/`, read at the step that needs them. (`09a7fa8`)
+
 ## 5.57.0 — 2026-11-07
 
 The ledger is part of the increment it records: the commit that takes the specification an analysis wrote takes the ledger with it, including `/deliver-scope`'s `analyse` commit under a goal that asks to specify (SPEC-001 R16, SPEC-008 R10). (`1322bbd`)
