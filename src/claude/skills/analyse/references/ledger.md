@@ -44,8 +44,9 @@ between increments only with the ledger answered again, because a changed digest
 A refusal names each line with no entry. Each is a line you read and did not answer, and the
 answer is one of three: give it the field, rule, scenario or answer it is owed — then rerun step
 4 — state why no node holds it, or leave it open saying what remains. Never an entry naming a node
-that does not hold the fact: the ledger is what an adoption reads to hand each file's judge its
-candidates, and a wrong entry sends a judge to the wrong node.
+that does not hold the fact: the ledger is what an adoption reads to hand each file's judge — the agent
+`/reconcile` sends to read that file — its candidates, and a wrong entry sends a judge to the
+wrong node.
 
 Sound, the command prints the lines still open and the reasons lines were left out, grouped and
 counted, largest first. Read the largest group before reporting: one reason carrying most of the

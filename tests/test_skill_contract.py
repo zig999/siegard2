@@ -592,7 +592,7 @@ def test_the_analysis_stops_on_material_that_states_no_fact():
     floor from no material at all."""
     text = unwrapped(skill_text("analyse"))
     assert "(SPEC-001 R15)" in text, "the skill never cites the stop over an absent material"
-    assert "Material present and stating nothing is the first input absent" in text
+    assert "Material that is present but states nothing counts as the first input absent" in text
     assert "never a question about the content" in text
 
 

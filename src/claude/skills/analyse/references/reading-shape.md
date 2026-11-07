@@ -3,7 +3,7 @@
 Read during step 4 of `/analyse`, once `spec.py --shape --of` has printed. Each line is a thing to
 open, and each has one answer:
 
-- a node of yours at or past its class's p90 is a node to reread whole, before any single
+- a node of yours at or past its class's 90th percentile (p90) is a node to reread whole, before any single
   section explains it. The class table is the only line that measures the specification drifting
   rather than one node being wrong, and drift has no defect to point at: every node on that list
   was defensible when it was written. Ask of yours what a reader gets from its length that the
