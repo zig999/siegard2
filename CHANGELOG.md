@@ -8,6 +8,10 @@ another form of subject and is read from `git log`.
 The version a consumer runs is the one in `.claude-plugin/plugin.json`. A major changes something
 a consumer's own files hold, and the README's "Across a major" section says how to bring them across.
 
+## 5.57.0 — 2026-11-07
+
+The ledger is part of the increment it records: the commit that takes the specification an analysis wrote takes the ledger with it, including `/deliver-scope`'s `analyse` commit under a goal that asks to specify (SPEC-001 R16, SPEC-008 R10). (`1322bbd`)
+
 ## 5.56.0 — 2026-11-07
 
 Every line of material given to `/analyse` as a file lands in a node, is left out with a reason, or is left open with what remains, in a ledger beside it that records the file's digest (SPEC-001 R16); `trace.py` enumerates the lines of prose material and `--ledger` prints the open lines and the reasons grouped by count. `handoff.py --prepare --ledger` leads the state with the open count and hands `/analyse` back as a door (SPEC-006 R10), and an adoption refuses a ledger over prose or with a line open (SPEC-005 R8). (`5825bf7`)
