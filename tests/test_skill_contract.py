@@ -878,3 +878,21 @@ def test_only_the_tasks_own_bindings_decide_whether_an_implementation_stands():
     assert "is read for the findings that name a node the task implements" in standing
     assert "A finding that names any other node on those files is not this task's" in standing
     assert "`--write-implementation` holds the same reading over the trace" in standing
+
+
+HINT_CITED = re.compile(r"`/([a-z][\w-]*)`'s\s+`argument-hint`")
+
+
+def test_every_argument_hint_a_handoff_cites_exists():
+    """A handoff hands an invocation "in the form `/x`'s `argument-hint` states": the hint is the
+    one home of that form, so a skill citing it where the receiving skill declares none hands the
+    session a form to invent again."""
+    cited = {(path.parent.name, name)
+             for path in (REPO / "src/claude/skills").glob("*/SKILL.md")
+             for name in HINT_CITED.findall(path.read_text(encoding="utf-8"))}
+    assert cited, "no handoff cites an argument-hint; the guard lost its subject"
+    import yaml
+    for citing, name in sorted(cited):
+        front = yaml.safe_load(FENCE.match(skill_text(name)).group(1))
+        assert isinstance(front.get("argument-hint"), str) and front["argument-hint"], \
+            f"{citing} hands /{name} in the form its argument-hint states, and /{name} declares none"

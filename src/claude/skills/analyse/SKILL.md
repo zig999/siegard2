@@ -464,9 +464,10 @@ Report, in this order, in the file:
   nothing. `/reconcile` takes these as candidates and can then attribute rather than misreport.
   Naming them costs a line and is the only place they are written down together;
 - the validator's final output, verbatim, and what `--project` wrote;
-- the handoff: the `/plan-work` invocation ready to paste — this project root filled in, since
-  the specification it holds was just validated, and one named slot for each input only the
-  person decides: the scope, which target, and the initiative's slug. The handoff offers the
+- the handoff: the `/plan-work` invocation ready to paste, in the form `/plan-work`'s
+  `argument-hint` states — this project root filled in, since the specification it holds was just
+  validated, and one named slot for each input only the person decides: the scope, which target,
+  and the initiative's slug. The handoff offers the
   next step, never takes it: filling the slots and invoking are the person's.
 - where the material was a survey or intent material, the `/reconcile` invocation ready to
   paste, before the `/plan-work` one and in its place as the next step: as an adoption, over the

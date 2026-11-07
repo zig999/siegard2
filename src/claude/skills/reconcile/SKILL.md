@@ -661,9 +661,10 @@ remainder under a new slug: the node has moved, the judgment reads it as it now 
 stamps both sides.
 
 The second, where the node is right and the behavior is not — the `/plan-work` invocation ready to
-paste for a corrective increment, naming the scope (the one wrong behavior, as the finding states
-it), the project root, the target, and the initiative's slug. That route ends in a delivery, which
-binds on its own and leaves this reconciliation with nothing to do.
+paste for a corrective increment, in the form `/plan-work`'s `argument-hint` states, naming the
+scope (the one wrong behavior, as the finding states it), the project root, the target, and the
+initiative's slug. That route ends in a delivery, which binds on its own and leaves this
+reconciliation with nothing to do.
 
 The third, where the node and the behavior agree and what the finding names is the file's own
 prose — a comment breaking the consumer rules' comment rule. Neither door above fits it: there is

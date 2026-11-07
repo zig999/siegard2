@@ -1,6 +1,7 @@
 ---
 name: plan-work
 description: Turns a stated development scope plus a validated specification into a development plan — inventory, epics and tasks as markdown nodes, each task naming the nodes it implements — validates the plan against the specification, and derives plan.json. A fact the specification does not state is decided on the way, blind to the task cut, and disclosed in the decision log. Also takes a corrective increment — one wrong behavior observed in code already delivered, answering to no task's criteria — as a single task, without the survey or the decomposition. Also takes a proof increment — facts a test decides, held by delivered code, proven by none — one task per fact. Also closes a plan whose initiative the human declares over. Use to plan or decompose work over a domain the specification holds, to route a bug found by running the delivered system, to owe a node its test, or to close a finished plan. Not for analysing domain material, and not for writing source code or tests.
+argument-hint: "<project-root> target <key> slug <slug> — <the scope, or the increment, in prose>"
 effort: medium
 ---
 
