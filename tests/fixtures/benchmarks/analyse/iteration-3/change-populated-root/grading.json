@@ -1,0 +1,49 @@
+{
+ "run": "change-populated-root",
+ "case": "change-populated-root",
+ "arm": "5.59.2 candidate (working tree over 4ac87e9)",
+ "subagent_tokens": 98172,
+ "seconds": 172.6,
+ "expectations": [
+  {
+   "text": "mechanical: spec.py exits 0",
+   "passed": true,
+   "evidence": "specification sound: 11 element(s), 4 rule(s), 2 scenario(s), 4 contract(s), 1 constraint(s) across 2 context(s); 11 decision(s) disclosed"
+  },
+  {
+   "text": "mechanical: no node carries an open marker",
+   "passed": true,
+   "evidence": "none"
+  },
+  {
+   "text": "mechanical: the state machine gains resolved -> investigating",
+   "passed": true,
+   "evidence": "from: resolved\n    trigger: reopen\n    to: investigating"
+  },
+  {
+   "text": "mechanical: cancelled stays terminal with no transition out",
+   "passed": true,
+   "evidence": "- cancelled"
+  },
+  {
+   "text": "reported: decision logs changed by the run",
+   "passed": true,
+   "evidence": "spec/domain/troubleshooting/case.log.md, spec/domain/troubleshooting/reopening.log.md, spec/rules/troubleshooting/case-transitions.log.md, spec/rules/troubleshooting/reopen-within-seven-days.log.md"
+  },
+  {
+   "text": "mechanical: the report says the material was not a file",
+   "passed": true,
+   "evidence": "não é arquivo"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  }
+ ]
+}

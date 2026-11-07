@@ -432,9 +432,9 @@ in four steps:
    their count: «so an analysis with lines open is never handed as complete» (SPEC-001 R16). Say
    what remains open and which increment answers it; never say the analysis, or the material, is
    done while the count stands.
-4. Run `handoff.py --render` over the record and hand the person exactly what it prints — the
-   opening «A handoff opens with what needs the person, and explains after» (SPEC-006 R1) states.
-   A refusal is answered by rewriting the field it names; a state it says has moved, by running
+4. Run `handoff.py --render` over the record and hand the person exactly what it prints: it
+   opens with what needs the person — «A handoff opens with what needs the person, and explains
+   after» (SPEC-006 R1). A refusal is answered by rewriting the field it names; a state it says has moved, by running
    `--prepare` again and carrying its `state` and `state_from` whole.
 
 Report, in this order, in the file:

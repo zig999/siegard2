@@ -1,0 +1,16 @@
+{
+ "commits_added": 0,
+ "logs_changed": [
+  "spec/domain/lending/_context.log.md",
+  "spec/domain/lending/copy.log.md",
+  "spec/domain/lending/loan.log.md",
+  "spec/domain/lending/member.log.md",
+  "spec/domain/lending/reservation.log.md",
+  "spec/domain/lending/title.log.md",
+  "spec/rules/lending/loan-due-date.log.md",
+  "spec/rules/lending/overdue-fine-per-day.log.md",
+  "spec/rules/lending/renewal-refused-while-copy-reserved.log.md",
+  "spec/rules/lending/reserved-copy-held-three-days.log.md",
+  "spec/rules/lending/reserving-member-notified-on-return.log.md"
+ ]
+}

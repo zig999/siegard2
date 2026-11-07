@@ -1,0 +1,15 @@
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/SKILL.md
+/tmp/analyse-bench/iteration-3/projects/file-material-empty-root/docs/material.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/context.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/element.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/rule.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/scenario.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/contract.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/constraint.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/spec/decision-log.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/references/deciding-by-class.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/references/reading-shape.md
+/home/siegfriedneto/projects/siegard2/src/claude/skills/analyse/references/ledger.md
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/ledger.json
+/home/siegfriedneto/projects/siegard2/src/claude/schemas/handoff.json
+/home/siegfriedneto/projects/siegard2/src/claude/skills/plan-work/SKILL.md (grep of argument-hint line only)

@@ -1,0 +1,9 @@
+{
+ "commits_added": 0,
+ "logs_changed": [
+  "spec/domain/troubleshooting/case.log.md",
+  "spec/domain/troubleshooting/reopening.log.md",
+  "spec/rules/troubleshooting/case-transitions.log.md",
+  "spec/rules/troubleshooting/reopen-within-seven-days.log.md"
+ ]
+}

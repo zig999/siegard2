@@ -82,3 +82,17 @@ as shipped passes every case, which the newest iteration must keep saying.
 `--skill <SKILL.md>` points `setup` and `prompt` at another arm. A change to the skill records a
 new iteration beside this one, never over it; `test_the_latest_iteration_passes_every_expectation_on_every_case`
 holds the newest one to passing every case.
+
+# Iteration 3 (2026-11-07): 5.59.2, two citations moved out of the clause they split
+
+| case | tokens (iteration 2 → 3) | time | expectations |
+|---|---|---|---|
+| `file-material-empty-root` | 105.5k → 101.5k | 3 m 38 s | 10/10 |
+| `change-populated-root` | 97.2k → 98.2k | 2 m 53 s | 8/8 |
+| `compaction-resume` | 84.6k → 91.3k | 3 m 14 s | 9/9 |
+
+The change moves two quotations so that each follows the instruction it backs instead of standing
+inside it; `test_no_analyse_citation_splits_the_clause_it_stands_in` measures that, red on 5.59.1
+and green here. These cases cannot tell the two versions apart, and were run to show that nothing
+regressed: every expectation still passes, and the token differences sit within one run's
+variation.

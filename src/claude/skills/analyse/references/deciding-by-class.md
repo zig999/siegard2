@@ -6,8 +6,8 @@ class may declare; this is the judgment that decides what goes in it:
 - **Language first.** The material's recurring nouns, with the meanings the material gives
   them, are the candidate Domain Model elements. A term whose meaning shifts between parts of
   the material is the strongest boundary signal you will get: two meanings, two contexts.
-  «There is no alias mechanism» (SPEC-001 R3) in this model — where the material uses two words
-  for one thing, the analysis picks the one that best carries the term as the element's name,
+  There is no alias in this model — «There is no alias mechanism» (SPEC-001 R3): where the
+  material uses two words for one thing, the analysis picks the one that best carries the term as the element's name,
   and the other does not surface as a second entry. `display` exists only to correct a slug's
   derived PascalCase where it would miscase an acronym, never to record a synonym. A phrase you
   find yourself writing again in a second node is the same signal in reverse: name the thing it

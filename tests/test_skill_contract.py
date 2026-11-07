@@ -916,3 +916,20 @@ def test_the_analyse_skill_keeps_its_bounds(bound):
     what the session may change and on who takes the next step. A pass trimming prohibitions for
     tone must leave these standing; rewording one re-anchors it here in the same change."""
     assert bound in unwrapped(skill_text("analyse")), f"the analyse skill lost a bound: {bound}"
+
+
+CLAUSE_SPLIT = re.compile(r"«[^»]*»\s*\(SPEC-\d+ (?:R\d+|§[\w ]+)\)(?P<after>\s*[a-z`][^\s]*)")
+JOINS = ("and", "or", "but", "so")
+
+
+@pytest.mark.parametrize("path", sorted((REPO / "src/claude/skills/analyse").rglob("*.md")),
+                         ids=lambda p: p.relative_to(REPO / "src/claude/skills").as_posix())
+def test_no_analyse_citation_splits_the_clause_it_stands_in(path):
+    """A quotation the session must read through to find where its own sentence ends is a
+    quotation standing where the instruction should: the rule is stated in the skill's words, and
+    the requirement's sentence follows it. A citation may close a clause, or be followed by a
+    joined one, never by the rest of the clause it opened inside."""
+    text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+    split = [m.group(0)[-80:] for m in CLAUSE_SPLIT.finditer(text)
+             if m.group("after").split()[0].strip("`") not in JOINS]
+    assert not split, f"{path.name}: a citation splits its clause: {split}"

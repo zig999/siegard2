@@ -1,0 +1,17 @@
+python3 -B bin/spec.py spec — exit 0
+python3 -B bin/spec.py --project spec — exit 0
+python3 -B bin/spec.py --shape --of <16 nodes> spec — exit 0
+python3 -B bin/spec.py --node spec/rules/lending/reserved-copy-lent-only-to-reserver.md spec — exit 0
+python3 -B bin/spec.py --decide rules/lending/reserved-copy-lent-only-to-reserver spec (type) — exit 0
+python3 -B bin/spec.py --decide rules/lending/reserved-copy-lent-only-to-reserver spec (consistency) — exit 0
+python3 -B bin/spec.py spec — exit 0
+python3 -B bin/spec.py --project spec — exit 0
+python3 -B bin/spec.py --shape --of <17 nodes> spec — exit 0
+python3 -B bin/trace.py --ledger docs/ledger.md spec — exit 2 (ledger node pattern refused domain/lending/_context)
+python3 -B bin/trace.py --ledger docs/ledger.md spec — exit 0
+python3 -B bin/handoff.py --prepare --skill analyse --project . --ledger docs/ledger.md --language pt-BR — exit 0
+python3 -B bin/handoff.py --help — exit 0
+python3 -B bin/handoff.py --save-report .git/siegard/handoff/20261107T133203Z-analyse.md — exit 0
+python3 -B bin/handoff.py --render handoff.json — exit 1 (block 707 chars > 600)
+python3 -B bin/handoff.py --render handoff.json — exit 0
+python3 -B bin/handoff.py --render handoff.json — exit 0 (re-render appended to report.md)

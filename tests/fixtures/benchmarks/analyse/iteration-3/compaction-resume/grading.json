@@ -1,0 +1,54 @@
+{
+ "run": "compaction-resume",
+ "case": "compaction-resume",
+ "arm": "5.59.2 candidate (working tree over 4ac87e9)",
+ "subagent_tokens": 91323,
+ "seconds": 194.3,
+ "expectations": [
+  {
+   "text": "mechanical: spec.py exits 0",
+   "passed": true,
+   "evidence": "specification sound: 5 element(s), 10 rule(s), 1 scenario(s) across 1 context(s); 17 decision(s) disclosed"
+  },
+  {
+   "text": "mechanical: docs/ledger.md beside the material and trace.py --ledger exits 0",
+   "passed": true,
+   "evidence": "ledger sound: 10 fact line(s) over 1 material file(s) — 8 landed in 14 node(s), 2 left out with a reason, 0 open"
+  },
+  {
+   "text": "mechanical: spec.py --project wrote the projections",
+   "passed": true,
+   "evidence": "capability-map.mmd, class-diagram-lending.mmd, context-map.mmd, full-text.md, overview.md"
+  },
+  {
+   "text": "mechanical: the report was saved through handoff.py --save-report",
+   "passed": true,
+   "evidence": "handoff.md"
+  },
+  {
+   "text": "mechanical: the report hands /plan-work",
+   "passed": true,
+   "evidence": ""
+  },
+  {
+   "text": "reported: commands.txt shows --shape[^\\n]*--of",
+   "passed": true,
+   "evidence": "--shape --of"
+  },
+  {
+   "text": "reported: commands.txt shows --prepare[^\\n]*--ledger",
+   "passed": true,
+   "evidence": "--prepare --skill analyse --project . --ledger"
+  },
+  {
+   "text": "reported: commands.txt shows --render",
+   "passed": true,
+   "evidence": "--render"
+  },
+  {
+   "text": "reported: the run made no commit",
+   "passed": true,
+   "evidence": "commits added: 0"
+  }
+ ]
+}
