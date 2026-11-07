@@ -1,0 +1,13 @@
+python3 -B /tmp/it3/cand/bin/deliver.py --contract proof  -> exit 0
+python3 -B /tmp/it3/cand/bin/run.py delivery/lending --run fees-compute-late-fee-suite --cwd app --excerpt 40 --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests'  -> exit 0 (passed)
+python3 -B /tmp/it3/cand/bin/deliver.py --write-proof delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file /tmp/it3/runs/compaction-resume/p/app/standard.yaml --from-text /tmp/it3/runs/compaction-resume/scratch/proof-return.yaml --note "..."  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py delivery/lending work/lending app spec  -> exit 0
+python3 -B /tmp/it3/cand/bin/trace.py --bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --outstanding delivery/lending work/lending app spec  -> exit 0 (re-run for the report's standard lines)
+python3 -B /tmp/it3/cand/bin/handoff.py --prepare --skill implement-task --project /tmp/it3/runs/compaction-resume/p --slug lending --target app --language pt-BR  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --help  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --save-report /tmp/it3/runs/compaction-resume/p/.git/siegard/handoff/20261107T184014Z-implement-task.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/runs/compaction-resume/scratch/record.json  -> exit 1 (fees.py named in a prose field; block 845 > 600 chars)
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/runs/compaction-resume/scratch/record.json  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/runs/compaction-resume/scratch/record.json  -> exit 0 (re-rendered to save into report.md)

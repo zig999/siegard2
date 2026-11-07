@@ -1,0 +1,5 @@
+{"name": "compaction-resume-late",
+ "what": "The session resumes after a compaction holding only the first 20,000 characters of the skill; steps 1-6 are done — source, tests, both records and a green suite sit uncommitted, written by the framework's own writers. Steps 7 (validate), 8 (bind) and 9 (report) remain, which the 5.68.0 cut loses whole. Does the rest of the route still run, and at what reading cost?",
+ "invocation": "/implement-task {project} task/fees/compute-late-fee",
+ "resume_after_step": 6, "truncate_chars": 20000,
+ "checks": ["implementation_written", "proof_written", "delivery_sound", "delivery_derived", "suite_passed", "trace_bound", "tests_written", "existing_test_untouched", "handoff_saved", "report_hands:/review-change", "every_change_recorded", "reported:unrecorded", "reported:bind_record", "reported:render", "no_commit"]}

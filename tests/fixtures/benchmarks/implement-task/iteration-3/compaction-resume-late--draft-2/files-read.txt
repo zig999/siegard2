@@ -1,0 +1,14 @@
+/tmp/it3/runs/compaction-resume-late-2/prompt.txt
+/tmp/it3/runs/compaction-resume-late-2/p.skill-after-compaction.md
+/tmp/it3/cand/skills/implement-task/references/finish.md
+/tmp/it3/runs/compaction-resume-late-2/p/siegard.json
+/tmp/it3/cand/skills/implement-task/references/report.md
+/tmp/it3/runs/compaction-resume-late-2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume-late-2/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume-late-2/p/delivery/lending/run/fees-compute-late-fee-build/run.json
+/tmp/it3/runs/compaction-resume-late-2/p/delivery/lending/run/fees-compute-late-fee-suite/run.json
+/tmp/it3/runs/compaction-resume-late-2/p/app/standard.yaml
+/tmp/it3/runs/compaction-resume-late-2/p/siegard-trace.json
+/tmp/it3/cand/bin/handoff.py (docstring via --help; add_argument grep)
+/tmp/it3/cand/schemas/handoff.json
+/tmp/it3/cand/skills/review-change/SKILL.md (lines 1-12 and Required inputs section)

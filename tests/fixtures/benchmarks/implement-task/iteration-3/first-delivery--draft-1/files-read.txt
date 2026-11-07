@@ -1,0 +1,24 @@
+/tmp/it3/runs/first-delivery/prompt.txt
+/tmp/it3/cand/skills/implement-task/SKILL.md
+/tmp/it3/cand/skills/implement-task/references/standard.md
+/tmp/it3/runs/first-delivery/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs/first-delivery/p/work/lending/plan.json
+/tmp/it3/runs/first-delivery/p/work/lending/epic/fees.md
+/tmp/it3/runs/first-delivery/p/work/lending/inventory/lending-app.md
+/tmp/it3/cand/skills/implement-task/references/delegation.md
+/tmp/it3/cand/agents/task-implementer.md
+/tmp/it3/runs/first-delivery/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/it3/runs/first-delivery/p/app/standard.yaml
+/tmp/it3/runs/first-delivery/p/app/lending/loans.py
+/tmp/it3/runs/first-delivery/p/app/lending/__init__.py
+/tmp/it3/runs/first-delivery/p/spec/domain/lending/loan.md
+/tmp/it3/runs/first-delivery/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+(deliver.py --contract output, implementation slice, saved tool output)
+/tmp/it3/cand/skills/implement-task/references/records.md
+/tmp/it3/cand/agents/test-author.md
+(deliver.py --contract output, proof slice, saved tool output)
+/tmp/it3/runs/first-delivery/p/app/tests/conftest.py
+/tmp/it3/runs/first-delivery/p/app/tests/test_loans.py
+/tmp/it3/cand/skills/implement-task/references/finish.md
+/tmp/it3/cand/skills/implement-task/references/report.md
+/tmp/it3/cand/schemas/handoff.json

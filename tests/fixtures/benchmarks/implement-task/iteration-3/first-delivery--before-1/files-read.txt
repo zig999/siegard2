@@ -1,0 +1,25 @@
+/tmp/it3/runs/first-delivery--before-1/prompt.txt
+/tmp/it3/before/skills/implement-task/SKILL.md
+/tmp/it3/before/skills/implement-task/references/standard.md
+/tmp/it3/runs/first-delivery--before-1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs/first-delivery--before-1/p/work/lending/plan.json
+/tmp/it3/runs/first-delivery--before-1/p/work/lending/inventory/lending-app.md
+/tmp/it3/runs/first-delivery--before-1/p/work/lending/epic/fees.md
+/tmp/it3/before/skills/implement-task/references/delegation.md
+/tmp/it3/before/agents/task-implementer.md
+/tmp/it3/runs/first-delivery--before-1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/it3/runs/first-delivery--before-1/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/it3/runs/first-delivery--before-1/p/app/standard.yaml
+/tmp/it3/runs/first-delivery--before-1/p/app/lending/__init__.py
+/tmp/it3/runs/first-delivery--before-1/p/app/lending/loans.py
+/tmp/it3/runs/first-delivery--before-1/p/app/tests/conftest.py
+/tmp/it3/runs/first-delivery--before-1/p/app/tests/test_loans.py
+/tmp/it3/runs/first-delivery--before-1/p/spec/domain/lending/loan.md
+(deliver.py --contract implementation output, saved to /tmp/it3-scratch-fd1/contract-implementation.txt)
+/tmp/it3/before/skills/implement-task/references/records.md
+/tmp/it3/before/agents/test-author.md
+(deliver.py --contract proof output, saved to /tmp/it3-scratch-fd1/contract-proof.txt)
+/tmp/it3/before/skills/implement-task/references/finish.md
+/tmp/it3/before/skills/implement-task/references/report.md
+/tmp/it3/before/bin/handoff.py (--help text only)
+/tmp/it3/before/schemas/handoff.json (fields, x-labels pt-BR, x-ceilings, x-jargon)

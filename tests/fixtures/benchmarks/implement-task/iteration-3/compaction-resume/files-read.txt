@@ -1,0 +1,19 @@
+/tmp/it3/runs2/compaction-resume/prompt.txt
+/tmp/it3/runs2/compaction-resume/p.skill-after-compaction.md
+/tmp/it3/runs2/compaction-resume/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs2/compaction-resume/p/app/lending/fees.py
+/tmp/it3/runs2/compaction-resume/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs2/compaction-resume/p/app/standard.yaml
+/tmp/it3/runs2/compaction-resume/p/siegard.json
+/tmp/it3/cand2/skills/implement-task/references/delegation.md
+/tmp/it3/cand2/agents/test-author.md
+/tmp/it3/runs2/compaction-resume/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/it3/runs2/compaction-resume/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/it3/runs2/compaction-resume/p/app/lending/loans.py
+/tmp/it3/runs2/compaction-resume/p/app/tests/conftest.py
+/tmp/it3/runs2/compaction-resume/p/app/tests/test_loans.py
+/tmp/it3/cand2/skills/implement-task/references/records.md
+/tmp/it3/cand2/skills/implement-task/references/finish.md
+/tmp/it3/cand2/skills/implement-task/references/report.md
+/tmp/it3/cand2/skills/review-change/SKILL.md (lines 1-12 and grep hits only)
+/tmp/it3/cand2/schemas/handoff.json

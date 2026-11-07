@@ -1,0 +1,10 @@
+python3 -B /tmp/it3/cand/bin/deliver.py --unrecorded <p>/app <p>/delivery/lending/implementation/fees/compute-late-fee.md <p>/delivery/lending/proof/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py <p>/delivery/lending <p>/work/lending <p>/app <p>/spec  -> exit 0
+python3 -B /tmp/it3/cand/bin/trace.py --bind-record <p>/app <p>/spec <p>/delivery/lending/implementation/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --help  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --prepare --skill implement-task --project <p> --slug lending --target app --language pt-BR  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --save-report <p>/.git/siegard/handoff/20261107T183939Z-implement-task.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/scratch/record.json  -> exit 1 (decisions/0: its block renders to 655 characters, over the ceiling of 600)
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/scratch/record.json  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/scratch/record.json  -> exit 0 (re-rendered into report.md)
+(<p> = /tmp/it3/runs/compaction-resume-late/p)

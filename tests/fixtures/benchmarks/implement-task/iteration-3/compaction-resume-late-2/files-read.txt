@@ -1,0 +1,12 @@
+/tmp/it3/runs2/compaction-resume-late-2/prompt.txt
+/tmp/it3/runs2/compaction-resume-late-2/p.skill-after-compaction.md
+/tmp/it3/cand2/skills/implement-task/references/finish.md
+/tmp/it3/cand2/skills/implement-task/references/report.md
+/tmp/it3/cand2/bin/handoff.py
+/tmp/it3/cand2/schemas/handoff.json
+/tmp/it3/cand2/skills/review-change/SKILL.md
+/tmp/it3/runs2/compaction-resume-late-2/p/siegard.json
+/tmp/it3/runs2/compaction-resume-late-2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs2/compaction-resume-late-2/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/it3/runs2/compaction-resume-late-2/p/delivery/lending/run/fees-compute-late-fee-build/run.json
+/tmp/it3/runs2/compaction-resume-late-2/p/delivery/lending/run/fees-compute-late-fee-suite/run.json

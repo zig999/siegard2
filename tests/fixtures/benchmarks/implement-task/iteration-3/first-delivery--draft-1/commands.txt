@@ -1,0 +1,21 @@
+python3 -B /tmp/it3/cand/bin/project.py /tmp/it3/runs/first-delivery/p  -> exit 0
+python3 -B /tmp/it3/cand/bin/plan.py --check /tmp/it3/runs/first-delivery/p/work/lending /tmp/it3/runs/first-delivery/p/spec  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --contract implementation  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --contract proof  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --contract finding  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --outstanding /tmp/it3/runs/first-delivery/p/delivery/lending /tmp/it3/runs/first-delivery/p/work/lending /tmp/it3/runs/first-delivery/p/app /tmp/it3/runs/first-delivery/p/spec  -> exit 2 (delivery root not a directory; created empty, then rerun)
+python3 -B /tmp/it3/cand/bin/deliver.py --outstanding /tmp/it3/runs/first-delivery/p/delivery/lending /tmp/it3/runs/first-delivery/p/work/lending /tmp/it3/runs/first-delivery/p/app /tmp/it3/runs/first-delivery/p/spec  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --standard /tmp/it3/runs/first-delivery/p/app/standard.yaml --against /tmp/it3/runs/first-delivery/p/app --specification /tmp/it3/runs/first-delivery/p/spec  -> exit 0
+python3 -B /tmp/it3/cand/bin/run.py /tmp/it3/runs/first-delivery/p/delivery/lending --run fees-compute-late-fee-build --cwd /tmp/it3/runs/first-delivery/p/app --excerpt 40 --timeout-seconds 60 --step 'build=python3 -m compileall -q lending'  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --write-implementation /tmp/it3/runs/first-delivery/p/delivery/lending task/fees/compute-late-fee --target app --task-file /tmp/it3/runs/first-delivery/p/work/lending/task/fees/compute-late-fee.md --run run/fees-compute-late-fee-build --standard standard.yaml --standard-file /tmp/it3/runs/first-delivery/p/app/standard.yaml --from-text /tmp/it3/runs/first-delivery/scratch/implementation-return.yaml --note "..."  -> exit 0
+python3 -B /tmp/it3/cand/bin/run.py /tmp/it3/runs/first-delivery/p/delivery/lending --run fees-compute-late-fee-suite --cwd /tmp/it3/runs/first-delivery/p/app --excerpt 40 --timeout-seconds 120 --step 'build=python3 -m compileall -q lending' --step 'test=python3 -m pytest -q tests'  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --write-proof /tmp/it3/runs/first-delivery/p/delivery/lending task/fees/compute-late-fee --target app --run run/fees-compute-late-fee-suite --standard standard.yaml --standard-file /tmp/it3/runs/first-delivery/p/app/standard.yaml --from-text /tmp/it3/runs/first-delivery/scratch/proof-return.yaml --note "..."  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py --unrecorded /tmp/it3/runs/first-delivery/p/app /tmp/it3/runs/first-delivery/p/delivery/lending/implementation/fees/compute-late-fee.md /tmp/it3/runs/first-delivery/p/delivery/lending/proof/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/deliver.py /tmp/it3/runs/first-delivery/p/delivery/lending /tmp/it3/runs/first-delivery/p/work/lending /tmp/it3/runs/first-delivery/p/app /tmp/it3/runs/first-delivery/p/spec  -> exit 0
+python3 -B /tmp/it3/cand/bin/trace.py --bind-record /tmp/it3/runs/first-delivery/p/app /tmp/it3/runs/first-delivery/p/spec /tmp/it3/runs/first-delivery/p/delivery/lending/implementation/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --prepare --skill implement-task --project /tmp/it3/runs/first-delivery/p --slug lending --target app --language pt-BR  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --prepare --skill implement-task --project /tmp/it3/runs/first-delivery/p --slug lending --target app --file lending/fees.py --file tests/test_fees.py --language pt-BR  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --save-report /tmp/it3/runs/first-delivery/p/.git/siegard/handoff/20261107T184113Z-implement-task.md  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/runs/first-delivery/scratch/handoff-record.json  -> exit 1 (block over 600 chars; script name in prose)
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/runs/first-delivery/scratch/handoff-record.json  -> exit 0
+python3 -B /tmp/it3/cand/bin/handoff.py --render /tmp/it3/runs/first-delivery/scratch/handoff-record.json  -> exit 0 (re-rendered into out/report.md)

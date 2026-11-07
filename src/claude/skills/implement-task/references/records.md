@@ -20,11 +20,13 @@ stamps, on both records:
 - the run that passed — the build run on the implementation, the suite run on the proof; omit
   `--run` where nothing ran.
 
-On the implementation it also stamps the pin of the task file on `task`. On the proof it stamps the
-SHA-256 of `implementation/<epic>/<slug>.md` as it stands on disk on `implementation` —
-`sha256sum <that file>` by hand — so rewriting the implementation and leaving the proof makes the
-validator refuse the pair. The proof carries its own standard pin because the rules about how a
-project writes its tests reach files no implementation lists.
+On the implementation it also stamps the pin of the task file on `task`; you never type it. It
+equals `sha256sum <work-root>/task/<epic>/<slug>.md`, and covers the task and not the plan's index,
+so adding an unrelated task stales no record. On the proof it stamps the SHA-256 of
+`implementation/<epic>/<slug>.md` as it stands on disk on `implementation` — `sha256sum <that file>`
+by hand — so rewriting the implementation and leaving the proof makes the validator refuse the pair.
+The proof carries its own standard pin because the rules about how a project writes its tests reach
+files no implementation lists.
 
 A return carrying any stamped key is refused naming the key: the producer answers for what it
 decided, and the writer stamps what you know. Every dependency the implementer added is in its

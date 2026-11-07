@@ -245,7 +245,7 @@ def grading_of(record: Path) -> dict:
 
 def test_every_implement_task_case_names_only_checks_the_grader_knows(tmp_path):
     names = sorted(p.parent.name for p in IMPLEMENT_CASES.glob("*/case.json"))
-    assert names == ["compaction-resume", "first-delivery", "reading-quiz"]
+    assert names == ["compaction-resume", "compaction-resume-late", "first-delivery", "reading-quiz"]
     for name in names:
         project = tmp_path / name
         bench_implement_task.setup(name, project, bench_implement_task.SKILL)
@@ -276,40 +276,86 @@ def test_the_resumed_implement_task_case_starts_where_step_4_ends(tmp_path):
 
 
 def test_the_resumed_implement_task_case_cuts_the_skill_where_a_compaction_reattaches_it(tmp_path):
-    """The cut keeps the checklist that tells a resumed session to read the skill again, and
-    loses every step past the implement step — which is the subject of the case."""
+    """The cut keeps the checklist that tells a resumed session to read the skill again. Up to
+    5.68.0 it lost every step past the one the case resumes after, which was the subject of the
+    case; from 5.69.0 the whole skill fits, so the cut holds every step and what is measured is
+    whether the session still reads the skill again."""
     project = tmp_path / "compaction-resume"
     bench_implement_task.setup("compaction-resume", project, bench_implement_task.SKILL)
     cut = (tmp_path / "compaction-resume.skill-after-compaction.md").read_text(encoding="utf-8")
     assert "## Progress checklist" in cut
     assert "read `${CLAUDE_PLUGIN_ROOT}/skills/implement-task/SKILL.md`" in " ".join(cut.split())
-    assert "### 6. Suite" not in cut, "the cut keeps the suite step; the case lost its subject"
+    assert cut == bench_implement_task.SKILL.read_text(encoding="utf-8").rstrip("\n"), \
+        "the shipped skill no longer fits the cut whole"
+
+
+def test_the_late_resumed_implement_task_case_starts_where_step_6_ends(tmp_path):
+    """Steps 1-6 ran through the framework's writers: the source, the tests, both records and a
+    green suite stand uncommitted. The state is sound — deriving it in a copy exits 0 and
+    `--check` then accepts it — and nothing of steps 7-9 exists: no delivery.json, no trace."""
+    project = tmp_path / "compaction-resume-late"
+    bench_implement_task.setup("compaction-resume-late", project, bench_implement_task.SKILL)
+    for rel in (bench_implement_task.IMPLEMENTATION, bench_implement_task.PROOF,
+                "app/lending/fees.py", "app/tests/test_fees.py"):
+        assert (project / rel).is_file(), rel
+    assert not (project / "delivery/lending/delivery.json").exists()
+    assert not (project / "siegard-trace.json").exists()
+    assert bench_implement_task.git(project, "rev-list", "--count", "HEAD").strip() == "1"
+    assert bench_implement_task.git(project, "status", "--porcelain", "--", "delivery", "app")
+    graded = {e["text"]: e["passed"]
+              for e in bench_implement_task.checks("compaction-resume-late", project)}
+    assert graded["mechanical: the proof's run passed and ran the suite step"] is True
+    assert graded["mechanical: deliver.py over the recorded delivery exits 0"] is True
+    assert graded["mechanical: deliver.py derived delivery.json at the delivery root"] is False
+    roots = [project / "delivery/lending", project / "work/lending", project / "app", project / "spec"]
+    deliver = REPO / "src/claude/bin/deliver.py"
+    refused = subprocess.run([sys.executable, "-B", str(deliver), *map(str, roots), "--check"],
+                             capture_output=True, text=True)
+    assert refused.returncode == 1 and "has never been derived" in refused.stdout
+    copy = tmp_path / "copy"
+    import shutil
+    shutil.copytree(project, copy)
+    roots = [copy / "delivery/lending", copy / "work/lending", copy / "app", copy / "spec"]
+    for extra in ([], ["--check"]):
+        done = subprocess.run([sys.executable, "-B", str(deliver), *map(str, roots), *extra],
+                              capture_output=True, text=True)
+        assert done.returncode == 0, done.stdout + done.stderr
 
 
 @pytest.mark.parametrize("run", [str(p.relative_to(IMPLEMENT)) for p in implement_runs()])
 def test_each_implement_task_run_grades_as_recomputed_from_its_record(run):
     record = IMPLEMENT / run
     grading = grading_of(record)
-    assert grading["arm"].split(":")[0] in ("shipped", "before"), f"{run}: arm {grading['arm']!r}"
+    assert grading["arm"].split(":")[0] in ("shipped", "before", "draft"), \
+        f"{run}: arm {grading['arm']!r}"
     recomputed = {e["text"]: e["passed"] for e in bench_implement_task.checks(grading["case"], record)}
+    facts = record / "facts.json"
+    if facts.is_file() and "skill_read_again" in json.loads(facts.read_text(encoding="utf-8")):
+        assert json.loads(facts.read_text(encoding="utf-8"))["skill_read_again"] == \
+            bench_implement_task.read_again(record), f"{run}: skill_read_again recomputes otherwise"
     for expectation in grading["expectations"]:
         assert recomputed[expectation["text"]] == expectation["passed"], \
             f"{run}: '{expectation['text']}' was recorded {expectation['passed']} and recomputes otherwise"
 
 
-def test_the_latest_implement_task_iteration_passes_every_expectation_with_the_shipped_skill():
-    """The regression gate: the newest recorded iteration ran the skill as it ships, over every
-    case, and passed. A change to the skill records a new iteration beside this one."""
-    latest = max(IMPLEMENT.glob("iteration-*"), key=lambda p: int(p.name.split("-")[1]), default=None)
-    assert latest, "no iteration is recorded"
-    shipped = [p for p in latest.iterdir() if (p / "grading.json").is_file()
-               and grading_of(p)["arm"].startswith("shipped:")]
-    assert sorted({grading_of(p)["case"] for p in shipped}) == \
-        sorted(p.parent.name for p in IMPLEMENT_CASES.glob("*/case.json")), \
-        f"{latest.name} does not run the shipped skill over every case"
-    for record in shipped:
-        failed = [e["text"] for e in grading_of(record)["expectations"] if not e["passed"]]
-        assert not failed, f"{record.name}: {failed}"
+def latest_implement_iteration_of(case_name: str) -> str:
+    held = [it for it in sorted(IMPLEMENT.glob("iteration-*"), key=lambda p: int(p.name.split("-")[1]))
+            if any(grading_of(p)["case"] == case_name for p in it.iterdir()
+                   if (p / "grading.json").is_file())]
+    assert held, f"no iteration records {case_name}"
+    return held[-1].name
+
+
+@pytest.mark.parametrize("case_name", sorted(p.parent.name for p in IMPLEMENT_CASES.glob("*/case.json")))
+def test_the_latest_implement_task_iteration_of_each_case_passes_with_the_shipped_skill(case_name):
+    """The regression gate: the newest iteration recording a case ran the skill as it ships over
+    it, and passed. A change to the skill records a new iteration beside the earlier ones."""
+    latest = latest_implement_iteration_of(case_name)
+    shipped = runs_of(latest, case_name, "shipped:")
+    assert shipped, f"{case_name}: no run of the shipped skill in {latest}"
+    for grading in shipped:
+        failed = [e["text"] for e in grading["expectations"] if not e["passed"]]
+        assert not failed, f"{grading['run']}: {failed}"
 
 
 def test_the_checklist_is_what_carries_a_resumed_delivery_to_its_end():
@@ -362,6 +408,33 @@ def test_the_5_62_0_rewrite_reads_as_well_for_less():
         for grading in runs_of("iteration-2", case_name, "shipped:"):
             assert all(e["passed"] for e in grading["expectations"]), grading["run"]
 
+
+
+def test_the_5_69_0_skill_fits_the_cut_and_a_resumed_delivery_no_longer_reads_it_again():
+    """Iteration 3 resumes after step 4 and, new, after step 6, holding the first 20,000
+    characters. The 5.68.0 checklist already carried both resumptions to their end, so every run
+    of both arms meets every expectation: the claim is non-regression, never a better score. What
+    separates the arms is the read the cut forced — every 5.68.0 run read SKILL.md again, and no
+    5.69.0 run did, since the cut holds it whole. Tokens are recorded and not held: the two arms'
+    ranges overlap on the step-4 case and sit 0.1k apart on the late one. The quiz holds the move
+    to losing no meaning."""
+    for case_name in ("compaction-resume", "compaction-resume-late"):
+        before = runs_of("iteration-3", case_name, "before:")
+        shipped = runs_of("iteration-3", case_name, "shipped:")
+        assert len(before) >= 2 and len(shipped) >= 2, case_name
+        for grading in before + shipped:
+            assert all(e["passed"] for e in grading["expectations"]), grading["run"]
+        for grading in before:
+            assert bench_implement_task.read_again(IMPLEMENT / "iteration-3" / grading["run"]), \
+                f"{grading['run']} ran the 5.68.0 cut and never read SKILL.md again"
+        for grading in shipped:
+            assert bench_implement_task.read_again(IMPLEMENT / "iteration-3" / grading["run"]) is False, \
+                f"{grading['run']} holds the whole skill and still read SKILL.md again"
+    quiz = runs_of("iteration-3", "reading-quiz", "")
+    assert len([g for g in quiz if g["arm"].startswith("before:")]) >= 2
+    assert len([g for g in quiz if g["arm"].startswith("shipped:")]) >= 2
+    for grading in quiz:
+        assert all(e["passed"] for e in grading["expectations"]), grading["run"]
 
 # ---------------------------------------------------------------- /plan-work: cases
 # Plans over the implement-task benchmark's fixture project, its plan removed; graded by

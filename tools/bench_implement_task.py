@@ -16,7 +16,9 @@ text decides; `quiz_options` shuffles them by the question's id, so the letter i
 question and never the same position throughout.
 
 A resumed case is a compaction: `setup` runs the skill's steps up to the one the case names
-through the framework's own writers, and cuts the skill where Claude Code re-attaches it.
+through the framework's own writers, and cuts the skill where Claude Code re-attaches it. Its
+`facts.json` records whether the run's `files-read.txt` names the whole `SKILL.md` — the read the
+checklist asks for past the cut.
 
 Usage:
     python3 tools/bench_implement_task.py setup  <case> <project-dir> [--skill <SKILL.md>]
@@ -47,6 +49,7 @@ NODE = "rules/lending/late-fee-per-overdue-day"
 IMPLEMENTATION = f"delivery/{SLUG}/implementation/fees/compute-late-fee.md"
 PROOF = f"delivery/{SLUG}/proof/fees/compute-late-fee.md"
 BUILD_RUN = "fees-compute-late-fee-build"
+SUITE_RUN = "fees-compute-late-fee-suite"
 CACHES = shutil.ignore_patterns("__pycache__", ".pytest_cache", "*.pyc")
 COMMANDS = {"write_implementation": r"--write-implementation", "write_proof": r"--write-proof",
             "unrecorded": r"--unrecorded", "bind_record": r"--bind-record", "render": r"--render"}
@@ -88,8 +91,9 @@ def quiz_options(question: dict) -> tuple[list[str], str]:
 
 
 def setup(name: str, project: Path, skill: Path) -> None:
-    """The fixture project, committed once; for a resumed case, steps 1-4 run through the
-    framework's writers and left uncommitted, and the skill cut where a compaction re-attaches it."""
+    """The fixture project, committed once; for a resumed case, the steps up to the one it names
+    run through the framework's writers and left uncommitted, and the skill cut where a compaction
+    re-attaches it."""
     c = case(name)
     if project.exists():
         shutil.rmtree(project)
@@ -114,7 +118,23 @@ def setup(name: str, project: Path, skill: Path) -> None:
             "--standard-file", project / "app/standard.yaml",
             "--from-text", c["dir"] / "pre/implementer-return.yaml")
         assert code == 0, said
+        if c["resume_after_step"] >= 6:
+            shutil.copy(c["dir"] / "pre/test_fees.py", project / "app/tests/test_fees.py")
+            code, said = bin_run(PLUGIN / "bin/run.py", project / f"delivery/{SLUG}", "--run",
+                                 SUITE_RUN, "--cwd", project / "app", "--excerpt", "40",
+                                 "--timeout-seconds", "120",
+                                 "--step", "build=python3 -m compileall -q lending",
+                                 "--step", "test=python3 -m pytest -q tests")
+            assert code == 0, said
+            code, said = bin_run(
+                PLUGIN / "bin/deliver.py", "--write-proof", project / f"delivery/{SLUG}", TASK,
+                "--target", "app", "--run", f"run/{SUITE_RUN}", "--standard", "standard.yaml",
+                "--standard-file", project / "app/standard.yaml",
+                "--from-text", c["dir"] / "pre/test-author-return.yaml")
+            assert code == 0, said
         for cache in project.rglob("__pycache__"):
+            shutil.rmtree(cache)
+        for cache in project.rglob(".pytest_cache"):
             shutil.rmtree(cache)
     if c.get("truncate_chars"):
         text = skill.read_text(encoding="utf-8")[: c["truncate_chars"]]
@@ -140,6 +160,23 @@ def quiz_prompt(c: dict, out: Path, skill: Path) -> str:
             f"\n\nWrite {out}/answers.json: one JSON object mapping each question's number, as "
             f"a string, to its letter, e.g. {{\"1\": \"a\"}}. Write {out}/files-read.txt: every "
             f"file you read, one per line. Return the answers on one line.")
+
+
+PAST_STEP_4 = (f" Prove ran inline: the tests are `app/tests/test_fees.py`, and they name "
+               f"`{NODE}` on the test that demonstrates it. Suite: run `run/{SUITE_RUN}` passed, "
+               f"build then test, on its first attempt. The proof record was written through "
+               f"`deliver.py --write-proof` at `{PROOF}`. Steps 1-6 are closed.")
+
+
+def read_again(record: Path) -> bool | None:
+    """Whether the run's files-read.txt names the arm's SKILL.md, whole or in part — the file a
+    resumed session reads again past the cut; None where the run left no list. A line may carry
+    the run's own note after the path, as `SKILL.md (lines 340-end)`."""
+    listed = record / "files-read.txt"
+    if not listed.is_file():
+        return None
+    return any(line.split(" (", 1)[0].strip().endswith("skills/implement-task/SKILL.md")
+               for line in listed.read_text(encoding="utf-8").splitlines())
 
 
 def prompt(name: str, project: Path, out: Path, skill: Path) -> str:
@@ -177,7 +214,8 @@ def prompt(name: str, project: Path, out: Path, skill: Path) -> str:
                 f"tests'`. Set up was skipped (no install). Implement ran inline: the source is "
                 f"`app/lending/fees.py`. Build: run `run/{BUILD_RUN}` passed. The implementation "
                 f"record was written through `deliver.py --write-implementation` at "
-                f"`{IMPLEMENTATION}`. Continue the invocation from where it stands to its end."
+                f"`{IMPLEMENTATION}`." + (PAST_STEP_4 if c["resume_after_step"] >= 6 else "") +
+                f" Continue the invocation from where it stands to its end."
                 f"\n\nYou cannot ask the user anything. {keep}")
     return (f"Execute this task by following a skill file exactly as if the user had invoked "
             f"it.\n\n- Skill: read {skill} and follow it. {root} Read only what the skill tells "
@@ -236,6 +274,10 @@ def checks(name: str, record: Path) -> list[dict]:
                               if (copy / f"delivery/{SLUG}").is_dir() else (1, "no delivery root"))
             out.append(("mechanical: deliver.py over the recorded delivery exits 0", code == 0,
                         said.splitlines()[0] if said else ""))
+        elif kind == "delivery_derived":
+            ok = (record / f"delivery/{SLUG}/delivery.json").is_file()
+            out.append(("mechanical: deliver.py derived delivery.json at the delivery root", ok,
+                        "delivery.json" if ok else "absent"))
         elif kind == "suite_passed":
             run = proof.get("run", "")
             data = record / f"delivery/{SLUG}" / run / "run.json"
@@ -320,6 +362,8 @@ def record(name: str, project: Path, out: Path, dest: Path, arm: str,
     facts = {"commits_added": int(git(project, "rev-list", "--count", "HEAD").strip()) - 1,
              "changed_under_target": changed,
              "spec_changed": bool(git(project, "status", "--porcelain", "--", "spec").strip())}
+    if case(name).get("resume_after_step"):
+        facts["skill_read_again"] = read_again(dest)
     (dest / "facts.json").write_text(json.dumps(facts, indent=1) + "\n", encoding="utf-8")
     grading = {"run": dest.name, "case": name, "arm": arm, "subagent_tokens": tokens,
                "seconds": seconds, "expectations": checks(name, dest)}

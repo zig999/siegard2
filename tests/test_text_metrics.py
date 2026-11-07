@@ -29,7 +29,7 @@ AGENTS = ("task-implementer", "test-author", "failure-diagnostician")
 
 PINS = {
     "chars": 103_000,
-    "skill_chars": 26_000,
+    "skill_chars": 19_900,
     "sentence_words_median": 18,
     "sentence_words_p90": 35,
     "sentences_over_60_words": 3,
@@ -349,3 +349,51 @@ def test_the_deliver_scope_terms_are_schemas_terms_json_s_and_each_is_used_outsi
         assert said == means[term.lower()], f"{term}: {said!r} is not terms.json's means"
         assert re.search(rf"\b{re.escape(term.lower())}\b", rest.lower()), \
             f"{term} is never used outside ## Terms"
+
+
+# ---------------------------------------------------------------- implement-task, wave B at 5.69.0
+# The same fifteen files as the 5.62.0 section above, measured against the 5.68.0 text: SKILL.md
+# fits the compaction cut, the two spawn blocks moved into references/delegation.md, and the three
+# agents are untouched. A rewrite that moves text is held to falling in characters and to growing
+# in no other measure.
+IMPLEMENT_B_BASELINE = REPO / "tests/fixtures/benchmarks/implement-task/text-metrics-5.68.0.json"
+IMPLEMENT_B_PINS = {
+    "chars": 101_050,
+    "skill_chars": 19_900,
+    "sentence_words_median": 18,
+    "sentence_words_p90": 35,
+    "sentences_over_60_words": 3,
+    "prose_lines_over_100": 0,
+}
+
+
+def implement_b_baseline() -> dict:
+    return json.loads(IMPLEMENT_B_BASELINE.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("measure", ["chars", "skill_chars"])
+def test_the_implement_task_wave_b_is_strictly_shorter_than_5_68_0(measure):
+    before, now = implement_b_baseline()[measure], current()[measure]
+    assert now < before, f"implement-task {measure}: {now} is not below 5.68.0's {before}"
+
+
+@pytest.mark.parametrize("measure", ["sentence_words_median", "sentence_words_p90",
+                                     "sentence_words_max", "sentences_over_60_words",
+                                     "prose_lines_over_100"])
+def test_the_implement_task_wave_b_is_no_worse_than_5_68_0(measure):
+    before, now = implement_b_baseline()[measure], current()[measure]
+    assert now <= before, f"implement-task {measure}: {now} is above 5.68.0's {before}"
+
+
+@pytest.mark.parametrize("name", ["skill", *AGENTS])
+def test_no_implement_task_description_grew_past_5_68_0(name):
+    before = implement_b_baseline()["description_chars"][name]
+    assert current()["description_chars"][name] <= before
+
+
+@pytest.mark.parametrize("measure", sorted(IMPLEMENT_B_PINS))
+def test_no_implement_task_measure_grows_past_its_5_69_0_pin(measure):
+    now = current()[measure]
+    assert now <= IMPLEMENT_B_PINS[measure], \
+        f"implement-task {measure} grew to {now}, past its pin {IMPLEMENT_B_PINS[measure]}: raise " \
+        f"the pin in the same change and say in the commit what the growth bought"

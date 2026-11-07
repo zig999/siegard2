@@ -1,0 +1,19 @@
+/tmp/it3/runs/compaction-resume--before-1/prompt.txt
+/tmp/it3/runs/compaction-resume--before-1/p.skill-after-compaction.md
+/tmp/it3/before/skills/implement-task/SKILL.md
+/tmp/it3/runs/compaction-resume--before-1/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume--before-1/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume--before-1/p/app/lending/fees.py
+/tmp/it3/before/agents/test-author.md
+/tmp/it3/runs/compaction-resume--before-1/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/it3/runs/compaction-resume--before-1/p/app/lending/loans.py
+/tmp/it3/runs/compaction-resume--before-1/p/app/tests/test_loans.py
+/tmp/it3/runs/compaction-resume--before-1/p/app/tests/conftest.py
+/tmp/it3/runs/compaction-resume--before-1/p/app/standard.yaml
+/tmp/it3/before/skills/implement-task/references/records.md
+/tmp/it3/before/skills/implement-task/references/finish.md
+/tmp/it3/before/skills/implement-task/references/report.md
+/tmp/it3/before/schemas/handoff.json
+/tmp/it3/before/skills/review-change/SKILL.md (grep over lines 1-80, to fill the invocation)
+/tmp/it3/runs/compaction-resume--before-1/p/delivery/lending/proof/fees/compute-late-fee.md (first 12 lines)
+/tmp/it3/runs/compaction-resume--before-1/p/siegard.json

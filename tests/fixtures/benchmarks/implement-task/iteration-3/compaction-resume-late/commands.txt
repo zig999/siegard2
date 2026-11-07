@@ -1,0 +1,8 @@
+python3 -B /tmp/it3/cand2/bin/deliver.py --unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md  # exit 0
+python3 -B /tmp/it3/cand2/bin/deliver.py delivery/lending work/lending app spec  # exit 0
+python3 -B /tmp/it3/cand2/bin/trace.py --bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md  # exit 0
+python3 -B /tmp/it3/cand2/bin/handoff.py --prepare --skill implement-task --project /tmp/it3/runs2/compaction-resume-late/p --slug lending --target app --language pt-BR  # exit 0
+python3 -B /tmp/it3/cand2/bin/handoff.py --help  # exit 0
+python3 -B /tmp/it3/cand2/bin/handoff.py --save-report /tmp/it3/runs2/compaction-resume-late/p/.git/siegard/handoff/20261107T184309Z-implement-task.md  # exit 0
+python3 -B /tmp/it3/cand2/bin/handoff.py --render ../work/record.json  # exit 1 (door carried 'fees.py'; block 749 > 600 chars)
+python3 -B /tmp/it3/cand2/bin/handoff.py --render ../work/record.json  # exit 0

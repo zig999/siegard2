@@ -1,0 +1,14 @@
+/tmp/it3/runs/compaction-resume-late/prompt.txt
+/tmp/it3/runs/compaction-resume-late/p.skill-after-compaction.md
+/tmp/it3/runs/compaction-resume-late/p/siegard.json
+/tmp/it3/cand/skills/implement-task/references/finish.md
+/tmp/it3/cand/skills/implement-task/references/report.md
+/tmp/it3/cand/schemas/handoff.json
+/tmp/it3/runs/compaction-resume-late/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume-late/p/delivery/lending/proof/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume-late/p/siegard-trace.json
+/tmp/it3/runs/compaction-resume-late/p/delivery/lending/run/fees-compute-late-fee-build/run.json
+/tmp/it3/runs/compaction-resume-late/p/delivery/lending/run/fees-compute-late-fee-suite/run.json
+/tmp/it3/cand/skills/review-change/SKILL.md (lines 56-110, and a grep for the invocation form)
+/tmp/it3/runs/compaction-resume-late/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume-late/p/app/standard.yaml

@@ -1,0 +1,9 @@
+python3 -B /tmp/it3/before/bin/deliver.py --unrecorded app delivery/lending/implementation/fees/compute-late-fee.md delivery/lending/proof/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/before/bin/deliver.py delivery/lending work/lending app spec  -> exit 0
+python3 -B /tmp/it3/before/bin/trace.py --bind-record app spec delivery/lending/implementation/fees/compute-late-fee.md  -> exit 0
+python3 -B /tmp/it3/before/bin/handoff.py --prepare --skill implement-task --project /tmp/it3/runs/compaction-resume-late--before-2/p --slug lending --target app --language pt-BR  -> exit 0
+python3 -B /tmp/it3/before/bin/handoff.py --help  -> exit 0
+python3 -B /tmp/it3/before/bin/handoff.py --save-report /tmp/it3/runs/compaction-resume-late--before-2/p/.git/siegard/handoff/20261107T183424Z-implement-task.md  -> exit 0
+python3 -B /tmp/it3/before/bin/handoff.py --render /tmp/it3/runs/compaction-resume-late--before-2/out/handoff.json  -> exit 1 (fees.py in door prose; block 743 > 600)
+python3 -B /tmp/it3/before/bin/handoff.py --render /tmp/it3/runs/compaction-resume-late--before-2/out/handoff.json  -> exit 0
+python3 -B /tmp/it3/before/bin/handoff.py --render ../out/handoff.json  -> exit 0 (re-render into report.md)

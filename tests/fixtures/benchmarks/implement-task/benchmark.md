@@ -100,3 +100,77 @@ option differs from the right one in one plausible detail; options are shuffled 
 - **Behaviour held.** Both delivery cases pass every expectation on both arms; a whole delivery cost
   115.5k tokens against 120.5k, and a resumed one 89.1k against 88.1k — one run each, within one
   run's variation.
+
+# Iteration 3 (2026-11-07): 5.69.0, wave B — the skill fits the compaction cut whole
+
+`before:` is `src/claude` at `2a6ee49` (Siegard 5.68.0: `SKILL.md` 25,895 characters, the cut
+falling inside step 5's spawn block and losing steps 6-9 and the never-list); `shipped:` is the
+working tree that became 5.69.0 (`SKILL.md` 19,970 characters, 338 lines). The two spawn blocks
+moved into `references/delegation.md`, the order diagram is dropped (the checklist states the
+order), "Every run is captured" keeps its rules without their justification, and the task-pin
+paragraph moved into `references/records.md`. The agents are untouched.
+
+A fourth case joins: `compaction-resume-late`, resumed after step 6. `setup` writes the source,
+the tests (`pre/test_fees.py`), the build and suite runs through `run.py`, and both records
+through `deliver.py --write-implementation` and `--write-proof --from-text` over `pre/`; nothing
+is committed. What remains is step 7 (`--unrecorded`, `deliver.py`), step 8 (`--bind-record`) and
+step 9 (`--prepare`, `--save-report`, `--render`), which the 5.68.0 cut loses whole. The state is
+held sound by `test_the_late_resumed_implement_task_case_starts_where_step_6_ends`: `deliver.py
+--check` over it refuses as written (`delivery.json` has never been derived — deriving it is step
+7), so the test derives it in a copy, which exits 0, and `--check` then accepts. A new check,
+`delivery_derived`, holds that step 7 ran. Every resumed run's `facts.json` records
+`skill_read_again`: whether its `files-read.txt` names the arm's `SKILL.md`, whole or in part.
+
+| run | case | arm | expectations | read SKILL.md again | tokens | time |
+|---|---|---|---|---|---|---|
+| `compaction-resume-late` | resumed after step 6 | shipped | 15/15 | no | 66.4k | 1 m 30 s |
+| `compaction-resume-late-2` | resumed after step 6 | shipped | 15/15 | no | 67.4k | 1 m 27 s |
+| `compaction-resume-late--before-1` | resumed after step 6 | before | 15/15 | yes | 69.2k | 1 m 31 s |
+| `compaction-resume-late--before-2` | resumed after step 6 | before | 15/15 | yes (lines 340-end) | 67.5k | 1 m 25 s |
+| `compaction-resume` | resumed after step 4 | shipped | 15/15 | no | 83.1k | 2 m 21 s |
+| `compaction-resume-2` | resumed after step 4 | shipped | 15/15 | no | 87.5k | 2 m 18 s |
+| `compaction-resume--before-1` | resumed after step 4 | before | 15/15 | yes | 86.0k | 2 m 26 s |
+| `compaction-resume--before-2` | resumed after step 4 | before | 15/15 | yes | 85.9k | 2 m 07 s |
+| `first-delivery` | whole route | shipped | 16/16 | — | 107.5k | 3 m 28 s |
+| `first-delivery--before-1` | whole route | before | 16/16 | — | 104.1k | 3 m 00 s |
+| `reading-quiz` | quiz | shipped | 18/18 | — | 73.9k | 18 s |
+| `reading-quiz-2` | quiz | shipped | 18/18 | — | 73.3k | 15 s |
+| `reading-quiz--before-1` | quiz | before | 18/18 | — | 74.0k | 17 s |
+| `reading-quiz--before-2` | quiz | before | 18/18 | — | 74.6k | 21 s |
+
+## What the runs say
+
+- **No expectation separates the arms.** As iteration 2 found, the 5.68.0 checklist already
+  carries a resumed delivery to its end: it tells the session to read `SKILL.md` again, and every
+  5.68.0 run did, after step 4 and after step 6 alike, and passed everything. 5.69.0 is held as
+  non-regression, never as a better score.
+- **What separates them is the read the cut forced.** Every 5.68.0 resumed run read `SKILL.md`
+  again (one only from line 340, where step 6 began); no 5.69.0 run did, because the cut holds the
+  whole skill. Each run still opened the references its steps name.
+- **Tokens do not separate them.** The late case: 66.4k/67.4k against 69.2k/67.5k, 0.1k apart at
+  the closest; the step-4 case: 83.1k/87.5k against 86.0k/85.9k, overlapping. The re-read of a
+  25.9k-character file is a small share of a resumed run, and one run's variation is as large.
+  Recorded, not claimed.
+- **The quiz holds the move to losing no meaning**: 18/18 on both arms, twice each, at equal cost.
+
+## Drafts
+
+The first candidate dropped "you never type it" when it moved the task-pin paragraph into
+`references/records.md`; both of its quiz runs answered question 2 right and named the sentence
+as readable both ways. The candidate was corrected and every case run again; its seven runs stay
+recorded under `draft:` (`*--draft-N`): 15/15, 15/15, 15/15, 15/15, 16/16 and 18/18, 18/18, none
+reading `SKILL.md` again.
+
+## Grader correction
+
+`read_again` first matched only a line ending in `SKILL.md`; a run that annotated its line
+(`SKILL.md (lines 340-end)`) read as not re-read. It now reads the path before a ` (` note. The
+correction ran over every record that carries the fact, before any comparison;
+`test_each_implement_task_run_grades_as_recomputed_from_its_record` recomputes it.
+
+## Open
+
+- Every run, both arms, found `/review-change` refusing while `delivery/<slug>` is uncommitted, and
+  handed a commit first; several said they guessed the `/review-change` argument form.
+- Every resumed run's first `--render` was refused (a block over 600 characters, a file name in
+  prose) and passed on the second.

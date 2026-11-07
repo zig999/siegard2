@@ -784,8 +784,11 @@ def test_a_build_red_only_a_test_can_answer_goes_to_the_test_author_before_the_r
         < build.index("A red no change to this task's own files can answer")
     assert "not a test the target declares, which the shape above hands the test-author" in build
     prove = skill.split("### 5. Prove", 1)[1].split("### 6. Suite", 1)[0]
-    assert "red build:" in prove
-    assert "unless step 4 runs this step ahead of the record" in prove
+    assert "the step 5 block of `references/delegation.md`" in prove
+    block = reference_text("implement-task", "delegation").split(
+        "## What step 5 hands the test-author", 1)[1].split("## Waiting", 1)[0]
+    assert "red build:" in block
+    assert "unless step 4 runs this step ahead of the record" in block
     author = " ".join((REPO / "src/claude/agents/test-author.md").read_text(encoding="utf-8")
                       .split())
     supplied = author.split("## What the caller supplies", 1)[1].split("## The obligations", 1)[0]
@@ -1104,6 +1107,26 @@ def test_the_deliver_scope_skill_survives_a_compaction_whole():
     report = (REPO / "src/claude/skills/deliver-scope/references/report.md").read_text(
         encoding="utf-8")
     assert report.startswith("# The report\n")
+
+
+def test_the_implement_task_skill_survives_a_compaction_whole():
+    """At 5.68.0 the cut fell inside step 5's spawn block and every later step was lost — the
+    suite, the validation, the bind, the report's handoff and the never-list; the rewrite keeps
+    SKILL.md inside the 20,000 characters a compaction re-attaches, so a resumed delivery holds
+    every step, and the two spawn blocks sit in the reference the steps name."""
+    text = skill_text("implement-task")
+    assert len(text) <= COMPACTION_CUT, \
+        f"implement-task's SKILL.md is {len(text)} characters, past the cut"
+    held = unwrapped(text)
+    for kept in ("deliver.py --unrecorded", "trace.py --bind-record",
+                 "handoff.py --prepare --skill implement-task", "--save-report",
+                 "handoff.py --render", "(SPEC-006 R10)", "(SPEC-006 R1)",
+                 "the step 3 block of `references/delegation.md`",
+                 "the step 5 block of `references/delegation.md`"):
+        assert kept in held, f"implement-task's SKILL.md lost {kept!r}"
+    delegation = reference_text("implement-task", "delegation")
+    assert "## What step 3 hands the task-implementer ``` task file:" in delegation
+    assert "## What step 5 hands the test-author ``` task file:" in delegation
 
 
 def test_the_reconcile_skill_keeps_its_handoff_and_bind_in_skill_md():

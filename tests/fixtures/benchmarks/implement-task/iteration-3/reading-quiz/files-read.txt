@@ -1,0 +1,17 @@
+/tmp/it3/runs2/reading-quiz/prompt.txt
+/tmp/it3/cand2/skills/implement-task/SKILL.md
+/tmp/it3/cand2/skills/implement-task/references/blocking.md
+/tmp/it3/cand2/skills/implement-task/references/delegation.md
+/tmp/it3/cand2/skills/implement-task/references/finish.md
+/tmp/it3/cand2/skills/implement-task/references/implementer-returns.md
+/tmp/it3/cand2/skills/implement-task/references/records.md
+/tmp/it3/cand2/skills/implement-task/references/red-build.md
+/tmp/it3/cand2/skills/implement-task/references/red-suite.md
+/tmp/it3/cand2/skills/implement-task/references/redelivery.md
+/tmp/it3/cand2/skills/implement-task/references/report.md
+/tmp/it3/cand2/skills/implement-task/references/standard.md
+/tmp/it3/cand2/skills/implement-task/references/substrate.md
+/tmp/it3/cand2/agents/task-implementer.md
+/tmp/it3/cand2/agents/test-author.md
+/tmp/it3/cand2/agents/failure-diagnostician.md
+/home/siegfriedneto/.claude/projects/-home-siegfriedneto-projects-siegard2/0cfb0639-c237-4813-9b3b-4c360209a6b9/tool-results/byc8nkqff.txt

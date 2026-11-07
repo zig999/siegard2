@@ -1,0 +1,9 @@
+{
+ "commits_added": 0,
+ "changed_under_target": [
+  "lending/fees.py",
+  "tests/test_fees.py"
+ ],
+ "spec_changed": false,
+ "skill_read_again": false
+}

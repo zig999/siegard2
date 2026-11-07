@@ -1,0 +1,16 @@
+/tmp/it3/runs/reading-quiz/prompt.txt
+/tmp/it3/cand/skills/implement-task/SKILL.md
+/tmp/it3/cand/skills/implement-task/references/blocking.md
+/tmp/it3/cand/skills/implement-task/references/delegation.md
+/tmp/it3/cand/skills/implement-task/references/finish.md
+/tmp/it3/cand/skills/implement-task/references/implementer-returns.md
+/tmp/it3/cand/skills/implement-task/references/records.md
+/tmp/it3/cand/skills/implement-task/references/red-build.md
+/tmp/it3/cand/skills/implement-task/references/red-suite.md
+/tmp/it3/cand/skills/implement-task/references/redelivery.md
+/tmp/it3/cand/skills/implement-task/references/report.md
+/tmp/it3/cand/skills/implement-task/references/standard.md
+/tmp/it3/cand/skills/implement-task/references/substrate.md
+/tmp/it3/cand/agents/task-implementer.md
+/tmp/it3/cand/agents/test-author.md
+/tmp/it3/cand/agents/failure-diagnostician.md

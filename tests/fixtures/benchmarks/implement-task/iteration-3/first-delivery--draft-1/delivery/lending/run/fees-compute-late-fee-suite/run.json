@@ -1,0 +1,29 @@
+{
+  "contract_version": "siegard-run/2",
+  "run": "run/fees-compute-late-fee-suite",
+  "cwd": "/tmp/it3/runs/first-delivery/p/app",
+  "timeout_seconds": 120,
+  "outcome": "passed",
+  "failed_step": null,
+  "steps": [
+    {
+      "name": "build",
+      "command": "python3 -m compileall -q lending",
+      "outcome": "passed",
+      "exit_code": 0,
+      "output": "build.log",
+      "started_at": "2026-11-07T18:40:43.493+00:00",
+      "ended_at": "2026-11-07T18:40:43.535+00:00"
+    },
+    {
+      "name": "test",
+      "command": "python3 -m pytest -q tests",
+      "outcome": "passed",
+      "exit_code": 0,
+      "output": "test.log",
+      "started_at": "2026-11-07T18:40:43.535+00:00",
+      "ended_at": "2026-11-07T18:40:43.844+00:00"
+    }
+  ],
+  "combined_output": "run.log"
+}

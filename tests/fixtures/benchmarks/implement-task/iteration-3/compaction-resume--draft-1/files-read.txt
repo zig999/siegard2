@@ -1,0 +1,19 @@
+/tmp/it3/runs/compaction-resume/prompt.txt
+/tmp/it3/runs/compaction-resume/p.skill-after-compaction.md
+/tmp/it3/runs/compaction-resume/p/siegard.json
+/tmp/it3/cand/skills/implement-task/references/delegation.md
+/tmp/it3/runs/compaction-resume/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs/compaction-resume/p/app/lending/fees.py
+/tmp/it3/runs/compaction-resume/p/app/standard.yaml
+/tmp/it3/runs/compaction-resume/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/it3/runs/compaction-resume/p/app/lending/loans.py
+/tmp/it3/runs/compaction-resume/p/app/tests/conftest.py
+/tmp/it3/runs/compaction-resume/p/app/tests/test_loans.py
+/tmp/it3/cand/agents/test-author.md
+/tmp/it3/cand/skills/implement-task/references/records.md
+/tmp/it3/cand/skills/implement-task/references/finish.md
+/tmp/it3/cand/skills/implement-task/references/report.md
+/tmp/it3/cand/schemas/handoff.json
+/tmp/it3/cand/skills/review-change/SKILL.md (lines 1-12 and 40-80, for the invocation's inputs)
+/tmp/it3/runs/compaction-resume/p/siegard-trace.json

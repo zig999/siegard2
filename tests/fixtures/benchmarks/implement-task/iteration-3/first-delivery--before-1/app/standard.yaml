@@ -1,0 +1,29 @@
+contract_version: siegard-standard/1
+standard: lending-app
+summary: How the lending service writes its Python modules and its tests.
+rules:
+- id: PY-01
+  statement: Money is computed in integer cents, never in floating point.
+  because: A float cannot hold most decimal amounts exactly, and a fee summed over days drifts.
+  decided_by: reading
+  applies_to:
+  - under: lending
+    suffix: .py
+    nested: true
+- id: PY-02
+  statement: Every module compiles under the interpreter the project runs.
+  because: A module that does not compile fails every caller that imports it.
+  decided_by: tool
+  tool: build
+  applies_to:
+  - under: lending
+    suffix: .py
+    nested: true
+commands:
+- step: build
+  command: python3 -m compileall -q lending
+  timeout_seconds: 60
+- step: test
+  command: python3 -m pytest -q tests
+  timeout_seconds: 120
+  role: suite

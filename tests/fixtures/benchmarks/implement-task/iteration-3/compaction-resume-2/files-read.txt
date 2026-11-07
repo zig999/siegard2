@@ -1,0 +1,22 @@
+/tmp/it3/runs2/compaction-resume-2/prompt.txt
+/tmp/it3/runs2/compaction-resume-2/p.skill-after-compaction.md
+/tmp/it3/cand2/skills/implement-task/references/delegation.md
+/tmp/it3/cand2/agents/test-author.md
+/tmp/it3/runs2/compaction-resume-2/p/work/lending/task/fees/compute-late-fee.md
+/tmp/it3/runs2/compaction-resume-2/p/app/lending/fees.py
+/tmp/it3/runs2/compaction-resume-2/p/delivery/lending/implementation/fees/compute-late-fee.md
+/tmp/it3/runs2/compaction-resume-2/p/spec/rules/lending/late-fee-per-overdue-day.md
+/tmp/it3/runs2/compaction-resume-2/p/spec/rules/lending/late-fee-per-overdue-day.log.md
+/tmp/it3/runs2/compaction-resume-2/p/app/standard.yaml
+/tmp/it3/runs2/compaction-resume-2/p/app/lending/loans.py
+/tmp/it3/runs2/compaction-resume-2/p/app/tests/conftest.py
+/tmp/it3/runs2/compaction-resume-2/p/app/tests/test_loans.py
+/tmp/it3/runs2/compaction-resume-2/p/siegard.json
+/tmp/it3/runs2/compaction-resume-2/p/app/.gitignore
+/tmp/it3/cand2/skills/implement-task/references/records.md
+/tmp/it3/cand2/skills/implement-task/references/finish.md
+/tmp/it3/runs2/compaction-resume-2/p/delivery/lending/run/fees-compute-late-fee-suite/test.log
+/tmp/it3/cand2/skills/implement-task/references/report.md
+/tmp/it3/cand2/schemas/handoff.json
+/tmp/it3/cand2/skills/review-change/SKILL.md (lines 1-110, for the /review-change invocation's inputs)
+/tmp/it3/runs2/compaction-resume-2/p/delivery/lending/proof/fees/compute-late-fee.md (first 12 lines)
